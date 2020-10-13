@@ -551,7 +551,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
         e.preventDefault();
     }
 
-    componentWillReceiveProps(nextProps?: ProjectsCarouselProps) {
+    UNSAFE_componentWillReceiveProps(nextProps?: ProjectsCarouselProps) {
         if (nextProps.selectedIndex != undefined) {
             document.addEventListener('keydown', this.closeDetailOnEscape);
         }

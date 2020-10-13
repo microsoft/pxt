@@ -237,7 +237,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         }
     }
 
-    componentWillReceiveProps(nextProps: SettingsMenuProps) {
+    UNSAFE_componentWillReceiveProps(nextProps: SettingsMenuProps) {
         const newState: SettingsMenuState = {};
         if (nextProps.highContrast != undefined) {
             newState.highContrast = nextProps.highContrast;
@@ -414,6 +414,24 @@ class SandboxMenuItem extends data.Component<ISettingsProps, {}> {
     }
 }
 
+class AssetMenuItem extends data.Component<ISettingsProps, {}> {
+    constructor(props: ISettingsProps) {
+        super(props);
+    }
+
+    protected onClick = (): void => {
+        pxt.tickEvent("menu.assets", undefined, { interactiveConsent: true });
+        this.props.parent.openAssets();
+    }
+
+    protected isActive = (): boolean => {
+        return this.props.parent.isAssetsActive();
+    }
+
+    renderCore() {
+        return <BaseMenuItemProps className="assets-menuitem" icon="picture" text={lf("Assets")} title={lf("View project assets")} onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} />
+    }
+}
 interface IEditorSelectorProps extends ISettingsProps {
     python?: boolean;
     sandbox?: boolean;
@@ -434,6 +452,7 @@ export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
         // show python in toggle if: python editor currently active, or blocks editor active & saved language pref is python
         const showPython = parent.isPythonActive() || (parent.isBlocksActive() && pxt.shell.isPyLangPref());
         const showBlocks = !!pkg.mainEditorPkg().files["main.blocks"];
+        const showAssets = !!pkg.mainEditorPkg().files[pxt.ASSETS_FILE];
 
         return (
             <div id="editortoggle" className={`ui grid padded ${(pyOnly || tsOnly) ? "one-language" : ""}`}>
@@ -444,6 +463,7 @@ export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
                     <JavascriptMenuItem parent={parent} />
                     <PythonMenuItem parent={parent} />
                 </sui.DropdownMenu>}
+                {showAssets && pxt.appTarget.appTheme.assetEditor && <AssetMenuItem parent={parent} />}
                 <div className={`ui item toggle ${python ? 'hasdropdown' : ''}`}></div>
             </div>
         )
@@ -495,9 +515,9 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
     }
 
     exitTutorial() {
-        pxt.tickEvent("menu.exitTutorial", undefined, { interactiveConsent: true });
-        if (this.props.parent.state.tutorialOptions
-            && this.props.parent.state.tutorialOptions.tutorialRecipe)
+        const tutorialOptions = this.props.parent.state.tutorialOptions;
+        pxt.tickEvent("menu.exitTutorial", { tutorial: tutorialOptions?.tutorial }, { interactiveConsent: true });
+        if (tutorialOptions?.tutorialRecipe)
             this.props.parent.completeTutorialAsync().done();
         else
             this.props.parent.exitTutorial();
@@ -691,7 +711,7 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
         }
     }
 
-    componentWillReceiveProps(nextProps: SideDocsProps) {
+    UNSAFE_componentWillReceiveProps(nextProps: SideDocsProps) {
         const newState: SideDocsState = {};
         if (nextProps.sideDocsCollapsed != undefined) {
             newState.sideDocsCollapsed = nextProps.sideDocsCollapsed;

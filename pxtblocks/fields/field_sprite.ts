@@ -32,22 +32,22 @@ namespace pxtblockly {
         }
 
         protected createNewAsset(text?: string): pxt.Asset {
-            if (text && pxt.Util.startsWith(text.trim(), pxt.sprite.IMAGES_NAMESPACE)) {
-                const asset = pxt.react.getTilemapProject().lookupAsset(pxt.AssetType.Image, text.replace(/\s/g, ""));
-                if (asset) return asset;
+            const project = pxt.react.getTilemapProject();
+            if (text) {
+                const match = /^\s*assets\s*\.\s*image\s*`([^`]+)`\s*$/.exec(text);
+                if (match) {
+                    const asset = project.lookupAssetByName(pxt.AssetType.Image, match[1].trim());
+                    if (asset) return asset;
+                }
             }
 
             const bmp = text ? pxt.sprite.imageLiteralToBitmap(text) : new pxt.sprite.Bitmap(this.params.initWidth, this.params.initHeight);
-            const newAsset = pxt.react.getTilemapProject().createNewImage(bmp.width, bmp.height);
-            newAsset.bitmap = bmp.data();
-            newAsset.meta = {
-                isTemporary: true
-            };
+            const newAsset = project.createNewProjectImage(bmp.data());
             return newAsset;
         }
 
         protected getValueText(): string {
-            if (this.asset && !this.isTemporaryAsset()) return this.asset.id;
+            if (this.asset && !this.isTemporaryAsset()) return `assets.image\`${this.asset.meta.displayName || this.asset.id.substr(this.asset.id.lastIndexOf(".") + 1)}\``;
             return pxt.sprite.bitmapToImageLiteral(this.asset && pxt.sprite.Bitmap.fromData((this.asset as pxt.ProjectImage).bitmap), pxt.editor.FileType.TypeScript);
         }
 

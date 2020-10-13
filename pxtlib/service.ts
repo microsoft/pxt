@@ -610,7 +610,6 @@ namespace ts.pxtc {
         const lang = pxtc.Util.userLanguage();
         if (pxtc.Util.userLanguage() == "en") return Promise.resolve(cleanLocalizations(apis));
 
-        const errors: pxt.Map<number> = {};
         const langLower = lang.toLowerCase();
         const attrJsLocsKey = langLower + "|jsdoc";
         const attrBlockLocsKey = langLower + "|block";
@@ -661,14 +660,23 @@ namespace ts.pxtc {
                     } else if (fn.attributes.block && locBlock) {
                         const ps = pxt.blocks.compileInfo(fn);
                         const oldBlock = fn.attributes.block;
-                        fn.attributes.block = pxt.blocks.normalizeBlock(locBlock, err => errors[`${fn.attributes.blockId}.${lang}`] = 1);
+                        fn.attributes.block = pxt.blocks.normalizeBlock(locBlock, err => {
+                            pxt.tickEvent("loc.normalized", {
+                                block: fn.attributes.block,
+                                lang: lang,
+                                error: err,
+                            });
+                        });
                         fn.attributes._untranslatedBlock = oldBlock;
                         if (oldBlock != fn.attributes.block) {
                             updateBlockDef(fn.attributes);
                             const locps = pxt.blocks.compileInfo(fn);
                             if (!hasEquivalentParameters(ps, locps)) {
                                 pxt.log(`block has non matching arguments: ${oldBlock} vs ${fn.attributes.block}`);
-                                errors[`${fn.attributes.blockId}.${lang}`] = 2;
+                                pxt.reportError(`loc.errors`, `invalid translations`, {
+                                    block: fn.attributes.blockId,
+                                    lang: lang,
+                                });
                                 fn.attributes.block = oldBlock;
                                 updateBlockDef(fn.attributes);
                             }
@@ -679,10 +687,6 @@ namespace ts.pxtc {
                 })
             })))
             .then(() => cleanLocalizations(apis))
-            .finally(() => {
-                if (Object.keys(errors).length)
-                    pxt.reportError(`loc.errors`, `invalid translation`, errors);
-            })
     }
 
     function cleanLocalizations(apis: ApisInfo) {

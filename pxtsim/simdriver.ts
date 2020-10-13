@@ -269,37 +269,42 @@ namespace pxsim {
             }
 
             const broadcastmsg = msg as pxsim.SimulatorBroadcastMessage;
+            if (!source || !broadcastmsg?.broadcast)
+                return; // not our message, ignore
+
             const depEditors = this.dependentEditors();
             let frames = this.simFrames();
             const simUrl = U.isLocalHost() ? "*" : this.getSimUrl();
-            if (source && broadcastmsg && !!broadcastmsg.broadcast) {
-                // the editor is hosted in a multi-editor setting
-                // don't start extra frames
-                const parentWindow = window.parent && window.parent !== window.window
-                    ? window.parent : window.opener;
-                if (this.options.nestedEditorSim && parentWindow) {
-                    // if message comes from parent already, don't echo
-                    if (source !== parentWindow) {
-                        const parentOrigin = this.options.parentOrigin || window.location.origin
-                        parentWindow.postMessage(msg, parentOrigin);
-                    }
-                } else if (depEditors) {
-                    depEditors.forEach(w => {
-                        if (source !== w)
-                            // dependant editors should be in the same origin
-                            w.postMessage(msg, window.location.origin)
-                    });
-                } else {
-                    // start secondary frame if needed
-                    if (frames.length < 2) {
-                        this.container.appendChild(this.createFrame());
-                        frames = this.simFrames();
-                    } else if (frames[1].dataset['runid'] != this.runId) {
-                        this.startFrame(frames[1]);
-                    }
+
+            // if the editor is hosted in a multi-editor setting
+            // don't start extra frames
+            const parentWindow = window.parent && window.parent !== window.window
+                ? window.parent : window.opener;
+            if (this.options.nestedEditorSim && parentWindow) {
+                // if message comes from parent already, don't echo
+                if (source !== parentWindow) {
+                    const parentOrigin = this.options.parentOrigin || window.location.origin
+                    parentWindow.postMessage(msg, parentOrigin);
+                }
+                // send message to other editors
+            } else if (depEditors) {
+                depEditors.forEach(w => {
+                    if (source !== w)
+                        // dependant editors should be in the same origin
+                        w.postMessage(msg, window.location.origin)
+                })
+                // start second simulator
+            } else {
+                // start secondary frame if needed
+                if (frames.length < 2) {
+                    this.container.appendChild(this.createFrame());
+                    frames = this.simFrames();
+                } else if (frames[1].dataset['runid'] != this.runId) {
+                    this.startFrame(frames[1]);
                 }
             }
 
+            // now that we have iframe starts,
             // dispatch message to other frames
             for (let i = 0; i < frames.length; ++i) {
                 const frame = frames[i] as HTMLIFrameElement
@@ -308,6 +313,7 @@ namespace pxsim {
                 // frame not in DOM
                 if (!frame.contentWindow) continue;
 
+                // finally, send the message
                 frame.contentWindow.postMessage(msg, simUrl);
 
                 // don't start more than 1 recorder

@@ -6,13 +6,39 @@ namespace pxt.editor {
 
     export class MonacoSpriteEditor extends MonacoReactFieldEditor<pxt.ProjectImage> {
         protected isPython: boolean;
+        protected isAsset: boolean;
 
         protected textToValue(text: string): pxt.ProjectImage {
             this.isPython = text.indexOf("`") === -1
+
+            const match = /^\s*assets\s*\.\s*image\s*`([^`]*)`\s*$/.exec(text);
+            if (match) {
+                const project = pxt.react.getTilemapProject();
+                this.isAsset = true;
+                const asset = project.lookupAssetByName(pxt.AssetType.Image, match[1].trim());
+                if (asset) {
+                    return asset;
+                }
+                else {
+                    const name = match[1].trim();
+                    const newAsset = project.createNewImage();
+
+                    if (name && !project.isNameTaken(pxt.AssetType.Image, name) && pxt.validateAssetName(name)) {
+                        newAsset.meta.displayName = name;
+                    }
+
+                    return newAsset;
+                }
+            }
+
             return createFakeAsset(pxt.sprite.imageLiteralToBitmap(text));
         }
 
         protected resultToText(result: pxt.ProjectImage): string {
+            if (this.isAsset && result.meta.displayName) {
+                result = pxt.react.getTilemapProject().updateAsset(result)
+                return `assets.image\`${result.meta.displayName}\``
+            }
             return pxt.sprite.bitmapToImageLiteral(pxt.sprite.Bitmap.fromData(result.bitmap), this.isPython ? "python" : "typescript");
         }
 
@@ -35,6 +61,7 @@ namespace pxt.editor {
             id: "",
             internalID: 0,
             bitmap: bitmap.data(),
+            meta: {},
             jresData: ""
         }
     }
@@ -46,7 +73,7 @@ namespace pxt.editor {
         heightInPixels: 510,
         matcher: {
             // match both JS and python
-            searchString: "img\\s*(?:`|\\(\\s*\"\"\")[ a-fA-F0-9\\.\\n]*\\s*(?:`|\"\"\"\\s*\\))",
+            searchString: "(?:img|assets\\s*\\.\\s*image)\\s*(?:`|\\(\\s*\"\"\")[^\"`]*\\s*(?:`|\"\"\"\\s*\\))",
             isRegex: true,
             matchCase: true,
             matchWholeWord: false

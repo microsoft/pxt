@@ -385,7 +385,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         this.props.parent.hideLightbox();
     }
 
-    componentWillUpdate() {
+    UNSAFE_componentWillUpdate() {
         document.documentElement.addEventListener("keydown", this.closeLightboxOnEscape);
     }
 
@@ -615,7 +615,7 @@ export class WorkspaceHeader extends data.Component<any, {}> {
         super(props);
     }
 
-    componentWillUpdate() {
+    UNSAFE_componentWillUpdate() {
         let flyout = document.querySelector('.blocklyFlyout');
         if (flyout) {
             this.flyoutWidth = flyout.clientWidth;

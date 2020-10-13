@@ -400,6 +400,7 @@ declare namespace pxt {
         embedBlocksInSnapshot?: boolean; // embed blocks xml in right-click snapshot
         blocksErrorList?: boolean; // blocks error list experiment
         identity?: boolean; // login with identity providers
+        assetEditor?: boolean; // enable asset editor view (in blocks/text toggle)
     }
 
     interface SocialOptions {

@@ -1250,10 +1250,18 @@ ${output}</xml>`;
 
             const r = mkExpr(api.attributes.blockId, t);
 
-            const text = (t.template as ts.NoSubstitutionTemplateLiteral).text;
+            let text: string;
+            const param = comp.parameters[0];
+
+            if (param.fieldOptions && param.fieldOptions[DecompileParamKeys.DecompileArgumentAsString]) {
+                text = t.getText();
+            }
+            else {
+                text = (t.template as ts.NoSubstitutionTemplateLiteral).text;
+            }
 
             // This will always be a field and not a value because we only allow no-substitution templates
-            r.fields = [getField(comp.parameters[0].actualName, text)];
+            r.fields = [getField(param.actualName, text)];
 
             return r;
         }

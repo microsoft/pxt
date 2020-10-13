@@ -113,6 +113,8 @@ namespace pxtblockly {
                 fv.restorePersistentData(this.undoRedoState);
             }
 
+            pxt.react.getTilemapProject().pushUndo();
+
             fv.onHide(() => {
                 const result = fv.getResult();
                 const project = pxt.react.getTilemapProject();
@@ -122,15 +124,8 @@ namespace pxtblockly {
                     if (pxt.assetEquals(this.asset, result)) return;
 
                     this.pendingEdit = true;
-                    const oldAsset = this.asset;
                     this.asset = result;
-                    if (this.isTemporaryAsset()) {
-                        if (oldAsset.id !== result.id) {
-                            this.setAssetTemporary(false);
-                        }
-                    }
                     const lastRevision = project.revision();
-                    project.pushUndo();
 
                     this.onEditorClose(this.asset);
                     this.updateAssetListener();
@@ -205,6 +200,7 @@ namespace pxtblockly {
         disposeOfTemporaryAsset() {
             if (this.isTemporaryAsset()) {
                 pxt.react.getTilemapProject().removeAsset(this.asset);
+                this.asset = undefined;
             }
         }
 
@@ -263,6 +259,12 @@ namespace pxtblockly {
                 }
                 else {
                     if (!newText) return;
+                    if (this.asset) {
+                        if (this.sourceBlock_ && this.asset.meta.blockIDs) {
+                            this.asset.meta.blockIDs = this.asset.meta.blockIDs.filter(id => id !== this.sourceBlock_.id);
+                            project.updateAsset(this.asset);
+                        }
+                    }
                     this.asset = this.createNewAsset(newText);
                 }
                 this.updateAssetMeta();
@@ -354,14 +356,7 @@ namespace pxtblockly {
         }
 
         protected isTemporaryAsset() {
-            return this.asset?.meta?.isTemporary;
-        }
-
-        protected setAssetTemporary(isTemporary: boolean) {
-            if (this.asset) {
-                if (!this.asset.meta) this.asset.meta = {};
-                this.asset.meta.isTemporary = isTemporary;
-            }
+            return this.asset && !this.asset.meta.displayName;
         }
     }
 

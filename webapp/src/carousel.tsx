@@ -59,7 +59,7 @@ export class Carousel extends data.Component<ICarouselProps, ICarouselState> {
         this.onRightArrowClick = this.onRightArrowClick.bind(this);
     }
 
-    componentWillReceiveProps(nextProps: ICarouselProps) {
+    UNSAFE_componentWillReceiveProps(nextProps: ICarouselProps) {
         if (nextProps.selectedIndex != undefined) {
             this.setIndex(nextProps.selectedIndex);
         }

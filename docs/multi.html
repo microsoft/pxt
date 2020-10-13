@@ -64,7 +64,7 @@
         <option value="https://makecode.adafruit.com/beta">Adafruit Circuit Playground Express (beta)</option>
         <option value="https://arcade.makecode.com/beta">Arcade (beta)</option>
         <option value="https://makecode.calliope.cc/beta">Calliope (beta)</option>
-        <option value="https://maker.makecode.com/beta">Maker (beta)</option>
+        <option value="https://maker.makecode.com/">Maker (beta)</option>
     </select>
     <iframe id="left" allow="usb;camera"></iframe>
     <div id="divider"></div>
@@ -76,6 +76,17 @@
             var frames = [left, right]
             var selectLeft = document.getElementById("selectleft");
             var selectRight = document.getElementById("selectright");
+            var jacdac = /jacdac=1/.test(window.location.href)
+            if (jacdac) {
+                [selectLeft, selectRight].forEach(function(sel) {
+                    var opt = document.createElement("option")
+                    opt.value = "https://microsoft.github.io/jacdac-ts"
+                    opt.innerText = "JACDAC (beta)"
+                    sel.appendChild(opt)
+                })
+                selectLeft.value = "https://microsoft.github.io/jacdac-ts"
+                selectRight.value = "https://maker.makecode.com/"
+            }
             var divider = document.getElementById("divider");
             var localhost = /localhost=1/.test(window.location.href)
             var flags = "?nestededitorsim=1&editorlayout=ide&nosandbox=1&parentOrigin=" + encodeURIComponent(window.location.origin);
@@ -105,8 +116,6 @@
                 }
             }
             function handleHash() {
-                var hashLeft = ""
-                var hashRight = ""
                 var route = (window.location.hash || "#");
                 var parts = route.replace(/^#/, '').split(':|:', 2);
                 updateSrc(left, selectLeft, parts[0]);

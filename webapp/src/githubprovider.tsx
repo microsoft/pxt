@@ -118,7 +118,7 @@ export class GithubProvider extends cloudsync.ProviderBase {
                 </ol>}
                 {useToken && <div className="ui field">
                     <label id="selectUrlToOpenLabel">{lf("Paste GitHub token here:")}</label>
-                    <input type="url" tabIndex={0} autoFocus aria-labelledby="selectUrlToOpenLabel" placeholder="0123abcd..." className="ui blue fluid"></input>
+                    <input id="githubTokenInput" type="url" tabIndex={0} autoFocus aria-labelledby="selectUrlToOpenLabel" placeholder="0123abcd..." className="ui blue fluid"></input>
                 </div>}
             </div>,
         }).then(res => {
@@ -127,8 +127,8 @@ export class GithubProvider extends cloudsync.ProviderBase {
                 return Promise.resolve()
             } else {
                 if (useToken) {
-                    const input = form.querySelectorAll('input')[0] as HTMLInputElement;
-                    const hextoken = input.value.trim();
+                    const input = form.querySelector(`#githubTokenInput`) as HTMLInputElement;
+                    const hextoken = input?.value?.trim();
                     return this.saveAndValidateTokenAsync(hextoken, rememberMe);
                 }
                 else {
