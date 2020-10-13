@@ -47,7 +47,7 @@ export class AssetEditor extends Editor {
         return <Provider store={store}>
             <div className="asset-editor-outer">
                 <AssetSidebar showAssetFieldView={this.showAssetFieldView} />
-                <AssetGallery galleryAssets={this.galleryAssets} />
+                <AssetGallery galleryAssets={this.galleryAssets} showAssetFieldView={this.showAssetFieldView} />
             </div>
         </Provider>
     }

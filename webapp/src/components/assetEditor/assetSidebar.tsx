@@ -22,8 +22,17 @@ interface AssetSidebarProps {
     dispatchUpdateUserAssets: () => void;
 }
 
-class AssetSidebarImpl extends React.Component<AssetSidebarProps> {
+interface AssetSidebarState {
+    showDeleteModal?: boolean;
+}
+
+class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarState> {
     protected copyTextAreaRef: HTMLTextAreaElement;
+
+    constructor(props: AssetSidebarProps) {
+        super(props);
+        this.state = { showDeleteModal: false };
+    }
 
     protected getAssetDetails(): AssetDetail[] {
         const asset = this.props.asset;
@@ -89,7 +98,16 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps> {
 
     protected copyTextAreaRefHandler = (el: HTMLTextAreaElement) => { this.copyTextAreaRef = el }
 
+    protected showDeleteModal = () => {
+        this.setState({ showDeleteModal: true });
+    }
+
+    protected hideDeleteModal = () => {
+        this.setState({ showDeleteModal: false });
+    }
+
     protected deleteAssetHandler = () => {
+        this.setState({ showDeleteModal: false });
         const project = pxt.react.getTilemapProject();
         project.pushUndo();
         project.removeAsset(this.props.asset);
@@ -99,7 +117,14 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps> {
 
     render() {
         const { asset, isGalleryAsset } = this.props;
+        const { showDeleteModal } = this.state;
         const details = this.getAssetDetails();
+        const name = asset?.meta?.displayName || lf("No asset selected");
+
+        const actions: sui.ModalButton[] = [
+            { label: lf("Cancel"), onclick: this.hideDeleteModal, icon: 'cancel' },
+            { label: lf("Delete"), onclick: this.deleteAssetHandler, icon: 'trash', className: 'red' }
+        ]
 
         return <div className="asset-editor-sidebar">
             <div className="asset-editor-sidebar-info">
@@ -107,9 +132,7 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps> {
                 <div className="asset-editor-sidebar-preview">
                     { asset && <AssetPreview asset={asset} />  }
                 </div>
-                <div className="asset-editor-sidebar-name">
-                    { asset?.meta?.displayName || lf("No asset selected") }
-                </div>
+                <div className="asset-editor-sidebar-name">{ name }</div>
                 {details.map(el => {
                     return <div key={el.name} className="asset-editor-sidebar-detail">{`${el.name}: ${el.value}`}</div>
                 })}
@@ -118,9 +141,13 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps> {
                 {!isGalleryAsset && <sui.MenuItem name={lf("Edit")} className="asset-editor-button" icon="edit" onClick={this.editAssetHandler}/>}
                 <sui.MenuItem name={lf("Duplicate")} className="asset-editor-button" icon="copy" onClick={this.duplicateAssetHandler}/>
                 <sui.MenuItem name={lf("Copy")} className="asset-editor-button" icon="paste" onClick={this.copyAssetHandler}/>
-                {!isGalleryAsset && <sui.MenuItem name={lf("Delete")} className="asset-editor-button" icon="delete" onClick={this.deleteAssetHandler}/>}
+                {!isGalleryAsset && <sui.MenuItem name={lf("Delete")} className="asset-editor-button" icon="trash" onClick={this.showDeleteModal}/>}
             </div>}
             <textarea className="asset-editor-sidebar-copy" ref={this.copyTextAreaRefHandler} ></textarea>
+            <sui.Modal isOpen={showDeleteModal} onClose={this.hideDeleteModal} closeIcon={false}
+                dimmer={true} header={lf("Delete Asset")} buttons={actions}>
+                <div>{lf("Are you sure you want to delete {0}? Deleted assets cannot be recovered.", name)}</div>
+            </sui.Modal>
         </div>
     }
 }

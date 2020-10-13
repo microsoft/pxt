@@ -10,13 +10,14 @@ interface AssetGalleryProps {
     view: GalleryView;
     galleryAssets: pxt.Asset[];
     userAssets: pxt.Asset[];
+    showAssetFieldView?: (asset: pxt.Asset, cb: (result: any) => void) => void;
 }
 
 class AssetGalleryImpl extends React.Component<AssetGalleryProps> {
     render() {
-        const { view, galleryAssets, userAssets } = this.props;
+        const { view, galleryAssets, userAssets, showAssetFieldView } = this.props;
         return <div className="asset-editor-gallery">
-            <AssetTopbar />
+            <AssetTopbar showAssetFieldView={showAssetFieldView} />
             <div className={`asset-editor-card-list ${view !== GalleryView.User ? "hidden" : ""}`}>
                 <AssetCardList assets={userAssets} />
             </div>
