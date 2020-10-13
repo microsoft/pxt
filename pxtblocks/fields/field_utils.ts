@@ -69,7 +69,7 @@ namespace pxtblockly {
         return canvas.toDataURL();
     }
 
-    export function tilemapToImageURI(data: pxt.sprite.TilemapData, sideLength: number, lightMode: boolean, blocksInfo: pxtc.BlocksInfo) {
+    export function tilemapToImageURI(data: pxt.sprite.TilemapData, sideLength: number, lightMode: boolean) {
         const colors = pxt.appTarget.runtime.palette.slice();
         const canvas = document.createElement("canvas");
         canvas.width = sideLength;

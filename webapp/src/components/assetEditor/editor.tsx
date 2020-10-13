@@ -15,6 +15,7 @@ import { AssetGallery } from "./assetGallery";
 
 export class AssetEditor extends Editor {
     protected galleryAssets: pxt.Asset[] = [];
+    protected blocksInfo: pxtc.BlocksInfo;
 
     acceptsFile(file: pkg.File) {
         return file.name === pxt.ASSETS_FILE;
@@ -24,7 +25,10 @@ export class AssetEditor extends Editor {
         // force refresh to ensure we have a view
         return super.loadFileAsync(file, hc)
             .then(() => compiler.getBlocksAsync()) // make sure to load block definitions
-            .then(info => this.updateGalleryAssets(info))
+            .then(info => {
+                this.blocksInfo = info;
+                this.updateGalleryAssets(info);
+            })
             .then(() => store.dispatch(dispatchUpdateUserAssets()))
             .then(() => this.parent.forceUpdate());
     }
@@ -42,7 +46,7 @@ export class AssetEditor extends Editor {
     display(): JSX.Element {
         return <Provider store={store}>
             <div className="asset-editor-outer">
-                <AssetSidebar />
+                <AssetSidebar showAssetFieldView={this.showAssetFieldView} />
                 <AssetGallery galleryAssets={this.galleryAssets} />
             </div>
         </Provider>
@@ -81,5 +85,34 @@ export class AssetEditor extends Editor {
         }
 
         this.galleryAssets = imageAssets.concat(tileAssets);
+    }
+
+    protected showAssetFieldView = (asset: pxt.Asset, cb?: (result: any) => void) => {
+        let fieldView: pxt.react.FieldEditorView<any>;
+        switch (asset.type) {
+            case pxt.AssetType.Image:
+            case pxt.AssetType.Tile:
+                fieldView = pxt.react.getFieldEditorView("image-editor", asset as pxt.ProjectImage, {
+                    initWidth: 16,
+                    initHeight: 16,
+                    showTiles: true,
+                    headerVisible: false,
+                    blocksInfo: this.blocksInfo
+                });
+                break;
+            case pxt.AssetType.Tilemap:
+                fieldView = pxt.react.getFieldEditorView("tilemap-editor", asset as pxt.ProjectTilemap, {
+                    initWidth: 16,
+                    initHeight: 16,
+                    headerVisible: false,
+                    blocksInfo: this.blocksInfo
+                });
+                break;
+            default:
+                break;
+        }
+
+        fieldView.onHide(() => cb(fieldView.getResult()));
+        fieldView.show();
     }
 }

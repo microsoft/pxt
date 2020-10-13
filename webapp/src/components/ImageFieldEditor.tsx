@@ -13,6 +13,7 @@ export interface ImageFieldEditorProps {
 export interface ImageFieldEditorState {
     currentView: "editor" | "gallery" | "my-assets";
     tileGalleryVisible?: boolean;
+    headerVisible?: boolean;
     galleryFilter?: string;
 }
 
@@ -44,7 +45,7 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
 
     render() {
         const { showTiles } = this.props;
-        const { currentView } = this.state;
+        const { currentView, headerVisible } = this.state;
 
         if (this.blocksInfo && !this.extensionGallery) {
             this.extensionGallery = pxt.sprite.getGalleryItems(this.blocksInfo, "Image")
@@ -61,7 +62,7 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
         const toggleClass = currentView === "editor" ? "left" : (currentView === "gallery" ? "center" : "right");
 
         return <div className="image-editor-wrapper">
-            <div className="gallery-editor-header">
+            {headerVisible && <div className="gallery-editor-header">
                 <div className={`gallery-editor-toggle ${toggleClass} ${pxt.BrowserUtils.isEdge() ? "edge" : ""}`}>
                     <div className="gallery-editor-toggle-label gallery-editor-toggle-left" onClick={this.showEditor} role="button">
                         {lf("Editor")}
@@ -75,7 +76,7 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
                     <div className="gallery-editor-toggle-handle"/>
                 </div>
                 { showTiles && <button className="gallery-editor-show-tiles" onClick={this.toggleTileGallery}>{lf("Tile Gallery")}</button>}
-            </div>
+            </div>}
             <div className="image-editor-gallery-content">
                 <ImageEditor ref="image-editor" singleFrame={this.props.singleFrame} onDoneClicked={this.onDoneClick} />
                 <ImageEditorGallery
@@ -121,6 +122,10 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
                 this.setState({
                     galleryFilter: options.filter
                 });
+            }
+
+            if (options.headerVisible === false) {
+                this.setState({ headerVisible: false })
             }
         }
     }
