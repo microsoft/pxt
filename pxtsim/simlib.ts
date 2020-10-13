@@ -556,7 +556,7 @@ namespace pxsim {
 
         export function tone(frequency: number, gain: number) {
             if (_mute) return;
-            if (frequency <= 0) return;
+            if (frequency < 0) return;
             _frequency = frequency;
 
             let ctx = context();
