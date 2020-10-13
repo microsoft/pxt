@@ -16,7 +16,7 @@ Teddy has been in Brooklyn for almost two weeks, after more than four months of 
 ![Teddy Seyed](/static/blog/alava/seyed.jpg)
 
 MSR intern James Devine (Lancaster University, United Kingdom) is sitting next to me, alternating between
-debugging his [JACDAC](https://jacdac.org) protocol for plug-and-play of microcontrollers, and soldering last minute enhancements to Teddy's prototype fashion beads:
+debugging his JACDAC protocol for plug-and-play of microcontrollers, and soldering last minute enhancements to Teddy's prototype fashion beads:
 
 ![James Devine](/static/blog/alava/devine.jpg)
 
