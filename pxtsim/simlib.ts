@@ -249,12 +249,27 @@ namespace pxsim {
         }
 
         export function stopAll() {
-            stopTone();
+            stop();
             muteAllChannels();
         }
 
         export function stop() {
             stopTone();
+            clearVca();
+        }
+
+        function clearVco() {
+            if (_vco) {
+                _vco.stop();
+                _vco.disconnect();
+                _vco = undefined;
+            }
+        }
+        function clearVca() {
+            if (_vca) {
+                _vca.disconnect();
+                _vca = undefined;
+            }
         }
 
         export function frequency(): number {
@@ -562,11 +577,7 @@ namespace pxsim {
             let ctx = context();
             if (!ctx) return;
 
-            if (_vco) {
-                _vco.stop();
-                _vco.disconnect();
-                _vco = undefined;
-            }
+            clearVco();
 
             gain = Math.max(0, Math.min(1, gain));
             try {
@@ -585,6 +596,12 @@ namespace pxsim {
 
             _vco.frequency.value = frequency;
             _vca.gain.value = gain;
+        }
+
+        export function setCurrentToneGain(gain: number) {
+            if (_vca && _vca.gain && !_mute) {
+                _vca.gain.value = gain;
+            }
         }
 
         function uint8ArrayToString(input: Uint8Array) {
