@@ -49,6 +49,7 @@ import * as serial from "./serial"
 import * as blocks from "./blocks"
 import * as gitjson from "./gitjson"
 import * as serialindicator from "./serialindicator"
+import * as assetEditor from "./components/assetEditor/editor";
 import * as draganddrop from "./draganddrop";
 import * as notification from "./notification";
 import * as electron from "./electron";
@@ -100,6 +101,7 @@ export class ProjectView
     serialEditor: serial.Editor;
     blocksEditor: blocks.Editor;
     gitjsonEditor: gitjson.Editor;
+    assetEditor: assetEditor.AssetEditor;
     allEditors: srceditor.Editor[] = [];
     settings: EditorSettings;
     scriptSearch: scriptsearch.ScriptSearch;
@@ -404,6 +406,11 @@ export class ProjectView
             && this.editorFile && this.editorFile.name == "main.py";
     }
 
+    isAssetsActive(): boolean {
+        return !this.state.embedSimView && this.editor == this.assetEditor
+            && this.editorFile && this.editorFile.name == pxt.ASSETS_FILE;
+    }
+
     private isAnyEditeableJavaScriptOrPackageActive(): boolean {
         return this.editor == this.textEditor
             && this.editorFile && !this.editorFile.isReadonly() && /(\.ts|pxt.json)$/.test(this.editorFile.name);
@@ -500,6 +507,10 @@ export class ProjectView
         }
 
         this.shouldTryDecompile = false;
+    }
+
+    openAssets() {
+        this.setFile(pkg.mainEditorPkg().lookupFile(`this/${pxt.ASSETS_FILE}`));
     }
 
     openSettings() {
@@ -775,6 +786,7 @@ export class ProjectView
         this.serialEditor = new serial.Editor(this);
         this.blocksEditor = new blocks.Editor(this);
         this.gitjsonEditor = new gitjson.Editor(this);
+        this.assetEditor = new assetEditor.AssetEditor(this);
 
         let changeHandler = () => {
             if (this.editorFile) {
@@ -793,7 +805,7 @@ export class ProjectView
                 this.editorChangeHandler();
             }
         }
-        this.allEditors = [this.pxtJsonEditor, this.gitjsonEditor, this.blocksEditor, this.serialEditor, this.textEditor]
+        this.allEditors = [this.pxtJsonEditor, this.gitjsonEditor, this.blocksEditor, this.serialEditor,  this.assetEditor, this.textEditor]
         this.allEditors.forEach(e => e.changeCallback = changeHandler)
         this.editor = this.allEditors[this.allEditors.length - 1]
     }
@@ -1004,6 +1016,9 @@ export class ProjectView
                     header.editor = pxt.PYTHON_PROJECT_NAME
                     header.pubCurrent = false
                     isCodeFile = true;
+                } else if (fn.name == pxt.ASSETS_FILE) {
+                    header.editor = pxt.ASSETS_PROJECT_NAME
+                    header.pubCurrent = false
                 } else {
                     // some other file type
                 }
@@ -2091,6 +2106,10 @@ export class ProjectView
                 default:
                     return pxt.JAVASCRIPT_PROJECT_NAME;
             }
+        }
+
+        if (this.editor == this.assetEditor) {
+            return pxt.ASSETS_PROJECT_NAME
         }
 
         // no preferred editor

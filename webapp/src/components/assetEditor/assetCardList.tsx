@@ -10,7 +10,7 @@ interface AssetCardListProps {
 export class AssetCardList extends React.Component<AssetCardListProps> {
     render() {
         const { assets } = this.props;
-        return <div className="asset-editor-card-list">
+        return <div>
             {assets.map(asset => <AssetCard asset={asset} key={asset.id} />)}
         </div>
     }

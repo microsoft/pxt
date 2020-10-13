@@ -188,6 +188,7 @@ namespace pxt.editor {
         openBlocks(): void;
         openJavaScript(giveFocusOnLoading?: boolean): void;
         openPython(giveFocusOnLoading?: boolean): void;
+        openAssets(): void;
         openSettings(): void;
         openSimView(): void;
         openSimSerial(): void;
@@ -307,6 +308,7 @@ namespace pxt.editor {
         isBlocksActive(): boolean;
         isJavaScriptActive(): boolean;
         isPythonActive(): boolean;
+        isAssetsActive(): boolean;
 
         editor: IEditor;
 
