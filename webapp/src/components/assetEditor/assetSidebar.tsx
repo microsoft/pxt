@@ -7,7 +7,6 @@ import { AssetEditorState } from './store/assetEditorReducer';
 import { dispatchChangeSelectedAsset, dispatchUpdateUserAssets } from './actions/dispatch';
 
 import { AssetPreview } from "./assetPreview";
-import { allEditorPkgs } from "../../package";
 
 interface AssetDetail {
     name: string;
@@ -35,8 +34,8 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps> {
     }
 
     protected updateAssets(): void {
-        pkg.mainEditorPkg().buildAssetsAsync();
-        this.props.dispatchUpdateUserAssets();
+        pkg.mainEditorPkg().buildAssetsAsync()
+            .then(() => this.props.dispatchUpdateUserAssets());
     }
 
     protected editAssetHandler = () => {
@@ -102,7 +101,7 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps> {
                 <sui.MenuItem name={lf("Copy")} className="asset-editor-button" icon="paste" onClick={this.copyAssetHandler}/>
                 <sui.MenuItem name={lf("Delete")} className="asset-editor-button" icon="delete" onClick={this.deleteAssetHandler}/>
             </div>}
-            <textarea ref={this.copyTextAreaRefHandler} style={ { position: "absolute", marginTop: "-9999px" } }></textarea>
+            <textarea className="asset-editor-sidebar-copy" ref={this.copyTextAreaRefHandler} ></textarea>
         </div>
     }
 }
