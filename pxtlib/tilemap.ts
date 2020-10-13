@@ -106,7 +106,7 @@ namespace pxt {
                 const clone = cloneAsset(asset);
                 this.takenNames[clone.id] = true;
 
-                if (clone.meta.displayName) {
+                if (clone.meta.displayName && clone.meta.displayName !== clone.id) {
                     if (this.takenNames[clone.meta.displayName]) {
                         clone.meta.displayName = this.generateNewDisplayName(clone.meta.displayName);
                     }
@@ -160,9 +160,11 @@ namespace pxt {
         }
 
         getByDisplayName(name: string): U {
-            for (const asset of this.assets) {
-                if (asset.meta.displayName === name) {
-                    return cloneAsset(asset);
+            if (this.takenNames[name]) {
+                for (const asset of this.assets) {
+                    if (asset.meta.displayName === name) {
+                        return cloneAsset(asset);
+                    }
                 }
             }
             return undefined;
@@ -244,7 +246,7 @@ namespace pxt {
                 this.takenNames[asset.id] = true;
 
                 if (asset.meta.displayName) {
-                    pxt.Util.assert(!this.takenNames[asset.meta.displayName]);
+                    if (asset.meta.displayName !== asset.id) pxt.Util.assert(!this.takenNames[asset.meta.displayName]);
                     this.takenNames[asset.meta.displayName] = true;
                 }
             }
@@ -554,7 +556,9 @@ namespace pxt {
                 internalID: this.getNewInternalId(),
                 id,
                 type: AssetType.Tilemap,
-                meta: {},
+                meta: {
+                    displayName: id
+                },
                 data: data
             });
 
@@ -917,7 +921,7 @@ namespace pxt {
 
         protected generateNewID(type: AssetType, varPrefix: string, namespaceString?: string) {
             const prefix = namespaceString ? namespaceString + "." + varPrefix : varPrefix;
-            let index = 0;
+            let index = 1;
             while (this.isNameTaken(type, prefix + index)) {
                 ++index;
             }
@@ -1006,13 +1010,13 @@ namespace pxt {
                 out += `${indent}//% fixedInstance jres blockIdentity=images._tile\n`
                 out += `${indent}export const ${key} = image.ofBuffer(hex\`\`);\n`
 
-                tileEntries.push({ key: entry.displayName || key.substr(key.lastIndexOf(".") + 1), expression: key})
+                tileEntries.push({ keys: [entry.displayName, key.substr(key.lastIndexOf(".") + 1)], expression: key})
             }
 
             if (entry.mimeType === TILEMAP_MIME_TYPE) {
                 const tm = decodeTilemap(entry);
 
-                tilemapEntries.push({ key: entry.displayName, expression: pxt.sprite.encodeTilemap(tm, "typescript") });
+                tilemapEntries.push({ keys: [entry.displayName, entry.id], expression: pxt.sprite.encodeTilemap(tm, "typescript") });
             }
         }
 
@@ -1042,16 +1046,16 @@ namespace pxt {
             const entry = jres[key];
 
             let expression: string;
-            let factoryKey = key.substr(key.lastIndexOf(".") + 1);
+            let factoryKeys = [key.substr(key.lastIndexOf(".") + 1)]
             if (typeof entry === "string") {
                 expression = sprite.bitmapToImageLiteral(sprite.getBitmapFromJResURL(entry), "typescript");
             }
             else {
                 expression = sprite.bitmapToImageLiteral(sprite.getBitmapFromJResURL(entry.data), "typescript");
-                factoryKey = entry.displayName || factoryKey
+                factoryKeys.push(entry.displayName)
             }
             imageEntries.push({
-                key: factoryKey,
+                keys: factoryKeys,
                 expression
             });
         }
@@ -1065,7 +1069,7 @@ namespace pxt {
     }
 
     interface FactoryEntry {
-        key: string;
+        keys: string[];
         expression: string;
     }
 
@@ -1075,7 +1079,10 @@ namespace pxt {
         return "\n" +
         `${indent}helpers._registerFactory("${factoryKind}", function(name: string) {\n` +
         `${indent}${indent}switch(helpers.stringTrim(name)) {\n` +
-        expressions.map(t => `${indent}${indent}${indent}case "${t.key}": return ${t.expression};`).join("\n") + "\n" +
+        expressions.map(t =>
+            t.keys.filter(k => !!k).map(key => `${indent}${indent}${indent}case "${key}":`).join("\n") +
+            `return ${t.expression};`
+        ).join("\n") + "\n" +
         `${indent}${indent}}\n` +
         `${indent}${indent}return null;\n` +
         `${indent}})\n`

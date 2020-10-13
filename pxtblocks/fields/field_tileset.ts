@@ -8,7 +8,7 @@ namespace pxtblockly {
         height: number;
     }
 
-    export type TilesetDropdownOption = [ImageJSON, string];
+    export type TilesetDropdownOption = [ImageJSON, string, string];
 
     const PREVIEW_SIDE_LENGTH = 32;
 
@@ -67,8 +67,8 @@ namespace pxtblockly {
                     src: getTileImage(tile),
                     width: PREVIEW_SIDE_LENGTH,
                     height: PREVIEW_SIDE_LENGTH,
-                    alt: tile.id
-                }, tile.id])
+                    alt: displayName(tile)
+                }, tile.id, literalValue(tile)])
             }
             return FieldTileset.referencedTiles;
         }
@@ -124,8 +124,8 @@ namespace pxtblockly {
                             src: bitmapToImageURI(pxt.sprite.Bitmap.fromData(tile.bitmap), PREVIEW_SIDE_LENGTH, false),
                             width: PREVIEW_SIDE_LENGTH,
                             height: PREVIEW_SIDE_LENGTH,
-                            alt: tile.id
-                        }, this.value_]
+                            alt: displayName(tile)
+                        }, this.value_, literalValue(tile)]
                     }
                 }
 
@@ -133,7 +133,31 @@ namespace pxtblockly {
             super.render_();
         }
 
-        getOptions(): any[] {
+        doValueUpdate_(newValue: string) {
+            super.doValueUpdate_(newValue);
+            const options = this.getOptions(true);
+
+            // First look for the qualified name and the full text
+            for (let i = 0, option; (option = options[i]); i++) {
+                if (option[1] == this.value_ || option[2] == this.value_) {
+                    this.selectedOption_ = option;
+                    this.value_ = this.selectedOption_[2] || this.selectedOption_[1];
+                }
+            }
+
+            if (newValue) {
+                // If we didn't find it, check to see if we got just the literal text
+                const literal = `assets.tile\`${newValue}\``
+                for (let i = 0, option; (option = options[i]); i++) {
+                    if (option[2] == literal) {
+                        this.selectedOption_ = option;
+                        this.value_ = this.selectedOption_[2] || this.selectedOption_[1];
+                    }
+                }
+            }
+        }
+
+        getOptions(opt_useCache?: boolean): any[] {
             if (typeof this.menuGenerator_ !== 'function') {
                 this.transparent = constructTransparentTile();
                 return [this.transparent];
@@ -149,7 +173,7 @@ namespace pxtblockly {
                     width: PREVIEW_SIDE_LENGTH,
                     height: PREVIEW_SIDE_LENGTH,
                     alt: this.getValue()
-                }, this.getValue()]]
+                }, this.getValue(), this.getValue()]]
             }
             return FieldTileset.getReferencedTiles(this.sourceBlock_.workspace);
         }
@@ -162,7 +186,7 @@ namespace pxtblockly {
             width: PREVIEW_SIDE_LENGTH,
             height: PREVIEW_SIDE_LENGTH,
             alt: pxt.U.lf("transparency")
-        }, tile.id];
+        }, tile.id, literalValue(tile)];
     }
 
     function mkTransparentTileImage(sideLength: number) {
@@ -200,5 +224,13 @@ namespace pxtblockly {
                 }
                 return 9999999999;
         }
+    }
+
+    function displayName(tile: pxt.Tile) {
+        return tile.meta.displayName || tile.id.substr(tile.id.lastIndexOf(".") + 1);
+    }
+
+    function literalValue(tile: pxt.Tile) {
+        return tile.meta.displayName ? `assets.tile\`${tile.meta.displayName}\`` : null;
     }
 }

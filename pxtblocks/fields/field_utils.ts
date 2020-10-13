@@ -258,13 +258,21 @@ namespace pxtblockly {
 
         const allTiles = getAllBlocksWithTilesets(workspace);
         for (const tilesetField of allTiles) {
-            const id = tilesetField.ref.getValue();
+            const value = tilesetField.ref.getValue();
+            const match = /^\s*assets\s*\.\s*tile\s*`([^`]*)`\s*$/.exec(value);
 
-            if (!all[id]) {
-                all[id] = project.resolveTile(id);
+            if (match) {
+                const tile = project.lookupAssetByName(pxt.AssetType.Tile, match[1]);
+
+                if (!all[tile.id]) {
+                    all[tile.id] = tile;
+                }
+            }
+            else if (!all[value]) {
+                all[value] = project.resolveTile(value);
             }
         }
 
-        return Object.keys(all).map(key => all[key]);
+        return Object.keys(all).map(key => all[key]).filter(t => !!t);
     }
 }
