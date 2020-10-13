@@ -496,10 +496,12 @@ namespace pxt {
     export const SERIAL_EDITOR_FILE = "serial.txt"
     export const README_FILE = "README.md"
     export const GITIGNORE_FILE = ".gitignore"
+    export const ASSETS_FILE = "assets.json"
     export const CLOUD_ID = "pxt/"
     export const BLOCKS_PROJECT_NAME = "blocksprj";
     export const JAVASCRIPT_PROJECT_NAME = "tsprj";
     export const PYTHON_PROJECT_NAME = "pyprj";
+    export const ASSETS_PROJECT_NAME = "assetsprj"
     export const DEFAULT_GROUP_NAME = "other"; // used in flyout, for snippet groups
     export const TILEMAP_CODE = "tilemap.g.ts";
     export const TILEMAP_JRES = "tilemap.g.jres";

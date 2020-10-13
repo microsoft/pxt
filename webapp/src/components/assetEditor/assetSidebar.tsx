@@ -1,8 +1,11 @@
 import * as React from "react";
+import * as pkg from "../../package";
 import * as sui from "../../sui";
 import { connect } from 'react-redux';
 
 import { AssetEditorState } from './store/assetEditorReducer';
+import { dispatchChangeSelectedAsset, dispatchUpdateUserAssets } from './actions/dispatch';
+
 import { AssetPreview } from "./assetPreview";
 
 interface AssetDetail {
@@ -12,9 +15,13 @@ interface AssetDetail {
 
 interface AssetSidebarProps {
     asset?: pxt.Asset;
+    dispatchChangeSelectedAsset: (asset: pxt.Asset) => void;
+    dispatchUpdateUserAssets: () => void;
 }
 
 class AssetSidebarImpl extends React.Component<AssetSidebarProps> {
+    protected copyTextAreaRef: HTMLTextAreaElement;
+
     protected getAssetDetails(): AssetDetail[] {
         const asset = this.props.asset as pxt.ProjectImage; // TODO generalize
         const details: AssetDetail[] = [];
@@ -26,20 +33,49 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps> {
         return details;
     }
 
+    protected updateAssets(): void {
+        pkg.mainEditorPkg().buildAssetsAsync()
+            .then(() => this.props.dispatchUpdateUserAssets());
+    }
+
     protected editAssetHandler = () => {
 
     }
 
     protected duplicateAssetHandler = () => {
-
+        const project = pxt.react.getTilemapProject();
+        project.pushUndo();
+        const newAsset = project.duplicateAsset(this.props.asset);
+        this.props.dispatchChangeSelectedAsset(newAsset);
+        this.updateAssets();
     }
 
     protected copyAssetHandler = () => {
-
+        const { asset } = this.props;
+        switch (asset.type) {
+            case pxt.AssetType.Image:
+            case pxt.AssetType.Tile:
+                try {
+                    const data = pxt.sprite.bitmapToImageLiteral(pxt.sprite.getBitmapFromJResURL(asset.jresData), "typescript");
+                    this.copyTextAreaRef.value = data;
+                    this.copyTextAreaRef.focus();
+                    this.copyTextAreaRef.select();
+                    document.execCommand("copy");
+                } catch { }
+                break;
+            default:
+                break;
+        }
     }
 
-    protected deleteAssetHandler = () => {
+    protected copyTextAreaRefHandler = (el: HTMLTextAreaElement) => { this.copyTextAreaRef = el }
 
+    protected deleteAssetHandler = () => {
+        const project = pxt.react.getTilemapProject();
+        project.pushUndo();
+        project.removeAsset(this.props.asset);
+        this.props.dispatchChangeSelectedAsset(null);
+        this.updateAssets();
     }
 
     render() {
@@ -65,11 +101,12 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps> {
                 <sui.MenuItem name={lf("Copy")} className="asset-editor-button" icon="paste" onClick={this.copyAssetHandler}/>
                 <sui.MenuItem name={lf("Delete")} className="asset-editor-button" icon="delete" onClick={this.deleteAssetHandler}/>
             </div>}
+            <textarea className="asset-editor-sidebar-copy" ref={this.copyTextAreaRefHandler} ></textarea>
         </div>
     }
 }
 
-export function getDisplayTextForAsset(type: pxt.AssetType) {
+function getDisplayTextForAsset(type: pxt.AssetType) {
     switch (type) {
         case pxt.AssetType.Image:
             return lf("Image");
@@ -90,6 +127,8 @@ function mapStateToProps(state: AssetEditorState, ownProps: any) {
 }
 
 const mapDispatchToProps = {
+    dispatchChangeSelectedAsset,
+    dispatchUpdateUserAssets
 };
 
 export const AssetSidebar = connect(mapStateToProps, mapDispatchToProps)(AssetSidebarImpl);

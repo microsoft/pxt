@@ -754,6 +754,33 @@ namespace pxt {
             }
         }
 
+        public duplicateAsset(asset: ProjectImage): ProjectImage;
+        public duplicateAsset(asset: Tile): Tile;
+        public duplicateAsset(asset: ProjectTilemap): ProjectTilemap;
+        public duplicateAsset(asset: Animation): Animation;
+        public duplicateAsset(asset: Asset): Asset;
+        public duplicateAsset(asset: Asset) {
+            this.onChange();
+            const newAsset = cloneAsset(asset);
+            newAsset.internalID = this.getNewInternalId();
+            const name = newAsset.id.substr(newAsset.id.lastIndexOf(".") + 1).replace(/\d*$/, "");
+            switch (newAsset.type) {
+                case AssetType.Image:
+                    newAsset.id = this.generateNewID(AssetType.Image, name, pxt.sprite.IMAGES_NAMESPACE);
+                    this.state.images.add(newAsset); break;
+                case AssetType.Tile:
+                    newAsset.id = this.generateNewID(AssetType.Tile, name, pxt.sprite.TILE_NAMESPACE);
+                    this.state.tiles.add(newAsset); break;
+                case AssetType.Tilemap:
+                    newAsset.id = this.generateNewID(AssetType.Tilemap, name);
+                    this.state.tilemaps.add(newAsset); break;
+                case AssetType.Animation:
+                    newAsset.id = this.generateNewID(AssetType.Animation, name);
+                    this.state.animations.add(newAsset); break;
+            }
+            return newAsset;
+        }
+
         public removeAsset(asset: Asset) {
             this.onChange();
             switch (asset.type) {

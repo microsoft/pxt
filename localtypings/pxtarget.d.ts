@@ -393,6 +393,7 @@ declare namespace pxt {
         errorList?: boolean; // error list experiment
         embedBlocksInSnapshot?: boolean; // embed blocks xml in right-click snapshot
         blocksErrorList?: boolean; // blocks error list experiment
+        assetEditor?: boolean; // enable asset editor view (in blocks/text toggle)
     }
 
     interface SocialOptions {
