@@ -92,9 +92,7 @@ namespace pxsim {
                 const simUrl = new URL(this.getSimUrl())
                 this._allowedOrigins.push(simUrl.origin)
             } catch (e) {
-                if (!U.isLocalHost()) {
-                    console.error(`Invalid sim url ${this.getSimUrl()}`)
-                }
+                console.error(`Invalid sim url ${this.getSimUrl()}`)
             }
         }
 
@@ -261,7 +259,7 @@ namespace pxsim {
         }
 
         private getSimUrl(): string {
-            return this.options.simUrl || ((window as any).pxtConfig || {}).simUrl || "/sim/simulator.html"
+            return this.options.simUrl || ((window as any).pxtConfig || {}).simUrl || `${location.origin}/sim/simulator.html`;
         }
 
         public postMessage(msg: pxsim.SimulatorMessage, source?: Window) {
