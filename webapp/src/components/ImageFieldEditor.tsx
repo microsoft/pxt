@@ -212,18 +212,7 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
     }
 
     protected initAnimation(value: pxt.Animation, options?: any) {
-        let frames: pxt.sprite.BitmapData[];
-        let interval: number;
-        if (!value) {
-            frames = [new pxt.sprite.Bitmap(16, 16).data()];
-            interval = 100;
-        }
-        else {
-            frames = value.frames;
-            interval = value.interval;
-        }
-
-        this.ref.initAnimation(frames.map(b => pxt.sprite.Bitmap.fromData(b)), interval);
+        this.ref.openAsset(value);
 
         if (options.disableResize) {
             this.ref.disableResize();

@@ -1,6 +1,7 @@
 namespace pxt {
     const IMAGE_MIME_TYPE = "image/x-mkcd-f4"
     const TILEMAP_MIME_TYPE = "application/mkcd-tilemap"
+    const ANIMATION_MIME_TYPE = "application/mkcd-animation"
 
     export const enum AssetType {
         Image = "image",
@@ -355,6 +356,35 @@ namespace pxt {
                 jresData: pxt.sprite.base64EncodeBitmap(bitmap)
             };
             return this.state.images.add(newImage);
+        }
+
+        public createNewAnimation(width = 16, height = 16) {
+            const id = this.generateNewID(AssetType.Animation, pxt.sprite.ANIMATION_PREFIX, pxt.sprite.ANIMATION_NAMESPACE);
+            const bitmap = new pxt.sprite.Bitmap(width, height).data()
+
+            const newAnimation: Animation = {
+                internalID: this.getNewInternalId(),
+                id,
+                type: AssetType.Animation,
+                frames: [bitmap],
+                interval: 500,
+                meta: {},
+            };
+            return this.state.animations.add(newAnimation);
+        }
+
+        public createNewAnimationFromData(frames: pxt.sprite.BitmapData[], interval = 500) {
+            const id = this.generateNewID(AssetType.Animation, pxt.sprite.ANIMATION_PREFIX, pxt.sprite.ANIMATION_NAMESPACE);
+
+            const newAnimation: Animation = {
+                internalID: this.getNewInternalId(),
+                id,
+                type: AssetType.Animation,
+                frames,
+                interval,
+                meta: {},
+            };
+            return this.state.animations.add(newAnimation);
         }
 
         public getGalleryTiles(tileWidth: number): TileSet[] | null {
@@ -841,12 +871,20 @@ namespace pxt {
                             this.gallery.tiles.add(image);
                         }
                     }
-                    else {
+                    else if (image.type === AssetType.Image) {
                         if (isProject) {
                             this.state.images.add(image);
                         }
                         else {
                             this.gallery.images.add(image);
+                        }
+                    }
+                    else {
+                        if (isProject) {
+                            this.state.animations.add(image);
+                        }
+                        else {
+                            this.gallery.animations.add(image);
                         }
                     }
                 }
@@ -872,7 +910,7 @@ namespace pxt {
         loadTilemapJRes(jres: Map<JRes>, skipDuplicates = false) {
             jres = inflateJRes(jres)
 
-            const tiles = this.readImages(jres, true).filter(im => im.type === pxt.AssetType.Tile);
+            const tiles = this.readImages(jres, true).filter(im => im.type === pxt.AssetType.Tile) as Tile[];
 
             // If we are loading JRES into an existing project (i.e. in multipart tutorials)
             // we need to correct the tile ids because the user may have created new tiles
@@ -973,7 +1011,7 @@ namespace pxt {
         }
 
         protected readImages(allJRes: Map<JRes>, isProjectFile = false) {
-            const assets: (Tile | ProjectImage)[] = [];
+            const assets: (Tile | ProjectImage | Animation)[] = [];
 
             for (const key of Object.keys(allJRes)) {
                 const entry = allJRes[key];
@@ -1004,6 +1042,12 @@ namespace pxt {
                         id: entry.id,
                         bitmap: pxt.sprite.getBitmapFromJResURL(`data:${IMAGE_MIME_TYPE};base64,${entry.data}`).data()
                     })
+                }
+                else if (entry.mimeType === ANIMATION_MIME_TYPE) {
+                    assets.push({
+                        ...decodeAnimation(entry),
+                        internalID: this.getNewInternalId()
+                    });
                 }
             }
 
@@ -1078,31 +1122,45 @@ namespace pxt {
         let out = "";
 
         const imageEntries: FactoryEntry[] = [];
+        const animationEntries: FactoryEntry[] = [];
 
         for (const key of entries) {
             if (key === "*") continue;
 
             const entry = jres[key];
 
-            let expression: string;
-            let factoryKeys = [getShortIDCore(AssetType.Image, key)]
-            if (typeof entry === "string") {
-                expression = sprite.bitmapToImageLiteral(sprite.getBitmapFromJResURL(entry), "typescript");
+            if (typeof entry === "string" || entry.mimeType === IMAGE_MIME_TYPE) {
+                let expression: string;
+                let factoryKeys = [getShortIDCore(AssetType.Image, key)]
+                if (typeof entry === "string") {
+                    expression = sprite.bitmapToImageLiteral(sprite.getBitmapFromJResURL(entry), "typescript");
+                }
+                else {
+                    expression = sprite.bitmapToImageLiteral(sprite.getBitmapFromJResURL(entry.data), "typescript");
+                    factoryKeys.push(entry.displayName)
+                }
+                imageEntries.push({
+                    keys: factoryKeys,
+                    expression
+                });
             }
-            else {
-                expression = sprite.bitmapToImageLiteral(sprite.getBitmapFromJResURL(entry.data), "typescript");
-                factoryKeys.push(entry.displayName)
+            else if (entry.mimeType === ANIMATION_MIME_TYPE) {
+                const animation = decodeAnimation(entry);
+
+                animationEntries.push({
+                    keys: [entry.displayName, getShortIDCore(AssetType.Animation, key)],
+                    expression: `[${animation.frames.map(f =>
+                            sprite.bitmapToImageLiteral(sprite.Bitmap.fromData(f), "typescript")
+                        ).join(", ")}]`
+                });
             }
-            imageEntries.push({
-                keys: factoryKeys,
-                expression
-            });
         }
 
 
         const warning = lf("Auto-generated code. Do not edit.");
 
         out += emitFactoryHelper("image", imageEntries);
+        out += emitFactoryHelper("animation", animationEntries);
 
         return `// ${warning}\nnamespace ${pxt.sprite.IMAGES_NAMESPACE} {\n${out}\n}\n// ${warning}\n`
     }
@@ -1207,8 +1265,8 @@ namespace pxt {
                 break;
 
             case AssetType.Animation:
-                // TODO: riknoll
-
+                allJRes[id] = serializeAnimation(asset);
+                break;
         }
     }
 
@@ -1258,7 +1316,7 @@ namespace pxt {
                 prefix = "";
                 break;
             case AssetType.Animation:
-                prefix = "";
+                prefix = pxt.sprite.ANIMATION_NAMESPACE + ".";
                 break;
         }
 
@@ -1299,5 +1357,80 @@ namespace pxt {
             tileset: tilemap.tileset.tiles.map(t => t.id),
             displayName: name
         }
+    }
+
+    function serializeAnimation(asset: Animation): JRes {
+        const encodedFrames = asset.frames.map(frame => frame.data);
+
+        const data = new Uint8ClampedArray(8 + encodedFrames[0].length * encodedFrames.length);
+
+        // interval, frame width, frame height, frame count
+        set16Bit(data, 0, asset.interval);
+        set16Bit(data, 2, asset.frames[0].width);
+        set16Bit(data, 4, asset.frames[0].height);
+        set16Bit(data, 6, asset.frames.length);
+
+        let offset = 8;
+        encodedFrames.forEach(buf => {
+            data.set(buf, offset);
+            offset += buf.length;
+        })
+
+        return {
+            namespace: asset.id.substr(0, asset.id.lastIndexOf(".")),
+            id: asset.id.substr(asset.id.lastIndexOf(".") + 1),
+            mimeType: ANIMATION_MIME_TYPE,
+            data: btoa(pxt.sprite.uint8ArrayToHex(data)),
+            displayName: asset.meta.displayName
+        }
+    }
+
+    function decodeAnimation(jres: JRes): Animation {
+        const hex = atob(jres.data);
+        const bytes = new Uint8ClampedArray(U.fromHex(hex));
+
+        const interval = read16Bit(bytes, 0);
+        const frameWidth = read16Bit(bytes, 2);
+        const frameHeight = read16Bit(bytes, 4);
+        const frameCount = read16Bit(bytes, 6);
+        const frameLength = (frameWidth * frameHeight) >> 1;
+
+        let offset = 8;
+
+        const decodedFrames: pxt.sprite.BitmapData[] = [];
+
+        for (let i = 0; i < frameCount; i++) {
+            const frameData = bytes.slice(offset, offset + frameLength);
+            decodedFrames.push({
+                x0: 0,
+                y0: 0,
+                width: frameWidth,
+                height: frameHeight,
+                data: frameData
+            });
+
+            offset += frameLength;
+        }
+
+        return {
+            type: AssetType.Animation,
+            internalID: 0,
+            id: jres.id,
+            interval,
+            frames: decodedFrames,
+            meta: {
+                displayName: jres.displayName
+            }
+        }
+    }
+
+
+    function set16Bit(buf: Uint8ClampedArray, offset: number, value: number) {
+        buf[offset] = value & 0xff;
+        buf[offset + 1] = (value >> 8) & 0xff;
+    }
+
+    function read16Bit(buf: Uint8ClampedArray, offset: number) {
+        return buf[offset] | (buf[offset + 1] << 8)
     }
 }
