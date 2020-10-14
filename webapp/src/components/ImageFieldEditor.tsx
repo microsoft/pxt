@@ -38,7 +38,8 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
         super(props);
 
         this.state = {
-            currentView: "editor"
+            currentView: "editor",
+            headerVisible: true
         };
         setTelemetryFunction(tickImageEditorEvent);
     }
@@ -124,8 +125,8 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
                 });
             }
 
-            if (options.headerVisible === false) {
-                this.setState({ headerVisible: false })
+            if (options.headerVisible != undefined) {
+                this.setState({ headerVisible: options.headerVisible })
             }
         }
     }

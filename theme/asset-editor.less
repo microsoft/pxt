@@ -15,6 +15,11 @@
     margin: 1rem;
 }
 
+.asset-editor-sidebar-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .asset-editor-sidebar-preview {
     width: ~"calc(@{blocklyRowWidthWide} - 2rem)";
     height: ~"calc(@{blocklyRowWidthWide} - 2rem)";
@@ -128,5 +133,20 @@
 }
 
 .create-new {
+    color: @white;
+    background-color: @green;
     margin-left: auto;
+    font-weight: 700;
+}
+
+.delete-asset {
+    color: @white;
+    background-color: @red;
+    font-weight: 700;
+}
+
+.asset-editor-create-dialog .actions,
+.asset-editor-delete-dialog .actions {
+    display: flex;
+    justify-content: space-between;
 }
