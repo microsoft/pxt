@@ -7,7 +7,7 @@ import { TutorialCard, TutorialHint } from "./tutorial";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
-export class SidebarTutorialHint extends TutorialHint{
+export class SidebarTutorialHint extends TutorialHint {
     constructor(props: ISettingsProps) {
         super(props);
     }

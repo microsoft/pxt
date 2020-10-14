@@ -345,7 +345,7 @@ export class ZoomSlider extends data.Component<ZoomSliderProps, ZoomSliderState>
 
     constructor(props: ZoomSliderProps) {
         super(props);
-        this.state = {zoomValue: 3};
+        this.state = { zoomValue: 3 };
 
         this.zoomUpdate = this.zoomUpdate.bind(this);
         this.zoomOut = this.zoomOut.bind(this);
