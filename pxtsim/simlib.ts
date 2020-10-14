@@ -260,14 +260,18 @@ namespace pxsim {
 
         function clearVco() {
             if (_vco) {
-                _vco.stop();
-                _vco.disconnect();
+                try {
+                    _vco.stop();
+                    _vco.disconnect();
+                } catch { }
                 _vco = undefined;
             }
         }
         function clearVca() {
             if (_vca) {
-                _vca.disconnect();
+                try {
+                    _vca.disconnect();
+                } catch { }
                 _vca = undefined;
             }
         }
@@ -586,7 +590,7 @@ namespace pxsim {
                 _vco.type = 'triangle';
                 _vco.connect(_vca);
                 _vca.connect(ctx.destination);
-                _vca.gain.value = gain;
+                setCurrentToneGain(gain);
                 _vco.start(0);
             } catch (e) {
                 _vco = undefined;
@@ -599,7 +603,7 @@ namespace pxsim {
         }
 
         export function setCurrentToneGain(gain: number) {
-            if (_vca && _vca.gain && !_mute) {
+            if (_vca?.gain && !_mute) {
                 _vca.gain.value = gain;
             }
         }
