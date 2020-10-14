@@ -78,7 +78,7 @@ class AssetTopbarImpl extends React.Component<AssetTopbarProps, AssetTopbarState
         return <div className="asset-editor-topbar">
             <AssetGalleryTab title={lf("My Assets")} view={GalleryView.User} />
             <AssetGalleryTab title={lf("Gallery")} view={GalleryView.Gallery} />
-            <div className="asset-editor-button create-new" onClick={this.showCreateModal}>{lf("Create New")}</div>
+            <div className="asset-editor-button create-new" onClick={this.showCreateModal} role="button">{lf("Create New")}</div>
             <sui.Modal isOpen={showCreateModal} onClose={this.hideCreateModal} closeIcon={false} dimmer={true} header={lf("Create New Asset")} buttons={actions}>
                 <div>{lf("Choose your asset type from the options below.")}</div>
             </sui.Modal>
