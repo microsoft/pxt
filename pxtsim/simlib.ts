@@ -504,7 +504,7 @@ namespace pxsim {
                 if (!ctx || prevStop != instrStopId)
                     return Promise.delay(duration)
 
-                if (currWave != soundWaveIdx || currFreq != freq) {
+                if (currWave != soundWaveIdx || currFreq != freq || freq != endFreq) {
                     if (ch.generator) {
                         return Promise.delay(timeOff)
                             .then(() => {
