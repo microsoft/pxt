@@ -35,6 +35,7 @@ namespace pxtblockly {
         protected preview: svg.Image;
         protected animateRef: number;
         protected asset: pxt.Animation;
+        protected initInterval: number;
 
         init() {
             if (this.fieldGroup_) {
@@ -51,6 +52,10 @@ namespace pxtblockly {
 
         showEditor_() {
             // Read parent interval
+            if (this.asset) {
+                this.asset.interval = this.getParentInterval() || this.asset.interval;
+            }
+
             super.showEditor_();
         }
 
@@ -85,6 +90,10 @@ namespace pxtblockly {
             }
 
             return project.createNewAnimation(this.params.initWidth, this.params.initHeight);
+        }
+
+        protected onEditorClose(newValue: pxt.Animation) {
+            this.setParentInterval(newValue.interval);
         }
 
         protected getValueText(): string {
@@ -131,7 +140,9 @@ namespace pxtblockly {
         protected onMouseEnter = () => {
             if (this.animateRef || !this.asset) return;
 
-            const interval = this.asset.interval > 50 ? this.asset.interval : 50;
+            const assetInterval = this.getParentInterval() || this.asset.interval;
+
+            const interval = assetInterval > 50 ? assetInterval : 50;
 
             let index = 0;
             this.animateRef = setInterval(() => {
