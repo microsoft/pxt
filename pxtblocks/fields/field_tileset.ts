@@ -8,7 +8,7 @@ namespace pxtblockly {
         height: number;
     }
 
-    export type TilesetDropdownOption = [ImageJSON, string, string];
+    export type TilesetDropdownOption = [ImageJSON, string, pxt.Tile];
 
     const PREVIEW_SIDE_LENGTH = 32;
 
@@ -68,7 +68,7 @@ namespace pxtblockly {
                     width: PREVIEW_SIDE_LENGTH,
                     height: PREVIEW_SIDE_LENGTH,
                     alt: displayName(tile)
-                }, tile.id, literalValue(tile)])
+                }, tile.id, tile])
             }
             return FieldTileset.referencedTiles;
         }
@@ -81,7 +81,6 @@ namespace pxtblockly {
         constructor(text: string, options: FieldImageDropdownOptions, validator?: Function) {
             super(text, options, validator);
             this.blocksInfo = options.blocksInfo;
-
         }
 
         init() {
@@ -93,6 +92,10 @@ namespace pxtblockly {
         }
 
         getValue() {
+            if (this.selectedOption_) {
+                const tile = this.selectedOption_[2];
+                return `assets.tile\`${displayName(tile)}\``
+            }
             const v = super.getValue();
 
             // If the user decompiled from JavaScript, then they might have passed an image literal
@@ -125,7 +128,7 @@ namespace pxtblockly {
                             width: PREVIEW_SIDE_LENGTH,
                             height: PREVIEW_SIDE_LENGTH,
                             alt: displayName(tile)
-                        }, this.value_, literalValue(tile)]
+                        }, this.value_, tile]
                     }
                 }
 
@@ -135,25 +138,32 @@ namespace pxtblockly {
 
         doValueUpdate_(newValue: string) {
             super.doValueUpdate_(newValue);
-            const options = this.getOptions(true);
+            const options: TilesetDropdownOption[] = this.getOptions(true);
 
-            // First look for the qualified name and the full text
-            for (let i = 0, option; (option = options[i]); i++) {
-                if (option[1] == this.value_ || option[2] == this.value_) {
-                    this.selectedOption_ = option;
-                    this.value_ = this.selectedOption_[2] || this.selectedOption_[1];
-                }
-            }
+            // This text can be one of four things:
+            // 1. The JavaScript expression (assets.tile`name`)
+            // 2. The tile id (qualified name)
+            // 3. The tile display name
+            // 4. Something invalid (like an image literal or undefined)
 
             if (newValue) {
-                // If we didn't find it, check to see if we got just the literal text
-                const literal = `assets.tile\`${newValue}\``
-                for (let i = 0, option; (option = options[i]); i++) {
-                    if (option[2] == literal) {
+                // If it's an expression, pull out the id
+                const match = /^\s*assets\s*\.\s*tile\s*`([^`]+)`\s*$/.exec(newValue);
+                if (match) {
+                    newValue = match[1];
+                }
+
+                for (const option of options) {
+                    if (newValue === option[2].id || newValue === option[2].meta.displayName || newValue === pxt.getShortIDForAsset(option[2])) {
                         this.selectedOption_ = option;
-                        this.value_ = this.selectedOption_[2] || this.selectedOption_[1];
+                        this.value_ = this.getValue();
+                        this.updateAssetListener();
+                        return;
                     }
                 }
+
+                this.selectedOption_ = null;
+                this.updateAssetListener();
             }
         }
 
@@ -177,6 +187,24 @@ namespace pxtblockly {
             }
             return FieldTileset.getReferencedTiles(this.sourceBlock_.workspace);
         }
+
+        dispose() {
+            super.dispose();
+            pxt.react.getTilemapProject().removeChangeListener(pxt.AssetType.Tile, this.assetChangeListener);
+        }
+
+        protected updateAssetListener() {
+            const project = pxt.react.getTilemapProject();
+            project.removeChangeListener(pxt.AssetType.Tile, this.assetChangeListener);
+            if (this.selectedOption_) {
+                project.addChangeListener(this.selectedOption_[2], this.assetChangeListener);
+            }
+        }
+
+        protected assetChangeListener = () => {
+           this.doValueUpdate_(this.getValue());
+           this.forceRerender();
+        }
     }
 
     function constructTransparentTile(): TilesetDropdownOption {
@@ -186,7 +214,7 @@ namespace pxtblockly {
             width: PREVIEW_SIDE_LENGTH,
             height: PREVIEW_SIDE_LENGTH,
             alt: pxt.U.lf("transparency")
-        }, tile.id, literalValue(tile)];
+        }, tile.id, tile];
     }
 
     function mkTransparentTileImage(sideLength: number) {
@@ -227,10 +255,6 @@ namespace pxtblockly {
     }
 
     function displayName(tile: pxt.Tile) {
-        return tile.meta.displayName || tile.id.substr(tile.id.lastIndexOf(".") + 1);
-    }
-
-    function literalValue(tile: pxt.Tile) {
-        return tile.meta.displayName ? `assets.tile\`${tile.meta.displayName}\`` : null;
+        return tile.meta.displayName || pxt.getShortIDForAsset(tile);
     }
 }

@@ -238,21 +238,21 @@ namespace pxtblockly {
         let all: pxt.Map<pxt.Tile> = {};
 
         const allMaps = getAllBlocksWithTilemaps(workspace);
+        const project = pxt.react.getTilemapProject();
 
         for (const map of allMaps) {
             if (map.block.id === excludeBlockID) continue;
 
             for (const tile of map.ref.getTileset()?.tiles || []) {
-                all[tile.id] = tile;
+                all[tile.id] = project.lookupAsset(pxt.AssetType.Tile, tile.id);
             }
         }
 
-        const project = pxt.react.getTilemapProject();
         const projectMaps = project.getAssets(pxt.AssetType.Tilemap);
 
         for (const projectMap of projectMaps) {
             for (const tile of projectMap.data.tileset.tiles) {
-                all[tile.id] = tile;
+                all[tile.id] = project.lookupAsset(pxt.AssetType.Tile, tile.id);;
             }
         }
 
