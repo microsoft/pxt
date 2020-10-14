@@ -286,6 +286,7 @@ namespace pxt {
         }
 
         protected generateNewDisplayName(prefix: string) {
+            prefix = prefix.replace(/\d+$/, "");
             let index = 0;
             while (this.takenNames[prefix + index]) {
                 ++index;
@@ -768,19 +769,24 @@ namespace pxt {
             this.onChange();
             const newAsset = cloneAsset(asset);
             newAsset.internalID = this.getNewInternalId();
-            const name = newAsset.id.substr(newAsset.id.lastIndexOf(".") + 1).replace(/\d*$/, "");
+            const id = newAsset.id.substr(newAsset.id.lastIndexOf(".") + 1).replace(/\d*$/, "");
+            if (!newAsset.meta?.displayName) {
+                if (!newAsset.meta) newAsset.meta = {};
+                newAsset.meta.displayName = id;
+            }
+
             switch (newAsset.type) {
                 case AssetType.Image:
-                    newAsset.id = this.generateNewID(AssetType.Image, name, pxt.sprite.IMAGES_NAMESPACE);
+                    newAsset.id = this.generateNewID(AssetType.Image, id, pxt.sprite.IMAGES_NAMESPACE);
                     this.state.images.add(newAsset); break;
                 case AssetType.Tile:
-                    newAsset.id = this.generateNewID(AssetType.Tile, name, pxt.sprite.TILE_NAMESPACE);
+                    newAsset.id = this.generateNewID(AssetType.Tile, id, pxt.sprite.TILE_NAMESPACE);
                     this.state.tiles.add(newAsset); break;
                 case AssetType.Tilemap:
-                    newAsset.id = this.generateNewID(AssetType.Tilemap, name);
+                    newAsset.id = this.generateNewID(AssetType.Tilemap, id);
                     this.state.tilemaps.add(newAsset); break;
                 case AssetType.Animation:
-                    newAsset.id = this.generateNewID(AssetType.Animation, name);
+                    newAsset.id = this.generateNewID(AssetType.Animation, id);
                     this.state.animations.add(newAsset); break;
             }
             return newAsset;
@@ -952,6 +958,7 @@ namespace pxt {
         }
 
         protected generateNewID(type: AssetType, varPrefix: string, namespaceString?: string) {
+            varPrefix = varPrefix.replace(/\d+$/, "");
             const prefix = namespaceString ? namespaceString + "." + varPrefix : varPrefix;
             let index = 1;
             while (this.isNameTaken(type, prefix + index)) {
@@ -1148,6 +1155,7 @@ namespace pxt {
     }
 
     function cloneAsset<U extends Asset>(asset: U): U {
+        asset.meta = Object.assign({}, asset.meta);
         switch (asset.type) {
             case AssetType.Tile:
             case AssetType.Image:

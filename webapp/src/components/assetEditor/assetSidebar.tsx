@@ -3,8 +3,8 @@ import * as pkg from "../../package";
 import * as sui from "../../sui";
 import { connect } from 'react-redux';
 
-import { AssetEditorState } from './store/assetEditorReducer';
-import { dispatchChangeSelectedAsset, dispatchUpdateUserAssets } from './actions/dispatch';
+import { AssetEditorState, GalleryView } from './store/assetEditorReducer';
+import { dispatchChangeGalleryView, dispatchChangeSelectedAsset, dispatchUpdateUserAssets } from './actions/dispatch';
 
 import { AssetPreview } from "./assetPreview";
 
@@ -15,19 +15,39 @@ interface AssetDetail {
 
 interface AssetSidebarProps {
     asset?: pxt.Asset;
+    isGalleryAsset?: boolean;
+    showAssetFieldView?: (asset: pxt.Asset, cb: (result: any) => void) => void;
+    dispatchChangeGalleryView: (view: GalleryView) => void;
     dispatchChangeSelectedAsset: (asset: pxt.Asset) => void;
     dispatchUpdateUserAssets: () => void;
 }
 
-class AssetSidebarImpl extends React.Component<AssetSidebarProps> {
+interface AssetSidebarState {
+    showDeleteModal?: boolean;
+}
+
+class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarState> {
     protected copyTextAreaRef: HTMLTextAreaElement;
 
+    constructor(props: AssetSidebarProps) {
+        super(props);
+        this.state = { showDeleteModal: false };
+    }
+
     protected getAssetDetails(): AssetDetail[] {
-        const asset = this.props.asset as pxt.ProjectImage; // TODO generalize
+        const asset = this.props.asset;
         const details: AssetDetail[] = [];
         if (asset) {
             details.push({ name: lf("Type"), value: getDisplayTextForAsset(asset.type)});
-            details.push({ name: lf("Size"), value: `${asset.bitmap.width} x ${asset.bitmap.height}`});
+
+            switch (asset.type) {
+                case pxt.AssetType.Image:
+                case pxt.AssetType.Tile:
+                    details.push({ name: lf("Size"), value: `${asset.bitmap.width} x ${asset.bitmap.height}`});
+                    break;
+                case pxt.AssetType.Tilemap:
+                    details.push({ name: lf("Size"), value: `${asset.data.tilemap.width} x ${asset.data.tilemap.height}`});
+            }
         }
 
         return details;
@@ -39,7 +59,14 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps> {
     }
 
     protected editAssetHandler = () => {
+        this.props.showAssetFieldView(this.props.asset, this.editAssetDoneHandler);
+    }
 
+    protected editAssetDoneHandler = (result: any) => {
+        const project = pxt.react.getTilemapProject();
+        project.pushUndo();
+        project.updateAsset(result);
+        this.updateAssets();
     }
 
     protected duplicateAssetHandler = () => {
@@ -47,6 +74,7 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps> {
         project.pushUndo();
         const newAsset = project.duplicateAsset(this.props.asset);
         this.props.dispatchChangeSelectedAsset(newAsset);
+        if (this.props.isGalleryAsset) this.props.dispatchChangeGalleryView(GalleryView.User);
         this.updateAssets();
     }
 
@@ -70,7 +98,16 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps> {
 
     protected copyTextAreaRefHandler = (el: HTMLTextAreaElement) => { this.copyTextAreaRef = el }
 
+    protected showDeleteModal = () => {
+        this.setState({ showDeleteModal: true });
+    }
+
+    protected hideDeleteModal = () => {
+        this.setState({ showDeleteModal: false });
+    }
+
     protected deleteAssetHandler = () => {
+        this.setState({ showDeleteModal: false });
         const project = pxt.react.getTilemapProject();
         project.pushUndo();
         project.removeAsset(this.props.asset);
@@ -79,8 +116,15 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps> {
     }
 
     render() {
-        const { asset } = this.props;
+        const { asset, isGalleryAsset } = this.props;
+        const { showDeleteModal } = this.state;
         const details = this.getAssetDetails();
+        const name = asset?.meta?.displayName || lf("No asset selected");
+
+        const actions: sui.ModalButton[] = [
+            { label: lf("Cancel"), onclick: this.hideDeleteModal, icon: 'cancel' },
+            { label: lf("Delete"), onclick: this.deleteAssetHandler, icon: 'trash', className: 'red' }
+        ]
 
         return <div className="asset-editor-sidebar">
             <div className="asset-editor-sidebar-info">
@@ -88,20 +132,22 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps> {
                 <div className="asset-editor-sidebar-preview">
                     { asset && <AssetPreview asset={asset} />  }
                 </div>
-                <div className="asset-editor-sidebar-name">
-                    { asset ? asset.id : lf("No asset selected") }
-                </div>
+                <div className="asset-editor-sidebar-name">{ name }</div>
                 {details.map(el => {
                     return <div key={el.name} className="asset-editor-sidebar-detail">{`${el.name}: ${el.value}`}</div>
                 })}
             </div>
             { asset && <div className="asset-editor-sidebar-controls">
-                <sui.MenuItem name={lf("Edit")} className="asset-editor-button" icon="edit" onClick={this.editAssetHandler}/>
+                {!isGalleryAsset && <sui.MenuItem name={lf("Edit")} className="asset-editor-button" icon="edit" onClick={this.editAssetHandler}/>}
                 <sui.MenuItem name={lf("Duplicate")} className="asset-editor-button" icon="copy" onClick={this.duplicateAssetHandler}/>
                 <sui.MenuItem name={lf("Copy")} className="asset-editor-button" icon="paste" onClick={this.copyAssetHandler}/>
-                <sui.MenuItem name={lf("Delete")} className="asset-editor-button" icon="delete" onClick={this.deleteAssetHandler}/>
+                {!isGalleryAsset && <sui.MenuItem name={lf("Delete")} className="asset-editor-button" icon="trash" onClick={this.showDeleteModal}/>}
             </div>}
             <textarea className="asset-editor-sidebar-copy" ref={this.copyTextAreaRefHandler} ></textarea>
+            <sui.Modal isOpen={showDeleteModal} onClose={this.hideDeleteModal} closeIcon={false}
+                dimmer={true} header={lf("Delete Asset")} buttons={actions}>
+                <div>{lf("Are you sure you want to delete {0}? Deleted assets cannot be recovered.", name)}</div>
+            </sui.Modal>
         </div>
     }
 }
@@ -122,11 +168,13 @@ function getDisplayTextForAsset(type: pxt.AssetType) {
 function mapStateToProps(state: AssetEditorState, ownProps: any) {
     if (!state) return {};
     return {
-        asset: state.selectedAsset
+        asset: state.selectedAsset,
+        isGalleryAsset: state.selectedAsset?.internalID == -1
     };
 }
 
 const mapDispatchToProps = {
+    dispatchChangeGalleryView,
     dispatchChangeSelectedAsset,
     dispatchUpdateUserAssets
 };

@@ -48,8 +48,15 @@ function getUserAssets() {
         return asset;
     };
 
+    const tilemapToGalleryItem = (asset: pxt.ProjectTilemap) => {
+        let tilemap = asset.data.tilemap;
+        asset.previewURI = pxtblockly.tilemapToImageURI(asset.data, Math.max(tilemap.width, tilemap.height), false);
+        return asset;
+    };
+
     return project.getAssets(pxt.AssetType.Image).map(imageToGalleryItem)
-        .concat(project.getAssets(pxt.AssetType.Tile).map(imageToGalleryItem));
+        .concat(project.getAssets(pxt.AssetType.Tile).map(imageToGalleryItem))
+        .concat(project.getAssets(pxt.AssetType.Tilemap).map(tilemapToGalleryItem));
 }
 
 export default topReducer;
