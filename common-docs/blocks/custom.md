@@ -60,7 +60,10 @@ The easiest way to share your blocks is to share the entire project using the [s
 
 If you plan to reuse those blocks further, you might consider turning them into an [extension](/extensions).
 
-## Depending on your language the default custom.ts looks something like this
+## Default custom.ts
+
+When ``custom.ts`` is created, it contains some default code for blocks as a placeholders for you to start with.
+Depending on your language the default ``custom.ts`` looks something like this:
 
 ```typescript
 
