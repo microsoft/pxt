@@ -7,60 +7,49 @@ import * as compiler from "../../compiler";
 import { Provider } from 'react-redux';
 import store from './store/assetEditorStore'
 
+import { dispatchUpdateUserAssets } from './actions/dispatch';
+
 import { Editor } from "../../srceditor";
-import { AssetCardList } from "./assetCardList";
 import { AssetSidebar } from "./assetSidebar";
-import { AssetTopbar } from "./assetTopbar";
-import { GalleryView } from "./store/assetEditorReducer";
+import { AssetGallery } from "./assetGallery";
 
 export class AssetEditor extends Editor {
-    protected projectAssets: pxt.Asset[] = [];
     protected galleryAssets: pxt.Asset[] = [];
-    protected galleryView: GalleryView;
-
-    constructor(parent: pxt.editor.IProjectView) {
-        super(parent);
-        store.subscribe(this.onStoreChange);
-    }
+    protected blocksInfo: pxtc.BlocksInfo;
 
     acceptsFile(file: pkg.File) {
-        return file.name === "assets.jres";
+        return file.name === pxt.ASSETS_FILE;
     }
 
     loadFileAsync(file: pkg.File, hc?: boolean): Promise<void> {
         // force refresh to ensure we have a view
         return super.loadFileAsync(file, hc)
             .then(() => compiler.getBlocksAsync()) // make sure to load block definitions
-            .then(info => this.updateGalleryAssets(info))
-            .then(() => this.updateProjectAssets())
+            .then(info => {
+                this.blocksInfo = info;
+                this.updateGalleryAssets(info);
+            })
+            .then(() => store.dispatch(dispatchUpdateUserAssets()))
             .then(() => this.parent.forceUpdate());
     }
 
-    display(): JSX.Element {
-        const state = store.getState();
-        return <Provider store={store}>
-            <div className="asset-editor-outer">
-                <AssetSidebar />
-                <div className="asset-editor-gallery">
-                    <AssetTopbar />
-                    <AssetCardList assets={state.view == GalleryView.Gallery ? this.galleryAssets : this.projectAssets} />
-                </div>
-            </div>
-        </Provider>
+    undo() {
+        pxt.react.getTilemapProject().undo();
+        store.dispatch(dispatchUpdateUserAssets());
     }
 
-    protected updateProjectAssets() {
-        const project = pxt.react.getTilemapProject();
-        const imgConv = new pxt.ImageConverter();
+    redo() {
+        pxt.react.getTilemapProject().redo();
+        store.dispatch(dispatchUpdateUserAssets());
+    }
 
-        const imageToGalleryItem = (image: pxt.ProjectImage | pxt.Tile) => {
-            let asset = image as pxt.Asset;
-            asset.previewURI = imgConv.convert("data:image/x-mkcd-f," + image.jresData);
-            return asset;
-        };
-
-        this.projectAssets = project.getAssets(pxt.AssetType.Image).map(imageToGalleryItem)
-            .concat(project.getAssets(pxt.AssetType.Tile).map(imageToGalleryItem));
+    display(): JSX.Element {
+        return <Provider store={store}>
+            <div className="asset-editor-outer">
+                <AssetSidebar showAssetFieldView={this.showAssetFieldView} />
+                <AssetGallery galleryAssets={this.galleryAssets} showAssetFieldView={this.showAssetFieldView} />
+            </div>
+        </Provider>
     }
 
     protected updateGalleryAssets(blocksInfo: pxtc.BlocksInfo) {
@@ -70,24 +59,26 @@ export class AssetEditor extends Editor {
 
         for (const item of allImages) {
             if (item.tags.indexOf("tile") === -1) {
+                const bitmapData = pxt.sprite.getBitmap(blocksInfo, item.qName).data();
                 imageAssets.push({
                     internalID: -1,
                     type: pxt.AssetType.Image,
                     id: item.qName,
-                    jresData: "",
+                    jresData: pxt.sprite.base64EncodeBitmap(bitmapData),
                     previewURI: item.src,
-                    bitmap: pxt.sprite.getBitmap(blocksInfo, item.qName).data(),
+                    bitmap: bitmapData,
                     meta: {}
                 });
             }
             else {
+                const bitmapData = pxt.sprite.Bitmap.fromData(pxt.react.getTilemapProject().resolveTile(item.qName).bitmap).data();
                 tileAssets.push({
                     internalID: -1,
                     type: pxt.AssetType.Tile,
                     id: item.qName,
-                    jresData: "",
+                    jresData: pxt.sprite.base64EncodeBitmap(bitmapData),
                     previewURI: item.src,
-                    bitmap: pxt.sprite.Bitmap.fromData(pxt.react.getTilemapProject().resolveTile(item.qName).bitmap).data(),
+                    bitmap: bitmapData,
                     meta: {}
                 });
             }
@@ -96,11 +87,32 @@ export class AssetEditor extends Editor {
         this.galleryAssets = imageAssets.concat(tileAssets);
     }
 
-    protected onStoreChange = () => {
-        const state = store.getState();
-        if (state.view != this.galleryView) {
-            this.galleryView = state.view;
-            this.parent.forceUpdate();
+    protected showAssetFieldView = (asset: pxt.Asset, cb?: (result: any) => void) => {
+        let fieldView: pxt.react.FieldEditorView<any>;
+        switch (asset.type) {
+            case pxt.AssetType.Image:
+            case pxt.AssetType.Tile:
+                fieldView = pxt.react.getFieldEditorView("image-editor", asset as pxt.ProjectImage, {
+                    initWidth: 16,
+                    initHeight: 16,
+                    showTiles: true,
+                    headerVisible: false,
+                    blocksInfo: this.blocksInfo
+                });
+                break;
+            case pxt.AssetType.Tilemap:
+                fieldView = pxt.react.getFieldEditorView("tilemap-editor", asset as pxt.ProjectTilemap, {
+                    initWidth: 16,
+                    initHeight: 16,
+                    headerVisible: false,
+                    blocksInfo: this.blocksInfo
+                });
+                break;
+            default:
+                break;
         }
+
+        fieldView.onHide(() => cb(fieldView.getResult()));
+        fieldView.show();
     }
 }

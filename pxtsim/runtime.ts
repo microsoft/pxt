@@ -281,7 +281,8 @@ namespace pxsim {
         messageListeners: MessageListener[] = [];
 
         constructor() {
-            this.id = "b" + Math.round(Math.random() * 2147483647);
+            // use a stable board id
+            this.id = Embed.frameid || ("b" + Math.round(Math.random() * 2147483647));
             this.bus = new pxsim.EventBus(runtime);
         }
 

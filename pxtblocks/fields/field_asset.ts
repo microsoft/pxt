@@ -238,7 +238,7 @@ namespace pxtblockly {
                         dataURI = bitmapToImageURI(pxt.sprite.Bitmap.fromData(this.asset.frames[0]), PREVIEW_WIDTH, this.lightMode);
                         break;
                     case pxt.AssetType.Tilemap:
-                        dataURI = tilemapToImageURI(this.asset.data, PREVIEW_WIDTH, this.lightMode, this.blocksInfo);
+                        dataURI = tilemapToImageURI(this.asset.data, PREVIEW_WIDTH, this.lightMode);
                         break;
                 }
                 const img = new svg.Image()

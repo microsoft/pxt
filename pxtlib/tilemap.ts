@@ -105,8 +105,9 @@ namespace pxt {
             else {
                 const clone = cloneAsset(asset);
                 this.takenNames[clone.id] = true;
+                this.takenNames[getShortIDForAsset(clone)] = true;
 
-                if (clone.meta.displayName) {
+                if (clone.meta.displayName && clone.meta.displayName !== clone.id) {
                     if (this.takenNames[clone.meta.displayName]) {
                         clone.meta.displayName = this.generateNewDisplayName(clone.meta.displayName);
                     }
@@ -149,6 +150,9 @@ namespace pxt {
             const existing = this.lookupByID(id);
             this.assets = this.assets.filter(a => a.id !== id);
             delete this.takenNames[id];
+            if (existing) {
+                delete this.takenNames[getShortIDForAsset(existing)]
+            }
             if (existing?.meta.displayName) {
                 delete this.takenNames[existing?.meta.displayName];
             }
@@ -160,9 +164,11 @@ namespace pxt {
         }
 
         getByDisplayName(name: string): U {
-            for (const asset of this.assets) {
-                if (asset.meta.displayName === name) {
-                    return cloneAsset(asset);
+            if (this.takenNames[name]) {
+                for (const asset of this.assets) {
+                    if (asset.meta.displayName === name || getShortIDForAsset(asset) === name) {
+                        return cloneAsset(asset);
+                    }
                 }
             }
             return undefined;
@@ -242,9 +248,10 @@ namespace pxt {
             for (const asset of this.assets) {
                 pxt.Util.assert(!this.takenNames[asset.id]);
                 this.takenNames[asset.id] = true;
+                this.takenNames[getShortIDForAsset(asset)] = true;
 
                 if (asset.meta.displayName) {
-                    pxt.Util.assert(!this.takenNames[asset.meta.displayName]);
+                    if (asset.meta.displayName !== asset.id) pxt.Util.assert(!this.takenNames[asset.meta.displayName]);
                     this.takenNames[asset.meta.displayName] = true;
                 }
             }
@@ -279,6 +286,7 @@ namespace pxt {
         }
 
         protected generateNewDisplayName(prefix: string) {
+            prefix = prefix.replace(/\d+$/, "");
             let index = 0;
             while (this.takenNames[prefix + index]) {
                 ++index;
@@ -554,7 +562,9 @@ namespace pxt {
                 internalID: this.getNewInternalId(),
                 id,
                 type: AssetType.Tilemap,
-                meta: {},
+                meta: {
+                    displayName: id
+                },
                 data: data
             });
 
@@ -750,6 +760,38 @@ namespace pxt {
             }
         }
 
+        public duplicateAsset(asset: ProjectImage): ProjectImage;
+        public duplicateAsset(asset: Tile): Tile;
+        public duplicateAsset(asset: ProjectTilemap): ProjectTilemap;
+        public duplicateAsset(asset: Animation): Animation;
+        public duplicateAsset(asset: Asset): Asset;
+        public duplicateAsset(asset: Asset) {
+            this.onChange();
+            const newAsset = cloneAsset(asset);
+            newAsset.internalID = this.getNewInternalId();
+            const id = newAsset.id.substr(newAsset.id.lastIndexOf(".") + 1).replace(/\d*$/, "");
+            if (!newAsset.meta?.displayName) {
+                if (!newAsset.meta) newAsset.meta = {};
+                newAsset.meta.displayName = id;
+            }
+
+            switch (newAsset.type) {
+                case AssetType.Image:
+                    newAsset.id = this.generateNewID(AssetType.Image, id, pxt.sprite.IMAGES_NAMESPACE);
+                    this.state.images.add(newAsset); break;
+                case AssetType.Tile:
+                    newAsset.id = this.generateNewID(AssetType.Tile, id, pxt.sprite.TILE_NAMESPACE);
+                    this.state.tiles.add(newAsset); break;
+                case AssetType.Tilemap:
+                    newAsset.id = this.generateNewID(AssetType.Tilemap, id);
+                    this.state.tilemaps.add(newAsset); break;
+                case AssetType.Animation:
+                    newAsset.id = this.generateNewID(AssetType.Animation, id);
+                    this.state.animations.add(newAsset); break;
+            }
+            return newAsset;
+        }
+
         public removeAsset(asset: Asset) {
             this.onChange();
             switch (asset.type) {
@@ -916,8 +958,9 @@ namespace pxt {
         }
 
         protected generateNewID(type: AssetType, varPrefix: string, namespaceString?: string) {
+            varPrefix = varPrefix.replace(/\d+$/, "");
             const prefix = namespaceString ? namespaceString + "." + varPrefix : varPrefix;
-            let index = 0;
+            let index = 1;
             while (this.isNameTaken(type, prefix + index)) {
                 ++index;
             }
@@ -1006,13 +1049,13 @@ namespace pxt {
                 out += `${indent}//% fixedInstance jres blockIdentity=images._tile\n`
                 out += `${indent}export const ${key} = image.ofBuffer(hex\`\`);\n`
 
-                tileEntries.push({ key: entry.displayName || key.substr(key.lastIndexOf(".") + 1), expression: key})
+                tileEntries.push({ keys: [entry.displayName, getShortIDCore(AssetType.Tile, key)], expression: key})
             }
 
             if (entry.mimeType === TILEMAP_MIME_TYPE) {
                 const tm = decodeTilemap(entry);
 
-                tilemapEntries.push({ key: entry.displayName, expression: pxt.sprite.encodeTilemap(tm, "typescript") });
+                tilemapEntries.push({ keys: [entry.displayName, getShortIDCore(AssetType.Tilemap, entry.id)], expression: pxt.sprite.encodeTilemap(tm, "typescript") });
             }
         }
 
@@ -1042,16 +1085,16 @@ namespace pxt {
             const entry = jres[key];
 
             let expression: string;
-            let factoryKey = key.substr(key.lastIndexOf(".") + 1);
+            let factoryKeys = [getShortIDCore(AssetType.Image, key)]
             if (typeof entry === "string") {
                 expression = sprite.bitmapToImageLiteral(sprite.getBitmapFromJResURL(entry), "typescript");
             }
             else {
                 expression = sprite.bitmapToImageLiteral(sprite.getBitmapFromJResURL(entry.data), "typescript");
-                factoryKey = entry.displayName || factoryKey
+                factoryKeys.push(entry.displayName)
             }
             imageEntries.push({
-                key: factoryKey,
+                keys: factoryKeys,
                 expression
             });
         }
@@ -1065,7 +1108,7 @@ namespace pxt {
     }
 
     interface FactoryEntry {
-        key: string;
+        keys: string[];
         expression: string;
     }
 
@@ -1075,7 +1118,10 @@ namespace pxt {
         return "\n" +
         `${indent}helpers._registerFactory("${factoryKind}", function(name: string) {\n` +
         `${indent}${indent}switch(helpers.stringTrim(name)) {\n` +
-        expressions.map(t => `${indent}${indent}${indent}case "${t.key}": return ${t.expression};`).join("\n") + "\n" +
+        expressions.map(t =>
+            t.keys.filter(k => !!k).map(key => `${indent}${indent}${indent}case "${key}":`).join("\n") +
+            `return ${t.expression};`
+        ).join("\n") + "\n" +
         `${indent}${indent}}\n` +
         `${indent}${indent}return null;\n` +
         `${indent}})\n`
@@ -1109,6 +1155,7 @@ namespace pxt {
     }
 
     function cloneAsset<U extends Asset>(asset: U): U {
+        asset.meta = Object.assign({}, asset.meta);
         switch (asset.type) {
             case AssetType.Tile:
             case AssetType.Image:
@@ -1192,6 +1239,35 @@ namespace pxt {
         // Covers all punctuation/whitespace except for "-", "_", and " "
         const bannedRegex = /[\u0000-\u001f\u0021-\u002c\u002e\u002f\u003a-\u0040\u005b-\u005e\u0060\u007b-\u007f]/
         return !bannedRegex.test(name);
+    }
+
+    export function getShortIDForAsset(asset: pxt.Asset) {
+        return getShortIDCore(asset.type, asset.id);
+    }
+
+    function getShortIDCore(assetType: pxt.AssetType, id: string) {
+        let prefix: string;
+        switch (assetType) {
+            case AssetType.Image:
+                prefix = pxt.sprite.IMAGES_NAMESPACE + ".";
+                break;
+            case AssetType.Tile:
+                prefix = pxt.sprite.TILE_NAMESPACE + ".";
+                break;
+            case AssetType.Tilemap:
+                prefix = "";
+                break;
+            case AssetType.Animation:
+                prefix = "";
+                break;
+        }
+
+        if (prefix && id.startsWith(prefix)) {
+            const short = id.substr(prefix.length);
+            if (short.indexOf(".") === -1) return short;
+        }
+
+        return id;
     }
 
     function arrayEquals<U>(a: U[], b: U[], compare: (c: U, d: U) => boolean = (c, d) => c === d) {

@@ -49,6 +49,7 @@ import * as serial from "./serial"
 import * as blocks from "./blocks"
 import * as gitjson from "./gitjson"
 import * as serialindicator from "./serialindicator"
+import * as assetEditor from "./components/assetEditor/editor";
 import * as draganddrop from "./draganddrop";
 import * as notification from "./notification";
 import * as electron from "./electron";
@@ -100,6 +101,7 @@ export class ProjectView
     serialEditor: serial.Editor;
     blocksEditor: blocks.Editor;
     gitjsonEditor: gitjson.Editor;
+    assetEditor: assetEditor.AssetEditor;
     allEditors: srceditor.Editor[] = [];
     settings: EditorSettings;
     scriptSearch: scriptsearch.ScriptSearch;
@@ -404,6 +406,11 @@ export class ProjectView
             && this.editorFile && this.editorFile.name == "main.py";
     }
 
+    isAssetsActive(): boolean {
+        return !this.state.embedSimView && this.editor == this.assetEditor
+            && this.editorFile && this.editorFile.name == pxt.ASSETS_FILE;
+    }
+
     private isAnyEditeableJavaScriptOrPackageActive(): boolean {
         return this.editor == this.textEditor
             && this.editorFile && !this.editorFile.isReadonly() && /(\.ts|pxt.json)$/.test(this.editorFile.name);
@@ -500,6 +507,10 @@ export class ProjectView
         }
 
         this.shouldTryDecompile = false;
+    }
+
+    openAssets() {
+        this.setFile(pkg.mainEditorPkg().lookupFile(`this/${pxt.ASSETS_FILE}`));
     }
 
     openSettings() {
@@ -775,6 +786,7 @@ export class ProjectView
         this.serialEditor = new serial.Editor(this);
         this.blocksEditor = new blocks.Editor(this);
         this.gitjsonEditor = new gitjson.Editor(this);
+        this.assetEditor = new assetEditor.AssetEditor(this);
 
         let changeHandler = () => {
             if (this.editorFile) {
@@ -793,7 +805,7 @@ export class ProjectView
                 this.editorChangeHandler();
             }
         }
-        this.allEditors = [this.pxtJsonEditor, this.gitjsonEditor, this.blocksEditor, this.serialEditor, this.textEditor]
+        this.allEditors = [this.pxtJsonEditor, this.gitjsonEditor, this.blocksEditor, this.serialEditor,  this.assetEditor, this.textEditor]
         this.allEditors.forEach(e => e.changeCallback = changeHandler)
         this.editor = this.allEditors[this.allEditors.length - 1]
     }
@@ -865,6 +877,10 @@ export class ProjectView
 
     // Add an error guard for the entire application
     componentDidCatch(error: any, info: any) {
+        this.handleCriticalError(error, info);
+    }
+
+    handleCriticalError(error: any, info?: any) {
         try {
             core.killLoadingQueue();
             pxsim.U.remove(document.getElementById('loading'));
@@ -872,10 +888,10 @@ export class ProjectView
             // Log critical error
             pxt.tickEvent('pxt.criticalerror', { error: error || '', info: info || '' });
             // Reload the page in 2 seconds
-            const lastCriticalError = pxt.storage.getLocal("lastcriticalerror") ?
-                Date.parse(pxt.storage.getLocal("lastcriticalerror")) : Date.now();
+            const lastCriticalError = pxt.storage.getLocal("lastcriticalerror") &&
+                Date.parse(pxt.storage.getLocal("lastcriticalerror"));
             // don't refresh if we refreshed in the last minute
-            if (!lastCriticalError || (!isNaN(lastCriticalError) && Date.now() - lastCriticalError > 60 * 1000)) {
+            if (!lastCriticalError || isNaN(lastCriticalError) || Date.now() - lastCriticalError > 60 * 1000) {
                 pxt.storage.setLocal("lastcriticalerror", new Date().toISOString());
                 setTimeout(() => {
                     this.reloadEditor();
@@ -1004,6 +1020,9 @@ export class ProjectView
                     header.editor = pxt.PYTHON_PROJECT_NAME
                     header.pubCurrent = false
                     isCodeFile = true;
+                } else if (fn.name == pxt.ASSETS_FILE) {
+                    header.editor = pxt.ASSETS_PROJECT_NAME
+                    header.pubCurrent = false
                 } else {
                     // some other file type
                 }
@@ -1439,7 +1458,7 @@ export class ProjectView
             })
             .catch(e => {
                 // Failed to decompile
-                pxt.tickEvent('tutorial.faileddecompile', { tutorialId: t.tutorial });
+                pxt.tickEvent('tutorial.faileddecompile', { tutorial: t.tutorial });
                 core.errorNotification(lf("Oops, an error occured as we were loading the tutorial."));
                 // Reset state (delete the current project and exit the tutorial)
                 this.exitTutorial(true);
@@ -2091,6 +2110,10 @@ export class ProjectView
                 default:
                     return pxt.JAVASCRIPT_PROJECT_NAME;
             }
+        }
+
+        if (this.editor == this.assetEditor) {
+            return pxt.ASSETS_PROJECT_NAME
         }
 
         // no preferred editor
@@ -3365,7 +3388,7 @@ export class ProjectView
                     return processMarkdown(md);
                 });
         } else if (scriptId) {
-            pxt.tickEvent("tutorial.shared");
+            pxt.tickEvent("tutorial.shared", { tutorial: scriptId });
             p = workspace.downloadFilesByIdAsync(scriptId)
                 .then(files => {
                     const pxtJson = pxt.Package.parseAndValidConfig(files["pxt.json"]);
@@ -3532,14 +3555,19 @@ export class ProjectView
     }
 
     startActivity(activity: pxt.editor.Activity, path: string, title?: string, editorProjectName?: string, focus = true) {
-        pxt.tickEvent(activity + ".start", { editor: editorProjectName });
         switch (activity) {
             case "tutorial":
-                this.startTutorialAsync(path, title, false, editorProjectName); break;
+                pxt.tickEvent("tutorial.start", { tutorial: path, editor: editorProjectName });
+                this.startTutorialAsync(path, title, false, editorProjectName);
+                break;
             case "recipe":
-                this.startTutorialAsync(path, title, true, editorProjectName); break;
+                pxt.tickEvent("recipe.start", { recipe: path, editor: editorProjectName });
+                this.startTutorialAsync(path, title, true, editorProjectName);
+                break;
             case "example":
-                this.importExampleAsync({ name, path, loadBlocks: false, preferredEditor: editorProjectName }); break;
+                pxt.tickEvent("example.start", { example: path, editor: editorProjectName });
+                this.importExampleAsync({ name, path, loadBlocks: false, preferredEditor: editorProjectName });
+                break;
         }
         this.textEditor.giveFocusOnLoading = focus;
     }
@@ -3588,7 +3616,7 @@ export class ProjectView
     }
 
     exitTutorial(removeProject?: boolean) {
-        pxt.tickEvent("tutorial.exit");
+        pxt.tickEvent("tutorial.exit", { tutorial: this.state.header?.tutorial?.tutorial });
         core.showLoading("leavingtutorial", lf("leaving tutorial..."));
         const tutorial = this.state.header && this.state.header.tutorial;
         const stayInEditor = tutorial && !!tutorial.tutorialRecipe;
@@ -4550,11 +4578,15 @@ document.addEventListener("DOMContentLoaded", () => {
             else theEditor.newProject();
             return Promise.resolve();
         })
+        .catch(e => {
+            theEditor.handleCriticalError(e, "Failure in DOM loaded handler");
+            throw e;
+        })
         .then(() => {
             pxsim.U.remove(document.getElementById('loading'));
             return workspace.loadedAsync();
         })
-        .done()
+        .done();
 
     document.addEventListener("visibilitychange", ev => {
         if (theEditor)
