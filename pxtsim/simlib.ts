@@ -241,7 +241,7 @@ namespace pxsim {
         }
 
         function stopTone() {
-            if (_vca) _vca.gain.value = 0;
+            setCurrentToneGain(0);
             _frequency = 0;
             if (audio) {
                 audio.pause();
@@ -249,7 +249,7 @@ namespace pxsim {
         }
 
         export function stopAll() {
-            stop();
+            stopTone();
             muteAllChannels();
         }
 
@@ -574,7 +574,6 @@ namespace pxsim {
         }
 
         export function tone(frequency: number, gain: number) {
-            if (_mute) return;
             if (frequency < 0) return;
             _frequency = frequency;
 
@@ -599,12 +598,12 @@ namespace pxsim {
             }
 
             _vco.frequency.value = frequency;
-            _vca.gain.value = gain;
+            setCurrentToneGain(gain);
         }
 
         export function setCurrentToneGain(gain: number) {
-            if (_vca?.gain && !_mute) {
-                _vca.gain.value = gain;
+            if (_vca?.gain) {
+                _vca.gain.value = _mute ? 0 : gain;
             }
         }
 
