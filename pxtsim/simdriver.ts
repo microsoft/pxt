@@ -259,7 +259,7 @@ namespace pxsim {
         }
 
         private getSimUrl(): string {
-            return this.options.simUrl || ((window as any).pxtConfig || {}).simUrl || "/sim/simulator.html"
+            return this.options.simUrl || ((window as any).pxtConfig || {}).simUrl || `${location.origin}/sim/simulator.html`;
         }
 
         public postMessage(msg: pxsim.SimulatorMessage, source?: Window) {
