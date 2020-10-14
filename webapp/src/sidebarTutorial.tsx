@@ -16,17 +16,14 @@ export class SidebarTutorialHint extends TutorialHint{
         const options = this.props.parent.state.tutorialOptions;
         const { tutorialName, tutorialReady, tutorialStepInfo, tutorialStep, tutorialStepExpanded, metadata } = options;
         const stepInfo = tutorialStepInfo[tutorialStep];
-        const hasHint = true; // VIVIAN TODO
         const tutorialHint = stepInfo.hintContentMd;
-        const tutorialCardContent = stepInfo.headerContentMd;
         const showDialog = stepInfo.showDialog;
         const fullText = stepInfo.contentMd;
 
         let onClick = tutorialStep < tutorialStepInfo.length - 1 ? this.next : this.closeHint;
         const actions: sui.ModalButton[] = [{
-            label: lf("Ok"),
+            label: lf("Start"),
             onclick: onClick,
-            icon: 'check',
             className: 'green'
         }]
         return <div id="callout" className={`callout-container`}>
@@ -52,10 +49,9 @@ export class SidebarTutorialCard extends TutorialCard {
 
     renderCore() {
         const options = this.props.parent.state.tutorialOptions;
-        const { tutorialName, tutorialReady, tutorialStepInfo, tutorialStep, tutorialStepExpanded, metadata } = options;
+        const { tutorialName, tutorialStepInfo, tutorialStep } = options;
         const stepInfo = tutorialStepInfo[tutorialStep];
-        const hasHint = true; // VIVIAN TODO
-        const tutorialHint = stepInfo.hintContentMd;
+        const hasHint = !!tutorialStepInfo[tutorialStep].hintContentMd || tutorialStepInfo[tutorialStep].showDialog;
         const tutorialCardContent = stepInfo.headerContentMd;
         const showDialog = stepInfo.showDialog;
 

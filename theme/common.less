@@ -138,16 +138,19 @@ pre {
     margin-right: 10px;
 }
 
-input[type='range']::-webkit-slider-thumb {
-    border: .2rem solid black;
-    background-color: grey;
-    height: 3.1rem;
-    width: 2.2rem;
-    cursor: pointer;
-    border-left: .2rem solid white;
-    border-top: .2rem solid white;
-    border-bottom: .2rem solid grey;
-    border-right: .2rem solid grey;
+input[type='range'] {
+    &::-webkit-slider-thumb {
+        -webkit-appearance: none !important;
+        outline: .3rem solid black;
+        background-color: #c6c6c6 !important;
+        height: 1.3rem!important;
+        width: 1rem!important;
+        cursor: pointer!important;
+        border-left: .3rem solid white!important;
+        border-top: .3rem solid white!important;
+        border-bottom: .3rem solid #999999!important;
+        border-right: .3rem solid #999999!important;
+    }
 }
 
 #zoomSlider {

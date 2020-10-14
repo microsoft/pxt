@@ -286,7 +286,7 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
         } else {
             let onClick = tutorialStep < tutorialStepInfo.length - 1 ? this.next : this.closeHint;
             const actions: sui.ModalButton[] = [{
-                label: lf("Ok"),
+                label: lf("Start"),
                 onclick: onClick,
                 icon: 'check',
                 className: 'green'
