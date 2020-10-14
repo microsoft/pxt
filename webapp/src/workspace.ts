@@ -90,13 +90,25 @@ export function setupWorkspace(id: string) {
     }
 }
 
-function switchToMemoryWorkspace(reason: string) {
+async function switchToMemoryWorkspace(reason: string): Promise<void> {
     pxt.tickEvent(`workspace.syncerror`, {
         ws: implType,
         reason: reason
     });
 
     pxt.log(`workspace: error, switching from ${implType} to memory workspace`);
+    const expectedMemWs = pxt.shell.isSandboxMode() || pxt.shell.isReadOnly() || pxt.BrowserUtils.isIFrame();
+    if (!expectedMemWs && impl !== memoryworkspace.provider) {
+        // TODO; probably don't want this in HOC
+        await core.confirmAsync({
+            header: lf("Unable to save projects"),
+            body: lf("We are unable to save your projects at this time; be sure to save your project by downloading or sharing it, as they will go after you refresh!"),
+            agreeLbl: lf("Done"),
+            agreeClass: "cancel",
+            agreeIcon: "cancel",
+            hasCloseIcon: true,
+        });
+    }
     impl = memoryworkspace.provider;
 }
 
@@ -368,7 +380,7 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
             ver = await impl.setAsync(h, e.version, toWrite);
         } catch (e) {
             // Write failed; use in memory db.
-            switchToMemoryWorkspace("write failed");
+            await switchToMemoryWorkspace("write failed");
             ver = await impl.setAsync(h, e.version, toWrite);
         }
 
@@ -1337,8 +1349,8 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
         .catch((e) => {
             // There might be a problem with the native databases. Switch to memory for this session so the user can at
             // least use the editor.
-            switchToMemoryWorkspace("sync failed");
-            return impl.listAsync();
+            return switchToMemoryWorkspace("sync failed")
+                .then(() => impl.listAsync());
         })
         .then(headers => {
             const existing = U.toDictionary(allScripts || [], h => h.header.id)
