@@ -8,7 +8,7 @@ namespace pxtblockly {
         height: number;
     }
 
-    export type TilesetDropdownOption = [ImageJSON, string];
+    export type TilesetDropdownOption = [ImageJSON, string, pxt.Tile];
 
     const PREVIEW_SIDE_LENGTH = 32;
 
@@ -67,8 +67,8 @@ namespace pxtblockly {
                     src: getTileImage(tile),
                     width: PREVIEW_SIDE_LENGTH,
                     height: PREVIEW_SIDE_LENGTH,
-                    alt: tile.id
-                }, tile.id])
+                    alt: displayName(tile)
+                }, tile.id, tile])
             }
             return FieldTileset.referencedTiles;
         }
@@ -81,7 +81,6 @@ namespace pxtblockly {
         constructor(text: string, options: FieldImageDropdownOptions, validator?: Function) {
             super(text, options, validator);
             this.blocksInfo = options.blocksInfo;
-
         }
 
         init() {
@@ -93,6 +92,10 @@ namespace pxtblockly {
         }
 
         getValue() {
+            if (this.selectedOption_) {
+                const tile = this.selectedOption_[2];
+                return `assets.tile\`${displayName(tile)}\``
+            }
             const v = super.getValue();
 
             // If the user decompiled from JavaScript, then they might have passed an image literal
@@ -124,8 +127,8 @@ namespace pxtblockly {
                             src: bitmapToImageURI(pxt.sprite.Bitmap.fromData(tile.bitmap), PREVIEW_SIDE_LENGTH, false),
                             width: PREVIEW_SIDE_LENGTH,
                             height: PREVIEW_SIDE_LENGTH,
-                            alt: tile.id
-                        }, this.value_]
+                            alt: displayName(tile)
+                        }, this.value_, tile]
                     }
                 }
 
@@ -133,7 +136,38 @@ namespace pxtblockly {
             super.render_();
         }
 
-        getOptions(): any[] {
+        doValueUpdate_(newValue: string) {
+            super.doValueUpdate_(newValue);
+            const options: TilesetDropdownOption[] = this.getOptions(true);
+
+            // This text can be one of four things:
+            // 1. The JavaScript expression (assets.tile`name`)
+            // 2. The tile id (qualified name)
+            // 3. The tile display name
+            // 4. Something invalid (like an image literal or undefined)
+
+            if (newValue) {
+                // If it's an expression, pull out the id
+                const match = /^\s*assets\s*\.\s*tile\s*`([^`]+)`\s*$/.exec(newValue);
+                if (match) {
+                    newValue = match[1];
+                }
+
+                for (const option of options) {
+                    if (newValue === option[2].id || newValue === option[2].meta.displayName || newValue === pxt.getShortIDForAsset(option[2])) {
+                        this.selectedOption_ = option;
+                        this.value_ = this.getValue();
+                        this.updateAssetListener();
+                        return;
+                    }
+                }
+
+                this.selectedOption_ = null;
+                this.updateAssetListener();
+            }
+        }
+
+        getOptions(opt_useCache?: boolean): any[] {
             if (typeof this.menuGenerator_ !== 'function') {
                 this.transparent = constructTransparentTile();
                 return [this.transparent];
@@ -149,9 +183,27 @@ namespace pxtblockly {
                     width: PREVIEW_SIDE_LENGTH,
                     height: PREVIEW_SIDE_LENGTH,
                     alt: this.getValue()
-                }, this.getValue()]]
+                }, this.getValue(), this.getValue()]]
             }
             return FieldTileset.getReferencedTiles(this.sourceBlock_.workspace);
+        }
+
+        dispose() {
+            super.dispose();
+            pxt.react.getTilemapProject().removeChangeListener(pxt.AssetType.Tile, this.assetChangeListener);
+        }
+
+        protected updateAssetListener() {
+            const project = pxt.react.getTilemapProject();
+            project.removeChangeListener(pxt.AssetType.Tile, this.assetChangeListener);
+            if (this.selectedOption_) {
+                project.addChangeListener(this.selectedOption_[2], this.assetChangeListener);
+            }
+        }
+
+        protected assetChangeListener = () => {
+           this.doValueUpdate_(this.getValue());
+           this.forceRerender();
         }
     }
 
@@ -162,7 +214,7 @@ namespace pxtblockly {
             width: PREVIEW_SIDE_LENGTH,
             height: PREVIEW_SIDE_LENGTH,
             alt: pxt.U.lf("transparency")
-        }, tile.id];
+        }, tile.id, tile];
     }
 
     function mkTransparentTileImage(sideLength: number) {
@@ -200,5 +252,9 @@ namespace pxtblockly {
                 }
                 return 9999999999;
         }
+    }
+
+    function displayName(tile: pxt.Tile) {
+        return tile.meta.displayName || pxt.getShortIDForAsset(tile);
     }
 }

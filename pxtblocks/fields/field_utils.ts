@@ -238,33 +238,41 @@ namespace pxtblockly {
         let all: pxt.Map<pxt.Tile> = {};
 
         const allMaps = getAllBlocksWithTilemaps(workspace);
+        const project = pxt.react.getTilemapProject();
 
         for (const map of allMaps) {
             if (map.block.id === excludeBlockID) continue;
 
             for (const tile of map.ref.getTileset()?.tiles || []) {
-                all[tile.id] = tile;
+                all[tile.id] = project.lookupAsset(pxt.AssetType.Tile, tile.id);
             }
         }
 
-        const project = pxt.react.getTilemapProject();
         const projectMaps = project.getAssets(pxt.AssetType.Tilemap);
 
         for (const projectMap of projectMaps) {
             for (const tile of projectMap.data.tileset.tiles) {
-                all[tile.id] = tile;
+                all[tile.id] = project.lookupAsset(pxt.AssetType.Tile, tile.id);;
             }
         }
 
         const allTiles = getAllBlocksWithTilesets(workspace);
         for (const tilesetField of allTiles) {
-            const id = tilesetField.ref.getValue();
+            const value = tilesetField.ref.getValue();
+            const match = /^\s*assets\s*\.\s*tile\s*`([^`]*)`\s*$/.exec(value);
 
-            if (!all[id]) {
-                all[id] = project.resolveTile(id);
+            if (match) {
+                const tile = project.lookupAssetByName(pxt.AssetType.Tile, match[1]);
+
+                if (!all[tile.id]) {
+                    all[tile.id] = tile;
+                }
+            }
+            else if (!all[value]) {
+                all[value] = project.resolveTile(value);
             }
         }
 
-        return Object.keys(all).map(key => all[key]);
+        return Object.keys(all).map(key => all[key]).filter(t => !!t);
     }
 }

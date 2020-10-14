@@ -498,17 +498,19 @@ export class EditorPackage {
     }
 
     buildTilemapsAsync() {
-        const existing = this.lookupFile("this/" + pxt.TILEMAP_CODE);
+        const existingTS = this.lookupFile("this/" + pxt.TILEMAP_CODE);
+        const existingJRES = this.lookupFile("this/" + pxt.TILEMAP_JRES);
 
         const jres = this.tilemapProject.getProjectTilesetJRes();
 
-        if (!existing && Object.keys(jres).length === 1) return Promise.resolve();
+        if (!existingTS && Object.keys(jres).length === 1) return Promise.resolve();
 
         const ts = pxt.emitTilemapsFromJRes(jres);
+        const stringRes = JSON.stringify(jres, null, 4);
 
-        if (existing?.content === ts) return Promise.resolve();
+        if (existingTS?.content === ts && existingJRES?.content === stringRes) return Promise.resolve();
 
-        return this.setContentAsync(pxt.TILEMAP_JRES, JSON.stringify(jres, null, 4))
+        return this.setContentAsync(pxt.TILEMAP_JRES, stringRes)
             .then(() => this.setContentAsync(pxt.TILEMAP_CODE, ts))
             .then(() => {
                 mainPkg.updateJRes();
@@ -517,17 +519,19 @@ export class EditorPackage {
     }
 
     buildImagesAsync() {
-        const existing = this.lookupFile("this/" + pxt.IMAGES_CODE);
+        const existingTS = this.lookupFile("this/" + pxt.IMAGES_CODE);
+        const existingJRES = this.lookupFile("this/" + pxt.IMAGES_JRES);
 
         const jres = this.tilemapProject.getProjectAssetsJRes();
 
-        if (!existing && Object.keys(jres).length === 1) return Promise.resolve();
+        if (!existingTS && Object.keys(jres).length === 1) return Promise.resolve();
 
         const ts = pxt.emitProjectImages(jres);
+        const stringRes = JSON.stringify(jres, null, 4)
 
-        if (existing?.content === ts) return Promise.resolve();
+        if (existingTS?.content === ts && existingJRES?.content === stringRes) return Promise.resolve();
 
-        return this.setContentAsync(pxt.IMAGES_JRES, JSON.stringify(jres, null, 4))
+        return this.setContentAsync(pxt.IMAGES_JRES, stringRes)
             .then(() => this.setContentAsync(pxt.IMAGES_CODE, ts))
             .then(() => {
                 mainPkg.updateJRes();
