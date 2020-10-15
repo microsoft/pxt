@@ -929,7 +929,7 @@ namespace pxt.BrowserUtils {
             return deleteDbAsync();
         return _translationDbPromise
             .then(db => db.clearAsync())
-            .catch(e => deleteDbAsync().done());
+            .catch(e => deleteDbAsync().then());
     }
 
     export function getTutorialInfoHash(code: string[]) {

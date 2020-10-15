@@ -203,7 +203,7 @@ function queue(ce: CacheEntry) {
         final(ce.api.getSync(ce.path))
     else {
         const p = ce.api.getAsync(ce.path);
-        p.done(final)
+        p.then(final)
     }
 }
 

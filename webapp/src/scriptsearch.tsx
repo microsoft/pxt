@@ -229,7 +229,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                     .then(() => {
                         window.location.href = homeUrl + urlPath;
                     })
-                    .done();
+                    .then();
             }
         }
         else {

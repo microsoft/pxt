@@ -77,7 +77,7 @@ export function makeAsync(): Promise<void> {
         /* tslint:enable:react-iframe-missing-sandbox */
         , onLoaded: (_) => {
             renderAsync(_.querySelectorAll("#makeiframe")[0] as HTMLIFrameElement)
-                .done();
+                .then();
         }
     }).then(r => {
     })

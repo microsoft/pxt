@@ -176,7 +176,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     pxt.perf.measureEnd("domUpdate loadBlockly")
                 });
 
-            this.loadingXmlPromise.done();
+            this.loadingXmlPromise.then();
             this.loadingXmlPromise = null;
         }
     }
@@ -1002,13 +1002,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     openTypeScript() {
         pxt.tickEvent("blocks.showjavascript");
         this.parent.closeFlyout();
-        this.parent.openTypeScriptAsync().done();
+        this.parent.openTypeScriptAsync().then();
     }
 
     openPython() {
         pxt.tickEvent("blocks.showpython");
         this.parent.closeFlyout();
-        this.parent.openPythonAsync().done();
+        this.parent.openPythonAsync().then();
     }
 
     private cleanUpShadowBlocks() {

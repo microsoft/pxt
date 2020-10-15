@@ -101,7 +101,7 @@ function switchToMemoryWorkspace(reason: string) {
 }
 
 export function getHeaders(withDeleted = false) {
-    maybeSyncHeadersAsync().done();
+    maybeSyncHeadersAsync().then();
     let r = allScripts.map(e => e.header).filter(h => (withDeleted || !h.isDeleted) && !h.isBackup)
     r.sort((a, b) => b.recentUse - a.recentUse)
     return r
@@ -159,7 +159,7 @@ function cleanupBackupsAsync() {
 }
 
 export function getHeader(id: string) {
-    maybeSyncHeadersAsync().done();
+    maybeSyncHeadersAsync().then();
     let e = lookup(id)
     if (e && !e.header.isDeleted)
         return e.header
@@ -1365,7 +1365,7 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
                 }
                 return ex;
             })
-            cloudsync.syncAsync().done() // sync in background
+            cloudsync.syncAsync().then() // sync in background
         })
         .then(() => {
             refreshHeadersSession();

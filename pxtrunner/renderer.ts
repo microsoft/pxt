@@ -227,7 +227,7 @@ namespace pxt.runner {
             const compressed = pkg.compressToFileAsync();
             $editBtn.click(() => {
                 pxt.tickEvent("docs.btn", { button: "edit" });
-                compressed.done(buf => {
+                compressed.then(buf => {
                     window.open(`${getEditUrl(options)}/#project:${ts.pxtc.encodeBase64(Util.uint8ArrayToString(buf))}`, 'pxt');
                 });
             });

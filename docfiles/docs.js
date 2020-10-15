@@ -264,7 +264,7 @@ function renderSnippets() {
                 options.hex = true;
                 options.hexName = path;
                 return pxt.runner.renderAsync(options);
-            }).done();
+            });
     });
 }
 

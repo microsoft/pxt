@@ -458,7 +458,7 @@ namespace pxsim {
                         return Promise.resolve()
                     return playInstructionsAsync(b)
                 })
-                .done()
+                .then()
         }
 
         export function playInstructionsAsync(b: RefBuffer) {

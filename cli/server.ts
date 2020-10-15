@@ -526,7 +526,7 @@ function initSocketServer(wsPort: number, hostname: string) {
                                 return null;
                         }
                     })
-                    .done(resp => {
+                    .then(resp => {
                         if (!ws) return;
                         pxt.debug(`hid: resp ${objToString(resp)}`)
                         ws.send(JSON.stringify({
@@ -613,7 +613,7 @@ function initSocketServer(wsPort: number, hostname: string) {
                                 return null;
                         }
                     })
-                    .done(resp => {
+                    .then(resp => {
                         if (!ws) return;
                         pxt.debug(`hid: resp ${objToString(resp)}`)
                         ws.send(JSON.stringify({

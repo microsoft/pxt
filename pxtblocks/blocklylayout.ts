@@ -224,7 +224,7 @@ namespace pxt.blocks.layout {
                         const datacvs = pxt.Util.encodeBlobAsync(cvs, blob);
                         resolve(datacvs.toDataURL("image/png"));
                     });
-                    p.done();
+                    p.then();
                 } else {
                     resolve(canvasdata);
                 }

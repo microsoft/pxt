@@ -969,7 +969,7 @@ namespace ts.pxtc.Util {
                     // update expired entries
                     const dt = (Date.now() - entry.time) / 1000;
                     if (dt > 300) // 5min caching time before trying etag again
-                        downloadFromCloudAsync(entry.strings).done();
+                        downloadFromCloudAsync(entry.strings).then();
                     return entry.strings;
                 } else
                     return downloadFromCloudAsync();

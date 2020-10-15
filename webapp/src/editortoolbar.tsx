@@ -138,7 +138,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         if (pxt.hasHwVariants())
             this.props.parent.showChooseHwDialog(true);
         else
-            this.props.parent.showBoardDialogAsync(undefined, true).done();
+            this.props.parent.showBoardDialogAsync(undefined, true).then();
 
     }
 
@@ -152,7 +152,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
     }
 
     protected onDisconnectClick = () => {
-        cmds.showDisconnectAsync().done();
+        cmds.showDisconnectAsync().then();
     }
 
     protected getCompileButton(view: View): JSX.Element[] {

@@ -80,7 +80,7 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
                 .then(() => {
                     this.props.parent.reloadEditor();
                 })
-                .done();
+                .then();
         } else {
             pxt.tickEvent(`menu.lang.samelang`, { lang: langId });
             this.hide();

@@ -119,7 +119,7 @@
             codeFromData = window.frameElement ? window.frameElement.getAttribute('data-code') : undefined;
         } catch (e) {
             /**
-             *  Internet Explorer 11 and Microsoft Edge throw an exception when checking 
+             *  Internet Explorer 11 and Microsoft Edge throw an exception when checking
              *  if the frame element exists when the iframe is on a different origin
              */
         }
@@ -160,7 +160,7 @@
             if (footer) pxt.runner.initFooter(document.getElementById('footer'), id);
             if (hex) {
                 console.log('compiling script to hex')
-                pxt.runner.generateHexFileAsync(options).done(function(hex) {
+                pxt.runner.generateHexFileAsync(options).then(function(hex) {
                     $(loading).remove();
                     var name = pxt.appTarget.id + '-' + ts.pxt.BINARY_HEX;
                     var uri = pxt.BrowserUtils.browserDownloadBinText(hex, name)
@@ -181,7 +181,7 @@
                     dependencies: deps ? decodeURIComponent(deps[1]).split(",") : undefined
                 };
                 console.log('simulating script')
-                pxt.runner.simulateAsync(sims, options).done(function() {
+                pxt.runner.simulateAsync(sims, options).then(function() {
                     console.log('simulator started...')
                     $(loading).remove();
                 })

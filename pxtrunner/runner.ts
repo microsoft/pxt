@@ -480,7 +480,7 @@ namespace pxt.runner {
             case "fileloaded":
                 let fm = m as pxsim.SimulatorFileLoadedMessage;
                 let name = fm.name;
-                setEditorContextAsync(/\.ts$/i.test(name) ? LanguageMode.TypeScript : LanguageMode.Blocks, fm.locale).done();
+                setEditorContextAsync(/\.ts$/i.test(name) ? LanguageMode.TypeScript : LanguageMode.Blocks, fm.locale).then();
                 break;
             case "popout":
                 let mp = /((\/v[0-9+])\/)?[^\/]*#(doc|md):([^&?:]+)/i.exec(window.location.href);
@@ -555,7 +555,7 @@ namespace pxt.runner {
         }
 
         pxt.editor.initEditorExtensionsAsync()
-            .done(() => {
+            .then(() => {
                 // notify parent that render engine is loaded
                 window.addEventListener("message", function (ev) {
                     const msg = ev.data as pxsim.RenderBlocksRequestMessage;
@@ -632,7 +632,7 @@ namespace pxt.runner {
                     if (backButton) $(backButton).show()
                     $(content).show()
                 })
-                .done(() => { });
+                .then(() => { });
         }
 
         function pushHistory() {
@@ -683,7 +683,7 @@ namespace pxt.runner {
             }
         }
         let promise = pxt.editor.initEditorExtensionsAsync();
-        promise.done(() => {
+        promise.then(() => {
             window.addEventListener("message", receiveDocMessage, false);
             window.addEventListener("hashchange", () => {
                 renderHash();
@@ -1122,7 +1122,7 @@ ${linkString}
     export let initCallbacks: (() => void)[] = [];
     export function init() {
         initInnerAsync()
-            .done(() => {
+            .then(() => {
                 for (let i = 0; i < initCallbacks.length; ++i) {
                     initCallbacks[i]();
                 }

@@ -325,7 +325,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
     handleCreateGitHubRepository() {
         pxt.tickEvent("share.github.create", undefined, { interactiveConsent: true });
         this.hide();
-        this.props.parent.createGitHubRepositoryAsync().done();
+        this.props.parent.createGitHubRepositoryAsync().then();
     }
 
     renderCore() {

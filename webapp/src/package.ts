@@ -212,7 +212,7 @@ export class EditorPackage {
                 const f = this.files[pxt.SIMSTATE_JSON]
                 if (!f)
                     return
-                f.setContentAsync(JSON.stringify(this.simState)).done()
+                f.setContentAsync(JSON.stringify(this.simState)).then()
             }, 2000)
         }
     }
@@ -420,7 +420,7 @@ export class EditorPackage {
         this.saveScheduled = true;
         setTimeout(() => {
             this.saveScheduled = false;
-            this.savePkgAsync().done();
+            this.savePkgAsync().then();
         }, 5000)
     }
 
@@ -598,7 +598,7 @@ class Host
             // only write config writes
             let epkg = getEditorPkg(module)
             let file = epkg.files[filename];
-            file.setContentAsync(contents, force).done();
+            file.setContentAsync(contents, force).then();
             return;
         }
         throw Util.oops("trying to write " + module + " / " + filename)

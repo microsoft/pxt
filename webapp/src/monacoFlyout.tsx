@@ -187,7 +187,7 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
                 this.props.moveFocusToParent();
             } else if (charCode == 13 && block) { // ENTER
                 let p = snippet ? Promise.resolve(snippet) : compiler.snippetAsync(block.qName, isPython);
-                p.done(snip => {
+                p.then(snip => {
                     this.props.insertSnippet(null, snip, block.retType != "void");
                     // Fire a create event
                     workspace.fireEvent({ type: 'create', editor: 'ts', blockId: block.attributes.blockId } as pxt.editor.events.CreateEvent);

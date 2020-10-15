@@ -8,7 +8,7 @@ namespace pxt.winrt {
 
     export function promisify<T>(p: Windows.Foundation.IAsyncOperation<T> | Windows.Foundation.Projections.Promise<T>): Promise<T> {
         return new Promise<T>((resolve, reject) => {
-            p.done(v => resolve(v), e => reject(e));
+            p.then(v => resolve(v), e => reject(e));
         })
     }
 
@@ -127,14 +127,14 @@ namespace pxt.winrt {
                 () => suspensionDeferral.complete(),
                 (e) => suspensionDeferral.complete()
             )
-            .done();
+            .then();
     }
 
     function resumingHandler(args: ResumingArgs) {
         pxt.log(`resuming`);
         if (packetIO) {
             pxt.log(`reconnet pack io`);
-            packetIO.reconnectAsync().done();
+            packetIO.reconnectAsync().then();
         }
         initSerial();
     }

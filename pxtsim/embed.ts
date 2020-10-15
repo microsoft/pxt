@@ -262,7 +262,7 @@ namespace pxsim {
                 case "stopsound": stopSound(); break;
                 case "print": print(); break;
                 case 'recorder': recorder(<SimulatorRecorderMessage>data); break;
-                case "screenshot": Runtime.postScreenshotAsync(<SimulatorScreenshotMessage>data).done(); break;
+                case "screenshot": Runtime.postScreenshotAsync(<SimulatorScreenshotMessage>data).then(); break;
                 case "custom":
                     if (handleCustomMessage)
                         handleCustomMessage((<SimulatorCustomMessage>data));
@@ -309,7 +309,7 @@ namespace pxsim {
 
             runtime = new Runtime(msg);
             runtime.board.initAsync(msg)
-                .done(() => {
+                .then(() => {
                     runtime.run((v) => {
                         pxsim.dumpLivePointers();
                         Runtime.postMessage({ type: "toplevelcodefinished" })

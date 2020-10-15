@@ -152,7 +152,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         if (pxt.hasHwVariants())
             this.props.parent.showChooseHwDialog();
         else
-            this.props.parent.showBoardDialogAsync(undefined, true).done();
+            this.props.parent.showBoardDialogAsync(undefined, true).then();
     }
 
     saveProject() {
@@ -514,7 +514,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         const tutorialOptions = this.props.parent.state.tutorialOptions;
         pxt.tickEvent("menu.exitTutorial", { tutorial: tutorialOptions?.tutorial }, { interactiveConsent: true });
         if (tutorialOptions?.tutorialRecipe)
-            this.props.parent.completeTutorialAsync().done();
+            this.props.parent.completeTutorialAsync().then();
         else
             this.props.parent.exitTutorial();
     }

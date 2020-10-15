@@ -191,7 +191,7 @@ namespace pxt.winrt {
             info: deviceInfo
         };
         Windows.Devices.SerialCommunication.SerialDevice.fromIdAsync(deviceInfo.id)
-            .done((dev: SerialDevice) => {
+            .then((dev: SerialDevice) => {
                 activePorts[deviceInfo.id].device = dev;
                 startDevice(deviceInfo.id);
             });
@@ -230,7 +230,7 @@ namespace pxt.winrt {
                 return;
             }
             port.readingOperation = reader.loadAsync(32);
-            port.readingOperation.done((bytesRead) => {
+            port.readingOperation.then((bytesRead) => {
                 let msg = reader.readString(Math.floor(reader.unconsumedBufferLength / 4) * 4);
                 pxt.Util.bufferSerial(serialBuffers, msg, id);
                 setTimeout(() => readMore(), 1);

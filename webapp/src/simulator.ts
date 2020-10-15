@@ -224,7 +224,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
                                     window.open(msg.linkButtonHref, '_blank');
                                 }
                             })
-                            .done();
+                            .then();
                     }
                     break;
             }

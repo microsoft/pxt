@@ -106,7 +106,7 @@ export class ExtensionManager {
                 break;
             case "extwritecode":
                 handleWriteCodeRequestAsync(this.extIdToName[request.extId], resp, request.body)
-                    .done(() => this.sendResponse(resp));
+                    .then(() => this.sendResponse(resp));
                 break;
         }
 
@@ -168,7 +168,7 @@ export class ExtensionManager {
 
             if (current.permissions.length) {
                 this.host.promptForPermissionAsync(this.extIdToName[current.extId], current.permissions)
-                    .done(approved => {
+                    .then(approved => {
                         current.resolver(approved);
                         this.nextPermissionRequest();
                     })
