@@ -97,9 +97,9 @@ async function switchToMemoryWorkspace(reason: string): Promise<void> {
     });
 
     pxt.log(`workspace: error, switching from ${implType} to memory workspace`);
-    const expectedMemWs = pxt.shell.isSandboxMode() || pxt.shell.isReadOnly() || pxt.BrowserUtils.isIFrame();
+    const expectedMemWs = pxt.appTarget.appTheme.disableMemoryWorkspaceWarning
+                            || pxt.shell.isSandboxMode() || pxt.shell.isReadOnly() || pxt.BrowserUtils.isIFrame();
     if (!expectedMemWs && impl !== memoryworkspace.provider) {
-        // TODO; probably don't want this in HOC
         await core.confirmAsync({
             header: lf("Unable to save projects"),
             body: lf("We are unable to save your projects at this time; be sure to save your project by downloading or sharing it, as they will go after you refresh!"),
