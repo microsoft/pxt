@@ -133,7 +133,7 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
 
     getValue() {
         if (this.ref) {
-            return (this.props.singleFrame ? this.ref.getImage() : this.ref.getAnimation()) as U;
+            return this.ref.getAsset() as U;
         }
         return null;
     }

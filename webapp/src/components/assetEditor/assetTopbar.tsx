@@ -61,7 +61,10 @@ class AssetTopbarImpl extends React.Component<AssetTopbarProps, AssetTopbarState
             case pxt.AssetType.Tile:
                 (asset as pxt.ProjectImage).bitmap = new pxt.sprite.Bitmap(16, 16).data(); break
             case pxt.AssetType.Tilemap:
-                (asset as pxt.ProjectTilemap).data = project.blankTilemap(16, 16, 16);
+                const tilemap = asset as pxt.ProjectTilemap;
+                tilemap.data = project.blankTilemap(16, 16, 16);
+                tilemap.data.tileset = project.getProjectTiles(tilemap.data.tileset.tileWidth, true);
+
         }
         return asset;
     }

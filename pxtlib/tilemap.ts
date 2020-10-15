@@ -435,7 +435,7 @@ namespace pxt {
             if (existing) {
                 this.state.tiles.update(existing.id, tile);
 
-                if (existing.id !== tile.id) {
+                if (existing.id !== tile.id || !pxt.sprite.bitmapEquals(existing.bitmap, tile.bitmap)) {
                     for (const tm of this.getAssets(AssetType.Tilemap)) {
                         if (tm.data.tileset.tiles.some(t => t.internalID === tile.internalID)) {
 
@@ -568,6 +568,10 @@ namespace pxt {
                     displayName: id
                 },
                 data: data
+            });
+
+            data.tileset.tiles.forEach(t => {
+                this.resolveTile(t.id) ? this.updateTile(t) : this.createNewTile(t.bitmap, t.id, t.meta?.displayName);
             });
 
             return [id, data];
@@ -756,6 +760,7 @@ namespace pxt {
                 case AssetType.Tile:
                     return this.updateTile(asset);
                 case AssetType.Tilemap:
+                    asset.data.tileset.tiles.forEach(t => this.updateTile(t));
                     return this.state.tilemaps.update(asset.id, asset);
                 case AssetType.Animation:
                     return this.state.animations.update(asset.id, asset);

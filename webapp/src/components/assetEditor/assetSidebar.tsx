@@ -59,6 +59,18 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
     }
 
     protected editAssetHandler = () => {
+        const { asset } = this.props;
+
+        // for tilemaps, fill in all project tiles
+        if (asset.type == pxt.AssetType.Tilemap) {
+            const allTiles = pxt.react.getTilemapProject().getProjectTiles(asset.data.tileset.tileWidth, true);
+            for (const tile of allTiles.tiles) {
+                if (!asset.data.tileset.tiles.some(t => t.id === tile.id)) {
+                    asset.data.tileset.tiles.push(tile);
+                }
+            }
+        }
+
         this.props.showAssetFieldView(this.props.asset, this.editAssetDoneHandler);
     }
 
