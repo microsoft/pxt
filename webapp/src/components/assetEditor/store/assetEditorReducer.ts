@@ -29,9 +29,11 @@ const topReducer = (state: AssetEditorState = initialState, action: any): AssetE
                 view: action.view
             };
         case actions.UPDATE_USER_ASSETS:
+            const assets = getUserAssets()
             return {
                 ...state,
-                assets: getUserAssets()
+                selectedAsset: state.selectedAsset ? assets.find(el => el.id == state.selectedAsset.id) : undefined,
+                assets
             }
         default:
             return state

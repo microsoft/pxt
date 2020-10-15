@@ -119,7 +119,7 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
         const { asset, isGalleryAsset } = this.props;
         const { showDeleteModal } = this.state;
         const details = this.getAssetDetails();
-        const name = asset?.meta?.displayName || lf("No asset selected");
+        const name = asset ? asset.meta?.displayName || pxt.getShortIDForAsset(asset) || lf("Unnamed") : lf("No asset selected");
 
         const actions: sui.ModalButton[] = [
             { label: lf("Cancel"), onclick: this.hideDeleteModal, icon: 'cancel' },
@@ -141,11 +141,10 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
                 {!isGalleryAsset && <sui.MenuItem name={lf("Edit")} className="asset-editor-button" icon="edit" onClick={this.editAssetHandler}/>}
                 <sui.MenuItem name={lf("Duplicate")} className="asset-editor-button" icon="copy" onClick={this.duplicateAssetHandler}/>
                 <sui.MenuItem name={lf("Copy")} className="asset-editor-button" icon="paste" onClick={this.copyAssetHandler}/>
-                {!isGalleryAsset && <sui.MenuItem name={lf("Delete")} className="asset-editor-button" icon="trash" onClick={this.showDeleteModal}/>}
+                {!isGalleryAsset && <sui.MenuItem name={lf("Delete")} className="asset-editor-button delete-asset" icon="trash" onClick={this.showDeleteModal}/>}
             </div>}
             <textarea className="asset-editor-sidebar-copy" ref={this.copyTextAreaRefHandler} ></textarea>
-            <sui.Modal isOpen={showDeleteModal} onClose={this.hideDeleteModal} closeIcon={false}
-                dimmer={true} header={lf("Delete Asset")} buttons={actions}>
+            <sui.Modal className="asset-editor-delete-dialog" isOpen={showDeleteModal} onClose={this.hideDeleteModal} closeIcon={false} dimmer={true} header={lf("Delete Asset")} buttons={actions}>
                 <div>{lf("Are you sure you want to delete {0}? Deleted assets cannot be recovered.", name)}</div>
             </sui.Modal>
         </div>

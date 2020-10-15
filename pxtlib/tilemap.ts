@@ -410,7 +410,7 @@ namespace pxt {
             return this.state.tiles.add(newTile);
         }
 
-        public createNewProjectImage(data: pxt.sprite.BitmapData) {
+        public createNewProjectImage(data: pxt.sprite.BitmapData, displayName?: string) {
             this.onChange();
 
             const newImage: ProjectImage = {
@@ -418,7 +418,9 @@ namespace pxt {
                 id: this.generateNewID(AssetType.Image, pxt.sprite.IMAGE_PREFIX, pxt.sprite.IMAGES_NAMESPACE),
                 type: AssetType.Image,
                 jresData: pxt.sprite.base64EncodeBitmap(data),
-                meta: {},
+                meta: {
+                    displayName
+                },
                 bitmap: data
             };
 
