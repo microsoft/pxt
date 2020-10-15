@@ -469,15 +469,27 @@ namespace ts.pxtc.Util {
     }
 
     export async function promiseTimeout<T>(ms: number, promise: T | Promise<T>, msg?: string): Promise<T> {
-        return Promise.race([
-            promise,
-            new Promise((_, reject) => {
-                const id = setTimeout(() => {
-                    clearTimeout(id);
-                    reject(msg || `Promise timed out after ${ms}ms`);
-                }, ms);
-            }) as Promise<T>
-        ])
+        let timeoutId: number;
+        let res: () => void;
+
+        const timeoutPromise: Promise<T> = new Promise((resolve, reject) => {
+            res = resolve;
+            timeoutId = setTimeout(() => {
+                res = undefined;
+                clearTimeout(timeoutId);
+                reject(msg || `Promise timed out after ${ms}ms`);
+            }, ms);
+        });
+
+        return Promise.race([ promise, timeoutPromise ])
+            .then(output => {
+                // clear any dangling timeout
+                if (res) {
+                    clearTimeout(timeoutId);
+                    res();
+                }
+                return output;
+            });
     }
 
     export function memoize<S, T>(getId: (v: S) => string, createNew: (v: S) => T): (id: S) => T {
