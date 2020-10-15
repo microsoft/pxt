@@ -23,7 +23,10 @@ interface AssetSidebarProps {
 }
 
 interface AssetSidebarState {
-    showDeleteModal?: boolean;
+    showDeleteModal: boolean;
+    canEdit: boolean;
+    canCopy: boolean;
+    canDelete: boolean;
 }
 
 class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarState> {
@@ -31,7 +34,20 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
 
     constructor(props: AssetSidebarProps) {
         super(props);
-        this.state = { showDeleteModal: false };
+        this.state = { showDeleteModal: false, canEdit: true, canCopy: true, canDelete: true };
+    }
+
+    UNSAFE_componentWillReceiveProps(nextProps: AssetSidebarProps) {
+        if (nextProps.asset && this.props.asset != nextProps.asset) {
+            const { asset, isGalleryAsset } = nextProps;
+
+            const project = pxt.react.getTilemapProject();
+            const canEdit = !isGalleryAsset;
+            const canCopy = asset?.type != pxt.AssetType.Tilemap;
+            const canDelete = !isGalleryAsset && !project.isAssetUsed(asset, pkg.mainEditorPkg().files);
+
+            this.setState({ canEdit, canCopy, canDelete });
+        }
     }
 
     protected getAssetDetails(): AssetDetail[] {
@@ -116,8 +132,8 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
     }
 
     render() {
-        const { asset, isGalleryAsset } = this.props;
-        const { showDeleteModal } = this.state;
+        const { asset } = this.props;
+        const { showDeleteModal, canEdit, canCopy, canDelete } = this.state;
         const details = this.getAssetDetails();
         const name = asset ? asset.meta?.displayName || pxt.getShortIDForAsset(asset) || lf("Unnamed") : lf("No asset selected");
 
@@ -138,10 +154,10 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
                 })}
             </div>
             { asset && <div className="asset-editor-sidebar-controls">
-                {!isGalleryAsset && <sui.MenuItem name={lf("Edit")} className="asset-editor-button" icon="edit" onClick={this.editAssetHandler}/>}
+                {canEdit && <sui.MenuItem name={lf("Edit")} className="asset-editor-button" icon="edit" onClick={this.editAssetHandler}/>}
                 <sui.MenuItem name={lf("Duplicate")} className="asset-editor-button" icon="copy" onClick={this.duplicateAssetHandler}/>
-                <sui.MenuItem name={lf("Copy")} className="asset-editor-button" icon="paste" onClick={this.copyAssetHandler}/>
-                {!isGalleryAsset && <sui.MenuItem name={lf("Delete")} className="asset-editor-button delete-asset" icon="trash" onClick={this.showDeleteModal}/>}
+                {canCopy && <sui.MenuItem name={lf("Copy")} className="asset-editor-button" icon="paste" onClick={this.copyAssetHandler}/>}
+                {canDelete && <sui.MenuItem name={lf("Delete")} className="asset-editor-button delete-asset" icon="trash" onClick={this.showDeleteModal}/>}
             </div>}
             <textarea className="asset-editor-sidebar-copy" ref={this.copyTextAreaRefHandler} ></textarea>
             <sui.Modal className="asset-editor-delete-dialog" isOpen={showDeleteModal} onClose={this.hideDeleteModal} closeIcon={false} dimmer={true} header={lf("Delete Asset")} buttons={actions}>
