@@ -12,7 +12,7 @@ namespace pxt.Cloud {
     function offlineError(url: string) {
         let e: any = new Error(Util.lf("Cannot access {0} while offline", url));
         e.isOffline = true;
-        return Promise.delay(1000).then(() => Promise.reject(e))
+        return U.delay(1000).then(() => Promise.reject(e))
     }
 
     export function hasAccessToken() {

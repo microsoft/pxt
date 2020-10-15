@@ -280,7 +280,7 @@ namespace pxt.HF2 {
                     if (this.reconnectTries < 5) {
                         this.reconnectTries++
                         log(`error ${e.message}; reconnecting attempt #${this.reconnectTries}`)
-                        return Promise.delay(500)
+                        return U.delay(500)
                             .then(() => this.reconnectAsync())
                     } else {
                         throw e
@@ -417,7 +417,7 @@ namespace pxt.HF2 {
             this.flashing = true;
             return this.io.reconnectAsync()
                 .then(() => this.flashAsync(blocks))
-                .then(() => Promise.delay(100))
+                .then(() => U.delay(100))
                 .finally(() => this.flashing = false)
         }
 

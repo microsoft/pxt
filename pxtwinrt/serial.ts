@@ -125,7 +125,7 @@ namespace pxt.winrt {
                 // recognize the device has been plugged in. Without drivers, connection to the device might still fail
                 // the first time, but drivers should be installed by the time the user clicks Download again, at which
                 // point flashing will work without the user ever needing to manually set the device to bootloader
-                return Promise.delay(1500);
+                return U.delay(1500);
             });
     }
 

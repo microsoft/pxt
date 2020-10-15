@@ -236,7 +236,7 @@ export class ProjectView
         // don't try to reconnect immediately as the other is still closing
         // the webusb resources
         const maybeReconnect = () => {
-            Promise.delay(3000).then(() => {
+            Util.delay(3000).then(() => {
                 if (!this.state.home && document.visibilityState == 'visible')
                     cmds.maybeReconnectAsync();
             });
@@ -2151,7 +2151,7 @@ export class ProjectView
         core.showLoading("newproject", lf("creating new project..."));
         return this.createProjectAsync(options)
             .then(() => this.autoChooseBoardAsync())
-            .then(() => Promise.delay(500))
+            .then(() => Util.delay(500))
             .finally(() => core.hideLoading("newproject"));
     }
 
@@ -3634,7 +3634,7 @@ export class ProjectView
         curr.isDeleted = removeProject;
         let files = pkg.mainEditorPkg().getAllFiles();
         return workspace.saveAsync(curr, files)
-            .then(() => Promise.delay(500))
+            .then(() => Util.delay(500))
             .finally(() => {
                 this.setState({
                     tutorialOptions: undefined,

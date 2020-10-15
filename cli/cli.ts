@@ -2287,7 +2287,7 @@ function buildAndWatchAsync(f: () => Promise<string[]>): Promise<void> {
             if (globalConfig.noAutoBuild) return
             pxt.debug('watching ' + dirs.join(', ') + '...');
             let loop = () => {
-                Promise.delay(1000)
+                U.delay(1000)
                     .then(() => maxMTimeAsync(dirs))
                     .then(num => {
                         if (num > currMtime) {
@@ -5925,7 +5925,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
                     if (e.statusCode == 429 && retry++ < 6) {
                         delay *= 2;
                         pxt.log(`retrying in ${delay / 1000} secs...`)
-                        return Promise.delay(delay)
+                        return U.delay(delay)
                             .then(() => workAsync());
                     }
                     reportError({ repo: fullname, title: "build error", body: e.message })

@@ -640,7 +640,7 @@ namespace pxt.BrowserUtils {
         for (let i = 0; i < 16; ++i)
             md += md + Math.random();
         console.log(`adding entry ${md.length * 2} bytes`);
-        return Promise.delay(1)
+        return U.delay(1)
             .then(() => translationDbAsync())
             .then(db => db.setAsync("foobar", Math.random().toString(), "", null, undefined, md))
             .then(() => pxt.BrowserUtils.storageEstimateAsync())

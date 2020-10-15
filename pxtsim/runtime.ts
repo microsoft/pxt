@@ -104,7 +104,15 @@ namespace pxsim {
         }
 
         export function nextTick(f: () => void) {
-            (<any>Promise)._async._schedule(f)
+            setTimeout(f, 0);
+        }
+
+        export async function delay<T>(duration: number, value: T): Promise<T>;
+        export async function delay(duration: number): Promise<void>
+        export async function delay<T>(duration: number, value?: T): Promise<T> {
+            const output = await value;
+            await new Promise(resolve => setTimeout(() => resolve(), duration));
+            return output;
         }
 
         // this will take lower 8 bits from each character

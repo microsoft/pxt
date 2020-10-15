@@ -93,7 +93,7 @@ namespace pxt.webBluetooth {
             // give a 1sec for device to reboot
             if (this.autoReconnect && !this.reconnectPromise)
                 this.reconnectPromise =
-                    Promise.delay(this.autoReconnectDelay)
+                    U.delay(this.autoReconnectDelay)
                         .then(() => this.exponentialBackoffConnectAsync(8, 500))
                         .finally(() => this.reconnectPromise = undefined);
         }
@@ -141,7 +141,7 @@ namespace pxt.webBluetooth {
                         this.failedConnectionServicesVersion = this.device.servicesVersion;
                     if (this.disconnectOnAutoReconnect)
                         this.device.disconnect();
-                    return Promise.delay(delay)
+                    return U.delay(delay)
                         .then(() => this.exponentialBackoffConnectAsync(--max, delay * 1.8));
                 })
         }
@@ -337,7 +337,7 @@ namespace pxt.webBluetooth {
                     this.pfCharacteristic.startNotifications();
                     this.pfCharacteristic.addEventListener('characteristicvaluechanged', this.handleCharacteristic);
 
-                    // looks like we asked the device to reconnect in pairing mode, 
+                    // looks like we asked the device to reconnect in pairing mode,
                     // let's see if that worked out
                     if (this.state == PartialFlashingState.PairingModeRequested) {
                         this.debug(`checking pairing mode`)
@@ -579,7 +579,7 @@ namespace pxt.webBluetooth {
 
             // add delays or chrome crashes
             let chunk = new Uint8Array(20);
-            Promise.delay(this.chunkDelay)
+            U.delay(this.chunkDelay)
                 .then(() => {
                     this.flashPacketToken.throwIfCancelled();
                     chunk[0] = PartialFlashingService.FLASH_DATA;
@@ -625,7 +625,7 @@ namespace pxt.webBluetooth {
                     // and send a bogus package to trigger an out of order situations
                     const currentFlashOffset = this.flashOffset;
                     const transferDaemonAsync: () => Promise<void> = () => {
-                        return Promise.delay(500)
+                        return U.delay(500)
                             .then(() => {
                                 // are we stuck?
                                 if (currentFlashOffset != this.flashOffset // transfer ok
@@ -764,7 +764,7 @@ namespace pxt.webBluetooth {
             this.disconnect();
             if (this.pendingResumeLogOnDisconnection) {
                 this.pendingResumeLogOnDisconnection = false;
-                Promise.delay(500).then(() => this.resumeLog());
+                U.delay(500).then(() => this.resumeLog());
             }
         }
 

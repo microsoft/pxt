@@ -311,7 +311,7 @@ namespace pxt.HWDBG {
                     .then(() => hid.reconnectAsync()) // this will reset into app at the end
             })
             .then(() => hid.talkAsync(HF2_DBG_RESTART).catch(e => { }))
-            .then(() => Promise.delay(200))
+            .then(() => U.delay(200))
             .then(() => hid.reconnectAsync())
             .then(clearHalted)
             .then(waitForHaltAsync)

@@ -653,7 +653,7 @@ namespace pxsim {
         export function forever(a: RefAction) {
             function loop() {
                 runtime.runFiberAsync(a)
-                    .then(() => Promise.delay(20))
+                    .then(() => U.delay(20))
                     .then(loop)
                     .then()
             }

@@ -445,9 +445,16 @@ namespace ts.pxtc.Util {
     }
 
     export function nextTick(f: () => void) {
-        (<any>Promise)._async._schedule(f)
+        setTimeout(f, 0);
     }
 
+    export async function delay<T>(duration: number, value: T | Promise<T>): Promise<T>;
+    export async function delay(duration: number): Promise<void>
+    export async function delay<T>(duration: number, value?: T | Promise<T>): Promise<T> {
+        const output = await value;
+        await new Promise(resolve => setTimeout(() => resolve(), duration));
+        return output;
+    }
 
     export function memoizeString<T>(createNew: (id: string) => T): (id: string) => T {
         return memoize(s => s, createNew)
@@ -834,7 +841,7 @@ namespace ts.pxtc.Util {
                     }
                     this.waiting.push(f)
                     if (timeout > 0) {
-                        Promise.delay(timeout)
+                        U.delay(timeout)
                             .then(() => {
                                 let idx = this.waiting.indexOf(f)
                                 if (idx >= 0) {

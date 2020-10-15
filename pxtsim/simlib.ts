@@ -452,7 +452,7 @@ namespace pxsim {
 
         export function queuePlayInstructions(when: number, b: RefBuffer) {
             const prevStop = instrStopId
-            Promise.delay(when)
+            U.delay(when)
                 .then(() => {
                     if (prevStop != instrStopId)
                         return Promise.resolve()
@@ -487,7 +487,7 @@ namespace pxsim {
 
             const loopAsync = (): Promise<void> => {
                 if (idx >= b.data.length || !b.data[idx])
-                    return Promise.delay(timeOff).then(finish)
+                    return U.delay(timeOff).then(finish)
 
                 const soundWaveIdx = b.data[idx]
                 const freq = BufferMethods.getNumber(b, BufferMethods.NumberFormat.UInt16LE, idx + 2)
@@ -502,11 +502,11 @@ namespace pxsim {
                 const scaledEnd = scaleVol(endVol, isSquareWave);
 
                 if (!ctx || prevStop != instrStopId)
-                    return Promise.delay(duration)
+                    return U.delay(duration)
 
                 if (currWave != soundWaveIdx || currFreq != freq || freq != endFreq) {
                     if (ch.generator) {
-                        return Promise.delay(timeOff)
+                        return U.delay(timeOff)
                             .then(() => {
                                 finish()
                                 return loopAsync()
@@ -516,7 +516,7 @@ namespace pxsim {
                     ch.generator = _mute ? null : getGenerator(soundWaveIdx, freq)
 
                     if (!ch.generator)
-                        return Promise.delay(duration)
+                        return U.delay(duration)
 
                     currWave = soundWaveIdx
                     currFreq = freq

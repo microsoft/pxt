@@ -589,7 +589,7 @@ namespace pxt.runner {
             $(content).hide()
             $(loading).show()
 
-            Promise.delay(100) // allow UI to update
+            U.delay(100) // allow UI to update
                 .then(() => {
                     switch (doctype) {
                         case "print":
@@ -785,7 +785,7 @@ ${linkString}
 
         // start the work
         let toc: TOCMenuEntry[];
-        return Promise.delay(100)
+        return U.delay(100)
             .then(() => pxt.Cloud.markdownAsync(summaryid))
             .then(summary => {
                 toc = pxt.docs.buildTOC(summary);

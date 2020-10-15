@@ -214,7 +214,7 @@ namespace pxt {
         }
 
         initAsync() {
-            return Promise.delay(1000)
+            return U.delay(1000)
                 .then(() => this.sendCmdAsync("!")) // extended mode
                 .then(() => this.sendCmdAsync("qSupported"))
                 .then(res => {

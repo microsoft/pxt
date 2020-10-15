@@ -477,7 +477,7 @@ namespace pxt.github {
         const endTm = Date.now() + 5 * 60 * 1000
         let refs: RefsResult = null
         while (!refs && Date.now() < endTm) {
-            await Promise.delay(1000)
+            await U.delay(1000)
             try {
                 refs = await listRefsExtAsync(repoInfo.fullName, "heads");
             } catch (err) {

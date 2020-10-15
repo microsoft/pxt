@@ -266,7 +266,7 @@ export class HidIO implements pxt.packetio.PacketIO {
         this.dev.removeAllListeners("error");
         const pkt = new Uint8Array([0x48])
         this.sendPacketAsync(pkt).catch(e => { })
-        return Promise.delay(100)
+        return U.delay(100)
             .then(() => {
                 if (this.dev) {
                     const d = this.dev;

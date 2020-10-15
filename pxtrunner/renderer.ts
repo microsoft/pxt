@@ -547,7 +547,7 @@ namespace pxt.runner {
                         $el.append($('<div/>').addClass("ui segment warning").text(e.message));
                     }
                     $el.removeClass(cls);
-                    return Promise.delay(1, renderNextXmlAsync(cls, render, options));
+                    return U.delay(1, renderNextXmlAsync(cls, render, options));
                 })
         }
 
@@ -590,7 +590,7 @@ namespace pxt.runner {
                         pxt.reportException(e)
                         $el.append($('<div/>').addClass("ui segment warning").text(e.message));
                     }
-                    return Promise.delay(1, renderNextXmlAsync(cls, render, options));
+                    return U.delay(1, renderNextXmlAsync(cls, render, options));
                 })
         }
 
@@ -629,7 +629,7 @@ namespace pxt.runner {
                 pxt.reportException(e)
                 $el.append($('<div/>').addClass("ui segment warning").text(e.message));
             }
-            return Promise.delay(1, renderNextDiffAsync(cls));
+            return U.delay(1, renderNextDiffAsync(cls));
         }
 
         return renderNextDiffAsync(cls);
@@ -688,7 +688,7 @@ namespace pxt.runner {
                         pxt.reportException(e)
                         $el.append($('<div/>').addClass("ui segment warning").text(e.message));
                     }
-                    return Promise.delay(1, renderNextDiffAsync(cls));
+                    return U.delay(1, renderNextDiffAsync(cls));
                 })
         }
 
@@ -792,7 +792,7 @@ namespace pxt.runner {
                         }
                         $el.replaceWith($newel);
                     }
-                    return Promise.delay(1, renderNextAsync());
+                    return U.delay(1, renderNextAsync());
                 });
         }
 
@@ -1107,7 +1107,7 @@ namespace pxt.runner {
 
         if (options.snippetReplaceParent) $el = $el.parent();
         return fillCodeCardAsync($el, cards, { hideHeader: true })
-            .then(() => Promise.delay(1, renderNextCodeCardAsync(cls, options)));
+            .then(() => U.delay(1, renderNextCodeCardAsync(cls, options)));
     }
 
     function getRunUrl(options: ClientRenderOptions): string {
