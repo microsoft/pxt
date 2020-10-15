@@ -119,7 +119,7 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
         const { asset, isGalleryAsset } = this.props;
         const { showDeleteModal } = this.state;
         const details = this.getAssetDetails();
-        const name = asset ? asset.meta?.displayName || asset.id || lf("Unnamed") : lf("No asset selected");
+        const name = asset ? asset.meta?.displayName || pxt.getShortIDForAsset(asset) || lf("Unnamed") : lf("No asset selected");
 
         const actions: sui.ModalButton[] = [
             { label: lf("Cancel"), onclick: this.hideDeleteModal, icon: 'cancel' },
