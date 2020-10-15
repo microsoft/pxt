@@ -758,7 +758,7 @@ namespace pxt {
                 for (let filename of Object.keys(files)) {
                     const f = files[filename];
                     // Match .ts files that are not generated (.g.ts)
-                    if (filename.match(/(?<!\.g)\.ts$/i)) {
+                    if (filename.match(/((?!\.g).{2}|^.{0,1})\.ts$/i)) {
                         if (f.content.match(assetTsRegex)) return true;
                     } else if (filename.endsWith(".py")) {
                         if (f.content.match(assetPyRegex)) return true;
