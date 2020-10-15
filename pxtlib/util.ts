@@ -456,8 +456,28 @@ namespace ts.pxtc.Util {
         return output;
     }
 
+    export function promiseMapAll<T, V>(values: T[], mapper: (obj: T) => Promise<V>): Promise<V[]> {
+        return Promise.all(values.map(v => mapper(v)));
+    }
+
+    export function promiseMapAllSeries<T, V>(values: T[], mapper: (obj: T) => Promise<V>): Promise<V[]> {
+        return promisePoolAsync(1, values, mapper);
+    }
+
     export function memoizeString<T>(createNew: (id: string) => T): (id: string) => T {
         return memoize(s => s, createNew)
+    }
+
+    export async function promiseTimeout<T>(ms: number, promise: T | Promise<T>, msg?: string): Promise<T> {
+        return Promise.race([
+            promise,
+            new Promise((_, reject) => {
+                const id = setTimeout(() => {
+                    clearTimeout(id);
+                    reject(msg || `Promise timed out after ${ms}ms`);
+                }, ms);
+            }) as Promise<T>
+        ])
     }
 
     export function memoize<S, T>(getId: (v: S) => string, createNew: (v: S) => T): (id: S) => T {
@@ -1156,7 +1176,7 @@ namespace ts.pxtc.Util {
         if (live) {
             let errorCount = 0;
 
-            const pAll = Promise.mapSeries(stringFiles, (file) => downloadLiveTranslationsAsync(code, file.path, file.branch)
+            const pAll = U.promiseMapAllSeries(stringFiles, (file) => downloadLiveTranslationsAsync(code, file.path, file.branch)
                 .then(mergeTranslations, e => {
                     console.log(e.message);
                     ++errorCount;

@@ -71,7 +71,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
             const animationClasses = `${animation} visible transition animating`;
             pxsim.U.addClass(el, animationClasses);
 
-            Promise.resolve().delay(500).then(() => {
+            pxt.Util.delay(500).then(() => {
                 pxsim.U.removeClass(el, animationClasses);
                 el.style.animationDuration = '';
 
@@ -103,7 +103,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
                 el.style.animationDuration = '500ms';
                 const animationClasses = `${animation} visible transition animating`;
                 pxsim.U.addClass(el, animationClasses);
-                Promise.resolve().delay(500).then(() => {
+                pxt.Util.delay(500).then(() => {
                     pxsim.U.removeClass(el, `animating`);
                     el.style.animationDuration = '';
 

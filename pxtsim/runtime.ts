@@ -115,6 +115,49 @@ namespace pxsim {
             return output;
         }
 
+        export function promiseMapAll<T, V>(values: T[], mapper: (obj: T) => Promise<V>): Promise<V[]> {
+            return Promise.all(values.map(v => mapper(v)));
+        }
+
+        export  function promiseMapAllSeries<T, V>(values: T[], mapper: (obj: T) => Promise<V>): Promise<V[]> {
+            return promisePoolAsync(1, values, mapper);
+        }
+
+        export async function promisePoolAsync<T, V>(maxConcurrent: number, inputValues: T[], handler: (input: T) => Promise<V>): Promise<V[]> {
+            let curr = 0;
+            const promises = [];
+            const output: V[] = [];
+
+            for (let i = 0; i < maxConcurrent; i++) {
+                const thread = (async () => {
+                    while (curr < inputValues.length) {
+                        const id = curr++;
+                        const input = inputValues[id];
+                        output[id] = await handler(input);
+                    }
+                })();
+
+                promises.push(thread);
+            }
+
+            await Promise.all(promises);
+
+            return output;
+        }
+
+        export async function promiseTimeout<T>(ms: number, promise: T | Promise<T>, msg?: string): Promise<T> {
+            return Promise.race([
+                promise,
+                new Promise((_, reject) => {
+                    const id = setTimeout(() => {
+                        clearTimeout(id);
+                        reject(msg || `Promise timed out after ${ms}ms`);
+                    }, ms);
+                }) as Promise<T>
+            ])
+        }
+
+
         // this will take lower 8 bits from each character
         export function stringToUint8Array(input: string) {
             let len = input.length;

@@ -1907,9 +1907,9 @@ export class ProjectView
         // make sure simulator is ready
         this.setState({ screenshoting: true });
         simulator.driver.postMessage({ type: "screenshot" } as pxsim.SimulatorScreenshotMessage);
-        return this.requestScreenshotPromise = new Promise<string>((resolve, reject) => {
+        return Util.promiseTimeout(1000, this.requestScreenshotPromise = new Promise<string>((resolve, reject) => {
             this.pushScreenshotHandler(msg => resolve(pxt.BrowserUtils.imageDataToPNG(msg.data)));
-        }).timeout(1000) // simulator might be stopped or in bad shape
+        })) // simulator might be stopped or in bad shape
             .catch(e => {
                 pxt.tickEvent('screenshot.timeout');
                 return undefined;

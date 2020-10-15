@@ -619,7 +619,7 @@ function msdDeployCoreAsync(res: ts.pxtc.CompileResult): Promise<void> {
                         .then(() => pxt.debug("   wrote to " + drivename))
                         .catch(() => pxt.log(`   failed writing to ${drivename}`));
                 };
-                return Promise.map(drives, d => writeHexFile(d))
+                return U.promiseMapAll(drives, d => writeHexFile(d))
                     .then(() => drives.length);
             }).then(() => { });
     }

@@ -267,7 +267,7 @@ namespace pxt.HWDBG {
             .then(stack => {
                 buildFrames(H.decodeU32LE(stack), msg);
                 let maps = [msg.globals].concat(msg.stackframes.map(s => s.locals))
-                return Promise.map(maps, heapExpandMapAsync)
+                return U.promiseMapAll(maps, heapExpandMapAsync)
             })
             .then(() => postMessage(msg))
     }

@@ -168,14 +168,15 @@ export function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.De
     return deployAsync();
 
     function deployAsync(): Promise<void> {
-        return pxt.packetio.initAsync(isRetry)
-            .then(dev => core.showLoadingAsync(LOADING_KEY, lf("Downloading..."),
-                dev.reflashAsync(resp)
-                    .then(() => dev.reconnectAsync()), 5000))
-            .then(() => core.infoNotification("Download completed!"))
-            .finally(() => core.hideLoading(LOADING_KEY))
-            .timeout(120000, "timeout") // packetio should time out first
-            .catch((e) => {
+        // packetio should time out first
+        return pxt.Util.promiseTimeout(120000,
+                pxt.packetio.initAsync(isRetry)
+                    .then(dev => core.showLoadingAsync(LOADING_KEY, lf("Downloading..."),
+                        dev.reflashAsync(resp)
+                            .then(() => dev.reconnectAsync()), 5000))
+                    .then(() => core.infoNotification("Download completed!"))
+                    .finally(() => core.hideLoading(LOADING_KEY))
+            ).catch((e) => {
                 if (e.type === "repairbootloader") {
                     return pairBootloaderAsync()
                         .then(() => hidDeployCoreAsync(resp))
@@ -219,8 +220,7 @@ function pairBootloaderAsync(): Promise<void> {
 
 function winrtDeployCoreAsync(r: pxtc.CompileResult, d: pxt.commands.DeployOptions): Promise<void> {
     log(`winrt deploy`)
-    return hidDeployCoreAsync(r, d)
-        .timeout(60000)
+    return pxt.Util.promiseTimeout(60000, hidDeployCoreAsync(r, d))
         .catch((e) => {
             return pxt.packetio.disconnectAsync()
                 .catch((e) => {

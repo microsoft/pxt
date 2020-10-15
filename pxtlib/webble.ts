@@ -55,8 +55,7 @@ namespace pxt.webBluetooth {
         connectAsync(): Promise<void> {
             if (!this.connectPromise)
                 this.connectPromise = this.alivePromise(this.createConnectPromise())
-            return this.connectPromise
-                .timeout(this.connectionTimeout, "connection timeout")
+            return pxt.Util.promiseTimeout(this.connectionTimeout, this.connectPromise, "connection timeout")
                 .then(() => this.aliveToken.throwIfCancelled())
                 .catch(e => {
                     // connection failed, clear promise to try again

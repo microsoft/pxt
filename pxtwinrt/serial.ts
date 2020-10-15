@@ -65,8 +65,7 @@ namespace pxt.winrt {
                 const deferred = Promise.defer<void>();
                 port.cancellingDeferred = deferred;
                 stoppedReadingOpsPromise = stoppedReadingOpsPromise.then(() => {
-                    return deferred.promise
-                        .timeout(500)
+                    return U.promiseTimeout(500, deferred.promise)
                         .catch((e) => {
                             pxt.reportError("winrt_device", `could not cancel reading operation for a device: ${e.message}`);
                         });

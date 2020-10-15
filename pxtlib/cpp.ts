@@ -1444,7 +1444,7 @@ namespace pxt.hexloader {
                 keys.unshift(newkey)
                 let todel = keys.slice(maxLen)
                 keys = keys.slice(0, maxLen)
-                return Promise.map(todel, e => host.cacheStoreAsync(e, null))
+                return U.promiseMapAll(todel, e => host.cacheStoreAsync(e, null))
                     .then(() => host.cacheStoreAsync(idxkey, JSON.stringify(keys)))
             })
     }

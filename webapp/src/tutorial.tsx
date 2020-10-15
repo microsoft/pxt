@@ -419,7 +419,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
             tutorialCard.style.animationDuration = '500ms';
             this.lastStep = step;
             pxsim.U.addClass(tutorialCard, animationClasses);
-            Promise.resolve().delay(500)
+            pxt.Util.delay(500)
                 .then(() => pxsim.U.removeClass(tutorialCard, animationClasses));
         }
         if (this.prevStep != step) {
