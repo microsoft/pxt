@@ -91,15 +91,16 @@ export function setupWorkspace(id: string) {
 }
 
 async function switchToMemoryWorkspace(reason: string): Promise<void> {
-    pxt.tickEvent(`workspace.syncerror`, {
-        ws: implType,
-        reason: reason
-    });
-
     pxt.log(`workspace: error, switching from ${implType} to memory workspace`);
+
     const expectedMemWs = pxt.appTarget.appTheme.disableMemoryWorkspaceWarning
-                            || pxt.shell.isSandboxMode() || pxt.shell.isReadOnly() || pxt.BrowserUtils.isIFrame();
+        || pxt.shell.isSandboxMode() || pxt.shell.isReadOnly() || pxt.BrowserUtils.isIFrame();
     if (!expectedMemWs && impl !== memoryworkspace.provider) {
+        pxt.tickEvent(`workspace.syncerror`, {
+            ws: implType,
+            reason: reason
+        });
+
         await core.confirmAsync({
             header: lf("Unable to save projects"),
             body: lf("We are unable to save your projects at this time; be sure to save your project by downloading or sharing it, as they will go after you refresh!"),

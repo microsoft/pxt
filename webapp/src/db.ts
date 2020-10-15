@@ -13,38 +13,18 @@ const PouchDB = require("pouchdb")
 });
 
 let _db: any = undefined;
-let inMemory = false;
-
-function memoryDb(): Promise<any> {
-    pxt.debug('db: in memory...')
-    inMemory = true;
-    _db = new PouchDB("pxt-" + pxt.storage.storageId(), {
-        adapter: 'memory'
-    })
-    return Promise.resolve(_db);
-}
 
 export function getDbAsync(): Promise<any> {
     if (_db) return Promise.resolve(_db);
-
-    if (pxt.shell.isSandboxMode() || pxt.shell.isReadOnly())
-        return memoryDb();
 
     const opts: any = {
         revs_limit: 2
     };
 
-    let temp = new PouchDB("pxt-" + pxt.storage.storageId(), opts);
-    return temp.get('pouchdbsupportabletest')
-        .catch(function (error: any) {
-            if (error && error.error && error.name == 'indexed_db_went_bad') {
-                return memoryDb();
-            } else {
-                _db = temp;
-                return Promise.resolve(_db);
-            }
-        })
-        .finally(() => { pxt.log(`PouchDB adapter: ${_db.adapter}`) });
+    _db = new PouchDB("pxt-" + pxt.storage.storageId(), opts);
+    pxt.log(`PouchDB adapter: ${_db.adapter}`)
+
+    return Promise.resolve(_db);
 }
 
 export function destroyAsync(): Promise<void> {
