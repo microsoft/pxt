@@ -80,9 +80,8 @@ export class Table {
                     .then(() => pxt.BrowserUtils.clearTutorialInfoDbAsync())
                     .then(() => this.setAsyncNoRetry(obj))
                     .catch(e => {
-                        pxt.reportException(e);
                         pxt.log(`table: we are out of space...`)
-                        return undefined;
+                        throw e;
                     })
             })
     }
