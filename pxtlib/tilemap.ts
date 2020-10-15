@@ -681,6 +681,98 @@ namespace pxt {
             }
         }
 
+        /**
+         * Checks if the asset is referenced anywhere in the user's code.
+         * If an asset is referenced in any block we return true, as well
+         * as if a tile is used in any tilemap.
+         *
+         * Ways to reference an asset in TS/Python:
+         *
+         * TILES:
+         * myTiles.shortId
+         * assets.tile`shortId`
+         * assets.tile`displayName`
+         *
+         * IMAGES:
+         * assets.image`shortId`
+         * assets.image`displayName`
+         *
+         * ANIMATIONS:
+         * assets.animation`shortId`
+         * assets.animation`displayName`
+         *
+         * TILEMAPS:
+         * tilemap`shortId`
+         **/
+        public isAssetUsed(asset: Asset, files?: pxt.Map<{content: string}>): boolean {
+            if (asset.meta?.blockIDs?.length > 0) return true;
+
+            if (asset.type == pxt.AssetType.Tile) {
+                for (const tm of this.getAssets(AssetType.Tilemap)) {
+                    if (tm.data.tileset.tiles.some(t => t.internalID === asset.internalID)) {
+                        return true;
+                    }
+                }
+            }
+
+            if (files) {
+                const shortId = getShortIDForAsset(asset);
+                const displayName = asset.meta?.displayName || "";
+
+                let assetTsRefs: string;
+                switch (asset.type) {
+                    case pxt.AssetType.Tile:
+                        assetTsRefs = `myTiles.${shortId}|assets.tile\`${shortId}\``;
+                        if (displayName) assetTsRefs += `|assets.tile\`${displayName}\``;
+                        break;
+                    case pxt.AssetType.Tilemap:
+                        assetTsRefs = `tilemap\`${shortId}\``;
+                        break;
+                    case pxt.AssetType.Animation:
+                        assetTsRefs = `assets.animation\`${shortId}\``;
+                        if (displayName) assetTsRefs += `|assets.animation\`${displayName}\``;
+                        break;
+                    default:
+                        assetTsRefs = `assets.image\`${shortId}\``;
+                        if (displayName) assetTsRefs += `|assets.image\`${displayName}\``;
+                        break;
+                }
+                const assetTsRegex = new RegExp(assetTsRefs, "gm");
+
+                let assetPyRefs: string;
+                switch (asset.type) {
+                    case pxt.AssetType.Tile:
+                        assetPyRefs = `myTiles.${shortId}|assets.tile\("""${shortId}"""\)`;
+                        if (displayName) assetPyRefs += `|assets.tile\("""${displayName}"""\)`;
+                        break;
+                    case pxt.AssetType.Tilemap:
+                        assetPyRefs = `assets.tilemap\("""${shortId}"""\)`;
+                        break;
+                    case pxt.AssetType.Animation:
+                        assetPyRefs = `assets.animation\("""${shortId}"""\)`;
+                        if (displayName) assetPyRefs += `|assets.animation\("""${displayName}"""\)`;
+                        break;
+                    default:
+                        assetPyRefs = `assets.image\("""${shortId}"""\)`;
+                        if (displayName) assetPyRefs += `|assets.image\("""${displayName}"""\)`;
+                        break;
+                }
+                const assetPyRegex = new RegExp(assetPyRefs, "gm");
+
+                for (let filename of Object.keys(files)) {
+                    const f = files[filename];
+                    // Match .ts files that are not generated (.g.ts)
+                    if (filename.match(/((?!\.g).{2}|^.{0,1})\.ts$/i)) {
+                        if (f.content.match(assetTsRegex)) return true;
+                    } else if (filename.endsWith(".py")) {
+                        if (f.content.match(assetPyRegex)) return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
         public lookupAsset(assetType: AssetType.Image, name: string): ProjectImage;
         public lookupAsset(assetType: AssetType.Tile, name: string): Tile;
         public lookupAsset(assetType: AssetType.Tilemap, name: string): ProjectTilemap;
