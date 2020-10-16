@@ -8,6 +8,6 @@ As well as the speaker and microphone, the new micro:bit also includes an update
 
 Soon you will be able to use the micro:bit with an accessory shield, to play MakeCode Arcade games! Connecting the new micro:bit to a MakeCode Arcade compatible shield allows the micro:bit to become its own retro gaming handheld.  The micro:bit acts like a game cartridge that contains all of your game code, all the shield does is enhance the micro:bit with a full colour LCD, additional buttons for game input, and multiplayer capability. In addition to these awesome new features, micro:bit accessory manufacturers can augment their shields with their own custom Arcade shield designs and unique capabilities.
 
-We will be releasing the hardware specification for MakeCode Arcade shields very shortly, so stay tuned!
+We will be releasing the hardware specification for MakeCode Arcade shields very shortly, so stay tuned! If you are an electronics manufacturer interested in producing a micro:bit Arcade Shield [please contact us](mailto:arcadehdw@microsoft.com).
 
 https://youtu.be/uZcsJYvYL_I
