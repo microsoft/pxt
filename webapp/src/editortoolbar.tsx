@@ -5,8 +5,6 @@ import * as data from "./data";
 import * as sui from "./sui";
 import * as githubbutton from "./githubbutton";
 import * as cmds from "./cmds"
-import { is } from "bluebird";
-import { show } from "react-tooltip";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
