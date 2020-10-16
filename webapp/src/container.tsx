@@ -448,7 +448,7 @@ export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
         // show python in toggle if: python editor currently active, or blocks editor active & saved language pref is python
         const showPython = parent.isPythonActive() || (parent.isBlocksActive() && pxt.shell.isPyLangPref());
         const showBlocks = !!pkg.mainEditorPkg().files["main.blocks"];
-        const showAssets = !!pkg.mainEditorPkg().files[pxt.ASSETS_FILE];
+        const showAssets = pxt.appTarget.appTheme.assetEditor;
 
         const hasDropdown = python && languageRestriction === pxt.editor.LanguageRestriction.Standard;
 
@@ -461,7 +461,7 @@ export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
                     <JavascriptMenuItem parent={parent} />
                     <PythonMenuItem parent={parent} />
                 </sui.DropdownMenu>}
-                {showAssets && pxt.appTarget.appTheme.assetEditor && <AssetMenuItem parent={parent} />}
+                {showAssets && <AssetMenuItem parent={parent} />}
                 <div className={`ui item toggle ${hasDropdown ? 'hasdropdown' : ''}`}></div>
             </div>
         )

@@ -87,8 +87,8 @@ namespace pxt.winrt.workspace {
         return promisify(folder.createFolderAsync(logicalDirname, Windows.Storage.CreationCollisionOption.openIfExists))
             .then(() => Promise.map(data.files, f => readFileAsync(pathjoin(logicalDirname, f.name))
                 .then(text => {
-                    if (f.name == pxt.SIMSTATE_JSON)
-                        return; // ignore conflicts in sim inernal file
+                    if (f.name == pxt.SIMSTATE_JSON || f.name == pxt.ASSETS_FILE)
+                        return; // ignore conflicts in sim or assets internal file
                     else if (f.name == pxt.CONFIG_NAME) {
                         try {
                             let cfg: pxt.PackageConfig = JSON.parse(f.content)

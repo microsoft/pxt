@@ -41,9 +41,9 @@ class AssetTopbarImpl extends React.Component<AssetTopbarProps, AssetTopbarState
                 const name = result.meta?.displayName;
                 switch (type) {
                     case pxt.AssetType.Image:
-                        project.createNewProjectImage(result.bitmap); break;
+                        project.createNewProjectImage(result.bitmap, name); break;
                     case pxt.AssetType.Tile:
-                        project.createNewTile(result.bitmap); break;
+                        project.createNewTile(result.bitmap, null, name); break;
                     case pxt.AssetType.Tilemap:
                         project.createNewTilemapFromData(result.data, name); break;
                 }
@@ -55,15 +55,30 @@ class AssetTopbarImpl extends React.Component<AssetTopbarProps, AssetTopbarState
 
     protected getEmptyAsset(type: pxt.AssetType): pxt.Asset {
         const project = pxt.react.getTilemapProject();
-        const asset = { type, id: "", internalID: 0, meta: {} } as pxt.Asset;
+        const asset = { type, id: "", internalID: 0, meta: { displayName: this.getEmptyAssetDisplayName(type) } } as pxt.Asset;
         switch (type) {
             case pxt.AssetType.Image:
             case pxt.AssetType.Tile:
                 (asset as pxt.ProjectImage).bitmap = new pxt.sprite.Bitmap(16, 16).data(); break
             case pxt.AssetType.Tilemap:
-                (asset as pxt.ProjectTilemap).data = project.blankTilemap(16, 16, 16);
+                const tilemap = asset as pxt.ProjectTilemap;
+                tilemap.data = project.blankTilemap(16, 16, 16);
+
         }
         return asset;
+    }
+
+    protected getEmptyAssetDisplayName(type: pxt.AssetType): string {
+        switch (type) {
+            case pxt.AssetType.Image:
+                return lf("image");
+            case pxt.AssetType.Tile:
+                return lf("tile");
+            case pxt.AssetType.Tilemap:
+                return lf("level");
+            default:
+                return lf("asset")
+        }
     }
 
     render() {
@@ -79,7 +94,7 @@ class AssetTopbarImpl extends React.Component<AssetTopbarProps, AssetTopbarState
             <AssetGalleryTab title={lf("My Assets")} view={GalleryView.User} />
             <AssetGalleryTab title={lf("Gallery")} view={GalleryView.Gallery} />
             <div className="asset-editor-button create-new" onClick={this.showCreateModal} role="button">{lf("Create New")}</div>
-            <sui.Modal isOpen={showCreateModal} onClose={this.hideCreateModal} closeIcon={false} dimmer={true} header={lf("Create New Asset")} buttons={actions}>
+            <sui.Modal className="asset-editor-create-dialog" isOpen={showCreateModal} onClose={this.hideCreateModal} closeIcon={false} dimmer={true} header={lf("Create New Asset")} buttons={actions}>
                 <div>{lf("Choose your asset type from the options below.")}</div>
             </sui.Modal>
         </div>
