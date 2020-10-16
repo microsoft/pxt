@@ -141,7 +141,13 @@ namespace pxsim {
                 promises.push(thread);
             }
 
-            await Promise.all(promises);
+            try {
+                await Promise.all(promises);
+            } catch (e) {
+                // do not spawn any more promises after pool failed.
+                curr = inputValues.length;
+                throw e;
+            }
 
             return output;
         }
