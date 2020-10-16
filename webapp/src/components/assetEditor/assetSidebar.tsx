@@ -75,18 +75,6 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
     }
 
     protected editAssetHandler = () => {
-        const { asset } = this.props;
-
-        // for tilemaps, fill in all project tiles
-        if (asset.type == pxt.AssetType.Tilemap) {
-            const allTiles = pxt.react.getTilemapProject().getProjectTiles(asset.data.tileset.tileWidth, true);
-            for (const tile of allTiles.tiles) {
-                if (!asset.data.tileset.tiles.some(t => t.id === tile.id)) {
-                    asset.data.tileset.tiles.push(tile);
-                }
-            }
-        }
-
         this.props.showAssetFieldView(this.props.asset, this.editAssetDoneHandler);
     }
 
@@ -168,7 +156,7 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
             { asset && <div className="asset-editor-sidebar-controls">
                 {canEdit && <sui.MenuItem name={lf("Edit")} className="asset-editor-button" icon="edit" onClick={this.editAssetHandler}/>}
                 <sui.MenuItem name={lf("Duplicate")} className="asset-editor-button" icon="copy" onClick={this.duplicateAssetHandler}/>
-                {canCopy && <sui.MenuItem name={lf("Copy")} className="asset-editor-button" icon="paste" onClick={this.copyAssetHandler}/>}
+                {canCopy && <sui.MenuItem name={lf("Clipboard")} className="asset-editor-button" icon="paste" onClick={this.copyAssetHandler}/>}
                 {canDelete && <sui.MenuItem name={lf("Delete")} className="asset-editor-button delete-asset" icon="trash" onClick={this.showDeleteModal}/>}
             </div>}
             <textarea className="asset-editor-sidebar-copy" ref={this.copyTextAreaRefHandler} ></textarea>

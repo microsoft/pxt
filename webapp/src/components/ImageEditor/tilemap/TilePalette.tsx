@@ -487,7 +487,12 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
         return this.props.tileset.tiles
             .map((t, i) => ([t, i] as [pxt.Tile, number]))
             .filter(([t]) => t.isProjectTile)
-            .sort(([a], [b]) => a.internalID - b.internalID);
+            .sort(([a], [b]) => {
+                const transparency = "myTiles.transparency" + this.props.tileset.tileWidth;
+                if (a.id == transparency) return -1
+                else if (b.id == transparency) return 1
+                else return a.internalID - b.internalID;
+            });
     }
 
     protected getTileIndex(g: GalleryTile) {

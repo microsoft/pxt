@@ -40,6 +40,10 @@ const topReducer = (state: AssetEditorState = initialState, action: any): AssetE
     }
 }
 
+function compareInternalId(a: pxt.Asset, b: pxt.Asset) {
+    return a.internalID - b.internalID;
+}
+
 function getUserAssets() {
     const project = pxt.react.getTilemapProject();
     const imgConv = new pxt.ImageConverter();
@@ -56,9 +60,12 @@ function getUserAssets() {
         return asset;
     };
 
-    return project.getAssets(pxt.AssetType.Image).map(imageToGalleryItem)
-        .concat(project.getAssets(pxt.AssetType.Tile).map(imageToGalleryItem))
-        .concat(project.getAssets(pxt.AssetType.Tilemap).map(tilemapToGalleryItem));
+    const images = project.getAssets(pxt.AssetType.Image).map(imageToGalleryItem).sort(compareInternalId);
+    const tiles = project.getAssets(pxt.AssetType.Tile).map(imageToGalleryItem)
+        .filter(t => !t.id.match(/^myTiles.transparency(8|16|32)$/gi)).sort(compareInternalId);
+    const tilemaps = project.getAssets(pxt.AssetType.Tilemap).map(tilemapToGalleryItem).sort(compareInternalId);
+
+    return images.concat(tiles).concat(tilemaps);
 }
 
 export default topReducer;

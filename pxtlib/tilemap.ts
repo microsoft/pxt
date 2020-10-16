@@ -570,10 +570,6 @@ namespace pxt {
                 data: data
             });
 
-            data.tileset.tiles.forEach(t => {
-                this.resolveTile(t.id) ? this.updateTile(t) : this.createNewTile(t.bitmap, t.id, t.meta?.displayName);
-            });
-
             return [id, data];
         }
 
@@ -852,7 +848,6 @@ namespace pxt {
                 case AssetType.Tile:
                     return this.updateTile(asset);
                 case AssetType.Tilemap:
-                    asset.data.tileset.tiles.forEach(t => this.updateTile(t));
                     return this.state.tilemaps.update(asset.id, asset);
                 case AssetType.Animation:
                     return this.state.animations.update(asset.id, asset);
