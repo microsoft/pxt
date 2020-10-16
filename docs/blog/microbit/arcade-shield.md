@@ -2,7 +2,7 @@
 
 **Posted on October 16, 2020 by [James Devine](https://github.com/jamesadevine)**
 
-It has been an exciting week with the announcement of the [new micro:bit](https://microbit.org/new-microbit/)! We can’t wait for these new little devices to get into the hands of educators and students next month – having a speaker and microphone will _amplify_ the power of what you can do with these mini-computers, and we can’t wait to see all the creative coding projects you come up with!
+It has been an exciting week with the announcement of the [new micro:bit](https://microbit.org/new-microbit/)! We can’t wait for these new little devices to get into the hands of educators and students next month – having a speaker and microphone will _amplify_ the power of what you can do with these tiny-computers, and we can’t wait to see all the creative coding projects you come up with!
 
 As well as the speaker and microphone, the new micro:bit also includes an updated, more powerful processor. What this means is that it will be compatible with [Microsoft MakeCode Arcade](https://arcade.makecode.com/)! MakeCode Arcade is a retro arcade game development environment which makes it super easy for anyone to make a game, blending artistic creativity and computer science education.
 
@@ -10,4 +10,4 @@ Soon you will be able to use the micro:bit with an accessory shield, to play Mak
 
 We will be releasing the hardware specification for MakeCode Arcade shields very shortly, so stay tuned!
 
-![GIF of a micro:bit V2 being inserted into the new micro:bit arcade shield. When inserted, a game starts playing. The game stops when the micro:bit is removed.](/static/blog/microbit/arcade-shield.gif)
+https://youtu.be/uZcsJYvYL_I
