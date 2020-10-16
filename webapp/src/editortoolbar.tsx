@@ -342,12 +342,12 @@ interface ZoomSliderState {
 }
 
 export class ZoomSlider extends data.Component<ZoomSliderProps, ZoomSliderState> {
-    private zoomMin = this.props.zoomMin? this.props.zoomMin : 0;
-    private zoomMax = this.props.zoomMax? this.props.zoomMax : 5;
+    private zoomMin = this.props.zoomMin ? this.props.zoomMin : 0;
+    private zoomMax = this.props.zoomMax ? this.props.zoomMax : 5;
 
     constructor(props: ZoomSliderProps) {
         super(props);
-        this.state = {zoomValue: Math.floor((this.zoomMax + 1 - this.zoomMin)/2) + this.zoomMin};
+        this.state = {zoomValue: Math.floor((this.zoomMax + 1 - this.zoomMin) / 2) + this.zoomMin};
 
         this.zoomUpdate = this.zoomUpdate.bind(this);
         this.zoomOut = this.zoomOut.bind(this);
