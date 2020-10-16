@@ -17,7 +17,10 @@
 @avatarSize: 4.5rem;
 @avatarMargin: @avatarSize + 0.5rem;
 @mobileAvatarMargin: 2rem;
-@workspaceHeaderHeight: 2rem;
+
+@workspaceHeaderHeight: 3rem;
+@sidebarPadding: 1.6rem;
+@sidebarTutorialHeaderSize: 1.5rem;
 
 /*******************************
       Tutorial mode
@@ -28,6 +31,10 @@
 
 .tutorial.flyoutOnly #maineditor > .full-abs {
     top: calc(@tutorialCardHeight + @workspaceHeaderHeight);
+}
+
+.tutorial.flyoutOnly.sidebarTutorial #maineditor > .full-abs {
+    top: @workspaceHeaderHeight;
 }
 
 /* Tutorial Mode */
@@ -62,8 +69,8 @@
     font-family: @docsPageFont;
 }
 
-.tutorial #tutotialcard > code,
-.tutorial #tutotialcard > pre {
+.tutorial #tutorialcard > code,
+.tutorial #tutorialcard > pre {
     font-family: @pageFont;
 }
 
@@ -491,8 +498,9 @@ code.lang-filterblocks {
     color: @white;
     z-index: @simulatorZIndex;
 
-    #workspaceHeader {
-        flex: 1;
+    #headerToolbar {
+        position: absolute;
+        right: 0;
     }
 
     #flyoutHeader {
@@ -500,13 +508,87 @@ code.lang-filterblocks {
         overflow: hidden;
         white-space: nowrap;
         text-overflow: ellipsis;
+
+        #flyoutHeaderTitle{
+            padding-left: 1.2rem;
+            padding-top: .8rem;
+        }
     }
 
     div {
         display: inline-block;
         text-align: center;
         line-height: 2rem;
-        font-weight: 800;
+    }
+}
+
+.flyoutOnly {
+    #headers {
+        height: @workspaceHeaderHeight;
+
+        div {
+            display: inline-flex;
+        }
+    }
+}
+
+/*******************************
+        Sidebar Tutorial
+*******************************/
+.flyoutOnly.sidebarTutorial.tutorial {
+    #maineditor{
+        left: 33.3%;
+    }
+
+    #maineditor > .full-abs {
+        top: 0;
+    }
+
+    #maineditor > #blocksArea {
+        top: 3rem;
+    }
+
+    #sidebar {
+        width: 33.3%;
+        height: 100%;
+        background-color: @sidebarTutorialColor;
+        color: #3c3c3c;
+        font-family: @docsPageFont;
+        padding: @sidebarPadding / 2 @sidebarPadding;
+        overflow-y: auto;
+
+        .tutorialTitle {
+            font-size: @sidebarTutorialHeaderSize;
+            padding-bottom: 1.6rem;
+            word-wrap: break-word;
+        }
+
+        .tutorialMessage {
+            font-size: 1.2rem;
+            padding-bottom: 2rem;
+        }
+
+        #callout {
+            padding: @sidebarTutorialHeaderSize 0 4rem;
+            position: relative;
+
+            .callout-hint-header {
+                font-size: @sidebarTutorialHeaderSize;
+            }
+
+            .callout-hint {
+                width: 5rem;
+                height: 5rem;
+                position: absolute;
+                bottom: -1rem;
+                left: 1rem;
+                z-index: 2;
+            }
+
+            .callout-wrapper {
+                padding: 0 1.5rem;
+            }
+        }
     }
 }
 

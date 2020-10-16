@@ -12,6 +12,7 @@ import * as codecard from "./codecard";
 import { HintTooltip } from "./hinttooltip";
 import { PlayButton } from "./simtoolbar";
 import { ProjectView } from "./app";
+import * as editortoolbar from "./editortoolbar";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -285,7 +286,7 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
         } else {
             let onClick = tutorialStep < tutorialStepInfo.length - 1 ? this.next : this.closeHint;
             const actions: sui.ModalButton[] = [{
-                label: lf("Ok"),
+                label: lf("Start"),
                 onclick: onClick,
                 icon: 'check',
                 className: 'green'
@@ -610,7 +611,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
 export class WorkspaceHeader extends data.Component<any, {}> {
     private flyoutWidth: number = 0;
     private flyoutTitle: string = lf("Toolbox");
-    private workspaceTitle: string = lf("Workspace");
+    private workspaceWidth: number = 0;
     constructor(props: any) {
         super(props);
     }
@@ -620,6 +621,11 @@ export class WorkspaceHeader extends data.Component<any, {}> {
         if (flyout) {
             this.flyoutWidth = flyout.clientWidth;
         }
+
+        let workspace = document.querySelector('#blocksArea');
+        if (workspace) {
+            this.workspaceWidth = workspace.clientWidth - this.flyoutWidth - 4;
+        }
     }
 
     private headerStyle() {
@@ -628,10 +634,20 @@ export class WorkspaceHeader extends data.Component<any, {}> {
         }
     }
 
+    private workspaceStyle() {
+        return {
+            width: this.workspaceWidth
+        }
+    }
+
     renderCore() {
         return <div id="headers">
-            <div id="flyoutHeader" style={this.headerStyle()}>{this.flyoutTitle}</div>
-            <div id="workspaceHeader">{this.workspaceTitle}</div>
+            <div id="flyoutHeader" style={this.headerStyle()}>
+                <div id="flyoutHeaderTitle">{this.flyoutTitle}</div>
+            </div>
+            <div id="workspaceHeader" style={this.workspaceStyle()}>
+                <editortoolbar.SmallEditorToolbar parent={this.props.parent}/>
+            </div>
         </div>;
     }
 }
