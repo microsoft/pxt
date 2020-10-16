@@ -323,14 +323,24 @@ div.simframe > iframe {
     transition-timing-function: ease-in;
 }
 
+.active.item.javascript-menuitem ~ .toggle,
+.active.item.python-menuitem ~ .toggle,
 .active.item.blocks-menuitem ~ .toggle {
     margin-left: 0 !important;
     box-shadow: 2px 0px 0px rgba(0,0,0,0.1) !important;
     background: @editorToggleColor !important;
 }
+.javascript-menuitem ~ .active.item.assets-menuitem ~ .toggle,
+.python-menuitem ~ .active.item.assets-menuitem ~ .toggle,
 .blocks-menuitem ~ .active.item.javascript-menuitem ~ .toggle,
 .blocks-menuitem ~ .active.item.python-menuitem ~ .toggle {
     margin-left: 140px !important;
+    box-shadow: -2px 0px 0px rgba(0,0,0,0.1) !important;
+    background: @editorToggleColor !important;
+}
+
+.blocks-menuitem ~ .active.item.assets-menuitem ~ .toggle {
+    margin-left: 326px !important;
     box-shadow: -2px 0px 0px rgba(0,0,0,0.1) !important;
     background: @editorToggleColor !important;
 }
@@ -848,6 +858,13 @@ p.ui.font.small {
             box-shadow: -2px 0px 0px rgba(0,0,0,0.1) !important;
             background: @editorToggleColor !important;
         }
+
+        .blocks-menuitem ~ .active.item.assets-menuitem ~ .toggle {
+            margin-left: 120px !important;
+            box-shadow: -2px 0px 0px rgba(0,0,0,0.1) !important;
+            background: @editorToggleColor !important;
+        }
+
     }
 
     .simView #boardview {
@@ -1381,10 +1398,16 @@ p.ui.font.small {
         width: 40px;
         height: 38px;
     }
+    .javascript-menuitem ~ .active.item.assets-menuitem ~ .toggle,
+    .python-menuitem ~ .active.item.assets-menuitem ~ .toggle,
     .blocks-menuitem ~ .active.item.javascript-menuitem ~ .toggle,
     .blocks-menuitem ~ .active.item.python-menuitem ~ .toggle {
         margin-left: 40px !important;
     }
+    .blocks-menuitem ~ .active.item.assets-menuitem ~ .toggle {
+        margin-left: 120px !important;
+    }
+
     /* Top Menu */
     #maineditor {
         top: @mobileMenuHeight;
