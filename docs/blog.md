@@ -4,7 +4,7 @@
 
 October 16th, 2020 by [James Devine](https://github.com/jamesadevine)
 
-We are excited to announce that MakeCode Arcade is coming to the micro:bit V2 via a brand new accessory shield.
+We are excited to announce that MakeCode Arcade is coming to micro:bit V2 via a brand new accessory shield.
 
 **[Continue reading this blog post](/blog/microbit/arcade-shield)**
 
