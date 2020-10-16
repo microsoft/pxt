@@ -4,7 +4,9 @@
 
 October 16th, 2020 by [James Devine](https://github.com/jamesadevine)
 
-It has been an exciting week with the announcement of the [new micro:bit](https://microbit.org/new-microbit/)! We can’t wait for these new...
+We are excited to announce that MakeCode Arcade is coming to the new micro:bit via a brand new accessory shield.
+
+**[Continue reading this blog post](/blog/microbit/arcade-shield)**
 
 ## [Microsoft TileCode: Design, Code, and Play Games on MakeCode Arcade Devices](/blog/arcade/tilecode)
 
