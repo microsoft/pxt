@@ -63,7 +63,6 @@ export class SidebarTutorialCard extends TutorialCard {
             tutorialHintTooltip += lf("Click to show a hint!");
         }
 
-        // TODO onClick={hintOnClick} for hint button
         return <div id="sidebar">
             <div className={`tutorialTitle`}><p>{tutorialName}</p></div>
             <div ref="tutorialmessage" className={`tutorialMessage`} role="alert" aria-label={tutorialAriaLabel} tabIndex={hasHint ? 0 : -1}
