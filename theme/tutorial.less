@@ -20,6 +20,7 @@
 
 @workspaceHeaderHeight: 3rem;
 @sidebarPadding: 1.6rem;
+@sidebarTutorialHeaderSize: 1.5rem;
 
 /*******************************
       Tutorial mode
@@ -556,7 +557,7 @@ code.lang-filterblocks {
         padding: @sidebarPadding / 2 @sidebarPadding;
 
         .tutorialTitle {
-            font-size: 1.5rem;
+            font-size: @sidebarTutorialHeaderSize;
             padding-bottom: 1.6rem;
         }
 
@@ -566,11 +567,11 @@ code.lang-filterblocks {
         }
 
         #callout {
-            padding: 1.5rem 0 4rem;
+            padding: @sidebarTutorialHeaderSize 0 4rem;
             position: relative;
 
             .callout-hint-header {
-                font-size: 1.5rem;
+                font-size: @sidebarTutorialHeaderSize;
             }
 
             .callout-hint {

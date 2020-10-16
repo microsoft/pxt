@@ -333,6 +333,8 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
 
 interface ZoomSliderProps extends ISettingsProps {
     view: string;
+    zoomMin?: number;
+    zoomMax?: number;
 }
 
 interface ZoomSliderState {
@@ -340,12 +342,12 @@ interface ZoomSliderState {
 }
 
 export class ZoomSlider extends data.Component<ZoomSliderProps, ZoomSliderState> {
-    private zoomMin = 0;
-    private zoomMax = 5;
+    private zoomMin = this.props.zoomMin? this.props.zoomMin : 0;
+    private zoomMax = this.props.zoomMax? this.props.zoomMax : 5;
 
     constructor(props: ZoomSliderProps) {
         super(props);
-        this.state = {zoomValue: 3};
+        this.state = {zoomValue: Math.floor((this.zoomMax + 1 - this.zoomMin)/2) + this.zoomMin};
 
         this.zoomUpdate = this.zoomUpdate.bind(this);
         this.zoomOut = this.zoomOut.bind(this);
@@ -354,7 +356,7 @@ export class ZoomSlider extends data.Component<ZoomSliderProps, ZoomSliderState>
 
     zoomOut() {
         if (this.state.zoomValue > this.zoomMin) {
-            this.setState({zoomValue: this.state.zoomValue - 1}) // TODO make it the (state) => format
+            this.setState({zoomValue: this.state.zoomValue - 1});
             this.props.parent.editor.zoomOut();
             this.props.parent.forceUpdate();
         }
@@ -387,7 +389,8 @@ export class ZoomSlider extends data.Component<ZoomSliderProps, ZoomSliderState>
         return <div className="zoom">
             <EditorToolbarButton icon="minus circle" className="editortools-btn zoomout-editortools-btn borderless" title={lf("Zoom Out")} onButtonClick={this.zoomOut} view={this.props.view} key="minus"/>
             <div id="zoomSlider">
-                <input className="zoomSliderBar" type="range" min={this.zoomMin} max={this.zoomMax} step="1" value={this.state.zoomValue.toString()} onChange={this.zoomUpdate}></input>
+                <input className="zoomSliderBar" type="range" min={this.zoomMin} max={this.zoomMax} step="1" value={this.state.zoomValue.toString()} onChange={this.zoomUpdate}
+                aria-valuemax={this.zoomMax} aria-valuemin={this.zoomMin} aria-valuenow={this.state.zoomValue}></input>
             </div>
             <EditorToolbarButton icon='plus circle' className="editortools-btn zoomin-editortools-btn borderless" title={lf("Zoom In")} onButtonClick={this.zoomIn} view={this.props.view} key="plus" />
         </div>
@@ -401,7 +404,7 @@ export class SmallEditorToolbar extends EditorToolbar {
     }
     renderCore() {
         return <div id="headerToolbar" className="smallEditorToolbar">
-            <ZoomSlider parent={this.props.parent} view={super.getViewString(View.Computer)}></ZoomSlider>
+            <ZoomSlider parent={this.props.parent} view={super.getViewString(View.Computer)} zoomMin={0} zoomMax={5}></ZoomSlider>
             <div className="ui icon undo-redo-buttons">{super.getUndoRedo(View.Computer)}</div>
         </div>
     }

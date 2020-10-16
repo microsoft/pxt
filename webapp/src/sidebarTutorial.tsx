@@ -7,7 +7,7 @@ import { TutorialCard, TutorialHint } from "./tutorial";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
-export class SidebarTutorialHint extends TutorialHint{
+export class SidebarTutorialHint extends TutorialHint {
     constructor(props: ISettingsProps) {
         super(props);
     }
@@ -27,18 +27,19 @@ export class SidebarTutorialHint extends TutorialHint{
             className: 'green'
         }]
         return <div id="callout" className={`callout-container`}>
-                        <sui.Button className={`callout-hint ui circular label blue hintbutton`} icon="lightbulb outline" tabIndex={-1} onKeyDown={sui.fireClickOnEnter} />
-                        {!showDialog ? <div className={`callout-wrapper`}><div className="callout-hint-header">Hint:</div>
-                        <div className="callout-hint-text"><md.MarkedContent markdown={tutorialHint} unboxSnippets={true} parent={this.props.parent}/></div>
-                        </div>
-                        :
-                        <sui.Modal isOpen={true} className="hintdialog"
-                            closeIcon={false} header={tutorialName} buttons={actions}
-                            onClose={onClick} dimmer={true} longer={true}
-                            closeOnDimmerClick closeOnDocumentClick closeOnEscape>
-                            <md.MarkedContent markdown={fullText} parent={this.props.parent} />
-                        </sui.Modal>}
-                    </div>
+            <sui.Button className={`callout-hint ui circular label blue hintbutton`} icon="lightbulb outline" tabIndex={-1} onKeyDown={sui.fireClickOnEnter} />
+            {!showDialog ? <div className={`callout-wrapper`}>
+                <div className="callout-hint-header">Hint:</div>
+                <div className="callout-hint-text"><md.MarkedContent markdown={tutorialHint} unboxSnippets={true} parent={this.props.parent}/></div>
+            </div>
+            :
+            <sui.Modal isOpen={true} className="hintdialog flyoutOnly"
+                closeIcon={false} header={tutorialName} buttons={actions}
+                onClose={onClick} dimmer={true} longer={true}
+                closeOnDimmerClick closeOnDocumentClick closeOnEscape>
+                <md.MarkedContent markdown={fullText} parent={this.props.parent} />
+            </sui.Modal>}
+        </div>
     }
 }
 
@@ -66,12 +67,12 @@ export class SidebarTutorialCard extends TutorialCard {
         return <div id="sidebar">
             <div className={`tutorialTitle`}><p>{tutorialName}</p></div>
             <div ref="tutorialmessage" className={`tutorialMessage`} role="alert" aria-label={tutorialAriaLabel} tabIndex={hasHint ? 0 : -1}
-                        onKeyDown={hasHint ? sui.fireClickOnEnter : undefined}>
-                        <div className="content">
-                        {!showDialog && <md.MarkedContent className="no-select" markdown={tutorialCardContent} parent={this.props.parent} onDidRender={this.onMarkdownDidRender} />}
-                        </div>
-                    </div>
-                    <SidebarTutorialHint parent={this.props.parent}/>
+                onKeyDown={hasHint ? sui.fireClickOnEnter : undefined}>
+                <div className="content">
+                    {!showDialog && <md.MarkedContent className="no-select" markdown={tutorialCardContent} parent={this.props.parent} onDidRender={this.onMarkdownDidRender} />}
+                </div>
+            </div>
+                    {hasHint && <SidebarTutorialHint parent={this.props.parent}/>}
         </div>
     }
 }
