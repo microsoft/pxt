@@ -101,13 +101,20 @@ export class AssetEditor extends Editor {
                 });
                 break;
             case pxt.AssetType.Tilemap:
+                const project = pxt.react.getTilemapProject();
                 // for tilemaps, fill in all project tiles
-                const allTiles = pxt.react.getTilemapProject().getProjectTiles(asset.data.tileset.tileWidth, true);
+                const allTiles = project.getProjectTiles(asset.data.tileset.tileWidth, true);
+                const referencedTiles = [];
                 for (const tile of allTiles.tiles) {
                     if (!asset.data.tileset.tiles.some(t => t.id === tile.id)) {
                         asset.data.tileset.tiles.push(tile);
                     }
+                    if (project.isAssetUsed(tile)) {
+                        referencedTiles.push(tile.id);
+                    }
                 }
+
+                asset.data.projectReferences = referencedTiles;
 
                 fieldView = pxt.react.getFieldEditorView("tilemap-editor", asset as pxt.ProjectTilemap, {
                     initWidth: 16,
