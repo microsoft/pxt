@@ -510,6 +510,13 @@ export class ProjectView
     }
 
     openAssets() {
+        const mainEditorPkg = pkg.mainEditorPkg()
+        if (!mainEditorPkg) return;
+
+        // create assets.json if it does not exist
+        if (!mainEditorPkg.lookupFile("this/" + pxt.ASSETS_FILE)) {
+            mainEditorPkg.setFile(pxt.ASSETS_FILE, "\n", true);
+        }
         this.setFile(pkg.mainEditorPkg().lookupFile(`this/${pxt.ASSETS_FILE}`));
     }
 
