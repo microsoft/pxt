@@ -63,7 +63,6 @@ class AssetTopbarImpl extends React.Component<AssetTopbarProps, AssetTopbarState
             case pxt.AssetType.Tilemap:
                 const tilemap = asset as pxt.ProjectTilemap;
                 tilemap.data = project.blankTilemap(16, 16, 16);
-                tilemap.data.tileset = project.getProjectTiles(tilemap.data.tileset.tileWidth, true);
 
         }
         return asset;

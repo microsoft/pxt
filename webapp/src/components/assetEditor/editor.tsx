@@ -101,6 +101,14 @@ export class AssetEditor extends Editor {
                 });
                 break;
             case pxt.AssetType.Tilemap:
+                // for tilemaps, fill in all project tiles
+                const allTiles = pxt.react.getTilemapProject().getProjectTiles(asset.data.tileset.tileWidth, true);
+                for (const tile of allTiles.tiles) {
+                    if (!asset.data.tileset.tiles.some(t => t.id === tile.id)) {
+                        asset.data.tileset.tiles.push(tile);
+                    }
+                }
+
                 fieldView = pxt.react.getFieldEditorView("tilemap-editor", asset as pxt.ProjectTilemap, {
                     initWidth: 16,
                     initHeight: 16,
@@ -112,7 +120,35 @@ export class AssetEditor extends Editor {
                 break;
         }
 
-        fieldView.onHide(() => cb(fieldView.getResult()));
+        fieldView.onHide(() => {
+            const result = fieldView.getResult();
+            if (asset.type == pxt.AssetType.Tilemap) result.data = this.updateTilemapTiles(result.data);
+            cb(result);
+        });
         fieldView.show();
+    }
+
+    protected updateTilemapTiles = (data: pxt.sprite.TilemapData): pxt.sprite.TilemapData => {
+        const project = pxt.react.getTilemapProject();
+
+        data.deletedTiles?.forEach(deleted => project.deleteTile(deleted));
+
+        data.editedTiles?.forEach(edited => {
+            const index = data.tileset.tiles.findIndex(t => t.id === edited);
+            const tile = data.tileset.tiles[index];
+
+            if (!tile) return;
+
+            data.tileset.tiles[index] = project.updateTile(tile);
+        })
+
+        data.tileset.tiles.forEach((t, i) => {
+            if (t && !t.jresData) {
+                data.tileset.tiles[i] = project.resolveTile(t.id);
+            }
+        })
+
+        pxt.sprite.trimTilemapTileset(data);
+        return data;
     }
 }
