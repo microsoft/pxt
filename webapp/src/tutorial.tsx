@@ -608,21 +608,33 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
     }
 }
 
-export class WorkspaceHeader extends data.Component<any, {}> {
+interface WorkspaceHeaderState {
+    windowSize?: number;
+}
+
+export class WorkspaceHeader extends data.Component<any, WorkspaceHeaderState> {
     private flyoutWidth: number = 0;
     private flyoutTitle: string = lf("Toolbox");
     private workspaceWidth: number = 0;
     constructor(props: any) {
         super(props);
+
+        this.handleResize = this.handleResize.bind(this);
+        window.addEventListener('resize', this.handleResize);
+        this.state = {windowSize: window.innerWidth};
+    }
+
+    handleResize() {
+        this.setState({windowSize: window.innerWidth});
     }
 
     UNSAFE_componentWillUpdate() {
-        let flyout = document.querySelector('.blocklyFlyout');
+        const flyout = document.querySelector('.blocklyFlyout');
         if (flyout) {
             this.flyoutWidth = flyout.clientWidth;
         }
 
-        let workspace = document.querySelector('#blocksArea');
+        const workspace = document.querySelector('#blocksArea');
         if (workspace) {
             this.workspaceWidth = workspace.clientWidth - this.flyoutWidth - 4;
         }
