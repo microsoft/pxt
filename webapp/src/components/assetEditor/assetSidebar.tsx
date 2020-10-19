@@ -138,10 +138,11 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
     }
 
     render() {
-        const { asset } = this.props;
+        const { asset, isGalleryAsset } = this.props;
         const { showDeleteModal, canEdit, canCopy, canDelete } = this.state;
         const details = this.getAssetDetails();
-        const name = asset ? asset.meta?.displayName || pxt.getShortIDForAsset(asset) || lf("Unnamed") : lf("No asset selected");
+        const isNamed = asset?.meta?.displayName || isGalleryAsset;
+        const name = getDisplayNameForAsset(asset, isGalleryAsset);
 
         const actions: sui.ModalButton[] = [{ label: lf("Delete"), onclick: this.deleteAssetHandler, icon: 'trash', className: 'red' }];
 
@@ -151,7 +152,7 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
                 <div className="asset-editor-sidebar-preview">
                     { asset && <AssetPreview asset={asset} />  }
                 </div>
-                <div className="asset-editor-sidebar-name">{ name }</div>
+                <div className={`asset-editor-sidebar-name ${!isNamed ? 'unnamed' : ''}`}>{ name }</div>
                 {details.map(el => {
                     return <div key={el.name} className="asset-editor-sidebar-detail">{`${el.name}: ${el.value}`}</div>
                 })}
@@ -180,6 +181,16 @@ function getDisplayTextForAsset(type: pxt.AssetType) {
             return lf("Animation");
         case pxt.AssetType.Tilemap:
             return lf("Tilemap");
+    }
+}
+
+function getDisplayNameForAsset(asset: pxt.Asset, isGalleryAsset?: boolean) {
+    if (!asset) {
+        return lf("No asset selected");
+    } else if (asset?.meta?.displayName) {
+        return asset.meta.displayName;
+    } else {
+        return isGalleryAsset ? pxt.getShortIDForAsset(asset) : lf("Temporary asset");
     }
 }
 
