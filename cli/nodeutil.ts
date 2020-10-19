@@ -36,7 +36,7 @@ export function addCliFinalizer(f: () => Promise<void>) {
 export function runCliFinalizersAsync() {
     let fins = cliFinalizers
     cliFinalizers = []
-    return Promise.mapSeries(fins, f => f())
+    return pxt.Util.promiseMapAllSeries(fins, f => f())
         .then(() => { })
 }
 
@@ -258,10 +258,8 @@ function sha256(hashData: string): string {
 
 
 function init() {
-    // no, please, I want to handle my errors myself
-    let async = (<any>Promise)._async
-    async.fatalError = (e: any) => async.throwLater(e);
-
+    // TODO jwunderl handle uncaught exceptions in promise
+    require("promise.prototype.finally").shim();
     Util.isNodeJS = true;
     Util.httpRequestCoreAsync = nodeHttpRequestAsync;
     Util.sha256 = sha256;

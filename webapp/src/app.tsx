@@ -3021,10 +3021,10 @@ export class ProjectView
                 }
             })
             pxt.HWDBG.postMessage = (msg) => simulator.driver.handleHwDebuggerMsg(msg)
-            return Promise.join<any>(
+            return Promise.all([
                 compiler.compileAsync({ debug: true, native: true }),
                 pxt.packetio.initAsync()
-            ).then(vals => pxt.HWDBG.startDebugAsync(vals[0], vals[1]))
+            ]).then(vals => pxt.HWDBG.startDebugAsync(vals[0], vals[1] as pxt.HF2.Wrapper))
         })
     }
 
@@ -3465,6 +3465,7 @@ export class ProjectView
             core.handleNetworkError(e);
             core.errorNotification(lf("Oops, we could not load this activity."));
             this.openHome(); // don't stay stranded
+            return undefined;
         });
 
         function processMarkdown(md: string) {

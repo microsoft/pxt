@@ -13,6 +13,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import * as child_process from 'child_process';
+import { promisify } from "util";
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
@@ -29,7 +30,7 @@ import * as gitfs from './gitfs';
 import * as crowdin from './crowdin';
 import * as youtube from './youtube';
 
-const rimraf: (f: string, opts: any, cb: (err: any, res: any) => void) => void = require('rimraf');
+const rimraf: (f: string, opts: any, cb: (err: Error, res: void) => void) => void = require('rimraf');
 
 pxt.docs.requireDOMSanitizer = () => require("sanitize-html");
 
@@ -757,7 +758,7 @@ function gitUploadAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
             let size = 0
             for (let r of missingReqs) size += r.size
             console.log("files missing: ", missingReqs.length, size, "bytes")
-            return Promise.map(missingReqs,
+            return U.promiseMapAll(missingReqs,
                 r => Cloud.privatePostAsync("upload/blob", r)
                     .then(() => {
                         console.log(r.filename + ": OK," + r.size + " " + r.hash)
@@ -1195,12 +1196,12 @@ function uploadCoreAsync(opts: UploadOptions) {
     pxt.log('');
 
     if (opts.localDir)
-        return Promise.map(opts.fileList, uploadFileAsync, { concurrency: 15 })
+        return U.promisePoolAsync(15, opts.fileList, uploadFileAsync)
             .then(() => {
                 pxt.log("Release files written to " + path.join(opts.builtPackaged, opts.localDir))
             })
 
-    return Promise.map(opts.fileList, uploadFileAsync, { concurrency: 15 })
+    return U.promisePoolAsync(15, opts.fileList, uploadFileAsync)
         .then(() =>
             opts.githubOnly
                 ? uploadToGitRepoAsync(opts, uplReqs)
@@ -1232,7 +1233,7 @@ function forEachBundledPkgAsync(f: (pkg: pxt.MainPackage, dirname: string) => Pr
         folders = folders.concat(projects);
     }
 
-    return Promise.mapSeries(folders, (dirname) => {
+    return U.promiseMapAllSeries(folders, (dirname) => {
         const host = new Host();
         const pkgPath = path.join(nodeutil.targetDir, dirname);
         pxt.debug(`building bundled package at ${pkgPath}`)
@@ -1345,8 +1346,8 @@ export function ghpPushAsync(builtPackaged: string, minify = false) {
 
 function maxMTimeAsync(dirs: string[]) {
     let max = 0
-    return Promise.map(dirs, dn => readDirAsync(dn)
-        .then(files => Promise.map(files, fn => statAsync(path.join(dn, fn))
+    return U.promiseMapAll(dirs, dn => readDirAsync(dn)
+        .then(files => U.promiseMapAll(files, fn => statAsync(path.join(dn, fn))
             .then(st => {
                 max = Math.max(st.mtime.getTime(), max)
             }))))
@@ -2492,11 +2493,11 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
 }
 
 
-const readFileAsync: any = Promise.promisify(fs.readFile)
-const writeFileAsync: any = Promise.promisify(fs.writeFile)
-const readDirAsync = Promise.promisify(fs.readdir)
-const statAsync = Promise.promisify(fs.stat)
-const rimrafAsync = Promise.promisify(rimraf);
+const readFileAsync: any = promisify(fs.readFile)
+const writeFileAsync: any = promisify(fs.writeFile)
+const readDirAsync = promisify(fs.readdir)
+const statAsync = promisify(fs.stat)
+const rimrafAsync = promisify(rimraf);
 
 let commonfiles: Map<string> = {}
 
@@ -3014,7 +3015,7 @@ export function initAsync(parsed: commandParser.ParsedCommand) {
     let configMap: Map<string> = JSON.parse(files[pxt.CONFIG_NAME])
     let initPromise = Promise.resolve();
     if (!parsed.flags["useDefaults"]) {
-        initPromise = Promise.mapSeries(["name", "description", "license"], f =>
+        initPromise = U.promiseMapAllSeries(["name", "description", "license"], f =>
             queryAsync(f, configMap[f])
                 .then(r => {
                     configMap[f] = r
@@ -3254,7 +3255,7 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
         })
     }
     return pxt.discourse.topicsByTag(discourseRoot, tag)
-        .then(topics => Promise.mapSeries(topics, topic => {
+        .then(topics => U.promiseMapAllSeries(topics, topic => {
             pxt.log(`  ${topic.title}`)
             return pxt.discourse.extractSharedIdFromPostUrl(topic.url)
                 .then(id => {
@@ -3755,7 +3756,7 @@ function testDirAsync(parsed: commandParser.ParsedCommand) {
     let currBase = ""
     let errors: string[] = []
 
-    return Promise.mapSeries(tests, (ti) => {
+    return U.promiseMapAllSeries(tests, (ti) => {
         let fn = path.basename(ti.filename)
         console.log(`--- ${fn}`)
         let hexPath = outdir + fn.replace(/\.ts$/, "") + ".hex"
@@ -3872,7 +3873,7 @@ function testPkgConflictsAsync() {
     let trg = nodeutil.getPxtTarget();
     pxt.setAppTarget(trg);
 
-    return Promise.mapSeries(testCases, (tc) => {
+    return U.promiseMapAllSeries(testCases, (tc) => {
         let testFailed = (reason: string) => {
             failures.push({ testCase: tc.id, reason });
         };
@@ -3918,7 +3919,7 @@ function testPkgConflictsAsync() {
 }
 
 function decompileAsync(parsed: commandParser.ParsedCommand) {
-    return Promise.mapSeries(parsed.args, f => {
+    return U.promiseMapAllSeries(parsed.args, f => {
         const outFile = replaceFileExtension(f, ".blocks")
         return decompileAsyncWorker(f, parsed.flags["dep"] as string)
             .then(result => {
@@ -3987,7 +3988,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictSyntaxC
         })
         infos.forEach(info => pxt.log(`${f}:(${info.line},${info.column}): ${info.category} ${info.messageText}`));
     }
-    return Promise.map(snippets, (snippet: CodeSnippet) => {
+    return U.promiseMapAllSeries(snippets, (snippet: CodeSnippet) => {
         const name = snippet.name;
         const fn = snippet.file || snippet.name;
         pxt.log(`  ${fn} (${snippet.type})`);
@@ -4193,7 +4194,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictSyntaxC
                     }
                 ])
             }))
-    }, { concurrency: 1 }).then((a: any) => {
+    }).then((a: any) => {
         pxt.log(`${successes.length}/${successes.length + failures.length} snippets compiled to blocks and python (and back), ${failures.length} failed`)
         if (ignoreCount > 0) {
             pxt.log(`Skipped ${ignoreCount} snippets`)
@@ -5570,7 +5571,7 @@ function internalCacheUsedBlocksAsync(): Promise<Map<pxt.BuiltTutorialInfo>> {
     }
 
     const namespaceRegex = /^\s*namespace\s+[^\s]+\s*{([\S\s]*)}\s*$/im;
-    return Promise.map(Object.keys(tutorialInfo), (hash: string) => {
+    return U.promiseMapAll(Object.keys(tutorialInfo), (hash: string) => {
         const info = tutorialInfo[hash];
         const cache: Map<string> = {};
         let isPy = info.language === "python"
@@ -5949,7 +5950,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
                 fullnames = fullnames.filter(fn => filterRx.test(fn))
             reportLog(`found ${fullnames.length} approved extensions`);
             reportLog(nodeutil.stringify(fullnames));
-            return Promise.mapSeries(fullnames, nextAsync);
+            return U.promiseMapAllSeries(fullnames, nextAsync);
         })
         .then(() => {
             if (errorCount > 0) {
@@ -5994,7 +5995,7 @@ function blockTestsAsync(parsed?: commandParser.ParsedCommand) {
 
     function getBlocksFilesAsync(libsDirectory: string): Promise<BlockTestCase[]> {
         return readDirAsync(libsDirectory)
-            .then(dirs => Promise.map(dirs, dir => {
+            .then(dirs => U.promiseMapAll(dirs, dir => {
                 const dirPath = path.resolve(libsDirectory, dir, "blocks-test");
                 const configPath = path.resolve(libsDirectory, dir, "pxt.json");
                 let packageName: string;
@@ -6005,7 +6006,7 @@ function blockTestsAsync(parsed?: commandParser.ParsedCommand) {
                         .then((configText: string) => {
                             packageName = (JSON.parse(configText) as pxt.PackageConfig).name;
                             return readDirAsync(dirPath)
-                                .then(files => Promise.map(files.filter(f => U.endsWith(f, ".blocks") && f != "main.blocks"), fn =>
+                                .then(files => U.promiseMapAll(files.filter(f => U.endsWith(f, ".blocks") && f != "main.blocks"), fn =>
                                     readFileAsync(path.join(dirPath, fn), "utf8")
                                         .then((contents: string) => testFiles.push({ testName: fn, contents }))))
                         })
