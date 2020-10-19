@@ -893,7 +893,7 @@ export function updatePackagesAsync(packages: pkg.EditorPackage[], token?: pxt.U
 
             return workspace.saveAsync(epkg.header);
         })
-        .then(() => Promise.each(packages, p => {
+        .then(() => U.promiseMapAllSeries(packages, p => {
             if (token) token.throwIfCancelled();
             return epkg.updateDepAsync(p.getPkgId())
                 .then(() => {

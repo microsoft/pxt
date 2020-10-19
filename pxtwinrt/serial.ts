@@ -17,7 +17,7 @@ namespace pxt.winrt {
         info: DeviceInfo;
         device?: SerialDevice;
         readingOperation?: LoadOperation;
-        cancellingDeferred?: pxt.winrt.DeferredPromise<void>;
+        cancellingDeferred?: pxt.Util.DeferredPromise<void>;
     }
 
     export function initSerial() {
@@ -62,7 +62,7 @@ namespace pxt.winrt {
             const port = activePorts[deviceId];
             const currentRead = port.readingOperation;
             if (currentRead) {
-                const deferred = pxt.winrt.defer<void>();
+                const deferred = pxt.Util.defer<void>();
                 port.cancellingDeferred = deferred;
                 stoppedReadingOpsPromise = stoppedReadingOpsPromise.then(() => {
                     return U.promiseTimeout(500, deferred.promise)

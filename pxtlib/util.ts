@@ -521,6 +521,51 @@ namespace ts.pxtc.Util {
             });
     }
 
+    export interface DeferredPromise<T> {
+        resolve: (value: T) => void;
+        reject: (reason: any) => void;
+        promise: Promise<T>;
+        isResolved: boolean;
+    }
+
+    export function defer<T>(): DeferredPromise<T> {
+        let result: T | Promise<T>;
+        let resolve: (value?: unknown) => void;
+        let reject: (reason?: any) => void;
+        let isResolved = false;
+
+        return {
+            resolve: function (value: T) {
+                if (resolve) {
+                    resolve(value);
+                } else {
+                    result = result || new Promise(function (r) { r(value); });
+                }
+                isResolved = true;
+            },
+
+            reject: function (reason: any) {
+                if (reject) {
+                    reject(reason);
+                } else {
+                    result = result || new Promise(function (_, j) { j(reason); });
+                }
+                isResolved = true;
+            },
+
+            promise: new Promise<T>(function (r, j) {
+                if (result) {
+                    r(result);
+                } else {
+                    resolve = r;
+                    reject = j;
+                }
+            }),
+
+            isResolved
+        };
+    };
+
     export function memoize<S, T>(getId: (v: S) => string, createNew: (v: S) => T): (id: S) => T {
         const cache: pxt.Map<T> = {}
         return (v: S) => {
