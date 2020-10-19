@@ -86,6 +86,7 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
         const project = pxt.react.getTilemapProject();
         project.pushUndo();
         project.updateAsset(result);
+        this.props.dispatchChangeGalleryView(GalleryView.User);
         this.updateAssets();
     }
 
@@ -94,7 +95,7 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
         project.pushUndo();
         const newAsset = project.duplicateAsset(this.props.asset);
         this.props.dispatchChangeSelectedAsset(newAsset);
-        if (this.props.isGalleryAsset) this.props.dispatchChangeGalleryView(GalleryView.User);
+        this.props.dispatchChangeGalleryView(GalleryView.User);
         this.updateAssets();
     }
 
@@ -132,6 +133,7 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
         project.pushUndo();
         project.removeAsset(this.props.asset);
         this.props.dispatchChangeSelectedAsset(null);
+        this.props.dispatchChangeGalleryView(GalleryView.User);
         this.updateAssets();
     }
 
