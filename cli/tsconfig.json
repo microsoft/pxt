@@ -9,6 +9,7 @@
         "rootDir": ".",
         "newLine": "LF",
         "sourceMap": false,
+        "moduleResolution": "node",
         "incremental": false
     }
 }

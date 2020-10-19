@@ -17,7 +17,7 @@ namespace pxt.winrt {
         info: DeviceInfo;
         device?: SerialDevice;
         readingOperation?: LoadOperation;
-        cancellingDeferred?: Promise.Resolver<void>;
+        cancellingDeferred?: pxt.winrt.DeferredPromise<void>;
     }
 
     export function initSerial() {
@@ -62,7 +62,7 @@ namespace pxt.winrt {
             const port = activePorts[deviceId];
             const currentRead = port.readingOperation;
             if (currentRead) {
-                const deferred = Promise.defer<void>();
+                const deferred = pxt.winrt.defer<void>();
                 port.cancellingDeferred = deferred;
                 stoppedReadingOpsPromise = stoppedReadingOpsPromise.then(() => {
                     return U.promiseTimeout(500, deferred.promise)
@@ -174,8 +174,8 @@ namespace pxt.winrt {
                     return Promise.resolve([]);
                 }
 
-                return Promise.map(allDeviceInfo, (devInfo: DeviceInfo) => {
-                    return sd.fromIdAsync(devInfo.id);
+                return U.promiseMapAll(allDeviceInfo, (devInfo: DeviceInfo) => {
+                    return pxt.winrt.promisify(sd.fromIdAsync(devInfo.id));
                 });
             });
     }

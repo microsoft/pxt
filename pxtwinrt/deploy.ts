@@ -33,6 +33,6 @@ namespace pxt.winrt {
                 }
                 // Save cancelled
                 return Promise.resolve(false);
-            }));
+            })) as unknown as Promise<boolean>;
     }
 }

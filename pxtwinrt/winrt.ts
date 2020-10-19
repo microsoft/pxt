@@ -19,6 +19,51 @@ namespace pxt.winrt {
         return r;
     }
 
+    export interface DeferredPromise<T> {
+        resolve: (value: T) => void;
+        reject: (reason: any) => void;
+        promise: Promise<T>;
+        isResolved: boolean;
+    }
+
+    export function defer<T>(): DeferredPromise<T> {
+        let result: T | Promise<T>;
+        let resolve: (value?: unknown) => void;
+        let reject: (reason?: any) => void;
+        let isResolved = false;
+
+        return {
+            resolve: function (value: T) {
+                if (resolve) {
+                    resolve(value);
+                } else {
+                    result = result || new Promise(function (r) { r(value); });
+                }
+                isResolved = true;
+            },
+
+            reject: function (reason: any) {
+                if (reject) {
+                    reject(reason);
+                } else {
+                    result = result || new Promise(function (_, j) { j(reason); });
+                }
+                isResolved = true;
+            },
+
+            promise: new Promise<T>(function (r, j) {
+                if (result) {
+                    r(result);
+                } else {
+                    resolve = r;
+                    reject = j;
+                }
+            }),
+
+            isResolved
+        };
+    };
+
     /**
      * Detects if the script is running in a browser on windows
      */
@@ -62,7 +107,7 @@ namespace pxt.winrt {
         if (!isWinRT()) {
             return;
         }
-        initialActivationDeferred = Promise.defer<ActivationArgs>();
+        initialActivationDeferred = defer<ActivationArgs>();
         const app = Windows.UI.WebUI.WebUIApplication as any;
         app.addEventListener("activated", initialActivationHandler);
     }
@@ -139,7 +184,7 @@ namespace pxt.winrt {
         initSerial();
     }
 
-    let initialActivationDeferred: Promise.Resolver<ActivationArgs>;
+    let initialActivationDeferred: DeferredPromise<ActivationArgs>;
     let importHex: (hex: pxt.cpp.HexFile, options?: pxt.editor.ImportFileOptions) => void;
 
     function fileActivationHandler(args: ActivationArgs, openHomeIfFailed = false) {
@@ -158,7 +203,7 @@ namespace pxt.winrt {
                         dataReader.close();
                         return pxt.cpp.unpackSourceFromHexAsync(new Uint8Array(ar));
                     })
-                    .then((hex) => importHex(hex, { openHomeIfFailed }));
+                    .then((hex) => importHex(hex as unknown as pxt.cpp.HexFile, { openHomeIfFailed }));
             }
         }
     }
