@@ -11,11 +11,16 @@ namespace pxt.editor {
         protected textToValue(text: string): pxt.ProjectTilemap {
             const tm = this.readTilemap(text);
 
-            const allTiles = pxt.react.getTilemapProject().getProjectTiles(tm.data.tileset.tileWidth, true);
+            const project = pxt.react.getTilemapProject();
+            const allTiles = project.getProjectTiles(tm.data.tileset.tileWidth, true);
+            tm.data.projectReferences = [];
 
             for (const tile of allTiles.tiles) {
                 if (!tm.data.tileset.tiles.some(t => t.id === tile.id)) {
                     tm.data.tileset.tiles.push(tile);
+                }
+                if (project.isAssetUsed(tile)) {
+                    tm.data.projectReferences.push(tile.id);
                 }
             }
 

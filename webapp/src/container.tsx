@@ -448,7 +448,9 @@ export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
         // show python in toggle if: python editor currently active, or blocks editor active & saved language pref is python
         const showPython = parent.isPythonActive() || (parent.isBlocksActive() && pxt.shell.isPyLangPref());
         const showBlocks = !!pkg.mainEditorPkg().files["main.blocks"];
-        const showAssets = !!pkg.mainEditorPkg().files[pxt.ASSETS_FILE];
+        const showAssets = pxt.appTarget.appTheme.assetEditor;
+
+        const hasDropdown = python && languageRestriction === pxt.editor.LanguageRestriction.Standard;
 
         return (
             <div id="editortoggle" className={`ui grid padded ${(pyOnly || tsOnly) ? "one-language" : ""}`}>
@@ -459,8 +461,8 @@ export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
                     <JavascriptMenuItem parent={parent} />
                     <PythonMenuItem parent={parent} />
                 </sui.DropdownMenu>}
-                {showAssets && pxt.appTarget.appTheme.assetEditor && <AssetMenuItem parent={parent} />}
-                <div className={`ui item toggle ${python ? 'hasdropdown' : ''}`}></div>
+                {showAssets && <AssetMenuItem parent={parent} />}
+                <div className={`ui item toggle ${hasDropdown ? 'hasdropdown' : ''}`}></div>
             </div>
         )
     }
@@ -566,8 +568,9 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         const languageRestriction = cfg && cfg.languageRestriction;
 
         const inAltEditor = debugging || inTutorial;
-        const tsOnly = !inAltEditor && languageRestriction === pxt.editor.LanguageRestriction.JavaScriptOnly;
-        const pyOnly = !inAltEditor && languageRestriction === pxt.editor.LanguageRestriction.PythonOnly;
+        const showAssets = !!pkg.mainEditorPkg().files[pxt.ASSETS_FILE];
+        const tsOnly = !inAltEditor && !showAssets && languageRestriction === pxt.editor.LanguageRestriction.JavaScriptOnly;
+        const pyOnly = !inAltEditor && !showAssets && languageRestriction === pxt.editor.LanguageRestriction.PythonOnly;
         const showToggle = !inAltEditor && !targetTheme.blocksOnly
             && (sandbox || !(tsOnly || pyOnly)); // show if sandbox or not single language
         const editor = this.props.parent.isPythonActive() ? "Python" : (this.props.parent.isJavaScriptActive() ? "JavaScript" : "Blocks");
