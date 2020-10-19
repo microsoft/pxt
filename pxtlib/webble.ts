@@ -589,7 +589,9 @@ namespace pxt.webBluetooth {
                         chunk[4 + i] = hex[i];
                     //this.debug(`chunk 0 ${Util.toHex(chunk)}`)
                     return this.pfCharacteristic.writeValue(chunk);
-                }).delay(this.chunkDelay).then(() => {
+                })
+                .then(() => U.delay(this.chunkDelay))
+                .then(() => {
                     this.flashPacketToken.throwIfCancelled();
                     chunk[0] = PartialFlashingService.FLASH_DATA;
                     chunk[1] = (this.flashOffset >> 24) & 0xff;
@@ -599,7 +601,9 @@ namespace pxt.webBluetooth {
                         chunk[4 + i] = hex[16 + i] || 0;
                     //this.debug(`chunk 1 ${Util.toHex(chunk)}`)
                     return this.pfCharacteristic.writeValue(chunk);
-                }).delay(this.chunkDelay).then(() => {
+                })
+                .then(() => U.delay(this.chunkDelay))
+                .then(() => {
                     this.flashPacketToken.throwIfCancelled();
                     chunk[0] = PartialFlashingService.FLASH_DATA;
                     chunk[1] = 0;
@@ -609,7 +613,9 @@ namespace pxt.webBluetooth {
                         chunk[4 + i] = hex[32 + i] || 0;
                     //this.debug(`chunk 2 ${Util.toHex(chunk)}`)
                     return this.pfCharacteristic.writeValue(chunk);
-                }).delay(this.chunkDelay).then(() => {
+                })
+                .then(() => U.delay(this.chunkDelay))
+                .then(() => {
                     this.flashPacketToken.throwIfCancelled();
                     chunk[0] = PartialFlashingService.FLASH_DATA;
                     chunk[1] = 0;

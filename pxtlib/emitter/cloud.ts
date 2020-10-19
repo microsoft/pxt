@@ -187,13 +187,13 @@ namespace pxt.Cloud {
             return localRequestAsync(url).then(resp => {
                 if (resp.statusCode == 404)
                     return privateRequestAsync({ url, method: "GET" })
-                        .then(resp => { return { md: resp.text, etag: resp.headers["etag"] }; });
+                        .then(resp => { return { md: resp.text, etag: <string>resp.headers["etag"] }; });
                 else return { md: resp.text, etag: undefined };
             });
         else {
             const headers: pxt.Map<string> = etag && !useCdnApi() ? { "If-None-Match": etag } : undefined;
             return apiRequestWithCdnAsync({ url, method: "GET", headers })
-                .then(resp => { return { md: resp.text, etag: resp.headers["etag"] }; });
+                .then(resp => { return { md: resp.text, etag: <string>resp.headers["etag"] }; });
         }
     }
 

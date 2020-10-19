@@ -104,7 +104,8 @@ namespace pxsim {
             let queues = this.getQueues(id, evid, true).concat(this.getQueues(id, evid, false))
             this.lastEventValue = evid;
             this.lastEventTimestampUs = U.perfNowUs();
-            Promise.each(queues, (q) => {
+
+            U.promiseMapAllSeries(queues, q => {
                 if (q) return q.push(value, notifyOne);
                 else return Promise.resolve()
             })
@@ -135,7 +136,7 @@ namespace pxsim {
         // false means last frame
         frame: () => boolean;
         whenDone?: (cancelled: boolean) => void;
-        setTimeoutHandle?: number;
+        setTimeoutHandle?: any;
     }
 
     export class AnimationQueue {

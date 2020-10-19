@@ -6,6 +6,7 @@
         "declaration": true,
         "out": "../built/backendutils.js",
         "newLine": "LF",
-        "sourceMap": false
+        "sourceMap": false,
+        "moduleResolution": "node"
     }
 }

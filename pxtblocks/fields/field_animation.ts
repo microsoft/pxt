@@ -41,7 +41,7 @@ namespace pxtblockly {
         protected frames: string[];
 
         protected preview: svg.Image;
-        protected animateRef: number;
+        protected animateRef: any;
 
         constructor(text: string, params: any, validator?: Function) {
             super(text, validator);

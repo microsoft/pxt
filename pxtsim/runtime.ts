@@ -153,7 +153,7 @@ namespace pxsim {
         }
 
         export async function promiseTimeout<T>(ms: number, promise: T | Promise<T>, msg?: string): Promise<T> {
-            let timeoutId: number;
+            let timeoutId: any;
             let res: () => void;
 
             const timeoutPromise: Promise<T> = new Promise((resolve, reject) => {
@@ -172,7 +172,7 @@ namespace pxsim {
                         clearTimeout(timeoutId);
                         res();
                     }
-                    return output;
+                    return <T>output;
                 });
         }
 
@@ -398,7 +398,7 @@ namespace pxsim {
 
         protected serialOutBuffer: string = '';
         private messages: SerialMessage[] = [];
-        private serialTimeout: number;
+        private serialTimeout: any;
         private lastSerialTime = 0;
 
         public writeSerial(s: string) {
@@ -542,8 +542,8 @@ namespace pxsim {
             // all events will be processed by concurrent promisified code below, so start afresh
             this.events = []
             // in order semantics for events and handlers
-            return Promise.each(events, (value) => {
-                return Promise.each(this.handlers, (handler) => {
+            return U.promiseMapAllSeries(events, (value) => {
+                return U.promiseMapAllSeries(this.handlers, (handler) => {
                     return this.runtime.runFiberAsync(handler, ...(this.valueToArgs ? this.valueToArgs(value) : [value]))
                 })
             }).then(() => {
@@ -635,7 +635,7 @@ namespace pxsim {
     }
 
     export class TimeoutScheduled {
-        constructor(public id: number, public fn: Function, public totalRuntime: number, public timestampCall: number) { }
+        constructor(public id: any, public fn: Function, public totalRuntime: number, public timestampCall: number) { }
     }
 
     export class PausedTimeout {
@@ -694,9 +694,9 @@ namespace pxsim {
 
         dead = false;
         running = false;
-        idleTimer: number = undefined;
+        idleTimer: any = undefined;
         recording = false;
-        recordingTimer = 0;
+        recordingTimer: any = 0;
         recordingLastImageData: ImageData = undefined;
         recordingWidth: number = undefined;
         startTime = 0;

@@ -8,11 +8,12 @@
         "out": "../built/pxtsim.js",
         "newLine": "LF",
         "sourceMap": false,
+        "moduleResolution": "node",
         "lib": [
             "dom",
             "dom.iterable",
             "scripthost",
-            "es6"
+            "es2018"
         ],
         "incremental": true
     }

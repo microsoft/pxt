@@ -517,7 +517,7 @@ namespace ts.pxtc.Util {
                     clearTimeout(timeoutId);
                     res();
                 }
-                return output;
+                return <T>output;
             });
     }
 

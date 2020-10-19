@@ -522,8 +522,10 @@ namespace pxt.github {
             }
             return { refs: r, head }
         }, err => {
-            if (err.statusCode == 404) return { refs: {} }
-            else return Promise.reject(err)
+            if (err.statusCode == 404)
+                return { refs: {} } as any
+            else
+                return Promise.reject(err)
         })
     }
 

@@ -12,7 +12,7 @@
             "dom",
             "dom.iterable",
             "scripthost",
-            "es6"
+            "es2018"
         ],
         "types": [
             "fuse"
