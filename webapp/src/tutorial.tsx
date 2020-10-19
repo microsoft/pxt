@@ -623,15 +623,16 @@ export class WorkspaceHeader extends data.Component<any, WorkspaceHeaderState> {
         this.state = {windowSize: window.innerWidth};
     }
 
+    handleResize() {
+        this.setState({windowSize: window.innerWidth});
+    }
+
     componentDidMount() {
         window.addEventListener('resize', this.handleResize);
     }
 
     componentWillUnmount() {
         window.removeEventListener('resize', this.handleResize);
-
-    handleResize() {
-        this.setState({windowSize: window.innerWidth});
     }
 
     UNSAFE_componentWillUpdate() {
