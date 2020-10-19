@@ -619,7 +619,7 @@ export class WorkspaceHeader extends data.Component<any, WorkspaceHeaderState> {
     constructor(props: any) {
         super(props);
 
-        this.handleResize = this.handleResize.bind(this
+        this.handleResize = this.handleResize.bind(this);
         this.state = {windowSize: window.innerWidth};
     }
 
