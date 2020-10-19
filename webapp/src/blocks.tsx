@@ -25,7 +25,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     delayLoadXml: string;
     typeScriptSaveable: boolean;
     loadingXml: boolean;
-    loadingXmlPromise: Promise<any>;
     compilationResult: pxt.blocks.BlockCompilationResult;
     isFirstBlocklyLoad = true;
     functionsDialog: CreateFunctionDialog = null;
@@ -149,7 +148,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             editorDiv.appendChild(loadingDimmer);
 
             compiler.clearCaches(); // ensure that we refresh the blocks list
-            this.loadingXmlPromise = this.loadBlocklyAsync()
+            this.loadBlocklyAsync()
                 .then(() => compiler.getBlocksAsync())
                 .then(bi => {
                     this.blockInfo = bi;
@@ -175,9 +174,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     } catch { }
                     pxt.perf.measureEnd("domUpdate loadBlockly")
                 });
-
-            this.loadingXmlPromise.then();
-            this.loadingXmlPromise = null;
         }
     }
 
@@ -852,7 +848,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     loadFileAsync(file: pkg.File): Promise<void> {
         Util.assert(!this.delayLoadXml);
-        Util.assert(!this.loadingXmlPromise);
 
         return this.loadBlocklyAsync()
             .then(() => {
@@ -1104,10 +1099,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.delayLoadXml = this.getCurrentSource();
             this.editor = undefined;
             this.loadingXml = false;
-            if (this.loadingXmlPromise) {
-                this.loadingXmlPromise.cancel();
-                this.loadingXmlPromise = null;
-            }
             this.prepareBlockly(hasCategories);
             this.domUpdate();
             this.editor.scrollCenter();
