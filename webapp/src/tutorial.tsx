@@ -619,7 +619,7 @@ export class WorkspaceHeader extends data.Component<any, WorkspaceHeaderState> {
     constructor(props: any) {
         super(props);
 
-        this.handleResize = this.handleResize.bind(this);
+        this.handleResize = this.handleResize.bind(this
         this.state = {windowSize: window.innerWidth};
     }
 
@@ -629,7 +629,6 @@ export class WorkspaceHeader extends data.Component<any, WorkspaceHeaderState> {
 
     componentWillUnmount() {
         window.removeEventListener('resize', this.handleResize);
-    }
 
     handleResize() {
         this.setState({windowSize: window.innerWidth});
