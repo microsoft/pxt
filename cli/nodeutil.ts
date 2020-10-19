@@ -258,8 +258,14 @@ function sha256(hashData: string): string {
 
 
 function init() {
-    // TODO jwunderl handle uncaught exceptions in promise
     require("promise.prototype.finally").shim();
+    // Make unhandled async rejections throw
+    process.on(
+        'unhandledRejection',
+        e => {
+            throw e
+        }
+    );
     Util.isNodeJS = true;
     Util.httpRequestCoreAsync = nodeHttpRequestAsync;
     Util.sha256 = sha256;
