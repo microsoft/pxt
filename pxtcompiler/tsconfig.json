@@ -15,8 +15,7 @@
             "es6"
         ],
         "types": [
-            "fuse",
-            "bluebird"
+            "fuse"
         ],
         "incremental": true
     },

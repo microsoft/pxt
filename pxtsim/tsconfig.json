@@ -14,9 +14,6 @@
             "scripthost",
             "es6"
         ],
-        "types": [
-            "bluebird"
-        ],
         "incremental": true
     }
 }

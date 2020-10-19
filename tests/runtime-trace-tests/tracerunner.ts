@@ -19,7 +19,6 @@ import { promisify } from 'util';
 
 // setup
 function initGlobals() {
-    Promise = require("bluebird");
     let g = global as any
     g.pxt = pxt;
     g.ts = ts;

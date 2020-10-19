@@ -24,8 +24,7 @@
         ],
         "types": [
             "react",
-            "react-dom",
-            "bluebird"
+            "react-dom"
         ],
         "incremental": false
     },

@@ -332,7 +332,6 @@ const copyJquery = () => gulp.src("node_modules/jquery/dist/jquery.min.js")
 
 const copyWebapp = () =>
     gulp.src([
-        "node_modules/bluebird/js/browser/bluebird.min.js",
         "node_modules/applicationinsights-js/dist/ai.0.js",
         "pxtcompiler/ext-typescript/lib/typescript.js",
         "built/pxtlib.js",

@@ -17,7 +17,6 @@
         "types": [
             "highlight.js",
             "marked",
-            "bluebird",
             "web-bluetooth"
         ],
         "incremental": true

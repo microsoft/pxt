@@ -1,6 +1,6 @@
 {
     "compilerOptions": {
-        "target": "es5",
+        "target": "es2018",
         "noImplicitAny": true,
         "noImplicitReturns": true,
         "declaration": true,
@@ -15,8 +15,7 @@
         ],
         "types": [
             "jquery",
-            "highlight.js",
-            "bluebird"
+            "highlight.js"
         ],
         "incremental": true
     }

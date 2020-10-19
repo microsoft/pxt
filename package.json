@@ -53,7 +53,6 @@
     "npm": ">=3.0.0"
   },
   "dependencies": {
-    "bluebird": "3.5.1",
     "faye-websocket": "0.11.1",
     "lzma": "2.3.2",
     "marked": "0.3.19",
@@ -113,7 +112,6 @@
     "@types/react-modal": "3.1.2",
     "@types/react-tooltip": "3.3.6",
     "@types/chai": "4.0.6",
-    "@types/bluebird": "2.0.33",
     "@types/fuse": "2.5.2",
     "@types/highlight.js": "9.12.2",
     "@types/jquery": "3.3.29",

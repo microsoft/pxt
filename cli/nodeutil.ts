@@ -9,8 +9,6 @@ import * as crypto from 'crypto';
 import * as path from 'path';
 import * as os from 'os';
 
-Promise = require("bluebird");
-
 import Util = pxt.Util;
 
 export interface SpawnOptions {
