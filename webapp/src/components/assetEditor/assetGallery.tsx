@@ -118,7 +118,7 @@ class AssetGalleryImpl extends React.Component<AssetGalleryProps, AssetGallerySt
                 <AssetCardList assets={galleryAssets} />
             </div>
             <sui.Modal className="asset-editor-create-dialog" isOpen={showCreateModal} onClose={this.hideCreateModal}
-                closeIcon={false} dimmer={true} header={lf("Create New Asset")} buttons={actions}>
+                closeIcon={true} dimmer={true} header={lf("Create New Asset")} buttons={actions}>
                 <div>{lf("Choose your asset type from the options below.")}</div>
             </sui.Modal>
         </div>

@@ -143,10 +143,7 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
         const details = this.getAssetDetails();
         const name = asset ? asset.meta?.displayName || pxt.getShortIDForAsset(asset) || lf("Unnamed") : lf("No asset selected");
 
-        const actions: sui.ModalButton[] = [
-            { label: lf("Cancel"), onclick: this.hideDeleteModal, icon: 'cancel' },
-            { label: lf("Delete"), onclick: this.deleteAssetHandler, icon: 'trash', className: 'red' }
-        ]
+        const actions: sui.ModalButton[] = [{ label: lf("Delete"), onclick: this.deleteAssetHandler, icon: 'trash', className: 'red' }];
 
         return <div className="asset-editor-sidebar">
             <div className="asset-editor-sidebar-info">
@@ -166,7 +163,7 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
                 {canDelete && <sui.MenuItem name={lf("Delete")} className="asset-editor-button delete-asset" icon="trash" onClick={this.showDeleteModal}/>}
             </div>}
             <textarea className="asset-editor-sidebar-copy" ref={this.copyTextAreaRefHandler} ></textarea>
-            <sui.Modal className="asset-editor-delete-dialog" isOpen={showDeleteModal} onClose={this.hideDeleteModal} closeIcon={false} dimmer={true} header={lf("Delete Asset")} buttons={actions}>
+            <sui.Modal className="asset-editor-delete-dialog" isOpen={showDeleteModal} onClose={this.hideDeleteModal} closeIcon={true} dimmer={true} header={lf("Delete Asset")} buttons={actions}>
                 <div>{lf("Are you sure you want to delete {0}? Deleted assets cannot be recovered.", name)}</div>
             </sui.Modal>
         </div>
