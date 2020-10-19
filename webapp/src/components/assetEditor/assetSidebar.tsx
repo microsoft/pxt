@@ -43,7 +43,7 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
 
             const project = pxt.react.getTilemapProject();
             const canEdit = !isGalleryAsset;
-            const canCopy = asset?.type != pxt.AssetType.Tilemap;
+            const canCopy = asset?.type != pxt.AssetType.Tilemap && asset?.type != pxt.AssetType.Animation;
             const canDelete = !isGalleryAsset && !project.isAssetUsed(asset, pkg.mainEditorPkg().files);
 
             this.setState({ canEdit, canCopy, canDelete });
@@ -63,6 +63,10 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
                     break;
                 case pxt.AssetType.Tilemap:
                     details.push({ name: lf("Size"), value: `${asset.data.tilemap.width} x ${asset.data.tilemap.height}`});
+                    break;
+                case pxt.AssetType.Animation:
+                    details.push({ name: lf("Size"), value: `${asset.frames[0].width} x ${asset.frames[0].height}`});
+                    break;
             }
         }
 

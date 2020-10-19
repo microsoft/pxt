@@ -51,6 +51,8 @@ class AssetGalleryImpl extends React.Component<AssetGalleryProps, AssetGallerySt
                         project.createNewTile(result.bitmap, null, name); break;
                     case pxt.AssetType.Tilemap:
                         project.createNewTilemapFromData(result.data, name); break;
+                    case pxt.AssetType.Animation:
+                        project.createNewAnimationFromData(result.data, name); break;
                 }
                 pkg.mainEditorPkg().buildAssetsAsync()
                     .then(() => this.props.dispatchUpdateUserAssets());
@@ -68,6 +70,10 @@ class AssetGalleryImpl extends React.Component<AssetGalleryProps, AssetGallerySt
             case pxt.AssetType.Tilemap:
                 const tilemap = asset as pxt.ProjectTilemap;
                 tilemap.data = project.blankTilemap(16, 16, 16);
+            case pxt.AssetType.Animation:
+                const animation = asset as pxt.Animation;
+                animation.frames = [new pxt.sprite.Bitmap(16, 16).data()];
+                break;
 
         }
         return asset;
@@ -81,6 +87,8 @@ class AssetGalleryImpl extends React.Component<AssetGalleryProps, AssetGallerySt
                 return lf("tile");
             case pxt.AssetType.Tilemap:
                 return lf("level");
+            case pxt.AssetType.Animation:
+                return lf("anim");
             default:
                 return lf("asset")
         }
