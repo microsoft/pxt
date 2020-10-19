@@ -17,6 +17,10 @@ export class AssetEditor extends Editor {
     protected galleryAssets: pxt.Asset[] = [];
     protected blocksInfo: pxtc.BlocksInfo;
 
+    getId() {
+        return "assetEditor";
+    }
+
     acceptsFile(file: pkg.File) {
         return file.name === pxt.ASSETS_FILE;
     }
