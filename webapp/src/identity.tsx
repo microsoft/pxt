@@ -4,6 +4,7 @@ import * as core from "./core";
 import * as auth from "./auth";
 import * as data from "./data";
 import * as codecard from "./codecard";
+import * as cloudsync from "./cloudsync";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -16,7 +17,7 @@ export type LoginDialogState = {
     visible?: boolean;
     onComplete?: () => void;
     rememberMe?: boolean;
-    continuationState?: string;
+    continuationHash?: string;
     username?: string;
     avatarUrl?: string;
 };
@@ -30,7 +31,7 @@ export class LoginDialog extends data.Component<LoginDialogProps, LoginDialogSta
             visible: this.props.initialVisibility,
             onComplete: this.props.onComplete,
             rememberMe: false,
-            continuationState: "",
+            continuationHash: "",
             username: "",
             avatarUrl: ""
         };
@@ -47,8 +48,8 @@ export class LoginDialog extends data.Component<LoginDialogProps, LoginDialogSta
         this.setState({ rememberMe: v });
     }
 
-    public show(continuationState: string) {
-        this.setState({ visible: true, continuationState });
+    public show(continuationHash: string) {
+        this.setState({ visible: true, continuationHash });
     }
 
     public hide() {
@@ -81,7 +82,7 @@ export class LoginDialog extends data.Component<LoginDialogProps, LoginDialogSta
 
     componentDidUpdate(prevProps: Readonly<LoginDialogProps>) {
         if (this.props.initialVisibility !== prevProps.initialVisibility) {
-            this.setState({visible: this.props.initialVisibility});
+            this.setState({ visible: this.props.initialVisibility });
         }
     }
 
@@ -97,7 +98,7 @@ export class LoginDialog extends data.Component<LoginDialogProps, LoginDialogSta
                                 key={p.name}
                                 provider={p}
                                 rememberMe={this.state.rememberMe}
-                                continuationState={this.state.continuationState}
+                                continuationHash={this.state.continuationHash}
                                 onLoggedIn={this.onLoggedIn} />
                         ))}
                     </div>
@@ -147,7 +148,7 @@ export class LoginDialog extends data.Component<LoginDialogProps, LoginDialogSta
 type ProviderButtonProps = {
     provider: pxt.AppCloudProvider;
     rememberMe: boolean;
-    continuationState: string;
+    continuationHash: string;
     onLoggedIn?: () => void;
 };
 
@@ -160,7 +161,7 @@ class ProviderButton extends data.PureComponent<ProviderButtonProps, {}> {
 
     private async handleClick() {
         const { provider, onLoggedIn } = this.props;
-        await auth.loginAsync(this.props.provider.id, this.props.rememberMe, this.props.continuationState);
+        await auth.loginAsync(this.props.provider.id, this.props.rememberMe, this.props.continuationHash);
         if (onLoggedIn) onLoggedIn();
     }
 
@@ -169,11 +170,95 @@ class ProviderButton extends data.PureComponent<ProviderButtonProps, {}> {
         return (<codecard.CodeCardView
             ariaLabel={lf("Sign in with {0}.", provider.name)}
             role="button"
-            key={'import'}
-            icon={`${provider.icon} large`}
+            key={provider.name}
+            imageUrl={provider.icon}
             name={provider.name}
             onClick={this.handleClick}
             {...rest}
         />);
+    }
+}
+
+export type UserMenuProps = ISettingsProps & {
+    continuationHash?: string;
+};
+
+type UserMenuState = {
+
+}
+
+export class UserMenu extends data.Component<UserMenuProps, UserMenuState> {
+    constructor(props: UserMenuProps) {
+        super(props);
+        this.state = {
+        }
+    }
+
+    handleLoginClick = () => {
+        this.props.parent.showLoginDialog(this.props.continuationHash);
+    }
+
+    handleLogoutClick = () => {
+        auth.logout();
+    }
+
+    handleProfileClick = () => {
+    }
+
+    getLoggedIn(): boolean {
+        return this.getData<boolean>(auth.LOGGED_IN);
+    }
+
+    getUser(): auth.UserProfile {
+        return this.getData<auth.UserProfile>(auth.USER);
+    }
+
+    renderCore() {
+        const loggedIn = this.getLoggedIn();
+        const user = this.getUser();
+        const icon = "user large"; // TODO: Show user's avatar pic
+        const title = user && user.username ? user.username : lf("Sign in");
+
+        return (
+            <sui.DropdownMenu role="menuitem"
+                icon={icon}
+                title={title}
+                text={title}
+                textClass="widedesktop only"
+                className="item icon user-dropdown-menuitem"
+            >
+                {!loggedIn ? <sui.Item role="menuitem" text={lf("Sign in...")} onClick={this.handleLoginClick} /> : undefined}
+                {loggedIn ? <sui.Item role="menuitem" text={lf("My Account")} /> : undefined}
+                {loggedIn ? <sui.Item role="menuitem" text={lf("My Profile")} /> : undefined}
+                {loggedIn ? <div className="ui divider"></div> : undefined}
+                {loggedIn ? <sui.Item role="menuitem" text={lf("Sign out")} onClick={this.handleLogoutClick} /> : undefined}
+            </sui.DropdownMenu>
+        );
+    }
+}
+
+export class Provider extends cloudsync.ProviderBase implements cloudsync.Provider {
+
+    constructor() {
+        super("mkcd", lf("MakeCode"), "xicon makecode", "https://www.makecode.com");
+    }
+
+    listAsync(): Promise<cloudsync.FileInfo[]> {
+        throw new Error("Method not implemented.");
+    }
+    downloadAsync(id: string): Promise<cloudsync.FileInfo> {
+        throw new Error("Method not implemented.");
+    }
+    uploadAsync(id: string, baseVersion: string, files: pxt.Map<string>): Promise<cloudsync.FileInfo> {
+        throw new Error("Method not implemented.");
+    }
+    deleteAsync(id: string): Promise<void> {
+        throw new Error("Method not implemented.");
+    }
+    updateAsync(id: string, newName: string): Promise<void> {
+        throw new Error("Method not implemented.");
+    }
+    getUserInfoAsync(): Promise<pxt.editor.UserInfo> {
+        throw new Error("Method not implemented.");
     }
 }

@@ -323,7 +323,7 @@ namespace pxt.editor {
         showShareDialog(title?: string): void;
         showAboutDialog(): void;
 
-        showLoginDialog(): void;
+        showLoginDialog(continuationHash: string): void;
 
         showImportUrlDialog(): void;
         showImportFileDialog(options?: ImportFileOptions): void;

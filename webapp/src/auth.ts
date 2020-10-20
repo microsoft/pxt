@@ -8,12 +8,15 @@ import U = pxt.Util;
  * Virtual API keys
  */
 const MODULE = "auth";
-const F_USER = "user";
-const F_LOGGED_IN = "logged-in";
-const F_NEEDS_SETUP = "needs-setup";
-export const USER = `${MODULE}:${F_USER}`;
-export const LOGGED_IN = `${MODULE}:${F_LOGGED_IN}`;
-export const NEEDS_SETUP = `${MODULE}:${F_NEEDS_SETUP}`;
+const FIELD_USER = "user";
+const FIELD_LOGGED_IN = "logged-in";
+const FIELD_NEEDS_SETUP = "needs-setup";
+export const USER = `${MODULE}:${FIELD_USER}`;
+export const LOGGED_IN = `${MODULE}:${FIELD_LOGGED_IN}`;
+export const NEEDS_SETUP = `${MODULE}:${FIELD_NEEDS_SETUP}`;
+
+const AUTH_TOKEN = "xsrf-token";
+const AUTH_STATE = "auth-login-state";
 
 export type UserProfile = {
     id?: string;
@@ -41,7 +44,7 @@ export const getState = (): Readonly<State> => state_;
  * redirect after login completes. This is the shape of that state.
  */
 type AuthState = {
-    continuationState?: string;
+    continuationHash?: string;
     idp?: pxt.IdentityProviderId;
 }
 
@@ -52,10 +55,10 @@ type AuthState = {
  * accessible in code, but will be included in all subsequent http requests.
  * @param idp The id of the identity provider.
  * @param persistent Whether or not to remember this login across sessions.
- * @param continuationState App state to return to after authentication completes.
+ * @param continuationHash The URL hash to return to after authentication completes.
  */
-export async function loginAsync(idp: pxt.IdentityProviderId, persistent: boolean, continuationState: string) {
-    if (!hasIdentity() || !idpEnabled(idp)) return;
+export async function loginAsync(idp: pxt.IdentityProviderId, persistent: boolean, continuationHash: string) {
+    if (!hasIdentity() || !idpEnabled(idp)) { return; }
 
     const state = getState();
 
@@ -76,23 +79,21 @@ export async function loginAsync(idp: pxt.IdentityProviderId, persistent: boolea
 
     pxt.tickEvent('auth.login.start', { 'provider': idp });
 
-    const stateKey = ts.pxtc.Util.guidGen();
     const stateObj: AuthState = {
-        continuationState,
+        continuationHash,
         idp,
     };
     const stateStr = JSON.stringify(stateObj);
 
-    pxt.storage.setLocal('auth:login:state', stateStr);
+    pxt.storage.setLocal(AUTH_STATE, stateStr);
 
     // Redirect to the login endpoint.
     const loginUrl = core.stringifyQueryString(
         `${pxt.Cloud.getServiceUrl()}/auth/login`, {
-        state: stateKey,
         response_type: "token",
         provider: idp,
         persistent,
-        redirect_uri: `${window.location.origin}/#authcallback`
+        redirect_uri: `${window.location.origin}/index.html?authcallback=1`
     });
 
     window.location.href = loginUrl;
@@ -102,15 +103,27 @@ export async function loginAsync(idp: pxt.IdentityProviderId, persistent: boolea
  * Sign out the user and clear the auth token cookie.
  */
 export async function logout() {
-    if (!hasIdentity()) return;
+    if (!hasIdentity()) { return; }
 
     pxt.tickEvent('auth.logout');
 
-    const wasLoggedIn = loggedIn();
-    await apiAsync('/api/auth/logout');
+    // backend will clear the cookie token and pass back the provider logout endpoint.
+    const result = await apiAsync(core.stringifyQueryString(
+        '/api/auth/logout', {
+        // Where to end up after logging out from provider.
+        redirect_uri: window.location.origin
+    }));
+
+    // Clear header token so we can no longer make authenticated requests.
+    pxt.storage.removeLocal(AUTH_TOKEN);
+
+    // Update state and UI to reflect logged out state.
     clearState();
-    if (wasLoggedIn) {
-        core.infoNotification(lf("Signed out"));
+
+    // Redirect to provider's logout endpoint. If all goes well there, we'll
+    // be redirected back here.
+    if (result.resp?.logout_uri) {
+        window.location.href = result.resp.logout_uri;
     }
 }
 
@@ -119,7 +132,10 @@ export async function logout() {
  * the backend. If we have a valid auth token cookie, it will succeed.
  */
 export async function authCheck() {
-    if (!hasIdentity()) return;
+    if (!hasIdentity()) { return; }
+
+    // Fail fast if we don't have an auth token.
+    if (!pxt.storage.getLocal(AUTH_TOKEN)) { return; }
 
     // Optimistically try to fetch user profile. It will succeed if we have a valid
     // session cookie. Upon success, virtual api state will be updated, and the UI
@@ -128,17 +144,26 @@ export async function authCheck() {
 }
 
 export async function loginCallback(qs: pxt.Map<string>) {
-    if (!hasIdentity()) return;
+    if (!hasIdentity()) { return; }
 
-    // @eanders investigate: `state` parameter is getting stripped from the url somewhere in the redirect.
-    // if (!qs['state']) throw new Error("Missing 'state' parameter on auth callback");
+    let continuationHash: string;
 
-    const stateStr = pxt.storage.getLocal('auth:login:state');
-    if (stateStr) {
-        pxt.debug("Auth state not found in storge.");
-    } else {
-        const stateObj: AuthState = JSON.parse(stateStr);
-        const { idp, continuationState } = stateObj;
+    do {
+        // Read and remove auth state from local storage
+        const stateStr = pxt.storage.getLocal(AUTH_STATE);
+        if (!stateStr) {
+            pxt.debug("Auth state not found in storge.");
+            break;
+        }
+        pxt.storage.removeLocal(AUTH_STATE);
+
+        const state: AuthState = JSON.parse(stateStr);
+        if (typeof state !== 'object') {
+            pxt.debug("Failed to parse auth state.");
+            break;
+        }
+
+        continuationHash = state.continuationHash;
 
         const error = qs['error'];
         if (error) {
@@ -146,17 +171,33 @@ export async function loginCallback(qs: pxt.Map<string>) {
             //  'invalid_request' -- Something is wrong with the request itself.
             //  'access_denied'   -- The identity provider denied the request, or user canceled it.
             const error_description = qs['error_description'];
-            pxt.tickEvent('auth.login.fail', { 'error': error, 'provider': idp });
+            pxt.tickEvent('auth.login.error', { 'error': error, 'provider': state.idp });
             pxt.log(`Auth failed: ${error}:${error_description}`);
-            // TODO: Show a message to the user
-        } else {
-            await fetchUserAsync();
-            pxt.tickEvent('auth.login.success', { 'provider': idp });
-            // TODO: How to process continuationState? New hash condition? For now, redirect to remove hash.
+            // TODO: Is it correct to clear continuation hash?
+            continuationHash = '';
+            // TODO: Show a message to the user (via rewritten continuation path)?
+            break;
         }
-    }
-    pxt.BrowserUtils.changeHash("#");
-    window.location.reload();
+
+        const authToken = qs['token'];
+        if (!authToken) {
+            pxt.debug("Missing authToken in auth callback.")
+            break;
+        }
+
+        // Store auth token in local storage. It is ok to do this even when
+        // "Remember me" wasn't selected because this token is not usable
+        // without its cookie-based counterpart. When "Remember me" is false,
+        // the cookie is not persisted.
+        pxt.storage.setLocal(AUTH_TOKEN, authToken);
+
+        pxt.tickEvent('auth.login.success', { 'provider': state.idp });
+    } while (false);
+
+    // Clear url parameters and redirect to root with continuation hash.
+    continuationHash = continuationHash ?? '';
+    if (continuationHash.charAt(0) != '#') { continuationHash = `#${continuationHash}`; }
+    window.location.href = `/${continuationHash}`;
 }
 
 export function identityProviders(): pxt.AppCloudProvider[] {
@@ -170,9 +211,9 @@ export function hasIdentity(): boolean {
 }
 
 export function loggedIn(): boolean {
-    if (!hasIdentity()) return false;
+    if (!hasIdentity()) { return false; }
     const state = getState();
-    return !!state.user?.id
+    return !!state.user?.id;
 }
 
 export function profileNeedsSetup(): boolean {
@@ -184,7 +225,7 @@ export async function updateUserProfile(opts: {
     username?: string,
     avatarUrl?: string
 }) {
-    if (!loggedIn()) return;
+    if (!loggedIn()) { return; }
     const state = getState();
     const result = await apiAsync<UserProfile>('/api/user/profile', {
         id: state.user.id,
@@ -205,7 +246,7 @@ async function fetchUserAsync() {
     const state = getState();
 
     // We already have a user, no need to get it again.
-    if (state.user) return;
+    if (state.user) { return; }
 
     const result = await apiAsync('/api/user/profile');
     if (result.success) {
@@ -221,10 +262,11 @@ function setUser(user: UserProfile) {
     const wasLoggedIn = loggedIn();
     state_.user = user;
     const isLoggedIn = loggedIn();
+    const needsSetup = profileNeedsSetup();
     data.invalidate(USER);
     data.invalidate(LOGGED_IN);
     data.invalidate(NEEDS_SETUP);
-    if (isLoggedIn && !wasLoggedIn) {
+    if (isLoggedIn && !needsSetup && !wasLoggedIn) {
         core.infoNotification(`Signed in: ${user.username}`);
     }
 }
@@ -236,14 +278,18 @@ type ApiResult<T> = {
     errmsg: string;
 };
 
-function apiAsync<T = any>(path: string, data?: any): Promise<ApiResult<T>> {
+async function apiAsync<T = any>(url: string, data?: any): Promise<ApiResult<T>> {
+    const headers: pxt.Map<string> = {};
+    const authToken = pxt.storage.getLocal(AUTH_TOKEN);
+    if (authToken) {
+        headers["authorization"] = `mkcd ${authToken}`;
+    }
     return U.requestAsync({
-        url: path,
-        headers: { "Cache-Control": "no-store" },   // don't cache responses
+        url,
+        headers,
+        data,
         method: data ? "POST" : "GET",
-        data: data || undefined,
-        withCredentials: true,  // include access token in request
-        allowHttpErrors: true,  // don't show network failures to the user
+        withCredentials: true,  // include cookies and authorization header in request
     }).then(r => {
         return {
             statusCode: r.statusCode,
@@ -265,9 +311,9 @@ function authApiHandler(p: string) {
     const field = data.stripProtocol(p);
     const state = getState();
     switch (field) {
-        case F_USER: return state.user;
-        case F_LOGGED_IN: return loggedIn();
-        case F_NEEDS_SETUP: return profileNeedsSetup();
+        case FIELD_USER: return state.user;
+        case FIELD_LOGGED_IN: return loggedIn();
+        case FIELD_NEEDS_SETUP: return profileNeedsSetup();
     }
     return null;
 }
