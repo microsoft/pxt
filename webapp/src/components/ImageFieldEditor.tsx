@@ -38,7 +38,8 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
         super(props);
 
         this.state = {
-            currentView: "editor"
+            currentView: "editor",
+            headerVisible: true
         };
         setTelemetryFunction(tickImageEditorEvent);
     }
@@ -124,15 +125,15 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
                 });
             }
 
-            if (options.headerVisible === false) {
-                this.setState({ headerVisible: false })
+            if (options.headerVisible != undefined) {
+                this.setState({ headerVisible: options.headerVisible })
             }
         }
     }
 
     getValue() {
         if (this.ref) {
-            return (this.props.singleFrame ? this.ref.getImage() : this.ref.getAnimation()) as U;
+            return this.ref.getAsset() as U;
         }
         return null;
     }
@@ -212,18 +213,7 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
     }
 
     protected initAnimation(value: pxt.Animation, options?: any) {
-        let frames: pxt.sprite.BitmapData[];
-        let interval: number;
-        if (!value) {
-            frames = [new pxt.sprite.Bitmap(16, 16).data()];
-            interval = 100;
-        }
-        else {
-            frames = value.frames;
-            interval = value.interval;
-        }
-
-        this.ref.initAnimation(frames.map(b => pxt.sprite.Bitmap.fromData(b)), interval);
+        this.ref.openAsset(value);
 
         if (options.disableResize) {
             this.ref.disableResize();

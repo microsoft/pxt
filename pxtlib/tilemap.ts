@@ -1,6 +1,7 @@
 namespace pxt {
     const IMAGE_MIME_TYPE = "image/x-mkcd-f4"
     const TILEMAP_MIME_TYPE = "application/mkcd-tilemap"
+    const ANIMATION_MIME_TYPE = "application/mkcd-animation"
 
     export const enum AssetType {
         Image = "image",
@@ -357,6 +358,35 @@ namespace pxt {
             return this.state.images.add(newImage);
         }
 
+        public createNewAnimation(width = 16, height = 16) {
+            const id = this.generateNewID(AssetType.Animation, pxt.sprite.ANIMATION_PREFIX, pxt.sprite.ANIMATION_NAMESPACE);
+            const bitmap = new pxt.sprite.Bitmap(width, height).data()
+
+            const newAnimation: Animation = {
+                internalID: this.getNewInternalId(),
+                id,
+                type: AssetType.Animation,
+                frames: [bitmap],
+                interval: 500,
+                meta: {},
+            };
+            return this.state.animations.add(newAnimation);
+        }
+
+        public createNewAnimationFromData(frames: pxt.sprite.BitmapData[], interval = 500) {
+            const id = this.generateNewID(AssetType.Animation, pxt.sprite.ANIMATION_PREFIX, pxt.sprite.ANIMATION_NAMESPACE);
+
+            const newAnimation: Animation = {
+                internalID: this.getNewInternalId(),
+                id,
+                type: AssetType.Animation,
+                frames,
+                interval,
+                meta: {},
+            };
+            return this.state.animations.add(newAnimation);
+        }
+
         public getGalleryTiles(tileWidth: number): TileSet[] | null {
             if (this.extensionTileSets) {
                 return this.extensionTileSets.map(
@@ -410,7 +440,7 @@ namespace pxt {
             return this.state.tiles.add(newTile);
         }
 
-        public createNewProjectImage(data: pxt.sprite.BitmapData) {
+        public createNewProjectImage(data: pxt.sprite.BitmapData, displayName?: string) {
             this.onChange();
 
             const newImage: ProjectImage = {
@@ -418,7 +448,9 @@ namespace pxt {
                 id: this.generateNewID(AssetType.Image, pxt.sprite.IMAGE_PREFIX, pxt.sprite.IMAGES_NAMESPACE),
                 type: AssetType.Image,
                 jresData: pxt.sprite.base64EncodeBitmap(data),
-                meta: {},
+                meta: {
+                    displayName
+                },
                 bitmap: data
             };
 
@@ -433,7 +465,7 @@ namespace pxt {
             if (existing) {
                 this.state.tiles.update(existing.id, tile);
 
-                if (existing.id !== tile.id) {
+                if (existing.id !== tile.id || !pxt.sprite.bitmapEquals(existing.bitmap, tile.bitmap)) {
                     for (const tm of this.getAssets(AssetType.Tilemap)) {
                         if (tm.data.tileset.tiles.some(t => t.internalID === tile.internalID)) {
 
@@ -675,6 +707,98 @@ namespace pxt {
             }
         }
 
+        /**
+         * Checks if the asset is referenced anywhere in the user's code.
+         * If an asset is referenced in any block we return true, as well
+         * as if a tile is used in any tilemap.
+         *
+         * Ways to reference an asset in TS/Python:
+         *
+         * TILES:
+         * myTiles.shortId
+         * assets.tile`shortId`
+         * assets.tile`displayName`
+         *
+         * IMAGES:
+         * assets.image`shortId`
+         * assets.image`displayName`
+         *
+         * ANIMATIONS:
+         * assets.animation`shortId`
+         * assets.animation`displayName`
+         *
+         * TILEMAPS:
+         * tilemap`shortId`
+         **/
+        public isAssetUsed(asset: Asset, files?: pxt.Map<{content: string}>): boolean {
+            if (asset.meta?.blockIDs?.length > 0) return true;
+
+            if (asset.type == pxt.AssetType.Tile) {
+                for (const tm of this.getAssets(AssetType.Tilemap)) {
+                    if (tm.data.tileset.tiles.some(t => t.internalID === asset.internalID)) {
+                        return true;
+                    }
+                }
+            }
+
+            if (files) {
+                const shortId = getShortIDForAsset(asset);
+                const displayName = asset.meta?.displayName || "";
+
+                let assetTsRefs: string;
+                switch (asset.type) {
+                    case pxt.AssetType.Tile:
+                        assetTsRefs = `myTiles.${shortId}|assets.tile\`${shortId}\``;
+                        if (displayName) assetTsRefs += `|assets.tile\`${displayName}\``;
+                        break;
+                    case pxt.AssetType.Tilemap:
+                        assetTsRefs = `tilemap\`${shortId}\``;
+                        break;
+                    case pxt.AssetType.Animation:
+                        assetTsRefs = `assets.animation\`${shortId}\``;
+                        if (displayName) assetTsRefs += `|assets.animation\`${displayName}\``;
+                        break;
+                    default:
+                        assetTsRefs = `assets.image\`${shortId}\``;
+                        if (displayName) assetTsRefs += `|assets.image\`${displayName}\``;
+                        break;
+                }
+                const assetTsRegex = new RegExp(assetTsRefs, "gm");
+
+                let assetPyRefs: string;
+                switch (asset.type) {
+                    case pxt.AssetType.Tile:
+                        assetPyRefs = `myTiles.${shortId}|assets.tile\("""${shortId}"""\)`;
+                        if (displayName) assetPyRefs += `|assets.tile\("""${displayName}"""\)`;
+                        break;
+                    case pxt.AssetType.Tilemap:
+                        assetPyRefs = `assets.tilemap\("""${shortId}"""\)`;
+                        break;
+                    case pxt.AssetType.Animation:
+                        assetPyRefs = `assets.animation\("""${shortId}"""\)`;
+                        if (displayName) assetPyRefs += `|assets.animation\("""${displayName}"""\)`;
+                        break;
+                    default:
+                        assetPyRefs = `assets.image\("""${shortId}"""\)`;
+                        if (displayName) assetPyRefs += `|assets.image\("""${displayName}"""\)`;
+                        break;
+                }
+                const assetPyRegex = new RegExp(assetPyRefs, "gm");
+
+                for (let filename of Object.keys(files)) {
+                    const f = files[filename];
+                    // Match .ts files that are not generated (.g.ts)
+                    if (filename.match(/((?!\.g).{2}|^.{0,1})\.ts$/i)) {
+                        if (f.content.match(assetTsRegex)) return true;
+                    } else if (filename.endsWith(".py")) {
+                        if (f.content.match(assetPyRegex)) return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
         public lookupAsset(assetType: AssetType.Image, name: string): ProjectImage;
         public lookupAsset(assetType: AssetType.Tile, name: string): Tile;
         public lookupAsset(assetType: AssetType.Tilemap, name: string): ProjectTilemap;
@@ -841,12 +965,20 @@ namespace pxt {
                             this.gallery.tiles.add(image);
                         }
                     }
-                    else {
+                    else if (image.type === AssetType.Image) {
                         if (isProject) {
                             this.state.images.add(image);
                         }
                         else {
                             this.gallery.images.add(image);
+                        }
+                    }
+                    else {
+                        if (isProject) {
+                            this.state.animations.add(image);
+                        }
+                        else {
+                            this.gallery.animations.add(image);
                         }
                     }
                 }
@@ -872,7 +1004,7 @@ namespace pxt {
         loadTilemapJRes(jres: Map<JRes>, skipDuplicates = false) {
             jres = inflateJRes(jres)
 
-            const tiles = this.readImages(jres, true).filter(im => im.type === pxt.AssetType.Tile);
+            const tiles = this.readImages(jres, true).filter(im => im.type === pxt.AssetType.Tile) as Tile[];
 
             // If we are loading JRES into an existing project (i.e. in multipart tutorials)
             // we need to correct the tile ids because the user may have created new tiles
@@ -973,7 +1105,7 @@ namespace pxt {
         }
 
         protected readImages(allJRes: Map<JRes>, isProjectFile = false) {
-            const assets: (Tile | ProjectImage)[] = [];
+            const assets: (Tile | ProjectImage | Animation)[] = [];
 
             for (const key of Object.keys(allJRes)) {
                 const entry = allJRes[key];
@@ -1004,6 +1136,12 @@ namespace pxt {
                         id: entry.id,
                         bitmap: pxt.sprite.getBitmapFromJResURL(`data:${IMAGE_MIME_TYPE};base64,${entry.data}`).data()
                     })
+                }
+                else if (entry.mimeType === ANIMATION_MIME_TYPE) {
+                    assets.push({
+                        ...decodeAnimation(entry),
+                        internalID: this.getNewInternalId()
+                    });
                 }
             }
 
@@ -1078,31 +1216,45 @@ namespace pxt {
         let out = "";
 
         const imageEntries: FactoryEntry[] = [];
+        const animationEntries: FactoryEntry[] = [];
 
         for (const key of entries) {
             if (key === "*") continue;
 
             const entry = jres[key];
 
-            let expression: string;
-            let factoryKeys = [getShortIDCore(AssetType.Image, key)]
-            if (typeof entry === "string") {
-                expression = sprite.bitmapToImageLiteral(sprite.getBitmapFromJResURL(entry), "typescript");
+            if (typeof entry === "string" || entry.mimeType === IMAGE_MIME_TYPE) {
+                let expression: string;
+                let factoryKeys = [getShortIDCore(AssetType.Image, key)]
+                if (typeof entry === "string") {
+                    expression = sprite.bitmapToImageLiteral(sprite.getBitmapFromJResURL(entry), "typescript");
+                }
+                else {
+                    expression = sprite.bitmapToImageLiteral(sprite.getBitmapFromJResURL(entry.data), "typescript");
+                    factoryKeys.push(entry.displayName)
+                }
+                imageEntries.push({
+                    keys: factoryKeys,
+                    expression
+                });
             }
-            else {
-                expression = sprite.bitmapToImageLiteral(sprite.getBitmapFromJResURL(entry.data), "typescript");
-                factoryKeys.push(entry.displayName)
+            else if (entry.mimeType === ANIMATION_MIME_TYPE) {
+                const animation = decodeAnimation(entry);
+
+                animationEntries.push({
+                    keys: [entry.displayName, getShortIDCore(AssetType.Animation, key)],
+                    expression: `[${animation.frames.map(f =>
+                            sprite.bitmapToImageLiteral(sprite.Bitmap.fromData(f), "typescript")
+                        ).join(", ")}]`
+                });
             }
-            imageEntries.push({
-                keys: factoryKeys,
-                expression
-            });
         }
 
 
         const warning = lf("Auto-generated code. Do not edit.");
 
         out += emitFactoryHelper("image", imageEntries);
+        out += emitFactoryHelper("animation", animationEntries);
 
         return `// ${warning}\nnamespace ${pxt.sprite.IMAGES_NAMESPACE} {\n${out}\n}\n// ${warning}\n`
     }
@@ -1207,8 +1359,8 @@ namespace pxt {
                 break;
 
             case AssetType.Animation:
-                // TODO: riknoll
-
+                allJRes[id] = serializeAnimation(asset);
+                break;
         }
     }
 
@@ -1258,7 +1410,7 @@ namespace pxt {
                 prefix = "";
                 break;
             case AssetType.Animation:
-                prefix = "";
+                prefix = pxt.sprite.ANIMATION_NAMESPACE + ".";
                 break;
         }
 
@@ -1299,5 +1451,80 @@ namespace pxt {
             tileset: tilemap.tileset.tiles.map(t => t.id),
             displayName: name
         }
+    }
+
+    function serializeAnimation(asset: Animation): JRes {
+        const encodedFrames = asset.frames.map(frame => frame.data);
+
+        const data = new Uint8ClampedArray(8 + encodedFrames[0].length * encodedFrames.length);
+
+        // interval, frame width, frame height, frame count
+        set16Bit(data, 0, asset.interval);
+        set16Bit(data, 2, asset.frames[0].width);
+        set16Bit(data, 4, asset.frames[0].height);
+        set16Bit(data, 6, asset.frames.length);
+
+        let offset = 8;
+        encodedFrames.forEach(buf => {
+            data.set(buf, offset);
+            offset += buf.length;
+        })
+
+        return {
+            namespace: asset.id.substr(0, asset.id.lastIndexOf(".")),
+            id: asset.id.substr(asset.id.lastIndexOf(".") + 1),
+            mimeType: ANIMATION_MIME_TYPE,
+            data: btoa(pxt.sprite.uint8ArrayToHex(data)),
+            displayName: asset.meta.displayName
+        }
+    }
+
+    function decodeAnimation(jres: JRes): Animation {
+        const hex = atob(jres.data);
+        const bytes = new Uint8ClampedArray(U.fromHex(hex));
+
+        const interval = read16Bit(bytes, 0);
+        const frameWidth = read16Bit(bytes, 2);
+        const frameHeight = read16Bit(bytes, 4);
+        const frameCount = read16Bit(bytes, 6);
+        const frameLength = (frameWidth * frameHeight) >> 1;
+
+        let offset = 8;
+
+        const decodedFrames: pxt.sprite.BitmapData[] = [];
+
+        for (let i = 0; i < frameCount; i++) {
+            const frameData = bytes.slice(offset, offset + frameLength);
+            decodedFrames.push({
+                x0: 0,
+                y0: 0,
+                width: frameWidth,
+                height: frameHeight,
+                data: frameData
+            });
+
+            offset += frameLength;
+        }
+
+        return {
+            type: AssetType.Animation,
+            internalID: 0,
+            id: jres.id,
+            interval,
+            frames: decodedFrames,
+            meta: {
+                displayName: jres.displayName
+            }
+        }
+    }
+
+
+    function set16Bit(buf: Uint8ClampedArray, offset: number, value: number) {
+        buf[offset] = value & 0xff;
+        buf[offset + 1] = (value >> 8) & 0xff;
+    }
+
+    function read16Bit(buf: Uint8ClampedArray, offset: number) {
+        return buf[offset] | (buf[offset + 1] << 8)
     }
 }
