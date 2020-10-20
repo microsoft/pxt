@@ -52,7 +52,7 @@ class AssetGalleryImpl extends React.Component<AssetGalleryProps, AssetGallerySt
                     case pxt.AssetType.Tilemap:
                         project.createNewTilemapFromData(result.data, name); break;
                     case pxt.AssetType.Animation:
-                        project.createNewAnimationFromData(result.data, name); break;
+                        project.createNewAnimationFromData(result.frames, result.interval, name); break;
                 }
                 pkg.mainEditorPkg().buildAssetsAsync()
                     .then(() => this.props.dispatchUpdateUserAssets());
@@ -101,7 +101,8 @@ class AssetGalleryImpl extends React.Component<AssetGalleryProps, AssetGallerySt
         const actions: sui.ModalButton[] = [
             { label: lf("Image"), onclick: this.getCreateAssetHandler(pxt.AssetType.Image) },
             { label: lf("Tile"), onclick: this.getCreateAssetHandler(pxt.AssetType.Tile) },
-            { label: lf("Tilemap"), onclick: this.getCreateAssetHandler(pxt.AssetType.Tilemap) }
+            { label: lf("Tilemap"), onclick: this.getCreateAssetHandler(pxt.AssetType.Tilemap) },
+            { label: lf("Animation"), onclick: this.getCreateAssetHandler(pxt.AssetType.Animation) }
         ]
 
         return <div className="asset-editor-gallery">

@@ -18,7 +18,7 @@ interface AssetSidebarProps {
     isGalleryAsset?: boolean;
     showAssetFieldView?: (asset: pxt.Asset, cb: (result: any) => void) => void;
     dispatchChangeGalleryView: (view: GalleryView) => void;
-    dispatchChangeSelectedAsset: (asset: pxt.Asset) => void;
+    dispatchChangeSelectedAsset: (assetType?: pxt.AssetType, assetId?: string) => void;
     dispatchUpdateUserAssets: () => void;
 }
 
@@ -73,9 +73,10 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
         return details;
     }
 
-    protected updateAssets(): void {
+    protected updateAssets(select?: pxt.Asset): void {
         pkg.mainEditorPkg().buildAssetsAsync()
-            .then(() => this.props.dispatchUpdateUserAssets());
+            .then(() => this.props.dispatchUpdateUserAssets())
+            .then(() => select && this.props.dispatchChangeSelectedAsset(select.type, select.id));
     }
 
     protected editAssetHandler = () => {
@@ -93,10 +94,9 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
     protected duplicateAssetHandler = () => {
         const project = pxt.react.getTilemapProject();
         project.pushUndo();
-        const newAsset = project.duplicateAsset(this.props.asset);
-        this.props.dispatchChangeSelectedAsset(newAsset);
+        const asset = project.duplicateAsset(this.props.asset);
         this.props.dispatchChangeGalleryView(GalleryView.User);
-        this.updateAssets();
+        this.updateAssets(asset);
     }
 
     protected copyAssetHandler = () => {
@@ -132,7 +132,7 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
         const project = pxt.react.getTilemapProject();
         project.pushUndo();
         project.removeAsset(this.props.asset);
-        this.props.dispatchChangeSelectedAsset(null);
+        this.props.dispatchChangeSelectedAsset();
         this.props.dispatchChangeGalleryView(GalleryView.User);
         this.updateAssets();
     }
