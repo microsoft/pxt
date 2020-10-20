@@ -13,3 +13,4 @@ There are several ways to do this depending on the editor you are using:
 
 * Private browsing: If you open makecode in your browsers 'private browsing' mode, it will often fail to be able to save projects - depending on the browser, they might be saved only until the browser window is closed, or only until the window is refreshed.
 * Storage full: The browser allocates a certain amount of space for each website, so it's possible that you have run out of memory. If this is the case, you might need to try to clear space on your hard drive, or delete old projects.
+* Storage disabled: Many browsers have options to disable local storage or cookies entirely. If these settings are enabled in your browser, you may need to disable them for auto save to work again.
