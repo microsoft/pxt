@@ -102,11 +102,14 @@ async function switchToMemoryWorkspace(reason: string): Promise<void> {
         });
 
         await core.confirmAsync({
-            header: lf("Unable to save projects"),
-            body: lf("We are unable to save your projects at this time; be sure to save your project by downloading or sharing it, as they will go after you refresh!"),
-            agreeLbl: lf("Done"),
+            header: lf("Warning! Project Auto-Save Disabled"),
+            body: lf("We are unable to save your projects at this time. You can still manually save your project via direct download, or sharing your project."),
+            agreeLbl: lf("Continue"),
+            headerIcon: "warning",
             agreeClass: "cancel",
             agreeIcon: "cancel",
+            helpUrl: "/browsers/no-auto-save",
+            className: "auto-save-disabled-warning",
             hasCloseIcon: true,
         });
     }
