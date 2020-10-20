@@ -533,10 +533,11 @@ namespace ts.pxtc.Util {
         let result: T | Promise<T>;
         let resolve: (value?: unknown) => void;
         let reject: (reason?: any) => void;
+        let isResolved = false;
 
         return {
             resolve: function (value: T) {
-                if (result) {
+                if (isResolved) {
                     pxt.debug("Deferred promise already resolved");
                     return;
                 }
@@ -546,10 +547,12 @@ namespace ts.pxtc.Util {
                 } else {
                     result = result || new Promise(function (r) { r(value); });
                 }
+
+                isResolved = true;
             },
 
             reject: function (reason: any) {
-                if (result) {
+                if (isResolved) {
                     pxt.debug("Deferred promise already resolved");
                     return;
                 }
@@ -559,6 +562,8 @@ namespace ts.pxtc.Util {
                 } else {
                     result = result || new Promise(function (_, j) { j(reason); });
                 }
+
+                isResolved = true;
             },
 
             promise: new Promise<T>(function (r, j) {
