@@ -10,7 +10,7 @@ import { AssetPreview } from "./assetPreview";
 interface AssetCardProps {
     asset: pxt.Asset;
     selected?: boolean;
-    dispatchChangeSelectedAsset: (asset: pxt.Asset) => void;
+    dispatchChangeSelectedAsset: (assetType?: pxt.AssetType, assetId?: string) => void;
 }
 
 class AssetCardImpl extends React.Component<AssetCardProps> {
@@ -29,7 +29,8 @@ class AssetCardImpl extends React.Component<AssetCardProps> {
     }
 
     clickHandler = () => {
-        this.props.dispatchChangeSelectedAsset(this.props.asset);
+        const { type, id } = this.props.asset;
+        this.props.dispatchChangeSelectedAsset(type, id);
     }
 
     render() {
