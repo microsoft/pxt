@@ -17,6 +17,10 @@ export class AssetEditor extends Editor {
     protected galleryAssets: pxt.Asset[] = [];
     protected blocksInfo: pxtc.BlocksInfo;
 
+    getId() {
+        return "assetEditor";
+    }
+
     acceptsFile(file: pkg.File) {
         return file.name === pxt.ASSETS_FILE;
     }
@@ -119,6 +123,15 @@ export class AssetEditor extends Editor {
                 fieldView = pxt.react.getFieldEditorView("tilemap-editor", asset as pxt.ProjectTilemap, {
                     initWidth: 16,
                     initHeight: 16,
+                    headerVisible: false,
+                    blocksInfo: this.blocksInfo
+                });
+                break;
+            case pxt.AssetType.Animation:
+                fieldView = pxt.react.getFieldEditorView("animation-editor", asset as pxt.Animation, {
+                    initWidth: 16,
+                    initHeight: 16,
+                    showTiles: true,
                     headerVisible: false,
                     blocksInfo: this.blocksInfo
                 });

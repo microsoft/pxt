@@ -18,6 +18,13 @@
 .asset-editor-sidebar-name {
     overflow: hidden;
     text-overflow: ellipsis;
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+
+    &.unnamed {
+        font-weight: 400;
+        font-style: italic;
+    }
 }
 
 .asset-editor-sidebar-preview {
@@ -157,8 +164,7 @@
     font-weight: 700;
 }
 
-.asset-editor-create-dialog .actions,
-.asset-editor-delete-dialog .actions {
+.asset-editor-create-dialog .actions {
     display: flex;
-    justify-content: space-between;
+    justify-content: space-around;
 }

@@ -145,7 +145,9 @@ export class File implements pxt.editor.IFile {
             this.name === pxt.TILEMAP_CODE ||
             this.name === pxt.TILEMAP_JRES ||
             this.name === pxt.IMAGES_CODE ||
-            this.name === pxt.IMAGES_JRES
+            this.name === pxt.IMAGES_JRES ||
+            this.name === pxt.TUTORIAL_INFO_FILE ||
+            this.name == pxt.ASSETS_FILE
         );
     }
 }
