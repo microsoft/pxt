@@ -103,8 +103,10 @@ namespace pxsim {
             return perf() * 1000;
         }
 
+        const _nextTickResolvedPromise = Promise.resolve();
         export function nextTick(f: () => void) {
-            setTimeout(f, 0);
+            // .then should run as a microtask / at end of loop
+            _nextTickResolvedPromise.then(f);
         }
 
         export async function delay<T>(duration: number, value: T): Promise<T>;
