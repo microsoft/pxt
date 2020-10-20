@@ -3,6 +3,7 @@
 import * as React from "react";
 import * as pkg from "../../package";
 import * as compiler from "../../compiler";
+import * as blocklyFieldView from "../../blocklyFieldView";
 
 import { Provider } from 'react-redux';
 import store from './store/assetEditorStore'
@@ -50,6 +51,16 @@ export class AssetEditor extends Editor {
     redo() {
         pxt.react.getTilemapProject().redo();
         store.dispatch(dispatchUpdateUserAssets());
+    }
+
+
+    resize(e?: Event) {
+        blocklyFieldView.setEditorBounds({
+            top: 0,
+            left: 0,
+            width: window.innerWidth,
+            height: window.innerHeight
+        });
     }
 
     display(): JSX.Element {
