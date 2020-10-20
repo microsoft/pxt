@@ -322,7 +322,7 @@ export class Component<TProps, TState> extends React.Component<TProps, TState> {
     }
 
     getData<T = any>(path: string) {
-        const fetchResult = this.getDataWithStatus(path);
+        const fetchResult = this.getDataWithStatus<T>(path);
         return fetchResult.data as T;
     }
 
