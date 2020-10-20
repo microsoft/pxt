@@ -163,10 +163,9 @@ class BlocklyCompilerTestHost implements pxt.Host {
     }
 }
 
+// @ts-ignore
 function fail(msg: string): never {
     chai.assert(false, msg);
-    // convince compiler we won't return
-    throw msg;
 }
 
 let cachedBlocksInfo: pxtc.BlocksInfo;
