@@ -27,6 +27,7 @@ export class AssetEditor extends Editor {
 
     loadFileAsync(file: pkg.File, hc?: boolean): Promise<void> {
         // force refresh to ensure we have a view
+
         return super.loadFileAsync(file, hc)
             .then(() => compiler.getBlocksAsync()) // make sure to load block definitions
             .then(info => {
@@ -35,6 +36,10 @@ export class AssetEditor extends Editor {
             })
             .then(() => store.dispatch(dispatchUpdateUserAssets()))
             .then(() => this.parent.forceUpdate());
+    }
+
+    unloadFileAsync(): Promise<void> {
+        return pkg.mainEditorPkg().buildAssetsAsync();
     }
 
     undo() {
