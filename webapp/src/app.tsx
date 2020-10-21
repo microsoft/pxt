@@ -1028,9 +1028,6 @@ export class ProjectView
                     header.editor = pxt.PYTHON_PROJECT_NAME
                     header.pubCurrent = false
                     isCodeFile = true;
-                } else if (fn.name == pxt.ASSETS_FILE) {
-                    header.editor = pxt.ASSETS_PROJECT_NAME
-                    header.pubCurrent = false
                 } else {
                     // some other file type
                 }
