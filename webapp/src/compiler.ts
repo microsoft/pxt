@@ -349,7 +349,7 @@ export function pySnippetArrayToBlocksAsync(code: string[], blockInfo?: ts.pxtc.
                     let lines = noNamespace.split("\n");
                     let cleanLines = lines.map((element: string) => {
                         const matchExportLet = element.match(exportLetRegex);
-                        const strippedExportLet = matchExportLet? matchExportLet[1] : element;
+                        const strippedExportLet = matchExportLet ? matchExportLet[1] : element;
                         const strippedExportFunc = strippedExportLet.match(exportFunctionRegex);
                         if (strippedExportFunc) {
                             return strippedExportFunc[1];
