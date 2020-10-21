@@ -94,7 +94,7 @@ namespace pxtblockly {
         getValue() {
             if (this.selectedOption_) {
                 const tile = this.selectedOption_[2];
-                return `assets.tile\`${displayName(tile)}\``
+                return isGalleryTile(tile) ? tile.id : `assets.tile\`${displayName(tile)}\``
             }
             const v = super.getValue();
 
@@ -251,5 +251,9 @@ namespace pxtblockly {
 
     function displayName(tile: pxt.Tile) {
         return tile.meta.displayName || pxt.getShortIDForAsset(tile);
+    }
+
+    function isGalleryTile(tile: pxt.Tile) {
+        return tile.id.startsWith("sprites.");
     }
 }
