@@ -332,12 +332,19 @@ namespace pxtblockly {
             if (!this.asset.meta) {
                 this.asset.meta = {};
             }
+
             if (!this.asset.meta.blockIDs) {
                 this.asset.meta.blockIDs = [];
             }
 
             if (this.sourceBlock_) {
                 if (this.asset.meta.blockIDs.indexOf(this.sourceBlock_.id) === -1) {
+                    const blockIDs = this.asset.meta.blockIDs;
+                    if (blockIDs.length && this.isTemporaryAsset() && blockIDs.some(id => this.sourceBlock_.workspace.getBlockById(id))) {
+                        // This temporary asset is already used, so we should clone a copy for ourselves
+                        this.asset = pxt.react.getTilemapProject().duplicateAsset(this.asset, true);
+                        this.asset.meta.blockIDs = [];
+                    }
                     this.asset.meta.blockIDs.push(this.sourceBlock_.id);
                 }
                 this.setBlockData(this.asset.id);

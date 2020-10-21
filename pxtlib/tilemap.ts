@@ -884,19 +884,22 @@ namespace pxt {
             }
         }
 
-        public duplicateAsset(asset: ProjectImage): ProjectImage;
-        public duplicateAsset(asset: Tile): Tile;
-        public duplicateAsset(asset: ProjectTilemap): ProjectTilemap;
-        public duplicateAsset(asset: Animation): Animation;
-        public duplicateAsset(asset: Asset): Asset;
-        public duplicateAsset(asset: Asset) {
+        public duplicateAsset(asset: ProjectImage, temporary?: boolean): ProjectImage;
+        public duplicateAsset(asset: Tile, temporary?: boolean): Tile;
+        public duplicateAsset(asset: ProjectTilemap, temporary?: boolean): ProjectTilemap;
+        public duplicateAsset(asset: Animation, temporary?: boolean): Animation;
+        public duplicateAsset(asset: Asset, temporary?: boolean): Asset;
+        public duplicateAsset(asset: Asset, temporary = false) {
             this.onChange();
             const newAsset = cloneAsset(asset);
             newAsset.internalID = this.getNewInternalId();
             const id = newAsset.id.substr(newAsset.id.lastIndexOf(".") + 1).replace(/\d*$/, "");
-            if (!newAsset.meta?.displayName) {
-                if (!newAsset.meta) newAsset.meta = {};
-                newAsset.meta.displayName = id;
+
+            if (!temporary) {
+                if (!newAsset.meta?.displayName) {
+                    if (!newAsset.meta) newAsset.meta = {};
+                    newAsset.meta.displayName = id;
+                }
             }
 
             switch (newAsset.type) {
