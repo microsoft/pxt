@@ -21,7 +21,7 @@ const topReducer = (state: AssetEditorState = initialState, action: any): AssetE
         case actions.CHANGE_SELECTED_ASSET:
             return {
                 ...state,
-                selectedAsset: action.asset
+                selectedAsset: getSelectedAsset(state.assets, action.assetType, action.assetId)
             };
         case actions.CHANGE_GALLERY_VIEW:
             return {
@@ -29,7 +29,7 @@ const topReducer = (state: AssetEditorState = initialState, action: any): AssetE
                 view: action.view
             };
         case actions.UPDATE_USER_ASSETS:
-            const assets = getUserAssets()
+            const assets = getUserAssets();
             return {
                 ...state,
                 selectedAsset: state.selectedAsset ? assets.find(el => el.id == state.selectedAsset.id) : undefined,
@@ -42,6 +42,12 @@ const topReducer = (state: AssetEditorState = initialState, action: any): AssetE
 
 function compareInternalId(a: pxt.Asset, b: pxt.Asset) {
     return a.internalID - b.internalID;
+}
+
+function getSelectedAsset(assets: pxt.Asset[], type: pxt.AssetType, id: string) {
+    if (!type || !id) return undefined;
+
+    return assets.find(el => el.type == type && el.id == id);
 }
 
 function getUserAssets() {

@@ -518,7 +518,7 @@ export class ProjectView
         if (!mainEditorPkg.lookupFile("this/" + pxt.ASSETS_FILE)) {
             mainEditorPkg.setFile(pxt.ASSETS_FILE, "\n", true);
         }
-        this.setFile(pkg.mainEditorPkg().lookupFile(`this/${pxt.ASSETS_FILE}`));
+        this.saveFileAsync().then(() => this.setFile(pkg.mainEditorPkg().lookupFile(`this/${pxt.ASSETS_FILE}`)));
     }
 
     openSettings() {
