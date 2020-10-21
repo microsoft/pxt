@@ -58,7 +58,7 @@ namespace pxtblockly {
         protected abstract getValueText(): string;
 
         init() {
-            if (this.fieldGroup_) {
+            if (this.isInitialized()) {
                 // Field has already been initialized once.
                 return;
             }
@@ -188,23 +188,25 @@ namespace pxtblockly {
                 return;
             }
             this.value_ = newValue;
-            this.parseValueText(newValue);
-            this.redrawPreview();
 
-            super.doValueUpdate_(newValue);
+            if (this.isInitialized()) {
+                this.parseValueText(newValue);
+                this.redrawPreview();
+
+                super.doValueUpdate_(newValue);
+            }
         }
 
         dispose() {
             super.dispose();
 
             pxt.react.getTilemapProject().removeChangeListener(this.getAssetType(), this.assetChangeListener);
-
-            this.disposeOfTemporaryAsset();
         }
 
         disposeOfTemporaryAsset() {
             if (this.isTemporaryAsset()) {
                 pxt.react.getTilemapProject().removeAsset(this.asset);
+                this.setBlockData("");
                 this.asset = undefined;
             }
         }
@@ -258,7 +260,7 @@ namespace pxtblockly {
             if (this.sourceBlock_ && !this.sourceBlock_.isInFlyout) {
                 const project = pxt.react.getTilemapProject();
 
-                const id = pxt.blocks.getBlockDataForField(this.sourceBlock_, this.name);
+                const id = this.getBlockData();
                 if (id) {
                     this.asset = project.lookupAsset(this.getAssetType(), id);
                 }
@@ -312,12 +314,12 @@ namespace pxtblockly {
             if (!this.asset && this.sourceBlock_ && !this.sourceBlock_.isInFlyout) {
                 const project = pxt.react.getTilemapProject();
 
-                const id = pxt.blocks.getBlockDataForField(this.sourceBlock_, this.name);
+                const id = this.getBlockData();
                 if (id) {
                     this.asset = project.lookupAsset(this.getAssetType(), id);
                 }
                 if (!this.asset) {
-                    this.asset = this.createNewAsset();
+                    this.asset = this.createNewAsset(this.value_);
                 }
                 this.updateAssetListener();
             }
@@ -330,15 +332,22 @@ namespace pxtblockly {
             if (!this.asset.meta) {
                 this.asset.meta = {};
             }
+
             if (!this.asset.meta.blockIDs) {
                 this.asset.meta.blockIDs = [];
             }
 
             if (this.sourceBlock_) {
                 if (this.asset.meta.blockIDs.indexOf(this.sourceBlock_.id) === -1) {
+                    const blockIDs = this.asset.meta.blockIDs;
+                    if (blockIDs.length && this.isTemporaryAsset() && blockIDs.some(id => this.sourceBlock_.workspace.getBlockById(id))) {
+                        // This temporary asset is already used, so we should clone a copy for ourselves
+                        this.asset = pxt.react.getTilemapProject().duplicateAsset(this.asset);
+                        this.asset.meta.blockIDs = [];
+                    }
                     this.asset.meta.blockIDs.push(this.sourceBlock_.id);
                 }
-                pxt.blocks.setBlockDataForField(this.sourceBlock_, this.name, this.asset.id);
+                this.setBlockData(this.asset.id);
             }
 
             pxt.react.getTilemapProject().updateAsset(this.asset);
@@ -353,7 +362,7 @@ namespace pxtblockly {
 
         protected assetChangeListener = () => {
             if (this.pendingEdit) return;
-            const id = pxt.blocks.getBlockDataForField(this.sourceBlock_, this.name);
+            const id = this.getBlockData();
             if (id) {
                 this.asset = pxt.react.getTilemapProject().lookupAsset(this.getAssetType(), id);
             }
@@ -362,6 +371,18 @@ namespace pxtblockly {
 
         protected isTemporaryAsset() {
             return this.asset && !this.asset.meta.displayName;
+        }
+
+        protected getBlockData() {
+            return pxt.blocks.getBlockDataForField(this.sourceBlock_, this.name);
+        }
+
+        protected setBlockData(value: string) {
+            pxt.blocks.setBlockDataForField(this.sourceBlock_, this.name, value);
+        }
+
+        protected isInitialized() {
+            return !!this.fieldGroup_;
         }
     }
 
