@@ -5,10 +5,9 @@ import * as ReactDOM from "react-dom";
 import * as data from "./data";
 import * as sui from "./sui";
 import * as core from "./core";
-import * as cloud from "./cloud";
 import * as cloudsync from "./cloudsync";
 import * as auth from "./auth";
-
+import * as identity from "./identity";
 import * as codecard from "./codecard"
 import * as carousel from "./carousel";
 import { showAboutDialogAsync } from "./dialogs";
@@ -291,8 +290,6 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
         this.showResetDialog = this.showResetDialog.bind(this);
         this.showReportAbuse = this.showReportAbuse.bind(this);
         this.showAboutDialog = this.showAboutDialog.bind(this);
-        this.showLoginDialog = this.showLoginDialog.bind(this);
-        this.logout = this.logout.bind(this);
         this.signOutGithub = this.signOutGithub.bind(this);
     }
 
@@ -332,14 +329,6 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
         this.props.parent.showAboutDialog();
     }
 
-    showLoginDialog() {
-        this.props.parent.showLoginDialog();
-    }
-
-    logout() {
-        auth.logout();
-    }
-
     signOutGithub() {
         pxt.tickEvent("home.github.signout");
         const githubProvider = cloudsync.githubProvider();
@@ -356,7 +345,6 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
         const githubUser = this.getData("github:user") as pxt.editor.UserInfo;
         const reportAbuse = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing;
         const showDivider = targetTheme.selectLanguage || targetTheme.highContrast || githubUser;
-        const loggedIn = this.getData<boolean>(auth.LOGGED_IN);
 
         // tslint:disable react-a11y-anchors
         return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("More...")} className="item icon more-dropdown-menuitem">
@@ -369,10 +357,6 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
                 </div>
                 {lf("Sign out")}
             </div>}
-            {targetTheme.identity ? <div className="ui divider"></div> : undefined}
-            {targetTheme.identity && !loggedIn ? <sui.Item role="menuitem" text={lf("Login")} onClick={this.showLoginDialog} /> : undefined}
-            {targetTheme.identity && loggedIn ? <sui.Item role="menuitem" text={`Profile: ${auth.getState().user.username}`} /> : undefined}
-            {targetTheme.identity && loggedIn ? <sui.Item role="menuitem" text={lf("Logout")} onClick={this.logout} /> : undefined}
             {showDivider && <div className="ui divider"></div>}
             {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...")} onClick={this.showReportAbuse} /> : undefined}
             <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={this.showResetDialog} />
@@ -408,9 +392,6 @@ export class ProjectsMenu extends data.Component<ISettingsProps, {}> {
     renderCore() {
         const targetTheme = pxt.appTarget.appTheme;
 
-        // only show cloud head if a configuration is available
-        const showCloudHead = this.hasCloud();
-
         return <div id="homemenu" className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
             <div className="left menu">
                 <a href={targetTheme.logoUrl} aria-label={lf("{0} Logo", targetTheme.boardName)} role="menuitem" target="blank" rel="noopener" className="ui item logo brand" onClick={this.brandIconClick}>
@@ -422,8 +403,8 @@ export class ProjectsMenu extends data.Component<ISettingsProps, {}> {
             </div>
             <div className="ui item home mobile hide"><sui.Icon icon={`icon home large`} /> <span>{lf("Home")}</span></div>
             <div className="right menu">
-                {!showCloudHead ? undefined : <cloud.UserMenu parent={this.props.parent} />}
                 <ProjectSettingsMenu parent={this.props.parent} highContrast={this.props.parent.state.highContrast} />
+                {auth.hasIdentity() ? <identity.UserMenu parent={this.props.parent} /> : undefined}
                 <a href={targetTheme.organizationUrl} target="blank" rel="noopener" className="ui item logo organization" onClick={this.orgIconClick}>
                     {targetTheme.organizationWideLogo || targetTheme.organizationLogo
                         ? <img className={`ui logo ${targetTheme.organizationWideLogo ? " portrait hide" : ''}`} src={targetTheme.organizationWideLogo || targetTheme.organizationLogo} alt={lf("{0} Logo", targetTheme.organization)} />

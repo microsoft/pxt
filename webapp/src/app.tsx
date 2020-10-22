@@ -32,7 +32,6 @@ import * as container from "./container";
 import * as scriptsearch from "./scriptsearch";
 import * as projects from "./projects";
 import * as scriptmanager from "./scriptmanager";
-import * as cloud from "./cloud";
 import * as extensions from "./extensions";
 import * as sounds from "./sounds";
 import * as make from "./make";
@@ -113,7 +112,6 @@ export class ProjectView
     languagePicker: lang.LanguagePicker;
     scriptManagerDialog: scriptmanager.ScriptManagerDialog;
     importDialog: projects.ImportDialog;
-    signInDialog: cloud.SignInDialog;
     identityLoginDialog: identity.LoginDialog;
     exitAndSaveDialog: projects.ExitAndSaveDialog;
     newProjectDialog: projects.NewProjectDialog;
@@ -1997,7 +1995,8 @@ export class ProjectView
                 this.cloudSignInComplete();
             })
         else {
-            this.signInDialog.show();
+            // TODO: Revisit in new cloud sync
+            //this.signInDialog.show();
         }
     }
 
@@ -3232,8 +3231,8 @@ export class ProjectView
         dialogs.showAboutDialogAsync(this);
     }
 
-    showLoginDialog() {
-        this.identityLoginDialog.show("");
+    showLoginDialog(callbackLocation: string) {
+        this.identityLoginDialog.show(callbackLocation);
     }
 
     showShareDialog(title?: string) {
@@ -3832,10 +3831,6 @@ export class ProjectView
         this.chooseHwDialog = c;
     }
 
-    private handleSignInDialogRef = (c: cloud.SignInDialog) => {
-        this.signInDialog = c;
-    }
-
     private handleLoginDialogRef = (c: identity.LoginDialog) => {
         this.identityLoginDialog = c;
     }
@@ -3932,7 +3927,6 @@ export class ProjectView
         const showFileList = !sandbox && !inTutorial
             && !(isBlocks
                 || (pkg.mainPkg && pkg.mainPkg.config && (pkg.mainPkg.config.preferredEditor == pxt.BLOCKS_PROJECT_NAME)));
-        const hasCloud = this.hasCloud();
         const hasIdentity = auth.hasIdentity();
         return (
             <div id='root' className={rootClasses}>
@@ -3989,7 +3983,6 @@ export class ProjectView
                 {sandbox ? undefined : <scriptsearch.ScriptSearch parent={this} ref={this.handleScriptSearchRef} />}
                 {sandbox ? undefined : <extensions.Extensions parent={this} ref={this.handleExtensionRef} />}
                 {inHome ? <projects.ImportDialog parent={this} ref={this.handleImportDialogRef} /> : undefined}
-                {hasCloud ? <cloud.SignInDialog parent={this} ref={this.handleSignInDialogRef} onComplete={this.cloudSignInComplete} /> : undefined}
                 {hasIdentity ? <identity.LoginDialog parent={this} ref={this.handleLoginDialogRef} onComplete={this.identityLoginComplete} initialVisibility={loginDialogInitialVisibility} /> : undefined}
                 {inHome && targetTheme.scriptManager ? <scriptmanager.ScriptManagerDialog parent={this} ref={this.handleScriptManagerDialogRef} onClose={this.handleScriptManagerDialogClose} /> : undefined}
                 {sandbox ? undefined : <projects.ExitAndSaveDialog parent={this} ref={this.handleExitAndSaveDialogRef} />}
@@ -4290,11 +4283,6 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
             }
             break;
         }
-        case "authcallback": {
-            const qs = core.parseQueryString(window.location.href);
-            auth.loginCallback(qs);
-            return true;
-        }
     }
 
     return false;
@@ -4466,6 +4454,13 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
+    const query = core.parseQueryString(window.location.href);
+
+    // Handle auth callback redirect.
+    if (query["authcallback"]) {
+        auth.loginCallback(query);
+    }
+
     initLogin();
     hash = parseHash();
     appcache.init(() => theEditor.reloadEditor());
@@ -4478,8 +4473,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const hm = /^(https:\/\/[^/]+)/.exec(window.location.href)
     if (hm) Cloud.apiRoot = hm[1] + "/api/"
-
-    const query = core.parseQueryString(window.location.href)
 
     if (query["hw"]) {
         pxt.setHwVariant(query["hw"])

@@ -6,7 +6,8 @@ import * as sui from "./sui";
 import * as tutorial from "./tutorial";
 import * as container from "./container";
 import * as core from "./core";
-import * as cloud from "./cloud";
+import * as auth from "./auth";
+import * as identity from "./identity";
 import * as cloudsync from "./cloudsync";
 import * as pkg from "./package";
 
@@ -218,8 +219,8 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         pxt.tickEvent("menu.about");
         this.props.parent.showAboutDialog();
     }
-    showLoginDialog() {
-        this.props.parent.showLoginDialog();
+    showLoginDialog(continuationHash: string) {
+        this.props.parent.showLoginDialog(continuationHash);
     }
 
     print() {
@@ -562,10 +563,6 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         const simOpts = pxt.appTarget.simulator;
         const isHeadless = simOpts && simOpts.headless;
 
-        const hasCloud = this.hasCloud();
-        const user = hasCloud ? this.getUser() : undefined;
-        const showCloud = !sandbox && !inTutorial && !debugging && !!user;
-
         const cfg = pkg.mainPkg && pkg.mainPkg.config;
         const languageRestriction = cfg && cfg.languageRestriction;
 
@@ -607,11 +604,11 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
                 {debugging ? <sui.ButtonMenuItem className="exit-debugmode-btn" role="menuitem" icon="external" text={lf("Exit Debug Mode")} textClass="landscape only" onClick={this.toggleDebug} /> : undefined}
                 {docMenu ? <container.DocsMenu parent={this.props.parent} editor={editor} /> : undefined}
                 {sandbox || inTutorial || debugging ? undefined : <container.SettingsMenu parent={this.props.parent} highContrast={highContrast} greenScreen={greenScreen} accessibleBlocks={accessibleBlocks} />}
-                {showCloud ? <cloud.UserMenu parent={this.props.parent} /> : undefined}
                 {sandbox && !targetTheme.hideEmbedEdit ? <sui.Item role="menuitem" icon="external" textClass="mobile hide" text={lf("Edit")} onClick={this.launchFullEditor} /> : undefined}
                 {inTutorial && tutorialReportId ? <sui.ButtonMenuItem className="report-tutorial-btn" role="menuitem" icon="warning circle" text={lf("Report Abuse")} textClass="landscape only" onClick={this.showReportAbuse} /> : undefined}
                 {(inTutorial && !lockedEditor && !hideIteration) && <sui.ButtonMenuItem className="exit-tutorial-btn" role="menuitem" icon="external" text={lf("Exit tutorial")} textClass="landscape only" onClick={this.exitTutorial} />}
 
+                {auth.hasIdentity() ? <identity.UserMenu parent={this.props.parent} continuationHash={"#editor"} /> : undefined}
                 {!sandbox ? <a href={lockedEditor ? undefined : targetTheme.organizationUrl} aria-label={lf("{0} Logo", targetTheme.organization)} role="menuitem" target="blank" rel="noopener" className="ui item logo organization" onClick={lockedEditor ? undefined : this.orgIconClick}>
                     {targetTheme.organizationWideLogo || targetTheme.organizationLogo
                         ? <img className={`ui logo ${targetTheme.organizationWideLogo ? " portrait hide" : ''}`} src={targetTheme.organizationWideLogo || targetTheme.organizationLogo} alt={lf("{0} Logo", targetTheme.organization)} />

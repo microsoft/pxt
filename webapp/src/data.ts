@@ -322,14 +322,14 @@ export class Component<TProps, TState> extends React.Component<TProps, TState> {
     }
 
     getData<T = any>(path: string) {
-        const fetchResult = this.getDataWithStatus(path);
+        const fetchResult = this.getDataWithStatus<T>(path);
         return fetchResult.data as T;
     }
 
     /**
      * Like getData, but the data is wrapped in a result object that indicates the status of the fetch operation
      */
-    getDataWithStatus(path: string): DataFetchResult<any> {
+    getDataWithStatus<T = any>(path: string): DataFetchResult<T> {
         if (!this.renderCoreOk)
             Util.oops("Override renderCore() not render()")
         return getCached(this, path)
@@ -341,10 +341,6 @@ export class Component<TProps, TState> extends React.Component<TProps, TState> {
 
     hasSync(): boolean {
         return !!this.getData("sync:hassync")
-    }
-
-    getUser(): pxt.editor.UserInfo {
-        return this.getData("sync:user");
     }
 
     componentWillUnmount(): void {
