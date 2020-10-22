@@ -705,21 +705,30 @@ namespace pxt {
             const fd = this.config.fileDependencies
             if (this.config.fileDependencies)
                 res = res.filter(fn => {
-                    let cond = U.lookup(fd, fn)
-                    if (!cond) return true
-                    cond = cond.trim()
-                    if (!cond) return true
-                    if (/^[\w-]+$/.test(cond)) {
-                        const dep = this.parent.resolveDep(cond)
-                        if (dep && !dep.cppOnly)
-                            return true
+                    const evalCond = (cond: string): boolean => {
+                        cond = cond.trim()
+                        if (cond[0] == '!')
+                            return !evalCond(cond.slice(1))
+                        if (/^[\w-]+$/.test(cond)) {
+                            const dep = this.parent.resolveDep(cond)
+                            if (dep && !dep.cppOnly)
+                                return true
+                            return false
+                        }
+                        const m = /^target:(\w+)$/.exec(cond)
+                        if (m)
+                            return m[1] == pxt.appTarget.id || m[1] == pxt.appTarget.platformid
+
+                        if (!Package.depWarnings[cond]) {
+                            Package.depWarnings[cond] = true
+                            pxt.log(`invalid dependency expression: ${cond} in ${this.id}/${fn}`)
+                        }
                         return false
                     }
-                    if (!Package.depWarnings[cond]) {
-                        Package.depWarnings[cond] = true
-                        pxt.log(`invalid dependency expression: ${cond} in ${this.id}/${fn}`)
-                    }
-                    return false
+
+                    const cond = U.lookup(fd, fn)
+                    if (!cond || !cond.trim()) return true
+                    return cond.split('||').some(c => c.split('&&').every(evalCond))
                 })
             return res
         }
