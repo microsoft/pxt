@@ -353,6 +353,7 @@ div.simframe > iframe {
     box-shadow: 2px 0px 0px rgba(0,0,0,0.1) !important;
     background: @editorToggleColor !important;
 }
+
 .javascript-menuitem ~ .active.item.assets-menuitem ~ .toggle,
 .python-menuitem ~ .active.item.assets-menuitem ~ .toggle,
 .blocks-menuitem ~ .active.item.javascript-menuitem ~ .toggle,
@@ -362,7 +363,11 @@ div.simframe > iframe {
     background: @editorToggleColor !important;
 }
 
-.blocks-menuitem ~ .active.item.assets-menuitem ~ .toggle {
+#editordropdown ~ .active.item.assets-menuitem ~ .toggle  {
+    margin-left: 185px!important;
+}
+
+.blocks-menuitem ~ #editordropdown ~ .active.item.assets-menuitem ~ .toggle {
     margin-left: 326px !important;
     box-shadow: -2px 0px 0px rgba(0,0,0,0.1) !important;
     background: @editorToggleColor !important;
@@ -1427,7 +1432,12 @@ p.ui.font.small {
     .blocks-menuitem ~ .active.item.python-menuitem ~ .toggle {
         margin-left: 40px !important;
     }
-    .blocks-menuitem ~ .active.item.assets-menuitem ~ .toggle {
+
+    #editordropdown ~ .active.item.assets-menuitem ~ .toggle {
+        margin-left: 80px !important;
+    }
+
+    .blocks-menuitem ~ #editordropdown ~ .active.item.assets-menuitem ~ .toggle {
         margin-left: 120px !important;
     }
 

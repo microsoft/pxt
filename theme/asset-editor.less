@@ -164,7 +164,34 @@
     font-weight: 700;
 }
 
-.asset-editor-create-dialog .actions {
+.asset-editor-create-options {
     display: flex;
+    flex-wrap: wrap;
+    padding: 1rem 0;
     justify-content: space-around;
+}
+
+.asset-editor-create-button {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 10rem;
+    width: 10rem;
+    margin-bottom: 1rem;
+    color: @white;
+    font-weight: 700;
+    background-color: @teal;
+    cursor: pointer;
+
+    &:hover {
+        background-color: darken(@teal, 5%);
+    }
+
+    i {
+        font-size: 4rem;
+        line-height: 4rem;
+        margin: 1rem;
+    }
+
 }
