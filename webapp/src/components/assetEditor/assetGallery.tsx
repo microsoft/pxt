@@ -21,10 +21,25 @@ interface AssetGalleryState {
     showCreateModal?: boolean;
 }
 
+interface AssetOption {
+    label: string;
+    icon: string;
+    handler: () => void;
+}
+
 class AssetGalleryImpl extends React.Component<AssetGalleryProps, AssetGalleryState> {
+    private assetCreateOptions: AssetOption[];
+
     constructor(props: AssetGalleryProps) {
         super(props);
         this.state = { showCreateModal: false };
+
+        this.assetCreateOptions = [
+            { label: lf("Image"), icon: "picture", handler: this.getCreateAssetHandler(pxt.AssetType.Image) },
+            { label: lf("Tile"), icon: "clone", handler: this.getCreateAssetHandler(pxt.AssetType.Tile) },
+            { label: lf("Tilemap"), icon: "map", handler: this.getCreateAssetHandler(pxt.AssetType.Tilemap) },
+            { label: lf("Animation"), icon: "video", handler: this.getCreateAssetHandler(pxt.AssetType.Animation) }
+        ]
     }
 
     protected showCreateModal = () => {
@@ -98,13 +113,6 @@ class AssetGalleryImpl extends React.Component<AssetGalleryProps, AssetGallerySt
         const { view, galleryAssets, userAssets } = this.props;
         const { showCreateModal } = this.state;
 
-        const actions: sui.ModalButton[] = [
-            { label: lf("Image"), onclick: this.getCreateAssetHandler(pxt.AssetType.Image) },
-            { label: lf("Tile"), onclick: this.getCreateAssetHandler(pxt.AssetType.Tile) },
-            { label: lf("Tilemap"), onclick: this.getCreateAssetHandler(pxt.AssetType.Tilemap) },
-            { label: lf("Animation"), onclick: this.getCreateAssetHandler(pxt.AssetType.Animation) }
-        ]
-
         return <div className="asset-editor-gallery">
             <AssetTopbar />
             <div className={`asset-editor-card-list ${view !== GalleryView.User ? "hidden" : ""}`}>
@@ -119,8 +127,15 @@ class AssetGalleryImpl extends React.Component<AssetGalleryProps, AssetGallerySt
                 <AssetCardList assets={galleryAssets} />
             </div>
             <sui.Modal className="asset-editor-create-dialog" isOpen={showCreateModal} onClose={this.hideCreateModal}
-                closeIcon={true} dimmer={true} header={lf("Create New Asset")} buttons={actions}>
-                <div>{lf("Choose your asset type from the options below.")}</div>
+                closeIcon={true} dimmer={true} header={lf("Create New Asset")}>
+                <div>{lf("Choose your asset type from the options below:")}</div>
+                <div className="asset-editor-create-options">{
+                    this.assetCreateOptions.map((opt, i) => {
+                        return <div className="asset-editor-create-button" onClick={opt.handler} role="button" key={i}>
+                            <i className={`icon ${opt.icon}`} /><span>{opt.label}</span>
+                        </div>
+                    })
+                }</div>
             </sui.Modal>
         </div>
     }
