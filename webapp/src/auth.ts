@@ -15,7 +15,7 @@ export const USER = `${MODULE}:${FIELD_USER}`;
 export const LOGGED_IN = `${MODULE}:${FIELD_LOGGED_IN}`;
 export const NEEDS_SETUP = `${MODULE}:${FIELD_NEEDS_SETUP}`;
 
-const AUTH_TOKEN = "xsrf-token";
+const CSRF_TOKEN = "csrf-token";
 const AUTH_STATE = "auth-login-state";
 
 export type UserProfile = {
@@ -44,9 +44,10 @@ export const getState = (): Readonly<State> => state_;
  * redirect after login completes. This is the shape of that state.
  */
 type AuthState = {
-    continuationHash?: string;
-    idp?: pxt.IdentityProviderId;
-}
+    key: string;
+    callbackLocation: string;
+    idp: pxt.IdentityProviderId;
+};
 
 /**
  * Starts the process of authenticating the user against the given identity
@@ -55,9 +56,10 @@ type AuthState = {
  * accessible in code, but will be included in all subsequent http requests.
  * @param idp The id of the identity provider.
  * @param persistent Whether or not to remember this login across sessions.
- * @param continuationHash The URL hash to return to after authentication completes.
+ * @param callbackLocation The URL fragment to return to after authentication
+ *  completes. This may include an optional hash and params.
  */
-export async function loginAsync(idp: pxt.IdentityProviderId, persistent: boolean, continuationHash: string) {
+export async function loginAsync(idp: pxt.IdentityProviderId, persistent: boolean, callbackLocation: string) {
     if (!hasIdentity() || !idpEnabled(idp)) { return; }
 
     const state = getState();
@@ -79,8 +81,10 @@ export async function loginAsync(idp: pxt.IdentityProviderId, persistent: boolea
 
     pxt.tickEvent('auth.login.start', { 'provider': idp });
 
+    const genId = () => (Math.PI * Math.random()).toString(36).slice(2);
     const stateObj: AuthState = {
-        continuationHash,
+        key: genId(),
+        callbackLocation,
         idp,
     };
     const stateStr = JSON.stringify(stateObj);
@@ -93,7 +97,7 @@ export async function loginAsync(idp: pxt.IdentityProviderId, persistent: boolea
         response_type: "token",
         provider: idp,
         persistent,
-        redirect_uri: `${window.location.origin}/index.html?authcallback=1`
+        redirect_uri: `${window.location.origin}/index.html?authcallback=1&state=${stateObj.key}`
     });
 
     window.location.href = loginUrl;
@@ -108,23 +112,16 @@ export async function logout() {
     pxt.tickEvent('auth.logout');
 
     // backend will clear the cookie token and pass back the provider logout endpoint.
-    const result = await apiAsync(core.stringifyQueryString(
-        '/api/auth/logout', {
-        // Where to end up after logging out from provider.
-        redirect_uri: window.location.origin
-    }));
+    await apiAsync('/api/auth/logout');
 
-    // Clear header token so we can no longer make authenticated requests.
-    pxt.storage.removeLocal(AUTH_TOKEN);
+    // Clear csrf token so we can no longer make authenticated requests.
+    pxt.storage.removeLocal(CSRF_TOKEN);
 
     // Update state and UI to reflect logged out state.
     clearState();
 
-    // Redirect to provider's logout endpoint. If all goes well there, we'll
-    // be redirected back here.
-    if (result.resp?.logout_uri) {
-        window.location.href = result.resp.logout_uri;
-    }
+    // Redirect to home screen.
+    window.location.href = window.location.origin;
 }
 
 /**
@@ -134,8 +131,8 @@ export async function logout() {
 export async function authCheck() {
     if (!hasIdentity()) { return; }
 
-    // Fail fast if we don't have an auth token.
-    if (!pxt.storage.getLocal(AUTH_TOKEN)) { return; }
+    // Fail fast if we don't have csrf token.
+    if (!pxt.storage.getLocal(CSRF_TOKEN)) { return; }
 
     // Optimistically try to fetch user profile. It will succeed if we have a valid
     // session cookie. Upon success, virtual api state will be updated, and the UI
@@ -146,7 +143,7 @@ export async function authCheck() {
 export async function loginCallback(qs: pxt.Map<string>) {
     if (!hasIdentity()) { return; }
 
-    let continuationHash: string;
+    let callbackLocation: string;
 
     do {
         // Read and remove auth state from local storage
@@ -163,7 +160,13 @@ export async function loginCallback(qs: pxt.Map<string>) {
             break;
         }
 
-        continuationHash = state.continuationHash;
+        const stateKey = qs['state'];
+        if (!stateKey || state.key !== stateKey) {
+            pxt.debug("Failed to get auth state for key");
+            break;
+        }
+
+        callbackLocation = state.callbackLocation;
 
         const error = qs['error'];
         if (error) {
@@ -174,7 +177,7 @@ export async function loginCallback(qs: pxt.Map<string>) {
             pxt.tickEvent('auth.login.error', { 'error': error, 'provider': state.idp });
             pxt.log(`Auth failed: ${error}:${error_description}`);
             // TODO: Is it correct to clear continuation hash?
-            continuationHash = '';
+            callbackLocation = "";
             // TODO: Show a message to the user (via rewritten continuation path)?
             break;
         }
@@ -185,19 +188,18 @@ export async function loginCallback(qs: pxt.Map<string>) {
             break;
         }
 
-        // Store auth token in local storage. It is ok to do this even when
+        // Store csrf token in local storage. It is ok to do this even when
         // "Remember me" wasn't selected because this token is not usable
         // without its cookie-based counterpart. When "Remember me" is false,
         // the cookie is not persisted.
-        pxt.storage.setLocal(AUTH_TOKEN, authToken);
+        pxt.storage.setLocal(CSRF_TOKEN, authToken);
 
         pxt.tickEvent('auth.login.success', { 'provider': state.idp });
     } while (false);
 
-    // Clear url parameters and redirect to root with continuation hash.
-    continuationHash = continuationHash ?? '';
-    if (continuationHash.charAt(0) != '#') { continuationHash = `#${continuationHash}`; }
-    window.location.href = `/${continuationHash}`;
+    // Clear url parameters and redirect to the callback location.
+    callbackLocation = callbackLocation ?? "";
+    window.location.href = `/${callbackLocation}`;
 }
 
 export function identityProviders(): pxt.AppCloudProvider[] {
@@ -280,16 +282,16 @@ type ApiResult<T> = {
 
 async function apiAsync<T = any>(url: string, data?: any): Promise<ApiResult<T>> {
     const headers: pxt.Map<string> = {};
-    const authToken = pxt.storage.getLocal(AUTH_TOKEN);
-    if (authToken) {
-        headers["authorization"] = `mkcd ${authToken}`;
+    const csrfToken = pxt.storage.getLocal(CSRF_TOKEN);
+    if (csrfToken) {
+        headers["authorization"] = `mkcd ${csrfToken}`;
     }
     return U.requestAsync({
         url,
         headers,
         data,
         method: data ? "POST" : "GET",
-        withCredentials: true,  // include cookies and authorization header in request
+        withCredentials: true,  // Include cookies and authorization header in request, subject to CORS policy.
     }).then(r => {
         return {
             statusCode: r.statusCode,

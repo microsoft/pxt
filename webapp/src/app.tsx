@@ -3231,8 +3231,8 @@ export class ProjectView
         dialogs.showAboutDialogAsync(this);
     }
 
-    showLoginDialog(continuationHash: string) {
-        this.identityLoginDialog.show(continuationHash);
+    showLoginDialog(callbackLocation: string) {
+        this.identityLoginDialog.show(callbackLocation);
     }
 
     showShareDialog(title?: string) {
