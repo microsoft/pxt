@@ -161,9 +161,12 @@ export class AssetEditor extends Editor {
             if (asset.type == pxt.AssetType.Tilemap) result.data = this.updateTilemapTiles(result.data);
 
             Promise.resolve(cb(result)).then(() => {
-                this.parent.saveBlocksToTypeScriptAsync().then((src) => {
-                    pkg.mainEditorPkg().setContentAsync("main.ts", src)
-                })
+                // for temporary (unnamed) assets, update the underlying typescript image literal
+                if (!result.meta?.displayName) {
+                    this.parent.saveBlocksToTypeScriptAsync().then((src) => {
+                        if (src) pkg.mainEditorPkg().setContentAsync("main.ts", src)
+                    })
+                }
             });
         });
         fieldView.show();
