@@ -401,11 +401,13 @@ namespace pxt.runner {
 
                     let fnArgs = resp.usedArguments;
                     let board = pxt.appTarget.simulator.boardDefinition;
-                    let parts = pxtc.computeUsedParts(resp, true);
+                    let parts = pxtc.computeUsedParts(resp, "ignorebuiltin");
+                    const usedBuiltinParts = pxtc.computeUsedParts(resp, "onlybuiltin");
                     let storedState: Map<string> = getStoredState(simOptions.id)
                     let runOptions: pxsim.SimulatorRunOptions = {
                         boardDefinition: board,
                         parts: parts,
+                        builtinParts: usedBuiltinParts,
                         fnArgs: fnArgs,
                         cdnUrl: pxt.webConfig.commitCdnUrl,
                         localizedStrings: Util.getLocalizedStrings(),
