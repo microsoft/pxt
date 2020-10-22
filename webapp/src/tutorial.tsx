@@ -629,10 +629,12 @@ export class WorkspaceHeader extends data.Component<any, WorkspaceHeaderState> {
 
     componentDidMount() {
         window.addEventListener('resize', this.handleResize);
+        window.addEventListener('wheel', this.handleResize);
     }
 
     componentWillUnmount() {
         window.removeEventListener('resize', this.handleResize);
+        window.removeEventListener('wheel', this.handleResize);
     }
 
     UNSAFE_componentWillUpdate() {
