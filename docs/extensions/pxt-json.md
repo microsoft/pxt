@@ -152,6 +152,11 @@ the entire extension in the editor.
 There is no point in adding them as regular `dependencies` - that would negate the
 effects of `fileDependencies` and always include both the dependencies and files.
 
+The `fileDependencies` allows expressions with `!`, `&&` and `||` (with the usual priorities).
+Parenthesis are not supported.
+
+In addition to packages, one can also say something like `target:microbit` or `target:arcade`.
+
 In future, we may allow things like `"radio >= 1.2.3"`, but for now the package identifier is
 the only thing supported.
 
