@@ -44,7 +44,7 @@ namespace pxsim {
         trace?: boolean;
         boardDefinition?: pxsim.BoardDefinition;
         parts?: string[];
-        builtinParts?: string[]
+        builtinParts?: string[];
         fnArgs?: any;
         aspectRatio?: number;
         partDefinitions?: pxsim.Map<PartDefinition>;
