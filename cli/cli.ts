@@ -3183,10 +3183,11 @@ export async function validateAndFixPkgConfig(parsed: commandParser.ParsedComman
         cfg.testFiles = trimmedTestFiles;
     }
 
-    const validFilesInFileDependencies = validateFileList("fileDependencies", U.values(cfg.fileDependencies));
+    const dependentFiles = Object.keys(cfg.fileDependencies);
+    const validFilesInFileDependencies = validateFileList("fileDependencies", dependentFiles);
     if (validFilesInFileDependencies) {
-        for (const key of Object.keys(cfg.fileDependencies)) {
-            if (validFilesInFileDependencies.indexOf(cfg.fileDependencies[key]) === -1) {
+        for (const key of dependentFiles) {
+            if (validFilesInFileDependencies.indexOf(key) === -1) {
                 delete cfg.fileDependencies[key];
             }
         }
