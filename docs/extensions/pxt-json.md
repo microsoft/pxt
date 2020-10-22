@@ -152,8 +152,24 @@ the entire extension in the editor.
 There is no point in adding them as regular `dependencies` - that would negate the
 effects of `fileDependencies` and always include both the dependencies and files.
 
-In future, we may allow things like `"radio >= 1.2.3"`, but for now the package identifier is
-the only thing supported.
+In addition to package names, you can also use `target:microbit` or similar
+to indicate that the file should be only included when compiling for a specific MakeCode
+editor (other options include `target:maker` and `target:arcade`).
+
+Finally, boolean expressions are allowed, using `!`, `&&` and `||` operators.
+Parentheses are not allowed, and operator precedence is the same as in C or JavaScript
+(`!` binds tighter than `&&`, which binds tighter than `||`).
+
+```typescript-ignore
+  ...
+  "fileDependencies": {
+      "weather-radio.ts": "!bluetooth && target:microbit",
+      "weather-buttons.ts": "target:microbit && arcade-controls || target:arcade"
+  },
+  ...
+```
+
+In future, we may allow things like `"radio >= 1.2.3"`.
 
 ## C++ dependencies
 
