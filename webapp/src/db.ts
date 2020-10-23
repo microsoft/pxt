@@ -12,23 +12,28 @@ const PouchDB = require("pouchdb")
     }
 });
 
-let _db: any = undefined;
-
+let _db: Promise<any> = undefined;
 export function getDbAsync(): Promise<any> {
-    if (_db) return Promise.resolve(_db);
+    if (_db) return _db;
 
-    const opts: any = {
-        revs_limit: 2
-    };
+    return _db = Promise.resolve()
+        .then(() => {
+            const opts: any = {
+                revs_limit: 2
+            };
 
-    _db = new PouchDB("pxt-" + pxt.storage.storageId(), opts);
-    pxt.log(`PouchDB adapter: ${_db.adapter}`)
+            const db = new PouchDB("pxt-" + pxt.storage.storageId(), opts);
+            pxt.log(`PouchDB adapter: ${db.adapter}`);
 
-    return Promise.resolve(_db);
+            return db;
+        });
 }
 
 export function destroyAsync(): Promise<void> {
-    return !_db ? Promise.resolve() : _db.destroy();
+    return !_db ? Promise.resolve() : _db.then((db: any) => {
+        db.destroy();
+        _db = undefined;
+    });
 }
 
 export class Table {
