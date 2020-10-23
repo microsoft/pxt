@@ -298,7 +298,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             }
 
             if (ev.key == "Escape" && this.editState?.floating?.image && this.shouldHandleCanvasShortcut()) {
-                // TODO: If there isn't currently a marquee'd selection, escape should save and close the field editor
+                // TODO: If there isn't currently a marqueed selection, escape should save and close the field editor
                 this.cancelSelection();
                 ev.preventDefault();
             }
