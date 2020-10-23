@@ -271,10 +271,12 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
 
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 export interface ProjectSettingsMenuProps extends ISettingsProps {
-    highContrast?: boolean;
+    // TODO @darzu: 
+    // highContrast?: boolean;
 }
 export interface ProjectSettingsMenuState {
-    highContrast?: boolean;
+    // TODO @darzu: 
+    // highContrast?: boolean;
 }
 
 export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps, ProjectSettingsMenuState> {
@@ -282,7 +284,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
     constructor(props: ProjectSettingsMenuProps) {
         super(props);
         this.state = {
-            highContrast: props.highContrast
+            // highContrast: props.highContrast
         }
 
         this.showLanguagePicker = this.showLanguagePicker.bind(this);
@@ -300,8 +302,10 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
 
     toggleHighContrast() {
         pxt.tickEvent("home.togglecontrast", undefined, { interactiveConsent: true });
-        this.props.parent.toggleHighContrast();
-        this.setState({ highContrast: !this.state.highContrast });
+        // TODO @darzu: 
+        // this.props.parent.toggleHighContrast();
+        core.toggleHighContrast();
+        // this.setState({ highContrast: !this.state.highContrast });
     }
 
     toggleGreenScreen() {
@@ -340,7 +344,9 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
     }
 
     renderCore() {
-        const { highContrast } = this.state;
+        // TODO @darzu: 
+        const highContrast = (this.getData("user-pref") as auth.UserPreferences)?.highContrast
+        // const { highContrast } = this.state;
         const targetTheme = pxt.appTarget.appTheme;
         const githubUser = this.getData("github:user") as pxt.editor.UserInfo;
         const reportAbuse = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing;
@@ -391,8 +397,6 @@ export class ProjectsMenu extends data.Component<ISettingsProps, {}> {
 
     renderCore() {
         const targetTheme = pxt.appTarget.appTheme;
-        
-        const highContrast = (this.getData("user-pref") as auth.UserPreferences)?.highContrast
 
         return <div id="homemenu" className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
             <div className="left menu">
@@ -405,7 +409,7 @@ export class ProjectsMenu extends data.Component<ISettingsProps, {}> {
             </div>
             <div className="ui item home mobile hide"><sui.Icon icon={`icon home large`} /> <span>{lf("Home")}</span></div>
             <div className="right menu">
-                <ProjectSettingsMenu parent={this.props.parent} highContrast={highContrast} />
+                <ProjectSettingsMenu parent={this.props.parent} />
                 {auth.hasIdentity() ? <identity.UserMenu parent={this.props.parent} /> : undefined}
                 <a href={targetTheme.organizationUrl} target="blank" rel="noopener" className="ui item logo organization" onClick={this.orgIconClick}>
                     {targetTheme.organizationWideLogo || targetTheme.organizationLogo
