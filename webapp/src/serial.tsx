@@ -5,6 +5,7 @@ import * as core from "./core"
 import * as srceditor from "./srceditor"
 import * as sui from "./sui"
 import * as data from "./data";
+import * as auth from "./auth";
 
 import Util = pxt.Util
 
@@ -28,7 +29,8 @@ export class Editor extends srceditor.Editor {
     lineColors: string[];
     hcLineColors: string[];
     currentLineColors: string[];
-    highContrast: boolean = false
+    // TODO @darzu: 
+    highContrast?: boolean = false
 
     //refs
     startPauseButton: StartPauseButton
@@ -46,8 +48,9 @@ export class Editor extends srceditor.Editor {
     }
 
     setVisible(b: boolean) {
-        if (this.parent.state.highContrast !== this.highContrast) {
-            this.setHighContrast(this.parent.state.highContrast)
+        const highContrast = (data.getSync("user-pref") as auth.UserPreferences)?.highContrast
+        if (highContrast !== this.highContrast) {
+            this.setHighContrast(highContrast)
         }
         this.isVisible = b
         if (this.isVisible) {

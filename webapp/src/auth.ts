@@ -25,11 +25,18 @@ export type UserProfile = {
     avatarUrl?: string;
 };
 
+// TODO @darzu
+export type UserPreferences = {
+    language?: string;
+    highContrast?: boolean;
+};
+
 /**
  * In-memory auth state. Changes to this state trigger virtual API subscription callbacks.
  */
 export type State = {
     user?: UserProfile;
+    preferences?: UserPreferences; // TODO @darzu
 };
 
 let state_: State = {};
@@ -327,4 +334,14 @@ function clearState() {
     data.invalidate(NEEDS_SETUP);
 }
 
+function userPreferencesHandler(path: string): UserPreferences {
+    console.log("userPreferencesHandler")
+    return {
+        highContrast: true,
+        language: "dz2", // TODO @darzu: 
+    }
+}
+
 data.mountVirtualApi("auth", { getSync: authApiHandler });
+
+data.mountVirtualApi("user-pref", { getSync: userPreferencesHandler });

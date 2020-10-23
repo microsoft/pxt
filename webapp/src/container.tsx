@@ -94,7 +94,7 @@ class DocsMenuItem extends sui.StatelessUIElement<DocsMenuItemProps> {
 }
 
 export interface SettingsMenuProps extends ISettingsProps {
-    highContrast: boolean;
+    highContrast?: boolean;
     greenScreen: boolean;
     accessibleBlocks: boolean;
 }
@@ -536,7 +536,8 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
     }
 
     renderCore() {
-        const { debugging, home, header, highContrast, greenScreen, accessibleBlocks, simState, tutorialOptions } = this.props.parent.state;
+        const highContrast = (this.getData("user-pref") as auth.UserPreferences)?.highContrast
+        const { debugging, home, header, greenScreen, accessibleBlocks, simState, tutorialOptions } = this.props.parent.state;
         if (home) return <div />; // Don't render if we're on the home screen
 
         const targetTheme = pxt.appTarget.appTheme;
@@ -551,7 +552,8 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         const hideIteration = tutorialOptions && tutorialOptions.metadata && tutorialOptions.metadata.hideIteration;
         const tutorialReportId = tutorialOptions && tutorialOptions.tutorialReportId;
         const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox && !inTutorial && !debugging;
-        const hc = !!this.props.parent.state.highContrast;
+        // const hc = !!this.props.parent.state.highContrast;
+        const hc = highContrast; // TODO @darzu: 
         const showShare = !inTutorial && header && pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && !isController && !debugging;
 
         const logo = (hc ? targetTheme.highContrastLogo : undefined) || targetTheme.logo;

@@ -1,17 +1,20 @@
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as React from "react";
+import { UserPreferences } from "./auth";
 import * as data from "./data";
 import * as sui from "./sui";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
 export interface EditorAccessibilityMenuProps extends ISettingsProps {
-    highContrast: boolean;
+    // TODO @darzu: 
+    highContrast?: boolean;
 }
 
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 export interface EditorAccessibilityMenuState {
+    // TODO @darzu: 
     highContrast?: boolean;
 }
 
@@ -67,7 +70,9 @@ export class EditorAccessibilityMenu extends data.Component<EditorAccessibilityM
     }
 
     renderCore() {
-        const { highContrast } = this.props.parent.state;
+        // TODO @darzu: 
+        // const { highContrast } = this.props.parent.state;
+        let highContrast = (this.getData("user-pref") as UserPreferences)?.highContrast
         const targetTheme = pxt.appTarget.appTheme;
         const hasHome = !pxt.shell.isControllerMode();
 
@@ -87,6 +92,7 @@ export interface HomeAccessibilityMenuProps extends ISettingsProps {
 
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 export interface HomeAccessibilityMenuState {
+    // TODO @darzu: 
     highContrast?: boolean;
 }
 

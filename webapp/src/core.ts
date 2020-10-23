@@ -6,6 +6,7 @@ import * as data from "./data";
 import * as sui from "./sui";
 
 import * as coretsx from "./coretsx";
+import * as auth from "./auth";
 
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
@@ -108,7 +109,7 @@ export function cancelAsyncLoading(id: string) {
 ///////////////////////////////////////////////////////////
 
 function showNotificationMsg(kind: string, msg: string) {
-    coretsx.pushNotificationMessage({ kind: kind, text: msg, hc: highContrast });
+    coretsx.pushNotificationMessage({ kind: kind, text: msg, hc: getHighContrast() });
 }
 
 export function errorNotification(msg: string) {
@@ -276,14 +277,25 @@ export function promptAsync(options: PromptOptions): Promise<string> {
 ////////////         Accessibility            /////////////
 ///////////////////////////////////////////////////////////
 
-export let highContrast: boolean;
 export const TAB_KEY = 9;
 export const ESC_KEY = 27;
 export const ENTER_KEY = 13;
 export const SPACE_KEY = 32;
 
+export function getHighContrast(): boolean {
+    // TODO @darzu: 
+    let fetch = data.getSync("user-pref") as data.DataFetchResult<auth.UserPreferences>
+    let pref = fetch.data as auth.UserPreferences
+    return pref?.highContrast ?? false
+}
+export function toggleHighContrast() {
+    setHighContrast(!getHighContrast())
+}
 export function setHighContrast(on: boolean) {
-    highContrast = on;
+    (auth as any).state_.preferences.highContrast = on; // TODO @darzu: 
+    // highContrast = on;
+    // TODO @darzu: update high contrast state in cloud
+    console.log("setting high contrast state: " + on)
 }
 
 export function resetFocus() {

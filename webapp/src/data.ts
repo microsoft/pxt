@@ -223,30 +223,7 @@ function lookup(path: string) {
 
 function getCached(component: AnyComponent, path: string): DataFetchResult<any> {
     subscribe(component, path)
-    let r = lookup(path)
-    if (r.api.isSync)
-        return {
-            data: r.api.getSync(r.path),
-            status: FetchStatus.Complete
-        }
-
-    // cache async values
-    let fetchRes: DataFetchResult<any> = {
-        data: r.data,
-        status: FetchStatus.Complete
-    };
-
-    if (expired(r) || r.data instanceof Error) {
-        fetchRes.status = r.data instanceof Error ? FetchStatus.Error : FetchStatus.Pending;
-        if (r.api.isOffline && r.api.isOffline()) {
-            // The request will not be requeued so we don't want to show it as pending
-            fetchRes.status = FetchStatus.Offline;
-        } else {
-            queue(r)
-        }
-    }
-
-    return fetchRes;
+    return getSync(path);
 }
 
 //
@@ -310,6 +287,33 @@ export function getAsync<T = any>(path: string) {
         })
         queue(ce)
     })
+}
+
+export function getSync(path: string): DataFetchResult<any> {
+    let r = lookup(path)
+    if (r.api.isSync)
+        return {
+            data: r.api.getSync(r.path),
+            status: FetchStatus.Complete
+        }
+
+    // cache async values
+    let fetchRes: DataFetchResult<any> = {
+        data: r.data,
+        status: FetchStatus.Complete
+    };
+
+    if (expired(r) || r.data instanceof Error) {
+        fetchRes.status = r.data instanceof Error ? FetchStatus.Error : FetchStatus.Pending;
+        if (r.api.isOffline && r.api.isOffline()) {
+            // The request will not be requeued so we don't want to show it as pending
+            fetchRes.status = FetchStatus.Offline;
+        } else {
+            queue(r)
+        }
+    }
+
+    return fetchRes;
 }
 
 export class Component<TProps, TState> extends React.Component<TProps, TState> {

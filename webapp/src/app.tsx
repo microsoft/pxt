@@ -140,6 +140,7 @@ export class ProjectView
         this.settings = JSON.parse(pxt.storage.getLocal("editorSettings") || "{}")
         const shouldShowHomeScreen = this.shouldShowHomeScreen();
         const isHighContrast = /hc=(\w+)/.test(window.location.href);
+        // TODO @darzu: how should we handle query string overriding the HC state?
         if (isHighContrast) core.setHighContrast(true);
 
         const simcfg = pxt.appTarget.simulator;
@@ -149,7 +150,6 @@ export class ProjectView
             active: document.visibilityState == 'visible' || pxt.BrowserUtils.isElectron() || pxt.winrt.isWinRT() || pxt.appTarget.appTheme.dontSuspendOnVisibility,
             // don't start collapsed in mobile since we can go fullscreen now
             collapseEditorTools: simcfg.headless,
-            highContrast: isHighContrast,
             simState: pxt.editor.SimState.Stopped,
             autoRun: this.autoRunOnStart()
         };
@@ -941,7 +941,10 @@ export class ProjectView
                 this.allEditors.forEach(e => e.setVisible(e == this.editor))
                 return previousEditor ? previousEditor.unloadFileAsync() : Promise.resolve();
             })
-            .then(() => { return this.editor.loadFileAsync(this.editorFile, this.state.highContrast); })
+            .then(() => {
+                let hc = (this.getData("user-pref") as auth.UserPreferences)?.highContrast
+                return this.editor.loadFileAsync(this.editorFile, hc)
+            })
             .then(() => {
                 this.saveFileAsync().done(); // make sure state is up to date
                 if (this.editor == this.textEditor || this.editor == this.blocksEditor)
@@ -2036,6 +2039,9 @@ export class ProjectView
 
     identityLoginComplete() {
         // TODO: Sync cloud data (profile, projects, etc.)
+        // TODO @darzu: sync preferences
+        console.log("sign in complete")
+        data.invalidate("user-pref");
     }
 
     ///////////////////////////////////////////////////////////
@@ -2939,9 +2945,10 @@ export class ProjectView
                     if (resp.outfiles[pxtc.BINARY_JS]) {
                         if (!cancellationToken.isCancelled()) {
                             pxt.debug(`sim: run`)
+                            let hc = (this.getData("user-pref") as auth.UserPreferences)?.highContrast
                             simulator.run(pkg.mainPkg, opts.debug, resp, {
                                 mute: this.state.mute,
-                                highContrast: this.state.highContrast,
+                                highContrast: hc,
                                 light: pxt.options.light,
                                 clickTrigger: opts.clickTrigger,
                                 storedState: pkg.mainEditorPkg().getSimState(),
@@ -3711,17 +3718,18 @@ export class ProjectView
     ///////////////////////////////////////////////////////////
 
     toggleHighContrast() {
-        const highContrastOn = !this.state.highContrast;
-        pxt.tickEvent("app.highcontrast", { on: highContrastOn ? 1 : 0 });
-        this.setState({ highContrast: highContrastOn }, () => {
+        // const highContrastOn = !this.state.highContrast;
+        // TODO @darzu: 
+        // this.setState({ highContrast: highContrastOn }, () => {
             if (this.isSimulatorRunning()) {  // if running, send updated high contrast state.
                 this.startSimulator()
             }
-        });
-        core.setHighContrast(highContrastOn);
-        if (this.editor && this.editor.isReady) {
-            this.editor.setHighContrast(highContrastOn);
-        }
+        // });
+        core.toggleHighContrast();
+        pxt.tickEvent("app.highcontrast", { on: core.getHighContrast() ? 1 : 0 });
+        // if (this.editor && this.editor.isReady) {
+        //     this.editor.setHighContrast(highContrastOn);
+        // }
     }
 
     toggleGreenScreen() {
@@ -3879,6 +3887,8 @@ export class ProjectView
 
         const isApp = cmds.isNativeHost() || pxt.winrt.isWinRT() || pxt.BrowserUtils.isElectron();
 
+        const hc = (data.getSync("user-pref") as auth.UserPreferences)?.highContrast
+
         let rootClassList = [
             "ui",
             lightbox ? 'dimmable dimmed' : 'dimmable',
@@ -3887,7 +3897,7 @@ export class ProjectView
             transparentEditorToolbar ? "transparentEditorTools" : '',
             invertedTheme ? 'inverted-theme' : '',
             this.state.fullscreen ? 'fullscreensim' : '',
-            this.state.highContrast ? 'hc' : '',
+            hc ? 'hc' : '',
             showSideDoc ? 'sideDocs' : '',
             pxt.shell.layoutTypeClass(),
             inHome ? 'inHome' : '',
@@ -3934,7 +3944,7 @@ export class ProjectView
                 {accessibleBlocks && <accessibleblocks.AccessibleBlocksInfo />}
                 {hideMenuBar || inHome ? undefined :
                     <header className="menubar" role="banner">
-                        {inEditor ? <accessibility.EditorAccessibilityMenu parent={this} highContrast={this.state.highContrast} /> : undefined}
+                        {inEditor ? <accessibility.EditorAccessibilityMenu parent={this} highContrast={hc} /> : undefined}
                         <notification.NotificationBanner parent={this} />
                         <container.MainMenu parent={this} />
                     </header>}
@@ -3972,7 +3982,7 @@ export class ProjectView
                 {inHome ? <div id="homescreen" className="full-abs">
                     <div className="ui home projectsdialog">
                         <header className="menubar" role="banner">
-                            <accessibility.HomeAccessibilityMenu parent={this} highContrast={this.state.highContrast} />
+                            <accessibility.HomeAccessibilityMenu parent={this} highContrast={hc} />
                             <projects.ProjectsMenu parent={this} />
                         </header>
                         <projects.Projects parent={this} ref={this.handleHomeRef} />

@@ -1262,7 +1262,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
             className
         ]);
         const portalClassName = cx([
-            core.highContrast ? 'hc' : '',
+            core.getHighContrast() ? 'hc' : '',
             mountClasses
         ])
         const aria = {

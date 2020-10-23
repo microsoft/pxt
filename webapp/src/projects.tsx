@@ -271,7 +271,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
 
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 export interface ProjectSettingsMenuProps extends ISettingsProps {
-    highContrast: boolean;
+    highContrast?: boolean;
 }
 export interface ProjectSettingsMenuState {
     highContrast?: boolean;
@@ -391,6 +391,8 @@ export class ProjectsMenu extends data.Component<ISettingsProps, {}> {
 
     renderCore() {
         const targetTheme = pxt.appTarget.appTheme;
+        
+        const highContrast = (this.getData("user-pref") as auth.UserPreferences)?.highContrast
 
         return <div id="homemenu" className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
             <div className="left menu">
@@ -403,7 +405,7 @@ export class ProjectsMenu extends data.Component<ISettingsProps, {}> {
             </div>
             <div className="ui item home mobile hide"><sui.Icon icon={`icon home large`} /> <span>{lf("Home")}</span></div>
             <div className="right menu">
-                <ProjectSettingsMenu parent={this.props.parent} highContrast={this.props.parent.state.highContrast} />
+                <ProjectSettingsMenu parent={this.props.parent} highContrast={highContrast} />
                 {auth.hasIdentity() ? <identity.UserMenu parent={this.props.parent} /> : undefined}
                 <a href={targetTheme.organizationUrl} target="blank" rel="noopener" className="ui item logo organization" onClick={this.orgIconClick}>
                     {targetTheme.organizationWideLogo || targetTheme.organizationLogo
