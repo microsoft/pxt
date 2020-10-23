@@ -6,8 +6,9 @@ namespace pxt.editor.experiments {
         feedbackUrl: string; // allows user to put feedback
     }
 
-    function key(experiment: Experiment): string {
-        return `experiments-${experiment.id}`
+    function key(experiment: Experiment | string): string {
+        const id = (typeof experiment === "object") ? experiment.id : experiment;
+        return `experiments-${id}`
     }
 
     export function syncTheme() {
@@ -185,7 +186,7 @@ namespace pxt.editor.experiments {
         return all().some(experiment => isEnabled(experiment));
     }
 
-    export function isEnabled(experiment: Experiment): boolean {
+    export function isEnabled(experiment: Experiment | string): boolean {
         return !!pxt.storage.getLocal(key(experiment));
     }
 

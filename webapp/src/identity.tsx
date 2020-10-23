@@ -161,7 +161,9 @@ class ProviderButton extends data.PureComponent<ProviderButtonProps, {}> {
 
     private async handleClick() {
         const { provider, onLoggedIn } = this.props;
-        await auth.loginAsync(this.props.provider.id, this.props.rememberMe, this.props.continuationHash);
+        await auth.loginAsync(this.props.provider.id, this.props.rememberMe, {
+            hash: this.props.continuationHash
+        });
         if (onLoggedIn) onLoggedIn();
     }
 
@@ -205,6 +207,14 @@ export class UserMenu extends data.Component<UserMenuProps, UserMenuState> {
     handleProfileClick = () => {
     }
 
+    handleDropdownClick = (): boolean => {
+        if (!this.getLoggedIn()) {
+            this.props.parent.showLoginDialog(this.props.continuationHash);
+            return false;
+        }
+        return true;
+    }
+
     getLoggedIn(): boolean {
         return this.getData<boolean>(auth.LOGGED_IN);
     }
@@ -226,8 +236,8 @@ export class UserMenu extends data.Component<UserMenuProps, UserMenuState> {
                 text={title}
                 textClass="widedesktop only"
                 className="item icon user-dropdown-menuitem"
+                onClick={this.handleDropdownClick}
             >
-                {!loggedIn ? <sui.Item role="menuitem" text={lf("Sign in...")} onClick={this.handleLoginClick} /> : undefined}
                 {loggedIn ? <sui.Item role="menuitem" text={lf("My Account")} /> : undefined}
                 {loggedIn ? <sui.Item role="menuitem" text={lf("My Profile")} /> : undefined}
                 {loggedIn ? <div className="ui divider"></div> : undefined}

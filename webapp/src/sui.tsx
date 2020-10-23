@@ -71,6 +71,7 @@ export interface DropdownProps extends UiProps {
     title?: string;
     id?: string;
     onChange?: (v: string) => void;
+    onClick?: () => boolean;    // Return 'true' to toggle open/close
 
     avatarImage?: string;
     avatarInitials?: string;
@@ -259,7 +260,8 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
     }
 
     private handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-        this.toggle();
+        if (!this.props.onClick || this.props.onClick())
+            this.toggle();
         e.stopPropagation()
     }
 
