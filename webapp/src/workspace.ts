@@ -94,13 +94,16 @@ async function switchToMemoryWorkspace(reason: string): Promise<void> {
     pxt.log(`workspace: error, switching from ${implType} to memory workspace`);
 
     const expectedMemWs = pxt.appTarget.appTheme.disableMemoryWorkspaceWarning
+        || impl === memoryworkspace.provider
         || pxt.shell.isSandboxMode() || pxt.shell.isReadOnly() || pxt.BrowserUtils.isIFrame();
-    if (!expectedMemWs && impl !== memoryworkspace.provider) {
-        pxt.tickEvent(`workspace.syncerror`, {
-            ws: implType,
-            reason: reason
-        });
 
+    pxt.tickEvent(`workspace.syncerror`, {
+        ws: implType,
+        reason: reason,
+        expected: expectedMemWs ? 1 : 0
+    });
+
+    if (!expectedMemWs) {
         await core.confirmAsync({
             header: lf("Warning! Project Auto-Save Disabled"),
             body: lf("We are unable to save your projects at this time. You can still manually save your project via direct download, or sharing your project."),
@@ -113,6 +116,7 @@ async function switchToMemoryWorkspace(reason: string): Promise<void> {
             hasCloseIcon: true,
         });
     }
+
     impl = memoryworkspace.provider;
 }
 
