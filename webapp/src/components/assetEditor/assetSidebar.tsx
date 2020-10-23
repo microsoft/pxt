@@ -1,5 +1,6 @@
 import * as React from "react";
 import * as pkg from "../../package";
+import * as simulator from "../../simulator";
 import * as sui from "../../sui";
 import { connect } from 'react-redux';
 
@@ -73,10 +74,9 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
         return details;
     }
 
-    protected updateAssets(select?: pxt.Asset): void {
-        pkg.mainEditorPkg().buildAssetsAsync()
-            .then(() => this.props.dispatchUpdateUserAssets())
-            .then(() => select && this.props.dispatchChangeSelectedAsset(select.type, select.id));
+    protected updateAssets(): Promise<void> {
+        return pkg.mainEditorPkg().buildAssetsAsync()
+            .then(() => this.props.dispatchUpdateUserAssets());
     }
 
     protected editAssetHandler = () => {
@@ -88,15 +88,17 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
         project.pushUndo();
         project.updateAsset(result);
         this.props.dispatchChangeGalleryView(GalleryView.User);
-        this.updateAssets();
+        this.updateAssets().then(() => simulator.setDirty());
     }
 
     protected duplicateAssetHandler = () => {
         const project = pxt.react.getTilemapProject();
         project.pushUndo();
-        const asset = project.duplicateAsset(this.props.asset);
-        this.props.dispatchChangeGalleryView(GalleryView.User);
-        this.updateAssets(asset);
+        const { type, id } = project.duplicateAsset(this.props.asset);
+        this.updateAssets().then(() => {
+            this.props.dispatchChangeGalleryView(GalleryView.User);
+            this.props.dispatchChangeSelectedAsset(type, id);
+        });
     }
 
     protected copyAssetHandler = () => {
