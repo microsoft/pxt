@@ -19,7 +19,7 @@ namespace pxt.editor {
                 if (!tm.data.tileset.tiles.some(t => t.id === tile.id)) {
                     tm.data.tileset.tiles.push(tile);
                 }
-                if (project.isAssetUsed(tile)) {
+                if (project.isAssetUsed(tile, null, [tm.id])) {
                     tm.data.projectReferences.push(tile.id);
                 }
             }

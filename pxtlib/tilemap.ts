@@ -729,13 +729,18 @@ namespace pxt {
          *
          * TILEMAPS:
          * tilemap`shortId`
+         *
+         * @param skipIDs string[] a list of string ids (block id, asset id, or file name) to ignore
          **/
-        public isAssetUsed(asset: Asset, files?: pxt.Map<{content: string}>): boolean {
-            if (asset.meta?.blockIDs?.length > 0) return true;
+        public isAssetUsed(asset: Asset, files?: pxt.Map<{content: string}>, skipIDs?: string[]): boolean {
+            let blockIds = asset.meta?.blockIDs?.filter(id => !skipIDs || skipIDs?.indexOf(id) < 0) || [];
+            if (blockIds.length > 0) return true;
 
             if (asset.type == pxt.AssetType.Tile) {
                 for (const tm of this.getAssets(AssetType.Tilemap)) {
-                    if (tm.data.tileset.tiles.some(t => t.internalID === asset.internalID)) {
+                    if (skipIDs?.indexOf(tm.id) >= 0) {
+                        continue;
+                    } else if (tm.data.tileset.tiles.some(t => t.internalID === asset.internalID)) {
                         return true;
                     }
                 }
@@ -786,6 +791,8 @@ namespace pxt {
                 const assetPyRegex = new RegExp(assetPyRefs, "gm");
 
                 for (let filename of Object.keys(files)) {
+                    if (skipIDs?.indexOf(filename) >= 0) continue;
+
                     const f = files[filename];
                     // Match .ts files that are not generated (.g.ts)
                     if (filename.match(/((?!\.g).{2}|^.{0,1})\.ts$/i)) {

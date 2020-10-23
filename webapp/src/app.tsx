@@ -2117,10 +2117,6 @@ export class ProjectView
             }
         }
 
-        if (this.editor == this.assetEditor) {
-            return pxt.ASSETS_PROJECT_NAME
-        }
-
         // no preferred editor
         return undefined;
     }
