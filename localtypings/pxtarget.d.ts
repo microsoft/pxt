@@ -395,6 +395,7 @@ declare namespace pxt {
         embedBlocksInSnapshot?: boolean; // embed blocks xml in right-click snapshot
         blocksErrorList?: boolean; // blocks error list experiment
         assetEditor?: boolean; // enable asset editor view (in blocks/text toggle)
+        disableMemoryWorkspaceWarning?: boolean; // do not warn the user when switching to in memory workspace
     }
 
     interface SocialOptions {
