@@ -129,7 +129,7 @@ export class AssetEditor extends Editor {
                     if (!asset.data.tileset.tiles.some(t => t.id === tile.id)) {
                         asset.data.tileset.tiles.push(tile);
                     }
-                    if (project.isAssetUsed(tile)) {
+                    if (project.isAssetUsed(tile, null, [asset.id])) {
                         referencedTiles.push(tile.id);
                     }
                 }
