@@ -178,6 +178,7 @@ declare namespace pxt {
         client_id?: string;
         redirect?: boolean; // Whether or not to popup or redirect the oauth. Default to popup
         identity?: boolean; // Whether or not this provider can be used for top-level login
+        order?: number;     // Sort order
     }
 
     interface AppSimulator {

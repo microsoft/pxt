@@ -37,7 +37,7 @@ function genericClassName(cls: string, props: UiProps, ignoreIcon: boolean = fal
     return `${cls} ${ignoreIcon ? '' : props.icon && props.text ? 'icon icon-and-text' : props.icon ? 'icon' : ""} ${props.inverted ? 'inverted' : ''} ${props.className || ""}`;
 }
 
-function genericContent(props: UiProps) {
+export function genericContent(props: UiProps) {
     let retVal = [
         props.icon ? (<Icon key='iconkey' icon={props.icon + (props.text ? " icon-and-text " : "") + (props.iconClass ? " " + props.iconClass : '')} />) : null,
         props.text ? (<span key='textkey' className={'ui text' + (props.textClass ? ' ' + props.textClass : '')}>{props.text}</span>) : null,
@@ -73,8 +73,7 @@ export interface DropdownProps extends UiProps {
     onChange?: (v: string) => void;
     onClick?: () => boolean;    // Return 'true' to toggle open/close
 
-    avatarImage?: string;
-    avatarInitials?: string;
+    titleContent?: React.ReactNode;
     displayAbove?: boolean;
     displayRight?: boolean;
     dataTooltip?: string;
@@ -313,7 +312,7 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
     }
 
     renderCore() {
-        const { disabled, title, role, icon, className, avatarImage, avatarInitials, children, displayAbove, displayRight, dataTooltip } = this.props;
+        const { disabled, title, role, icon, className, titleContent, children, displayAbove, displayRight, dataTooltip } = this.props;
         const { open } = this.state;
 
         const aria = {
@@ -341,12 +340,6 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
             open ? 'visible transition' : ''
         ])
 
-        const avatar = avatarImage || avatarInitials ?
-            <div className="avatar">
-                {avatarImage ? <img className="ui circular image" src={avatarImage} alt={title} /> :
-                    <div className="initials">{avatarInitials}</div>}
-            </div>
-            : undefined;
         return (
             <div role="listbox" ref="dropdown" title={title} {...aria}
                 id={this.props.id}
@@ -359,7 +352,7 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
                 onBlur={this.handleBlur}
                 tabIndex={0}
             >
-                {avatar ? avatar : genericContent(this.props)}
+                {titleContent ? titleContent : genericContent(this.props)}
                 <div ref="menu" {...menuAria} className={menuClasses}
                     role="menu">
                     {children}
@@ -970,6 +963,7 @@ export class MenuItem extends data.Component<MenuItemProps, {}> {
         return (
             <div
                 id={id}
+                key={id}
                 tabIndex={tabIndex != null ? tabIndex : -1}
                 className={classes}
                 onClick={this.handleClick}

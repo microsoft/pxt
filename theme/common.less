@@ -1708,6 +1708,53 @@ div.simframe.ui.embed {
     background-size: contain;
 }
 
+/* Profile dialog */
+.profiledialog {
+    .settings-panel {
+        justify-content: center;
+    }
+
+    .account-info {
+        max-width: 400px;
+    }
+
+    .avatar-info {
+        max-width: 400px;
+    }
+
+    .ui.card {
+        width: unset;
+        border-radius: @homeCardBorderRadius;
+        color: @homeCardColor;
+        border: @homeCardBorderSize solid @homeCardBorderColor !important;
+        background-color: @homeCardBackgroundColor;
+
+        .ui.image, .ui.imagewrapper, .content {
+            border-radius: @homeCardImageBorderRadius !important;
+        }
+        .header {
+            color: @homeCardHeaderColor;
+        }
+        .header-title {
+            font-size: 20px;
+            white-space: nowrap;
+        }
+        .meta {
+            color: @homeCardMetaColor;
+        }
+        .column {
+            padding: 0;
+        }
+        .content-box {
+            max-width: 400px;
+        }
+    }
+    .ui.card:focus {
+        outline: none;
+        border: @homeCardBorderSize solid @homeCardFocusBorderColor !important;
+    }
+}
+
 .sandbox.simView {
     #simulators, #simulator, #editortools {
         display: inherit;
