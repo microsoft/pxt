@@ -79,7 +79,11 @@ function getUserAssets() {
     const tilemaps = project.getAssets(pxt.AssetType.Tilemap).map(tilemapToGalleryItem).sort(compareInternalId);
     const animations = project.getAssets(pxt.AssetType.Animation).map(animationToGalleryItem);
 
-    return images.concat(tiles).concat(tilemaps).concat(animations);
+    const assets = images.concat(tiles).concat(tilemaps).concat(animations);
+
+    pxt.tickEvent("assets.update", { count: assets.length });
+
+    return assets;
 }
 
 export default topReducer;
