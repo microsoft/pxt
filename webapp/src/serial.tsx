@@ -48,7 +48,8 @@ export class Editor extends srceditor.Editor {
     }
 
     setVisible(b: boolean) {
-        const highContrast = (data.getSync("user-pref") as auth.UserPreferences)?.highContrast
+        // TODO @darzu: re-render this component when HC changes
+        const highContrast = data.getData<auth.UserPreferences>("user-pref:")?.highContrast
         if (highContrast !== this.highContrast) {
             this.setHighContrast(highContrast)
         }

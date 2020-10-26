@@ -334,14 +334,20 @@ function clearState() {
     data.invalidate(NEEDS_SETUP);
 }
 
+export function setUserPreferences(newPrefs: Partial<UserPreferences>) {
+    state_.preferences = { ...(state_.preferences || {}), ...newPrefs }
+    data.invalidate("user-pref");
+    // TODO @darzu: cloud sync
+}
 function userPreferencesHandler(path: string): UserPreferences {
     console.log("userPreferencesHandler")
     return {
-        highContrast: true,
-        language: "dz2", // TODO @darzu: 
+        highContrast: state_?.preferences?.highContrast ?? true,
+        language: "dz2", // TODO @darzu:
     }
 }
 
 data.mountVirtualApi("auth", { getSync: authApiHandler });
 
+console.log("mounting user-pref") // TODO @darzu: 
 data.mountVirtualApi("user-pref", { getSync: userPreferencesHandler });

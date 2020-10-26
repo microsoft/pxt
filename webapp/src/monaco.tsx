@@ -771,6 +771,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     setHighContrast(hc: boolean) {
+        // TODO @darzu: defineEditorTheme needs to be called when user-pref data changes
         if (this.loadMonacoPromise) this.defineEditorTheme(hc, true);
     }
 

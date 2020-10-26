@@ -228,7 +228,7 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
     }
 
     protected getBlockStyle = (color: string) => {
-        const highContrast = (this.getData("user-pref") as auth.UserPreferences)?.highContrast
+        const highContrast = this.getData<auth.UserPreferences>("user-pref:")?.highContrast
         return {
             backgroundColor: color,
             border: highContrast ? `2px solid ${color}` : "none",
@@ -394,7 +394,7 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
         </div>
     }
 
-    render() {
+    renderCore() {
         const { name, ns, color, icon, groups } = this.state;
         const rgb = pxt.toolbox.convertColor(color || (ns && pxt.toolbox.getNamespaceColor(ns)) || "255");
         const iconClass = `blocklyTreeIcon${icon ? (ns || icon).toLowerCase() : "Default"}`.replace(/\s/g, "");

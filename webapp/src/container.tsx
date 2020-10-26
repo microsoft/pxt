@@ -264,7 +264,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
 
     renderCore() {
         // TODO @darzu: 
-        const highContrast = (this.getData("user-pref") as auth.UserPreferences)?.highContrast
+        const highContrast = this.getData<auth.UserPreferences>("user-pref:")?.highContrast
         const { greenScreen, accessibleBlocks } = this.state;
         const targetTheme = pxt.appTarget.appTheme;
         const packages = pxt.appTarget.cloud && !!pxt.appTarget.cloud.packages;
@@ -542,7 +542,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
     }
 
     renderCore() {
-        const highContrast = (this.getData("user-pref") as auth.UserPreferences)?.highContrast
+        const highContrast = this.getData<auth.UserPreferences>("user-pref:")?.highContrast
         const { debugging, home, header, greenScreen, accessibleBlocks, simState, tutorialOptions } = this.props.parent.state;
         if (home) return <div />; // Don't render if we're on the home screen
 

@@ -942,7 +942,7 @@ export class ProjectView
                 return previousEditor ? previousEditor.unloadFileAsync() : Promise.resolve();
             })
             .then(() => {
-                let hc = (this.getData("user-pref") as auth.UserPreferences)?.highContrast
+                let hc = this.getData<auth.UserPreferences>("user-pref:")?.highContrast
                 return this.editor.loadFileAsync(this.editorFile, hc)
             })
             .then(() => {
@@ -2945,7 +2945,7 @@ export class ProjectView
                     if (resp.outfiles[pxtc.BINARY_JS]) {
                         if (!cancellationToken.isCancelled()) {
                             pxt.debug(`sim: run`)
-                            let hc = (this.getData("user-pref") as auth.UserPreferences)?.highContrast
+                            let hc = this.getData<auth.UserPreferences>("user-pref:")?.highContrast
                             simulator.run(pkg.mainPkg, opts.debug, resp, {
                                 mute: this.state.mute,
                                 highContrast: hc,
@@ -3887,7 +3887,7 @@ export class ProjectView
 
         const isApp = cmds.isNativeHost() || pxt.winrt.isWinRT() || pxt.BrowserUtils.isElectron();
 
-        const hc = (data.getSync("user-pref") as auth.UserPreferences)?.highContrast
+        const hc = this.getData<auth.UserPreferences>("user-pref:")?.highContrast
 
         let rootClassList = [
             "ui",

@@ -223,7 +223,7 @@ function lookup(path: string) {
 
 function getCached(component: AnyComponent, path: string): DataFetchResult<any> {
     subscribe(component, path)
-    return getSync(path);
+    return getDataWithStatus(path);
 }
 
 //
@@ -289,7 +289,11 @@ export function getAsync<T = any>(path: string) {
     })
 }
 
-export function getSync(path: string): DataFetchResult<any> {
+export function getData<T>(path: string): T {
+    return getDataWithStatus<T>(path).data;
+}
+
+export function getDataWithStatus<T>(path: string): DataFetchResult<T> {
     let r = lookup(path)
     if (r.api.isSync)
         return {
@@ -298,7 +302,7 @@ export function getSync(path: string): DataFetchResult<any> {
         }
 
     // cache async values
-    let fetchRes: DataFetchResult<any> = {
+    let fetchRes: DataFetchResult<T> = {
         data: r.data,
         status: FetchStatus.Complete
     };

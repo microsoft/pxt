@@ -345,7 +345,8 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
 
     renderCore() {
         // TODO @darzu: 
-        const highContrast = (this.getData("user-pref") as auth.UserPreferences)?.highContrast
+        const highContrast = this.getData<auth.UserPreferences>("user-pref:")?.highContrast
+        console.log("projects.tsx highContrast: " + highContrast);
         // const { highContrast } = this.state;
         const targetTheme = pxt.appTarget.appTheme;
         const githubUser = this.getData("github:user") as pxt.editor.UserInfo;

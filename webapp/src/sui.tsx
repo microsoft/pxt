@@ -5,6 +5,7 @@ import * as ReactTooltip from 'react-tooltip';
 
 import * as data from "./data";
 import * as core from "./core";
+import * as auth from "./auth";
 
 export const appElement = document.getElementById('content');
 
@@ -1156,7 +1157,7 @@ interface ModalState {
     mountClasses?: string;
 }
 
-export class Modal extends React.Component<ModalProps, ModalState> {
+export class Modal extends data.Component<ModalProps, ModalState> {
 
     private id: string;
     private animationRequestId: any;
@@ -1241,7 +1242,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
         onClose();
     }
 
-    render() {
+    renderCore() {
         const { isOpen, size, longer, basic, className,
             onClose, closeIcon, children, onKeyDown,
             header, headerClass, headerActions, helpUrl, description,
@@ -1261,8 +1262,9 @@ export class Modal extends React.Component<ModalProps, ModalState> {
             'modal transition visible active',
             className
         ]);
+        const hc = this.getData<auth.UserPreferences>("user-pref:");
         const portalClassName = cx([
-            core.getHighContrast() ? 'hc' : '',
+            hc ? 'hc' : '',
             mountClasses
         ])
         const aria = {

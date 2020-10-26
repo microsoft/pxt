@@ -72,7 +72,7 @@ export class EditorAccessibilityMenu extends data.Component<EditorAccessibilityM
     renderCore() {
         // TODO @darzu: 
         // const { highContrast } = this.props.parent.state;
-        let highContrast = (this.getData("user-pref") as UserPreferences)?.highContrast
+        let highContrast = this.getData<UserPreferences>("user-pref:")?.highContrast
         const targetTheme = pxt.appTarget.appTheme;
         const hasHome = !pxt.shell.isControllerMode();
 

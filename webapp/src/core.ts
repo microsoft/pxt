@@ -284,17 +284,14 @@ export const SPACE_KEY = 32;
 
 export function getHighContrast(): boolean {
     // TODO @darzu: 
-    let fetch = data.getSync("user-pref") as data.DataFetchResult<auth.UserPreferences>
-    let pref = fetch.data as auth.UserPreferences
-    return pref?.highContrast ?? false
+    return data.getData<auth.UserPreferences>("user-pref:")?.highContrast || false
 }
 export function toggleHighContrast() {
     setHighContrast(!getHighContrast())
 }
 export function setHighContrast(on: boolean) {
-    (auth as any).state_.preferences.highContrast = on; // TODO @darzu: 
-    // highContrast = on;
-    // TODO @darzu: update high contrast state in cloud
+    auth.setUserPreferences({ highContrast: on });
+    // TODO @darzu:
     console.log("setting high contrast state: " + on)
 }
 
