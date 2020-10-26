@@ -5,7 +5,7 @@ import * as auth from "./auth";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
-export type ProfileTab = 'settings' | 'privacy';
+export type ProfileTab = 'settings' | 'privacy' | 'my-stuff';
 
 
 export type ProfileDialogProps = ISettingsProps & {
@@ -21,12 +21,12 @@ export class ProfileDialog extends auth.Component<ProfileDialogProps, ProfileDia
         super(props);
         this.state = {
             visible: props.visible,
-            location: 'settings'
+            location: 'my-stuff'
         };
     }
 
     show(location?: string) {
-        location = location ?? 'settings';
+        location = location ?? 'my-stuff';
         this.setState({
             visible: true,
             location: location as ProfileTab
@@ -46,8 +46,9 @@ export class ProfileDialog extends auth.Component<ProfileDialogProps, ProfileDia
         if (!isLoggedIn) return null;
 
         const tabs: { id: ProfileTab, label: string }[] = [
+            { id: 'my-stuff', label: lf("My Stuff") },
             { id: 'settings', label: lf("Settings") },
-            { id: 'privacy', label: lf("Privacy") }
+            { id: 'privacy', label: lf("Privacy") },
         ];
 
         const user = this.getUser();
@@ -64,6 +65,7 @@ export class ProfileDialog extends auth.Component<ProfileDialogProps, ProfileDia
                 </sui.Menu>
                 {this.state.location === 'settings' ? <SettingsPanel parent={this} /> : undefined}
                 {this.state.location === 'privacy' ? <PrivacyPanel parent={this} /> : undefined}
+                {this.state.location === 'my-stuff' ? <MyStuffPanel parent={this} /> : undefined}
             </sui.Modal>
         );
     }
@@ -140,8 +142,48 @@ type PrivacyPanelProps = {
 
 class PrivacyPanel extends sui.UIElement<PrivacyPanelProps, {}> {
 
+    handleDeleteAccountClick = async () => {
+        const result = await core.confirmAsync({
+            header: lf("Delete Account"),
+            body: lf("You are about to delete your account. You can't undo this. Are you sure?"),
+            agreeClass: "red",
+            agreeIcon: "delete",
+            agreeLbl: lf("Delete my account"),
+        });
+        if (result) {
+            await auth.deleteAccount();
+            // Exit out of the profile screen.
+            this.props.parent.hide();
+            core.infoNotification(lf("Account deleted!"));
+        }
+    }
+
     renderCore(): JSX.Element {
-        return null;
+        return (
+            <>
+                <sui.Button ariaLabel={lf("Delete Account")} className="red" text={lf("Delete Account")} onClick={this.handleDeleteAccountClick} />
+            </>
+        );
+    }
+}
+
+type MyStuffPanelProps = {
+    parent: ProfileDialog;
+}
+
+class MyStuffPanel extends sui.UIElement<MyStuffPanelProps, {}> {
+
+    renderCore(): JSX.Element {
+        return (
+            <div className="empty-content">
+                <h2 className={`ui center aligned header`}>
+                    <div className="content">
+                        {lf("It's empty in here")}
+                        <div className="sub header">{lf("TODO: Show all the best info here")}</div>
+                    </div>
+                </h2>
+            </div>
+        );
     }
 }
 
@@ -213,12 +255,17 @@ export class EditAccountInfoDialog extends auth.Component<EditAccountInfoDialogP
         this.setState({ visible: false });
     }
 
-    handleUsernameChanged = (s: string) => {
+    updateUsername(s: string) {
         const trimmed = s.trim();
         this.setState({
             username: s,
             okBtnDisabled: !trimmed || trimmed.length < 2
         });
+    }
+
+    handleUsernameChanged = (s: string) => {
+        this.updateUsername(s);
+        const trimmed = s.trim();
     }
 
     handleOkClicked = async () => {
@@ -231,6 +278,13 @@ export class EditAccountInfoDialog extends auth.Component<EditAccountInfoDialogP
             core.infoNotification(lf("Profile updated!"));
         } else {
             core.errorNotification(lf("User update failed. Something went wrong."));
+        }
+    }
+
+    handleSuggestClicked = async () => {
+        const username = await auth.suggestUsername();
+        if (username) {
+            this.updateUsername(username);
         }
     }
 
@@ -252,6 +306,7 @@ export class EditAccountInfoDialog extends auth.Component<EditAccountInfoDialogP
                         <sui.Input placeholder={lf("Name")} autoFocus={!pxt.BrowserUtils.isMobile()} id={"usernameInput"}
                             ariaLabel={lf("Set your username")} autoComplete={false}
                             value={this.state.username} onChange={this.handleUsernameChanged} />
+                        <sui.Button ariaLabel={lf("Suggest username")} className="" text={lf("Suggest")} onClick={this.handleSuggestClicked} />
                     </div>
                     <label></label>
                     <sui.Button ariaLabel="ok" className="green" text={lf("Ok")} onClick={this.handleOkClicked} disabled={this.state.saving || this.state.okBtnDisabled} loading={this.state.saving} />

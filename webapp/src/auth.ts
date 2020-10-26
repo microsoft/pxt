@@ -25,6 +25,10 @@ export type UserProfile = {
     avatarUrl?: string;
 };
 
+type UsernameSuggestion = {
+    username: string;
+};
+
 /**
  * In-memory auth state. Changes to this state trigger virtual API subscription callbacks.
  */
@@ -272,6 +276,21 @@ export async function updateUserProfile(opts: {
     return result.success;
 }
 
+export async function deleteAccount() {
+    if (!loggedIn()) { return; }
+    await apiAsync('/api/user', null, 'DELETE');
+    clearState();
+}
+
+export async function suggestUsername(): Promise<string> {
+    if (!loggedIn()) { return null; }
+    const result = await apiAsync<UsernameSuggestion>('/api/user/name-suggest');
+    if (result.success) {
+        return result.resp.username;
+    }
+    return null;
+}
+
 export class Component<TProps, TState> extends data.Component<TProps, TState> {
     public getUser(): UserProfile {
         return this.getData<UserProfile>(USER);
@@ -324,7 +343,7 @@ type ApiResult<T> = {
     errmsg: string;
 };
 
-async function apiAsync<T = any>(url: string, data?: any): Promise<ApiResult<T>> {
+async function apiAsync<T = any>(url: string, data?: any, method?: string): Promise<ApiResult<T>> {
     const headers: pxt.Map<string> = {};
     const csrfToken = pxt.storage.getLocal(CSRF_TOKEN);
     if (csrfToken) {
@@ -334,7 +353,7 @@ async function apiAsync<T = any>(url: string, data?: any): Promise<ApiResult<T>>
         url,
         headers,
         data,
-        method: data ? "POST" : "GET",
+        method: method ? method : data ? "POST" : "GET",
         withCredentials: true,  // Include cookies and authorization header in request, subject to CORS policy.
     }).then(r => {
         return {

@@ -35,24 +35,18 @@ export class LoginDialog extends auth.Component<LoginDialogProps, LoginDialogSta
             username: "",
             avatarUrl: ""
         };
-
-        this.hide = this.hide.bind(this);
-        this.handleRememberMeChanged = this.handleRememberMeChanged.bind(this);
-        this.handleUsernameChanged = this.handleUsernameChanged.bind(this);
-        this.handleUsernameRef = this.handleUsernameRef.bind(this);
-        this.handleProfileSetupOkClicked = this.handleProfileSetupOkClicked.bind(this);
-        this.onLoggedIn = this.onLoggedIn.bind(this);
     }
 
-    private handleRememberMeChanged(v: boolean) {
+    private handleRememberMeChanged = (v: boolean) => {
         this.setState({ rememberMe: v });
     }
 
-    public show(continuationHash?: string) {
-        this.setState({ visible: true, continuationHash });
+    public async show(continuationHash?: string) {
+        const state: LoginDialogState = { visible: true, continuationHash };
+        this.setState(state);
     }
 
-    public hide() {
+    public hide = () => {
         if (this.profileNeedsSetup()) {
             // User canceled setting up essential profile info.
             auth.logout();
@@ -60,20 +54,17 @@ export class LoginDialog extends auth.Component<LoginDialogProps, LoginDialogSta
         this.setState({ visible: false });
     }
 
-    private onLoggedIn() {
+    private onLoggedIn = () => {
         const { onComplete } = this.props;
         this.hide();
         if (onComplete) onComplete();
     }
 
-    handleUsernameChanged(v: string) {
+    handleUsernameChanged = (v: string) => {
         this.setState({ username: v });
     }
 
-    handleUsernameRef(ref: any) {
-    }
-
-    async handleProfileSetupOkClicked() {
+    handleProfileSetupOkClicked = async () => {
         await auth.updateUserProfile({
             username: this.state.username,
             avatarUrl: this.state.avatarUrl
@@ -81,9 +72,20 @@ export class LoginDialog extends auth.Component<LoginDialogProps, LoginDialogSta
         this.hide();
     }
 
-    componentDidUpdate(prevProps: Readonly<LoginDialogProps>) {
+    handleSuggestClicked = async () => {
+        const username = await auth.suggestUsername();
+        if (username) {
+            this.setState({ username });
+        }
+    }
+
+    async componentDidUpdate(prevProps: Readonly<LoginDialogProps>) {
         if (this.props.initialVisibility !== prevProps.initialVisibility) {
-            this.setState({ visible: this.props.initialVisibility });
+            let username = this.state.username;
+            if (!username || !username.length) {
+                username = await auth.suggestUsername();
+            }
+            this.setState({ username, visible: this.props.initialVisibility });
         }
     }
 
@@ -118,12 +120,13 @@ export class LoginDialog extends auth.Component<LoginDialogProps, LoginDialogSta
                 <div className="ui header">{lf("Create your Profile")}</div>
                 <div className={`ui form`}>
                     <div className="ui ten wide field">
-                        <sui.Input ref={this.handleUsernameRef} placeholder={lf("Name")} autoFocus={!pxt.BrowserUtils.isMobile()} id={"usernameInput"}
+                        <sui.Input placeholder={lf("Name")} autoFocus={!pxt.BrowserUtils.isMobile()} id={"usernameInput"}
                             ariaLabel={lf("Set your username")} autoComplete={false}
                             value={this.state.username} onChange={this.handleUsernameChanged} />
+                        <sui.Button ariaLabel={lf("Suggest username")} className="" text={lf("Suggest")} onClick={this.handleSuggestClicked} />
                     </div>
                     <label></label>
-                    <sui.Button ariaLabel="ok" className="large green" text={lf("Ok")} onClick={this.handleProfileSetupOkClicked} />
+                    <sui.Button ariaLabel="ok" className="green" text={lf("Ok")} onClick={this.handleProfileSetupOkClicked} />
                 </div>
             </>
         );
@@ -198,19 +201,15 @@ export class UserMenu extends auth.Component<UserMenuProps, UserMenuState> {
         };
     }
 
-    handleLoginClick = () => {
-        this.props.parent.showLoginDialog(this.props.continuationHash);
-    }
-
-    handleLogoutClick = () => {
+    handleLogoutClicked = () => {
         auth.logout();
     }
 
-    handleProfileClick = () => {
+    handleProfileClicked = () => {
         this.props.parent.showProfileDialog();
     }
 
-    handleDropdownClick = (): boolean => {
+    handleDropdownClicked = (): boolean => {
         if (!this.isLoggedIn()) {
             this.props.parent.showLoginDialog(this.props.continuationHash);
             return false;
@@ -253,11 +252,11 @@ export class UserMenu extends auth.Component<UserMenuProps, UserMenuState> {
                 title={lf("User Menu")}
                 className="item icon user-dropdown-menuitem"
                 titleContent={titleContent}
-                onClick={this.handleDropdownClick}
+                onClick={this.handleDropdownClicked}
             >
-                {loggedIn ? <sui.Item role="menuitem" text={lf("My Profile")} onClick={this.handleProfileClick} /> : undefined}
+                {loggedIn ? <sui.Item role="menuitem" text={lf("My Profile")} onClick={this.handleProfileClicked} /> : undefined}
                 {loggedIn ? <div className="ui divider"></div> : undefined}
-                {loggedIn ? <sui.Item role="menuitem" text={lf("Sign out")} onClick={this.handleLogoutClick} /> : undefined}
+                {loggedIn ? <sui.Item role="menuitem" text={lf("Sign out")} onClick={this.handleLogoutClicked} /> : undefined}
             </sui.DropdownMenu>
         );
     }
