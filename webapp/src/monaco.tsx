@@ -15,6 +15,7 @@ import * as toolbox from "./toolbox";
 import * as workspace from "./workspace";
 import * as blocklyFieldView from "./blocklyFieldView";
 import { ViewZoneEditorHost, ModalEditorHost, FieldEditorManager } from "./monacoFieldEditorHost";
+import * as data from "./data";
 
 import Util = pxt.Util;
 import { BreakpointCollection } from "./monacoDebugger";
@@ -24,6 +25,7 @@ import { amendmentToInsertSnippet, listenForEditAmendments, createLineReplacemen
 
 import { MonacoFlyout } from "./monacoFlyout";
 import { ErrorList } from "./errorList";
+import { UserPreferences } from "./auth";
 
 const MIN_EDITOR_FONT_SIZE = 10
 const MAX_EDITOR_FONT_SIZE = 40
@@ -372,6 +374,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private exceptionChangesListeners: pxt.Map<(exception: pxsim.DebuggerBreakpointMessage, locations: pxtc.LocationInfo[]) => void> = {}
     private callLocations: pxtc.LocationInfo[];
 
+    private userPreferencesSubscriber: data.DataSubscriber = {
+        subscriptions: [],
+        onDataChanged: () => {
+            this.onUserPreferencesChanged();
+        }
+    };
+
     private handleFlyoutWheel = (e: WheelEvent) => e.stopPropagation();
     private handleFlyoutScroll = (e: WheelEvent) => e.stopPropagation();
 
@@ -383,6 +392,17 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.listenToExceptionChanges = this.listenToExceptionChanges.bind(this)
         this.goToError = this.goToError.bind(this);
         this.startDebugger = this.startDebugger.bind(this)
+        this.onUserPreferencesChanged = this.onUserPreferencesChanged.bind(this);
+
+        // TODO @darzu: will this ever unsubscribe?
+        data.subscribe(this.userPreferencesSubscriber, "user-pref:");
+    }
+
+    onUserPreferencesChanged() {
+        const prefs = data.getData<UserPreferences>("user-pref:");
+        const hc = !!prefs?.highContrast
+
+        if (this.loadMonacoPromise) this.defineEditorTheme(hc, true);
     }
 
     hasBlocks() {
