@@ -25,6 +25,10 @@ export type UserProfile = {
     avatarUrl?: string;
 };
 
+type UsernameSuggestion = {
+    username: string;
+};
+
 /**
  * In-memory auth state. Changes to this state trigger virtual API subscription callbacks.
  */
@@ -39,14 +43,29 @@ let state_: State = {};
  */
 export const getState = (): Readonly<State> => state_;
 
+export type CallbackState = {
+    hash?: string;
+    params?: pxt.Map<string>;
+};
+
+const NilCallbackState = {
+    hash: '',
+    params: {}
+};
+
 /**
  * During login, we store some state in local storage so we know where to
  * redirect after login completes. This is the shape of that state.
  */
 type AuthState = {
     key: string;
-    callbackLocation: string;
+    callbackState: CallbackState;
+    callbackPathname: string;
     idp: pxt.IdentityProviderId;
+};
+
+type LoginResponse = {
+    loginUrl: string;
 };
 
 /**
@@ -56,10 +75,10 @@ type AuthState = {
  * accessible in code, but will be included in all subsequent http requests.
  * @param idp The id of the identity provider.
  * @param persistent Whether or not to remember this login across sessions.
- * @param callbackLocation The URL fragment to return to after authentication
- *  completes. This may include an optional hash and params.
+ * @param callbackState The URL hash and params to return to after the auth
+ *  flow completes.
  */
-export async function loginAsync(idp: pxt.IdentityProviderId, persistent: boolean, callbackLocation: string) {
+export async function loginAsync(idp: pxt.IdentityProviderId, persistent: boolean, callbackState: CallbackState = NilCallbackState) {
     if (!hasIdentity() || !idpEnabled(idp)) { return; }
 
     const state = getState();
@@ -79,28 +98,37 @@ export async function loginAsync(idp: pxt.IdentityProviderId, persistent: boolea
 
     clearState();
 
-    pxt.tickEvent('auth.login.start', { 'provider': idp });
+    // Make sure we can assume these fields are non-null.
+    callbackState.hash = callbackState.hash ?? "";
+    callbackState.params = callbackState.params ?? {};
 
+    // Store some continuation state in local storage so we can return to what
+    // the user was doing before signing in.
     const genId = () => (Math.PI * Math.random()).toString(36).slice(2);
     const stateObj: AuthState = {
         key: genId(),
-        callbackLocation,
+        callbackState,
+        callbackPathname: window.location.pathname,
         idp,
     };
     const stateStr = JSON.stringify(stateObj);
-
     pxt.storage.setLocal(AUTH_STATE, stateStr);
 
     // Redirect to the login endpoint.
-    const loginUrl = core.stringifyQueryString(
-        `${pxt.Cloud.getServiceUrl()}/auth/login`, {
+    const loginUrl = core.stringifyQueryString('/api/auth/login', {
         response_type: "token",
         provider: idp,
         persistent,
-        redirect_uri: `${window.location.origin}/index.html?authcallback=1&state=${stateObj.key}`
-    });
+        redirect_uri: `${window.location.origin}${window.location.pathname}?authcallback=1&state=${stateObj.key}`
+    })
+    const apiResult = await apiAsync<LoginResponse>(loginUrl);
 
-    window.location.href = loginUrl;
+    if (apiResult.success) {
+        pxt.tickEvent('auth.login.start', { 'provider': idp });
+        window.location.href = apiResult.resp.loginUrl;
+    } else {
+        core.errorNotification(lf("Sign in failed. Something went wrong."));
+    }
 }
 
 /**
@@ -121,7 +149,7 @@ export async function logout() {
     clearState();
 
     // Redirect to home screen.
-    window.location.href = window.location.origin;
+    window.location.href = `${window.location.origin}${window.location.pathname}`;
 }
 
 /**
@@ -143,7 +171,7 @@ export async function authCheck() {
 export async function loginCallback(qs: pxt.Map<string>) {
     if (!hasIdentity()) { return; }
 
-    let callbackLocation: string;
+    let state: AuthState;
 
     do {
         // Read and remove auth state from local storage
@@ -154,7 +182,7 @@ export async function loginCallback(qs: pxt.Map<string>) {
         }
         pxt.storage.removeLocal(AUTH_STATE);
 
-        const state: AuthState = JSON.parse(stateStr);
+        state = JSON.parse(stateStr);
         if (typeof state !== 'object') {
             pxt.debug("Failed to parse auth state.");
             break;
@@ -166,7 +194,7 @@ export async function loginCallback(qs: pxt.Map<string>) {
             break;
         }
 
-        callbackLocation = state.callbackLocation;
+        state.callbackState = state.callbackState ?? NilCallbackState;
 
         const error = qs['error'];
         if (error) {
@@ -177,7 +205,7 @@ export async function loginCallback(qs: pxt.Map<string>) {
             pxt.tickEvent('auth.login.error', { 'error': error, 'provider': state.idp });
             pxt.log(`Auth failed: ${error}:${error_description}`);
             // TODO: Is it correct to clear continuation hash?
-            callbackLocation = "";
+            state.callbackState = NilCallbackState;
             // TODO: Show a message to the user (via rewritten continuation path)?
             break;
         }
@@ -198,18 +226,25 @@ export async function loginCallback(qs: pxt.Map<string>) {
     } while (false);
 
     // Clear url parameters and redirect to the callback location.
-    callbackLocation = callbackLocation ?? "";
-    window.location.href = `/${callbackLocation}`;
+    const hash = state.callbackState.hash.startsWith('#') ? state.callbackState.hash : `#${state.callbackState.hash}`;
+    const params = core.stringifyQueryString('', state.callbackState.params);
+    const pathname = state.callbackPathname.startsWith('/') ? state.callbackPathname : `/${state.callbackPathname}`;
+    const redirect = `${pathname}${hash}${params}`;
+    window.location.href = redirect;
 }
 
 export function identityProviders(): pxt.AppCloudProvider[] {
     return Object.keys(pxt.appTarget.cloud?.cloudProviders)
         .map(id => pxt.appTarget.cloud.cloudProviders[id])
-        .filter(prov => prov.identity);
+        .filter(prov => prov.identity)
+        .sort((a, b) => a.order - b.order);
 }
 
 export function hasIdentity(): boolean {
-    return identityProviders().length > 0;
+    // Must read storage for this rather than app theme because this method
+    // gets called before experiments are synced to the theme.
+    const experimentEnabled = pxt.editor.experiments.isEnabled("identity");
+    return experimentEnabled && identityProviders().length > 0;
 }
 
 export function loggedIn(): boolean {
@@ -226,8 +261,8 @@ export function profileNeedsSetup(): boolean {
 export async function updateUserProfile(opts: {
     username?: string,
     avatarUrl?: string
-}) {
-    if (!loggedIn()) { return; }
+}): Promise<boolean> {
+    if (!loggedIn()) { return false; }
     const state = getState();
     const result = await apiAsync<UserProfile>('/api/user/profile', {
         id: state.user.id,
@@ -237,6 +272,34 @@ export async function updateUserProfile(opts: {
     if (result.success) {
         // Set user profile from returned value
         setUser(result.resp);
+    }
+    return result.success;
+}
+
+export async function deleteAccount() {
+    if (!loggedIn()) { return; }
+    await apiAsync('/api/user', null, 'DELETE');
+    clearState();
+}
+
+export async function suggestUsername(): Promise<string> {
+    if (!loggedIn()) { return null; }
+    const result = await apiAsync<UsernameSuggestion>('/api/user/name-suggest');
+    if (result.success) {
+        return result.resp.username;
+    }
+    return null;
+}
+
+export class Component<TProps, TState> extends data.Component<TProps, TState> {
+    public getUser(): UserProfile {
+        return this.getData<UserProfile>(USER);
+    }
+    public isLoggedIn(): boolean {
+        return this.getData<boolean>(LOGGED_IN);
+    }
+    public profileNeedsSetup(): boolean {
+        return this.getData<boolean>(NEEDS_SETUP);
     }
 }
 
@@ -280,7 +343,7 @@ type ApiResult<T> = {
     errmsg: string;
 };
 
-async function apiAsync<T = any>(url: string, data?: any): Promise<ApiResult<T>> {
+async function apiAsync<T = any>(url: string, data?: any, method?: string): Promise<ApiResult<T>> {
     const headers: pxt.Map<string> = {};
     const csrfToken = pxt.storage.getLocal(CSRF_TOKEN);
     if (csrfToken) {
@@ -290,7 +353,7 @@ async function apiAsync<T = any>(url: string, data?: any): Promise<ApiResult<T>>
         url,
         headers,
         data,
-        method: data ? "POST" : "GET",
+        method: method ? method : data ? "POST" : "GET",
         withCredentials: true,  // Include cookies and authorization header in request, subject to CORS policy.
     }).then(r => {
         return {
