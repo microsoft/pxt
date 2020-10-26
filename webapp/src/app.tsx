@@ -2041,6 +2041,7 @@ export class ProjectView
         // TODO: Sync cloud data (profile, projects, etc.)
         // TODO @darzu: sync preferences
         console.log("sign in complete")
+        auth.fetchUserPreferencesAsync();
         data.invalidate("user-pref");
     }
 

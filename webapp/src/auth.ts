@@ -263,6 +263,43 @@ async function fetchUserAsync() {
     }
 }
 
+
+export async function updateUserPreferencesAsync(newPref: Partial<UserPreferences>) {
+    state_.preferences = { ...(state_.preferences || {}), ...newPref }
+    data.invalidate("user-pref");
+
+    if (!loggedIn()) { return; }
+
+    // If the user is logged in, save to cloud
+    const result = await apiAsync<UserPreferences>('/api/user/preferences', newPref);
+    if (result.success) {
+        console.log("updating userpref from POST")
+        // Set user profile from returned value
+        state_.preferences = { ...state_.preferences, ...result.resp }
+        data.invalidate("user-pref");
+    } else {
+        console.error("fetch failed: ")
+        console.dir(result);
+    }
+}
+
+export async function fetchUserPreferencesAsync() {
+    // TODO @darzu: 
+    console.log("fetchUserPreferencesAsync")
+
+    const result = await apiAsync<UserPreferences>('/api/user/preferences');
+    if (result.success) {
+        console.log("updating userpref from GET")
+        // Set user profile from returned value
+        state_.preferences = result.resp
+        data.invalidate("user-pref");
+    } else {
+        console.error("fetch failed: ")
+        console.dir(result);
+    }
+}
+
+
 function idpEnabled(idp: pxt.IdentityProviderId): boolean {
     return identityProviders().filter(prov => prov.id === idp).length > 0;
 }
@@ -334,17 +371,16 @@ function clearState() {
     data.invalidate(NEEDS_SETUP);
 }
 
-export function setUserPreferences(newPrefs: Partial<UserPreferences>) {
-    state_.preferences = { ...(state_.preferences || {}), ...newPrefs }
-    data.invalidate("user-pref");
-    // TODO @darzu: cloud sync
-}
 function userPreferencesHandler(path: string): UserPreferences {
-    console.log("userPreferencesHandler")
-    return {
-        highContrast: state_?.preferences?.highContrast ?? true,
-        language: "dz2", // TODO @darzu:
+    if (!state_.preferences) {
+        // TODO @darzu: what's the right way to handle defaults here?
+        state_.preferences = {
+            highContrast: false,
+            language: "dz2",
+        }
+        fetchUserPreferencesAsync();
     }
+    return state_?.preferences 
 }
 
 data.mountVirtualApi("auth", { getSync: authApiHandler });

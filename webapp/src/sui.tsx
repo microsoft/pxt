@@ -1262,7 +1262,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
             'modal transition visible active',
             className
         ]);
-        const hc = this.getData<auth.UserPreferences>("user-pref:");
+        const hc = this.getData<auth.UserPreferences>("user-pref:")?.highContrast;
         const portalClassName = cx([
             hc ? 'hc' : '',
             mountClasses
