@@ -356,7 +356,7 @@ namespace pxt.runner {
                 if (simOptions.code) opts.fileSystem["main.ts"] = simOptions.code;
 
                 // Api info needed for py2ts conversion, if project is shared in Python
-                if (opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME) {
+                if (opts.target.preferredEditor === pxt.PYTHON_PROJECT_NAME) {
                     opts.target.preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME;
                     opts.ast = true;
                     const resp = pxtc.compile(opts)
