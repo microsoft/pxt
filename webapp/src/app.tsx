@@ -43,6 +43,7 @@ import * as socketbridge from "./socketbridge";
 import * as webusb from "./webusb";
 import * as keymap from "./keymap";
 import * as auth from "./auth";
+import * as user from "./user";
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -112,7 +113,8 @@ export class ProjectView
     languagePicker: lang.LanguagePicker;
     scriptManagerDialog: scriptmanager.ScriptManagerDialog;
     importDialog: projects.ImportDialog;
-    identityLoginDialog: identity.LoginDialog;
+    loginDialog: identity.LoginDialog;
+    profileDialog: user.ProfileDialog;
     exitAndSaveDialog: projects.ExitAndSaveDialog;
     newProjectDialog: projects.NewProjectDialog;
     chooseHwDialog: projects.ChooseHwDialog;
@@ -3231,8 +3233,12 @@ export class ProjectView
         dialogs.showAboutDialogAsync(this);
     }
 
-    showLoginDialog(callbackLocation: string) {
-        this.identityLoginDialog.show(callbackLocation);
+    showLoginDialog(continuationHash?: string) {
+        this.loginDialog.show(continuationHash);
+    }
+
+    showProfileDialog(location?: string) {
+        this.profileDialog.show(location);
     }
 
     showShareDialog(title?: string) {
@@ -3832,7 +3838,11 @@ export class ProjectView
     }
 
     private handleLoginDialogRef = (c: identity.LoginDialog) => {
-        this.identityLoginDialog = c;
+        this.loginDialog = c;
+    }
+
+    private handleProfileDialogRef = (c: user.ProfileDialog) => {
+        this.profileDialog = c;
     }
 
     ///////////////////////////////////////////////////////////
@@ -3984,6 +3994,7 @@ export class ProjectView
                 {sandbox ? undefined : <extensions.Extensions parent={this} ref={this.handleExtensionRef} />}
                 {inHome ? <projects.ImportDialog parent={this} ref={this.handleImportDialogRef} /> : undefined}
                 {hasIdentity ? <identity.LoginDialog parent={this} ref={this.handleLoginDialogRef} onComplete={this.identityLoginComplete} initialVisibility={loginDialogInitialVisibility} /> : undefined}
+                {hasIdentity ? <user.ProfileDialog parent={this} ref={this.handleProfileDialogRef} /> : undefined}
                 {inHome && targetTheme.scriptManager ? <scriptmanager.ScriptManagerDialog parent={this} ref={this.handleScriptManagerDialogRef} onClose={this.handleScriptManagerDialogClose} /> : undefined}
                 {sandbox ? undefined : <projects.ExitAndSaveDialog parent={this} ref={this.handleExitAndSaveDialogRef} />}
                 {sandbox ? undefined : <projects.NewProjectDialog parent={this} ref={this.handleNewProjectDialogRef} />}

@@ -25,6 +25,10 @@ export type UserProfile = {
     avatarUrl?: string;
 };
 
+type UsernameSuggestion = {
+    username: string;
+};
+
 /**
  * In-memory auth state. Changes to this state trigger virtual API subscription callbacks.
  */
@@ -232,7 +236,8 @@ export async function loginCallback(qs: pxt.Map<string>) {
 export function identityProviders(): pxt.AppCloudProvider[] {
     return Object.keys(pxt.appTarget.cloud?.cloudProviders)
         .map(id => pxt.appTarget.cloud.cloudProviders[id])
-        .filter(prov => prov.identity);
+        .filter(prov => prov.identity)
+        .sort((a, b) => a.order - b.order);
 }
 
 export function hasIdentity(): boolean {
@@ -256,8 +261,8 @@ export function profileNeedsSetup(): boolean {
 export async function updateUserProfile(opts: {
     username?: string,
     avatarUrl?: string
-}) {
-    if (!loggedIn()) { return; }
+}): Promise<boolean> {
+    if (!loggedIn()) { return false; }
     const state = getState();
     const result = await apiAsync<UserProfile>('/api/user/profile', {
         id: state.user.id,
@@ -267,6 +272,34 @@ export async function updateUserProfile(opts: {
     if (result.success) {
         // Set user profile from returned value
         setUser(result.resp);
+    }
+    return result.success;
+}
+
+export async function deleteAccount() {
+    if (!loggedIn()) { return; }
+    await apiAsync('/api/user', null, 'DELETE');
+    clearState();
+}
+
+export async function suggestUsername(): Promise<string> {
+    if (!loggedIn()) { return null; }
+    const result = await apiAsync<UsernameSuggestion>('/api/user/name-suggest');
+    if (result.success) {
+        return result.resp.username;
+    }
+    return null;
+}
+
+export class Component<TProps, TState> extends data.Component<TProps, TState> {
+    public getUser(): UserProfile {
+        return this.getData<UserProfile>(USER);
+    }
+    public isLoggedIn(): boolean {
+        return this.getData<boolean>(LOGGED_IN);
+    }
+    public profileNeedsSetup(): boolean {
+        return this.getData<boolean>(NEEDS_SETUP);
     }
 }
 
@@ -310,7 +343,7 @@ type ApiResult<T> = {
     errmsg: string;
 };
 
-async function apiAsync<T = any>(url: string, data?: any): Promise<ApiResult<T>> {
+async function apiAsync<T = any>(url: string, data?: any, method?: string): Promise<ApiResult<T>> {
     const headers: pxt.Map<string> = {};
     const csrfToken = pxt.storage.getLocal(CSRF_TOKEN);
     if (csrfToken) {
@@ -320,7 +353,7 @@ async function apiAsync<T = any>(url: string, data?: any): Promise<ApiResult<T>>
         url,
         headers,
         data,
-        method: data ? "POST" : "GET",
+        method: method ? method : data ? "POST" : "GET",
         withCredentials: true,  // Include cookies and authorization header in request, subject to CORS policy.
     }).then(r => {
         return {
