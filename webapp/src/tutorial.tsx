@@ -642,7 +642,7 @@ export class WorkspaceHeader extends data.Component<any, WorkspaceHeaderState> {
     UNSAFE_componentWillUpdate() {
         const flyout = document.querySelector('.blocklyFlyout');
         if (flyout) {
-            this.flyoutWidth = flyout.clientWidth;
+            this.flyoutWidth = flyout.getBoundingClientRect().width;
         }
 
         const workspace = document.querySelector('#blocksArea');
