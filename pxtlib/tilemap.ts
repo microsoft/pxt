@@ -1507,10 +1507,17 @@ namespace pxt {
             offset += frameLength;
         }
 
+        let id = jres.id;
+
+        if (!id.startsWith(jres.namespace)) {
+            id = jres.namespace + "." + id;
+            id = id.replace(/\.\./g, ".");
+        }
+
         return {
             type: AssetType.Animation,
             internalID: 0,
-            id: jres.id,
+            id: id,
             interval,
             frames: decodedFrames,
             meta: {

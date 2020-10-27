@@ -50,7 +50,7 @@ function getSelectedAsset(assets: pxt.Asset[], type: pxt.AssetType, id: string) 
     return assets.find(el => el.type == type && el.id == id);
 }
 
-function getUserAssets() {
+export function getUserAssets() {
     const project = pxt.react.getTilemapProject();
     const imgConv = new pxt.ImageConverter();
 
