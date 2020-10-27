@@ -8,7 +8,7 @@ export class AssetPreview extends React.Component<AssetPreviewProps> {
     render() {
         const { asset } = this.props;
 
-        return <div className="asset-editor-preview">
+        return <div className="asset-editor-preview" title={asset.meta.displayName || asset.id}>
             <img src={asset.previewURI} alt={lf("A preview of your asset (eg image, tile, animation)")} />
         </div>
     }

@@ -58,7 +58,7 @@ function getSelectedAsset(state: AssetEditorState, type: pxt.AssetType, id: stri
         || state.galleryAssets.find(el => el.type == type && el.id == id);
 }
 
-function getUserAssets() {
+export function getUserAssets() {
     const project = pxt.react.getTilemapProject();
     const imgConv = new pxt.ImageConverter();
 
