@@ -1,5 +1,15 @@
 import * as actions from '../actions/types'
 
+export interface Activity {
+    id: string;
+    name: string;
+    url: string;
+    description?: string;
+    imageUrl?: string;
+    tags?: string[];
+    next?: string;
+}
+
 export interface SkillsMapState {
     selectedItem?: string;
 }

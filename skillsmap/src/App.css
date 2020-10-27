@@ -1,33 +1,66 @@
 .skills-map-container {
     height: 100%;
     width: 100%;
+}
+
+.carousel {
+    width: 100%;
     display: flex;
-    justify-content: center;
     align-items: center;
 }
 
-.skills-map-steps {
+.carousel-items {
+    height: 13.5rem;
+    flex: 1;
+    padding: 0.5rem;
+    overflow: hidden;
+}
+
+.carousel-items-inner {
     display: flex;
-    flex-direction: column;
+    overflow: auto;
+    padding-bottom: 1rem;
 }
 
-.skills-map-item {
-    height: 8rem;
-    width: 8rem;
-}
-.skills-map-item polygon {
-    height: 100%;
-    width: 100%;
-    fill: #dedede;
-}
-.skills-map-item.selected polygon {
-    stroke: #333;
-    stroke-width: 3px;
+.carousel-item {
+    background-color: #ddd;
+    font-family: "Share Tech Mono", Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
+
+    position: relative;
+    width: 18rem;
+    height: 12.5rem;
+    flex-grow: 0;
+    flex-shrink: 0;
+    margin-right: 0.5rem;
+    border: 2px solid transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.skills-map-item text {
-    fill: #999;
-    text-anchor: middle;
-    font-family: Share Tech Mono,Monaco,Menlo,Ubuntu Mono,Consolas,source-code-pro,monospace;
-    font-size: 1.5rem;
+.carousel-item.selected {
+    border-color: #666;
+}
+
+.carousel-item.linked {
+    margin-right: 2rem;
+}
+.carousel-item.linked:after {
+    content: '';
+    position: absolute;
+    right: -2.5rem;
+    width: 2.5rem;
+    height: 0.75rem;
+    background-color: #000;
+}
+
+.carousel-item.locked:before {
+    position: absolute;
+    content: "🔒";
+    font-size: 5rem;
+}
+
+.carousel-arrow {
+    font-size: 4rem;
+    line-height: 4rem;
 }
