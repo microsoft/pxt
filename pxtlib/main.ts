@@ -500,6 +500,8 @@ namespace pxt {
     export const JAVASCRIPT_PROJECT_NAME = "tsprj";
     export const PYTHON_PROJECT_NAME = "pyprj";
     export const DEFAULT_GROUP_NAME = "other"; // used in flyout, for snippet groups
+    export const TUTORIAL_CODE_START = "_onCodeStart.ts";
+    export const TUTORIAL_CODE_STOP = "_onCodeStop.ts";
 
     export function outputName(trg: pxtc.CompileTarget = null) {
         if (!trg) trg = appTarget.compile

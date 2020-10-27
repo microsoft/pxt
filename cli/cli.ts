@@ -4309,7 +4309,7 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
 
             if (buildOpts.mode === BuildOption.DebugSim) {
                 mainPkg.host().writeFile(mainPkg, "built/debug/debugInfo.json", JSON.stringify({
-                    usedParts: pxtc.computeUsedParts(res, true),
+                    usedParts: pxtc.computeUsedParts(res, "ignorebuiltin"),
                     usedArguments: res.usedArguments,
                     breakpoints: res.breakpoints
                 }));
