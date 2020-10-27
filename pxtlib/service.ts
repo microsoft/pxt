@@ -336,7 +336,7 @@ namespace ts.pxtc {
         endingToken?: string;
     }
 
-    export function computeUsedParts(resp: CompileResult, ignoreBuiltin = false): string[] {
+    export function computeUsedParts(resp: CompileResult, filter?: "onlybuiltin" | "ignorebuiltin"): string[] {
         if (!resp.usedSymbols || !pxt.appTarget.simulator || !pxt.appTarget.simulator.parts)
             return [];
 
@@ -356,10 +356,15 @@ namespace ts.pxtc {
             }
         });
 
-        if (ignoreBuiltin) {
+        if (filter) {
             const builtinParts = pxt.appTarget.simulator.boardDefinition.onboardComponents;
-            if (builtinParts)
-                parts = parts.filter(p => builtinParts.indexOf(p) < 0);
+            if (builtinParts) {
+                if (filter === "ignorebuiltin") {
+                    parts = parts.filter(p => builtinParts.indexOf(p) === -1);
+                } else if (filter === "onlybuiltin") {
+                    parts = parts.filter(p => builtinParts.indexOf(p) >= 0);
+                }
+            }
         }
 
         //sort parts (so breadboarding layout is stable w.r.t. code ordering)

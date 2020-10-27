@@ -629,16 +629,20 @@ export class WorkspaceHeader extends data.Component<any, WorkspaceHeaderState> {
 
     componentDidMount() {
         window.addEventListener('resize', this.handleResize);
+        window.addEventListener('wheel', this.handleResize);
+        window.addEventListener('pointermove', this.handleResize);
     }
 
     componentWillUnmount() {
         window.removeEventListener('resize', this.handleResize);
+        window.removeEventListener('wheel', this.handleResize);
+        window.removeEventListener('pointermove', this.handleResize);
     }
 
     UNSAFE_componentWillUpdate() {
         const flyout = document.querySelector('.blocklyFlyout');
         if (flyout) {
-            this.flyoutWidth = flyout.clientWidth;
+            this.flyoutWidth = flyout.getBoundingClientRect().width;
         }
 
         const workspace = document.querySelector('#blocksArea');
