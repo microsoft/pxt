@@ -369,18 +369,27 @@ namespace pxt.BrowserUtils {
     export function browserDownloadBase64(b64: string, name: string, contentType: string = "application/octet-stream", userContextWindow?: Window, onError?: (err: any) => void): string {
         pxt.debug('trigger download')
 
-        const saveBlob = (<any>window).navigator.msSaveOrOpenBlob && !pxt.BrowserUtils.isMobile();
-        const dataurl = toDownloadDataUri(b64, name);
+        const hasMsSaveOrOpenBlob = (<any>window).navigator.msSaveOrOpenBlob && !pxt.BrowserUtils.isMobile();
+        const createObjectUrl = window.URL?.createObjectURL;
+        let downloadurl = toDownloadDataUri(b64, name);
         try {
-            if (saveBlob) {
+            if (hasMsSaveOrOpenBlob || !!createObjectUrl) {
                 const b = new Blob([Util.stringToUint8Array(atob(b64))], { type: contentType })
-                const result = (<any>window).navigator.msSaveOrOpenBlob(b, name);
-            } else browserDownloadDataUri(dataurl, name, userContextWindow);
+                if (!!createObjectUrl) {
+                    downloadurl = createObjectUrl(b);
+                    // TODO: revoke after dialog closed to help gc underlying blob window.URL.revokeObjectURL()
+                    browserDownloadDataUri(downloadurl, name, userContextWindow);
+                } else {
+                    const result = (<any>window).navigator.msSaveOrOpenBlob(b, name);
+                }
+            } else  {
+                browserDownloadDataUri(downloadurl, name, userContextWindow);
+            }
         } catch (e) {
             if (onError) onError(e);
             pxt.debug("saving failed")
         }
-        return dataurl;
+        return downloadurl;
     }
 
     export function loadImageAsync(data: string): Promise<HTMLImageElement> {
