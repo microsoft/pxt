@@ -285,12 +285,12 @@ namespace pxt.BrowserUtils {
         return 1;
     }
 
-    export function browserDownloadBinText(text: string, name: string, contentType: string = "application/octet-stream", userContextWindow?: Window, onError?: (err: any) => void): string {
-        return browserDownloadBase64(ts.pxtc.encodeBase64(text), name, contentType, userContextWindow, onError)
+    export function browserDownloadBinText(text: string, name: string, contentType: string = "application/octet-stream", opt?: BrowserDownloadOptions): string {
+        return browserDownloadBase64(ts.pxtc.encodeBase64(text), name, contentType, opt)
     }
 
-    export function browserDownloadText(text: string, name: string, contentType: string = "application/octet-stream", userContextWindow?: Window, onError?: (err: any) => void): string {
-        return browserDownloadBase64(ts.pxtc.encodeBase64(Util.toUTF8(text)), name, contentType, userContextWindow, onError)
+    export function browserDownloadText(text: string, name: string, contentType: string = "application/octet-stream", opt?: BrowserDownloadOptions): string {
+        return browserDownloadBase64(ts.pxtc.encodeBase64(Util.toUTF8(text)), name, contentType, opt);
     }
 
     export function isBrowserDownloadInSameWindow(): boolean {
@@ -352,8 +352,8 @@ namespace pxt.BrowserUtils {
         }
     }
 
-    export function browserDownloadUInt8Array(buf: Uint8Array, name: string, contentType: string = "application/octet-stream", userContextWindow?: Window, onError?: (err: any) => void): string {
-        return browserDownloadBase64(ts.pxtc.encodeBase64(Util.uint8ArrayToString(buf)), name, contentType, userContextWindow, onError)
+    export function browserDownloadUInt8Array(buf: Uint8Array, name: string, contentType: string = "application/octet-stream", opt?: BrowserDownloadOptions): string {
+        return browserDownloadBase64(ts.pxtc.encodeBase64(Util.uint8ArrayToString(buf)), name, contentType, opt);
     }
 
     export function toDownloadDataUri(b64: string, contentType: string): string {
@@ -366,17 +366,30 @@ namespace pxt.BrowserUtils {
         return dataurl;
     }
 
-    export function browserDownloadBase64(b64: string, name: string, contentType: string = "application/octet-stream", userContextWindow?: Window, onError?: (err: any) => void): string {
+    export interface BrowserDownloadOptions {
+        userContextWindow?: Window,
+        onError?: (err: any) => void;
+        maintainObjectURL?: boolean;
+    }
+
+    export function browserDownloadBase64(b64: string, name: string, contentType: string = "application/octet-stream", opt: BrowserDownloadOptions = {}): string {
         pxt.debug('trigger download');
+
+        const { userContextWindow, onError, maintainObjectURL } = opt;
 
         const createObjectURL = window.URL?.createObjectURL;
         let downloadurl: string;
         try {
             if (!!createObjectURL) {
                 const b = new Blob([Util.stringToUint8Array(atob(b64))], { type: contentType });
-                downloadurl = createObjectURL(b);
+                const objUrl = createObjectURL(b);
                 // TODO: revoke after dialog closed to help gc underlying blob window.URL.revokeObjectURL()
-                browserDownloadDataUri(downloadurl, name, userContextWindow);
+                browserDownloadDataUri(objUrl, name, userContextWindow);
+                if (maintainObjectURL) {
+                    downloadurl = objUrl;
+                } else {
+                    window.setTimeout(() => window.URL.revokeObjectURL(downloadurl), 0);
+                }
             } else  {
                 downloadurl = toDownloadDataUri(b64, name);
                 browserDownloadDataUri(downloadurl, name, userContextWindow);
