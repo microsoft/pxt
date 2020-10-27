@@ -13,6 +13,7 @@ interface AssetGalleryTabProps {
 
 class AssetGalleryTabImpl extends React.Component<AssetGalleryTabProps> {
     handleClick = () => {
+        pxt.tickEvent("assets.gallerytab", { view: this.props.view.toString() });
         this.props.dispatchChangeGalleryView(this.props.view);
     }
 
