@@ -383,7 +383,6 @@ namespace pxt.BrowserUtils {
             if (!!createObjectURL) {
                 const b = new Blob([Util.stringToUint8Array(atob(b64))], { type: contentType });
                 const objUrl = createObjectURL(b);
-                // TODO: revoke after dialog closed to help gc underlying blob window.URL.revokeObjectURL()
                 browserDownloadDataUri(objUrl, name, userContextWindow);
                 if (maintainObjectURL) {
                     downloadurl = objUrl;
