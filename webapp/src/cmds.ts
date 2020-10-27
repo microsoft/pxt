@@ -17,8 +17,8 @@ function browserDownloadAsync(text: string, name: string, contentType: string): 
     pxt.BrowserUtils.browserDownloadBinText(
         text,
         name,
-        contentType,
         {
+            contentType: contentType,
             onError: (e: any) => core.errorNotification(lf("saving file failed..."))
         }
     );
@@ -39,8 +39,8 @@ export function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promis
         url = pxt.BrowserUtils.browserDownloadBase64(
             out,
             fn,
-            "application/x-uf2",
             {
+                contentType: "application/x-uf2",
                 userContextWindow: resp.userContextWindow,
                 onError: e => core.errorNotification(lf("saving file failed...")),
                 maintainObjectURL: true,
@@ -51,8 +51,8 @@ export function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promis
         url = pxt.BrowserUtils.browserDownloadBinText(
             out,
             fn,
-            pxt.appTarget.compile.hexMimeType,
             {
+                contentType: pxt.appTarget.compile.hexMimeType,
                 userContextWindow: resp.userContextWindow,
                 onError: e => core.errorNotification(lf("saving file failed...")),
                 maintainObjectURL: true,

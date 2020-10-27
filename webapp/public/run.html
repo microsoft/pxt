@@ -163,7 +163,7 @@
                 pxt.runner.generateHexFileAsync(options).done(function(hex) {
                     $(loading).remove();
                     var name = pxt.appTarget.id + '-' + ts.pxt.BINARY_HEX;
-                    var uri = pxt.BrowserUtils.browserDownloadBinText(hex, name, undefined, { maintainObjectURL: true });
+                    var uri = pxt.BrowserUtils.browserDownloadBinText(hex, name, { maintainObjectURL: true });
                     var a = document.createElement("a");
                     a.href = uri;
                     a.download = name;
