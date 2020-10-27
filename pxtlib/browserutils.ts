@@ -367,27 +367,23 @@ namespace pxt.BrowserUtils {
     }
 
     export function browserDownloadBase64(b64: string, name: string, contentType: string = "application/octet-stream", userContextWindow?: Window, onError?: (err: any) => void): string {
-        pxt.debug('trigger download')
+        pxt.debug('trigger download');
 
-        const hasMsSaveOrOpenBlob = (<any>window).navigator.msSaveOrOpenBlob && !pxt.BrowserUtils.isMobile();
-        const createObjectUrl = window.URL?.createObjectURL;
-        let downloadurl = toDownloadDataUri(b64, name);
+        const createObjectURL = window.URL?.createObjectURL;
+        let downloadurl: string;
         try {
-            if (hasMsSaveOrOpenBlob || !!createObjectUrl) {
-                const b = new Blob([Util.stringToUint8Array(atob(b64))], { type: contentType })
-                if (!!createObjectUrl) {
-                    downloadurl = createObjectUrl(b);
-                    // TODO: revoke after dialog closed to help gc underlying blob window.URL.revokeObjectURL()
-                    browserDownloadDataUri(downloadurl, name, userContextWindow);
-                } else {
-                    const result = (<any>window).navigator.msSaveOrOpenBlob(b, name);
-                }
+            if (!!createObjectURL) {
+                const b = new Blob([Util.stringToUint8Array(atob(b64))], { type: contentType });
+                downloadurl = createObjectURL(b);
+                // TODO: revoke after dialog closed to help gc underlying blob window.URL.revokeObjectURL()
+                browserDownloadDataUri(downloadurl, name, userContextWindow);
             } else  {
+                downloadurl = toDownloadDataUri(b64, name);
                 browserDownloadDataUri(downloadurl, name, userContextWindow);
             }
         } catch (e) {
             if (onError) onError(e);
-            pxt.debug("saving failed")
+            pxt.debug("saving failed");
         }
         return downloadurl;
     }
