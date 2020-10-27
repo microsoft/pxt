@@ -216,6 +216,7 @@ namespace ts.pxtc {
             let hasParams = kind == SymbolKind.Function || kind == SymbolKind.Method
 
             let pkg: string = null
+            let pkgs: string[] = []
 
             let src = getSourceFileOfNode(stmt)
             if (src) {
@@ -251,6 +252,7 @@ namespace ts.pxtc {
                 fileName: stmt.getSourceFile().fileName,
                 attributes,
                 pkg,
+                pkgs,
                 extendsTypes,
                 retType:
                     stmt.kind == SyntaxKind.Constructor ? "void" :
@@ -528,6 +530,17 @@ namespace ts.pxtc {
                                 source = foundSrc;
                             }
                             si.attributes = parseCommentString(source);
+
+                            if (existing.kind === SymbolKind.Module) {
+                                // Copy the existing package array to the new symbol info
+                                si.pkgs = existing.pkgs || []
+                                if (existing?.pkg !== si?.pkg) {
+                                    if (!si.pkgs.find(element => element === existing.pkg)) {
+                                        si.pkgs.push(existing.pkg)
+                                        console.log(`${si.pkg}/${si.name} adding package ${existing.pkg} to the list of packages ${existing.pkgs}`)
+                                    }
+                                }
+                            }
                             if (existing.extendsTypes) {
                                 si.extendsTypes = si.extendsTypes || []
                                 existing.extendsTypes.forEach(t => {

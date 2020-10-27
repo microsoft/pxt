@@ -772,6 +772,7 @@ declare namespace ts.pxtc {
         // qualified name (e.g. "Blocks.Grass")
         qName?: string;
         pkg?: string;
+        pkgs?: string[]; // for symbols defined in multiple packages
         snippet?: string;
         snippetName?: string;
         snippetWithMarkers?: string; // TODO(dz)

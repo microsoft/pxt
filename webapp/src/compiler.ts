@@ -700,8 +700,13 @@ async function cacheApiInfoAsync(project: pkg.EditorPackage, info: pxtc.ApisInfo
 
             for (const api of apiList) {
                 const apiInfo = info.byQName[api];
-                if (apiInfo.pkg === pkgId) {
-                    entry.apis.byQName[api] = apiInfo;
+
+                if (apiInfo.pkg === pkgId || apiInfo?.pkgs.find(element => element === pkgId)) {
+                    // Create a copy of the API info since we want to remove the package list.
+                    // Most info objects won't have a package list
+                    entry.apis.byQName[api] = Object.assign({}, apiInfo);
+                    // strip the pkg array to not store duplicate info
+                    entry.apis.byQName[api].pkgs = []
                 }
             }
 
