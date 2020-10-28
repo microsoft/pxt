@@ -25,7 +25,7 @@ interface MapActivity {
     activityId: string;
 
     displayName: string;
-    description: string;
+    description?: string;
     tags: string[];
 
     type: "tutorial";

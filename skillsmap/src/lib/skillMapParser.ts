@@ -1,9 +1,9 @@
 /// <reference path="./skillMap.d.ts" />
 
 const testMap = `
-# Skills map title
+# map1
+name: test skills map
 description: A test skills map
-
 required: 2 easy
 
 ## flower
@@ -44,6 +44,7 @@ imageUrl: /static/lessons/barrel-dodger.png
 `
 
 interface MarkdownSection {
+    headerKind: "single" | "double";
     header: string;
     attributes: {[index: string]: string};
 }
@@ -55,51 +56,24 @@ export function test() {
 export function parseSkillsMap(text: string) {
     const sections = getSectionsFromText(text);
 
-    const result = inflateSkillMap(sections[0]);
-    const activities = sections.slice(1).map(inflateActivity);
+    const parsed: SkillsMap[] = [];
 
-    result.root = activities[0];
+    let start = -1;
 
-    for (const activity of activities) {
-        if (result.actvities![activity.activityId]) {
-            error(`Duplicate activity id '${activity.activityId}'`);
-        }
-
-        result.actvities![activity.activityId] = activity;
-    }
-
-    for (const activity of activities) {
-        for (const id of activity.nextIds) {
-            if (!result.actvities![id]) error(`Unknown activity id '${id}'`);
-            activity.next.push(result.actvities![id]);
+    for (let i = 0; i < sections.length; i++) {
+        if (sections[i].headerKind === "single") {
+            if (start >= 0) {
+                parsed.push(buildMapFromSections(sections[start], sections.slice(start + 1, i)));
+            }
+            start = i;
         }
     }
 
-    const reachable: {[index: string]: boolean} = {};
-
-    checkForLoopsRecursive(result.root);
-
-    for (const activity of activities) {
-        if (!reachable[activity.activityId]) {
-            console.warn(`Unreachable activity detected '${activity.activityId}'`);
-        }
+    if (start > 0) {
+        parsed.push(buildMapFromSections(sections[start], sections.slice(start + 1, sections.length)));
     }
 
-    return result as SkillsMap;
-
-    function checkForLoopsRecursive(root: MapActivity, visited: {[index: string]: boolean} = {}) {
-        if (visited[root.activityId]) error("Loop in skill map detected");
-        visited[root.activityId] = true;
-        reachable[root.activityId] = true;
-
-        if (root.next.length > 1) {
-            error("Branching currently not supported")
-        }
-
-        for (const next of root.next) {
-            checkForLoopsRecursive(next, {...visited});
-        }
-    }
+    return parsed;
 }
 
 function getSectionsFromText(text: string) {
@@ -120,13 +94,14 @@ function getSectionsFromText(text: string) {
         }
 
         if (line.startsWith("#")) {
-            const headerMatch = /^#+\s*(.+)$/.exec(line);
+            const headerMatch = /^(#+)\s*(.+)$/.exec(line);
 
             if (headerMatch) {
                 pushSection();
 
                 currentSection = {
-                    header: headerMatch[1],
+                    headerKind: headerMatch[1].length === 1 ? "single" : "double",
+                    header: headerMatch[2],
                     attributes: {}
                 }
                 currentKey = null;
@@ -167,10 +142,58 @@ function getSectionsFromText(text: string) {
     }
 }
 
+function buildMapFromSections(header: MarkdownSection, sections: MarkdownSection[]) {
+    const result = inflateSkillMap(header);
+    const activities = sections.map(inflateActivity);
+
+    result.root = activities[0];
+
+    for (const activity of activities) {
+        if (result.actvities![activity.activityId]) {
+            error(`Duplicate activity id '${activity.activityId}' in map '${result.mapId}'`);
+        }
+
+        result.actvities![activity.activityId] = activity;
+    }
+
+    for (const activity of activities) {
+        for (const id of activity.nextIds) {
+            if (!result.actvities![id]) error(`Unknown activity id '${id}' in map '${result.mapId}'`);
+            activity.next.push(result.actvities![id]);
+        }
+    }
+
+    const reachable: {[index: string]: boolean} = {};
+
+    checkForLoopsRecursive(result.root);
+
+    for (const activity of activities) {
+        if (!reachable[activity.activityId]) {
+            console.warn(`Unreachable activity detected '${activity.activityId}' in map '${result.mapId}'`);
+        }
+    }
+
+    return result as SkillsMap;
+
+    function checkForLoopsRecursive(root: MapActivity, visited: {[index: string]: boolean} = {}) {
+        if (visited[root.activityId]) error(`Loop in map '${result.mapId}' detected`);
+        visited[root.activityId] = true;
+        reachable[root.activityId] = true;
+
+        if (root.next.length > 1) {
+            error("Branching currently not supported")
+        }
+
+        for (const next of root.next) {
+            checkForLoopsRecursive(next, {...visited});
+        }
+    }
+}
+
 
 function inflateSkillMap(section: MarkdownSection): Partial<SkillsMap> {
     const result: Partial<SkillsMap> = {
-        mapId: section.header,
+        mapId: section.header.toLowerCase(),
         displayName: section.attributes["name"] || section.header,
         description: section.attributes["description"],
         prerequisites: [],
@@ -203,7 +226,7 @@ function inflateSkillMap(section: MarkdownSection): Partial<SkillsMap> {
 
 function inflateActivity(section: MarkdownSection): MapActivity {
     const result: Partial<MapActivity> = {
-        activityId: section.header,
+        activityId: section.header.toLowerCase(),
         displayName: section.attributes["name"] || section.header,
         description: section.attributes["description"],
         url: section.attributes["url"],
