@@ -937,7 +937,7 @@ export function serveAsync(options: ServeOptions) {
         const htmlParams: pxt.Map<string> = {};
         if (opts["lang"] || opts["forcelang"])
             htmlParams["locale"] = (opts["lang"] as string || opts["forcelang"] as string);
-
+            
         if (pathname == "/") {
             res.writeHead(301, { location: '/index.html' })
             res.end()
@@ -1084,6 +1084,7 @@ export function serveAsync(options: ServeOptions) {
 
         if (/\.js\.map$/.test(pathname)) {
             error(404, "map files disabled")
+            return;
         }
 
         let dd = dirs
