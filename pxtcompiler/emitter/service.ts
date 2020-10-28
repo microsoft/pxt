@@ -537,7 +537,6 @@ namespace ts.pxtc {
                                 if (existing?.pkg !== si?.pkg) {
                                     if (!si.pkgs.find(element => element === existing.pkg)) {
                                         si.pkgs.push(existing.pkg)
-                                        console.log(`${si.pkg}/${si.name} adding package ${existing.pkg} to the list of packages ${existing.pkgs}`)
                                     }
                                 }
                             }
