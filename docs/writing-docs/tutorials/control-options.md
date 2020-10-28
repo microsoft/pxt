@@ -98,3 +98,13 @@ input.onButtonPressed(Button.A, function () {
 basic.showIcon(IconNames.Heart)
 ```
 ````
+
+## URL Parameters
+
+### Locked Editor
+
+In some scenarios, you may want to "lock" a student in a tutorial. Locked editor mode disables the Home and Exit Tutorial buttons and hides the Finish button at the end of the tutorial. The user will not be able to access the homescreen or full sandbox mode.
+
+You can enable locked editor mode by adding `&lockedEditor=1` to your tutorial URL:
+
+`https://arcade.makecode.com/?lockedEditor=1#tutorial:/tutorials/chicken-rain`
