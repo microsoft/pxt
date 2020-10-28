@@ -4,6 +4,7 @@ import { Provider } from 'react-redux';
 import store from './store/store'
 import { Activity } from './store/reducer';
 import { SkillsCarousel } from './components/SkillsCarousel'
+import { Carousel } from './components/Carousel'
 
 import './App.css';
 
@@ -57,8 +58,7 @@ function App() {
     return (<Provider store={store}>
             <div className="skills-map-container">
                 <SkillsCarousel activities={temp} />
-                <SkillsCarousel activities={temp} />
-                <SkillsCarousel activities={temp} />
+                <Carousel items={[{id: "test", label: "test-one"},{id: "test2", label: "test-two"},{id: "test3", label: "test-three"}]} />
             </div>
         </Provider>);
 }

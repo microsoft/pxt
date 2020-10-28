@@ -4,6 +4,7 @@ import { connect } from 'react-redux';
 import { Activity, SkillsMapState } from '../store/reducer';
 import { Carousel } from './Carousel';
 import { Item } from './CarouselItem';
+import { SkillCard } from './SkillCard';
 
 interface SkillsCarouselProps {
     selectedItem?: string;
@@ -36,8 +37,9 @@ class SkillsCarouselImpl extends React.Component<SkillsCarouselProps> {
                 label: activity.name,
                 url: activity.url,
                 imageUrl: activity.imageUrl,
-                className: `linked ${locked ? 'locked' : ''}`
+                locked
             });
+            // className: `linked ${locked ? 'locked' : ''}`
             if (activity.id === this.current) locked = true;
             activity = this.activityMap[activity.next || ""];
         }
@@ -46,14 +48,14 @@ class SkillsCarouselImpl extends React.Component<SkillsCarouselProps> {
     }
 
     render() {
-        return <Carousel items={this.getItems()} />
+        return <Carousel items={this.getItems()} itemTemplate={SkillCard} itemClassName="linked" />
     }
 }
 
 function mapStateToProps(state: SkillsMapState, ownProps: any) {
     if (!state) return {};
     return {
-        selectedItem: state.selectedItem
+        selectedItem: ownProps.activities.some((el: Activity) => el.id === state.selectedItem) ? state.selectedItem : undefined
     }
 }
 

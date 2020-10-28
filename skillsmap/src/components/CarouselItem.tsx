@@ -9,12 +9,23 @@ export interface Item {
     label?: string;
     url?: string;
     imageUrl?: string;
-    className?: string;
+}
+
+interface CarouselItemTemplateProps extends Item {
+}
+
+class CarouselItemTemplate extends React.Component<CarouselItemTemplateProps> {
+    render() {
+        const { label } = this.props;
+        return <span>{ label }</span>
+    }
 }
 
 interface CarouselItemProps {
     item: Item;
+    itemTemplate?: any;
     selected?: boolean;
+    className?: string;
     dispatchChangeSelectedItem: (id: string) => void;
 }
 
@@ -24,10 +35,11 @@ class CarouselItemImpl extends React.Component<CarouselItemProps> {
     }
 
     render() {
-        const { item, selected } = this.props;
+        const { item, itemTemplate, selected, className } = this.props;
+        const Inner = itemTemplate || CarouselItemTemplate;
 
-        return <div className={`carousel-item ${selected ? 'selected' : ''} ${item.className || ''}`} onClick={this.handleClick}>
-            <span>{item.label}</span>
+        return <div className={`carousel-item ${selected ? 'selected' : ''} ${className || ''}`} onClick={this.handleClick}>
+            <Inner {...item} />
         </div>
     }
 }

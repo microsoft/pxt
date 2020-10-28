@@ -1,0 +1,43 @@
+.carousel {
+    width: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.carousel-items {
+    height: 13.5rem;
+    flex: 1;
+    padding: 0.5rem;
+    overflow: hidden;
+}
+
+.carousel-items-inner {
+    display: flex;
+    overflow: auto;
+    padding-bottom: 1rem;
+}
+
+.carousel-item {
+    background-color: #ddd;
+    font-family: "Share Tech Mono", Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
+
+    position: relative;
+    width: 18rem;
+    height: 12.5rem;
+    flex-grow: 0;
+    flex-shrink: 0;
+    margin-right: 0.5rem;
+    border: 2px solid transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.carousel-item.selected {
+    border-color: #666;
+}
+
+.carousel-arrow {
+    font-size: 4rem;
+    line-height: 4rem;
+}
