@@ -216,7 +216,7 @@ namespace ts.pxtc {
             let hasParams = kind == SymbolKind.Function || kind == SymbolKind.Method
 
             let pkg: string = null
-            let pkgs: string[] = []
+            let pkgs: string[] = null
 
             let src = getSourceFileOfNode(stmt)
             if (src) {
@@ -531,10 +531,13 @@ namespace ts.pxtc {
                             }
                             si.attributes = parseCommentString(source);
 
+                            // Check if the colliding symbols are namespace definitions. The same namespace can be
+                            // defined in different packages/extensions, so we want to keep track of that information.
+                            // That way, we can make sure each cached extension has a copy of the namespace
                             if (existing.kind === SymbolKind.Module) {
-                                // Copy the existing package array to the new symbol info
+                                // Reference the existing array of packages where this namespace has been defined 
                                 si.pkgs = existing.pkgs || []
-                                if (existing?.pkg !== si?.pkg) {
+                                if (existing.pkg !== si.pkg) {
                                     if (!si.pkgs.find(element => element === existing.pkg)) {
                                         si.pkgs.push(existing.pkg)
                                     }

@@ -701,10 +701,13 @@ async function cacheApiInfoAsync(project: pkg.EditorPackage, info: pxtc.ApisInfo
             for (const api of apiList) {
                 const apiInfo = info.byQName[api];
 
-                if (apiInfo.pkg === pkgId || apiInfo?.pkgs.find(element => element === pkgId)) {
+                // We include an API in the list of APIs for an external package in two cases:
+                //  1. If the API's package ID is the same as the external package
+                //  2. If any of the package IDs in the list of packages that defined the API are the same as the external package
+                if (apiInfo.pkg === pkgId || apiInfo.pkgs?.find(element => element === pkgId)) {
                     // Create a copy of the API info since we want to remove the package list.
                     // Most info objects won't have a package list
-                    entry.apis.byQName[api] = Object.assign({}, apiInfo);
+                    entry.apis.byQName[api] = U.clone(apiInfo);
                     // strip the pkg array to not store duplicate info
                     entry.apis.byQName[api].pkgs = []
                 }
