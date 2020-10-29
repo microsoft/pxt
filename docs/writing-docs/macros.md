@@ -394,18 +394,18 @@ To render one or more code cards as JSON into cards, use **codecard**.
 
 Code cards also support a text based format:
 
-    ```codecard
-    name: A card
-    url: ...
+    ### ~ codecard
+    * name: A card
+    * url: ...
     ---
-    name: Another card
-    url: ...
+    * name: Another card
+    * url: ...
     ---
-    name: Yet another card
-    url: ...
-    ```
+    * name: Yet another card
+    * url: ...
+    ### ~
 
-where each card is a sequence of ``KEY: VALUE`` pairs separate by an ``---`` line.
+where each card is a sequence of ``KEY: VALUE`` pairs bullet points separated by a ``---`` line.
 
 ### apis
 

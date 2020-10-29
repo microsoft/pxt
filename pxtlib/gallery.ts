@@ -105,7 +105,7 @@ namespace pxt.gallery {
                         cc[n] = v
                     return ''
                 })
-                return Object.keys(cc).length && cc as pxt.CodeCard;
+                return !!Object.keys(cc).length && cc as pxt.CodeCard;
             })
             .filter(cc => !!cc);
         if (cards?.length)
@@ -115,21 +115,36 @@ namespace pxt.gallery {
     }
 
     export function parseCodeCardsHtml(el: HTMLElement) {
-        const cards: pxt.CodeCard[] =
-            Array.from(el.querySelectorAll("ul"))
-                .map(ul => {
-                    const card: any = {};
-                    Array.from(ul.querySelectorAll("li"))
+        const cards: pxt.CodeCard[] = []
+        let card: any;
+        Array.from(el.children)
+            .forEach(child => {
+                if (child.tagName === "UL") {
+                    if (!card)
+                        card = {};
+                    // read fields into card
+                    Array.from(child.querySelectorAll("li"))
                         .forEach(field => {
                             const text = field.innerText;
-                            const m = /^\s*\*\s+(\w+)\s*:\s*(.*)$/.exec(text);
+                            const m = /^\s*(\w+)\s*:\s*(.*)$/.exec(text);
                             if (m) {
-                                card[m[1]] = m[2].trim();
+                                const k = m[1]
+                                card[k] = m[2].trim();
+                                if (k === "flags")
+                                    card[k] = card[k].split(/,\s*/);
                             }
                         });
-                    return Object.keys(card).length && card;
-                })
-        return cards.length && cards;
+                } else if (child.tagName == "HR") {
+                    // flush current card
+                    if (card)
+                        cards.push(card)
+                    card = undefined;
+                }
+            })
+        // flush last card
+        if (card)
+            cards.push(card);
+        return !!cards.length && cards;
     }
 
     export function parseGalleryMardown(md: string): Gallery[] {
