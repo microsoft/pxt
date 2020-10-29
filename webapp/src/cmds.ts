@@ -65,7 +65,6 @@ export function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promis
     }
 
     if (!userContext && (resp.saveOnly || pxt.BrowserUtils.isBrowserDownloadInSameWindow())) {
-        window.URL?.revokeObjectURL(url)
         return Promise.resolve()
             .then(() => window.URL?.revokeObjectURL(url));
     } else {
