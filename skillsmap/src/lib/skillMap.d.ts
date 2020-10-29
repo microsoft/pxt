@@ -4,7 +4,7 @@ interface SkillsMap {
     description?: string;
     prerequisites: MapPrerequisite[];
 
-    actvities: {[index: string]: MapActivity};
+    activities: {[index: string]: MapActivity};
     root: MapActivity;
 }
 
@@ -39,7 +39,7 @@ interface MapActivity {
 }
 
 interface UserState {
-    mapProgress: MapState[];
+    mapProgress: {[index: string]: MapState};
     completedTags: {[index: string]: number};
 }
 

@@ -1,33 +1,4 @@
 .skills-map-container {
     height: 100%;
     width: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.skills-map-steps {
-    display: flex;
-    flex-direction: column;
-}
-
-.skills-map-item {
-    height: 8rem;
-    width: 8rem;
-}
-.skills-map-item polygon {
-    height: 100%;
-    width: 100%;
-    fill: #dedede;
-}
-.skills-map-item.selected polygon {
-    stroke: #333;
-    stroke-width: 3px;
-}
-
-.skills-map-item text {
-    fill: #999;
-    text-anchor: middle;
-    font-family: Share Tech Mono,Monaco,Menlo,Ubuntu Mono,Consolas,source-code-pro,monospace;
-    font-size: 1.5rem;
 }

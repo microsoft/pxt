@@ -1,6 +1,6 @@
 
 export function isActivityCompleted(user: UserState, mapId: string, activityId: string) {
-    const progress = user.mapProgress.find(progress => progress.mapId === mapId);
+    const progress = user.mapProgress[mapId];
 
     return !!(progress?.activityState[activityId]?.isCompleted);
 }
@@ -12,7 +12,7 @@ export function isMapUnlocked(user: UserState, map: SkillsMap) {
             if (numCompleted === undefined || numCompleted < pre.numberCompleted) return false;
         }
         else if (pre.type === "activity") {
-            if (!user.mapProgress.some(progress => progress.mapId === pre.mapId)) return false;
+            if (user.mapProgress[pre.mapId]) return false;
         }
     }
 

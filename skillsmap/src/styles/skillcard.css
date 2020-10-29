@@ -1,0 +1,29 @@
+.carousel-item.linked {
+    margin-right: 2rem;
+}
+.carousel-item.linked:after {
+    content: '';
+    position: absolute;
+    right: -2.5rem;
+    width: 2.5rem;
+    height: 0.75rem;
+    background-color: #000;
+}
+.carousel-item.linked:last-child:after {
+    display: none;
+}
+
+.skill-card-overlay {
+    position: absolute;
+    display: flex;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    align-items: center;
+    justify-content: center;
+    font-size: 4rem;
+    line-height: 4rem;
+    color: #fff;
+    background-color: rgba(0,0,0,0.3);
+}

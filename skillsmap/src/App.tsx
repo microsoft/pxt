@@ -1,27 +1,47 @@
-import React from 'react';
-import { Provider } from 'react-redux';
+/// <reference path="./lib/skillMap.d.ts" />
 
-import store from './store/store'
-import { Item } from './components/Item'
+import React from 'react';
+import { connect } from 'react-redux';
+
+import { dispatchAddSkillsMap } from './actions/dispatch';
+import { SkillsCarousel } from './components/SkillsCarousel';
+
+import { test } from './lib/skillMapParser';
 
 import './App.css';
 
-function App() {
-    const steps = [
-        { id: "step-1" },
-        { id: "step-2" },
-        { id: "step-3" },
-        { id: "step-4" }];
-
-    return (<Provider store={store}>
-            <div className="skills-map-container">
-                <div className="skills-map-steps">
-                    {steps.map(((step, i) => {
-                        return <Item id={step.id} key={i} />
-                    }))}
-                </div>
-            </div>
-        </Provider>);
+interface AppProps {
+    dispatchAddSkillsMap: (map: SkillsMap) => void;
 }
+
+class AppImpl extends React.Component<AppProps> {
+    protected skillsMaps: SkillsMap[];
+
+    constructor(props: any) {
+        super(props);
+        this.skillsMaps = test();
+        this.skillsMaps.forEach(map => props.dispatchAddSkillsMap(map));
+    }
+
+    render() {
+        return (<div>
+                <div className="skills-map-container">
+                    {this.skillsMaps.map((el, i) => {
+                        return <SkillsCarousel map={el} key={i} />
+                    })}
+                </div>
+            </div>);
+    }
+}
+
+function mapStateToProps(state: any, ownProps: any) {
+    return {};
+}
+
+const mapDispatchToProps = {
+    dispatchAddSkillsMap
+};
+
+const App = connect(mapStateToProps, mapDispatchToProps)(AppImpl);
 
 export default App;
