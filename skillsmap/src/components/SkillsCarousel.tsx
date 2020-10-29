@@ -34,9 +34,7 @@ class SkillsCarouselImpl extends React.Component<SkillsCarouselProps> {
                 url: activity.url,
                 imageUrl: activity.imageUrl
             });
-            // className: `linked ${locked ? 'locked' : ''}`
-            // if (activity.id === this.current) locked = true;
-            activity = activity.next[0]; // TODO bfs probs
+            activity = activity.next[0]; // TODO still add nonlinear items to array even if we don't render graph
         }
 
         return items;

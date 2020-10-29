@@ -10,7 +10,7 @@ import '../styles/carousel.css'
 interface CarouselProps {
     items: Item[];
     selectedItem?: string;
-    itemTemplate?: any;
+    itemTemplate?: (props: Item) => JSX.Element;
     itemClassName?: string;
     dispatchChangeSelectedItem: (id: string) => void;
 }
