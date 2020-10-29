@@ -98,9 +98,18 @@ namespace pxt.gallery {
             .filter(cmd => !!cmd)
             .map(cmd => {
                 let cc: any = {};
-                cmd.replace(/^\s*(-|\*)\s+(\w+)\s*:\s*(.*)$/gm, (m, n, v) => {
+                cmd.replace(/^\s*(?:-|\*)\s+(\w+)\s*:\s*(.*)$/gm, (m, n, v) => {
                     if (n == "flags")
                         cc[n] = v.split(',')
+                    else if (n === "otherAction") {
+                        const parts: string[] = v.split(',').map((p: string) => p?.trim())
+                        const oas = (cc["otherActions"] || (cc["otherActions"] = []));
+                        oas.push({
+                            url: parts[0],
+                            editor: parts[1],
+                            cardType: parts[2]
+                        })
+                    }
                     else
                         cc[n] = v
                     return ''
