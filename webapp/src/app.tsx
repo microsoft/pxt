@@ -23,6 +23,7 @@ import * as share from "./share";
 import * as lang from "./lang";
 import * as accessibility from "./accessibility";
 import * as tutorial from "./tutorial";
+import * as sidebarTutorial from "./sidebarTutorial";
 import * as editortoolbar from "./editortoolbar";
 import * as simtoolbar from "./simtoolbar";
 import * as dialogs from "./dialogs";
@@ -514,7 +515,14 @@ export class ProjectView
     }
 
     openAssets() {
-        this.setFile(pkg.mainEditorPkg().lookupFile(`this/${pxt.ASSETS_FILE}`));
+        const mainEditorPkg = pkg.mainEditorPkg()
+        if (!mainEditorPkg) return;
+
+        // create assets.json if it does not exist
+        if (!mainEditorPkg.lookupFile("this/" + pxt.ASSETS_FILE)) {
+            mainEditorPkg.setFile(pxt.ASSETS_FILE, "\n", true);
+        }
+        this.saveFileAsync().then(() => this.setFile(pkg.mainEditorPkg().lookupFile(`this/${pxt.ASSETS_FILE}`)));
     }
 
     openSettings() {
@@ -881,6 +889,10 @@ export class ProjectView
 
     // Add an error guard for the entire application
     componentDidCatch(error: any, info: any) {
+        this.handleCriticalError(error, info);
+    }
+
+    handleCriticalError(error: any, info?: any) {
         try {
             core.killLoadingQueue();
             pxsim.U.remove(document.getElementById('loading'));
@@ -888,10 +900,10 @@ export class ProjectView
             // Log critical error
             pxt.tickEvent('pxt.criticalerror', { error: error || '', info: info || '' });
             // Reload the page in 2 seconds
-            const lastCriticalError = pxt.storage.getLocal("lastcriticalerror") ?
-                Date.parse(pxt.storage.getLocal("lastcriticalerror")) : Date.now();
+            const lastCriticalError = pxt.storage.getLocal("lastcriticalerror") &&
+                Date.parse(pxt.storage.getLocal("lastcriticalerror"));
             // don't refresh if we refreshed in the last minute
-            if (!lastCriticalError || (!isNaN(lastCriticalError) && Date.now() - lastCriticalError > 60 * 1000)) {
+            if (!lastCriticalError || isNaN(lastCriticalError) || Date.now() - lastCriticalError > 60 * 1000) {
                 pxt.storage.setLocal("lastcriticalerror", new Date().toISOString());
                 setTimeout(() => {
                     this.reloadEditor();
@@ -1020,9 +1032,6 @@ export class ProjectView
                     header.editor = pxt.PYTHON_PROJECT_NAME
                     header.pubCurrent = false
                     isCodeFile = true;
-                } else if (fn.name == pxt.ASSETS_FILE) {
-                    header.editor = pxt.ASSETS_PROJECT_NAME
-                    header.pubCurrent = false
                 } else {
                     // some other file type
                 }
@@ -1963,8 +1972,8 @@ export class ProjectView
     saveProjectToFileAsync(): Promise<void> {
         const mpkg = pkg.mainPkg;
         if (saveAsBlocks()) {
-            pxt.BrowserUtils.browserDownloadText(mpkg.readFile("main.blocks"), pkg.genFileName(".blocks"), 'application/xml');
-            return Promise.resolve();;
+            pxt.BrowserUtils.browserDownloadText(mpkg.readFile("main.blocks"), pkg.genFileName(".blocks"), { contentType: 'application/xml' });
+            return Promise.resolve();
         }
         if (pxt.commands.saveProjectAsync) {
             core.infoNotification(lf("Saving..."))
@@ -1976,7 +1985,7 @@ export class ProjectView
         else return this.exportProjectToFileAsync()
             .then((buf: Uint8Array) => {
                 const fn = pkg.genFileName(".mkcd");
-                pxt.BrowserUtils.browserDownloadUInt8Array(buf, fn, 'application/octet-stream');
+                pxt.BrowserUtils.browserDownloadUInt8Array(buf, fn, { contentType: 'application/octet-stream' });
             })
     }
 
@@ -2115,10 +2124,6 @@ export class ProjectView
                 default:
                     return pxt.JAVASCRIPT_PROJECT_NAME;
             }
-        }
-
-        if (this.editor == this.assetEditor) {
-            return pxt.ASSETS_PROJECT_NAME
         }
 
         // no preferred editor
@@ -3861,6 +3866,7 @@ export class ProjectView
         const sideDocs = !(sandbox || targetTheme.hideSideDocs);
         const tutorialOptions = this.state.tutorialOptions;
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
+        const isSidebarTutorial = pxt.appTarget.appTheme.sidebarTutorial;
         const inTutorialExpanded = inTutorial && tutorialOptions.tutorialStepExpanded;
         const hideTutorialIteration = inTutorial && tutorialOptions.metadata && tutorialOptions.metadata.hideIteration;
         const inDebugMode = this.state.debugging;
@@ -3903,6 +3909,7 @@ export class ProjectView
             inHome ? 'inHome' : '',
             inTutorial ? 'tutorial' : '',
             inTutorialExpanded ? 'tutorialExpanded' : '',
+            isSidebarTutorial ? 'sidebarTutorial' : '',
             inDebugMode ? 'debugger' : '',
             pxt.options.light ? 'light' : '',
             pxt.BrowserUtils.isTouchEnabled() ? 'has-touch' : '',
@@ -3933,8 +3940,8 @@ export class ProjectView
         }
         const isRTL = pxt.Util.isUserLanguageRtl();
         const showRightChevron = (this.state.collapseEditorTools || isRTL) && !(this.state.collapseEditorTools && isRTL); // Collapsed XOR RTL
-        // don't show in sandbox or is blocks editor or previous editor is blocks
-        const showFileList = !sandbox && !inTutorial
+        // don't show in sandbox or is blocks editor or previous editor is blocks or assets editor
+        const showFileList = !sandbox && !inTutorial && !this.isAssetsActive()
             && !(isBlocks
                 || (pkg.mainPkg && pkg.mainPkg.config && (pkg.mainPkg.config.preferredEditor == pxt.BLOCKS_PROJECT_NAME)));
         const hasIdentity = auth.hasIdentity();
@@ -3948,10 +3955,12 @@ export class ProjectView
                         <notification.NotificationBanner parent={this} />
                         <container.MainMenu parent={this} />
                     </header>}
+                {isSidebarTutorial && flyoutOnly && inTutorial && <sidebarTutorial.SidebarTutorialCard ref={ProjectView.tutorialCardId} parent={this} pokeUser={this.state.pokeUserComponent == ProjectView.tutorialCardId} />}
                 {inTutorial && <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
-                    <tutorial.TutorialCard ref={ProjectView.tutorialCardId} parent={this} pokeUser={this.state.pokeUserComponent == ProjectView.tutorialCardId} />
-                    {flyoutOnly && <tutorial.WorkspaceHeader />}
+                    {!(isSidebarTutorial && flyoutOnly) && inTutorial && <tutorial.TutorialCard ref={ProjectView.tutorialCardId} parent={this} pokeUser={this.state.pokeUserComponent == ProjectView.tutorialCardId} />}
+                    {flyoutOnly && <tutorial.WorkspaceHeader parent={this}/>}
                 </div>}
+
                 <div id="simulator" className="simulator">
                     <div id="filelist" className="ui items">
                         <div id="boardview" className={`ui vertical editorFloat`} role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0}>
@@ -4603,11 +4612,15 @@ document.addEventListener("DOMContentLoaded", () => {
             else theEditor.newProject();
             return Promise.resolve();
         })
+        .catch(e => {
+            theEditor.handleCriticalError(e, "Failure in DOM loaded handler");
+            throw e;
+        })
         .then(() => {
             pxsim.U.remove(document.getElementById('loading'));
             return workspace.loadedAsync();
         })
-        .done()
+        .done();
 
     document.addEventListener("visibilitychange", ev => {
         if (theEditor)

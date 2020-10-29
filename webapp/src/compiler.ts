@@ -318,6 +318,8 @@ export function pySnippetToBlocksAsync(code: string, blockInfo?: ts.pxtc.BlocksI
 // Py[] -> blocks
 export function pySnippetArrayToBlocksAsync(code: string[], blockInfo?: ts.pxtc.BlocksInfo): Promise<pxtc.CompileResult> {
     const namespaceRegex = /^\s*namespace\s+[^\s]+\s*{([\S\s]*)}\s*$/im;
+    const exportLetRegex = /^\s*export\s(let\s*[\S\s]*)\s*$/im;
+    const exportFunctionRegex = /^\s*export\s(function\s*[\S\s]*)\s*$/im;
     const snippetBlocks = "main.blocks";
     let trg = pkg.mainPkg.getTargetOptions()
     let files: string[] = [];
@@ -342,7 +344,22 @@ export function pySnippetArrayToBlocksAsync(code: string[], blockInfo?: ts.pxtc.
             let ts = "";
             for (let file of files) {
                 let match = res.outfiles[file + ".ts"].match(namespaceRegex);
-                if (match && match[1]) ts += `{\n${match[1]}\n}\n`
+                if (match && match[1]) {
+                    const noNamespace = match[1];
+                    // strip out 'export let' and 'export function'. This won't hit custom kinds since those are always const
+                    let lines = noNamespace.split("\n");
+                    let cleanLines = lines.map((element: string) => {
+                        const matchExportLet = element.match(exportLetRegex);
+                        const strippedExportLet = matchExportLet ? matchExportLet[1] : element;
+                        const strippedExportFunc = strippedExportLet.match(exportFunctionRegex);
+                        if (strippedExportFunc) {
+                            return strippedExportFunc[1];
+                        } else {
+                            return strippedExportLet;
+                        }
+                    })
+                    ts += `{\n${cleanLines.join("\n")}\n}\n`;
+                }
             }
             return decompileBlocksSnippetAsync(ts, blockInfo)
         });

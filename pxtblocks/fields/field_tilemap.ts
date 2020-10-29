@@ -46,7 +46,11 @@ namespace pxtblockly {
 
             if (match) {
                 const tilemapId = match[1].trim();
-                const resolved = project.lookupAssetByName(pxt.AssetType.Tilemap, tilemapId);
+                let resolved = project.lookupAssetByName(pxt.AssetType.Tilemap, tilemapId);
+
+                if (!resolved) {
+                    resolved = project.lookupAsset(pxt.AssetType.Tilemap, tilemapId);
+                }
 
                 if (resolved) {
                     return resolved;

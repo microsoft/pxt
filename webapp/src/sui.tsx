@@ -1131,6 +1131,7 @@ export interface ModalProps extends ReactModal.Props {
     longer?: boolean;
 
     header?: string;
+    headerIcon?: string;
     headerClass?: string;
     description?: string;
 
@@ -1240,7 +1241,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
     render() {
         const { isOpen, size, longer, basic, className,
             onClose, closeIcon, children, onKeyDown,
-            header, headerClass, headerActions, helpUrl, description,
+            header, headerIcon, headerClass, headerActions, helpUrl, description,
             closeOnDimmerClick, closeOnDocumentClick, closeOnEscape,
             shouldCloseOnEsc, shouldCloseOnOverlayClick, shouldFocusAfterRender, overlayClassName, ...rest } = this.props;
         const { marginTop, scrolling, mountClasses } = this.state;
@@ -1283,6 +1284,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
             role="dialog"
             aria={aria} {...rest}>
             {header || showBack || helpUrl ? <div id={this.id + 'title'} className={"header " + (headerClass || "")}>
+                {headerIcon && <Icon icon={headerIcon} />}
                 <span className="header-title" style={{ margin: `0 ${helpUrl ? '-20rem' : '0'} 0 ${showBack ? '-20rem' : '0'}` }}>{header}</span>
                 {showBack ? <div className="header-close">
                     <Button className="back-button large" title={lf("Go back")} onClick={onClose} tabIndex={0} onKeyDown={fireClickOnEnter}>

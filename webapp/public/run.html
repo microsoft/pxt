@@ -119,7 +119,7 @@
             codeFromData = window.frameElement ? window.frameElement.getAttribute('data-code') : undefined;
         } catch (e) {
             /**
-             *  Internet Explorer 11 and Microsoft Edge throw an exception when checking 
+             *  Internet Explorer 11 and Microsoft Edge throw an exception when checking
              *  if the frame element exists when the iframe is on a different origin
              */
         }
@@ -163,7 +163,7 @@
                 pxt.runner.generateHexFileAsync(options).done(function(hex) {
                     $(loading).remove();
                     var name = pxt.appTarget.id + '-' + ts.pxt.BINARY_HEX;
-                    var uri = pxt.BrowserUtils.browserDownloadBinText(hex, name)
+                    var uri = pxt.BrowserUtils.browserDownloadBinText(hex, name, { maintainObjectURL: true });
                     var a = document.createElement("a");
                     a.href = uri;
                     a.download = name;

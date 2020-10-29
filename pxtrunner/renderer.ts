@@ -275,7 +275,7 @@ namespace pxt.runner {
         if (woptions.hexname && woptions.hex) {
             let $hexBtn = snippetBtn(lf("Download"), "download icon").click(() => {
                 pxt.tickEvent("docs.btn", { button: "hex" });
-                BrowserUtils.browserDownloadBinText(woptions.hex, woptions.hexname, pxt.appTarget.compile.hexMimeType);
+                BrowserUtils.browserDownloadBinText(woptions.hex, woptions.hexname, { contentType: pxt.appTarget.compile.hexMimeType });
             })
             $menu.append($hexBtn);
         }
@@ -853,7 +853,7 @@ namespace pxt.runner {
                     const csymbols = symbols.filter(symbol => !!namespaces[symbol.attributes.blockNamespace || symbol.namespace])
                     if (!csymbols.length) return;
 
-                    csymbols.sort((l,r) => {
+                    csymbols.sort((l, r) => {
                         // render cards first
                         const lcard = !l.attributes.blockHidden && Blockly.Blocks[l.attributes.blockId];
                         const rcard = !r.attributes.blockHidden && Blockly.Blocks[r.attributes.blockId]
@@ -1095,14 +1095,10 @@ namespace pxt.runner {
         if (!$el[0]) return Promise.resolve();
 
         $el.removeClass(cls);
-        let cards: pxt.CodeCard[];
-        try {
-            let js: any = JSON.parse($el.text());
-            if (!Array.isArray(js)) js = [js];
-            cards = js as pxt.CodeCard[];
-        } catch (e) {
-            pxt.reportException(e);
-            $el.append($('<div/>').addClass("ui segment warning").text(e.messageText));
+        // try parsing the card as json
+        const cards = pxt.gallery.parseCodeCardsHtml($el[0]);
+        if (!cards) {
+            $el.append($('<div/>').addClass("ui segment warning").text("invalid codecard format"));
         }
 
         if (options.snippetReplaceParent) $el = $el.parent();

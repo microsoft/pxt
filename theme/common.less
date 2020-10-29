@@ -116,6 +116,28 @@ pre {
     }
 }
 
+.zoomSliderBar {
+    -webkit-appearance: none;  /* Override default CSS styles */
+    appearance: none;
+    width: 100%;
+    height: .5rem;
+    background: @black;
+    outline: none;
+    opacity: 0.7;
+    -webkit-transition: .2s;
+    transition: opacity .2s;
+    top: 50%;
+    position: relative;
+    border-bottom: .2rem solid @grey;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+#zoomSlider {
+    display: inline-block;
+    position: relative;
+}
+
 #root {
     --extra-mobile-sim-padding: 0px;
     &.errorListHeader {
@@ -131,7 +153,7 @@ pre {
     z-index: (@blocklyFlyoutZIndex)-1;
 }
 
-#blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #filelist {
+#blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #assetEditor, #filelist {
     bottom: @editorToolsCollapsedHeight;
 }
 
@@ -140,6 +162,7 @@ pre {
 .hideEditorToolbar #pxtJsonEditor,
 .hideEditorToolbar #serialEditor,
 .hideEditorToolbar #githubEditor,
+.hideEditorToolbar #assetEditor,
 .hideEditorToolbar #filelist {
     bottom: 0rem !important;
 }
@@ -306,6 +329,8 @@ div.simframe > iframe {
     background: none;
     color: @mainMenuInvertedBackground !important;
 }
+
+/* toggle style */
 .ui.item.editor-menuitem .item.toggle {
     z-index: 1 !important;
     margin: 1px;
@@ -323,25 +348,30 @@ div.simframe > iframe {
     transition-timing-function: ease-in;
 }
 
-.active.item.blocks-menuitem ~ .toggle {
-    margin-left: 0 !important;
-    box-shadow: 2px 0px 0px rgba(0,0,0,0.1) !important;
-    background: @editorToggleColor !important;
-}
-.blocks-menuitem ~ .active.item.javascript-menuitem ~ .toggle,
-.blocks-menuitem ~ .active.item.python-menuitem ~ .toggle {
-    margin-left: 140px !important;
-    box-shadow: -2px 0px 0px rgba(0,0,0,0.1) !important;
-    background: @editorToggleColor !important;
+/* active toggle */
+.ui.item.editor-menuitem .active ~ .item.toggle {
+    box-shadow: 2px 0 0 rgba(0,0,0,.1)!important;
+    background: #fff!important;
 }
 
-#editortoggle .active.item.javascript-menuitem ~ .toggle.hasdropdown,
-#editortoggle .active.item.python-menuitem ~ .toggle.hasdropdown  {
-    border-top-right-radius: 0px!important;
-    border-bottom-right-radius: 0px!important;
-}
 #editortoggle > .link {
     justify-content: center;
+}
+
+#editortoggle {
+    /* toggle positioning, no dropdown */
+    .base-menuitem:nth-of-type(1).active ~ .toggle { margin-left: 0!important; }
+    .base-menuitem:nth-of-type(2).active ~ .toggle { margin-left: 140px!important; }
+    .base-menuitem:nth-of-type(3).active ~ .toggle { margin-left: 280px!important; }
+
+    /* toggle positioning after dropdown */
+    & > #editordropdown:nth-of-type(2) ~ .active ~ .toggle { margin-left: 185px!important; }
+    & > #editordropdown:nth-of-type(3) ~ .active ~ .toggle { margin-left: 326px!important; }
+
+    .toggle.dropdown-attached {
+        border-top-right-radius: 0!important;
+        border-bottom-right-radius: 0!important;
+    }
 }
 
 #editordropdown {
@@ -831,25 +861,6 @@ p.ui.font.small {
 
 /* Mobile + Tablet */
 @media only screen and (max-width: @largestTabletScreen) {
-    #root.sandbox:not(.headless) {
-        .active.item.sim-menuitem ~ .toggle {
-            margin-left: 0 !important;
-            box-shadow: 2px 0px 0px rgba(0,0,0,0.1) !important;
-            background: @editorToggleColor !important;
-        }
-        .active.item.blocks-menuitem ~ .toggle {
-            margin-left: 40px !important;
-            box-shadow: 2px 0px 0px rgba(0,0,0,0.1), -2px 0px 0px rgba(0,0,0,0.1) !important;
-            background: @editorToggleColor !important;
-        }
-        .blocks-menuitem ~ .active.item.javascript-menuitem ~ .toggle,
-        .blocks-menuitem ~ .active.item.python-menuitem ~ .toggle {
-            margin-left: 80px !important;
-            box-shadow: -2px 0px 0px rgba(0,0,0,0.1) !important;
-            background: @editorToggleColor !important;
-        }
-    }
-
     .simView #boardview {
         padding-top: @sandboxMobileMenuHeight;
     }
@@ -1249,7 +1260,7 @@ p.ui.font.small {
         height: 9rem;
     }
 
-    #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #filelist {
+    #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #assetEditor, #filelist {
         bottom: @editorToolsCollapsedMobileHeight;
     }
 
@@ -1381,10 +1392,18 @@ p.ui.font.small {
         width: 40px;
         height: 38px;
     }
-    .blocks-menuitem ~ .active.item.javascript-menuitem ~ .toggle,
-    .blocks-menuitem ~ .active.item.python-menuitem ~ .toggle {
-        margin-left: 40px !important;
+
+    #editortoggle {
+        /* toggle positioning, no dropdown */
+        .base-menuitem:nth-of-type(1).active ~ .toggle { margin-left: 0!important; }
+        .base-menuitem:nth-of-type(2).active ~ .toggle { margin-left: 40px!important; }
+        .base-menuitem:nth-of-type(3).active ~ .toggle { margin-left: 80px!important; }
+
+        /* toggle positioning after dropdown */
+        & > #editordropdown:nth-of-type(2) ~ .active ~ .toggle { margin-left: 80px!important; }
+        & > #editordropdown:nth-of-type(3) ~ .active ~ .toggle { margin-left: 120px!important; }
     }
+
     /* Top Menu */
     #maineditor {
         top: @mobileMenuHeight;
@@ -1513,7 +1532,7 @@ p.ui.font.small {
         top: @thinMenuHeight;
         padding: 0.5rem 1.5rem;
     }
-    #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #filelist {
+    #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #assetEditor, #filelist {
         bottom: @editorToolsThinHeight;
     }
 
@@ -1657,38 +1676,8 @@ div.simframe.ui.embed {
         display: inherit;
     }
 
-    #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #editortools, #msg {
+    #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #assetEditor, #editortools, #msg {
         bottom: 1.5rem !important;
-    }
-
-    &:not(.headless) .active.item.sim-menuitem ~ .toggle {
-        margin-left: 0 !important;
-        box-shadow: 2px 0px 0px rgba(0,0,0,0.1) !important;
-        background: @editorToggleColor !important;
-    }
-    &:not(.headless) .active.item.blocks-menuitem ~ .toggle {
-        margin-left: 140px !important;
-        box-shadow: 2px 0px 0px rgba(0,0,0,0.1) !important;
-        background: @editorToggleColor !important;
-    }
-    &:not(.headless) .blocks-menuitem ~ .active.item.javascript-menuitem ~ .toggle,
-    &:not(.headless) .blocks-menuitem ~ .active.item.python-menuitem ~ .toggle {
-        margin-left: 280px !important;
-        box-shadow: -2px 0px 0px rgba(0,0,0,0.1) !important;
-        background: @editorToggleColor !important;
-    }
-
-    .one-language {
-        .active.item.javascript-menuitem ~ .toggle,
-        .active.item.python-menuitem ~ .toggle {
-            margin-left: 0px !important;
-        }
-    }
-    &:not(.headless) .one-language {
-        .active.item.javascript-menuitem ~ .toggle,
-        .active.item.python-menuitem ~ .toggle {
-            margin-left: 140px !important;
-        }
     }
 }
 
@@ -1844,5 +1833,11 @@ select.ui.dropdown {
 .newproject {
     .expandable-menu {
         font-size: 12px !important;
+    }
+}
+
+.ui.modal.auto-save-disabled-warning {
+    .header {
+        background-color: #F5BC5F;
     }
 }
