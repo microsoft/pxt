@@ -238,10 +238,11 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const flyoutOnly = editorState && editorState.hasCategories === false;
 
         const disableFileAccessinMaciOs = targetTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isIOS() || pxt.BrowserUtils.isMac());
+        const disableFileAccessinAndroid = pxt.appTarget.appTheme.disableFileAccessinAndroid && pxt.BrowserUtils.isAndroid();
         const ghid = header && pxt.github.parseRepoId(header.githubId);
         const hasRepository = !!ghid;
         const showSave = !readOnly && !isController && !targetTheme.saveInMenu
-            && !tutorial && !debugging && !disableFileAccessinMaciOs
+            && !tutorial && !debugging && !disableFileAccessinMaciOs && !disableFileAccessinAndroid
             && !hasRepository;
         const showProjectRename = !tutorial && !readOnly && !isController
             && !targetTheme.hideProjectRename && !debugging;
