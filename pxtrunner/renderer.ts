@@ -275,7 +275,7 @@ namespace pxt.runner {
         if (woptions.hexname && woptions.hex) {
             let $hexBtn = snippetBtn(lf("Download"), "download icon").click(() => {
                 pxt.tickEvent("docs.btn", { button: "hex" });
-                BrowserUtils.browserDownloadBinText(woptions.hex, woptions.hexname, pxt.appTarget.compile.hexMimeType);
+                BrowserUtils.browserDownloadBinText(woptions.hex, woptions.hexname, { contentType: pxt.appTarget.compile.hexMimeType });
             })
             $menu.append($hexBtn);
         }
