@@ -159,7 +159,7 @@ namespace pxt.gallery {
         let cardsSource: string = "";
         md.split(/\r?\n/).forEach(line => {
             // new category
-            if (/^##/.test(line)) {
+            if (/^## /.test(line)) {
                 name = line.substr(2).trim();
             } else if (/^(### ~ |```)codecard$/.test(line)) {
                 incard = true;
