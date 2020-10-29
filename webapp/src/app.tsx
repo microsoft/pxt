@@ -1848,8 +1848,8 @@ export class ProjectView
     saveProjectToFileAsync(): Promise<void> {
         const mpkg = pkg.mainPkg;
         if (saveAsBlocks()) {
-            pxt.BrowserUtils.browserDownloadText(mpkg.readFile("main.blocks"), pkg.genFileName(".blocks"), 'application/xml');
-            return Promise.resolve();;
+            pxt.BrowserUtils.browserDownloadText(mpkg.readFile("main.blocks"), pkg.genFileName(".blocks"), { contentType: 'application/xml' });
+            return Promise.resolve();
         }
         if (pxt.commands.saveProjectAsync) {
             core.infoNotification(lf("Saving..."))
@@ -1861,7 +1861,7 @@ export class ProjectView
         else return this.exportProjectToFileAsync()
             .then((buf: Uint8Array) => {
                 const fn = pkg.genFileName(".mkcd");
-                pxt.BrowserUtils.browserDownloadUInt8Array(buf, fn, 'application/octet-stream');
+                pxt.BrowserUtils.browserDownloadUInt8Array(buf, fn, { contentType: 'application/octet-stream' });
             })
     }
 
