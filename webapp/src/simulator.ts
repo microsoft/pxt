@@ -283,7 +283,8 @@ export function run(pkg: pxt.MainPackage, debug: boolean,
     res: pxtc.CompileResult, options: RunOptions, trace: boolean) {
     const js = res.outfiles[pxtc.BINARY_JS]
     const boardDefinition = pxt.appTarget.simulator.boardDefinition;
-    const parts = pxtc.computeUsedParts(res, true);
+    const parts = pxtc.computeUsedParts(res, "ignorebuiltin");
+    const usedBuiltinParts = pxtc.computeUsedParts(res, "onlybuiltin");
     const fnArgs = res.usedArguments;
     lastCompileResult = res;
     const { mute, highContrast, light, clickTrigger, storedState, autoRun } = options;
@@ -292,6 +293,7 @@ export function run(pkg: pxt.MainPackage, debug: boolean,
         boardDefinition: boardDefinition,
         mute,
         parts,
+        builtinParts: usedBuiltinParts,
         debug,
         trace,
         fnArgs,

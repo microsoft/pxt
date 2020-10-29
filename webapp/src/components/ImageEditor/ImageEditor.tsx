@@ -142,6 +142,20 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
         return imageStateToBitmap(currentFrame);
     }
 
+    getAsset(): pxt.Asset {
+        const type = this.editingAsset.type;
+        switch (type) {
+            case pxt.AssetType.Tile:
+                return this.getTile();
+            case pxt.AssetType.Animation:
+                return this.getAnimation();
+            case pxt.AssetType.Tilemap:
+                return this.getTilemap();
+            default:
+                return this.getImage();
+        }
+    }
+
     getImage(): pxt.ProjectImage {
         const state = this.getStore().getState();
         const data = this.getCurrentFrame().data();
@@ -294,19 +308,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
 
     protected onDoneClick = () => {
         if (this.props.onDoneClicked) {
-            let value: pxt.Asset;
-
-            if (this.getStore().getState().editor.isTilemap) {
-                value = this.getTilemap();
-            }
-            else if (this.props.singleFrame) {
-                value = this.props.nested ? this.getTile() : this.getImage();
-            }
-            else {
-                value = this.getAnimation()
-            }
-
-            this.props.onDoneClicked(value);
+            this.props.onDoneClicked(this.getAsset());
         }
     }
 

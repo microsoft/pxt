@@ -90,6 +90,36 @@ export function setupWorkspace(id: string) {
     }
 }
 
+async function switchToMemoryWorkspace(reason: string): Promise<void> {
+    pxt.log(`workspace: error, switching from ${implType} to memory workspace`);
+
+    const expectedMemWs = pxt.appTarget.appTheme.disableMemoryWorkspaceWarning
+        || impl === memoryworkspace.provider
+        || pxt.shell.isSandboxMode() || pxt.shell.isReadOnly() || pxt.BrowserUtils.isIFrame();
+
+    pxt.tickEvent(`workspace.syncerror`, {
+        ws: implType,
+        reason: reason,
+        expected: expectedMemWs ? 1 : 0
+    });
+
+    if (!expectedMemWs) {
+        await core.confirmAsync({
+            header: lf("Warning! Project Auto-Save Disabled"),
+            body: lf("We are unable to save your projects at this time. You can still manually save your project via direct download, or sharing your project."),
+            agreeLbl: lf("Continue"),
+            headerIcon: "warning",
+            agreeClass: "cancel",
+            agreeIcon: "cancel",
+            helpUrl: "/browsers/no-auto-save",
+            className: "auto-save-disabled-warning",
+            hasCloseIcon: true,
+        });
+    }
+
+    impl = memoryworkspace.provider;
+}
+
 export function getHeaders(withDeleted = false) {
     maybeSyncHeadersAsync().done();
     let r = allScripts.map(e => e.header).filter(h => (withDeleted || !h.isDeleted) && !h.isBackup)
@@ -348,21 +378,34 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
                 .filter(p => !!pxt.bundledSvg(p))[0];
     }
 
-    return headerQ.enqueue<void>(h.id, () =>
-        fixupVersionAsync(e).then(() =>
-            impl.setAsync(h, e.version, text ? e.text : null)
-                .then(ver => {
-                    if (text)
-                        e.version = ver
-                    if ((text && !isCloud) || h.isDeleted) {
-                        h.pubCurrent = false
-                        h.blobCurrent = false
-                        h.saveId = null
-                        data.invalidate("text:" + h.id)
-                        data.invalidate("pkg-git-status:" + h.id)
-                    }
-                    refreshHeadersSession()
-                })))
+    return headerQ.enqueue<void>(h.id, async () => {
+        await fixupVersionAsync(e);
+        let ver: any;
+
+        const toWrite = text ? e.text : null;
+
+        try {
+            ver = await impl.setAsync(h, e.version, toWrite);
+        } catch (e) {
+            // Write failed; use in memory db.
+            await switchToMemoryWorkspace("write failed");
+            ver = await impl.setAsync(h, e.version, toWrite);
+        }
+
+        if (text) {
+            e.version = ver;
+        }
+
+        if ((text && !isCloud) || h.isDeleted) {
+            h.pubCurrent = false;
+            h.blobCurrent = false;
+            h.saveId = null;
+            data.invalidate("text:" + h.id);
+            data.invalidate("pkg-git-status:" + h.id);
+        }
+
+        refreshHeadersSession();
+    });
 }
 
 function computePath(h: Header) {
@@ -869,7 +912,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
                 // if xml merge fails, leave an empty xml payload to force decompilation
                 blocksNeedDecompilation = blocksNeedDecompilation || !d3;
                 text = d3 || "";
-            } else if (path == BINARY_JS_PATH || path == VERSION_TXT_PATH || path == pxt.TUTORIAL_INFO_FILE) {
+            } else if (path == BINARY_JS_PATH || path == VERSION_TXT_PATH || path == pxt.TUTORIAL_INFO_FILE || path == pxt.ASSETS_FILE) {
                 // local build wins, does not matter
                 text = files[path];
             } else {
@@ -1314,10 +1357,8 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
         .catch((e) => {
             // There might be a problem with the native databases. Switch to memory for this session so the user can at
             // least use the editor.
-            pxt.tickEvent("workspace.syncerror", { ws: implType });
-            pxt.log("workspace: error, switching to memory workspace");
-            impl = memoryworkspace.provider;
-            return impl.listAsync();
+            return switchToMemoryWorkspace("sync failed")
+                .then(() => impl.listAsync());
         })
         .then(headers => {
             const existing = U.toDictionary(allScripts || [], h => h.header.id)

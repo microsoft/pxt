@@ -17,9 +17,10 @@ function browserDownloadAsync(text: string, name: string, contentType: string): 
     pxt.BrowserUtils.browserDownloadBinText(
         text,
         name,
-        contentType,
-        undefined,
-        e => core.errorNotification(lf("saving file failed..."))
+        {
+            contentType: contentType,
+            onError: (e: any) => core.errorNotification(lf("saving file failed..."))
+        }
     );
 
     return Promise.resolve();
@@ -38,18 +39,24 @@ export function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promis
         url = pxt.BrowserUtils.browserDownloadBase64(
             out,
             fn,
-            "application/x-uf2",
-            resp.userContextWindow,
-            e => core.errorNotification(lf("saving file failed..."))
+            {
+                contentType: "application/x-uf2",
+                userContextWindow: resp.userContextWindow,
+                onError: e => core.errorNotification(lf("saving file failed...")),
+                maintainObjectURL: true,
+            }
         );
     } else {
         log('saving ' + fn)
         url = pxt.BrowserUtils.browserDownloadBinText(
             out,
             fn,
-            pxt.appTarget.compile.hexMimeType,
-            resp.userContextWindow,
-            e => core.errorNotification(lf("saving file failed..."))
+            {
+                contentType: pxt.appTarget.compile.hexMimeType,
+                userContextWindow: resp.userContextWindow,
+                onError: e => core.errorNotification(lf("saving file failed...")),
+                maintainObjectURL: true,
+            }
         );
     }
 
@@ -57,9 +64,14 @@ export function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promis
         return Promise.resolve();
     }
 
-    if (resp.saveOnly && userContext) return pxt.commands.showUploadInstructionsAsync(fn, url, core.confirmAsync); // save does the same as download as far iOS is concerned
-    if (resp.saveOnly || pxt.BrowserUtils.isBrowserDownloadInSameWindow() && !userContext) return Promise.resolve();
-    else return pxt.commands.showUploadInstructionsAsync(fn, url, core.confirmAsync);
+    if (!userContext && (resp.saveOnly || pxt.BrowserUtils.isBrowserDownloadInSameWindow())) {
+        return Promise.resolve()
+            .then(() => window.URL?.revokeObjectURL(url));
+    } else {
+        // save does the same as download as far iOS is concerned
+        return pxt.commands.showUploadInstructionsAsync(fn, url, core.confirmAsync)
+            .then(() => window.URL?.revokeObjectURL(url));
+    }
 }
 
 function showUploadInstructionsAsync(fn: string, url: string, confirmAsync: (options: core.PromptOptions) => Promise<number>): Promise<void> {
@@ -170,8 +182,7 @@ export function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.De
     function deployAsync(): Promise<void> {
         return pxt.packetio.initAsync(isRetry)
             .then(dev => core.showLoadingAsync(LOADING_KEY, lf("Downloading..."),
-                dev.reflashAsync(resp)
-                    .then(() => dev.reconnectAsync()), 5000))
+                dev.reflashAsync(resp), 5000))
             .then(() => core.infoNotification("Download completed!"))
             .finally(() => core.hideLoading(LOADING_KEY))
             .timeout(120000, "timeout") // packetio should time out first
