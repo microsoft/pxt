@@ -98,7 +98,7 @@ namespace pxt.gallery {
             .filter(cmd => !!cmd)
             .map(cmd => {
                 let cc: any = {};
-                cmd.replace(/^\s*\*\s+(\w+)\s*:\s*(.*)$/gm, (m, n, v) => {
+                cmd.replace(/^\s*(-|\*)\s+(\w+)\s*:\s*(.*)$/gm, (m, n, v) => {
                     if (n == "flags")
                         cc[n] = v.split(',')
                     else
@@ -119,7 +119,7 @@ namespace pxt.gallery {
         let card: any;
         Array.from(el.children)
             .forEach(child => {
-                if (child.tagName === "UL") {
+                if (child.tagName === "UL" || child.tagName === "OL") {
                     if (!card)
                         card = {};
                     // read fields into card
