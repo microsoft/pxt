@@ -14,7 +14,8 @@ let apiAsync = (path: string, data?: any) => {
         headers: { "Authorization": Cloud.localToken },
         method: data ? "POST" : "GET",
         data: data || undefined,
-        allowHttpErrors: true
+        allowHttpErrors: true,
+        allowRelativeUrl: true
     }).then(r => r.json).catch(core.handleNetworkError);
 }
 
