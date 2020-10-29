@@ -1098,8 +1098,6 @@ namespace pxt.runner {
         // try parsing the card as json
         const cards = pxt.gallery.parseCodeCardsHtml($el[0]);
         if (!cards) {
-            // try parsing nested HTML structure
-
             $el.append($('<div/>').addClass("ui segment warning").text("invalid codecard format"));
         }
 
