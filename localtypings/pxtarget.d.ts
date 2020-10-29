@@ -348,6 +348,7 @@ declare namespace pxt {
         tagColors?: pxt.Map<string>; // optional colors for tags
         dontSuspendOnVisibility?: boolean; // we're inside an app, don't suspend the editor
         disableFileAccessinMaciOs?: boolean; //Disable save & import of files in Mac and iOS, mainly used as embed webkit doesn't support these
+        disableFileAccessinAndroid?: boolean; // Disable import of files in Android.
         baseTheme?: string; // Use this to determine whether to show a light or dark theme, default is 'light', options are 'light', 'dark', or 'hc'
         scriptManager?: boolean; // Whether or not to enable the script manager. default: false
         monacoFieldEditors?: string[]; // A list of field editors to show in monaco. Currently only "image-editor" is supported
