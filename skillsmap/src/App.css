@@ -1,4 +1,59 @@
+#root {
+    font-family: "Share Tech Mono", Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
+}
+
+.header {
+    background-color: #444;
+
+    height: 4rem;
+    max-height: 4rem;
+    display: flex;
+    align-items: center;
+    font-size: 2rem;
+    color: #fff;
+}
+
+.header-left, .header-right {
+    margin: 0 1rem;
+}
+
+.banner {
+    background-color: #ddd;
+
+    display: flex;
+    align-items: center;
+    height: 12rem;
+    margin-bottom: 0.5rem;
+}
+
+.banner-card {
+    background-color: #666;
+
+    min-width: 24rem;
+    width: 60%;
+    display: flex;
+    color: #fff;
+}
+
+.banner-card i {
+    font-size: 5rem;
+    line-height: 5rem;
+    margin: 2rem 1rem;
+}
+
+.banner-text {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin-left: 1rem;
+}
+
+.banner-title {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
 .skills-map-container {
-    height: 100%;
-    width: 100%;
+    display: flex;
+    flex-direction: column;
 }

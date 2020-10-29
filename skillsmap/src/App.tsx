@@ -5,6 +5,8 @@ import { connect } from 'react-redux';
 
 import { dispatchAddSkillsMap, dispatchClearSkillsMaps } from './actions/dispatch';
 import { SkillsMapState } from './store/reducer';
+import { HeaderBar } from './components/HeaderBar';
+import { Banner } from './components/Banner';
 import { SkillsCarousel } from './components/SkillsCarousel';
 
 import { parseSkillsMap } from './lib/skillMapParser';
@@ -59,6 +61,8 @@ class AppImpl extends React.Component<AppProps> {
     render() {
         const maps = Object.keys(this.props.skillsMaps).map((id: string) => this.props.skillsMaps[id]);
         return (<div>
+                <HeaderBar />
+                <Banner title="Game Maker Guide" icon="map" description="Level up your game making skills by completing the tutorials in this guide." />
                 <div className="skills-map-container">
                     {maps?.map((el, i) => {
                         return <SkillsCarousel map={el} key={i} />
