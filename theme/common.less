@@ -1710,48 +1710,134 @@ div.simframe.ui.embed {
 
 /* Profile dialog */
 .profiledialog {
-    .settings-panel {
-        justify-content: center;
-    }
-
-    .account-info {
-        max-width: 400px;
-    }
-
-    .avatar-info {
-        max-width: 400px;
-    }
-
     .ui.card {
-        width: unset;
+        margin: 0;
+        margin-right: 14px;
+        margin-bottom: 14px;
         border-radius: @homeCardBorderRadius;
         color: @homeCardColor;
         border: @homeCardBorderSize solid @homeCardBorderColor !important;
         background-color: @homeCardBackgroundColor;
 
-        .ui.image, .ui.imagewrapper, .content {
-            border-radius: @homeCardImageBorderRadius !important;
+        button {
+            margin: 0;
         }
-        .header {
-            color: @homeCardHeaderColor;
+
+        label.title {
+            font-weight: bold;
         }
-        .header-title {
+
+        p.value {
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        p.description {
+            text-overflow: ellipsis;
+            overflow: hidden;
+        }
+
+        div.header-text {
             font-size: 20px;
             white-space: nowrap;
+            grid-row-start: 1;
+            grid-row-end: 2;
+            grid-column-start: 1;
+            grid-column-end: 2;
+            justify-self: start;
         }
-        .meta {
-            color: @homeCardMetaColor;
+
+        &.privacy {
+            width: fit-content;
+            min-width: 350px;
+            max-width: 500px;
+            padding: 14px;
+            display: inline-grid;
+            row-gap: 10px;
+            grid-template-rows: 36px auto;
+            grid-template-columns: auto;
         }
-        .column {
-            padding: 0;
+
+        &.github {
+            width: fit-content;
+            min-width: 350px;
+            max-width: 500px;
+            padding: 14px;
+            display: inline-grid;
+            row-gap: 10px;
+            grid-template-rows: 36px auto 46px;
+            grid-template-columns: 50% 50%;
+
+            div.profile-pic {
+                grid-row-start: 1;
+                grid-row-end: 2;
+                grid-column-start: 2;
+                grid-column-end: 2;
+                justify-self: end;
+            }
+
+            div.connected {
+                grid-row-start: 2;
+                grid-row-end: 2;
+                grid-column-start: 1;
+                grid-column-end: 3;
+                justify-self: start;
+                max-width: 100%;
+            }
+
+            div.disconnected {
+                grid-row-start: 2;
+                grid-row-end: 2;
+                grid-column-start: 1;
+                grid-column-end: 3;
+                justify-self: start;
+                max-width: 100%;
+            }
+
+            div.unlink {
+                grid-row-start: 3;
+                grid-row-end: 3;
+                grid-column-start: 1;
+                grid-column-end: 1;
+                justify-self: start;
+            }
         }
-        .content-box {
-            max-width: 400px;
+
+        &.account {
+            width: fit-content;
+            min-width: 350px;
+            max-width: 500px;
+            padding: 14px;
+            display: inline-grid;
+            row-gap: 10px;
+            grid-template-rows: 36px auto 46px;
+            grid-template-columns: 50% 50%;
+
+            div.profile-pic {
+                grid-row-start: 1;
+                grid-row-end: 2;
+                grid-column-start: 2;
+                grid-column-end: 2;
+                justify-self: end;
+            }
+
+            div.username {
+                grid-row-start: 2;
+                grid-row-end: 2;
+                grid-column-start: 1;
+                grid-column-end: 3;
+                justify-self: start;
+            }
+
+            div.signout {
+                grid-row-start: 3;
+                grid-row-end: 3;
+                grid-column-start: 1;
+                grid-column-end: 1;
+                justify-self: start;
+            }
         }
-    }
-    .ui.card:focus {
-        outline: none;
-        border: @homeCardBorderSize solid @homeCardFocusBorderColor !important;
     }
 }
 

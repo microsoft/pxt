@@ -3883,7 +3883,6 @@ export class ProjectView
         const hwDialog = !sandbox && pxt.hasHwVariants();
         const expandedStyle = inTutorialExpanded ? this.getExpandedCardStyle(flyoutOnly) : null;
         const invertedTheme = targetTheme.invertedMenu && targetTheme.invertedMonaco;
-        const loginDialogInitialVisibility = this.getData<boolean>(auth.NEEDS_SETUP);
 
         const collapseIconTooltip = this.state.collapseEditorTools ? lf("Show the simulator") : lf("Hide the simulator");
 
@@ -3993,7 +3992,7 @@ export class ProjectView
                 {sandbox ? undefined : <scriptsearch.ScriptSearch parent={this} ref={this.handleScriptSearchRef} />}
                 {sandbox ? undefined : <extensions.Extensions parent={this} ref={this.handleExtensionRef} />}
                 {inHome ? <projects.ImportDialog parent={this} ref={this.handleImportDialogRef} /> : undefined}
-                {hasIdentity ? <identity.LoginDialog parent={this} ref={this.handleLoginDialogRef} onComplete={this.identityLoginComplete} initialVisibility={loginDialogInitialVisibility} /> : undefined}
+                {hasIdentity ? <identity.LoginDialog parent={this} ref={this.handleLoginDialogRef} onComplete={this.identityLoginComplete} initialVisibility={false} /> : undefined}
                 {hasIdentity ? <user.ProfileDialog parent={this} ref={this.handleProfileDialogRef} /> : undefined}
                 {inHome && targetTheme.scriptManager ? <scriptmanager.ScriptManagerDialog parent={this} ref={this.handleScriptManagerDialogRef} onClose={this.handleScriptManagerDialogClose} /> : undefined}
                 {sandbox ? undefined : <projects.ExitAndSaveDialog parent={this} ref={this.handleExitAndSaveDialogRef} />}

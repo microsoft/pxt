@@ -2,6 +2,7 @@ import * as React from "react";
 import * as sui from "./sui";
 import * as core from "./core";
 import * as auth from "./auth";
+import * as cloudsync from "./cloudsync";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -45,100 +46,132 @@ export class ProfileDialog extends auth.Component<ProfileDialogProps, ProfileDia
         const isLoggedIn = this.isLoggedIn();
         if (!isLoggedIn) return null;
 
-        const tabs: { id: ProfileTab, label: string }[] = [
-            { id: 'my-stuff', label: lf("My Stuff") },
-            { id: 'settings', label: lf("Settings") },
-            { id: 'privacy', label: lf("Privacy") },
-        ];
-
         const user = this.getUser();
+
         return (
             <sui.Modal isOpen={this.state.visible} className="ui profiledialog" size="fullscreen"
                 onClose={this.hide} dimmer={true}
-                closeIcon={true} header={user?.username}
+                closeIcon={true} header={user?.idp?.displayName}
                 closeOnDimmerClick={false}
                 closeOnDocumentClick={false}
                 closeOnEscape={false}
             >
-                <sui.Menu pointing secondary>
-                    {tabs.map((tab, index) => <ProfileTabItem id={tab.id} active={this.state.location === tab.id} label={tab.label} index={index} onClick={this.handleTabClick} />)}
-                </sui.Menu>
-                {this.state.location === 'settings' ? <SettingsPanel parent={this} /> : undefined}
-                {this.state.location === 'privacy' ? <PrivacyPanel parent={this} /> : undefined}
-                {this.state.location === 'my-stuff' ? <MyStuffPanel parent={this} /> : undefined}
+                <AccountPanel parent={this} />
+                <GitHubPanel parent={this} />
+                <PrivacyPanel parent={this} />
             </sui.Modal>
         );
     }
 }
 
-type ProfileTabItemProps = {
-    id: ProfileTab;
-    active: boolean;
-    label: string;
-    index: number;
-    onClick: (id: ProfileTab) => void;
+type PanelProps = {
+    parent: ProfileDialog;
 };
 
-class ProfileTabItem extends sui.StatelessUIElement<ProfileTabItemProps> {
-    handleClick = () => {
-        this.props.onClick(this.props.id);
+type AccountPanelProps = PanelProps & {
+};
+
+class AccountPanel extends sui.UIElement<AccountPanelProps, {}> {
+
+    handleSignoutClicked = () => {
+        auth.logout();
     }
 
     renderCore() {
-        const { id, active, label, index } = this.props;
-        return <sui.MenuItem id={id} key={index} active={active} name={label} tabIndex={index} onClick={this.handleClick} />
-    }
-}
-
-type SettingsPanelProps = {
-    parent: ProfileDialog;
-}
-
-class SettingsPanel extends sui.UIElement<SettingsPanelProps, {}> {
-    editAccountInfoDialog: EditAccountInfoDialog;
-
-    handleEditAccountInfoClick = () => {
-        this.editAccountInfoDialog.show();
-    }
-
-    handleEditAvatarClick = () => {
-    }
-
-    handleEditAccountInfoDialogRef = (r: EditAccountInfoDialog) => {
-        this.editAccountInfoDialog = r;
-    }
-
-    renderCore(): JSX.Element {
         const user = this.getData<auth.UserProfile>(auth.USER);
 
-        const editAccountInfoBtn = <sui.Button key="edit" icon="edit outline" className="icon"
-            text={lf("Edit")} textClass="landscape only" title={lf("Edit Account Info")} onClick={this.handleEditAccountInfoClick} />;
-        const editAvatarBtn = <sui.Button key="edit" icon="edit outline" className="icon"
-            text={lf("Edit")} textClass="landscape only" title={lf("Edit Avatar")} onClick={this.handleEditAvatarClick} />;
+        const avatarElem = (
+            <div className="profile-pic avatar">
+                <img src={user?.idp?.picture?.dataUrl} alt={lf("User")} />
+            </div>
+        );
+        const initialsElem = (
+            <div className="profile-pic avatar">
+                <span>{cloudsync.userInitials(user?.idp?.displayName)}</span>
+            </div>
+        );
 
         return (
-            <div className="ui padded grid settings-panel">
-                <div className="equal width row">
-                    <ContentBox key={0} title={lf("Account Info")} headerControls={editAccountInfoBtn} classes="column account-info">
-                        <div className="centered two column row">
-                            <span>{lf("Name:")}</span>
-                            <span style={{ paddingLeft: "20px" }}>{user.username}</span>
-                        </div>
-                    </ContentBox>
-                    <span style={{ width: "20px" }} />
-                    <ContentBox key={1} title={lf("Avatar")} headerControls={editAvatarBtn} classes="column avatar-info">
-                        <div>Show avatar here</div>
-                    </ContentBox>
+            <div className="ui card account">
+                <div className="header-text">
+                    <label>{lf("Account")}</label>
                 </div>
-                {<EditAccountInfoDialog parent={this.props.parent.props.parent} ref={this.handleEditAccountInfoDialogRef} />}
+                {user?.idp?.picture?.dataUrl ? avatarElem : initialsElem}
+                <div className="username">
+                    <label className="title">{lf("Account")}</label>
+                    <p className="value">{user?.idp?.username}</p>
+                </div>
+                <div className="signout">
+                    <sui.Button text={lf("Sign out")} icon={`xicon ${user?.idp?.provider}`} ariaLabel={lf("Sign out {0}", user?.idp?.provider)} onClick={this.handleSignoutClicked} />
+                </div>
             </div>
         );
     }
 }
 
-type PrivacyPanelProps = {
-    parent: ProfileDialog;
+type GitHubPanelProps = PanelProps & {
+};
+
+class GitHubPanel extends sui.UIElement<GitHubPanelProps, {}> {
+
+    handleUnlinkClicked = () => {
+        const github = cloudsync.githubProvider();
+        if (github) {
+            github.logout();
+        }
+    }
+
+    renderUsername(): JSX.Element {
+        const github = cloudsync.githubProvider();
+        const user = github.user();
+        return (
+            <div className="connected">
+                <label className="title">{lf("Username")}</label>
+                <p className="value">{user?.userName}</p>
+            </div>
+        )
+    }
+
+    renderUnlink(): JSX.Element {
+        return (
+            <div className="unlink">
+                <sui.Button text={lf("Unlink")} icon="github" ariaLabel={lf("Unlink GitHub")} onClick={this.handleUnlinkClicked} />
+            </div>
+        );
+    }
+
+    renderDisconnected(): JSX.Element {
+        return (
+            <div className="disconnected">
+                <p className="description">{lf("You haven't linked a GitHub account.")}</p>
+            </div>
+        )
+    }
+
+    renderCore() {
+        const github = cloudsync.githubProvider();
+        if (!github) return null;
+        const user = github.user();
+
+        return (
+            <div className="ui card github">
+                <div className="header-text">
+                    <label>{lf("GitHub")}</label>
+                </div>
+                {user?.photo ?
+                    <div className="profile-pic avatar">
+                        <img src={user.photo} alt={lf("GitHub user photo")} />
+                    </div> : undefined}
+                {user ? this.renderUsername() : undefined}
+                {user ? this.renderUnlink() : undefined}
+                {!user ? this.renderDisconnected() : undefined}
+            </div>
+        );
+    }
 }
+
+type PrivacyPanelProps = PanelProps & {
+};
 
 class PrivacyPanel extends sui.UIElement<PrivacyPanelProps, {}> {
 
@@ -158,162 +191,27 @@ class PrivacyPanel extends sui.UIElement<PrivacyPanelProps, {}> {
         }
     }
 
-    renderCore(): JSX.Element {
+    renderCore() {
         return (
-            <>
-                <sui.Button ariaLabel={lf("Delete Account")} className="red" text={lf("Delete Account")} onClick={this.handleDeleteAccountClick} />
-            </>
-        );
-    }
-}
-
-type MyStuffPanelProps = {
-    parent: ProfileDialog;
-}
-
-class MyStuffPanel extends sui.UIElement<MyStuffPanelProps, {}> {
-
-    renderCore(): JSX.Element {
-        return (
-            <div className="empty-content">
-                <h2 className={`ui center aligned header`}>
-                    <div className="content">
-                        {lf("It's empty in here")}
-                        <div className="sub header">{lf("TODO: Show all the best info here")}</div>
-                    </div>
-                </h2>
+            <div className="ui card privacy">
+                <div className="header-text">
+                    <label>{lf("Privacy")}</label>
+                </div>
+                <div className="export-data-desc">
+                    <p className="description">{lf("You can view and export all the information we have about you at any time.")}</p>
+                </div>
+                <div className="export-data-btn">
+                    <sui.Button text={lf("Request Data")} />
+                </div>
+                <div className="delete-acct-desc">
+                    <p></p>
+                    <p className="description">{lf("You can delete your account. Warning: This will delete all your saved projects! If you want to preserve them, export your data first.")}</p>
+                </div>
+                <div className="delete-acct-btn">
+                    <sui.Button ariaLabel={lf("Delete Account")} className="red" text={lf("Delete Account")} onClick={this.handleDeleteAccountClick} />
+                </div>
             </div>
         );
     }
 }
 
-type ContentBoxProps = {
-    title: string;
-    headerControls?: React.ReactNode;
-    classes: string;
-};
-
-class ContentBox extends sui.StatelessUIElement<ContentBoxProps> {
-
-    renderCore() {
-        return (
-            <div className={sui.cx(["ui vertically grid card content-box", this.props.classes])}>
-                <div className="equal width row">
-                    <div className="column header">
-                        <span className="header-title">
-                            {this.props.title}
-                        </span>
-                    </div>
-                    <div className="right aligned column">
-                        {this.props.headerControls}
-                    </div>
-                </div>
-                <div className="equal width row">
-                    <div className="column">
-                        {this.props.children}
-                    </div>
-                </div>
-            </div>
-        )
-    }
-}
-
-export type EditAccountInfoDialogProps = ISettingsProps & {
-
-};
-
-type EditAccountInfoDialogState = {
-    visible?: boolean;
-    username?: string;
-    okBtnDisabled?: boolean;
-    saving?: boolean;
-};
-
-export class EditAccountInfoDialog extends auth.Component<EditAccountInfoDialogProps, EditAccountInfoDialogState> {
-
-    constructor(props: EditAccountInfoDialogProps) {
-        super(props);
-        this.state = {
-        };
-    }
-
-    public show() {
-        const user = this.getUser();
-        this.setState({
-            visible: true,
-            username: user?.username,
-            okBtnDisabled: false,
-            saving: false
-        });
-    }
-
-    public hide = () => {
-        if (this.profileNeedsSetup()) {
-            // User canceled setting up essential profile info.
-            auth.logout();
-        }
-        this.setState({ visible: false });
-    }
-
-    updateUsername(s: string) {
-        const trimmed = s.trim();
-        this.setState({
-            username: s,
-            okBtnDisabled: !trimmed || trimmed.length < 2
-        });
-    }
-
-    handleUsernameChanged = (s: string) => {
-        this.updateUsername(s);
-        const trimmed = s.trim();
-    }
-
-    handleOkClicked = async () => {
-        this.setState({ saving: true });
-        const success = await auth.updateUserProfile({
-            username: this.state.username
-        });
-        this.hide();
-        if (success) {
-            core.infoNotification(lf("Profile updated!"));
-        } else {
-            core.errorNotification(lf("User update failed. Something went wrong."));
-        }
-    }
-
-    handleSuggestClicked = async () => {
-        const username = await auth.suggestUsername();
-        if (username) {
-            this.updateUsername(username);
-        }
-    }
-
-    renderCore() {
-        const { visible } = this.state;
-
-        return (
-            <sui.Modal isOpen={visible} className="signindialog" size="small"
-                onClose={this.hide}
-                dimmer={true}
-                header={lf("Account Info")}
-                closeOnDimmerClick={false}
-                closeOnDocumentClick={false}
-                closeOnEscape={true}
-            >
-                <div className="ui header">{lf("Name")}</div>
-                <div className={`ui form`}>
-                    <div className="ui ten wide field">
-                        <sui.Input placeholder={lf("Name")} autoFocus={!pxt.BrowserUtils.isMobile()} id={"usernameInput"}
-                            ariaLabel={lf("Set your username")} autoComplete={false}
-                            value={this.state.username} onChange={this.handleUsernameChanged} />
-                        <sui.Button ariaLabel={lf("Suggest username")} className="" text={lf("Suggest")} onClick={this.handleSuggestClicked} />
-                    </div>
-                    <label></label>
-                    <sui.Button ariaLabel="ok" className="green" text={lf("Ok")} onClick={this.handleOkClicked} disabled={this.state.saving || this.state.okBtnDisabled} loading={this.state.saving} />
-                    <sui.Button ariaLabel="cancel" className="" text={lf("Cancel")} onClick={this.hide} disabled={this.state.saving} />
-                </div>
-            </sui.Modal>
-        );
-    }
-
-}

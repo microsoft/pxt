@@ -47,10 +47,6 @@ export class LoginDialog extends auth.Component<LoginDialogProps, LoginDialogSta
     }
 
     public hide = () => {
-        if (this.profileNeedsSetup()) {
-            // User canceled setting up essential profile info.
-            auth.logout();
-        }
         this.setState({ visible: false });
     }
 
@@ -72,20 +68,9 @@ export class LoginDialog extends auth.Component<LoginDialogProps, LoginDialogSta
         this.hide();
     }
 
-    handleSuggestClicked = async () => {
-        const username = await auth.suggestUsername();
-        if (username) {
-            this.setState({ username });
-        }
-    }
-
     async componentDidUpdate(prevProps: Readonly<LoginDialogProps>) {
         if (this.props.initialVisibility !== prevProps.initialVisibility) {
-            let username = this.state.username;
-            if (!username || !username.length) {
-                username = await auth.suggestUsername();
-            }
-            this.setState({ username, visible: this.props.initialVisibility });
+            this.setState({ visible: this.props.initialVisibility });
         }
     }
 
@@ -114,36 +99,15 @@ export class LoginDialog extends auth.Component<LoginDialogProps, LoginDialogSta
         );
     }
 
-    renderSetup() {
-        return (
-            <>
-                <div className="ui header">{lf("Create your Profile")}</div>
-                <div className={`ui form`}>
-                    <div className="ui ten wide field">
-                        <sui.Input placeholder={lf("Name")} autoFocus={!pxt.BrowserUtils.isMobile()} id={"usernameInput"}
-                            ariaLabel={lf("Set your username")} autoComplete={false}
-                            value={this.state.username} onChange={this.handleUsernameChanged} />
-                        <sui.Button ariaLabel={lf("Suggest username")} className="" text={lf("Suggest")} onClick={this.handleSuggestClicked} />
-                    </div>
-                    <label></label>
-                    <sui.Button ariaLabel="ok" className="green" text={lf("Ok")} onClick={this.handleProfileSetupOkClicked} />
-                </div>
-            </>
-        );
-    }
-
     renderCore() {
         const { visible } = this.state;
-        const showLogin = !auth.loggedIn();
-        const showSetup = !showLogin && auth.profileNeedsSetup();
 
         return (
             <sui.Modal isOpen={visible} className="signindialog" size="small"
                 onClose={this.hide} dimmer={true}
                 closeIcon={true} header={lf("Sign In")}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape>
-                { showLogin ? this.renderLogin() : undefined}
-                { showSetup ? this.renderSetup() : undefined}
+                {this.renderLogin()}
             </sui.Modal>
         );
     }
@@ -201,6 +165,10 @@ export class UserMenu extends auth.Component<UserMenuProps, UserMenuState> {
         };
     }
 
+    handleLoginClicked = () => {
+        this.props.parent.showLoginDialog(this.props.continuationHash);
+    }
+
     handleLogoutClicked = () => {
         auth.logout();
     }
@@ -209,51 +177,43 @@ export class UserMenu extends auth.Component<UserMenuProps, UserMenuState> {
         this.props.parent.showProfileDialog();
     }
 
-    handleDropdownClicked = (): boolean => {
-        if (!this.isLoggedIn()) {
-            this.props.parent.showLoginDialog(this.props.continuationHash);
-            return false;
-        }
-        return true;
-    }
-
-    getInitials(username: string): string {
-        if (!username) return "?";
-        // Parse the user name for user initials
-        const initials = username.match(/\b\w/g) || [];
-        return ((initials.shift() || '') + (initials.pop() || ''));
-    }
-
     renderCore() {
         const loggedIn = this.isLoggedIn();
         const user = this.getUser();
-        const icon = "user large"; // TODO: Show user's avatar pic if logged in
-        const name = user && user.username ? user.username : lf("Sign in");
-        const initials = user && user.username ? this.getInitials(user.username) : "";
+        const icon = "user large";
+        const title = lf("User Menu");
 
-        const initialsElem = sui.genericContent({
-            icon,
-            text: initials,
-            textClass: "portrait only",
-            iconClass: "ui portrait only"
+        const signedOutElem = sui.genericContent({
+            icon
         });
+        const avatarElem = (
+            <div className="avatar">
+                <img src={user?.idp?.picture?.dataUrl} alt={lf("User Menu")} />
+            </div>
+        );
+        const initialsElem = (
+            <div className="avatar">
+                <span>{cloudsync.userInitials(user?.idp?.displayName)}</span>
+            </div>
+        );
+        const signedInElem = user?.idp?.picture?.dataUrl ? avatarElem : initialsElem;
 
-        const usernameElem = sui.genericContent({
-            icon,
-            text: name,
-            textClass: "portrait hide",
-            iconClass: "ui portrait hide"
-        });
-
-        const titleContent = <>{initialsElem}{usernameElem}</>;
+        let pictureElem: React.ReactNode;
+        if (user?.idp?.picture?.dataUrl) {
+            pictureElem = (
+                <div className="avatar">
+                    <img src={user.idp.picture.dataUrl} alt={title} />
+                </div>
+            );
+        }
 
         return (
             <sui.DropdownMenu role="menuitem"
-                title={lf("User Menu")}
+                title={title}
                 className="item icon user-dropdown-menuitem"
-                titleContent={titleContent}
-                onClick={this.handleDropdownClicked}
+                titleContent={loggedIn ? signedInElem : signedOutElem}
             >
+                {!loggedIn ? <sui.Item role="menuitem" text={lf("Sign in")} onClick={this.handleLoginClicked} /> : undefined}
                 {loggedIn ? <sui.Item role="menuitem" text={lf("My Profile")} onClick={this.handleProfileClicked} /> : undefined}
                 {loggedIn ? <div className="ui divider"></div> : undefined}
                 {loggedIn ? <sui.Item role="menuitem" text={lf("Sign out")} onClick={this.handleLogoutClicked} /> : undefined}
