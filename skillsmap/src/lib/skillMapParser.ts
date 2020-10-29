@@ -26,6 +26,7 @@ name: Free Throw
 type: tutorial
 description: Take your best shot and slam dunk this Basketball free throw game!
 tags: easy
+next: barrel
 
 url: /tutorials/free-throw
 imageUrl: /static/tutorials/free-throw.png
@@ -41,6 +42,40 @@ type: tutorial
 
 url: /tutorials/barrel-dodger
 imageUrl: /static/lessons/barrel-dodger.png
+
+# map2
+name: test skills map2
+description: A test skills map
+required: 2 easy
+
+## flower2
+
+name: Chase the Pizza
+type: tutorial
+description: Get started creating a simple game to chase a pizza around the screen and collect as many points as possible before time runs out!
+tags: easy, botanical
+next: bball2
+
+url: /tutorials/happy-flower
+
+
+## bball2
+
+name: Walking Hero
+type: tutorial
+description: Take your best shot and slam dunk this Basketball free throw game!
+tags: easy
+next: barrel2
+
+url: /tutorials/free-throw
+
+## barrel2
+
+name: Effects
+description: Jump and run to avoid the barrels
+type: tutorial
+
+url: /tutorials/barrel-dodger
 `
 
 interface MarkdownSection {
@@ -69,7 +104,7 @@ export function parseSkillsMap(text: string) {
         }
     }
 
-    if (start > 0) {
+    if (start > 0 || parsed.length === 0) {
         parsed.push(buildMapFromSections(sections[start], sections.slice(start + 1, sections.length)));
     }
 
@@ -149,17 +184,17 @@ function buildMapFromSections(header: MarkdownSection, sections: MarkdownSection
     result.root = activities[0];
 
     for (const activity of activities) {
-        if (result.actvities![activity.activityId]) {
+        if (result.activities![activity.activityId]) {
             error(`Duplicate activity id '${activity.activityId}' in map '${result.mapId}'`);
         }
 
-        result.actvities![activity.activityId] = activity;
+        result.activities![activity.activityId] = activity;
     }
 
     for (const activity of activities) {
         for (const id of activity.nextIds) {
-            if (!result.actvities![id]) error(`Unknown activity id '${id}' in map '${result.mapId}'`);
-            activity.next.push(result.actvities![id]);
+            if (!result.activities![id]) error(`Unknown activity id '${id}' in map '${result.mapId}'`);
+            activity.next.push(result.activities![id]);
         }
     }
 
@@ -197,7 +232,7 @@ function inflateSkillMap(section: MarkdownSection): Partial<SkillsMap> {
         displayName: section.attributes["name"] || section.header,
         description: section.attributes["description"],
         prerequisites: [],
-        actvities: {}
+        activities: {}
     };
 
     if (section.attributes["required"]) {

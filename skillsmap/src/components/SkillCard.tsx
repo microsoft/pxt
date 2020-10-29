@@ -1,14 +1,20 @@
 import * as React from "react";
+import { connect } from 'react-redux';
+
+import { SkillsMapState } from '../store/reducer';
 import { Item } from './CarouselItem';
+
+import { isActivityUnlocked } from '../lib/skillMapUtils';
 
 import '../styles/skillcard.css'
 
 interface SkillCardProps extends Item {
+    mapId: string;
     tags?: string[];
     locked?: boolean;
 }
 
-export class SkillCard extends React.Component<SkillCardProps> {
+export class SkillCardImpl extends React.Component<SkillCardProps> {
     render() {
         const { label, locked } = this.props;
 
@@ -18,3 +24,11 @@ export class SkillCard extends React.Component<SkillCardProps> {
         </div>
     }
 }
+
+function mapStateToProps(state: SkillsMapState, ownProps: any) {
+    return {
+        locked: state.user && state.maps?.[ownProps.mapId] && !isActivityUnlocked(state.user, state.maps[ownProps.mapId], ownProps.id)
+    };
+}
+
+export const SkillCard = connect(mapStateToProps)(SkillCardImpl);

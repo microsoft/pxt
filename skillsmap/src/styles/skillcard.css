@@ -9,6 +9,9 @@
     height: 0.75rem;
     background-color: #000;
 }
+.carousel-item.linked:last-child:after {
+    display: none;
+}
 
 .skill-card-overlay {
     position: absolute;

@@ -1,61 +1,57 @@
+/// <reference path="../lib/skillMap.d.ts" />
+
 import * as React from "react";
 import { connect } from 'react-redux';
 
-import { Activity, SkillsMapState } from '../store/reducer';
+import { SkillsMapState } from '../store/reducer';
 import { Carousel } from './Carousel';
 import { Item } from './CarouselItem';
 import { SkillCard } from './SkillCard';
 
 interface SkillsCarouselProps {
+    map: SkillsMap;
+    user: UserState;
     selectedItem?: string;
-    activities: Activity[];
 }
 
 class SkillsCarouselImpl extends React.Component<SkillsCarouselProps> {
-    protected activityMap: { [key: string]: Activity};
-    protected root: string;
-    protected current: string;
+    protected items: Item[];
 
     constructor(props: SkillsCarouselProps) {
         super(props);
 
-        this.activityMap = {};
-        props.activities.forEach(el => this.activityMap[el.id] = el);
-
-        this.root = props.activities[0].id;
-        this.current = this.root;
+        this.items = this.getItems(props.map.mapId, props.map.root);
     }
 
-    protected getItems(): Item[] {
-        this.current = this.props.selectedItem || this.root;
+    protected getItems(mapId: string, root: MapActivity): Item[] {
         const items = [];
-        let activity = this.activityMap[this.root];
-        let locked = false;
+        let activity = root;
         while (activity) {
             items.push({
-                id: activity.id,
-                label: activity.name,
+                id: activity.activityId,
+                mapId,
+                label: activity.displayName,
                 url: activity.url,
-                imageUrl: activity.imageUrl,
-                locked
+                imageUrl: activity.imageUrl
             });
             // className: `linked ${locked ? 'locked' : ''}`
-            if (activity.id === this.current) locked = true;
-            activity = this.activityMap[activity.next || ""];
+            // if (activity.id === this.current) locked = true;
+            activity = activity.next[0]; // TODO bfs probs
         }
 
         return items;
     }
 
     render() {
-        return <Carousel items={this.getItems()} itemTemplate={SkillCard} itemClassName="linked" />
+        return <Carousel items={this.items} itemTemplate={SkillCard} itemClassName="linked" />
     }
 }
 
 function mapStateToProps(state: SkillsMapState, ownProps: any) {
     if (!state) return {};
     return {
-        selectedItem: ownProps.activities.some((el: Activity) => el.id === state.selectedItem) ? state.selectedItem : undefined
+        progress: state.user,
+        selectedItem: state.selectedItem && ownProps.map?.activities?.[state.selectedItem] ? state.selectedItem : undefined
     }
 }
 
