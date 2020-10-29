@@ -166,7 +166,6 @@ export class ProjectView
         this.toggleGreenScreen = this.toggleGreenScreen.bind(this);
         this.toggleSimulatorFullscreen = this.toggleSimulatorFullscreen.bind(this);
         this.cloudSignInComplete = this.cloudSignInComplete.bind(this);
-        this.identityLoginComplete = this.identityLoginComplete.bind(this);
         this.toggleSimulatorCollapse = this.toggleSimulatorCollapse.bind(this);
         this.showKeymap = this.showKeymap.bind(this);
         this.toggleKeymap = this.toggleKeymap.bind(this);
@@ -2034,10 +2033,6 @@ export class ProjectView
             .then(() => {
                 this.forceUpdate();
             }).done();
-    }
-
-    identityLoginComplete() {
-        // TODO: Sync cloud data (profile, projects, etc.)
     }
 
     ///////////////////////////////////////////////////////////
@@ -3992,7 +3987,7 @@ export class ProjectView
                 {sandbox ? undefined : <scriptsearch.ScriptSearch parent={this} ref={this.handleScriptSearchRef} />}
                 {sandbox ? undefined : <extensions.Extensions parent={this} ref={this.handleExtensionRef} />}
                 {inHome ? <projects.ImportDialog parent={this} ref={this.handleImportDialogRef} /> : undefined}
-                {hasIdentity ? <identity.LoginDialog parent={this} ref={this.handleLoginDialogRef} onComplete={this.identityLoginComplete} initialVisibility={false} /> : undefined}
+                {hasIdentity ? <identity.LoginDialog parent={this} ref={this.handleLoginDialogRef} /> : undefined}
                 {hasIdentity ? <user.ProfileDialog parent={this} ref={this.handleProfileDialogRef} /> : undefined}
                 {inHome && targetTheme.scriptManager ? <scriptmanager.ScriptManagerDialog parent={this} ref={this.handleScriptManagerDialogRef} onClose={this.handleScriptManagerDialogClose} /> : undefined}
                 {sandbox ? undefined : <projects.ExitAndSaveDialog parent={this} ref={this.handleExitAndSaveDialogRef} />}

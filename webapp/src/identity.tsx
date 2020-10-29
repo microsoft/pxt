@@ -9,17 +9,12 @@ import * as cloudsync from "./cloudsync";
 type ISettingsProps = pxt.editor.ISettingsProps;
 
 export type LoginDialogProps = ISettingsProps & {
-    initialVisibility?: boolean;
-    onComplete?: () => void;
 };
 
 export type LoginDialogState = {
     visible?: boolean;
-    onComplete?: () => void;
     rememberMe?: boolean;
     continuationHash?: string;
-    username?: string;
-    avatarUrl?: string;
 };
 
 export class LoginDialog extends auth.Component<LoginDialogProps, LoginDialogState> {
@@ -28,12 +23,9 @@ export class LoginDialog extends auth.Component<LoginDialogProps, LoginDialogSta
         super(props);
 
         this.state = {
-            visible: this.props.initialVisibility,
-            onComplete: this.props.onComplete,
+            visible: false,
             rememberMe: false,
-            continuationHash: "",
-            username: "",
-            avatarUrl: ""
+            continuationHash: ""
         };
     }
 
@@ -42,72 +34,40 @@ export class LoginDialog extends auth.Component<LoginDialogProps, LoginDialogSta
     }
 
     public async show(continuationHash?: string) {
-        const state: LoginDialogState = { visible: true, continuationHash };
-        this.setState(state);
+        this.setState({ visible: true, continuationHash });
     }
 
     public hide = () => {
         this.setState({ visible: false });
     }
 
-    private onLoggedIn = () => {
-        const { onComplete } = this.props;
-        this.hide();
-        if (onComplete) onComplete();
-    }
-
-    handleUsernameChanged = (v: string) => {
-        this.setState({ username: v });
-    }
-
-    handleProfileSetupOkClicked = async () => {
-        await auth.updateUserProfile({
-            username: this.state.username,
-            avatarUrl: this.state.avatarUrl
-        });
-        this.hide();
-    }
-
-    async componentDidUpdate(prevProps: Readonly<LoginDialogProps>) {
-        if (this.props.initialVisibility !== prevProps.initialVisibility) {
-            this.setState({ visible: this.props.initialVisibility });
-        }
-    }
-
-    renderLogin() {
-        const providers = auth.identityProviders();
-        return (
-            <>
-                <div className="ui header">{lf("Sign in with:")}</div>
-                <div className="ui grid padded">
-                    <div className={"ui cards"}>
-                        {providers.map(p => (
-                            <ProviderButton
-                                key={p.name}
-                                provider={p}
-                                rememberMe={this.state.rememberMe}
-                                continuationHash={this.state.continuationHash}
-                                onLoggedIn={this.onLoggedIn} />
-                        ))}
-                    </div>
-                    <div className={`ui form padded`}>
-                        <p>&nbsp;</p>
-                        <sui.PlainCheckbox label={lf("Remember me")} onChange={this.handleRememberMeChanged} />
-                    </div>
-                </div>
-            </>
-        );
-    }
-
     renderCore() {
         const { visible } = this.state;
+        const providers = auth.identityProviders();
 
         return (
-            <sui.Modal isOpen={visible} className="signindialog" size="small"
+            <sui.Modal isOpen={visible} className="signindialog" size="tiny"
                 onClose={this.hide} dimmer={true}
-                closeIcon={true} header={lf("Sign In")}
+                closeIcon={true} header={lf("Sign in or Signup")}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape>
-                {this.renderLogin()}
+                <div className="description">
+                    <p>{lf("Connect an existing account in order to sign in or signup for the first time.")}</p>
+                </div>
+                <div className="container">
+                    <div className="prompt">
+                        <p>Choose an account to connect:</p>
+                    </div>
+                    <div className="providers">
+                        <div className="provider">
+                            {providers.map(p => (
+                                <ProviderButton provider={p} rememberMe={this.state.rememberMe} continuationHash={this.state.continuationHash} />
+                            ))}
+                        </div>
+                        <div className="remember-me">
+                            <sui.PlainCheckbox label={lf("Remember me")} onChange={this.handleRememberMeChanged} />
+                        </div>
+                    </div>
+                </div>
             </sui.Modal>
         );
     }
@@ -117,36 +77,21 @@ type ProviderButtonProps = {
     provider: pxt.AppCloudProvider;
     rememberMe: boolean;
     continuationHash: string;
-    onLoggedIn?: () => void;
 };
 
 class ProviderButton extends data.PureComponent<ProviderButtonProps, {}> {
-    constructor(props: any) {
-        super(props);
 
-        this.handleClick = this.handleClick.bind(this);
-    }
-
-    private async handleClick() {
-        const { provider, rememberMe, onLoggedIn } = this.props;
+    handleLoginClicked = async () => {
+        const { provider, rememberMe } = this.props;
         await auth.loginAsync(provider.id, rememberMe, {
             hash: this.props.continuationHash
         });
-        if (onLoggedIn) onLoggedIn();
     }
 
     renderCore() {
-        const { provider, ...rest } = this.props;
+        const { provider } = this.props;
         return (
-            <codecard.CodeCardView
-                ariaLabel={lf("Sign in with {0}.", provider.name)}
-                role="button"
-                key={provider.name}
-                imageUrl={encodeURI(provider.icon)}
-                name={provider.name}
-                onClick={this.handleClick}
-                {...rest}
-            />
+            <sui.Button icon={`xicon ${provider.id}`} text={provider.name} onClick={this.handleLoginClicked} />
         );
     }
 }

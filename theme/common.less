@@ -1704,8 +1704,38 @@ div.simframe.ui.embed {
 }
 
 /* Sign in dialog */
-.ui.modal.signindialog .ui.cardimage {
-    background-size: contain;
+.ui.modal.signindialog {
+    .content {
+        padding: 24px 20px;
+    }
+
+    div.description {
+        line-height: 1.1em;
+        margin-bottom: 20px;
+    }
+
+    div.container {
+        display: grid;
+        row-gap: 10px;
+        grid-template-rows: 36px auto;
+        grid-template-columns: auto;
+        justify-content: center;
+
+        button {
+            margin: 0;
+        }
+
+        div.prompt {
+            justify-self: center;
+        }
+
+        div.providers {
+            display: grid;
+            row-gap: 20px;
+            grid-template-rows: auto;
+            justify-content: center;
+        }
+    }
 }
 
 /* Profile dialog */
