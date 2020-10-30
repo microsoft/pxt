@@ -384,13 +384,40 @@ To render one or more code cards as JSON into cards, use **codecard**.
 
     ```codecard
     [{
-        "title": "A card",
+        "name": "A card",
         "url": "...."
     }, {
-        "title": "Another card",
+        "name": "Another card",
         "url": "...."
     }]
     ```
+
+Code cards also support a text based format:
+
+    ### ~ codecard
+    * name: A card
+    * url: ...
+    ---
+    * name: Another card
+    * url: ...
+    ---
+    * name: Yet another card
+    * url: ...
+    ### ~
+
+where each card is a sequence of ``KEY: VALUE`` pairs bullet points separated by a ``---`` line.
+
+If you need to specify ``otherActions``, add multiple line of ``otherAction`` (singular)
+with a ``URL, EDITOR, CARD_TYPE`` format.
+
+    ### ~ codecard
+    ...
+    ---
+    * name: Yet another card
+    * url: ...
+    * otherAction: URL, js, example
+    * otherAction: URL, py, example
+    ### ~
 
 ### apis
 

@@ -178,6 +178,7 @@ declare namespace pxt {
         client_id?: string;
         redirect?: boolean; // Whether or not to popup or redirect the oauth. Default to popup
         identity?: boolean; // Whether or not this provider can be used for top-level login
+        order?: number;     // Sort order
     }
 
     interface AppSimulator {
@@ -358,6 +359,7 @@ declare namespace pxt {
         scriptManager?: boolean; // Whether or not to enable the script manager. default: false
         monacoFieldEditors?: string[]; // A list of field editors to show in monaco. Currently only "image-editor" is supported
         disableAPICache?: boolean; // Disables the api cache in target.js
+        sidebarTutorial? : boolean; // Move the tutorial pane to be on the left side of the screen
         /**
          * Internal and temporary flags:
          * These flags may be removed without notice, please don't take a dependency on them
@@ -401,6 +403,7 @@ declare namespace pxt {
         blocksErrorList?: boolean; // blocks error list experiment
         identity?: boolean; // login with identity providers
         assetEditor?: boolean; // enable asset editor view (in blocks/text toggle)
+        disableMemoryWorkspaceWarning?: boolean; // do not warn the user when switching to in memory workspace
     }
 
     interface SocialOptions {

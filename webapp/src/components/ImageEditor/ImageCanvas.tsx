@@ -103,7 +103,9 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
 
     componentDidMount() {
         // move initial focus off of the blockly surface
-        (document.activeElement as HTMLElement)?.blur();
+        if (document.activeElement instanceof HTMLElement) {
+            document.activeElement.blur();
+        }
 
         this.cellWidth = this.props.isTilemap ? this.props.tilemapState.tileset.tileWidth * TILE_SCALE : SCALE;
         this.canvas = this.refs["paint-surface"] as HTMLCanvasElement;
@@ -186,6 +188,10 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         this.hasInteracted = true
         if (this.isPanning()) return;
 
+        if (document.activeElement instanceof HTMLElement) {
+            document.activeElement.blur();
+        }
+
         if (this.isColorSelect()) {
             this.selectCanvasColor(coord, isRightClick);
             return;
@@ -249,6 +255,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     }
 
     protected onKeyDown = (ev: KeyboardEvent): void => {
+        // TODO: we should bail out of this when gallery is open.
         this.hasInteracted = true;
 
         if (this.shouldHandleCanvasShortcut() && this.editState?.floating?.image) {
@@ -291,6 +298,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             }
 
             if (ev.key == "Escape" && this.editState?.floating?.image && this.shouldHandleCanvasShortcut()) {
+                // TODO: If there isn't currently a marqueed selection, escape should save and close the field editor
                 this.cancelSelection();
                 ev.preventDefault();
             }
@@ -892,8 +900,8 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     }
 
     protected shouldHandleCanvasShortcut() {
-        // canvas shortcuts (select all; delete) should only be handled if the focus is not within a focusable element
-        return !this.props.suppressShortcuts && document.activeElement === document.body || !document.activeElement;
+        // canvas shortcuts (select all; delete) should only be handled if the focus is not within an input element
+        return !(this.props.suppressShortcuts || document.activeElement instanceof HTMLInputElement);
     }
 
     protected preventContextMenu = (ev: React.MouseEvent<any>) => ev.preventDefault();

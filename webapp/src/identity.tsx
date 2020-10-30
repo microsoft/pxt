@@ -22,7 +22,7 @@ export type LoginDialogState = {
     avatarUrl?: string;
 };
 
-export class LoginDialog extends data.Component<LoginDialogProps, LoginDialogState> {
+export class LoginDialog extends auth.Component<LoginDialogProps, LoginDialogState> {
 
     constructor(props: any) {
         super(props);
@@ -35,44 +35,36 @@ export class LoginDialog extends data.Component<LoginDialogProps, LoginDialogSta
             username: "",
             avatarUrl: ""
         };
-
-        this.hide = this.hide.bind(this);
-        this.handleRememberMeChanged = this.handleRememberMeChanged.bind(this);
-        this.handleUsernameChanged = this.handleUsernameChanged.bind(this);
-        this.handleUsernameRef = this.handleUsernameRef.bind(this);
-        this.handleProfileSetupOkClicked = this.handleProfileSetupOkClicked.bind(this);
-        this.onLoggedIn = this.onLoggedIn.bind(this);
     }
 
-    private handleRememberMeChanged(v: boolean) {
+    private handleRememberMeChanged = (v: boolean) => {
         this.setState({ rememberMe: v });
     }
 
-    public show(continuationHash: string) {
-        this.setState({ visible: true, continuationHash });
+    public async show(continuationHash?: string) {
+        const state: LoginDialogState = { visible: true, continuationHash };
+        this.setState(state);
     }
 
-    public hide() {
-        if (auth.profileNeedsSetup()) {
+    public hide = () => {
+        if (this.profileNeedsSetup()) {
+            // User canceled setting up essential profile info.
             auth.logout();
         }
         this.setState({ visible: false });
     }
 
-    private onLoggedIn() {
+    private onLoggedIn = () => {
         const { onComplete } = this.props;
         this.hide();
         if (onComplete) onComplete();
     }
 
-    handleUsernameChanged(v: string) {
+    handleUsernameChanged = (v: string) => {
         this.setState({ username: v });
     }
 
-    handleUsernameRef(ref: any) {
-    }
-
-    async handleProfileSetupOkClicked() {
+    handleProfileSetupOkClicked = async () => {
         await auth.updateUserProfile({
             username: this.state.username,
             avatarUrl: this.state.avatarUrl
@@ -80,9 +72,20 @@ export class LoginDialog extends data.Component<LoginDialogProps, LoginDialogSta
         this.hide();
     }
 
-    componentDidUpdate(prevProps: Readonly<LoginDialogProps>) {
+    handleSuggestClicked = async () => {
+        const username = await auth.suggestUsername();
+        if (username) {
+            this.setState({ username });
+        }
+    }
+
+    async componentDidUpdate(prevProps: Readonly<LoginDialogProps>) {
         if (this.props.initialVisibility !== prevProps.initialVisibility) {
-            this.setState({ visible: this.props.initialVisibility });
+            let username = this.state.username;
+            if (!username || !username.length) {
+                username = await auth.suggestUsername();
+            }
+            this.setState({ username, visible: this.props.initialVisibility });
         }
     }
 
@@ -117,12 +120,13 @@ export class LoginDialog extends data.Component<LoginDialogProps, LoginDialogSta
                 <div className="ui header">{lf("Create your Profile")}</div>
                 <div className={`ui form`}>
                     <div className="ui ten wide field">
-                        <sui.Input ref={this.handleUsernameRef} placeholder={lf("Name")} autoFocus={!pxt.BrowserUtils.isMobile()} id={"usernameInput"}
+                        <sui.Input placeholder={lf("Name")} autoFocus={!pxt.BrowserUtils.isMobile()} id={"usernameInput"}
                             ariaLabel={lf("Set your username")} autoComplete={false}
                             value={this.state.username} onChange={this.handleUsernameChanged} />
+                        <sui.Button ariaLabel={lf("Suggest username")} className="" text={lf("Suggest")} onClick={this.handleSuggestClicked} />
                     </div>
                     <label></label>
-                    <sui.Button ariaLabel="ok" className="large green" text={lf("Ok")} onClick={this.handleProfileSetupOkClicked} />
+                    <sui.Button ariaLabel="ok" className="green" text={lf("Ok")} onClick={this.handleProfileSetupOkClicked} />
                 </div>
             </>
         );
@@ -160,22 +164,26 @@ class ProviderButton extends data.PureComponent<ProviderButtonProps, {}> {
     }
 
     private async handleClick() {
-        const { provider, onLoggedIn } = this.props;
-        await auth.loginAsync(this.props.provider.id, this.props.rememberMe, this.props.continuationHash);
+        const { provider, rememberMe, onLoggedIn } = this.props;
+        await auth.loginAsync(provider.id, rememberMe, {
+            hash: this.props.continuationHash
+        });
         if (onLoggedIn) onLoggedIn();
     }
 
     renderCore() {
         const { provider, ...rest } = this.props;
-        return (<codecard.CodeCardView
-            ariaLabel={lf("Sign in with {0}.", provider.name)}
-            role="button"
-            key={provider.name}
-            imageUrl={provider.icon}
-            name={provider.name}
-            onClick={this.handleClick}
-            {...rest}
-        />);
+        return (
+            <codecard.CodeCardView
+                ariaLabel={lf("Sign in with {0}.", provider.name)}
+                role="button"
+                key={provider.name}
+                imageUrl={encodeURI(provider.icon)}
+                name={provider.name}
+                onClick={this.handleClick}
+                {...rest}
+            />
+        );
     }
 }
 
@@ -184,81 +192,72 @@ export type UserMenuProps = ISettingsProps & {
 };
 
 type UserMenuState = {
+};
 
-}
-
-export class UserMenu extends data.Component<UserMenuProps, UserMenuState> {
+export class UserMenu extends auth.Component<UserMenuProps, UserMenuState> {
     constructor(props: UserMenuProps) {
         super(props);
         this.state = {
-        }
+        };
     }
 
-    handleLoginClick = () => {
-        this.props.parent.showLoginDialog(this.props.continuationHash);
-    }
-
-    handleLogoutClick = () => {
+    handleLogoutClicked = () => {
         auth.logout();
     }
 
-    handleProfileClick = () => {
+    handleProfileClicked = () => {
+        this.props.parent.showProfileDialog();
     }
 
-    getLoggedIn(): boolean {
-        return this.getData<boolean>(auth.LOGGED_IN);
+    handleDropdownClicked = (): boolean => {
+        if (!this.isLoggedIn()) {
+            this.props.parent.showLoginDialog(this.props.continuationHash);
+            return false;
+        }
+        return true;
     }
 
-    getUser(): auth.UserProfile {
-        return this.getData<auth.UserProfile>(auth.USER);
+    getInitials(username: string): string {
+        if (!username) return "?";
+        // Parse the user name for user initials
+        const initials = username.match(/\b\w/g) || [];
+        return ((initials.shift() || '') + (initials.pop() || ''));
     }
 
     renderCore() {
-        const loggedIn = this.getLoggedIn();
+        const loggedIn = this.isLoggedIn();
         const user = this.getUser();
-        const icon = "user large"; // TODO: Show user's avatar pic
-        const title = user && user.username ? user.username : lf("Sign in");
+        const icon = "user large"; // TODO: Show user's avatar pic if logged in
+        const name = user && user.username ? user.username : lf("Sign in");
+        const initials = user && user.username ? this.getInitials(user.username) : "";
+
+        const initialsElem = sui.genericContent({
+            icon,
+            text: initials,
+            textClass: "portrait only",
+            iconClass: "ui portrait only"
+        });
+
+        const usernameElem = sui.genericContent({
+            icon,
+            text: name,
+            textClass: "portrait hide",
+            iconClass: "ui portrait hide"
+        });
+
+        const titleContent = <>{initialsElem}{usernameElem}</>;
 
         return (
             <sui.DropdownMenu role="menuitem"
-                icon={icon}
-                title={title}
-                text={title}
-                textClass="widedesktop only"
+                title={lf("User Menu")}
                 className="item icon user-dropdown-menuitem"
+                titleContent={titleContent}
+                onClick={this.handleDropdownClicked}
             >
-                {!loggedIn ? <sui.Item role="menuitem" text={lf("Sign in...")} onClick={this.handleLoginClick} /> : undefined}
-                {loggedIn ? <sui.Item role="menuitem" text={lf("My Account")} /> : undefined}
-                {loggedIn ? <sui.Item role="menuitem" text={lf("My Profile")} /> : undefined}
+                {loggedIn ? <sui.Item role="menuitem" text={lf("My Profile")} onClick={this.handleProfileClicked} /> : undefined}
                 {loggedIn ? <div className="ui divider"></div> : undefined}
-                {loggedIn ? <sui.Item role="menuitem" text={lf("Sign out")} onClick={this.handleLogoutClick} /> : undefined}
+                {loggedIn ? <sui.Item role="menuitem" text={lf("Sign out")} onClick={this.handleLogoutClicked} /> : undefined}
             </sui.DropdownMenu>
         );
-    }
-}
-
-export class Provider extends cloudsync.ProviderBase implements cloudsync.Provider {
-
-    constructor() {
-        super("mkcd", lf("MakeCode"), "xicon makecode", "https://www.makecode.com");
-    }
-
-    listAsync(): Promise<cloudsync.FileInfo[]> {
-        throw new Error("Method not implemented.");
-    }
-    downloadAsync(id: string): Promise<cloudsync.FileInfo> {
-        throw new Error("Method not implemented.");
-    }
-    uploadAsync(id: string, baseVersion: string, files: pxt.Map<string>): Promise<cloudsync.FileInfo> {
-        throw new Error("Method not implemented.");
-    }
-    deleteAsync(id: string): Promise<void> {
-        throw new Error("Method not implemented.");
-    }
-    updateAsync(id: string, newName: string): Promise<void> {
-        throw new Error("Method not implemented.");
-    }
-    getUserInfoAsync(): Promise<pxt.editor.UserInfo> {
-        throw new Error("Method not implemented.");
     }
 }

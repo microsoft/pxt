@@ -7,6 +7,8 @@ namespace pxt.sprite {
     export const TILE_NAMESPACE = "myTiles";
     export const IMAGES_NAMESPACE = "myImages";
     export const IMAGE_PREFIX = "image";
+    export const ANIMATION_NAMESPACE = "myAnimations";
+    export const ANIMATION_PREFIX = "anim";
 
     export interface Coord {
         x: number,
@@ -359,7 +361,10 @@ namespace pxt.sprite {
     }
 
     export function getBitmapFromJResURL(jresURL: string) {
-        let data = atob(jresURL.slice(jresURL.indexOf(",") + 1))
+        return hexToBitmap(atob(jresURL.slice(jresURL.indexOf(",") + 1)))
+    }
+
+    export function hexToBitmap(data: string) {
         let magic = data.charCodeAt(0);
         let w = data.charCodeAt(1);
         let h = data.charCodeAt(2);
@@ -718,14 +723,14 @@ namespace pxt.sprite {
         }
     }
 
-    function hexToUint8Array(hex: string) {
+    export function hexToUint8Array(hex: string) {
         let r = new Uint8ClampedArray(hex.length >> 1);
         for (let i = 0; i < hex.length; i += 2)
             r[i >> 1] = parseInt(hex.slice(i, i + 2), 16)
         return r
     }
 
-    export function uint8ArrayToHex(data: Uint8ClampedArray) {
+    export function uint8ArrayToHex(data: Uint8ClampedArray | Uint8Array) {
         const hex = "0123456789abcdef";
         let res = "";
         for (let i = 0; i < data.length; ++i) {

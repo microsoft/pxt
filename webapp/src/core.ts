@@ -156,6 +156,7 @@ export interface DialogOptions {
     logos?: string[];
     className?: string;
     header: string;
+    headerIcon?: string;
     body?: string;
     jsx?: JSX.Element;
     jsxd?: () => JSX.Element; // dynamic-er version of jsx

@@ -38,7 +38,7 @@ function genericClassName(cls: string, props: UiProps, ignoreIcon: boolean = fal
     return `${cls} ${ignoreIcon ? '' : props.icon && props.text ? 'icon icon-and-text' : props.icon ? 'icon' : ""} ${props.inverted ? 'inverted' : ''} ${props.className || ""}`;
 }
 
-function genericContent(props: UiProps) {
+export function genericContent(props: UiProps) {
     let retVal = [
         props.icon ? (<Icon key='iconkey' icon={props.icon + (props.text ? " icon-and-text " : "") + (props.iconClass ? " " + props.iconClass : '')} />) : null,
         props.text ? (<span key='textkey' className={'ui text' + (props.textClass ? ' ' + props.textClass : '')}>{props.text}</span>) : null,
@@ -72,9 +72,9 @@ export interface DropdownProps extends UiProps {
     title?: string;
     id?: string;
     onChange?: (v: string) => void;
+    onClick?: () => boolean;    // Return 'true' to toggle open/close
 
-    avatarImage?: string;
-    avatarInitials?: string;
+    titleContent?: React.ReactNode;
     displayAbove?: boolean;
     displayRight?: boolean;
     dataTooltip?: string;
@@ -260,7 +260,8 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
     }
 
     private handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-        this.toggle();
+        if (!this.props.onClick || this.props.onClick())
+            this.toggle();
         e.stopPropagation()
     }
 
@@ -312,7 +313,7 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
     }
 
     renderCore() {
-        const { disabled, title, role, icon, className, avatarImage, avatarInitials, children, displayAbove, displayRight, dataTooltip } = this.props;
+        const { disabled, title, role, icon, className, titleContent, children, displayAbove, displayRight, dataTooltip } = this.props;
         const { open } = this.state;
 
         const aria = {
@@ -340,12 +341,6 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
             open ? 'visible transition' : ''
         ])
 
-        const avatar = avatarImage || avatarInitials ?
-            <div className="avatar">
-                {avatarImage ? <img className="ui circular image" src={avatarImage} alt={title} /> :
-                    <div className="initials">{avatarInitials}</div>}
-            </div>
-            : undefined;
         return (
             <div role="listbox" ref="dropdown" title={title} {...aria}
                 id={this.props.id}
@@ -358,7 +353,7 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
                 onBlur={this.handleBlur}
                 tabIndex={0}
             >
-                {avatar ? avatar : genericContent(this.props)}
+                {titleContent ? titleContent : genericContent(this.props)}
                 <div ref="menu" {...menuAria} className={menuClasses}
                     role="menu">
                     {children}
@@ -969,6 +964,7 @@ export class MenuItem extends data.Component<MenuItemProps, {}> {
         return (
             <div
                 id={id}
+                key={id}
                 tabIndex={tabIndex != null ? tabIndex : -1}
                 className={classes}
                 onClick={this.handleClick}
@@ -1136,6 +1132,7 @@ export interface ModalProps extends ReactModal.Props {
     longer?: boolean;
 
     header?: string;
+    headerIcon?: string;
     headerClass?: string;
     description?: string;
 
@@ -1245,7 +1242,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
     renderCore() {
         const { isOpen, size, longer, basic, className,
             onClose, closeIcon, children, onKeyDown,
-            header, headerClass, headerActions, helpUrl, description,
+            header, headerIcon, headerClass, headerActions, helpUrl, description,
             closeOnDimmerClick, closeOnDocumentClick, closeOnEscape,
             shouldCloseOnEsc, shouldCloseOnOverlayClick, shouldFocusAfterRender, overlayClassName, ...rest } = this.props;
         const { marginTop, scrolling, mountClasses } = this.state;
@@ -1289,6 +1286,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
             role="dialog"
             aria={aria} {...rest}>
             {header || showBack || helpUrl ? <div id={this.id + 'title'} className={"header " + (headerClass || "")}>
+                {headerIcon && <Icon icon={headerIcon} />}
                 <span className="header-title" style={{ margin: `0 ${helpUrl ? '-20rem' : '0'} 0 ${showBack ? '-20rem' : '0'}` }}>{header}</span>
                 {showBack ? <div className="header-close">
                     <Button className="back-button large" title={lf("Go back")} onClick={onClose} tabIndex={0} onKeyDown={fireClickOnEnter}>
