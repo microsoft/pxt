@@ -623,6 +623,10 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
             const headers = this.fetchLocalData()
             const showNewProject = pxt.appTarget.appTheme && !pxt.appTarget.appTheme.hideNewProjectButton;
             const showScriptManagerCard = targetTheme.scriptManager && headers.length > ProjectsCarousel.NUM_PROJECTS_HOMESCREEN;
+
+            const headersToShow = headers
+                .filter(h => !h.tutorial?.metadata?.hideIteration)
+                .slice(0, ProjectsCarousel.NUM_PROJECTS_HOMESCREEN);
             return <carousel.Carousel bleedPercent={20}>
                 {showNewProject ? <div role="button" className="ui card link buttoncard newprojectcard" title={lf("Creates a new empty project")}
                     onClick={this.newProject} onKeyDown={sui.fireClickOnEnter} >
@@ -631,7 +635,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                         <span className="header">{lf("New Project")}</span>
                     </div>
                 </div> : undefined}
-                {headers.slice(0, ProjectsCarousel.NUM_PROJECTS_HOMESCREEN).map((scr, index) => {
+                {headersToShow.map((scr, index) => {
                     const tutorialStep =
                         scr.tutorial ? scr.tutorial.tutorialStep
                             : scr.tutorialCompleted ? scr.tutorialCompleted.steps - 1

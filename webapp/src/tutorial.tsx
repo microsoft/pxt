@@ -666,7 +666,7 @@ export class WorkspaceHeader extends data.Component<any, WorkspaceHeaderState> {
     renderCore() {
         return <div id="headers">
             <div id="flyoutHeader" style={this.headerStyle()}>
-                <div id="flyoutHeaderTitle">{this.flyoutTitle}</div>
+                <div id="flyoutHeaderTitle" className="no-select">{this.flyoutTitle}</div>
             </div>
             <div id="workspaceHeader" style={this.workspaceStyle()}>
                 <editortoolbar.SmallEditorToolbar parent={this.props.parent}/>
