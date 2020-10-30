@@ -133,10 +133,10 @@ export class ProjectView
     private openingTypeScript: boolean;
     private preserveUndoStack: boolean;
 
-    private userPreferencesSubscriber: data.DataSubscriber = {
+    private highContrastSubscriber: data.DataSubscriber = {
         subscriptions: [],
         onDataChanged: () => {
-            this.onUserPreferencesChanged();
+            this.onHighContrastChanged();
         }
     };
 
@@ -896,11 +896,12 @@ export class ProjectView
         this.loadBlocklyAsync();
 
         // subscribe to user preference changes (for simulator or non-render subscriptions)
-        data.subscribe(this.userPreferencesSubscriber, "user-pref:");
+        // TODO @darzu: restrict to highContrast
+        data.subscribe(this.highContrastSubscriber, "user-pref:");
     }
 
     public componentWillUnmount() {
-        data.unsubscribe(this.userPreferencesSubscriber);
+        data.unsubscribe(this.highContrastSubscriber);
     }
 
     // Add an error guard for the entire application
@@ -2918,9 +2919,7 @@ export class ProjectView
         simulator.suspend()
     }
 
-    onUserPreferencesChanged() {
-        // TODO @darzu: 
-        // this.runSimulator();
+    onHighContrastChanged() {
         this.restartSimulator();
     }
 
