@@ -338,6 +338,10 @@ namespace pxsim {
             frame.frameBorder = "0";
             frame.dataset['runid'] = this.runId;
 
+            if (!!(window as any).ipcRenderer) {
+                frame.dataset['ipcRenderer'] = "true";
+            }
+
             wrapper.appendChild(frame);
 
             const i = document.createElement("i");
