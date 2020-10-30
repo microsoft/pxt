@@ -130,6 +130,13 @@ export class ProjectView
     private openingTypeScript: boolean;
     private preserveUndoStack: boolean;
 
+    private userPreferencesSubscriber: data.DataSubscriber = {
+        subscriptions: [],
+        onDataChanged: () => {
+            this.onUserPreferencesChanged();
+        }
+    };
+
     // component ID strings
     static readonly tutorialCardId = "tutorialcard";
 
@@ -223,6 +230,7 @@ export class ProjectView
     }
 
     updateVisibility() {
+        console.log("updateVisibility") // TODO @darzu: 
         if (pxt.BrowserUtils.isElectron() || pxt.winrt.isWinRT() || pxt.appTarget.appTheme.dontSuspendOnVisibility) {
             // Don't suspend when inside apps
             return;
@@ -266,6 +274,7 @@ export class ProjectView
             } else if (this.state.resumeOnVisibility) {
                 this.setState({ resumeOnVisibility: false });
                 // We did a save when the page was hidden, no need to save again.
+                console.log("updateVisibility (2)") // TODO @darzu: 
                 this.runSimulator();
                 maybeReconnect()
             } else if (!this.state.home) {
@@ -875,6 +884,13 @@ export class ProjectView
 
         // start blockly load
         this.loadBlocklyAsync();
+
+        // subscribe to user preference changes (for simulator or non-render subscriptions)
+        data.subscribe(this.userPreferencesSubscriber, "user-pref:");
+    }
+
+    public componentWillUnmount() {
+        data.unsubscribe(this.userPreferencesSubscriber);
     }
 
     // Add an error guard for the entire application
@@ -2895,6 +2911,11 @@ export class ProjectView
         simulator.suspend()
     }
 
+    onUserPreferencesChanged() {
+        // TODO @darzu: 
+        this.runSimulator();
+    }
+
     runSimulator(opts: compiler.CompileOptions = {}): Promise<void> {
         const emptyRun = this.firstRun
             && opts.background
@@ -2946,10 +2967,11 @@ export class ProjectView
                     if (resp.outfiles[pxtc.BINARY_JS]) {
                         if (!cancellationToken.isCancelled()) {
                             pxt.debug(`sim: run`)
-                            let hc = this.getData<auth.UserPreferences>("user-pref:")?.highContrast
+
+                            const hc = data.getData<auth.UserPreferences>("user-pref:")?.highContrast
                             simulator.run(pkg.mainPkg, opts.debug, resp, {
                                 mute: this.state.mute,
-                                highContrast: hc,
+                                highContrast: hc, // TODO @darzu: 
                                 light: pxt.options.light,
                                 clickTrigger: opts.clickTrigger,
                                 storedState: pkg.mainEditorPkg().getSimState(),

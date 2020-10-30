@@ -290,7 +290,7 @@ export function toggleHighContrast() {
     setHighContrast(!getHighContrast())
 }
 export function setHighContrast(on: boolean) {
-    auth.setUserPreferences({ highContrast: on });
+    auth.updateUserPreferencesAsync({ highContrast: on });
     // TODO @darzu:
     console.log("setting high contrast state: " + on)
 }

@@ -265,16 +265,18 @@ async function fetchUserAsync() {
 
 
 export async function updateUserPreferencesAsync(newPref: Partial<UserPreferences>) {
+    // Update our local state
     state_.preferences = { ...(state_.preferences || {}), ...newPref }
     data.invalidate("user-pref");
 
+    // If we're not logged in, non-persistent local state is all we'll use
     if (!loggedIn()) { return; }
 
     // If the user is logged in, save to cloud
     const result = await apiAsync<UserPreferences>('/api/user/preferences', newPref);
     if (result.success) {
-        console.log("updating userpref from POST")
-        // Set user profile from returned value
+        pxt.debug("Updating local user preferences w/ cloud data after result of POST")
+        // Set user profile from returned value so we stay in-sync
         state_.preferences = { ...state_.preferences, ...result.resp }
         data.invalidate("user-pref");
     } else {
