@@ -1036,6 +1036,7 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
         const { visible } = this.state;
         const targetTheme = pxt.appTarget.appTheme;
         const disableFileAccessinMaciOs = pxt.appTarget.appTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isIOS() || pxt.BrowserUtils.isMac());
+        const disableFileAccessinAndroid = pxt.appTarget.appTheme.disableFileAccessinAndroid && pxt.BrowserUtils.isAndroid();
         const showImport = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing;
         const showCreateGithubRepo = targetTheme.githubEditor
             && !pxt.winrt.isWinRT() // not supported in windows 10
@@ -1049,7 +1050,7 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
             >
                 <div className={pxt.github.token ? "ui three cards" : "ui two cards"}>
-                    {pxt.appTarget.compile && !disableFileAccessinMaciOs ?
+                    {pxt.appTarget.compile && !disableFileAccessinMaciOs && !disableFileAccessinAndroid ?
                         <codecard.CodeCardView
                             ariaLabel={lf("Open files from your computer")}
                             role="button"
