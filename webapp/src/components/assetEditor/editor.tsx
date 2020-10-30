@@ -8,14 +8,13 @@ import * as blocklyFieldView from "../../blocklyFieldView";
 import { Provider } from 'react-redux';
 import store from './store/assetEditorStore'
 
-import { dispatchUpdateUserAssets } from './actions/dispatch';
+import { dispatchUpdateUserAssets, dispatchUpdateGalleryAssets } from './actions/dispatch';
 
 import { Editor } from "../../srceditor";
 import { AssetSidebar } from "./assetSidebar";
 import { AssetGallery } from "./assetGallery";
 
 export class AssetEditor extends Editor {
-    protected galleryAssets: pxt.Asset[] = [];
     protected blocksInfo: pxtc.BlocksInfo;
 
     getId() {
@@ -67,7 +66,7 @@ export class AssetEditor extends Editor {
         return <Provider store={store}>
             <div className="asset-editor-outer">
                 <AssetSidebar showAssetFieldView={this.showAssetFieldView} />
-                <AssetGallery galleryAssets={this.galleryAssets} showAssetFieldView={this.showAssetFieldView} />
+                <AssetGallery showAssetFieldView={this.showAssetFieldView} />
             </div>
         </Provider>
     }
@@ -104,7 +103,7 @@ export class AssetEditor extends Editor {
             }
         }
 
-        this.galleryAssets = imageAssets.concat(tileAssets);
+        store.dispatch(dispatchUpdateGalleryAssets(imageAssets.concat(tileAssets)));
     }
 
     protected showAssetFieldView = (asset: pxt.Asset, cb?: (result: any) => void) => {
