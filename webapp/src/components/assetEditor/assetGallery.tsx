@@ -148,7 +148,8 @@ function mapStateToProps(state: AssetEditorState, ownProps: any) {
     return {
         ...ownProps,
         view: state.view,
-        userAssets: state.assets
+        userAssets: state.assets,
+        galleryAssets: state.galleryAssets
     }
 }
 

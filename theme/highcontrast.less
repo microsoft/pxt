@@ -595,6 +595,58 @@
         background: @HCtextColor !important;
     }
 
+    /* Asset Editor */
+    #assetEditor {
+        .asset-editor-sidebar,
+        .asset-editor-sidebar-preview,
+        .asset-editor-preview {
+            color: @HCtextColor;
+            background-color: @HCbackground;
+            border-color: @HCtextColor;
+        }
+
+        .asset-editor-gallery-tab {
+            color: @HCtextColor;
+            background-color: @HCbackground;
+            border-right: 1px solid @HCtextColor;
+        }
+
+        .asset-editor-topbar {
+            border-bottom: 1px solid @HCtextColor;
+        }
+
+        .asset-editor-button,
+        .asset-editor-card,
+        .create-new {
+            color: @HCtextColor;
+            background: @HCbackground;
+            border: 1px solid @HCtextColor;
+            box-shadow: none;
+        }
+
+        .asset-editor-card-label {
+            color: @HCbackground;
+        }
+
+        .delete-asset {
+            border: 1px solid @red;
+        }
+
+        .asset-editor-gallery-tab.selected,
+        .asset-editor-button:hover,
+        .create-new:hover {
+            border: 2px solid @selected;
+        }
+    }
+
+    .asset-editor-create-button {
+        background-color: @HCbackground;
+        border: 1px solid @HCtextColor;
+        &:hover {
+            border: 2px solid @selected;
+        }
+    }
+
     /* Hyperlinks */
     a {
         color: @HCtextColor !important;
