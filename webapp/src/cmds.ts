@@ -175,12 +175,11 @@ export function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.De
         log(`compilation failed, use browser deploy instead`)
         return browserDownloadDeployCoreAsync(resp);
     }
-    let isRetry = false;
     const LOADING_KEY = "hiddeploy";
     return deployAsync();
 
     function deployAsync(): Promise<void> {
-        return pxt.packetio.initAsync(isRetry)
+        return pxt.packetio.initAsync(false)
             .then(dev => core.showLoadingAsync(LOADING_KEY, lf("Downloading..."),
                 dev.reflashAsync(resp), 5000))
             .then(() => core.infoNotification("Download completed!"))
@@ -208,13 +207,6 @@ export function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.De
                     log(`hid error ${e.message}`)
                     pxt.reportException(e)
                     if (d) d.reportError(e.message);
-                }
-
-                // disconnect and try again
-                if (!isRetry) {
-                    log(`retry deploy`);
-                    isRetry = true;
-                    return deployAsync();
                 }
 
                 // default, save file
