@@ -345,12 +345,23 @@ namespace pxt.usb {
                 }, pkt).then(res => {
                     if (res.status != "ok")
                         this.error("USB CTRL OUT transfer failed")
+                    else if (!isHF2)
+                        this.recvOne()
                 })
             }
             return this.dev.transferOut(this.epOut.endpointNumber, pkt)
                 .then(res => {
                     if (res.status != "ok")
                         this.error("USB OUT transfer failed")
+                })
+        }
+
+        private recvOne() {
+            this.recvPacketAsync()
+                .then(buf => {
+                    this.onData(buf)
+                }, err => {
+                    this.onError(err)
                 })
         }
 
@@ -382,7 +393,7 @@ namespace pxt.usb {
             loop()
         }
 
-        recvPacketAsync(): Promise<Uint8Array> {
+        private recvPacketAsync(): Promise<Uint8Array> {
             let final = (res: USBInTransferResult) => {
                 if (res.status != "ok")
                     this.error("USB IN transfer failed")
@@ -439,21 +450,16 @@ namespace pxt.usb {
                         return false
                     }
                     this.log("got " + dev.configurations[0].interfaces.length + " interfaces")
-                    const matching = dev.configurations[0].interfaces.filter(matchesFilters)
-                    let iface = matching[matching.length - 1]
-                    this.log(`${matching.length} matching interfaces; picking ${iface ? "#" + iface.interfaceNumber : "n/a"}`)
+                    let iface = dev.configurations[0].interfaces.filter(matchesFilters)[0]
                     if (!iface)
                         this.error("cannot find supported USB interface")
                     this.altIface = iface.alternates[0]
                     this.iface = iface
                     if (this.altIface.endpoints.length) {
-                        this.log("using dedicated endpoints")
                         this.epIn = this.altIface.endpoints.filter(e => e.direction == "in")[0]
                         this.epOut = this.altIface.endpoints.filter(e => e.direction == "out")[0]
                         Util.assert(this.epIn.packetSize == 64);
                         Util.assert(this.epOut.packetSize == 64);
-                    } else {
-                        this.log("using ctrl pipe")
                     }
                     this.log("claim interface")
                     return dev.claimInterface(iface.interfaceNumber)
@@ -462,7 +468,7 @@ namespace pxt.usb {
                     this.log("device ready")
                     this.lastKnownDeviceSerialNumber = this.dev.serialNumber;
                     this.ready = true;
-                    if (isHF2)
+                    if (this.epIn || isHF2)
                         this.readLoop();
                     if (this.onConnectionChanged)
                         this.onConnectionChanged();
