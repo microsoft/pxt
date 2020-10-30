@@ -296,6 +296,12 @@ export function setHighContrast(on: boolean) {
     console.log("setting high contrast state: " + on)
 }
 
+export function setLanguage(lang: string) {
+    auth.updateUserPreferencesAsync({ language: lang });
+    // TODO @darzu:
+    console.log("setting language state: " + lang)
+}
+
 export function resetFocus() {
     let content = document.getElementById('content');
     content.tabIndex = 0;

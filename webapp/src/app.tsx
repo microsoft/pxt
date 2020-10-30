@@ -2067,10 +2067,6 @@ export class ProjectView
 
     identityLoginComplete() {
         // TODO: Sync cloud data (profile, projects, etc.)
-        // TODO @darzu: sync preferences
-        console.log("sign in complete")
-        auth.fetchUserPreferencesAsync();
-        data.invalidate("user-pref");
     }
 
     ///////////////////////////////////////////////////////////
@@ -4553,7 +4549,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const href = window.location.href;
             let live = false;
             let force = false;
-            let useLang: string = undefined;
+            let useLang: string = auth.getState()?.preferences?.language || undefined;
             if (/[&?]translate=1/.test(href) && !pxt.BrowserUtils.isIE()) {
                 console.log(`translation mode`);
                 live = force = true;

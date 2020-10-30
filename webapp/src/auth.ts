@@ -331,6 +331,8 @@ export async function updateUserPreferencesAsync(newPref: Partial<UserPreference
     // Update our local state
     state_.preferences = { ...(state_.preferences || {}), ...newPref }
     data.invalidate("user-pref");
+    console.log("updated pref: ")
+    console.dir(newPref);
 
     // If we're not logged in, non-persistent local state is all we'll use
     if (!loggedIn()) { return; }
@@ -338,9 +340,12 @@ export async function updateUserPreferencesAsync(newPref: Partial<UserPreference
     // If the user is logged in, save to cloud
     const result = await apiAsync<UserPreferences>('/api/user/preferences', newPref);
     if (result.success) {
-        pxt.debug("Updating local user preferences w/ cloud data after result of POST")
+        console.log("Updating local user preferences w/ cloud data after result of POST")
+        // TODO @darzu:
+        // pxt.debug("Updating local user preferences w/ cloud data after result of POST")
         // Set user profile from returned value so we stay in-sync
         state_.preferences = { ...state_.preferences, ...result.resp }
+        console.dir(state_.preferences); // TODO @darzu: 
         data.invalidate("user-pref");
     } else {
         console.error("fetch failed: ")
@@ -441,7 +446,7 @@ function userPreferencesHandler(path: string): UserPreferences {
         // TODO @darzu: what's the right way to handle defaults here?
         state_.preferences = {
             highContrast: false,
-            language: "dz2",
+            language: "en",
         }
         fetchUserPreferencesAsync();
     }
