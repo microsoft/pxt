@@ -10,19 +10,26 @@ import U = pxt.Util;
 const MODULE = "auth";
 const FIELD_USER = "user";
 const FIELD_LOGGED_IN = "logged-in";
-const FIELD_NEEDS_SETUP = "needs-setup";
 export const USER = `${MODULE}:${FIELD_USER}`;
 export const LOGGED_IN = `${MODULE}:${FIELD_LOGGED_IN}`;
-export const NEEDS_SETUP = `${MODULE}:${FIELD_NEEDS_SETUP}`;
 
 const CSRF_TOKEN = "csrf-token";
 const AUTH_STATE = "auth-login-state";
 
 export type UserProfile = {
     id?: string;
-    idp?: pxt.IdentityProviderId;
-    username?: string;
-    avatarUrl?: string;
+    idp?: {
+        provider?: pxt.IdentityProviderId;
+        username?: string;
+        displayName?: string;
+        picture?: {
+            mimeType?: string;
+            width?: number;
+            height?: number;
+            encoded?: string;
+            dataUrl?: string;
+        };
+    };
 };
 
 // TODO @darzu
@@ -30,10 +37,6 @@ export type UserPreferences = {
     language?: string;
     highContrast?: boolean;
 }
-
-type UsernameSuggestion = {
-    username: string;
-};
 
 /**
  * In-memory auth state. Changes to this state trigger virtual API subscription callbacks.
@@ -247,6 +250,10 @@ export function identityProviders(): pxt.AppCloudProvider[] {
         .sort((a, b) => a.order - b.order);
 }
 
+export function identityProvider(id: pxt.IdentityProviderId): pxt.AppCloudProvider {
+    return identityProviders().filter(prov => prov.id === id).shift();
+}
+
 export function hasIdentity(): boolean {
     // Must read storage for this rather than app theme because this method
     // gets called before experiments are synced to the theme.
@@ -258,11 +265,6 @@ export function loggedIn(): boolean {
     if (!hasIdentity()) { return false; }
     const state = getState();
     return !!state.user?.id;
-}
-
-export function profileNeedsSetup(): boolean {
-    const state = getState();
-    return loggedIn() && !state.user.username;
 }
 
 export async function updateUserProfile(opts: {
@@ -289,24 +291,12 @@ export async function deleteAccount() {
     clearState();
 }
 
-export async function suggestUsername(): Promise<string> {
-    if (!loggedIn()) { return null; }
-    const result = await apiAsync<UsernameSuggestion>('/api/user/name-suggest');
-    if (result.success) {
-        return result.resp.username;
-    }
-    return null;
-}
-
 export class Component<TProps, TState> extends data.Component<TProps, TState> {
     public getUser(): UserProfile {
         return this.getData<UserProfile>(USER);
     }
     public isLoggedIn(): boolean {
         return this.getData<boolean>(LOGGED_IN);
-    }
-    public profileNeedsSetup(): boolean {
-        return this.getData<boolean>(NEEDS_SETUP);
     }
 }
 
@@ -322,7 +312,19 @@ async function fetchUserAsync() {
 
     const result = await apiAsync('/api/user/profile');
     if (result.success) {
-        setUser(result.resp);
+        const user: UserProfile = result.resp;
+        if (user?.idp?.picture?.encoded) {
+            const url = window.URL || window.webkitURL;
+            try {
+                // Decode the base64 image to a data URL.
+                const decoded = U.stringToUint8Array(atob(user.idp.picture.encoded));
+                const blob = new Blob([decoded], { type: user.idp.picture.mimeType });
+                user.idp.picture.dataUrl = url.createObjectURL(blob);
+                // This is a pretty big buffer and we don't need it anymore so free it.
+                delete user.idp.picture.encoded;
+            } catch { }
+        }
+        setUser(user);
     }
 }
 
@@ -378,12 +380,10 @@ function setUser(user: UserProfile) {
     const wasLoggedIn = loggedIn();
     state_.user = user;
     const isLoggedIn = loggedIn();
-    const needsSetup = profileNeedsSetup();
     data.invalidate(USER);
     data.invalidate(LOGGED_IN);
-    data.invalidate(NEEDS_SETUP);
-    if (isLoggedIn && !needsSetup && !wasLoggedIn) {
-        core.infoNotification(`Signed in: ${user.username}`);
+    if (isLoggedIn && !wasLoggedIn) {
+        core.infoNotification(`Signed in: ${user.idp.displayName}`);
     }
 }
 
@@ -429,7 +429,6 @@ function authApiHandler(p: string) {
     switch (field) {
         case FIELD_USER: return state.user;
         case FIELD_LOGGED_IN: return loggedIn();
-        case FIELD_NEEDS_SETUP: return profileNeedsSetup();
     }
     return null;
 }
@@ -438,7 +437,6 @@ function clearState() {
     state_ = {};
     data.invalidate(USER);
     data.invalidate(LOGGED_IN);
-    data.invalidate(NEEDS_SETUP);
 }
 
 function userPreferencesHandler(path: string): UserPreferences {
@@ -457,3 +455,5 @@ data.mountVirtualApi("auth", { getSync: authApiHandler });
 
 console.log("mounting user-pref") // TODO @darzu: 
 data.mountVirtualApi("user-pref", { getSync: userPreferencesHandler });
+
+data.mountVirtualApi(MODULE, { getSync: authApiHandler });

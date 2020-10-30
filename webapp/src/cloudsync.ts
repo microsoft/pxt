@@ -758,7 +758,7 @@ function setStatus(s: string) {
     }
 }
 
-function userInitials(username: string): string {
+export function userInitials(username: string): string {
     if (!username) return "?";
     // Parse the user name for user initials
     const initials = username.match(/\b\w/g) || [];
