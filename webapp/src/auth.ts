@@ -451,8 +451,6 @@ function userPreferencesHandler(path: string): UserPreferences {
     return state_?.preferences
 }
 
-data.mountVirtualApi("auth", { getSync: authApiHandler });
-
 console.log("mounting user-pref") // TODO @darzu: 
 data.mountVirtualApi("user-pref", { getSync: userPreferencesHandler });
 

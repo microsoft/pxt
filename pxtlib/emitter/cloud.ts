@@ -8,8 +8,8 @@ namespace pxt.Cloud {
     const BACKEND_LOCALHOST = "http://localhost:5500";
     const BACKEND_LOCALHOST_SSL = "https://localhost:5500";
 
-    const BACKEND = BACKEND_LOCALHOST;
-    // const BACKEND = BACKEND_PROD;
+    // const BACKEND = BACKEND_LOCALHOST;
+    const BACKEND = BACKEND_PROD;
 
     // hit /api/ to stay on same domain and avoid CORS
     export let appRoot = (pxt.BrowserUtils.isLocalHost() || Util.isNodeJS) ? `${BACKEND}` : "";
