@@ -651,6 +651,7 @@ namespace ts.pxtc.Util {
         forceLiveEndpoint?: boolean;
         successCodes?: number[];
         withCredentials?: boolean;
+        allowRelativeUrl?: boolean;
     }
 
     export interface HttpResponse {
@@ -1430,7 +1431,11 @@ namespace ts.pxtc.BrowserImpl {
 
             let headers = Util.clone(options.headers) || {}
 
-            options.url = /^http/.test(options.url) ? options.url : pxt.Cloud.appRoot + options.url;
+            options.url = /^https?/.test(options.url)
+                ? options.url
+                : !options.allowRelativeUrl
+                    ? pxt.Cloud.appRoot + options.url
+                    : options.url;
 
             client = new XMLHttpRequest();
             if (options.responseArrayBuffer)
