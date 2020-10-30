@@ -2920,7 +2920,8 @@ export class ProjectView
 
     onUserPreferencesChanged() {
         // TODO @darzu: 
-        this.runSimulator();
+        // this.runSimulator();
+        this.restartSimulator();
     }
 
     runSimulator(opts: compiler.CompileOptions = {}): Promise<void> {
