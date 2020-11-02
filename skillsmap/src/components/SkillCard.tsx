@@ -20,7 +20,7 @@ export class SkillCardImpl extends React.Component<SkillCardProps> {
 
         return <div className={`skill-card ${locked ? 'locked' : ''}`}>
             {locked && <div className="skill-card-overlay"><i className="icon lock" /></div>}
-            <span>{`CARD ${label}`}</span>
+            <span>{label}</span>
         </div>
     }
 }

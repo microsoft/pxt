@@ -16,16 +16,14 @@ interface CarouselProps {
 }
 
 class CarouselImpl extends React.Component<CarouselProps> {
+    protected carouselRef: any;
+
     protected handlePreviousArrowClick = () => {
-        const { items, selectedItem } = this.props;
-        const index = items.findIndex(el => el.id === selectedItem);
-        this.props.dispatchChangeSelectedItem(items[Math.max(index - 1, 0)].id);
+        this.carouselRef.scrollBy({ left: - (window.innerWidth / 2) });
     }
 
     protected handleNextArrowClick = () => {
-        const { items, selectedItem } = this.props;
-        const index = items.findIndex(el => el.id === selectedItem);
-        this.props.dispatchChangeSelectedItem(items[Math.min(index + 1, items.length - 1)].id);
+        this.carouselRef.scrollBy({ left: window.innerWidth / 2 });
     }
 
     render() {
@@ -37,7 +35,7 @@ class CarouselImpl extends React.Component<CarouselProps> {
                     <i className="icon chevron left" />
                 </div>
                 <div className="carousel-items">
-                    <div className="carousel-items-inner">
+                    <div className="carousel-items-inner" ref={(el) => this.carouselRef = el}>
                         {items.map((el, i) => {
                             return <CarouselItem key={i} className={itemClassName} item={el} itemTemplate={itemTemplate} selected={selectedItem === el.id} />
                         })}

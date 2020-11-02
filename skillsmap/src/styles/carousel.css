@@ -15,6 +15,7 @@
     display: flex;
     overflow: auto;
     padding-bottom: 1rem;
+    scroll-behavior: smooth;
 }
 
 .carousel-item {
