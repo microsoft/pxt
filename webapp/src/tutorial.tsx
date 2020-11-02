@@ -270,6 +270,7 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
     renderCore() {
         const { visible } = this.state;
         const options = this.props.parent.state.tutorialOptions;
+        const flyoutOnly = this.props.parent.state.editorState && this.props.parent.state.editorState.hasCategories === false;
         const { tutorialReady, tutorialStepInfo, tutorialStep, tutorialName } = options;
         if (!tutorialReady) return <div />;
 
@@ -292,7 +293,8 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
                 className: 'green'
             }]
 
-            return <sui.Modal isOpen={visible} className="hintdialog"
+            const modalClasses = flyoutOnly ? "hintdialog flyoutOnly" : "hintdialog";
+            return <sui.Modal isOpen={visible} className={modalClasses}
                 closeIcon={false} header={tutorialName} buttons={actions}
                 onClose={onClick} dimmer={true} longer={true}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape>
