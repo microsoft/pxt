@@ -13,11 +13,13 @@ import { parseSkillsMap } from './lib/skillMapParser';
 import { parseHash, getMarkdownAsync, MarkdownSource } from './lib/browserUtils';
 
 import './App.css';
+import { MakeCodeFrame } from './components/makecodeFrame';
 
 interface AppProps {
     skillsMaps: { [key: string]: SkillsMap };
     dispatchAddSkillsMap: (map: SkillsMap) => void;
     dispatchClearSkillsMaps: () => void;
+    selectedItem?: string;
 }
 
 class AppImpl extends React.Component<AppProps> {
@@ -59,15 +61,19 @@ class AppImpl extends React.Component<AppProps> {
     }
 
     render() {
-        const maps = Object.keys(this.props.skillsMaps).map((id: string) => this.props.skillsMaps[id]);
-        return (<div>
+        const { selectedItem, skillsMaps } = this.props;
+        const maps = Object.keys(skillsMaps).map((id: string) => skillsMaps[id]);
+        return (<div className="app-container">
                 <HeaderBar />
-                <Banner title="Game Maker Guide" icon="map" description="Level up your game making skills by completing the tutorials in this guide." />
-                <div className="skills-map-container">
-                    {maps?.map((el, i) => {
-                        return <SkillsCarousel map={el} key={i} />
-                    })}
+                { selectedItem ? <MakeCodeFrame /> : <div>
+                    <Banner title="Game Maker Guide" icon="map" description="Level up your game making skills by completing the tutorials in this guide." />
+                    <div className="skills-map-container">
+                        { maps?.map((el, i) => {
+                            return <SkillsCarousel map={el} key={i} />
+                        })}
+                    </div>
                 </div>
+                }
             </div>);
     }
 }
@@ -75,7 +81,8 @@ class AppImpl extends React.Component<AppProps> {
 function mapStateToProps(state: SkillsMapState, ownProps: any) {
     if (!state) return {};
     return {
-        skillsMaps: state.maps
+        skillsMaps: state.maps,
+        selectedItem: state.selectedItem
     };
 }
 

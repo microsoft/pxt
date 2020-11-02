@@ -41,6 +41,17 @@ const topReducer = (state: SkillsMapState = initialState, action: any): SkillsMa
                 ...state,
                 selectedItem: action.id
             };
+        case actions.SET_HEADERID_FOR_ACTIVITY:
+            return {
+                ...state,
+                user: {
+                    ...state.user,
+                    mapProgress: {
+                        ...state.user.mapProgress,
+                        [action.id]: { mapId: action.map.id, activityState: {} }
+                    }
+                }
+            }
         default:
             return state
     }
