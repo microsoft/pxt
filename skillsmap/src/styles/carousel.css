@@ -1,7 +1,10 @@
 .carousel {
     width: 100%;
-    display: flex;
-    align-items: center;
+    position: relative;
+}
+
+.carousel-title {
+    margin-left: 0.5rem;
 }
 
 .carousel-items {
@@ -38,6 +41,14 @@
 }
 
 .carousel-arrow {
+    position: absolute;
+    top: calc(50% + 0.75rem);
+    transform: translateY(-50%);
     font-size: 4rem;
     line-height: 4rem;
+    z-index: 10;
+}
+
+.carousel-arrow.right {
+    right: 0;
 }
