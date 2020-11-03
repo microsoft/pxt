@@ -3,7 +3,7 @@
 const testMap = ``
 
 interface MarkdownSection {
-    headerKind: "single" | "double";
+    headerKind: "single" | "double" | "triple";
     header: string;
     attributes: {[index: string]: string};
 }
@@ -12,15 +12,18 @@ export function test() {
     return parseSkillsMap(testMap);
 }
 
-export function parseSkillsMap(text: string) {
+export function parseSkillsMap(text: string): { maps: SkillsMap[], metadata?: PageMetadata } {
     const sections = getSectionsFromText(text);
 
     const parsed: SkillsMap[] = [];
+    let metadata: PageMetadata | undefined;
 
     let start = -1;
 
     for (let i = 0; i < sections.length; i++) {
         if (sections[i].headerKind === "single") {
+            metadata = inflateMetadata(sections[i]);
+        } else if (sections[i].headerKind === "double") {
             if (start >= 0) {
                 parsed.push(buildMapFromSections(sections[start], sections.slice(start + 1, i)));
             }
@@ -32,7 +35,7 @@ export function parseSkillsMap(text: string) {
         parsed.push(buildMapFromSections(sections[start], sections.slice(start + 1, sections.length)));
     }
 
-    return parsed;
+    return { maps: parsed, metadata };
 }
 
 function getSectionsFromText(text: string) {
@@ -59,7 +62,8 @@ function getSectionsFromText(text: string) {
                 pushSection();
 
                 currentSection = {
-                    headerKind: headerMatch[1].length === 1 ? "single" : "double",
+                    headerKind: headerMatch[1].length === 1 ? "single" :
+                        (headerMatch[1].length === 2 ? "double" : "triple"),
                     header: headerMatch[2],
                     attributes: {}
                 }
@@ -223,6 +227,13 @@ function inflateActivity(section: MarkdownSection): MapActivity {
     return result as MapActivity;
 }
 
+function inflateMetadata(section: MarkdownSection): PageMetadata {
+    return {
+        title: section.attributes["name"] || section.header,
+        description: section.attributes["description"],
+        infoUrl: section.attributes["infoUrl"]
+    }
+}
 
 function parseList(list: string, includeDuplicates = false) {
     if (!list) return [];

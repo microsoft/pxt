@@ -1,4 +1,7 @@
 import * as React from "react";
+import { connect } from 'react-redux';
+
+import { SkillsMapState } from '../store/reducer';
 
 interface BannerProps {
     title: string;
@@ -6,7 +9,7 @@ interface BannerProps {
     icon: string;
 }
 
-export class Banner extends React.Component<BannerProps> {
+export class BannerImpl extends React.Component<BannerProps> {
     render() {
         const  { title, description, icon } = this.props;
         return <div className="banner">
@@ -20,3 +23,12 @@ export class Banner extends React.Component<BannerProps> {
         </div>
     }
 }
+
+function mapStateToProps(state: SkillsMapState, ownProps: any) {
+    return {
+        title: state.title,
+        description: state.description
+    };
+}
+
+export const Banner = connect(mapStateToProps)(BannerImpl);

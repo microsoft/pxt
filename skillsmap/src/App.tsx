@@ -3,7 +3,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 
-import { dispatchAddSkillsMap, dispatchClearSkillsMaps } from './actions/dispatch';
+import { dispatchAddSkillsMap, dispatchClearSkillsMaps, dispatchSetPageTitle, dispatchSetPageDescription, dispatchSetPageInfoUrl } from './actions/dispatch';
 import { SkillsMapState } from './store/reducer';
 import { HeaderBar } from './components/HeaderBar';
 import { Banner } from './components/Banner';
@@ -17,9 +17,12 @@ import { MakeCodeFrame } from './components/makecodeFrame';
 
 interface AppProps {
     skillsMaps: { [key: string]: SkillsMap };
+    activityOpen: boolean;
     dispatchAddSkillsMap: (map: SkillsMap) => void;
     dispatchClearSkillsMaps: () => void;
-    activityOpen: boolean;
+    dispatchSetPageTitle: (title: string) => void;
+    dispatchSetPageDescription: (description: string) => void;
+    dispatchSetPageInfoUrl: (infoUrl: string) => void;
 }
 
 class AppImpl extends React.Component<AppProps> {
@@ -40,12 +43,18 @@ class AppImpl extends React.Component<AppProps> {
     protected fetchAndParseSkillsMaps(source: MarkdownSource, url: string) {
         getMarkdownAsync(source, url).then((md) => {
             if (md) {
-                const skillsMaps = parseSkillsMap(md);
-                if (skillsMaps?.length > 0) {
+                const { maps, metadata } = parseSkillsMap(md);
+                if (maps?.length > 0) {
                     this.props.dispatchClearSkillsMaps();
-                    skillsMaps.forEach(map => {
+                    maps.forEach(map => {
                         this.props.dispatchAddSkillsMap(map);
                     })
+                }
+                if (metadata) {
+                    const { title, description, infoUrl } = metadata;
+                    this.props.dispatchSetPageTitle(title);
+                    if (description) this.props.dispatchSetPageDescription(description);
+                    if (infoUrl) this.props.dispatchSetPageDescription(infoUrl);
                 }
             }
         });
@@ -88,7 +97,10 @@ function mapStateToProps(state: SkillsMapState, ownProps: any) {
 
 const mapDispatchToProps = {
     dispatchAddSkillsMap,
-    dispatchClearSkillsMaps
+    dispatchClearSkillsMaps,
+    dispatchSetPageTitle,
+    dispatchSetPageDescription,
+    dispatchSetPageInfoUrl
 };
 
 const App = connect(mapStateToProps, mapDispatchToProps)(AppImpl);

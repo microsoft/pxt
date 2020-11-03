@@ -15,6 +15,7 @@ type SkillCardStatus = "locked" | "notstarted" | "inprogress" | "completed" ;
 interface SkillCardProps extends Item {
     mapId: string;
     description?: string;
+    imageUrl?: string;
     tags?: string[];
     status?: SkillCardStatus;
     dispatchOpenActivity: (mapId: string, activityId: string) => void;
@@ -51,14 +52,27 @@ export class SkillCardImpl extends React.Component<SkillCardProps> {
     }
 
     render() {
-        const { label, description, status } = this.props;
+        const { label, description, imageUrl, tags, status } = this.props;
 
         return <div className={`skill-card ${status || ''}`}>
             <div className="skill-card-display">
                 {(status === "locked" || status === "completed") && <div className="skill-card-overlay">
-                    <i className={`icon ${status === "locked" ? "lock" : "check circle"}`} />
+                    <i className={`icon ${status === "locked" ? "xx" : "check circle"}`} />
                 </div>}
-                <div className="skill-card-title">{label}</div>
+                <div className="skill-card-image">
+                    {imageUrl ? <img src={imageUrl} alt={`Preview of activity content`} /> : <i className="icon game" />}
+                </div>
+                <div className="skill-card-label">
+                    <div className="skill-card-title">
+                        {status === "locked" && <i className="icon lock" />}
+                        <span>{label}</span>
+                    </div>
+                    <div className="skill-card-tags">
+                        {tags?.map((t, i) => {
+                            return <div key={i}>{t}</div>
+                        })}
+                    </div>
+                </div>
             </div>
             <div className="skill-card-info">
                 <div className="skill-card-title">{label}</div>

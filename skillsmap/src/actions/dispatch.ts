@@ -6,3 +6,7 @@ export const dispatchChangeSelectedItem = (id: string) => ({ type: actions.CHANG
 export const dispatchSetHeaderIdForActivity = (id: string) => ({ type: actions.SET_HEADERID_FOR_ACTIVITY, id });
 export const dispatchOpenActivity = (mapId: string, activityId: string) => ({ type: actions.OPEN_ACTIVITY, mapId, activityId });
 export const dispatchCloseActivity = () => ({ type: actions.CLOSE_ACTIVITY });
+
+export const dispatchSetPageTitle = (title: string) => ({ type: actions.SET_PAGE_TITLE, title });
+export const dispatchSetPageDescription = (description: string) => ({ type: actions.SET_PAGE_DESCRIPTION, description });
+export const dispatchSetPageInfoUrl = (infoUrl: string) => ({ type: actions.SET_PAGE_INFO_URL, infoUrl });

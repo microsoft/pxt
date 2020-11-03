@@ -2,6 +2,9 @@ import * as actions from '../actions/types'
 import { lookupActivityProgress } from '../lib/skillMapUtils';
 
 export interface SkillsMapState {
+    title: string;
+    description: string;
+    infoUrl?: string;
     user: UserState;
     maps: { [key: string]: SkillsMap };
     selectedItem?: string;
@@ -17,6 +20,8 @@ export interface EditorViewState {
 }
 
 const initialState: SkillsMapState = {
+    title: "Game Maker Guide",
+    description: "Level up your game making skills by completing the tutorials in this guide.",
     user: {
         mapProgress: {},
         completedTags: {}
@@ -74,6 +79,21 @@ const topReducer = (state: SkillsMapState = initialState, action: any): SkillsMa
                 },
                 user: setHeaderIdForActivity(state.user, state.editorView!.currentMapId, state.editorView!.currentActivityId, action.id)
             };
+        case actions.SET_PAGE_TITLE:
+            return {
+                ...state,
+                title: action.title
+            }
+        case actions.SET_PAGE_DESCRIPTION:
+            return {
+                ...state,
+                description: action.description
+            }
+        case actions.SET_PAGE_INFO_URL:
+            return {
+                ...state,
+                infoUrl: action.infoUrl
+            }
         default:
             return state
     }
