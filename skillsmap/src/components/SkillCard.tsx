@@ -4,7 +4,9 @@ import { connect } from 'react-redux';
 import { SkillsMapState } from '../store/reducer';
 import { Item } from './CarouselItem';
 
-import { isActivityCompleted, isActivityUnlocked } from '../lib/skillMapUtils';
+import { dispatchOpenActivity } from '../actions/dispatch';
+
+import { isActivityCompleted, isActivityUnlocked, lookupActivityProgress, } from '../lib/skillMapUtils';
 
 import '../styles/skillcard.css'
 
@@ -15,6 +17,7 @@ interface SkillCardProps extends Item {
     description?: string;
     tags?: string[];
     status?: SkillCardStatus;
+    dispatchOpenActivity: (mapId: string, activityId: string) => void;
 }
 
 export class SkillCardImpl extends React.Component<SkillCardProps> {
@@ -30,6 +33,20 @@ export class SkillCardImpl extends React.Component<SkillCardProps> {
             case "notstarted":
             default:
                 return "START"
+        }
+    }
+
+    protected handleActionButtonClick = () => {
+        const { status, mapId, id, dispatchOpenActivity } = this.props;
+
+        switch (status) {
+            case "locked":
+            case "completed":
+                break;
+            case "inprogress":
+            case "notstarted":
+            default:
+                return dispatchOpenActivity(mapId, id);
         }
     }
 
@@ -49,7 +66,7 @@ export class SkillCardImpl extends React.Component<SkillCardProps> {
                 <div className="spacer"></div>
                 <div className="skill-card-action">
                     {status === "completed" && <div className="skill-card-button-icon"><i className="xicon redo"></i></div>}
-                    <div className="skill-card-button">{this.getSkillCardActionText()}</div>
+                    <div className="skill-card-button" role="button" onClick={this.handleActionButtonClick}>{this.getSkillCardActionText()}</div>
                 </div>
             </div>
         </div>
@@ -61,6 +78,8 @@ function mapStateToProps(state: SkillsMapState, ownProps: any) {
     if (state.user && state.maps?.[ownProps.mapId] && isActivityUnlocked(state.user, state.maps[ownProps.mapId], ownProps.id)) {
         if (isActivityCompleted(state.user, ownProps.mapId, ownProps.id)) {
             status = "completed";
+        } else if (lookupActivityProgress(state.user, ownProps.mapId, ownProps.id)?.headerId) {
+            status = "inprogress";
         } else {
             status = "notstarted";
         }
@@ -71,4 +90,8 @@ function mapStateToProps(state: SkillsMapState, ownProps: any) {
     };
 }
 
-export const SkillCard = connect(mapStateToProps)(SkillCardImpl);
+const mapDispatchToProps = {
+    dispatchOpenActivity
+}
+
+export const SkillCard = connect(mapStateToProps, mapDispatchToProps)(SkillCardImpl);

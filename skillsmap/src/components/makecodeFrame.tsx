@@ -87,15 +87,20 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps> {
     protected async handleWorkspaceSaveRequestAsync(request: pxt.editor.EditorWorkspaceSaveRequest) {
         const { dispatchSetHeaderIdForActivity, activityHeaderId } = this.props;
 
-        if (activityHeaderId && request.project.header?.id !== activityHeaderId) {
-            console.warn("Ignoring save to project " + request.project.header?.id)
-            return;
-        }
         const workspace = await getWorkspaceAsync();
-        await workspace.saveProjectAsync(request.project);
+        const project = {
+            ...request.project,
+            header: {
+                ...request.project.header!,
+                id: activityHeaderId || request.project.header!.id
+            }
+        };
+
+        await workspace.saveProjectAsync(project);
+
 
         if (!activityHeaderId) {
-            dispatchSetHeaderIdForActivity(request.project.header!.id);
+            dispatchSetHeaderIdForActivity(project.header!.id);
         }
     }
 
