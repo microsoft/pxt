@@ -101,10 +101,6 @@ export async function loginAsync(idp: pxt.IdentityProviderId, persistent: boolea
 
     clearState();
 
-    // Make sure we can assume these fields are non-null.
-    callbackState.hash = callbackState.hash ?? "";
-    callbackState.params = callbackState.params ?? {};
-
     // Store some continuation state in local storage so we can return to what
     // the user was doing before signing in.
     const genId = () => (Math.PI * Math.random()).toString(36).slice(2);
@@ -175,6 +171,7 @@ export async function loginCallback(qs: pxt.Map<string>) {
     if (!hasIdentity()) { return; }
 
     let state: AuthState;
+    let callbackState: CallbackState;
 
     do {
         // Read and remove auth state from local storage
@@ -197,8 +194,11 @@ export async function loginCallback(qs: pxt.Map<string>) {
             break;
         }
 
-        state.callbackState = state.callbackState ?? NilCallbackState;
-
+        callbackState = {
+            ...NilCallbackState,
+            ...state.callbackState
+        };
+    
         const error = qs['error'];
         if (error) {
             // Possible values for 'error':
@@ -208,7 +208,7 @@ export async function loginCallback(qs: pxt.Map<string>) {
             pxt.tickEvent('auth.login.error', { 'error': error, 'provider': state.idp });
             pxt.log(`Auth failed: ${error}:${error_description}`);
             // TODO: Is it correct to clear continuation hash?
-            state.callbackState = NilCallbackState;
+            callbackState = NilCallbackState;
             // TODO: Show a message to the user (via rewritten continuation path)?
             break;
         }
@@ -229,8 +229,8 @@ export async function loginCallback(qs: pxt.Map<string>) {
     } while (false);
 
     // Clear url parameters and redirect to the callback location.
-    const hash = state.callbackState.hash.startsWith('#') ? state.callbackState.hash : `#${state.callbackState.hash}`;
-    const params = core.stringifyQueryString('', state.callbackState.params);
+    const hash = callbackState.hash.startsWith('#') ? callbackState.hash : `#${callbackState.hash}`;
+    const params = core.stringifyQueryString('', callbackState.params);
     const pathname = state.callbackPathname.startsWith('/') ? state.callbackPathname : `/${state.callbackPathname}`;
     const redirect = `${pathname}${hash}${params}`;
     window.location.href = redirect;
