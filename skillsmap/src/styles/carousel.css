@@ -1,7 +1,13 @@
 .carousel {
     width: 100%;
-    display: flex;
-    align-items: center;
+    position: relative;
+}
+
+.carousel-title {
+    margin-left: 0.5rem;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
 }
 
 .carousel-items {
@@ -15,28 +21,30 @@
     display: flex;
     overflow: auto;
     padding-bottom: 1rem;
+    scroll-behavior: smooth;
 }
 
 .carousel-item {
-    background-color: #ddd;
-
     position: relative;
     width: 18rem;
     height: 12.5rem;
     flex-grow: 0;
     flex-shrink: 0;
     margin-right: 0.5rem;
-    border: 2px solid transparent;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-.carousel-item.selected {
-    border-color: #444;
-}
-
 .carousel-arrow {
+    position: absolute;
+    top: calc(50% + 0.75rem);
+    transform: translateY(-50%);
     font-size: 4rem;
     line-height: 4rem;
+    z-index: 10;
+}
+
+.carousel-arrow.right {
+    right: 0;
 }
