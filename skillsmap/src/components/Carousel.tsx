@@ -33,7 +33,7 @@ class CarouselImpl extends React.Component<CarouselProps, CarouselState> {
         window.addEventListener("resize", this.handleScroll);
     }
 
-    componentDidUnmount() {
+    componentWillUnmount() {
         window.removeEventListener("resize", this.handleScroll);
     }
 
