@@ -19,7 +19,7 @@ interface AppProps {
     skillsMaps: { [key: string]: SkillsMap };
     dispatchAddSkillsMap: (map: SkillsMap) => void;
     dispatchClearSkillsMaps: () => void;
-    selectedItem?: string;
+    activityOpen: boolean;
 }
 
 class AppImpl extends React.Component<AppProps> {
@@ -61,11 +61,11 @@ class AppImpl extends React.Component<AppProps> {
     }
 
     render() {
-        const { selectedItem, skillsMaps } = this.props;
+        const {skillsMaps, activityOpen } = this.props;
         const maps = Object.keys(skillsMaps).map((id: string) => skillsMaps[id]);
         return (<div className="app-container">
                 <HeaderBar />
-                { selectedItem ? <MakeCodeFrame /> : <div>
+                { activityOpen ? <MakeCodeFrame /> : <div>
                     <Banner title="Game Maker Guide" icon="map" description="Level up your game making skills by completing the tutorials in this guide." />
                     <div className="skills-map-container">
                         { maps?.map((el, i) => {
@@ -82,7 +82,7 @@ function mapStateToProps(state: SkillsMapState, ownProps: any) {
     if (!state) return {};
     return {
         skillsMaps: state.maps,
-        selectedItem: state.selectedItem
+        activityOpen: !!state.editorView
     };
 }
 

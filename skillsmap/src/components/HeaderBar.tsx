@@ -2,24 +2,23 @@ import * as React from "react";
 /// <reference path="../lib/skillMap.d.ts" />
 
 import { connect } from 'react-redux';
-import { dispatchChangeSelectedItem } from '../actions/dispatch';
+import { dispatchCloseActivity } from '../actions/dispatch';
 import { SkillsMapState } from '../store/reducer';
 
 
 interface HeaderBarProps {
-    selectedItem?: string;
-    dispatchChangeSelectedItem: (id: string) => void;
+    activityOpen: boolean;
+    dispatchCloseActivity: () => void;
 }
 
 export class HeaderBarImpl extends React.Component<HeaderBarProps> {
     render() {
-        const { selectedItem } = this.props;
+        const { activityOpen } = this.props;
 
         return <div className="header">
             <div className="header-left">
                 <i className="icon game" />
-                { selectedItem && <i className="icon arrow left" role="button" onClick={this.onBackClicked}/> }
-
+                { activityOpen && <i className="icon arrow left" role="button" onClick={this.onBackClicked}/> }
             </div>
             <div className="spacer" />
             <div className="header-right"><i className="icon square" />MICROSOFT</div>
@@ -27,7 +26,7 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
     }
 
     onBackClicked = () => {
-        this.props.dispatchChangeSelectedItem("");
+        this.props.dispatchCloseActivity();
     }
 }
 
@@ -35,13 +34,13 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
 function mapStateToProps(state: SkillsMapState, ownProps: any) {
     if (!state) return {};
     return {
-        selectedItem: state.selectedItem
+        activityOpen: !!state.editorView
     }
 }
 
 
 const mapDispatchToProps = {
-    dispatchChangeSelectedItem
+    dispatchCloseActivity
 };
 
 export const HeaderBar = connect(mapStateToProps, mapDispatchToProps)(HeaderBarImpl);

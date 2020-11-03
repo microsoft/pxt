@@ -14,7 +14,7 @@ interface MakeCodeFrameProps {
     title: string;
     url: string;
     activityHeaderId?: string;
-    dispatchSetHeaderIdForActivity: (headerId: string, activityId: string) => void;
+    dispatchSetHeaderIdForActivity: (headerId: string) => void;
 }
 
 const editorUrl = "https://arcade.makecode.com"
@@ -80,6 +80,9 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps> {
         await workspace.saveProjectAsync(request.project);
 
         const { activityId, dispatchSetHeaderIdForActivity, } = this.props;
+        if (!activityId) {
+            dispatchSetHeaderIdForActivity(request.project.header!.id);
+        }
 
     }
 
@@ -98,34 +101,22 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps> {
 }
 
 function mapStateToProps(state: SkillsMapState, ownProps: any) {
-    if (!state) return {};
+    if (!state || !state.editorView) return {};
 
-    const activityId = state.selectedItem;
+    const { currentActivityId, currentMapId, currentHeaderId } = state.editorView;
 
     let url: string | undefined;
     let title: string | undefined;
-    let headerId: string | undefined;
 
-    if (activityId) {
-        const mapId = Object.keys(state.maps).find(key => state.maps[key].activities[activityId]);
-
-        if (mapId) {
-            const activity = state.maps[mapId].activities[activityId];
-            url = `${editorUrl}/#tutorial:${activity.url}?controller=1`;
-            title = activity.displayName;
-
-            if (state.user.mapProgress[mapId]) {
-                headerId = state.user.mapProgress[mapId].activityState[activityId]?.headerId;
-            }
-        }
-    }
-
+    const activity = state.maps[currentMapId].activities[currentActivityId];
+    url = `${editorUrl}/#tutorial:${activity.url}?controller=1`;
+    title = activity.displayName;
 
     return {
-        activityId,
         url,
         title,
-        activityHeaderId: headerId
+        activityId: currentActivityId,
+        activityHeaderId: currentHeaderId
     }
 }
 

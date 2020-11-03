@@ -2,9 +2,10 @@ import * as React from "react";
 import { connect } from 'react-redux';
 
 import { SkillsMapState } from '../store/reducer';
-import { dispatchChangeSelectedItem } from '../actions/dispatch';
+import { dispatchChangeSelectedItem, dispatchOpenActivity } from '../actions/dispatch';
 
 export interface Item {
+    mapId: string;
     id: string;
     label?: string;
     url?: string;
@@ -27,11 +28,18 @@ interface CarouselItemProps {
     selected?: boolean;
     className?: string;
     dispatchChangeSelectedItem: (id: string) => void;
+    dispatchOpenActivity: (mapId: string, activityId: string) => void;
 }
 
 class CarouselItemImpl extends React.Component<CarouselItemProps> {
     handleClick = () => {
-        this.props.dispatchChangeSelectedItem(this.props.item.id);
+        const { selected, item, dispatchChangeSelectedItem, dispatchOpenActivity } = this.props;
+        if (selected) {
+            dispatchOpenActivity(item.mapId, item.id);
+        }
+        else {
+            dispatchChangeSelectedItem(item.id);
+        }
     }
 
     render() {
@@ -49,7 +57,8 @@ function mapStateToProps(state: SkillsMapState, ownProps: any) {
 }
 
 const mapDispatchToProps = {
-    dispatchChangeSelectedItem
+    dispatchChangeSelectedItem,
+    dispatchOpenActivity
 };
 
 export const CarouselItem = connect(mapStateToProps, mapDispatchToProps)(CarouselItemImpl);
