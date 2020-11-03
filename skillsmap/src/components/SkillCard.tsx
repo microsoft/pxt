@@ -38,14 +38,19 @@ export class SkillCardImpl extends React.Component<SkillCardProps> {
 
         return <div className={`skill-card ${status || ''}`}>
             <div className="skill-card-display">
-                {status === "locked" && <div className="skill-card-overlay"><i className="icon lock" /></div>}
+                {(status === "locked" || status === "completed") && <div className="skill-card-overlay">
+                    <i className={`icon ${status === "locked" ? "lock" : "check circle"}`} />
+                </div>}
                 <div className="skill-card-title">{label}</div>
             </div>
             <div className="skill-card-info">
                 <div className="skill-card-title">{label}</div>
                 <div className="skill-card-description">{description}</div>
                 <div className="spacer"></div>
-                <div className="skill-card-action">{this.getSkillCardActionText()}</div>
+                <div className="skill-card-action">
+                    {status === "completed" && <div className="skill-card-button-icon"><i className="xicon redo"></i></div>}
+                    <div className="skill-card-button">{this.getSkillCardActionText()}</div>
+                </div>
             </div>
         </div>
     }

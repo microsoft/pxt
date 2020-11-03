@@ -90,23 +90,46 @@
 }
 
 .skill-card-action {
+    display: flex;
+    flex-shrink: 0;
+    align-items: flex-end;
+}
+
+
+.skill-card-button,
+.skill-card-button-icon {
+    height: 2.5rem;
+}
+
+.skill-card-button {
     border: 1px solid #444;
     padding: 0.5rem;
     margin-top: 0.5rem;
     font-size: 1.2rem;
     text-align: center;
     cursor: pointer;
-    flex-shrink: 0;
+    flex: 1;
 }
 
-.skill-card-action:hover {
+.skill-card-button:hover,
+.skill-card-button-icon:hover {
     background-color: #ccc;
 }
 
-.locked .skill-card-action,
-.locked .skill-card-action:hover {
+.skill-card-button-icon {
+    border: 1px solid #444;
+    border-right: none;
+    padding: 0.5rem;
+}
+
+.locked .skill-card-button,
+.locked .skill-card-button:hover {
     color: #999;
     background-color: transparent;
     border-color: #999;
     cursor: not-allowed;
+}
+
+.completed i.xicon.redo {
+    font-size: 1.5rem;
 }
