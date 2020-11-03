@@ -39,13 +39,13 @@
     font-size: 5rem;
     line-height: 5rem;
     margin: 2rem 1rem;
+    flex-shrink: 0;
 }
 
 .banner-text {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    margin-left: 1rem;
 }
 
 .banner-title {

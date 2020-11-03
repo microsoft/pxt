@@ -41,7 +41,7 @@ class SkillsCarouselImpl extends React.Component<SkillsCarouselProps> {
     }
 
     render() {
-        return <Carousel items={this.items} itemTemplate={SkillCard} itemClassName="linked" />
+        return <Carousel title={this.props.map.displayName} items={this.items} itemTemplate={SkillCard} itemClassName="linked" />
     }
 }
 
