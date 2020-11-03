@@ -1,3 +1,9 @@
+interface PageMetadata {
+    title: string;
+    description?: string;
+    infoUrl?: string;
+}
+
 interface SkillsMap {
     mapId: string;
     displayName: string;

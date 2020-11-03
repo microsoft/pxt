@@ -7,11 +7,11 @@
     margin-left: 0.5rem;
     font-size: 1.2rem;
     font-weight: 600;
-    margin-top: 0.5rem;
+    margin-top: 1rem;
 }
 
 .carousel-items {
-    height: 13.5rem;
+    height: 15rem;
     flex: 1;
     padding: 0.5rem;
     overflow: hidden;
@@ -27,7 +27,7 @@
 .carousel-item {
     position: relative;
     width: 18rem;
-    height: 12.5rem;
+    height: 14rem;
     flex-grow: 0;
     flex-shrink: 0;
     margin-right: 0.5rem;

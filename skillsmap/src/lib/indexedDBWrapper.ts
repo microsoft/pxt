@@ -25,7 +25,7 @@ export class IDBWrapper {
         console.error(new Error(`${this.name} IDBWrapper error for ${op}: ${err.message}`));
         reject(err);
         // special case for quota exceeded
-        if (err.name == "QuotaExceededError") {
+        if (err.name === "QuotaExceededError") {
             // oops, we ran out of space
             pxt.log(`storage quota exceeded...`);
             pxt.tickEvent('storage.quotaexceedederror');
@@ -42,7 +42,7 @@ export class IDBWrapper {
 
     static deleteDatabaseAsync(name: string): Promise<void> {
         return new Promise((resolve, reject) => {
-            const idbFactory: IDBFactory = window.indexedDB || (<any>window).mozIndexedDB || (<any>window).webkitIndexedDB || (<any>window).msIndexedDB;
+            const idbFactory: IDBFactory = window.indexedDB || (window as any).mozIndexedDB || (window as any).webkitIndexedDB || (window as any).msIndexedDB;
             const request = idbFactory.deleteDatabase(name);
             request.onsuccess = () => resolve();
             request.onerror = () => reject(request.error);
@@ -51,7 +51,7 @@ export class IDBWrapper {
 
     public openAsync(): Promise<void> {
         return new Promise((resolve, reject) => {
-            const idbFactory: IDBFactory = window.indexedDB || (<any>window).mozIndexedDB || (<any>window).webkitIndexedDB || (<any>window).msIndexedDB;
+            const idbFactory: IDBFactory = window.indexedDB || (window as any).mozIndexedDB || (window as any).webkitIndexedDB || (window as any).msIndexedDB;
             const request = idbFactory.open(this.name, this.version);
             request.onsuccess = () => {
                 this._db = request.result;
