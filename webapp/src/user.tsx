@@ -58,7 +58,6 @@ export class ProfileDialog extends auth.Component<ProfileDialogProps, ProfileDia
             >
                 <AccountPanel parent={this} />
                 <GitHubPanel parent={this} />
-                <PrivacyPanel parent={this} />
             </sui.Modal>
         );
     }
@@ -77,8 +76,25 @@ class AccountPanel extends sui.UIElement<AccountPanelProps, {}> {
         auth.logout();
     }
 
+    handleDeleteAccountClick = async () => {
+        const result = await core.confirmAsync({
+            header: lf("Delete Account"),
+            body: lf("You are about to delete your account. You can't undo this. Are you sure?"),
+            agreeClass: "red",
+            agreeIcon: "delete",
+            agreeLbl: lf("Delete my account"),
+        });
+        if (result) {
+            await auth.deleteAccount();
+            // Exit out of the profile screen.
+            this.props.parent.hide();
+            core.infoNotification(lf("Account deleted!"));
+        }
+    }
+
     renderCore() {
         const user = this.getData<auth.UserProfile>(auth.USER);
+        const provider = auth.identityProvider(user.idp.provider);
 
         const avatarElem = (
             <div className="profile-pic avatar">
@@ -92,17 +108,30 @@ class AccountPanel extends sui.UIElement<AccountPanelProps, {}> {
         );
 
         return (
-            <div className="ui card account">
+            <div className="ui card panel">
                 <div className="header-text">
                     <label>{lf("Account")}</label>
                 </div>
                 {user?.idp?.picture?.dataUrl ? avatarElem : initialsElem}
-                <div className="username">
-                    <label className="title">{lf("Account")}</label>
+                <div className="row">
+                    <label className="title">{lf("Name")}</label>
+                    <p className="value">{user?.idp?.displayName}</p>
+                </div>
+                <div className="row">
+                    <label className="title">{lf("Username")}</label>
                     <p className="value">{user?.idp?.username}</p>
                 </div>
-                <div className="signout">
+                <div className="row">
+                    <label className="title">{lf("Provider")}</label>
+                    <p className="value">{provider.name}</p>
+                </div>
+                <div className="row">
                     <sui.Button text={lf("Sign out")} icon={`xicon ${user?.idp?.provider}`} ariaLabel={lf("Sign out {0}", user?.idp?.provider)} onClick={this.handleSignoutClicked} />
+                </div>
+                <div className="row">
+                    <label className="title">{lf("Delete Account")}</label>
+                    <p className="description">{lf("Warning: Deleting your account will delete your cloud-saved projects! No undo. If you want to preserve your projects, save them to disk first.")}</p>
+                    <sui.Button ariaLabel={lf("Delete Account")} className="red" text={lf("Delete Account")} onClick={this.handleDeleteAccountClick} />
                 </div>
             </div>
         );
@@ -125,16 +154,30 @@ class GitHubPanel extends sui.UIElement<GitHubPanelProps, {}> {
         const github = cloudsync.githubProvider();
         const user = github.user();
         return (
-            <div className="connected">
-                <label className="title">{lf("Username")}</label>
-                <p className="value">{user?.userName}</p>
-            </div>
+            <>
+                <div className="row">
+                    <label className="title">{lf("Name")}</label>
+                    <p className="value">{user?.name}</p>
+                </div>
+                <div className="row">
+                    <label className="title">{lf("Username")}</label>
+                    <p className="value">{user?.userName}</p>
+                </div>
+            </>
         )
+    }
+
+    renderUserPhoto(url: string): JSX.Element {
+        return (
+            <div className="profile-pic avatar">
+                <img src={url} alt={lf("GitHub user photo")} />
+            </div>
+        );
     }
 
     renderUnlink(): JSX.Element {
         return (
-            <div className="unlink">
+            <div className="row">
                 <sui.Button text={lf("Unlink")} icon="github" ariaLabel={lf("Unlink GitHub")} onClick={this.handleUnlinkClicked} />
             </div>
         );
@@ -142,7 +185,7 @@ class GitHubPanel extends sui.UIElement<GitHubPanelProps, {}> {
 
     renderDisconnected(): JSX.Element {
         return (
-            <div className="disconnected">
+            <div className="row">
                 <p className="description">{lf("You haven't linked a GitHub account.")}</p>
             </div>
         )
@@ -154,14 +197,11 @@ class GitHubPanel extends sui.UIElement<GitHubPanelProps, {}> {
         const user = github.user();
 
         return (
-            <div className="ui card github">
+            <div className="ui card panel">
                 <div className="header-text">
                     <label>{lf("GitHub")}</label>
                 </div>
-                {user?.photo ?
-                    <div className="profile-pic avatar">
-                        <img src={user.photo} alt={lf("GitHub user photo")} />
-                    </div> : undefined}
+                {user?.photo ? this.renderUserPhoto(user.photo) : undefined}
                 {user ? this.renderUsername() : undefined}
                 {user ? this.renderUnlink() : undefined}
                 {!user ? this.renderDisconnected() : undefined}
@@ -169,49 +209,3 @@ class GitHubPanel extends sui.UIElement<GitHubPanelProps, {}> {
         );
     }
 }
-
-type PrivacyPanelProps = PanelProps & {
-};
-
-class PrivacyPanel extends sui.UIElement<PrivacyPanelProps, {}> {
-
-    handleDeleteAccountClick = async () => {
-        const result = await core.confirmAsync({
-            header: lf("Delete Account"),
-            body: lf("You are about to delete your account. You can't undo this. Are you sure?"),
-            agreeClass: "red",
-            agreeIcon: "delete",
-            agreeLbl: lf("Delete my account"),
-        });
-        if (result) {
-            await auth.deleteAccount();
-            // Exit out of the profile screen.
-            this.props.parent.hide();
-            core.infoNotification(lf("Account deleted!"));
-        }
-    }
-
-    renderCore() {
-        return (
-            <div className="ui card privacy">
-                <div className="header-text">
-                    <label>{lf("Privacy")}</label>
-                </div>
-                <div className="export-data-desc">
-                    <p className="description">{lf("You can view and export all the information we have about you at any time.")}</p>
-                </div>
-                <div className="export-data-btn">
-                    <sui.Button text={lf("Request Data")} />
-                </div>
-                <div className="delete-acct-desc">
-                    <p></p>
-                    <p className="description">{lf("You can delete your account. Warning: This will delete all your saved projects! If you want to preserve them, export your data first.")}</p>
-                </div>
-                <div className="delete-acct-btn">
-                    <sui.Button ariaLabel={lf("Delete Account")} className="red" text={lf("Delete Account")} onClick={this.handleDeleteAccountClick} />
-                </div>
-            </div>
-        );
-    }
-}
-
