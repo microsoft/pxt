@@ -2,7 +2,7 @@ import * as React from "react";
 import { connect } from 'react-redux';
 
 import { SkillsMapState } from '../store/reducer';
-import { dispatchChangeSelectedItem, dispatchOpenActivity } from '../actions/dispatch';
+import { dispatchChangeSelectedItem } from '../actions/dispatch';
 
 export interface Item {
     id: string;
