@@ -7,6 +7,7 @@ import { dispatchAddSkillsMap, dispatchClearSkillsMaps, dispatchSetPageTitle, di
 import { SkillsMapState } from './store/reducer';
 import { HeaderBar } from './components/HeaderBar';
 import { Banner } from './components/Banner';
+import { CompletionModal } from './components/CompletionModal';
 import { SkillsCarousel } from './components/SkillsCarousel';
 
 import { parseSkillsMap } from './lib/skillMapParser';
@@ -87,6 +88,7 @@ class AppImpl extends React.Component<AppProps> {
                     </div>
                 </div>
                 }
+                <CompletionModal />
             </div>);
     }
 }

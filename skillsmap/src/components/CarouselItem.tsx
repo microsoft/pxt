@@ -14,11 +14,9 @@ export interface Item {
 interface CarouselItemTemplateProps extends Item {
 }
 
-class CarouselItemTemplate extends React.Component<CarouselItemTemplateProps> {
-    render() {
-        const { label } = this.props;
-        return <span>{ label }</span>
-    }
+function CarouselItemTemplate(props: CarouselItemTemplateProps) {
+    const { label } = props;
+    return <span>{ label }</span>
 }
 
 interface CarouselItemProps {

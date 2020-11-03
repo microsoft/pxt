@@ -31,7 +31,7 @@
     font-size: 6rem;
     line-height: 6rem;
     color: #fff;
-    background-color: rgba(0,0,0,0.3);
+    background-color: rgba(0, 0, 0, 0.3);
 }
 
 .selected .skill-card-overlay {
@@ -176,4 +176,8 @@
 
 .completed i.xicon.redo {
     font-size: 1.5rem;
+}
+
+.completed i.xicon.redo:before {
+    vertical-align: bottom;
 }
