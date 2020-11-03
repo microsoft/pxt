@@ -23,6 +23,7 @@ namespace pxsim {
         clickTrigger?: boolean;
         breakOnStart?: boolean;
         storedState?: Map<any>;
+        ipc?: boolean;
     }
 
     export interface SimulatorInstructionsMessage extends SimulatorMessage {
