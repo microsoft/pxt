@@ -171,7 +171,7 @@ export async function loginCallback(qs: pxt.Map<string>) {
     if (!hasIdentity()) { return; }
 
     let state: AuthState;
-    let callbackState: CallbackState;
+    let callbackState: CallbackState = { ...NilCallbackState };
 
     do {
         // Read and remove auth state from local storage
@@ -208,7 +208,7 @@ export async function loginCallback(qs: pxt.Map<string>) {
             pxt.tickEvent('auth.login.error', { 'error': error, 'provider': state.idp });
             pxt.log(`Auth failed: ${error}:${error_description}`);
             // TODO: Is it correct to clear continuation hash?
-            callbackState = NilCallbackState;
+            callbackState = { ...NilCallbackState };
             // TODO: Show a message to the user (via rewritten continuation path)?
             break;
         }
