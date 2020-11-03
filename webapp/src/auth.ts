@@ -198,7 +198,7 @@ export async function loginCallback(qs: pxt.Map<string>) {
             ...NilCallbackState,
             ...state.callbackState
         };
-    
+
         const error = qs['error'];
         if (error) {
             // Possible values for 'error':
