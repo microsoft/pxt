@@ -1,8 +1,6 @@
 
 export function isActivityCompleted(user: UserState, mapId: string, activityId: string) {
-    const progress = user.mapProgress[mapId];
-
-    return !!(progress?.activityState[activityId]?.isCompleted);
+    return !!(lookupActivityProgress(user, mapId, activityId)?.isCompleted);
 }
 
 export function isMapUnlocked(user: UserState, map: SkillsMap) {
@@ -37,4 +35,8 @@ export function isActivityUnlocked(user: UserState, map: SkillsMap, activityId: 
 
         return false;
     }
+}
+
+export function lookupActivityProgress(user: UserState, mapId: string, activityId: string) {
+    return user.mapProgress[mapId]?.activityState[activityId]
 }

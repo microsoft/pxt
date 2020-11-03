@@ -31,7 +31,8 @@ interface CarouselItemProps {
 
 class CarouselItemImpl extends React.Component<CarouselItemProps> {
     handleClick = () => {
-        this.props.dispatchChangeSelectedItem(this.props.item.id);
+        const { item, dispatchChangeSelectedItem } = this.props;
+        dispatchChangeSelectedItem(item.id);
     }
 
     render() {
