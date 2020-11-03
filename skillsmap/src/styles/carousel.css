@@ -5,6 +5,9 @@
 
 .carousel-title {
     margin-left: 0.5rem;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
 }
 
 .carousel-items {
@@ -22,22 +25,15 @@
 }
 
 .carousel-item {
-    background-color: #ddd;
-
     position: relative;
     width: 18rem;
     height: 12.5rem;
     flex-grow: 0;
     flex-shrink: 0;
     margin-right: 0.5rem;
-    border: 2px solid transparent;
     display: flex;
     align-items: center;
     justify-content: center;
-}
-
-.carousel-item.selected {
-    border-color: #444;
 }
 
 .carousel-arrow {

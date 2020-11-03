@@ -31,6 +31,8 @@ class SkillsCarouselImpl extends React.Component<SkillsCarouselProps> {
                 id: activity.activityId,
                 mapId,
                 label: activity.displayName,
+                description: activity.description,
+                tags: activity.tags,
                 url: activity.url,
                 imageUrl: activity.imageUrl
             });
