@@ -71,13 +71,9 @@ const topReducer = (state: SkillsMapState = initialState, action: any): SkillsMa
                 editorView: {
                     ...state.editorView!,
                     currentHeaderId: action.id
-                }
-            };
-        case actions.SET_HEADERID_FOR_ACTIVITY:
-            return {
-                ...state,
+                },
                 user: setHeaderIdForActivity(state.user, state.editorView!.currentMapId, state.editorView!.currentActivityId, action.id)
-            }
+            };
         default:
             return state
     }

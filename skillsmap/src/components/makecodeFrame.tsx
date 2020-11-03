@@ -8,19 +8,24 @@ import  { dispatchSetHeaderIdForActivity } from '../actions/dispatch';
 
 import '../styles/makecode-editor.css'
 
+function isLocal() {
+    return window.location.hostname === "localhost";
+}
 
 interface MakeCodeFrameProps {
     activityId: string;
     title: string;
     url: string;
+    tutorialPath: string;
     activityHeaderId?: string;
     dispatchSetHeaderIdForActivity: (headerId: string) => void;
 }
 
-const editorUrl = "https://arcade.makecode.com"
+const editorUrl = isLocal() ? "http://localhost:3232/index.html" : "https://arcade.makecode.com"
 
 class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps> {
     protected ref: HTMLIFrameElement | undefined;
+    protected messageQueue: any[] = [];
 
     render() {
         const { url, title } = this.props;
@@ -59,7 +64,15 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps> {
 
     protected sendMessage(message: any) {
         if (this.ref) {
-            this.ref.contentWindow?.postMessage(message, "*");
+            if (!this.ref.contentWindow) {
+                this.messageQueue.push(message);
+            }
+            else {
+                while (this.messageQueue.length) {
+                    this.ref.contentWindow.postMessage(this.messageQueue.shift(), "*");
+                }
+                this.ref.contentWindow.postMessage(message, "*");
+            }
         }
     }
 
@@ -72,31 +85,38 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps> {
     }
 
     protected async handleWorkspaceSaveRequestAsync(request: pxt.editor.EditorWorkspaceSaveRequest) {
-        if (this.props.activityHeaderId && request.project.header?.id !== this.props.activityHeaderId) {
+        const { dispatchSetHeaderIdForActivity, activityHeaderId } = this.props;
+
+        if (activityHeaderId && request.project.header?.id !== activityHeaderId) {
             console.warn("Ignoring save to project " + request.project.header?.id)
             return;
         }
         const workspace = await getWorkspaceAsync();
         await workspace.saveProjectAsync(request.project);
 
-        const { activityId, dispatchSetHeaderIdForActivity, } = this.props;
-        if (!activityId) {
+        if (!activityHeaderId) {
             dispatchSetHeaderIdForActivity(request.project.header!.id);
         }
-
     }
 
     protected async handleWorkspaceReadyEventAsync() {
-        if (!this.props.activityHeaderId) return;
-        const workspace = await getWorkspaceAsync();
-        const project = await workspace.getProjectAsync(this.props.activityHeaderId);
-
-        this.sendMessage({
-            type: "pxthost",
-            action: "importproject",
-            project: project
-        } as pxt.editor.EditorMessageImportProjectRequest)
-
+        if (this.props.activityHeaderId) {
+            const workspace = await getWorkspaceAsync();
+            const project = await workspace.getProjectAsync(this.props.activityHeaderId);
+            this.sendMessage({
+                type: "pxteditor",
+                action: "importproject",
+                project: project
+            } as pxt.editor.EditorMessageImportProjectRequest)
+        }
+        else {
+            this.sendMessage({
+                type: "pxteditor",
+                action: "startactivity",
+                path: this.props.tutorialPath,
+                activityType: "tutorial"
+            } as pxt.editor.EditorMessageStartActivity);
+        }
     }
 }
 
@@ -109,11 +129,12 @@ function mapStateToProps(state: SkillsMapState, ownProps: any) {
     let title: string | undefined;
 
     const activity = state.maps[currentMapId].activities[currentActivityId];
-    url = `${editorUrl}/#tutorial:${activity.url}?controller=1`;
+    url = `${editorUrl}/?controller=1`;
     title = activity.displayName;
 
     return {
         url,
+        tutorialPath: activity.url,
         title,
         activityId: currentActivityId,
         activityHeaderId: currentHeaderId

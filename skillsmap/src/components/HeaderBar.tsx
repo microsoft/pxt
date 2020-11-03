@@ -1,5 +1,5 @@
-import * as React from "react";
 /// <reference path="../lib/skillMap.d.ts" />
+import * as React from "react";
 
 import { connect } from 'react-redux';
 import { dispatchCloseActivity } from '../actions/dispatch';
