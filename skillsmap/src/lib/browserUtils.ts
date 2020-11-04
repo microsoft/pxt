@@ -1,3 +1,4 @@
+const apiRoot = "https://www.makecode.com/api/md/arcade/";
 export type MarkdownSource = "docs" | "github";
 
 export function parseHash() {
@@ -11,10 +12,11 @@ export function parseHash() {
 }
 
 export async function getMarkdownAsync(source: MarkdownSource, url: string) {
-    // TODO handle fetching from our cloud/caching (translations?)
     if (!source || !url) return "";
     switch (source) {
         case "docs":
+            url = url.trim().replace(/^\\/i, "");
+            return await httpGetAsync(`${apiRoot}/${url}`);
         case "github":
             /**
              * FORMATS:

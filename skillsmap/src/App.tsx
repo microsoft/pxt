@@ -43,18 +43,22 @@ class AppImpl extends React.Component<AppProps> {
     protected fetchAndParseSkillsMaps(source: MarkdownSource, url: string) {
         getMarkdownAsync(source, url).then((md) => {
             if (md) {
-                const { maps, metadata } = parseSkillsMap(md);
-                if (maps?.length > 0) {
-                    this.props.dispatchClearSkillsMaps();
-                    maps.forEach(map => {
-                        this.props.dispatchAddSkillsMap(map);
-                    })
-                }
-                if (metadata) {
-                    const { title, description, infoUrl } = metadata;
-                    this.props.dispatchSetPageTitle(title);
-                    if (description) this.props.dispatchSetPageDescription(description);
-                    if (infoUrl) this.props.dispatchSetPageDescription(infoUrl);
+                try {
+                    const { maps, metadata } = parseSkillsMap(md);
+                    if (maps?.length > 0) {
+                        this.props.dispatchClearSkillsMaps();
+                        maps.forEach(map => {
+                            this.props.dispatchAddSkillsMap(map);
+                        })
+                    }
+                    if (metadata) {
+                        const { title, description, infoUrl } = metadata;
+                        this.props.dispatchSetPageTitle(title);
+                        if (description) this.props.dispatchSetPageDescription(description);
+                        if (infoUrl) this.props.dispatchSetPageDescription(infoUrl);
+                    }
+                } catch {
+                    console.error("Error parsing markdown")
                 }
             }
         });
