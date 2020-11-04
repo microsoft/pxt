@@ -18,19 +18,24 @@ export class CompletionModalImpl extends React.Component<CompletionModalProps> {
         const  { activity, dispatchHideCompletionModal } = this.props;
         if (!activity) return <div />
 
+        const completionModalTitle = "Activity Complete!";
+        const completionModalText = "Good work! You've completed {0}. Keep going?";
+        const completionModalTextSegments = completionModalText.split("{0}");
+
+        const hasNext = !!activity?.next;
         const actions = [
-            { label: "NEXT", onClick: () => console.log(activity?.next?.[0]?.activityId || "no next") },
-            { label: "REWARDS", onClick: () => console.log("rewards") }
+            { label: hasNext ? "NEXT" : "DONE", onClick: () => console.log(activity?.next?.[0]?.activityId || "Done") }
         ]
 
-        return <Modal title="Activity Complete!" actions={actions} onClose={() => dispatchHideCompletionModal()}>
-            Good work! You've completed {<strong>{activity.displayName}</strong>}. Keep going?
+        return <Modal title={completionModalTitle} actions={actions} onClose={() => dispatchHideCompletionModal()}>
+            {completionModalTextSegments[0]}{<strong>{activity.displayName}</strong>}{completionModalTextSegments[1]}
         </Modal>
     }
 }
 
 function mapStateToProps(state: SkillsMapState, ownProps: any) {
     if (!state) return {};
+    console.log(state.modal)
     const { currentMapId, currentActivityId } = state.modal || {};
     return {
         activity: currentMapId && currentActivityId ? state.maps[currentMapId].activities[currentActivityId] : undefined

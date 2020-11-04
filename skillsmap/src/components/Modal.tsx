@@ -32,7 +32,7 @@ export class Modal extends React.Component<ModalProps> {
                 <div className="modal-header">
                     <div className="modal-title">{title}</div>
                     <div className="spacer" />
-                    <div className="modal-close-icon"  onClick={this.handleCloseClick}><i className="icon close"/></div>
+                    <div className="modal-close-icon" onClick={this.handleCloseClick}><i className="icon close"/></div>
                 </div>
                 <div className="modal-body">
                     { this.props.children }
