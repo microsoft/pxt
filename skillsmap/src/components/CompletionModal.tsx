@@ -35,7 +35,6 @@ export class CompletionModalImpl extends React.Component<CompletionModalProps> {
 
 function mapStateToProps(state: SkillsMapState, ownProps: any) {
     if (!state) return {};
-    console.log(state.modal)
     const { currentMapId, currentActivityId } = state.modal || {};
     return {
         activity: currentMapId && currentActivityId ? state.maps[currentMapId].activities[currentActivityId] : undefined
