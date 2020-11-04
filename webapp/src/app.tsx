@@ -118,6 +118,7 @@ export class ProjectView
     chooseHwDialog: projects.ChooseHwDialog;
     prevEditorId: string;
     screenshotHandlers: ((msg: pxt.editor.ScreenshotData) => void)[] = [];
+    rootClasses: string[];
 
     private lastChangeTime: number;
     private reload: boolean;
@@ -3906,6 +3907,7 @@ export class ProjectView
             this.editor == this.textEditor && this.state.errorListState,
             'full-abs',
         ];
+        this.rootClasses = rootClassList;
         const rootClasses = sui.cx(rootClassList);
 
         if (this.state.hasError) {

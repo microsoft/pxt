@@ -1042,13 +1042,14 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
         const disableFileAccessinMaciOs = pxt.appTarget.appTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isIOS() || pxt.BrowserUtils.isMac());
         const disableFileAccessinAndroid = pxt.appTarget.appTheme.disableFileAccessinAndroid && pxt.BrowserUtils.isAndroid();
         const showImport = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing;
+        const classes = (["importdialog", this.props.parent.rootClasses.filter((e: string) => e != "full-abs").join(" ")]).join(" ");
         const showCreateGithubRepo = targetTheme.githubEditor
             && !pxt.winrt.isWinRT() // not supported in windows 10
             && !pxt.BrowserUtils.isPxtElectron()
             && pxt.appTarget?.cloud?.cloudProviders?.github;
         /* tslint:disable:react-a11y-anchors */
         return (
-            <sui.Modal isOpen={visible} className="importdialog" size="small"
+            <sui.Modal isOpen={visible} className={classes} size="small"
                 onClose={this.close} dimmer={true}
                 closeIcon={true} header={lf("Import")}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
@@ -1168,9 +1169,10 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
                 onclick: this.skip
             }
         ];
+        const classes = (["exitandsave", this.props.parent.rootClasses.filter((e: string) => e != "full-abs").join(" ")]).join(" ");
 
         return (
-            <sui.Modal isOpen={visible} className="exitandsave" size="tiny"
+            <sui.Modal isOpen={visible} className={classes} size="tiny"
                 onClose={this.hide} dimmer={true} buttons={actions}
                 closeIcon={true} header={lf("Project has no name {0}", this.state.emoji)}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
@@ -1303,8 +1305,9 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
             }
         ];
 
+        const classes = "newproject" + this.props.parent.rootClasses.filter((e: string) => e != "full-abs").join(" ");
 
-        return <sui.Modal isOpen={visible} className="newproject" size="tiny"
+        return <sui.Modal isOpen={visible} className={classes} size="tiny"
             onClose={this.hide} dimmer={true} buttons={actions}
             closeIcon={true} header={lf("Create a Project {0}", emoji)}
             closeOnDimmerClick closeOnDocumentClick closeOnEscape

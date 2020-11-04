@@ -287,9 +287,13 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
             this.submitConsent();
         };
         const actions: sui.ModalButton[] = action ? [{ label: action, onclick: actionClick }] : undefined;
+        const extensionClasses = [(needsConsent?"extensionconsentdialog":"extensiondialog"),
+            this.props.parent.rootClasses.filter((e) => e != "full-abs").join(" ")].join(" ");
+        const permissionClasses = ["extensionpermissiondialog", "basic",
+            this.props.parent.rootClasses.filter((e) => e != "full-abs").join(" ")].join(" ");
         if (!needsConsent && visible) this.initializeFrame();
         return (
-            <sui.Modal isOpen={visible} className={`${needsConsent ? 'extensionconsentdialog' : 'extensiondialog'}`}
+            <sui.Modal isOpen={visible} className={extensionClasses}
                 size={needsConsent ? 'small' : 'fullscreen'} closeIcon={true}
                 onClose={this.hide} dimmer={true} buttons={actions}
                 modalDidOpen={this.updateDimensions} shouldFocusAfterRender={false}
@@ -298,7 +302,7 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
                 {consent ?
                     <div id="extensionWrapper" data-frame={extension} ref={this.handleExtensionWrapperRef}>
                         {permissionRequest ?
-                            <sui.Modal isOpen={true} className="extensionpermissiondialog basic" closeIcon={false} dimmer={true} dimmerClassName="permissiondimmer">
+                            <sui.Modal isOpen={true} className={permissionClasses} closeIcon={false} dimmer={true} dimmerClassName="permissiondimmer">
                                 <div className="permissiondialoginner">
                                     <div className="permissiondialogheader">
                                         {lf("Permission Request")}

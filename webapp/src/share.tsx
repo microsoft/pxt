@@ -467,9 +467,10 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             && pxt.appTarget?.cloud?.cloudProviders?.github;
         const unknownError = sharingError && !tooBigErrorSuggestGitHub;
         const qrCodeFull = !!qrCodeUri && qrCodeExpanded;
+        const classes = (["sharedialog", this.props.parent.rootClasses.filter((e: string) => e != "full-abs").join(" ")]).join(" ");
 
         return (
-            <sui.Modal isOpen={visible} className="sharedialog"
+            <sui.Modal isOpen={visible} className={classes}
                 size={thumbnails ? "" : "small"}
                 onClose={this.hide}
                 dimmer={true} header={title || lf("Share Project")}

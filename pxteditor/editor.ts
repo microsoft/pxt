@@ -337,6 +337,7 @@ namespace pxt.editor {
         checkForHwVariant(): boolean;
         pairAsync(): Promise<void>;
 
+        rootClasses: string[];
         showModalDialogAsync(options: ModalDialogOptions): Promise<void>;
 
         askForProjectCreationOptionsAsync(): Promise<ProjectCreationOptions>;
