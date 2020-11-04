@@ -22,7 +22,6 @@ interface SkillCardProps extends Item {
 }
 
 export class SkillCardImpl extends React.Component<SkillCardProps> {
-
     protected getSkillCardActionText(): string {
         switch (this.props.status) {
             case "locked":
@@ -56,15 +55,13 @@ export class SkillCardImpl extends React.Component<SkillCardProps> {
 
         return <div className={`skill-card ${status || ''}`}>
             <div className="skill-card-display">
-                {(status === "locked" || status === "completed") && <div className="skill-card-overlay">
-                    <i className={`icon ${status === "locked" ? "xx" : "check circle"}`} />
-                </div>}
+                {status === "locked" && <div className="skill-card-overlay" />}
                 <div className="skill-card-image">
                     {imageUrl ? <img src={imageUrl} alt={`Preview of activity content`} /> : <i className="icon game" />}
                 </div>
                 <div className="skill-card-label">
                     <div className="skill-card-title">
-                        {status === "locked" && <i className="icon lock" />}
+                        {(status === "locked" || status === "completed") && <i className={`icon ${status === "locked" ? "lock" : "check circle"}`} />}
                         <span>{label}</span>
                     </div>
                     <div className="skill-card-tags">

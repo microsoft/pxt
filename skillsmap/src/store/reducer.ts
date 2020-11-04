@@ -10,13 +10,18 @@ export interface SkillsMapState {
     selectedItem?: string;
 
     editorView?: EditorViewState;
+    modal?: ModalState;
 }
-
 
 export interface EditorViewState {
     currentHeaderId?: string;
     currentMapId: string;
     currentActivityId: string;
+}
+
+interface ModalState {
+    currentMapId?: string;
+    currentActivityId?: string;
 }
 
 const initialState: SkillsMapState = {
@@ -94,6 +99,16 @@ const topReducer = (state: SkillsMapState = initialState, action: any): SkillsMa
                 ...state,
                 infoUrl: action.infoUrl
             }
+        case actions.SHOW_COMPLETION_MODAL:
+            return {
+                ...state,
+                modal: { currentMapId: action.mapId, currentActivityId: action.activityId }
+            };
+        case actions.HIDE_COMPLETION_MODAL:
+            return {
+                ...state,
+                modal: undefined
+            };
         default:
             return state
     }
