@@ -287,7 +287,7 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
             this.submitConsent();
         };
         const actions: sui.ModalButton[] = action ? [{ label: action, onclick: actionClick }] : undefined;
-        const extensionClasses = [(needsConsent?"extensionconsentdialog":"extensiondialog"),
+        const extensionClasses = [(needsConsent ? "extensionconsentdialog" : "extensiondialog"),
             this.props.parent.rootClasses.filter((e) => e != "full-abs").join(" ")].join(" ");
         const permissionClasses = ["extensionpermissiondialog", "basic",
             this.props.parent.rootClasses.filter((e) => e != "full-abs").join(" ")].join(" ");
