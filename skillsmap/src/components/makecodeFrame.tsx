@@ -42,10 +42,13 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
         const { url, title } = this.props;
         const { loaded } = this.state;
 
+        const loadingText = "Loading..."
+        const imageAlt = "MakeCode Logo";
+
         return <div className="makecode-frame-outer">
             <div className={`makecode-frame-loader ${loaded ? "hidden" : ""}`}>
-                <img src="./logo.svg" alt="MakeCode Logo" />
-                <div className="makecode-frame-loader-text">Loading...</div>
+                <img src="./logo.svg" alt={imageAlt} />
+                <div className="makecode-frame-loader-text">{loadingText}</div>
             </div>
             <iframe className="makecode-frame" src={url} title={title} ref={this.handleFrameRef}></iframe>
         </div>
