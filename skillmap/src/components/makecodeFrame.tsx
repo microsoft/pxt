@@ -3,7 +3,7 @@ import * as React from "react";
 import { connect } from 'react-redux';
 import { getWorkspaceAsync } from "../lib/workspaceProvider";
 
-import { SkillsMapState } from '../store/reducer';
+import { SkillMapState } from '../store/reducer';
 import  { dispatchSetHeaderIdForActivity } from '../actions/dispatch';
 
 import '../styles/makecode-editor.css'
@@ -164,7 +164,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
     }
 }
 
-function mapStateToProps(state: SkillsMapState, ownProps: any) {
+function mapStateToProps(state: SkillMapState, ownProps: any) {
     if (!state || !state.editorView) return {};
 
     const { currentActivityId, currentMapId, currentHeaderId } = state.editorView;

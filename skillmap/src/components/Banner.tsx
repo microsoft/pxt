@@ -1,7 +1,7 @@
 import * as React from "react";
 import { connect } from 'react-redux';
 
-import { SkillsMapState } from '../store/reducer';
+import { SkillMapState } from '../store/reducer';
 
 interface BannerProps {
     title: string;
@@ -24,7 +24,7 @@ export class BannerImpl extends React.Component<BannerProps> {
     }
 }
 
-function mapStateToProps(state: SkillsMapState, ownProps: any) {
+function mapStateToProps(state: SkillMapState, ownProps: any) {
     return {
         title: state.title,
         description: state.description

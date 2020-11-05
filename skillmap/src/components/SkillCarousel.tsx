@@ -3,21 +3,21 @@
 import * as React from "react";
 import { connect } from 'react-redux';
 
-import { SkillsMapState } from '../store/reducer';
+import { SkillMapState } from '../store/reducer';
 import { Carousel } from './Carousel';
 import { Item } from './CarouselItem';
 import { SkillCard } from './SkillCard';
 
-interface SkillsCarouselProps {
-    map: SkillsMap;
+interface SkillCarouselProps {
+    map: SkillMap;
     user: UserState;
     selectedItem?: string;
 }
 
-class SkillsCarouselImpl extends React.Component<SkillsCarouselProps> {
+class SkillCarouselImpl extends React.Component<SkillCarouselProps> {
     protected items: Item[];
 
-    constructor(props: SkillsCarouselProps) {
+    constructor(props: SkillCarouselProps) {
         super(props);
 
         this.items = this.getItems(props.map.mapId, props.map.root);
@@ -47,7 +47,7 @@ class SkillsCarouselImpl extends React.Component<SkillsCarouselProps> {
     }
 }
 
-function mapStateToProps(state: SkillsMapState, ownProps: any) {
+function mapStateToProps(state: SkillMapState, ownProps: any) {
     if (!state) return {};
     return {
         progress: state.user,
@@ -55,4 +55,4 @@ function mapStateToProps(state: SkillsMapState, ownProps: any) {
     }
 }
 
-export const SkillsCarousel = connect(mapStateToProps)(SkillsCarouselImpl);
+export const SkillCarousel = connect(mapStateToProps)(SkillCarouselImpl);

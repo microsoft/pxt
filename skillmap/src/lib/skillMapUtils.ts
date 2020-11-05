@@ -3,7 +3,7 @@ export function isActivityCompleted(user: UserState, mapId: string, activityId: 
     return !!(lookupActivityProgress(user, mapId, activityId)?.isCompleted);
 }
 
-export function isMapUnlocked(user: UserState, map: SkillsMap) {
+export function isMapUnlocked(user: UserState, map: SkillMap) {
     for (const pre of map.prerequisites) {
         if (pre.type === "tag") {
             const numCompleted = user.completedTags[pre.tag];
@@ -17,7 +17,7 @@ export function isMapUnlocked(user: UserState, map: SkillsMap) {
     return true;
 }
 
-export function isActivityUnlocked(user: UserState, map: SkillsMap, activityId: string) {
+export function isActivityUnlocked(user: UserState, map: SkillMap, activityId: string) {
     if (map.root.activityId === activityId) return true;
 
     return checkRecursive(map.root);

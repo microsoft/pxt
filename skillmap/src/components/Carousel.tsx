@@ -1,7 +1,7 @@
 import * as React from "react";
 import { connect } from 'react-redux';
 
-import { SkillsMapState } from '../store/reducer';
+import { SkillMapState } from '../store/reducer';
 import { Item, CarouselItem } from './CarouselItem';
 import { dispatchChangeSelectedItem } from '../actions/dispatch';
 
@@ -73,7 +73,7 @@ class CarouselImpl extends React.Component<CarouselProps, CarouselState> {
     }
 }
 
-function mapStateToProps(state: SkillsMapState, ownProps: any) {
+function mapStateToProps(state: SkillMapState, ownProps: any) {
     if (!state) return {};
     return {
         selectedItem: state.selectedItem

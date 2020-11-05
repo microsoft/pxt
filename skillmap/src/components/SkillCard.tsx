@@ -1,7 +1,7 @@
 import * as React from "react";
 import { connect } from 'react-redux';
 
-import { SkillsMapState } from '../store/reducer';
+import { SkillMapState } from '../store/reducer';
 import { Item } from './CarouselItem';
 
 import { dispatchOpenActivity } from '../actions/dispatch';
@@ -84,7 +84,7 @@ export class SkillCardImpl extends React.Component<SkillCardProps> {
     }
 }
 
-function mapStateToProps(state: SkillsMapState, ownProps: any) {
+function mapStateToProps(state: SkillMapState, ownProps: any) {
     let status: SkillCardStatus = "locked";
     if (state.user && state.maps?.[ownProps.mapId] && isActivityUnlocked(state.user, state.maps[ownProps.mapId], ownProps.id)) {
         if (isActivityCompleted(state.user, ownProps.mapId, ownProps.id)) {

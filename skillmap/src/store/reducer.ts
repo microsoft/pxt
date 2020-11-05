@@ -1,12 +1,12 @@
 import * as actions from '../actions/types'
 import { lookupActivityProgress } from '../lib/skillMapUtils';
 
-export interface SkillsMapState {
+export interface SkillMapState {
     title: string;
     description: string;
     infoUrl?: string;
     user: UserState;
-    maps: { [key: string]: SkillsMap };
+    maps: { [key: string]: SkillMap };
     selectedItem?: string;
 
     editorView?: EditorViewState;
@@ -24,7 +24,7 @@ interface ModalState {
     currentActivityId?: string;
 }
 
-const initialState: SkillsMapState = {
+const initialState: SkillMapState = {
     title: "Game Maker Guide",
     description: "Level up your game making skills by completing the tutorials in this guide.",
     user: {
@@ -34,9 +34,9 @@ const initialState: SkillsMapState = {
     maps: {}
 }
 
-const topReducer = (state: SkillsMapState = initialState, action: any): SkillsMapState => {
+const topReducer = (state: SkillMapState = initialState, action: any): SkillMapState => {
     switch (action.type) {
-        case actions.ADD_SKILLS_MAP:
+        case actions.ADD_SKILL_MAP:
             return {
                 ...state,
                 user: {
@@ -51,7 +51,7 @@ const topReducer = (state: SkillsMapState = initialState, action: any): SkillsMa
                     [action.map.mapId]: action.map
                 }
             }
-        case actions.CLEAR_SKILLS_MAPS:
+        case actions.CLEAR_SKILL_MAPS:
             return {
                 ...state,
                 maps: {}

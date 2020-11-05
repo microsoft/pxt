@@ -3,7 +3,7 @@ import * as React from "react";
 
 import { connect } from 'react-redux';
 import { dispatchCloseActivity } from '../actions/dispatch';
-import { SkillsMapState } from '../store/reducer';
+import { SkillMapState } from '../store/reducer';
 
 
 interface HeaderBarProps {
@@ -31,7 +31,7 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
 }
 
 
-function mapStateToProps(state: SkillsMapState, ownProps: any) {
+function mapStateToProps(state: SkillMapState, ownProps: any) {
     if (!state) return {};
     return {
         activityOpen: !!state.editorView
