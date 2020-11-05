@@ -1,4 +1,9 @@
 
+export function isMapCompleted(user: UserState, map: SkillMap) {
+    if (Object.keys(map?.activities).some(k => !user?.mapProgress[map.mapId]?.activityState[k]?.isCompleted)) return false;
+    return true;
+}
+
 export function isActivityCompleted(user: UserState, mapId: string, activityId: string) {
     return !!(lookupActivityProgress(user, mapId, activityId)?.isCompleted);
 }

@@ -4,6 +4,8 @@ import * as React from "react";
 import { connect } from 'react-redux';
 
 import { SkillMapState } from '../store/reducer';
+import { dispatchChangeSelectedItem, dispatchShowCompletionModal } from '../actions/dispatch';
+import { isMapCompleted } from '../lib/skillMapUtils';
 import { Carousel } from './Carousel';
 import { Item } from './CarouselItem';
 import { SkillCard } from './SkillCard';
@@ -12,6 +14,8 @@ interface SkillCarouselProps {
     map: SkillMap;
     user: UserState;
     selectedItem?: string;
+    dispatchChangeSelectedItem: (id: string) => void;
+    dispatchShowCompletionModal: (mapId: string, activityId?: string) => void;
 }
 
 class SkillCarouselImpl extends React.Component<SkillCarouselProps> {
@@ -42,17 +46,43 @@ class SkillCarouselImpl extends React.Component<SkillCarouselProps> {
         return items;
     }
 
+    protected onItemSelect = (id: string) => {
+        this.props.dispatchChangeSelectedItem(id);
+    }
+
+    protected handleEndCardClick = () => {
+        this.props.dispatchShowCompletionModal(this.props.map.mapId);
+    }
+
+    protected getEndCard(): JSX.Element {
+        return <div className="end-card" key="end">
+            <div className="end-card-icon" onClick={this.handleEndCardClick}>
+                <i className="icon trophy" />
+            </div>
+        </div>
+    }
+
     render() {
-        return <Carousel title={this.props.map.displayName} items={this.items} itemTemplate={SkillCard} itemClassName="linked" />
+        const { map, user, selectedItem } = this.props;
+        const endCard = isMapCompleted(user, map) ? [this.getEndCard()] : [];
+
+        return <Carousel title={map.displayName} items={this.items} itemTemplate={SkillCard} itemClassName="linked"
+            onItemSelect={this.onItemSelect} selectedItem={selectedItem}
+            appendChildren={endCard} />
     }
 }
 
 function mapStateToProps(state: SkillMapState, ownProps: any) {
     if (!state) return {};
     return {
-        progress: state.user,
+        user: state.user,
         selectedItem: state.selectedItem && ownProps.map?.activities?.[state.selectedItem] ? state.selectedItem : undefined
     }
 }
 
-export const SkillCarousel = connect(mapStateToProps)(SkillCarouselImpl);
+const mapDispatchToProps = {
+    dispatchChangeSelectedItem,
+    dispatchShowCompletionModal
+};
+
+export const SkillCarousel = connect(mapStateToProps, mapDispatchToProps)(SkillCarouselImpl);

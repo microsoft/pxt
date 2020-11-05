@@ -181,3 +181,41 @@
 .completed i.xicon.redo:before {
     vertical-align: bottom;
 }
+
+/* END CARD DISPLAY (TROPHY) */
+.end-card {
+    position: relative;
+    flex-grow: 0;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 2rem;
+}
+
+.end-card-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 6rem;
+    height: 6rem;
+    margin-right: 3rem;
+    border-radius: 50%;
+
+    background-color: #ddd;
+}
+
+.end-card i.icon {
+    font-size: 4rem;
+    line-height: 4rem;
+    margin: 0;
+}
+
+.end-card:before {
+    content: '';
+    position: absolute;
+    left: -2.5rem;
+    width: 2.5rem;
+    height: 0.75rem;
+    background-color: #000;
+}

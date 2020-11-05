@@ -2,7 +2,7 @@ import * as React from "react";
 
 import '../styles/modal.css'
 
-interface ModalAction {
+export interface ModalAction {
     label: string;
     className?: string;
     onClick: () => void;
