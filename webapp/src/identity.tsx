@@ -59,8 +59,8 @@ export class LoginDialog extends auth.Component<LoginDialogProps, LoginDialogSta
                     </div>
                     <div className="providers">
                         <div className="provider">
-                            {providers.map(p => (
-                                <ProviderButton provider={p} rememberMe={this.state.rememberMe} continuationHash={this.state.continuationHash} />
+                            {providers.map((p, key) => (
+                                <ProviderButton key={key} provider={p} rememberMe={this.state.rememberMe} continuationHash={this.state.continuationHash} />
                             ))}
                         </div>
                         <div className="remember-me">

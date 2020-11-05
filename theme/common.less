@@ -1761,100 +1761,37 @@ div.simframe.ui.embed {
             font-size: 20px;
             white-space: nowrap;
             grid-row-start: 1;
-            grid-row-end: 2;
+            grid-row-end: 1;
             grid-column-start: 1;
             grid-column-end: 2;
             justify-self: start;
         }
 
-        &.privacy {
+        div.profile-pic {
+            grid-row-start: 1;
+            grid-row-end: 1;
+            grid-column-start: 2;
+            grid-column-end: 2;
+            justify-self: end;
+        }
+
+        &.panel {
             width: fit-content;
             min-width: 350px;
             max-width: 500px;
             padding: 14px;
             display: inline-grid;
-            row-gap: 10px;
-            grid-template-rows: 36px auto;
+            row-gap: 20px;
+            grid-template-rows: auto;
             grid-template-columns: auto;
-        }
 
-        &.github {
-            width: fit-content;
-            min-width: 350px;
-            max-width: 500px;
-            padding: 14px;
-            display: inline-grid;
-            row-gap: 10px;
-            grid-template-rows: 36px auto 46px;
-            grid-template-columns: 50% 50%;
-
-            div.profile-pic {
-                grid-row-start: 1;
-                grid-row-end: 2;
-                grid-column-start: 2;
-                grid-column-end: 2;
-                justify-self: end;
-            }
-
-            div.connected {
-                grid-row-start: 2;
-                grid-row-end: 2;
+            div.row {
+                grid-row-start: auto;
+                grid-row-end: auto;
                 grid-column-start: 1;
-                grid-column-end: 3;
+                grid-column-end: 2;
                 justify-self: start;
                 max-width: 100%;
-            }
-
-            div.disconnected {
-                grid-row-start: 2;
-                grid-row-end: 2;
-                grid-column-start: 1;
-                grid-column-end: 3;
-                justify-self: start;
-                max-width: 100%;
-            }
-
-            div.unlink {
-                grid-row-start: 3;
-                grid-row-end: 3;
-                grid-column-start: 1;
-                grid-column-end: 1;
-                justify-self: start;
-            }
-        }
-
-        &.account {
-            width: fit-content;
-            min-width: 350px;
-            max-width: 500px;
-            padding: 14px;
-            display: inline-grid;
-            row-gap: 10px;
-            grid-template-rows: 36px auto 46px;
-            grid-template-columns: 50% 50%;
-
-            div.profile-pic {
-                grid-row-start: 1;
-                grid-row-end: 2;
-                grid-column-start: 2;
-                grid-column-end: 2;
-                justify-self: end;
-            }
-
-            div.username {
-                grid-row-start: 2;
-                grid-row-end: 2;
-                grid-column-start: 1;
-                grid-column-end: 3;
-                justify-self: start;
-            }
-
-            div.signout {
-                grid-row-start: 3;
-                grid-row-end: 3;
-                grid-column-start: 1;
-                grid-column-end: 1;
-                justify-self: start;
             }
         }
     }
