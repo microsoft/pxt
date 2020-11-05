@@ -21,16 +21,34 @@ interface MakeCodeFrameProps {
     dispatchSetHeaderIdForActivity: (headerId: string) => void;
 }
 
+interface MakeCodeFrameState {
+    loaded: boolean;
+}
+
 const editorUrl = isLocal() ? "http://localhost:3232/index.html" : "https://arcade.makecode.com"
 
-class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps> {
+class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFrameState> {
     protected ref: HTMLIFrameElement | undefined;
     protected messageQueue: any[] = [];
 
+    constructor(props: MakeCodeFrameProps) {
+        super(props);
+        this.state = {
+            loaded: false
+        };
+    }
+
     render() {
         const { url, title } = this.props;
+        const { loaded } = this.state;
 
-        return <iframe className="makecode-frame" src={url} title={title} ref={this.handleFrameRef}></iframe>
+        return <div className="makecode-frame-outer">
+            <div className={`makecode-frame-loader ${loaded ? "hidden" : ""}`}>
+                <img src="./logo.svg" alt="MakeCode Logo" />
+                <div className="makecode-frame-loader-text">Loading...</div>
+            </div>
+            <iframe className="makecode-frame" src={url} title={title} ref={this.handleFrameRef}></iframe>
+        </div>
     }
 
 
@@ -50,6 +68,9 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps> {
         }
 
         switch (data.action) {
+            case "event":
+                this.handleEditorTickEvent(data as pxt.editor.EditorMessageEventRequest);
+                break;
             case "workspacesync":
                 this.handleWorkspaceSyncRequest(data as pxt.editor.EditorWorkspaceSyncRequest);
                 break;
@@ -123,6 +144,21 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps> {
             } as pxt.editor.EditorMessageStartActivity);
         }
     }
+
+    protected handleEditorTickEvent(event: pxt.editor.EditorMessageEventRequest) {
+        switch (event.tick) {
+            // FIXME: add a better tick; app.editor fires too early
+            case "app.editor":
+                this.onEditorLoaded();
+                break;
+        }
+    }
+
+    protected onEditorLoaded() {
+        this.setState({
+            loaded: true
+        });
+    }
 }
 
 function mapStateToProps(state: SkillsMapState, ownProps: any) {
@@ -134,7 +170,7 @@ function mapStateToProps(state: SkillsMapState, ownProps: any) {
     let title: string | undefined;
 
     const activity = state.maps[currentMapId].activities[currentActivityId];
-    url = `${editorUrl}/?controller=1`;
+    url = `${editorUrl}/?controller=1&skillsMap=1`;
     title = activity.displayName;
 
     return {

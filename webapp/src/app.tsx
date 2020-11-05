@@ -3905,6 +3905,7 @@ export class ProjectView
             this.editor != this.blocksEditor ? "editorlang-text" : "",
             this.editor == this.textEditor && this.state.errorListState,
             'full-abs',
+            pxt.appTarget.appTheme.embeddedTutorial ? "tutorial-embed" : ""
         ];
         const rootClasses = sui.cx(rootClassList);
 
