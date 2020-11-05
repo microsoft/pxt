@@ -151,7 +151,7 @@ export class CreateFunctionDialog extends data.Component<ISettingsProps, CreateF
             }
         ];
         const types = this.getArgumentTypes().slice();
-        const classes = ["createfunction", this.props.parent.rootClasses.filter((e: string) => e != "full-abs").join(" ")].join(" ");
+        const classes =  this.props.parent.createModalClasses("createfunction");
         return (
             <sui.Modal isOpen={visible} className={classes} size="large"
                 closeOnEscape={false} closeIcon={true} closeOnDimmerClick={false} closeOnDocumentClick={false}

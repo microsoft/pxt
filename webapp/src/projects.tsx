@@ -1042,7 +1042,7 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
         const disableFileAccessinMaciOs = pxt.appTarget.appTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isIOS() || pxt.BrowserUtils.isMac());
         const disableFileAccessinAndroid = pxt.appTarget.appTheme.disableFileAccessinAndroid && pxt.BrowserUtils.isAndroid();
         const showImport = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing;
-        const classes = (["importdialog", this.props.parent.rootClasses.filter((e: string) => e != "full-abs").join(" ")]).join(" ");
+        const classes = this.props.parent.createModalClasses("importdialog");
         const showCreateGithubRepo = targetTheme.githubEditor
             && !pxt.winrt.isWinRT() // not supported in windows 10
             && !pxt.BrowserUtils.isPxtElectron()
@@ -1169,7 +1169,7 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
                 onclick: this.skip
             }
         ];
-        const classes = (["exitandsave", this.props.parent.rootClasses.filter((e: string) => e != "full-abs").join(" ")]).join(" ");
+        const classes = this.props.parent.createModalClasses("exitandsave");
 
         return (
             <sui.Modal isOpen={visible} className={classes} size="tiny"
@@ -1304,8 +1304,7 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
                 display: lf("{0} Only", "JavaScript")
             }
         ];
-
-        const classes = "newproject" + this.props.parent.rootClasses.filter((e: string) => e != "full-abs").join(" ");
+        const classes = this.props.parent.createModalClasses("newproject");
 
         return <sui.Modal isOpen={visible} className={classes} size="tiny"
             onClose={this.hide} dimmer={true} buttons={actions}

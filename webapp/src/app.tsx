@@ -118,7 +118,6 @@ export class ProjectView
     chooseHwDialog: projects.ChooseHwDialog;
     prevEditorId: string;
     screenshotHandlers: ((msg: pxt.editor.ScreenshotData) => void)[] = [];
-    rootClasses: string[];
 
     private lastChangeTime: number;
     private reload: boolean;
@@ -130,6 +129,7 @@ export class ProjectView
     private loadingExample: boolean;
     private openingTypeScript: boolean;
     private preserveUndoStack: boolean;
+    private rootClasses: string[];
 
     // component ID strings
     static readonly tutorialCardId = "tutorialcard";
@@ -3219,6 +3219,16 @@ export class ProjectView
     ///////////////////////////////////////////////////////////
     ////////////             Dialogs              /////////////
     ///////////////////////////////////////////////////////////
+
+    // Classes to add to modals
+    createModalClasses(classes?: string): string {
+        const rootClassList = [
+            classes,
+            this.rootClasses.indexOf("flyoutOnly") != -1 ? "flyoutOnly": "",
+            this.rootClasses.indexOf("inverted-theme") != -1 ? "inverted-theme" : "",
+        ]
+        return sui.cx(rootClassList);
+    }
 
     showReportAbuse() {
         const pubId = (this.state.tutorialOptions && this.state.tutorialOptions.tutorialReportId)

@@ -19,8 +19,7 @@ export class SidebarTutorialHint extends TutorialHint {
         const tutorialHint = stepInfo.hintContentMd;
         const showDialog = stepInfo.showDialog;
         const fullText = stepInfo.contentMd;
-        const classes = (["hintdialog",
-            this.props.parent.rootClasses.filter((e: string) => e != "full-abs").join(" ")]).join(" ");
+        const classes = this.props.parent.createModalClasses("hintdialog");
 
         let onClick = tutorialStep < tutorialStepInfo.length - 1 ? this.next : this.closeHint;
         const actions: sui.ModalButton[] = [{

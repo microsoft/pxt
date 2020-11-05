@@ -292,7 +292,7 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
                 icon: 'check',
                 className: 'green'
             }]
-            const classes = (["hintdialog", this.props.parent.rootClasses.filter((e: string) => e != "full-abs").join(" ")]).join(" ");
+            const classes = this.props.parent.createModalClasses("hintdialog");
 
             return <sui.Modal isOpen={visible} className={classes}
                 closeIcon={false} header={tutorialName} buttons={actions}
