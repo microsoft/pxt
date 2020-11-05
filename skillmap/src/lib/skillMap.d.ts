@@ -58,4 +58,6 @@ interface ActivityState {
     activityId: string;
     headerId: string;
     isCompleted: boolean;
+    currentStep: number;
+    maxSteps?: number;
 }

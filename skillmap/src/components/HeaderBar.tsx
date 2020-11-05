@@ -2,13 +2,13 @@
 import * as React from "react";
 
 import { connect } from 'react-redux';
-import { dispatchCloseActivity } from '../actions/dispatch';
+import { dispatchSaveAndCloseActivity } from '../actions/dispatch';
 import { SkillMapState } from '../store/reducer';
 
 
 interface HeaderBarProps {
     activityOpen: boolean;
-    dispatchCloseActivity: () => void;
+    dispatchSaveAndCloseActivity: () => void;
 }
 
 export class HeaderBarImpl extends React.Component<HeaderBarProps> {
@@ -26,7 +26,7 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
     }
 
     onBackClicked = () => {
-        this.props.dispatchCloseActivity();
+        this.props.dispatchSaveAndCloseActivity();
     }
 }
 
@@ -40,7 +40,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
 
 
 const mapDispatchToProps = {
-    dispatchCloseActivity
+    dispatchSaveAndCloseActivity
 };
 
 export const HeaderBar = connect(mapStateToProps, mapDispatchToProps)(HeaderBarImpl);

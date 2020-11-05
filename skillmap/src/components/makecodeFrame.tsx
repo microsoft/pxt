@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 import { getWorkspaceAsync } from "../lib/workspaceProvider";
 
 import { SkillMapState } from '../store/reducer';
-import  { dispatchSetHeaderIdForActivity } from '../actions/dispatch';
+import  { dispatchSetHeaderIdForActivity, dispatchCloseActivity, dispatchSaveAndCloseActivity } from '../actions/dispatch';
 
 import '../styles/makecode-editor.css'
 
@@ -13,12 +13,15 @@ function isLocal() {
 }
 
 interface MakeCodeFrameProps {
+    save: boolean;
     activityId: string;
     title: string;
     url: string;
     tutorialPath: string;
     activityHeaderId?: string;
-    dispatchSetHeaderIdForActivity: (headerId: string) => void;
+    dispatchSetHeaderIdForActivity: (headerId: string, currentStep: number, maxSteps: number) => void;
+    dispatchCloseActivity: (finished?: boolean) => void;
+    dispatchSaveAndCloseActivity: () => void;
 }
 
 interface MakeCodeFrameState {
@@ -38,15 +41,28 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
         };
     }
 
+    componentDidUpdate() {
+        if (this.props.save) {
+            this.sendMessage({
+                type: "pxteditor",
+                action: "saveproject"
+            } as pxt.editor.EditorMessage);
+        }
+    }
+
+    componentWillUnmount() {
+        window.removeEventListener("message", this.onMessageReceived);
+    }
+
     render() {
-        const { url, title } = this.props;
+        const { url, title, save } = this.props;
         const { loaded } = this.state;
 
-        const loadingText = "Loading..."
+        const loadingText = save ? "Saving..." : "Loading..."
         const imageAlt = "MakeCode Logo";
 
         return <div className="makecode-frame-outer">
-            <div className={`makecode-frame-loader ${loaded ? "hidden" : ""}`}>
+            <div className={`makecode-frame-loader ${(loaded && !save) ? "hidden" : ""}`}>
                 <img src="./logo.svg" alt={imageAlt} />
                 <div className="makecode-frame-loader-text">{loadingText}</div>
             </div>
@@ -109,7 +125,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
     }
 
     protected async handleWorkspaceSaveRequestAsync(request: pxt.editor.EditorWorkspaceSaveRequest) {
-        const { dispatchSetHeaderIdForActivity, activityHeaderId } = this.props;
+        const { dispatchSetHeaderIdForActivity, activityHeaderId, save, dispatchCloseActivity } = this.props;
 
         const workspace = await getWorkspaceAsync();
         const project = {
@@ -122,9 +138,16 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
 
         await workspace.saveProjectAsync(project);
 
+        if (project.header!.tutorial) {
+            dispatchSetHeaderIdForActivity(
+                project.header.id,
+                (project.header.tutorial.tutorialStep || 0) + 1,
+                project.header.tutorial.tutorialStepInfo!.length
+            );
+        }
 
-        if (!activityHeaderId) {
-            dispatchSetHeaderIdForActivity(project.header!.id);
+        if (save) {
+            dispatchCloseActivity();
         }
     }
 
@@ -154,6 +177,10 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
             case "app.editor":
                 this.onEditorLoaded();
                 break;
+            case "tutorial.complete":
+                this.onTutorialFinished();
+                break;
+
         }
     }
 
@@ -162,12 +189,16 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
             loaded: true
         });
     }
+
+    protected onTutorialFinished() {
+        this.props.dispatchSaveAndCloseActivity();
+    }
 }
 
 function mapStateToProps(state: SkillMapState, ownProps: any) {
     if (!state || !state.editorView) return {};
 
-    const { currentActivityId, currentMapId, currentHeaderId } = state.editorView;
+    const { currentActivityId, currentMapId, currentHeaderId, state: saveState } = state.editorView;
 
     let url: string | undefined;
     let title: string | undefined;
@@ -181,12 +212,15 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         tutorialPath: activity.url,
         title,
         activityId: currentActivityId,
-        activityHeaderId: currentHeaderId
+        activityHeaderId: currentHeaderId,
+        save: saveState === "saving"
     }
 }
 
 const mapDispatchToProps = {
     dispatchSetHeaderIdForActivity,
+    dispatchCloseActivity,
+    dispatchSaveAndCloseActivity
 };
 
 export const MakeCodeFrame = connect(mapStateToProps, mapDispatchToProps)(MakeCodeFrameImpl);

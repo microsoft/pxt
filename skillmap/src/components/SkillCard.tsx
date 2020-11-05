@@ -6,7 +6,7 @@ import { Item } from './CarouselItem';
 
 import { dispatchOpenActivity } from '../actions/dispatch';
 
-import { isActivityCompleted, isActivityUnlocked, lookupActivityProgress, } from '../lib/skillMapUtils';
+import { isActivityUnlocked, lookupActivityProgress, } from '../lib/skillMapUtils';
 
 import '../styles/skillcard.css'
 
@@ -18,6 +18,8 @@ interface SkillCardProps extends Item {
     imageUrl?: string;
     tags?: string[];
     status?: SkillCardStatus;
+    currentStep?: number;
+    maxSteps?: number
     dispatchOpenActivity: (mapId: string, activityId: string) => void;
 }
 
@@ -51,7 +53,7 @@ export class SkillCardImpl extends React.Component<SkillCardProps> {
     }
 
     render() {
-        const { label, description, imageUrl, tags, status } = this.props;
+        const { label, description, imageUrl, tags, status, currentStep, maxSteps} = this.props;
 
         return <div className={`skill-card ${status || ''}`}>
             <div className="skill-card-display">
@@ -62,6 +64,7 @@ export class SkillCardImpl extends React.Component<SkillCardProps> {
                 <div className="skill-card-label">
                     <div className="skill-card-title">
                         {(status === "locked" || status === "completed") && <i className={`icon ${status === "locked" ? "lock" : "check circle"}`} />}
+                        {(status === "inprogress" || status === "notstarted") && maxSteps && <span className="circular-label">{`${currentStep}/${maxSteps}`}</span> }
                         <span>{label}</span>
                     </div>
                     <div className="skill-card-tags">
@@ -85,19 +88,31 @@ export class SkillCardImpl extends React.Component<SkillCardProps> {
 }
 
 function mapStateToProps(state: SkillMapState, ownProps: any) {
-    let status: SkillCardStatus = "locked";
-    if (state.user && state.maps?.[ownProps.mapId] && isActivityUnlocked(state.user, state.maps[ownProps.mapId], ownProps.id)) {
-        if (isActivityCompleted(state.user, ownProps.mapId, ownProps.id)) {
-            status = "completed";
-        } else if (lookupActivityProgress(state.user, ownProps.mapId, ownProps.id)?.headerId) {
-            status = "inprogress";
-        } else {
-            status = "notstarted";
+    const isUnlocked = state.user && state.maps?.[ownProps.mapId] && isActivityUnlocked(state.user, state.maps[ownProps.mapId], ownProps.id);
+
+    let status: SkillCardStatus = isUnlocked ? "notstarted" : "locked";
+    let currentStep: number | undefined;
+    let maxSteps: number | undefined;
+
+    if (state.user) {
+        const progress = lookupActivityProgress(state.user, ownProps.mapId, ownProps.id);
+
+        if (progress) {
+            if (progress.isCompleted) {
+                status = "completed";
+            }
+            else if (progress.headerId) {
+                status = "inprogress";
+                currentStep = progress?.currentStep;
+                maxSteps = progress?.maxSteps;
+            }
         }
     }
 
     return {
-        status
+        status,
+        currentStep,
+        maxSteps
     };
 }
 

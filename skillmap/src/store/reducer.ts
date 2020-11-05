@@ -17,6 +17,7 @@ export interface EditorViewState {
     currentHeaderId?: string;
     currentMapId: string;
     currentActivityId: string;
+    state: "active" | "saving";
 }
 
 interface ModalState {
@@ -67,22 +68,47 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                 editorView: {
                     currentMapId: action.mapId,
                     currentActivityId: action.activityId,
-                    currentHeaderId: lookupActivityProgress(state.user, action.mapId, action.activityId)?.headerId
+                    state: "active",
+                    currentHeaderId: lookupActivityProgress(
+                        state.user,
+                        action.mapId,
+                        action.activityId,
+                    )?.headerId
+
+                }
+            };
+        case actions.SAVE_AND_CLOSE_ACTIVITY:
+            return {
+                ...state,
+                editorView: {
+                    ...state.editorView!,
+                    state: "saving"
                 }
             };
         case actions.CLOSE_ACTIVITY:
             return {
                 ...state,
-                editorView: undefined
+                editorView: undefined,
+                user: action.finished ?
+                    setActivityFinished(state.user, state.editorView!.currentMapId, state.editorView!.currentActivityId) :
+                    state.user
             };
         case actions.SET_HEADERID_FOR_ACTIVITY:
+            if (!state.editorView) return state;
             return {
                 ...state,
                 editorView: {
                     ...state.editorView!,
                     currentHeaderId: action.id
                 },
-                user: setHeaderIdForActivity(state.user, state.editorView!.currentMapId, state.editorView!.currentActivityId, action.id)
+                user: setHeaderIdForActivity(
+                    state.user,
+                    state.editorView!.currentMapId,
+                    state.editorView!.currentActivityId,
+                    action.id,
+                    action.currentStep,
+                    action.maxSteps
+                )
             };
         case actions.SET_PAGE_TITLE:
             return {
@@ -115,13 +141,15 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
 }
 
 
-export function setHeaderIdForActivity(user: UserState, mapId: string, activityId: string, headerId: string): UserState {
+export function setHeaderIdForActivity(user: UserState, mapId: string, activityId: string, headerId: string, currentStep: number, maxSteps: number): UserState {
     let existing = lookupActivityProgress(user, mapId, activityId);
 
     if (!existing) {
         existing = {
             isCompleted: false,
             activityId,
+            currentStep,
+            maxSteps,
             headerId
         }
     }
@@ -136,7 +164,40 @@ export function setHeaderIdForActivity(user: UserState, mapId: string, activityI
                     ...(user.mapProgress[mapId]?.activityState || {}),
                     [activityId]: {
                         ...existing,
-                        headerId: headerId
+                        headerId,
+                        currentStep,
+                        maxSteps,
+                        isCompleted: currentStep >= maxSteps
+                    }
+                }
+            }
+        }
+    };
+}
+
+export function setActivityFinished(user: UserState, mapId: string, activityId: string) {
+    let existing = lookupActivityProgress(user, mapId, activityId);
+
+    if (!existing) {
+        existing = {
+            isCompleted: false,
+            activityId,
+            headerId: "",
+            currentStep: 0
+        }
+    }
+
+    return {
+        ...user,
+        mapProgress: {
+            ...user.mapProgress,
+            [mapId]: {
+                ...(user.mapProgress[mapId] || { mapId }),
+                activityState: {
+                    ...(user.mapProgress[mapId]?.activityState || {}),
+                    [activityId]: {
+                        ...existing,
+                        isCompleted: true
                     }
                 }
             }
