@@ -4,31 +4,42 @@ import * as React from "react";
 import { connect } from 'react-redux';
 
 import { SkillMapState } from '../store/reducer';
-import { dispatchHideCompletionModal } from '../actions/dispatch';
+import { dispatchOpenActivity, dispatchHideCompletionModal } from '../actions/dispatch';
 
-import { Modal } from './Modal';
+import { Modal, ModalAction } from './Modal';
+
+type CompletionModalType = "map" | "activity";
 
 interface CompletionModalProps {
-    activity?: MapActivity;
+    type?: CompletionModalType;
+    mapId?: string;
+    displayName?: string;
+    nextActivityId?: string;
+    dispatchOpenActivity: (mapId: string, activityId: string) => void;
     dispatchHideCompletionModal: () => void;
 }
 
 export class CompletionModalImpl extends React.Component<CompletionModalProps> {
     render() {
-        const  { activity, dispatchHideCompletionModal } = this.props;
-        if (!activity) return <div />
+        const  { type, mapId, displayName, nextActivityId, dispatchOpenActivity, dispatchHideCompletionModal } = this.props;
+        if (!type) return <div />
 
-        const completionModalTitle = "Activity Complete!";
-        const completionModalText = "Good work! You've completed {0}. Keep going?";
+        const completionModalTitle = type === "activity" ? "Activity Complete!" : "Path Complete!";
+        const completionModalText = "Good work! You've completed {0}. Keep going!";
         const completionModalTextSegments = completionModalText.split("{0}");
 
-        const hasNext = !!activity?.next;
-        const actions = [
-            { label: hasNext ? "NEXT" : "DONE", onClick: () => console.log(activity?.next?.[0]?.activityId || "Done") }
-        ]
+        const actions: ModalAction[] = [];
+        if (type === "activity" && mapId && nextActivityId) {
+            actions.push({ label:"NEXT", onClick: () => {
+                dispatchHideCompletionModal();
+                dispatchOpenActivity(mapId, nextActivityId);
+             } });
+        } else {
+            actions.push({ label: "CERTIFICATE", onClick: () => {} });
+        }
 
         return <Modal title={completionModalTitle} actions={actions} onClose={() => dispatchHideCompletionModal()}>
-            {completionModalTextSegments[0]}{<strong>{activity.displayName}</strong>}{completionModalTextSegments[1]}
+            {completionModalTextSegments[0]}{<strong>{displayName}</strong>}{completionModalTextSegments[1]}
         </Modal>
     }
 }
@@ -36,12 +47,28 @@ export class CompletionModalImpl extends React.Component<CompletionModalProps> {
 function mapStateToProps(state: SkillMapState, ownProps: any) {
     if (!state) return {};
     const { currentMapId, currentActivityId } = state.modal || {};
-    return {
-        activity: currentMapId && currentActivityId ? state.maps[currentMapId].activities[currentActivityId] : undefined
+    let type: CompletionModalType | undefined;
+    let displayName: string | undefined;
+    let nextActivityId: string | undefined;
+
+    if (currentMapId) {
+        const map = state.maps[currentMapId];
+        if (currentActivityId) {
+            const activity = map.activities[currentActivityId];
+            type = "activity";
+            displayName = activity.displayName;
+            nextActivityId = activity.next?.[0].activityId;
+        } else {
+            type = "map";
+            displayName = map.displayName;
+        }
     }
+
+    return { type, mapId: currentMapId, displayName, nextActivityId }
 }
 
 const mapDispatchToProps = {
+    dispatchOpenActivity,
     dispatchHideCompletionModal
 };
 
