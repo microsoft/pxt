@@ -3224,7 +3224,7 @@ export class ProjectView
     createModalClasses(classes?: string): string {
         const rootClassList = [
             classes,
-            this.rootClasses.indexOf("flyoutOnly") != -1 ? "flyoutOnly": "",
+            this.rootClasses.indexOf("flyoutOnly") != -1 ? "flyoutOnly" : "",
             this.rootClasses.indexOf("inverted-theme") != -1 ? "inverted-theme" : "",
         ]
         return sui.cx(rootClassList);
