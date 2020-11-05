@@ -43,7 +43,7 @@ const topReducer = (state: SkillsMapState = initialState, action: any): SkillsMa
                     ...state.user,
                     mapProgress: {
                         ...state.user.mapProgress,
-                        [action.id]: { mapId: action.map.id, activityState: {} }
+                        [action.map.mapId]: { mapId: action.map.mapId, activityState: { } }
                     }
                 },
                 maps: {

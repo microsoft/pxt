@@ -1,8 +1,4 @@
 import * as React from "react";
-import { connect } from 'react-redux';
-
-import { SkillsMapState } from '../store/reducer';
-import { dispatchChangeSelectedItem } from '../actions/dispatch';
 
 export interface Item {
     id: string;
@@ -24,31 +20,16 @@ interface CarouselItemProps {
     itemTemplate?: any;
     selected?: boolean;
     className?: string;
-    dispatchChangeSelectedItem: (id: string) => void;
+    onSelect?: (id: string) => void;
 }
 
-class CarouselItemImpl extends React.Component<CarouselItemProps> {
-    handleClick = () => {
-        const { item, dispatchChangeSelectedItem } = this.props;
-        dispatchChangeSelectedItem(item.id);
-    }
+export function CarouselItem(props: CarouselItemProps) {
+    const { item, itemTemplate, selected, className, onSelect } = props;
+    const Inner = itemTemplate || CarouselItemTemplate;
 
-    render() {
-        const { item, itemTemplate, selected, className } = this.props;
-        const Inner = itemTemplate || CarouselItemTemplate;
+    const handleClick = () => { if (onSelect) onSelect(item.id); };
 
-        return <div className={`carousel-item ${selected ? 'selected' : ''} ${className || ''}`} onClick={this.handleClick}>
-            <Inner {...item} />
-        </div>
-    }
+    return <div className={`carousel-item ${selected ? 'selected' : ''} ${className || ''}`} onClick={handleClick}>
+        <Inner {...item} />
+    </div>
 }
-
-function mapStateToProps(state: SkillsMapState, ownProps: any) {
-    return {};
-}
-
-const mapDispatchToProps = {
-    dispatchChangeSelectedItem
-};
-
-export const CarouselItem = connect(mapStateToProps, mapDispatchToProps)(CarouselItemImpl);
