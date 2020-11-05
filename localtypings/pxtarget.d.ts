@@ -396,6 +396,7 @@ declare namespace pxt {
         blocksErrorList?: boolean; // blocks error list experiment
         assetEditor?: boolean; // enable asset editor view (in blocks/text toggle)
         disableMemoryWorkspaceWarning?: boolean; // do not warn the user when switching to in memory workspace
+        embeddedTutorial?: boolean;
     }
 
     interface SocialOptions {
