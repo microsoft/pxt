@@ -4,7 +4,7 @@ interface PageMetadata {
     infoUrl?: string;
 }
 
-interface SkillsMap {
+interface SkillMap {
     mapId: string;
     displayName: string;
     description?: string;

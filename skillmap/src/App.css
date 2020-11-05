@@ -61,7 +61,7 @@
     margin-bottom: 0.5rem;
 }
 
-.skills-map-container {
+.skill-map-container {
     flex-grow: 1;
     display: flex;
     flex-direction: column;

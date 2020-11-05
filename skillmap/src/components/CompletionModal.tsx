@@ -3,7 +3,7 @@
 import * as React from "react";
 import { connect } from 'react-redux';
 
-import { SkillsMapState } from '../store/reducer';
+import { SkillMapState } from '../store/reducer';
 import { dispatchHideCompletionModal } from '../actions/dispatch';
 
 import { Modal } from './Modal';
@@ -33,7 +33,7 @@ export class CompletionModalImpl extends React.Component<CompletionModalProps> {
     }
 }
 
-function mapStateToProps(state: SkillsMapState, ownProps: any) {
+function mapStateToProps(state: SkillMapState, ownProps: any) {
     if (!state) return {};
     const { currentMapId, currentActivityId } = state.modal || {};
     return {

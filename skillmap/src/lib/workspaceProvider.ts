@@ -22,7 +22,7 @@ export function getWorkspaceAsync() {
 
 class IndexedDBWorkspace implements WorkspaceProvider {
     static version = 6;
-    static databaseName = "local-skills-map";
+    static databaseName = "local-skill-map";
     static projectTable = "projects";
     static projectKey = "id";
     static userTable = "users";

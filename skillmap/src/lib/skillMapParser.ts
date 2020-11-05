@@ -9,13 +9,13 @@ interface MarkdownSection {
 }
 
 export function test() {
-    return parseSkillsMap(testMap);
+    return parseSkillMap(testMap);
 }
 
-export function parseSkillsMap(text: string): { maps: SkillsMap[], metadata?: PageMetadata } {
+export function parseSkillMap(text: string): { maps: SkillMap[], metadata?: PageMetadata } {
     const sections = getSectionsFromText(text);
 
-    const parsed: SkillsMap[] = [];
+    const parsed: SkillMap[] = [];
     let metadata: PageMetadata | undefined;
 
     let start = -1;
@@ -136,7 +136,7 @@ function buildMapFromSections(header: MarkdownSection, sections: MarkdownSection
         }
     }
 
-    return result as SkillsMap;
+    return result as SkillMap;
 
     function checkForLoopsRecursive(root: MapActivity, visited: {[index: string]: boolean} = {}) {
         if (visited[root.activityId]) error(`Loop in map '${result.mapId}' detected`);
@@ -154,8 +154,8 @@ function buildMapFromSections(header: MarkdownSection, sections: MarkdownSection
 }
 
 
-function inflateSkillMap(section: MarkdownSection): Partial<SkillsMap> {
-    const result: Partial<SkillsMap> = {
+function inflateSkillMap(section: MarkdownSection): Partial<SkillMap> {
+    const result: Partial<SkillMap> = {
         mapId: section.header.toLowerCase(),
         displayName: section.attributes["name"] || section.header,
         description: section.attributes["description"],

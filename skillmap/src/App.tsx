@@ -3,24 +3,24 @@
 import React from 'react';
 import { connect } from 'react-redux';
 
-import { dispatchAddSkillsMap, dispatchClearSkillsMaps, dispatchSetPageTitle, dispatchSetPageDescription, dispatchSetPageInfoUrl } from './actions/dispatch';
-import { SkillsMapState } from './store/reducer';
+import { dispatchAddSkillMap, dispatchClearSkillMaps, dispatchSetPageTitle, dispatchSetPageDescription, dispatchSetPageInfoUrl } from './actions/dispatch';
+import { SkillMapState } from './store/reducer';
 import { HeaderBar } from './components/HeaderBar';
 import { Banner } from './components/Banner';
 import { CompletionModal } from './components/CompletionModal';
-import { SkillsCarousel } from './components/SkillsCarousel';
+import { SkillCarousel } from './components/SkillCarousel';
 
-import { parseSkillsMap } from './lib/skillMapParser';
+import { parseSkillMap } from './lib/skillMapParser';
 import { parseHash, getMarkdownAsync, MarkdownSource } from './lib/browserUtils';
 
 import './App.css';
 import { MakeCodeFrame } from './components/makecodeFrame';
 
 interface AppProps {
-    skillsMaps: { [key: string]: SkillsMap };
+    skillMaps: { [key: string]: SkillMap };
     activityOpen: boolean;
-    dispatchAddSkillsMap: (map: SkillsMap) => void;
-    dispatchClearSkillsMaps: () => void;
+    dispatchAddSkillMap: (map: SkillMap) => void;
+    dispatchClearSkillMaps: () => void;
     dispatchSetPageTitle: (title: string) => void;
     dispatchSetPageDescription: (description: string) => void;
     dispatchSetPageInfoUrl: (infoUrl: string) => void;
@@ -35,21 +35,21 @@ class AppImpl extends React.Component<AppProps> {
 
     protected handleHashChange = (e: HashChangeEvent) => {
         let hash = parseHash();
-        this.fetchAndParseSkillsMaps(hash.cmd as MarkdownSource, hash.arg);
+        this.fetchAndParseSkillMaps(hash.cmd as MarkdownSource, hash.arg);
 
         e.stopPropagation();
         e.preventDefault();
     }
 
-    protected fetchAndParseSkillsMaps(source: MarkdownSource, url: string) {
+    protected fetchAndParseSkillMaps(source: MarkdownSource, url: string) {
         getMarkdownAsync(source, url).then((md) => {
             if (md) {
                 try {
-                    const { maps, metadata } = parseSkillsMap(md);
+                    const { maps, metadata } = parseSkillMap(md);
                     if (maps?.length > 0) {
-                        this.props.dispatchClearSkillsMaps();
+                        this.props.dispatchClearSkillMaps();
                         maps.forEach(map => {
-                            this.props.dispatchAddSkillsMap(map);
+                            this.props.dispatchAddSkillMap(map);
                         })
                     }
                     if (metadata) {
@@ -67,7 +67,7 @@ class AppImpl extends React.Component<AppProps> {
 
     componentDidMount() {
         let hash = parseHash();
-        this.fetchAndParseSkillsMaps(hash.cmd as MarkdownSource, hash.arg);
+        this.fetchAndParseSkillMaps(hash.cmd as MarkdownSource, hash.arg);
     }
 
     componentWillUnmount() {
@@ -75,15 +75,15 @@ class AppImpl extends React.Component<AppProps> {
     }
 
     render() {
-        const {skillsMaps, activityOpen } = this.props;
-        const maps = Object.keys(skillsMaps).map((id: string) => skillsMaps[id]);
+        const {skillMaps, activityOpen } = this.props;
+        const maps = Object.keys(skillMaps).map((id: string) => skillMaps[id]);
         return (<div className="app-container">
                 <HeaderBar />
                 { activityOpen ? <MakeCodeFrame /> : <div>
                     <Banner title="Game Maker Guide" icon="map" description="Level up your game making skills by completing the tutorials in this guide." />
-                    <div className="skills-map-container">
+                    <div className="skill-map-container">
                         { maps?.map((el, i) => {
-                            return <SkillsCarousel map={el} key={i} />
+                            return <SkillCarousel map={el} key={i} />
                         })}
                     </div>
                 </div>
@@ -93,17 +93,17 @@ class AppImpl extends React.Component<AppProps> {
     }
 }
 
-function mapStateToProps(state: SkillsMapState, ownProps: any) {
+function mapStateToProps(state: SkillMapState, ownProps: any) {
     if (!state) return {};
     return {
-        skillsMaps: state.maps,
+        skillMaps: state.maps,
         activityOpen: !!state.editorView
     };
 }
 
 const mapDispatchToProps = {
-    dispatchAddSkillsMap,
-    dispatchClearSkillsMaps,
+    dispatchAddSkillMap,
+    dispatchClearSkillMaps,
     dispatchSetPageTitle,
     dispatchSetPageDescription,
     dispatchSetPageInfoUrl
