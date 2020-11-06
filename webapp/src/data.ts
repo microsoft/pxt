@@ -295,7 +295,7 @@ export function invalidateHeader(prefix: string, hd: pxt.workspace.Header) {
         invalidate(prefix + ':' + hd.id);
 }
 
-export function getAsync(path: string) {
+export function getAsync<T = any>(path: string) {
     let ce = lookup(path)
 
     if (ce.api.isSync)
@@ -304,7 +304,7 @@ export function getAsync(path: string) {
     if (!Cloud.isOnline() || !expired(ce))
         return Promise.resolve(ce.data)
 
-    return new Promise((resolve, reject) => {
+    return new Promise<T>((resolve, reject) => {
         ce.callbackOnce.push(() => {
             resolve(ce.data)
         })
@@ -321,15 +321,15 @@ export class Component<TProps, TState> extends React.Component<TProps, TState> {
         this.state = <any>{}
     }
 
-    getData(path: string) {
-        const fetchResult = this.getDataWithStatus(path);
-        return fetchResult.data;
+    getData<T = any>(path: string) {
+        const fetchResult = this.getDataWithStatus<T>(path);
+        return fetchResult.data as T;
     }
 
     /**
      * Like getData, but the data is wrapped in a result object that indicates the status of the fetch operation
      */
-    getDataWithStatus(path: string): DataFetchResult<any> {
+    getDataWithStatus<T = any>(path: string): DataFetchResult<T> {
         if (!this.renderCoreOk)
             Util.oops("Override renderCore() not render()")
         return getCached(this, path)
@@ -341,10 +341,6 @@ export class Component<TProps, TState> extends React.Component<TProps, TState> {
 
     hasSync(): boolean {
         return !!this.getData("sync:hassync")
-    }
-
-    getUser(): pxt.editor.UserInfo {
-        return this.getData("sync:user");
     }
 
     componentWillUnmount(): void {

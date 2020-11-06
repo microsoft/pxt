@@ -5,9 +5,9 @@ import * as ReactDOM from "react-dom";
 import * as data from "./data";
 import * as sui from "./sui";
 import * as core from "./core";
-import * as cloud from "./cloud";
 import * as cloudsync from "./cloudsync";
-
+import * as auth from "./auth";
+import * as identity from "./identity";
 import * as codecard from "./codecard"
 import * as carousel from "./carousel";
 import { showAboutDialogAsync } from "./dialogs";
@@ -324,7 +324,6 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
         this.props.parent.showReportAbuse();
     }
 
-
     showAboutDialog() {
         pxt.tickEvent("home.about");
         this.props.parent.showAboutDialog();
@@ -393,9 +392,6 @@ export class ProjectsMenu extends data.Component<ISettingsProps, {}> {
     renderCore() {
         const targetTheme = pxt.appTarget.appTheme;
 
-        // only show cloud head if a configuration is available
-        const showCloudHead = this.hasCloud();
-
         return <div id="homemenu" className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
             <div className="left menu">
                 <a href={targetTheme.logoUrl} aria-label={lf("{0} Logo", targetTheme.boardName)} role="menuitem" target="blank" rel="noopener" className="ui item logo brand" onClick={this.brandIconClick}>
@@ -407,8 +403,8 @@ export class ProjectsMenu extends data.Component<ISettingsProps, {}> {
             </div>
             <div className="ui item home mobile hide"><sui.Icon icon={`icon home large`} /> <span>{lf("Home")}</span></div>
             <div className="right menu">
-                {!showCloudHead ? undefined : <cloud.UserMenu parent={this.props.parent} />}
                 <ProjectSettingsMenu parent={this.props.parent} highContrast={this.props.parent.state.highContrast} />
+                {auth.hasIdentity() ? <identity.UserMenu parent={this.props.parent} /> : undefined}
                 <a href={targetTheme.organizationUrl} target="blank" rel="noopener" className="ui item logo organization" onClick={this.orgIconClick}>
                     {targetTheme.organizationWideLogo || targetTheme.organizationLogo
                         ? <img className={`ui logo ${targetTheme.organizationWideLogo ? " portrait hide" : ''}`} src={targetTheme.organizationWideLogo || targetTheme.organizationLogo} alt={lf("{0} Logo", targetTheme.organization)} />

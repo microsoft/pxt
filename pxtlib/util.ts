@@ -650,6 +650,8 @@ namespace ts.pxtc.Util {
         responseArrayBuffer?: boolean;
         forceLiveEndpoint?: boolean;
         successCodes?: number[];
+        withCredentials?: boolean;
+        allowRelativeUrl?: boolean;
     }
 
     export interface HttpResponse {
@@ -1429,9 +1431,17 @@ namespace ts.pxtc.BrowserImpl {
 
             let headers = Util.clone(options.headers) || {}
 
+            options.url = /^https?/.test(options.url)
+                ? options.url
+                : !options.allowRelativeUrl
+                    ? pxt.Cloud.appRoot + options.url
+                    : options.url;
+
             client = new XMLHttpRequest();
             if (options.responseArrayBuffer)
                 client.responseType = "arraybuffer";
+            if (options.withCredentials)
+                client.withCredentials = true;
             client.onreadystatechange = () => {
                 if (resolved) return // Safari/iOS likes to call this thing more than once
 

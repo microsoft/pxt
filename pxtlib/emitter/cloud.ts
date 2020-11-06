@@ -2,8 +2,17 @@
 namespace pxt.Cloud {
     import Util = pxtc.Util;
 
+    const BACKEND_PROD = "https://www.makecode.com";
+    const BACKEND_STAGING = "https://staging.pxt.io";
+    // tslint:disable-next-line:no-http-string
+    const BACKEND_LOCALHOST = "http://localhost:5500";
+    const BACKEND_LOCALHOST_SSL = "https://localhost:5500";
+
+    const BACKEND = BACKEND_PROD;
+
     // hit /api/ to stay on same domain and avoid CORS
-    export let apiRoot = (pxt.BrowserUtils.isLocalHost() || Util.isNodeJS) ? "https://www.makecode.com/api/" : "/api/";
+    export let appRoot = (pxt.BrowserUtils.isLocalHost() || Util.isNodeJS) ? `${BACKEND}` : "";
+    export let apiRoot = `${appRoot}/api/`;
     export let accessToken = "";
     export let localToken = "";
     let _isOnline = true;

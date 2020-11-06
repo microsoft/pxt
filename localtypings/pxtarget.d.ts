@@ -169,9 +169,16 @@ declare namespace pxt {
         cloudProviders?: pxt.Map<AppCloudProvider>;
     }
 
+    type IdentityProviderId = "makecode" | "microsoft" | "google" | "github";
+
     interface AppCloudProvider {
-        client_id: string;
+        id: IdentityProviderId;
+        name?: string;
+        icon?: string;
+        client_id?: string;
         redirect?: boolean; // Whether or not to popup or redirect the oauth. Default to popup
+        identity?: boolean; // Whether or not this provider can be used for top-level login
+        order?: number;     // Sort order
     }
 
     interface AppSimulator {
@@ -395,6 +402,7 @@ declare namespace pxt {
         errorList?: boolean; // error list experiment
         embedBlocksInSnapshot?: boolean; // embed blocks xml in right-click snapshot
         blocksErrorList?: boolean; // blocks error list experiment
+        identity?: boolean; // login with identity providers
         assetEditor?: boolean; // enable asset editor view (in blocks/text toggle)
         disableMemoryWorkspaceWarning?: boolean; // do not warn the user when switching to in memory workspace
     }

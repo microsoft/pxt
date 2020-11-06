@@ -27,12 +27,12 @@ import * as sidebarTutorial from "./sidebarTutorial";
 import * as editortoolbar from "./editortoolbar";
 import * as simtoolbar from "./simtoolbar";
 import * as dialogs from "./dialogs";
+import * as identity from "./identity";
 import * as filelist from "./filelist";
 import * as container from "./container";
 import * as scriptsearch from "./scriptsearch";
 import * as projects from "./projects";
 import * as scriptmanager from "./scriptmanager";
-import * as cloud from "./cloud";
 import * as extensions from "./extensions";
 import * as sounds from "./sounds";
 import * as make from "./make";
@@ -43,6 +43,8 @@ import * as accessibleblocks from "./accessibleblocks";
 import * as socketbridge from "./socketbridge";
 import * as webusb from "./webusb";
 import * as keymap from "./keymap";
+import * as auth from "./auth";
+import * as user from "./user";
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -112,7 +114,8 @@ export class ProjectView
     languagePicker: lang.LanguagePicker;
     scriptManagerDialog: scriptmanager.ScriptManagerDialog;
     importDialog: projects.ImportDialog;
-    signInDialog: cloud.SignInDialog;
+    loginDialog: identity.LoginDialog;
+    profileDialog: user.ProfileDialog;
     exitAndSaveDialog: projects.ExitAndSaveDialog;
     newProjectDialog: projects.NewProjectDialog;
     chooseHwDialog: projects.ChooseHwDialog;
@@ -2003,7 +2006,8 @@ export class ProjectView
                 this.cloudSignInComplete();
             })
         else {
-            this.signInDialog.show();
+            // TODO: Revisit in new cloud sync
+            //this.signInDialog.show();
         }
     }
 
@@ -3240,6 +3244,14 @@ export class ProjectView
         dialogs.showAboutDialogAsync(this);
     }
 
+    showLoginDialog(continuationHash?: string) {
+        this.loginDialog.show(continuationHash);
+    }
+
+    showProfileDialog(location?: string) {
+        this.profileDialog.show(location);
+    }
+
     showShareDialog(title?: string) {
         this.shareEditor.show(title);
     }
@@ -3836,8 +3848,12 @@ export class ProjectView
         this.chooseHwDialog = c;
     }
 
-    private handleSignInDialogRef = (c: cloud.SignInDialog) => {
-        this.signInDialog = c;
+    private handleLoginDialogRef = (c: identity.LoginDialog) => {
+        this.loginDialog = c;
+    }
+
+    private handleProfileDialogRef = (c: user.ProfileDialog) => {
+        this.profileDialog = c;
     }
 
     ///////////////////////////////////////////////////////////
@@ -3934,7 +3950,7 @@ export class ProjectView
         const showFileList = !sandbox && !inTutorial && !this.isAssetsActive()
             && !(isBlocks
                 || (pkg.mainPkg && pkg.mainPkg.config && (pkg.mainPkg.config.preferredEditor == pxt.BLOCKS_PROJECT_NAME)));
-        const hasCloud = this.hasCloud();
+        const hasIdentity = auth.hasIdentity();
         return (
             <div id='root' className={rootClasses}>
                 {greenScreen ? <greenscreen.WebCam close={this.toggleGreenScreen} /> : undefined}
@@ -3992,7 +4008,8 @@ export class ProjectView
                 {sandbox ? undefined : <scriptsearch.ScriptSearch parent={this} ref={this.handleScriptSearchRef} />}
                 {sandbox ? undefined : <extensions.Extensions parent={this} ref={this.handleExtensionRef} />}
                 {inHome ? <projects.ImportDialog parent={this} ref={this.handleImportDialogRef} /> : undefined}
-                {hasCloud ? <cloud.SignInDialog parent={this} ref={this.handleSignInDialogRef} onComplete={this.cloudSignInComplete} /> : undefined}
+                {hasIdentity ? <identity.LoginDialog parent={this} ref={this.handleLoginDialogRef} /> : undefined}
+                {hasIdentity ? <user.ProfileDialog parent={this} ref={this.handleProfileDialogRef} /> : undefined}
                 {inHome && targetTheme.scriptManager ? <scriptmanager.ScriptManagerDialog parent={this} ref={this.handleScriptManagerDialogRef} onClose={this.handleScriptManagerDialogClose} /> : undefined}
                 {sandbox ? undefined : <projects.ExitAndSaveDialog parent={this} ref={this.handleExitAndSaveDialogRef} />}
                 {sandbox ? undefined : <projects.NewProjectDialog parent={this} ref={this.handleNewProjectDialogRef} />}
@@ -4028,6 +4045,7 @@ function parseLocalToken() {
 function initLogin() {
     cloudsync.loginCheck()
     parseLocalToken();
+    auth.authCheck();
 }
 
 function initPacketIO() {
@@ -4462,6 +4480,13 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
+    const query = core.parseQueryString(window.location.href);
+
+    // Handle auth callback redirect.
+    if (query["authcallback"]) {
+        auth.loginCallback(query);
+    }
+
     initLogin();
     hash = parseHash();
     appcache.init(() => theEditor.reloadEditor());
@@ -4474,8 +4499,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const hm = /^(https:\/\/[^/]+)/.exec(window.location.href)
     if (hm) Cloud.apiRoot = hm[1] + "/api/"
-
-    const query = core.parseQueryString(window.location.href)
 
     if (query["hw"]) {
         pxt.setHwVariant(query["hw"])
