@@ -1018,10 +1018,16 @@ namespace ts.pxtc {
             let files = program.getSourceFiles().slice();
 
             const main = files.find(sf => sf.fileName === "main.ts");
-
             if (main) {
                 files = files.filter(sf => sf.fileName !== "main.ts");
                 files.push(main);
+            }
+
+            // run post-processing code last, if present
+            const postProcessing = files.find(sf => sf.fileName === pxt.TUTORIAL_CODE_STOP);
+            if (postProcessing) {
+                files = files.filter(sf => sf.fileName !== pxt.TUTORIAL_CODE_STOP);
+                files.push(postProcessing);
             }
 
             files.forEach(f => {

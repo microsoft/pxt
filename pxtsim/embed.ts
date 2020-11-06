@@ -10,6 +10,7 @@ namespace pxsim {
         refCountingDebug?: boolean;
         options?: any;
         parts?: string[];
+        builtinParts?: string[];
         partDefinitions?: Map<PartDefinition>
         fnArgs?: any;
         code: string;
@@ -22,6 +23,7 @@ namespace pxsim {
         clickTrigger?: boolean;
         breakOnStart?: boolean;
         storedState?: Map<any>;
+        ipc?: boolean;
     }
 
     export interface SimulatorInstructionsMessage extends SimulatorMessage {
@@ -307,13 +309,18 @@ namespace pxsim {
             if (msg.localizedStrings)
                 pxsim.localization.setLocalizedStrings(msg.localizedStrings);
 
-            runtime = new Runtime(msg);
-            runtime.board.initAsync(msg)
+            const rt = new Runtime(msg);
+            runtime = rt;
+            rt.board.initAsync(msg)
                 .then(() => {
-                    runtime.run((v) => {
-                        pxsim.dumpLivePointers();
-                        Runtime.postMessage({ type: "toplevelcodefinished" })
-                    });
+                    if (rt === runtime) {
+                        rt.run((v) => {
+                            pxsim.dumpLivePointers();
+                            Runtime.postMessage({ type: "toplevelcodefinished" });
+                        });
+                    }
+                    // else: a new runtime was started while this one was still initializing.
+                    // This runtime has already been stopped by the beginning of this function.
                 });
         }
 

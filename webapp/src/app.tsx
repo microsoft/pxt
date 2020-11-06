@@ -129,6 +129,7 @@ export class ProjectView
     private loadingExample: boolean;
     private openingTypeScript: boolean;
     private preserveUndoStack: boolean;
+    private rootClasses: string[];
 
     // component ID strings
     static readonly tutorialCardId = "tutorialcard";
@@ -518,7 +519,7 @@ export class ProjectView
         if (!mainEditorPkg.lookupFile("this/" + pxt.ASSETS_FILE)) {
             mainEditorPkg.setFile(pxt.ASSETS_FILE, "\n", true);
         }
-        this.setFile(pkg.mainEditorPkg().lookupFile(`this/${pxt.ASSETS_FILE}`));
+        this.saveFileAsync().then(() => this.setFile(pkg.mainEditorPkg().lookupFile(`this/${pxt.ASSETS_FILE}`)));
     }
 
     openSettings() {
@@ -1028,9 +1029,6 @@ export class ProjectView
                     header.editor = pxt.PYTHON_PROJECT_NAME
                     header.pubCurrent = false
                     isCodeFile = true;
-                } else if (fn.name == pxt.ASSETS_FILE) {
-                    header.editor = pxt.ASSETS_PROJECT_NAME
-                    header.pubCurrent = false
                 } else {
                     // some other file type
                 }
@@ -1971,8 +1969,8 @@ export class ProjectView
     saveProjectToFileAsync(): Promise<void> {
         const mpkg = pkg.mainPkg;
         if (saveAsBlocks()) {
-            pxt.BrowserUtils.browserDownloadText(mpkg.readFile("main.blocks"), pkg.genFileName(".blocks"), 'application/xml');
-            return Promise.resolve();;
+            pxt.BrowserUtils.browserDownloadText(mpkg.readFile("main.blocks"), pkg.genFileName(".blocks"), { contentType: 'application/xml' });
+            return Promise.resolve();
         }
         if (pxt.commands.saveProjectAsync) {
             core.infoNotification(lf("Saving..."))
@@ -1984,7 +1982,7 @@ export class ProjectView
         else return this.exportProjectToFileAsync()
             .then((buf: Uint8Array) => {
                 const fn = pkg.genFileName(".mkcd");
-                pxt.BrowserUtils.browserDownloadUInt8Array(buf, fn, 'application/octet-stream');
+                pxt.BrowserUtils.browserDownloadUInt8Array(buf, fn, { contentType: 'application/octet-stream' });
             })
     }
 
@@ -2118,10 +2116,6 @@ export class ProjectView
                 default:
                     return pxt.JAVASCRIPT_PROJECT_NAME;
             }
-        }
-
-        if (this.editor == this.assetEditor) {
-            return pxt.ASSETS_PROJECT_NAME
         }
 
         // no preferred editor
@@ -3226,6 +3220,16 @@ export class ProjectView
     ////////////             Dialogs              /////////////
     ///////////////////////////////////////////////////////////
 
+    // Classes to add to modals
+    createModalClasses(classes?: string): string {
+        const rootClassList = [
+            classes,
+            this.rootClasses.indexOf("flyoutOnly") != -1 ? "flyoutOnly" : "",
+            this.rootClasses.indexOf("inverted-theme") != -1 ? "inverted-theme" : "",
+        ]
+        return sui.cx(rootClassList);
+    }
+
     showReportAbuse() {
         const pubId = (this.state.tutorialOptions && this.state.tutorialOptions.tutorialReportId)
             || (this.state.header && this.state.header.pubCurrent && this.state.header.pubId);
@@ -3914,6 +3918,7 @@ export class ProjectView
             this.editor == this.textEditor && this.state.errorListState,
             'full-abs',
         ];
+        this.rootClasses = rootClassList;
         const rootClasses = sui.cx(rootClassList);
 
         if (this.state.hasError) {
@@ -3926,8 +3931,8 @@ export class ProjectView
         }
         const isRTL = pxt.Util.isUserLanguageRtl();
         const showRightChevron = (this.state.collapseEditorTools || isRTL) && !(this.state.collapseEditorTools && isRTL); // Collapsed XOR RTL
-        // don't show in sandbox or is blocks editor or previous editor is blocks
-        const showFileList = !sandbox && !inTutorial
+        // don't show in sandbox or is blocks editor or previous editor is blocks or assets editor
+        const showFileList = !sandbox && !inTutorial && !this.isAssetsActive()
             && !(isBlocks
                 || (pkg.mainPkg && pkg.mainPkg.config && (pkg.mainPkg.config.preferredEditor == pxt.BLOCKS_PROJECT_NAME)));
         const hasCloud = this.hasCloud();

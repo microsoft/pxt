@@ -3184,10 +3184,11 @@ export async function validateAndFixPkgConfig(parsed: commandParser.ParsedComman
         cfg.testFiles = trimmedTestFiles;
     }
 
-    const validFilesInFileDependencies = validateFileList("fileDependencies", U.values(cfg.fileDependencies));
+    const dependentFiles = Object.keys(cfg.fileDependencies);
+    const validFilesInFileDependencies = validateFileList("fileDependencies", dependentFiles);
     if (validFilesInFileDependencies) {
-        for (const key of Object.keys(cfg.fileDependencies)) {
-            if (validFilesInFileDependencies.indexOf(cfg.fileDependencies[key]) === -1) {
+        for (const key of dependentFiles) {
+            if (validFilesInFileDependencies.indexOf(key) === -1) {
                 delete cfg.fileDependencies[key];
             }
         }
@@ -4404,7 +4405,7 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
 
             if (buildOpts.mode === BuildOption.DebugSim) {
                 mainPkg.host().writeFile(mainPkg, "built/debug/debugInfo.json", JSON.stringify({
-                    usedParts: pxtc.computeUsedParts(res, true),
+                    usedParts: pxtc.computeUsedParts(res, "ignorebuiltin"),
                     usedArguments: res.usedArguments,
                     breakpoints: res.breakpoints
                 }));

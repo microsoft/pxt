@@ -252,7 +252,7 @@ namespace pxtblockly {
 
         for (const projectMap of projectMaps) {
             for (const tile of projectMap.data.tileset.tiles) {
-                all[tile.id] = project.lookupAsset(pxt.AssetType.Tile, tile.id);;
+                all[tile.id] = project.lookupAsset(pxt.AssetType.Tile, tile.id);
             }
         }
 
@@ -264,7 +264,7 @@ namespace pxtblockly {
             if (match) {
                 const tile = project.lookupAssetByName(pxt.AssetType.Tile, match[1]);
 
-                if (!all[tile.id]) {
+                if (tile && !all[tile.id]) {
                     all[tile.id] = tile;
                 }
             }

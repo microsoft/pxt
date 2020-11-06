@@ -623,6 +623,10 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
             const headers = this.fetchLocalData()
             const showNewProject = pxt.appTarget.appTheme && !pxt.appTarget.appTheme.hideNewProjectButton;
             const showScriptManagerCard = targetTheme.scriptManager && headers.length > ProjectsCarousel.NUM_PROJECTS_HOMESCREEN;
+
+            const headersToShow = headers
+                .filter(h => !h.tutorial?.metadata?.hideIteration)
+                .slice(0, ProjectsCarousel.NUM_PROJECTS_HOMESCREEN);
             return <carousel.Carousel bleedPercent={20}>
                 {showNewProject ? <div role="button" className="ui card link buttoncard newprojectcard" title={lf("Creates a new empty project")}
                     onClick={this.newProject} onKeyDown={sui.fireClickOnEnter} >
@@ -631,7 +635,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                         <span className="header">{lf("New Project")}</span>
                     </div>
                 </div> : undefined}
-                {headers.slice(0, ProjectsCarousel.NUM_PROJECTS_HOMESCREEN).map((scr, index) => {
+                {headersToShow.map((scr, index) => {
                     const tutorialStep =
                         scr.tutorial ? scr.tutorial.tutorialStep
                             : scr.tutorialCompleted ? scr.tutorialCompleted.steps - 1
@@ -1036,20 +1040,22 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
         const { visible } = this.state;
         const targetTheme = pxt.appTarget.appTheme;
         const disableFileAccessinMaciOs = pxt.appTarget.appTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isIOS() || pxt.BrowserUtils.isMac());
+        const disableFileAccessinAndroid = pxt.appTarget.appTheme.disableFileAccessinAndroid && pxt.BrowserUtils.isAndroid();
         const showImport = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing;
+        const classes = this.props.parent.createModalClasses("importdialog");
         const showCreateGithubRepo = targetTheme.githubEditor
             && !pxt.winrt.isWinRT() // not supported in windows 10
             && !pxt.BrowserUtils.isPxtElectron()
             && pxt.appTarget?.cloud?.cloudProviders?.github;
         /* tslint:disable:react-a11y-anchors */
         return (
-            <sui.Modal isOpen={visible} className="importdialog" size="small"
+            <sui.Modal isOpen={visible} className={classes} size="small"
                 onClose={this.close} dimmer={true}
                 closeIcon={true} header={lf("Import")}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
             >
                 <div className={pxt.github.token ? "ui three cards" : "ui two cards"}>
-                    {pxt.appTarget.compile && !disableFileAccessinMaciOs ?
+                    {pxt.appTarget.compile && !disableFileAccessinMaciOs && !disableFileAccessinAndroid ?
                         <codecard.CodeCardView
                             ariaLabel={lf("Open files from your computer")}
                             role="button"
@@ -1163,9 +1169,10 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
                 onclick: this.skip
             }
         ];
+        const classes = this.props.parent.createModalClasses("exitandsave");
 
         return (
-            <sui.Modal isOpen={visible} className="exitandsave" size="tiny"
+            <sui.Modal isOpen={visible} className={classes} size="tiny"
                 onClose={this.hide} dimmer={true} buttons={actions}
                 closeIcon={true} header={lf("Project has no name {0}", this.state.emoji)}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
@@ -1297,9 +1304,9 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
                 display: lf("{0} Only", "JavaScript")
             }
         ];
+        const classes = this.props.parent.createModalClasses("newproject");
 
-
-        return <sui.Modal isOpen={visible} className="newproject" size="tiny"
+        return <sui.Modal isOpen={visible} className={classes} size="tiny"
             onClose={this.hide} dimmer={true} buttons={actions}
             closeIcon={true} header={lf("Create a Project {0}", emoji)}
             closeOnDimmerClick closeOnDocumentClick closeOnEscape

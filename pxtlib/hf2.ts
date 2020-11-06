@@ -419,6 +419,7 @@ namespace pxt.HF2 {
                 .then(() => this.flashAsync(blocks))
                 .then(() => U.delay(100))
                 .finally(() => this.flashing = false)
+                .then(() => this.reconnectAsync())
         }
 
         writeWordsAsync(addr: number, words: number[]) {

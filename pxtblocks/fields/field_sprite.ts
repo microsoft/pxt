@@ -41,6 +41,10 @@ namespace pxtblockly {
                 }
             }
 
+            if (this.getBlockData()) {
+                return project.lookupAsset(pxt.AssetType.Image, this.getBlockData());
+            }
+
             const bmp = text ? pxt.sprite.imageLiteralToBitmap(text) : new pxt.sprite.Bitmap(this.params.initWidth, this.params.initHeight);
             const newAsset = project.createNewProjectImage(bmp.data());
             return newAsset;

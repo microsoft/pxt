@@ -1086,6 +1086,7 @@ export function serveAsync(options: ServeOptions) {
 
         if (/\.js\.map$/.test(pathname)) {
             error(404, "map files disabled")
+            return;
         }
 
         let dd = dirs

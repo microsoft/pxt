@@ -238,10 +238,11 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const flyoutOnly = editorState && editorState.hasCategories === false;
 
         const disableFileAccessinMaciOs = targetTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isIOS() || pxt.BrowserUtils.isMac());
+        const disableFileAccessinAndroid = pxt.appTarget.appTheme.disableFileAccessinAndroid && pxt.BrowserUtils.isAndroid();
         const ghid = header && pxt.github.parseRepoId(header.githubId);
         const hasRepository = !!ghid;
         const showSave = !readOnly && !isController && !targetTheme.saveInMenu
-            && !tutorial && !debugging && !disableFileAccessinMaciOs
+            && !tutorial && !debugging && !disableFileAccessinMaciOs && !disableFileAccessinAndroid
             && !hasRepository;
         const showProjectRename = !tutorial && !readOnly && !isController
             && !targetTheme.hideProjectRename && !debugging;
@@ -347,14 +348,44 @@ export class ZoomSlider extends data.Component<ZoomSliderProps, ZoomSliderState>
         super(props);
         this.state = {zoomValue: Math.floor((this.zoomMax + 1 - this.zoomMin) / 2) + this.zoomMin};
 
+        this.handleWheelZoom = this.handleWheelZoom.bind(this);
         this.zoomUpdate = this.zoomUpdate.bind(this);
         this.zoomOut = this.zoomOut.bind(this);
         this.zoomIn = this.zoomIn.bind(this);
     }
 
-    zoomOut() {
+    componentDidMount() {
+        window.addEventListener('wheel', this.handleWheelZoom);
+    }
+
+    componentWillUnmount() {
+        window.removeEventListener('wheel', this.handleWheelZoom);
+    }
+
+    handleWheelZoom(e: WheelEvent) {
+        if (e.ctrlKey) {
+            if (e.deltaY < 0) {
+                this.increaseZoomState();
+            } else {
+                this.decreaseZoomState();
+            }
+        }
+    }
+
+    private decreaseZoomState() {
         if (this.state.zoomValue > this.zoomMin) {
             this.setState({zoomValue: this.state.zoomValue - 1});
+        }
+    }
+    private increaseZoomState() {
+        if (this.state.zoomValue < this.zoomMax) {
+            this.setState({zoomValue: this.state.zoomValue + 1})
+        }
+    }
+
+    zoomOut() {
+        if (this.state.zoomValue > this.zoomMin) {
+            this.decreaseZoomState();
             this.props.parent.editor.zoomOut();
             this.props.parent.forceUpdate();
         }
@@ -362,7 +393,7 @@ export class ZoomSlider extends data.Component<ZoomSliderProps, ZoomSliderState>
 
     zoomIn() {
         if (this.state.zoomValue < this.zoomMax) {
-            this.setState({zoomValue: this.state.zoomValue + 1})
+            this.increaseZoomState();
             this.props.parent.editor.zoomIn();
             this.props.parent.forceUpdate();
         }

@@ -364,3 +364,14 @@
 @errorListInvertedEven: rgba(255, 255, 255, 0.03);
 @errorListInvertedTextColor: white;
 @errorListInvertedMessageHoverColor: rgba(255, 255, 255, 0.1);
+
+/*-------------------
+   Asset Editor
+-------------------*/
+@assetSidebarBorder: #dedede;
+@assetSidebarButton: #f8f8f8;
+@assetSidebarButtonHover: #dedede;
+@assetPreviewBackground: #dedede;
+@assetUnselected: #e3ddd0;
+@assetTypeButton: @teal;
+

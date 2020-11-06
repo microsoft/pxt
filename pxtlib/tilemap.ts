@@ -373,7 +373,7 @@ namespace pxt {
             return this.state.animations.add(newAnimation);
         }
 
-        public createNewAnimationFromData(frames: pxt.sprite.BitmapData[], interval = 500) {
+        public createNewAnimationFromData(frames: pxt.sprite.BitmapData[], interval = 500, displayName?: string) {
             const id = this.generateNewID(AssetType.Animation, pxt.sprite.ANIMATION_PREFIX, pxt.sprite.ANIMATION_NAMESPACE);
 
             const newAnimation: Animation = {
@@ -382,7 +382,7 @@ namespace pxt {
                 type: AssetType.Animation,
                 frames,
                 interval,
-                meta: {},
+                meta: { displayName },
             };
             return this.state.animations.add(newAnimation);
         }
@@ -729,13 +729,18 @@ namespace pxt {
          *
          * TILEMAPS:
          * tilemap`shortId`
+         *
+         * @param skipIDs string[] a list of string ids (block id, asset id, or file name) to ignore
          **/
-        public isAssetUsed(asset: Asset, files?: pxt.Map<{content: string}>): boolean {
-            if (asset.meta?.blockIDs?.length > 0) return true;
+        public isAssetUsed(asset: Asset, files?: pxt.Map<{content: string}>, skipIDs?: string[]): boolean {
+            let blockIds = asset.meta?.blockIDs?.filter(id => !skipIDs || skipIDs?.indexOf(id) < 0) || [];
+            if (blockIds.length > 0) return true;
 
             if (asset.type == pxt.AssetType.Tile) {
                 for (const tm of this.getAssets(AssetType.Tilemap)) {
-                    if (tm.data.tileset.tiles.some(t => t.internalID === asset.internalID)) {
+                    if (skipIDs?.indexOf(tm.id) >= 0) {
+                        continue;
+                    } else if (tm.data.tileset.tiles.some(t => t.internalID === asset.internalID)) {
                         return true;
                     }
                 }
@@ -786,6 +791,8 @@ namespace pxt {
                 const assetPyRegex = new RegExp(assetPyRefs, "gm");
 
                 for (let filename of Object.keys(files)) {
+                    if (skipIDs?.indexOf(filename) >= 0) continue;
+
                     const f = files[filename];
                     // Match .ts files that are not generated (.g.ts)
                     if (filename.match(/((?!\.g).{2}|^.{0,1})\.ts$/i)) {
@@ -891,27 +898,21 @@ namespace pxt {
         public duplicateAsset(asset: Asset): Asset;
         public duplicateAsset(asset: Asset) {
             this.onChange();
-            const newAsset = cloneAsset(asset);
-            newAsset.internalID = this.getNewInternalId();
-            const id = newAsset.id.substr(newAsset.id.lastIndexOf(".") + 1).replace(/\d*$/, "");
-            if (!newAsset.meta?.displayName) {
-                if (!newAsset.meta) newAsset.meta = {};
-                newAsset.meta.displayName = id;
-            }
+            const clone = cloneAsset(asset);
+            const displayName = clone.meta?.displayName;
 
-            switch (newAsset.type) {
+            let newAsset: pxt.Asset;
+            switch (asset.type) {
                 case AssetType.Image:
-                    newAsset.id = this.generateNewID(AssetType.Image, id, pxt.sprite.IMAGES_NAMESPACE);
-                    this.state.images.add(newAsset); break;
+                    newAsset = this.createNewProjectImage((clone as pxt.ProjectImage).bitmap, displayName); break;
                 case AssetType.Tile:
-                    newAsset.id = this.generateNewID(AssetType.Tile, id, pxt.sprite.TILE_NAMESPACE);
-                    this.state.tiles.add(newAsset); break;
+                    newAsset = this.createNewTile((clone as pxt.Tile).bitmap, null, displayName); break;
                 case AssetType.Tilemap:
-                    newAsset.id = this.generateNewID(AssetType.Tilemap, id);
-                    this.state.tilemaps.add(newAsset); break;
+                    const [id, tilemap] = this.createNewTilemapFromData((clone as pxt.ProjectTilemap).data, displayName);
+                    newAsset = this.getTilemap(id);
+                    break;
                 case AssetType.Animation:
-                    newAsset.id = this.generateNewID(AssetType.Animation, id);
-                    this.state.animations.add(newAsset); break;
+                    newAsset = this.createNewAnimationFromData((clone as pxt.Animation).frames, (clone as pxt.Animation).interval, displayName)
             }
             return newAsset;
         }

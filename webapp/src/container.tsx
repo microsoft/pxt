@@ -261,7 +261,8 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         const readOnly = pxt.shell.isReadOnly();
         const isController = pxt.shell.isControllerMode();
         const disableFileAccessinMaciOs = targetTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isIOS() || pxt.BrowserUtils.isMac())
-        const showSave = !readOnly && !isController && !!targetTheme.saveInMenu && !disableFileAccessinMaciOs;
+        const disableFileAccessinAndroid = pxt.appTarget.appTheme.disableFileAccessinAndroid && pxt.BrowserUtils.isAndroid();
+        const showSave = !readOnly && !isController && !!targetTheme.saveInMenu && !disableFileAccessinMaciOs && !disableFileAccessinAndroid;
         const showSimCollapse = !readOnly && !isController && !!targetTheme.simCollapseInMenu;
         const showGreenScreen = targetTheme.greenScreen || /greenscreen=1/i.test(window.location.href);
         const showPrint = targetTheme.print && !pxt.BrowserUtils.isIE();
@@ -326,7 +327,7 @@ class BaseMenuItemProps extends data.Component<IBaseMenuItemProps, {}> {
 
     renderCore() {
         const active = this.props.isActive();
-        return <sui.Item className={`${this.props.className} ${active ? "selected" : ""}`} role="menuitem" textClass="landscape only" text={this.props.text} icon={this.props.icon} active={active} onClick={this.props.onClick} title={this.props.title} />
+        return <sui.Item className={`base-menuitem ${this.props.className} ${active ? "selected" : ""}`} role="menuitem" textClass="landscape only" text={this.props.text} icon={this.props.icon} active={active} onClick={this.props.onClick} title={this.props.title} />
     }
 }
 
@@ -445,24 +446,25 @@ export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
         const dropdownActive = python && (parent.isJavaScriptActive() || parent.isPythonActive());
         const tsOnly = languageRestriction === pxt.editor.LanguageRestriction.JavaScriptOnly;
         const pyOnly = languageRestriction === pxt.editor.LanguageRestriction.PythonOnly;
-        // show python in toggle if: python editor currently active, or blocks editor active & saved language pref is python
-        const showPython = parent.isPythonActive() || (parent.isBlocksActive() && pxt.shell.isPyLangPref());
-        const showBlocks = !!pkg.mainEditorPkg().files["main.blocks"];
-        const showAssets = pxt.appTarget.appTheme.assetEditor;
 
-        const hasDropdown = python && languageRestriction === pxt.editor.LanguageRestriction.Standard;
+        // show python in toggle if: python editor currently active, or blocks editor active & saved language pref is python
+        const showPython = python && !tsOnly && (parent.isPythonActive() || pxt.shell.isPyLangPref());
+        const showBlocks = !pyOnly && !tsOnly && !!pkg.mainEditorPkg().files["main.blocks"];
+        const showSandbox = sandbox && !headless;
+        const showDropdown = !pyOnly && !tsOnly && python;
+        const showAssets = pxt.appTarget.appTheme.assetEditor && !sandbox;
 
         return (
             <div id="editortoggle" className={`ui grid padded ${(pyOnly || tsOnly) ? "one-language" : ""}`}>
-                {sandbox && !headless && <SandboxMenuItem parent={parent} />}
-                {!pyOnly && !tsOnly && showBlocks && <BlocksMenuItem parent={parent} />}
-                {python && showPython ? <PythonMenuItem parent={parent} /> : <JavascriptMenuItem parent={parent} />}
-                {!pyOnly && !tsOnly && python && <sui.DropdownMenu id="editordropdown" role="menuitem" icon="chevron down" rightIcon title={lf("Select code editor language")} className={`item button attached right ${dropdownActive ? "active" : ""}`}>
+                {showSandbox && <SandboxMenuItem parent={parent} />}
+                {showBlocks && <BlocksMenuItem parent={parent} />}
+                {showPython ? <PythonMenuItem parent={parent} /> : <JavascriptMenuItem parent={parent} />}
+                {showDropdown && <sui.DropdownMenu id="editordropdown" role="menuitem" icon="chevron down" rightIcon title={lf("Select code editor language")} className={`item button attached right ${dropdownActive ? "active" : ""}`}>
                     <JavascriptMenuItem parent={parent} />
                     <PythonMenuItem parent={parent} />
                 </sui.DropdownMenu>}
                 {showAssets && <AssetMenuItem parent={parent} />}
-                <div className={`ui item toggle ${hasDropdown ? 'hasdropdown' : ''}`}></div>
+                <div className={`ui item toggle ${dropdownActive ? 'dropdown-attached' : ''}`}></div>
             </div>
         )
     }

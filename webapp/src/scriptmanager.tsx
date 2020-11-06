@@ -289,7 +289,8 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
 
     private getSortedHeaders() {
         const { sortedBy, sortedAsc } = this.state;
-        const headers = this.fetchLocalData() || [];
+        const headers = (this.fetchLocalData() || [])
+            .filter(h => !h.tutorial?.metadata?.hideIteration);
         return headers.sort(this.getSortingFunction(sortedBy, sortedAsc))
     }
 

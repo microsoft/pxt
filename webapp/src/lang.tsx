@@ -105,9 +105,11 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
             && !pxt.shell.isReadOnly()
             && !pxt.BrowserUtils.isPxtElectron()
             && pxt.appTarget.appTheme.crowdinProject;
+        const classes = this.props.parent.createModalClasses();
 
         return (
             <sui.Modal isOpen={this.state.visible}
+                className={classes}
                 size={modalSize}
                 onClose={this.hide}
                 dimmer={true} header={lf("Select Language")}

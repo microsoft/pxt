@@ -989,6 +989,8 @@ namespace pxt.cpp {
                 .forEach(k => optSettings["YOTTA_CFG_" + k] = optSettings[k]);
         }
 
+        optSettings["PXT_TARGET"] = JSON.stringify(appTarget.id)
+
         const configJson = U.jsonUnFlatten(optSettings)
         if (isDockerMake) {
             let packageJson = {

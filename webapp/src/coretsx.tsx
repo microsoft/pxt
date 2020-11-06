@@ -106,6 +106,7 @@ export class CoreDialog extends React.Component<core.PromptOptions, CoreDialogSt
                 defaultOpen={true} buttons={buttons}
                 dimmer={true} closeIcon={options.hasCloseIcon}
                 header={options.header}
+                headerIcon={options.headerIcon}
                 closeOnDimmerClick={!options.hideCancel}
                 closeOnDocumentClick={!options.hideCancel}
                 closeOnEscape={!options.hideCancel}

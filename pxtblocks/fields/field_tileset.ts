@@ -94,7 +94,7 @@ namespace pxtblockly {
         getValue() {
             if (this.selectedOption_) {
                 const tile = this.selectedOption_[2];
-                return `assets.tile\`${displayName(tile)}\``
+                return isGalleryTile(tile) ? tile.id : `assets.tile\`${displayName(tile)}\``
             }
             const v = super.getValue();
 
@@ -178,12 +178,7 @@ namespace pxtblockly {
 
         menuGenerator_ = () => {
             if (this.sourceBlock_?.workspace && needsTilemapUpgrade(this.sourceBlock_?.workspace)) {
-                return [[{
-                    src: mkTransparentTileImage(16),
-                    width: PREVIEW_SIDE_LENGTH,
-                    height: PREVIEW_SIDE_LENGTH,
-                    alt: this.getValue()
-                }, this.getValue(), this.getValue()]]
+                return [constructTransparentTile()]
             }
             return FieldTileset.getReferencedTiles(this.sourceBlock_.workspace);
         }
@@ -256,5 +251,9 @@ namespace pxtblockly {
 
     function displayName(tile: pxt.Tile) {
         return tile.meta.displayName || pxt.getShortIDForAsset(tile);
+    }
+
+    function isGalleryTile(tile: pxt.Tile) {
+        return tile.id.startsWith("sprites.");
     }
 }

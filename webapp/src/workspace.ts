@@ -90,13 +90,33 @@ export function setupWorkspace(id: string) {
     }
 }
 
-function switchToMemoryWorkspace(reason: string) {
+async function switchToMemoryWorkspace(reason: string): Promise<void> {
+    pxt.log(`workspace: error, switching from ${implType} to memory workspace`);
+
+    const expectedMemWs = pxt.appTarget.appTheme.disableMemoryWorkspaceWarning
+        || impl === memoryworkspace.provider
+        || pxt.shell.isSandboxMode() || pxt.shell.isReadOnly() || pxt.BrowserUtils.isIFrame();
+
     pxt.tickEvent(`workspace.syncerror`, {
         ws: implType,
-        reason: reason
+        reason: reason,
+        expected: expectedMemWs ? 1 : 0
     });
 
-    pxt.log(`workspace: error, switching from ${implType} to memory workspace`);
+    if (!expectedMemWs) {
+        await core.confirmAsync({
+            header: lf("Warning! Project Auto-Save Disabled"),
+            body: lf("We are unable to save your projects at this time. You can still manually save your project via direct download, or sharing your project."),
+            agreeLbl: lf("Continue"),
+            headerIcon: "warning",
+            agreeClass: "cancel",
+            agreeIcon: "cancel",
+            helpUrl: "/browsers/no-auto-save",
+            className: "auto-save-disabled-warning",
+            hasCloseIcon: true,
+        });
+    }
+
     impl = memoryworkspace.provider;
 }
 
@@ -368,7 +388,7 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
             ver = await impl.setAsync(h, e.version, toWrite);
         } catch (e) {
             // Write failed; use in memory db.
-            switchToMemoryWorkspace("write failed");
+            await switchToMemoryWorkspace("write failed");
             ver = await impl.setAsync(h, e.version, toWrite);
         }
 
@@ -1337,8 +1357,8 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
         .catch((e) => {
             // There might be a problem with the native databases. Switch to memory for this session so the user can at
             // least use the editor.
-            switchToMemoryWorkspace("sync failed");
-            return impl.listAsync();
+            return switchToMemoryWorkspace("sync failed")
+                .then(() => impl.listAsync());
         })
         .then(headers => {
             const existing = U.toDictionary(allScripts || [], h => h.header.id)
