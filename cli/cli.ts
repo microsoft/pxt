@@ -4496,7 +4496,7 @@ export async function staticpkgAsync(parsed: commandParser.ParsedCommand) {
         await internalGenDocsAsync(false, true);
         if (locsSrc) {
             const languages = pxt.appTarget?.appTheme?.availableLocales
-                    .filter(langId => nodeutil.existsDirSync(path.join(locsSrc, langId)));
+                .filter(langId => nodeutil.existsDirSync(path.join(locsSrc, langId)));
 
             await crowdin.buildAllTranslationsAsync(async (fileName: string) => {
                 const output: pxt.Map<pxt.Map<string>> = {};
@@ -5526,6 +5526,34 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
     })
 }
 
+async function upgradeGalleriesAsync(): Promise<void> {
+    const targetConfig = nodeutil.readJson("targetconfig.json") as pxt.TargetConfig;
+    if (!targetConfig?.galleries) return;
+
+    const docsRoot = nodeutil.targetDir;
+    Object.keys(targetConfig.galleries).forEach(k => {
+        pxt.log(`gallery ${k}`);
+        const galleryUrl = getGalleryUrl(targetConfig.galleries[k])
+        const gallerymd = nodeutil.resolveMd(docsRoot, galleryUrl);
+        if (!/```codecard/.test(gallerymd))
+            return;
+        // replace codecard with markdown
+        const galleries = pxt.gallery.parseGalleryMardown(gallerymd);
+        galleries?.forEach(gallery => {
+            const md = `### ~ codecard
+${gallery.cards.map(
+                card => Object.keys(card)
+                .filter(k => !!(<any>card)[k])
+                .map(k => `* ${k}: ${(<any>card)[k]}`).join('\n')
+            )
+                    .join('\n---\n\n')}
+### ~
+`
+            console.log(md)
+        })
+    });
+}
+
 interface TutorialInfo extends pxt.tutorial.TutorialInfo {
     path: string;
     pkgs?: Map<string>
@@ -6427,6 +6455,7 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
             }
         }
     }, checkDocsAsync);
+    advancedCommand("upgradegalleries", "convert JSON galleries to markdown format", upgradeGalleriesAsync, "");
 
     p.defineCommand({
         name: "usedblocks",
