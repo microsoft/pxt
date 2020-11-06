@@ -20,6 +20,7 @@ declare namespace pxt {
     }
     interface TargetConfig {
         packages?: PackagesConfig;
+        shareLinks?: ShareConfig;
         // common galleries
         galleries?: pxt.Map<string | GalleryProps>;
         // localized galleries
@@ -41,6 +42,10 @@ declare namespace pxt {
         // "acme-corp/pxt-widget": "min:v0.1.2" - auto-upgrade to that version
         // "acme-corp/pxt-widget": "dv:foo,bar" - add "disablesVariant": ["foo", "bar"] to pxt.json
         upgrades?: pxt.Map<string>;
+    }
+
+    interface ShareConfig {
+        approved?: string[];
     }
 
     interface AppTarget {
