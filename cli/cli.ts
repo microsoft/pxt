@@ -1917,6 +1917,28 @@ function buildWebStringsAsync() {
     return Promise.resolve()
 }
 
+function buildSkillMapAsync() {
+    return nodeutil.spawnAsync({
+        cmd: "npm.cmd",
+        args: ["run-script", "build"],
+        cwd: "node_modules/pxt-core/skillmap",
+        shell: true
+    }).then(() => {
+        nodeutil.cpR("node_modules/pxt-core/skillmap/build", "docs/static/skillmap");
+
+        // patch paths to match updated folder structure
+        // patch <include src="file.html"> to <!-- @include file.html>
+        const fn = "docs/static/skillmap/index.html";
+        const f = fs.readFileSync(fn, "utf8");
+        const patched = f.replace(/\"\/static\//g, `"/static/skillmap/static/`).replace(/<include src="(\S+)">/gmi, "<!-- @include $1 -->");
+        fs.writeFileSync("docs/skillmap.html", patched, { encoding: "utf8" });
+
+        // remove old index.html
+        fs.unlinkSync(fn);
+        return Promise.resolve();
+    });
+}
+
 function updateDefaultProjects(cfg: pxt.TargetBundle) {
     let defaultProjects = [
         pxt.BLOCKS_PROJECT_NAME,
@@ -6453,6 +6475,13 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
             }
         }
     }, buildSemanticUIAsync);
+
+    p.defineCommand({
+        name: "buildskillmap",
+        aliases: ["skillmap"],
+        advanced: true,
+        help: "Builds the skill map webapp",
+    }, buildSkillMapAsync);
 
     advancedCommand("augmentdocs", "test markdown docs replacements", augmnetDocsAsync, "<temlate.md> <doc.md>");
 
