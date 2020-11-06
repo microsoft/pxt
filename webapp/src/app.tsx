@@ -129,6 +129,7 @@ export class ProjectView
     private loadingExample: boolean;
     private openingTypeScript: boolean;
     private preserveUndoStack: boolean;
+    private rootClasses: string[];
 
     // component ID strings
     static readonly tutorialCardId = "tutorialcard";
@@ -3919,6 +3920,7 @@ export class ProjectView
             this.editor == this.textEditor && this.state.errorListState,
             'full-abs',
         ];
+        this.rootClasses = rootClassList;
         const rootClasses = sui.cx(rootClassList);
 
         if (this.state.hasError) {

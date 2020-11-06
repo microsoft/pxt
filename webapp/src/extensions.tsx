@@ -289,7 +289,7 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
         const actions: sui.ModalButton[] = action ? [{ label: action, onclick: actionClick }] : undefined;
         if (!needsConsent && visible) this.initializeFrame();
         return (
-            <sui.Modal isOpen={visible} className={`${needsConsent ? 'extensionconsentdialog' : 'extensiondialog'}`}
+            <sui.Modal isOpen={visible} className={(needsConsent ? "extensionconsentdialog" : "extensiondialog")}
                 size={needsConsent ? 'small' : 'fullscreen'} closeIcon={true}
                 onClose={this.hide} dimmer={true} buttons={actions}
                 modalDidOpen={this.updateDimensions} shouldFocusAfterRender={false}
