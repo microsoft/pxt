@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 import { SkillMapState } from '../store/reducer';
 import { Item } from './CarouselItem';
 
-import { dispatchOpenActivity } from '../actions/dispatch';
+import { dispatchOpenActivity, dispatchShowRestartActivityWarning } from '../actions/dispatch';
 
 import { isActivityUnlocked, lookupActivityProgress, } from '../lib/skillMapUtils';
 
@@ -21,6 +21,7 @@ interface SkillCardProps extends Item {
     currentStep?: number;
     maxSteps?: number
     dispatchOpenActivity: (mapId: string, activityId: string) => void;
+    dispatchShowRestartActivityWarning: (mapId: string, activityId: string) => void;
 }
 
 export class SkillCardImpl extends React.Component<SkillCardProps> {
@@ -43,13 +44,18 @@ export class SkillCardImpl extends React.Component<SkillCardProps> {
 
         switch (status) {
             case "locked":
-            case "completed":
                 break;
+            case "completed":
             case "inprogress":
             case "notstarted":
             default:
                 return dispatchOpenActivity(mapId, id);
         }
+    }
+
+    protected handleRestartButtonClick = () => {
+        const { mapId, id, dispatchShowRestartActivityWarning } = this.props;
+        dispatchShowRestartActivityWarning(mapId, id);
     }
 
     render() {
@@ -64,7 +70,9 @@ export class SkillCardImpl extends React.Component<SkillCardProps> {
                 <div className="skill-card-label">
                     <div className="skill-card-title">
                         {(status === "locked" || status === "completed") && <i className={`icon ${status === "locked" ? "lock" : "check circle"}`} />}
-                        {(status === "inprogress" || status === "notstarted") && maxSteps && <span className="circular-label">{`${currentStep}/${maxSteps}`}</span> }
+                        {(status === "inprogress" || status === "notstarted") && maxSteps &&
+                            <span className="circular-label">{`${currentStep}/${maxSteps}`}</span>
+                        }
                         <span>{label}</span>
                     </div>
                     <div className="skill-card-tags">
@@ -79,8 +87,14 @@ export class SkillCardImpl extends React.Component<SkillCardProps> {
                 <div className="skill-card-description">{description}</div>
                 <div className="spacer"></div>
                 <div className="skill-card-action">
-                    {status === "completed" && <div className="skill-card-button-icon"><i className="xicon redo"></i></div>}
-                    <div className="skill-card-button" role="button" onClick={this.handleActionButtonClick}>{this.getSkillCardActionText()}</div>
+                    {status === "completed" &&
+                        <div className="skill-card-button-icon" role="button" onClick={this.handleRestartButtonClick}>
+                            <i className="xicon redo"></i>
+                        </div>
+                    }
+                    <div className="skill-card-button" role="button" onClick={this.handleActionButtonClick}>
+                        {this.getSkillCardActionText()}
+                    </div>
                 </div>
             </div>
         </div>
@@ -117,7 +131,8 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
 }
 
 const mapDispatchToProps = {
-    dispatchOpenActivity
+    dispatchOpenActivity,
+    dispatchShowRestartActivityWarning
 }
 
 export const SkillCard = connect(mapStateToProps, mapDispatchToProps)(SkillCardImpl);

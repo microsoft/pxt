@@ -56,8 +56,8 @@ interface MapState {
 
 interface ActivityState {
     activityId: string;
-    headerId: string;
     isCompleted: boolean;
-    currentStep: number;
+    headerId?: string;
+    currentStep?: number;
     maxSteps?: number;
 }

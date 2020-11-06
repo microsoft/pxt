@@ -20,7 +20,10 @@ export interface EditorViewState {
     state: "active" | "saving";
 }
 
+export type ModalType = "restart-warning" | "completion";
+
 interface ModalState {
+    type: ModalType;
     currentMapId?: string;
     currentActivityId?: string;
 }
@@ -93,6 +96,21 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                     setActivityFinished(state.user, state.editorView!.currentMapId, state.editorView!.currentActivityId) :
                     state.user
             };
+        case actions.RESTART_ACTIVITY:
+            return {
+                ...state,
+                modal: undefined,
+                editorView: {
+                    state: "active",
+                    currentMapId: action.mapId,
+                    currentActivityId: action.activityId
+                },
+                user: setHeaderIdForActivity(
+                    state.user,
+                    action.mapId,
+                    action.activityId
+                )
+            }
         case actions.SET_HEADERID_FOR_ACTIVITY:
             if (!state.editorView) return state;
             return {
@@ -128,9 +146,14 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
         case actions.SHOW_COMPLETION_MODAL:
             return {
                 ...state,
-                modal: { currentMapId: action.mapId, currentActivityId: action.activityId }
+                modal: { type: "completion", currentMapId: action.mapId, currentActivityId: action.activityId }
             };
-        case actions.HIDE_COMPLETION_MODAL:
+        case actions.SHOW_RESTART_ACTIVITY_MODAL:
+            return {
+                ...state,
+                modal: { type: "restart-warning", currentMapId: action.mapId, currentActivityId: action.activityId }
+            };
+        case actions.HIDE_MODAL:
             return {
                 ...state,
                 modal: undefined
@@ -141,7 +164,7 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
 }
 
 
-export function setHeaderIdForActivity(user: UserState, mapId: string, activityId: string, headerId: string, currentStep: number, maxSteps: number): UserState {
+export function setHeaderIdForActivity(user: UserState, mapId: string, activityId: string, headerId?: string, currentStep?: number, maxSteps?: number): UserState {
     let existing = lookupActivityProgress(user, mapId, activityId);
 
     if (!existing) {
@@ -153,6 +176,8 @@ export function setHeaderIdForActivity(user: UserState, mapId: string, activityI
             headerId
         }
     }
+
+    const isCompleted = existing.isCompleted || currentStep !== undefined && maxSteps !== undefined && currentStep >= maxSteps;
 
     return {
         ...user,
@@ -167,7 +192,7 @@ export function setHeaderIdForActivity(user: UserState, mapId: string, activityI
                         headerId,
                         currentStep,
                         maxSteps,
-                        isCompleted: currentStep >= maxSteps
+                        isCompleted
                     }
                 }
             }
