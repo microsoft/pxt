@@ -3238,7 +3238,8 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
         U.userError("Target not configured for discourse");
     if (outmd && !fs.existsSync(outmd))
         U.userError(`${outmd} file not found`)
-    let md: string = outmd && fs.readFileSync(outmd, { encoding: "utf8" });
+    const md: string = outmd && fs.readFileSync(outmd, { encoding: "utf8" });
+    const title = md && /^# (.)$/m.exec(md)?.[1];
 
     nodeutil.mkdirP(out);
     let n = 0;
@@ -3303,12 +3304,12 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
                 if (lastCard)
                     cards.push(lastCard);
                 cards.forEach(card => delete (card as any).id);
-                md = md.replace(/```/g, (m, c) => {
-                    return `\`\`\`codecard
-${JSON.stringify(cards, null, 4)}
-\`\`\``;
-                })
-                nodeutil.writeFileSync(outmd, md, { encoding: "utf8" });
+               const newmd = `# ${title || "Community"}
+
+${pxt.gallery.codeCardsToMarkdown(cards)}
+
+`
+                nodeutil.writeFileSync(outmd, newmd, { encoding: "utf8" });
             }
             pxt.log(`downloaded ${n} programs (${newcards} new) from tag ${tag}`)
         })
