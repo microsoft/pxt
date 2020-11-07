@@ -211,7 +211,7 @@ namespace pxt.gallery {
     export function codeCardsToMarkdown(cards: pxt.CodeCard[]) {
         const md = `### ~ codecard
 
-        ${(cards || []).map(
+${(cards || []).map(
             card => Object.keys(card)
                 .filter(k => !!(<any>card)[k])
                 .map(k => k === "otherActions" 
@@ -219,10 +219,15 @@ namespace pxt.gallery {
                     : `* ${k}: ${(<any>card)[k]}`
                 ).join('\n')
         )
-                .join('\n---\n\n')}
+                .join(
+`
 
-        ### ~
-        `
+---
+
+`)}
+
+### ~
+`
         return md;
 
         function otherActionsToMd(oas: pxt.CodeCardAction[]): string {
