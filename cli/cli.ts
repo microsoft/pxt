@@ -3159,9 +3159,8 @@ export function downloadPlaylistsAsync(parsed: commandParser.ParsedCommand): Pro
     const fn = (parsed.args[0] as string || "playlists.json");
     if (!nodeutil.fileExistsSync(fn))
         U.userError(`File ${fn} not found`);
-    const md = !!parsed.flags["md"];
     const playlists = nodeutil.readJson(fn);
-    return youtube.renderPlaylistsAsync(playlists, md);
+    return youtube.renderPlaylistsAsync(playlists);
 }
 
 export async function validateAndFixPkgConfig(parsed: commandParser.ParsedCommand): Promise<void> {
@@ -3227,7 +3226,6 @@ export async function validateAndFixPkgConfig(parsed: commandParser.ParsedComman
 }
 
 export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): Promise<void> {
-    const rx = /```codecard((.|\s)*)```/;
     const tag = parsed.args[0] as string;
     if (!tag)
         U.userError("Missing tag")
@@ -3249,11 +3247,8 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
     let lastCard: pxt.CodeCard = undefined;
     // parse existing cards
     if (md) {
-        md.replace(rx, (m, c) => {
-            cards = JSON.parse(c);
-            lastCard = cards.pop();
-            return "";
-        })
+        cards = pxt.gallery.parseGalleryMardown(md);
+        lastCard = cards.pop();
     }
     return pxt.discourse.topicsByTag(discourseRoot, tag)
         .then(topics => Promise.mapSeries(topics, topic => {
@@ -3308,7 +3303,7 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
                 if (lastCard)
                     cards.push(lastCard);
                 cards.forEach(card => delete (card as any).id);
-                md = md.replace(rx, (m, c) => {
+                md = md.replace(/```/g, (m, c) => {
                     return `\`\`\`codecard
 ${JSON.stringify(cards, null, 4)}
 \`\`\``;
@@ -5532,10 +5527,10 @@ async function upgradeCardsAsync(): Promise<void> {
     // markdowns with cards
     const mds = nodeutil.allFiles(docsRoot, 10, false, false)
         .filter(fn => /\.md$/.test(fn))
-        .map(fn => ({ filename: fn, content: nodeutil.readText(fn)}))
+        .map(fn => ({ filename: fn, content: nodeutil.readText(fn) }))
         .filter(f => /```codecard/.test(f.content));
-    
-    mds.forEach(({filename, content}) => {
+
+    mds.forEach(({ filename, content }) => {
         pxt.log(`patching ${filename}`)
         const updated = content.replace(/```codecard([^`]+)```/g, (m, c: string) => {
             const cards = pxt.gallery.parseCodeCards(c);
@@ -6680,11 +6675,6 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
         name: "downloadplaylists",
         aliases: ["playlists"],
         help: "Download YouTube playlists and generate markdown",
-        flags: {
-            md: {
-                description: "generate markdown"
-            }
-        },
         advanced: true,
         argString: "<list>"
     }, downloadPlaylistsAsync)
