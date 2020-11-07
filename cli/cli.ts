@@ -5536,6 +5536,11 @@ async function upgradeCardsAsync(): Promise<void> {
     
     mds.forEach(({filename, content}) => {
         pxt.log(`patching ${filename}`)
+        const updated = content.replace(/```codecard([^`]+)```/g, (m, c: string) => {
+            const cards = pxt.gallery.parseCodeCards(c);
+            return pxt.gallery.codeCardsToMarkdown(cards);
+        })
+        nodeutil.writeFileSync(filename, updated);
     })
 }
 
