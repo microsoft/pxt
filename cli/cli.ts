@@ -5526,32 +5526,17 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
     })
 }
 
-async function upgradeGalleriesAsync(): Promise<void> {
-    const targetConfig = nodeutil.readJson("targetconfig.json") as pxt.TargetConfig;
-    if (!targetConfig?.galleries) return;
-
+async function upgradeCardsAsync(): Promise<void> {
     const docsRoot = nodeutil.targetDir;
-    Object.keys(targetConfig.galleries).forEach(k => {
-        pxt.log(`gallery ${k}`);
-        const galleryUrl = getGalleryUrl(targetConfig.galleries[k])
-        const gallerymd = nodeutil.resolveMd(docsRoot, galleryUrl);
-        if (!/```codecard/.test(gallerymd))
-            return;
-        // replace codecard with markdown
-        const galleries = pxt.gallery.parseGalleryMardown(gallerymd);
-        galleries?.forEach(gallery => {
-            const md = `### ~ codecard
-${gallery.cards.map(
-                card => Object.keys(card)
-                .filter(k => !!(<any>card)[k])
-                .map(k => `* ${k}: ${(<any>card)[k]}`).join('\n')
-            )
-                    .join('\n---\n\n')}
-### ~
-`
-            console.log(md)
-        })
-    });
+    // markdowns with cards
+    const mds = nodeutil.allFiles(docsRoot, 10, false, false)
+        .filter(fn => /\.md$/.test(fn))
+        .map(fn => ({ filename: fn, content: nodeutil.readText(fn)}))
+        .filter(f => /```codecard/.test(f.content));
+    
+    mds.forEach(({filename, content}) => {
+        pxt.log(`patching ${filename}`)
+    })
 }
 
 interface TutorialInfo extends pxt.tutorial.TutorialInfo {
@@ -6455,7 +6440,7 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
             }
         }
     }, checkDocsAsync);
-    advancedCommand("upgradegalleries", "convert JSON galleries to markdown format", upgradeGalleriesAsync, "");
+    advancedCommand("upgradecards", "convert JSON codecard to markdown format", upgradeCardsAsync, "");
 
     p.defineCommand({
         name: "usedblocks",

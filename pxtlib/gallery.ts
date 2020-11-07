@@ -207,4 +207,27 @@ namespace pxt.gallery {
         return pxt.Cloud.markdownAsync(name)
             .then(md => parseGalleryMardown(md))
     }
+
+    export function codeCardsToMarkdown(cards: pxt.CodeCard[]) {
+        const md = `### ~ codecard
+
+        ${(cards || []).map(
+            card => Object.keys(card)
+                .filter(k => !!(<any>card)[k])
+                .map(k => k === "otherActions" 
+                    ? otherActionsToMd((<any>card)[k])
+                    : `* ${k}: ${(<any>card)[k]}`
+                ).join('\n')
+        )
+                .join('\n---\n\n')}
+
+        ### ~
+        `
+        return md;
+
+        function otherActionsToMd(oas: pxt.CodeCardAction[]): string {
+            return oas.map(oa => `* otherAction: ${oa.url} ${oa.editor || "ts"} ${oa.cardType || ""}`)
+                .join('\n');
+        }
+    }
 }
