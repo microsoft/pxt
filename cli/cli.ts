@@ -3159,8 +3159,9 @@ export function downloadPlaylistsAsync(parsed: commandParser.ParsedCommand): Pro
     const fn = (parsed.args[0] as string || "playlists.json");
     if (!nodeutil.fileExistsSync(fn))
         U.userError(`File ${fn} not found`);
+    const md = !!parsed.flags["md"];
     const playlists = nodeutil.readJson(fn);
-    return youtube.renderPlaylistsAsync(playlists);
+    return youtube.renderPlaylistsAsync(playlists, md);
 }
 
 export async function validateAndFixPkgConfig(parsed: commandParser.ParsedCommand): Promise<void> {
@@ -6679,6 +6680,11 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
         name: "downloadplaylists",
         aliases: ["playlists"],
         help: "Download YouTube playlists and generate markdown",
+        flags: {
+            md: {
+                description: "generate markdown"
+            }
+        },
         advanced: true,
         argString: "<list>"
     }, downloadPlaylistsAsync)

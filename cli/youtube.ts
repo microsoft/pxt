@@ -15,7 +15,7 @@ function checkApiKey() {
     }
 }
 
-async function renderPlaylistAsync(fn: string, id: string): Promise<void> {
+async function renderPlaylistAsync(fn: string, id: string, useMarkdownCards: boolean): Promise<void> {
     fn = fn.replace(/\.md$/i, '');
     const assets = `/static/${fn}`
     nodeutil.mkdirP("docs" + assets)
@@ -48,6 +48,13 @@ async function renderPlaylistAsync(fn: string, id: string): Promise<void> {
         "youTubePlaylistId": id,
         "imageUrl": `${assets}/playlist.png`
     });
+
+    const cardsMd = useMarkdownCards ? pxt.gallery.codeCardsToMarkdown(cards)
+        : 
+`\`\`\`codecard
+${JSON.stringify(cards, null, 4)}
+\`\`\``
+
     const md =
         `# ${playlist.snippet.title}
 
@@ -55,9 +62,7 @@ ${playlist.snippet.description || ""}
 
 ## Videos
 
-\`\`\`codecard
-${JSON.stringify(cards, null, 4)}
-\`\`\`
+${cardsMd}
 
 ## See Also
 
@@ -68,8 +73,8 @@ ${JSON.stringify(cards, null, 4)}
     nodeutil.writeFileSync(path.join('docs', fn + ".md"), md, { encoding: "utf8" });
 }
 
-export function renderPlaylistsAsync(playlists: pxt.Map<string>): Promise<void> {
+export function renderPlaylistsAsync(playlists: pxt.Map<string>, useMarkdownCards: boolean): Promise<void> {
     checkApiKey();
-    return Promise.all(Object.keys(playlists).map(fn => renderPlaylistAsync(fn, playlists[fn])))
+    return Promise.all(Object.keys(playlists).map(fn => renderPlaylistAsync(fn, playlists[fn], useMarkdownCards)))
         .then(() => { pxt.log('playlists refreshed') });
 }
