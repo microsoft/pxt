@@ -214,13 +214,13 @@ namespace pxt.gallery {
 ${(cards || []).map(
             card => Object.keys(card)
                 .filter(k => !!(<any>card)[k])
-                .map(k => k === "otherActions" 
+                .map(k => k === "otherActions"
                     ? otherActionsToMd((<any>card)[k])
                     : `* ${k}: ${(<any>card)[k]}`
                 ).join('\n')
         )
                 .join(
-`
+                    `
 
 ---
 
