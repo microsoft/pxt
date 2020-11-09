@@ -363,8 +363,11 @@ export async function fetchUserPreferencesAsync() {
     if (result.success) {
         console.log("updating userpref from GET")
         // Set user profile from returned value
-        state_.preferences = result.resp
-        data.invalidate("user-pref");
+        if (result.resp) {
+            // TODO @darzu: how to handle defaults and undefined cloud state
+            state_.preferences = result.resp
+            data.invalidate("user-pref");
+        }
     } else {
         console.error("fetch failed: ")
         console.dir(result);
@@ -448,7 +451,7 @@ function userPreferencesHandler(path: string): UserPreferences {
         }
         fetchUserPreferencesAsync();
     }
-    return state_?.preferences
+    return state_.preferences
 }
 
 console.log("mounting user-pref") // TODO @darzu: 
