@@ -363,9 +363,11 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         const experiments = this.fetchExperiments();
         const isSearching = searchFor && (ghdata.status === data.FetchStatus.Pending || urldata.status === data.FetchStatus.Pending);
         const disableFileAccessinMaciOs = pxt.appTarget.appTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isIOS() || pxt.BrowserUtils.isMac());
+        const disableFileAccessinAndroid = pxt.appTarget.appTheme.disableFileAccessinAndroid && pxt.BrowserUtils.isAndroid();
         const showImportFile = mode == ScriptSearchMode.Extensions
             && pxt.appTarget.appTheme.importExtensionFiles
             && !disableFileAccessinMaciOs
+            && !disableFileAccessinAndroid
             && !searchFor;
         // inject beta at end of / or /#
         // also excludes http://localhost:port/index.html
@@ -415,9 +417,11 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         const experimentsChanged = mode == ScriptSearchMode.Experiments
             && experimentsState != pxt.editor.experiments.state();
 
+        const classes = this.props.parent.createModalClasses("searchdialog");
+
         return (
             <sui.Modal isOpen={visible} dimmer={true}
-                className="searchdialog" size="fullscreen"
+                className={classes} size="fullscreen"
                 onClose={this.hide}
                 closeIcon={closeIcon}
                 header={headerText}

@@ -132,6 +132,7 @@ export class ProjectView
     private loadingExample: boolean;
     private openingTypeScript: boolean;
     private preserveUndoStack: boolean;
+    private rootClasses: string[];
 
     private highContrastSubscriber: data.DataSubscriber = {
         subscriptions: [],
@@ -3249,6 +3250,16 @@ export class ProjectView
     ////////////             Dialogs              /////////////
     ///////////////////////////////////////////////////////////
 
+    // Classes to add to modals
+    createModalClasses(classes?: string): string {
+        const rootClassList = [
+            classes,
+            this.rootClasses.indexOf("flyoutOnly") != -1 ? "flyoutOnly" : "",
+            this.rootClasses.indexOf("inverted-theme") != -1 ? "inverted-theme" : "",
+        ]
+        return sui.cx(rootClassList);
+    }
+
     showReportAbuse() {
         const pubId = (this.state.tutorialOptions && this.state.tutorialOptions.tutorialReportId)
             || (this.state.header && this.state.header.pubCurrent && this.state.header.pubId);
@@ -3951,6 +3962,7 @@ export class ProjectView
             this.editor == this.textEditor && this.state.errorListState,
             'full-abs',
         ];
+        this.rootClasses = rootClassList;
         const rootClasses = sui.cx(rootClassList);
 
         if (this.state.hasError) {

@@ -291,8 +291,9 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
                 icon: 'check',
                 className: 'green'
             }]
+            const classes = this.props.parent.createModalClasses("hintdialog");
 
-            return <sui.Modal isOpen={visible} className="hintdialog"
+            return <sui.Modal isOpen={visible} className={classes}
                 closeIcon={false} header={tutorialName} buttons={actions}
                 onClose={onClick} dimmer={true} longer={true}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape>
@@ -666,7 +667,7 @@ export class WorkspaceHeader extends data.Component<any, WorkspaceHeaderState> {
     renderCore() {
         return <div id="headers">
             <div id="flyoutHeader" style={this.headerStyle()}>
-                <div id="flyoutHeaderTitle">{this.flyoutTitle}</div>
+                <div id="flyoutHeaderTitle" className="no-select">{this.flyoutTitle}</div>
             </div>
             <div id="workspaceHeader" style={this.workspaceStyle()}>
                 <editortoolbar.SmallEditorToolbar parent={this.props.parent}/>

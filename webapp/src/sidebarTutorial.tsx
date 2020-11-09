@@ -19,6 +19,7 @@ export class SidebarTutorialHint extends TutorialHint {
         const tutorialHint = stepInfo.hintContentMd;
         const showDialog = stepInfo.showDialog;
         const fullText = stepInfo.contentMd;
+        const classes = this.props.parent.createModalClasses("hintdialog");
 
         let onClick = tutorialStep < tutorialStepInfo.length - 1 ? this.next : this.closeHint;
         const actions: sui.ModalButton[] = [{
@@ -33,7 +34,7 @@ export class SidebarTutorialHint extends TutorialHint {
                 <div className="callout-hint-text"><md.MarkedContent markdown={tutorialHint} unboxSnippets={true} parent={this.props.parent}/></div>
             </div>
             :
-            <sui.Modal isOpen={true} className="hintdialog flyoutOnly"
+            <sui.Modal isOpen={true} className={classes}
                 closeIcon={false} header={tutorialName} buttons={actions}
                 onClose={onClick} dimmer={true} longer={true}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape>
