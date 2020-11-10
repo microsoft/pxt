@@ -844,6 +844,7 @@ namespace pxt.runner {
                         && !symbol.attributes.deprecated
                         && !symbol.attributes.blockAliasFor
                         && !!symbol.attributes.jsDoc
+                        && !!symbol.attributes.block
                         && !/^__/.test(symbol.name)
                     );
                 apisEl.each((i, e) => {
