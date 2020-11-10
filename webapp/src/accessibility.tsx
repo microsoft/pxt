@@ -1,7 +1,7 @@
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as React from "react";
-import { UserPreferences } from "./auth";
+import * as auth from "./auth";
 import * as data from "./data";
 import * as sui from "./sui";
 
@@ -68,7 +68,7 @@ export class EditorAccessibilityMenu extends data.Component<EditorAccessibilityM
     }
 
     renderCore() {
-        let highContrast = this.getData<UserPreferences>("user-pref:")?.highContrast
+        let highContrast = this.getData<boolean>(auth.HIGHCONTRAST)
         const targetTheme = pxt.appTarget.appTheme;
         const hasHome = !pxt.shell.isControllerMode();
 

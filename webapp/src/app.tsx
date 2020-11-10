@@ -893,7 +893,7 @@ export class ProjectView
         this.loadBlocklyAsync();
 
         // subscribe to user preference changes (for simulator or non-render subscriptions)
-        data.subscribe(this.highContrastSubscriber, "user-pref:");
+        data.subscribe(this.highContrastSubscriber, auth.HIGHCONTRAST);
     }
 
     public componentWillUnmount() {
@@ -969,7 +969,7 @@ export class ProjectView
                 return previousEditor ? previousEditor.unloadFileAsync() : Promise.resolve();
             })
             .then(() => {
-                let hc = this.getData<auth.UserPreferences>("user-pref:")?.highContrast
+                let hc = this.getData<boolean>(auth.HIGHCONTRAST)
                 return this.editor.loadFileAsync(this.editorFile, hc)
             })
             .then(() => {
@@ -2963,7 +2963,7 @@ export class ProjectView
                         if (!cancellationToken.isCancelled()) {
                             pxt.debug(`sim: run`)
 
-                            const hc = data.getData<auth.UserPreferences>("user-pref:")?.highContrast
+                            const hc = data.getData<boolean>(auth.HIGHCONTRAST)
                             simulator.run(pkg.mainPkg, opts.debug, resp, {
                                 mute: this.state.mute,
                                 highContrast: hc,
@@ -3916,7 +3916,7 @@ export class ProjectView
 
         const isApp = cmds.isNativeHost() || pxt.winrt.isWinRT() || pxt.BrowserUtils.isElectron();
 
-        const hc = this.getData<auth.UserPreferences>("user-pref:")?.highContrast
+        const hc = this.getData<boolean>(auth.HIGHCONTRAST)
 
         let rootClassList = [
             "ui",
@@ -4549,7 +4549,7 @@ document.addEventListener("DOMContentLoaded", () => {
             } catch (e) {
                 pxt.debug("not connected to user preferences.");
             }
-            const cloudLang = auth.getState()?.preferences?.language;
+            const cloudLang = data.getData<string>(auth.LANGUAGE);
             let useLang: string = undefined;
             if (/[&?]translate=1/.test(href) && !pxt.BrowserUtils.isIE()) {
                 console.log(`translation mode`);

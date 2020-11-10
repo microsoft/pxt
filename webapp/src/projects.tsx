@@ -335,7 +335,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
     }
 
     renderCore() {
-        const highContrast = this.getData<auth.UserPreferences>("user-pref:")?.highContrast
+        const highContrast = this.getData<boolean>(auth.HIGHCONTRAST)
         const targetTheme = pxt.appTarget.appTheme;
         const githubUser = this.getData("github:user") as pxt.editor.UserInfo;
         const reportAbuse = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing;

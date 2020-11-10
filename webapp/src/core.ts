@@ -284,7 +284,7 @@ export const ENTER_KEY = 13;
 export const SPACE_KEY = 32;
 
 export function getHighContrastOnce(): boolean {
-    return data.getData<auth.UserPreferences>("user-pref:")?.highContrast || false
+    return data.getData<boolean>(auth.HIGHCONTRAST) || false
 }
 export function toggleHighContrast() {
     setHighContrast(!getHighContrastOnce())

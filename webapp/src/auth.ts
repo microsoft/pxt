@@ -16,6 +16,12 @@ export const LOGGED_IN = `${MODULE}:${FIELD_LOGGED_IN}`;
 const CSRF_TOKEN = "csrf-token";
 const AUTH_STATE = "auth-login-state";
 
+const USER_PREF_MODULE = "user-pref";
+const FIELD_HIGHCONTRAST = "high-contrast";
+const FIELD_LANGUAGE = "language";
+export const HIGHCONTRAST = `${USER_PREF_MODULE}:${FIELD_HIGHCONTRAST}`
+export const LANGUAGE = `${USER_PREF_MODULE}:${FIELD_LANGUAGE}`
+
 export type UserProfile = {
     id?: string;
     idp?: {
@@ -313,7 +319,7 @@ export async function updateUserPreferencesAsync(newPref: Partial<UserPreference
 
     // Update our local state
     state_.preferences = { ...(state_.preferences || {}), ...newPref }
-    data.invalidate("user-pref");
+    data.invalidate(USER_PREF_MODULE);
 
     // If we're not logged in, non-persistent local state is all we'll use
     if (!loggedIn()) { return; }
@@ -324,7 +330,7 @@ export async function updateUserPreferencesAsync(newPref: Partial<UserPreference
         pxt.debug("Updating local user preferences w/ cloud data after result of POST")
         // Set user profile from returned value so we stay in-sync
         state_.preferences = { ...state_.preferences, ...result.resp }
-        data.invalidate("user-pref");
+        data.invalidate(USER_PREF_MODULE);
     } else {
         pxt.reportError("identity", "update preferences failed failed", result as any);
     }
@@ -392,7 +398,7 @@ async function fetchUserPreferencesAsync(): Promise<void> {
             //     pxt.BrowserUtils.setCookieLang(newLang);
             //     // TODO @darzu: refresh the page?
             // }
-            data.invalidate("user-pref");
+            data.invalidate(USER_PREF_MODULE);
         }
     } else {
         if (!userPreferencesInitialFetch_?.isFulfilled())
@@ -470,15 +476,19 @@ function clearState() {
     data.invalidate(LOGGED_IN);
 }
 
-function userPreferencesHandler(path: string): UserPreferences {
+function userPreferencesHandler(path: string): UserPreferences | boolean | string {
     if (!state_.preferences) {
         state_.preferences = DEFAULT_USER_PREFERENCES();
-        fetchUserPreferencesAsync();
+        /* async */ fetchUserPreferencesAsync();
+    }
+    const field = data.stripProtocol(path);
+    switch (field) {
+        case FIELD_HIGHCONTRAST: return state_.preferences.highContrast;
+        case FIELD_LANGUAGE: return state_.preferences.language;
     }
     return state_.preferences
 }
 
-
-data.mountVirtualApi("user-pref", { getSync: userPreferencesHandler });
+data.mountVirtualApi(USER_PREF_MODULE, { getSync: userPreferencesHandler });
 
 data.mountVirtualApi(MODULE, { getSync: authApiHandler });

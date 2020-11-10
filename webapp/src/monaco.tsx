@@ -25,7 +25,7 @@ import { amendmentToInsertSnippet, listenForEditAmendments, createLineReplacemen
 
 import { MonacoFlyout } from "./monacoFlyout";
 import { ErrorList } from "./errorList";
-import { UserPreferences } from "./auth";
+import * as auth from "./auth";
 
 const MIN_EDITOR_FONT_SIZE = 10
 const MAX_EDITOR_FONT_SIZE = 40
@@ -394,12 +394,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.startDebugger = this.startDebugger.bind(this)
         this.onUserPreferencesChanged = this.onUserPreferencesChanged.bind(this);
 
-        data.subscribe(this.userPreferencesSubscriber, "user-pref:");
+        data.subscribe(this.userPreferencesSubscriber, auth.HIGHCONTRAST);
     }
 
     onUserPreferencesChanged() {
-        const prefs = data.getData<UserPreferences>("user-pref:");
-        const hc = !!prefs?.highContrast
+        const hc = data.getData<boolean>(auth.HIGHCONTRAST);
 
         if (this.loadMonacoPromise) this.defineEditorTheme(hc, true);
     }

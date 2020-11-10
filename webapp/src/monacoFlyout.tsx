@@ -228,7 +228,7 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
     }
 
     protected getBlockStyle = (color: string) => {
-        const highContrast = this.getData<auth.UserPreferences>("user-pref:")?.highContrast
+        const highContrast = this.getData<boolean>(auth.HIGHCONTRAST)
         return {
             backgroundColor: color,
             border: highContrast ? `2px solid ${color}` : "none",
