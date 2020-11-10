@@ -426,6 +426,7 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
     constructor(props: ProjectsCarouselProps) {
         super(props)
         this.handleRefreshCard = this.handleRefreshCard.bind(this);
+        this.handleCardClick = this.handleCardClick.bind(this);
         this.state = {
         }
     }
@@ -434,6 +435,12 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
         pxt.log(`next hero carousel`)
         const cardIndex = this.state.cardIndex || 0;
         this.setState({ cardIndex: (cardIndex + 1) % this.prevGalleries.length })
+    }
+
+    private handleCardClick() {
+        const card = this.state.cardIndex !== undefined && this.prevGalleries[this.state.cardIndex]
+        if (card)
+            pxt.tickEvent("hero.card.click", { card: card.name })
     }
 
     private startRefresh() {
@@ -489,7 +496,8 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
         }
         return <div className="ui segment getting-started-segment"
             style={{ backgroundImage: `url(${encodeURI(card.largeImageUrl || card.imageUrl)})` }}>
-            {!!card.name && !!card.url && <sui.Link className="large hero button" href={card.url}
+            {!!card.name && !!card.url && <sui.Link className="large hero button" 
+                href={card.url} onClick={this.handleCardClick}
                 role="button" title={card.name} ariaLabel={card.name}>
                 {card.name}
             </sui.Link>}
