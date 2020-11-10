@@ -70,7 +70,7 @@ export class SkillCardImpl extends React.Component<SkillCardProps> {
                 <div className="skill-card-label">
                     <div className="skill-card-title">
                         {(status === "locked" || status === "completed") && <i className={`icon ${status === "locked" ? "lock" : "check circle"}`} />}
-                        {(status === "inprogress" || status === "notstarted") && maxSteps &&
+                        {status === "inprogress" && maxSteps &&
                             <span className="circular-label">{`${currentStep}/${maxSteps}`}</span>
                         }
                         <span>{label}</span>

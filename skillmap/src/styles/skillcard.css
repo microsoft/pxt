@@ -183,12 +183,12 @@
 }
 
 .circular-label {
-	background: #656565;
-	padding: 0.2rem;
-	font-size: 0.75rem;
-	color: white;
-	border-radius: 1.5rem;
-	vertical-align: middle;
+    background: #656565;
+    padding: 0.2rem;
+    font-size: 0.75rem;
+    color: white;
+    border-radius: 1.5rem;
+    vertical-align: middle;
     margin-right: 0.25rem;
 }
 
