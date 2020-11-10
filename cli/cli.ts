@@ -5382,6 +5382,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
         if (!md) {
             pxt.log(`unable to resolve ${entrypath}`)
             broken++;
+            continue;
         }
         // look for broken urls
         md.replace(/]\( (\/[^)]+?)(\s+"[^"]+")?\)/g, (m) => {
@@ -5427,6 +5428,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                 if (!gallerymd) {
                     pxt.log(`unable to resolve ${galleryUrl}`)
                     broken++;
+                    return;
                 }
                 let gallery = pxt.gallery.parseGalleryMardown(gallerymd);
                 pxt.debug(`found ${gallery.length} galleries`);
@@ -5441,6 +5443,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                                 if (!tutorialMd) {
                                     pxt.log(`unable to resolve ${url}`)
                                     broken++;
+                                    continue;
                                 }
                                 const tutorial = pxt.tutorial.parseTutorial(tutorialMd);
                                 const pkgs: pxt.Map<string> = { "blocksprj": "*" };
@@ -5495,6 +5498,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                                 if (!exMd) {
                                     pxt.log(`unable to resolve ${url}`)
                                     broken++;
+                                    continue;
                                 }                                                const prj = pxt.gallery.parseExampleMarkdown(card.name, exMd);
                                 const pkgs: pxt.Map<string> = { "blocksprj": "*" };
                                 pxt.U.jsonMergeFrom(pkgs, prj.dependencies);
