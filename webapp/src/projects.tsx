@@ -418,18 +418,19 @@ interface HeroBannerState {
     cardIndex?: number;
 }
 
+const HERO_BANNER_DELAY = 10000;
 class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
     private prevGalleries: pxt.CodeCard[] = [];
     private carouselInterval: any = undefined;
 
     constructor(props: ProjectsCarouselProps) {
         super(props)
-        this.refreshCard.bind(this);
+        this.handleRefreshCard = this.handleRefreshCard.bind(this);
         this.state = {
         }
     }
 
-    private refreshCard() {
+    private handleRefreshCard() {
         pxt.log(`next hero carousel`)
         const cardIndex = this.state.cardIndex || 0;
         this.setState({ cardIndex: (cardIndex + 1) % this.prevGalleries.length })
@@ -438,7 +439,9 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
     private startRefresh() {
         if (!this.carouselInterval && this.prevGalleries.length) {
             pxt.log(`start refreshing hero carousel`)
-            this.carouselInterval = setInterval(this.refreshCard, 10000);
+            this.carouselInterval = setInterval(this.handleRefreshCard, HERO_BANNER_DELAY);
+            if (this.state.cardIndex === undefined)
+                setTimeout(this.handleRefreshCard, 100); // show first item immediately
         }
     }
 
@@ -486,7 +489,10 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
         }
         return <div className="ui segment getting-started-segment"
             style={{ backgroundImage: `url(${encodeURI(card.largeImageUrl || card.imageUrl)})` }}>
-            {!!card.title && !!card.url && <sui.Link className="button" href={card.url} target={"_blank"} role="button" title={card.description} ariaLabel={card.description}>{card.title}</sui.Link>}
+            {!!card.name && !!card.url && <sui.Link className="hero button" href={card.url}
+                role="button" title={card.description} ariaLabel={card.description}>
+                {card.name}
+            </sui.Link>}
         </div>
     }
 }
