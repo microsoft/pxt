@@ -414,12 +414,42 @@ export class ProjectsMenu extends data.Component<ISettingsProps, {}> {
     }
 }
 
-class HeroBanner extends data.Component<ISettingsProps, {}> {
+interface HeroBannerState {
+    cardIndex?: number;
+}
+
+class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
     private prevGalleries: pxt.CodeCard[] = [];
+    private carouselInterval: any = undefined;
 
     constructor(props: ProjectsCarouselProps) {
         super(props)
+        this.refreshCard.bind(this);
         this.state = {
+        }
+    }
+
+    private refreshCard() {
+        pxt.log(`refrehing carousel`)
+        const cardIndex = this.state.cardIndex || 0;
+        this.setState({ cardIndex: (cardIndex + 1) % this.prevGalleries.length })
+    }
+
+    private startRefresh() {
+        if (!this.carouselInterval && this.prevGalleries.length) {
+            pxt.log(`start refreshing carousel`)
+            this.carouselInterval = setInterval(this.refreshCard, 10000);
+        }
+    }
+
+    componentWillMount() {
+        this.startRefresh();
+    }
+
+    componentWillUnmount() {
+        if (this.carouselInterval) {
+            clearInterval(this.carouselInterval)
+            this.carouselInterval = undefined;
         }
     }
 
@@ -437,6 +467,7 @@ class HeroBanner extends data.Component<ISettingsProps, {}> {
                 // ignore;
             } else {
                 this.prevGalleries = pxt.Util.concat(res.map(g => g.cards));
+                this.startRefresh();
             }
         }
         return this.prevGalleries || [];
@@ -444,11 +475,18 @@ class HeroBanner extends data.Component<ISettingsProps, {}> {
 
     renderCore() {
         const targetTheme = pxt.appTarget.appTheme;
+        const { cardIndex } = this.state;
         const showHeroBanner = !!targetTheme.homeScreenHero;
         if (!showHeroBanner)
             return null; // nothing to see here
         const cards = this.fetchGallery();
-        return <div className="ui segment getting-started-segment" style={{ backgroundImage: `url(${encodeURI(targetTheme.homeScreenHero)})` }} />
+        const card = (cardIndex !== undefined && cards[cardIndex]) || {
+            imageUrl: targetTheme.homeScreenHero
+        }
+        return <div className="ui segment getting-started-segment"
+            style={{ backgroundImage: `url(${encodeURI(card.largeImageUrl || card.imageUrl)})` }}>
+            {!!card.title && !!card.url && <sui.Link className="button" href={card.url} target={"_blank"} role="button" title={card.description} ariaLabel={card.description}>{card.title}</sui.Link>}
+        </div>
     }
 }
 
