@@ -394,7 +394,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.startDebugger = this.startDebugger.bind(this)
         this.onUserPreferencesChanged = this.onUserPreferencesChanged.bind(this);
 
-        // TODO @darzu: will this ever unsubscribe?
         data.subscribe(this.userPreferencesSubscriber, "user-pref:");
     }
 
@@ -791,8 +790,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     setHighContrast(hc: boolean) {
-        // TODO @darzu: defineEditorTheme needs to be called when user-pref data changes
-        if (this.loadMonacoPromise) this.defineEditorTheme(hc, true);
+        // handled by onUserPreferencesChanged
     }
 
     beforeCompile() {

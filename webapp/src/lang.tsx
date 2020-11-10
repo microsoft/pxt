@@ -74,13 +74,9 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
             return;
         }
 
-        pxt.BrowserUtils.setCookieLang(langId);
-
         if (langId !== initialLang) {
             pxt.tickEvent(`menu.lang.changelang`, { lang: langId });
-            // TODO @darzu: 
-            console.log("doing updateUserPreferencesAsync: " + langId);
-            auth.updateUserPreferencesAsync({ language: langId })
+            core.setLanguage(langId)
                 .then(() => pxt.winrt.releaseAllDevicesAsync())            
                 .then(() => {
                     this.props.parent.reloadEditor();

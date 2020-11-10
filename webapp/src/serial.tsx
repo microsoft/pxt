@@ -29,7 +29,6 @@ export class Editor extends srceditor.Editor {
     lineColors: string[];
     hcLineColors: string[];
     currentLineColors: string[];
-    // TODO @darzu: 
     highContrast?: boolean = false
 
     //refs
@@ -48,8 +47,9 @@ export class Editor extends srceditor.Editor {
     }
 
     setVisible(b: boolean) {
-        // TODO @darzu: re-render this component when HC changes
-        const highContrast = data.getData<auth.UserPreferences>("user-pref:")?.highContrast
+        // TODO: It'd be great to re-render this component dynamically when the contrast changes,
+        // but for now the user has to toggle the serial editor to see a change. 
+        const highContrast = core.getHighContrastOnce();
         if (highContrast !== this.highContrast) {
             this.setHighContrast(highContrast)
         }

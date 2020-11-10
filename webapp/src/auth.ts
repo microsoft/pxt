@@ -32,18 +32,25 @@ export type UserProfile = {
     };
 };
 
-// TODO @darzu
+/**
+ * User preference state that should be synced with the cloud.
+ */
 export type UserPreferences = {
     language?: string;
     highContrast?: boolean;
 }
+
+const DEFAULT_USER_PREFERENCES: () => UserPreferences = () => ({
+    highContrast: false,
+    language: pxt.appTarget.appTheme.defaultLocale,
+})
 
 /**
  * In-memory auth state. Changes to this state trigger virtual API subscription callbacks.
  */
 export type State = {
     user?: UserProfile;
-    preferences?: UserPreferences; // TODO @darzu
+    preferences?: UserPreferences;
 };
 
 let state_: State = {};
@@ -300,6 +307,40 @@ export class Component<TProps, TState> extends data.Component<TProps, TState> {
     }
 }
 
+export async function updateUserPreferencesAsync(newPref: Partial<UserPreferences>) {
+    if (!loggedIn())
+        return Promise.reject("User not logged in.");
+
+    // Update our local state
+    state_.preferences = { ...(state_.preferences || {}), ...newPref }
+    data.invalidate("user-pref");
+
+    // If we're not logged in, non-persistent local state is all we'll use
+    if (!loggedIn()) { return; }
+
+    // If the user is logged in, save to cloud
+    const result = await apiAsync<UserPreferences>('/api/user/preferences', newPref);
+    if (result.success) {
+        pxt.debug("Updating local user preferences w/ cloud data after result of POST")
+        // Set user profile from returned value so we stay in-sync
+        state_.preferences = { ...state_.preferences, ...result.resp }
+        data.invalidate("user-pref");
+    } else {
+        pxt.reportError("identity", "update preferences failed failed", result as any);
+    }
+}
+
+let userPreferencesInitialFetch_: Promise<UserPreferences> = undefined;
+export async function initialFetchUserPreferencesAsync() {
+    if (!userPreferencesInitialFetch_) {
+        await fetchUserPreferencesAsync();
+    }
+    if (!userPreferencesInitialFetch_) {
+        userPreferencesInitialFetch_ = Promise.reject("Failed to fetch user preferences for unknown reason.");
+    }
+    return userPreferencesInitialFetch_;
+}
+
 /**
  * Private functions
  */
@@ -328,70 +369,35 @@ async function fetchUserAsync() {
     }
 }
 
-
-export async function updateUserPreferencesAsync(newPref: Partial<UserPreferences>) {
-    // Update our local state
-    state_.preferences = { ...(state_.preferences || {}), ...newPref }
-    data.invalidate("user-pref");
-    console.log("updated pref: ")
-    console.dir(newPref);
-
-    // If we're not logged in, non-persistent local state is all we'll use
-    if (!loggedIn()) { return; }
-
-    // If the user is logged in, save to cloud
-    const result = await apiAsync<UserPreferences>('/api/user/preferences', newPref);
-    if (result.success) {
-        console.log("Updating local user preferences w/ cloud data after result of POST")
-        // TODO @darzu:
-        // pxt.debug("Updating local user preferences w/ cloud data after result of POST")
-        // Set user profile from returned value so we stay in-sync
-        state_.preferences = { ...state_.preferences, ...result.resp }
-        data.invalidate("user-pref");
-        console.dir(state_.preferences); // TODO @darzu: 
-    } else {
-        console.error("fetch failed: ")
-        console.dir(result);
-    }
-}
-
-let userPreferencesInitialFetch: Promise<UserPreferences> = undefined;
-
-export async function initialFetchUserPreferencesAsync() {
-    if (!userPreferencesInitialFetch) {
-        await fetchUserPreferencesAsync();
-    }
-    if (!userPreferencesInitialFetch) {
-        userPreferencesInitialFetch = Promise.reject("Failed to fetch user preferences for unknown reason.");
-    }
-    return userPreferencesInitialFetch;
-}
-
-async function fetchUserPreferencesAsync() {
-    // TODO @darzu: 
-    console.log("fetchUserPreferencesAsync")
+async function fetchUserPreferencesAsync(): Promise<void> {
+    if (!loggedIn())
+        return;
 
     const api = '/api/user/preferences';
-    const result = await apiAsync<UserPreferences>('/api/user/preferences');
+    const result = await apiAsync<Partial<UserPreferences>>('/api/user/preferences');
     if (result.success) {
-        console.log("updating userpref from GET")
         // Set user profile from returned value
         if (result.resp) {
-            // TODO @darzu: how to handle defaults and undefined cloud state
-            state_.preferences = result.resp
-            if (!userPreferencesInitialFetch?.isResolved())
-                userPreferencesInitialFetch = Promise.resolve(state_.preferences);
-            const newLang = state_.preferences?.language
-            if (newLang !== pxt.BrowserUtils.getCookieLang()) {
-                pxt.BrowserUtils.setCookieLang(newLang);
-                // TODO @darzu: refresh the page?
-            }
+            // Note the cloud will send partial information back if it is missing
+            // a field. So e.g. if the language has never been set in the cloud, it won't
+            // overwrite the local state.
+            state_.preferences = { ...state_.preferences ?? {}, ...result.resp };
+            // update our one-time promise for the initial load
+            if (!userPreferencesInitialFetch_?.isResolved())
+                userPreferencesInitialFetch_ = Promise.resolve(state_.preferences);
+
+            // TODO @darzu: we shouldn't need to reload the page here
+            // const newLang = state_.preferences?.language
+            // if (newLang !== pxt.BrowserUtils.getCookieLang()) {
+            //     pxt.BrowserUtils.setCookieLang(newLang);
+            //     // TODO @darzu: refresh the page?
+            // }
             data.invalidate("user-pref");
         }
     } else {
-        if (!userPreferencesInitialFetch?.isFulfilled())
-            userPreferencesInitialFetch = Promise.reject(`Call to ${api} failed.`)
-        console.error("fetch failed: ")
+        if (!userPreferencesInitialFetch_?.isFulfilled())
+            userPreferencesInitialFetch_ = Promise.reject(`Call to ${api} failed.`)
+        console.error("fetch user preferences failed: ")
         console.dir(result);
     }
 }
@@ -466,20 +472,13 @@ function clearState() {
 
 function userPreferencesHandler(path: string): UserPreferences {
     if (!state_.preferences) {
-        // TODO @darzu: what's the right way to handle defaults here?
-        state_.preferences = {
-            highContrast: false,
-            language: "en",
-            // TODO @darzu: 
-            // theme.defaultLocale
-        }
+        state_.preferences = DEFAULT_USER_PREFERENCES();
         fetchUserPreferencesAsync();
     }
     return state_.preferences
 }
 
 
-console.log("mounting user-pref") // TODO @darzu: 
 data.mountVirtualApi("user-pref", { getSync: userPreferencesHandler });
 
 data.mountVirtualApi(MODULE, { getSync: authApiHandler });

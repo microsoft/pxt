@@ -271,21 +271,15 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
 
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 export interface ProjectSettingsMenuProps extends ISettingsProps {
-    // TODO @darzu: 
-    // highContrast?: boolean;
 }
 export interface ProjectSettingsMenuState {
-    // TODO @darzu: 
-    // highContrast?: boolean;
 }
 
 export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps, ProjectSettingsMenuState> {
 
     constructor(props: ProjectSettingsMenuProps) {
         super(props);
-        this.state = {
-            // highContrast: props.highContrast
-        }
+        this.state = {}
 
         this.showLanguagePicker = this.showLanguagePicker.bind(this);
         this.toggleHighContrast = this.toggleHighContrast.bind(this);
@@ -302,10 +296,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
 
     toggleHighContrast() {
         pxt.tickEvent("home.togglecontrast", undefined, { interactiveConsent: true });
-        // TODO @darzu: 
-        // this.props.parent.toggleHighContrast();
         core.toggleHighContrast();
-        // this.setState({ highContrast: !this.state.highContrast });
     }
 
     toggleGreenScreen() {
@@ -344,10 +335,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
     }
 
     renderCore() {
-        // TODO @darzu: 
         const highContrast = this.getData<auth.UserPreferences>("user-pref:")?.highContrast
-        console.log("projects.tsx highContrast: " + highContrast);
-        // const { highContrast } = this.state;
         const targetTheme = pxt.appTarget.appTheme;
         const githubUser = this.getData("github:user") as pxt.editor.UserInfo;
         const reportAbuse = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing;

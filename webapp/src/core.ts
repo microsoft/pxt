@@ -109,7 +109,7 @@ export function cancelAsyncLoading(id: string) {
 ///////////////////////////////////////////////////////////
 
 function showNotificationMsg(kind: string, msg: string) {
-    coretsx.pushNotificationMessage({ kind: kind, text: msg, hc: getHighContrast() });
+    coretsx.pushNotificationMessage({ kind: kind, text: msg, hc: getHighContrastOnce() });
 }
 
 export function errorNotification(msg: string) {
@@ -283,23 +283,20 @@ export const ESC_KEY = 27;
 export const ENTER_KEY = 13;
 export const SPACE_KEY = 32;
 
-export function getHighContrast(): boolean {
-    // TODO @darzu: 
+export function getHighContrastOnce(): boolean {
     return data.getData<auth.UserPreferences>("user-pref:")?.highContrast || false
 }
 export function toggleHighContrast() {
-    setHighContrast(!getHighContrast())
+    setHighContrast(!getHighContrastOnce())
 }
-export function setHighContrast(on: boolean) {
-    auth.updateUserPreferencesAsync({ highContrast: on });
-    // TODO @darzu:
-    console.log("setting high contrast state: " + on)
+export async function setHighContrast(on: boolean) {
+    await auth.updateUserPreferencesAsync({ highContrast: on });
 }
 
-export function setLanguage(lang: string) {
-    auth.updateUserPreferencesAsync({ language: lang });
-    // TODO @darzu:
-    console.log("setting language state: " + lang)
+export async function setLanguage(lang: string) {
+    pxt.BrowserUtils.setCookieLang(lang);
+    if (auth.loggedIn())
+        await auth.updateUserPreferencesAsync({ language: lang });
 }
 
 export function resetFocus() {

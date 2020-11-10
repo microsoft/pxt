@@ -8,13 +8,11 @@ import * as sui from "./sui";
 type ISettingsProps = pxt.editor.ISettingsProps;
 
 export interface EditorAccessibilityMenuProps extends ISettingsProps {
-    // TODO @darzu: 
     highContrast?: boolean;
 }
 
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 export interface EditorAccessibilityMenuState {
-    // TODO @darzu: 
     highContrast?: boolean;
 }
 
@@ -70,8 +68,6 @@ export class EditorAccessibilityMenu extends data.Component<EditorAccessibilityM
     }
 
     renderCore() {
-        // TODO @darzu: 
-        // const { highContrast } = this.props.parent.state;
         let highContrast = this.getData<UserPreferences>("user-pref:")?.highContrast
         const targetTheme = pxt.appTarget.appTheme;
         const hasHome = !pxt.shell.isControllerMode();
@@ -92,7 +88,6 @@ export interface HomeAccessibilityMenuProps extends ISettingsProps {
 
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 export interface HomeAccessibilityMenuState {
-    // TODO @darzu: 
     highContrast?: boolean;
 }
 

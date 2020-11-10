@@ -151,7 +151,6 @@ export class ProjectView
         this.settings = JSON.parse(pxt.storage.getLocal("editorSettings") || "{}")
         const shouldShowHomeScreen = this.shouldShowHomeScreen();
         const isHighContrast = /hc=(\w+)/.test(window.location.href);
-        // TODO @darzu: how should we handle query string overriding the HC state?
         if (isHighContrast) core.setHighContrast(true);
 
         const simcfg = pxt.appTarget.simulator;
@@ -233,7 +232,6 @@ export class ProjectView
     }
 
     updateVisibility() {
-        console.log("updateVisibility") // TODO @darzu: 
         if (pxt.BrowserUtils.isElectron() || pxt.winrt.isWinRT() || pxt.appTarget.appTheme.dontSuspendOnVisibility) {
             // Don't suspend when inside apps
             return;
@@ -277,7 +275,6 @@ export class ProjectView
             } else if (this.state.resumeOnVisibility) {
                 this.setState({ resumeOnVisibility: false });
                 // We did a save when the page was hidden, no need to save again.
-                console.log("updateVisibility (2)") // TODO @darzu: 
                 this.runSimulator();
                 maybeReconnect()
             } else if (!this.state.home) {
@@ -896,7 +893,6 @@ export class ProjectView
         this.loadBlocklyAsync();
 
         // subscribe to user preference changes (for simulator or non-render subscriptions)
-        // TODO @darzu: restrict to highContrast
         data.subscribe(this.highContrastSubscriber, "user-pref:");
     }
 
@@ -2970,7 +2966,7 @@ export class ProjectView
                             const hc = data.getData<auth.UserPreferences>("user-pref:")?.highContrast
                             simulator.run(pkg.mainPkg, opts.debug, resp, {
                                 mute: this.state.mute,
-                                highContrast: hc, // TODO @darzu: 
+                                highContrast: hc,
                                 light: pxt.options.light,
                                 clickTrigger: opts.clickTrigger,
                                 storedState: pkg.mainEditorPkg().getSimState(),
@@ -3754,18 +3750,11 @@ export class ProjectView
     ///////////////////////////////////////////////////////////
 
     toggleHighContrast() {
-        // const highContrastOn = !this.state.highContrast;
-        // TODO @darzu: 
-        // this.setState({ highContrast: highContrastOn }, () => {
-            if (this.isSimulatorRunning()) {  // if running, send updated high contrast state.
-                this.startSimulator()
-            }
-        // });
         core.toggleHighContrast();
-        pxt.tickEvent("app.highcontrast", { on: core.getHighContrast() ? 1 : 0 });
-        // if (this.editor && this.editor.isReady) {
-        //     this.editor.setHighContrast(highContrastOn);
-        // }
+        pxt.tickEvent("app.highcontrast", { on: core.getHighContrastOnce() ? 1 : 0 });
+        if (this.isSimulatorRunning()) {  // if running, send updated high contrast state.
+            this.startSimulator()
+        }
     }
 
     toggleGreenScreen() {
