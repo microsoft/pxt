@@ -132,6 +132,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
+
     domUpdate() {
         if (this.delayLoadXml) {
             if (this.loadingXml) return
@@ -168,16 +169,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     Blockly.svgResize(this.editor);
                     this.isFirstBlocklyLoad = false;
                 }).finally(() => {
-                    this.loadingXml = false
                     try {
                         // It's possible Blockly reloads and the loading dimmer is no longer a child of the editorDiv
                         editorDiv.removeChild(loadingDimmer);
                     } catch { }
+                    this.loadingXml = false
+                    this.loadingXmlPromise = null;
                     pxt.perf.measureEnd("domUpdate loadBlockly")
                 });
-
-            this.loadingXmlPromise.done();
-            this.loadingXmlPromise = null;
         }
     }
 
@@ -1100,20 +1099,25 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 // If we're switching from a toolbox to no toolbox, unmount node
                 ReactDOM.unmountComponentAtNode(this.getBlocklyToolboxDiv());
             }
-            // Refresh Blockly
-            this.delayLoadXml = this.getCurrentSource();
-            this.editor = undefined;
-            this.loadingXml = false;
-            if (this.loadingXmlPromise) {
-                this.loadingXmlPromise.cancel();
-                this.loadingXmlPromise = null;
+
+            const refreshBlockly = () => {
+                this.delayLoadXml = this.getCurrentSource();
+                this.editor = undefined;
+                this.prepareBlockly(hasCategories);
+                this.domUpdate();
+                this.editor.scrollCenter();
+                if (hasCategories) {
+                    // If we're switching from no toolbox to a toolbox, mount node
+                    this.renderToolbox(true);
+                }
             }
-            this.prepareBlockly(hasCategories);
-            this.domUpdate();
-            this.editor.scrollCenter();
-            if (hasCategories) {
-                // If we're switching from no toolbox to a toolbox, mount node
-                this.renderToolbox(true);
+
+            if (this.loadingXmlPromise) {
+                // enqueue refresh if currently loading
+                this.loadingXmlPromise
+                    .then(refreshBlockly);
+            } else {
+                refreshBlockly();
             }
         }
         pxt.perf.measureEnd("refreshToolbox")
