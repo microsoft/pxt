@@ -349,14 +349,14 @@ type ApiResult<T> = {
     errmsg: string;
 };
 
-const BACKEND_DEFAULT = "";
-const BACKEND_PROD = "https://www.makecode.com";
-const BACKEND_STAGING = "https://staging.pxt.io";
+const DEV_BACKEND_DEFAULT = "";
+const DEV_BACKEND_PROD = "https://www.makecode.com";
+const DEV_BACKEND_STAGING = "https://staging.pxt.io";
 // tslint:disable-next-line:no-http-string
-const BACKEND_LOCALHOST = "http://localhost:5500";
-const BACKEND_LOCALHOST_SSL = "https://localhost:5500";
+const DEV_BACKEND_LOCALHOST = "http://localhost:5500";
+const DEV_BACKEND_LOCALHOST_SSL = "https://localhost:5500";
 
-const BACKEND = BACKEND_DEFAULT;
+const DEV_BACKEND = DEV_BACKEND_LOCALHOST;
 
 async function apiAsync<T = any>(url: string, data?: any, method?: string): Promise<ApiResult<T>> {
     const headers: pxt.Map<string> = {};
@@ -364,8 +364,10 @@ async function apiAsync<T = any>(url: string, data?: any, method?: string): Prom
     if (csrfToken) {
         headers["authorization"] = `mkcd ${csrfToken}`;
     }
+    url = pxt.BrowserUtils.isLocalHostDev() ? `${DEV_BACKEND}${url}` : url;
+
     return U.requestAsync({
-        url: `${BACKEND}/${url}`,
+        url,
         headers,
         data,
         method: method ? method : data ? "POST" : "GET",
