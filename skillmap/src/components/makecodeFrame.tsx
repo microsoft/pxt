@@ -2,16 +2,13 @@
 import * as React from "react";
 import { connect } from 'react-redux';
 import { getWorkspaceAsync } from "../lib/workspaceProvider";
+import { isLocal } from "../lib/browserUtils";
 
 import { SkillMapState } from '../store/reducer';
 import  { dispatchSetHeaderIdForActivity, dispatchCloseActivity, dispatchSaveAndCloseActivity } from '../actions/dispatch';
 
 import '../styles/makecode-editor.css'
 import { lookupActivityProgress } from "../lib/skillMapUtils";
-
-function isLocal() {
-    return window.location.hostname === "localhost";
-}
 
 interface MakeCodeFrameProps {
     save: boolean;
@@ -30,7 +27,7 @@ interface MakeCodeFrameState {
     loaded: boolean;
 }
 
-const editorUrl = isLocal() ? "http://localhost:3232/index.html" : "https://arcade.makecode.com"
+const editorUrl = isLocal() ? "http://localhost:3232/index.html" : (window as any).pxtTargetBundle.appTheme.embedUrl
 
 class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFrameState> {
     protected ref: HTMLIFrameElement | undefined;
@@ -247,7 +244,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
     let title: string | undefined;
 
     const activity = state.maps[currentMapId].activities[currentActivityId];
-    url = `${editorUrl}/?controller=1&skillsMap=1`;
+    url = `${editorUrl}?controller=1&skillsMap=1`;
     title = activity.displayName;
 
     return {

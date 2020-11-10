@@ -1,19 +1,19 @@
 import * as React from "react";
-import { connect } from 'react-redux';
 
-import { SkillMapState } from '../store/reducer';
 import { Item, CarouselItem } from './CarouselItem';
-import { dispatchChangeSelectedItem } from '../actions/dispatch';
 
 import '../styles/carousel.css'
+import { ComponentClass } from "react-redux";
 
 interface CarouselProps {
     title?: string;
     items: Item[];
     selectedItem?: string;
-    itemTemplate?: (props: Item) => JSX.Element;
     itemClassName?: string;
-    dispatchChangeSelectedItem: (id: string) => void;
+    itemTemplate?: ((props: Item) => JSX.Element) | ComponentClass<any>;
+    onItemSelect?: (id: string) => void;
+    prependChildren?: JSX.Element[];
+    appendChildren?: JSX.Element[];
 }
 
 interface CarouselState {
@@ -21,7 +21,7 @@ interface CarouselState {
     showRight: boolean;
 }
 
-class CarouselImpl extends React.Component<CarouselProps, CarouselState> {
+export class Carousel extends React.Component<CarouselProps, CarouselState> {
     protected carouselRef: any;
     constructor(props: CarouselProps) {
         super(props);
@@ -51,7 +51,7 @@ class CarouselImpl extends React.Component<CarouselProps, CarouselState> {
     }
 
     render() {
-        const { title, items, selectedItem, itemTemplate, itemClassName } = this.props;
+        const { title, items, selectedItem, itemTemplate, itemClassName, onItemSelect, prependChildren, appendChildren } = this.props;
         const { showLeft, showRight } = this.state;
 
         return <div className="carousel">
@@ -61,9 +61,11 @@ class CarouselImpl extends React.Component<CarouselProps, CarouselState> {
             </div>}
             <div className="carousel-items">
                 <div className="carousel-items-inner" onScroll={this.handleScroll} ref={(el) => this.carouselRef = el}>
+                    {prependChildren}
                     {items.map((el, i) => {
-                        return <CarouselItem key={i} className={itemClassName} item={el} itemTemplate={itemTemplate} selected={selectedItem === el.id} />
+                        return <CarouselItem key={i} className={itemClassName} item={el} itemTemplate={itemTemplate} selected={selectedItem === el.id} onSelect={onItemSelect} />
                     })}
+                    {appendChildren}
                 </div>
             </div>
             {showRight && <div className="carousel-arrow right" onClick={this.handleRightArrowClick}>
@@ -72,16 +74,3 @@ class CarouselImpl extends React.Component<CarouselProps, CarouselState> {
         </div>
     }
 }
-
-function mapStateToProps(state: SkillMapState, ownProps: any) {
-    if (!state) return {};
-    return {
-        selectedItem: state.selectedItem
-    }
-}
-
-const mapDispatchToProps = {
-    dispatchChangeSelectedItem
-};
-
-export const Carousel = connect(mapStateToProps, mapDispatchToProps)(CarouselImpl);
