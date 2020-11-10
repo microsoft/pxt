@@ -430,14 +430,14 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
     }
 
     private refreshCard() {
-        pxt.log(`refrehing carousel`)
+        pxt.log(`next hero carousel`)
         const cardIndex = this.state.cardIndex || 0;
         this.setState({ cardIndex: (cardIndex + 1) % this.prevGalleries.length })
     }
 
     private startRefresh() {
         if (!this.carouselInterval && this.prevGalleries.length) {
-            pxt.log(`start refreshing carousel`)
+            pxt.log(`start refreshing hero carousel`)
             this.carouselInterval = setInterval(this.refreshCard, 10000);
         }
     }
@@ -448,6 +448,7 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
 
     componentWillUnmount() {
         if (this.carouselInterval) {
+            pxt.log(`stopping hero carousel`)
             clearInterval(this.carouselInterval)
             this.carouselInterval = undefined;
         }
