@@ -3239,7 +3239,7 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
     if (outmd && !fs.existsSync(outmd))
         U.userError(`${outmd} file not found`)
     const md: string = outmd && fs.readFileSync(outmd, { encoding: "utf8" });
-    const title = md && /^# (.)$/m.exec(md)?.[1];
+    const title = md && /^# (.*)$/m.exec(md)?.[1];
 
     nodeutil.mkdirP(out);
     let n = 0;
