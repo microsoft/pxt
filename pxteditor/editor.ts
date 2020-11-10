@@ -247,6 +247,7 @@ namespace pxt.editor {
         pokeUserActivity(): void;
         stopPokeUserActivity(): void;
         clearUserPoke(): void;
+        setHintSeen(step: number): void;
 
         anonymousPublishAsync(screenshotUri?: string): Promise<string>;
 
