@@ -1,4 +1,4 @@
-const apiRoot = "https://www.makecode.com/api/md/arcade/";
+const apiRoot = "https://www.makecode.com/api/md";
 export type MarkdownSource = "docs" | "github";
 
 export function parseHash() {
@@ -15,8 +15,9 @@ export async function getMarkdownAsync(source: MarkdownSource, url: string) {
     if (!source || !url) return "";
     switch (source) {
         case "docs":
-            url = url.trim().replace(/^\\/i, "");
-            return await httpGetAsync(`${apiRoot}/${url}`);
+            url = url.trim().replace(/^[\\/]/i, "").replace(/\.md$/i, "");
+            const target = (window as any).pxtTargetBundle.name;
+            return await httpGetAsync(`${apiRoot}/${target}/${url}`);
         case "github":
             /**
              * FORMATS:
@@ -56,4 +57,8 @@ export function httpGetAsync(url: string): Promise<string> {
         request.open("GET", url);
         request.send();
     })
+}
+
+export function isLocal() {
+    return window.location.hostname === "localhost";
 }
