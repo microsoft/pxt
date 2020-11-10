@@ -7,6 +7,7 @@ import { SkillMapState } from '../store/reducer';
 import  { dispatchSetHeaderIdForActivity, dispatchCloseActivity, dispatchSaveAndCloseActivity } from '../actions/dispatch';
 
 import '../styles/makecode-editor.css'
+import { lookupActivityProgress } from "../lib/skillMapUtils";
 
 function isLocal() {
     return window.location.hostname === "localhost";
@@ -18,6 +19,7 @@ interface MakeCodeFrameProps {
     title: string;
     url: string;
     tutorialPath: string;
+    completed: boolean;
     activityHeaderId?: string;
     dispatchSetHeaderIdForActivity: (headerId: string, currentStep: number, maxSteps: number) => void;
     dispatchCloseActivity: (finished?: boolean) => void;
@@ -33,6 +35,9 @@ const editorUrl = isLocal() ? "http://localhost:3232/index.html" : "https://arca
 class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFrameState> {
     protected ref: HTMLIFrameElement | undefined;
     protected messageQueue: any[] = [];
+    protected finishedTutorial = false;
+    protected nextId: number = 0;
+    protected pendingMessages: {[index: string]: any} = {};
 
     constructor(props: MakeCodeFrameProps) {
         super(props);
@@ -45,8 +50,9 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
         if (this.props.save) {
             this.sendMessage({
                 type: "pxteditor",
-                action: "saveproject"
-            } as pxt.editor.EditorMessage);
+                action: "saveproject",
+                response: false
+            } as pxt.editor.EditorMessage, true);
         }
     }
 
@@ -86,6 +92,12 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
             return;
         }
 
+        if (data.type === "pxteditor" && data.id && this.pendingMessages[data.id]) {
+            this.onResponseReceived(this.pendingMessages[data.id], event.data as pxt.editor.EditorMessageResponse);
+            delete this.pendingMessages[data.id];
+            return;
+        }
+
         switch (data.action) {
             case "event":
                 this.handleEditorTickEvent(data as pxt.editor.EditorMessageEventRequest);
@@ -99,19 +111,46 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
             default:
                 console.log(JSON.stringify(data, null, 4));
         }
-
     }
 
-    protected sendMessage(message: any) {
+    protected onResponseReceived(original: any, response: pxt.editor.EditorMessageResponse) {
+        const { save, dispatchCloseActivity } = this.props;
+
+        if (original.action === "saveproject" && save) {
+            if (this.finishedTutorial) {
+                this.finishedTutorial = false;
+
+                // Save again to be sure we get any final edits
+                this.sendMessage({
+                    type: "pxteditor",
+                    action: "saveproject"
+                } as pxt.editor.EditorMessage, true);
+            }
+            else {
+                dispatchCloseActivity();
+            }
+        }
+    }
+
+    protected sendMessage(message: any, response = false) {
+        const sendMessageCore = (message: any) => {
+            if (response) {
+                message.response = true;
+                message.id = this.nextId++ + "";
+                this.pendingMessages[message.id] = message;
+            }
+            this.ref!.contentWindow!.postMessage(message, "*");
+        }
+
         if (this.ref) {
             if (!this.ref.contentWindow) {
                 this.messageQueue.push(message);
             }
             else {
                 while (this.messageQueue.length) {
-                    this.ref.contentWindow.postMessage(this.messageQueue.shift(), "*");
+                    sendMessageCore(this.messageQueue.shift());
                 }
-                this.ref.contentWindow.postMessage(message, "*");
+                sendMessageCore(message);
             }
         }
     }
@@ -145,9 +184,12 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
                 project.header.tutorial.tutorialStepInfo!.length
             );
         }
-
-        if (save) {
-            dispatchCloseActivity();
+        else if (project.header!.tutorialCompleted) {
+            dispatchSetHeaderIdForActivity(
+                project.header.id,
+                project.header.tutorialCompleted.steps,
+                project.header.tutorialCompleted.steps
+            );
         }
     }
 
@@ -191,6 +233,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
     }
 
     protected onTutorialFinished() {
+        this.finishedTutorial = true;
         this.props.dispatchSaveAndCloseActivity();
     }
 }
@@ -213,6 +256,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         title,
         activityId: currentActivityId,
         activityHeaderId: currentHeaderId,
+        completed: lookupActivityProgress(state.user, currentMapId, currentActivityId)?.isCompleted,
         save: saveState === "saving"
     }
 }

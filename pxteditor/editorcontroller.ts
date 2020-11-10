@@ -331,7 +331,7 @@ namespace pxt.editor {
                                 case "hidesimulator": return Promise.resolve().then(() => projectView.collapseSimulator());
                                 case "showsimulator": return Promise.resolve().then(() => projectView.expandSimulator());
                                 case "closeflyout": return Promise.resolve().then(() => projectView.closeFlyout());
-                                case "saveproject": return Promise.resolve().then(() => projectView.saveFileAsync());
+                                case "saveproject": return projectView.saveProjectAsync();
                                 case "redo": return Promise.resolve()
                                     .then(() => {
                                         const editor = projectView.editor;
