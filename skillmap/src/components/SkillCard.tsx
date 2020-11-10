@@ -4,9 +4,9 @@ import { connect } from 'react-redux';
 import { SkillMapState } from '../store/reducer';
 import { Item } from './CarouselItem';
 
-import { dispatchOpenActivity } from '../actions/dispatch';
+import { dispatchOpenActivity, dispatchShowRestartActivityWarning } from '../actions/dispatch';
 
-import { isActivityCompleted, isActivityUnlocked, lookupActivityProgress, } from '../lib/skillMapUtils';
+import { isActivityUnlocked, lookupActivityProgress, } from '../lib/skillMapUtils';
 
 import '../styles/skillcard.css'
 
@@ -18,7 +18,10 @@ interface SkillCardProps extends Item {
     imageUrl?: string;
     tags?: string[];
     status?: SkillCardStatus;
+    currentStep?: number;
+    maxSteps?: number
     dispatchOpenActivity: (mapId: string, activityId: string) => void;
+    dispatchShowRestartActivityWarning: (mapId: string, activityId: string) => void;
 }
 
 export class SkillCardImpl extends React.Component<SkillCardProps> {
@@ -41,8 +44,8 @@ export class SkillCardImpl extends React.Component<SkillCardProps> {
 
         switch (status) {
             case "locked":
-            case "completed":
                 break;
+            case "completed":
             case "inprogress":
             case "notstarted":
             default:
@@ -50,8 +53,13 @@ export class SkillCardImpl extends React.Component<SkillCardProps> {
         }
     }
 
+    protected handleRestartButtonClick = () => {
+        const { mapId, id, dispatchShowRestartActivityWarning } = this.props;
+        dispatchShowRestartActivityWarning(mapId, id);
+    }
+
     render() {
-        const { label, description, imageUrl, tags, status } = this.props;
+        const { label, description, imageUrl, tags, status, currentStep, maxSteps} = this.props;
 
         return <div className={`skill-card ${status || ''}`}>
             <div className="skill-card-display">
@@ -62,6 +70,9 @@ export class SkillCardImpl extends React.Component<SkillCardProps> {
                 <div className="skill-card-label">
                     <div className="skill-card-title">
                         {(status === "locked" || status === "completed") && <i className={`icon ${status === "locked" ? "lock" : "check circle"}`} />}
+                        {status === "inprogress" && maxSteps &&
+                            <span className="circular-label">{`${currentStep}/${maxSteps}`}</span>
+                        }
                         <span>{label}</span>
                     </div>
                     <div className="skill-card-tags">
@@ -76,8 +87,14 @@ export class SkillCardImpl extends React.Component<SkillCardProps> {
                 <div className="skill-card-description">{description}</div>
                 <div className="spacer"></div>
                 <div className="skill-card-action">
-                    {status === "completed" && <div className="skill-card-button-icon"><i className="xicon redo"></i></div>}
-                    <div className="skill-card-button" role="button" onClick={this.handleActionButtonClick}>{this.getSkillCardActionText()}</div>
+                    {status === "completed" &&
+                        <div className="skill-card-button-icon" role="button" onClick={this.handleRestartButtonClick}>
+                            <i className="xicon redo"></i>
+                        </div>
+                    }
+                    <div className="skill-card-button" role="button" onClick={this.handleActionButtonClick}>
+                        {this.getSkillCardActionText()}
+                    </div>
                 </div>
             </div>
         </div>
@@ -85,24 +102,37 @@ export class SkillCardImpl extends React.Component<SkillCardProps> {
 }
 
 function mapStateToProps(state: SkillMapState, ownProps: any) {
-    let status: SkillCardStatus = "locked";
-    if (state.user && state.maps?.[ownProps.mapId] && isActivityUnlocked(state.user, state.maps[ownProps.mapId], ownProps.id)) {
-        if (isActivityCompleted(state.user, ownProps.mapId, ownProps.id)) {
-            status = "completed";
-        } else if (lookupActivityProgress(state.user, ownProps.mapId, ownProps.id)?.headerId) {
-            status = "inprogress";
-        } else {
-            status = "notstarted";
+    const isUnlocked = state.user && state.maps?.[ownProps.mapId] && isActivityUnlocked(state.user, state.maps[ownProps.mapId], ownProps.id);
+
+    let status: SkillCardStatus = isUnlocked ? "notstarted" : "locked";
+    let currentStep: number | undefined;
+    let maxSteps: number | undefined;
+
+    if (state.user) {
+        const progress = lookupActivityProgress(state.user, ownProps.mapId, ownProps.id);
+
+        if (progress) {
+            if (progress.isCompleted) {
+                status = "completed";
+            }
+            else if (progress.headerId) {
+                status = "inprogress";
+                currentStep = progress?.currentStep;
+                maxSteps = progress?.maxSteps;
+            }
         }
     }
 
     return {
-        status
+        status,
+        currentStep,
+        maxSteps
     };
 }
 
 const mapDispatchToProps = {
-    dispatchOpenActivity
+    dispatchOpenActivity,
+    dispatchShowRestartActivityWarning
 }
 
 export const SkillCard = connect(mapStateToProps, mapDispatchToProps)(SkillCardImpl);

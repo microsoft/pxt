@@ -51,6 +51,7 @@ namespace pxt.editor {
         | "renderpython"
         | "setscale"
         | "startactivity"
+        | "saveproject"
 
         | "toggletrace" // EditorMessageToggleTraceRequest
         | "togglehighcontrast"
@@ -330,6 +331,7 @@ namespace pxt.editor {
                                 case "hidesimulator": return Promise.resolve().then(() => projectView.collapseSimulator());
                                 case "showsimulator": return Promise.resolve().then(() => projectView.expandSimulator());
                                 case "closeflyout": return Promise.resolve().then(() => projectView.closeFlyout());
+                                case "saveproject": return projectView.saveProjectAsync();
                                 case "redo": return Promise.resolve()
                                     .then(() => {
                                         const editor = projectView.editor;

@@ -380,6 +380,11 @@ export class ProjectView
             .then(() => this.setFileContentAsync());
     }
 
+    saveProjectAsync(): Promise<void> {
+        return this.saveFileAsync()
+            .then(() => pkg.mainEditorPkg().buildAssetsAsync());
+    }
+
     setFileContentAsync(): Promise<void> {
         let txt = this.editor.getCurrentSource()
         if (txt != this.editorFile.content)
