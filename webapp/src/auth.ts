@@ -280,7 +280,13 @@ export async function updateUserProfile(opts: {
 
 export async function deleteAccount() {
     if (!loggedIn()) { return; }
+
     await apiAsync('/api/user', null, 'DELETE');
+
+    // Clear csrf token so we can no longer make authenticated requests.
+    pxt.storage.removeLocal(CSRF_TOKEN);
+
+    // Update state and UI to reflect logged out state.
     clearState();
 }
 
@@ -343,12 +349,23 @@ type ApiResult<T> = {
     errmsg: string;
 };
 
+const DEV_BACKEND_DEFAULT = "";
+const DEV_BACKEND_PROD = "https://www.makecode.com";
+const DEV_BACKEND_STAGING = "https://staging.pxt.io";
+// tslint:disable-next-line:no-http-string
+const DEV_BACKEND_LOCALHOST = "http://localhost:5500";
+const DEV_BACKEND_LOCALHOST_SSL = "https://localhost:5500";
+
+const DEV_BACKEND = DEV_BACKEND_LOCALHOST;
+
 async function apiAsync<T = any>(url: string, data?: any, method?: string): Promise<ApiResult<T>> {
     const headers: pxt.Map<string> = {};
     const csrfToken = pxt.storage.getLocal(CSRF_TOKEN);
     if (csrfToken) {
         headers["authorization"] = `mkcd ${csrfToken}`;
     }
+    url = pxt.BrowserUtils.isLocalHostDev() ? `${DEV_BACKEND}${url}` : url;
+
     return U.requestAsync({
         url,
         headers,
