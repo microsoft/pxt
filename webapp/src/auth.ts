@@ -347,18 +347,31 @@ export async function updateUserPreferencesAsync(newPref: Partial<UserPreference
         // pxt.debug("Updating local user preferences w/ cloud data after result of POST")
         // Set user profile from returned value so we stay in-sync
         state_.preferences = { ...state_.preferences, ...result.resp }
-        console.dir(state_.preferences); // TODO @darzu: 
         data.invalidate("user-pref");
+        console.dir(state_.preferences); // TODO @darzu: 
     } else {
         console.error("fetch failed: ")
         console.dir(result);
     }
 }
 
-export async function fetchUserPreferencesAsync() {
+let userPreferencesInitialFetch: Promise<UserPreferences> = undefined;
+
+export async function initialFetchUserPreferencesAsync() {
+    if (!userPreferencesInitialFetch) {
+        await fetchUserPreferencesAsync();
+    }
+    if (!userPreferencesInitialFetch) {
+        userPreferencesInitialFetch = Promise.reject("Failed to fetch user preferences for unknown reason.");
+    }
+    return userPreferencesInitialFetch;
+}
+
+async function fetchUserPreferencesAsync() {
     // TODO @darzu: 
     console.log("fetchUserPreferencesAsync")
 
+    const api = '/api/user/preferences';
     const result = await apiAsync<UserPreferences>('/api/user/preferences');
     if (result.success) {
         console.log("updating userpref from GET")
@@ -366,9 +379,18 @@ export async function fetchUserPreferencesAsync() {
         if (result.resp) {
             // TODO @darzu: how to handle defaults and undefined cloud state
             state_.preferences = result.resp
+            if (!userPreferencesInitialFetch?.isResolved())
+                userPreferencesInitialFetch = Promise.resolve(state_.preferences);
+            const newLang = state_.preferences?.language
+            if (newLang !== pxt.BrowserUtils.getCookieLang()) {
+                pxt.BrowserUtils.setCookieLang(newLang);
+                // TODO @darzu: refresh the page?
+            }
             data.invalidate("user-pref");
         }
     } else {
+        if (!userPreferencesInitialFetch?.isFulfilled())
+            userPreferencesInitialFetch = Promise.reject(`Call to ${api} failed.`)
         console.error("fetch failed: ")
         console.dir(result);
     }
@@ -448,11 +470,14 @@ function userPreferencesHandler(path: string): UserPreferences {
         state_.preferences = {
             highContrast: false,
             language: "en",
+            // TODO @darzu: 
+            // theme.defaultLocale
         }
         fetchUserPreferencesAsync();
     }
     return state_.preferences
 }
+
 
 console.log("mounting user-pref") // TODO @darzu: 
 data.mountVirtualApi("user-pref", { getSync: userPreferencesHandler });

@@ -4551,24 +4551,33 @@ document.addEventListener("DOMContentLoaded", () => {
     else if (pxt.BrowserUtils.isIpcRenderer()) workspace.setupWorkspace("idb");
     else if (pxt.BrowserUtils.isLocalHost() || pxt.BrowserUtils.isPxtElectron()) workspace.setupWorkspace("fs");
     Promise.resolve()
-        .then(() => {
+        .then(async () => {
             const href = window.location.href;
             let live = false;
             let force = false;
-            let useLang: string = auth.getState()?.preferences?.language || undefined;
+            try {
+                await auth.initialFetchUserPreferencesAsync()
+            } catch (e) {
+                pxt.debug("not connected to user preferences.");
+            }
+            const cloudLang = auth.getState()?.preferences?.language;
+            let useLang: string = undefined;
             if (/[&?]translate=1/.test(href) && !pxt.BrowserUtils.isIE()) {
                 console.log(`translation mode`);
                 live = force = true;
                 useLang = ts.pxtc.Util.TRANSLATION_LOCALE;
             } else {
-                const mlang = /(live)?(force)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
-                if (mlang && window.location.hash.indexOf(mlang[0]) >= 0) {
-                    pxt.BrowserUtils.changeHash(window.location.hash.replace(mlang[0], ""));
+                const hashLangMatch = /(live)?(force)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
+                if (hashLangMatch && window.location.hash.indexOf(hashLangMatch[0]) >= 0) {
+                    pxt.BrowserUtils.changeHash(window.location.hash.replace(hashLangMatch[0], ""));
                 }
-                useLang = mlang ? mlang[3] : (pxt.BrowserUtils.getCookieLang() || theme.defaultLocale || (navigator as any).userLanguage || navigator.language);
+                const hashLang = hashLangMatch ? hashLangMatch[3] : undefined
+                const cookieLang = pxt.BrowserUtils.getCookieLang()
+                // chose the user's language using the following ordering:
+                useLang = hashLang || cloudLang || cookieLang || theme.defaultLocale || (navigator as any).userLanguage || navigator.language;
                 const locstatic = /staticlang=1/i.test(window.location.href);
-                live = !(locstatic || pxt.BrowserUtils.isPxtElectron() || theme.disableLiveTranslations) || (mlang && !!mlang[1]);
-                force = !!mlang && !!mlang[2];
+                live = !(locstatic || pxt.BrowserUtils.isPxtElectron() || theme.disableLiveTranslations) || (hashLangMatch && !!hashLangMatch[1]);
+                force = !!hashLangMatch && !!hashLangMatch[2];
             }
             const targetId = pxt.appTarget.id;
             const baseUrl = config.commitCdnUrl;
