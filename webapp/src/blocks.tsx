@@ -132,7 +132,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
-
     domUpdate() {
         if (this.delayLoadXml) {
             if (this.loadingXml) return
@@ -173,7 +172,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                         // It's possible Blockly reloads and the loading dimmer is no longer a child of the editorDiv
                         editorDiv.removeChild(loadingDimmer);
                     } catch { }
-                    this.loadingXml = false
+                    this.loadingXml = false;
                     this.loadingXmlPromise = null;
                     pxt.perf.measureEnd("domUpdate loadBlockly")
                 });
@@ -1110,7 +1109,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     // If we're switching from no toolbox to a toolbox, mount node
                     this.renderToolbox(true);
                 }
-            }
+            };
 
             if (this.loadingXmlPromise) {
                 // enqueue refresh if currently loading
