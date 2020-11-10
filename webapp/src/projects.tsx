@@ -186,15 +186,13 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         // lf("Examples")
         // lf("Tutorials")
 
-        const showHeroBanner = !!targetTheme.homeScreenHero;
 
         const tabClasses = sui.cx([
             'ui segment bottom attached tab active tabsegment'
         ]);
 
         return <div ref="homeContainer" className={tabClasses} role="main">
-            {showHeroBanner ?
-                <div className="ui segment getting-started-segment" style={{ backgroundImage: `url(${encodeURI(targetTheme.homeScreenHero)})` }} /> : undefined}
+            <HeroBanner parent={this.props.parent} />
             <div key={`mystuff_gallerysegment`} className="ui segment gallerysegment mystuff-segment" role="region" aria-label={lf("My Projects")}>
                 <div className="ui heading">
                     <div className="column" style={{ zIndex: 1 }}>
@@ -413,6 +411,44 @@ export class ProjectsMenu extends data.Component<ISettingsProps, {}> {
                 </a>
             </div>
         </div>;
+    }
+}
+
+class HeroBanner extends data.Component<ISettingsProps, {}> {
+    private prevGalleries: pxt.CodeCard[] = [];
+
+    constructor(props: ProjectsCarouselProps) {
+        super(props)
+        this.state = {
+        }
+    }
+
+    fetchGallery(): pxt.CodeCard[] {
+        const targetTheme = pxt.appTarget.appTheme;
+        const path = targetTheme.homeScreenHeroGallery;
+        if (!path) {
+            return this.prevGalleries = [];
+        }
+
+        // fetch gallery
+        let res = this.getData(`gallery:${encodeURIComponent(path)}`) as pxt.gallery.Gallery[];
+        if (res) {
+            if (res instanceof Error) {
+                // ignore;
+            } else {
+                this.prevGalleries = pxt.Util.concat(res.map(g => g.cards));
+            }
+        }
+        return this.prevGalleries || [];
+    }
+
+    renderCore() {
+        const targetTheme = pxt.appTarget.appTheme;
+        const showHeroBanner = !!targetTheme.homeScreenHero;
+        if (!showHeroBanner)
+            return null; // nothing to see here
+        const cards = this.fetchGallery();
+        return <div className="ui segment getting-started-segment" style={{ backgroundImage: `url(${encodeURI(targetTheme.homeScreenHero)})` }} />
     }
 }
 
