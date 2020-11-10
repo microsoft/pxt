@@ -4496,7 +4496,7 @@ export async function staticpkgAsync(parsed: commandParser.ParsedCommand) {
         await internalGenDocsAsync(false, true);
         if (locsSrc) {
             const languages = pxt.appTarget?.appTheme?.availableLocales
-                    .filter(langId => nodeutil.existsDirSync(path.join(locsSrc, langId)));
+                .filter(langId => nodeutil.existsDirSync(path.join(locsSrc, langId)));
 
             await crowdin.buildAllTranslationsAsync(async (fileName: string) => {
                 const output: pxt.Map<pxt.Map<string>> = {};
@@ -5382,6 +5382,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
         if (!md) {
             pxt.log(`unable to resolve ${entrypath}`)
             broken++;
+            continue;
         }
         // look for broken urls
         md.replace(/]\( (\/[^)]+?)(\s+"[^"]+")?\)/g, (m) => {
@@ -5424,6 +5425,11 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                 pxt.log(`gallery ${k}`);
                 const galleryUrl = getGalleryUrl(targetConfig.galleries[k])
                 let gallerymd = nodeutil.resolveMd(docsRoot, galleryUrl);
+                if (!gallerymd) {
+                    pxt.log(`unable to resolve ${galleryUrl}`)
+                    broken++;
+                    return;
+                }
                 let gallery = pxt.gallery.parseGalleryMardown(gallerymd);
                 pxt.debug(`found ${gallery.length} galleries`);
                 gallery.forEach(gal => gal.cards.forEach((card, cardIndex) => {
@@ -5434,6 +5440,11 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                             if (card.otherActions) card.otherActions.forEach(a => { if (a.url) urls.push(a.url) });
                             for (let url of urls) {
                                 const tutorialMd = nodeutil.resolveMd(docsRoot, url);
+                                if (!tutorialMd) {
+                                    pxt.log(`unable to resolve ${url}`)
+                                    broken++;
+                                    continue;
+                                }
                                 const tutorial = pxt.tutorial.parseTutorial(tutorialMd);
                                 const pkgs: pxt.Map<string> = { "blocksprj": "*" };
                                 pxt.Util.jsonMergeFrom(pkgs, pxt.gallery.parsePackagesFromMarkdown(tutorialMd) || {});
@@ -5484,7 +5495,11 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                             if (card.otherActions) card.otherActions.forEach(a => { if (a.url) urls.push(a.url) });
                             for (let url of urls) {
                                 const exMd = nodeutil.resolveMd(docsRoot, url);
-                                const prj = pxt.gallery.parseExampleMarkdown(card.name, exMd);
+                                if (!exMd) {
+                                    pxt.log(`unable to resolve ${url}`)
+                                    broken++;
+                                    continue;
+                                }                                                const prj = pxt.gallery.parseExampleMarkdown(card.name, exMd);
                                 const pkgs: pxt.Map<string> = { "blocksprj": "*" };
                                 pxt.U.jsonMergeFrom(pkgs, prj.dependencies);
 
