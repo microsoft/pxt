@@ -4544,7 +4544,14 @@ document.addEventListener("DOMContentLoaded", () => {
             const href = window.location.href;
             let live = false;
             let force = false;
-            const cloudLang = (await auth.initialUserPreferences())?.language
+            const cloudLang = auth.getState()?.preferences?.language;
+            // kick of a user preferences check; if the language is different we'll reload
+            auth.initialUserPreferences().then((pref) => {
+                if (pref && pref.language !== pxt.BrowserUtils.getCookieLang()) {
+                    pxt.BrowserUtils.setCookieLang(pref.language);
+                    location.reload();
+                }
+            })
             let useLang: string = undefined;
             if (/[&?]translate=1/.test(href) && !pxt.BrowserUtils.isIE()) {
                 console.log(`translation mode`);
