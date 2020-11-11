@@ -9,6 +9,7 @@ export const dispatchCloseActivity = (finished = false) => ({ type: actions.CLOS
 export const dispatchSaveAndCloseActivity = () => ({ type: actions.SAVE_AND_CLOSE_ACTIVITY });
 export const dispatchRestartActivity = (mapId: string, activityId: string) => ({ type: actions.RESTART_ACTIVITY, mapId, activityId });
 
+export const dispatchSetUser = (user: UserState) => ({ type: actions.SET_USER, user });
 
 export const dispatchSetPageTitle = (title: string) => ({ type: actions.SET_PAGE_TITLE, title });
 export const dispatchSetPageDescription = (description: string) => ({ type: actions.SET_PAGE_DESCRIPTION, description });

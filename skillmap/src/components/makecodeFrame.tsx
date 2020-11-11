@@ -1,7 +1,7 @@
 /// <reference path="../../../built/pxteditor.d.ts" />
 import * as React from "react";
 import { connect } from 'react-redux';
-import { getWorkspaceAsync } from "../lib/workspaceProvider";
+import { saveProjectAsync, getProjectAsync } from "../lib/workspaceProvider";
 import { isLocal, resolvePath } from "../lib/browserUtils";
 import { lookupActivityProgress } from "../lib/skillMapUtils";
 
@@ -163,7 +163,6 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
     protected async handleWorkspaceSaveRequestAsync(request: pxt.editor.EditorWorkspaceSaveRequest) {
         const { dispatchSetHeaderIdForActivity, activityHeaderId, save, dispatchCloseActivity } = this.props;
 
-        const workspace = await getWorkspaceAsync();
         const project = {
             ...request.project,
             header: {
@@ -172,7 +171,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
             }
         };
 
-        await workspace.saveProjectAsync(project);
+        await saveProjectAsync(project);
 
         if (project.header!.tutorial) {
             dispatchSetHeaderIdForActivity(
@@ -192,8 +191,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
 
     protected async handleWorkspaceReadyEventAsync() {
         if (this.props.activityHeaderId) {
-            const workspace = await getWorkspaceAsync();
-            const project = await workspace.getProjectAsync(this.props.activityHeaderId);
+            const project = await getProjectAsync(this.props.activityHeaderId);
             this.sendMessage({
                 type: "pxteditor",
                 action: "importproject",

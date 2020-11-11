@@ -1,4 +1,5 @@
 import * as actions from '../actions/types'
+import { guidGen } from '../lib/browserUtils';
 import { lookupActivityProgress } from '../lib/skillMapUtils';
 
 export interface SkillMapState {
@@ -32,6 +33,8 @@ const initialState: SkillMapState = {
     title: "Game Maker Guide",
     description: "Level up your game making skills by completing the tutorials in this guide.",
     user: {
+        isDebug: true,
+        id: guidGen(),
         mapProgress: {},
         completedTags: {}
     },
@@ -127,6 +130,11 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                     action.currentStep,
                     action.maxSteps
                 )
+            };
+        case actions.SET_USER:
+            return {
+                ...state,
+                user: action.user
             };
         case actions.SET_PAGE_TITLE:
             return {
