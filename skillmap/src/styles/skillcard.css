@@ -12,7 +12,7 @@
     right: -2.5rem;
     width: 2.5rem;
     height: 0.75rem;
-    background-color: #000;
+    background-color: var(--primary-color);
 }
 .carousel-item.linked:last-child:after {
     display: none;
@@ -30,8 +30,10 @@
     justify-content: center;
     font-size: 6rem;
     line-height: 6rem;
-    color: #fff;
-    background-color: rgba(0, 0, 0, 0.3);
+}
+
+.skill-card-overlay i.icon {
+    margin-bottom: 4.35rem;
 }
 
 .selected .skill-card-overlay {
@@ -50,7 +52,7 @@
 }
 
 .selected .skill-card {
-    border-color: #444;
+    border-color: var(--active-color);
     transform: rotateX(180deg);
 }
 
@@ -66,7 +68,7 @@
 }
 
 .skill-card-display, .skill-card-info {
-    background-color: #ddd;
+    background-color: var(--secondary-color);
 
     display: flex;
     flex-direction: column;
@@ -83,6 +85,8 @@
 }
 
 .skill-card-image {
+    background-color: var(--hover-color);
+
     overflow: hidden;
     display: flex;
     justify-content: center;
@@ -100,7 +104,7 @@
 }
 
 .locked .skill-card-image img {
-    filter: grayscale(100%);
+    filter: opacity(50%) grayscale(100%);
     opacity: 0.5;
 }
 
@@ -120,7 +124,7 @@
 .skill-card-tags div {
     margin-right: 0.25rem;
     padding: 0 0.25rem;
-    border: 1px solid #999;
+    border: 1px solid var(--inactive-color);
 }
 
 /* SKILL CARD INFO (BACK) */
@@ -146,7 +150,7 @@
 }
 
 .skill-card-button {
-    border: 1px solid #444;
+    border: 1px solid var(--active-color);
     padding: 0.5rem;
     margin-top: 0.5rem;
     font-size: 1.2rem;
@@ -157,21 +161,21 @@
 
 .skill-card-button:hover,
 .skill-card-button-icon:hover {
-    background-color: #ccc;
+    background-color: var(--hover-color);
 }
 
 .skill-card-button-icon {
-    border: 1px solid #444;
+    border: 1px solid var(--active-color);
     border-right: none;
     padding: 0.5rem;
 }
 
 .locked .skill-card-button,
 .locked .skill-card-button:hover {
-    color: #999;
+    color: var(--inactive-color);
     background-color: transparent;
-    border-color: #999;
-    cursor: not-allowed;
+    border-color: var(--inactive-color);
+    cursor: default;
 }
 
 .completed i.xicon.redo {
@@ -183,10 +187,10 @@
 }
 
 .circular-label {
-    background: #656565;
-    padding: 0.2rem;
+    background: var(--active-color);
+    padding: 0.2rem 0.3rem;
     font-size: 0.75rem;
-    color: white;
+    color: var(--inverted-text-color);
     border-radius: 1.5rem;
     vertical-align: middle;
     margin-right: 0.25rem;
@@ -211,8 +215,10 @@
     height: 6rem;
     margin-right: 3rem;
     border-radius: 50%;
+    cursor: pointer;
 
-    background-color: #ddd;
+    color: var(--inverted-text-color);
+    background-color: var(--primary-color);
 }
 
 .end-card i.icon {
@@ -227,5 +233,5 @@
     left: -2.5rem;
     width: 2.5rem;
     height: 0.75rem;
-    background-color: #000;
+    background-color: var(--primary-color);
 }
