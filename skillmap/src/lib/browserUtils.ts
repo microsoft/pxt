@@ -100,3 +100,7 @@ export function guidGen() {
 export function isLocal() {
     return window.location.hostname === "localhost";
 }
+
+export function resolvePath(path: string) {
+    return `${isLocal() ? "" : "/static/skillmap"}/${path.replace(/^\//, "")}`
+}

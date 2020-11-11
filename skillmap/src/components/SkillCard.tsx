@@ -63,13 +63,12 @@ export class SkillCardImpl extends React.Component<SkillCardProps> {
 
         return <div className={`skill-card ${status || ''}`}>
             <div className="skill-card-display">
-                {status === "locked" && <div className="skill-card-overlay" />}
                 <div className="skill-card-image">
-                    {imageUrl ? <img src={imageUrl} alt={`Preview of activity content`} /> : <i className="icon game" />}
+                    {imageUrl ? <img src={imageUrl} alt={`Preview of activity content`} /> : <i className={`icon ${status !== "locked" ? "game" : ""}`} />}
                 </div>
                 <div className="skill-card-label">
                     <div className="skill-card-title">
-                        {(status === "locked" || status === "completed") && <i className={`icon ${status === "locked" ? "lock" : "check circle"}`} />}
+                        {status === "completed" && <i className={`icon check circle`} />}
                         {status === "inprogress" && maxSteps &&
                             <span className="circular-label">{`${currentStep}/${maxSteps}`}</span>
                         }
@@ -81,6 +80,7 @@ export class SkillCardImpl extends React.Component<SkillCardProps> {
                         })}
                     </div>
                 </div>
+                {status === "locked" && <div className="skill-card-overlay"><i className="icon lock" /></div>}
             </div>
             <div className="skill-card-info">
                 <div className="skill-card-title">{label}</div>
