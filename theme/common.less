@@ -1692,6 +1692,111 @@ div.simframe.ui.embed {
     -ms-interpolation-mode: nearest-neighbor;
 }
 
+/* Sign in dialog */
+.ui.modal.signindialog {
+    .content {
+        padding: 24px 20px;
+    }
+
+    div.description {
+        line-height: 1.1em;
+        margin-bottom: 20px;
+    }
+
+    div.container {
+        display: grid;
+        row-gap: 10px;
+        grid-template-rows: 36px auto;
+        grid-template-columns: auto;
+        justify-content: center;
+
+        button {
+            margin: 0;
+        }
+
+        div.prompt {
+            justify-self: center;
+        }
+
+        div.providers {
+            display: grid;
+            row-gap: 20px;
+            grid-template-rows: auto;
+            justify-content: center;
+        }
+    }
+}
+
+/* Profile dialog */
+.profiledialog {
+    .ui.card {
+        margin: 0;
+        margin-right: 14px;
+        margin-bottom: 14px;
+        border-radius: @homeCardBorderRadius;
+        color: @homeCardColor;
+        border: @homeCardBorderSize solid @homeCardBorderColor !important;
+        background-color: @homeCardBackgroundColor;
+
+        button {
+            margin: 0;
+        }
+
+        label.title {
+            font-weight: bold;
+        }
+
+        p.value {
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        p.description {
+            text-overflow: ellipsis;
+            overflow: hidden;
+        }
+
+        div.header-text {
+            font-size: 20px;
+            white-space: nowrap;
+            grid-row-start: 1;
+            grid-row-end: 1;
+            grid-column-start: 1;
+            grid-column-end: 2;
+            justify-self: start;
+        }
+
+        div.profile-pic {
+            grid-row-start: 1;
+            grid-row-end: 1;
+            grid-column-start: 2;
+            grid-column-end: 2;
+            justify-self: end;
+        }
+
+        &.panel {
+            width: fit-content;
+            min-width: 350px;
+            max-width: 500px;
+            padding: 14px;
+            display: inline-grid;
+            row-gap: 20px;
+            grid-template-rows: auto;
+            grid-template-columns: auto;
+
+            div.row {
+                grid-row-start: auto;
+                grid-row-end: auto;
+                grid-column-start: 1;
+                grid-column-end: 2;
+                justify-self: start;
+                max-width: 100%;
+            }
+        }
+    }
+}
+
 .sandbox.simView {
     #simulators, #simulator, #editortools {
         display: inherit;

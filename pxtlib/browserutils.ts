@@ -285,12 +285,12 @@ namespace pxt.BrowserUtils {
         return 1;
     }
 
-    export function browserDownloadBinText(text: string, name: string, contentType: string = "application/octet-stream", userContextWindow?: Window, onError?: (err: any) => void): string {
-        return browserDownloadBase64(ts.pxtc.encodeBase64(text), name, contentType, userContextWindow, onError)
+    export function browserDownloadBinText(text: string, name: string, opt?: BrowserDownloadOptions): string {
+        return browserDownloadBase64(ts.pxtc.encodeBase64(text), name, opt)
     }
 
-    export function browserDownloadText(text: string, name: string, contentType: string = "application/octet-stream", userContextWindow?: Window, onError?: (err: any) => void): string {
-        return browserDownloadBase64(ts.pxtc.encodeBase64(Util.toUTF8(text)), name, contentType, userContextWindow, onError)
+    export function browserDownloadText(text: string, name: string, opt?: BrowserDownloadOptions): string {
+        return browserDownloadBase64(ts.pxtc.encodeBase64(Util.toUTF8(text)), name, opt);
     }
 
     export function isBrowserDownloadInSameWindow(): boolean {
@@ -332,7 +332,7 @@ namespace pxt.BrowserUtils {
                 document.body.appendChild(iframe);
             }
             iframe.src = uri;
-        } else if (pxt.BrowserUtils.isEdge() || pxt.BrowserUtils.isIE()) {
+        } else if (/^data:/i.test(uri) && (pxt.BrowserUtils.isEdge() || pxt.BrowserUtils.isIE())) {
             //Fix for edge
             let byteString = atob(uri.split(',')[1]);
             let ia = Util.stringToUint8Array(byteString);
@@ -352,8 +352,8 @@ namespace pxt.BrowserUtils {
         }
     }
 
-    export function browserDownloadUInt8Array(buf: Uint8Array, name: string, contentType: string = "application/octet-stream", userContextWindow?: Window, onError?: (err: any) => void): string {
-        return browserDownloadBase64(ts.pxtc.encodeBase64(Util.uint8ArrayToString(buf)), name, contentType, userContextWindow, onError)
+    export function browserDownloadUInt8Array(buf: Uint8Array, name: string, opt?: BrowserDownloadOptions): string {
+        return browserDownloadBase64(ts.pxtc.encodeBase64(Util.uint8ArrayToString(buf)), name, opt);
     }
 
     export function toDownloadDataUri(b64: string, contentType: string): string {
@@ -366,21 +366,44 @@ namespace pxt.BrowserUtils {
         return dataurl;
     }
 
-    export function browserDownloadBase64(b64: string, name: string, contentType: string = "application/octet-stream", userContextWindow?: Window, onError?: (err: any) => void): string {
-        pxt.debug('trigger download')
+    export interface BrowserDownloadOptions {
+        contentType?: string; // defl: application/octet-stream
+        userContextWindow?: Window;
+        onError?: (err: any) => void;
+        maintainObjectURL?: boolean;
+    }
 
-        const saveBlob = (<any>window).navigator.msSaveOrOpenBlob && !pxt.BrowserUtils.isMobile();
-        const dataurl = toDownloadDataUri(b64, name);
+    export function browserDownloadBase64(b64: string, name: string, opt: BrowserDownloadOptions = {}): string {
+        pxt.debug('trigger download');
+
+        const {
+            contentType = "application/octet-stream",
+            userContextWindow,
+            onError,
+            maintainObjectURL
+        } = opt;
+
+        const createObjectURL = window.URL?.createObjectURL;
+        let downloadurl: string;
         try {
-            if (saveBlob) {
-                const b = new Blob([Util.stringToUint8Array(atob(b64))], { type: contentType })
-                const result = (<any>window).navigator.msSaveOrOpenBlob(b, name);
-            } else browserDownloadDataUri(dataurl, name, userContextWindow);
+            if (!!createObjectURL) {
+                const b = new Blob([Util.stringToUint8Array(atob(b64))], { type: contentType });
+                const objUrl = createObjectURL(b);
+                browserDownloadDataUri(objUrl, name, userContextWindow);
+                if (maintainObjectURL) {
+                    downloadurl = objUrl;
+                } else {
+                    window.setTimeout(() => window.URL.revokeObjectURL(downloadurl), 0);
+                }
+            } else  {
+                downloadurl = toDownloadDataUri(b64, name);
+                browserDownloadDataUri(downloadurl, name, userContextWindow);
+            }
         } catch (e) {
             if (onError) onError(e);
-            pxt.debug("saving failed")
+            pxt.debug("saving failed");
         }
-        return dataurl;
+        return downloadurl;
     }
 
     export function loadImageAsync(data: string): Promise<HTMLImageElement> {

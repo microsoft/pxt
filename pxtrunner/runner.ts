@@ -355,6 +355,16 @@ namespace pxt.runner {
             .then(() => compileAsync(false, opts => {
                 if (simOptions.code) opts.fileSystem["main.ts"] = simOptions.code;
 
+                // Api info needed for py2ts conversion, if project is shared in Python
+                if (opts.target.preferredEditor === pxt.PYTHON_PROJECT_NAME) {
+                    opts.target.preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME;
+                    opts.ast = true;
+                    const resp = pxtc.compile(opts)
+                    const apis = getApiInfo(resp.ast, opts);
+                    opts.apisInfo = apis;
+                    opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME;
+                }
+
                 // Apply upgrade rules if necessary
                 const sharedTargetVersion = mainPkg.config.targetVersions.target;
                 const currentTargetVersion = pxt.appTarget.versions.target;
@@ -863,6 +873,10 @@ ${linkString}
             @BODY@
         </div>
     </div>
+</aside>
+
+<aside id=codecard class=box>
+    <pre><code class="lang-codecard">@BODY@</code></pre>
 </aside>
 
 <aside id=tutorialhint class=box>

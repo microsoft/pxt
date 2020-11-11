@@ -8,12 +8,14 @@ export const enum GalleryView {
 export interface AssetEditorState {
     view: GalleryView;
     assets: pxt.Asset[];
+    galleryAssets: pxt.Asset[];
     selectedAsset?: pxt.Asset;
 }
 
 const initialState: AssetEditorState = {
     view: GalleryView.User,
-    assets: []
+    assets: [],
+    galleryAssets: []
 }
 
 const topReducer = (state: AssetEditorState = initialState, action: any): AssetEditorState => {
@@ -21,7 +23,7 @@ const topReducer = (state: AssetEditorState = initialState, action: any): AssetE
         case actions.CHANGE_SELECTED_ASSET:
             return {
                 ...state,
-                selectedAsset: getSelectedAsset(state.assets, action.assetType, action.assetId)
+                selectedAsset: getSelectedAsset(state, action.assetType, action.assetId)
             };
         case actions.CHANGE_GALLERY_VIEW:
             return {
@@ -35,6 +37,11 @@ const topReducer = (state: AssetEditorState = initialState, action: any): AssetE
                 selectedAsset: state.selectedAsset ? assets.find(el => el.id == state.selectedAsset.id) : undefined,
                 assets
             }
+        case actions.UPDATE_GALLERY_ASSETS:
+            return {
+                ...state,
+                galleryAssets: action.assets
+            }
         default:
             return state
     }
@@ -44,10 +51,11 @@ function compareInternalId(a: pxt.Asset, b: pxt.Asset) {
     return a.internalID - b.internalID;
 }
 
-function getSelectedAsset(assets: pxt.Asset[], type: pxt.AssetType, id: string) {
+function getSelectedAsset(state: AssetEditorState, type: pxt.AssetType, id: string) {
     if (!type || !id) return undefined;
 
-    return assets.find(el => el.type == type && el.id == id);
+    return state.assets.find(el => el.type == type && el.id == id)
+        || state.galleryAssets.find(el => el.type == type && el.id == id);
 }
 
 function getUserAssets() {
@@ -79,7 +87,11 @@ function getUserAssets() {
     const tilemaps = project.getAssets(pxt.AssetType.Tilemap).map(tilemapToGalleryItem).sort(compareInternalId);
     const animations = project.getAssets(pxt.AssetType.Animation).map(animationToGalleryItem);
 
-    return images.concat(tiles).concat(tilemaps).concat(animations);
+    const assets = images.concat(tiles).concat(tilemaps).concat(animations);
+
+    pxt.tickEvent("assets.update", { count: assets.length });
+
+    return assets;
 }
 
 export default topReducer;

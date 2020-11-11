@@ -291,8 +291,9 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
                 icon: 'check',
                 className: 'green'
             }]
+            const classes = this.props.parent.createModalClasses("hintdialog");
 
-            return <sui.Modal isOpen={visible} className="hintdialog"
+            return <sui.Modal isOpen={visible} className={classes}
                 closeIcon={false} header={tutorialName} buttons={actions}
                 onClose={onClick} dimmer={true} longer={true}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape>
@@ -532,6 +533,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
 
         const th = this.refs["tutorialhint"] as TutorialHint;
         if (!th) return;
+        const currentStep = this.props.parent.state.tutorialOptions.tutorialStep;
 
         if (!visible) {
             if (th.elementRef) th.elementRef.removeEventListener('click', this.expandedHintOnClick);
@@ -546,6 +548,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
             if (!options.tutorialStepInfo[options.tutorialStep].showDialog)
                 document.addEventListener('click', this.closeHint); // add close listener if not modal
             pxt.tickEvent(`tutorial.showhint`, { tutorial: options.tutorial, step: options.tutorialStep });
+            this.props.parent.setHintSeen(currentStep);
         }
         th.showHint(visible, showFullText);
     }
@@ -642,7 +645,7 @@ export class WorkspaceHeader extends data.Component<any, WorkspaceHeaderState> {
     UNSAFE_componentWillUpdate() {
         const flyout = document.querySelector('.blocklyFlyout');
         if (flyout) {
-            this.flyoutWidth = flyout.clientWidth;
+            this.flyoutWidth = flyout.getBoundingClientRect().width;
         }
 
         const workspace = document.querySelector('#blocksArea');
@@ -666,7 +669,7 @@ export class WorkspaceHeader extends data.Component<any, WorkspaceHeaderState> {
     renderCore() {
         return <div id="headers">
             <div id="flyoutHeader" style={this.headerStyle()}>
-                <div id="flyoutHeaderTitle">{this.flyoutTitle}</div>
+                <div id="flyoutHeaderTitle" className="no-select">{this.flyoutTitle}</div>
             </div>
             <div id="workspaceHeader" style={this.workspaceStyle()}>
                 <editortoolbar.SmallEditorToolbar parent={this.props.parent}/>

@@ -84,6 +84,8 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
     }
 
     protected editAssetDoneHandler = (result: any) => {
+        pxt.tickEvent("assets.edit", { type: result.type.toString() });
+
         const project = pxt.react.getTilemapProject();
         project.pushUndo();
         project.updateAsset(result);
@@ -92,6 +94,8 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
     }
 
     protected duplicateAssetHandler = () => {
+        pxt.tickEvent("assets.duplicate", { type: this.props.asset.type.toString(), gallery: this.props.isGalleryAsset.toString() });
+
         const project = pxt.react.getTilemapProject();
         project.pushUndo();
         const { type, id } = project.duplicateAsset(this.props.asset);
@@ -103,6 +107,8 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
 
     protected copyAssetHandler = () => {
         const { asset } = this.props;
+        pxt.tickEvent("assets.clipboard", { type: asset.type.toString(), gallery: this.props.isGalleryAsset.toString() });
+
         switch (asset.type) {
             case pxt.AssetType.Image:
             case pxt.AssetType.Tile:
@@ -130,6 +136,8 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
     }
 
     protected deleteAssetHandler = () => {
+        pxt.tickEvent("assets.delete", { type: this.props.asset.type.toString() });
+
         this.setState({ showDeleteModal: false });
         const project = pxt.react.getTilemapProject();
         project.pushUndo();

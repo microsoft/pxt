@@ -248,6 +248,7 @@ namespace pxt.editor {
         pokeUserActivity(): void;
         stopPokeUserActivity(): void;
         clearUserPoke(): void;
+        setHintSeen(step: number): void;
 
         anonymousPublishAsync(screenshotUri?: string): Promise<string>;
 
@@ -324,6 +325,9 @@ namespace pxt.editor {
         showShareDialog(title?: string): void;
         showAboutDialog(): void;
 
+        showLoginDialog(continuationHash?: string): void;
+        showProfileDialog(location?: string): void;
+
         showImportUrlDialog(): void;
         showImportFileDialog(options?: ImportFileOptions): void;
         showImportGithubDialog(): void;
@@ -338,6 +342,7 @@ namespace pxt.editor {
         checkForHwVariant(): boolean;
         pairAsync(): Promise<void>;
 
+        createModalClasses(classes?: string): string;
         showModalDialogAsync(options: ModalDialogOptions): Promise<void>;
 
         askForProjectCreationOptionsAsync(): Promise<ProjectCreationOptions>;

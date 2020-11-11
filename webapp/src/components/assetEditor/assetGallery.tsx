@@ -52,6 +52,8 @@ class AssetGalleryImpl extends React.Component<AssetGalleryProps, AssetGallerySt
 
     protected getCreateAssetHandler = (type: pxt.AssetType) => {
         return () => {
+            pxt.tickEvent("assets.create", { type: type.toString() });
+
             const project = pxt.react.getTilemapProject();
             const asset = this.getEmptyAsset(type);
 
@@ -146,7 +148,8 @@ function mapStateToProps(state: AssetEditorState, ownProps: any) {
     return {
         ...ownProps,
         view: state.view,
-        userAssets: state.assets
+        userAssets: state.assets,
+        galleryAssets: state.galleryAssets
     }
 }
 

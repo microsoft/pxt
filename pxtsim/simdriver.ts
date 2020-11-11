@@ -59,6 +59,7 @@ namespace pxsim {
         breakOnStart?: boolean;
         storedState?: Map<any>;
         autoRun?: boolean;
+        ipc?: boolean;
     }
 
     export interface HwDebugger {
@@ -523,7 +524,8 @@ namespace pxsim {
                 version: opts.version,
                 clickTrigger: opts.clickTrigger,
                 breakOnStart: opts.breakOnStart,
-                storedState: opts.storedState
+                storedState: opts.storedState,
+                ipc: opts.ipc,
             }
             this.start();
         }
