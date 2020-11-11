@@ -318,8 +318,7 @@ export async function updateUserPreferencesAsync(newPref: Partial<UserPreference
         return Promise.reject("User not logged in.");
 
     // Update our local state
-    state_.preferences = { ...(state_.preferences || {}), ...newPref }
-    data.invalidate(USER_PREF_MODULE);
+    internalPrefUpdateAndInvalidate(newPref)
 
     // If we're not logged in, non-persistent local state is all we'll use
     if (!loggedIn()) { return; }
@@ -329,11 +328,25 @@ export async function updateUserPreferencesAsync(newPref: Partial<UserPreference
     if (result.success) {
         pxt.debug("Updating local user preferences w/ cloud data after result of POST")
         // Set user profile from returned value so we stay in-sync
-        state_.preferences = { ...state_.preferences, ...result.resp }
-        data.invalidate(USER_PREF_MODULE);
+        internalPrefUpdateAndInvalidate(result.resp)
     } else {
         pxt.reportError("identity", "update preferences failed failed", result as any);
     }
+}
+
+function internalPrefUpdateAndInvalidate(newPref: Partial<UserPreferences>) {
+    // TODO is there a generic way to do this so we don't need to add new branches
+    //  for each field that changes?
+
+    // remember old
+    const oldPref = pxt.Util.clone(state_.preferences ?? {})
+    // update
+    state_.preferences = { ...(state_.preferences ?? {}), ...newPref }
+    // invalidate fields that change
+    if (oldPref?.highContrast !== state_.preferences?.highContrast)
+        data.invalidate(HIGHCONTRAST)
+    if (oldPref?.language !== state_.preferences?.language)
+        data.invalidate(LANGUAGE)
 }
 
 let userPreferencesInitialFetch_: Promise<UserPreferences> = undefined;
@@ -384,21 +397,14 @@ async function fetchUserPreferencesAsync(): Promise<void> {
     if (result.success) {
         // Set user profile from returned value
         if (result.resp) {
-            // Note the cloud will send partial information back if it is missing
+            // Note the cloud should send partial information back if it is missing
             // a field. So e.g. if the language has never been set in the cloud, it won't
             // overwrite the local state.
-            state_.preferences = { ...state_.preferences ?? {}, ...result.resp };
+            internalPrefUpdateAndInvalidate(result.resp);
+
             // update our one-time promise for the initial load
             if (!userPreferencesInitialFetch_?.isResolved())
                 userPreferencesInitialFetch_ = Promise.resolve(state_.preferences);
-
-            // TODO @darzu: we shouldn't need to reload the page here
-            // const newLang = state_.preferences?.language
-            // if (newLang !== pxt.BrowserUtils.getCookieLang()) {
-            //     pxt.BrowserUtils.setCookieLang(newLang);
-            //     // TODO @darzu: refresh the page?
-            // }
-            data.invalidate(USER_PREF_MODULE);
         }
     } else {
         if (!userPreferencesInitialFetch_?.isFulfilled())
