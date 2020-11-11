@@ -4,9 +4,7 @@ import * as React from "react";
 import { connect } from 'react-redux';
 import { dispatchSaveAndCloseActivity } from '../actions/dispatch';
 import { SkillMapState } from '../store/reducer';
-
-import logo from '../assets/logo.svg';
-import organization from '../assets/microsoft.png';
+import { resolvePath } from "../lib/browserUtils";
 
 interface HeaderBarProps {
     activityOpen: boolean;
@@ -22,14 +20,14 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
         return <div className="header">
             <div className="header-left">
                 <div className="header-logo">
-                    <img src={logo} alt={logoAlt} />
+                    <img src={resolvePath("assets/logo.svg")} alt={logoAlt} />
                 </div>
                 { activityOpen && <i className="icon arrow left" role="button" onClick={this.onBackClicked}/> }
             </div>
             <div className="spacer" />
             <div className="header-right">
                 <div className="header-org-logo">
-                    <img src={organization} alt={organizationLogoAlt} />
+                    <img src={resolvePath("assets/microsoft.png")} alt={organizationLogoAlt} />
                 </div>
             </div>
         </div>

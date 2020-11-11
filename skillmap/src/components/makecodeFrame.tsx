@@ -2,14 +2,13 @@
 import * as React from "react";
 import { connect } from 'react-redux';
 import { getWorkspaceAsync } from "../lib/workspaceProvider";
-import { isLocal } from "../lib/browserUtils";
+import { isLocal, resolvePath } from "../lib/browserUtils";
 import { lookupActivityProgress } from "../lib/skillMapUtils";
 
 import { SkillMapState } from '../store/reducer';
 import  { dispatchSetHeaderIdForActivity, dispatchCloseActivity, dispatchSaveAndCloseActivity } from '../actions/dispatch';
 
 import '../styles/makecode-editor.css'
-import logo from '../assets/logo.svg';
 
 interface MakeCodeFrameProps {
     save: boolean;
@@ -67,7 +66,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
 
         return <div className="makecode-frame-outer">
             <div className={`makecode-frame-loader ${(loaded && !save) ? "hidden" : ""}`}>
-                <img src={logo} alt={imageAlt} />
+                <img src={resolvePath("assets/logo.svg")} alt={imageAlt} />
                 <div className="makecode-frame-loader-text">{loadingText}</div>
             </div>
             <iframe className="makecode-frame" src={url} title={title} ref={this.handleFrameRef}></iframe>
