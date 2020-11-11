@@ -24,8 +24,8 @@ interface AppModalProps {
 
 export class AppModalImpl extends React.Component<AppModalProps> {
     render() {
-        const  { activity, type } = this.props;
-        if (!activity) return <div />
+        const  { activity, type, completionType } = this.props;
+        if (!activity && completionType !== "map") return <div />
 
         switch (type) {
             case "completion":

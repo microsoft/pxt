@@ -1,5 +1,41 @@
-#root {
-    font-family: "Share Tech Mono", Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
+
+:root {
+    --black: #000;
+    --white: #fff;
+
+    --primary-color: #AA278F;
+    --secondary-color: #EAC6EB;
+    --tertiary-color: #850A6B;
+
+    --hover-color: #EAC6EB;
+    --active-color: #850A6B;
+    --inactive-color: #EAC6EB;
+
+    --body-background-color: #F9F9F9;
+    --default-card-color: #CCC;
+    --modal-overlay-color: rgba(0, 0, 0, 0.5);
+    --card-overlay-color: rgba(0, 0, 0, 0.2);
+    --inverted-text-color: var(--white);
+
+    --body-font-family: "Share Tech Mono", Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
+}
+
+
+body {
+    margin: 0;
+    font-family: var(--body-font-family);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: var(--body-background-color);
+}
+
+code {
+    font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+#root, #root > div {
+    width: 100%;
+    height: 100%;
 }
 
 .app-container {
@@ -10,22 +46,42 @@
 }
 
 .header {
-    background-color: #444;
+    background-color: var(--tertiary-color);
 
     height: 4rem;
     max-height: 4rem;
     display: flex;
     align-items: center;
     font-size: 2rem;
-    color: #fff;
+    color: var(--inverted-text-color);
+    flex-grow: 0;
+    flex-shrink: 0;
 }
 
 .header-left, .header-right {
     margin: 0 1rem;
 }
 
+.header-logo {
+    width: 3rem;
+    height: 3rem;
+}
+
+.header-org-logo {
+    height: 2rem;
+}
+
+.header-org-logo img {
+    height: 100%;
+}
+
+.header i.icon {
+    line-height: 2rem;
+    cursor: pointer;
+}
+
 .banner {
-    background-color: #ddd;
+    background-color:  var(--secondary-color);
 
     display: flex;
     align-items: center;
@@ -34,12 +90,12 @@
 }
 
 .banner-card {
-    background-color: #666;
+    background-color: var(--primary-color);
 
     min-width: 24rem;
     width: 60%;
     display: flex;
-    color: #fff;
+    color: var(--inverted-text-color);
 }
 
 .banner-card i {

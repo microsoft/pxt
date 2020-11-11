@@ -22,6 +22,7 @@ interface CarouselState {
 }
 
 export class Carousel extends React.Component<CarouselProps, CarouselState> {
+    protected scrollMargin = 5;
     protected carouselRef: any;
     constructor(props: CarouselProps) {
         super(props);
@@ -30,6 +31,7 @@ export class Carousel extends React.Component<CarouselProps, CarouselState> {
     }
 
     componentDidMount() {
+        this.handleScroll();
         window.addEventListener("resize", this.handleScroll);
     }
 
@@ -47,7 +49,10 @@ export class Carousel extends React.Component<CarouselProps, CarouselState> {
 
     protected handleScroll = () => {
         const scrollLeft = this.carouselRef.scrollLeft;
-        this.setState({ showLeft: scrollLeft !== 0, showRight: scrollLeft !== this.carouselRef.scrollWidth - this.carouselRef.clientWidth })
+        this.setState({
+            showLeft: scrollLeft > this.scrollMargin,
+            showRight: ((this.carouselRef.scrollWidth - this.carouselRef.clientWidth) - scrollLeft) > this.scrollMargin
+        });
     }
 
     render() {
