@@ -1806,6 +1806,7 @@ export class ProjectView
         try {
             const { options, editor } = pxt.tutorial.getTutorialOptions(md, "untitled", "untitled", "", false);
             const dependencies = pxt.gallery.parsePackagesFromMarkdown(md);
+            this.hintManager.clearViewedHints();
 
             return this.createProjectAsync({
                 name: "untitled",
@@ -3572,6 +3573,7 @@ export class ProjectView
                     throw new Error(lf("Tutorial {0} not found", tutorialId));
 
                 const { options, editor: parsedEditor } = pxt.tutorial.getTutorialOptions(md, tutorialId, filename, reportId, !!recipe);
+                this.hintManager.clearViewedHints();
 
                 // pick tutorial editor
                 const editor = editorProjectName || parsedEditor;
@@ -3721,7 +3723,7 @@ export class ProjectView
     pokeUserActivity() {
         if (!!this.state.tutorialOptions && !!this.state.tutorialOptions.tutorial) {
             // animate tutorial hint after some time of user inactivity
-            this.hintManager.pokeUserActivity(ProjectView.tutorialCardId, this.state.tutorialOptions.tutorialHintCounter);
+            this.hintManager.pokeUserActivity(ProjectView.tutorialCardId, this.state.tutorialOptions.tutorialStep, this.state.tutorialOptions.tutorialHintCounter);
         }
     }
 
@@ -3731,6 +3733,10 @@ export class ProjectView
 
     clearUserPoke() {
         this.setState({ pokeUserComponent: null });
+    }
+
+    setHintSeen(step: number) {
+        this.hintManager.viewedHint(step);
     }
 
     private tutorialCardHintCallback() {
