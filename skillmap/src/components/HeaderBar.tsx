@@ -19,10 +19,12 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
 
         return <div className="header">
             <div className="header-left">
-                <div className="header-logo">
-                    <img src={resolvePath("assets/logo.svg")} alt={logoAlt} />
-                </div>
-                { activityOpen && <i className="icon arrow left" role="button" onClick={this.onBackClicked}/> }
+                { activityOpen
+                    ? <i className="icon arrow left" role="button" onClick={this.onBackClicked}/>
+                    : <div className="header-logo">
+                        <img src={resolvePath("assets/logo.svg")} alt={logoAlt} />
+                    </div>
+                }
             </div>
             <div className="spacer" />
             <div className="header-right">

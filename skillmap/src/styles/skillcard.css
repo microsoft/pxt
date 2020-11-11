@@ -9,8 +9,8 @@
 .carousel-item.linked:after {
     content: '';
     position: absolute;
-    right: -2.5rem;
-    width: 2.5rem;
+    right: -2rem;
+    width: 2rem;
     height: 0.75rem;
     background-color: var(--primary-color);
 }
@@ -68,8 +68,6 @@
 }
 
 .skill-card-display, .skill-card-info {
-    background-color: var(--secondary-color);
-
     display: flex;
     flex-direction: column;
     position: absolute;
@@ -81,12 +79,13 @@
 
 /* SKILL CARD DISPLAY (FRONT) */
 .skill-card-display {
+    color: var(--inverted-text-color);
+    background-color: var(--primary-color);
     justify-content: flex-end;
 }
 
 .skill-card-image {
-    background-color: var(--hover-color);
-
+    background-color: var(--default-card-color);
     overflow: hidden;
     display: flex;
     justify-content: center;
@@ -129,6 +128,7 @@
 
 /* SKILL CARD INFO (BACK) */
 .skill-card-info {
+    background-color: var(--white);
     padding: 0.5rem;
     transform: rotateX(180deg);
 }
@@ -150,6 +150,7 @@
 }
 
 .skill-card-button {
+    color: var(--active-color);
     border: 1px solid var(--active-color);
     padding: 0.5rem;
     margin-top: 0.5rem;

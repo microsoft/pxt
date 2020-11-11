@@ -4,14 +4,15 @@
     --white: #fff;
 
     --primary-color: #AA278F;
-    --secondary-color: #E5E5E1;
-    --tertiary-color: #EAC6EB;
+    --secondary-color: #EAC6EB;
+    --tertiary-color: #850A6B;
 
-    --hover-color: #CCC;
-    --active-color: #505050;
-    --inactive-color: #969696;
+    --hover-color: #EAC6EB;
+    --active-color: #850A6B;
+    --inactive-color: #EAC6EB;
 
-    --body-background-color: var(--white);
+    --body-background-color: #F9F9F9;
+    --default-card-color: #CCC;
     --modal-overlay-color: rgba(0, 0, 0, 0.5);
     --card-overlay-color: rgba(0, 0, 0, 0.2);
     --inverted-text-color: var(--white);
@@ -45,7 +46,7 @@ code {
 }
 
 .header {
-    background-color: var(--primary-color);
+    background-color: var(--tertiary-color);
 
     height: 4rem;
     max-height: 4rem;
@@ -53,6 +54,8 @@ code {
     align-items: center;
     font-size: 2rem;
     color: var(--inverted-text-color);
+    flex-grow: 0;
+    flex-shrink: 0;
 }
 
 .header-left, .header-right {
@@ -72,8 +75,13 @@ code {
     height: 100%;
 }
 
+.header i.icon {
+    line-height: 2rem;
+    cursor: pointer;
+}
+
 .banner {
-    background-color:  var(--tertiary-color);
+    background-color:  var(--secondary-color);
 
     display: flex;
     align-items: center;
