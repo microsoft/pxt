@@ -533,6 +533,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
 
         const th = this.refs["tutorialhint"] as TutorialHint;
         if (!th) return;
+        const currentStep = this.props.parent.state.tutorialOptions.tutorialStep;
 
         if (!visible) {
             if (th.elementRef) th.elementRef.removeEventListener('click', this.expandedHintOnClick);
@@ -547,6 +548,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
             if (!options.tutorialStepInfo[options.tutorialStep].showDialog)
                 document.addEventListener('click', this.closeHint); // add close listener if not modal
             pxt.tickEvent(`tutorial.showhint`, { tutorial: options.tutorial, step: options.tutorialStep });
+            this.props.parent.setHintSeen(currentStep);
         }
         th.showHint(visible, showFullText);
     }
