@@ -4544,12 +4544,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const href = window.location.href;
             let live = false;
             let force = false;
-            try {
-                await auth.initialFetchUserPreferencesAsync()
-            } catch (e) {
-                pxt.debug("not connected to user preferences.");
-            }
-            const cloudLang = data.getData<string>(auth.LANGUAGE);
+            const cloudLang = (await auth.initialUserPreferences())?.language
             let useLang: string = undefined;
             if (/[&?]translate=1/.test(href) && !pxt.BrowserUtils.isIE()) {
                 console.log(`translation mode`);

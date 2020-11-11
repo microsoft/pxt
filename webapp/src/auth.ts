@@ -108,7 +108,7 @@ export async function loginAsync(idp: pxt.IdentityProviderId, persistent: boolea
 
     // See if we have a valid access token already.
     if (!state.user) {
-        await fetchUserAsync();
+        await authCheck();
     }
 
     const currIdp = state.user?.idp;
@@ -171,20 +171,32 @@ export async function logout() {
     window.location.href = `${window.location.origin}${window.location.pathname}`;
 }
 
+let initialAuthCheck_: Promise<UserProfile | undefined> = undefined;
 /**
  * Checks to see if we're already logged in by trying to fetch user info from
  * the backend. If we have a valid auth token cookie, it will succeed.
  */
-export async function authCheck() {
-    if (!hasIdentity()) { return; }
+export async function authCheck(): Promise<UserProfile | undefined> {
+    if (!hasIdentity()) {
+        return undefined;
+    }
 
     // Fail fast if we don't have csrf token.
-    if (!pxt.storage.getLocal(CSRF_TOKEN)) { return; }
+    if (!pxt.storage.getLocal(CSRF_TOKEN)) { return undefined; }
 
-    // Optimistically try to fetch user profile. It will succeed if we have a valid
-    // session cookie. Upon success, virtual api state will be updated, and the UI
-    // will update accordingly.
-    await fetchUserAsync();
+    if (state_.user) {
+        if (!initialAuthCheck_) {
+            initialAuthCheck_ = Promise.resolve(state_.user)
+        }
+        return state_.user
+    }
+    if (!initialAuthCheck_) {
+        // Optimistically try to fetch user profile. It will succeed if we have a valid
+        // session cookie. Upon success, virtual api state will be updated, and the UI
+        // will update accordingly.
+        initialAuthCheck_ = fetchUserAsync();
+    }
+    return initialAuthCheck_;
 }
 
 export async function loginCallback(qs: pxt.Map<string>) {
@@ -274,17 +286,16 @@ export function hasIdentity(): boolean {
     return experimentEnabled && identityProviders().length > 0;
 }
 
-export function loggedIn(): boolean {
-    if (!hasIdentity()) { return false; }
-    const state = getState();
-    return !!state.user?.id;
+export async function loggedIn(): Promise<boolean> {
+    await authCheck();
+    return loggedInSync();
 }
 
 export async function updateUserProfile(opts: {
     username?: string,
     avatarUrl?: string
 }): Promise<boolean> {
-    if (!loggedIn()) { return false; }
+    if (!await loggedIn()) { return false; }
     const state = getState();
     const result = await apiAsync<UserProfile>('/api/user/profile', {
         id: state.user.id,
@@ -299,7 +310,7 @@ export async function updateUserProfile(opts: {
 }
 
 export async function deleteAccount() {
-    if (!loggedIn()) { return; }
+    if (!await loggedIn()) { return; }
     await apiAsync('/api/user', null, 'DELETE');
     clearState();
 }
@@ -314,14 +325,11 @@ export class Component<TProps, TState> extends data.Component<TProps, TState> {
 }
 
 export async function updateUserPreferencesAsync(newPref: Partial<UserPreferences>) {
-    if (!loggedIn())
-        return Promise.reject("User not logged in.");
-
     // Update our local state
     internalPrefUpdateAndInvalidate(newPref)
 
     // If we're not logged in, non-persistent local state is all we'll use
-    if (!loggedIn()) { return; }
+    if (!await loggedIn()) { return; }
 
     // If the user is logged in, save to cloud
     const result = await apiAsync<UserPreferences>('/api/user/preferences', newPref);
@@ -339,36 +347,47 @@ function internalPrefUpdateAndInvalidate(newPref: Partial<UserPreferences>) {
     //  for each field that changes?
 
     // remember old
-    const oldPref = pxt.Util.clone(state_.preferences ?? {})
+    const oldPref = state_.preferences ?? DEFAULT_USER_PREFERENCES()
     // update
-    state_.preferences = { ...(state_.preferences ?? {}), ...newPref }
+    state_.preferences = { ...oldPref, ...newPref }
     // invalidate fields that change
-    if (oldPref?.highContrast !== state_.preferences?.highContrast)
+    if (oldPref?.highContrast !== state_.preferences?.highContrast) {
         data.invalidate(HIGHCONTRAST)
-    if (oldPref?.language !== state_.preferences?.language)
+    }
+    if (oldPref?.language !== state_.preferences?.language) {
         data.invalidate(LANGUAGE)
+    }
 }
 
-let userPreferencesInitialFetch_: Promise<UserPreferences> = undefined;
-export async function initialFetchUserPreferencesAsync() {
-    if (!userPreferencesInitialFetch_) {
-        await fetchUserPreferencesAsync();
+let initialUserPreferences_: Promise<UserPreferences | undefined> = undefined;
+export async function initialUserPreferences(): Promise<UserPreferences | undefined> {
+    // only if we're logged in
+    if (!await loggedIn()) {
+        return undefined;
     }
-    if (!userPreferencesInitialFetch_) {
-        userPreferencesInitialFetch_ = Promise.reject("Failed to fetch user preferences for unknown reason.");
+
+    if (!initialUserPreferences_) {
+        initialUserPreferences_ = fetchUserPreferencesAsync();
     }
-    return userPreferencesInitialFetch_;
+    return initialUserPreferences_;
 }
 
 /**
  * Private functions
  */
+function loggedInSync(): boolean {
+    if (!hasIdentity()) { return false; }
+    const state = getState();
+    return !!state.user?.id;
+}
 
-async function fetchUserAsync() {
+async function fetchUserAsync(): Promise<UserProfile | undefined> {
     const state = getState();
 
     // We already have a user, no need to get it again.
-    if (state.user) { return; }
+    if (state.user) {
+        return state.user;
+    }
 
     const result = await apiAsync('/api/user/profile');
     if (result.success) {
@@ -385,13 +404,15 @@ async function fetchUserAsync() {
             } catch { }
         }
         setUser(user);
+        return user
     }
+    return undefined
 }
 
-async function fetchUserPreferencesAsync(): Promise<void> {
-    if (!loggedIn())
-        return;
-
+async function fetchUserPreferencesAsync(): Promise<UserPreferences | undefined> {
+    // Wait for the initial auth
+    if (!await loggedIn()) return undefined;
+    
     const api = '/api/user/preferences';
     const result = await apiAsync<Partial<UserPreferences>>('/api/user/preferences');
     if (result.success) {
@@ -403,15 +424,12 @@ async function fetchUserPreferencesAsync(): Promise<void> {
             internalPrefUpdateAndInvalidate(result.resp);
 
             // update our one-time promise for the initial load
-            if (!userPreferencesInitialFetch_?.isResolved())
-                userPreferencesInitialFetch_ = Promise.resolve(state_.preferences);
+            return state_.preferences
         }
     } else {
-        if (!userPreferencesInitialFetch_?.isFulfilled())
-            userPreferencesInitialFetch_ = Promise.reject(`Call to ${api} failed.`)
-        console.error("fetch user preferences failed: ")
-        console.dir(result);
+        pxt.reportError("identity", `fetch ${api} failed:\n${JSON.stringify(result)}`)
     }
+    return undefined
 }
 
 
@@ -420,9 +438,9 @@ function idpEnabled(idp: pxt.IdentityProviderId): boolean {
 }
 
 function setUser(user: UserProfile) {
-    const wasLoggedIn = loggedIn();
+    const wasLoggedIn = loggedInSync();
     state_.user = user;
-    const isLoggedIn = loggedIn();
+    const isLoggedIn = loggedInSync();
     data.invalidate(USER);
     data.invalidate(LOGGED_IN);
     if (isLoggedIn && !wasLoggedIn) {
@@ -471,7 +489,7 @@ function authApiHandler(p: string) {
     const state = getState();
     switch (field) {
         case FIELD_USER: return state.user;
-        case FIELD_LOGGED_IN: return loggedIn();
+        case FIELD_LOGGED_IN: return loggedInSync();
     }
     return null;
 }
@@ -482,11 +500,7 @@ function clearState() {
     data.invalidate(LOGGED_IN);
 }
 
-function userPreferencesHandler(path: string): UserPreferences | boolean | string {
-    if (!state_.preferences) {
-        state_.preferences = DEFAULT_USER_PREFERENCES();
-        /* async */ fetchUserPreferencesAsync();
-    }
+function internalUserPreferencesHandler(path: string): UserPreferences | boolean | string {
     const field = data.stripProtocol(path);
     switch (field) {
         case FIELD_HIGHCONTRAST: return state_.preferences.highContrast;
@@ -494,7 +508,25 @@ function userPreferencesHandler(path: string): UserPreferences | boolean | strin
     }
     return state_.preferences
 }
+function userPreferencesHandlerSync(path: string): UserPreferences | boolean | string {
+    if (!state_.preferences) {
+        state_.preferences = DEFAULT_USER_PREFERENCES();
+        /* await */ initialUserPreferences();
+    }
+    return internalUserPreferencesHandler(path);
+}
+async function userPreferencesHandlerAsync(path: string): Promise<UserPreferences | boolean | string> {
+    if (!state_.preferences) {
+        state_.preferences = DEFAULT_USER_PREFERENCES();
+        await initialUserPreferences();
+    }
+    return internalUserPreferencesHandler(path);
+}
 
-data.mountVirtualApi(USER_PREF_MODULE, { getSync: userPreferencesHandler });
+data.mountVirtualApi(USER_PREF_MODULE, {
+    getSync: userPreferencesHandlerSync,
+    // TODO: virtual apis don't support both sync & async
+    // getAsync: userPreferencesHandlerAsync
+});
 
 data.mountVirtualApi(MODULE, { getSync: authApiHandler });
