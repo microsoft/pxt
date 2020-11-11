@@ -11,6 +11,24 @@ export function parseHash() {
     return hash;
 }
 
+export function parseQuery() {
+    const out: {[index: string]: string} = {};
+    const query = window.location.search;
+
+    if (query) {
+        const params = new URLSearchParams(query);
+
+        params.forEach((value, key) => {
+            if (value.toLowerCase() === "true" || value === "1") {
+                value = "true";
+            }
+            out[key] = value;
+        });
+    }
+
+    return out;
+}
+
 export async function getMarkdownAsync(source: MarkdownSource, url: string) {
     if (!source || !url) return "";
     switch (source) {
@@ -57,6 +75,26 @@ export function httpGetAsync(url: string): Promise<string> {
         request.open("GET", url);
         request.send();
     })
+}
+
+function getRandomBuf(buf: Uint8Array) {
+    if (window.crypto)
+        window.crypto.getRandomValues(buf);
+    else {
+        for (let i = 0; i < buf.length; ++i)
+            buf[i] = Math.floor(Math.random() * 255);
+    }
+}
+
+function randomUint32() {
+    let buf = new Uint8Array(4)
+    getRandomBuf(buf)
+    return new Uint32Array(buf.buffer)[0]
+}
+
+export function guidGen() {
+    function f() { return (randomUint32() | 0x10000).toString(16).slice(-4); }
+    return f() + f() + "-" + f() + "-4" + f().slice(-3) + "-" + f() + "-" + f() + f() + f();
 }
 
 export function isLocal() {

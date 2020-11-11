@@ -45,6 +45,8 @@ interface MapActivity {
 }
 
 interface UserState {
+    isDebug?: boolean;
+    id: string;
     mapProgress: {[index: string]: MapState};
     completedTags: {[index: string]: number};
 }
