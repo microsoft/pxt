@@ -58,8 +58,8 @@ You will be prompted with a dialog that contains the block translatable string.
 
 ### Documentation page translation
 
-In any documention page, click on the **Language** button 
-in the footer; then select translation this page in the dialog.
+When on any documention page, click on the **Language** button 
+in the footer and then select **Translate this page** in the dialog.
 
 
 ## Crowdin project
