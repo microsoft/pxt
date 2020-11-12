@@ -223,7 +223,7 @@ function pairBootloaderAsync(): Promise<void> {
 function winrtDeployCoreAsync(r: pxtc.CompileResult, d: pxt.commands.DeployOptions): Promise<void> {
     log(`winrt deploy`)
     return hidDeployCoreAsync(r, d)
-        .timeout(60000)
+        .timeout(180000)
         .catch((e) => {
             return pxt.packetio.disconnectAsync()
                 .catch((e) => {
