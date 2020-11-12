@@ -405,6 +405,7 @@ declare namespace pxt {
         identity?: boolean; // login with identity providers
         assetEditor?: boolean; // enable asset editor view (in blocks/text toggle)
         disableMemoryWorkspaceWarning?: boolean; // do not warn the user when switching to in memory workspace
+        disableBlobObjectDownload?: boolean; // use data uri downloads instead of object urls
     }
 
     interface SocialOptions {
