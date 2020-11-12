@@ -134,6 +134,13 @@ export class ProjectView
     private preserveUndoStack: boolean;
     private rootClasses: string[];
 
+    private highContrastSubscriber: data.DataSubscriber = {
+        subscriptions: [],
+        onDataChanged: () => {
+            this.onHighContrastChanged();
+        }
+    };
+
     // component ID strings
     static readonly tutorialCardId = "tutorialcard";
 
@@ -153,7 +160,6 @@ export class ProjectView
             active: document.visibilityState == 'visible' || pxt.BrowserUtils.isElectron() || pxt.winrt.isWinRT() || pxt.appTarget.appTheme.dontSuspendOnVisibility,
             // don't start collapsed in mobile since we can go fullscreen now
             collapseEditorTools: simcfg.headless,
-            highContrast: isHighContrast,
             simState: pxt.editor.SimState.Stopped,
             autoRun: this.autoRunOnStart()
         };
@@ -885,6 +891,13 @@ export class ProjectView
 
         // start blockly load
         this.loadBlocklyAsync();
+
+        // subscribe to user preference changes (for simulator or non-render subscriptions)
+        data.subscribe(this.highContrastSubscriber, auth.HIGHCONTRAST);
+    }
+
+    public componentWillUnmount() {
+        data.unsubscribe(this.highContrastSubscriber);
     }
 
     // Add an error guard for the entire application
@@ -955,7 +968,10 @@ export class ProjectView
                 this.allEditors.forEach(e => e.setVisible(e == this.editor))
                 return previousEditor ? previousEditor.unloadFileAsync() : Promise.resolve();
             })
-            .then(() => { return this.editor.loadFileAsync(this.editorFile, this.state.highContrast); })
+            .then(() => {
+                let hc = this.getData<boolean>(auth.HIGHCONTRAST)
+                return this.editor.loadFileAsync(this.editorFile, hc)
+            })
             .then(() => {
                 this.saveFileAsync().done(); // make sure state is up to date
                 if (this.editor == this.textEditor || this.editor == this.blocksEditor)
@@ -2892,6 +2908,10 @@ export class ProjectView
         simulator.suspend()
     }
 
+    onHighContrastChanged() {
+        this.restartSimulator();
+    }
+
     runSimulator(opts: compiler.CompileOptions = {}): Promise<void> {
         const emptyRun = this.firstRun
             && opts.background
@@ -2943,9 +2963,11 @@ export class ProjectView
                     if (resp.outfiles[pxtc.BINARY_JS]) {
                         if (!cancellationToken.isCancelled()) {
                             pxt.debug(`sim: run`)
+
+                            const hc = data.getData<boolean>(auth.HIGHCONTRAST)
                             simulator.run(pkg.mainPkg, opts.debug, resp, {
                                 mute: this.state.mute,
-                                highContrast: this.state.highContrast,
+                                highContrast: hc,
                                 light: pxt.options.light,
                                 clickTrigger: opts.clickTrigger,
                                 storedState: pkg.mainEditorPkg().getSimState(),
@@ -3734,16 +3756,10 @@ export class ProjectView
     ///////////////////////////////////////////////////////////
 
     toggleHighContrast() {
-        const highContrastOn = !this.state.highContrast;
-        pxt.tickEvent("app.highcontrast", { on: highContrastOn ? 1 : 0 });
-        this.setState({ highContrast: highContrastOn }, () => {
-            if (this.isSimulatorRunning()) {  // if running, send updated high contrast state.
-                this.startSimulator()
-            }
-        });
-        core.setHighContrast(highContrastOn);
-        if (this.editor && this.editor.isReady) {
-            this.editor.setHighContrast(highContrastOn);
+        core.toggleHighContrast();
+        pxt.tickEvent("app.highcontrast", { on: core.getHighContrastOnce() ? 1 : 0 });
+        if (this.isSimulatorRunning()) {  // if running, send updated high contrast state.
+            this.startSimulator()
         }
     }
 
@@ -3906,6 +3922,8 @@ export class ProjectView
 
         const isApp = cmds.isNativeHost() || pxt.winrt.isWinRT() || pxt.BrowserUtils.isElectron();
 
+        const hc = this.getData<boolean>(auth.HIGHCONTRAST)
+
         let rootClassList = [
             "ui",
             lightbox ? 'dimmable dimmed' : 'dimmable',
@@ -3914,7 +3932,7 @@ export class ProjectView
             transparentEditorToolbar ? "transparentEditorTools" : '',
             invertedTheme ? 'inverted-theme' : '',
             this.state.fullscreen ? 'fullscreensim' : '',
-            this.state.highContrast ? 'hc' : '',
+            hc ? 'hc' : '',
             showSideDoc ? 'sideDocs' : '',
             pxt.shell.layoutTypeClass(),
             inHome ? 'inHome' : '',
@@ -3963,7 +3981,7 @@ export class ProjectView
                 {accessibleBlocks && <accessibleblocks.AccessibleBlocksInfo />}
                 {hideMenuBar || inHome ? undefined :
                     <header className="menubar" role="banner">
-                        {inEditor ? <accessibility.EditorAccessibilityMenu parent={this} highContrast={this.state.highContrast} /> : undefined}
+                        {inEditor ? <accessibility.EditorAccessibilityMenu parent={this} highContrast={hc} /> : undefined}
                         <notification.NotificationBanner parent={this} />
                         <container.MainMenu parent={this} />
                     </header>}
@@ -4003,7 +4021,7 @@ export class ProjectView
                 {inHome ? <div id="homescreen" className="full-abs">
                     <div className="ui home projectsdialog">
                         <header className="menubar" role="banner">
-                            <accessibility.HomeAccessibilityMenu parent={this} highContrast={this.state.highContrast} />
+                            <accessibility.HomeAccessibilityMenu parent={this} highContrast={hc} />
                             <projects.ProjectsMenu parent={this} />
                         </header>
                         <projects.Projects parent={this} ref={this.handleHomeRef} />
@@ -4528,24 +4546,35 @@ document.addEventListener("DOMContentLoaded", () => {
     else if (pxt.BrowserUtils.isIpcRenderer()) workspace.setupWorkspace("idb");
     else if (pxt.BrowserUtils.isLocalHost() || pxt.BrowserUtils.isPxtElectron()) workspace.setupWorkspace("fs");
     Promise.resolve()
-        .then(() => {
+        .then(async () => {
             const href = window.location.href;
             let live = false;
             let force = false;
+            const cloudLang = auth.getState()?.preferences?.language;
+            // kick of a user preferences check; if the language is different we'll reload
+            auth.initialUserPreferences().then((pref) => {
+                if (pref && pref.language !== pxt.BrowserUtils.getCookieLang()) {
+                    pxt.BrowserUtils.setCookieLang(pref.language);
+                    location.reload();
+                }
+            })
             let useLang: string = undefined;
             if (/[&?]translate=1/.test(href) && !pxt.BrowserUtils.isIE()) {
                 console.log(`translation mode`);
                 live = force = true;
                 useLang = ts.pxtc.Util.TRANSLATION_LOCALE;
             } else {
-                const mlang = /(live)?(force)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
-                if (mlang && window.location.hash.indexOf(mlang[0]) >= 0) {
-                    pxt.BrowserUtils.changeHash(window.location.hash.replace(mlang[0], ""));
+                const hashLangMatch = /(live)?(force)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
+                if (hashLangMatch && window.location.hash.indexOf(hashLangMatch[0]) >= 0) {
+                    pxt.BrowserUtils.changeHash(window.location.hash.replace(hashLangMatch[0], ""));
                 }
-                useLang = mlang ? mlang[3] : (pxt.BrowserUtils.getCookieLang() || theme.defaultLocale || (navigator as any).userLanguage || navigator.language);
+                const hashLang = hashLangMatch ? hashLangMatch[3] : undefined
+                const cookieLang = pxt.BrowserUtils.getCookieLang()
+                // chose the user's language using the following ordering:
+                useLang = hashLang || cloudLang || cookieLang || theme.defaultLocale || (navigator as any).userLanguage || navigator.language;
                 const locstatic = /staticlang=1/i.test(window.location.href);
-                live = !(locstatic || pxt.BrowserUtils.isPxtElectron() || theme.disableLiveTranslations) || (mlang && !!mlang[1]);
-                force = !!mlang && !!mlang[2];
+                live = !(locstatic || pxt.BrowserUtils.isPxtElectron() || theme.disableLiveTranslations) || (hashLangMatch && !!hashLangMatch[1]);
+                force = !!hashLangMatch && !!hashLangMatch[2];
             }
             const targetId = pxt.appTarget.id;
             const baseUrl = config.commitCdnUrl;
