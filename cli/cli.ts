@@ -1925,14 +1925,14 @@ function buildSkillMapAsync(parsed: commandParser.ParsedCommand) {
 
     if (parsed.flags["serve"]) {
         return nodeutil.spawnAsync({
-            cmd: "npm.cmd",
+            cmd: os.platform() === "win32" ? "npm.cmd" : "npm",
             args: ["run-script", "start"],
             cwd: skillmapRoot,
             shell: true
         })
     } else {
         return nodeutil.spawnAsync({
-            cmd: "npm.cmd",
+            cmd: os.platform() === "win32" ? "npm.cmd" : "npm",
             args: ["run-script", "build"],
             cwd: skillmapRoot,
             shell: true
