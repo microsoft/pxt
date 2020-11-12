@@ -412,7 +412,7 @@ export async function initAsync() {
     if (pxt.winrt.isWinRT()) {
         log(`deploy: init winrt`)
         pxt.winrt.initWinrtHid(
-            () => pxt.packetio.initAsync(true).then(() => { }),
+            () => pxt.packetio.initAsync(true).then(wrap => wrap?.reconnectAsync()),
             () => pxt.packetio.disconnectAsync()
         );
     }
