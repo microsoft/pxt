@@ -4174,21 +4174,21 @@ function parseHash(): { cmd: string; arg: string } {
     return { cmd: '', arg: '' };
 }
 
-function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boolean {
-    if (!hash) return false;
+function handleHash(newHash: { cmd: string; arg: string }, loading: boolean): boolean {
+    if (!newHash) return false;
     let editor = theEditor;
     if (!editor) return false;
 
-    if (isProjectRelatedHash(hash)) editor.setState({ home: false });
+    if (isProjectRelatedHash(newHash)) editor.setState({ home: false });
 
-    switch (hash.cmd) {
+    switch (newHash.cmd) {
         case "doc":
             pxt.tickEvent("hash.doc")
-            editor.setSideDoc(hash.arg, editor.editor === editor.blocksEditor);
+            editor.setSideDoc(newHash.arg, editor.editor === editor.blocksEditor);
             break;
         case "follow":
             pxt.tickEvent("hash.follow")
-            editor.newEmptyProject(undefined, hash.arg);
+            editor.newEmptyProject(undefined, newHash.arg);
             return true;
         case "newproject": // shortcut to create a new blocks proj
             pxt.tickEvent("hash.newproject")
@@ -4207,7 +4207,7 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
             return true;
         case "testproject": {// create new project that references the given extension
             pxt.tickEvent("hash.testproject");
-            const hid = hash.arg;
+            const hid = newHash.arg;
             const header = workspace.getHeader(hid);
             if (header) {
                 const existing = workspace.getHeaders().filter(hd => hd.extensionUnderTest == header.id)[0];
@@ -4235,8 +4235,9 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
         case "tutorial":
         case "example":
         case "recipe": {
-            pxt.tickEvent("hash." + hash.cmd)
-            let tutorialPath = hash.arg;
+            pxt.tickEvent("hash." + newHash.cmd)
+            hash = newHash;
+            let tutorialPath = newHash.arg;
             let editorProjectName: string = undefined;
             if (/^([jt]s|py|blocks?):/i.test(tutorialPath)) {
                 if (/^py:/i.test(tutorialPath))
@@ -4247,7 +4248,7 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
                     editorProjectName = pxt.BLOCKS_PROJECT_NAME;
                 tutorialPath = tutorialPath.substr(tutorialPath.indexOf(':') + 1)
             }
-            editor.startActivity(hash.cmd, tutorialPath, undefined, editorProjectName, false);
+            editor.startActivity(newHash.cmd, tutorialPath, undefined, editorProjectName, false);
             pxt.BrowserUtils.changeHash("editor");
             return true;
         }
@@ -4259,22 +4260,22 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
         case "sandbox":
         case "pub":
         case "edit": // load a published proj, eg: #pub:27750-32291-62442-22749
-            pxt.tickEvent("hash." + hash.cmd);
+            pxt.tickEvent("hash." + newHash.cmd);
             pxt.BrowserUtils.changeHash("");
-            if (/^(github:|https:\/\/github\.com\/)/.test(hash.arg))
-                importGithubProject(hash.arg);
+            if (/^(github:|https:\/\/github\.com\/)/.test(newHash.arg))
+                importGithubProject(newHash.arg);
             else
-                loadHeaderBySharedId(hash.arg);
+                loadHeaderBySharedId(newHash.arg);
             return true;
         case "header":
-            pxt.tickEvent("hash." + hash.cmd);
+            pxt.tickEvent("hash." + newHash.cmd);
             pxt.BrowserUtils.changeHash("");
-            editor.loadHeaderAsync(workspace.getHeader(hash.arg)).done();
+            editor.loadHeaderAsync(workspace.getHeader(newHash.arg)).done();
             return true;
         case "sandboxproject":
         case "project":
-            pxt.tickEvent("hash." + hash.cmd);
-            const fileContents = Util.stringToUint8Array(atob(hash.arg));
+            pxt.tickEvent("hash." + newHash.cmd);
+            const fileContents = Util.stringToUint8Array(atob(newHash.arg));
             pxt.BrowserUtils.changeHash("");
             core.showLoading("loadingproject", lf("loading project..."));
             editor.importProjectFromFileAsync(fileContents)
@@ -4284,8 +4285,8 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
             if (loading) pxt.BrowserUtils.changeHash("");
             return false;
         case "github": {
-            const repoid = pxt.github.parseRepoId(hash.arg);
-            const [ghCmd, ghArg] = hash.arg.split(':', 2);
+            const repoid = pxt.github.parseRepoId(newHash.arg);
+            const [ghCmd, ghArg] = newHash.arg.split(':', 2);
             pxt.BrowserUtils.changeHash("");
             const provider = cloudsync.githubProvider();
             if (!provider)
@@ -4310,7 +4311,7 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
                 dialogs.showImportGithubDialogAsync();
                 return true;
             } else if (repoid) {
-                importGithubProject(hash.arg, true);
+                importGithubProject(newHash.arg, true);
                 return true;
             }
             break;

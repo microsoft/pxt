@@ -1077,8 +1077,19 @@ class ApiInfoIndexedDb {
                 pxt.perf.measureEnd("compiler db setAsync")
             })
     }
+
+    clearAsync(): Promise<void> {
+        return this.db.deleteAllAsync(ApiInfoIndexedDb.TABLE)
+            .then(() => console.debug(`db: all clean`))
+            .catch(e => {
+                console.error('db: failed to delete all');
+            })
+    }
 }
 
 export function clearApiInfoDbAsync() {
-    return pxt.BrowserUtils.IDBWrapper.deleteDatabaseAsync(ApiInfoIndexedDb.dbName())
+    return ApiInfoIndexedDb.createAsync()
+        .then(db => db.clearAsync())
+        .catch(e => pxt.BrowserUtils.IDBWrapper.deleteDatabaseAsync(ApiInfoIndexedDb.dbName()).done());
+
 }
