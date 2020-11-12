@@ -31,13 +31,18 @@ interface AppProps {
     dispatchSetUser: (user: UserState) => void;
 }
 
-class AppImpl extends React.Component<AppProps> {
+interface AppState {
+    error?: string;
+}
+
+class AppImpl extends React.Component<AppProps, AppState> {
     protected queryFlags: {[index: string]: string} = {};
     protected unsubscribeChangeListener: Unsubscribe | undefined;
     protected loadedUser: UserState | undefined;
 
     constructor(props: any) {
         super(props);
+        this.state = {};
 
         window.addEventListener("hashchange", this.handleHashChange);
     }
@@ -71,8 +76,11 @@ class AppImpl extends React.Component<AppProps> {
                     if (description) this.props.dispatchSetPageDescription(description);
                     if (infoUrl) this.props.dispatchSetPageDescription(infoUrl);
                 }
+                this.setState({ error: undefined })
             } catch {
-                console.error("Error parsing markdown")
+                const errorMsg = "Oops! Couldn't load content, please check the URL and markdown file."
+                console.error(errorMsg);
+                this.setState({ error: errorMsg });
             }
         }
 
@@ -106,16 +114,19 @@ class AppImpl extends React.Component<AppProps> {
     }
 
     render() {
-        const {skillMaps, activityOpen } = this.props;
+        const { skillMaps, activityOpen } = this.props;
+        const { error } = this.state;
         const maps = Object.keys(skillMaps).map((id: string) => skillMaps[id]);
         return (<div className="app-container">
                 <HeaderBar />
                 { activityOpen ? <MakeCodeFrame /> : <div>
                     <Banner title="Game Maker Guide" icon="map" description="Level up your game making skills by completing the tutorials in this guide." />
                     <div className="skill-map-container">
-                        { maps?.map((el, i) => {
-                            return <SkillCarousel map={el} key={i} />
-                        })}
+                        { error
+                            ? <div className="skill-map-error">{error}</div>
+                            : maps?.map((el, i) => {
+                                return <SkillCarousel map={el} key={i} />
+                            })}
                     </div>
                 </div>
                 }

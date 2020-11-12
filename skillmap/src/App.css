@@ -13,6 +13,7 @@
 
     --body-background-color: #F9F9F9;
     --default-card-color: #CCC;
+    --card-hover-color: #BFBFBF;
     --modal-overlay-color: rgba(0, 0, 0, 0.5);
     --card-overlay-color: rgba(0, 0, 0, 0.2);
     --inverted-text-color: var(--white);
@@ -45,6 +46,7 @@ code {
     width: 100%;
 }
 
+/* HEADER BAR */
 .header {
     background-color: var(--tertiary-color);
 
@@ -59,7 +61,12 @@ code {
 }
 
 .header-left, .header-right {
+    display: flex;
     margin: 0 1rem;
+}
+
+.header-right > div {
+    margin-left: 1rem;
 }
 
 .header-logo {
@@ -80,6 +87,7 @@ code {
     cursor: pointer;
 }
 
+/* TOP BANNER */
 .banner {
     background-color:  var(--secondary-color);
 
@@ -117,8 +125,15 @@ code {
     margin-bottom: 0.5rem;
 }
 
+/* SKILL CAROUSEL CONTAINERS */
 .skill-map-container {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
+}
+
+.skill-map-error {
+    text-align: center;
+    margin-top: 2rem;
+    color: red;
 }
