@@ -22,12 +22,13 @@ https://youtu.be/OugXfqhWUQo
 
 ### ~ hint
 
-#### Trouble signin with Crowdin?
+#### Trouble signing in with Crowdin?
 
-If you have trouble with signin the in-context translation page,
+If you have trouble with signing into the in-context translation page,
 you might need to disable ``same site by default cookies``. 
 Go to **chrome://flags/#same-site-by-default-cookies** 
-and set the **SameSite by default cookies** to **Disabled** option
+and set the **SameSite by default cookies** to **Disabled** option.
+
 ### ~
 
 ### Editor translation
