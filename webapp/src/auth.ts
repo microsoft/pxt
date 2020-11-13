@@ -13,14 +13,15 @@ const FIELD_LOGGED_IN = "logged-in";
 export const USER = `${MODULE}:${FIELD_USER}`;
 export const LOGGED_IN = `${MODULE}:${FIELD_LOGGED_IN}`;
 
-const CSRF_TOKEN = "csrf-token";
-const AUTH_STATE = "auth-login-state";
-
 const USER_PREF_MODULE = "user-pref";
 const FIELD_HIGHCONTRAST = "high-contrast";
 const FIELD_LANGUAGE = "language";
 export const HIGHCONTRAST = `${USER_PREF_MODULE}:${FIELD_HIGHCONTRAST}`
 export const LANGUAGE = `${USER_PREF_MODULE}:${FIELD_LANGUAGE}`
+
+const CSRF_TOKEN = "csrf-token";
+const AUTH_STATE = "auth-login-state";
+const X_PXT_TARGET = "x-pxt-target";
 
 export type UserProfile = {
     id?: string;
@@ -378,9 +379,6 @@ export async function initialUserPreferences(): Promise<UserPreferences | undefi
     return initialUserPreferences_;
 }
 
-/**
- * Private functions
- */
 function loggedInSync(): boolean {
     if (!hasIdentity()) { return false; }
     const state = getState();
@@ -454,7 +452,7 @@ function setUser(user: UserProfile) {
     }
 }
 
-type ApiResult<T> = {
+export type ApiResult<T> = {
     resp: T;
     statusCode: number;
     success: boolean;
@@ -470,12 +468,14 @@ const DEV_BACKEND_LOCALHOST_SSL = "https://localhost:5500";
 
 const DEV_BACKEND = DEV_BACKEND_LOCALHOST;
 
-async function apiAsync<T = any>(url: string, data?: any, method?: string): Promise<ApiResult<T>> {
+export async function apiAsync<T = any>(url: string, data?: any, method?: string): Promise<ApiResult<T>> {
     const headers: pxt.Map<string> = {};
     const csrfToken = pxt.storage.getLocal(CSRF_TOKEN);
     if (csrfToken) {
         headers["authorization"] = `mkcd ${csrfToken}`;
     }
+    headers[X_PXT_TARGET] = pxt.appTarget?.id;
+
     url = pxt.BrowserUtils.isLocalHostDev() ? `${DEV_BACKEND}${url}` : url;
 
     return U.requestAsync({
