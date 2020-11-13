@@ -34,7 +34,7 @@ export async function getMarkdownAsync(source: MarkdownSource, url: string) {
     switch (source) {
         case "docs":
             url = url.trim().replace(/^[\\/]/i, "").replace(/\.md$/i, "");
-            const target = (window as any).pxtTargetBundle.name;
+            const target = (window as any).pxtTargetBundle?.name || "arcade";
             return await httpGetAsync(`${apiRoot}/${target}/${url}`);
         case "github":
             /**
