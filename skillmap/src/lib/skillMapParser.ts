@@ -159,6 +159,7 @@ function inflateSkillMap(section: MarkdownSection): Partial<SkillMap> {
         mapId: section.header.toLowerCase(),
         displayName: section.attributes["name"] || section.header,
         description: section.attributes["description"],
+        completionUrl: section.attributes["completionurl"],
         prerequisites: [],
         activities: {}
     };
