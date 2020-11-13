@@ -390,6 +390,7 @@ declare namespace pxt {
         openProjectNewDependentTab?: boolean; // allow opening project in a new tab -- connected
         tutorialExplicitHints?: boolean; // allow use explicit hints
         errorList?: boolean; // error list experiment
+        disableBlobObjectDownload?: boolean; // use data uri downloads instead of object urls
     }
 
     interface SocialOptions {

@@ -384,9 +384,10 @@ namespace pxt.BrowserUtils {
         } = opt;
 
         const createObjectURL = window.URL?.createObjectURL;
+        const asDataUri = pxt.appTarget.appTheme.disableBlobObjectDownload;
         let downloadurl: string;
         try {
-            if (!!createObjectURL) {
+            if (!!createObjectURL && !asDataUri) {
                 const b = new Blob([Util.stringToUint8Array(atob(b64))], { type: contentType });
                 const objUrl = createObjectURL(b);
                 browserDownloadDataUri(objUrl, name, userContextWindow);
