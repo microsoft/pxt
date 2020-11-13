@@ -17,6 +17,7 @@ interface AppModalProps {
     activity?: MapActivity;
     nextActivityId?: string;
     displayName?: string;
+    actions?: ModalAction[];
     dispatchHideModal: () => void;
     dispatchRestartActivity: (mapId: string, activityId: string) => void;
     dispatchOpenActivity: (mapId: string, activityId: string) => void;
@@ -37,24 +38,13 @@ export class AppModalImpl extends React.Component<AppModalProps> {
         }
     }
 
-
     renderCompletionModal() {
-        const  { type, mapId, displayName, nextActivityId, dispatchOpenActivity, dispatchHideModal, completionType } = this.props;
+        const  { type, displayName, dispatchHideModal, completionType, actions } = this.props;
         if (!type) return <div />
 
         const completionModalTitle = completionType === "activity" ? "Activity Complete!" : "Path Complete!";
         const completionModalText = "Good work! You've completed {0}. Keep going!";
         const completionModalTextSegments = completionModalText.split("{0}");
-
-        const actions: ModalAction[] = [];
-        if (completionType === "activity" && mapId && nextActivityId) {
-            actions.push({ label:"NEXT", onClick: () => {
-                dispatchHideModal();
-                dispatchOpenActivity(mapId, nextActivityId);
-             } });
-        } else {
-            actions.push({ label: "CERTIFICATE", onClick: () => {} });
-        }
 
         return <Modal title={completionModalTitle} actions={actions} onClose={() => dispatchHideModal()}>
             {completionModalTextSegments[0]}{<strong>{displayName}</strong>}{completionModalTextSegments[1]}
@@ -86,6 +76,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
     let nextActivityId: string | undefined;
     let displayName: string | undefined;
     let completionType: CompletionModalType | undefined;
+    let actions: ModalAction[] = [];
 
     if (currentMapId) {
         const map = state.maps[currentMapId];
@@ -94,9 +85,16 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
             completionType = "activity";
             displayName = activity.displayName;
             nextActivityId = activity.next?.[0].activityId;
+
+            actions.push({ label:"NEXT", onClick: () => {
+                dispatchHideModal();
+                dispatchOpenActivity(currentMapId, nextActivityId || "");
+             } });
         } else {
             completionType = "map";
             displayName = map.displayName;
+
+            actions.push({ label: "CERTIFICATE", onClick: () => window.open(map.completionUrl) });
         }
     }
 
@@ -105,6 +103,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         completionType,
         displayName,
         nextActivityId,
+        actions,
 
         mapId: currentMapId,
         activity: currentMapId && currentActivityId ? state.maps[currentMapId].activities[currentActivityId] : undefined

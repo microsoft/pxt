@@ -9,6 +9,7 @@ interface SkillMap {
     displayName: string;
     description?: string;
     prerequisites: MapPrerequisite[];
+    completionUrl?: string;
 
     activities: {[index: string]: MapActivity};
     root: MapActivity;
