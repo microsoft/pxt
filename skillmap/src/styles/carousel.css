@@ -26,6 +26,10 @@
     margin-left: 0.5rem;
 }
 
+.carousel-subtitle-map {
+    font-weight: 700;
+}
+
 .carousel-subtitle-tag {
     color: var(--primary-color);
     border: 1px solid var(--primary-color);
