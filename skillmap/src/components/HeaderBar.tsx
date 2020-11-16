@@ -4,7 +4,7 @@ import * as React from "react";
 import { connect } from 'react-redux';
 import { dispatchSaveAndCloseActivity } from '../actions/dispatch';
 import { SkillMapState } from '../store/reducer';
-import { resolvePath } from "../lib/browserUtils";
+import { resolvePath, tickEvent } from "../lib/browserUtils";
 
 interface HeaderBarProps {
     activityOpen: boolean;
@@ -36,6 +36,7 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
     }
 
     onBackClicked = () => {
+        tickEvent("skillmap.activity.back");
         this.props.dispatchSaveAndCloseActivity();
     }
 }

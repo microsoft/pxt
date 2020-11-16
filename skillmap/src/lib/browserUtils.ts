@@ -124,3 +124,7 @@ export function isLocal() {
 export function resolvePath(path: string) {
     return `${isLocal() ? "" : "/static/skillmap"}/${path.replace(/^\//, "")}`
 }
+
+export function tickEvent(id: string, data?: { [key: string] : string | number }) {
+    (window as any).pxtTickEvent(name, data);
+}

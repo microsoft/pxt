@@ -5,6 +5,7 @@ import { connect } from 'react-redux';
 
 import { ModalType, SkillMapState } from '../store/reducer';
 import { dispatchHideModal, dispatchRestartActivity, dispatchOpenActivity } from '../actions/dispatch';
+import { tickEvent } from "../lib/browserUtils";
 
 import { Modal, ModalAction } from './Modal';
 
@@ -60,6 +61,7 @@ export class AppModalImpl extends React.Component<AppModalProps> {
         const actions = [
             { label: "CANCEL", onClick: () => dispatchHideModal() },
             { label: "RESTART", onClick: () => {
+                tickEvent("skillmap.activity.restart", { map: mapId, activity: activity!.activityId });
                 dispatchRestartActivity(mapId, activity!.activityId);
             }}
         ]
@@ -87,6 +89,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
             nextActivityId = activity.next?.[0].activityId;
 
             actions.push({ label:"NEXT", onClick: () => {
+                tickEvent("skillmap.activity.next", { map: currentMapId, activity: currentActivityId });
                 dispatchHideModal();
                 dispatchOpenActivity(currentMapId, nextActivityId || "");
              } });
@@ -94,7 +97,10 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
             completionType = "map";
             displayName = map.displayName;
 
-            actions.push({ label: "CERTIFICATE", onClick: () => window.open(map.completionUrl) });
+            actions.push({ label: "CERTIFICATE", onClick: () => {
+                tickEvent("skillmap.certificate", { map: currentMapId });
+                window.open(map.completionUrl)
+            }});
         }
     }
 
