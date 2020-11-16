@@ -77,13 +77,14 @@ class AccountPanel extends sui.UIElement<AccountPanelProps, {}> {
     }
 
     handleDeleteAccountClick = async () => {
+        const profile = this.getData<auth.UserProfile>(auth.USER)
         const result = await core.confirmAsync({
             header: lf("Delete Account"),
-            body: lf("You are about to delete your account. You can't undo this. Are you sure?"),
+            body: lf("You are about to delete your account. YOU CAN NOT UNDO THIS! Are you sure?"),
             agreeClass: "red",
             agreeIcon: "delete",
             agreeLbl: lf("Delete my account"),
-            confirmationText: this.getData<auth.UserProfile>(auth.USER)?.idp?.username || lf("User")
+            confirmationText: profile?.idp?.displayName || profile?.idp?.username || lf("User")
         });
         if (result) {
             await auth.deleteAccount();
