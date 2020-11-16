@@ -45,7 +45,7 @@ export async function getMarkdownAsync(source: MarkdownSource, url: string): Pro
     switch (source) {
         case "docs":
             url = url.trim().replace(/^[\\/]/i, "").replace(/\.md$/i, "");
-            const target = (window as any).pxtTargetBundle.name;
+            const target = (window as any).pxtTargetBundle?.name || "arcade";
             toFetch = `${apiRoot}/${target}/${url}`;
             break;
         case "github":

@@ -13,6 +13,7 @@
     width: 2rem;
     height: 0.75rem;
     background-color: var(--primary-color);
+    z-index: 1;
 }
 .carousel-item.linked:last-child:after {
     display: none;
@@ -49,6 +50,8 @@
     border: 2px solid transparent;
     transition: transform 0.6s;
     transform-style: preserve-3d;
+    transition: transform .1s ease;
+    z-index: 5;
 }
 
 .selected .skill-card {
@@ -76,6 +79,24 @@
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
 }
+
+/* SKILL CARD HOVER */
+.skill-card:not(.locked):hover {
+    transform: scale(1.06);
+}
+
+.selected .skill-card:not(.locked):hover {
+    transform: rotateX(180deg) scale(1.06);
+}
+
+.skill-card:not(.locked):hover .skill-card-display {
+    background-color: var(--active-color);
+}
+
+.skill-card:not(.locked):hover .skill-card-image {
+    background-color: var(--card-hover-color);
+}
+
 
 /* SKILL CARD DISPLAY (FRONT) */
 .skill-card-display {

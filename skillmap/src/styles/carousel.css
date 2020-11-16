@@ -33,16 +33,16 @@
 }
 
 .carousel-items {
-    height: 15rem;
+    height: 16rem;
     flex: 1;
-    padding: 0.5rem;
+    padding: 0 0.5rem 0.5rem;
     overflow: hidden;
 }
 
 .carousel-items-inner {
     display: flex;
     overflow: auto;
-    padding-bottom: 1rem;
+    padding: 1rem 0;
     scroll-behavior: smooth;
 }
 
