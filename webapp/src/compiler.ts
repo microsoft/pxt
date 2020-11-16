@@ -705,11 +705,7 @@ async function cacheApiInfoAsync(project: pkg.EditorPackage, info: pxtc.ApisInfo
                 //  1. If the API's package ID is the same as the external package
                 //  2. If any of the package IDs in the list of packages that defined the API are the same as the external package
                 if (apiInfo.pkg === pkgId || apiInfo.pkgs?.find(element => element === pkgId)) {
-                    // Create a copy of the API info since we want to remove the package list.
-                    // Most info objects won't have a package list
-                    entry.apis.byQName[api] = U.clone(apiInfo);
-                    // strip the pkg array to not store duplicate info
-                    entry.apis.byQName[api].pkgs = []
+                    entry.apis.byQName[api] = cleanApiForCache(apiInfo);
                 }
             }
 
@@ -717,6 +713,34 @@ async function cacheApiInfoAsync(project: pkg.EditorPackage, info: pxtc.ApisInfo
             pxt.debug(`Stored API info for ${getPackageKey(dep)}`);
         }
     }
+}
+
+function cleanApiForCache(apiInfo: pxtc.SymbolInfo) {
+    // Create a copy of the API info since we want to remove the package list.
+    // Most info objects won't have a package list
+    const cachedEntry = U.clone(apiInfo);
+
+    // strip the pkg array to not store duplicate info
+    delete cachedEntry.pkgs;
+
+    // clear translations on blocks before caching
+    const cachedAttrs = U.clone(cachedEntry.attributes)
+    let defChanged = false;
+    if (cachedAttrs._untranslatedBlock) {
+        cachedAttrs.block = cachedAttrs._untranslatedBlock;
+        delete cachedAttrs._untranslatedBlock;
+        defChanged = true;
+    }
+    if (cachedAttrs._untranslatedJsDoc) {
+        cachedAttrs.jsDoc = cachedAttrs._untranslatedJsDoc;
+        delete cachedAttrs._untranslatedJsDoc;
+        defChanged = true;
+    }
+    if (defChanged) {
+        ts.pxtc.updateBlockDef(cachedAttrs);
+    }
+    cachedEntry.attributes = cachedAttrs;
+    return cachedEntry;
 }
 
 export interface UpgradeResult {
