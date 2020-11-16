@@ -14,7 +14,7 @@ interface SkillMap {
     root: MapActivity;
 }
 
-type MapPrerequisite = TagPrerequisite | ActivityPrerequisite;
+type MapPrerequisite = TagPrerequisite | MapFinishedPrerequisite;
 
 interface TagPrerequisite {
     type: "tag"
@@ -22,8 +22,8 @@ interface TagPrerequisite {
     numberCompleted: number;
 }
 
-interface ActivityPrerequisite {
-    type: "activity";
+interface MapFinishedPrerequisite {
+    type: "map";
     mapId: string;
 }
 

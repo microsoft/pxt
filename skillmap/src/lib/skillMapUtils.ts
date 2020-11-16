@@ -11,11 +11,13 @@ export function isActivityCompleted(user: UserState, mapId: string, activityId: 
 export function isMapUnlocked(user: UserState, map: SkillMap, pageSource: string) {
     for (const pre of map.prerequisites) {
         if (pre.type === "tag") {
+            if (!user.completedTags[pageSource]) return false;
+
             const numCompleted = user.completedTags[pageSource][pre.tag];
             if (numCompleted === undefined || numCompleted < pre.numberCompleted) return false;
         }
-        else if (pre.type === "activity") {
-            if (user.mapProgress[pre.mapId]) return false;
+        else if (pre.type === "map") {
+            if (!isMapCompleted(user, map)) return false;
         }
     }
 

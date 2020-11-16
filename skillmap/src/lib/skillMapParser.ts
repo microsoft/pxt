@@ -177,7 +177,7 @@ function inflateSkillMap(section: MarkdownSection): Partial<SkillMap> {
             }
             else {
                 result.prerequisites!.push({
-                    type: "activity",
+                    type: "map",
                     mapId: match[2].trim()
                 });
             }
