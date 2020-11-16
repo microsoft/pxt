@@ -7,6 +7,7 @@ interface CoreDialogState {
     visible?: boolean;
     inputValue?: string;
     inputError?: string;
+    confirmationText?: string;
 }
 
 export class CoreDialog extends React.Component<core.PromptOptions, CoreDialogState> {
@@ -28,6 +29,7 @@ export class CoreDialog extends React.Component<core.PromptOptions, CoreDialogSt
         this.hide = this.hide.bind(this);
         this.modalDidOpen = this.modalDidOpen.bind(this);
         this.handleInputChange = this.handleInputChange.bind(this);
+        this.handleConfirmationChange = this.handleConfirmationChange.bind(this);
     }
 
     hide() {
@@ -78,6 +80,10 @@ export class CoreDialog extends React.Component<core.PromptOptions, CoreDialogSt
         this.setState({ inputValue: v.target.value, inputError });
     }
 
+    handleConfirmationChange(v: string) {
+        this.setState({ confirmationText: v })
+    }
+
     render() {
         const options = this.props;
         const { inputValue, inputError } = this.state;
@@ -98,6 +104,21 @@ export class CoreDialog extends React.Component<core.PromptOptions, CoreDialogSt
             'coredialog',
             options.className
         ])
+
+        const mobile = pxt.BrowserUtils.isMobile();
+
+        // if we have confirmation text (e.g. enter your name), disable the approve button until the
+        //  text matches
+        options.buttons?.forEach(b => {
+            if (b.approveButton && !!options.confirmationText) {
+                const match = this.state.confirmationText === this.props.confirmationText
+                const disabledClass = " disabled"
+                if (match)
+                    b.className = b.className.replace(disabledClass, "")
+                else
+                    b.className += b.className.indexOf(disabledClass) >= 0 ? "" : disabledClass
+            }
+        });
 
         /* tslint:disable:react-no-dangerous-html TODO(tslint): This needs to be reviewed with a security expert to allow for exception */
         return (
@@ -131,6 +152,15 @@ export class CoreDialog extends React.Component<core.PromptOptions, CoreDialogSt
                 {!!options.jsxd && options.jsxd()}
                 {!!options.body && <p>{options.body}</p>}
                 {!!options.copyable && <sui.Input copy={true} readOnly={true} value={options.copyable} selectOnClick={true} autoComplete={false} />}
+                {!!options.confirmationText &&
+                    <>
+                        <p>Type '{options.confirmationText}' to confirm:</p>
+                        <sui.Input ref="confirmationInput" id="confirmationInput"
+                            ariaLabel={lf("Type your name to confirm")} autoComplete={false}
+                            value={this.state.confirmationText || ''} onChange={this.handleConfirmationChange}
+                            selectOnMount={!mobile} autoFocus={!mobile} />
+                    </>
+                }
             </sui.Modal >)
         /* tslint:enable:react-no-dangerous-html */
     }

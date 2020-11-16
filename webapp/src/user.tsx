@@ -83,6 +83,7 @@ class AccountPanel extends sui.UIElement<AccountPanelProps, {}> {
             agreeClass: "red",
             agreeIcon: "delete",
             agreeLbl: lf("Delete my account"),
+            confirmationText: this.getData<auth.UserProfile>(auth.USER)?.idp?.username || lf("User")
         });
         if (result) {
             await auth.deleteAccount();

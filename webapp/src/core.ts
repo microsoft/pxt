@@ -168,6 +168,7 @@ export interface DialogOptions {
     modalContext?: string;
     hasCloseIcon?: boolean;
     helpUrl?: string;
+    confirmationText?: string;
 }
 
 export function dialogAsync(options: DialogOptions): Promise<void> {
