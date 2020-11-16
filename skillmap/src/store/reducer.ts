@@ -1,12 +1,13 @@
 import * as actions from '../actions/types'
 import { guidGen } from '../lib/browserUtils';
-import { lookupActivityProgress } from '../lib/skillMapUtils';
+import { getCompletedTags, lookupActivityProgress } from '../lib/skillMapUtils';
 
 export interface SkillMapState {
     title: string;
     description: string;
     infoUrl?: string;
     user: UserState;
+    pageSourceUrl?: string;
     maps: { [key: string]: SkillMap };
     selectedItem?: string;
 
@@ -136,6 +137,18 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                 ...state,
                 user: action.user
             };
+        case actions.UPDATE_USER_COMPLETED_TAGS:
+            if (!state.pageSourceUrl) return state;
+            return {
+                ...state,
+                user: {
+                    ...state.user,
+                    completedTags: {
+                        ...state.user.completedTags,
+                        [state.pageSourceUrl]: getCompletedTags(state.user, Object.keys(state.maps).map(key => state.maps[key]))
+                    }
+                }
+            }
         case actions.SET_PAGE_TITLE:
             return {
                 ...state,
@@ -150,6 +163,11 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
             return {
                 ...state,
                 infoUrl: action.infoUrl
+            }
+        case actions.SET_PAGE_SOURCE_URL:
+            return {
+                ...state,
+                pageSourceUrl: action.url
             }
         case actions.SHOW_COMPLETION_MODAL:
             return {

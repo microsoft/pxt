@@ -14,6 +14,7 @@ interface SkillCarouselProps {
     map: SkillMap;
     user: UserState;
     selectedItem?: string;
+    pageSourceUrl?: string;
     dispatchChangeSelectedItem: (id: string) => void;
     dispatchShowCompletionModal: (mapId: string, activityId?: string) => void;
 }
@@ -62,13 +63,38 @@ class SkillCarouselImpl extends React.Component<SkillCarouselProps> {
         </div>
     }
 
+    protected renderRequirements(): JSX.Element | undefined {
+        if (!this.props.pageSourceUrl) return undefined;
+
+        const requirements = this.props.map.prerequisites;
+        const completedTags = this.props.user.completedTags;
+
+        const tags = requirements.map(req => {
+            if (req.type === "tag") {
+                let incomplete = req.numberCompleted;
+                if (completedTags[this.props.pageSourceUrl!] && completedTags[this.props.pageSourceUrl!][req.tag]) {
+                    incomplete = Math.max(incomplete - completedTags[this.props.pageSourceUrl!][req.tag], 0);
+                }
+
+                if (incomplete) {
+                    return <span key={req.tag}>{incomplete} <span className="carousel-subtitle-tag">{req.tag}</span></span>
+                }
+            }
+            return null;
+        }).filter(element => !!element)
+
+
+        return tags.length ? <span> Complete {tags} tutorials to unlock!</span> : undefined;
+    }
+
     render() {
         const { map, user, selectedItem } = this.props;
         const endCard = isMapCompleted(user, map) ? [this.getEndCard()] : [];
+        const requirments = this.renderRequirements();
 
         return <Carousel title={map.displayName} items={this.items} itemTemplate={SkillCard} itemClassName="linked"
             onItemSelect={this.onItemSelect} selectedItem={selectedItem}
-            appendChildren={endCard} />
+            appendChildren={endCard} titleIcon={requirments && "lock"} titleDecoration={requirments}/>
     }
 }
 
@@ -76,6 +102,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
     if (!state) return {};
     return {
         user: state.user,
+        pageSourceUrl: state.pageSourceUrl,
         selectedItem: state.selectedItem && ownProps.map?.activities?.[state.selectedItem] ? state.selectedItem : undefined
     }
 }
