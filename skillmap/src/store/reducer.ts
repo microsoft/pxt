@@ -22,7 +22,7 @@ export interface EditorViewState {
     state: "active" | "saving";
 }
 
-export type ModalType = "restart-warning" | "completion";
+export type ModalType = "restart-warning" | "completion" | "report-abuse";
 
 interface ModalState {
     type: ModalType;
@@ -178,6 +178,11 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
             return {
                 ...state,
                 modal: { type: "restart-warning", currentMapId: action.mapId, currentActivityId: action.activityId }
+            };
+        case actions.SHOW_REPORT_ABUSE_MODAL:
+            return {
+                ...state,
+                modal: { type: "report-abuse", currentMapId: action.mapId, currentActivityId: action.activityId }
             };
         case actions.HIDE_MODAL:
             return {

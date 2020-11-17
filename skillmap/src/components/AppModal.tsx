@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 
 import { ModalType, SkillMapState } from '../store/reducer';
 import { dispatchHideModal, dispatchRestartActivity, dispatchOpenActivity } from '../actions/dispatch';
-import { tickEvent } from "../lib/browserUtils";
+import { tickEvent, postAbuseReportAsync } from "../lib/browserUtils";
 
 import { Modal, ModalAction } from './Modal';
 
@@ -17,6 +17,7 @@ interface AppModalProps {
     mapId: string;
     activity?: MapActivity;
     nextActivityId?: string;
+    pageSourceUrl?: string;
     displayName?: string;
     actions?: ModalAction[];
     dispatchHideModal: () => void;
@@ -27,13 +28,16 @@ interface AppModalProps {
 export class AppModalImpl extends React.Component<AppModalProps> {
     render() {
         const  { activity, type, completionType } = this.props;
-        if (!activity && completionType !== "map") return <div />
 
         switch (type) {
             case "completion":
+                if (!activity && completionType !== "map") return <div />
                 return this.renderCompletionModal();
             case "restart-warning":
+                if (!activity) return <div />
                 return this.renderRestartWarning();
+            case "report-abuse":
+                return this.renderReportAbuse();
             default:
                 return <div/>
         }
@@ -70,10 +74,28 @@ export class AppModalImpl extends React.Component<AppModalProps> {
             {restartModalTextSegments[0]}{<strong>{activity!.displayName}</strong>}{restartModalTextSegments[1]}
         </Modal>
     }
+
+    renderReportAbuse() {
+        const  { pageSourceUrl, dispatchHideModal } = this.props;
+        const abuseModalTitle = "Report Abuse";
+        const abuseModalText = "Describe the content and explain why you are reporting it for abuse. Provide as much detail as possible!";
+
+        const actions = [
+            { label: "REPORT", onClick: () => {
+                postAbuseReportAsync(pageSourceUrl || "", { text: (document.querySelector(".report-abuse-text") as HTMLTextAreaElement).value });
+                dispatchHideModal();
+            }}
+        ]
+
+        return <Modal title={abuseModalTitle} actions={actions} onClose={() => dispatchHideModal()}>
+            <textarea className="report-abuse-text" placeholder={abuseModalText} />
+        </Modal>
+    }
 }
 
 function mapStateToProps(state: SkillMapState, ownProps: any) {
     if (!state) return {};
+    const { pageSourceUrl } = state;
     const { currentMapId, currentActivityId, type } = state.modal || {};
     let nextActivityId: string | undefined;
     let displayName: string | undefined;
@@ -109,6 +131,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         completionType,
         displayName,
         nextActivityId,
+        pageSourceUrl,
         actions,
 
         mapId: currentMapId,

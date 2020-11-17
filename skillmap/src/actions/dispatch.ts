@@ -18,6 +18,7 @@ export const dispatchSetPageInfoUrl = (infoUrl: string) => ({ type: actions.SET_
 export const dispatchSetPageSourceUrl = (url: string) => ({ type: actions.SET_PAGE_SOURCE_URL, url });
 
 export const dispatchShowCompletionModal = (mapId: string, activityId?: string) => ({ type: actions.SHOW_COMPLETION_MODAL, mapId, activityId });
-export const dispatchHideModal = () => ({ type: actions.HIDE_MODAL });
-
 export const dispatchShowRestartActivityWarning = (mapId: string, activityId: string) => ({ type: actions.SHOW_RESTART_ACTIVITY_MODAL, mapId, activityId });
+export const dispatchShowReportAbuseModal = () => ({ type: actions.SHOW_REPORT_ABUSE_MODAL });
+
+export const dispatchHideModal = () => ({ type: actions.HIDE_MODAL });
