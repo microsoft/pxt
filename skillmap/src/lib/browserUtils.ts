@@ -77,6 +77,11 @@ export async function getMarkdownAsync(source: MarkdownSource, url: string): Pro
     };
 }
 
+export async function postAbuseReportAsync(id: string, data: { text: string }): Promise<void> {
+    if (!!id) await httpPostAsync(`/api/${encodeURIComponent(id)}/abusereports`, data);
+    return;
+}
+
 export function httpGetAsync(url: string): Promise<string> {
     return new Promise<string>((resolve, reject) => {
         const request = new XMLHttpRequest();
@@ -94,6 +99,27 @@ export function httpGetAsync(url: string): Promise<string> {
         });
         request.open("GET", url);
         request.send();
+    })
+}
+
+export function httpPostAsync(url: string, data: any): Promise<string> {
+    return new Promise<string>((resolve, reject) => {
+        const request = new XMLHttpRequest();
+        request.addEventListener("error", err => {
+            reject(err);
+        });
+
+        request.addEventListener("load", () => {
+            try {
+                resolve(request.responseText);
+            }
+            catch (e) {
+                reject(e);
+            }
+        });
+        request.open("POST", url, true);
+        request.setRequestHeader('Content-type', 'application/json');
+        request.send(JSON.stringify(data));
     })
 }
 
