@@ -82,6 +82,7 @@ export class AppModalImpl extends React.Component<AppModalProps> {
 
         const actions = [
             { label: "REPORT", onClick: () => {
+                tickEvent("skillmap.reportabuse", { path: pageSourceUrl || "" });
                 postAbuseReportAsync(pageSourceUrl || "", { text: (document.querySelector(".report-abuse-text") as HTMLTextAreaElement).value });
                 dispatchHideModal();
             }}
