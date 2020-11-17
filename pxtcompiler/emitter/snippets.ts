@@ -292,7 +292,7 @@ namespace ts.pxtc.service {
                         deflKind = SK.BooleanKeyword;
                     } else if (defaultName.includes(".")) {
                         // try to parse as an enum
-                        deflKind= SK.EnumKeyword;
+                        deflKind = SK.EnumKeyword;
                     } else {
                         // otherwise it'll be a string
                         deflKind = SK.StringKeyword;
