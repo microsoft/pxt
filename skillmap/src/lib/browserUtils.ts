@@ -1,6 +1,11 @@
 const apiRoot = "https://www.makecode.com/api/md";
 export type MarkdownSource = "docs" | "github";
 
+export interface MarkdownFetchResult {
+    text: string;
+    url: string;
+}
+
 export function parseHash() {
     let hash = { cmd: '', arg: '' };
     // TODO shakao remove testing url later
@@ -29,13 +34,20 @@ export function parseQuery() {
     return out;
 }
 
-export async function getMarkdownAsync(source: MarkdownSource, url: string) {
-    if (!source || !url) return "";
+export async function getMarkdownAsync(source: MarkdownSource, url: string): Promise<MarkdownFetchResult> {
+    if (!source || !url) return {
+        text: "",
+        url: ""
+    };
+
+    let toFetch: string;
+
     switch (source) {
         case "docs":
             url = url.trim().replace(/^[\\/]/i, "").replace(/\.md$/i, "");
             const target = (window as any).pxtTargetBundle?.name || "arcade";
-            return await httpGetAsync(`${apiRoot}/${target}/${url}`);
+            toFetch = `${apiRoot}/${target}/${url}`;
+            break;
         case "github":
             /**
              * FORMATS:
@@ -45,16 +57,24 @@ export async function getMarkdownAsync(source: MarkdownSource, url: string) {
              *
              * Leading slash and '.md' are optional but allowed
              */
-            let rawUrl = url.trim();
-            let match = /^(?:(?:https?:\/\/)?[^/]*?github\.com)?(?:\/)?([^/.]+)\/([^/]+)\/(?:blob\/)?([^/]+)\/([^/.]+?)(?:\.md)?$/gi.exec(rawUrl);
+            toFetch = url.trim();
+            let match = /^(?:(?:https?:\/\/)?[^/]*?github\.com)?(?:\/)?([^/.]+)\/([^/]+)\/(?:blob\/)?([^/]+)\/([^/.]+?)(?:\.md)?$/gi.exec(toFetch);
             if (match) {
-                rawUrl = `https://raw.githubusercontent.com/${match[1]}/${match[2]}/${match[3]}/${match[4]}.md`
+                toFetch = `https://raw.githubusercontent.com/${match[1]}/${match[2]}/${match[3]}/${match[4]}.md`
             }
 
-            return await httpGetAsync(rawUrl);
+            break;
         default:
-            return await httpGetAsync(url);
+            toFetch = url;
+            break;
     }
+
+    const markdown = await httpGetAsync(toFetch);
+
+    return {
+        text: markdown,
+        url: toFetch
+    };
 }
 
 export function httpGetAsync(url: string): Promise<string> {

@@ -7,6 +7,8 @@ import { ComponentClass } from "react-redux";
 
 interface CarouselProps {
     title?: string;
+    titleIcon?: string;
+    titleDecoration?: JSX.Element;
     items: Item[];
     selectedItem?: string;
     itemClassName?: string;
@@ -56,11 +58,26 @@ export class Carousel extends React.Component<CarouselProps, CarouselState> {
     }
 
     render() {
-        const { title, items, selectedItem, itemTemplate, itemClassName, onItemSelect, prependChildren, appendChildren } = this.props;
+        const {
+            title,
+            items,
+            selectedItem,
+            itemTemplate,
+            itemClassName,
+            onItemSelect,
+            prependChildren,
+            appendChildren,
+            titleIcon,
+            titleDecoration
+        } = this.props;
         const { showLeft, showRight } = this.state;
 
         return <div className="carousel">
-            {title && <div className="carousel-title">{title}</div>}
+            {title && <div className="carousel-title">
+                {titleIcon && <i className={`icon ${titleIcon}`} />}
+                <span>{title}</span>
+                {titleDecoration && <span className="carousel-subtitle">{titleDecoration}</span>}
+            </div>}
             {showLeft && <div className="carousel-arrow left" onClick={this.handleLeftArrowClick}>
                 <i className="icon chevron left" />
             </div>}

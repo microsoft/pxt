@@ -17,6 +17,7 @@
     --modal-overlay-color: rgba(0, 0, 0, 0.5);
     --card-overlay-color: rgba(0, 0, 0, 0.2);
     --inverted-text-color: var(--white);
+    --subtitle-text-color: #6e6e6e;
 
     --body-font-family: "Share Tech Mono", Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
 }

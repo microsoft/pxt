@@ -6,7 +6,7 @@ import { Item } from './CarouselItem';
 
 import { dispatchOpenActivity, dispatchShowRestartActivityWarning } from '../actions/dispatch';
 
-import { isActivityUnlocked, lookupActivityProgress, } from '../lib/skillMapUtils';
+import { isActivityUnlocked, isMapUnlocked, lookupActivityProgress, } from '../lib/skillMapUtils';
 
 import '../styles/skillcard.css'
 
@@ -102,23 +102,30 @@ export class SkillCardImpl extends React.Component<SkillCardProps> {
 }
 
 function mapStateToProps(state: SkillMapState, ownProps: any) {
-    const isUnlocked = state.user && state.maps?.[ownProps.mapId] && isActivityUnlocked(state.user, state.maps[ownProps.mapId], ownProps.id);
+    const map = state.maps?.[ownProps.mapId];
+
+    const isUnlocked = state.user && map && isActivityUnlocked(state.user, state.maps[ownProps.mapId], ownProps.id);
 
     let status: SkillCardStatus = isUnlocked ? "notstarted" : "locked";
     let currentStep: number | undefined;
     let maxSteps: number | undefined;
 
     if (state.user) {
-        const progress = lookupActivityProgress(state.user, ownProps.mapId, ownProps.id);
+        if (map && state.pageSourceUrl && !isMapUnlocked(state.user, map, state.pageSourceUrl)) {
+            status = "locked";
+        }
+        else {
+            const progress = lookupActivityProgress(state.user, ownProps.mapId, ownProps.id);
 
-        if (progress) {
-            if (progress.isCompleted) {
-                status = "completed";
-            }
-            else if (progress.headerId) {
-                status = "inprogress";
-                currentStep = progress?.currentStep;
-                maxSteps = progress?.maxSteps;
+            if (progress) {
+                if (progress.isCompleted) {
+                    status = "completed";
+                }
+                else if (progress.headerId) {
+                    status = "inprogress";
+                    currentStep = progress?.currentStep;
+                    maxSteps = progress?.maxSteps;
+                }
             }
         }
     }
@@ -126,7 +133,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
     return {
         status,
         currentStep,
-        maxSteps
+        maxSteps,
     };
 }
 

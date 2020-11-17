@@ -5,15 +5,18 @@ import { connect } from 'react-redux';
 
 import { SkillMapState } from '../store/reducer';
 import { dispatchChangeSelectedItem, dispatchShowCompletionModal } from '../actions/dispatch';
-import { isMapCompleted } from '../lib/skillMapUtils';
+import { isMapCompleted, isMapUnlocked } from '../lib/skillMapUtils';
 import { Carousel } from './Carousel';
 import { Item } from './CarouselItem';
 import { SkillCard } from './SkillCard';
+import { ElementFlags } from "typescript";
 
 interface SkillCarouselProps {
     map: SkillMap;
+    requiredMaps: SkillMap[];
     user: UserState;
     selectedItem?: string;
+    pageSourceUrl?: string;
     dispatchChangeSelectedItem: (id: string) => void;
     dispatchShowCompletionModal: (mapId: string, activityId?: string) => void;
 }
@@ -62,23 +65,103 @@ class SkillCarouselImpl extends React.Component<SkillCarouselProps> {
         </div>
     }
 
+    protected renderRequirements(): JSX.Element | undefined {
+        if (!this.props.pageSourceUrl) return undefined;
+
+        const requirements = this.props.map.prerequisites;
+        const completedTags = this.props.user.completedTags;
+
+        const tags = requirements.map(req => {
+            if (req.type === "tag") {
+                let incomplete = req.numberCompleted;
+                if (completedTags[this.props.pageSourceUrl!] && completedTags[this.props.pageSourceUrl!][req.tag]) {
+                    incomplete = Math.max(incomplete - completedTags[this.props.pageSourceUrl!][req.tag], 0);
+                }
+
+                if (incomplete) {
+                    return <span key={"tag_" + req.tag}>{incomplete} <span className="carousel-subtitle-tag">{req.tag}</span></span>
+                }
+            }
+            return null;
+        }).filter(element => !!element) as JSX.Element[];
+
+        const finishedMaps = this.props.requiredMaps.map(map =>
+            <span key={"map_" + map.mapId} className="carousel-subtitle-map">{map.displayName}</span>
+        );
+
+        if (!tags.length && !finishedMaps.length) {
+            return undefined;
+        }
+        else if (!finishedMaps.length) {
+            return formatString("Complete {0} tutorial(s) to unlock!", [formatList(tags)]);
+        }
+        else if (!tags.length) {
+            return formatString("Complete the {0} map(s) to unlock!", [formatList(finishedMaps)]);
+        }
+        else {
+            return formatString("Complete {0} tutorial(s) and the {1} map(s) to unlock!", [formatList(tags), formatList(finishedMaps)]);
+        }
+    }
+
     render() {
         const { map, user, selectedItem } = this.props;
         const endCard = isMapCompleted(user, map) ? [this.getEndCard()] : [];
+        const requirments = this.renderRequirements();
 
         return <Carousel title={map.displayName} items={this.items} itemTemplate={SkillCard} itemClassName="linked"
             onItemSelect={this.onItemSelect} selectedItem={selectedItem}
-            appendChildren={endCard} />
+            appendChildren={endCard} titleIcon={requirments && "lock"} titleDecoration={requirments}/>
     }
 }
 
 function mapStateToProps(state: SkillMapState, ownProps: any) {
     if (!state) return {};
+
+    const map: SkillMap = ownProps.map;
+    let requiredMaps: SkillMap[] = [];
+
+    if (map.prerequisites?.length && state.pageSourceUrl) {
+        requiredMaps = map.prerequisites
+            .filter(req => req.type === "map" && !isMapUnlocked(state.user, state.maps[req.mapId], state.pageSourceUrl!))
+            .map(req => state.maps[(req as MapFinishedPrerequisite).mapId]);
+
+    }
+
     return {
         user: state.user,
+        requiredMaps,
+        pageSourceUrl: state.pageSourceUrl,
         selectedItem: state.selectedItem && ownProps.map?.activities?.[state.selectedItem] ? state.selectedItem : undefined
     }
 }
+
+
+
+function formatList(elements: JSX.Element[]) {
+    if (elements.length <= 1) return elements[0];
+    else if (elements.length === 2) return <span>{elements[0]} and {elements[1]}</span>;
+    else {
+        return <span>
+            {elements.slice(0, elements.length - 1).map(e => <span>{e}, </span>)} and {elements[elements.length - 1]}
+        </span>
+    }
+}
+
+function formatString(fmtString: string, elements: JSX.Element[]) {
+    let out: JSX.Element[] = [];
+    let current = fmtString;
+    let index = 0;
+    for (let i = 0; i < elements.length; i++) {
+        const parts = current.split("{" + i + "}");
+        out.push(<span key={index++}>{parts[0]}</span>);
+        out.push(<span key={index++}>{elements[i]}</span>);
+        current = current.substr(parts[0].length + 3);
+    }
+    out.push(<span key={index++}>{current}</span>);
+
+return <span>{out}</span>
+}
+
 
 const mapDispatchToProps = {
     dispatchChangeSelectedItem,

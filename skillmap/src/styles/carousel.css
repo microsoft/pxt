@@ -12,6 +12,30 @@
     z-index: 15;
 }
 
+.carousel-subtitle {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--subtitle-text-color);
+    margin-left: 0.5rem;
+}
+
+.carousel-subtitle {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--subtitle-text-color);
+    margin-left: 0.5rem;
+}
+
+.carousel-subtitle-map {
+    font-weight: 700;
+}
+
+.carousel-subtitle-tag {
+    color: var(--primary-color);
+    border: 1px solid var(--primary-color);
+    padding: 0.1rem 0.25rem;
+}
+
 .carousel-items {
     height: 16rem;
     flex: 1;

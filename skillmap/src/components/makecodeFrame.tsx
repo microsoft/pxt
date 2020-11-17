@@ -6,7 +6,7 @@ import { isLocal, resolvePath } from "../lib/browserUtils";
 import { lookupActivityProgress } from "../lib/skillMapUtils";
 
 import { SkillMapState } from '../store/reducer';
-import  { dispatchSetHeaderIdForActivity, dispatchCloseActivity, dispatchSaveAndCloseActivity } from '../actions/dispatch';
+import  { dispatchSetHeaderIdForActivity, dispatchCloseActivity, dispatchSaveAndCloseActivity, dispatchUpdateUserCompletedTags } from '../actions/dispatch';
 
 import '../styles/makecode-editor.css'
 
@@ -21,6 +21,7 @@ interface MakeCodeFrameProps {
     dispatchSetHeaderIdForActivity: (headerId: string, currentStep: number, maxSteps: number) => void;
     dispatchCloseActivity: (finished?: boolean) => void;
     dispatchSaveAndCloseActivity: () => void;
+    dispatchUpdateUserCompletedTags: () => void;
 }
 
 interface MakeCodeFrameState {
@@ -87,7 +88,10 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
                 // This is a workaround for a bug in Chrome where for some reason the page hangs when
                 // trying to unload the makecode iframe. Instead, we set the src to about:blank, wait for
                 // that to load, and then unload the iframe
-                if (this.state.unloading) this.props.dispatchCloseActivity();
+                if (this.state.unloading) {
+                    this.props.dispatchCloseActivity();
+                    this.props.dispatchUpdateUserCompletedTags();
+                }
             });
         }
     }
@@ -276,7 +280,8 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
 const mapDispatchToProps = {
     dispatchSetHeaderIdForActivity,
     dispatchCloseActivity,
-    dispatchSaveAndCloseActivity
+    dispatchSaveAndCloseActivity,
+    dispatchUpdateUserCompletedTags
 };
 
 export const MakeCodeFrame = connect(mapStateToProps, mapDispatchToProps)(MakeCodeFrameImpl);

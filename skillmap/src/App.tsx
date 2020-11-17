@@ -5,7 +5,15 @@ import { connect } from 'react-redux';
 
 import store from "./store/store";
 
-import { dispatchAddSkillMap, dispatchClearSkillMaps, dispatchSetPageTitle, dispatchSetPageDescription, dispatchSetPageInfoUrl, dispatchSetUser } from './actions/dispatch';
+import {
+    dispatchAddSkillMap,
+    dispatchClearSkillMaps,
+    dispatchSetPageTitle,
+    dispatchSetPageDescription,
+    dispatchSetPageInfoUrl,
+    dispatchSetUser,
+    dispatchSetPageSourceUrl
+} from './actions/dispatch';
 import { SkillMapState } from './store/reducer';
 import { HeaderBar } from './components/HeaderBar';
 import { Banner } from './components/Banner';
@@ -29,6 +37,7 @@ interface AppProps {
     dispatchSetPageDescription: (description: string) => void;
     dispatchSetPageInfoUrl: (infoUrl: string) => void;
     dispatchSetUser: (user: UserState) => void;
+    dispatchSetPageSourceUrl: (url: string) => void;
 }
 
 interface AppState {
@@ -56,7 +65,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
     }
 
     protected async fetchAndParseSkillMaps(source: MarkdownSource, url: string) {
-        const md = await getMarkdownAsync(source, url);
+        const { text: md, url: fetched } = await getMarkdownAsync(source, url);
 
         let loadedMaps: SkillMap[] | undefined;
 
@@ -76,6 +85,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
                     if (description) this.props.dispatchSetPageDescription(description);
                     if (infoUrl) this.props.dispatchSetPageDescription(infoUrl);
                 }
+                this.props.dispatchSetPageSourceUrl(fetched);
                 this.setState({ error: undefined })
             } catch {
                 const errorMsg = "Oops! Couldn't load content, please check the URL and markdown file."
@@ -92,6 +102,10 @@ class AppImpl extends React.Component<AppProps, AppState> {
                 completedTags: {},
                 mapProgress: {}
             };
+        }
+
+        if (!user.completedTags[fetched]) {
+            user.completedTags[fetched] = {};
         }
 
         this.applyQueryFlags(user, loadedMaps);
@@ -134,7 +148,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
             </div>);
     }
 
-    protected applyQueryFlags(user: UserState, maps?: SkillMap[]) {
+    protected applyQueryFlags(user: UserState, maps?: SkillMap[], sourceUrl?: string) {
         if (this.queryFlags["debugNewUser"] === "true") {
             user.isDebug = true;
             user.mapProgress = {};
@@ -163,9 +177,10 @@ class AppImpl extends React.Component<AppProps, AppState> {
                             user.mapProgress[map.mapId].activityState[activity.activityId].isCompleted = true;
                         }
 
-                        if (activity.tags?.length) {
+                        if (activity.tags?.length && sourceUrl) {
                             for (const tag of activity.tags) {
-                                user.completedTags[tag]++;
+                                if (!user.completedTags[sourceUrl][tag]) user.completedTags[sourceUrl][tag] = 0;
+                                user.completedTags[sourceUrl][tag]++;
                             }
                         }
                     }
@@ -198,7 +213,8 @@ const mapDispatchToProps = {
     dispatchSetPageTitle,
     dispatchSetPageDescription,
     dispatchSetPageInfoUrl,
-    dispatchSetUser
+    dispatchSetUser,
+    dispatchSetPageSourceUrl
 };
 
 const App = connect(mapStateToProps, mapDispatchToProps)(AppImpl);
