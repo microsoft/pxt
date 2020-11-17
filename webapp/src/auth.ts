@@ -135,6 +135,17 @@ function loadState() {
     }
 }
 
+/**
+ * Clear all auth state.
+ * Direct access to state$ allowed.
+ */
+function clearState() {
+    state$ = {};
+    pxt.storage.removeLocal(AUTH_USER_STATE);
+    data.invalidate("auth:*");
+    //data.invalidate("user-prefs:*"); // Should we invalidate this? Or would it be jarring visually?
+}
+
 export type CallbackState = {
     hash?: string;
     params?: pxt.Map<string>;
@@ -588,17 +599,6 @@ function authApiHandler(p: string) {
         case FIELD_LOGGED_IN: return loggedInSync();
     }
     return null;
-}
-
-/**
- * Clear all auth state.
- * Direct access to state$ allowed.
- */
-function clearState() {
-    state$ = {};
-    pxt.storage.removeLocal(AUTH_USER_STATE);
-    data.invalidate("auth:*");
-    //data.invalidate("user-prefs:*"); // should we clear this?
 }
 
 function internalUserPreferencesHandler(path: string): UserPreferences | boolean | string {
