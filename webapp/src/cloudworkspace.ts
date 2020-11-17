@@ -112,21 +112,30 @@ function cloudApiHandler(p: string): any {
     return null;
 }
 
-data.mountVirtualApi("cloudws", { getSync: cloudApiHandler });
+export function init() {
+    // 'cloudws' because 'cloud' protocol is already taken.
+    data.mountVirtualApi("cloudws", { getSync: cloudApiHandler });
+    data.subscribe(userSubscriber, auth.LOGGED_IN);
+}
 
 let prevWorkspaceType: string;
 
-const userSubscriber: data.DataSubscriber = {
-    subscriptions: [],
-    onDataChanged: async () => {
-        const loggedIn = await auth.loggedIn();
-        if (loggedIn) {
-            prevWorkspaceType = workspace.switchToCloudWorkspce();
-        } else if (prevWorkspaceType) {
-            workspace.switchToWorkspace(prevWorkspaceType);
+async function updateWorkspace() {
+    const loggedIn = await auth.loggedIn();
+    if (loggedIn) {
+        // TODO: Handling of 'prev' is pretty hacky. Need to improve it.
+        let prev = workspace.switchToCloudWorkspace();
+        if (prev !== "cloud") {
+            prevWorkspaceType = prev;
         }
         await workspace.syncAsync();
+    } else if (prevWorkspaceType) {
+        workspace.switchToWorkspace(prevWorkspaceType);
+        await workspace.syncAsync();
     }
-};
+}
 
-data.subscribe(userSubscriber, auth.LOGGED_IN);
+const userSubscriber: data.DataSubscriber = {
+    subscriptions: [],
+    onDataChanged: async () => updateWorkspace()
+};

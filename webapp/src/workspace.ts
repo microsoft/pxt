@@ -93,7 +93,7 @@ export function setupWorkspace(id: string) {
     }
 }
 
-export function switchToCloudWorkspce(): string {
+export function switchToCloudWorkspace(): string {
     U.assert(implType !== "cloud", "workspace already cloud");
     const prevType = implType;
     impl = cloudWorkspace.provider;
