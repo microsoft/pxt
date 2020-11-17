@@ -124,6 +124,11 @@ code.lang-apis
     background-color: rgba(0,0,0,0.04);
     color:transparent;
 }
+code.lang-codecard > ul,
+code.lang-codecard > hr {
+    display: none
+}
+
 
 /* wrap cards header */
 .ui.card > .content > .header {
