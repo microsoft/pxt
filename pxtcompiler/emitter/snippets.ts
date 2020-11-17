@@ -280,7 +280,7 @@ namespace ts.pxtc.service {
             const name = param.name.kind === SK.Identifier ? (param.name as ts.Identifier).text : undefined;
 
             // check for explicit default in the attributes
-            if (attrs && attrs.paramDefl && attrs.paramDefl[name]) {
+            if (attrs?.paramDefl?.[name]) {
                 let deflKind: SyntaxKind;
                 if (typeNode.kind == SK.AnyKeyword) {
                     const defaultName = attrs.paramDefl[name].toUpperCase();
@@ -300,8 +300,7 @@ namespace ts.pxtc.service {
                 }
                 if (typeNode.kind === SK.StringKeyword || deflKind === SK.StringKeyword) {
                     const defaultName = attrs.paramDefl[name];
-                    const snippet = defaultName.indexOf(`"`) != 0 ? `"${defaultName}"` : defaultName;
-                    return snippet
+                    return defaultName.indexOf(`"`) != 0 ? `"${defaultName}"` : defaultName;
                 }
                 return attrs.paramDefl[name];
             }
