@@ -1947,7 +1947,7 @@ function buildSkillMapAsync(parsed: commandParser.ParsedCommand) {
             const f = fs.readFileSync(fn, "utf8");
             const patched = f.replace(/href="\//g, `href="/static/skillmap/`)
                 .replace(/src="\//g, `src="/static/skillmap/`)
-                .replace(/<include src="(\S+)">/gmi, "<!-- @include $1 -->");
+                .replace(/<include src="(\S+)">/gmi, "\n<!-- @include $1 -->\n");
             fs.writeFileSync("docs/skillmap.html", patched, { encoding: "utf8" });
 
             // remove old index.html

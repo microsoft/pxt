@@ -6,6 +6,7 @@ import { connect } from 'react-redux';
 import { SkillMapState } from '../store/reducer';
 import { dispatchChangeSelectedItem, dispatchShowCompletionModal } from '../actions/dispatch';
 import { isMapCompleted, isMapUnlocked } from '../lib/skillMapUtils';
+import { tickEvent } from '../lib/browserUtils';
 import { Carousel } from './Carousel';
 import { Item } from './CarouselItem';
 import { SkillCard } from './SkillCard';
@@ -50,10 +51,12 @@ class SkillCarouselImpl extends React.Component<SkillCarouselProps> {
     }
 
     protected onItemSelect = (id: string) => {
+        tickEvent("skillmap.carousel.item", { map: this.props.map.mapId, activity: id });
         this.props.dispatchChangeSelectedItem(id);
     }
 
     protected handleEndCardClick = () => {
+        tickEvent("skillmap.carousel.endcard", { map: this.props.map.mapId });
         this.props.dispatchShowCompletionModal(this.props.map.mapId);
     }
 

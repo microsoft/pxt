@@ -2,7 +2,7 @@
 import * as React from "react";
 import { connect } from 'react-redux';
 import { saveProjectAsync, getProjectAsync } from "../lib/workspaceProvider";
-import { isLocal, resolvePath } from "../lib/browserUtils";
+import { isLocal, resolvePath, tickEvent } from "../lib/browserUtils";
 import { lookupActivityProgress } from "../lib/skillMapUtils";
 
 import { SkillMapState } from '../store/reducer';
@@ -239,12 +239,14 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
     }
 
     protected onEditorLoaded() {
+        tickEvent("skillmap.activity.loaded");
         this.setState({
             loaded: true
         });
     }
 
     protected onTutorialFinished() {
+        tickEvent("skillmap.activity.complete");
         this.finishedTutorial = true;
         this.props.dispatchSaveAndCloseActivity();
     }

@@ -7,6 +7,7 @@ import { Item } from './CarouselItem';
 import { dispatchOpenActivity, dispatchShowRestartActivityWarning } from '../actions/dispatch';
 
 import { isActivityUnlocked, isMapUnlocked, lookupActivityProgress, } from '../lib/skillMapUtils';
+import { tickEvent } from '../lib/browserUtils';
 
 import '../styles/skillcard.css'
 
@@ -49,6 +50,7 @@ export class SkillCardImpl extends React.Component<SkillCardProps> {
             case "inprogress":
             case "notstarted":
             default:
+                tickEvent("skillmap.activity.open", { map: mapId, activity: id, status: status || "" });
                 return dispatchOpenActivity(mapId, id);
         }
     }
