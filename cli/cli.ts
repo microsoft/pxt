@@ -439,6 +439,7 @@ function ciAsync() {
                             .then(() => crowdin.execCrowdinAsync("upload", "built/webstrings.json"));
                     if (uploadApiStrings)
                         p = p.then(() => crowdin.execCrowdinAsync("upload", "built/strings.json"))
+                            .then(() => crowdin.execCrowdinAsync("upload", "built/skillmap-strings.json"))
                     if (uploadDocs || uploadApiStrings)
                         p = p.then(() => crowdin.internalUploadTargetTranslationsAsync(uploadApiStrings, uploadDocs));
                 }
@@ -1922,6 +1923,7 @@ function buildSkillMapAsync(parsed: commandParser.ParsedCommand) {
     // read pxtarget.json, save into 'pxtTargetBundle' global variable
     let cfg = readLocalPxTarget();
     nodeutil.writeFileSync(`${skillmapRoot}/public/target.js`, "// eslint-disable-next-line \n" + targetJsPrefix + JSON.stringify(cfg));
+    nodeutil.cp("node_modules/pxt-core/built/pxtlib.js", `${skillmapRoot}/public/`);
 
     if (parsed.flags["serve"]) {
         return nodeutil.spawnAsync({

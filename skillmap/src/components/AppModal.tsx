@@ -47,8 +47,8 @@ export class AppModalImpl extends React.Component<AppModalProps> {
         const  { type, displayName, dispatchHideModal, completionType, actions } = this.props;
         if (!type) return <div />
 
-        const completionModalTitle = completionType === "activity" ? "Activity Complete!" : "Path Complete!";
-        const completionModalText = "Good work! You've completed {0}. Keep going!";
+        const completionModalTitle = completionType === "activity" ? lf("Activity Complete!") : lf("Path Complete!");
+        const completionModalText = lf("Good work! You've completed {0}. Keep going!", "{0}");
         const completionModalTextSegments = completionModalText.split("{0}");
 
         return <Modal title={completionModalTitle} actions={actions} onClose={() => dispatchHideModal()}>
@@ -58,13 +58,13 @@ export class AppModalImpl extends React.Component<AppModalProps> {
 
     renderRestartWarning() {
         const  { mapId, activity, dispatchHideModal, dispatchRestartActivity } = this.props;
-        const restartModalTitle = "Restart Activity?";
-        const restartModalText = "Are you sure you want to restart {0}? You won't lose your map progress but any code you wrote will be deleted.";
+        const restartModalTitle = lf("Restart Activity?");
+        const restartModalText = lf("Are you sure you want to restart {0}? You won't lose your map progress but any code you wrote will be deleted.", "{0}");
         const restartModalTextSegments = restartModalText.split("{0}");
 
         const actions = [
-            { label: "CANCEL", onClick: () => dispatchHideModal() },
-            { label: "RESTART", onClick: () => {
+            { label: lf("CANCEL"), onClick: () => dispatchHideModal() },
+            { label: lf("RESTART"), onClick: () => {
                 tickEvent("skillmap.activity.restart", { map: mapId, activity: activity!.activityId });
                 dispatchRestartActivity(mapId, activity!.activityId);
             }}
@@ -111,7 +111,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
             displayName = activity.displayName;
             nextActivityId = activity.next?.[0].activityId;
 
-            actions.push({ label:"NEXT", onClick: () => {
+            actions.push({ label: lf("NEXT"), onClick: () => {
                 tickEvent("skillmap.activity.next", { map: currentMapId, activity: currentActivityId });
                 dispatchHideModal();
                 dispatchOpenActivity(currentMapId, nextActivityId || "");
@@ -120,7 +120,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
             completionType = "map";
             displayName = map.displayName;
 
-            actions.push({ label: "CERTIFICATE", onClick: () => {
+            actions.push({ label: lf("CERTIFICATE"), onClick: () => {
                 tickEvent("skillmap.certificate", { map: currentMapId });
                 window.open(map.completionUrl)
             }});
