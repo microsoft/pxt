@@ -3266,7 +3266,6 @@ export async function validateAndFixPkgConfig(parsed: commandParser.ParsedComman
 }
 
 export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): Promise<void> {
-    const rx = /```codecard((.|\s)*)```/;
     const tag = parsed.args[0] as string;
     if (!tag)
         U.userError("Missing tag")
@@ -3279,7 +3278,8 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
         U.userError("Target not configured for discourse");
     if (outmd && !fs.existsSync(outmd))
         U.userError(`${outmd} file not found`)
-    let md: string = outmd && fs.readFileSync(outmd, { encoding: "utf8" });
+    const md: string = outmd && fs.readFileSync(outmd, { encoding: "utf8" });
+    const title = md && /^# (.*)$/m.exec(md)?.[1];
 
     nodeutil.mkdirP(out);
     let n = 0;
@@ -3288,11 +3288,8 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
     let lastCard: pxt.CodeCard = undefined;
     // parse existing cards
     if (md) {
-        md.replace(rx, (m, c) => {
-            cards = JSON.parse(c);
-            lastCard = cards.pop();
-            return "";
-        })
+        cards = pxt.gallery.parseGalleryMardown(md);
+        lastCard = cards.pop();
     }
     return pxt.discourse.topicsByTag(discourseRoot, tag)
         .then(topics => Promise.mapSeries(topics, topic => {
@@ -3347,12 +3344,12 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
                 if (lastCard)
                     cards.push(lastCard);
                 cards.forEach(card => delete (card as any).id);
-                md = md.replace(rx, (m, c) => {
-                    return `\`\`\`codecard
-${JSON.stringify(cards, null, 4)}
-\`\`\``;
-                })
-                nodeutil.writeFileSync(outmd, md, { encoding: "utf8" });
+               const newmd = `# ${title || "Community"}
+
+${pxt.gallery.codeCardsToMarkdown(cards)}
+
+`
+                nodeutil.writeFileSync(outmd, newmd, { encoding: "utf8" });
             }
             pxt.log(`downloaded ${n} programs (${newcards} new) from tag ${tag}`)
         })
@@ -5581,6 +5578,24 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
     })
 }
 
+async function upgradeCardsAsync(): Promise<void> {
+    const docsRoot = nodeutil.targetDir;
+    // markdowns with cards
+    const mds = nodeutil.allFiles(docsRoot, 10, false, false)
+        .filter(fn => /\.md$/.test(fn))
+        .map(fn => ({ filename: fn, content: nodeutil.readText(fn) }))
+        .filter(f => /```codecard/.test(f.content));
+
+    mds.forEach(({ filename, content }) => {
+        pxt.log(`patching ${filename}`)
+        const updated = content.replace(/```codecard([^`]+)```/g, (m, c: string) => {
+            const cards = pxt.gallery.parseCodeCards(c);
+            return pxt.gallery.codeCardsToMarkdown(cards);
+        })
+        nodeutil.writeFileSync(filename, updated);
+    })
+}
+
 interface TutorialInfo extends pxt.tutorial.TutorialInfo {
     path: string;
     pkgs?: Map<string>
@@ -6482,6 +6497,7 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
             }
         }
     }, checkDocsAsync);
+    advancedCommand("upgradecards", "convert JSON codecard to markdown format", upgradeCardsAsync, "");
 
     p.defineCommand({
         name: "usedblocks",

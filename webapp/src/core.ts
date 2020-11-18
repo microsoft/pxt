@@ -6,6 +6,7 @@ import * as data from "./data";
 import * as sui from "./sui";
 
 import * as coretsx from "./coretsx";
+import * as auth from "./auth";
 
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
@@ -108,7 +109,7 @@ export function cancelAsyncLoading(id: string) {
 ///////////////////////////////////////////////////////////
 
 function showNotificationMsg(kind: string, msg: string) {
-    coretsx.pushNotificationMessage({ kind: kind, text: msg, hc: highContrast });
+    coretsx.pushNotificationMessage({ kind: kind, text: msg, hc: getHighContrastOnce() });
 }
 
 export function errorNotification(msg: string) {
@@ -167,6 +168,7 @@ export interface DialogOptions {
     modalContext?: string;
     hasCloseIcon?: boolean;
     helpUrl?: string;
+    confirmationText?: string;
 }
 
 export function dialogAsync(options: DialogOptions): Promise<void> {
@@ -277,14 +279,24 @@ export function promptAsync(options: PromptOptions): Promise<string> {
 ////////////         Accessibility            /////////////
 ///////////////////////////////////////////////////////////
 
-export let highContrast: boolean;
 export const TAB_KEY = 9;
 export const ESC_KEY = 27;
 export const ENTER_KEY = 13;
 export const SPACE_KEY = 32;
 
-export function setHighContrast(on: boolean) {
-    highContrast = on;
+export function getHighContrastOnce(): boolean {
+    return data.getData<boolean>(auth.HIGHCONTRAST) || false
+}
+export function toggleHighContrast() {
+    setHighContrast(!getHighContrastOnce())
+}
+export async function setHighContrast(on: boolean) {
+    await auth.updateUserPreferencesAsync({ highContrast: on });
+}
+
+export async function setLanguage(lang: string) {
+    pxt.BrowserUtils.setCookieLang(lang);
+    await auth.updateUserPreferencesAsync({ language: lang });
 }
 
 export function resetFocus() {

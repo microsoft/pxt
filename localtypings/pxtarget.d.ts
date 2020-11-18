@@ -406,6 +406,7 @@ declare namespace pxt {
         assetEditor?: boolean; // enable asset editor view (in blocks/text toggle)
         disableMemoryWorkspaceWarning?: boolean; // do not warn the user when switching to in memory workspace
         embeddedTutorial?: boolean;
+        disableBlobObjectDownload?: boolean; // use data uri downloads instead of object urls
     }
 
     interface SocialOptions {
@@ -710,6 +711,7 @@ declare namespace ts.pxtc {
         _def?: ParsedBlockDef;
         _expandedDef?: ParsedBlockDef;
         _untranslatedBlock?: string; // The block definition before it was translated
+        _untranslatedJsDoc?: string // the jsDoc before it was translated
         _shadowOverrides?: pxt.Map<string>;
         jsDoc?: string;
         paramHelp?: pxt.Map<string>;
