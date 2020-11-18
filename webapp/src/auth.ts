@@ -1,4 +1,3 @@
-import { loginCheck } from "./cloudsync";
 import * as core from "./core";
 import * as data from "./data";
 
@@ -8,19 +7,21 @@ import U = pxt.Util;
  * Virtual API keys
  */
 const MODULE = "auth";
-const FIELD_USER = "user";
+const FIELD_PROFILE = "profile";
 const FIELD_LOGGED_IN = "logged-in";
-export const USER = `${MODULE}:${FIELD_USER}`;
+export const PROFILE = `${MODULE}:${FIELD_PROFILE}`;
 export const LOGGED_IN = `${MODULE}:${FIELD_LOGGED_IN}`;
-
-const CSRF_TOKEN = "csrf-token";
-const AUTH_STATE = "auth-login-state";
 
 const USER_PREF_MODULE = "user-pref";
 const FIELD_HIGHCONTRAST = "high-contrast";
 const FIELD_LANGUAGE = "language";
 export const HIGHCONTRAST = `${USER_PREF_MODULE}:${FIELD_HIGHCONTRAST}`
 export const LANGUAGE = `${USER_PREF_MODULE}:${FIELD_LANGUAGE}`
+
+const CSRF_TOKEN = "csrf-token";
+const AUTH_LOGIN_STATE = "auth:login-state";
+const AUTH_USER_STATE = "auth:user-state";
+const X_PXT_TARGET = "x-pxt-target";
 
 export type UserProfile = {
     id?: string;
@@ -55,16 +56,95 @@ const DEFAULT_USER_PREFERENCES: () => UserPreferences = () => ({
  * In-memory auth state. Changes to this state trigger virtual API subscription callbacks.
  */
 export type State = {
-    user?: UserProfile;
+    profile?: UserProfile;
     preferences?: UserPreferences;
 };
 
-let state_: State = {};
+/**
+ * In-memory cache of user profile state. This is persisted in local storage.
+ * DO NOT ACCESS DIRECTLY UNLESS YOU KNOW IT IS OK. Functions allowed direct
+ * access are marked as such below.
+ */
+let state$: Readonly<State> = null;;
 
 /**
  * Read-only access to current state.
+ * Direct access to state$ allowed.
  */
-export const getState = (): Readonly<State> => state_;
+export function getState(): Readonly<State> {
+    if (!state$) {
+        loadState();
+        if (state$) {
+            generateUserProfilePicDataUrl(state$.profile);
+            data.invalidate("auth:*");
+            data.invalidate("user-pref:*");
+        }
+    }
+    if (!state$) {
+        state$ = {};
+    }
+    return state$;
+};
+
+/**
+ * Updates user profile state and writes it to local storage.
+ * Direct access to state$ allowed.
+ */
+function transformUserProfile(profile: UserProfile) {
+    state$ = {
+        ...state$,
+        profile: {
+            ...profile
+        }
+    };
+    saveState();
+}
+
+/**
+ * Updates user preference state and writes it to local storage.
+ * Direct access to state$ allowed.
+ */
+function transformUserPreferences(preferences: UserPreferences) {
+    state$ = {
+        ...state$,
+        preferences: {
+            ...preferences
+        }
+    };
+    saveState();
+}
+
+/**
+ * Write auth state to local storage.
+ * Direct access to state$ allowed.
+ */
+function saveState() {
+    pxt.storage.setLocal(AUTH_USER_STATE, JSON.stringify(state$));
+}
+
+/**
+ * Read cached auth state from local storage.
+ * Direct access to state$ allowed.
+ */
+function loadState() {
+    const str = pxt.storage.getLocal(AUTH_USER_STATE);
+    if (str) {
+        try {
+            state$ = JSON.parse(str);
+        } catch { }
+    }
+}
+
+/**
+ * Clear all auth state.
+ * Direct access to state$ allowed.
+ */
+function clearState() {
+    state$ = {};
+    pxt.storage.removeLocal(AUTH_USER_STATE);
+    data.invalidate("auth:*");
+    //data.invalidate("user-prefs:*"); // Should we invalidate this? Or would it be jarring visually?
+}
 
 export type CallbackState = {
     hash?: string;
@@ -107,11 +187,11 @@ export async function loginAsync(idp: pxt.IdentityProviderId, persistent: boolea
     const state = getState();
 
     // See if we have a valid access token already.
-    if (!state.user) {
+    if (!state.profile) {
         await authCheck();
     }
 
-    const currIdp = state.user?.idp;
+    const currIdp = state.profile?.idp;
 
     // Check if we're already signed into this identity provider.
     if (currIdp === idp) {
@@ -131,7 +211,7 @@ export async function loginAsync(idp: pxt.IdentityProviderId, persistent: boolea
         idp,
     };
     const stateStr = JSON.stringify(stateObj);
-    pxt.storage.setLocal(AUTH_STATE, stateStr);
+    pxt.storage.setLocal(AUTH_LOGIN_STATE, stateStr);
 
     // Redirect to the login endpoint.
     const loginUrl = core.stringifyQueryString('/api/auth/login', {
@@ -184,11 +264,13 @@ export async function authCheck(): Promise<UserProfile | undefined> {
     // Fail fast if we don't have csrf token.
     if (!pxt.storage.getLocal(CSRF_TOKEN)) { return undefined; }
 
-    if (state_.user) {
+    const state = getState();
+
+    if (state.profile) {
         if (!initialAuthCheck_) {
-            initialAuthCheck_ = Promise.resolve(state_.user)
+            initialAuthCheck_ = Promise.resolve(state.profile);
         }
-        return state_.user
+        return state.profile;
     }
     if (!initialAuthCheck_) {
         // Optimistically try to fetch user profile. It will succeed if we have a valid
@@ -207,12 +289,12 @@ export async function loginCallback(qs: pxt.Map<string>) {
 
     do {
         // Read and remove auth state from local storage
-        const stateStr = pxt.storage.getLocal(AUTH_STATE);
+        const stateStr = pxt.storage.getLocal(AUTH_LOGIN_STATE);
         if (!stateStr) {
             pxt.debug("Auth state not found in storge.");
             break;
         }
-        pxt.storage.removeLocal(AUTH_STATE);
+        pxt.storage.removeLocal(AUTH_LOGIN_STATE);
 
         state = JSON.parse(stateStr);
         if (typeof state !== 'object') {
@@ -269,7 +351,7 @@ export async function loginCallback(qs: pxt.Map<string>) {
 }
 
 export function identityProviders(): pxt.AppCloudProvider[] {
-    return Object.keys(pxt.appTarget.cloud?.cloudProviders)
+    return Object.keys(pxt.appTarget?.cloud?.cloudProviders || {})
         .map(id => pxt.appTarget.cloud.cloudProviders[id])
         .filter(prov => prov.identity)
         .sort((a, b) => a.order - b.order);
@@ -298,13 +380,13 @@ export async function updateUserProfile(opts: {
     if (!await loggedIn()) { return false; }
     const state = getState();
     const result = await apiAsync<UserProfile>('/api/user/profile', {
-        id: state.user.id,
+        id: state.profile.id,
         username: opts.username,
         avatarUrl: opts.avatarUrl
     } as UserProfile);
     if (result.success) {
         // Set user profile from returned value
-        setUser(result.resp);
+        setUserProfile(result.resp);
     }
     return result.success;
 }
@@ -323,7 +405,7 @@ export async function deleteAccount() {
 
 export class Component<TProps, TState> extends data.Component<TProps, TState> {
     public getUser(): UserProfile {
-        return this.getData<UserProfile>(USER);
+        return this.getData<UserProfile>(PROFILE);
     }
     public isLoggedIn(): boolean {
         return this.getData<boolean>(LOGGED_IN);
@@ -352,15 +434,20 @@ function internalPrefUpdateAndInvalidate(newPref: Partial<UserPreferences>) {
     // TODO is there a generic way to do this so we don't need to add new branches
     //  for each field that changes?
 
+    const state = getState();
+
     // remember old
-    const oldPref = state_.preferences ?? DEFAULT_USER_PREFERENCES()
+    const oldPref = state.preferences ?? DEFAULT_USER_PREFERENCES()
     // update
-    state_.preferences = { ...oldPref, ...newPref }
+    transformUserPreferences({
+        ...oldPref,
+        ...newPref
+    });
     // invalidate fields that change
-    if (oldPref?.highContrast !== state_.preferences?.highContrast) {
+    if (oldPref?.highContrast !== state.preferences?.highContrast) {
         data.invalidate(HIGHCONTRAST)
     }
-    if (oldPref?.language !== state_.preferences?.language) {
+    if (oldPref?.language !== state.preferences?.language) {
         data.invalidate(LANGUAGE)
     }
 }
@@ -378,46 +465,47 @@ export async function initialUserPreferences(): Promise<UserPreferences | undefi
     return initialUserPreferences_;
 }
 
-/**
- * Private functions
- */
 function loggedInSync(): boolean {
     if (!hasIdentity()) { return false; }
     const state = getState();
-    return !!state.user?.id;
+    return !!state.profile?.id;
 }
 
 async function fetchUserAsync(): Promise<UserProfile | undefined> {
     const state = getState();
 
     // We already have a user, no need to get it again.
-    if (state.user) {
-        return state.user;
+    if (state.profile) {
+        return state.profile;
     }
 
     const result = await apiAsync('/api/user/profile');
     if (result.success) {
-        const user: UserProfile = result.resp;
-        if (user?.idp?.picture?.encoded) {
-            const url = window.URL || window.webkitURL;
-            try {
-                // Decode the base64 image to a data URL.
-                const decoded = U.stringToUint8Array(atob(user.idp.picture.encoded));
-                const blob = new Blob([decoded], { type: user.idp.picture.mimeType });
-                user.idp.picture.dataUrl = url.createObjectURL(blob);
-                // This is a pretty big buffer and we don't need it anymore so free it.
-                delete user.idp.picture.encoded;
-            } catch { }
-        }
-        setUser(user);
-        return user
+        const profile: UserProfile = result.resp;
+        generateUserProfilePicDataUrl(profile);
+        setUserProfile(profile);
+        return profile;
     }
     return undefined
+}
+
+function generateUserProfilePicDataUrl(profile: UserProfile) {
+    if (profile?.idp?.picture?.encoded) {
+        const url = window.URL || window.webkitURL;
+        try {
+            // Decode the base64 image to a data URL.
+            const decoded = U.stringToUint8Array(atob(profile.idp.picture.encoded));
+            const blob = new Blob([decoded], { type: profile.idp.picture.mimeType });
+            profile.idp.picture.dataUrl = url.createObjectURL(blob);
+        } catch { }
+    }
 }
 
 async function fetchUserPreferencesAsync(): Promise<UserPreferences | undefined> {
     // Wait for the initial auth
     if (!await loggedIn()) return undefined;
+
+    const state = getState();
 
     const api = '/api/user/preferences';
     const result = await apiAsync<Partial<UserPreferences>>('/api/user/preferences');
@@ -430,7 +518,7 @@ async function fetchUserPreferencesAsync(): Promise<UserPreferences | undefined>
             internalPrefUpdateAndInvalidate(result.resp);
 
             // update our one-time promise for the initial load
-            return state_.preferences
+            return state.preferences
         }
     } else {
         pxt.reportError("identity", `fetch ${api} failed:\n${JSON.stringify(result)}`)
@@ -443,18 +531,18 @@ function idpEnabled(idp: pxt.IdentityProviderId): boolean {
     return identityProviders().filter(prov => prov.id === idp).length > 0;
 }
 
-function setUser(user: UserProfile) {
+function setUserProfile(profile: UserProfile) {
     const wasLoggedIn = loggedInSync();
-    state_.user = user;
+    transformUserProfile(profile);
     const isLoggedIn = loggedInSync();
-    data.invalidate(USER);
+    data.invalidate(PROFILE);
     data.invalidate(LOGGED_IN);
     if (isLoggedIn && !wasLoggedIn) {
-        core.infoNotification(`Signed in: ${user.idp.displayName}`);
+        core.infoNotification(`Signed in: ${profile.idp.displayName}`);
     }
 }
 
-type ApiResult<T> = {
+export type ApiResult<T> = {
     resp: T;
     statusCode: number;
     success: boolean;
@@ -470,12 +558,14 @@ const DEV_BACKEND_LOCALHOST_SSL = "https://localhost:5500";
 
 const DEV_BACKEND = DEV_BACKEND_LOCALHOST;
 
-async function apiAsync<T = any>(url: string, data?: any, method?: string): Promise<ApiResult<T>> {
+export async function apiAsync<T = any>(url: string, data?: any, method?: string): Promise<ApiResult<T>> {
     const headers: pxt.Map<string> = {};
     const csrfToken = pxt.storage.getLocal(CSRF_TOKEN);
     if (csrfToken) {
         headers["authorization"] = `mkcd ${csrfToken}`;
     }
+    headers[X_PXT_TARGET] = pxt.appTarget?.id;
+
     url = pxt.BrowserUtils.isLocalHostDev() ? `${DEV_BACKEND}${url}` : url;
 
     return U.requestAsync({
@@ -505,36 +595,33 @@ function authApiHandler(p: string) {
     const field = data.stripProtocol(p);
     const state = getState();
     switch (field) {
-        case FIELD_USER: return state.user;
+        case FIELD_PROFILE: return state.profile;
         case FIELD_LOGGED_IN: return loggedInSync();
     }
     return null;
 }
 
-function clearState() {
-    state_ = {};
-    data.invalidate(USER);
-    data.invalidate(LOGGED_IN);
-}
-
 function internalUserPreferencesHandler(path: string): UserPreferences | boolean | string {
+    const state = getState();
     const field = data.stripProtocol(path);
     switch (field) {
-        case FIELD_HIGHCONTRAST: return state_.preferences.highContrast;
-        case FIELD_LANGUAGE: return state_.preferences.language;
+        case FIELD_HIGHCONTRAST: return state.preferences.highContrast;
+        case FIELD_LANGUAGE: return state.preferences.language;
     }
-    return state_.preferences
+    return state.preferences
 }
 function userPreferencesHandlerSync(path: string): UserPreferences | boolean | string {
-    if (!state_.preferences) {
-        state_.preferences = DEFAULT_USER_PREFERENCES();
+    const state = getState();
+    if (!state.preferences) {
+        transformUserPreferences(DEFAULT_USER_PREFERENCES());
         /* await */ initialUserPreferences();
     }
     return internalUserPreferencesHandler(path);
 }
 async function userPreferencesHandlerAsync(path: string): Promise<UserPreferences | boolean | string> {
-    if (!state_.preferences) {
-        state_.preferences = DEFAULT_USER_PREFERENCES();
+    const state = getState();
+    if (!state.preferences) {
+        transformUserPreferences(DEFAULT_USER_PREFERENCES());
         await initialUserPreferences();
     }
     return internalUserPreferencesHandler(path);
@@ -547,3 +634,8 @@ data.mountVirtualApi(USER_PREF_MODULE, {
 });
 
 data.mountVirtualApi(MODULE, { getSync: authApiHandler });
+
+
+// ClouddWorkspace must be included after we mount our virtual APIs.
+import * as cloudWorkspace from "./cloudworkspace";
+cloudWorkspace.init();
