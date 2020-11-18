@@ -439,7 +439,8 @@ function ciAsync() {
                             .then(() => crowdin.execCrowdinAsync("upload", "built/webstrings.json"));
                     if (uploadApiStrings)
                         p = p.then(() => crowdin.execCrowdinAsync("upload", "built/strings.json"))
-                            .then(() => crowdin.execCrowdinAsync("upload", "built/skillmap-strings.json"))
+                            // TODO: uncomment once verified that this is correct
+                            // .then(() => crowdin.execCrowdinAsync("upload", "built/skillmap-strings.json"))
                     if (uploadDocs || uploadApiStrings)
                         p = p.then(() => crowdin.internalUploadTargetTranslationsAsync(uploadApiStrings, uploadDocs));
                 }
