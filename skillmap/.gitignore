@@ -11,6 +11,7 @@
 # production
 /build
 /public/target.js
+/public/pxtlib.js
 
 # misc
 .DS_Store

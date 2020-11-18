@@ -66,7 +66,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
         const { url, title, save } = this.props;
         const { loaded, unloading } = this.state;
 
-        const loadingText = save ? "Saving..." : "Loading..."
+        const loadingText = save ? lf("Saving...") : lf("Loading...")
         const imageAlt = "MakeCode Logo";
 
         return <div className="makecode-frame-outer">

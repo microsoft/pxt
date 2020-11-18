@@ -10,7 +10,6 @@ import { tickEvent } from '../lib/browserUtils';
 import { Carousel } from './Carousel';
 import { Item } from './CarouselItem';
 import { SkillCard } from './SkillCard';
-import { ElementFlags } from "typescript";
 
 interface SkillCarouselProps {
     map: SkillMap;
@@ -96,13 +95,13 @@ class SkillCarouselImpl extends React.Component<SkillCarouselProps> {
             return undefined;
         }
         else if (!finishedMaps.length) {
-            return formatString("Complete {0} tutorial(s) to unlock!", [formatList(tags)]);
+            return formatString(lf("Complete {0} tutorial(s) to unlock!", "{0}"), [formatList(tags)]);
         }
         else if (!tags.length) {
-            return formatString("Complete the {0} map(s) to unlock!", [formatList(finishedMaps)]);
+            return formatString(lf("Complete the {0} map(s) to unlock!", "{0}"), [formatList(finishedMaps)]);
         }
         else {
-            return formatString("Complete {0} tutorial(s) and the {1} map(s) to unlock!", [formatList(tags), formatList(finishedMaps)]);
+            return formatString(lf("Complete {0} tutorial(s) and the {1} map(s) to unlock!", "{0}", "{1}"), [formatList(tags), formatList(finishedMaps)]);
         }
     }
 
@@ -141,6 +140,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
 
 
 function formatList(elements: JSX.Element[]) {
+    // FIXME: "and" does not localize well
     if (elements.length <= 1) return elements[0];
     else if (elements.length === 2) return <span>{elements[0]} and {elements[1]}</span>;
     else {

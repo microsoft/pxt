@@ -29,14 +29,14 @@ export class SkillCardImpl extends React.Component<SkillCardProps> {
     protected getSkillCardActionText(): string {
         switch (this.props.status) {
             case "locked":
-                return "LOCKED"
+                return lf("LOCKED");
             case "completed":
-                return "VIEW CODE"
+                return lf("VIEW CODE");
             case "inprogress":
-                return "CONTINUE"
+                return lf("CONTINUE");
             case "notstarted":
             default:
-                return "START"
+                return lf("START");
         }
     }
 
@@ -66,7 +66,7 @@ export class SkillCardImpl extends React.Component<SkillCardProps> {
         return <div className={`skill-card ${status || ''}`}>
             <div className="skill-card-display">
                 <div className="skill-card-image">
-                    {imageUrl ? <img src={imageUrl} alt={`Preview of activity content`} /> : <i className={`icon ${status !== "locked" ? "game" : ""}`} />}
+                    {imageUrl ? <img src={imageUrl} alt={lf("Preview of activity content")} /> : <i className={`icon ${status !== "locked" ? "game" : ""}`} />}
                 </div>
                 <div className="skill-card-label">
                     <div className="skill-card-title">
