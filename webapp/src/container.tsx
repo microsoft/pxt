@@ -94,14 +94,12 @@ class DocsMenuItem extends sui.StatelessUIElement<DocsMenuItemProps> {
 }
 
 export interface SettingsMenuProps extends ISettingsProps {
-    highContrast: boolean;
     greenScreen: boolean;
     accessibleBlocks: boolean;
 }
 
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 export interface SettingsMenuState {
-    highContrast?: boolean;
     greenScreen?: boolean;
     accessibleBlocks?: boolean;
 }
@@ -236,9 +234,6 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
 
     UNSAFE_componentWillReceiveProps(nextProps: SettingsMenuProps) {
         const newState: SettingsMenuState = {};
-        if (nextProps.highContrast != undefined) {
-            newState.highContrast = nextProps.highContrast;
-        }
         if (nextProps.greenScreen !== undefined) {
             newState.greenScreen = nextProps.greenScreen;
         }
@@ -249,13 +244,13 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
     }
 
     shouldComponentUpdate(nextProps: SettingsMenuProps, nextState: SettingsMenuState, nextContext: any): boolean {
-        return this.state.highContrast != nextState.highContrast
-            || this.state.greenScreen != nextState.greenScreen
+        return this.state.greenScreen != nextState.greenScreen
             || this.state.accessibleBlocks != nextState.accessibleBlocks;
     }
 
     renderCore() {
-        const { highContrast, greenScreen, accessibleBlocks } = this.state;
+        const highContrast = this.getData<boolean>(auth.HIGHCONTRAST)
+        const { greenScreen, accessibleBlocks } = this.state;
         const targetTheme = pxt.appTarget.appTheme;
         const packages = pxt.appTarget.cloud && !!pxt.appTarget.cloud.packages;
         const reportAbuse = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing;
@@ -536,7 +531,8 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
     }
 
     renderCore() {
-        const { debugging, home, header, highContrast, greenScreen, accessibleBlocks, simState, tutorialOptions } = this.props.parent.state;
+        const highContrast = this.getData<boolean>(auth.HIGHCONTRAST)
+        const { debugging, home, header, greenScreen, accessibleBlocks, simState, tutorialOptions } = this.props.parent.state;
         if (home) return <div />; // Don't render if we're on the home screen
 
         const targetTheme = pxt.appTarget.appTheme;
@@ -551,7 +547,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         const hideIteration = tutorialOptions && tutorialOptions.metadata && tutorialOptions.metadata.hideIteration;
         const tutorialReportId = tutorialOptions && tutorialOptions.tutorialReportId;
         const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox && !inTutorial && !debugging;
-        const hc = !!this.props.parent.state.highContrast;
+        const hc = highContrast;
         const showShare = !inTutorial && header && pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && !isController && !debugging;
 
         const logo = (hc ? targetTheme.highContrastLogo : undefined) || targetTheme.logo;
@@ -604,7 +600,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
             <div className="right menu">
                 {debugging ? <sui.ButtonMenuItem className="exit-debugmode-btn" role="menuitem" icon="external" text={lf("Exit Debug Mode")} textClass="landscape only" onClick={this.toggleDebug} /> : undefined}
                 {docMenu ? <container.DocsMenu parent={this.props.parent} editor={editor} /> : undefined}
-                {sandbox || inTutorial || debugging ? undefined : <container.SettingsMenu parent={this.props.parent} highContrast={highContrast} greenScreen={greenScreen} accessibleBlocks={accessibleBlocks} />}
+                {sandbox || inTutorial || debugging ? undefined : <container.SettingsMenu parent={this.props.parent} greenScreen={greenScreen} accessibleBlocks={accessibleBlocks} />}
                 {sandbox && !targetTheme.hideEmbedEdit ? <sui.Item role="menuitem" icon="external" textClass="mobile hide" text={lf("Edit")} onClick={this.launchFullEditor} /> : undefined}
                 {inTutorial && tutorialReportId ? <sui.ButtonMenuItem className="report-tutorial-btn" role="menuitem" icon="warning circle" text={lf("Report Abuse")} textClass="landscape only" onClick={this.showReportAbuse} /> : undefined}
                 {(inTutorial && !lockedEditor && !hideIteration) && <sui.ButtonMenuItem className="exit-tutorial-btn" role="menuitem" icon="external" text={lf("Exit tutorial")} textClass="landscape only" onClick={this.exitTutorial} />}

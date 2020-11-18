@@ -83,7 +83,6 @@ namespace pxt.editor {
         pokeUserComponent?: string;
         flashHint?: boolean;
 
-        highContrast?: boolean;
         print?: boolean;
         greenScreen?: boolean;
         accessibleBlocks?: boolean;
