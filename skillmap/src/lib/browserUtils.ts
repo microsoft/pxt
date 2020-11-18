@@ -61,6 +61,11 @@ export async function getMarkdownAsync(source: MarkdownSource, url: string): Pro
     };
 }
 
+
+/**
+ * Fetches the result and returns an identifier to key the content on. For docs, it
+ * will just be the path. For github, it will be githubUser/reponame#path/to/skillmap.md
+ */
 async function fetchSkillMapFromGithub(path: string): Promise<MarkdownFetchResult | undefined> {
     const ghid = pxt.github.parseRepoId(path)
     const config = await pxt.packagesConfigAsync();
