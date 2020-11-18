@@ -358,4 +358,23 @@ ${code}
         return { options: tutorialOptions, editor: tutorialInfo.editor };
     }
 
+    export function resolveLocalizedMarkdown(ghid: pxt.github.ParsedRepo, files: pxt.Map<string>, fileName?: string): string {
+        // if non-default language, find localized file if any
+        const mfn = (fileName || ghid.fileName || "README") + ".md";
+
+        let md: string = undefined;
+        const [initialLang, baseLang, initialLangLowerCase] = pxt.Util.normalizeLanguageCode(pxt.Util.userLanguage());
+        if (initialLang && baseLang && initialLangLowerCase) {
+            //We need to first search base lang and then intial Lang
+            //Example: normalizeLanguageCode en-IN  will return ["en-IN", "en", "en-in"] and nb will be returned as ["nb"]
+            md = files[`_locales/${initialLang}/${mfn}`]
+                || files[`_locales/${initialLangLowerCase}/${mfn}`]
+                || files[`_locales/${baseLang}/${mfn}`]
+
+        } else {
+            md = files[`_locales/${initialLang}/${mfn}`];
+        }
+        md = md || files[mfn];
+        return md;
+    }
 }

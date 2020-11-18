@@ -67,10 +67,6 @@ class AppImpl extends React.Component<AppProps, AppState> {
     }
 
     protected async initLocalizationAsync() {
-        const bundle = (window as any).pxtTargetBundle as pxt.TargetBundle;
-        bundle.bundledpkgs = {}
-
-        pxt.setAppTarget(bundle);
         const theme = pxt.appTarget.appTheme;
 
         const href = window.location.href;
@@ -110,11 +106,14 @@ class AppImpl extends React.Component<AppProps, AppState> {
     }
 
     protected async fetchAndParseSkillMaps(source: MarkdownSource, url: string) {
-        const { text: md, url: fetched } = await getMarkdownAsync(source, url);
+        const result = await getMarkdownAsync(source, url);
+
+        const md = result?.text;
+        const fetched = result?.identifier;
 
         let loadedMaps: SkillMap[] | undefined;
 
-        if (md) {
+        if (md && fetched) {
             try {
                 const { maps, metadata } = parseSkillMap(md);
                 if (maps?.length > 0) {
@@ -149,7 +148,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
             };
         }
 
-        if (!user.completedTags[fetched]) {
+        if (fetched && !user.completedTags[fetched]) {
             user.completedTags[fetched] = {};
         }
 
@@ -158,12 +157,12 @@ class AppImpl extends React.Component<AppProps, AppState> {
         this.props.dispatchSetUser(user);
     }
 
-    componentDidMount() {
+    async componentDidMount() {
         this.unsubscribeChangeListener = store.subscribe(this.onStoreChange);
         this.queryFlags = parseQuery();
         let hash = parseHash();
+        await this.initLocalizationAsync();
         this.fetchAndParseSkillMaps(hash.cmd as MarkdownSource, hash.arg);
-        this.initLocalizationAsync();
     }
 
     componentWillUnmount() {
@@ -271,8 +270,8 @@ async function updateLocalizationAsync(targetId: string, baseUrl: string, code: 
         ts.pxtc.Util.TranslationsKind.SkillMap
     );
 
+    pxt.Util.setUserLanguage(code);
     if (translations) {
-        pxt.Util.setUserLanguage(code);
         pxt.Util.setLocalizedStrings(translations);
         if (live) {
             pxt.Util.localizeLive = true;
