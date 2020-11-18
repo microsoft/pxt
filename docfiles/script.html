@@ -144,7 +144,7 @@
                         return;
                     var d = ev.data;
                     if (d.type == "messagepacket" && d.channel == "tick-event" && d.data) {
-                        var unpackedData = ""
+                        var unpackedData = "";
                         for (var i = 0; i < d.data.length; ++i)
                             unpackedData += String.fromCharCode(d.data[i]);
 
