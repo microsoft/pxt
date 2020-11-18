@@ -77,7 +77,7 @@ class AccountPanel extends sui.UIElement<AccountPanelProps, {}> {
     }
 
     handleDeleteAccountClick = async () => {
-        const profile = this.getData<auth.UserProfile>(auth.USER)
+        const profile = this.getData<auth.UserProfile>(auth.PROFILE)
         const result = await core.confirmAsync({
             header: lf("Delete Account"),
             body: lf("You are about to delete your account. YOU CAN NOT UNDO THIS! Are you sure?"),
