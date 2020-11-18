@@ -2165,7 +2165,8 @@ export class ProjectView
             filesOverride: { "main.blocks": `<xml xmlns="http://www.w3.org/1999/xhtml"></xml>` },
             name,
             documentation,
-            preferredEditor
+            preferredEditor,
+            filters: {}
         })
     }
 
