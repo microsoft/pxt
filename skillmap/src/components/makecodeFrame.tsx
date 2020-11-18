@@ -2,11 +2,11 @@
 import * as React from "react";
 import { connect } from 'react-redux';
 import { saveProjectAsync, getProjectAsync } from "../lib/workspaceProvider";
-import { isLocal, resolvePath } from "../lib/browserUtils";
+import { isLocal, resolvePath, tickEvent } from "../lib/browserUtils";
 import { lookupActivityProgress } from "../lib/skillMapUtils";
 
 import { SkillMapState } from '../store/reducer';
-import  { dispatchSetHeaderIdForActivity, dispatchCloseActivity, dispatchSaveAndCloseActivity } from '../actions/dispatch';
+import  { dispatchSetHeaderIdForActivity, dispatchCloseActivity, dispatchSaveAndCloseActivity, dispatchUpdateUserCompletedTags } from '../actions/dispatch';
 
 import '../styles/makecode-editor.css'
 
@@ -21,13 +21,17 @@ interface MakeCodeFrameProps {
     dispatchSetHeaderIdForActivity: (headerId: string, currentStep: number, maxSteps: number) => void;
     dispatchCloseActivity: (finished?: boolean) => void;
     dispatchSaveAndCloseActivity: () => void;
+    dispatchUpdateUserCompletedTags: () => void;
 }
 
 interface MakeCodeFrameState {
     loaded: boolean;
+
+    // See handleFrameRef
+    unloading: boolean;
 }
 
-const editorUrl = isLocal() ? "http://localhost:3232/index.html" : (window as any).pxtTargetBundle.appTheme.embedUrl
+const editorUrl: string = isLocal() ? "http://localhost:3232/index.html" : (window as any).pxtTargetBundle.appTheme.embedUrl
 
 class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFrameState> {
     protected ref: HTMLIFrameElement | undefined;
@@ -39,7 +43,8 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
     constructor(props: MakeCodeFrameProps) {
         super(props);
         this.state = {
-            loaded: false
+            loaded: false,
+            unloading: false
         };
     }
 
@@ -59,9 +64,9 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
 
     render() {
         const { url, title, save } = this.props;
-        const { loaded } = this.state;
+        const { loaded, unloading } = this.state;
 
-        const loadingText = save ? "Saving..." : "Loading..."
+        const loadingText = save ? lf("Saving...") : lf("Loading...")
         const imageAlt = "MakeCode Logo";
 
         return <div className="makecode-frame-outer">
@@ -69,7 +74,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
                 <img src={resolvePath("assets/logo.svg")} alt={imageAlt} />
                 <div className="makecode-frame-loader-text">{loadingText}</div>
             </div>
-            <iframe className="makecode-frame" src={url} title={title} ref={this.handleFrameRef}></iframe>
+            <iframe className="makecode-frame" src={unloading ? "about:blank" : url} title={title} ref={this.handleFrameRef}></iframe>
         </div>
     }
 
@@ -78,6 +83,16 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
         if (ref && ref.contentWindow) {
             window.addEventListener("message", this.onMessageReceived);
             this.ref = ref;
+
+            this.ref.addEventListener("load", () => {
+                // This is a workaround for a bug in Chrome where for some reason the page hangs when
+                // trying to unload the makecode iframe. Instead, we set the src to about:blank, wait for
+                // that to load, and then unload the iframe
+                if (this.state.unloading) {
+                    this.props.dispatchCloseActivity();
+                    this.props.dispatchUpdateUserCompletedTags();
+                }
+            });
         }
     }
 
@@ -111,7 +126,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
     }
 
     protected onResponseReceived(original: any, response: pxt.editor.EditorMessageResponse) {
-        const { save, dispatchCloseActivity } = this.props;
+        const { save } = this.props;
 
         if (original.action === "saveproject" && save) {
             if (this.finishedTutorial) {
@@ -124,7 +139,9 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
                 } as pxt.editor.EditorMessage, true);
             }
             else {
-                dispatchCloseActivity();
+                this.setState({
+                    unloading: true
+                });
             }
         }
     }
@@ -161,7 +178,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
     }
 
     protected async handleWorkspaceSaveRequestAsync(request: pxt.editor.EditorWorkspaceSaveRequest) {
-        const { dispatchSetHeaderIdForActivity, activityHeaderId, save, dispatchCloseActivity } = this.props;
+        const { dispatchSetHeaderIdForActivity, activityHeaderId } = this.props;
 
         const project = {
             ...request.project,
@@ -222,12 +239,14 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
     }
 
     protected onEditorLoaded() {
+        tickEvent("skillmap.activity.loaded");
         this.setState({
             loaded: true
         });
     }
 
     protected onTutorialFinished() {
+        tickEvent("skillmap.activity.complete");
         this.finishedTutorial = true;
         this.props.dispatchSaveAndCloseActivity();
     }
@@ -238,11 +257,15 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
 
     const { currentActivityId, currentMapId, currentHeaderId, state: saveState } = state.editorView;
 
-    let url: string | undefined;
+    let url = editorUrl
     let title: string | undefined;
 
     const activity = state.maps[currentMapId].activities[currentActivityId];
-    url = `${editorUrl}?controller=1&skillsMap=1`;
+    if (editorUrl.charAt(editorUrl.length - 1) === "/" && !isLocal()) {
+        url = editorUrl.substr(0, editorUrl.length - 1);
+    }
+
+    url += `?controller=1&skillsMap=1`;
     title = activity.displayName;
 
     return {
@@ -259,7 +282,8 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
 const mapDispatchToProps = {
     dispatchSetHeaderIdForActivity,
     dispatchCloseActivity,
-    dispatchSaveAndCloseActivity
+    dispatchSaveAndCloseActivity,
+    dispatchUpdateUserCompletedTags
 };
 
 export const MakeCodeFrame = connect(mapStateToProps, mapDispatchToProps)(MakeCodeFrameImpl);

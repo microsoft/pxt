@@ -159,6 +159,7 @@ function inflateSkillMap(section: MarkdownSection): Partial<SkillMap> {
         mapId: section.header.toLowerCase(),
         displayName: section.attributes["name"] || section.header,
         description: section.attributes["description"],
+        completionUrl: section.attributes["completionurl"],
         prerequisites: [],
         activities: {}
     };
@@ -177,7 +178,7 @@ function inflateSkillMap(section: MarkdownSection): Partial<SkillMap> {
             }
             else {
                 result.prerequisites!.push({
-                    type: "activity",
+                    type: "map",
                     mapId: match[2].trim()
                 });
             }

@@ -439,6 +439,8 @@ function ciAsync() {
                             .then(() => crowdin.execCrowdinAsync("upload", "built/webstrings.json"));
                     if (uploadApiStrings)
                         p = p.then(() => crowdin.execCrowdinAsync("upload", "built/strings.json"))
+                            // TODO: uncomment once verified that this is correct
+                            // .then(() => crowdin.execCrowdinAsync("upload", "built/skillmap-strings.json"))
                     if (uploadDocs || uploadApiStrings)
                         p = p.then(() => crowdin.internalUploadTargetTranslationsAsync(uploadApiStrings, uploadDocs));
                 }
@@ -1922,17 +1924,18 @@ function buildSkillMapAsync(parsed: commandParser.ParsedCommand) {
     // read pxtarget.json, save into 'pxtTargetBundle' global variable
     let cfg = readLocalPxTarget();
     nodeutil.writeFileSync(`${skillmapRoot}/public/target.js`, "// eslint-disable-next-line \n" + targetJsPrefix + JSON.stringify(cfg));
+    nodeutil.cp("node_modules/pxt-core/built/pxtlib.js", `${skillmapRoot}/public/`);
 
     if (parsed.flags["serve"]) {
         return nodeutil.spawnAsync({
-            cmd: "npm.cmd",
+            cmd: os.platform() === "win32" ? "npm.cmd" : "npm",
             args: ["run-script", "start"],
             cwd: skillmapRoot,
             shell: true
         })
     } else {
         return nodeutil.spawnAsync({
-            cmd: "npm.cmd",
+            cmd: os.platform() === "win32" ? "npm.cmd" : "npm",
             args: ["run-script", "build"],
             cwd: skillmapRoot,
             shell: true
@@ -1947,7 +1950,7 @@ function buildSkillMapAsync(parsed: commandParser.ParsedCommand) {
             const f = fs.readFileSync(fn, "utf8");
             const patched = f.replace(/href="\//g, `href="/static/skillmap/`)
                 .replace(/src="\//g, `src="/static/skillmap/`)
-                .replace(/<include src="(\S+)">/gmi, "<!-- @include $1 -->");
+                .replace(/<include src="(\S+)">/gmi, "\n<!-- @include $1 -->\n");
             fs.writeFileSync("docs/skillmap.html", patched, { encoding: "utf8" });
 
             // remove old index.html

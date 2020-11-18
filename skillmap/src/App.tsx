@@ -3,9 +3,18 @@
 import React from 'react';
 import { connect } from 'react-redux';
 
+import * as Promise from "bluebird";
 import store from "./store/store";
 
-import { dispatchAddSkillMap, dispatchClearSkillMaps, dispatchSetPageTitle, dispatchSetPageDescription, dispatchSetPageInfoUrl, dispatchSetUser } from './actions/dispatch';
+import {
+    dispatchAddSkillMap,
+    dispatchClearSkillMaps,
+    dispatchSetPageTitle,
+    dispatchSetPageDescription,
+    dispatchSetPageInfoUrl,
+    dispatchSetUser,
+    dispatchSetPageSourceUrl
+} from './actions/dispatch';
 import { SkillMapState } from './store/reducer';
 import { HeaderBar } from './components/HeaderBar';
 import { Banner } from './components/Banner';
@@ -19,6 +28,7 @@ import './App.css';
 import { MakeCodeFrame } from './components/makecodeFrame';
 import { getUserStateAsync, saveUserStateAsync } from './lib/workspaceProvider';
 import { Unsubscribe } from 'redux';
+(window as any).Promise = Promise;
 
 interface AppProps {
     skillMaps: { [key: string]: SkillMap };
@@ -29,15 +39,21 @@ interface AppProps {
     dispatchSetPageDescription: (description: string) => void;
     dispatchSetPageInfoUrl: (infoUrl: string) => void;
     dispatchSetUser: (user: UserState) => void;
+    dispatchSetPageSourceUrl: (url: string) => void;
 }
 
-class AppImpl extends React.Component<AppProps> {
+interface AppState {
+    error?: string;
+}
+
+class AppImpl extends React.Component<AppProps, AppState> {
     protected queryFlags: {[index: string]: string} = {};
     protected unsubscribeChangeListener: Unsubscribe | undefined;
     protected loadedUser: UserState | undefined;
 
     constructor(props: any) {
         super(props);
+        this.state = {};
 
         window.addEventListener("hashchange", this.handleHashChange);
     }
@@ -50,8 +66,51 @@ class AppImpl extends React.Component<AppProps> {
         e.preventDefault();
     }
 
+    protected async initLocalizationAsync() {
+        const bundle = (window as any).pxtTargetBundle as pxt.TargetBundle;
+        bundle.bundledpkgs = {}
+
+        pxt.setAppTarget(bundle);
+        const theme = pxt.appTarget.appTheme;
+
+        const href = window.location.href;
+        let force = false;
+        let useLang: string | undefined = undefined;
+        if (/[&?]translate=1/.test(href) && !pxt.BrowserUtils.isIE()) {
+            console.log(`translation mode`);
+            useLang = ts.pxtc.Util.TRANSLATION_LOCALE;
+        } else {
+            const mlang = /(live)?(force)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
+            if (mlang && window.location.hash.indexOf(mlang[0]) >= 0) {
+                pxt.BrowserUtils.changeHash(window.location.hash.replace(mlang[0], ""));
+            }
+            useLang = mlang ? mlang[3] : (pxt.BrowserUtils.getCookieLang() || theme.defaultLocale || (navigator as any).userLanguage || navigator.language);
+            force = !!mlang && !!mlang[2];
+        }
+
+        // TODO: include the pxt webconfig so that we can get the commitcdnurl (and not always pass live=true)
+        const baseUrl = "";
+        const targetId = pxt.appTarget.id;
+        const pxtBranch = pxt.appTarget.versions.pxtCrowdinBranch;
+        const targetBranch = pxt.appTarget.versions.targetCrowdinBranch;
+
+        await updateLocalizationAsync(
+            targetId,
+            baseUrl,
+            useLang!,
+            pxtBranch!,
+            targetBranch!,
+            true,
+            force
+        );
+
+        if (pxt.Util.isLocaleEnabled(useLang!)) {
+            pxt.BrowserUtils.setCookieLang(useLang!);
+        }
+    }
+
     protected async fetchAndParseSkillMaps(source: MarkdownSource, url: string) {
-        const md = await getMarkdownAsync(source, url);
+        const { text: md, url: fetched } = await getMarkdownAsync(source, url);
 
         let loadedMaps: SkillMap[] | undefined;
 
@@ -71,8 +130,12 @@ class AppImpl extends React.Component<AppProps> {
                     if (description) this.props.dispatchSetPageDescription(description);
                     if (infoUrl) this.props.dispatchSetPageDescription(infoUrl);
                 }
+                this.props.dispatchSetPageSourceUrl(fetched);
+                this.setState({ error: undefined })
             } catch {
-                console.error("Error parsing markdown")
+                const errorMsg = lf("Oops! Couldn't load content, please check the URL and markdown file.");
+                console.error(errorMsg);
+                this.setState({ error: errorMsg });
             }
         }
 
@@ -86,6 +149,10 @@ class AppImpl extends React.Component<AppProps> {
             };
         }
 
+        if (!user.completedTags[fetched]) {
+            user.completedTags[fetched] = {};
+        }
+
         this.applyQueryFlags(user, loadedMaps);
         this.loadedUser = user;
         this.props.dispatchSetUser(user);
@@ -96,6 +163,7 @@ class AppImpl extends React.Component<AppProps> {
         this.queryFlags = parseQuery();
         let hash = parseHash();
         this.fetchAndParseSkillMaps(hash.cmd as MarkdownSource, hash.arg);
+        this.initLocalizationAsync();
     }
 
     componentWillUnmount() {
@@ -106,16 +174,19 @@ class AppImpl extends React.Component<AppProps> {
     }
 
     render() {
-        const {skillMaps, activityOpen } = this.props;
+        const { skillMaps, activityOpen } = this.props;
+        const { error } = this.state;
         const maps = Object.keys(skillMaps).map((id: string) => skillMaps[id]);
         return (<div className="app-container">
                 <HeaderBar />
                 { activityOpen ? <MakeCodeFrame /> : <div>
-                    <Banner title="Game Maker Guide" icon="map" description="Level up your game making skills by completing the tutorials in this guide." />
+                    <Banner title="Game Maker Guide" icon="map" description={lf("Level up your game making skills by completing the tutorials in this guide.")} />
                     <div className="skill-map-container">
-                        { maps?.map((el, i) => {
-                            return <SkillCarousel map={el} key={i} />
-                        })}
+                        { error
+                            ? <div className="skill-map-error">{error}</div>
+                            : maps?.map((el, i) => {
+                                return <SkillCarousel map={el} key={i} />
+                            })}
                     </div>
                 </div>
                 }
@@ -123,7 +194,7 @@ class AppImpl extends React.Component<AppProps> {
             </div>);
     }
 
-    protected applyQueryFlags(user: UserState, maps?: SkillMap[]) {
+    protected applyQueryFlags(user: UserState, maps?: SkillMap[], sourceUrl?: string) {
         if (this.queryFlags["debugNewUser"] === "true") {
             user.isDebug = true;
             user.mapProgress = {};
@@ -152,9 +223,10 @@ class AppImpl extends React.Component<AppProps> {
                             user.mapProgress[map.mapId].activityState[activity.activityId].isCompleted = true;
                         }
 
-                        if (activity.tags?.length) {
+                        if (activity.tags?.length && sourceUrl) {
                             for (const tag of activity.tags) {
-                                user.completedTags[tag]++;
+                                if (!user.completedTags[sourceUrl][tag]) user.completedTags[sourceUrl][tag] = 0;
+                                user.completedTags[sourceUrl][tag]++;
                             }
                         }
                     }
@@ -181,13 +253,41 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
     };
 }
 
+async function updateLocalizationAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean, force?: boolean) {
+    code = pxt.Util.normalizeLanguageCode(code)[0];
+    if (code === "en-US")
+        code = "en"; // special case for built-in language
+    if (code === pxt.Util.userLanguage() || (!pxt.Util.isLocaleEnabled(code) && !force)) {
+        return;
+    }
+
+    const translations = await pxt.Util.downloadTranslationsAsync(
+        targetId,
+        baseUrl,
+        code,
+        pxtBranch,
+        targetBranch,
+        !!live,
+        ts.pxtc.Util.TranslationsKind.SkillMap
+    );
+
+    if (translations) {
+        pxt.Util.setUserLanguage(code);
+        pxt.Util.setLocalizedStrings(translations);
+        if (live) {
+            pxt.Util.localizeLive = true;
+        }
+    }
+}
+
 const mapDispatchToProps = {
     dispatchAddSkillMap,
     dispatchClearSkillMaps,
     dispatchSetPageTitle,
     dispatchSetPageDescription,
     dispatchSetPageInfoUrl,
-    dispatchSetUser
+    dispatchSetUser,
+    dispatchSetPageSourceUrl
 };
 
 const App = connect(mapStateToProps, mapDispatchToProps)(AppImpl);

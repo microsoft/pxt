@@ -1,6 +1,11 @@
 const apiRoot = "https://www.makecode.com/api/md";
 export type MarkdownSource = "docs" | "github";
 
+export interface MarkdownFetchResult {
+    text: string;
+    url: string;
+}
+
 export function parseHash() {
     let hash = { cmd: '', arg: '' };
     // TODO shakao remove testing url later
@@ -29,13 +34,20 @@ export function parseQuery() {
     return out;
 }
 
-export async function getMarkdownAsync(source: MarkdownSource, url: string) {
-    if (!source || !url) return "";
+export async function getMarkdownAsync(source: MarkdownSource, url: string): Promise<MarkdownFetchResult> {
+    if (!source || !url) return {
+        text: "",
+        url: ""
+    };
+
+    let toFetch: string;
+
     switch (source) {
         case "docs":
             url = url.trim().replace(/^[\\/]/i, "").replace(/\.md$/i, "");
-            const target = (window as any).pxtTargetBundle.name;
-            return await httpGetAsync(`${apiRoot}/${target}/${url}`);
+            const target = (window as any).pxtTargetBundle?.name || "arcade";
+            toFetch = `${apiRoot}/${target}/${url}`;
+            break;
         case "github":
             /**
              * FORMATS:
@@ -45,16 +57,29 @@ export async function getMarkdownAsync(source: MarkdownSource, url: string) {
              *
              * Leading slash and '.md' are optional but allowed
              */
-            let rawUrl = url.trim();
-            let match = /^(?:(?:https?:\/\/)?[^/]*?github\.com)?(?:\/)?([^/.]+)\/([^/]+)\/(?:blob\/)?([^/]+)\/([^/.]+?)(?:\.md)?$/gi.exec(rawUrl);
+            toFetch = url.trim();
+            let match = /^(?:(?:https?:\/\/)?[^/]*?github\.com)?(?:\/)?([^/.]+)\/([^/]+)\/(?:blob\/)?([^/]+)\/([^/.]+?)(?:\.md)?$/gi.exec(toFetch);
             if (match) {
-                rawUrl = `https://raw.githubusercontent.com/${match[1]}/${match[2]}/${match[3]}/${match[4]}.md`
+                toFetch = `https://raw.githubusercontent.com/${match[1]}/${match[2]}/${match[3]}/${match[4]}.md`
             }
 
-            return await httpGetAsync(rawUrl);
+            break;
         default:
-            return await httpGetAsync(url);
+            toFetch = url;
+            break;
     }
+
+    const markdown = await httpGetAsync(toFetch);
+
+    return {
+        text: markdown,
+        url: toFetch
+    };
+}
+
+export async function postAbuseReportAsync(id: string, data: { text: string }): Promise<void> {
+    if (!!id) await httpPostAsync(`/api/${encodeURIComponent(id)}/abusereports`, data);
+    return;
 }
 
 export function httpGetAsync(url: string): Promise<string> {
@@ -74,6 +99,27 @@ export function httpGetAsync(url: string): Promise<string> {
         });
         request.open("GET", url);
         request.send();
+    })
+}
+
+export function httpPostAsync(url: string, data: any): Promise<string> {
+    return new Promise<string>((resolve, reject) => {
+        const request = new XMLHttpRequest();
+        request.addEventListener("error", err => {
+            reject(err);
+        });
+
+        request.addEventListener("load", () => {
+            try {
+                resolve(request.responseText);
+            }
+            catch (e) {
+                reject(e);
+            }
+        });
+        request.open("POST", url, true);
+        request.setRequestHeader('Content-type', 'application/json');
+        request.send(JSON.stringify(data));
     })
 }
 
@@ -103,4 +149,8 @@ export function isLocal() {
 
 export function resolvePath(path: string) {
     return `${isLocal() ? "" : "/static/skillmap"}/${path.replace(/^\//, "")}`
+}
+
+export function tickEvent(id: string, data?: { [key: string] : string | number }) {
+    (window as any).pxtTickEvent(name, data);
 }
