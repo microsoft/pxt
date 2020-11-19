@@ -214,6 +214,15 @@ function pxtcommon() {
 
 // TODO: Copied from Jakefile; should be async
 function updatestrings() {
+    return buildStrings("built/strings.json", ["pxtlib", "pxtblocks", "pxtblocks/fields", "webapp/src"]);
+}
+
+function updateSkillMapStrings() {
+    return buildStrings("built/skillmap-strings.json", ["skillmap/src"], true);
+}
+
+// TODO: Copied from Jakefile; should be async
+function buildStrings(out, rootPaths, recursive) {
     let errCnt = 0;
     const translationStrings = {}
     const translationHelpStrings = {}
@@ -252,7 +261,7 @@ function updatestrings() {
     }
 
     let fileCnt = 0;
-    const paths = ju.expand1(["pxtlib", "pxtblocks", "pxtblocks/fields", "webapp/src"]);
+    const paths = recursive ? ju.expand(rootPaths) : ju.expand1(rootPaths);
     paths.forEach(pth => {
         fileCnt++;
         processLf(pth);
@@ -266,9 +275,9 @@ function updatestrings() {
     fs.writeFileSync("built/localization.json", JSON.stringify({ strings: tr }, null, 1))
     let strings = {};
     tr.forEach((k) => { strings[k] = k; });
-    fs.writeFileSync("built/strings.json", JSON.stringify(strings, null, 2));
+    fs.writeFileSync(out, JSON.stringify(strings, null, 2));
 
-    console.log("Localization extraction: " + fileCnt + " files; " + tr.length + " strings");
+    console.log("Localization extraction: " + fileCnt + " files; " + tr.length + " strings; " + out);
     if (errCnt > 0)
         console.log("%d errors", errCnt);
 
@@ -586,6 +595,7 @@ function testTask(testFolder, testFile) {
 
 const buildAll = gulp.series(
     updatestrings,
+    updateSkillMapStrings,
     copyTypescriptServices,
     copyBlocklyTypings,
     gulp.parallel(pxtlib, pxtweb),
