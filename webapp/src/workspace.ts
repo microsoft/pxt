@@ -919,8 +919,11 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
         }
         text = await pxt.github.downloadTextAsync(parsed.fullName, sha, path)
         treeEnt.blobContent = text
-        if (gitsha(text) != treeEnt.sha)
+        if (gitsha(text) != treeEnt.sha
+                // Try adding UTF-8 BOM; this can be stripped over web requests
+                && gitsha(`\uFEFF${text}`) !== treeEnt.sha) {
             U.userError(lf("Corrupt SHA1 on download of '{0}'.", path))
+        }
         if (options.tryDiff3 && hasChanges) {
             if (path == pxt.CONFIG_NAME) {
                 text = pxt.diff.mergeDiff3Config(files[path], oldEnt.blobContent, treeEnt.blobContent);
