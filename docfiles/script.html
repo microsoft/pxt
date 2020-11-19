@@ -148,10 +148,13 @@
                         for (var i = 0; i < d.data.length; ++i)
                             unpackedData += String.fromCharCode(d.data[i]);
 
-                        window.pxtTickEvent(
-                            'simulator.user.tick',
-                            d.data,
-                        );
+                        try {
+                            const data = JSON.parse(unpackedData);
+                            window.pxtTickEvent(
+                                'simulator.user.tick',
+                                data,
+                            );
+                        } catch { /** failed to parse tick from game **/ }
                     }
                 });
             </script>
