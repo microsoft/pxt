@@ -138,6 +138,7 @@
     "test:err": "gulp testerr",
     "test:fmt": "gulp testfmt",
     "test:lang": "gulp testlang",
-    "update": "gulp update"
+    "update": "gulp update",
+    "watch-streamer": "cd docs/static/streamer && tsc --watch"
   }
 }
