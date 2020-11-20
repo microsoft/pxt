@@ -1374,7 +1374,7 @@ background-image: url(${config.backgroundImage});
             if (!!data.broadcast) {
                 data.outer = true;
                 const frames = document.querySelectorAll("iframe.site");
-                for(let i = 0; i < frames.length; ++i) {
+                for (let i = 0; i < frames.length; ++i) {
                     const ifrm = frames.item(i) as HTMLIFrameElement;
                     if (ifrm.contentWindow !== source)
                         ifrm.contentWindow.postMessage(data, "*");
@@ -2597,15 +2597,21 @@ background-image: url(${config.backgroundImage});
     }
 
     function tickEvent(id, data?: any, opts?: { interactiveConsent?: boolean }) {
-        if (typeof pxt === "undefined" || !pxt.aiTrackException || !pxt.aiTrackEvent) return;
-        if (opts?.interactiveConsent) pxt.setInteractiveConsent(true);
-        const args = tickProps(data);
-        pxt.aiTrackEvent(id, args[0], args[1]);
+        if (typeof pxt === "undefined") return;
+        if (opts?.interactiveConsent && pxt.setInteractiveConsent)
+            pxt.setInteractiveConsent(true);
+        if (pxt.aiTrackEvent) {
+            const args = tickProps(data);
+            pxt.aiTrackEvent(id, args[0], args[1]);
+        }
     }
 
     function trackException(err: any, id: string, data?: any) {
-        const args = tickProps(data);
-        pxt.aiTrackException(err, id, args[0]);
+        if (typeof pxt === "undefined") return;
+        if (pxt.aiTrackException) {
+            const args = tickProps(data);
+            pxt.aiTrackException(err, id, args[0]);
+        }
     }
 
     function tickProps(data) {
@@ -2702,7 +2708,7 @@ background-image: url(${config.backgroundImage});
             }
         } else {
             stingervideo.src = undefined;
-            if(stingerPlayer) stingerPlayer.stopVideo()
+            if (stingerPlayer) stingerPlayer.stopVideo();
             stingervideo.classList.add("hidden");
             stingeryoutube.classList.add("hidden")
             state.stingering = false;
