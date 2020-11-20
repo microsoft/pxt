@@ -1,12 +1,12 @@
 # Microsoft MakeCode Blog
 
-## [MakeCode for the micro:bit V2 Release](/blog/microbit/microbitv2)
+## [MakeCode for the micro:bit V2 Release](/blog/microbit/microbit-V2)
 
 November 20th, 2020 by [Jaqster](https://github.com/jaqster)
 
 We’ve been working closely with the Micro:bit Educational Foundation on supporting the new micro:bit V2 with MakeCode. Here’s a rundown of the new micro:bit features in MakeCode...
 
-**[Continue reading this blog post](/blog/microbit/microbitv2)**
+**[Continue reading this blog post](/blog/microbit/microbit-V2)**
 
 ## [micro:bit shield for MakeCode Arcade](/blog/microbit/arcade-shield)
 
