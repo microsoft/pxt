@@ -220,7 +220,7 @@ namespace pxt.cpp {
         const isCodal = compileService.buildEngine == "codal" || compileService.buildEngine == "dockercodal"
         const isDockerMake = compileService.buildEngine == "dockermake" || compileService.buildEngine == "dockercross"
         const isEspIdf = compileService.buildEngine == "dockerespidf"
-        const isYotta = !isPlatformio && !isCodal && !isDockerMake
+        const isYotta = !isPlatformio && !isCodal && !isDockerMake && !isEspIdf
         const isVM = compile.nativeType == pxtc.NATIVE_TYPE_VM
         if (isPlatformio)
             sourcePath = "/src/"
@@ -272,7 +272,7 @@ namespace pxt.cpp {
             }
 
             for (const fn of pkg.getFiles()) {
-                if (["Makefile", "sdkconfig", "CMakeLists.txt"].indexOf(fn) >= 0) {
+                if (["Makefile", "sdkconfig.defaults", "CMakeLists.txt"].indexOf(fn) >= 0) {
                     res.generatedFiles["/" + fn] = pkg.host().readFile(pkg, fn)
                 }
             }
@@ -1009,11 +1009,11 @@ namespace pxt.cpp {
             }
             res.generatedFiles["/package.json"] = JSON.stringify(packageJson, null, 4) + "\n"
         } else if (isEspIdf) {
-            const files = U.concatArrayLike([
+            const files = U.concatArrayLike<string>([
                 allFilesWithExt(".c"),
                 allFilesWithExt(".cpp"),
                 allFilesWithExt(".s")
-            ])
+            ]).map(s => s.slice(sourcePath.length - 1))
             res.generatedFiles[sourcePath + "CMakeLists.txt"] =
                 `idf_component_register(\n  SRCS\n` +
                 files.map(f => `    "${f}"\n`).join("") +

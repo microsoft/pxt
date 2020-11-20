@@ -143,7 +143,7 @@ export const buildEngines: Map<BuildEngine> = {
         patchHexInfo: patchDockerEspIdfHexInfo,
         prepBuildDirAsync: noopAsync,
         buildPath: "built/dockerespidf",
-        moduleConfig: "sdkconfig",
+        moduleConfig: "sdkconfig.defaults",
         deployAsync: noopAsync,
         appPath: "main"
     },
