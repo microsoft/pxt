@@ -130,12 +130,17 @@
                 window.pxtTargetConfigPromise
                     .then(function(targetConfig) {
                         var approvedShareLinks = targetConfig && targetConfig.shareLinks && targetConfig.shareLinks.approved;
-                        if (approvedShareLinks && approvedShareLinks.indexOf("@id@" >= 0)) {
+                        if (approvedShareLinks && approvedShareLinks.indexOf("@id@") >= 0) {
                             // This share link has been allow listed; remove cookie banner and allow sending of tick events
                             shareLinkIsApproved = true;
                             var abuseMessage = document.querySelector("#abuse-message");
                             if (abuseMessage)
                                 abuseMessage.remove();
+
+                            window.pxtTickEvent(
+                                'approved.shareurl.loaded',
+                                { shareurl: "@id@" },
+                            );
                         }
                     });
 
