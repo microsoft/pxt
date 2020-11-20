@@ -1,0 +1,21 @@
+<script type="text/javascript">
+    if (!window.pxtTargetConfigPromise) {
+
+        // This line gets patched up by the cloud
+        var pxtConfig = null;
+
+        var versionsuff = "@versionsuff@";
+        versionsuff = versionsuff ? "/" + versionsuff : "";
+
+        var targetConfigUrl = (pxtConfig && pxtConfig.isStatic) ? "targetconfig.json" : ("api/config/@targetid@/targetconfig" + versionsuff);
+        var fetchParams = !/localhost:/.test(window.location.href) ? {} : {
+            headers: {
+                "Authorization": localStorage.getItem("@targetid@/local_token"),
+                method: "GET"
+            }
+        };
+        // todo: CDN cached version?
+        window.pxtTargetConfigPromise = fetch(targetConfigUrl, fetchParams)
+            .then(resp => resp.json());
+    }
+</script>
