@@ -30,6 +30,8 @@ And when you use any of the V2 blocks in your program, you’ll see the micro:bi
 
 WebUSB (https://makecode.microbit.org/device/usb/webusb) isn’t a new feature, but we took this opportunity to improve the reliability of this technology. Most teachers and students have told us that the download process of copying program files over to the micro:bit is one of the most painful parts of programming with the micro:bit. WebUSB is a new technology (only available in Chrome and Edge browsers) which allows you to pair your micro:bit with MakeCode allowing you to do a one-click download!
 
+You can take a look at the [MakeCode for micro:bit - WebUSB](https://www.youtube.com/watch?v=_-xtP2FH9B8&list=PLMMBk9hE-SepwjCAK7cY-jvq6KeQKda8x) video for an in-depth demonstration on using WebUSB with the new micro:bit V2.
+
 ![micro:bit V2 WebUSB](/static/blog/microbit/microbit-V2/webusb.gif)
 
 ## New Music blocks
