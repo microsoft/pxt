@@ -7,6 +7,8 @@
 
     <!-- @include meta.html -->
     <!-- @include scripthead.html -->
+    <!-- @include targetconfig.html -->
+    <!-- @include tickevent.html -->
 
     <link rel="alternate" type="application/json+oembed" href="@oembedurl@&format=json" />
     <link rel="alternate" type="text/xml+oembed" href="@oembedurl@&format=xml" />
@@ -122,6 +124,45 @@
                             .modal("show");
                     })
                 })
+
+                var shareLinkIsApproved = false;
+
+                window.pxtTargetConfigPromise
+                    .then(function(targetConfig) {
+                        var approvedShareLinks = targetConfig && targetConfig.shareLinks && targetConfig.shareLinks.approved;
+                        if (approvedShareLinks && approvedShareLinks.indexOf("@id@") >= 0) {
+                            // This share link has been allow listed; remove cookie banner and allow sending of tick events
+                            shareLinkIsApproved = true;
+                            var abuseMessage = document.querySelector("#abuse-message");
+                            if (abuseMessage)
+                                abuseMessage.remove();
+
+                            window.pxtTickEvent(
+                                'approved.shareurl.loaded',
+                                { shareurl: "@id@" },
+                            );
+                        }
+                    });
+
+                window.addEventListener('message', function (ev) {
+                    if (!shareLinkIsApproved)
+                        return;
+                    var d = ev.data;
+                    if (d.type == "messagepacket" && d.channel == "tick-event" && d.data) {
+                        var unpackedData = "";
+                        for (var i = 0; i < d.data.length; ++i)
+                            unpackedData += String.fromCharCode(d.data[i]);
+
+                        try {
+                            const data = JSON.parse(unpackedData);
+                            data["shareurl"] = "@id@";
+                            window.pxtTickEvent(
+                                'simulator.user.tick',
+                                data,
+                            );
+                        } catch { /** failed to parse tick from game **/ }
+                    }
+                });
             </script>
         </div>
         <div class="script-bookend">
