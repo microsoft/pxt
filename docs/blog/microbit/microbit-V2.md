@@ -66,6 +66,14 @@ The following blocks support the microphone and the capacitive touch sensor on t
 
 ![sound level block](/static/blog/microbit/microbit-V2/sound-level.png)
 
+## New Pins block
+
+And finally, in the Advanced - Pins Toolbox drawer, under the More subcategory, there is a new Set Pin Touch Mode block which allows you to change the default behavior of the Pins and Logo.
+
+* **Set Pin To Touch Mode** - by default, the logo is set to capacitive touch and the edge connector pins (P0, P1, P2) are set to resistive touch.  The Set Touch Mode block enables you to change the default mode of the Pins and the Logo.
+
+![set touch mode block](/static/blog/microbit/microbit-V2/SetPinTouchMode.png)
+
 We can’t wait for you all to get your hands on the new micro:bit and try out some of these new code blocks and capabilities. Please share your projects and let us know what you think!
 
 <br/>
