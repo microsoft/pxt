@@ -1013,7 +1013,7 @@ namespace pxt.cpp {
                 allFilesWithExt(".c"),
                 allFilesWithExt(".cpp"),
                 allFilesWithExt(".s")
-            ]).map(s => s.slice(sourcePath.length - 1))
+            ]).map(s => s.slice(sourcePath.length - 1)).concat(["main.cpp"])
             res.generatedFiles[sourcePath + "CMakeLists.txt"] =
                 `idf_component_register(\n  SRCS\n` +
                 files.map(f => `    "${f}"\n`).join("") +
