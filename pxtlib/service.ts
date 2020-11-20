@@ -726,7 +726,7 @@ namespace ts.pxtc {
         let cs = pxt.appTarget.compileService
         if (!cs) cs = {} as any
         const pio = !!cs.platformioIni;
-        const docker = cs.buildEngine == "dockermake" || cs.buildEngine == "dockercross";
+        const docker = cs.buildEngine == "dockermake" || cs.buildEngine == "dockercross" || cs.buildEngine == "dockerespidf";
         const r: ExtensionInfo = {
             functions: [],
             generatedFiles: {},

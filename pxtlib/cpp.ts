@@ -219,12 +219,15 @@ namespace pxt.cpp {
         const isPlatformio = !!compileService.platformioIni;
         const isCodal = compileService.buildEngine == "codal" || compileService.buildEngine == "dockercodal"
         const isDockerMake = compileService.buildEngine == "dockermake" || compileService.buildEngine == "dockercross"
+        const isEspIdf = compileService.buildEngine == "dockerespidf"
         const isYotta = !isPlatformio && !isCodal && !isDockerMake
         const isVM = compile.nativeType == pxtc.NATIVE_TYPE_VM
         if (isPlatformio)
             sourcePath = "/src/"
         else if (isCodal || isDockerMake)
             sourcePath = "/pxtapp/"
+        else if (isEspIdf)
+            sourcePath = "/main/"
 
         let pxtConfig = "// Configuration defines\n"
         let pointersInc = "\nPXT_SHIMS_BEGIN\n"
@@ -256,8 +259,6 @@ namespace pxt.cpp {
             return name.trim().replace(/[\_\*]$/, "")
         }
 
-        let makefile = ""
-
         for (const pkg of mainDeps) {
             if (pkg.getFiles().indexOf(constsName) >= 0) {
                 const src = pkg.host().readFile(pkg, constsName)
@@ -269,8 +270,11 @@ namespace pxt.cpp {
                     }
                 })
             }
-            if (!makefile && pkg.getFiles().indexOf("Makefile") >= 0) {
-                makefile = pkg.host().readFile(pkg, "Makefile")
+
+            for (const fn of pkg.getFiles()) {
+                if (["Makefile", "sdkconfig", "CMakeLists.txt"].indexOf(fn) >= 0) {
+                    res.generatedFiles["/" + fn] = pkg.host().readFile(pkg, fn)
+                }
             }
         }
 
@@ -991,6 +995,11 @@ namespace pxt.cpp {
 
         optSettings["PXT_TARGET"] = JSON.stringify(appTarget.id)
 
+        function allFilesWithExt(ext: string) {
+            let allfiles = Object.keys(res.extensionFiles).concat(Object.keys(res.generatedFiles))
+            return allfiles.filter(f => U.endsWith(f, ext)).map(s => s.slice(1))
+        }
+
         const configJson = U.jsonUnFlatten(optSettings)
         if (isDockerMake) {
             let packageJson = {
@@ -999,6 +1008,16 @@ namespace pxt.cpp {
                 dependencies: res.npmDependencies,
             }
             res.generatedFiles["/package.json"] = JSON.stringify(packageJson, null, 4) + "\n"
+        } else if (isEspIdf) {
+            const files = U.concatArrayLike([
+                allFilesWithExt(".c"),
+                allFilesWithExt(".cpp"),
+                allFilesWithExt(".s")
+            ])
+            res.generatedFiles[sourcePath + "CMakeLists.txt"] =
+                `idf_component_register(\n  SRCS\n` +
+                files.map(f => `    "${f}"\n`).join("") +
+                `  INCLUDE_DIRS\n    "."\n)\n`
         } else if (isCodal) {
             let cs = compileService
             let cfg = U.clone(cs.codalDefinitions) || {}
@@ -1083,13 +1102,10 @@ int main() {
 }
 #endif
 `
-        if (makefile) {
-            let allfiles = Object.keys(res.extensionFiles).concat(Object.keys(res.generatedFiles))
+        if (res.generatedFiles["/Makefile"]) {
             let inc = ""
-            let objs: string[] = []
             let add = (name: string, ext: string) => {
-                let files = allfiles.filter(f => U.endsWith(f, ext)).map(s => s.slice(1))
-                inc += `${name} = ${files.join(" ")}\n`
+                inc += `${name} = ${allFilesWithExt(ext).join(" ")}\n`
             }
             add("PXT_C", ".c")
             add("PXT_CPP", ".cpp")
@@ -1097,7 +1113,6 @@ int main() {
             add("PXT_HEADERS", ".h")
             inc += "PXT_SOURCES := $(PXT_C) $(PXT_S) $(PXT_CPP)\n"
             inc += "PXT_OBJS := $(addprefix bld/, $(PXT_C:.c=.o) $(PXT_S:.s=.o) $(PXT_CPP:.cpp=.o))\n"
-            res.generatedFiles["/Makefile"] = makefile
             res.generatedFiles["/Makefile.inc"] = inc
         }
 
