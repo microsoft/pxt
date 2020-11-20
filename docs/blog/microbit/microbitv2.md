@@ -26,7 +26,7 @@ And when you use any of the V2 blocks in your program, you’ll see the micro:bi
 
 ![micro:bit V2 Simulator](/static/blog/microbit/microbitv2/simulator.png)
 
-Web USB reliability improvements Web USB (https://makecode.microbit.org/device/usb/webusb) isn’t a new feature, but we took this opportunity to improve the reliability of this technology. Most teachers and students have told us that the download process of copying program files over to the micro:bit is one of the most painful parts of programming with the micro:bit. Web USB is a new technology (only available in Chrome and Edge browsers) which allows you to pair your micro:bit with MakeCode allowing you to do a one-click download!
+WebUSB reliability improvements WebUSB (https://makecode.microbit.org/device/usb/webusb) isn’t a new feature, but we took this opportunity to improve the reliability of this technology. Most teachers and students have told us that the download process of copying program files over to the micro:bit is one of the most painful parts of programming with the micro:bit. WebUSB is a new technology (only available in Chrome and Edge browsers) which allows you to pair your micro:bit with MakeCode allowing you to do a one-click download!
 
 ![micro:bit V2 WebUSB](/static/blog/microbit/microbitv2/webusb.gif)
 
