@@ -413,7 +413,8 @@ interface HeroBannerState {
     cardIndex?: number;
 }
 
-const HERO_BANNER_DELAY = 10000;
+const HERO_BANNER_DELAY = 10000; // 10 seconds per card
+const HERO_BANNER_START_DELAY = 5000; // 5 seconds to start carousel
 class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
     private prevGalleries: pxt.CodeCard[] = [];
     private carouselInterval: any = undefined;
@@ -433,9 +434,13 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
     }
 
     private handleCardClick() {
-        const card = this.state.cardIndex !== undefined && this.prevGalleries[this.state.cardIndex]
+        const card = this.state.cardIndex !== undefined
+            && this.prevGalleries[this.state.cardIndex]
         if (card)
-            pxt.tickEvent("hero.card.click", { card: card.name })
+            pxt.tickEvent("hero.card.click", {
+                gallery: pxt.appTarget.appTheme.homeScreenHeroGallery,
+                card: card.name
+            })
     }
 
     private startRefresh() {
@@ -443,7 +448,7 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
             pxt.log(`start refreshing hero carousel`)
             this.carouselInterval = setInterval(this.handleRefreshCard, HERO_BANNER_DELAY);
             if (this.state.cardIndex === undefined)
-                setTimeout(this.handleRefreshCard, 100); // show first item immediately
+                setTimeout(this.handleRefreshCard, HERO_BANNER_START_DELAY); // show first item immediately
         }
     }
 
@@ -491,8 +496,8 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
         }
         return <div className="ui segment getting-started-segment"
             style={{ backgroundImage: `url(${encodeURI(card.largeImageUrl || card.imageUrl)})` }}>
-            {!!card.name && !!card.url && <sui.Link 
-                className="large primary hero button transition in fly right" 
+            {!!card.name && !!card.url && <sui.Link
+                className="large primary hero button transition in fly right"
                 href={card.url} onClick={this.handleCardClick}
                 role="button" title={card.name} ariaLabel={card.name}>
                 {card.name}
