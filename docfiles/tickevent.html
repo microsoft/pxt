@@ -32,7 +32,11 @@
                         else if (typeof data[k] == "number") measures[k] = data[k];
                         else props[k] = JSON.stringify(data[k] || '');
                     });
+                } else {
+                    data = {};
                 }
+                data["target"] = "@targetid@";
+                data["cookie"] = "true";
                 window.appInsights.trackEvent(id, data, measures);
             }
         }
