@@ -269,19 +269,15 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
 
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 export interface ProjectSettingsMenuProps extends ISettingsProps {
-    highContrast: boolean;
 }
 export interface ProjectSettingsMenuState {
-    highContrast?: boolean;
 }
 
 export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps, ProjectSettingsMenuState> {
 
     constructor(props: ProjectSettingsMenuProps) {
         super(props);
-        this.state = {
-            highContrast: props.highContrast
-        }
+        this.state = {}
 
         this.showLanguagePicker = this.showLanguagePicker.bind(this);
         this.toggleHighContrast = this.toggleHighContrast.bind(this);
@@ -298,8 +294,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
 
     toggleHighContrast() {
         pxt.tickEvent("home.togglecontrast", undefined, { interactiveConsent: true });
-        this.props.parent.toggleHighContrast();
-        this.setState({ highContrast: !this.state.highContrast });
+        core.toggleHighContrast();
     }
 
     toggleGreenScreen() {
@@ -338,7 +333,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
     }
 
     renderCore() {
-        const { highContrast } = this.state;
+        const highContrast = this.getData<boolean>(auth.HIGHCONTRAST)
         const targetTheme = pxt.appTarget.appTheme;
         const githubUser = this.getData("github:user") as pxt.editor.UserInfo;
         const reportAbuse = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing;
@@ -401,7 +396,7 @@ export class ProjectsMenu extends data.Component<ISettingsProps, {}> {
             </div>
             <div className="ui item home mobile hide"><sui.Icon icon={`icon home large`} /> <span>{lf("Home")}</span></div>
             <div className="right menu">
-                <ProjectSettingsMenu parent={this.props.parent} highContrast={this.props.parent.state.highContrast} />
+                <ProjectSettingsMenu parent={this.props.parent} />
                 {auth.hasIdentity() ? <identity.UserMenu parent={this.props.parent} /> : undefined}
                 <a href={targetTheme.organizationUrl} target="blank" rel="noopener" className="ui item logo organization" onClick={this.orgIconClick}>
                     {targetTheme.organizationWideLogo || targetTheme.organizationLogo

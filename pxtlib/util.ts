@@ -651,7 +651,6 @@ namespace ts.pxtc.Util {
         forceLiveEndpoint?: boolean;
         successCodes?: number[];
         withCredentials?: boolean;
-        allowRelativeUrl?: boolean;
     }
 
     export interface HttpResponse {
@@ -1108,7 +1107,8 @@ namespace ts.pxtc.Util {
     export enum TranslationsKind {
         Editor,
         Sim,
-        Apis
+        Apis,
+        SkillMap
     }
 
     export function downloadTranslationsAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live: boolean, translationKind?: TranslationsKind): Promise<pxt.Map<string>> {
@@ -1135,6 +1135,9 @@ namespace ts.pxtc.Util {
                 break;
             case TranslationsKind.Apis:
                 stringFiles = [{ branch: targetBranch, staticName: "bundled-strings.json", path: targetId + "/bundled-strings.json" }];
+                break;
+            case TranslationsKind.SkillMap:
+                stringFiles = [{ branch: targetBranch, staticName: "skillmap-strings.json", path: "/skillmap-strings.json" }];
                 break;
         }
         let translations: pxt.Map<string>;
@@ -1430,12 +1433,6 @@ namespace ts.pxtc.BrowserImpl {
             let resolved = false
 
             let headers = Util.clone(options.headers) || {}
-
-            options.url = /^https?/.test(options.url)
-                ? options.url
-                : !options.allowRelativeUrl
-                    ? pxt.Cloud.appRoot + options.url
-                    : options.url;
 
             client = new XMLHttpRequest();
             if (options.responseArrayBuffer)

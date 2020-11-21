@@ -83,7 +83,6 @@ namespace pxt.editor {
         pokeUserComponent?: string;
         flashHint?: boolean;
 
-        highContrast?: boolean;
         print?: boolean;
         greenScreen?: boolean;
         accessibleBlocks?: boolean;
@@ -201,6 +200,7 @@ namespace pxt.editor {
         saveBlocksToTypeScriptAsync(): Promise<string>;
 
         saveFileAsync(): Promise<void>;
+        saveProjectAsync(): Promise<void>;
         loadHeaderAsync(h: pxt.workspace.Header): Promise<void>;
         reloadHeaderAsync(): Promise<void>;
         importProjectAsync(prj: pxt.workspace.Project, editorState?: pxt.editor.EditorState): Promise<void>;
@@ -247,6 +247,7 @@ namespace pxt.editor {
         pokeUserActivity(): void;
         stopPokeUserActivity(): void;
         clearUserPoke(): void;
+        setHintSeen(step: number): void;
 
         anonymousPublishAsync(screenshotUri?: string): Promise<string>;
 

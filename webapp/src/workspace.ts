@@ -11,6 +11,7 @@ import * as memoryworkspace from "./memoryworkspace"
 import * as iframeworkspace from "./iframeworkspace"
 import * as cloudsync from "./cloudsync"
 import * as indexedDBWorkspace from "./idbworkspace";
+import * as cloudWorkspace from "./cloudworkspace";
 import * as compiler from "./compiler"
 
 import U = pxt.Util;
@@ -60,7 +61,7 @@ export function copyProjectToLegacyEditor(header: Header, majorVersion: number):
 export function setupWorkspace(id: string) {
     U.assert(!impl, "workspace set twice");
     pxt.log(`workspace: ${id}`);
-    implType = id;
+    implType = id ?? "browser";
     switch (id) {
         case "fs":
         case "file":
@@ -83,11 +84,26 @@ export function setupWorkspace(id: string) {
             impl = indexedDBWorkspace.provider;
             break;
         case "cloud":
+            impl = cloudWorkspace.provider;
+            break;
         case "browser":
         default:
             impl = browserworkspace.provider
             break;
     }
+}
+
+export function switchToCloudWorkspace(): string {
+    U.assert(implType !== "cloud", "workspace already cloud");
+    const prevType = implType;
+    impl = cloudWorkspace.provider;
+    implType = "cloud";
+    return prevType;
+}
+
+export function switchToWorkspace(id: string) {
+    impl = null;
+    setupWorkspace(id);
 }
 
 async function switchToMemoryWorkspace(reason: string): Promise<void> {
@@ -118,6 +134,7 @@ async function switchToMemoryWorkspace(reason: string): Promise<void> {
     }
 
     impl = memoryworkspace.provider;
+    implType = "mem";
 }
 
 export function getHeaders(withDeleted = false) {
@@ -235,7 +252,10 @@ function checkHeaderSession(h: Header): void {
 }
 
 export function initAsync() {
-    if (!impl) impl = browserworkspace.provider;
+    if (!impl) {
+        impl = browserworkspace.provider;
+        implType = "browser";
+    }
 
     return syncAsync()
         .then(state => cleanupBackupsAsync().then(() => state))
@@ -899,8 +919,11 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
         }
         text = await pxt.github.downloadTextAsync(parsed.fullName, sha, path)
         treeEnt.blobContent = text
-        if (gitsha(text) != treeEnt.sha)
+        if (gitsha(text) != treeEnt.sha
+                // Try adding UTF-8 BOM; this can be stripped over web requests
+                && gitsha(`\uFEFF${text}`) !== treeEnt.sha) {
             U.userError(lf("Corrupt SHA1 on download of '{0}'.", path))
+        }
         if (options.tryDiff3 && hasChanges) {
             if (path == pxt.CONFIG_NAME) {
                 text = pxt.diff.mergeDiff3Config(files[path], oldEnt.blobContent, treeEnt.blobContent);

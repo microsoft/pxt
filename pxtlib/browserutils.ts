@@ -384,9 +384,10 @@ namespace pxt.BrowserUtils {
         } = opt;
 
         const createObjectURL = window.URL?.createObjectURL;
+        const asDataUri = pxt.appTarget.appTheme.disableBlobObjectDownload;
         let downloadurl: string;
         try {
-            if (!!createObjectURL) {
+            if (!!createObjectURL && !asDataUri) {
                 const b = new Blob([Util.stringToUint8Array(atob(b64))], { type: contentType });
                 const objUrl = createObjectURL(b);
                 browserDownloadDataUri(objUrl, name, userContextWindow);
@@ -975,6 +976,7 @@ namespace pxt.BrowserUtils {
     export interface ITutorialInfoDb {
         getAsync(filename: string, code: string[], branch?: string): Promise<TutorialInfoIndexedDbEntry>;
         setAsync(filename: string, blocks: Map<number>, code: string[], branch?: string ): Promise<void>;
+        clearAsync(): Promise<void>;
     }
 
     class TutorialInfoIndexedDb implements ITutorialInfoDb {
@@ -1048,6 +1050,14 @@ namespace pxt.BrowserUtils {
                     pxt.perf.measureEnd("tutorial info db setAsync")
                 })
         }
+
+        clearAsync(): Promise<void> {
+            return this.db.deleteAllAsync(TutorialInfoIndexedDb.TABLE)
+                .then(() => console.debug(`db: all clean`))
+                .catch(e => {
+                    console.error('db: failed to delete all');
+                })
+        }
     }
 
     let _tutorialInfoDbPromise: Promise<TutorialInfoIndexedDb>;
@@ -1058,15 +1068,23 @@ namespace pxt.BrowserUtils {
     }
 
     export function clearTutorialInfoDbAsync(): Promise<void> {
-        const n = TutorialInfoIndexedDb.dbName();
-        return IDBWrapper.deleteDatabaseAsync(n)
-            .then(() => {
-                _tutorialInfoDbPromise = undefined;
-            })
-            .catch(e => {
-                pxt.log(`db: failed to delete ${n}`);
-                _tutorialInfoDbPromise = undefined;
-            });
+        function deleteDbAsync() {
+            const n = TutorialInfoIndexedDb.dbName();
+            return IDBWrapper.deleteDatabaseAsync(n)
+                .then(() => {
+                    _tutorialInfoDbPromise = undefined;
+                })
+                .catch(e => {
+                    pxt.log(`db: failed to delete ${n}`);
+                    _tutorialInfoDbPromise = undefined;
+                });
+        }
+
+        if (!_tutorialInfoDbPromise)
+            return deleteDbAsync();
+        return _tutorialInfoDbPromise
+            .then(db => db.clearAsync())
+            .catch(e => deleteDbAsync().done());
     }
 
     export interface IPointerEvents {

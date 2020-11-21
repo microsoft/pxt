@@ -77,12 +77,14 @@ class AccountPanel extends sui.UIElement<AccountPanelProps, {}> {
     }
 
     handleDeleteAccountClick = async () => {
+        const profile = this.getData<auth.UserProfile>(auth.PROFILE)
         const result = await core.confirmAsync({
             header: lf("Delete Account"),
-            body: lf("You are about to delete your account. You can't undo this. Are you sure?"),
+            body: lf("You are about to delete your account. YOU CAN NOT UNDO THIS! Are you sure?"),
             agreeClass: "red",
             agreeIcon: "delete",
             agreeLbl: lf("Delete my account"),
+            confirmationText: profile?.idp?.displayName || profile?.idp?.username || lf("User")
         });
         if (result) {
             await auth.deleteAccount();
@@ -93,17 +95,17 @@ class AccountPanel extends sui.UIElement<AccountPanelProps, {}> {
     }
 
     renderCore() {
-        const user = this.getData<auth.UserProfile>(auth.USER);
-        const provider = auth.identityProvider(user.idp.provider);
+        const profile = this.getData<auth.UserProfile>(auth.PROFILE);
+        const provider = auth.identityProvider(profile.idp?.provider);
 
         const avatarElem = (
             <div className="profile-pic avatar">
-                <img src={user?.idp?.picture?.dataUrl} alt={lf("User")} />
+                <img src={profile?.idp?.picture?.dataUrl} alt={lf("User")} />
             </div>
         );
         const initialsElem = (
             <div className="profile-pic avatar">
-                <span>{cloudsync.userInitials(user?.idp?.displayName)}</span>
+                <span>{cloudsync.userInitials(profile?.idp?.displayName)}</span>
             </div>
         );
 
@@ -112,21 +114,21 @@ class AccountPanel extends sui.UIElement<AccountPanelProps, {}> {
                 <div className="header-text">
                     <label>{lf("Account")}</label>
                 </div>
-                {user?.idp?.picture?.dataUrl ? avatarElem : initialsElem}
+                {profile?.idp?.picture?.dataUrl ? avatarElem : initialsElem}
                 <div className="row">
                     <label className="title">{lf("Name")}</label>
-                    <p className="value">{user?.idp?.displayName}</p>
+                    <p className="value">{profile?.idp?.displayName}</p>
                 </div>
                 <div className="row">
                     <label className="title">{lf("Username")}</label>
-                    <p className="value">{user?.idp?.username}</p>
+                    <p className="value">{profile?.idp?.username}</p>
                 </div>
                 <div className="row">
                     <label className="title">{lf("Provider")}</label>
                     <p className="value">{provider.name}</p>
                 </div>
                 <div className="row">
-                    <sui.Button text={lf("Sign out")} icon={`xicon ${user?.idp?.provider}`} ariaLabel={lf("Sign out {0}", user?.idp?.provider)} onClick={this.handleSignoutClicked} />
+                    <sui.Button text={lf("Sign out")} icon={`xicon ${profile?.idp?.provider}`} ariaLabel={lf("Sign out {0}", profile?.idp?.provider)} onClick={this.handleSignoutClicked} />
                 </div>
                 <div className="row">
                     <label className="title">{lf("Delete Account")}</label>

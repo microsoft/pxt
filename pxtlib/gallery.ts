@@ -124,36 +124,43 @@ namespace pxt.gallery {
     }
 
     export function parseCodeCardsHtml(el: HTMLElement) {
-        const cards: pxt.CodeCard[] = []
-        let card: any;
-        Array.from(el.children)
-            .forEach(child => {
-                if (child.tagName === "UL" || child.tagName === "OL") {
-                    if (!card)
-                        card = {};
-                    // read fields into card
-                    Array.from(child.querySelectorAll("li"))
-                        .forEach(field => {
-                            const text = field.innerText;
-                            const m = /^\s*(\w+)\s*:\s*(.*)$/.exec(text);
-                            if (m) {
-                                const k = m[1]
-                                card[k] = m[2].trim();
-                                if (k === "flags")
-                                    card[k] = card[k].split(/,\s*/);
-                            }
-                        });
-                } else if (child.tagName == "HR") {
-                    // flush current card
-                    if (card)
-                        cards.push(card)
-                    card = undefined;
-                }
-            })
-        // flush last card
-        if (card)
-            cards.push(card);
-        return !!cards.length && cards;
+        let cards: pxt.CodeCard[] = []
+
+        if (el.tagName === "CODE") {
+            // legacy JSON format
+            cards = pxt.Util.jsonTryParse(el.textContent);
+        }
+        else {
+            let card: any;
+            Array.from(el.children)
+                .forEach(child => {
+                    if (child.tagName === "UL" || child.tagName === "OL") {
+                        if (!card)
+                            card = {};
+                        // read fields into card
+                        Array.from(child.querySelectorAll("li"))
+                            .forEach(field => {
+                                const text = field.innerText;
+                                const m = /^\s*(\w+)\s*:\s*(.*)$/.exec(text);
+                                if (m) {
+                                    const k = m[1]
+                                    card[k] = m[2].trim();
+                                    if (k === "flags")
+                                        card[k] = card[k].split(/,\s*/);
+                                }
+                            });
+                    } else if (child.tagName == "HR") {
+                        // flush current card
+                        if (card)
+                            cards.push(card)
+                        card = undefined;
+                    }
+                })
+            // flush last card
+            if (card)
+                cards.push(card);
+        }
+        return !!cards?.length && cards;
     }
 
     export function parseGalleryMardown(md: string): Gallery[] {
@@ -206,5 +213,33 @@ namespace pxt.gallery {
     export function loadGalleryAsync(name: string): Promise<Gallery[]> {
         return pxt.Cloud.markdownAsync(name)
             .then(md => parseGalleryMardown(md))
+    }
+
+    export function codeCardsToMarkdown(cards: pxt.CodeCard[]) {
+        const md = `### ~ codecard
+
+${(cards || []).map(
+            card => Object.keys(card)
+                .filter(k => !!(<any>card)[k])
+                .map(k => k === "otherActions"
+                    ? otherActionsToMd((<any>card)[k])
+                    : `* ${k}: ${(<any>card)[k]}`
+                ).join('\n')
+        )
+                .join(
+                    `
+
+---
+
+`)}
+
+### ~
+`
+        return md;
+
+        function otherActionsToMd(oas: pxt.CodeCardAction[]): string {
+            return oas.map(oa => `* otherAction: ${oa.url} ${oa.editor || "ts"} ${oa.cardType || ""}`)
+                .join('\n');
+        }
     }
 }

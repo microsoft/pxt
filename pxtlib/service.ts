@@ -613,7 +613,9 @@ namespace ts.pxtc {
 
     export function localizeApisAsync(apis: pxtc.ApisInfo, mainPkg: pxt.MainPackage): Promise<pxtc.ApisInfo> {
         const lang = pxtc.Util.userLanguage();
-        if (pxtc.Util.userLanguage() == "en") return Promise.resolve(cleanLocalizations(apis));
+
+        if (lang == "en")
+            return Promise.resolve(cleanLocalizations(apis));
 
         const langLower = lang.toLowerCase();
         const attrJsLocsKey = langLower + "|jsdoc";
@@ -625,6 +627,7 @@ namespace ts.pxtc {
                 const attrLocs = fn.attributes.locs || {};
                 const locJsDoc = loc[fn.qName] || attrLocs[attrJsLocsKey];
                 if (locJsDoc) {
+                    fn.attributes._untranslatedJsDoc = fn.attributes.jsDoc;
                     fn.attributes.jsDoc = locJsDoc;
                     if (fn.parameters)
                         fn.parameters.forEach(pi => pi.description = loc[`${fn.qName}|param|${pi.name}`] || attrLocs[`${langLower}|param|${pi.name}`] || pi.description);

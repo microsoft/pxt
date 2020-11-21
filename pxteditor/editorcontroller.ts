@@ -50,6 +50,8 @@ namespace pxt.editor {
         | "renderblocks"
         | "renderpython"
         | "setscale"
+        | "startactivity"
+        | "saveproject"
 
         | "toggletrace" // EditorMessageToggleTraceRequest
         | "togglehighcontrast"
@@ -231,6 +233,11 @@ namespace pxt.editor {
         enabled: boolean;
     }
 
+    export interface EditorMessageStartActivity extends EditorMessageRequest {
+        action: "startactivity";
+        activityType: "tutorial" | "example" | "recipe";
+        path: string;
+    }
 
     export interface InfoMessage {
         versions: pxt.TargetVersions;
@@ -324,6 +331,7 @@ namespace pxt.editor {
                                 case "hidesimulator": return Promise.resolve().then(() => projectView.collapseSimulator());
                                 case "showsimulator": return Promise.resolve().then(() => projectView.expandSimulator());
                                 case "closeflyout": return Promise.resolve().then(() => projectView.closeFlyout());
+                                case "saveproject": return projectView.saveProjectAsync();
                                 case "redo": return Promise.resolve()
                                     .then(() => {
                                         const editor = projectView.editor;
@@ -358,6 +366,22 @@ namespace pxt.editor {
                                             filters: load.filters,
                                             searchBar: load.searchBar
                                         }));
+                                }
+                                case "startactivity": {
+                                    const msg = data as EditorMessageStartActivity;
+                                    let tutorialPath = msg.path;
+                                    let editorProjectName: string = undefined;
+                                    if (/^([jt]s|py|blocks?):/i.test(tutorialPath)) {
+                                        if (/^py:/i.test(tutorialPath))
+                                            editorProjectName = pxt.PYTHON_PROJECT_NAME;
+                                        else if (/^[jt]s:/i.test(tutorialPath))
+                                            editorProjectName = pxt.JAVASCRIPT_PROJECT_NAME;
+                                        else
+                                            editorProjectName = pxt.BLOCKS_PROJECT_NAME;
+                                        tutorialPath = tutorialPath.substr(tutorialPath.indexOf(':') + 1)
+                                    }
+                                    return Promise.resolve()
+                                        .then(() => projectView.startActivity(msg.activityType, tutorialPath, undefined, editorProjectName));
                                 }
                                 case "importtutorial": {
                                     const load = data as EditorMessageImportTutorialRequest;

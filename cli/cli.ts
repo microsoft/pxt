@@ -439,6 +439,8 @@ function ciAsync() {
                             .then(() => crowdin.execCrowdinAsync("upload", "built/webstrings.json"));
                     if (uploadApiStrings)
                         p = p.then(() => crowdin.execCrowdinAsync("upload", "built/strings.json"))
+                            // TODO: uncomment once verified that this is correct
+                            // .then(() => crowdin.execCrowdinAsync("upload", "built/skillmap-strings.json"))
                     if (uploadDocs || uploadApiStrings)
                         p = p.then(() => crowdin.internalUploadTargetTranslationsAsync(uploadApiStrings, uploadDocs));
                 }
@@ -1917,6 +1919,47 @@ function buildWebStringsAsync() {
     return Promise.resolve()
 }
 
+function buildSkillMapAsync(parsed: commandParser.ParsedCommand) {
+    const skillmapRoot = "node_modules/pxt-core/skillmap";
+    // read pxtarget.json, save into 'pxtTargetBundle' global variable
+    let cfg = readLocalPxTarget();
+    nodeutil.writeFileSync(`${skillmapRoot}/public/target.js`, "// eslint-disable-next-line \n" + targetJsPrefix + JSON.stringify(cfg));
+    nodeutil.cp("node_modules/pxt-core/built/pxtlib.js", `${skillmapRoot}/public/`);
+
+    if (parsed.flags["serve"]) {
+        return nodeutil.spawnAsync({
+            cmd: os.platform() === "win32" ? "npm.cmd" : "npm",
+            args: ["run-script", "start"],
+            cwd: skillmapRoot,
+            shell: true
+        })
+    } else {
+        return nodeutil.spawnAsync({
+            cmd: os.platform() === "win32" ? "npm.cmd" : "npm",
+            args: ["run-script", "build"],
+            cwd: skillmapRoot,
+            shell: true
+        }).then(() => {
+            return rimrafAsync("docs/static/skillmap", {})
+        }).then(() => {
+            nodeutil.cpR(`${skillmapRoot}/build`, "docs/static/skillmap");
+
+            // patch paths to match updated folder structure
+            // patch <include src="file.html"> to <!-- @include file.html>
+            const fn = "docs/static/skillmap/index.html";
+            const f = fs.readFileSync(fn, "utf8");
+            const patched = f.replace(/href="\//g, `href="/static/skillmap/`)
+                .replace(/src="\//g, `src="/static/skillmap/`)
+                .replace(/<include src="(\S+)">/gmi, "\n<!-- @include $1 -->\n");
+            fs.writeFileSync("docs/skillmap.html", patched, { encoding: "utf8" });
+
+            // remove old index.html
+            fs.unlinkSync(fn);
+            return Promise.resolve();
+        })
+    }
+}
+
 function updateDefaultProjects(cfg: pxt.TargetBundle) {
     let defaultProjects = [
         pxt.BLOCKS_PROJECT_NAME,
@@ -3226,7 +3269,6 @@ export async function validateAndFixPkgConfig(parsed: commandParser.ParsedComman
 }
 
 export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): Promise<void> {
-    const rx = /```codecard((.|\s)*)```/;
     const tag = parsed.args[0] as string;
     if (!tag)
         U.userError("Missing tag")
@@ -3239,7 +3281,8 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
         U.userError("Target not configured for discourse");
     if (outmd && !fs.existsSync(outmd))
         U.userError(`${outmd} file not found`)
-    let md: string = outmd && fs.readFileSync(outmd, { encoding: "utf8" });
+    const md: string = outmd && fs.readFileSync(outmd, { encoding: "utf8" });
+    const title = md && /^# (.*)$/m.exec(md)?.[1];
 
     nodeutil.mkdirP(out);
     let n = 0;
@@ -3248,11 +3291,8 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
     let lastCard: pxt.CodeCard = undefined;
     // parse existing cards
     if (md) {
-        md.replace(rx, (m, c) => {
-            cards = JSON.parse(c);
-            lastCard = cards.pop();
-            return "";
-        })
+        cards = pxt.gallery.parseGalleryMardown(md);
+        lastCard = cards.pop();
     }
     return pxt.discourse.topicsByTag(discourseRoot, tag)
         .then(topics => Promise.mapSeries(topics, topic => {
@@ -3307,12 +3347,12 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
                 if (lastCard)
                     cards.push(lastCard);
                 cards.forEach(card => delete (card as any).id);
-                md = md.replace(rx, (m, c) => {
-                    return `\`\`\`codecard
-${JSON.stringify(cards, null, 4)}
-\`\`\``;
-                })
-                nodeutil.writeFileSync(outmd, md, { encoding: "utf8" });
+               const newmd = `# ${title || "Community"}
+
+${pxt.gallery.codeCardsToMarkdown(cards)}
+
+`
+                nodeutil.writeFileSync(outmd, newmd, { encoding: "utf8" });
             }
             pxt.log(`downloaded ${n} programs (${newcards} new) from tag ${tag}`)
         })
@@ -4496,7 +4536,7 @@ export async function staticpkgAsync(parsed: commandParser.ParsedCommand) {
         await internalGenDocsAsync(false, true);
         if (locsSrc) {
             const languages = pxt.appTarget?.appTheme?.availableLocales
-                    .filter(langId => nodeutil.existsDirSync(path.join(locsSrc, langId)));
+                .filter(langId => nodeutil.existsDirSync(path.join(locsSrc, langId)));
 
             await crowdin.buildAllTranslationsAsync(async (fileName: string) => {
                 const output: pxt.Map<pxt.Map<string>> = {};
@@ -5382,6 +5422,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
         if (!md) {
             pxt.log(`unable to resolve ${entrypath}`)
             broken++;
+            continue;
         }
         // look for broken urls
         md.replace(/]\( (\/[^)]+?)(\s+"[^"]+")?\)/g, (m) => {
@@ -5424,6 +5465,11 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                 pxt.log(`gallery ${k}`);
                 const galleryUrl = getGalleryUrl(targetConfig.galleries[k])
                 let gallerymd = nodeutil.resolveMd(docsRoot, galleryUrl);
+                if (!gallerymd) {
+                    pxt.log(`unable to resolve ${galleryUrl}`)
+                    broken++;
+                    return;
+                }
                 let gallery = pxt.gallery.parseGalleryMardown(gallerymd);
                 pxt.debug(`found ${gallery.length} galleries`);
                 gallery.forEach(gal => gal.cards.forEach((card, cardIndex) => {
@@ -5434,6 +5480,11 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                             if (card.otherActions) card.otherActions.forEach(a => { if (a.url) urls.push(a.url) });
                             for (let url of urls) {
                                 const tutorialMd = nodeutil.resolveMd(docsRoot, url);
+                                if (!tutorialMd) {
+                                    pxt.log(`unable to resolve ${url}`)
+                                    broken++;
+                                    continue;
+                                }
                                 const tutorial = pxt.tutorial.parseTutorial(tutorialMd);
                                 const pkgs: pxt.Map<string> = { "blocksprj": "*" };
                                 pxt.Util.jsonMergeFrom(pkgs, pxt.gallery.parsePackagesFromMarkdown(tutorialMd) || {});
@@ -5484,7 +5535,11 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                             if (card.otherActions) card.otherActions.forEach(a => { if (a.url) urls.push(a.url) });
                             for (let url of urls) {
                                 const exMd = nodeutil.resolveMd(docsRoot, url);
-                                const prj = pxt.gallery.parseExampleMarkdown(card.name, exMd);
+                                if (!exMd) {
+                                    pxt.log(`unable to resolve ${url}`)
+                                    broken++;
+                                    continue;
+                                }                                                const prj = pxt.gallery.parseExampleMarkdown(card.name, exMd);
                                 const pkgs: pxt.Map<string> = { "blocksprj": "*" };
                                 pxt.U.jsonMergeFrom(pkgs, prj.dependencies);
 
@@ -5523,6 +5578,24 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
             if (pxt.appTarget.ignoreDocsErrors) pxt.log(msg)
             else U.userError(msg);
         }
+    })
+}
+
+async function upgradeCardsAsync(): Promise<void> {
+    const docsRoot = nodeutil.targetDir;
+    // markdowns with cards
+    const mds = nodeutil.allFiles(docsRoot, 10, false, false)
+        .filter(fn => /\.md$/.test(fn))
+        .map(fn => ({ filename: fn, content: nodeutil.readText(fn) }))
+        .filter(f => /```codecard/.test(f.content));
+
+    mds.forEach(({ filename, content }) => {
+        pxt.log(`patching ${filename}`)
+        const updated = content.replace(/```codecard([^`]+)```/g, (m, c: string) => {
+            const cards = pxt.gallery.parseCodeCards(c);
+            return pxt.gallery.codeCardsToMarkdown(cards);
+        })
+        nodeutil.writeFileSync(filename, updated);
     })
 }
 
@@ -6427,6 +6500,7 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
             }
         }
     }, checkDocsAsync);
+    advancedCommand("upgradecards", "convert JSON codecard to markdown format", upgradeCardsAsync, "");
 
     p.defineCommand({
         name: "usedblocks",
@@ -6453,6 +6527,18 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
             }
         }
     }, buildSemanticUIAsync);
+
+    p.defineCommand({
+        name: "buildskillmap",
+        aliases: ["skillmap"],
+        advanced: true,
+        help: "Builds the skill map webapp",
+        flags: {
+            serve: {
+                description: "Serve the skill map locally after building (npm start)"
+            }
+        }
+    }, buildSkillMapAsync);
 
     advancedCommand("augmentdocs", "test markdown docs replacements", augmnetDocsAsync, "<temlate.md> <doc.md>");
 
