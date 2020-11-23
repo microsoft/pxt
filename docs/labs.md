@@ -1,6 +1,6 @@
 # Labs
 
-A collection of MakeCode Editors created by the community. Got questions? Join us on the [MakeCode Forum](http://forum.makecode.com/)!
+A collection of MakeCode Editors created by the community, both academic and commercial. Got questions? Join us on the [MakeCode Forum](http://forum.makecode.com/)!
 
 ## ~hint
 
@@ -47,7 +47,7 @@ BuildBee is a 3D print solution
 
 ![BuildBee screenshot](/static/targets/buildbee/buildbee.png)
 
-- [Company](https://buildbee.com/)
+- [Product](https://buildbee.com/)
 - [Editor](https://makecode.buildbee.com/)
 - [GitHub](https://github.com/Buildbee/makecode)
 
@@ -95,7 +95,7 @@ A range of 80+ modular "xChips", which includes cores/CPUs, sensors, power, comm
 
 ![Xinabox editor snapshot](/static/targets/xinabox/xinabox.png)
 
-- [Project](https://xinabox.cc)
+- [Product](https://xinabox.cc)
 - [Editor](https://makecode.xinabox.cc/)
 - [GitHub](https://github.com/xinabox/pxt-xinabox)
 
