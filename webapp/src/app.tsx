@@ -379,7 +379,7 @@ export class ProjectView
 
     saveProjectAsync(): Promise<void> {
         return this.saveFileAsync()
-            .then(() => pkg.mainEditorPkg().buildAssetsAsync());
+            .then(() => pkg.mainEditorPkg().buildTilemapsAsync());
     }
 
     setFileContentAsync(): Promise<void> {
