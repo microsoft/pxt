@@ -339,6 +339,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         this.finishTutorial = this.finishTutorial.bind(this);
         this.toggleExpanded = this.toggleExpanded.bind(this);
         this.onMarkdownDidRender = this.onMarkdownDidRender.bind(this);
+        this.handleResize = this.handleResize.bind(this);
 
     }
 
@@ -433,12 +434,19 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         }
     }
 
+    private handleResize() {
+        const options = this.props.parent.state.tutorialOptions;
+        this.setShowSeeMore(options.autoexpandStep);
+    }
+
     componentDidMount() {
         this.setShowSeeMore(this.props.parent.state.tutorialOptions.autoexpandStep);
+        window.addEventListener('resize', this.handleResize);
     }
 
     onMarkdownDidRender() {
         this.setShowSeeMore(this.props.parent.state.tutorialOptions.autoexpandStep);
+        window.removeEventListener('resize', this.handleResize);
     }
 
     componentWillUnmount() {
@@ -501,7 +509,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         const tutorialCard = this.refs['tutorialmessage'] as HTMLElement;
         let show = false;
         if (tutorialCard && tutorialCard.firstElementChild && tutorialCard.firstElementChild.firstElementChild) {
-            show = tutorialCard.clientHeight < tutorialCard.firstElementChild.firstElementChild.scrollHeight;
+            show = tutorialCard.clientHeight <= tutorialCard.firstElementChild.firstElementChild.scrollHeight;
             if (show) {
                 this.cardHeight = tutorialCard.firstElementChild.firstElementChild.scrollHeight;
                 if (autoexpand) this.props.parent.setTutorialInstructionsExpanded(true);
