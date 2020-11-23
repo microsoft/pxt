@@ -1,6 +1,6 @@
 # MakeCode for the micro:bit V2 Release
 
-**Posted on November 20th, 2020 by [Jaqster](https://github.com/jaqster)**
+**Posted on November 23rd, 2020 by [Jaqster](https://github.com/jaqster)**
 
 "Aw3s0m3!!!"
 
