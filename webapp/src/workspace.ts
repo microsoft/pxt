@@ -11,8 +11,8 @@ import * as memoryworkspace from "./memoryworkspace"
 import * as iframeworkspace from "./iframeworkspace"
 import * as cloudsync from "./cloudsync"
 import * as indexedDBWorkspace from "./idbworkspace";
-import * as cloudWorkspace from "./cloudworkspace";
 import * as compiler from "./compiler"
+import * as auth from "./auth"
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
@@ -25,14 +25,9 @@ type Header = pxt.workspace.Header;
 type ScriptText = pxt.workspace.ScriptText;
 type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
 type InstallHeader = pxt.workspace.InstallHeader;
+type File = pxt.workspace.File;
 
-interface HeaderWithScript {
-    header: Header;
-    text: ScriptText;
-    version: pxt.workspace.Version;
-}
-
-let allScripts: HeaderWithScript[] = [];
+let allScripts: File[] = [];
 
 let headerQ = new U.PromiseQueue();
 
@@ -83,27 +78,11 @@ export function setupWorkspace(id: string) {
         case "idb":
             impl = indexedDBWorkspace.provider;
             break;
-        case "cloud":
-            impl = cloudWorkspace.provider;
-            break;
         case "browser":
         default:
             impl = browserworkspace.provider
             break;
     }
-}
-
-export function switchToCloudWorkspace(): string {
-    U.assert(implType !== "cloud", "workspace already cloud");
-    const prevType = implType;
-    impl = cloudWorkspace.provider;
-    implType = "cloud";
-    return prevType;
-}
-
-export function switchToWorkspace(id: string) {
-    impl = null;
-    setupWorkspace(id);
 }
 
 async function switchToMemoryWorkspace(reason: string): Promise<void> {
@@ -139,7 +118,11 @@ async function switchToMemoryWorkspace(reason: string): Promise<void> {
 
 export function getHeaders(withDeleted = false) {
     maybeSyncHeadersAsync().done();
-    let r = allScripts.map(e => e.header).filter(h => (withDeleted || !h.isDeleted) && !h.isBackup)
+    const cloudUserId = auth.user()?.id;
+    let r = allScripts.map(e => e.header).filter(h =>
+        (withDeleted || !h.isDeleted) &&
+        !h.isBackup &&
+        (!h.cloudUserId || h.cloudUserId === cloudUserId))
     r.sort((a, b) => b.recentUse - a.recentUse)
     return r
 }
@@ -335,7 +318,7 @@ export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptM
         })
 }
 
-function fixupVersionAsync(e: HeaderWithScript) {
+function fixupVersionAsync(e: File) {
     if (e.version !== undefined)
         return Promise.resolve()
     return impl.getAsync(e.header)
@@ -371,7 +354,7 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
             e.text = text
         if (!isCloud) {
             h.pubCurrent = false
-            h.blobCurrent = false
+            h.blobCurrent_ = false
             h.modificationTime = U.nowSeconds();
             h.targetVersion = h.targetVersion || "0.0.0";
         }
@@ -380,7 +363,7 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
     }
 
     // perma-delete
-    if (h.isDeleted && h.blobVersion == "DELETED") {
+    if (h.isDeleted && h.blobVersion_ == "DELETED") {
         let idx = allScripts.indexOf(e)
         U.assert(idx >= 0)
         allScripts.splice(idx, 1)
@@ -418,7 +401,7 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
 
         if ((text && !isCloud) || h.isDeleted) {
             h.pubCurrent = false;
-            h.blobCurrent = false;
+            h.blobCurrent_ = false;
             h.saveId = null;
             data.invalidate("text:" + h.id);
             data.invalidate("pkg-git-status:" + h.id);
@@ -444,7 +427,7 @@ function computePath(h: Header) {
 
 export function importAsync(h: Header, text: ScriptText, isCloud = false) {
     h.path = computePath(h)
-    const e: HeaderWithScript = {
+    const e: File = {
         header: h,
         text: text,
         version: null
@@ -1350,21 +1333,6 @@ export function installByIdAsync(id: string) {
 export function saveToCloudAsync(h: Header) {
     checkHeaderSession(h);
     return cloudsync.saveToCloudAsync(h)
-}
-
-export function resetCloudAsync(): Promise<void> {
-    // always sync local scripts before resetting
-    // remove all cloudsync or github repositories
-    return syncAsync().catch(e => { })
-        .then(() => cloudsync.resetAsync())
-        .then(() => Promise.all(allScripts.map(e => e.header).filter(h => h.cloudSync || h.githubId).map(h => {
-            // Remove cloud sync'ed project
-            h.isDeleted = true;
-            h.blobVersion = "DELETED";
-            return forceSaveAsync(h, null, true);
-        })))
-        .then(() => syncAsync())
-        .then(() => { });
 }
 
 // this promise is set while a sync is in progress
