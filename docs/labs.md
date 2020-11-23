@@ -17,8 +17,8 @@ preferably under the MIT License.
 An editor for maker-oriented microcontrollers, that typically require breadboarding. For 
 more information, see:
 
-* [Editor](https://maker.makecode.com)
-* [GitHub](https://github.com/microsoft/pxt-maker)
+- [Editor](https://maker.makecode.com)
+- [GitHub](https://github.com/microsoft/pxt-maker)
 
 ## ARcadia: Marker-based augment reality
 
@@ -26,10 +26,10 @@ more information, see:
 
 ARcadia is a toolkit for bringing paper prototypes to life through the use of marker-based Augmented Reality. It enables users to create tangible interfaces for real-time creative expression without the use of embedded sensors or electronics. For more information, see:
 
-* [Project](http://www.playfulcomputation.group/arcadia.html)
-* [Instructions](https://laboratoryforplayfulcomputation.github.io/arcadia/docs/about.html)
-* [Editor](https://laboratoryforplayfulcomputation.github.io/arcadia/)
-* [GitHub](https://github.com/LaboratoryForPlayfulComputation/arcadia)
+- [Project](http://www.playfulcomputation.group/arcadia.html)
+- [Instructions](https://laboratoryforplayfulcomputation.github.io/arcadia/docs/about.html)
+- [Editor](https://laboratoryforplayfulcomputation.github.io/arcadia/)
+- [GitHub](https://github.com/LaboratoryForPlayfulComputation/arcadia)
 
 ## Brainpad (GHI)
 
@@ -86,8 +86,17 @@ more information, see [GitHub](https://github.com/JCSPEC/BuildUFace)
 Create your own greeting cards using this MakeCode Editor. This is a nice example of
 MakeCode's support for embedding the MakeCode editor inside of a web app. For more information, see:
 
-* [Editor](https://samelhusseini.github.io/pxt-holidays/controller.html)
-* [GitHub](https://github.com/samelhusseini/pxt-holidays)
+- [Editor](https://samelhusseini.github.io/pxt-holidays/controller.html)
+- [GitHub](https://github.com/samelhusseini/pxt-holidays)
+
+## Turtle
+
+![Turtle editor screenshot](/static/targets/turtle/snapshot.png)
+
+Program a turtle!
+
+- [Editor](https://hwestphal.github.io/pxt-turtle/)
+- [GitHub](https://github.com/hwestphal/pxt-turtle)
 
 ## Xinabox
 
