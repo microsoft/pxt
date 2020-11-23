@@ -18,6 +18,10 @@
                     }, 1000);
                 }
 
+                if (queuedTicks.length >= 10) {
+                    queuedTicks.shift();
+                }
+
                 queuedTicks.push(function () {
                     sendTick(id, data);
                 });
