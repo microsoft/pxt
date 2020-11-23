@@ -2,7 +2,7 @@
 
 ## [MakeCode for the micro:bit V2 Release](/blog/microbit/microbit-V2)
 
-November 23th, 2020 by [Jaqster](https://github.com/jaqster)
+November 23rd, 2020 by [Jaqster](https://github.com/jaqster)
 
 We’ve been working closely with the Micro:bit Educational Foundation on supporting the new micro:bit V2 with MakeCode. Here’s a rundown of the new micro:bit features in MakeCode...
 
