@@ -146,6 +146,7 @@
 @mobileMenuHeight: 3.5rem;
 @sandboxMobileMenuHeight: 3.0rem;
 @thinMenuHeight: 3rem;
+@tutorialEmbedMenuHeight: 2.25rem;
 
 @tutorialSelectedMenuColor: @primaryColor;
 @editorToggleColor: white;

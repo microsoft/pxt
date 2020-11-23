@@ -1084,7 +1084,8 @@ namespace ts.pxtc.Util {
     export enum TranslationsKind {
         Editor,
         Sim,
-        Apis
+        Apis,
+        SkillMap
     }
 
     export function downloadTranslationsAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live: boolean, translationKind?: TranslationsKind): Promise<pxt.Map<string>> {
@@ -1111,6 +1112,9 @@ namespace ts.pxtc.Util {
                 break;
             case TranslationsKind.Apis:
                 stringFiles = [{ branch: targetBranch, staticName: "bundled-strings.json", path: targetId + "/bundled-strings.json" }];
+                break;
+            case TranslationsKind.SkillMap:
+                stringFiles = [{ branch: targetBranch, staticName: "skillmap-strings.json", path: "/skillmap-strings.json" }];
                 break;
         }
         let translations: pxt.Map<string>;
