@@ -25,8 +25,13 @@
     --body-font-family: "Share Tech Mono", Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
 }
 
+html {
+    overflow: auto;
+}
 
 body {
+    height: auto;
+    position: relative;
     margin: 0;
     font-family: var(--body-font-family);
     -webkit-font-smoothing: antialiased;
@@ -161,4 +166,10 @@ code {
 
 .report-abuse-text::placeholder {
     font-style: italic;
+}
+
+/* USABILLA */
+.usabilla_live_button_container {
+    top: unset !important;
+    bottom: 5rem !important;
 }
