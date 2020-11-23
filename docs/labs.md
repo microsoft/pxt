@@ -31,7 +31,7 @@ ARcadia is a toolkit for bringing paper prototypes to life through the use of ma
 * [Editor](https://laboratoryforplayfulcomputation.github.io/arcadia/)
 * [GitHub](https://github.com/LaboratoryForPlayfulComputation/arcadia)
 
-## GHI Brainpad
+## Brainpad (GHI)
 
 ![BrainPad screenshot](/static/targets/brainpad/brainpad.png)
 
@@ -40,17 +40,6 @@ The BrainPad is an exciting STEM/STEAM mini computer for learning and coding vid
 - [Product](https://www.brainpad.com/)
 - [Editor](https://makecode.brainpad.com/)
 - [GitHub](https://github.com/microsoft/pxt-brainpad)
-
-## Beat the traffic
-
-![Beat the traffic screenshot](/static/targets/corafic/screenshot.png)
-
-This [Cornell University course project](https://makecode.com/courses/cornellMPS2017)
-uses MakeCode to program the logic behind traffic lights in a traffic simulator. For 
-more information, see:
-
-* [Editor](https://liolop.github.io/Coraffic)
-* [GitHub](https://github.com/liolop/Coraffic)
 
 ## BuildBee
 
@@ -62,17 +51,6 @@ BuildBee is a 3D print solution
 - [Editor](https://makecode.buildbee.com/)
 - [GitHub](https://github.com/Buildbee/makecode)
 
-## Build-U-Face
-
-![Build-U-Face screenshot](/static/targets/builduface/screenshot.png)
-
-This [Cornell University course project](https://makecode.com/courses/cornellMPS2017)
-uses MakeCode to control a face recognition engine. For 
-more information, see:
-
-* [Editor](https://jcspec.github.io/BuildUFace)
-* [GitHub](https://github.com/JCSPEC/BuildUFace)
-
 ## Calliope
 
 ![Calliope mini screenshot](/static/targets/calliope/calliopeEditor.png)
@@ -82,6 +60,24 @@ With the Calliope mini you can get to know the world of computers in a playful a
 - [Project](https://calliope.cc/)
 - [Editor](https://makecode.calliope.cc/)
 - [GitHub](https://github.com/microsoft/pxt-calliope)
+
+## Cornell University Projects
+
+### Beat the traffic
+
+![Beat the traffic screenshot](/static/targets/corafic/screenshot.png)
+
+This [Cornell University course project](https://makecode.com/courses/cornellMPS2017)
+uses MakeCode to program the logic behind traffic lights in a traffic simulator. For 
+more information, see [GitHub](https://github.com/liolop/Coraffic)
+
+### Build-U-Face
+
+![Build-U-Face screenshot](/static/targets/builduface/screenshot.png)
+
+This [Cornell University course project](https://makecode.com/courses/cornellMPS2017)
+uses MakeCode to control a face recognition engine. For 
+more information, see [GitHub](https://github.com/JCSPEC/BuildUFace)
 
 ## Holiday Card
 
