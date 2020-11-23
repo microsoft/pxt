@@ -1,20 +1,16 @@
 # Labs
 
-A collection of experimental MakeCode Editors created by the community.
-
-* Got some questions? Join us on the [Community Discord](http://aka.ms/makecodecommunity)!
+A collection of MakeCode Editors created by the community. Got questions? Join us on the [MakeCode Forum](http://forum.makecode.com/)!
 
 ## ~hint
 
-Experimental Editors are not supported by the Microsoft MakeCode team.
+Editors listed here are not supported by the Microsoft MakeCode team.
 To be listed on this page, your editor must be open source on GitHub,
 preferably under the MIT License. 
 
 ## ~
 
-## Editors
-
-### Maker
+## Maker
 
 ![Maker editor screenshot](/static/targets/maker/screenshot.png)
 
@@ -24,7 +20,7 @@ more information, see:
 * [Editor](https://maker.makecode.com)
 * [GitHub](https://github.com/microsoft/pxt-maker)
 
-### ARcadia: Marker-based augment reality
+## ARcadia: Marker-based augment reality
 
 ![ARcadia screenshot](/static/targets/ar/screenshot.png)
 
@@ -35,7 +31,17 @@ ARcadia is a toolkit for bringing paper prototypes to life through the use of ma
 * [Editor](https://laboratoryforplayfulcomputation.github.io/arcadia/)
 * [GitHub](https://github.com/LaboratoryForPlayfulComputation/arcadia)
 
-### Beat the traffic
+## GHI Brainpad
+
+![BrainPad screenshot](/static/targets/brainpad/brainpad.png)
+
+The BrainPad is an exciting STEM/STEAM mini computer for learning and coding video games, robots and electronics.
+
+- [Product](https://www.brainpad.com/)
+- [Editor](https://makecode.brainpad.com/)
+- [GitHub](https://github.com/microsoft/pxt-brainpad)
+
+## Beat the traffic
 
 ![Beat the traffic screenshot](/static/targets/corafic/screenshot.png)
 
@@ -46,7 +52,17 @@ more information, see:
 * [Editor](https://liolop.github.io/Coraffic)
 * [GitHub](https://github.com/liolop/Coraffic)
 
-### Build-U-Face
+## BuildBee
+
+BuildBee is a 3D print solution
+
+![BuildBee screenshot](/static/targets/buildbee/buildbee.png)
+
+- [Company](https://buildbee.com/)
+- [Editor](https://makecode.buildbee.com/)
+- [GitHub](https://github.com/Buildbee/makecode)
+
+## Build-U-Face
 
 ![Build-U-Face screenshot](/static/targets/builduface/screenshot.png)
 
@@ -57,7 +73,17 @@ more information, see:
 * [Editor](https://jcspec.github.io/BuildUFace)
 * [GitHub](https://github.com/JCSPEC/BuildUFace)
 
-### Holiday Card
+## Calliope
+
+![Calliope mini screenshot](/static/targets/calliope/calliopeEditor.png)
+
+With the Calliope mini you can get to know the world of computers in a playful and creative way.
+
+- [Project](https://calliope.cc/)
+- [Editor](https://makecode.calliope.cc/)
+- [GitHub](https://github.com/microsoft/pxt-calliope)
+
+## Holiday Card
 
 ![Holiday editor screenshot](/static/targets/holiday/screenshot.png)
 
@@ -67,14 +93,18 @@ MakeCode's support for embedding the MakeCode editor inside of a web app. For mo
 * [Editor](https://samelhusseini.github.io/pxt-holidays/controller.html)
 * [GitHub](https://github.com/samelhusseini/pxt-holidays)
 
-## Johnny-Five
+## Xinabox
 
-A small wrapper around the **Johnny-Five** library.
+A range of 80+ modular "xChips", which includes cores/CPUs, sensors, power, communication, output, and storage.
 
-* [GitHub](https://github.com/microsoft/pxt-johnny-five)
+![Xinabox editor snapshot](/static/targets/xinabox/xinabox.png)
+
+- [Project](https://xinabox.cc)
+- [Editor](https://makecode.xinabox.cc/)
+- [GitHub](https://github.com/xinabox/pxt-xinabox)
 
 ## Documentation
 
 * [Create your own editor](/target-creation)
 * [Contribute](https://github.com/microsoft/pxt)
-* [Join the MakeCode Discord](http://aka.ms/makecodecommunity)
+* [Join the MakeCode Forum](http://forum.makecode.com/)
