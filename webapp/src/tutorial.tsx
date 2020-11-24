@@ -437,20 +437,17 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
 
     private handleResize() {
         const options = this.props.parent.state.tutorialOptions;
-        if (this.resizeDebounceTimer) {
-            clearTimeout(this.resizeDebounceTimer);
-        }
-        this.resizeDebounceTimer = setTimeout(()=>(this.setShowSeeMore(options.autoexpandStep)), 500);
+        this.setShowSeeMore(options.autoexpandStep);
     }
 
     componentDidMount() {
         this.setShowSeeMore(this.props.parent.state.tutorialOptions.autoexpandStep);
-        window.addEventListener('resize', this.handleResize);
+        window.addEventListener('resize', pxt.Util.debounce(this.handleResize, 500));
     }
 
     onMarkdownDidRender() {
         this.setShowSeeMore(this.props.parent.state.tutorialOptions.autoexpandStep);
-        window.removeEventListener('resize', this.handleResize);
+        window.removeEventListener('resize', pxt.Util.debounce(this.handleResize, 500));
     }
 
     componentWillUnmount() {
