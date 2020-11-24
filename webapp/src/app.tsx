@@ -377,6 +377,11 @@ export class ProjectView
             .then(() => this.setFileContentAsync());
     }
 
+    saveProjectAsync(): Promise<void> {
+        return this.saveFileAsync()
+            .then(() => pkg.mainEditorPkg().buildTilemapsAsync());
+    }
+
     setFileContentAsync(): Promise<void> {
         let txt = this.editor.getCurrentSource()
         if (txt != this.editorFile.content)
@@ -3870,6 +3875,7 @@ export class ProjectView
             this.editor != this.blocksEditor ? "editorlang-text" : "",
             this.editor == this.textEditor && this.state.errorListState,
             'full-abs',
+            pxt.appTarget.appTheme.embeddedTutorial ? "tutorial-embed" : ""
         ];
         const rootClasses = sui.cx(rootClassList);
 
