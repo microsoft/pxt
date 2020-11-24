@@ -624,6 +624,7 @@ namespace pxsim {
         export let string_inline_utf8_vt: any;
         export let string_cons_vt: any;
         export let string_skiplist16_vt: any;
+        export let string_skiplist16_packed_vt: any;
 
         export function typeOf(obj: any) {
             return typeof obj;
