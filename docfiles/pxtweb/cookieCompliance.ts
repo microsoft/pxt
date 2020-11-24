@@ -146,6 +146,7 @@ namespace pxt {
 
         if (isNativeApp() || shouldHideCookieBanner()) {
             initializeAppInsightsInternal(true);
+            if (isNativeApp()) setInteractiveConsent(true);
             return;
         }
 
