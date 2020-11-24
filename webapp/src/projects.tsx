@@ -149,7 +149,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
     }
 
     chgCode(name: string, path: string, loadBlocks: boolean, preferredEditor?: string, template?: pxt.ProjectTemplate) {
-        return this.props.parent.importExampleAsync({ name, path, loadBlocks, preferredEditor, prj: template });
+        return this.props.parent.startActivity("example", path, name, preferredEditor, null, { path, name, loadBlocks, prj: template });
     }
 
     importProject() {
