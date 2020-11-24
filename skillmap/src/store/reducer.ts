@@ -2,12 +2,16 @@ import * as actions from '../actions/types'
 import { guidGen } from '../lib/browserUtils';
 import { getCompletedTags, lookupActivityProgress } from '../lib/skillMapUtils';
 
+export type ModalType = "restart-warning" | "completion" | "report-abuse";
+export type PageSourceStatus = "approved" | "banned" | "unknown";
+
 export interface SkillMapState {
     title: string;
     description: string;
     infoUrl?: string;
     user: UserState;
     pageSourceUrl?: string;
+    pageSourceStatus: PageSourceStatus;
     maps: { [key: string]: SkillMap };
     selectedItem?: string;
 
@@ -22,8 +26,6 @@ export interface EditorViewState {
     state: "active" | "saving";
 }
 
-export type ModalType = "restart-warning" | "completion" | "report-abuse";
-
 interface ModalState {
     type: ModalType;
     currentMapId?: string;
@@ -31,8 +33,9 @@ interface ModalState {
 }
 
 const initialState: SkillMapState = {
-    title: "Game Maker Guide",
-    description: "Level up your game making skills by completing the tutorials in this guide.",
+    title: lf("Game Maker Guide"),
+    description: lf("Level up your game making skills by completing the tutorials in this guide."),
+    pageSourceStatus: "unknown",
     user: {
         isDebug: true,
         id: guidGen(),
@@ -167,7 +170,8 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
         case actions.SET_PAGE_SOURCE_URL:
             return {
                 ...state,
-                pageSourceUrl: action.url
+                pageSourceUrl: action.url,
+                pageSourceStatus: action.status
             }
         case actions.SHOW_COMPLETION_MODAL:
             return {
