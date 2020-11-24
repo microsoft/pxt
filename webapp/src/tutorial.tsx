@@ -315,6 +315,7 @@ interface TutorialCardProps extends ISettingsProps {
 export class TutorialCard extends data.Component<TutorialCardProps, TutorialCardState> {
     private prevStep: number;
     private cardHeight: number;
+    private resizeDebounceTimer: any;
 
     public focusInitialized: boolean;
 
@@ -436,7 +437,10 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
 
     private handleResize() {
         const options = this.props.parent.state.tutorialOptions;
-        this.setShowSeeMore(options.autoexpandStep);
+        if (this.resizeDebounceTimer) {
+            clearTimeout(this.resizeDebounceTimer);
+        }
+        this.resizeDebounceTimer = setTimeout(()=>(this.setShowSeeMore(options.autoexpandStep)), 500);
     }
 
     componentDidMount() {
