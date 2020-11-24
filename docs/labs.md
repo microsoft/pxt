@@ -45,7 +45,7 @@ The BrainPad is an exciting STEM/STEAM mini computer for learning and coding vid
 
 BuildBee is a 3D print solution
 
-![BuildBee screenshot](/static/targets/buildbee/buildbee.png)
+![BuildBee screenshot](/static/targets/buildbee/buildbee.PNG)
 
 - [Product](https://buildbee.com/)
 - [Editor](https://makecode.buildbee.com/)
@@ -53,7 +53,7 @@ BuildBee is a 3D print solution
 
 ## Calliope
 
-![Calliope mini screenshot](/static/targets/calliope/calliopeEditor.png)
+![Calliope mini screenshot](/static/targets/calliope/calliopeEditor.PNG)
 
 With the Calliope mini you can get to know the world of computers in a playful and creative way.
 
@@ -73,7 +73,7 @@ more information, see [GitHub](https://github.com/liolop/Coraffic)
 
 ### Build-U-Face
 
-![Build-U-Face screenshot](/static/targets/builduface/screenshot.png)
+![Build-U-Face screenshot](/static/targets/builduface/screenshot.PNG)
 
 This [Cornell University course project](https://makecode.com/courses/cornellMPS2017)
 uses MakeCode to control a face recognition engine. For 
@@ -102,7 +102,7 @@ Program a turtle!
 
 A range of 80+ modular "xChips", which includes cores/CPUs, sensors, power, communication, output, and storage.
 
-![Xinabox editor snapshot](/static/targets/xinabox/xinabox.png)
+![Xinabox editor snapshot](/static/targets/xinabox/xinabox.PNG)
 
 - [Product](https://xinabox.cc)
 - [Editor](https://makecode.xinabox.cc/)
