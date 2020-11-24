@@ -123,6 +123,7 @@ ${info.id}_IfaceVT:
     /* tslint:disable:no-trailing-whitespace */
     export function vmEmit(bin: Binary, opts: CompileOptions) {
         let vmsource = `; VM start
+_img_start:
 ${hexfile.hexPrelude()}
 `
 
@@ -210,6 +211,8 @@ _start_${name}:
 
         U.iterMap(bin.hexlits, (k, v) => {
             section(v, SectionType.Literal, () =>
+                `.word 0xffffffff, 0xffffffff ; -> pxt::buffer_vt\n` +
+                `.word 0xffffffff ; padding\n` +
                 hexLiteralAsm(k), [], pxt.BuiltInType.BoxedBuffer)
         })
 
@@ -218,10 +221,21 @@ _start_${name}:
         // by emitting them in order and before everything else
         const keys = U.unique(bin.ifaceMembers.concat(Object.keys(bin.strings)), s => s)
         keys.forEach(k => {
-            let ku = U.toUTF8(k, true)
-            section(bin.strings[k], SectionType.Literal, () =>
-                `.word ${ku.length}\n.string ${JSON.stringify(ku)}`,
-                [], pxt.BuiltInType.BoxedString)
+            const info = utf8AsmStringLiteral(k)
+            let tp = pxt.BuiltInType.BoxedString
+            if (info.vt == "pxt::string_inline_ascii_vt")
+                tp = pxt.BuiltInType.BoxedString_ASCII
+            else if (info.vt == "pxt::string_skiplist16_packed_vt")
+                tp = pxt.BuiltInType.BoxedString_SkipList
+            else if (info.vt == "pxt::string_inline_utf8_vt")
+                tp = pxt.BuiltInType.BoxedString
+            else oops("invalid vt")
+
+            const text =
+                `.word 0xffffffff, 0xffffffff ; -> ${info.vt}\n` +
+                info.asm
+
+            section(bin.strings[k], SectionType.Literal, () => text, [], tp)
         })
 
         section("numberLiterals", SectionType.NumberLiterals, () => ctx.dblText.join("\n"))
@@ -309,11 +323,14 @@ _start_${name}:
                 writeRaw(`; main`)
             }
 
+            write(`.word 0xffffffff, 0xffffffff ; -> pxt::RefAction_vt`)
+
             write(`.short 0, ${proc.args.length} ; #args`)
             write(`.short ${proc.captured.length}, 0 ; #cap`)
-            write(`.word 0, 0`) // space for fn pointer (64 bit)
+            write(`.word .fnstart-_img_start, 0  ; func+possible padding`)
 
             numLoc = proc.locals.length + currTmps.length
+            write(`.fnstart:`)
             write(`pushmany ${numLoc} ; incl. ${currTmps.length} tmps`)
 
             for (let s of proc.body) {

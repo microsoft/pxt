@@ -14,6 +14,8 @@ namespace pxt {
         RefMap = 8,
         RefMImage = 9, // microbit-specific
         MMap = 10, // linux, mostly ev3
+        BoxedString_SkipList = 11, // used by VM bytecode representation only
+        BoxedString_ASCII = 12, // ditto
         User0 = 16,
     }
 }
