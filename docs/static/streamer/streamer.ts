@@ -522,8 +522,9 @@ function onYouTubeIframeAPIReady() {
         const ytid = parseYouTubeVideoId(url);
         if (ytid)
             url = createYouTubeEmbedUrl(ytid, true)
-
         startStinger(config.stingerVideo, () => {
+            if (state.sceneIndex === CHAT_SCENE_INDEX || state.sceneIndex == COUNTDOWN_SCENE_INDEX)
+                setScene("right");
             if (config.multiEditor && state.sceneIndex == LEFT_SCENE_INDEX)
                 setFrameUrl(editor2(), url, true);
             else
