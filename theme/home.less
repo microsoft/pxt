@@ -52,11 +52,26 @@
             font-size: 50px;
             text-shadow: -1px 0 rgb(87, 87, 87), 0 1px rgb(87, 87, 87), 1px 0 rgb(87, 87, 87), 0 -1px rgb(87, 87, 87);
         }
-        .hero.button {
+    }
+    .getting-started-segment.hero {
+        .action {
             position: absolute;
             left: 1rem;
             bottom: 1rem;
             margin: 0.5rem;       
+        }
+        .dots {
+            position: absolute;
+            bottom: 1rem;
+            right: 1rem;
+
+            button {
+                margin-right: 1.5rem;
+            }
+
+            button.active {
+                background: @primaryColor;
+            }
         }
     }
     .content {
@@ -676,6 +691,10 @@
                 }
             }
         }
+    }
+
+    .hero.dots {
+        display: none;
     }
 }
 

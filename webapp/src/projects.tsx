@@ -433,6 +433,11 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
         this.setState({ cardIndex: (cardIndex + 1) % this.prevGalleries.length })
     }
 
+    private handleSetCardIndex(index: number) {
+        this.stopRefresh();
+        this.setState({ cardIndex: index });
+    }
+
     private handleCardClick() {
         const card = this.state.cardIndex !== undefined
             && this.prevGalleries[this.state.cardIndex]
@@ -452,16 +457,20 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
         }
     }
 
-    componentWillMount() {
-        this.startRefresh();
-    }
-
-    componentWillUnmount() {
+    private stopRefresh() {
         if (this.carouselInterval) {
             pxt.log(`stopping hero carousel`)
             clearInterval(this.carouselInterval)
             this.carouselInterval = undefined;
         }
+    }
+
+    componentWillMount() {
+        this.startRefresh();
+    }
+
+    componentWillUnmount() {
+        this.stopRefresh();
     }
 
     fetchGallery(): pxt.CodeCard[] {
@@ -494,14 +503,21 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
         const card = (cardIndex !== undefined && cards[cardIndex]) || {
             imageUrl: targetTheme.homeScreenHero
         }
-        return <div className="ui segment getting-started-segment"
+        const handleSetCard = (i: number) => () => this.handleSetCardIndex(i)
+        return <div className="ui segment getting-started-segment hero"
             style={{ backgroundImage: `url(${encodeURI(card.largeImageUrl || card.imageUrl)})` }}>
-            {!!card.name && !!card.url && <sui.Link
-                className="large primary hero button transition in fly right"
-                href={card.url} onClick={this.handleCardClick}
-                role="button" title={card.name} ariaLabel={card.name}>
-                {card.name}
-            </sui.Link>}
+            {!!card.name && !!card.url && <div className="action">
+                <sui.Link
+                    className="large primary button transition in fly right"
+                    href={card.url} onClick={this.handleCardClick}
+                    role="button" title={card.title || card.name} ariaLabel={card.title || card.name}>
+                    {card.label || card.name || lf("Start")}
+                </sui.Link>
+            </div>}
+            {cardIndex !== undefined && <div key="cards" className="dots">
+                {cards.map((card, i) => <button key={i} className={`ui button empty circular label  clear ${i === cardIndex && "active"}`} onClick={handleSetCard(i)}>
+                </button>)}
+            </div>}
         </div>
     }
 }
