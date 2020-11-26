@@ -413,6 +413,8 @@ function onYouTubeIframeAPIReady() {
             if (ytid)
                 url = createYouTubeEmbedUrl(ytid, true);
             startStinger(config.stingerVideo, () => {
+                if (state.sceneIndex === CHAT_SCENE_INDEX || state.sceneIndex == COUNTDOWN_SCENE_INDEX)
+                    setScene("right");
                 if (config.multiEditor && state.sceneIndex == LEFT_SCENE_INDEX)
                     setFrameUrl(editor2(), url, true);
                 else
@@ -1233,13 +1235,14 @@ background-image: url(${config.backgroundImage});
                 }
             ];
             function update() {
+                var _a;
                 // clear canvas if any
                 clearPaint();
                 const el = document.firstElementChild;
                 const w = el.clientWidth;
                 const h = el.clientHeight;
                 const resolution = resolutions.filter(r => r.w == w && r.h == h)[0];
-                const text = `${w}x${h} ${(resolution === null || resolution === void 0 ? void 0 : resolution.name) || `- resize to 1920x1080 or 1080x720`}`;
+                const text = `${w}x${h} ${((_a = resolution) === null || _a === void 0 ? void 0 : _a.name) || `- resize to 1920x1080 or 1080x720`}`;
                 const els = document.getElementsByClassName("screensize");
                 for (let i = 0; i < els.length; ++i) {
                     const el = els[i];
@@ -2466,9 +2469,10 @@ background-image: url(${config.backgroundImage});
             }
         }
         function tickEvent(id, data, opts) {
+            var _a;
             if (typeof pxt === "undefined")
                 return;
-            if ((opts === null || opts === void 0 ? void 0 : opts.interactiveConsent) && pxt.setInteractiveConsent)
+            if (((_a = opts) === null || _a === void 0 ? void 0 : _a.interactiveConsent) && pxt.setInteractiveConsent)
                 pxt.setInteractiveConsent(true);
             if (pxt.aiTrackEvent) {
                 const args = tickProps(data);
