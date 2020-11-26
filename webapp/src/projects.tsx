@@ -450,7 +450,7 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
     }
 
     private startRefresh() {
-        if (!this.carouselInterval && this.prevGalleries.length) {
+        if (!this.carouselInterval && this.prevGalleries && this.prevGalleries.length) {
             pxt.debug(`start refreshing hero carousel`)
             this.carouselInterval = setInterval(this.handleRefreshCard, HERO_BANNER_DELAY);
             if (this.state.cardIndex === undefined)
