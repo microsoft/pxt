@@ -243,7 +243,11 @@ in place of the hero image.
 }
 ```
 
-where ``hero`` is a gallery. Each card will rotate through the hero location on the home screen.
+where ``hero`` is a gallery. Each card will rotate through the hero location on the home screen. When rendering the cards,
+
+* ``largeImageUrl`` and ``imageUrl`` are used if present,
+* ``label`` is used in the button if present; otherwise ``name`` is used
+* (future) ``name`` and ``description`` shown above button
 
 ## Testing
 
