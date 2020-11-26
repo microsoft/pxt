@@ -1,3 +1,5 @@
+import { PageSourceStatus } from "../store/reducer";
+
 const apiRoot = "https://www.makecode.com/api/md";
 export type MarkdownSource = "docs" | "github";
 
@@ -5,6 +7,7 @@ export interface MarkdownFetchResult {
     identifier: string;
     text: string;
     reportId?: string;
+    status: PageSourceStatus;
 }
 
 export function parseHash() {
@@ -39,12 +42,14 @@ export async function getMarkdownAsync(source: MarkdownSource, url: string): Pro
     if (!source || !url) return undefined;
 
     let toFetch: string;
+    let status: PageSourceStatus = "unknown";
 
     switch (source) {
         case "docs":
             url = url.trim().replace(/^[\\/]/i, "").replace(/\.md$/i, "");
             const target = (window as any).pxtTargetBundle?.name || "arcade";
             toFetch = `${apiRoot}/${target}/${url}`;
+            status = "approved";
             break;
         case "github":
             return await fetchSkillMapFromGithub(url);
@@ -57,7 +62,8 @@ export async function getMarkdownAsync(source: MarkdownSource, url: string): Pro
 
     return {
         text: markdown,
-        identifier: toFetch
+        identifier: toFetch,
+        status
     };
 }
 
@@ -69,13 +75,17 @@ export async function getMarkdownAsync(source: MarkdownSource, url: string): Pro
 async function fetchSkillMapFromGithub(path: string): Promise<MarkdownFetchResult | undefined> {
     const ghid = pxt.github.parseRepoId(path)
     const config = await pxt.packagesConfigAsync();
-    const status = pxt.github.repoStatus(ghid, config);
+    const repoStatus = pxt.github.repoStatus(ghid, config);
+    let status: PageSourceStatus = "unknown";
 
     let reportId: string | undefined;
-    switch (status) {
+    switch (repoStatus) {
         case pxt.github.GitRepoStatus.Banned:
-            throw lf("This GitHub repository has been banned.");
+            status = "banned";
+            reportId = "https://github.com/" + ghid.fullName;
+            break;
         case pxt.github.GitRepoStatus.Approved:
+            status = "approved";
             reportId = undefined;
             break;
         default:
@@ -102,7 +112,8 @@ async function fetchSkillMapFromGithub(path: string): Promise<MarkdownFetchResul
         return {
             text: pxt.tutorial.resolveLocalizedMarkdown(ghid, gh.files, fileName),
             identifier: ghid.fullName + "#" + fileName,
-            reportId
+            reportId,
+            status
         }
     }
 
