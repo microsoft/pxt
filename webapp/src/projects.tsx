@@ -444,7 +444,8 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
         if (card)
             pxt.tickEvent("hero.card.click", {
                 gallery: pxt.appTarget.appTheme.homeScreenHeroGallery,
-                card: card.name
+                card: card.name,
+                cardIndex: this.state.cardIndex
             })
     }
 
@@ -486,7 +487,9 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
             if (res instanceof Error) {
                 // ignore;
             } else {
-                this.prevGalleries = pxt.Util.concat(res.map(g => g.cards));
+                this.prevGalleries = pxt.Util.concat(res.map(g => g.cards))
+                    .filter(card => card.url)
+                    .slice(0, 5); // max 5 cards
                 this.startRefresh();
             }
         }
@@ -499,7 +502,7 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
         const showHeroBanner = !!targetTheme.homeScreenHero;
         if (!showHeroBanner)
             return null; // nothing to see here
-        const cards = this.fetchGallery().filter(card => card.url);
+        const cards = this.fetchGallery();
         const card = (cardIndex !== undefined && cards[cardIndex]) || {
             imageUrl: targetTheme.homeScreenHero
         }
