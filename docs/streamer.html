@@ -336,6 +336,26 @@ Use https://uifabricicons.azurewebsites.net/
         body.loading {
             filter: blur(0.2vw);
         }
+        /** add site **/
+        #addsite {
+            display: none;
+            position: absolute;
+            left: 5%;
+            right: 5%;
+            top: calc(50% - 2rem);
+            z-index: 1000;
+            background-color: #ccc;
+            padding: 1vw; 
+            padding-top: 3vw;
+            padding-bottom: 3vw;  
+        }
+        #addsite input {
+            font-size: 2.5rem;
+            width: 100%;
+        }
+        .addsite #addsite {
+            display: block;
+        }
 
         /** intro **/
         #intro {
@@ -1414,6 +1434,7 @@ Settings
         body.rightscene.thumbnail #editor {
             right: 20%;
         }
+
     </style>
     <style id="editorstyle"></style>
 </head>
@@ -1837,6 +1858,11 @@ Settings
                 <button class="pip" id="skippip" title="I'm a pro already...">
                     Skip
                 </button>
+            </div>
+        </div>
+        <div class="box" id="addsite">
+            <div class="contents">
+                <input id="addsiteinput" type="url" placeholder="Enter url and press Enter" id="idsiteinput" />
             </div>
         </div>
     </div>

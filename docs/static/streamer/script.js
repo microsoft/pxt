@@ -47,7 +47,6 @@ function onYouTubeIframeAPIReady() {
     });
 }
 (async function () {
-    var _a, _b;
     const body = document.body;
     const container = document.getElementById("container");
     const selectapp = document.getElementById("selectapp");
@@ -77,7 +76,8 @@ function onYouTubeIframeAPIReady() {
     const backgroundvideo = document.getElementById('backgroundvideo');
     const backgroundyoutube = document.getElementById('backgroundyoutube');
     const intro = document.getElementById('intro');
-    const hasGetDisplayMedia = !!((_b = (_a = navigator) === null || _a === void 0 ? void 0 : _a.mediaDevices) === null || _b === void 0 ? void 0 : _b.getDisplayMedia);
+    const addsiteinput = document.getElementById('addsiteinput');
+    const hasGetDisplayMedia = !!navigator?.mediaDevices?.getDisplayMedia;
     const cachedFrames = {};
     const cachedFrames2 = {};
     const paintColors = ["#ffe135", "#00d9ff", "#cf1fdb", "#ee0000"];
@@ -106,6 +106,7 @@ function onYouTubeIframeAPIReady() {
         initVideos();
         initSubtitles();
         initAccessibility();
+        initAddSite();
         loadPaint();
         loadEditor();
         loadToolbox();
@@ -155,8 +156,11 @@ function onYouTubeIframeAPIReady() {
     async function hideSettings() {
         settings.classList.add("hidden");
     }
+    function settingsVisible() {
+        return !/hidden/.test(settings.className);
+    }
     function toggleSettings() {
-        if (/hidden/.test(settings.className))
+        if (!settingsVisible())
             showSettings();
         else
             hideSettings();
@@ -218,6 +222,7 @@ function onYouTubeIframeAPIReady() {
             state.recording && "recording",
             state.screenshoting && "screenshoting",
             state.stingering && "stingering",
+            state.addSite && "addsite",
             (config.faceCamGreenScreen || config.hardwareCamGreenScreen) && state.thumbnail && "thumbnail",
             config.micDelay === undefined && "micdelayerror",
             !hasGetDisplayMedia && "displaymediaerror",
@@ -291,11 +296,11 @@ function onYouTubeIframeAPIReady() {
             addSep(toolbox);
             addButton(toolbox, "FullView", "Toggle full screen", toggleFullscreen);
         }
-        if (config.extraSites && config.extraSites.length) {
-            addSep(toolbox);
+        addSep(toolbox);
+        addButton(toolbox, "Add", "Add web site", addAddSiteButton);
+        if (config.extraSites)
             config.extraSites.forEach(addSiteButton);
-            addButton(toolbox, "Code", "Reload MakeCode editor", () => startStinger(config.stingerVideo, loadEditor, config.stingerVideoGreenScreen, config.stingerVideoDelay));
-        }
+        addButton(toolbox, "Code", "Reload MakeCode editor", () => startStinger(config.stingerVideo, loadEditor, config.stingerVideoGreenScreen, config.stingerVideoDelay));
         addSep(toolbox);
         if (state.speech)
             addButton(toolbox, "ClosedCaption", "Captions", toggleSpeech, state.speechRunning);
@@ -351,6 +356,11 @@ function onYouTubeIframeAPIReady() {
                 setPaintTool("emoji");
             }, false);
             paintbox.append(btn);
+        }
+        function addAddSiteButton() {
+            state.addSite = true;
+            render();
+            addsiteinput.focus();
         }
         function addSiteButton(url) {
             addButton(toolbox, "SingleBookmark", url, () => setSite(url), false);
@@ -767,7 +777,9 @@ function onYouTubeIframeAPIReady() {
         }
         else {
             // remove from DOM
-            editor2().remove();
+            const e2 = editor2();
+            if (e2)
+                e2.remove();
         }
         loadStyle();
     }
@@ -1042,6 +1054,25 @@ background-image: url(${config.backgroundImage});
             console.log(e);
         }
     }
+    function initAddSite() {
+        addsiteinput.addEventListener("keydown", ev => {
+            if (ev.keyCode === 13) {
+                state.addSite = false;
+                const config = readConfig();
+                const url = normalizeUrl(ev.target.value);
+                if (!url)
+                    return;
+                if (!config.extraSites)
+                    config.extraSites = [];
+                if (config.extraSites.indexOf(url) < 0) {
+                    config.extraSites.push(url);
+                    saveConfig(config);
+                }
+                setSite(url);
+                render();
+            }
+        });
+    }
     function initVideos() {
         accessify(facecam.parentElement);
         accessify(hardwarecam.parentElement);
@@ -1168,14 +1199,13 @@ background-image: url(${config.backgroundImage});
             }
         ];
         function update() {
-            var _a;
             // clear canvas if any
             clearPaint();
             const el = document.firstElementChild;
             const w = el.clientWidth;
             const h = el.clientHeight;
             const resolution = resolutions.filter(r => r.w == w && r.h == h)[0];
-            const text = `${w}x${h} ${((_a = resolution) === null || _a === void 0 ? void 0 : _a.name) || `- resize to 1920x1080 or 1080x720`}`;
+            const text = `${w}x${h} ${resolution?.name || `- resize to 1920x1080 or 1080x720`}`;
             const els = document.getElementsByClassName("screensize");
             for (let i = 0; i < els.length; ++i) {
                 const el = els[i];
@@ -1245,16 +1275,15 @@ background-image: url(${config.backgroundImage});
         window.history.replaceState('', '', '#');
     }
     async function startStream(el, deviceId, rotate, greenscreen, clipBlack, contourColor) {
-        var _a;
         stopStream(el.srcObject);
         console.log(`trying device ${deviceId}`);
         if (deviceId === DISPLAY_DEVICE_ID) {
-            const stream = await ((_a = navigator.mediaDevices) === null || _a === void 0 ? void 0 : _a.getDisplayMedia({
+            const stream = await navigator.mediaDevices?.getDisplayMedia({
                 video: {
                     displaySurface: "application",
                     cursor: "never"
                 }
-            }));
+            });
             el.srcObject = stream;
         }
         else {
@@ -1463,15 +1492,14 @@ background-image: url(${config.backgroundImage});
         }
     }
     async function getDisplayStream(cursor) {
-        var _a;
         try {
             selectapp.classList.remove("hidden");
-            const stream = await ((_a = navigator.mediaDevices) === null || _a === void 0 ? void 0 : _a.getDisplayMedia({
+            const stream = await navigator.mediaDevices?.getDisplayMedia({
                 video: {
                     displaySurface: "browser",
                     cursor: cursor ? "always" : "never"
                 }
-            }));
+            });
             return stream;
         }
         finally {
@@ -1608,6 +1636,13 @@ background-image: url(${config.backgroundImage});
         a.href = url;
         a.download = name;
         a.click();
+    }
+    function normalizeUrl(url) {
+        url = url.trim();
+        const m = /<iframe.*?src="([^"]+)".*?>/i.exec(url);
+        if (m)
+            url = decodeURI(m[1]).replace(/&amp;/g, "&");
+        return /^http?s:\/\//i.test(url) && url;
     }
     async function loadSettings() {
         const config = readConfig();
@@ -1764,13 +1799,12 @@ background-image: url(${config.backgroundImage});
         const facecamscreeninput = document.getElementById("facecamscreeninput");
         facecamscreeninput.value = config.faceCamGreenScreen || "";
         facecamscreeninput.onchange = function (e) {
-            var _a;
             config.faceCamGreenScreen = undefined;
             if (/^#[a-fA-F0-9]{6}$/.test(facecamscreeninput.value))
                 config.faceCamGreenScreen = facecamscreeninput.value;
             saveConfig(config);
             // already running?
-            if (config.faceCamGreenScreen && ((_a = facecam.seriously) === null || _a === void 0 ? void 0 : _a.chroma))
+            if (config.faceCamGreenScreen && facecam.seriously?.chroma)
                 facecam.seriously.chroma.screen = toSeriousColor(config.faceCamGreenScreen);
             else
                 loadFaceCam()
@@ -1791,7 +1825,6 @@ background-image: url(${config.backgroundImage});
         const facecamscreenctx = facecamscreencanvas.getContext('2d');
         facecamscreenctx.drawImage(facecam, 0, 0, facecam.videoWidth, facecam.videoHeight, 0, 0, facecamscreencanvas.width, facecamscreencanvas.height);
         facecamscreencanvas.onclick = (e) => {
-            var _a;
             const x = e.offsetX;
             const y = e.offsetY;
             const rgb = facecamscreenctx.getImageData(x, y, 1, 1).data;
@@ -1801,7 +1834,7 @@ background-image: url(${config.backgroundImage});
                 ("0" + rgb[2].toString(16)).slice(-2);
             saveConfig(config);
             // already running?
-            if (config.faceCamGreenScreen && ((_a = facecam.seriously) === null || _a === void 0 ? void 0 : _a.chroma)) {
+            if (config.faceCamGreenScreen && facecam.seriously?.chroma) {
                 facecam.seriously.chroma.screen = toSeriousColor(config.faceCamGreenScreen);
                 loadSettings();
             }
@@ -1813,11 +1846,10 @@ background-image: url(${config.backgroundImage});
         const facecamgreenclipblack = document.getElementById("facecamgreenclipblack");
         facecamgreenclipblack.value = (config.faceCamClipBlack || 0.6) + "";
         facecamgreenclipblack.onchange = function (e) {
-            var _a;
             config.faceCamClipBlack = parseFloat(facecamgreenclipblack.value);
             saveConfig(config);
             // already running?
-            if ((_a = facecam.seriously) === null || _a === void 0 ? void 0 : _a.chroma)
+            if (facecam.seriously?.chroma)
                 facecam.seriously.chroma.clipBlack = config.faceCamClipBlack;
             else
                 loadFaceCam()
@@ -1827,13 +1859,12 @@ background-image: url(${config.backgroundImage});
         const facecamcontourinput = document.getElementById("facecamcontourinput");
         facecamcontourinput.value = config.faceCamContour || "";
         facecamcontourinput.onchange = function (e) {
-            var _a;
             config.faceCamContour = undefined;
             if (/^#[a-fA-F0-9]{6}$/.test(facecamcontourinput.value))
                 config.faceCamContour = facecamcontourinput.value;
             saveConfig(config);
             // already running?
-            if (config.faceCamContour && ((_a = facecam.seriously) === null || _a === void 0 ? void 0 : _a.contour))
+            if (config.faceCamContour && facecam.seriously?.contour)
                 facecam.seriously.contour.color = toSeriousColor(config.faceCamContour);
             else
                 loadFaceCam()
@@ -1927,13 +1958,12 @@ background-image: url(${config.backgroundImage});
         const hardwarecamscreeninput = document.getElementById("hardwarecamscreeninput");
         hardwarecamscreeninput.value = config.hardwareCamGreenScreen || "";
         hardwarecamscreeninput.onchange = function (e) {
-            var _a;
             config.hardwareCamGreenScreen = undefined;
             if (/^#[a-fA-F0-9]{6}$/.test(hardwarecamscreeninput.value))
                 config.hardwareCamGreenScreen = hardwarecamscreeninput.value;
             saveConfig(config);
             // already running?
-            if (config.hardwareCamGreenScreen && ((_a = hardwarecam.seriously) === null || _a === void 0 ? void 0 : _a.chroma))
+            if (config.hardwareCamGreenScreen && hardwarecam.seriously?.chroma)
                 hardwarecam.seriously.chroma.screen = toSeriousColor(config.hardwareCamGreenScreen);
             else
                 loadHardwareCam()
@@ -1946,7 +1976,6 @@ background-image: url(${config.backgroundImage});
         const hardwarecamscreenctx = hardwarecamscreencanvas.getContext('2d');
         hardwarecamscreenctx.drawImage(hardwarecam, 0, 0, hardwarecam.videoWidth, hardwarecam.videoHeight, 0, 0, hardwarecamscreencanvas.width, hardwarecamscreencanvas.height);
         hardwarecamscreencanvas.onclick = (e) => {
-            var _a;
             const x = e.offsetX;
             const y = e.offsetY;
             const rgb = hardwarecamscreenctx.getImageData(x, y, 1, 1).data;
@@ -1956,7 +1985,7 @@ background-image: url(${config.backgroundImage});
                 ("0" + rgb[2].toString(16)).slice(-2);
             saveConfig(config);
             // already running?
-            if (config.hardwareCamGreenScreen && ((_a = hardwarecam.seriously) === null || _a === void 0 ? void 0 : _a.chroma)) {
+            if (config.hardwareCamGreenScreen && hardwarecam.seriously?.chroma) {
                 hardwarecam.seriously.chroma.screen = toSeriousColor(config.hardwareCamGreenScreen);
                 loadSettings();
             }
@@ -1974,11 +2003,10 @@ background-image: url(${config.backgroundImage});
         const hardwarecamgreenclipblack = document.getElementById("hardwarecamgreenclipblack");
         hardwarecamgreenclipblack.value = (config.hardwareCamClipBlack || 0.6) + "";
         hardwarecamgreenclipblack.onchange = function (e) {
-            var _a;
             config.hardwareCamClipBlack = parseFloat(hardwarecamgreenclipblack.value);
             saveConfig(config);
             // already running?
-            if ((_a = hardwarecam.seriously) === null || _a === void 0 ? void 0 : _a.chroma)
+            if (hardwarecam.seriously?.chroma)
                 hardwarecam.seriously.chroma.clipBlack = config.hardwareCamClipBlack;
             else
                 loadHardwareCam()
@@ -1988,13 +2016,12 @@ background-image: url(${config.backgroundImage});
         const hardwarecamcontourinput = document.getElementById("hardwarecamcontourinput");
         hardwarecamcontourinput.value = config.hardwareCamContour || "";
         hardwarecamcontourinput.onchange = function (e) {
-            var _a;
             config.hardwareCamContour = undefined;
             if (/^#[a-fA-F0-9]{6}$/.test(hardwarecamcontourinput.value))
                 config.hardwareCamContour = hardwarecamcontourinput.value;
             saveConfig(config);
             // already running?
-            if (config.hardwareCamContour && ((_a = hardwarecam.seriously) === null || _a === void 0 ? void 0 : _a.contour))
+            if (config.hardwareCamContour && hardwarecam.seriously?.contour)
                 hardwarecam.seriously.contour.color = toSeriousColor(config.hardwareCamContour);
             else
                 loadHardwareCam()
@@ -2347,6 +2374,18 @@ background-image: url(${config.backgroundImage});
                     break;
             }
         }
+        // esc
+        if (ev.keyCode === 27) {
+            if (state.addSite)
+                state.addSite = false;
+            if (state.paint)
+                togglePaint();
+            if (settingsVisible())
+                toggleSettings();
+            if (intro.parentNode)
+                intro.remove();
+            render();
+        }
         function setPaintTool(ev, name) {
             state.painttool = name;
             if (!state.paint)
@@ -2373,10 +2412,9 @@ background-image: url(${config.backgroundImage});
         }
     }
     function tickEvent(id, data, opts) {
-        var _a;
         if (typeof pxt === "undefined")
             return;
-        if (((_a = opts) === null || _a === void 0 ? void 0 : _a.interactiveConsent) && pxt.setInteractiveConsent)
+        if (opts?.interactiveConsent && pxt.setInteractiveConsent)
             pxt.setInteractiveConsent(true);
         if (pxt.aiTrackEvent) {
             const args = tickProps(data);

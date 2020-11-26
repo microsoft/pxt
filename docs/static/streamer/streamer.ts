@@ -46,6 +46,7 @@ interface StreamerState {
     screenshotVideo?: HTMLVideoElement;
     recording?: () => void;
     stingering?: boolean;
+    addSite?: boolean;
 }
 
 interface StreamerConfig {
@@ -170,6 +171,7 @@ function onYouTubeIframeAPIReady() {
     const backgroundvideo = document.getElementById('backgroundvideo') as HTMLVideoElement
     const backgroundyoutube = document.getElementById('backgroundyoutube') as HTMLIFrameElement
     const intro = document.getElementById('intro')
+    const addsiteinput = document.getElementById('addsiteinput') as HTMLInputElement;
     const hasGetDisplayMedia = !!(<any>navigator)?.mediaDevices?.getDisplayMedia;
 
     const cachedFrames: { [url: string]: HTMLIFrameElement } = {}
@@ -203,6 +205,7 @@ function onYouTubeIframeAPIReady() {
         initVideos();
         initSubtitles();
         initAccessibility();
+        initAddSite();
         loadPaint();
         loadEditor()
         loadToolbox()
@@ -258,8 +261,12 @@ function onYouTubeIframeAPIReady() {
         settings.classList.add("hidden")
     }
 
+    function settingsVisible() {
+        return !/hidden/.test(settings.className)
+    }
+
     function toggleSettings() {
-        if (/hidden/.test(settings.className))
+        if (!settingsVisible())
             showSettings();
         else
             hideSettings();
@@ -328,6 +335,7 @@ function onYouTubeIframeAPIReady() {
             state.recording && "recording",
             state.screenshoting && "screenshoting",
             state.stingering && "stingering",
+            state.addSite && "addsite",
             (config.faceCamGreenScreen || config.hardwareCamGreenScreen) && state.thumbnail && "thumbnail",
             config.micDelay === undefined && "micdelayerror",
             !hasGetDisplayMedia && "displaymediaerror",
@@ -406,11 +414,10 @@ function onYouTubeIframeAPIReady() {
             addButton(toolbox, "FullView", "Toggle full screen", toggleFullscreen)
         }
 
-        if (config.extraSites && config.extraSites.length) {
-            addSep(toolbox);
-            config.extraSites.forEach(addSiteButton)
-            addButton(toolbox, "Code", "Reload MakeCode editor", () => startStinger(config.stingerVideo, loadEditor, config.stingerVideoGreenScreen, config.stingerVideoDelay))
-        }
+        addSep(toolbox);
+        addButton(toolbox, "Add", "Add web site", addAddSiteButton)
+        if (config.extraSites) config.extraSites.forEach(addSiteButton)
+        addButton(toolbox, "Code", "Reload MakeCode editor", () => startStinger(config.stingerVideo, loadEditor, config.stingerVideoGreenScreen, config.stingerVideoDelay))
 
         addSep(toolbox)
         if (state.speech)
@@ -472,6 +479,12 @@ function onYouTubeIframeAPIReady() {
                 setPaintTool("emoji")
             }, false)
             paintbox.append(btn)
+        }
+
+        function addAddSiteButton() {
+            state.addSite = true;
+            render();
+            addsiteinput.focus()
         }
 
         function addSiteButton(url) {
@@ -916,7 +929,9 @@ function onYouTubeIframeAPIReady() {
             setFrameUrl(editor2(), url, true)
         } else {
             // remove from DOM
-            editor2().remove();
+            const e2 = editor2();
+            if (e2)
+                e2.remove();
         }
 
         loadStyle();
@@ -1206,6 +1221,25 @@ background-image: url(${config.backgroundImage});
         } catch (e) {
             console.log(e)
         }
+    }
+
+    function initAddSite() {
+        addsiteinput.addEventListener("keydown", ev => {
+            if (ev.keyCode === 13) {
+                state.addSite = false;
+                const config = readConfig();
+                const url: string = normalizeUrl((ev.target as any).value);
+                if (!url) return;
+                if (!config.extraSites)
+                    config.extraSites = [];
+                if (config.extraSites.indexOf(url) < 0) {
+                    config.extraSites.push(url);
+                    saveConfig(config);
+                }
+                setSite(url)
+                render();
+            }
+        })
     }
 
     function initVideos() {
@@ -1796,6 +1830,14 @@ background-image: url(${config.backgroundImage});
         a.href = url;
         a.download = name;
         a.click();
+    }
+
+    function normalizeUrl(url: string) {
+        url = url.trim();
+        const m = /<iframe.*?src="([^"]+)".*?>/i.exec(url)
+        if (m)
+            url = decodeURI(m[1]).replace(/&amp;/g, "&");
+        return /^http?s:\/\//i.test(url) && url;
     }
 
     async function loadSettings() {
@@ -2565,6 +2607,14 @@ background-image: url(${config.backgroundImage});
                 case 40: // arrow down
                     updateCountdown(-60); break;
             }
+        }
+        // esc
+        if (ev.keyCode === 27) {
+            if (state.addSite) state.addSite = false;
+            if (state.paint) togglePaint();
+            if (settingsVisible()) toggleSettings();
+            if (intro.parentNode) intro.remove();
+            render();
         }
 
         function setPaintTool(ev, name) {
