@@ -113,12 +113,16 @@ To add a special behavior to a step, use a step modifier:
 
 ### fullscreen
 
-If you want to include a dramatic introduction or make certain that a special message is seen, you can use the ``@fullscreen`` tag. The section is displayed in an overlay window on top of the tutorial screen and isn't shown in the caption as part of the tutorial flow. You include it in your tutorial like this:
+The ``@fullscreen`` modifier is deprecated, use ``@showhint`` instead.
+
+### showhint
+
+If you want to include a dramatic introduction or make certain that a special message is seen, you can use the ``@showhint`` tag. The section is displayed in an overlay window on top of the tutorial screen and isn't shown in the caption as part of the tutorial flow. You include it in your tutorial like this:
 
 ```markdown
 # Flash-a-rama
 
-## It's time to code! @fullscreen
+## It's time to code! @showhint
 
 Let's get real bright. We're going to make all the lights flash on your board!
 
@@ -131,12 +135,16 @@ Let's get real bright. We're going to make all the lights flash on your board!
 
 ### unplugged
 
-If you want to display your tutorial step in a dialog and then have it skip to the next step automatically, use ``@unplugged``. This feature is typically used for introductory steps.
+The ``@unplugged`` modifier is deprecated, use ``@showdialog`` instead.
+
+### showdialog
+
+If you want to display your tutorial step in a dialog and then have it skip to the next step automatically, use ``@showdialog``. This feature is typically used for introductory steps.
 
 ```markdown
 # Flash-a-rama
 
-## It's time to code! @unplugged
+## It's time to code! @showdialog
 
 ```
 
