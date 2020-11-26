@@ -1224,12 +1224,12 @@ background-image: url(${config.backgroundImage});
     }
 
     function initAddSite() {
-        addsiteinput.addEventListener("keydown", ev => {
-            if (ev.keyCode === 13) {
-                state.addSite = false;
-                const config = readConfig();
-                const url: string = normalizeUrl((ev.target as any).value);
-                if (!url) return;
+        accessify(addsiteinput);
+        addsiteinput.addEventListener("click", ev => {
+            state.addSite = false;
+            const config = readConfig();
+            const url: string = normalizeUrl((ev.target as any).value);
+            if (url) {
                 if (!config.extraSites)
                     config.extraSites = [];
                 if (config.extraSites.indexOf(url) < 0) {
@@ -1237,8 +1237,8 @@ background-image: url(${config.backgroundImage});
                     saveConfig(config);
                 }
                 setSite(url)
-                render();
             }
+            render();
         })
     }
 
