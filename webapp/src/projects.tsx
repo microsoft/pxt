@@ -429,7 +429,7 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
 
     private handleRefreshCard() {
         pxt.debug(`next hero carousel`)
-        const cardIndex = this.state.cardIndex || 0;
+        const cardIndex = this.state.cardIndex !== undefined ? this.state.cardIndex : -1;
         this.setState({ cardIndex: (cardIndex + 1) % this.prevGalleries.length })
     }
 
