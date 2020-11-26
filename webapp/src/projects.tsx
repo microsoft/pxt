@@ -499,17 +499,22 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
         const showHeroBanner = !!targetTheme.homeScreenHero;
         if (!showHeroBanner)
             return null; // nothing to see here
-        const cards = this.fetchGallery();
+        const cards = this.fetchGallery().filter(card => card.url);
         const card = (cardIndex !== undefined && cards[cardIndex]) || {
             imageUrl: targetTheme.homeScreenHero
         }
         const handleSetCard = (i: number) => () => this.handleSetCardIndex(i)
+        let url = card.url;
+        // open tutorials in browser
+        if (card.cardType === "tutorial" && /^\//.test(url))
+            url = `#tutorial:${url}`
+
         return <div className="ui segment getting-started-segment hero"
             style={{ backgroundImage: `url(${encodeURI(card.largeImageUrl || card.imageUrl)})` }}>
-            {!!card.name && !!card.url && <div className="action">
+            {!!card.name && <div className="action">
                 <sui.Link
                     className="large primary button transition in fly right"
-                    href={card.url} onClick={this.handleCardClick}
+                    href={url} onClick={this.handleCardClick}
                     role="button" title={card.title || card.name} ariaLabel={card.title || card.name}>
                     {card.label || card.name || lf("Start")}
                 </sui.Link>
