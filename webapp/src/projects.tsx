@@ -428,7 +428,7 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
     }
 
     private handleRefreshCard() {
-        pxt.log(`next hero carousel`)
+        pxt.debug(`next hero carousel`)
         const cardIndex = this.state.cardIndex || 0;
         this.setState({ cardIndex: (cardIndex + 1) % this.prevGalleries.length })
     }
@@ -450,7 +450,7 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
 
     private startRefresh() {
         if (!this.carouselInterval && this.prevGalleries.length) {
-            pxt.log(`start refreshing hero carousel`)
+            pxt.debug(`start refreshing hero carousel`)
             this.carouselInterval = setInterval(this.handleRefreshCard, HERO_BANNER_DELAY);
             if (this.state.cardIndex === undefined)
                 setTimeout(this.handleRefreshCard, HERO_BANNER_START_DELAY); // show first item immediately
@@ -459,7 +459,7 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
 
     private stopRefresh() {
         if (this.carouselInterval) {
-            pxt.log(`stopping hero carousel`)
+            pxt.debug(`stopping hero carousel`)
             clearInterval(this.carouselInterval)
             this.carouselInterval = undefined;
         }
