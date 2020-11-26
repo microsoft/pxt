@@ -514,7 +514,7 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
 
         return <div className="ui segment getting-started-segment hero"
             style={{ backgroundImage: `url(${encodeURI(card.largeImageUrl || card.imageUrl)})` }}>
-            {!!card.name && <div className="action">
+            {!!card.name && !!url && <div className="action">
                 <sui.Link
                     className="large primary button transition in fly right"
                     href={url} onClick={this.handleCardClick}
