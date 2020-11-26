@@ -414,7 +414,6 @@ interface HeroBannerState {
 }
 
 const HERO_BANNER_DELAY = 10000; // 10 seconds per card
-const HERO_BANNER_START_DELAY = 5000; // 5 seconds to start carousel
 class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
     private prevGalleries: pxt.CodeCard[] = [];
     private carouselInterval: any = undefined;
@@ -453,8 +452,6 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
         if (!this.carouselInterval && this.prevGalleries && this.prevGalleries.length) {
             pxt.debug(`start refreshing hero carousel`)
             this.carouselInterval = setInterval(this.handleRefreshCard, HERO_BANNER_DELAY);
-            if (this.state.cardIndex === undefined)
-                setTimeout(this.handleRefreshCard, HERO_BANNER_START_DELAY); // show first item immediately
         }
     }
 
