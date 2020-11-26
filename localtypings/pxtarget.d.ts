@@ -269,6 +269,7 @@ declare namespace pxt {
         TOC?: TOCMenuEntry[];
         hideSideDocs?: boolean;
         homeScreenHero?: string; // home screen hero image
+        homeScreenHeroGallery?: string; // path to markdown file containing the gallery to display on homescreen
         sideDoc?: string; // deprecated
         hasReferenceDocs?: boolean; // if true: the monaco editor will add an option in the context menu to load the reference docs
         feedbackUrl?: string; // is set: a feedback link will show in the settings menu

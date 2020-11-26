@@ -186,15 +186,13 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         // lf("Examples")
         // lf("Tutorials")
 
-        const showHeroBanner = !!targetTheme.homeScreenHero;
 
         const tabClasses = sui.cx([
             'ui segment bottom attached tab active tabsegment'
         ]);
 
         return <div ref="homeContainer" className={tabClasses} role="main">
-            {showHeroBanner ?
-                <div className="ui segment getting-started-segment" style={{ backgroundImage: `url(${encodeURI(targetTheme.homeScreenHero)})` }} /> : undefined}
+            <HeroBanner parent={this.props.parent} />
             <div key={`mystuff_gallerysegment`} className="ui segment gallerysegment mystuff-segment" role="region" aria-label={lf("My Projects")}>
                 <div className="ui heading">
                     <div className="column" style={{ zIndex: 1 }}>
@@ -408,6 +406,125 @@ export class ProjectsMenu extends data.Component<ISettingsProps, {}> {
                 </a>
             </div>
         </div>;
+    }
+}
+
+interface HeroBannerState {
+    cardIndex?: number;
+}
+
+const HERO_BANNER_DELAY = 10000; // 10 seconds per card
+class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
+    private prevGalleries: pxt.CodeCard[] = [];
+    private carouselInterval: any = undefined;
+
+    constructor(props: ProjectsCarouselProps) {
+        super(props)
+        this.handleRefreshCard = this.handleRefreshCard.bind(this);
+        this.handleCardClick = this.handleCardClick.bind(this);
+        this.state = {
+        }
+    }
+
+    private handleRefreshCard() {
+        pxt.debug(`next hero carousel`)
+        const cardIndex = this.state.cardIndex !== undefined ? this.state.cardIndex : -1;
+        this.setState({ cardIndex: (cardIndex + 1) % this.prevGalleries.length })
+    }
+
+    private handleSetCardIndex(index: number) {
+        this.stopRefresh();
+        this.setState({ cardIndex: index });
+    }
+
+    private handleCardClick() {
+        const card = this.state.cardIndex !== undefined
+            && this.prevGalleries[this.state.cardIndex]
+        if (card)
+            pxt.tickEvent("hero.card.click", {
+                gallery: pxt.appTarget.appTheme.homeScreenHeroGallery,
+                card: card.name,
+                cardIndex: this.state.cardIndex
+            })
+    }
+
+    private startRefresh() {
+        if (!this.carouselInterval && this.prevGalleries && this.prevGalleries.length) {
+            pxt.debug(`start refreshing hero carousel`)
+            this.carouselInterval = setInterval(this.handleRefreshCard, HERO_BANNER_DELAY);
+            this.handleRefreshCard();
+        }
+    }
+
+    private stopRefresh() {
+        if (this.carouselInterval) {
+            pxt.debug(`stopping hero carousel`)
+            clearInterval(this.carouselInterval)
+            this.carouselInterval = undefined;
+        }
+    }
+
+    componentWillMount() {
+        this.startRefresh();
+    }
+
+    componentWillUnmount() {
+        this.stopRefresh();
+    }
+
+    fetchGallery(): pxt.CodeCard[] {
+        const targetTheme = pxt.appTarget.appTheme;
+        const path = targetTheme.homeScreenHeroGallery;
+        if (!path) {
+            return this.prevGalleries = [];
+        }
+
+        // fetch gallery
+        let res = this.getData(`gallery:${encodeURIComponent(path)}`) as pxt.gallery.Gallery[];
+        if (res) {
+            if (res instanceof Error) {
+                // ignore;
+            } else {
+                this.prevGalleries = pxt.Util.concat(res.map(g => g.cards))
+                    .filter(card => card.url)
+                    .slice(0, 5); // max 5 cards
+                this.startRefresh();
+            }
+        }
+        return this.prevGalleries || [];
+    }
+
+    renderCore() {
+        const targetTheme = pxt.appTarget.appTheme;
+        const { cardIndex } = this.state;
+        const showHeroBanner = !!targetTheme.homeScreenHero;
+        if (!showHeroBanner)
+            return null; // nothing to see here
+        const cards = this.fetchGallery();
+        const card = (cardIndex !== undefined && cards[cardIndex]) || {
+            imageUrl: targetTheme.homeScreenHero
+        }
+        const handleSetCard = (i: number) => () => this.handleSetCardIndex(i)
+        let url = card.url;
+        // open tutorials in browser
+        if (card.cardType === "tutorial" && /^\//.test(url))
+            url = `#tutorial:${url}`
+
+        return <div className="ui segment getting-started-segment hero"
+            style={{ backgroundImage: `url(${encodeURI(card.largeImageUrl || card.imageUrl)})` }}>
+            {!!card.name && !!url && <div className="action">
+                <sui.Link
+                    className="large primary button transition in fly right"
+                    href={url} onClick={this.handleCardClick}
+                    role="button" title={card.title || card.name} ariaLabel={card.title || card.name}>
+                    {card.label || card.name || lf("Start")}
+                </sui.Link>
+            </div>}
+            {cardIndex !== undefined && <div key="cards" className="dots">
+                {cards.map((card, i) => <button key={i} className={`ui button empty circular label  clear ${i === cardIndex && "active"}`} onClick={handleSetCard(i)}>
+                </button>)}
+            </div>}
+        </div>
     }
 }
 
