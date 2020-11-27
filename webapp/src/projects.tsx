@@ -520,7 +520,7 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
                     {card.label || card.name || lf("Start")}
                 </sui.Link>
             </div>}
-            {cardIndex !== undefined && <div key="cards" className="dots">
+            {cardIndex !== undefined && cards?.length > 1 && <div key="cards" className="dots">
                 {cards.map((card, i) => <button key={i} className={`ui button empty circular label  clear ${i === cardIndex && "active"}`} onClick={handleSetCard(i)}>
                 </button>)}
             </div>}
