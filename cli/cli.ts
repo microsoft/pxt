@@ -190,6 +190,54 @@ function initConfigAsync(): Promise<void> {
 function loadGithubToken() {
     if (!pxt.github.token)
         pxt.github.token = process.env["GITHUB_ACCESS_TOKEN"] || process.env["GITHUB_TOKEN"];
+    pxt.github.db = new FileGithubDb(pxt.github.db);
+}
+
+/**
+ * Caches github releases under pxt_modules/.githubcache/...
+ */
+class FileGithubDb implements pxt.github.IGithubDb {
+    constructor(public readonly db: pxt.github.IGithubDb) {
+
+    }
+
+    private loadAsync<T>(repopath: string, tag: string, suffix: string,
+        loader: (r: string, t: string) => Promise<T>): Promise<T> {
+        // only cache releases
+        if (!/^v\d+\.\d+\.\d+$/.test(tag))
+            return loader(repopath, tag);
+
+        const dir = path.join(`pxt_modules`, `.githubcache`, ...repopath.split(/\//g), tag);
+        const fn = path.join(dir, suffix + ".json");
+        // cache hit
+        if (fs.existsSync(fn)) {
+            const json = fs.readFileSync(fn, "utf8");
+            const p = pxt.Util.jsonTryParse(json) as T;
+            if (p) {
+                pxt.debug(`cache hit ${fn}`)
+                return Promise.resolve(p);
+            }
+        }
+
+        // download and cache
+        return loader(repopath, tag)
+            .then(p => {
+                if (p) {
+                    pxt.debug(`cached ${fn}`)
+                    nodeutil.mkdirP(dir);
+                    fs.writeFileSync(fn, JSON.stringify(p), "utf8");
+                }
+                return p;
+            })
+    }
+
+    loadConfigAsync(repopath: string, tag: string): Promise<pxt.PackageConfig> {
+        return this.loadAsync(repopath, tag, "pxt", (r, t) => this.db.loadConfigAsync(r, t));
+    }
+
+    loadPackageAsync(repopath: string, tag: string): Promise<pxt.github.CachedPackage> {
+        return this.loadAsync(repopath, tag, "pkg", (r, t) => this.db.loadPackageAsync(r, t));
+    }
 }
 
 function searchAsync(...query: string[]) {
@@ -439,8 +487,8 @@ function ciAsync() {
                             .then(() => crowdin.execCrowdinAsync("upload", "built/webstrings.json"));
                     if (uploadApiStrings)
                         p = p.then(() => crowdin.execCrowdinAsync("upload", "built/strings.json"))
-                            // TODO: uncomment once verified that this is correct
-                            // .then(() => crowdin.execCrowdinAsync("upload", "built/skillmap-strings.json"))
+                    // TODO: uncomment once verified that this is correct
+                    // .then(() => crowdin.execCrowdinAsync("upload", "built/skillmap-strings.json"))
                     if (uploadDocs || uploadApiStrings)
                         p = p.then(() => crowdin.internalUploadTargetTranslationsAsync(uploadApiStrings, uploadDocs));
                 }
@@ -3347,7 +3395,7 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
                 if (lastCard)
                     cards.push(lastCard);
                 cards.forEach(card => delete (card as any).id);
-               const newmd = `# ${title || "Community"}
+                const newmd = `# ${title || "Community"}
 
 ${pxt.gallery.codeCardsToMarkdown(cards)}
 
@@ -5539,7 +5587,8 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                                     pxt.log(`unable to resolve ${url}`)
                                     broken++;
                                     continue;
-                                }                                                const prj = pxt.gallery.parseExampleMarkdown(card.name, exMd);
+                                }
+                                const prj = pxt.gallery.parseExampleMarkdown(card.name, exMd);
                                 const pkgs: pxt.Map<string> = { "blocksprj": "*" };
                                 pxt.U.jsonMergeFrom(pkgs, prj.dependencies);
 
