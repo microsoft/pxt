@@ -3593,7 +3593,7 @@ export class ProjectView
             .finally(() => core.hideLoading("tutorial"));
     }
 
-    startActivity(activity: pxt.editor.Activity, path: string, title?: string, editorProjectName?: string, focus = true) {
+    startActivity(activity: pxt.editor.Activity, path: string, title?: string, editorProjectName?: string, focus = true, opts?: pxt.editor.ExampleImportOptions) {
         switch (activity) {
             case "tutorial":
                 pxt.tickEvent("tutorial.start", { tutorial: path, editor: editorProjectName });
@@ -3605,7 +3605,7 @@ export class ProjectView
                 break;
             case "example":
                 pxt.tickEvent("example.start", { example: path, editor: editorProjectName });
-                this.importExampleAsync({ name, path, loadBlocks: false, preferredEditor: editorProjectName });
+                this.importExampleAsync({ name: title, path, preferredEditor: editorProjectName, ...opts });
                 break;
         }
         this.textEditor.giveFocusOnLoading = focus;
