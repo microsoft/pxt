@@ -18,6 +18,7 @@ interface MakeCodeFrameProps {
     tutorialPath: string;
     completed: boolean;
     activityHeaderId?: string;
+    activityType: MapActivityType;
     dispatchSetHeaderIdForActivity: (headerId: string, currentStep: number, maxSteps: number) => void;
     dispatchCloseActivity: (finished?: boolean) => void;
     dispatchSaveAndCloseActivity: () => void;
@@ -182,7 +183,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
     }
 
     protected async handleWorkspaceSaveRequestAsync(request: pxt.editor.EditorWorkspaceSaveRequest) {
-        const { dispatchSetHeaderIdForActivity, activityHeaderId } = this.props;
+        const { dispatchSetHeaderIdForActivity, activityHeaderId, activityType } = this.props;
 
         const project = {
             ...request.project,
@@ -192,7 +193,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
             }
         };
 
-        if (project.header.tutorial || project.header.tutorialCompleted) {
+        if (activityType !== "tutorial" || project.header.tutorial || project.header.tutorialCompleted) {
             await saveProjectAsync(project);
         }
 
@@ -281,6 +282,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         activityId: currentActivityId,
         activityHeaderId: currentHeaderId,
         completed: lookupActivityProgress(state.user, currentMapId, currentActivityId)?.isCompleted,
+        activityType: activity.type,
         save: saveState === "saving"
     }
 }
