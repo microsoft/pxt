@@ -18,6 +18,7 @@ interface MakeCodeFrameProps {
     tutorialPath: string;
     completed: boolean;
     activityHeaderId?: string;
+    activityType: MapActivityType;
     dispatchSetHeaderIdForActivity: (headerId: string, currentStep: number, maxSteps: number) => void;
     dispatchCloseActivity: (finished?: boolean) => void;
     dispatchSaveAndCloseActivity: () => void;
@@ -144,6 +145,10 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
                 });
             }
         }
+
+        if (original.action === "importproject" || original.action === "startactivity") {
+            this.onEditorLoaded();
+        }
     }
 
     protected sendMessage(message: any, response = false) {
@@ -178,7 +183,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
     }
 
     protected async handleWorkspaceSaveRequestAsync(request: pxt.editor.EditorWorkspaceSaveRequest) {
-        const { dispatchSetHeaderIdForActivity, activityHeaderId } = this.props;
+        const { dispatchSetHeaderIdForActivity, activityHeaderId, activityType } = this.props;
 
         const project = {
             ...request.project,
@@ -188,7 +193,9 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
             }
         };
 
-        await saveProjectAsync(project);
+        if (activityType !== "tutorial" || project.header.tutorial || project.header.tutorialCompleted) {
+            await saveProjectAsync(project);
+        }
 
         if (project.header!.tutorial) {
             dispatchSetHeaderIdForActivity(
@@ -213,7 +220,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
                 type: "pxteditor",
                 action: "importproject",
                 project: project
-            } as pxt.editor.EditorMessageImportProjectRequest)
+            } as pxt.editor.EditorMessageImportProjectRequest, true)
         }
         else {
             this.sendMessage({
@@ -221,7 +228,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
                 action: "startactivity",
                 path: this.props.tutorialPath,
                 activityType: "tutorial"
-            } as pxt.editor.EditorMessageStartActivity);
+            } as pxt.editor.EditorMessageStartActivity, true);
         }
     }
 
@@ -229,7 +236,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
         switch (event.tick) {
             // FIXME: add a better tick; app.editor fires too early
             case "app.editor":
-                this.onEditorLoaded();
+                // this.onEditorLoaded();
                 break;
             case "tutorial.complete":
                 this.onTutorialFinished();
@@ -275,6 +282,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         activityId: currentActivityId,
         activityHeaderId: currentHeaderId,
         completed: lookupActivityProgress(state.user, currentMapId, currentActivityId)?.isCompleted,
+        activityType: activity.type,
         save: saveState === "saving"
     }
 }

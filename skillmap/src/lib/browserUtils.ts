@@ -195,5 +195,5 @@ export function resolvePath(path: string) {
 }
 
 export function tickEvent(id: string, data?: { [key: string] : string | number }) {
-    (window as any).pxtTickEvent(id, data);
+    (window as any).pxtTickEvent?.(id, data);
 }
