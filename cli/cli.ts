@@ -214,7 +214,7 @@ class FileGithubDb implements pxt.github.IGithubDb {
             const json = fs.readFileSync(fn, "utf8");
             const p = pxt.Util.jsonTryParse(json) as T;
             if (p) {
-                pxt.log(`cache hit ${fn}`)
+                pxt.debug(`cache hit ${fn}`)
                 return Promise.resolve(p);
             }
         }
@@ -223,7 +223,7 @@ class FileGithubDb implements pxt.github.IGithubDb {
         return loader(repopath, tag)
             .then(p => {
                 if (p) {
-                    pxt.log(`cached ${fn}`)
+                    pxt.debug(`cached ${fn}`)
                     nodeutil.mkdirP(dir);
                     fs.writeFileSync(fn, JSON.stringify(p), "utf8");
                 }
