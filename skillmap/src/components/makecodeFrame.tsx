@@ -144,6 +144,10 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
                 });
             }
         }
+
+        if (original.action === "importproject" || original.action === "startactivity") {
+            this.onEditorLoaded();
+        }
     }
 
     protected sendMessage(message: any, response = false) {
@@ -188,7 +192,9 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
             }
         };
 
-        await saveProjectAsync(project);
+        if (project.header.tutorial || project.header.tutorialCompleted) {
+            await saveProjectAsync(project);
+        }
 
         if (project.header!.tutorial) {
             dispatchSetHeaderIdForActivity(
@@ -213,7 +219,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
                 type: "pxteditor",
                 action: "importproject",
                 project: project
-            } as pxt.editor.EditorMessageImportProjectRequest)
+            } as pxt.editor.EditorMessageImportProjectRequest, true)
         }
         else {
             this.sendMessage({
@@ -221,7 +227,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
                 action: "startactivity",
                 path: this.props.tutorialPath,
                 activityType: "tutorial"
-            } as pxt.editor.EditorMessageStartActivity);
+            } as pxt.editor.EditorMessageStartActivity, true);
         }
     }
 
@@ -229,7 +235,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
         switch (event.tick) {
             // FIXME: add a better tick; app.editor fires too early
             case "app.editor":
-                this.onEditorLoaded();
+                // this.onEditorLoaded();
                 break;
             case "tutorial.complete":
                 this.onTutorialFinished();
