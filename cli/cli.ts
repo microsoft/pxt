@@ -5587,7 +5587,8 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                                     pxt.log(`unable to resolve ${url}`)
                                     broken++;
                                     continue;
-                                } const prj = pxt.gallery.parseExampleMarkdown(card.name, exMd);
+                                }
+                                const prj = pxt.gallery.parseExampleMarkdown(card.name, exMd);
                                 const pkgs: pxt.Map<string> = { "blocksprj": "*" };
                                 pxt.U.jsonMergeFrom(pkgs, prj.dependencies);
 
