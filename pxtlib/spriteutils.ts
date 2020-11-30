@@ -196,10 +196,14 @@ namespace pxt.sprite {
             const tm = this.tilemap.copy();
             const tileset: TileSet = {
                 tileWidth: this.tileset.tileWidth,
-                tiles: this.tileset.tiles.map(t => ({
-                    ...t,
-                    bitmap: Bitmap.fromData(t.bitmap).copy().data()
-                }))
+                tiles: this.tileset.tiles.map(t => {
+                    if (!t) {
+                        return null;
+                    }
+                    return {
+                        ...t,
+                        bitmap: Bitmap.fromData(t.bitmap).copy().data()
+                }})
             }
             const layers = Bitmap.fromData(this.layers).copy().data();
 
