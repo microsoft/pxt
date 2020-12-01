@@ -610,8 +610,6 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
             const showNewProject = pxt.appTarget.appTheme && !pxt.appTarget.appTheme.hideNewProjectButton;
             const showScriptManagerCard = targetTheme.scriptManager && headers.length > ProjectsCarousel.NUM_PROJECTS_HOMESCREEN;
 
-            // TODO @darzu: determine if project is cloud project
-
             const headersToShow = headers
                 .filter(h => !h.tutorial?.metadata?.hideIteration)
                 .slice(0, ProjectsCarousel.NUM_PROJECTS_HOMESCREEN);

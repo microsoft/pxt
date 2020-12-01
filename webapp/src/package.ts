@@ -405,7 +405,6 @@ export class EditorPackage {
     }
 
     savePkgAsync() {
-        console.log("savePkgAsync") // TODO @darzu: 
         if (this.header.cloudCurrent) return Promise.resolve();
         this.savingNow++;
         this.updateStatus();
