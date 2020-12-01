@@ -2,6 +2,7 @@ declare namespace pxt {
 
     type CodeCardType = "file" | "example" | "codeExample" | "tutorial" | "side" | "template" | "package" | "hw" | "forumUrl" | "forumExample" | "sharedExample";
     type CodeCardEditorType = "blocks" | "js" | "py";
+    type CodeCardCloudState = "local" | "cloud";
 
     interface Map<T> {
         [index: string]: T;
@@ -159,6 +160,7 @@ declare namespace pxt {
         cardType?: CodeCardType;
         editor?: CodeCardEditorType;
         otherActions?: CodeCardAction[];
+        cloudState?: CodeCardCloudState;
 
         header?: string;
 
