@@ -28,6 +28,8 @@ interface MapFinishedPrerequisite {
     mapId: string;
 }
 
+type MapActivityType = "tutorial";
+
 interface MapActivity {
     activityId: string;
 
@@ -35,7 +37,7 @@ interface MapActivity {
     description?: string;
     tags: string[];
 
-    type: "tutorial";
+    type: MapActivityType;
     editor: "blocks" | "js" | "py";
 
     url: string;

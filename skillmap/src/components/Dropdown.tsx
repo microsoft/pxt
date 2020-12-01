@@ -2,7 +2,7 @@ import React, { useState } from "react";
 
 import '../styles/dropdown.css'
 
-interface DropdownItem {
+export interface DropdownItem {
     id: string;
     label: string;
     onClick: (id: string) => void;

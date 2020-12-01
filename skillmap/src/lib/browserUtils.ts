@@ -1,15 +1,19 @@
+import { PageSourceStatus } from "../store/reducer";
+
 const apiRoot = "https://www.makecode.com/api/md";
 export type MarkdownSource = "docs" | "github";
 
 export interface MarkdownFetchResult {
+    identifier: string;
     text: string;
-    url: string;
+    reportId?: string;
+    status: PageSourceStatus;
 }
 
 export function parseHash() {
     let hash = { cmd: '', arg: '' };
     // TODO shakao remove testing url later
-    let match = /^#(\w+)(:([:./\-+=\w]+))?/.exec(window.location.hash || "#github:shakao-test/skill-map-test/main/test")
+    let match = /^#(\w+)(:([:./\-+=\w]+))?/.exec(window.location.hash || "#github:microsoft/pxt-skillmap-sample/skillmap.md")
     if (match) {
         hash = { cmd: match[1], arg: match[3] || '' };
     }
@@ -34,36 +38,21 @@ export function parseQuery() {
     return out;
 }
 
-export async function getMarkdownAsync(source: MarkdownSource, url: string): Promise<MarkdownFetchResult> {
-    if (!source || !url) return {
-        text: "",
-        url: ""
-    };
+export async function getMarkdownAsync(source: MarkdownSource, url: string): Promise<MarkdownFetchResult | undefined> {
+    if (!source || !url) return undefined;
 
     let toFetch: string;
+    let status: PageSourceStatus = "unknown";
 
     switch (source) {
         case "docs":
             url = url.trim().replace(/^[\\/]/i, "").replace(/\.md$/i, "");
             const target = (window as any).pxtTargetBundle?.name || "arcade";
             toFetch = `${apiRoot}/${target}/${url}`;
+            status = "approved";
             break;
         case "github":
-            /**
-             * FORMATS:
-             * /user-name/repo-name/branch-name/file-name
-             * https://github.com/user-name/repo-name/blob/branch-name/file-name.md
-             * https://raw.githubusercontent.com/user-name/repo-name/branch-name/file-name.md
-             *
-             * Leading slash and '.md' are optional but allowed
-             */
-            toFetch = url.trim();
-            let match = /^(?:(?:https?:\/\/)?[^/]*?github\.com)?(?:\/)?([^/.]+)\/([^/]+)\/(?:blob\/)?([^/]+)\/([^/.]+?)(?:\.md)?$/gi.exec(toFetch);
-            if (match) {
-                toFetch = `https://raw.githubusercontent.com/${match[1]}/${match[2]}/${match[3]}/${match[4]}.md`
-            }
-
-            break;
+            return await fetchSkillMapFromGithub(url);
         default:
             toFetch = url;
             break;
@@ -73,8 +62,62 @@ export async function getMarkdownAsync(source: MarkdownSource, url: string): Pro
 
     return {
         text: markdown,
-        url: toFetch
+        identifier: toFetch,
+        status
     };
+}
+
+
+/**
+ * Fetches the result and returns an identifier to key the content on. For docs, it
+ * will just be the path. For github, it will be githubUser/reponame#path/to/skillmap.md
+ */
+async function fetchSkillMapFromGithub(path: string): Promise<MarkdownFetchResult | undefined> {
+    const ghid = pxt.github.parseRepoId(path)
+    const config = await pxt.packagesConfigAsync();
+    const repoStatus = pxt.github.repoStatus(ghid, config);
+    let status: PageSourceStatus = "unknown";
+
+    let reportId: string | undefined;
+    switch (repoStatus) {
+        case pxt.github.GitRepoStatus.Banned:
+            status = "banned";
+            reportId = "https://github.com/" + ghid.fullName;
+            break;
+        case pxt.github.GitRepoStatus.Approved:
+            status = "approved";
+            reportId = undefined;
+            break;
+        default:
+            reportId = "https://github.com/" + ghid.fullName;
+            break;
+    }
+
+    const tag = ghid.tag || await pxt.github.latestVersionAsync(ghid.fullName, config, true);
+
+    if (!tag) {
+        pxt.log(`skillmap github tag not found at ${ghid.fullName}`);
+        return undefined;
+    }
+    ghid.tag = tag;
+
+    const gh = await pxt.github.downloadPackageAsync(`${ghid.fullName}#${ghid.tag}`, config);
+
+    if (gh) {
+        let fileName = ghid.fileName ||  "skillmap";
+        fileName = fileName.replace(/^\/?blob\/main\//, "")
+        fileName = fileName.replace(/^\/?blob\/master\//, "")
+        fileName = fileName.replace(/\.md$/, "")
+
+        return {
+            text: pxt.tutorial.resolveLocalizedMarkdown(ghid, gh.files, fileName),
+            identifier: ghid.fullName + "#" + fileName,
+            reportId,
+            status
+        }
+    }
+
+    return undefined
 }
 
 export async function postAbuseReportAsync(id: string, data: { text: string }): Promise<void> {
@@ -152,5 +195,5 @@ export function resolvePath(path: string) {
 }
 
 export function tickEvent(id: string, data?: { [key: string] : string | number }) {
-    (window as any).pxtTickEvent(name, data);
+    (window as any).pxtTickEvent?.(id, data);
 }

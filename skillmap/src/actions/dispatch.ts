@@ -1,3 +1,4 @@
+import { PageSourceStatus } from '../store/reducer';
 import * as actions from './types'
 
 export const dispatchAddSkillMap = (map: SkillMap) => ({ type: actions.ADD_SKILL_MAP, map });
@@ -15,7 +16,7 @@ export const dispatchUpdateUserCompletedTags = () => ({ type: actions.UPDATE_USE
 export const dispatchSetPageTitle = (title: string) => ({ type: actions.SET_PAGE_TITLE, title });
 export const dispatchSetPageDescription = (description: string) => ({ type: actions.SET_PAGE_DESCRIPTION, description });
 export const dispatchSetPageInfoUrl = (infoUrl: string) => ({ type: actions.SET_PAGE_INFO_URL, infoUrl });
-export const dispatchSetPageSourceUrl = (url: string) => ({ type: actions.SET_PAGE_SOURCE_URL, url });
+export const dispatchSetPageSourceUrl = (url: string, status: PageSourceStatus) => ({ type: actions.SET_PAGE_SOURCE_URL, url, status });
 
 export const dispatchShowCompletionModal = (mapId: string, activityId?: string) => ({ type: actions.SHOW_COMPLETION_MODAL, mapId, activityId });
 export const dispatchShowRestartActivityWarning = (mapId: string, activityId: string) => ({ type: actions.SHOW_RESTART_ACTIVITY_MODAL, mapId, activityId });
