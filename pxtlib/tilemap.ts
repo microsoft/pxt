@@ -1449,7 +1449,7 @@ namespace pxt {
             id,
             mimeType: TILEMAP_MIME_TYPE,
             data: btoa(pxt.sprite.uint8ArrayToHex(data)),
-            tileset: tilemap.tileset.tiles.map(t => t.id),
+            tileset: tilemap.tileset.tiles.map(t => t?.id),
             displayName: name
         }
     }
