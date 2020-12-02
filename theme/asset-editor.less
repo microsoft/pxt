@@ -108,6 +108,7 @@
 }
 
 .asset-editor-preview {
+    display: flex;
     width: 100%;
     height: 100%;
     background: @assetPreviewBackground;
@@ -136,8 +137,19 @@
     cursor: pointer;
 }
 
+.asset-editor-button.disabled,
+.asset-editor-button.disabled:hover {
+    color: darken(@assetSidebarButtonHover, 20%);
+    background-color: @assetSidebarButtonHover;
+    cursor: not-allowed;
+}
+
 .asset-editor-button:hover {
     background-color: @assetSidebarButtonHover;
+}
+
+.asset-editor-button[data-tooltip]:hover:after {
+    z-index: @sidedocZIndex;
 }
 
 .create-new {
