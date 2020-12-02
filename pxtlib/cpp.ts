@@ -1360,7 +1360,7 @@ namespace pxt.hexloader {
                                         pxt.log(`abandonning C++ build`)
                                         pxt.tickEvent("cppcompile.cancel", { retry })
                                         resolve(null);
-                                        return;
+                                        return null;
                                     }
                                     let url = ret.hex.replace(/\.hex/, ".json")
                                     pxt.log(`polling C++ build ${url} (attempt #${retry})`)
@@ -1384,7 +1384,7 @@ namespace pxt.hexloader {
                                                 delay = Math.min(30000, delay * 1.5); // exponential back off, max 30sec
                                                 pxt.log(`waiting ${(delay / 1000) | 0}s for C++ build...`)
                                                 setTimeout(tryGet, delay)
-                                                return
+                                                return null;
                                             })
                                 }
                                 tryGet();
