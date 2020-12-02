@@ -1351,7 +1351,7 @@ namespace pxt.hexloader {
                         Cloud.privatePostAsync("compile/extension", { data: extInfo.compileData })
                             .then(ret => new Promise<string>((resolve, reject) => {
                                 let retry = 0;
-                                const maxRetry = 5;
+                                const maxRetry = 7;
                                 let delay = 1000; // ms
 
                                 let tryGet = () => {
@@ -1359,7 +1359,8 @@ namespace pxt.hexloader {
                                     if (retry > maxRetry) {
                                         pxt.log(`abandonning C++ build`)
                                         pxt.tickEvent("cppcompile.cancel", { retry })
-                                        return undefined;
+                                        resolve(null);
+                                        return;
                                     }
                                     let url = ret.hex.replace(/\.hex/, ".json")
                                     pxt.log(`polling C++ build ${url} (attempt #${retry})`)
