@@ -1338,9 +1338,9 @@ namespace pxt.hexloader {
             .then((hex) => {
                 if (hex) {
                     // Found the hex image in the local server cache, use that
+                    pxt.tickEvent("cppcompile.cachehit")
                     return hex;
                 }
-
                 return getCdnUrlAsync()
                     .then(url => {
                         hexurl = url + "/compile/" + extInfo.sha
@@ -1349,12 +1349,24 @@ namespace pxt.hexloader {
                     .then(r => r, e =>
                         Cloud.privatePostAsync("compile/extension", { data: extInfo.compileData })
                             .then(ret => new Promise<string>((resolve, reject) => {
+                                let retry = 0;
+                                const maxRetry = 5;
+                                let delay = 1000; // ms
+
                                 let tryGet = () => {
+                                    retry++;
+                                    if (retry > maxRetry) {
+                                        pxt.log(`abandonning C++ build`)
+                                        pxt.tickEvent("cppcompile.cancel", { retry })
+                                        return undefined;
+                                    }
                                     let url = ret.hex.replace(/\.hex/, ".json")
-                                    pxt.log(`polling C++ build ${url}`)
+                                    pxt.log(`polling C++ build ${url} (attempt #${retry})`)
+                                    pxt.tickEvent("cppcompile.poll", { retry })
                                     return Util.httpGetJsonAsync(url)
                                         .then(json => {
                                             pxt.log(`build log ${url.replace(/\.json$/, ".log")}`);
+                                            pxt.tickEvent("cppcompile.done", { success: json?.success ? retry : 0 })
                                             if (!json.success) {
                                                 pxt.log(`build failed`);
                                                 if (json.mbedresponse && json.mbedresponse.result && json.mbedresponse.result.exception)
@@ -1367,7 +1379,9 @@ namespace pxt.hexloader {
                                             }
                                         },
                                             e => {
-                                                setTimeout(tryGet, 1000)
+                                                delay = Math.min(30000, delay * 1.5); // exponential back off, max 30sec
+                                                pxt.log(`waiting ${(delay / 1000) | 0}s for C++ build...`)
+                                                setTimeout(tryGet, delay)
                                                 return null
                                             })
                                 }
