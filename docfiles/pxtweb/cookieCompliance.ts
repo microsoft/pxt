@@ -146,7 +146,6 @@ namespace pxt {
 
         if (isNativeApp() || shouldHideCookieBanner()) {
             initializeAppInsightsInternal(true);
-            if (isNativeApp()) setInteractiveConsent(true);
             return;
         }
 
@@ -216,12 +215,14 @@ namespace pxt {
 
         // "cookie" does not actually correspond to whether or not we drop the cookie because we recently
         // switched to immediately dropping it rather than waiting. Instead, we maintain the legacy behavior
-        // of only setting it to true for production sites so that we don't break legacy queries
-        telemetryItem.properties["cookie"] = isProduction;
+        // of only setting it to true for production sites where interactive consent has been obtained
+        // so that we don't break legacy queries
+        telemetryItem.properties["cookie"] = interactiveConsent && isProduction;
 
-        // "interacted" corresponds to whether the user has interacted meaningfully with the site (ie
-        // the "interactiveConsent" flag is set to true). This is automatically set for native apps.
-        telemetryItem.properties["interacted"] = interactiveConsent && isProduction;
+        // "interactiveConsent" corresponds to whether the user has interacted meaningfully with the site
+        // This is the same as "cookie", we are renaming it for clarity in the future.
+        telemetryItem.properties["interactiveConsent"] = interactiveConsent && isProduction;
+
     }
 
     export function setInteractiveConsent(enabled: boolean) {
