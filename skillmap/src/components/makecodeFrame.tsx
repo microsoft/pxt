@@ -193,6 +193,16 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
             }
         };
 
+        if (project.header.tutorialCompleted) {
+            const existing = await getProjectAsync(project.header.id);
+
+            if (existing?.header?.tutorial) {
+                project.header.tutorial = existing.header.tutorial;
+                project.header.tutorial.tutorialStep = project.header.tutorialCompleted.steps - 1;
+                delete project.header.tutorialCompleted;
+            }
+        }
+
         if (activityType !== "tutorial" || project.header.tutorial || project.header.tutorialCompleted) {
             await saveProjectAsync(project);
         }
