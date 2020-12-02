@@ -315,6 +315,7 @@ interface TutorialCardProps extends ISettingsProps {
 export class TutorialCard extends data.Component<TutorialCardProps, TutorialCardState> {
     private prevStep: number;
     private cardHeight: number;
+    private resizeDebouncer: any;
 
     public focusInitialized: boolean;
 
@@ -441,12 +442,13 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
 
     componentDidMount() {
         this.setShowSeeMore(this.props.parent.state.tutorialOptions.autoexpandStep);
-        window.addEventListener('resize', pxt.Util.debounce(this.handleResize, 500));
+        this.resizeDebouncer = pxt.Util.debounce(this.handleResize, 500);
+        window.addEventListener('resize', this.resizeDebouncer);
     }
 
     onMarkdownDidRender() {
         this.setShowSeeMore(this.props.parent.state.tutorialOptions.autoexpandStep);
-        window.removeEventListener('resize', pxt.Util.debounce(this.handleResize, 500));
+        window.removeEventListener('resize', this.resizeDebouncer);
     }
 
     componentWillUnmount() {
