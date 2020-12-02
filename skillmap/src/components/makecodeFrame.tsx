@@ -146,7 +146,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
             }
         }
 
-        if (original.action === "importproject" || original.action === "startactivity") {
+        if (original.action === "importproject") {
             this.onEditorLoaded();
         }
     }
@@ -234,15 +234,15 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
 
     protected handleEditorTickEvent(event: pxt.editor.EditorMessageEventRequest) {
         switch (event.tick) {
-            // FIXME: add a better tick; app.editor fires too early
-            case "app.editor":
-                // this.onEditorLoaded();
+            case "tutorial.editorLoaded":
+                this.onEditorLoaded();
                 break;
             case "tutorial.complete":
                 this.onTutorialFinished();
                 break;
-
         }
+
+        console.log(event.tick);
     }
 
     protected onEditorLoaded() {

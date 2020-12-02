@@ -392,7 +392,8 @@ export class ProjectView
 
     saveProjectAsync(): Promise<void> {
         return this.saveFileAsync()
-            .then(() => pkg.mainEditorPkg().buildAssetsAsync());
+            .then(() => pkg.mainEditorPkg().buildAssetsAsync())
+            .then(() => this.state.header && workspace.saveAsync(this.state.header))
     }
 
     setFileContentAsync(): Promise<void> {
@@ -3584,7 +3585,9 @@ export class ProjectView
                     dependencies,
                     temporary: temporary
                 }).then(() => autoChooseBoard ? this.autoChooseBoardAsync(features) : Promise.resolve());
-            }).catch((e) => {
+            })
+            .then(() => pxt.tickEvent("tutorial.editorLoaded"))
+            .catch((e) => {
                 pxt.reportException(e, { tutorialId });
                 core.warningNotification(lf("Please check your internet connection and check the tutorial is valid."));
                 // go home if possible
