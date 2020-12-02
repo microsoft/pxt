@@ -1334,6 +1334,7 @@ namespace pxt.hexloader {
         let hexurl = ""
 
         showLoading(pxt.U.lf("Compiling (this may take a minute)..."));
+        pxt.tickEvent("cppcompile.start")
         return downloadHexInfoLocalAsync(extInfo)
             .then((hex) => {
                 if (hex) {
