@@ -1354,7 +1354,7 @@ namespace pxt.hexloader {
                                 const maxRetry = 7;
                                 let delay = 1000; // ms
 
-                                let tryGet = () => {
+                                const tryGet = () => {
                                     retry++;
                                     if (retry > maxRetry) {
                                         pxt.log(`abandonning C++ build`)
@@ -1384,7 +1384,7 @@ namespace pxt.hexloader {
                                                 delay = Math.min(30000, delay * 1.5); // exponential back off, max 30sec
                                                 pxt.log(`waiting ${(delay / 1000) | 0}s for C++ build...`)
                                                 setTimeout(tryGet, delay)
-                                                return null
+                                                return
                                             })
                                 }
                                 tryGet();
