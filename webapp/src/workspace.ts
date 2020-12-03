@@ -13,6 +13,7 @@ import * as cloudsync from "./cloudsync"
 import * as indexedDBWorkspace from "./idbworkspace";
 import * as compiler from "./compiler"
 import * as auth from "./auth"
+import * as cloud from "./cloud"
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
@@ -437,6 +438,7 @@ export function importAsync(h: Header, text: ScriptText, isCloud = false) {
 }
 
 export function installAsync(h0: InstallHeader, text: ScriptText) {
+    // TODO @darzu: why do we "install" here? how does that relate to "import"? This is 5 years old...
     U.assert(h0.target == pxt.appTarget.id);
 
     const h = <Header>h0
@@ -1330,15 +1332,21 @@ export function installByIdAsync(id: string) {
                     }, files)))
 }
 
-export function saveToCloudAsync(h: Header) {
+export async function saveToCloudAsync(h: Header) {
     checkHeaderSession(h);
-    return cloudsync.saveToCloudAsync(h)
+    // TODO @darzu: bypass cloudsync ?
+    // TODO @darzu: maybe rely on "syncAsync" instead?
+    const text = await getTextAsync(h.id);
+    return cloud.setAsync(h, h.cloudVersion, text);
+
+    // return cloudsync.saveToCloudAsync(h)
 }
 
 // this promise is set while a sync is in progress
 // cleared when sync is done.
 let syncAsyncPromise: Promise<pxt.editor.EditorSyncState>;
 export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
+    // TODO @darzu: this function shouldn't be needed ideally
     pxt.debug("workspace: sync")
     if (syncAsyncPromise) return syncAsyncPromise;
     return syncAsyncPromise = impl.listAsync()

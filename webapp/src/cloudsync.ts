@@ -513,6 +513,7 @@ function githubSyncAsync(): Promise<void> {
 }
 
 function cloudSyncAsync(): Promise<void> {
+    // TODO @darzu: delete?
     if (!currentProvider)
         return Promise.resolve(undefined)
     if (!currentProvider.hasSync())
@@ -742,7 +743,8 @@ export function loginCheck() {
         impl.loginCheck();
 }
 
-export function saveToCloudAsync(h: Header) {
+export async function saveToCloudAsync(h: Header) {
+    // TODO @darzu: why is this null when saving a new local project while logged in?
     if (!currentProvider || !currentProvider.hasSync())
         return Promise.resolve();
 

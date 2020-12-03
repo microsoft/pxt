@@ -48,6 +48,7 @@ declare namespace pxt.workspace {
         blobCurrent_: boolean; // has the current version of the script been pushed to cloud
 
         cloudVersion: string;     // The cloud-assigned version number (e.g. etag)
+        // TODO @darzu: "cloudCurrent" seems very bad. This is a stateful notation and it is hard to reason about whether or not this is true.
         cloudCurrent: boolean;    // Has the current version of the project been pushed to cloud
 
         // Used for Updating projects

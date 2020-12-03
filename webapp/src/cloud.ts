@@ -67,7 +67,8 @@ function getAsync(h: Header): Promise<File> {
     });
 }
 
-function setAsync(h: Header, prevVersion: Version, text?: ScriptText): Promise<Version> {
+// TODO @darzu: is it okay to export this?
+export function setAsync(h: Header, prevVersion: Version, text?: ScriptText): Promise<Version> {
     return new Promise(async (resolve, reject) => {
         const userId = auth.user()?.id;
         h.cloudUserId = userId;
