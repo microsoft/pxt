@@ -8,7 +8,7 @@
     right: 0;
     bottom: 0;
     background-color: var(--modal-overlay-color);
-    z-index: 100;
+    z-index: var(--modal-dimmer-zindex);
 }
 
 .modal {
@@ -40,7 +40,7 @@
 .modal-actions {
     display: flex;
     justify-content: space-around;
-    margin-top: 0.5rem;
+    margin-top: 1rem;
 }
 
 .modal-button {
@@ -51,6 +51,7 @@
     text-align: center;
     cursor: pointer;
     user-select: none;
+    text-transform: uppercase;
 }
 
 .modal-button:hover {

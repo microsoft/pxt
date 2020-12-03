@@ -48,7 +48,7 @@ export class AppModalImpl extends React.Component<AppModalProps> {
         if (!type) return <div />
 
         const completionModalTitle = completionType === "activity" ? lf("Activity Complete!") : lf("Path Complete!");
-        const completionModalText = lf("Good work! You've completed {0}. Keep going!", "{0}");
+        const completionModalText = lf("Good work! You've completed {0}. Collect your certificate and keep going!", "{0}");
         const completionModalTextSegments = completionModalText.split("{0}");
 
         return <Modal title={completionModalTitle} actions={actions} onClose={() => dispatchHideModal()}>
@@ -59,7 +59,7 @@ export class AppModalImpl extends React.Component<AppModalProps> {
     renderRestartWarning() {
         const  { mapId, activity, dispatchHideModal, dispatchRestartActivity } = this.props;
         const restartModalTitle = lf("Restart Activity?");
-        const restartModalText = lf("Are you sure you want to restart {0}? You won't lose your map progress but any code you wrote will be deleted.", "{0}");
+        const restartModalText = lf("Are you sure you want to restart {0}? You won't lose your path progress but the code have written for this activity will be deleted.", "{0}");
         const restartModalTextSegments = restartModalText.split("{0}");
 
         const actions = [
