@@ -252,9 +252,11 @@
 }
 
 .end-card i.icon {
+    opacity: 0;
     font-size: 4rem;
     line-height: 4rem;
     margin: 0;
+    transition: all 1.5s ease;
 }
 
 .end-card:before {
@@ -264,4 +266,9 @@
     width: 2.5rem;
     height: 0.75rem;
     background-color: var(--primary-color);
+}
+
+.end-card.spin i.icon {
+    opacity: 1;
+    transform: rotateZ(720deg);
 }
