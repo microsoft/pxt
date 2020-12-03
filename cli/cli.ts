@@ -4991,6 +4991,50 @@ export function buildAsync(parsed: commandParser.ParsedCommand) {
         }).then((compileOpts) => { });
 }
 
+export async function buildShareSimJsAsync(parsed: commandParser.ParsedCommand) {
+    const id = parsed.args[0];
+    console.log(`Building sim js for ${id}`);
+    const targetVersion = pxt.appTarget.versions.target;
+    const cwd = process.cwd();
+    const builtFolder = path.join("temp", id);
+    nodeutil.mkdirP(builtFolder);
+    process.chdir(builtFolder);
+
+    const mainPkg = new pxt.MainPackage(new Host());
+    mainPkg._verspec = `pub:${id}`;
+
+    await mainPkg.host().downloadPackageAsync(mainPkg);
+    await mainPkg.installAllAsync();
+    const opts = await mainPkg.getCompileOptionsAsync();
+    const compileResult = pxtc.compile(opts);
+    if (compileResult.diagnostics && compileResult.diagnostics.length > 0) {
+        compileResult.diagnostics.forEach(diag => {
+            console.error(diag.messageText)
+        })
+        throw new Error(`Failed to compile share id: ${id}`);
+    }
+
+    // todo: this is duped from runner.ts, maybe move to pxtc so can just keep in one loc?
+    const builtJs = {
+        js: compileResult.outfiles[pxtc.BINARY_JS],
+        targetVersion: targetVersion,
+        fnArgs: compileResult.usedArguments,
+        parts: pxtc.computeUsedParts(compileResult, "ignorebuiltin"),
+        usedBuiltinParts: pxtc.computeUsedParts(compileResult, "onlybuiltin"),
+    };
+
+    const outdir = parsed.flags["output"] as string || path.join(cwd, "docs", "static", "builtjs");
+    nodeutil.mkdirP(outdir);
+    const outputLocation = path.join(outdir, `${id}v${targetVersion}.json`);
+    fs.writeFileSync(
+        outputLocation,
+        JSON.stringify(builtJs)
+    );
+
+    process.chdir(cwd);
+    console.log(`saved prebuilt ${id} to ${outputLocation}`);
+}
+
 export function gendocsAsync(parsed: commandParser.ParsedCommand) {
     const docs = !!parsed.flags["docs"];
     const locs = !!parsed.flags["locs"];
@@ -6319,6 +6363,20 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
             }
         }
     }, buildAsync);
+
+    p.defineCommand({
+        name: "buildsimjs",
+        help: "build sim js for a share link",
+        argString: "<share id>",
+        flags: {
+            output: {
+                description: "Specifies the output folder for the generated files",
+                argument: "output",
+                type: "string",
+                aliases: ["o"]
+            },
+        },
+    }, buildShareSimJsAsync)
 
     simpleCmd("clean", "removes built folders", cleanAsync);
     advancedCommand("cleangen", "remove generated files", cleanGenAsync);
