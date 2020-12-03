@@ -263,13 +263,13 @@ namespace pxt.github {
         }
     }
 
-    function fallbackDownloadTextAsync(repopath: string, commitid: string, filepath: string) {
+    function fallbackDownloadTextAsync(parsed: ParsedRepo, commitid: string, filepath: string) {
         return ghRequestAsync({
-            url: "https://api.github.com/repos/" + repopath + "/contents/" + filepath + "?ref=" + commitid,
+            url: "https://api.github.com/repos/" + join([parsed.slug, "contents", parsed.fileName, filepath + "?ref=" + commitid]),
             method: "GET"
         }).then(resp => {
             const f = resp.json as FileContent
-            isPrivateRepoCache[repopath] = true
+            isPrivateRepoCache[parsed.fullName] = true
             // if they give us content, just return it
             if (f && f.encoding == "base64" && f.content != null)
                 return atob(f.content)
@@ -279,19 +279,20 @@ namespace pxt.github {
     }
 
     export function downloadTextAsync(repopath: string, commitid: string, filepath: string) {
+        const parsed = parseRepoId(repopath);
         // raw.githubusercontent.com doesn't accept ?access_token=... and has wrong CORS settings
         // for Authorization: header; so try anonymous access first, and otherwise fetch using API
 
-        if (isPrivateRepoCache[repopath])
-            return fallbackDownloadTextAsync(repopath, commitid, filepath)
+        if (isPrivateRepoCache[parsed.fullName])
+            return fallbackDownloadTextAsync(parsed, commitid, filepath)
 
         return U.requestAsync({
-            url: "https://raw.githubusercontent.com/" + repopath + "/" + commitid + "/" + filepath,
+            url: "https://raw.githubusercontent.com/" + join([parsed.slug, commitid, parsed.fileName, filepath]),
             allowHttpErrors: true
         }).then(resp => {
             if (resp.statusCode == 200)
                 return resp.text
-            return fallbackDownloadTextAsync(repopath, commitid, filepath)
+            return fallbackDownloadTextAsync(parsed, commitid, filepath)
         })
     }
 
@@ -304,7 +305,8 @@ namespace pxt.github {
     }
 
     export function getCommitsAsync(repopath: string, sha: string): Promise<CommitInfo[]> {
-        return ghGetJsonAsync("https://api.github.com/repos/" + repopath + "/commits?sha=" + sha)
+        const parsed = parseRepoId(repopath);
+        return ghGetJsonAsync("https://api.github.com/repos/" + parsed.slug + "/commits?sha=" + sha)
             .then(objs => objs.map((obj: any) => {
                 const c = obj.commit;
                 c.url = obj.url;
@@ -314,7 +316,8 @@ namespace pxt.github {
     }
 
     export function getCommitAsync(repopath: string, sha: string) {
-        return ghGetJsonAsync("https://api.github.com/repos/" + repopath + "/git/commits/" + sha)
+        const parsed = parseRepoId(repopath);
+        return ghGetJsonAsync("https://api.github.com/repos/" + parsed.slug + "/git/commits/" + sha)
             .then((commit: Commit) => ghGetJsonAsync(commit.tree.url + "?recursive=1")
                 .then((tree: Tree) => {
                     commit.tree = tree
@@ -353,20 +356,23 @@ namespace pxt.github {
     }
 
     export function createObjectAsync(repopath: string, type: string, data: any) {
-        return ghPostAsync(repopath + "/git/" + type + "s", data)
+        const parsed = parseRepoId(repopath);
+        return ghPostAsync(parsed.slug + "/git/" + type + "s", data)
             .then((resp: SHAObject) => resp.sha)
     }
 
     export function postCommitComment(repopath: string, commitSha: string, body: string, path?: string, position?: number) {
-        return ghPostAsync(`${repopath}/commits/${commitSha}/comments`, {
+        const parsed = parseRepoId(repopath);
+        return ghPostAsync(`${parsed.slug}/commits/${commitSha}/comments`, {
             body, path, position
         })
             .then((resp: CommitComment) => resp.id);
     }
 
     export async function fastForwardAsync(repopath: string, branch: string, commitid: string) {
+        const parsed = parseRepoId(repopath);
         const resp = await ghRequestAsync({
-            url: "https://api.github.com/repos/" + repopath + "/git/refs/heads/" + branch,
+            url: `https://api.github.com/repos/${parsed.slug}/git/refs/heads/${branch}`,
             method: "PATCH",
             allowHttpErrors: true,
             data: {
@@ -422,8 +428,9 @@ namespace pxt.github {
     }
 
     export function mergeAsync(repopath: string, base: string, head: string, message?: string) {
+        const parsed = parseRepoId(repopath);
         return ghRequestAsync({
-            url: "https://api.github.com/repos/" + repopath + "/merges",
+            url: `https://api.github.com/repos/${parsed.slug}/merges`,
             method: "POST",
             successCodes: [201, 204, 409],
             data: {
@@ -1107,10 +1114,11 @@ namespace pxt.github {
     export const GIT_JSON = ".git.json"
     const GRAPHQL_URL = "https://api.github.com/graphql";
 
-    export function lookupFile(commit: pxt.github.Commit, path: string) {
+    export function lookupFile(parsed: ParsedRepo, commit: pxt.github.Commit, path: string) {
         if (!commit)
             return null
-        return commit.tree.tree.find(e => e.path == path)
+        const fpath = join([parsed.fileName, path]);
+        return commit.tree.tree.find(e => e.path == fpath)
     }
 
     /**

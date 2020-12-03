@@ -134,8 +134,9 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         } else if (f.name == pxt.CONFIG_NAME) {
             needsReload = true;
             const gs = this.getGitJson()
+            const parsed = this.parsedRepoId();
             for (let d of deletedFiles) {
-                const prev = pxt.github.lookupFile(gs.commit, d)
+                const prev = pxt.github.lookupFile(parsed, gs.commit, d)
                 epkg.setFile(d, prev && prev.blobContent || "// Cannot restore.")
             }
             for (let d of addedFiles) {
@@ -1546,7 +1547,7 @@ class CommitView extends sui.UIElement<CommitViewProps, CommitViewState> {
         return Promise.all(
             files.map(p => {
                 const path = p.name;
-                const oldEnt = pxt.github.lookupFile(commit, path);
+                const oldEnt = pxt.github.lookupFile(githubId, commit, path);
                 if (!oldEnt) return Promise.resolve();
                 return pxt.github.downloadTextAsync(githubId.fullName, commit.sha, path)
                     .then(content => { oldFiles[path] = content; });

@@ -608,8 +608,9 @@ export async function revertAllAsync(hd: Header) {
     if (!gitjsontext)
         return PullStatus.NoSourceControl
     const gitjson = JSON.parse(gitjsontext) as GitJson
+    const parsed = pxt.github.parseRepoId(hd.githubId)
     const commit = gitjson.commit;
-    const configEntry = pxt.github.lookupFile(commit, pxt.CONFIG_NAME);
+    const configEntry = pxt.github.lookupFile(parsed, commit, pxt.CONFIG_NAME);
     const config = pxt.Package.parseAndValidConfig(configEntry && configEntry.blobContent);
     if (!config)
         return PullStatus.NoSourceControl
@@ -618,7 +619,7 @@ export async function revertAllAsync(hd: Header) {
     revertedFiles[GIT_JSON] = gitjsontext;
     revertedFiles[pxt.CONFIG_NAME] = configEntry.blobContent;
     for (const f of config.files.concat(config.testFiles)) {
-        const entry = pxt.github.lookupFile(commit, f);
+        const entry = pxt.github.lookupFile(parsed, commit, f);
         if (!entry || entry.blobContent === undefined) {
             pxt.log(`cannot revert ${f}, corrupted based commit`)
             return PullStatus.NoSourceControl
@@ -809,8 +810,7 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
             data.content = content.substr(m[0].length);
         }
         const sha = gitsha(data.content, data.encoding)
-        const gitPath = pxt.github.join([parsed.fileName, path])
-        const ex = pxt.github.lookupFile(gitjson.commit, gitPath)
+        const ex = pxt.github.lookupFile(parsed, gitjson.commit, path)
         let res: string;
         if (!ex || ex.sha != sha) {
             // look for unfinished merges
@@ -820,6 +820,7 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
             res = await pxt.github.createObjectAsync(parsed.slug, "blob", data)
             if (data.encoding == "utf-8")
                 U.assert(res == sha, `sha not matching ${res} != ${sha}`)
+            const gitPath = pxt.github.join([parsed.fileName, path])
             treeUpdate.tree.push({
                 "path": gitPath,
                 "mode": "100644",
@@ -900,8 +901,8 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
 
     const downloadAsync = async (path: string) => {
         downloadedFiles[path] = true
-        const treeEnt = pxt.github.lookupFile(commit, path)
-        const oldEnt = pxt.github.lookupFile(gitjson.commit, path)
+        const treeEnt = pxt.github.lookupFile(parsed, commit, path)
+        const oldEnt = pxt.github.lookupFile(parsed, gitjson.commit, path)
         const hasChanges = files[path] != null && (!oldEnt || oldEnt.blobContent != files[path])
         if (!treeEnt) {
             // file in pxt.json but not in git:
@@ -919,7 +920,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
                 files[path] = text
             return text
         }
-        text = await pxt.github.downloadTextAsync(parsed.slug, sha, pxt.github.join([parsed.fileName, path]))
+        text = await pxt.github.downloadTextAsync(parsed.fullName, sha, path)
         treeEnt.blobContent = text
         if (gitsha(text) != treeEnt.sha
             // Try adding UTF-8 BOM; this can be stripped over web requests
@@ -964,7 +965,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
         if (hd) // not importing
             U.userError(lf("Invalid pxt.json file."));
         pxt.debug(`github: reconstructing pxt.json`)
-        cfg = pxt.diff.reconstructConfig(files, commit, pxt.appTarget.blocksprj || pxt.appTarget.tsprj);
+        cfg = pxt.diff.reconstructConfig(parsed, files, commit, pxt.appTarget.blocksprj || pxt.appTarget.tsprj);
         files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
     }
     // patch the github references back to local workspaces
@@ -1082,12 +1083,13 @@ export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
     if (!gitjson.commit || !gitjson.commit.tree)
         return
 
+    const parsed = pxt.github.parseRepoId(h.githubId);
     let isCurrent = true
     let needsBlobs = false
     for (let k of Object.keys(files)) {
         if (k == GIT_JSON || k == pxt.SIMSTATE_JSON || k == pxt.SERIAL_EDITOR_FILE)
             continue
-        let treeEnt = pxt.github.lookupFile(gitjson.commit, k)
+        let treeEnt = pxt.github.lookupFile(parsed, gitjson.commit, k)
         if (!treeEnt || treeEnt.type != "blob") {
             isCurrent = false
             continue
