@@ -4994,7 +4994,6 @@ export function buildAsync(parsed: commandParser.ParsedCommand) {
 export async function buildShareSimJsAsync(parsed: commandParser.ParsedCommand) {
     const id = parsed.args[0];
     console.log(`Building sim js for ${id}`);
-    const targetVersion = pxt.appTarget.versions.target;
     const cwd = process.cwd();
     const builtFolder = path.join("temp", id);
     nodeutil.mkdirP(builtFolder);
@@ -5018,7 +5017,7 @@ export async function buildShareSimJsAsync(parsed: commandParser.ParsedCommand) 
 
     const outdir = parsed.flags["output"] as string || path.join(cwd, "docs", "static", "builtjs");
     nodeutil.mkdirP(outdir);
-    const outputLocation = path.join(outdir, `${id}v${targetVersion}.json`);
+    const outputLocation = path.join(outdir, `${id}v${pxt.appTarget.versions.target}.json`);
     fs.writeFileSync(
         outputLocation,
         JSON.stringify(builtJsInfo)
