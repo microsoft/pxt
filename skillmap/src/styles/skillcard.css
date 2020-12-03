@@ -179,6 +179,7 @@
     text-align: center;
     cursor: pointer;
     flex: 1;
+    user-select: none;
 }
 
 .skill-card-button:hover,

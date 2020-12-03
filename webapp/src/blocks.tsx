@@ -850,9 +850,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     loadFileAsync(file: pkg.File): Promise<void> {
         Util.assert(!this.delayLoadXml);
-        Util.assert(!this.loadingXmlPromise);
+        const init = this.loadingXmlPromise || Promise.resolve();
 
-        return this.loadBlocklyAsync()
+        return init
+            .then(() => this.loadBlocklyAsync())
             .then(() => {
                 pxt.blocks.cleanBlocks();
 
