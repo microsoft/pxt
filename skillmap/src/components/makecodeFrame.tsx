@@ -32,7 +32,7 @@ interface MakeCodeFrameState {
     unloading: boolean;
 }
 
-const editorUrl: string = isLocal() ? "http://localhost:3232/index.html" : (window as any).pxtTargetBundle.appTheme.embedUrl
+export const editorUrl: string = isLocal() ? "http://localhost:3232/index.html" : (window as any).pxtTargetBundle.appTheme.embedUrl
 
 class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFrameState> {
     protected ref: HTMLIFrameElement | undefined;

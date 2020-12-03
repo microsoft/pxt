@@ -1827,6 +1827,23 @@ export class ProjectView
         }
     }
 
+    importSkillmapProjectAsync(headerId: string) {
+        const skillmapWorkspace = new pxt.skillmap.IndexedDBWorkspace();
+
+        return skillmapWorkspace.initAsync()
+            .then(() => skillmapWorkspace.getProjectAsync(headerId))
+            .then(project => {
+                if (project.header.tutorial) {
+                    project.header.tutorialCompleted = {
+                        id: project.header.tutorial.tutorial,
+                        steps: project.header.tutorial.tutorialStepInfo.length
+                    };
+                    delete project.header.tutorial;
+                }
+                return this.importProjectAsync(project);
+            })
+    }
+
     initDragAndDrop() {
         draganddrop.setupDragAndDrop(document.body,
             file => file.size < 1000000 && this.isHexFile(file.name) || this.isBlocksFile(file.name),
@@ -4297,6 +4314,12 @@ function handleHash(newHash: { cmd: string; arg: string }, loading: boolean): bo
         case "reload": // need to reload last project - handled later in the load process
             if (loading) pxt.BrowserUtils.changeHash("");
             return false;
+        case "skillmapimport":
+            const headerId = newHash.arg;
+            core.showLoading("skillmapimport", lf("loading project..."));
+            editor.importSkillmapProjectAsync(headerId)
+                .finally(() => core.hideLoading("skillmapimport"));
+            return true;
         case "github": {
             const repoid = pxt.github.parseRepoId(newHash.arg);
             const [ghCmd, ghArg] = newHash.arg.split(':', 2);

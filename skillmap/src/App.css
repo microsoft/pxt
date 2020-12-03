@@ -11,6 +11,9 @@
     --active-color: #850A6B;
     --inactive-color: #EAC6EB;
 
+    --invert-active-color: #fff;
+    --invert-hover-text-color: #850A6B;
+
     --body-background-color: #F9F9F9;
     --default-card-color: #CCC;
     --card-hover-color: #BFBFBF;
@@ -98,6 +101,22 @@ code {
     align-items: center;
     height: var(--header-height);
     width: 3rem;
+}
+
+.header-button {
+    color: var(--invert-active-color);
+    border: 1px solid var(--invert-active-color);
+    padding: 0.5rem;
+    font-size: 1.2rem;
+    text-align: center;
+    cursor: pointer;
+    flex: 1;
+    user-select: none;
+}
+
+.header-button:hover {
+    background-color: var(--hover-color);
+    color: var(--invert-hover-text-color);
 }
 
 /* TOP BANNER */
