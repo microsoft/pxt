@@ -13,7 +13,16 @@ namespace pxt.runner {
         highContrast?: boolean;
         light?: boolean;
         fullScreen?: boolean;
-        dependencies?: string[]
+        dependencies?: string[];
+        builtJsInfo?: BuiltSimJsInfo;
+    }
+
+    export interface BuiltSimJsInfo {
+        js: string;
+        simVersion?: semver.Version;
+        fnArgs?: Map<String[]>;
+        parts?: string[];
+        usedBuiltinParts?: string[];
     }
 
     class EditorPackage {
@@ -349,17 +358,67 @@ namespace pxt.runner {
     }
 
     export async function simulateAsync(container: HTMLElement, simOptions: SimulateOptions) {
-        let didUpgrade = false;
+        const builtSimJS = simOptions.builtJsInfo || await buildSimJsInfo(simOptions);
+        const {
+            js,
+            fnArgs,
+            parts,
+            usedBuiltinParts
+        } = builtSimJS;
 
+        if (!js) {
+            console.error("Program failed to compile");
+            return;
+        }
+
+        let options: pxsim.SimulatorDriverOptions = {};
+        options.onSimulatorCommand = msg => {
+            if (msg.command === "restart") {
+                runOptions.storedState = getStoredState(simOptions.id)
+                driver.run(js, runOptions);
+            }
+            if (msg.command == "setstate") {
+                if (msg.stateKey && msg.stateValue) {
+                    setStoredState(simOptions.id, msg.stateKey, msg.stateValue)
+                }
+            }
+        };
+
+        let driver = new pxsim.SimulatorDriver(container, options);
+
+        let board = pxt.appTarget.simulator.boardDefinition;
+        let storedState: Map<string> = getStoredState(simOptions.id)
+        let runOptions: pxsim.SimulatorRunOptions = {
+            boardDefinition: board,
+            parts: parts,
+            builtinParts: usedBuiltinParts,
+            fnArgs: fnArgs,
+            cdnUrl: pxt.webConfig.commitCdnUrl,
+            localizedStrings: Util.getLocalizedStrings(),
+            highContrast: simOptions.highContrast,
+            storedState: storedState,
+            light: simOptions.light,
+        };
+        if (pxt.appTarget.simulator && !simOptions.fullScreen)
+            runOptions.aspectRatio = parts.length && pxt.appTarget.simulator.partsAspectRatio
+                ? pxt.appTarget.simulator.partsAspectRatio
+                : pxt.appTarget.simulator.aspectRatio;
+        driver.run(js, runOptions);
+    }
+
+    export async function buildSimJsInfo(simOptions: SimulateOptions): Promise<BuiltSimJsInfo> {
         await loadPackageAsync(simOptions.id, simOptions.code, simOptions.dependencies);
-        let resp = await compileAsync(false, opts => {
+
+        let didUpgrade = false;
+        const currentTargetVersion = pxt.appTarget.versions.target && pxt.semver.parse(pxt.appTarget.versions.target);
+        let compileResult = await compileAsync(false, opts => {
             if (simOptions.code) opts.fileSystem["main.ts"] = simOptions.code;
 
             // Api info needed for py2ts conversion, if project is shared in Python
             if (opts.target.preferredEditor === pxt.PYTHON_PROJECT_NAME) {
                 opts.target.preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME;
                 opts.ast = true;
-                const resp = pxtc.compile(opts)
+                const resp = pxtc.compile(opts);
                 const apis = getApiInfo(resp.ast, opts);
                 opts.apisInfo = apis;
                 opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME;
@@ -367,10 +426,9 @@ namespace pxt.runner {
 
             // Apply upgrade rules if necessary
             const sharedTargetVersion = mainPkg.config.targetVersions.target;
-            const currentTargetVersion = pxt.appTarget.versions.target;
 
             if (sharedTargetVersion && currentTargetVersion &&
-                pxt.semver.cmp(pxt.semver.parse(sharedTargetVersion), pxt.semver.parse(currentTargetVersion)) < 0) {
+                pxt.semver.cmp(pxt.semver.parse(sharedTargetVersion), currentTargetVersion) < 0) {
                 for (const fileName of Object.keys(opts.fileSystem)) {
                     if (!pxt.Util.startsWith(fileName, "pxt_modules") && pxt.Util.endsWith(fileName, ".ts")) {
                         didUpgrade = true;
@@ -380,55 +438,24 @@ namespace pxt.runner {
             }
         });
 
-        if (resp.diagnostics?.length > 0 && didUpgrade) {
+        if (compileResult.diagnostics?.length > 0 && didUpgrade) {
             pxt.log("Compile with upgrade rules failed, trying again with original code");
-            resp = await compileAsync(false, opts => {
+            compileResult = await compileAsync(false, opts => {
                 if (simOptions.code) opts.fileSystem["main.ts"] = simOptions.code;
             });
         }
 
-        if (resp.diagnostics && resp.diagnostics.length > 0) {
-            console.error("Diagnostics", resp.diagnostics)
+        if (compileResult.diagnostics && compileResult.diagnostics.length > 0) {
+            console.error("Diagnostics", compileResult.diagnostics);
         }
-        let js = resp.outfiles[pxtc.BINARY_JS];
-        if (js) {
-            let options: pxsim.SimulatorDriverOptions = {};
-            options.onSimulatorCommand = msg => {
-                if (msg.command === "restart") {
-                    runOptions.storedState = getStoredState(simOptions.id)
-                    driver.run(js, runOptions);
-                }
-                if (msg.command == "setstate") {
-                    if (msg.stateKey && msg.stateValue) {
-                        setStoredState(simOptions.id, msg.stateKey, msg.stateValue)
-                    }
-                }
-            };
 
-            let driver = new pxsim.SimulatorDriver(container, options);
-
-            let fnArgs = resp.usedArguments;
-            let board = pxt.appTarget.simulator.boardDefinition;
-            let parts = pxtc.computeUsedParts(resp, "ignorebuiltin");
-            const usedBuiltinParts = pxtc.computeUsedParts(resp, "onlybuiltin");
-            let storedState: Map<string> = getStoredState(simOptions.id)
-            let runOptions: pxsim.SimulatorRunOptions = {
-                boardDefinition: board,
-                parts: parts,
-                builtinParts: usedBuiltinParts,
-                fnArgs: fnArgs,
-                cdnUrl: pxt.webConfig.commitCdnUrl,
-                localizedStrings: Util.getLocalizedStrings(),
-                highContrast: simOptions.highContrast,
-                storedState: storedState,
-                light: simOptions.light
-            };
-            if (pxt.appTarget.simulator && !simOptions.fullScreen)
-                runOptions.aspectRatio = parts.length && pxt.appTarget.simulator.partsAspectRatio
-                    ? pxt.appTarget.simulator.partsAspectRatio
-                    : pxt.appTarget.simulator.aspectRatio;
-            driver.run(js, runOptions);
-        }
+        return {
+            js: compileResult.outfiles[pxtc.BINARY_JS],
+            simVersion: currentTargetVersion,
+            fnArgs: compileResult.usedArguments,
+            parts: pxtc.computeUsedParts(compileResult, "ignorebuiltin"),
+            usedBuiltinParts: pxtc.computeUsedParts(compileResult, "onlybuiltin"),
+        };
     }
 
     function getStoredState(id: string) {
