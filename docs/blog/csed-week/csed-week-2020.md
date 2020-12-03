@@ -2,7 +2,7 @@
 
 **Posted on December 4th, 2020 by [Jaqster](https://github.com/jaqster)**
 
-Hooray!!! It’s the end of 2020! And Computer Science Education Week is here!
+Hooray!!! It’s the end of 2020! And [Computer Science Education Week](https://www.csedweek.org/) is here!
 
 We’ve got a bunch of fun MakeCode activities for students to do during the week, whether they’re at school or at home.
 
@@ -12,7 +12,7 @@ Minecraft: Education Edition is hosting a free coding world for anyone (you don�
 
 ![Minecraft Demo Lesson](/static/blog/csed-week/csed-week-2020/minecraft-demo.png)
 
-This year’s Hour of Code experience is called “A Tale of Two Villages” and is all about diversity and inclusion.
+This year’s Hour of Code experience is called "A Tale of Two Villages" and is all about diversity and inclusion.
 
 https://youtu.be/FALg48OxtBQ
 
@@ -28,13 +28,11 @@ If 2D games are more your speed, check out the MakeCode Arcade Hour of Code acti
 
 ![Play, Design, Code buttons](/static/blog/csed-week/csed-week-2020/play-design-code.png)
 
-1. Play – Move the arrows to help Asphodel find her way through the maze!
+1. Play - Move the arrows to help Asphodel find her way through the maze!
+2. Design - Draw sprites and backgrounds to create your own version of an existing game
+3. Code - Follow a step-by-step tutorial to create your very own game from scratch!
 
-2. Design – Draw sprites and backgrounds to create your own version of an existing game
-
-3. Code – Follow a step-by-step tutorial to create your very own game from scratch!
-
-And students can print out their own Hour of Code certificates!
+After completing the challenges, students can print out their own Hour of Code certificates!
 
 ![Hour of Code certificate](/static/blog/csed-week/csed-week-2020/hoc-certificate.png)
 
@@ -48,11 +46,11 @@ Learn more at https://arcade.makecode.com/gamejam/ocean.
 
 ## Online Learning Resources
 
-Whether it’s CS Education Week or any time, we’ve compiled some resources for online learning with MakeCode at https://makecode.com/online-learning. You’ll find coding how-to videos, tutorials and projects as well as Educator resources for teaching computer science remotely.
+Whether it’s CS Education Week or any time, we’ve compiled some resources for online learning with MakeCode at https://makecode.com/online-learning. You’ll find coding how-to videos, tutorials and projects, as well as Educator resources for teaching computer science remotely.
 
 ![Online Learning banner](/static/blog/csed-week/csed-week-2020/online-learning.png)
 
-If you have questions, or would like to participate in the MakeCode community, please join the [Forum](https://forum.makecode.com) or follow us on social [@MSMakeCode](https://twitter.com/MSMakeCode).
+If you have questions or would like to participate in the MakeCode community, please join the [Forum](https://forum.makecode.com) or follow us on social [@MSMakeCode](https://twitter.com/MSMakeCode).
 
 <br/>
 Happy Making and Coding!
