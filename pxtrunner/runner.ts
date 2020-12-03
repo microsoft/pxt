@@ -19,7 +19,7 @@ namespace pxt.runner {
 
     export interface BuiltSimJsInfo {
         js: string;
-        simVersion?: semver.Version;
+        targetVersion: string;
         fnArgs?: Map<String[]>;
         parts?: string[];
         usedBuiltinParts?: string[];
@@ -363,7 +363,7 @@ namespace pxt.runner {
             js,
             fnArgs,
             parts,
-            usedBuiltinParts
+            usedBuiltinParts,
         } = builtSimJS;
 
         if (!js) {
@@ -410,7 +410,7 @@ namespace pxt.runner {
         await loadPackageAsync(simOptions.id, simOptions.code, simOptions.dependencies);
 
         let didUpgrade = false;
-        const currentTargetVersion = pxt.appTarget.versions.target && pxt.semver.parse(pxt.appTarget.versions.target);
+        const currentTargetVersion = pxt.appTarget.versions.target;
         let compileResult = await compileAsync(false, opts => {
             if (simOptions.code) opts.fileSystem["main.ts"] = simOptions.code;
 
@@ -428,7 +428,7 @@ namespace pxt.runner {
             const sharedTargetVersion = mainPkg.config.targetVersions.target;
 
             if (sharedTargetVersion && currentTargetVersion &&
-                pxt.semver.cmp(pxt.semver.parse(sharedTargetVersion), currentTargetVersion) < 0) {
+                pxt.semver.cmp(pxt.semver.parse(sharedTargetVersion), pxt.semver.parse(currentTargetVersion)) < 0) {
                 for (const fileName of Object.keys(opts.fileSystem)) {
                     if (!pxt.Util.startsWith(fileName, "pxt_modules") && pxt.Util.endsWith(fileName, ".ts")) {
                         didUpgrade = true;
@@ -451,7 +451,7 @@ namespace pxt.runner {
 
         return {
             js: compileResult.outfiles[pxtc.BINARY_JS],
-            simVersion: currentTargetVersion,
+            targetVersion: currentTargetVersion,
             fnArgs: compileResult.usedArguments,
             parts: pxtc.computeUsedParts(compileResult, "ignorebuiltin"),
             usedBuiltinParts: pxtc.computeUsedParts(compileResult, "onlybuiltin"),
