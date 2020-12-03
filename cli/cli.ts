@@ -5014,21 +5014,14 @@ export async function buildShareSimJsAsync(parsed: commandParser.ParsedCommand) 
         throw new Error(`Failed to compile share id: ${id}`);
     }
 
-    // todo: this is duped from runner.ts, maybe move to pxtc so can just keep in one loc?
-    const builtJs = {
-        js: compileResult.outfiles[pxtc.BINARY_JS],
-        targetVersion: targetVersion,
-        fnArgs: compileResult.usedArguments,
-        parts: pxtc.computeUsedParts(compileResult, "ignorebuiltin"),
-        usedBuiltinParts: pxtc.computeUsedParts(compileResult, "onlybuiltin"),
-    };
+    const builtJsInfo = pxtc.buildSimJsInfo(compileResult);
 
     const outdir = parsed.flags["output"] as string || path.join(cwd, "docs", "static", "builtjs");
     nodeutil.mkdirP(outdir);
     const outputLocation = path.join(outdir, `${id}v${targetVersion}.json`);
     fs.writeFileSync(
         outputLocation,
-        JSON.stringify(builtJs)
+        JSON.stringify(builtJsInfo)
     );
 
     process.chdir(cwd);

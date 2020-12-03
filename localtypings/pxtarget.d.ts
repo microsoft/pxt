@@ -859,6 +859,14 @@ declare namespace ts.pxtc {
         ignoreFileResolutionErrors?: boolean; // ignores triple-slash directive errors; debug only
     }
 
+    interface BuiltSimJsInfo {
+        js: string;
+        targetVersion: string;
+        fnArgs?: pxt.Map<String[]>;
+        parts?: string[];
+        usedBuiltinParts?: string[];
+    }
+
     interface UpgradePolicy {
         type: "api" | "blockId" | "missingPackage" | "package" | "blockValue" | "userenum";
         map?: pxt.Map<string>;

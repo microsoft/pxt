@@ -14,15 +14,7 @@ namespace pxt.runner {
         light?: boolean;
         fullScreen?: boolean;
         dependencies?: string[];
-        builtJsInfo?: BuiltSimJsInfo;
-    }
-
-    export interface BuiltSimJsInfo {
-        js: string;
-        targetVersion: string;
-        fnArgs?: Map<String[]>;
-        parts?: string[];
-        usedBuiltinParts?: string[];
+        builtJsInfo?: pxtc.BuiltSimJsInfo;
     }
 
     class EditorPackage {
@@ -406,7 +398,7 @@ namespace pxt.runner {
         driver.run(js, runOptions);
     }
 
-    export async function buildSimJsInfo(simOptions: SimulateOptions): Promise<BuiltSimJsInfo> {
+    export async function buildSimJsInfo(simOptions: SimulateOptions): Promise<pxtc.BuiltSimJsInfo> {
         await loadPackageAsync(simOptions.id, simOptions.code, simOptions.dependencies);
 
         let didUpgrade = false;
@@ -449,13 +441,7 @@ namespace pxt.runner {
             console.error("Diagnostics", compileResult.diagnostics);
         }
 
-        return {
-            js: compileResult.outfiles[pxtc.BINARY_JS],
-            targetVersion: currentTargetVersion,
-            fnArgs: compileResult.usedArguments,
-            parts: pxtc.computeUsedParts(compileResult, "ignorebuiltin"),
-            usedBuiltinParts: pxtc.computeUsedParts(compileResult, "onlybuiltin"),
-        };
+        return pxtc.buildSimJsInfo(compileResult);
     }
 
     function getStoredState(id: string) {
