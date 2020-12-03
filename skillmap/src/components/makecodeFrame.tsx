@@ -122,7 +122,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
                 this.handleWorkspaceSaveRequestAsync(data as pxt.editor.EditorWorkspaceSaveRequest);
                 break;
             default:
-                console.log(JSON.stringify(data, null, 4));
+                // console.log(JSON.stringify(data, null, 4));
         }
     }
 
@@ -251,8 +251,6 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
                 this.onTutorialFinished();
                 break;
         }
-
-        console.log(event.tick);
     }
 
     protected onEditorLoaded() {
