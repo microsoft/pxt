@@ -1015,7 +1015,7 @@ namespace pxt.cpp {
                 "pxt_gittag": cs.gittag,
                 "libraries": U.values(codalLibraries).map(r => ({
                     "name": r.project,
-                    "url": "https://github.com/" + r.slug,
+                    "url": "https://github.com/" + r.fullName,
                     "branch": r.tag || "master",
                     "type": "git"
                 }))
