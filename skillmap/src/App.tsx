@@ -216,6 +216,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
             if (maps) {
                 for (const map of maps) {
                     user.mapProgress[map.mapId] = {
+                        completionState: "completed",
                         mapId: map.mapId,
                         activityState: {}
                     };

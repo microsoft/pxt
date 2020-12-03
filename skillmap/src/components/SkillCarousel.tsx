@@ -4,7 +4,7 @@ import * as React from "react";
 import { connect } from 'react-redux';
 
 import { SkillMapState } from '../store/reducer';
-import { dispatchChangeSelectedItem, dispatchShowCompletionModal } from '../actions/dispatch';
+import { dispatchChangeSelectedItem, dispatchShowCompletionModal, dispatchSetSkillMapCompleted } from '../actions/dispatch';
 import { isMapCompleted, isMapUnlocked } from '../lib/skillMapUtils';
 import { tickEvent } from '../lib/browserUtils';
 import { Carousel } from './Carousel';
@@ -17,11 +17,14 @@ interface SkillCarouselProps {
     user: UserState;
     selectedItem?: string;
     pageSourceUrl?: string;
+    completionState: "incomplete" | "transitioning" | "completed";
     dispatchChangeSelectedItem: (id: string) => void;
     dispatchShowCompletionModal: (mapId: string, activityId?: string) => void;
+    dispatchSetSkillMapCompleted: (mapId: string) => void;
 }
 
 class SkillCarouselImpl extends React.Component<SkillCarouselProps> {
+    protected carouselRef: any;
     protected items: Item[];
 
     constructor(props: SkillCarouselProps) {
@@ -55,14 +58,19 @@ class SkillCarouselImpl extends React.Component<SkillCarouselProps> {
     }
 
     protected handleEndCardClick = () => {
-        tickEvent("skillmap.carousel.endcard", { map: this.props.map.mapId });
+        tickEvent("skillmap.carousel.endcard.click", { map: this.props.map.mapId });
+        this.props.dispatchShowCompletionModal(this.props.map.mapId);
+    }
+
+    protected handleEndCardTransition = () => {
+        tickEvent("skillmap.carousel.endcard.auto", { map: this.props.map.mapId });
         this.props.dispatchShowCompletionModal(this.props.map.mapId);
     }
 
     protected getEndCard(): JSX.Element {
-        return <div className="end-card" key="end">
+        return <div className={`end-card ${this.props.completionState === "completed" ? "spin" : ""}`} key="end">
             <div className="end-card-icon" onClick={this.handleEndCardClick}>
-                <i className="icon trophy" />
+                <i className="icon trophy" onTransitionEnd={this.handleEndCardTransition} />
             </div>
         </div>
     }
@@ -105,6 +113,14 @@ class SkillCarouselImpl extends React.Component<SkillCarouselProps> {
         }
     }
 
+    componentDidUpdate(props: SkillCarouselProps) {
+        if (props.completionState === "transitioning") {
+            // Scroll to end so user can see end card, then dispatch animation
+            this.carouselRef.scrollTo(10000);
+            setTimeout(() => props.dispatchSetSkillMapCompleted(props.map.mapId), 400);
+        }
+    }
+
     render() {
         const { map, user, selectedItem } = this.props;
         const endCard = isMapCompleted(user, map) ? [this.getEndCard()] : [];
@@ -112,7 +128,8 @@ class SkillCarouselImpl extends React.Component<SkillCarouselProps> {
 
         return <Carousel title={map.displayName} items={this.items} itemTemplate={SkillCard} itemClassName="linked"
             onItemSelect={this.onItemSelect} selectedItem={selectedItem}
-            appendChildren={endCard} titleIcon={requirments && "lock"} titleDecoration={requirments}/>
+            appendChildren={endCard} titleIcon={requirments && "lock"} titleDecoration={requirments}
+            ref={(el) => this.carouselRef = el} />
     }
 }
 
@@ -133,6 +150,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         user: state.user,
         requiredMaps,
         pageSourceUrl: state.pageSourceUrl,
+        completionState: state.user?.mapProgress?.[map.mapId]?.completionState,
         selectedItem: state.selectedItem && ownProps.map?.activities?.[state.selectedItem] ? state.selectedItem : undefined
     }
 }
@@ -168,7 +186,8 @@ return <span>{out}</span>
 
 const mapDispatchToProps = {
     dispatchChangeSelectedItem,
-    dispatchShowCompletionModal
+    dispatchShowCompletionModal,
+    dispatchSetSkillMapCompleted
 };
 
 export const SkillCarousel = connect(mapStateToProps, mapDispatchToProps)(SkillCarouselImpl);

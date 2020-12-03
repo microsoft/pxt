@@ -105,8 +105,7 @@ export class SkillCardImpl extends React.Component<SkillCardProps> {
 
 function mapStateToProps(state: SkillMapState, ownProps: any) {
     const map = state.maps?.[ownProps.mapId];
-
-    const isUnlocked = state.user && map && isActivityUnlocked(state.user, state.maps[ownProps.mapId], ownProps.id);
+    const isUnlocked = state.user && map && isActivityUnlocked(state.user, map, ownProps.id);
 
     let status: SkillCardStatus = isUnlocked ? "notstarted" : "locked";
     let currentStep: number | undefined;
