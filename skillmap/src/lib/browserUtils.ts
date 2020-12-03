@@ -93,7 +93,7 @@ async function fetchSkillMapFromGithub(path: string): Promise<MarkdownFetchResul
             break;
     }
 
-    const tag = ghid.tag || await pxt.github.latestVersionAsync(ghid.fullName, config, true);
+    const tag = ghid.tag || await pxt.github.latestVersionAsync(ghid.slug, config, true);
 
     if (!tag) {
         pxt.log(`skillmap github tag not found at ${ghid.fullName}`);

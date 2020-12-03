@@ -322,7 +322,7 @@ export class EditorPackage {
         let parsed = pxt.github.parseRepoId(p.verArgument())
         if (!parsed) return Promise.resolve();
         return pxt.targetConfigAsync()
-            .then(config => pxt.github.latestVersionAsync(parsed.fullName, config.packages))
+            .then(config => pxt.github.latestVersionAsync(parsed.slug, config.packages))
             .then(tag => { parsed.tag = tag })
             .then(() => pxt.github.pkgConfigAsync(parsed.fullName, parsed.tag))
             .catch(core.handleNetworkError)

@@ -3468,7 +3468,7 @@ export class ProjectView
                             reportId = "https://github.com/" + ghid.fullName;
                             break;
                     }
-                    return (ghid.tag ? Promise.resolve(ghid.tag) : pxt.github.latestVersionAsync(ghid.fullName, config, true))
+                    return (ghid.tag ? Promise.resolve(ghid.tag) : pxt.github.latestVersionAsync(ghid.slug, config, true))
                         .then(tag => {
                             if (!tag) {
                                 pxt.log(`tutorial github tag not found at ${ghid.fullName}`);
