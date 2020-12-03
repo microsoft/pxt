@@ -4,6 +4,8 @@ import * as actions from './types'
 export const dispatchAddSkillMap = (map: SkillMap) => ({ type: actions.ADD_SKILL_MAP, map });
 export const dispatchClearSkillMaps = () => ({ type: actions.CLEAR_SKILL_MAPS });
 export const dispatchChangeSelectedItem = (id: string) => ({ type: actions.CHANGE_SELECTED_ITEM, id });
+export const dispatchSetSkillMapCompleted = (mapId: string) => ({ type: actions.SET_SKILL_MAP_COMPLETED, mapId });
+
 export const dispatchSetHeaderIdForActivity = (id: string, currentStep: number, maxSteps: number) => ({ type: actions.SET_HEADERID_FOR_ACTIVITY, id, currentStep, maxSteps });
 export const dispatchOpenActivity = (mapId: string, activityId: string) => ({ type: actions.OPEN_ACTIVITY, mapId, activityId });
 export const dispatchCloseActivity = (finished = false) => ({ type: actions.CLOSE_ACTIVITY, finished });

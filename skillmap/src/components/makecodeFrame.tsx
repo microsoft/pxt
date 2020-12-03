@@ -37,7 +37,7 @@ export const editorUrl: string = isLocal() ? "http://localhost:3232/index.html" 
 class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFrameState> {
     protected ref: HTMLIFrameElement | undefined;
     protected messageQueue: any[] = [];
-    protected finishedTutorial = false;
+    protected finishedActivityState: "saving" | "finished" | undefined;
     protected nextId: number = 0;
     protected pendingMessages: {[index: string]: any} = {};
 
@@ -90,8 +90,10 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
                 // trying to unload the makecode iframe. Instead, we set the src to about:blank, wait for
                 // that to load, and then unload the iframe
                 if (this.state.unloading) {
-                    this.props.dispatchCloseActivity();
+                    this.props.dispatchCloseActivity(this.finishedActivityState === "finished");
                     this.props.dispatchUpdateUserCompletedTags();
+
+                    this.finishedActivityState = undefined;
                 }
             });
         }
@@ -130,8 +132,8 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
         const { save } = this.props;
 
         if (original.action === "saveproject" && save) {
-            if (this.finishedTutorial) {
-                this.finishedTutorial = false;
+            if (this.finishedActivityState === "saving") {
+                this.finishedActivityState = "finished";
 
                 // Save again to be sure we get any final edits
                 this.sendMessage({
@@ -262,7 +264,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
 
     protected onTutorialFinished() {
         tickEvent("skillmap.activity.complete");
-        this.finishedTutorial = true;
+        this.finishedActivityState = "saving";
         this.props.dispatchSaveAndCloseActivity();
     }
 }
