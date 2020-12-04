@@ -61,6 +61,7 @@ interface UserState {
 interface MapState {
     mapId: string;
     activityState: {[index: string]: ActivityState};
+    completionState: "incomplete" | "transitioning" | "completed";
 }
 
 interface ActivityState {
