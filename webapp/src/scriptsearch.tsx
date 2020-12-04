@@ -422,7 +422,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         const ghName = (scr: pxt.github.GitRepo) => {
             let n = scr.name.replace(/^pxt-/, "");
             if (scr.fileName)
-                n = lf("{0}/{1}", n, scr.fileName)
+                n = lf("{0} / {1}", n, scr.fileName)
             return n;
         }
 
@@ -491,7 +491,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                             )}
                             {ghdata.data.filter(repo => repo.status == pxt.github.GitRepoStatus.Approved).map(scr =>
                                 <ScriptSearchCodeCard
-                                    name={scr.name.replace(/^pxt-/, "")}
+                                    name={ghName(scr)}
                                     description={scr.description}
                                     key={'gha' + scr.fullName}
                                     scr={scr}
