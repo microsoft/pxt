@@ -1508,8 +1508,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     setDiagnostics(file: pkg.File, snapshot: string[]) {
-        Util.assert(this.editor != undefined); // Guarded
-        Util.assert(this.currFile == file)
+        if (!this.editor || this.currFile !== file)  // async outdated set diagnostics
+            return;
         this.diagSnapshot = snapshot
         this.forceDiagnosticsUpdate()
     }
