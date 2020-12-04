@@ -48,18 +48,29 @@ export class AppModalImpl extends React.Component<AppModalProps> {
         if (!type) return <div />
 
         const completionModalTitle = completionType === "activity" ? lf("Activity Complete!") : lf("Path Complete!");
-        const completionModalText = lf("Good work! You've completed {0}. Keep going!", "{0}");
+        const completionModalText = lf("Good work! You've completed {0}. Collect your certificate and keep going!", "{0}");
         const completionModalTextSegments = completionModalText.split("{0}");
 
-        return <Modal title={completionModalTitle} actions={actions} onClose={() => dispatchHideModal()}>
-            {completionModalTextSegments[0]}{<strong>{displayName}</strong>}{completionModalTextSegments[1]}
-        </Modal>
+        const density = 100;
+
+        return <div className="confetti-container">
+            <Modal title={completionModalTitle} actions={actions} onClose={() => dispatchHideModal()}>
+                {completionModalTextSegments[0]}{<strong>{displayName}</strong>}{completionModalTextSegments[1]}
+            </Modal>
+            {Array(density).fill(0).map((el, i) => {
+                const style = {
+                    animationDelay: `${0.1 * (i % density)}s`,
+                    left: `${1 * (Math.floor(Math.random() * density))}%`
+                }
+                return <div key={i} style={style} className={`confetti ${Math.random() > 0.5 ? "reverse" : ""} color-${Math.floor(Math.random() * 9)}`} />
+            })}
+        </div>
     }
 
     renderRestartWarning() {
         const  { mapId, activity, dispatchHideModal, dispatchRestartActivity } = this.props;
         const restartModalTitle = lf("Restart Activity?");
-        const restartModalText = lf("Are you sure you want to restart {0}? You won't lose your map progress but any code you wrote will be deleted.", "{0}");
+        const restartModalText = lf("Are you sure you want to restart {0}? You won't lose your path progress but the code have written for this activity will be deleted.", "{0}");
         const restartModalTextSegments = restartModalText.split("{0}");
 
         const actions = [
@@ -103,13 +114,13 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
     let completionType: CompletionModalType | undefined;
     let actions: ModalAction[] = [];
 
-    if (currentMapId) {
+    if (currentMapId && type !== "restart-warning") {
         const map = state.maps[currentMapId];
         if (currentActivityId) {
             const activity = map.activities[currentActivityId];
             completionType = "activity";
             displayName = activity.displayName;
-            nextActivityId = activity.next?.[0].activityId;
+            nextActivityId = activity.next?.[0]?.activityId;
 
             actions.push({ label: lf("NEXT"), onClick: () => {
                 tickEvent("skillmap.activity.next", { map: currentMapId, activity: currentActivityId });

@@ -21,6 +21,7 @@ declare namespace pxt {
     interface TargetConfig {
         packages?: PackagesConfig;
         shareLinks?: ShareConfig;
+        skillMap?: SkillMapConfig;
         // common galleries
         galleries?: pxt.Map<string | GalleryProps>;
         // localized galleries
@@ -46,6 +47,10 @@ declare namespace pxt {
 
     interface ShareConfig {
         approved?: string[];
+    }
+
+    interface SkillMapConfig {
+        defaultPath?: string;
     }
 
     interface AppTarget {

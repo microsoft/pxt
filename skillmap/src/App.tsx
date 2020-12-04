@@ -58,8 +58,9 @@ class AppImpl extends React.Component<AppProps, AppState> {
         window.addEventListener("hashchange", this.handleHashChange);
     }
 
-    protected handleHashChange = (e: HashChangeEvent) => {
-        let hash = parseHash();
+    protected handleHashChange = async (e: HashChangeEvent) => {
+        let config = await pxt.targetConfigAsync();
+        let hash = parseHash(window.location.hash || config.skillMap?.defaultPath);
         this.fetchAndParseSkillMaps(hash.cmd as MarkdownSource, hash.arg);
 
         e.stopPropagation();
@@ -146,6 +147,8 @@ class AppImpl extends React.Component<AppProps, AppState> {
             } catch {
                 this.handleError();
             }
+        } else {
+            this.setState({ error: lf("No content loaded.") })
         }
 
         let user = await getUserStateAsync();
@@ -170,7 +173,8 @@ class AppImpl extends React.Component<AppProps, AppState> {
     async componentDidMount() {
         this.unsubscribeChangeListener = store.subscribe(this.onStoreChange);
         this.queryFlags = parseQuery();
-        let hash = parseHash();
+        let config = await pxt.targetConfigAsync();
+        let hash = parseHash(window.location.hash || config.skillMap?.defaultPath);
         await this.initLocalizationAsync();
         this.fetchAndParseSkillMaps(hash.cmd as MarkdownSource, hash.arg);
     }
@@ -216,6 +220,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
             if (maps) {
                 for (const map of maps) {
                     user.mapProgress[map.mapId] = {
+                        completionState: "completed",
                         mapId: map.mapId,
                         activityState: {}
                     };

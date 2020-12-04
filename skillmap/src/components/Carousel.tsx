@@ -41,6 +41,10 @@ export class Carousel extends React.Component<CarouselProps, CarouselState> {
         window.removeEventListener("resize", this.handleScroll);
     }
 
+    scrollTo = (left: number) => {
+        this.carouselRef.scrollTo(left, 0);
+    }
+
     protected handleLeftArrowClick = () => {
         this.carouselRef.scrollBy({ left: - (window.innerWidth / 2) });
     }

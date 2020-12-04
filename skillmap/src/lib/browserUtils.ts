@@ -10,14 +10,13 @@ export interface MarkdownFetchResult {
     status: PageSourceStatus;
 }
 
-export function parseHash() {
-    let hash = { cmd: '', arg: '' };
-    // TODO shakao remove testing url later
-    let match = /^#(\w+)(:([:./\-+=\w]+))?/.exec(window.location.hash || "#github:microsoft/pxt-skillmap-sample/skillmap.md")
+export function parseHash(hash?: string) {
+    let parsed = { cmd: '', arg: '' };
+    let match = /^(\w+)(:([:./\-+=\w]+))?/.exec((hash || window.location.hash).replace(/^#/, ""))
     if (match) {
-        hash = { cmd: match[1], arg: match[3] || '' };
+        parsed = { cmd: match[1], arg: match[3] || '' };
     }
-    return hash;
+    return parsed;
 }
 
 export function parseQuery() {

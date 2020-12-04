@@ -63,39 +63,41 @@ export class SkillCardImpl extends React.Component<SkillCardProps> {
     render() {
         const { label, description, imageUrl, tags, status, currentStep, maxSteps} = this.props;
 
-        return <div className={`skill-card ${status || ''}`}>
-            <div className="skill-card-display">
-                <div className="skill-card-image">
-                    {imageUrl ? <img src={imageUrl} alt={lf("Preview of activity content")} /> : <i className={`icon ${status !== "locked" ? "game" : ""}`} />}
-                </div>
-                <div className="skill-card-label">
-                    <div className="skill-card-title">
-                        {status === "completed" && <i className={`icon check circle`} />}
-                        {status === "inprogress" && maxSteps &&
-                            <span className="circular-label">{`${currentStep}/${maxSteps}`}</span>
-                        }
-                        <span>{label}</span>
+        return <div className="skill-card-container">
+            <div className={`skill-card ${status || ''}`}>
+                <div className="skill-card-display">
+                    <div className="skill-card-image">
+                        {imageUrl ? <img src={imageUrl} alt={lf("Preview of activity content")} /> : <i className={`icon ${status !== "locked" ? "game" : ""}`} />}
                     </div>
-                    <div className="skill-card-tags">
-                        {tags?.map((t, i) => {
-                            return <div key={i}>{t}</div>
-                        })}
-                    </div>
-                </div>
-                {status === "locked" && <div className="skill-card-overlay"><i className="icon lock" /></div>}
-            </div>
-            <div className="skill-card-info">
-                <div className="skill-card-title">{label}</div>
-                <div className="skill-card-description">{description}</div>
-                <div className="spacer"></div>
-                <div className="skill-card-action">
-                    {status === "completed" &&
-                        <div className="skill-card-button-icon" role="button" onClick={this.handleRestartButtonClick}>
-                            <i className="xicon redo"></i>
+                    <div className="skill-card-label">
+                        <div className="skill-card-title">
+                            {status === "completed" && <i className={`icon check circle`} />}
+                            {status === "inprogress" && maxSteps &&
+                                <span className="circular-label">{`${currentStep}/${maxSteps}`}</span>
+                            }
+                            <span>{label}</span>
                         </div>
-                    }
-                    <div className="skill-card-button" role="button" onClick={this.handleActionButtonClick}>
-                        {this.getSkillCardActionText()}
+                        <div className="skill-card-tags">
+                            {tags?.map((t, i) => {
+                                return <div key={i}>{t}</div>
+                            })}
+                        </div>
+                    </div>
+                    {status === "locked" && <div className="skill-card-overlay"><i className="icon lock" /></div>}
+                </div>
+                <div className="skill-card-info">
+                    <div className="skill-card-title">{label}</div>
+                    <div className="skill-card-description">{description}</div>
+                    <div className="spacer"></div>
+                    <div className="skill-card-action">
+                        {status === "completed" &&
+                            <div className="skill-card-button-icon" role="button" onClick={this.handleRestartButtonClick}>
+                                <i className="xicon redo"></i>
+                            </div>
+                        }
+                        <div className="skill-card-button" role="button" onClick={this.handleActionButtonClick}>
+                            {this.getSkillCardActionText()}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -105,8 +107,7 @@ export class SkillCardImpl extends React.Component<SkillCardProps> {
 
 function mapStateToProps(state: SkillMapState, ownProps: any) {
     const map = state.maps?.[ownProps.mapId];
-
-    const isUnlocked = state.user && map && isActivityUnlocked(state.user, state.maps[ownProps.mapId], ownProps.id);
+    const isUnlocked = state.user && map && isActivityUnlocked(state.user, map, ownProps.id);
 
     let status: SkillCardStatus = isUnlocked ? "notstarted" : "locked";
     let currentStep: number | undefined;

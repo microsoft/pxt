@@ -32,12 +32,12 @@ interface MakeCodeFrameState {
     unloading: boolean;
 }
 
-const editorUrl: string = isLocal() ? "http://localhost:3232/index.html" : (window as any).pxtTargetBundle.appTheme.embedUrl
+export const editorUrl: string = isLocal() ? "http://localhost:3232/index.html" : (window as any).pxtTargetBundle.appTheme.embedUrl
 
 class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFrameState> {
     protected ref: HTMLIFrameElement | undefined;
     protected messageQueue: any[] = [];
-    protected finishedTutorial = false;
+    protected finishedActivityState: "saving" | "finished" | undefined;
     protected nextId: number = 0;
     protected pendingMessages: {[index: string]: any} = {};
 
@@ -90,8 +90,10 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
                 // trying to unload the makecode iframe. Instead, we set the src to about:blank, wait for
                 // that to load, and then unload the iframe
                 if (this.state.unloading) {
-                    this.props.dispatchCloseActivity();
+                    this.props.dispatchCloseActivity(this.finishedActivityState === "finished");
                     this.props.dispatchUpdateUserCompletedTags();
+
+                    this.finishedActivityState = undefined;
                 }
             });
         }
@@ -122,7 +124,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
                 this.handleWorkspaceSaveRequestAsync(data as pxt.editor.EditorWorkspaceSaveRequest);
                 break;
             default:
-                console.log(JSON.stringify(data, null, 4));
+                // console.log(JSON.stringify(data, null, 4));
         }
     }
 
@@ -130,8 +132,8 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
         const { save } = this.props;
 
         if (original.action === "saveproject" && save) {
-            if (this.finishedTutorial) {
-                this.finishedTutorial = false;
+            if (this.finishedActivityState === "saving") {
+                this.finishedActivityState = "finished";
 
                 // Save again to be sure we get any final edits
                 this.sendMessage({
@@ -146,7 +148,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
             }
         }
 
-        if (original.action === "importproject" || original.action === "startactivity") {
+        if (original.action === "importproject") {
             this.onEditorLoaded();
         }
     }
@@ -193,6 +195,16 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
             }
         };
 
+        if (project.header.tutorialCompleted) {
+            const existing = await getProjectAsync(project.header.id);
+
+            if (existing?.header?.tutorial) {
+                project.header.tutorial = existing.header.tutorial;
+                project.header.tutorial.tutorialStep = project.header.tutorialCompleted.steps - 1;
+                delete project.header.tutorialCompleted;
+            }
+        }
+
         if (activityType !== "tutorial" || project.header.tutorial || project.header.tutorialCompleted) {
             await saveProjectAsync(project);
         }
@@ -234,14 +246,12 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
 
     protected handleEditorTickEvent(event: pxt.editor.EditorMessageEventRequest) {
         switch (event.tick) {
-            // FIXME: add a better tick; app.editor fires too early
-            case "app.editor":
-                // this.onEditorLoaded();
+            case "tutorial.editorLoaded":
+                this.onEditorLoaded();
                 break;
             case "tutorial.complete":
                 this.onTutorialFinished();
                 break;
-
         }
     }
 
@@ -254,7 +264,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
 
     protected onTutorialFinished() {
         tickEvent("skillmap.activity.complete");
-        this.finishedTutorial = true;
+        this.finishedActivityState = "saving";
         this.props.dispatchSaveAndCloseActivity();
     }
 }

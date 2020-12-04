@@ -7,26 +7,32 @@
     --secondary-color: #EAC6EB;
     --tertiary-color: #850A6B;
 
-    --hover-color: #EAC6EB;
-    --active-color: #850A6B;
-    --inactive-color: #EAC6EB;
+    --hover-color: var(--secondary-color);
+    --active-color:var(--tertiary-color);
+    --inactive-color: var(--secondary-color);
+
+    --invert-active-color: #fff;
+    --invert-hover-text-color: #850A6B;
 
     --body-background-color: #F9F9F9;
     --default-card-color: #CCC;
     --card-hover-color: #BFBFBF;
     --dropdown-hover-color: #CCC;
     --modal-overlay-color: rgba(0, 0, 0, 0.5);
-    --card-overlay-color: rgba(0, 0, 0, 0.2);
     --inverted-text-color: var(--white);
     --subtitle-text-color: #6e6e6e;
 
     --header-height: 4rem;
 
     --body-font-family: "Share Tech Mono", Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
+
+    --frame-loader-zindex: 5;
+    --above-frame-zindex: 10;
+    --modal-dimmer-zindex: 100;
 }
 
-
 body {
+    position: relative;
     margin: 0;
     font-family: var(--body-font-family);
     -webkit-font-smoothing: antialiased;
@@ -100,6 +106,22 @@ code {
     width: 3rem;
 }
 
+.header-button {
+    color: var(--invert-active-color);
+    border: 1px solid var(--invert-active-color);
+    padding: 0.5rem;
+    font-size: 1.2rem;
+    text-align: center;
+    cursor: pointer;
+    flex: 1;
+    user-select: none;
+}
+
+.header-button:hover {
+    background-color: var(--hover-color);
+    color: var(--invert-hover-text-color);
+}
+
 /* TOP BANNER */
 .banner {
     background-color:  var(--secondary-color);
@@ -161,4 +183,10 @@ code {
 
 .report-abuse-text::placeholder {
     font-style: italic;
+}
+
+/* USABILLA */
+.usabilla_live_button_container {
+    top: unset !important;
+    bottom: 5rem !important;
 }
