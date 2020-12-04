@@ -4222,7 +4222,7 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
             if (loading) pxt.BrowserUtils.changeHash("");
             return false;
         case "skillmapimport":
-            const headerId = newHash.arg;
+            const headerId = hash.arg;
             core.showLoading("skillmapimport", lf("loading project..."));
             editor.importSkillmapProjectAsync(headerId)
                 .finally(() => core.hideLoading("skillmapimport"));
