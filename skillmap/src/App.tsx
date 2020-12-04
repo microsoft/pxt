@@ -28,6 +28,10 @@ import './App.css';
 import { MakeCodeFrame } from './components/makecodeFrame';
 import { getUserStateAsync, saveUserStateAsync } from './lib/workspaceProvider';
 import { Unsubscribe } from 'redux';
+
+// TODO: this file needs to read colors from the target
+import './arcade.css';
+
 (window as any).Promise = Promise;
 
 interface AppProps {
@@ -190,7 +194,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
         const { skillMaps, activityOpen } = this.props;
         const { error } = this.state;
         const maps = Object.keys(skillMaps).map((id: string) => skillMaps[id]);
-        return (<div className="app-container">
+        return (<div className={`app-container ${pxt.appTarget.id}`}>
                 <HeaderBar />
                 { activityOpen ? <MakeCodeFrame /> : <div>
                     <Banner icon="map" />

@@ -8,7 +8,7 @@
     --tertiary-color: #850A6B;
 
     --hover-color: var(--secondary-color);
-    --active-color:var(--tertiary-color);
+    --active-color: var(--tertiary-color);
     --inactive-color: var(--secondary-color);
 
     --invert-active-color: #fff;
