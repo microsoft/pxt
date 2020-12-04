@@ -1019,7 +1019,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
 
     if (!hd) {
         hd = await installAsync({
-            name: pxt.github.join(cfg.name, parsed.fileName),
+            name: cfg.name,
             githubId: repo,
             pubId: "",
             pubCurrent: false,
