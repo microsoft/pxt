@@ -394,12 +394,12 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         try {
             const ghid = this.parsedRepoId();
             const refs = await pxt.github.listRefsExtAsync(ghid.slug, "tags")
-            const tags = pxt.semver.sortLatestTags(Object.keys(refs.refs))
+            const tags = refs?.refs && pxt.semver.sortLatestTags(Object.keys(refs.refs))
             currv = tags[0];
         } catch (e) {
             console.log(e)
         }
-        const v = pxt.semver.parse(pkg.mainPkg.config.version, "0.0.0")
+        const v = pxt.semver.parse(currv, "0.0.0")
         const vmajor = pxt.semver.parse(pxt.semver.stringify(v)); vmajor.major++; vmajor.minor = 0; vmajor.patch = 0;
         const vminor = pxt.semver.parse(pxt.semver.stringify(v)); vminor.minor++; vminor.patch = 0;
         const vpatch = pxt.semver.parse(pxt.semver.stringify(v)); vpatch.patch++;
