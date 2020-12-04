@@ -178,7 +178,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
     private async newBranchAsync() {
         await cloudsync.ensureGitHubTokenAsync();
         const gid = this.parsedRepoId()
-        const initialBranchName = await pxt.github.getNewBranchNameAsync(gid.fullName, "patch-")
+        const initialBranchName = await pxt.github.getNewBranchNameAsync(gid.slug, "patch-")
         const branchName = await core.promptAsync({
             header: lf("New branch name"),
             body: lf("Name cannot have spaces or special characters. Examples: {0}",
@@ -198,7 +198,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         this.showLoading("github.branch", true, lf("creating branch..."));
         try {
             const gs = this.getGitJson()
-            await pxt.github.createNewBranchAsync(gid.fullName, branchName, gs.commit.sha)
+            await pxt.github.createNewBranchAsync(gid.slug, branchName, gs.commit.sha)
             await this.switchProjectToBranchAsync(branchName)
             this.forceUpdate();
         } catch (e) {
@@ -223,7 +223,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
 
     public async showSwitchBranchDialogAsync() {
         const gid = this.parsedRepoId()
-        const branches = await pxt.github.listRefsExtAsync(gid.fullName, "heads")
+        const branches = await pxt.github.listRefsExtAsync(gid.slug, "heads")
         const branchList = Object.keys(branches.refs).map(r => ({
             name: r,
             description: branches.refs[r],
@@ -313,13 +313,13 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             }
         }
         const error = fromError && <div className="ui message warning">
-            {lf("Oops, we could not write to {0}.", parsed.fullName)}
+            {lf("Oops, we could not write to {0}.", parsed.slug)}
             {org}
         </div>;
         const help =
-            <p>{lf("Forking creates a copy of {0} under your account. You can submit your changes back via a pull request.", parsed.fullName)}</p>
+            <p>{lf("Forking creates a copy of {0} under your account. You can submit your changes back via a pull request.", parsed.slug)}</p>
         const res = await core.confirmAsync({
-            header: lf("Do you want to fork {0}?", parsed.fullName),
+            header: lf("Do you want to fork {0}?", parsed.slug),
             hasCloseIcon: true,
             helpUrl: "/github/fork",
             jsx: <div>
@@ -335,7 +335,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         this.showLoading("github.fork", true, lf("forking repository (this may take a minute or two)..."))
         try {
             const gs = this.getGitJson();
-            const newGithubId = await pxt.github.forkRepoAsync(parsed.fullName, gs.commit.sha)
+            const newGithubId = await pxt.github.forkRepoAsync(parsed.slug, gs.commit.sha)
             const { header } = this.props.parent.state;
             header.githubId = newGithubId
             gs.repo = header.githubId
@@ -675,7 +675,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
 
             `
             */
-            const id = await pxt.github.createPRFromBranchAsync(gh.fullName, "master", gh.tag, title, msg);
+            const id = await pxt.github.createPRFromBranchAsync(gh.slug, "master", gh.tag, title, msg);
             data.invalidateHeader("pkg-git-pr", this.props.parent.state.header);
             core.infoNotification(lf("Pull request created successfully!", id));
         } catch (e) {
@@ -735,7 +735,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         const user = this.getData("github:user") as pxt.editor.UserInfo;
 
         // don't use gs.prUrl, as it gets cleared often
-        const url = `https://github.com/${githubId.fullName}${master ? "" : `/tree/${githubId.tag}`}`;
+        const url = `https://github.com/${githubId.slug}/${master && !githubId.fileName ? "" : pxt.github.join("tree", githubId.tag || "master", githubId.fileName)}`;
         const needsToken = !pxt.github.token;
         // this will show existing PR if any
         const pr: pxt.github.PullRequest = this.getData("pkg-git-pr:" + header.id)
@@ -756,7 +756,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                             className={haspull === true ? "positive" : ""}
                             text={lf("Pull changes")} title={lf("Pull changes from GitHub to get your code up-to-date.")} onClick={this.handlePullClick} onKeyDown={sui.fireClickOnEnter} />
                         {!isBlocksMode && isOwner &&
-                            <sui.Link className="ui item button desktop only" icon="user plus" href={`https://github.com/${githubId.fullName}/settings/collaboration`} target="_blank" title={lf("Invite others to contributes to this GitHub repository.")} />}
+                            <sui.Link className="ui item button desktop only" icon="user plus" href={`https://github.com/${githubId.slug}/settings/collaboration`} target="_blank" title={lf("Invite others to contributes to this GitHub repository.")} />}
                         <sui.Link className="ui button" icon="external alternate" href={url} title={lf("Open repository in GitHub.")} target="_blank" onKeyDown={sui.fireClickOnEnter} />
                     </div>
                 </div>
@@ -1165,7 +1165,7 @@ class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
                 <i className="exclamation circle icon"></i>
                 <div className="content">
                     {lf("This repository was not found. It might have been deleted or you may not have rights to access it.")}
-                    <sui.Link href={`https://github.com/${githubId.fullName}`} text={lf("Go to GitHub")} />
+                    <sui.Link href={`https://github.com/${githubId.slug}`} text={lf("Go to GitHub")} />
                 </div>
             </div>
 
@@ -1316,7 +1316,7 @@ class PullRequestZone extends sui.StatelessUIElement<GitHubViewProps> {
             </div>
             {(!mergeable && !mergeableUnknown) && <div className="ui field">
                 <sui.Link className="button" text={lf("Resolve conflicts")}
-                    href={`https://github.com/${githubId.fullName}/pull/${pullRequest.number}/conflicts`}
+                    href={`https://github.com/${githubId.slug}/pull/${pullRequest.number}/conflicts`}
                     target="_blank" />
                 <span className="inline-help">{lf("Resolve merge conflicts in GitHub.")}
                     {sui.helpIconLink("/github/pull-requests", lf("Learn about merging pull requests in GitHub."))}
@@ -1481,13 +1481,13 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
                     inverted={inverted}
                     onKeyDown={sui.fireClickOnEnter} />
                 <span className="inline-help">
-                    {lf("Fork your own copy of {0} to your account.", githubId.fullName)}
+                    {lf("Fork your own copy of {0} to your account.", githubId.slug)}
                     {sui.helpIconLink("/github/fork", lf("Learn more about forking repositories."))}
                 </span>
             </div>}
             {needsLicenseMessage && <div className={`ui field`}>
                 <sui.Link className="basic button"
-                    href={`https://github.com/${githubId.fullName}/community/license/new?branch=${githubId.tag}&template=mit`}
+                    href={`https://github.com/${githubId.slug}/community/license/new?branch=${githubId.tag}&template=mit`}
                     inverted={inverted}
                     text={lf("Add license")}
                     target={"_blank"} />
@@ -1533,7 +1533,7 @@ class CommitView extends sui.UIElement<CommitViewProps, CommitViewState> {
         // load commit and compute markdown
         const { githubId, commit } = this.props;
         this.setState({ loading: true });
-        pxt.github.getCommitAsync(githubId.fullName, commit.sha)
+        pxt.github.getCommitAsync(githubId.slug, commit.sha)
             .then(cmt => this.computeDiffAsync(cmt))
             .then(dfs => this.setState({ diffFiles: dfs }))
             .finally(() => this.setState({ loading: false }))
@@ -1645,7 +1645,7 @@ class HistoryZone extends sui.UIElement<GitHubViewProps, HistoryState> {
         const { selectedCommit, expanded, selectedDay } = this.state;
         const inverted = !!pxt.appTarget.appTheme.invertedGitHub;
         const commits = expanded &&
-            this.getData(`gh-commits:${githubId.fullName}#${gs.commit.sha}`) as pxt.github.CommitInfo[];
+            this.getData(`gh-commits:${githubId.slug}#${gs.commit.sha}`) as pxt.github.CommitInfo[];
         const loading = expanded && !commits;
 
         // group commits by day
