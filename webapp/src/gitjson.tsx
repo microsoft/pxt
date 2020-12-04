@@ -1111,7 +1111,7 @@ ${content}
     }
 
     renderCore() {
-        const { diffFiles, blocksMode } = this.props;
+        const { diffFiles, blocksMode, allowRevert } = this.props;
         const targetTheme = pxt.appTarget.appTheme;
         const invertedTheme = targetTheme.invertedMenu && targetTheme.invertedMonaco;
 
@@ -1121,9 +1121,9 @@ ${content}
         return diffFiles.length ? <div className="ui section">
             <div className={`ui ${invertedTheme ? "inverted " : ""} diffheader segment`}>
                 {lf("There are local changes.")}
-                <sui.Button className="small" icon="undo" text={lf("Revert all")}
+                {allowRevert && <sui.Button className="small" icon="undo" text={lf("Revert all")}
                     ariaLabel={lf("Revert all changes")} title={lf("Revert all changes")}
-                    textClass={"landscape only"} onClick={this.revertAllFiles} />
+                    textClass={"landscape only"} onClick={this.revertAllFiles} />}
             </div>
             {displayDiffFiles.map(df => this.showDiff(df))}
         </div> : <div className={`ui ${invertedTheme ? "inverted " : ""}segment`}>
