@@ -247,7 +247,7 @@ export function setHeaderIdForActivity(user: UserState, map: SkillMap, activityI
                         isCompleted
                     }
                 },
-                completionState: shouldTransition ? "transitioning" : user.mapProgress[mapId].completionState
+                completionState: shouldTransition ? "transitioning" : user.mapProgress[mapId]?.completionState
             }
         }
     };
