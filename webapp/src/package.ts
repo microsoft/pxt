@@ -384,12 +384,15 @@ export class EditorPackage {
         const gj = this.files[pxt.github.GIT_JSON]
         if (gj) {
             const gjc: pxt.github.GitJson = JSON.parse(gj.content)
+            const parsed = pxt.github.parseRepoId(gjc.repo);
             if (gjc.commit) {
-                for (let treeEnt of gjc.commit.tree.tree) {
-                    const f = this.files[treeEnt.path]
-                    if (f && treeEnt.blobContent != null)
+                Object.keys(this.files).forEach(fn => {
+                    const treeEnt = pxt.github.lookupFile(parsed, gjc.commit, fn);
+                    if (treeEnt && treeEnt.blobContent != null) {
+                        const f = this.files[fn];
                         f.setBaseGitContent(treeEnt.blobContent)
-                }
+                    }
+                })
             }
         }
     }
