@@ -419,6 +419,13 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
 
         const classes = this.props.parent.createModalClasses("searchdialog");
 
+        const ghName = (scr: pxt.github.GitRepo) => {
+            let n = scr.name.replace(/^pxt-/, "");
+            if (scr.fileName)
+                n = lf("{0} {1}", scr.fileName)
+            return n;
+        }
+
         return (
             <sui.Modal isOpen={visible} dimmer={true}
                 className={classes} size="fullscreen"
@@ -498,7 +505,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                             )}
                             {ghdata.data.filter(repo => repo.status != pxt.github.GitRepoStatus.Approved).map(scr =>
                                 <ScriptSearchCodeCard
-                                    name={scr.name.replace(/^pxt-/, "")}
+                                    name={ghName(scr)}
                                     description={(scr.description || "")}
                                     extracontent={lf("User-provided extension, not endorsed by Microsoft.")}
                                     key={'ghd' + scr.fullName}
