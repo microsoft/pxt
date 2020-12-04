@@ -990,7 +990,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
         await downloadAsync(fn)
 
     if (!cfg.name) {
-        cfg.name = (parsed.project || parsed.fullName).replace(/[^\w\-]/g, "");
+        cfg.name = (parsed.fileName || parsed.project || parsed.fullName).replace(/[^\w\-]/g, "");
         if (!justJSON)
             files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
     }
@@ -1019,7 +1019,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
 
     if (!hd) {
         hd = await installAsync({
-            name: cfg.name,
+            name: pxt.github.join(cfg.name, parsed.fileName),
             githubId: repo,
             pubId: "",
             pubCurrent: false,

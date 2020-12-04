@@ -386,6 +386,19 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             return;
         }
 
+        // we can't really trust the version pxt.json as the user may
+        // have create new releases in github since there.
+        // instead, we query the current tags and find the last one
+        // automatically
+        let currv = pkg.mainPkg.config.version;
+        try {
+            const ghid = this.parsedRepoId();
+            const refs = await pxt.github.listRefsExtAsync(ghid.slug, "tags")
+            const tags = pxt.semver.sortLatestTags(Object.keys(refs.refs))
+            currv = tags[0];
+        } catch (e) {
+            console.log(e)
+        }
         const v = pxt.semver.parse(pkg.mainPkg.config.version, "0.0.0")
         const vmajor = pxt.semver.parse(pxt.semver.stringify(v)); vmajor.major++; vmajor.minor = 0; vmajor.patch = 0;
         const vminor = pxt.semver.parse(pxt.semver.stringify(v)); vminor.minor++; vminor.patch = 0;

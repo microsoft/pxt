@@ -1051,8 +1051,8 @@ namespace pxt.github {
         return id
     }
 
-    export function latestVersionAsync(path: string, config: PackagesConfig, useProxy?: boolean, noCache?: boolean): Promise<string> {
-        const parsed = parseRepoId(path)
+    export function latestVersionAsync(repopath: string, config: PackagesConfig, useProxy?: boolean, noCache?: boolean): Promise<string> {
+        const parsed = parseRepoId(repopath)
 
         if (!parsed) return Promise.resolve<string>(null);
 
