@@ -900,6 +900,7 @@ namespace pxt.github {
                     github: true,
                     owner: rid.owner,
                     fullName: rid.fullName,
+                    slug: rid.slug,
                     name: meta.name,
                     description: meta.description,
                     defaultBranch: "master",
@@ -915,9 +916,9 @@ namespace pxt.github {
     export function searchAsync(query: string, config: pxt.PackagesConfig): Promise<GitRepo[]> {
         if (!config) return Promise.resolve([]);
 
-        let repos = query.split('|').map(parseRepoUrl).filter(repo => !!repo);
+        let repos = query.split('|').map(parseRepoId).filter(repo => !!repo);
         if (repos.length > 0)
-            return Promise.all(repos.map(id => repoAsync(id.path, config)))
+            return Promise.all(repos.map(id => repoAsync(id.fullName, config)))
                 .then(rs => rs.filter(r => r && r.status != GitRepoStatus.Banned)); // allow deep links to github repos
 
         // todo fix search
@@ -930,22 +931,6 @@ namespace pxt.github {
                     .filter(r => !pxt.appTarget.appTheme.githubUrl || `https://github.com/${r.fullName}` != pxt.appTarget.appTheme.githubUrl.toLowerCase())
             )
             .catch(err => []); // offline
-    }
-
-    function parseRepoUrl(url: string): { repo: string; tag?: string; path?: string; } {
-        if (!url) return undefined;
-        url = url.trim()
-        // match github.com urls
-        let m = /^((https:\/\/)?github.com\/)?([^/]+\/[^/#]+)\/?(#(\w+))?$/i.exec(url);
-        if (m) {
-            const r: { repo: string; tag?: string; path?: string; } = {
-                repo: m ? m[3].toLowerCase() : null,
-                tag: m ? m[5] : null
-            }
-            r.path = r.repo + (r.tag ? '#' + r.tag : '');
-            return r;
-        }
-        return undefined;
     }
 
     // parse https://github.com/[company]/[project](/filepath)(#tag)
