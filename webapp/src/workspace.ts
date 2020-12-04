@@ -1298,8 +1298,8 @@ export async function importGithubAsync(id: string): Promise<Header> {
             // ask user before modifying project
             const r = await core.confirmAsync({
                 header: parsed.fileName ? lf("Add a nested extension to existing GitHub repository?") : lf("Initialize GitHub repository for MakeCode?"),
-                body: parsed.fileName ? lf("We need to add a few files under {0} to your GitHub repository {1} to create the nested extension.", parsed.fileName, parsed.slug)
-                    : lf("We need to add a few files to your GitHub repository {0} to make it work with MakeCode.", parsed.fullName),
+                body: parsed.fileName ? lf("We need to add a few files under the /{0} folder to your GitHub repository https://github.com/{1} to create the nested extension.", parsed.fileName, parsed.slug)
+                    : lf("We need to add a few files to your GitHub repository https://github.com/{0} to make it work with MakeCode.", parsed.fullName),
                 agreeLbl: lf("Ok"),
                 hasCloseIcon: true,
                 helpUrl: "/github/import"
