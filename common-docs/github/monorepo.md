@@ -25,7 +25,16 @@ The file structure of an extension containing 2 sub extensions, ``button`` and `
 
 ## How to create a new nested extension?
 
-Created a nested extension is not supported in the MakeCode editor user interface. We recommend creating an empty repository; then moving the files in your favorite Git editor.
+First create a top level GitHub project using MakeCode. Once this is done, it is easy to add new nested repositories:
+
+On the home screen, 
+
+* click on **Import** then **Import URL**
+* enter the GitHub repository URL including the path
+
+    https://github.com/owner/name/path
+
+MakeCode will generate a nested project for you.
 
 ## How to reference a nested extension?
 
