@@ -957,8 +957,16 @@ namespace pxt.github {
             return undefined;
         const owner = m[1];
         const project = m[2];
-        const fileName = m[4];
+        let fileName = m[4];
         const tag = m[6];
+
+        const treeM = fileName && /^tree\/([^\/]+\/)/.exec(fileName)
+        if (treeM) {
+            // https://github.com/pelikhan/mono-demo/tree/master/demo2
+            fileName = fileName.slice(treeM[0].length);
+            // branch info?
+        }
+
         return {
             owner,
             project,
