@@ -662,14 +662,30 @@ export function bumpedVersion(cfg: pxt.PackageConfig) {
 export async function bumpAsync(hd: Header, newVer = "") {
     checkHeaderSession(hd);
 
-    let files = await getTextAsync(hd.id)
-    let cfg = pxt.Package.parseAndValidConfig(files[pxt.CONFIG_NAME]);
+    const files = await getTextAsync(hd.id)
+    const cfg = pxt.Package.parseAndValidConfig(files[pxt.CONFIG_NAME]);
     cfg.version = newVer || bumpedVersion(cfg)
+    const releaseTag = "v" + cfg.version;
+
+    // if any other github repo is referenced, also patch their version
+    // since those extensions are part of the same repo and share the same versions
+    if (cfg.dependencies) {
+        const gh = pxt.github.parseRepoId(hd.githubId);
+        Object.keys(cfg.dependencies).forEach(k => {
+            const ver = cfg.dependencies[k];
+            const ghid = pxt.github.parseRepoId(ver);
+            if (ghid && gh.slug === ghid.slug) {
+                cfg.dependencies[k] = `github:${pxt.github.join(gh.slug, ghid.fileName)}#${releaseTag}`
+                pxt.log(`patching dep ${k} to ${cfg.dependencies[k]}`)
+            }
+        })
+    }
+
     files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
     await saveAsync(hd, files)
     return await commitAsync(hd, {
         message: cfg.version,
-        createRelease: "v" + cfg.version,
+        createRelease: releaseTag,
         binaryJs: true
     })
 }
