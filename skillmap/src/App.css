@@ -31,14 +31,8 @@
     --modal-dimmer-zindex: 100;
 }
 
-html {
-    overflow: auto;
-}
-
 body {
-    height: auto;
     position: relative;
-    overflow: hidden;
     margin: 0;
     font-family: var(--body-font-family);
     -webkit-font-smoothing: antialiased;
