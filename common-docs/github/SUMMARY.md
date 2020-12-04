@@ -16,4 +16,5 @@
     * [token](/github/token)
     * [offline](/github/offline)
     * [explorer](/github/explorer)
+    * [monorepo](/github/monorepo)
     * [FAQ](/github/FAQ)

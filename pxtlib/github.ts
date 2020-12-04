@@ -901,6 +901,7 @@ namespace pxt.github {
                     github: true,
                     owner: rid.owner,
                     fullName: rid.fullName,
+                    fileName: rid.fileName,
                     slug: rid.slug,
                     name: meta.name,
                     description: meta.description,

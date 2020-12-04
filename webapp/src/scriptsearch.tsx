@@ -422,7 +422,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         const ghName = (scr: pxt.github.GitRepo) => {
             let n = scr.name.replace(/^pxt-/, "");
             if (scr.fileName)
-                n = lf("{0} {1}", scr.fileName)
+                n = lf("{0}/{1}", n, scr.fileName)
             return n;
         }
 
