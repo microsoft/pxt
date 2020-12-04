@@ -3,6 +3,12 @@ import * as db from "./db";
 type Header = pxt.workspace.Header;
 type ScriptText = pxt.workspace.ScriptText;
 
+type TextDbEntry = {
+    id: string,
+    files?: ScriptText,
+    _rev: any
+}
+
 export interface BrowserDbWorkspaceProvider extends pxt.workspace.WorkspaceProvider {
     prefix: string;
 }
@@ -16,7 +22,7 @@ export function createBrowserDbWorkspace(namespace: string): BrowserDbWorkspaceP
         return headerDb.getAllAsync()
     }
     async function getAsync(h: Header): Promise<pxt.workspace.File> {
-        const resp = await textDb.getAsync(h.id)
+        const resp: TextDbEntry = await textDb.getAsync(h.id)
         return {
             header: h,
             text: resp.files,
@@ -24,15 +30,13 @@ export function createBrowserDbWorkspace(namespace: string): BrowserDbWorkspaceP
         }
     }
     async function setAsync(h: Header, prevVer: any, text?: ScriptText): Promise<string> {
-        return setCoreAsync(headerDb, textDb, h, prevVer, text);
-    }
-    async function setCoreAsync(headers: db.Table, texts: db.Table, h: Header, prevVer: any, text?: ScriptText): Promise<string> {
-        const retrev = await texts.setAsync({
+        const textEnt: TextDbEntry = { 
             id: h.id,
             files: text,
             _rev: prevVer
-        })
-        const rev = await headers.setAsync(h)
+        }
+        const retrev = await textDb.setAsync(textEnt)
+        const rev = await headerDb.setAsync(h)
         h._rev = rev
         return retrev
     }

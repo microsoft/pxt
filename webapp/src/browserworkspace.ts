@@ -1,127 +1,110 @@
-import * as db from "./db";
-
-let headers: db.Table;
-let texts: db.Table;
+import { BrowserDbWorkspaceProvider, createBrowserDbWorkspace } from "./browserdbworkspace";
 
 type Header = pxt.workspace.Header;
 type ScriptText = pxt.workspace.ScriptText;
 type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
 
-function migratePrefixesAsync(): Promise<void> {
+let currentDb: BrowserDbWorkspaceProvider;
+async function init() {
+    if (!currentDb) {
+        currentDb = await createAndMigrateBrowserDb();
+    }
+}
+
+async function migrateProject(fromWs: WorkspaceProvider, newWs: WorkspaceProvider, h: pxt.workspace.Header): Promise<string> {
+    const old = await fromWs.getAsync(h)
+    // Ignore metadata of the previous script so they get re-generated for the new copy
+    delete (<any>h)._id;
+    delete (<any>h)._rev;
+    return await newWs.setAsync(h, undefined, old.text)
+};
+
+const getVersionedDbPrefix = (majorVersion: number) => {
+    return pxt.appTarget.appTheme.browserDbPrefixes && pxt.appTarget.appTheme.browserDbPrefixes[majorVersion];
+}
+const getCurrentDbPrefix = () => {
     const currentVersion = pxt.semver.parse(pxt.appTarget.versions.target);
     const currentMajor = currentVersion.major;
-    const currentDbPrefix = pxt.appTarget.appTheme.browserDbPrefixes && pxt.appTarget.appTheme.browserDbPrefixes[currentMajor];
+    const currentDbPrefix = getVersionedDbPrefix(currentMajor);
+    return currentDbPrefix
+}
+const getPreviousDbPrefix = () => {
+    // No headers using this prefix yet, attempt to migrate headers from previous major version (or default tables)
+    const currentVersion = pxt.semver.parse(pxt.appTarget.versions.target);
+    const currentMajor = currentVersion.major;
+    const previousMajor = currentMajor - 1;
+    const previousDbPrefix = previousMajor < 0 ? "" : getVersionedDbPrefix(previousMajor);
+    return previousDbPrefix
+}
 
-    if (!currentDbPrefix) {
+async function createAndMigrateBrowserDb(): Promise<BrowserDbWorkspaceProvider> {
+    const currentDbPrefix = getCurrentDbPrefix();
+    let currDb: BrowserDbWorkspaceProvider;
+    if (currentDbPrefix) {
+        currDb = createBrowserDbWorkspace(currentDbPrefix);
+    } else {
         // This version does not use a prefix for storing projects, so just use default tables
-        headers = new db.Table("header");
-        texts = new db.Table("text");
-        return Promise.resolve();
+        currDb = createBrowserDbWorkspace("");
+        return currDb;
     }
 
-    headers = new db.Table(`${currentDbPrefix}-header`);
-    texts = new db.Table(`${currentDbPrefix}-text`);
+    const currHeaders = await currDb.listAsync()
+    if (currHeaders.length) {
+        // There are already scripts using the prefix, so a migration has already happened
+        return currDb;
+    }
 
-    return headers.getAllAsync()
-        .then((allDbHeaders) => {
-            if (allDbHeaders.length) {
-                // There are already scripts using the prefix, so a migration has already happened
-                return Promise.resolve();
-            }
+    // Do a migration
+    const prevDbPrefix = getPreviousDbPrefix();
+    let prevDb: BrowserDbWorkspaceProvider;
+    if (prevDbPrefix) {
+        prevDb = createBrowserDbWorkspace(prevDbPrefix);
+    } else {
+        prevDb = createBrowserDbWorkspace("");
+    }
+    const prevHeaders = await prevDb.listAsync()
+    prevHeaders.forEach(h => migrateProject(prevDb, currDb, h));
 
-            // No headers using this prefix yet, attempt to migrate headers from previous major version (or default tables)
-            const previousMajor = currentMajor - 1;
-            const previousDbPrefix = previousMajor < 0 ? "" : pxt.appTarget.appTheme.browserDbPrefixes && pxt.appTarget.appTheme.browserDbPrefixes[previousMajor];
-            let previousHeaders = new db.Table("header");
-            let previousTexts = new db.Table("text");
-
-            if (previousDbPrefix) {
-                previousHeaders = new db.Table(`${previousDbPrefix}-header`);
-                previousTexts = new db.Table(`${previousDbPrefix}-text`);
-            }
-
-            const copyProject = (h: pxt.workspace.Header): Promise<string> => {
-                return previousTexts.getAsync(h.id)
-                    .then((resp) => {
-                        // Ignore metadata of the previous script so they get re-generated for the new copy
-                        delete (<any>h)._id;
-                        delete (<any>h)._rev;
-                        return setAsync(h, undefined, resp.files);
-                    });
-            };
-
-            return previousHeaders.getAllAsync()
-                .then((previousHeaders: pxt.workspace.Header[]) => {
-                    return Promise.map(previousHeaders, (h) => copyProject(h));
-                })
-                .then(() => { });
-        });
+    return currDb;
 }
 
-function listAsync(): Promise<pxt.workspace.Header[]> {
-    return migratePrefixesAsync()
-        .then(() => headers.getAllAsync());
-}
+export async function copyProjectToLegacyEditor(h: Header, majorVersion: number): Promise<Header> {
+    await init();
 
-function getAsync(h: Header): Promise<pxt.workspace.File> {
-    return texts.getAsync(h.id)
-        .then(resp => ({
-            header: h,
-            text: resp.files,
-            version: resp._rev
-        }));
-}
+    const prefix = getVersionedDbPrefix(majorVersion);
+    const oldDb = createBrowserDbWorkspace(prefix || "");
 
-function setAsync(h: Header, prevVer: any, text?: ScriptText) {
-    return setCoreAsync(headers, texts, h, prevVer, text);
-}
-
-function setCoreAsync(headers: db.Table, texts: db.Table, h: Header, prevVer: any, text?: ScriptText) {
-    let retrev = ""
-    return (!text ? Promise.resolve() :
-        texts.setAsync({
-            id: h.id,
-            files: text,
-            _rev: prevVer
-        }).then(rev => {
-            retrev = rev
-        }))
-        .then(() => headers.setAsync(h))
-        .then(rev => {
-            h._rev = rev
-            return retrev
-        });
-}
-
-export function copyProjectToLegacyEditor(h: Header, majorVersion: number): Promise<Header> {
-    const prefix = pxt.appTarget.appTheme.browserDbPrefixes && pxt.appTarget.appTheme.browserDbPrefixes[majorVersion];
-
-    const oldHeaders = new db.Table(prefix ? `${prefix}-header` : `header`);
-    const oldTexts = new db.Table(prefix ? `${prefix}-text` : `text`);
-
+    // clone header
     const header = pxt.Util.clone(h);
     delete (header as any)._id;
     delete header._rev;
     header.id = pxt.Util.guidGen();
 
-    return getAsync(h)
-        .then(resp => setCoreAsync(oldHeaders, oldTexts, header, undefined, resp.text))
-        .then(rev => header);
+    const resp = await currentDb.getAsync(h)
+    const rev = await oldDb.setAsync(header, undefined, resp.text)
+    return header
 }
 
-function deleteAsync(h: Header, prevVer: any) {
-    return headers.deleteAsync(h)
-        .then(() => texts.deleteAsync({ id: h.id, _rev: h._rev }));
-}
-
-function resetAsync() {
-    // workspace.resetAsync already clears all tables
-    return Promise.resolve();
-}
+// TODO @darzu: might be a better way to provide this wrapping and handle the migration
 export const provider: WorkspaceProvider = {
-    getAsync,
-    setAsync,
-    deleteAsync,
-    listAsync,
-    resetAsync,
+    listAsync: async () => {
+        await init();
+        return currentDb.listAsync();
+    },
+    getAsync: async (h: Header) => {
+        await init();
+        return currentDb.getAsync(h);
+    },
+    setAsync: async (h: Header, prevVersion: pxt.workspace.Version, text?: ScriptText) => {
+        await init();
+        return currentDb.setAsync(h, prevVersion, text);
+    },
+    deleteAsync: async (h: Header, prevVersion: pxt.workspace.Version) => {
+        await init();
+        return currentDb.deleteAsync(h, prevVersion);
+    },
+    resetAsync: async () => {
+        await init();
+        return currentDb.resetAsync();
+    }
 }
