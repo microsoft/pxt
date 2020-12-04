@@ -870,8 +870,8 @@ namespace pxt.github {
         return false;
     }
 
-    export async function repoAsync(id: string, config: pxt.PackagesConfig): Promise<GitRepo> {
-        const rid = parseRepoId(id);
+    export async function repoAsync(repopath: string, config: pxt.PackagesConfig): Promise<GitRepo> {
+        const rid = parseRepoId(repopath);
         if (!rid)
             return undefined;
         const status = repoStatus(rid, config);
@@ -893,7 +893,7 @@ namespace pxt.github {
 
     function proxyRepoAsync(rid: ParsedRepo, status: GitRepoStatus): Promise<GitRepo> {
         // always use proxy
-        return ghProxyWithCdnJsonAsync(`${rid.fullName}`)
+        return ghProxyWithCdnJsonAsync(rid.slug)
             .then(meta => {
                 if (!meta) return undefined;
                 return {
