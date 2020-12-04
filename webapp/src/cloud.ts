@@ -24,7 +24,7 @@ type CloudProject = {
     version: string;
 };
 
-async function listAsync(): Promise<Header[]> {
+export async function listAsync(): Promise<Header[]> {
     return new Promise(async (resolve, reject) => {
         const result = await auth.apiAsync<CloudProject[]>("/api/user/project");
         if (result.success) {
@@ -43,7 +43,7 @@ async function listAsync(): Promise<Header[]> {
     });
 }
 
-function getAsync(h: Header): Promise<File> {
+export function getAsync(h: Header): Promise<File> {
     return new Promise(async (resolve, reject) => {
         const result = await auth.apiAsync<CloudProject>(`/api/user/project/${h.id}`);
         if (result.success) {
@@ -92,11 +92,11 @@ export function setAsync(h: Header, prevVersion: Version, text?: ScriptText): Pr
     });
 }
 
-function deleteAsync(h: Header, prevVersion: Version, text?: ScriptText): Promise<void> {
+export function deleteAsync(h: Header, prevVersion: Version, text?: ScriptText): Promise<void> {
     return Promise.resolve();
 }
 
-function resetAsync(): Promise<void> {
+export function resetAsync(): Promise<void> {
     return Promise.resolve();
 }
 

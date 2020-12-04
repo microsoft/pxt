@@ -14,6 +14,7 @@ import * as indexedDBWorkspace from "./idbworkspace";
 import * as compiler from "./compiler"
 import * as auth from "./auth"
 import * as cloud from "./cloud"
+import * as cloudWorkspace from "./cloudworkspace"
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
@@ -79,11 +80,28 @@ export function setupWorkspace(id: string) {
         case "idb":
             impl = indexedDBWorkspace.provider;
             break;
+        case "cloud":
+            impl = cloudWorkspace.provider;
         case "browser":
         default:
             impl = browserworkspace.provider
             break;
     }
+}
+
+// TODO @darzu: needed?
+export function switchToCloudWorkspace(): string {
+    U.assert(implType !== "cloud", "workspace already cloud");
+    const prevType = implType;
+    impl = cloudWorkspace.provider;
+    implType = "cloud";
+    return prevType;
+}
+
+// TODO @darzu: needed?
+export function switchToWorkspace(id: string) {
+    impl = null;
+    setupWorkspace(id);
 }
 
 async function switchToMemoryWorkspace(reason: string): Promise<void> {
