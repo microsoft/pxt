@@ -778,7 +778,7 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
             await pxt.github.postCommitComment(
                 parsed.slug,
                 commitId,
-                `![${lf("Difference between blocks")}](https://raw.githubusercontent.com/${pxt.github.join([parsed.slug, commitId, parsed.fileName, BLOCKSDIFF_PREVIEW_PATH])}`);
+                `![${lf("Difference between blocks")}](https://raw.githubusercontent.com/${pxt.github.join(parsed.slug, commitId, parsed.fileName, BLOCKSDIFF_PREVIEW_PATH)}`);
         }
 
         await githubUpdateToAsync(hd, {
@@ -820,7 +820,7 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
             res = await pxt.github.createObjectAsync(parsed.slug, "blob", data)
             if (data.encoding == "utf-8")
                 U.assert(res == sha, `sha not matching ${res} != ${sha}`)
-            const gitPath = pxt.github.join([parsed.fileName, path])
+            const gitPath = pxt.github.join(parsed.fileName, path)
             treeUpdate.tree.push({
                 "path": gitPath,
                 "mode": "100644",
@@ -1288,7 +1288,7 @@ export async function importGithubAsync(id: string): Promise<Header> {
         // if the repo does not have a pxt.json file, treat as empty
         // (must be done before)
         const commit = await pxt.github.getCommitAsync(parsed.slug, sha)
-        const pxtConfigPath = pxt.github.join([parsed.fileName, pxt.CONFIG_NAME]);
+        const pxtConfigPath = pxt.github.join(parsed.fileName, pxt.CONFIG_NAME);
         if (!commit.tree.tree.find(f => f.path == pxtConfigPath)) {
             pxt.debug(`github: detected import non-makecode project`)
             if (pxt.shell.isReadOnly())

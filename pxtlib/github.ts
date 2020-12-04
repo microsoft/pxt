@@ -176,7 +176,8 @@ namespace pxt.github {
             }
 
             // load and cache
-            return ghProxyWithCdnJsonAsync(`${repopath}/${tag}/text`)
+            const parsed = parseRepoId(repopath)
+            return ghProxyWithCdnJsonAsync(join(parsed.slug, tag, parsed.fileName, "text"))
                 .then(v => this.packages[key] = { files: v });
         }
 
@@ -265,7 +266,7 @@ namespace pxt.github {
 
     function fallbackDownloadTextAsync(parsed: ParsedRepo, commitid: string, filepath: string) {
         return ghRequestAsync({
-            url: "https://api.github.com/repos/" + join([parsed.slug, "contents", parsed.fileName, filepath + "?ref=" + commitid]),
+            url: "https://api.github.com/repos/" + join(parsed.slug, "contents", parsed.fileName, filepath + "?ref=" + commitid),
             method: "GET"
         }).then(resp => {
             const f = resp.json as FileContent
@@ -287,7 +288,7 @@ namespace pxt.github {
             return fallbackDownloadTextAsync(parsed, commitid, filepath)
 
         return U.requestAsync({
-            url: "https://raw.githubusercontent.com/" + join([parsed.slug, commitid, parsed.fileName, filepath]),
+            url: "https://raw.githubusercontent.com/" + join(parsed.slug, commitid, parsed.fileName, filepath),
             allowHttpErrors: true
         }).then(resp => {
             if (resp.statusCode == 200)
@@ -386,7 +387,7 @@ namespace pxt.github {
     export async function putFileAsync(repopath: string, path: string, content: string) {
         const parsed = parseRepoId(repopath);
         await ghRequestAsync({
-            url: `https://api.github.com/repos/${pxt.github.join([parsed.slug, "contents", parsed.fileName, path])}`,
+            url: `https://api.github.com/repos/${pxt.github.join(parsed.slug, "contents", parsed.fileName, path)}`,
             method: "PUT",
             allowHttpErrors: true,
             data: {
@@ -553,9 +554,10 @@ namespace pxt.github {
         // TODO  support fetching a tag
         if (/^[a-f0-9]{40}$/.test(tag))
             return Promise.resolve(tag)
-        return ghGetJsonAsync("https://api.github.com/repos/" + repopath + "/git/refs/tags/" + tag)
+        const parsed = parseRepoId(repopath)
+        return ghGetJsonAsync(`https://api.github.com/repos/${parsed.slug}/git/refs/tags/${tag}`)
             .then(resolveRefAsync, e =>
-                ghGetJsonAsync("https://api.github.com/repos/" + repopath + "/git/refs/heads/" + tag)
+                ghGetJsonAsync(`https://api.github.com/repos/${parsed.slug}/git/refs/heads/${tag}`)
                     .then(resolveRefAsync))
     }
 
@@ -1003,7 +1005,7 @@ namespace pxt.github {
         return stringifyRepo(gid);
     }
 
-    export function join(parts: string[]) {
+    export function join(...parts: string[]) {
         return parts.filter(p => !!p).join('/');
     }
 
@@ -1117,7 +1119,7 @@ namespace pxt.github {
     export function lookupFile(parsed: ParsedRepo, commit: pxt.github.Commit, path: string) {
         if (!commit)
             return null
-        const fpath = join([parsed.fileName, path]);
+        const fpath = join(parsed.fileName, path);
         return commit.tree.tree.find(e => e.path == fpath)
     }
 
