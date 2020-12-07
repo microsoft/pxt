@@ -1,4 +1,4 @@
-import * as workspace from "./workspace";
+import * as workspace from "./workspaces/workspace";
 import * as data from "./data";
 import * as core from "./core";
 import * as db from "./db";

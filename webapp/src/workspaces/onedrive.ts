@@ -1,6 +1,6 @@
-import * as core from "./core";
+import * as core from "../core";
 import * as cloudsync from "./cloudsync";
-import * as data from "./data";
+import * as data from "../data";
 
 const rootdir = "/me/drive/special/approot"
 

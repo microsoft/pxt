@@ -2,7 +2,7 @@ import * as React from "react";
 import * as data from "./data";
 import * as sui from "./sui";
 import * as core from "./core";
-import * as workspace from "./workspace";
+import * as workspace from "./workspaces/workspace";
 import * as compiler from "./compiler";
 import * as auth from "./auth";
 

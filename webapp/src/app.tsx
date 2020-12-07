@@ -6,8 +6,8 @@
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import * as workspace from "./workspace";
-import * as cloudsync from "./cloudsync";
+import * as workspace from "./workspaces/workspace";
+import * as cloudsync from "./workspaces/cloudsync";
 import * as data from "./data";
 import * as pkg from "./package";
 import * as core from "./core";

@@ -8,7 +8,7 @@ import * as container from "./container";
 import * as core from "./core";
 import * as auth from "./auth";
 import * as identity from "./identity";
-import * as cloudsync from "./cloudsync";
+import * as cloudsync from "./workspaces/cloudsync";
 import * as pkg from "./package";
 
 type ISettingsProps = pxt.editor.ISettingsProps;

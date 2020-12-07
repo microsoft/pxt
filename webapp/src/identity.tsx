@@ -4,7 +4,7 @@ import * as core from "./core";
 import * as auth from "./auth";
 import * as data from "./data";
 import * as codecard from "./codecard";
-import * as cloudsync from "./cloudsync";
+import * as cloudsync from "./workspaces/cloudsync";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 

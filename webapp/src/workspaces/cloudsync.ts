@@ -1,10 +1,10 @@
 // TODO cloud save indication in the editor somewhere
 
-import * as core from "./core";
-import * as pkg from "./package";
+import * as core from "../core";
+import * as pkg from "../package";
 import * as ws from "./workspace";
-import * as data from "./data";
-import * as cloud from "./cloud";
+import * as data from "../data";
+import * as cloud from "../cloud";
 
 type Header = pxt.workspace.Header;
 type File = pxt.workspace.File;

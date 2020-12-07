@@ -2,7 +2,7 @@ import * as React from "react";
 import * as compiler from "./compiler"
 import * as core from "./core";
 import * as toolbox from "./toolbox";
-import * as workspace from "./workspace";
+import * as workspace from "./workspaces/workspace";
 import * as data from "./data";
 import * as auth from "./auth";
 

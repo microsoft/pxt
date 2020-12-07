@@ -1,8 +1,8 @@
 import * as React from "react";
-import * as sui from "./sui";
-import * as core from "./core";
+import * as sui from "../sui";
+import * as core from "../core";
 import * as cloudsync from "./cloudsync";
-import * as dialogs from "./dialogs";
+import * as dialogs from "../dialogs";
 import * as workspace from "./workspace";
 
 export const PROVIDER_NAME = "github";

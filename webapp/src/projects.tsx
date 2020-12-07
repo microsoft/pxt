@@ -5,9 +5,9 @@ import * as ReactDOM from "react-dom";
 import * as data from "./data";
 import * as sui from "./sui";
 import * as core from "./core";
-import * as cloudsync from "./cloudsync";
+import * as cloudsync from "./workspaces/cloudsync";
 import * as auth from "./auth";
-import * as workspace from "./workspace";
+import * as workspace from "./workspaces/workspace";
 import * as identity from "./identity";
 import * as codecard from "./codecard"
 import * as carousel from "./carousel";

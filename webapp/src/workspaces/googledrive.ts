@@ -1,4 +1,4 @@
-import * as core from "./core";
+import * as core from "../core";
 import * as cloudsync from "./cloudsync";
 
 import U = pxt.U

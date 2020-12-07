@@ -8,7 +8,7 @@ import * as pkg from "./package";
 import * as core from "./core";
 import * as codecard from "./codecard";
 import * as electron from "./electron";
-import * as workspace from "./workspace";
+import * as workspace from "./workspaces/workspace";
 import { SearchInput } from "./components/searchInput";
 
 type ISettingsProps = pxt.editor.ISettingsProps;

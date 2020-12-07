@@ -12,7 +12,7 @@ import * as snippets from "./monacoSnippets"
 import * as pyhelper from "./monacopyhelper";
 import * as simulator from "./simulator";
 import * as toolbox from "./toolbox";
-import * as workspace from "./workspace";
+import * as workspace from "./workspaces/workspace";
 import * as blocklyFieldView from "./blocklyFieldView";
 import { ViewZoneEditorHost, ModalEditorHost, FieldEditorManager } from "./monacoFieldEditorHost";
 import * as data from "./data";

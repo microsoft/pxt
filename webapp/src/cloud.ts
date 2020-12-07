@@ -1,14 +1,13 @@
 import * as core from "./core";
 import * as auth from "./auth";
-import * as ws from "./workspace";
+import * as ws from "./workspaces/workspace";
 import * as data from "./data";
-import * as workspace from "./workspace";
+import * as workspace from "./workspaces/workspace";
 
 type Version = pxt.workspace.Version;
 type File = pxt.workspace.File;
 type Header = pxt.workspace.Header;
 type ScriptText = pxt.workspace.ScriptText;
-type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
 
 import U = pxt.Util;
 

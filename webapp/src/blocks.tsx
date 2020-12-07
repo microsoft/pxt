@@ -8,7 +8,7 @@ import * as toolboxeditor from "./toolboxeditor"
 import * as compiler from "./compiler"
 import * as toolbox from "./toolbox";
 import * as snippets from "./blocksSnippets";
-import * as workspace from "./workspace";
+import * as workspace from "./workspaces/workspace";
 import * as simulator from "./simulator";
 import * as dialogs from "./dialogs";
 import * as blocklyFieldView from "./blocklyFieldView";

@@ -1,5 +1,5 @@
-import * as core from "./core";
-import * as electron from "./electron";
+import * as core from "../core";
+import * as electron from "../electron";
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;

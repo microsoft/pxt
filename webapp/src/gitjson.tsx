@@ -3,13 +3,13 @@ import * as pkg from "./package"
 import * as core from "./core"
 import * as srceditor from "./srceditor"
 import * as sui from "./sui"
-import * as workspace from "./workspace";
+import * as workspace from "./workspaces/workspace";
 import * as dialogs from "./dialogs";
 import * as coretsx from "./coretsx";
 import * as data from "./data";
 import * as markedui from "./marked";
 import * as compiler from "./compiler";
-import * as cloudsync from "./cloudsync";
+import * as cloudsync from "./workspaces/cloudsync";
 import * as tutorial from "./tutorial";
 import * as _package from "./package";
 

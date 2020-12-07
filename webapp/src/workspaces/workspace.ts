@@ -1,19 +1,19 @@
-/// <reference path="../../built/pxtlib.d.ts" />
-/// <reference path="../../built/pxteditor.d.ts" />
-/// <reference path="../../built/pxtwinrt.d.ts" />
+/// <reference path="../../../built/pxtlib.d.ts" />
+/// <reference path="../../../built/pxteditor.d.ts" />
+/// <reference path="../../../built/pxtwinrt.d.ts" />
 
-import * as db from "./db";
-import * as core from "./core";
-import * as data from "./data";
+import * as db from "../db";
+import * as core from "../core";
+import * as data from "../data";
 import * as browserworkspace from "./browserworkspace"
 import * as fileworkspace from "./fileworkspace"
 import * as memoryworkspace from "./memoryworkspace"
 import * as iframeworkspace from "./iframeworkspace"
 import * as cloudsync from "./cloudsync"
 import * as indexedDBWorkspace from "./idbworkspace";
-import * as compiler from "./compiler"
-import * as auth from "./auth"
-import * as cloud from "./cloud"
+import * as compiler from "../compiler"
+import * as auth from "../auth"
+import * as cloud from "../cloud"
 import * as cloudWorkspace from "./cloudworkspace"
 
 import U = pxt.Util;

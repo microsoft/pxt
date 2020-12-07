@@ -1,4 +1,4 @@
-import * as db from "./db";
+import * as db from "../db";
 
 type Header = pxt.workspace.Header;
 type ScriptText = pxt.workspace.ScriptText;

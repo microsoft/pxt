@@ -1,4 +1,4 @@
-import * as workspace from "./workspace";
+import * as workspace from "./workspaces/workspace";
 import * as data from "./data";
 
 type Header = pxt.workspace.Header;
