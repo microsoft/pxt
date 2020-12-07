@@ -81,6 +81,8 @@ export function setupWorkspace(id: string) {
             impl = indexedDBWorkspace.provider;
             break;
         case "cloud":
+            // TODO @darzu: 
+            console.log("CHOOSING CLOUD");
             impl = cloudWorkspace.provider;
         case "browser":
         default:
@@ -93,6 +95,8 @@ export function setupWorkspace(id: string) {
 export function switchToCloudWorkspace(): string {
     U.assert(implType !== "cloud", "workspace already cloud");
     const prevType = implType;
+    // TODO @darzu: 
+    console.log("switchToCloudWorkspace")
     impl = cloudWorkspace.provider;
     implType = "cloud";
     return prevType;
@@ -1352,9 +1356,13 @@ export function installByIdAsync(id: string) {
 
 export async function saveToCloudAsync(h: Header) {
     checkHeaderSession(h);
+    if (!await auth.loggedIn())
+        return;
     // TODO @darzu: bypass cloudsync ?
     // TODO @darzu: maybe rely on "syncAsync" instead?
     const text = await getTextAsync(h.id);
+    // TODO @darzu: debug logging
+    console.log("saveToCloudAsync")
     return cloud.setAsync(h, h.cloudVersion, text);
 
     // return cloudsync.saveToCloudAsync(h)

@@ -26,6 +26,8 @@ type CloudProject = {
 
 export async function listAsync(): Promise<Header[]> {
     return new Promise(async (resolve, reject) => {
+        // TODO @darzu: this is causing errors?
+        console.log("listAsync");
         const result = await auth.apiAsync<CloudProject[]>("/api/user/project");
         if (result.success) {
             const userId = auth.user()?.id;
@@ -80,6 +82,8 @@ export function setAsync(h: Header, prevVersion: Version, text?: ScriptText): Pr
             text: text ? JSON.stringify(text) : undefined,
             version: prevVersion
         }
+        // TODO @darzu: 
+        console.log("setAsync")
         const result = await auth.apiAsync<string>('/api/user/project', project);
         if (result.success) {
             h.cloudCurrent = true;
@@ -108,6 +112,8 @@ export async function syncAsync(): Promise<any> {
         // Filter to cloud-synced headers owned by the current user.
         const localCloudHeaders = workspace.getHeaders(true)
             .filter(h => h.cloudUserId && h.cloudUserId === userId);
+        // TODO @darzu: 
+        console.log("syncAsync: listAsync");
         const remoteHeaders = await listAsync();
         const remoteHeaderMap = U.toDictionary(remoteHeaders, h => h.id);
         const tasks = localCloudHeaders.map(async (local) => {
