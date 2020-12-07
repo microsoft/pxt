@@ -815,8 +815,8 @@ namespace pxt.github {
         const rr: GitRepo = {
             owner: r.owner.login.toLowerCase(),
             slug: r.full_name.toLowerCase(),
-            fullName: options?.fullName || r.full_name.toLowerCase(),
-            fileName: options?.fileName,
+            fullName: (options?.fullName || r.full_name).toLowerCase(),
+            fileName: options?.fileName?.toLocaleLowerCase(),
             name: r.name,
             description: r.description,
             defaultBranch: r.default_branch,
