@@ -1351,13 +1351,14 @@ namespace pxt.hexloader {
                         Cloud.privatePostAsync("compile/extension", { data: extInfo.compileData })
                             .then(ret => new Promise<string>((resolve, reject) => {
                                 let retry = 0;
-                                const maxRetry = 7;
-                                let delay = 1000; // ms
+                                // wait up to 120s
+                                const maxRetry = 12;
+                                let delay = 10000; // ms
 
                                 const tryGet = () => {
                                     retry++;
                                     if (retry > maxRetry) {
-                                        pxt.log(`abandonning C++ build`)
+                                        pxt.log(`abandoning C++ build`)
                                         pxt.tickEvent("cppcompile.cancel", { retry })
                                         resolve(null);
                                         return null;
@@ -1381,7 +1382,6 @@ namespace pxt.hexloader {
                                             }
                                         },
                                             e => {
-                                                delay = Math.min(30000, delay * 1.5); // exponential back off, max 30sec
                                                 pxt.log(`waiting ${(delay / 1000) | 0}s for C++ build...`)
                                                 setTimeout(tryGet, delay)
                                                 return null;
