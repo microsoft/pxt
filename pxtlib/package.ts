@@ -268,6 +268,7 @@ namespace pxt {
             // handle invalid names downstream
             if (this.config.targetVersions
                 && this.config.targetVersions.target
+                && this.config.targetVersions.targetId === pxt.appTarget.id // make sure it's the same target
                 && appTarget.versions
                 && semver.majorCmp(this.config.targetVersions.target, appTarget.versions.target) > 0)
                 U.userError(lf("{0} requires target version {1} (you are running {2})",

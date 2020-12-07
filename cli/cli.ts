@@ -2933,10 +2933,10 @@ function installPackageNameAsync(packageName: string): Promise<void> {
         return addDepAsync(packageName, "*", false);
 
     // github?
-    let parsed = pxt.github.parseRepoId(packageName)
+    const parsed = pxt.github.parseRepoId(packageName)
     if (parsed && parsed.fullName)
         return pxt.packagesConfigAsync()
-            .then(config => (parsed.tag ? Promise.resolve(parsed.tag) : pxt.github.latestVersionAsync(parsed.fullName, config))
+            .then(config => (parsed.tag ? Promise.resolve(parsed.tag) : pxt.github.latestVersionAsync(parsed.slug, config))
                 .then(tag => { parsed.tag = tag })
                 .then(() => pxt.github.pkgConfigAsync(parsed.fullName, parsed.tag))
                 .then(cfg => mainPkg.loadAsync(true)
