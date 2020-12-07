@@ -483,7 +483,7 @@ namespace pxt.github {
     export async function forkRepoAsync(repopath: string, commitid: string, pref = "pr-") {
         const parsed = parseRepoId(repopath);
         const res = await ghPostAsync(`${parsed.slug}/forks`, {})
-        const repoInfo = mkRepo(res, null, parsed.fullName, parsed.fileName, undefined)
+        const repoInfo = mkRepo(res, { fullName: parsed.fullName, fileName: parsed.fileName })
         const endTm = Date.now() + 5 * 60 * 1000
         let refs: RefsResult = null
         while (!refs && Date.now() < endTm) {
@@ -731,7 +731,7 @@ namespace pxt.github {
                     // legacy readme.md annotations
                     return readme && readme.indexOf("PXT/" + pxt.appTarget.id) > -1;
                 })
-                .map((node: any) => mkRepo(node, null, node.full_name, undefined, undefined))
+                .map((node: any) => mkRepo(node, { fullName: node.full_name }))
             );
     }
 
@@ -746,7 +746,7 @@ namespace pxt.github {
             allow_rebase_merge: false,
             allow_merge_commit: true,
             delete_branch_on_merge: false // keep branches for naming purposes
-        }).then(v => mkRepo(v, null, null, null, null))
+        }).then(v => mkRepo(v))
     }
 
     export async function enablePagesAsync(repo: string) {
@@ -805,22 +805,27 @@ namespace pxt.github {
         return Cloud.cdnApiUrl(`gh/${repo.fullName}/icon`)
     }
 
-    function mkRepo(r: Repo, config: pxt.PackagesConfig, fullName: string, fileName: string, tag: string): GitRepo {
+    function mkRepo(r: Repo, options?: {
+        config?: pxt.PackagesConfig,
+        fullName?: string,
+        fileName?: string,
+        tag?: string
+    }): GitRepo {
         if (!r) return undefined;
         const rr: GitRepo = {
             owner: r.owner.login.toLowerCase(),
             slug: r.full_name.toLowerCase(),
-            fullName: fullName || r.full_name.toLowerCase(),
-            fileName: fileName,
+            fullName: options?.fullName || r.full_name.toLowerCase(),
+            fileName: options?.fileName,
             name: r.name,
             description: r.description,
             defaultBranch: r.default_branch,
-            tag: tag,
+            tag: options?.tag,
             updatedAt: Math.round(new Date(r.updated_at).getTime() / 1000),
             fork: r.fork,
             private: r.private,
         }
-        rr.status = repoStatus(rr, config);
+        rr.status = repoStatus(rr, options?.config);
         return rr;
     }
 
@@ -889,7 +894,7 @@ namespace pxt.github {
         }
         // try github apis
         const r = await ghGetJsonAsync("https://api.github.com/repos/" + rid.slug)
-        return mkRepo(r, config, rid.fullName, rid.fileName, rid.tag);
+        return mkRepo(r, { config, fullName: rid.fullName, fileName: rid.fileName, tag: rid.tag });
     }
 
     function proxyRepoAsync(rid: ParsedRepo, status: GitRepoStatus): Promise<GitRepo> {
@@ -927,7 +932,7 @@ namespace pxt.github {
         const fetch = () => U.httpGetJsonAsync(`${pxt.Cloud.apiRoot}ghsearch/${appTarget.id}/${appTarget.platformid || appTarget.id}?q=${encodeURIComponent(query)}`)
         return fetch()
             .then((rs: SearchResults) =>
-                rs.items.map(item => mkRepo(item, config, item.full_name, undefined, undefined))
+                rs.items.map(item => mkRepo(item, { config, fullName: item.full_name }))
                     .filter(r => r.status == GitRepoStatus.Approved || (config.allowUnapproved && r.status == GitRepoStatus.Unknown))
                     // don't return the target itself!
                     .filter(r => !pxt.appTarget.appTheme.githubUrl || `https://github.com/${r.fullName}` != pxt.appTarget.appTheme.githubUrl.toLowerCase())
