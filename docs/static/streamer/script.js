@@ -1092,10 +1092,14 @@ background-image: url(${config.backgroundImage});
         function initAddSite() {
             accessify(addsiteinput);
             addsiteinput.addEventListener("click", ev => {
+                const value = addsiteinput.value;
+                if (!value)
+                    return; // ignore click
                 state.addSite = false;
                 const config = readConfig();
-                const url = normalizeUrl(ev.target.value);
+                const url = normalizeUrl(value);
                 if (url) {
+                    addsiteinput.value = "";
                     if (!config.extraSites)
                         config.extraSites = [];
                     if (config.extraSites.indexOf(url) < 0) {
@@ -1685,11 +1689,15 @@ background-image: url(${config.backgroundImage});
             a.click();
         }
         function normalizeUrl(url) {
+            if (!url)
+                return undefined;
             url = url.trim();
             const m = /<iframe.*?src="([^"]+)".*?>/i.exec(url);
             if (m)
                 url = decodeURI(m[1]).replace(/&amp;/g, "&");
-            return /^http?s:\/\//i.test(url) && url;
+            if (!/^http?s:\/\//i.test(url))
+                url = "https://" + url;
+            return url;
         }
         function loadSettings() {
             return __awaiter(this, void 0, void 0, function* () {

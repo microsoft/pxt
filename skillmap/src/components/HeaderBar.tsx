@@ -7,10 +7,13 @@ import { SkillMapState } from '../store/reducer';
 import { resolvePath, tickEvent } from "../lib/browserUtils";
 
 import { Dropdown, DropdownItem } from "./Dropdown";
+import { isActivityCompleted } from "../lib/skillMapUtils";
+import { editorUrl } from "./makecodeFrame";
 
 interface HeaderBarProps {
     activityOpen: boolean;
     showReportAbuse?: boolean;
+    completedHeaderId?: string;
     dispatchSaveAndCloseActivity: () => void;
 }
 
@@ -30,7 +33,7 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
     }
 
     render() {
-        const { activityOpen } = this.props;
+        const { activityOpen, completedHeaderId } = this.props;
         const logoAlt = "MakeCode Logo";
         const organizationLogoAlt = "Microsoft Logo";
 
@@ -47,6 +50,9 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
             </div>
             <div className="spacer" />
             <div className="header-right">
+                {completedHeaderId && <div className="header-button" onClick={this.onSaveClicked}>
+                    {lf("SAVE TO MY PROJECTS")}
+                </div>}
                 { items?.length > 0 && <Dropdown icon="setting" className="header-settings" items={items} /> }
                 <div className="header-org-logo">
                     <img src={resolvePath("assets/microsoft.png")} alt={organizationLogoAlt} />
@@ -59,14 +65,28 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
         tickEvent("skillmap.activity.back");
         this.props.dispatchSaveAndCloseActivity();
     }
+
+    onSaveClicked = () => {
+        const { completedHeaderId } = this.props;
+        window.open(`${editorUrl}#skillmapimport:${completedHeaderId}`)
+    }
 }
 
 
 function mapStateToProps(state: SkillMapState, ownProps: any) {
     if (!state) return {};
+
+    let completedHeaderId: string | undefined;
+    if (state.editorView?.currentHeaderId) {
+        if (isActivityCompleted(state.user, state.editorView.currentMapId, state.editorView.currentActivityId)) {
+            completedHeaderId = state.editorView.currentHeaderId;
+        }
+    }
+
     return {
         activityOpen: !!state.editorView,
-        showReportAbuse: state.pageSourceStatus === "unknown"
+        showReportAbuse: state.pageSourceStatus === "unknown",
+        completedHeaderId
     }
 }
 
