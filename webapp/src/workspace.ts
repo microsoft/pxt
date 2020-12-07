@@ -673,7 +673,7 @@ export async function bumpAsync(hd: Header, newVer = "") {
         const gh = pxt.github.parseRepoId(hd.githubId);
         Object.keys(cfg.dependencies).forEach(k => {
             const ver = cfg.dependencies[k];
-            const ghid = pxt.github.parseRepoId(ver);
+            const ghid = /^github:/.test(ver) && pxt.github.parseRepoId(ver);
             if (ghid && gh.slug === ghid.slug) {
                 cfg.dependencies[k] = `github:${pxt.github.join(gh.slug, ghid.fileName)}#${releaseTag}`
                 pxt.log(`patching dep ${k} to ${cfg.dependencies[k]}`)
