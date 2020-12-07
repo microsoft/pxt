@@ -1368,7 +1368,11 @@ namespace pxt.hexloader {
                                     return Util.httpGetJsonAsync(url)
                                         .then(json => {
                                             pxt.log(`build log ${url.replace(/\.json$/, ".log")}`);
-                                            pxt.tickEvent("cppcompile.done", { success: json?.success ? retry : 0 })
+                                            pxt.tickEvent("cppcompile.done", {
+                                                success: json?.success ? 1 : 0,
+                                                retry,
+                                                duration: U.now() - startTry
+                                            })
                                             if (!json.success) {
                                                 pxt.log(`build failed`);
                                                 if (json.mbedresponse && json.mbedresponse.result && json.mbedresponse.result.exception)
