@@ -1358,7 +1358,7 @@ namespace pxt.hexloader {
                                 const tryGet = () => {
                                     retry++;
                                     if (retry > maxRetry) {
-                                        pxt.log(`abandonning C++ build`)
+                                        pxt.log(`abandoning C++ build`)
                                         pxt.tickEvent("cppcompile.cancel", { retry })
                                         resolve(null);
                                         return null;
