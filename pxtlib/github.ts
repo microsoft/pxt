@@ -975,8 +975,8 @@ namespace pxt.github {
         return {
             owner,
             project,
-            slug: `${owner}/${project}`,
-            fullName: `${owner}/${project}${fileName ? `/${fileName}` : ''}`,
+            slug: join(owner, project),
+            fullName: join(owner, project, fileName),
             tag,
             fileName
         }
