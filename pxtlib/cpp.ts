@@ -1351,6 +1351,7 @@ namespace pxt.hexloader {
                         Cloud.privatePostAsync("compile/extension", { data: extInfo.compileData })
                             .then(ret => new Promise<string>((resolve, reject) => {
                                 let retry = 0;
+                                const delay = 8000; // ms
                                 const maxWait = 120000; // ms
                                 const startTry = U.now();
                                 const tryGet = () => {
