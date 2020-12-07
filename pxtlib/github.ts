@@ -97,7 +97,7 @@ namespace pxt.github {
 
     export let handleGithubNetworkError: (opts: U.HttpRequestOptions, e: any) => boolean;
 
-    let isPrivateRepoCache: pxt.Map<boolean> = {};
+    const isPrivateRepoCache: pxt.Map<boolean> = {};
 
     export interface CachedPackage {
         files: Map<string>;
@@ -270,7 +270,7 @@ namespace pxt.github {
             method: "GET"
         }).then(resp => {
             const f = resp.json as FileContent
-            isPrivateRepoCache[parsed.fullName] = true
+            isPrivateRepoCache[parsed.slug] = true
             // if they give us content, just return it
             if (f && f.encoding == "base64" && f.content != null)
                 return atob(f.content)
@@ -284,7 +284,7 @@ namespace pxt.github {
         // raw.githubusercontent.com doesn't accept ?access_token=... and has wrong CORS settings
         // for Authorization: header; so try anonymous access first, and otherwise fetch using API
 
-        if (isPrivateRepoCache[parsed.fullName])
+        if (isPrivateRepoCache[parsed.slug])
             return fallbackDownloadTextAsync(parsed, commitid, filepath)
 
         return U.requestAsync({
