@@ -26,7 +26,7 @@ type CloudProject = {
 export async function listAsync(): Promise<Header[]> {
     return new Promise(async (resolve, reject) => {
         // TODO @darzu: this is causing errors?
-        console.log("listAsync");
+        console.log("cloud.ts:listAsync");
         const result = await auth.apiAsync<CloudProject[]>("/api/user/project");
         if (result.success) {
             const userId = auth.user()?.id;
@@ -45,6 +45,7 @@ export async function listAsync(): Promise<Header[]> {
 }
 
 export function getAsync(h: Header): Promise<File> {
+    console.log(`cloud.ts:getAsync ${h.id}`); // TODO @darzu: 
     return new Promise(async (resolve, reject) => {
         const result = await auth.apiAsync<CloudProject>(`/api/user/project/${h.id}`);
         if (result.success) {
@@ -70,6 +71,7 @@ export function getAsync(h: Header): Promise<File> {
 
 // TODO @darzu: is it okay to export this?
 export function setAsync(h: Header, prevVersion: Version, text?: ScriptText): Promise<Version> {
+    console.log(`cloud.ts:setAsync ${h.id}`); // TODO @darzu: 
     return new Promise(async (resolve, reject) => {
         const userId = auth.user()?.id;
         h.cloudUserId = userId;
@@ -96,23 +98,24 @@ export function setAsync(h: Header, prevVersion: Version, text?: ScriptText): Pr
 }
 
 export function deleteAsync(h: Header, prevVersion: Version, text?: ScriptText): Promise<void> {
+    console.log(`cloud.ts:deleteAsync ${h.id}`); // TODO @darzu: 
     return Promise.resolve();
 }
 
 export function resetAsync(): Promise<void> {
+    console.log(`cloud.ts:resetAsync`); // TODO @darzu: 
     return Promise.resolve();
 }
 
 export async function syncAsync(): Promise<any> {
     if (!auth.hasIdentity()) { return; }
     if (!await auth.loggedIn()) { return; }
+    console.log(`cloud.ts:syncAsync`); // TODO @darzu: 
     try {
         const userId = auth.user()?.id;
         // Filter to cloud-synced headers owned by the current user.
         const localCloudHeaders = workspace.getHeaders(true)
             .filter(h => h.cloudUserId && h.cloudUserId === userId);
-        // TODO @darzu: 
-        console.log("syncAsync: listAsync");
         const remoteHeaders = await listAsync();
         const remoteHeaderMap = U.toDictionary(remoteHeaders, h => h.id);
         const tasks = localCloudHeaders.map(async (local) => {
