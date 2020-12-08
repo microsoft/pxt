@@ -247,7 +247,7 @@ export function setHeaderIdForActivity(user: UserState, map: SkillMap, activityI
                         isCompleted
                     }
                 },
-                completionState: shouldTransition ? "transitioning" : user.mapProgress[mapId].completionState
+                completionState: shouldTransition ? "transitioning" : user.mapProgress?.[mapId]?.completionState
             }
         }
     };
@@ -280,7 +280,7 @@ export function setActivityFinished(user: UserState, map: SkillMap, activityId: 
                         isCompleted: true
                     }
                 },
-                completionState: shouldTransition ? "transitioning" : user.mapProgress[mapId].completionState
+                completionState: shouldTransition ? "transitioning" : user.mapProgress?.[mapId]?.completionState
             }
         }
     };
