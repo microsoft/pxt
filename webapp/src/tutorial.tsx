@@ -315,7 +315,7 @@ interface TutorialCardProps extends ISettingsProps {
 export class TutorialCard extends data.Component<TutorialCardProps, TutorialCardState> {
     private prevStep: number;
     private cardHeight: number;
-    private resizeDebouncer: any;
+    private resizeDebouncer: () => void;
 
     public focusInitialized: boolean;
 
