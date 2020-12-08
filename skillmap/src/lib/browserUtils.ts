@@ -92,15 +92,15 @@ async function fetchSkillMapFromGithub(path: string): Promise<MarkdownFetchResul
             break;
     }
 
-    const tag = ghid.tag || await pxt.github.latestVersionAsync(ghid.fullName, config, true);
+    const tag = ghid.tag || await pxt.github.latestVersionAsync(ghid.slug, config, true);
 
     if (!tag) {
-        pxt.log(`skillmap github tag not found at ${ghid.fullName}`);
+        pxt.log(`skillmap github tag not found at ${ghid.slug}`);
         return undefined;
     }
     ghid.tag = tag;
 
-    const gh = await pxt.github.downloadPackageAsync(`${ghid.fullName}#${ghid.tag}`, config);
+    const gh = await pxt.github.downloadPackageAsync(`${ghid.slug}#${ghid.tag}`, config);
 
     if (gh) {
         let fileName = ghid.fileName ||  "skillmap";
@@ -110,7 +110,7 @@ async function fetchSkillMapFromGithub(path: string): Promise<MarkdownFetchResul
 
         return {
             text: pxt.tutorial.resolveLocalizedMarkdown(ghid, gh.files, fileName),
-            identifier: ghid.fullName + "#" + fileName,
+            identifier: ghid.slug + "#" + fileName,
             reportId,
             status
         }
