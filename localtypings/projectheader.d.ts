@@ -41,6 +41,8 @@ declare namespace pxt.workspace {
 
         isDeleted: boolean; // mark whether or not a header has been deleted
         saveId?: any; // used to determine whether a project has been edited while we're saving to cloud
+        
+        // TODO @darzu: remove all of these?
 
         // For cloud providers -- DEPRECATED
         blobId_: string;       // id of the cloud blob holding this script

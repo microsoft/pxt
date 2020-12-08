@@ -503,7 +503,12 @@ export function refreshToken() {
 }
 
 export function syncAsync(): Promise<void> {
-    return Promise.all([githubSyncAsync(), cloud.syncAsync()])
+    return Promise.all([
+        githubSyncAsync(), 
+        // TODO @darzu: 
+        // cloud.syncAsync()
+        cloudSyncAsync()
+    ])
         .then(() => { });
 }
 

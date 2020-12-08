@@ -143,6 +143,7 @@ async function switchToMemoryWorkspace(reason: string): Promise<void> {
 }
 
 export function getHeaders(withDeleted = false) {
+    // TODO @darzu: we need to consolidate this to one Workspace impl
     maybeSyncHeadersAsync().done();
     const cloudUserId = auth.user()?.id;
     let r = allScripts.map(e => e.header).filter(h =>
@@ -154,6 +155,7 @@ export function getHeaders(withDeleted = false) {
 }
 
 export function makeBackupAsync(h: Header, text: ScriptText): Promise<Header> {
+    // TODO @darzu: check mechanism & policy backup system
     let h2 = U.flatClone(h)
     h2.id = U.guidGen()
 
@@ -224,6 +226,7 @@ function maybeSyncHeadersAsync(): Promise<void> {
     return Promise.resolve();
 }
 function refreshHeadersSession() {
+    // TODO @darzu: carefully handle this
     // use # of scripts + time of last mod as key
     sessionID = allScripts.length + ' ' + allScripts
         .map(h => h.header.modificationTime)
@@ -345,6 +348,7 @@ export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptM
 }
 
 function fixupVersionAsync(e: File) {
+    // TODO @darzu: need to handle one-off tasks like this
     if (e.version !== undefined)
         return Promise.resolve()
     return impl.getAsync(e.header)
@@ -354,7 +358,7 @@ function fixupVersionAsync(e: File) {
 }
 
 export function forceSaveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Promise<void> {
-    clearHeaderSession(h);
+    clearHeaderSession(h); // TODO @darzu: why do we conservatively call clearHeaderSession everywhere?
     return saveAsync(h, text, isCloud);
 }
 
@@ -362,12 +366,14 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
     pxt.debug(`workspace: save ${h.id}`)
     if (h.isDeleted)
         clearHeaderSession(h);
-    checkHeaderSession(h);
+    checkHeaderSession(h); // TODO @darzu: what is header session...
 
     U.assert(h.target == pxt.appTarget.id);
 
-    if (h.temporary)
+    if (h.temporary) {
+        // TODO @darzu: lol... what abstraction does this fit?
         return Promise.resolve()
+    }
 
     let e = lookup(h.id)
     //U.assert(e.header === h)
@@ -390,6 +396,7 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
 
     // perma-delete
     if (h.isDeleted && h.blobVersion_ == "DELETED") {
+        // TODO @darzu: "isDelete" is a command flag????? argh..
         let idx = allScripts.indexOf(e)
         U.assert(idx >= 0)
         allScripts.splice(idx, 1)
@@ -401,12 +408,14 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
 
     // check if we have dynamic boards, store board info for home page rendering
     if (text && pxt.appTarget.simulator && pxt.appTarget.simulator.dynamicBoardDefinition) {
+        // TODO @darzu: what does this mean policy-wise...
         const pxtjson = pxt.Package.parseAndValidConfig(text[pxt.CONFIG_NAME]);
         if (pxtjson && pxtjson.dependencies)
             h.board = Object.keys(pxtjson.dependencies)
                 .filter(p => !!pxt.bundledSvg(p))[0];
     }
 
+    // TODO @darzu: what is this "headerQ" and why does it exist...
     return headerQ.enqueue<void>(h.id, async () => {
         await fixupVersionAsync(e);
         let ver: any;
@@ -417,6 +426,7 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
             ver = await impl.setAsync(h, e.version, toWrite);
         } catch (e) {
             // Write failed; use in memory db.
+            // TODO @darzu: POLICY
             await switchToMemoryWorkspace("write failed");
             ver = await impl.setAsync(h, e.version, toWrite);
         }
@@ -429,6 +439,7 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
             h.pubCurrent = false;
             h.blobCurrent_ = false;
             h.saveId = null;
+            // TODO @darzu: more data api syncing..
             data.invalidate("text:" + h.id);
             data.invalidate("pkg-git-status:" + h.id);
         }
@@ -452,6 +463,8 @@ function computePath(h: Header) {
 }
 
 export function importAsync(h: Header, text: ScriptText, isCloud = false) {
+    // TODO @darzu: why does import bypass workspaces or does it?
+    console.log(`importAsync: ${h.id}`);
     h.path = computePath(h)
     const e: File = {
         header: h,
@@ -646,6 +659,7 @@ export async function hasMergeConflictMarkersAsync(hd: Header): Promise<boolean>
 }
 
 export async function prAsync(hd: Header, commitId: string, msg: string) {
+    // TODO @darzu: this gh stuff should be moved elsewhere probably..
     let parsed = pxt.github.parseRepoId(hd.githubId)
     // merge conflict - create a Pull Request
     const branchName = await pxt.github.getNewBranchNameAsync(parsed.fullName, "merge-")
@@ -1342,6 +1356,7 @@ export function downloadFilesByIdAsync(id: string): Promise<pxt.Map<string>> {
 }
 
 export function installByIdAsync(id: string) {
+    // TODO @darzu: what is install?
     return Cloud.privateGetAsync(id, /* forceLiveEndpoint */ true)
         .then((scr: Cloud.JsonScript) =>
             getPublishedScriptAsync(scr.id)
@@ -1382,6 +1397,7 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
         .catch((e) => {
             // There might be a problem with the native databases. Switch to memory for this session so the user can at
             // least use the editor.
+            // TODO @darzu: POLICY
             return switchToMemoryWorkspace("sync failed")
                 .then(() => impl.listAsync());
         })
@@ -1396,6 +1412,8 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
                         // force reload
                         ex.text = undefined
                         ex.version = undefined
+                        // TODO @darzu: handle data API subscriptions on header changed
+                        console.log(`INVALIDATIN header ${hd.id}`) // TODO @darzu: 
                         data.invalidateHeader("header", hd);
                         data.invalidateHeader("text", hd);
                         data.invalidateHeader("pkg-git-status", hd);
@@ -1413,7 +1431,7 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
             cloudsync.syncAsync().done() // sync in background
         })
         .then(() => {
-            refreshHeadersSession();
+            // TODO @darzu: what does refreshHeadersSession do?
             return impl.getSyncState ? impl.getSyncState() : null
         })
         .finally(() => {
@@ -1422,6 +1440,7 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
 }
 
 export function resetAsync() {
+    // TODO @darzu: this should just pass through to workspace impl
     allScripts = []
     return impl.resetAsync()
         .then(cloudsync.resetAsync)
@@ -1491,6 +1510,7 @@ data.mountVirtualApi("headers", {
         p = data.stripProtocol(p)
         const headers = getHeaders()
         if (!p) return Promise.resolve(headers)
+        console.log(`data SEARCH headers:${p}`) // TODO @darzu: 
         return compiler.projectSearchAsync({ term: p, headers })
             .then((searchResults: pxtc.service.ProjectSearchInfo[]) => searchResults)
             .then(searchResults => {
@@ -1511,6 +1531,7 @@ data.mountVirtualApi("headers", {
 data.mountVirtualApi("text", {
     getAsync: p => {
         const m = /^[\w\-]+:([^\/]+)(\/(.*))?/.exec(p)
+        // TODO @darzu: thin layer over workspace impl?
         return getTextAsync(m[1])
             .then(files => {
                 if (m[3])
