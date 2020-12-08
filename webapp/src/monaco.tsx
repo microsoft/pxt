@@ -799,9 +799,17 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     isIncomplete() {
-        return this.editor && (this.editor as any)._view ?
-            (this.editor as any)._view.contentWidgets._widgets["editor.widget.suggestWidget"].isVisible :
-            false;
+        if (this.editor && (this.editor as any)._view &&
+            (this.editor as any)._view.contentWidgets._widgets["editor.widget.suggestWidget"].isVisible)
+            return true;
+
+        // broken pxt.json, don't save
+        if (this.editor &&
+            this.currFile.name === pxt.CONFIG_NAME
+            && !Util.jsonTryParse(this.getCurrentSource()))
+            return true;
+
+        return false;
     }
 
     resize(e?: Event) {
@@ -1508,8 +1516,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     setDiagnostics(file: pkg.File, snapshot: string[]) {
-        Util.assert(this.editor != undefined); // Guarded
-        Util.assert(this.currFile == file)
+        if (!this.editor || this.currFile !== file)  // async outdated set diagnostics
+            return;
         this.diagSnapshot = snapshot
         this.forceDiagnosticsUpdate()
     }

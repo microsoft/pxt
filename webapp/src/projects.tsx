@@ -757,7 +757,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                         key={'local' + scr.id + scr.recentUse}
                         // ref={(view) => { if (index === 1) this.latestProject = view }}
                         cardType="file"
-                        name={(ghid && ghid.project) || scr.name}
+                        name={(ghid && pxt.github.join(ghid.project, ghid.fileName)) || scr.name}
                         time={scr.recentUse}
                         url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ""}
                         scr={scr} index={index}

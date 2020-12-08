@@ -185,7 +185,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
     }
 
     protected async handleWorkspaceSaveRequestAsync(request: pxt.editor.EditorWorkspaceSaveRequest) {
-        const { dispatchSetHeaderIdForActivity, activityHeaderId, activityType } = this.props;
+        const { dispatchSetHeaderIdForActivity, activityHeaderId, activityType, title } = this.props;
 
         const project = {
             ...request.project,
@@ -194,6 +194,17 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
                 id: activityHeaderId || request.project.header!.id
             }
         };
+
+        // Patch the name, otherwise it will be the name of the GitHub repo
+        if (project.header?.name !== title) {
+            project.header!.name = title;
+            const pxtJSON = project.text!["pxt.json"];
+            if (pxtJSON) {
+                const config = JSON.parse(pxtJSON);
+                config.name = title;
+                project.text!["pxt.json"] = pxt.Package.stringifyConfig(config);
+            }
+        }
 
         if (project.header.tutorialCompleted) {
             const existing = await getProjectAsync(project.header.id);
@@ -282,7 +293,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         url = editorUrl.substr(0, editorUrl.length - 1);
     }
 
-    url += `?controller=1&skillsMap=1&nocookiebanner=1`;
+    url += `?controller=1&skillsMap=1&noproject=1&nocookiebanner=1`;
     title = activity.displayName;
 
     return {
