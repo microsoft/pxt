@@ -80,16 +80,16 @@ function chooseWorkspace(kind: WorkspaceKind = "browser"): pxt.workspace.Workspa
             console.log("CHOOSING CLOUD WORKSPACE");
             return cloudWorkspace.provider;
         case "browser":
+        default:
             return browserworkspace.provider
     }
-    // exhaustivity check
-    const _never: never = kind;
-    return _never;
 }
 
 export function setupWorkspace(kind: WorkspaceKind): void {
     U.assert(!impl, "workspace set twice");
     pxt.log(`workspace: ${kind}`);
+    // TODO @darzu: 
+    console.log(`choosing workspace: ${kind}`);
     implType = kind ?? "browser";
     impl = chooseWorkspace(implType);
 }
