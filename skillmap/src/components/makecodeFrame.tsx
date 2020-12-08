@@ -293,7 +293,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         url = editorUrl.substr(0, editorUrl.length - 1);
     }
 
-    url += `?controller=1&skillsMap=1`;
+    url += `?controller=1&skillsMap=1&noproject=1`;
     title = activity.displayName;
 
     return {

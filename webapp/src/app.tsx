@@ -4547,14 +4547,19 @@ document.addEventListener("DOMContentLoaded", () => {
                 // Hide the home screen
                 theEditor.setState({ home: false });
             }
+
             if (hash.cmd && handleHash(hash, true)) {
                 return Promise.resolve();
             }
             if (hasWinRTProject) {
                 return pxt.winrt.loadActivationProject();
             }
-            if (showHome)
+            if (pxt.shell.isNoProject()) {
+                workspace.fireEvent({ type: "createproject", editor: "blocks" });
                 return Promise.resolve();
+            }
+            if (showHome) return Promise.resolve();
+
 
             // default handlers
             const ent = theEditor.settings.fileHistory.filter(e => !!workspace.getHeader(e.id))[0];
