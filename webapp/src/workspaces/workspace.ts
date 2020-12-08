@@ -34,7 +34,7 @@ let allScripts: File[] = [];
 let headerQ = new U.PromiseQueue();
 
 let impl: WorkspaceProvider;
-let implType: string;
+let implType: WorkspaceKind;
 
 function lookup(id: string) {
     return allScripts.find(x => x.header.id == id || x.header.path == id);
@@ -55,40 +55,43 @@ export function copyProjectToLegacyEditor(header: Header, majorVersion: number):
     return browserworkspace.copyProjectToLegacyEditor(header, majorVersion);
 }
 
-export function setupWorkspace(id: string) {
-    U.assert(!impl, "workspace set twice");
-    pxt.log(`workspace: ${id}`);
-    implType = id ?? "browser";
-    switch (id) {
+
+type WorkspaceKind = "browser" | "fs" | "file" | "mem" | "memory" | "iframe" | "uwp" | "idb" | "cloud";
+
+function chooseWorkspace(kind: WorkspaceKind = "browser"): pxt.workspace.WorkspaceProvider {
+    switch (kind) {
         case "fs":
         case "file":
             // Local file workspace, serializes data under target/projects/
-            impl = fileworkspace.provider;
-            break;
+            return fileworkspace.provider;
         case "mem":
         case "memory":
-            impl = memoryworkspace.provider;
-            break;
+            return memoryworkspace.provider;
         case "iframe":
             // Iframe workspace, the editor relays sync messages back and forth when hosted in an iframe
-            impl = iframeworkspace.provider;
-            break;
+            return iframeworkspace.provider;
         case "uwp":
             fileworkspace.setApiAsync(pxt.winrt.workspace.fileApiAsync);
-            impl = pxt.winrt.workspace.getProvider(fileworkspace.provider);
-            break;
+            return pxt.winrt.workspace.getProvider(fileworkspace.provider);
         case "idb":
-            impl = indexedDBWorkspace.provider;
-            break;
+            return indexedDBWorkspace.provider;
         case "cloud":
             // TODO @darzu: 
-            console.log("CHOOSING CLOUD");
-            impl = cloudWorkspace.provider;
+            console.log("CHOOSING CLOUD WORKSPACE");
+            return cloudWorkspace.provider;
         case "browser":
-        default:
-            impl = browserworkspace.provider
-            break;
+            return browserworkspace.provider
     }
+    // exhaustivity check
+    const _never: never = kind;
+    return _never;
+}
+
+export function setupWorkspace(kind: WorkspaceKind): void {
+    U.assert(!impl, "workspace set twice");
+    pxt.log(`workspace: ${kind}`);
+    implType = kind ?? "browser";
+    impl = chooseWorkspace(implType);
 }
 
 // TODO @darzu: needed?
@@ -103,7 +106,7 @@ export function switchToCloudWorkspace(): string {
 }
 
 // TODO @darzu: needed?
-export function switchToWorkspace(id: string) {
+export function switchToWorkspace(id: WorkspaceKind) {
     impl = null;
     setupWorkspace(id);
 }
