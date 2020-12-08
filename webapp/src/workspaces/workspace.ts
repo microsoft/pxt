@@ -56,7 +56,7 @@ export function copyProjectToLegacyEditor(header: Header, majorVersion: number):
 }
 
 
-type WorkspaceKind = "browser" | "fs" | "file" | "mem" | "memory" | "iframe" | "uwp" | "idb" | "cloud";
+export type WorkspaceKind = "browser" | "fs" | "file" | "mem" | "memory" | "iframe" | "uwp" | "idb" | "cloud";
 
 function chooseWorkspace(kind: WorkspaceKind = "browser"): pxt.workspace.WorkspaceProvider {
     switch (kind) {
