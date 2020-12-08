@@ -5,7 +5,7 @@
 
 .carousel-title {
     position: relative;
-    margin-left: 0.5rem;
+    margin-left: 1rem;
     font-size: 1.2rem;
     font-weight: 600;
     margin-top: 1rem;
@@ -39,14 +39,14 @@
 .carousel-items {
     height: 16rem;
     flex: 1;
-    padding: 0 0.5rem 0.5rem;
+    padding: 0 1rem 0.5rem 0rem;
     overflow: hidden;
 }
 
 .carousel-items-inner {
     display: flex;
     overflow: auto;
-    padding: 1rem 0;
+    padding: 1rem;
     scroll-behavior: smooth;
 }
 
