@@ -417,7 +417,7 @@ namespace pxt.runner {
             }
 
             // Apply upgrade rules if necessary
-            const sharedTargetVersion = mainPkg.config.targetVersions.target;
+            const sharedTargetVersion = mainPkg.config.targetVersions?.target;
 
             if (sharedTargetVersion && currentTargetVersion &&
                 pxt.semver.cmp(pxt.semver.parse(sharedTargetVersion), pxt.semver.parse(currentTargetVersion)) < 0) {
