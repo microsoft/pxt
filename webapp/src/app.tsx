@@ -4663,7 +4663,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 return pxt.winrt.loadActivationProject();
             }
             if (pxt.shell.isNoProject()) {
-                pxt.tickEvent("pxt.controller.createproject");
+                workspace.fireEvent({ type: "createproject", editor: "blocks" });
                 return Promise.resolve();
             }
             if (showHome) return Promise.resolve();
