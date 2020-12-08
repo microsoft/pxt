@@ -61,6 +61,10 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
 
     componentWillUnmount() {
         window.removeEventListener("message", this.onMessageReceived);
+
+        // Show Usabilla widget
+        const usabilla = document.querySelector(".usabilla_live_button_container") as HTMLDivElement;
+        if (usabilla?.style) usabilla.style.display = "";
     }
 
     render() {
@@ -96,6 +100,10 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
                     this.finishedActivityState = undefined;
                 }
             });
+
+            // Hide Usabilla widget when inside iframe view
+            const usabilla = document.querySelector(".usabilla_live_button_container") as HTMLDivElement;
+            if (usabilla?.style) usabilla.style.display = "none";
         }
     }
 
