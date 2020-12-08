@@ -112,6 +112,11 @@ namespace pxt.HF2 {
     export const HF2_STATUS_EXEC_ERR = 0x02
     export const HF2_STATUS_EVENT = 0x80
 
+
+    export const HF2_CMD_JDS_CONFIG = 0x0020
+    export const HF2_CMD_JDS_SEND = 0x0021
+    export const HF2_EV_JDS_PACKET = 0x800020
+
     // the eventId is overlayed on the tag+status; the mask corresponds
     // to the HF2_STATUS_EVENT above
     export const HF2_EV_MASK = 0x800000
@@ -234,6 +239,9 @@ namespace pxt.HF2 {
                 }
                 //this.msgs.pushError(err)
             }
+            this.onEvent(HF2_EV_JDS_PACKET, buf => {
+                this.onCustomEvent("jacdac", buf)
+            })
         }
 
         private lock = new U.PromiseQueue();
@@ -251,8 +259,10 @@ namespace pxt.HF2 {
         icon = "usb";
         msgs = new U.PromiseBuffer<Uint8Array>()
         eventHandlers: pxt.Map<(buf: Uint8Array) => void> = {}
+        jacdacAvailable = false
 
         onSerial = (buf: Uint8Array, isStderr: boolean) => { };
+        onCustomEvent = (type: string, payload: Uint8Array) => { };
 
         private resetState() {
             this.lock = new U.PromiseQueue()
@@ -268,6 +278,13 @@ namespace pxt.HF2 {
         onEvent(id: number, f: (buf: Uint8Array) => void) {
             U.assert(!!(id & HF2_EV_MASK))
             this.eventHandlers[id + ""] = f
+        }
+
+        sendCustomEventAsync(type: string, payload: Uint8Array): Promise<void> {
+            if (type == "jacdac")
+                return this.talkAsync(HF2_CMD_JDS_SEND, payload)
+                    .then(() => { })
+            return Promise.reject(new Error("invalid custom event type"))
         }
 
         reconnectAsync(): Promise<void> {
@@ -500,6 +517,7 @@ namespace pxt.HF2 {
         private initAsync() {
             if (this.rawMode)
                 return Promise.resolve()
+
             return Promise.resolve()
                 .then(() => this.talkAsync(HF2_CMD_BININFO))
                 .then(binfo => {
@@ -534,6 +552,11 @@ namespace pxt.HF2 {
                         }
                     log(`Board-ID: ${this.info.BoardID} v${this.info.Parsed.Version} f${this.info.Parsed.Features}`)
                 })
+                .then(() => this.talkAsync(HF2_CMD_JDS_CONFIG, new Uint8Array([1])).then(() => {
+                    this.jacdacAvailable = true
+                }, _err => {
+                    this.jacdacAvailable = false
+                }))
                 .then(() => {
                     this.reconnectTries = 0
                 })

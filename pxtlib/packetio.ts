@@ -11,11 +11,13 @@ namespace pxt.packetio {
         familyID: number;
 
         onSerial: (buf: Uint8Array, isStderr: boolean) => void;
-
         reconnectAsync(): Promise<void>;
         disconnectAsync(): Promise<void>;
         // flash the device, does **not** reconnect
         reflashAsync(resp: pxtc.CompileResult): Promise<void>;
+
+        onCustomEvent: (type: string, payload: Uint8Array) => void;
+        sendCustomEventAsync(type: string, payload: Uint8Array): Promise<void>;
     }
 
     export interface PacketIO {
@@ -49,6 +51,7 @@ namespace pxt.packetio {
     let initPromise: Promise<PacketIOWrapper>;
     let onConnectionChangedHandler: () => void = () => { };
     let onSerialHandler: (buf: Uint8Array, isStderr: boolean) => void;
+    let onCustomEventHandler: (type: string, buf: Uint8Array) => void;
 
     /**
      * A DAP wrapper is active
@@ -100,13 +103,16 @@ namespace pxt.packetio {
 
     export function configureEvents(
         onConnectionChanged: () => void,
-        onSerial: (buf: Uint8Array, isStderr: boolean) => void
+        onSerial: (buf: Uint8Array, isStderr: boolean) => void,
+        onCustomEvent: (type: string, buf: Uint8Array) => void
     ): void {
         onConnectionChangedHandler = onConnectionChanged;
         onSerialHandler = onSerial;
+        onCustomEventHandler = onCustomEvent;
         if (wrapper) {
             wrapper.io.onConnectionChanged = onConnectionChangedHandler;
             wrapper.onSerial = onSerialHandler;
+            wrapper.onCustomEvent = onCustomEvent;
         }
     }
 

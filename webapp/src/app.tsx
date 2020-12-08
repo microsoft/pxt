@@ -829,7 +829,7 @@ export class ProjectView
                 this.editorChangeHandler();
             }
         }
-        this.allEditors = [this.pxtJsonEditor, this.gitjsonEditor, this.blocksEditor, this.serialEditor,  this.assetEditor, this.textEditor]
+        this.allEditors = [this.pxtJsonEditor, this.gitjsonEditor, this.blocksEditor, this.serialEditor, this.assetEditor, this.textEditor]
         this.allEditors.forEach(e => e.changeCallback = changeHandler)
         this.editor = this.allEditors[this.allEditors.length - 1]
     }
@@ -4000,7 +4000,7 @@ export class ProjectView
                 {isSidebarTutorial && flyoutOnly && inTutorial && <sidebarTutorial.SidebarTutorialCard ref={ProjectView.tutorialCardId} parent={this} pokeUser={this.state.pokeUserComponent == ProjectView.tutorialCardId} />}
                 {inTutorial && <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
                     {!(isSidebarTutorial && flyoutOnly) && inTutorial && <tutorial.TutorialCard ref={ProjectView.tutorialCardId} parent={this} pokeUser={this.state.pokeUserComponent == ProjectView.tutorialCardId} />}
-                    {flyoutOnly && <tutorial.WorkspaceHeader parent={this}/>}
+                    {flyoutOnly && <tutorial.WorkspaceHeader parent={this} />}
                 </div>}
 
                 <div id="simulator" className="simulator">
@@ -4096,6 +4096,14 @@ function initPacketIO() {
                 id: 'n/a', // TODO
                 data
             }, "*")
+        },
+        (type, payload) => {
+            if (type == "jacdac")
+                window.postMessage({
+                    type: type,
+                    id: 'n/a', // TODO
+                    data: Util.toHex(payload)
+                }, "*")
         });
 }
 
