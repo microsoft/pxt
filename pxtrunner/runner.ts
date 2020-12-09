@@ -375,7 +375,8 @@ namespace pxt.runner {
                 }
             }
         };
-
+        if (pxt.appTarget?.simulator?.messageSimulators)
+            options.messageSimulators = pxt.appTarget?.simulator?.messageSimulators;
         let driver = new pxsim.SimulatorDriver(container, options);
 
         let board = pxt.appTarget.simulator.boardDefinition;

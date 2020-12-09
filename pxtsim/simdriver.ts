@@ -19,6 +19,7 @@ namespace pxsim {
         // dispatch messages to parent window
         nestedEditorSim?: boolean;
         parentOrigin?: string
+        messageSimulators?: pxt.Map<string>;
     }
 
     export enum SimulatorState {
@@ -85,7 +86,8 @@ namespace pxsim {
         // screenshots for sharing
         private loanedSimulator: HTMLDivElement;
 
-        constructor(public container: HTMLElement, public options: SimulatorDriverOptions = {}) {
+        constructor(public container: HTMLElement,
+            public options: SimulatorDriverOptions = {}) {
             this._allowedOrigins.push(window.location.origin);
             if (options.parentOrigin) {
                 this._allowedOrigins.push(options.parentOrigin)
@@ -295,12 +297,37 @@ namespace pxsim {
                     })
                     // start second simulator
                 } else {
-                    // start secondary frame if needed
-                    if (frames.length < 2) {
-                        this.container.appendChild(this.createFrame());
-                        frames = this.simFrames();
-                    } else if (frames[1].dataset['runid'] != this.runId) {
-                        this.startFrame(frames[1]);
+                    const messageChannel = msg.type === "messagepacket" && (msg as SimulatorControlMessage).channel;
+                    const messageSimulatorUrl: string = messageChannel &&
+                        this.options.messageSimulators &&
+                        this.options.messageSimulators[messageChannel];
+                    // should we start an extension editor?
+                    if (messageSimulatorUrl) {
+                        // find a frame already running that simulator
+                        let messageFrame = frames.find(frame => frame.dataset[`messagechannel`] === messageChannel);
+                        // not found, spin a new one
+                        if (!messageFrame) {
+                            let wrapper = this.createFrame(messageSimulatorUrl);
+                            this.container.appendChild(wrapper);
+                            messageFrame = wrapper.firstElementChild as HTMLIFrameElement;
+                            messageFrame.dataset[`messagechannel`] = messageChannel;
+                            this.startFrame(messageFrame);
+                            frames = this.simFrames(); // refresh
+                        }
+                        // not running the curren run, restart
+                        else if (messageFrame.dataset['runid'] != this.runId) {
+                            this.startFrame(messageFrame);
+                        }
+                    } else {
+                        // start secondary frame if needed
+                        const mkcdFrames = frames.filter(frame => !frame.dataset[`messagechannel`]);
+                        if (mkcdFrames.length < 2) {
+                            this.container.appendChild(this.createFrame());
+                            frames = this.simFrames();
+                            // there might be an old frame
+                        } else if (mkcdFrames[1].dataset['runid'] != this.runId) {
+                            this.startFrame(mkcdFrames[1]);
+                        }
                     }
                 }
             }
@@ -324,7 +351,7 @@ namespace pxsim {
             }
         }
 
-        private createFrame(light?: boolean): HTMLDivElement {
+        private createFrame(url?: string): HTMLDivElement {
             const wrapper = document.createElement("div") as HTMLDivElement;
             wrapper.className = `simframe ui embed`;
 
@@ -335,7 +362,7 @@ namespace pxsim {
             frame.setAttribute('allow', 'autoplay');
             frame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
             frame.className = 'no-select'
-            frame.src = this.getSimUrl() + '#' + frame.id;
+            frame.src = (url || this.getSimUrl()) + '#' + frame.id;
             frame.frameBorder = "0";
             frame.dataset['runid'] = this.runId;
 
@@ -552,7 +579,7 @@ namespace pxsim {
             // first frame
             let frame = this.simFrames()[0];
             if (!frame) {
-                let wrapper = this.createFrame(this._runOptions && this._runOptions.light);
+                let wrapper = this.createFrame();
                 this.container.appendChild(wrapper);
                 frame = wrapper.firstElementChild as HTMLIFrameElement;
             } else // reuse simulator

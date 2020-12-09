@@ -78,6 +78,13 @@ namespace pxsim {
     export interface SimulatorBroadcastMessage extends SimulatorMessage {
         broadcast: boolean;
     }
+
+    export interface SimulatorControlMessage extends SimulatorBroadcastMessage {
+        type: "messagepacket";
+        channel: string;
+        data: Uint8Array;
+    }
+
     export interface SimulatorEventBusMessage extends SimulatorBroadcastMessage {
         type: "eventbus";
         broadcast: true;
