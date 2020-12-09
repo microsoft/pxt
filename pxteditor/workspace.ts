@@ -3,6 +3,8 @@
 namespace pxt.workspace {
     export type ScriptText = pxt.Map<string>;
 
+
+    // TODO @darzu: ugh. why is there a "Project" that is different from a "File". They are nearly identical...
     export interface Project {
         header?: Header;
         text?: ScriptText;
@@ -14,6 +16,8 @@ namespace pxt.workspace {
         url: string;
     }
 
+    // TODO @darzu: why can version be "any" ? that's really annoying to reason about
+    // TODO @darzu: _rev is a string; modificationTime is an int
     export type Version = any;
 
     export interface File {
