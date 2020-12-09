@@ -4098,13 +4098,22 @@ function initPacketIO() {
             }, "*")
         },
         (type, payload) => {
-            if (type == "jacdac")
+            if (type == "jacdac") {
                 window.postMessage({
-                    type: type,
-                    id: 'n/a', // TODO
-                    data: Util.toHex(payload)
+                    type: "messagepacket",
+                    broadcast: false,
+                    channel: type,
+                    data: payload,
+                    echo: true
                 }, "*")
+            }
         });
+
+    window.addEventListener('message', (ev: MessageEvent) => {
+        const msg = ev.data
+        if (msg.type == 'messagepacket' && msg.channel == "jacdac" && !msg.echo)
+            pxt.packetio.sendCustomEventAsync(msg.channel, msg.data);
+    }, false);
 }
 
 function initSerial() {

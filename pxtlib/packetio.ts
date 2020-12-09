@@ -116,6 +116,13 @@ namespace pxt.packetio {
         }
     }
 
+    export function sendCustomEventAsync(type: string, payload: Uint8Array) {
+        if (wrapper)
+            return wrapper.sendCustomEventAsync(type, payload)
+        else
+            return Promise.resolve()
+    }
+
     function wrapperAsync(): Promise<PacketIOWrapper> {
         if (wrapper)
             return Promise.resolve(wrapper);
@@ -132,6 +139,8 @@ namespace pxt.packetio {
                 wrapper = mkPacketIOWrapper(io);
                 if (onSerialHandler)
                     wrapper.onSerial = onSerialHandler;
+                if (onCustomEventHandler)
+                    wrapper.onCustomEvent = onCustomEventHandler;
                 // trigger ui update
                 if (onConnectionChangedHandler)
                     onConnectionChangedHandler();
