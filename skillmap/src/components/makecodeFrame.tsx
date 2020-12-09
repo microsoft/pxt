@@ -62,9 +62,9 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
     componentWillUnmount() {
         window.removeEventListener("message", this.onMessageReceived);
 
-        // Show Usabilla widget
-        const usabilla = document.querySelector(".usabilla_live_button_container") as HTMLDivElement;
-        if (usabilla?.style) usabilla.style.display = "";
+        // Show Usabilla widget + footer
+        setElementVisible(".usabilla_live_button_container", true);
+        setElementVisible("footer", true);
     }
 
     render() {
@@ -101,9 +101,9 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
                 }
             });
 
-            // Hide Usabilla widget when inside iframe view
-            const usabilla = document.querySelector(".usabilla_live_button_container") as HTMLDivElement;
-            if (usabilla?.style) usabilla.style.display = "none";
+            // Hide Usabilla widget + footer when inside iframe view
+            setElementVisible(".usabilla_live_button_container", false);
+            setElementVisible("footer", false);
         }
     }
 
@@ -314,6 +314,11 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         activityType: activity.type,
         save: saveState === "saving"
     }
+}
+
+function setElementVisible(selector: string, visible: boolean) {
+    const el = document.querySelector(selector) as HTMLDivElement;
+    if (el?.style) el.style.display = visible ? "" : "none";
 }
 
 const mapDispatchToProps = {
