@@ -26,8 +26,8 @@ type CloudProject = {
 export async function listAsync(): Promise<Header[]> {
     return new Promise(async (resolve, reject) => {
         // TODO @darzu: this is causing errors?
-        console.log("cloud.ts:listAsync");
         const result = await auth.apiAsync<CloudProject[]>("/api/user/project");
+        console.log("cloud.ts:listAsync"); // TODO @darzu: 
         if (result.success) {
             const userId = auth.user()?.id;
             const headers = result.resp.map(proj => {
@@ -37,6 +37,7 @@ export async function listAsync(): Promise<Header[]> {
                 header.cloudCurrent = true;
                 return header;
             });
+            console.dir(headers) // TODO @darzu: 
             resolve(headers);
         } else {
             reject(new Error(result.errmsg));

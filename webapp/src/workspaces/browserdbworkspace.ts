@@ -19,10 +19,10 @@ export function createBrowserDbWorkspace(namespace: string): BrowserDbWorkspaceP
     const textDb = new db.Table(`${prefix}text`);
 
     // TODO @darzu: debug logging
-    console.log(`createBrowserDbWorkspace: ${prefix}`);
     (async () => {
         const hdrs: pxt.workspace.Header[] = await headerDb.getAllAsync();
         const txts: TextDbEntry[] = await textDb.getAllAsync();    
+        console.log(`createBrowserDbWorkspace: ${prefix}:`);
         console.dir(hdrs)
         console.dir(txts)
     })();
@@ -30,7 +30,7 @@ export function createBrowserDbWorkspace(namespace: string): BrowserDbWorkspaceP
     async function listAsync(): Promise<pxt.workspace.Header[]> {
         const hdrs: pxt.workspace.Header[] = await headerDb.getAllAsync()
         // TODO @darzu: debug logging
-        console.log("browser db headers:")
+        console.log(`browser db headers ${prefix}:`)
         console.dir(hdrs.map(h => h.id))
         return hdrs
     }
@@ -45,8 +45,8 @@ export function createBrowserDbWorkspace(namespace: string): BrowserDbWorkspaceP
     async function setAsync(h: Header, prevVer: any, text?: ScriptText): Promise<string> {
         // TODO @darzu: debug logging
         if (!text) {
-            console.log("setAsync without text!")
-            console.dir(h)
+            console.log("setAsync without text :(")
+            // console.dir(h)
         } else {
             console.log("setAsync with text :)")
         }
