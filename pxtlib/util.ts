@@ -1409,6 +1409,10 @@ namespace ts.pxtc.Util {
                 return res
             })
     }
+
+    export function unreachable(...ns: never[]): never {
+        throw "Type error: this code should be unreachable";
+    }
 }
 
 namespace ts.pxtc.BrowserImpl {
