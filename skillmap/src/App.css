@@ -190,3 +190,8 @@ code {
     top: unset !important;
     bottom: 5rem !important;
 }
+
+/** mscc cookie banner. Can be removed once the banner is out of the checked in pxtweb in doccdn */
+#msccBanner {
+    display: none;
+}
