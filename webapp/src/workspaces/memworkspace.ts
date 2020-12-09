@@ -8,7 +8,7 @@ type Asset = pxt.workspace.Version;
 
 // TODO @darzu: is this the abstraction we want?
 // TODO @darzu: replace memory workspace?
-interface SyncWorkspaceProvider {
+export interface SyncWorkspaceProvider {
     listSync(): Header[];
     getSync(h: Header): File;
     setSync(h: Header, prevVersion: Version, text?: ScriptText): Version;
@@ -16,11 +16,12 @@ interface SyncWorkspaceProvider {
     resetSync(): void;
 }
 
-export interface RealtimeWorkspaceProvider extends WorkspaceProvider, SyncWorkspaceProvider { }
+export interface MemWorkspaceProvider extends WorkspaceProvider, SyncWorkspaceProvider { }
 
-export function createRealtimeWorkspace() {
+// TODO @darzu: de-duplicate with memoryworkspace
+export function createMemWorkspace() {
     // TODO @darzu: debug logging
-    console.log(`createRealtimeWorkspace`);
+    console.log(`MemWorkspaceProvider`);
 
     // TODO @darzu: Project or File ??
     const projects: { [key: string]: File } = {}
@@ -50,7 +51,7 @@ export function createRealtimeWorkspace() {
             Object.keys(projects).forEach(k => delete projects[k])
         },
     }
-    const provider: RealtimeWorkspaceProvider = {
+    const provider: MemWorkspaceProvider = {
         ...syncProv,
         getAsync: (h: Header): Promise<File> => {
             return Promise.resolve(syncProv.getSync(h))
