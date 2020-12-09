@@ -19,6 +19,10 @@ import * as cloudWorkspace from "./cloudworkspace"
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
 import { createJointWorkspace } from "./jointworkspace";
+import { createBrowserDbWorkspace } from "./browserdbworkspace";
+import { createSynchronizedWorkspace, Synchronizable } from "./synchronizedworkspace";
+import { ConflictStrategy, DisjointSetsStrategy } from "./workspacebehavior";
+import { createMemWorkspace, SyncWorkspaceProvider } from "./memworkspace";
 
 // Avoid importing entire crypto-js
 /* tslint:disable:no-submodule-imports */
@@ -35,6 +39,7 @@ let allScripts: File[] = [];
 let headerQ = new U.PromiseQueue();
 
 let impl: WorkspaceProvider;
+let implCache: SyncWorkspaceProvider & Synchronizable;
 let implType: WorkspaceKind;
 
 function lookup(id: string) {
@@ -92,13 +97,38 @@ export function setupWorkspace(kind: WorkspaceKind): void {
     // TODO @darzu: 
     console.log(`choosing workspace: ${kind}`);
     implType = kind ?? "browser";
-    const choice = chooseWorkspace(implType);
+    const localUserChoice = chooseWorkspace(implType);
     // TODO @darzu: 
-    if (auth.loggedInSync())
-        impl = createJointWorkspace(cloudWorkspace.provider, choice)
+    if (auth.loggedInSync()) {
+        const localCloud = createBrowserDbWorkspace("cloud-local");
+        const cachedCloud = createSynchronizedWorkspace(cloudWorkspace.provider, localCloud, {
+            conflict: ConflictStrategy.LastWriteWins,
+            disjointSets: DisjointSetsStrategy.Synchronize
+        });
+        const msPerMin = 1000 * 60
+        setInterval(() => {
+            // TODO @darzu: improve this
+            console.log("synchronizing with the cloud...");
+            cachedCloud.syncAsync()
+        }, 5 * msPerMin)
+
+        // TODO @darzu: when synchronization causes changes
+        // data.invalidate("header:*");
+        // data.invalidate("text:*");
+
+        // TODO @darzu: we are assuming these workspaces don't overlapp...
+        impl = createJointWorkspace(cachedCloud, localUserChoice)
+    }
     else
-        impl = choice
-}
+        impl = localUserChoice
+
+    // TODO @darzu: remove allHeaders etc..
+    implCache = createSynchronizedWorkspace(impl, createMemWorkspace(), {
+        conflict: ConflictStrategy.LastWriteWins,
+        disjointSets: DisjointSetsStrategy.Synchronize
+    });
+    implCache.syncAsync();
+}   
 
 // TODO @darzu: needed?
 export function switchToCloudWorkspace(): string {
