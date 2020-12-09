@@ -1,6 +1,6 @@
 declare namespace pxt {
 
-    type CodeCardType = "file" | "example" | "codeExample" | "tutorial" | "side" | "template" | "package" | "hw" | "forumUrl" | "forumExample" | "sharedExample";
+    type CodeCardType = "file" | "example" | "codeExample" | "tutorial" | "side" | "template" | "package" | "hw" | "forumUrl" | "forumExample" | "sharedExample" | "link";
     type CodeCardEditorType = "blocks" | "js" | "py";
 
     interface Map<T> {
@@ -154,6 +154,7 @@ declare namespace pxt {
         cardType?: CodeCardType;
         editor?: CodeCardEditorType;
         otherActions?: CodeCardAction[];
+        directOpen?: boolean; // skip the details view, directly do the card action
 
         header?: string;
 
