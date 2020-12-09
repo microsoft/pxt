@@ -129,6 +129,9 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                     window.location.hash = "pub:" + id;
                 }
                 break;
+            case "link":
+                window.open(((/^https:\/\//i.test(url)) || (/^\//i.test(url)) ? url : ''), "_blank");
+                break;
             default:
                 const m = /^\/#tutorial:([a-z0A-Z0-9\-\/]+)$/.exec(url); // Tutorial
                 if (m) this.props.parent.startActivity("tutorial", m[1]);
@@ -548,7 +551,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
 
     handleCardClick(e: any, scr: any, index?: number) {
         const { name } = this.props;
-        if (this.props.setSelected) {
+        if (this.props.setSelected && !(scr && scr.directOpen)) {
             // Set this item as selected
             pxt.tickEvent("projects.detail.open");
             this.props.setSelected(name, index);
