@@ -18,6 +18,7 @@ import * as cloudWorkspace from "./cloudworkspace"
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
+import { createJointWorkspace } from "./jointworkspace";
 
 // Avoid importing entire crypto-js
 /* tslint:disable:no-submodule-imports */
@@ -91,7 +92,12 @@ export function setupWorkspace(kind: WorkspaceKind): void {
     // TODO @darzu: 
     console.log(`choosing workspace: ${kind}`);
     implType = kind ?? "browser";
-    impl = chooseWorkspace(implType);
+    const choice = chooseWorkspace(implType);
+    // TODO @darzu: 
+    if (auth.loggedInSync())
+        impl = createJointWorkspace(cloudWorkspace.provider, choice)
+    else
+        impl = choice
 }
 
 // TODO @darzu: needed?
@@ -143,13 +149,18 @@ async function switchToMemoryWorkspace(reason: string): Promise<void> {
 }
 
 export function getHeaders(withDeleted = false) {
+    // TODO @darzu: include other stuff...
+    // return await impl.listAsync();
+
     // TODO @darzu: we need to consolidate this to one Workspace impl
     maybeSyncHeadersAsync().done();
     const cloudUserId = auth.user()?.id;
     let r = allScripts.map(e => e.header).filter(h =>
-        (withDeleted || !h.isDeleted) &&
-        !h.isBackup &&
-        (!h.cloudUserId || h.cloudUserId === cloudUserId))
+        (withDeleted || !h.isDeleted) 
+        && !h.isBackup
+        // TODO @darzu: 
+        // && (!h.cloudUserId || h.cloudUserId === cloudUserId)
+        )
     r.sort((a, b) => b.recentUse - a.recentUse)
     return r
 }

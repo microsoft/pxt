@@ -1336,6 +1336,7 @@ export class ProjectView
 
         // If user is signed in, sync this project to the cloud.
         if (this.hasCloudSync()) {
+            // TODO @darzu: this might not be where we want to attach the user to the project
             h.cloudUserId = this.getUser()?.id;
         }
 
