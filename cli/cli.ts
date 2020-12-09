@@ -4379,7 +4379,7 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
 
             if (buildOpts.mode === BuildOption.DebugSim) {
                 mainPkg.host().writeFile(mainPkg, "built/debug/debugInfo.json", JSON.stringify({
-                    usedParts: pxtc.computeUsedParts(res, true),
+                    usedParts: pxtc.computeUsedParts(res, "ignorebuiltin"),
                     usedArguments: res.usedArguments,
                     breakpoints: res.breakpoints
                 }));
@@ -4857,6 +4857,42 @@ export function buildAsync(parsed: commandParser.ParsedCommand) {
             parseBuildInfo(parsed);
             return buildCoreAsync({ mode, ignoreTests })
         }).then((compileOpts) => { });
+}
+
+export async function buildShareSimJsAsync(parsed: commandParser.ParsedCommand) {
+    const id = parsed.args[0];
+    console.log(`Building sim js for ${id}`);
+    const cwd = process.cwd();
+    const builtFolder = path.join("temp", id);
+    nodeutil.mkdirP(builtFolder);
+    process.chdir(builtFolder);
+
+    const mainPkg = new pxt.MainPackage(new Host());
+    mainPkg._verspec = `pub:${id}`;
+
+    await mainPkg.host().downloadPackageAsync(mainPkg);
+    await mainPkg.installAllAsync();
+    const opts = await mainPkg.getCompileOptionsAsync();
+    const compileResult = pxtc.compile(opts);
+    if (compileResult.diagnostics && compileResult.diagnostics.length > 0) {
+        compileResult.diagnostics.forEach(diag => {
+            console.error(diag.messageText)
+        })
+        throw new Error(`Failed to compile share id: ${id}`);
+    }
+
+    const builtJsInfo = pxtc.buildSimJsInfo(compileResult);
+
+    const outdir = parsed.flags["output"] as string || path.join(cwd, "docs", "static", "builtjs");
+    nodeutil.mkdirP(outdir);
+    const outputLocation = path.join(outdir, `${id}v${pxt.appTarget.versions.target}.json`);
+    fs.writeFileSync(
+        outputLocation,
+        JSON.stringify(builtJsInfo)
+    );
+
+    process.chdir(cwd);
+    console.log(`saved prebuilt ${id} to ${outputLocation}`);
 }
 
 export function gendocsAsync(parsed: commandParser.ParsedCommand) {
@@ -6042,6 +6078,20 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
             }
         }
     }, buildAsync);
+
+    p.defineCommand({
+        name: "buildsimjs",
+        help: "build sim js for a share link",
+        argString: "<share id>",
+        flags: {
+            output: {
+                description: "Specifies the output folder for the generated files",
+                argument: "output",
+                type: "string",
+                aliases: ["o"]
+            },
+        },
+    }, buildShareSimJsAsync)
 
     simpleCmd("clean", "removes built folders", cleanAsync);
     advancedCommand("cleangen", "remove generated files", cleanGenAsync);

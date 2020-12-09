@@ -10,6 +10,7 @@ namespace pxsim {
         refCountingDebug?: boolean;
         options?: any;
         parts?: string[];
+        builtinParts?: string[];
         partDefinitions?: Map<PartDefinition>
         fnArgs?: any;
         code: string;
