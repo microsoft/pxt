@@ -6,6 +6,7 @@ export interface ICarouselProps extends React.Props<Carousel> {
     // Percentage of child width to bleed over either edge of the page
     bleedPercent: number;
     selectedIndex?: number;
+    tickId?: string; // if set, collect usage analytics
 }
 
 export interface ICarouselState {
@@ -119,6 +120,15 @@ export class Carousel extends data.Component<ICarouselProps, ICarouselState> {
         const prevIndex = this.index;
         const prevScroll = this.container.scrollLeft;
         this.setIndex(left ? this.index - this.actualPageLength : this.index + this.actualPageLength);
+
+        const { tickId } = this.props;
+        if (tickId)
+            pxt.tickEvent("carousel.arrow.click", {
+                tickId,
+                index: this.index, 
+                left: left ? -1 : 1 
+            }, { interactiveConsent: true })
+
         if (left) {
             // Focus right most
             const prevElement = this.index + this.actualPageLength < prevIndex ? this.index + this.actualPageLength : prevIndex - 1;

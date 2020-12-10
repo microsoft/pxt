@@ -686,7 +686,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
             } else {
                 const selectedElement = cards[selectedIndex];
                 return <div>
-                    <carousel.Carousel ref="carousel" bleedPercent={20} selectedIndex={selectedIndex}>
+                    <carousel.Carousel ref="carousel" tickId={path} bleedPercent={20} selectedIndex={selectedIndex}>
                         {cards.map((scr, index) =>
                             <ProjectsCodeCard
                                 className="example"
@@ -738,7 +738,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
             const headersToShow = headers
                 .filter(h => !h.tutorial?.metadata?.hideIteration)
                 .slice(0, ProjectsCarousel.NUM_PROJECTS_HOMESCREEN);
-            return <carousel.Carousel bleedPercent={20}>
+            return <carousel.Carousel tickId="myprojects" bleedPercent={20}>
                 {showNewProject ? <div role="button" className="ui card link buttoncard newprojectcard" title={lf("Creates a new empty project")}
                     onClick={this.newProject} onKeyDown={sui.fireClickOnEnter} >
                     <div className="content">
