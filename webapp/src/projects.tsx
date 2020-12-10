@@ -839,7 +839,7 @@ export interface ProjectsDetailProps extends ISettingsProps {
     youTubePlaylistId?: string;
     buttonLabel?: string;
     url?: string;
-    scr?: any;
+    scr?: pxt.CodeCard;
     onClick: (scr: any, action?: pxt.CodeCardAction) => void;
     cardType: pxt.CodeCardType;
     tags?: string[];
@@ -1002,6 +1002,10 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
 
     handleActionClick(action?: pxt.CodeCardAction) {
         const { scr, onClick } = this.props;
+        pxt.tickEvent('projects.actions.details', {
+            name: scr.shortName || scr.name,
+            type: scr.cardType
+        }, { interactiveConsent: true })
         return () => onClick(scr, action);
     }
 
