@@ -322,7 +322,7 @@ namespace pxsim {
                         // not found, spin a new one
                         if (!messageFrame) {
                             const url = messageSimulator.url
-                                .replace("$PARENT_ORIGIN$", this.options.parentOrigin || "")
+                                .replace("$PARENT_ORIGIN$", encodeURIComponent(this.options.parentOrigin || ""))
                             let wrapper = this.createFrame(url);
                             this.container.appendChild(wrapper);
                             messageFrame = wrapper.firstElementChild as HTMLIFrameElement;
