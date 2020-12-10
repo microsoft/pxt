@@ -120,7 +120,7 @@
             codeFromData = window.frameElement ? window.frameElement.getAttribute('data-code') : undefined;
         } catch (e) {
             /**
-             *  Internet Explorer 11 and Microsoft Edge throw an exception when checking 
+             *  Internet Explorer 11 and Microsoft Edge throw an exception when checking
              *  if the frame element exists when the iframe is on a different origin
              */
         }
@@ -165,8 +165,7 @@
 
         var prebuiltCodePromise = Promise.resolve(undefined);
         if (prebuiltSimJs) {
-            var versionsuff = /localhost:/.test(window.location.href) ? "" : "@versionsuff@";
-            var builtSimJsUrl = "/static/builtjs/" + id[1] + versionsuff + ".json"
+            var builtSimJsUrl = "/static/builtjs/" + id[1] + ".json"
             // kick off fetch immediately, no need to wait for ksrunnerready
             prebuiltCodePromise = fetch(builtSimJsUrl)
                 .then(resp => resp.json())
