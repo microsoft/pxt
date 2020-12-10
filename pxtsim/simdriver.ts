@@ -72,6 +72,7 @@ namespace pxsim {
     }
 
     const FRAME_DATA_MESSAGE_CHANNEL = "messagechannel"
+    const MESSAGE_SOURCE = "pxtdriver"
 
     export class SimulatorDriver {
         private themes = ["blue", "red", "green", "yellow"];
@@ -200,12 +201,13 @@ namespace pxsim {
             this.postMessage(<SimulatorRecorderMessage>{
                 type: 'recorder',
                 action: 'start',
+                source: MESSAGE_SOURCE,
                 width
             });
         }
 
         public stopRecording() {
-            this.postMessage(<SimulatorRecorderMessage>{ type: 'recorder', action: 'stop' })
+            this.postMessage(<SimulatorRecorderMessage>{ type: 'recorder', source: MESSAGE_SOURCE, action: 'stop' })
         }
 
         private setFrameState(frame: HTMLIFrameElement) {
@@ -427,14 +429,14 @@ namespace pxsim {
 
         public stop(unload = false, starting = false) {
             this.clearDebugger();
-            this.postMessage({ type: 'stop' });
+            this.postMessage({ type: 'stop', source: MESSAGE_SOURCE });
             this.setState(starting ? SimulatorState.Starting : SimulatorState.Stopped);
             if (unload)
                 this.unload();
         }
 
         public suspend() {
-            this.postMessage({ type: 'stop' });
+            this.postMessage({ type: 'stop', source: MESSAGE_SOURCE });
             this.setState(SimulatorState.Suspended);
         }
 
@@ -450,11 +452,11 @@ namespace pxsim {
         public mute(mute: boolean) {
             if (this._currentRuntime)
                 this._currentRuntime.mute = mute;
-            this.postMessage({ type: 'mute', mute: mute } as pxsim.SimulatorMuteMessage);
+            this.postMessage({ type: 'mute', source: MESSAGE_SOURCE, mute: mute } as pxsim.SimulatorMuteMessage);
         }
 
         public stopSound() {
-            this.postMessage({ type: 'stopsound' } as pxsim.SimulatorStopSoundMessage)
+            this.postMessage({ type: 'stopsound', source: MESSAGE_SOURCE } as pxsim.SimulatorStopSoundMessage)
         }
 
         public isLoanedSimulator(el: HTMLElement) {
@@ -620,7 +622,8 @@ namespace pxsim {
         // ensure _currentRuntime is ready
         private startFrame(frame: HTMLIFrameElement): boolean {
             if (!this._currentRuntime || !frame.contentWindow) return false;
-            let msg = JSON.parse(JSON.stringify(this._currentRuntime)) as pxsim.SimulatorRunMessage;
+            const msg = JSON.parse(JSON.stringify(this._currentRuntime)) as pxsim.SimulatorRunMessage;
+            msg.source = MESSAGE_SOURCE;
             let mc = '';
             let m = /player=([A-Za-z0-9]+)/i.exec(window.location.href); if (m) mc = m[1];
             msg.frameCounter = ++this.frameCounter;
@@ -730,7 +733,7 @@ namespace pxsim {
                     return;
             }
 
-            this.postMessage({ type: 'debugger', subtype: msg } as pxsim.DebuggerMessage)
+            this.postMessage({ type: 'debugger', subtype: msg, source: MESSAGE_SOURCE } as pxsim.DebuggerMessage)
         }
 
         public setBreakpoints(breakPoints: number[]) {
@@ -835,6 +838,7 @@ namespace pxsim {
             const msg: pxsim.DebuggerMessage = JSON.parse(JSON.stringify(data))
             msg.type = "debugger"
             msg.subtype = subtype;
+            msg.source = MESSAGE_SOURCE;
             if (seq)
                 msg.seq = seq;
             this.postMessage(msg);
