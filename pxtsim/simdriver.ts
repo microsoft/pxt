@@ -22,7 +22,7 @@ namespace pxsim {
         messageSimulators?: pxt.Map<{
             url: string;
             aspectRatio?: number;
-        }>;      
+        }>;
     }
 
     export enum SimulatorState {
@@ -93,6 +93,7 @@ namespace pxsim {
 
         constructor(public container: HTMLElement,
             public options: SimulatorDriverOptions = {}) {
+            
             this._allowedOrigins.push(window.location.origin);
             if (options.parentOrigin) {
                 this._allowedOrigins.push(options.parentOrigin)
@@ -103,6 +104,14 @@ namespace pxsim {
             } catch (e) {
                 console.error(`Invalid sim url ${this.getSimUrl()}`)
             }
+            const messageSimulators = options?.messageSimulators
+            if (messageSimulators) {
+                Object.keys(messageSimulators)
+                    .map(channel => new URL(messageSimulators[channel].url).origin)
+                    .forEach(origin => this._allowedOrigins.push(origin));
+            }
+            this._allowedOrigins = U.unique(this._allowedOrigins, f => f);
+            console.log({ origins: this._allowedOrigins })
         }
 
         isDebug() {
@@ -312,7 +321,9 @@ namespace pxsim {
                         let messageFrame = frames.find(frame => frame.dataset[FRAME_DATA_MESSAGE_CHANNEL] === messageChannel);
                         // not found, spin a new one
                         if (!messageFrame) {
-                            let wrapper = this.createFrame(messageSimulator.url);
+                            const url = messageSimulator.url
+                                .replace("$PARENT_ORIGIN$", this.options.parentOrigin || "")
+                            let wrapper = this.createFrame(url);
                             this.container.appendChild(wrapper);
                             messageFrame = wrapper.firstElementChild as HTMLIFrameElement;
                             messageFrame.dataset[FRAME_DATA_MESSAGE_CHANNEL] = messageChannel;
@@ -672,7 +683,8 @@ namespace pxsim {
                     if (U.isLocalHost()) {
                         // no-op
                     } else {
-                        if (!this._allowedOrigins.find(origin => origin === ev.origin)) return
+                        if (this._allowedOrigins.indexOf(ev.origin) < 0)
+                            return
                     }
                     this.handleMessage(ev.data, ev.source as Window)
                 }

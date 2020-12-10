@@ -217,6 +217,8 @@ declare namespace pxt {
 
         // a map of allowed simulator channel to URL to handle specific control messages
         messageSimulators?: pxt.Map<{
+            // the URL to load the simulator, $PARENT_ORIGIN$ will be replaced by the parent
+            // origin to validate messages
             url: string;
             aspectRatio?: number;
         }>;
