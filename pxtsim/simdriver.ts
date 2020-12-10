@@ -111,7 +111,6 @@ namespace pxsim {
                     .forEach(origin => this._allowedOrigins.push(origin));
             }
             this._allowedOrigins = U.unique(this._allowedOrigins, f => f);
-            console.log({ origins: this._allowedOrigins })
         }
 
         isDebug() {
