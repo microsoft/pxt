@@ -19,7 +19,10 @@ namespace pxsim {
         // dispatch messages to parent window
         nestedEditorSim?: boolean;
         parentOrigin?: string
-        messageSimulators?: pxt.Map<string>;
+        messageSimulators?: pxt.Map<{
+            url: string;
+            aspectRatio?: number;
+        }>;      
     }
 
     export enum SimulatorState {
@@ -66,6 +69,8 @@ namespace pxsim {
     export interface HwDebugger {
         postMessage: (msg: pxsim.SimulatorMessage) => void;
     }
+
+    const FRAME_DATA_MESSAGE_CHANNEL = "messagechannel"
 
     export class SimulatorDriver {
         private themes = ["blue", "red", "green", "yellow"];
@@ -298,19 +303,19 @@ namespace pxsim {
                     // start second simulator
                 } else {
                     const messageChannel = msg.type === "messagepacket" && (msg as SimulatorControlMessage).channel;
-                    const messageSimulatorUrl: string = messageChannel &&
+                    const messageSimulator = messageChannel &&
                         this.options.messageSimulators &&
                         this.options.messageSimulators[messageChannel];
                     // should we start an extension editor?
-                    if (messageSimulatorUrl) {
+                    if (messageSimulator) {
                         // find a frame already running that simulator
-                        let messageFrame = frames.find(frame => frame.dataset[`messagechannel`] === messageChannel);
+                        let messageFrame = frames.find(frame => frame.dataset[FRAME_DATA_MESSAGE_CHANNEL] === messageChannel);
                         // not found, spin a new one
                         if (!messageFrame) {
-                            let wrapper = this.createFrame(messageSimulatorUrl);
+                            let wrapper = this.createFrame(messageSimulator.url);
                             this.container.appendChild(wrapper);
                             messageFrame = wrapper.firstElementChild as HTMLIFrameElement;
-                            messageFrame.dataset[`messagechannel`] = messageChannel;
+                            messageFrame.dataset[FRAME_DATA_MESSAGE_CHANNEL] = messageChannel;
                             this.startFrame(messageFrame);
                             frames = this.simFrames(); // refresh
                         }
@@ -320,7 +325,7 @@ namespace pxsim {
                         }
                     } else {
                         // start secondary frame if needed
-                        const mkcdFrames = frames.filter(frame => !frame.dataset[`messagechannel`]);
+                        const mkcdFrames = frames.filter(frame => !frame.dataset[FRAME_DATA_MESSAGE_CHANNEL]);
                         if (mkcdFrames.length < 2) {
                             this.container.appendChild(this.createFrame());
                             frames = this.simFrames();
@@ -490,7 +495,15 @@ namespace pxsim {
         }
 
         private applyAspectRatioToFrame(frame: HTMLIFrameElement, ratio?: number) {
-            const r = ratio || this._runOptions.aspectRatio;
+            let r = ratio || this._runOptions.aspectRatio;
+            const messageChannel = frame.dataset[FRAME_DATA_MESSAGE_CHANNEL];
+            if (messageChannel) {
+                const messageSimulatorAspectRatio = this.options?.messageSimulators?.[messageChannel]?.aspectRatio;
+                if (messageSimulatorAspectRatio) {
+                    r = messageSimulatorAspectRatio;
+                }
+            }
+
             frame.parentElement.style.paddingBottom =
                 (100 / r) + "%";
         }

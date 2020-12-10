@@ -216,7 +216,10 @@ declare namespace pxt {
         keymap?: boolean; // when non-empty and autoRun is disabled, this code is run upon simulator first start
 
         // a map of allowed simulator channel to URL to handle specific control messages
-        messageSimulators?: pxt.Map<string>;
+        messageSimulators?: pxt.Map<{
+            url: string;
+            aspectRatio?: number;
+        }>;
     }
 
     interface TargetCompileService {
