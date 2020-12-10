@@ -21,7 +21,7 @@ import Cloud = pxt.Cloud;
 import { createJointWorkspace } from "./jointworkspace";
 import { createBrowserDbWorkspace } from "./browserdbworkspace";
 import { createSynchronizedWorkspace, Synchronizable } from "./synchronizedworkspace";
-import { ConflictStrategy, DisjointSetsStrategy } from "./workspacebehavior";
+import { ConflictStrategy, DisjointSetsStrategy, wrapInMemCache } from "./workspacebehavior";
 import { createMemWorkspace, SyncWorkspaceProvider } from "./memworkspace";
 
 // Avoid importing entire crypto-js
@@ -34,6 +34,7 @@ type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
 type InstallHeader = pxt.workspace.InstallHeader;
 type File = pxt.workspace.File;
 
+// TODO @darzu: remove. redudant w/ implCache
 let allScripts: File[] = [];
 
 let headerQ = new U.PromiseQueue();
@@ -42,7 +43,10 @@ let impl: WorkspaceProvider;
 let implCache: SyncWorkspaceProvider & Synchronizable;
 let implType: WorkspaceKind;
 
-function lookup(id: string) {
+function lookup(id: string): File {
+    // TODO @darzu: 
+    // const hdr = implCache.listSync().find(x => x.header.id == id || x.header.path == id)
+    // implCache.getSync();
     return allScripts.find(x => x.header.id == id || x.header.path == id);
 }
 
@@ -91,6 +95,7 @@ function chooseWorkspace(kind: WorkspaceKind = "browser"): pxt.workspace.Workspa
     }
 }
 
+
 export function setupWorkspace(kind: WorkspaceKind): void {
     U.assert(!impl, "workspace set twice");
     pxt.log(`workspace: ${kind}`);
@@ -105,12 +110,15 @@ export function setupWorkspace(kind: WorkspaceKind): void {
             conflict: ConflictStrategy.LastWriteWins,
             disjointSets: DisjointSetsStrategy.Synchronize
         });
+
+        // TODO @darzu: improve this
         const msPerMin = 1000 * 60
-        setInterval(() => {
-            // TODO @darzu: improve this
+        const doSync = async () => {
             console.log("synchronizing with the cloud...");
-            cachedCloud.syncAsync()
-        }, 5 * msPerMin)
+            const changes = await cachedCloud.syncAsync()
+            console.log(`...changes synced! ${changes}`)
+        }
+        setInterval(doSync, 5 * msPerMin)
 
         // TODO @darzu: when synchronization causes changes
         // data.invalidate("header:*");
@@ -123,11 +131,14 @@ export function setupWorkspace(kind: WorkspaceKind): void {
         impl = localUserChoice
 
     // TODO @darzu: remove allHeaders etc..
-    implCache = createSynchronizedWorkspace(impl, createMemWorkspace(), {
-        conflict: ConflictStrategy.LastWriteWins,
-        disjointSets: DisjointSetsStrategy.Synchronize
-    });
+    implCache = wrapInMemCache(impl)
     implCache.syncAsync();
+
+    // TODO @darzu: 
+    // if (changes.length) {
+    //     data.invalidate("header:*");
+    //     data.invalidate("text:*");
+    // }
 }   
 
 // TODO @darzu: needed?
@@ -185,7 +196,10 @@ export function getHeaders(withDeleted = false) {
     // TODO @darzu: we need to consolidate this to one Workspace impl
     maybeSyncHeadersAsync().done();
     const cloudUserId = auth.user()?.id;
-    let r = allScripts.map(e => e.header).filter(h =>
+    // TODO @darzu: use allScripts still?
+    // let r = allScripts.map(e => e.header)
+    let r = implCache.listSync()
+        .filter(h =>
         (withDeleted || !h.isDeleted) 
         && !h.isBackup
         // TODO @darzu: 

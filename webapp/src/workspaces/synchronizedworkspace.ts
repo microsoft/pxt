@@ -1,3 +1,4 @@
+import { SyncWorkspaceProvider } from "./memworkspace";
 import { ConflictStrategy, DisjointSetsStrategy, Strategy, synchronize } from "./workspacebehavior";
 
 type Header = pxt.workspace.Header;
@@ -7,17 +8,30 @@ type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
 
 
 export interface Synchronizable {
-    syncAsync(): Promise<void>
+    syncAsync(): Promise<Header[]>,
+    // TODO @darzu: 
+    // lastLeftList(): Header[],
+    // lastRightList(): Header[],
 }
 
 export function createSynchronizedWorkspace<T extends WorkspaceProvider>(primary: WorkspaceProvider, cache: T, strat: Strategy): T & Synchronizable {
+
+    // TODO @darzu: debated caching items here
+    // const lastLeft: Header[] = [];
+    // const lastRight: Header[] = [];
+
     async function syncAsync() {
         // TODO @darzu: parameterize strategy?
-        await synchronize(primary, cache, strat)
+        const res = await synchronize(primary, cache, strat)
+        return res.changed
     }
 
     return {
         ...cache,
+        // TODO @darzu: 
+        // listAsync: async () => {
+
+        // },
         // mutative operations should be kicked off for both
         setAsync: async (h, prevVersion, text) => {
             // TODO @darzu: don't push to both when disjoint sets strat isn't synchronize

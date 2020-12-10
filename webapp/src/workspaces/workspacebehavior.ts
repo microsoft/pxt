@@ -1,3 +1,5 @@
+import { createMemWorkspace, SyncWorkspaceProvider } from "./memworkspace";
+import { createSynchronizedWorkspace, Synchronizable } from "./synchronizedworkspace";
 import U = pxt.Util;
 
 type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
@@ -56,14 +58,23 @@ function hasChanged(a: Header, b: Header): boolean {
     return a.modificationTime !== b.modificationTime
 }
 
-async function transfer(h: Header, fromWs: WorkspaceProvider, toWs: WorkspaceProvider) {
+async function transfer(h: Header, fromWs: WorkspaceProvider, toWs: WorkspaceProvider): Promise<Header> {
     const fromPrj = await fromWs.getAsync(h)
     const prevVersion: Version = null // TODO @darzu: what do we do with this version thing...
     const toRes: Version = await toWs.setAsync(h, prevVersion, fromPrj.text)
+    return h;
 }
 
-export async function synchronize(left: WorkspaceProvider, right: WorkspaceProvider, strat: Strategy) {
-    // TODO @darzu: 
+export interface SyncResult {
+    changed: Header[],
+    left: Header[],
+    right: Header[],
+}
+
+export async function synchronize(left: WorkspaceProvider, right: WorkspaceProvider, strat: Strategy): Promise<SyncResult> {
+    // TODO @darzu: add "on changes identified" handler so we can show in-progress syncing
+
+    // TODO @darzu: thoughts & notes
     // idea: never delete, only say "isDeleted" is true; can optimize away later
     /*
     sync scenarios:
@@ -79,7 +90,7 @@ export async function synchronize(left: WorkspaceProvider, right: WorkspaceProvi
     */
     
     const lHdrsList = await left.listAsync()
-    const rHdrsList = await left.listAsync()
+    const rHdrsList = await right.listAsync()
     const lHdrs = U.toDictionary(lHdrsList, h => h.id)
     const rHdrs = U.toDictionary(rHdrsList, h => h.id)
     const allHdrsList = [...lHdrsList, ...rHdrsList]
@@ -106,10 +117,26 @@ export async function synchronize(left: WorkspaceProvider, right: WorkspaceProvi
     const rChanges = conflictResults.reduce((p: Header[], n) => hasChanged(n, rHdrs[n.id]) ? [...p, n] : p, [])
     let rToPush = rChanges
     if (strat.disjointSets === DisjointSetsStrategy.Synchronize)
-        lToPush = [...lToPush, ...U.values(lOnly)]
+        rToPush = [...rToPush, ...U.values(lOnly)]
     const rPushPromises = rToPush.map(h => transfer(h, left, right))
 
     // wait
     // TODO @darzu: batching? throttling? incremental?
-    await Promise.all([...lPushPromises, ...rPushPromises])
+    const changed = await Promise.all([...lPushPromises, ...rPushPromises])
+
+    // return final results
+    const lRes = [...U.values(lOnly), ...lToPush]
+    const rRes = [...U.values(rOnly), ...rToPush]
+    return {
+        changed,
+        left: lRes,
+        right: rRes
+    }
+}
+
+export function wrapInMemCache(ws: WorkspaceProvider): SyncWorkspaceProvider & WorkspaceProvider & Synchronizable {
+    return createSynchronizedWorkspace(ws, createMemWorkspace(), {
+        conflict: ConflictStrategy.LastWriteWins,
+        disjointSets: DisjointSetsStrategy.Synchronize
+    });
 }
