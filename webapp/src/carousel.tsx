@@ -125,8 +125,8 @@ export class Carousel extends data.Component<ICarouselProps, ICarouselState> {
         if (tickId)
             pxt.tickEvent("carousel.arrow.click", {
                 tickId,
-                index: this.index, 
-                left: left ? -1 : 1 
+                index: this.index,
+                left: left ? -1 : 1
             }, { interactiveConsent: true })
 
         if (left) {
