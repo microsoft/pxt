@@ -603,15 +603,59 @@ namespace pxt {
                 })
             }
 
+            const handleVerMismatch = (mod: Package, ver: string) => {
+                pxt.debug(`version spec mismatch: ${mod._verspec} != ${ver}`)
+
+                // if both are github, try to pick the higher semver
+                if (/^github:/.test(mod._verspec) && /^github:/.test(ver)) {
+                    const modid = pxt.github.parseRepoId(mod._verspec);
+                    const verid = pxt.github.parseRepoId(ver);
+                    // same repo
+                    if (modid?.slug && modid?.slug === verid?.slug) {
+                        // if modid does not have a tag, try sniffing it from config
+                        // this may be an issue if the user does not create releases
+                        // and pulls from master
+                        const modtag = modid?.tag || mod?.config.version;
+                        const c= pxt.semver.strcmp(modtag, verid.tag);
+                        if (c == 0) {
+                            // turns out to be the same versions
+                            pxt.debug(`resolved version are ${modtag}`)
+                            return;
+                        }
+                        else if (c < 0) {
+                            // already loaded version of dependencies is greater
+                            // than current version, use it instead
+                            pxt.debug(`auto-upgraded ${ver} to ${modtag}`)
+                            return;
+                        }
+                    }
+                }
+
+                // ignore, file: protocol
+                if (/^file:/.test(mod._verspec) || /^file:/.test(ver)) {
+                    pxt.debug(`ignore file: mismatch issues`)
+                    return;
+                }
+
+                // crashing if really really not good
+                // so instead we just ignore and continute
+                mod.configureAsInvalidPackage(lf("version mismatch"))
+            }
 
             const loadDepsRecursive = async (deps: pxt.Map<string>, from: Package, isCpp = false) => {
                 if (!deps) deps = from.dependencies(isCpp)
                 for (let id of Object.keys(deps)) {
-                    const ver = deps[id] || "*"
+                    let ver = deps[id] || "*"
                     if (id == "hw" && pxt.hwVariant)
                         id = "hw---" + pxt.hwVariant
                     let mod = from.resolveDep(id)
                     if (mod) {
+                        // check if the current dependecy matches the ones
+                        // loaded in parent
+                        if (!mod.invalid() && mod._verspec !== ver)
+                            handleVerMismatch(mod, ver);
+
+                        // bail out if invalid
                         if (mod.invalid()) {
                             // failed to resolve dependency, ignore
                             mod.level = Math.min(mod.level, from.level + 1)
@@ -619,8 +663,6 @@ namespace pxt {
                             continue
                         }
 
-                        if (mod._verspec != ver && !/^file:/.test(mod._verspec) && !/^file:/.test(ver))
-                            U.userError("Version spec mismatch on " + id)
                         if (!isCpp) {
                             mod.level = Math.min(mod.level, from.level + 1)
                             mod.addedBy.push(from)
