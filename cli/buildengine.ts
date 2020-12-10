@@ -209,7 +209,7 @@ function patchDockerCrossHexInfo(extInfo: pxtc.ExtensionInfo) {
 }
 
 function patchDockerEspIdfHexInfo(extInfo: pxtc.ExtensionInfo) {
-    let hexPath = thisBuild.buildPath + "/bld/all.tgz.b64"
+    let hexPath = thisBuild.buildPath + "/build/pxtapp.b64"
     return {
         hex: fs.readFileSync(hexPath, "utf8").split(/\r?\n/)
     }
