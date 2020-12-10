@@ -997,14 +997,19 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
 
     handleDetailClick() {
         const { scr, onClick } = this.props;
+        pxt.tickEvent('projects.actions.details', {
+            name: scr.shortName || scr.name,
+            type: scr.cardType
+        }, { interactiveConsent: true })
         onClick(scr);
     }
 
     handleActionClick(action?: pxt.CodeCardAction) {
         const { scr, onClick } = this.props;
-        pxt.tickEvent('projects.actions.details', {
+        pxt.tickEvent('projects.actions.click`', {
             name: scr.shortName || scr.name,
-            type: scr.cardType
+            type: scr.cardType,
+            editor: scr.editor
         }, { interactiveConsent: true })
         return () => onClick(scr, action);
     }
