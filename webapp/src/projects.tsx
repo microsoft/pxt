@@ -657,11 +657,13 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
         this.setState({})
     }
 
-    handleCardClick(e: any, scr: any, index?: number) {
+    handleCardClick(e: any, scr: pxt.CodeCard, index?: number) {
         const { name } = this.props;
         if (this.props.setSelected && !(scr && scr.directOpen)) {
             // Set this item as selected
-            pxt.tickEvent("projects.detail.open");
+            pxt.tickEvent("projects.detail.open", {
+                name: scr?.name, url: scr?.url, cardType: scr?.cardType, editor: scr?.editor
+            }, { interactiveConsent: true });
             this.props.setSelected(name, index);
         } else {
             this.props.onClick(scr);
@@ -998,8 +1000,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
     handleDetailClick() {
         const { scr, onClick } = this.props;
         pxt.tickEvent('projects.actions.details', {
-            name: scr.shortName || scr.name,
-            type: scr.cardType
+            name: scr.name, url: scr.url, cardType: scr.cardType, editor: scr.editor
         }, { interactiveConsent: true })
         onClick(scr);
     }
@@ -1007,9 +1008,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
     handleActionClick(action?: pxt.CodeCardAction) {
         const { scr, onClick } = this.props;
         pxt.tickEvent('projects.actions.click`', {
-            name: scr.shortName || scr.name,
-            type: scr.cardType,
-            editor: scr.editor
+            name: scr.name, url: scr.url, cardType: scr.cardType, editor: scr.editor
         }, { interactiveConsent: true })
         return () => onClick(scr, action);
     }
