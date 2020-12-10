@@ -54,11 +54,12 @@ in ``pxtarget.json`` under the ``simulator.messageSimulators`` field:
            ...
            "mychannel": {
                "url": "url of the simulator$PARENT_ORIGIN$",
-               ...
            }
        }
    }
 ```
 
 When loading the message simulator url, MakeCode expands ``$PARENT_ORIGIN$`` with the URI-encoded origin of the editor.
-You can use this value to validate the origin of iframe messages. 
+You can use this value to validate the origin of iframe messages.
+
+Optionally, you can specify a ``localHostUrl`` that will be used in local development mode.

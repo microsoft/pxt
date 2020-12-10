@@ -21,6 +21,7 @@ namespace pxsim {
         parentOrigin?: string
         messageSimulators?: pxt.Map<{
             url: string;
+            localHostUrl?: string;
             aspectRatio?: number;
         }>;
     }
@@ -107,8 +108,12 @@ namespace pxsim {
             const messageSimulators = options?.messageSimulators
             if (messageSimulators) {
                 Object.keys(messageSimulators)
-                    .map(channel => new URL(messageSimulators[channel].url).origin)
-                    .forEach(origin => this._allowedOrigins.push(origin));
+                    .map(channel => messageSimulators[channel])
+                    .forEach(messageSimulator => {
+                        this._allowedOrigins.push(new URL(messageSimulator.url).origin);
+                        if (messageSimulator.localHostUrl)
+                            this._allowedOrigins.push(new URL(messageSimulator.localHostUrl).origin);
+                    });
             }
             this._allowedOrigins = U.unique(this._allowedOrigins, f => f);
         }
@@ -320,7 +325,7 @@ namespace pxsim {
                         let messageFrame = frames.find(frame => frame.dataset[FRAME_DATA_MESSAGE_CHANNEL] === messageChannel);
                         // not found, spin a new one
                         if (!messageFrame) {
-                            const url = messageSimulator.url
+                            const url = ((U.isLocalHost() && messageSimulator.localHostUrl) || messageSimulator.url)
                                 .replace("$PARENT_ORIGIN$", encodeURIComponent(this.options.parentOrigin || ""))
                             let wrapper = this.createFrame(url);
                             this.container.appendChild(wrapper);
