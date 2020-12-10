@@ -186,7 +186,7 @@ namespace pxsim {
                 }
             })
             return v;
-        }    
+        }
     }
 
     export interface Map<T> {

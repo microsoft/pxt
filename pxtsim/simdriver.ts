@@ -93,7 +93,7 @@ namespace pxsim {
 
         constructor(public container: HTMLElement,
             public options: SimulatorDriverOptions = {}) {
-            
+
             this._allowedOrigins.push(window.location.origin);
             if (options.parentOrigin) {
                 this._allowedOrigins.push(options.parentOrigin)
