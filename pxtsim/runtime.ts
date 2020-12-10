@@ -174,6 +174,19 @@ namespace pxsim {
                     && !/nolocalhost=1/.test(window.location.href);
             } catch (e) { return false; }
         }
+
+        export function unique<T>(arr: T[], f: (t: T) => string): T[] {
+            let v: T[] = [];
+            let r: { [index: string]: any; } = {}
+            arr.forEach(e => {
+                let k = f(e)
+                if (!r.hasOwnProperty(k)) {
+                    r[k] = null;
+                    v.push(e);
+                }
+            })
+            return v;
+        }
     }
 
     export interface Map<T> {
