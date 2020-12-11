@@ -4098,21 +4098,24 @@ function initPacketIO() {
             }, "*")
         },
         (type, payload) => {
-            if (type == "jacdac") {
+            if (type == pxt.HF2.CUSTOM_EV_JACDAC) {
                 window.postMessage({
                     type: "messagepacket",
                     broadcast: false,
                     channel: type,
                     data: payload,
-                    echo: true
+                    fromPacketIO: true
                 }, "*")
             }
         });
 
     window.addEventListener('message', (ev: MessageEvent) => {
         const msg = ev.data
-        if (msg.type == 'messagepacket' && msg.channel == "jacdac" && !msg.echo)
-            pxt.packetio.sendCustomEventAsync(msg.channel, msg.data);
+        if (msg.type == 'messagepacket' && msg.channel == pxt.HF2.CUSTOM_EV_JACDAC && !msg.fromPacketIO)
+            pxt.packetio.sendCustomEventAsync(msg.channel, msg.data)
+                .then(() => { }, err => {
+                    core.errorNotification("JACDAC: " + err.message)
+                });
     }, false);
 }
 
