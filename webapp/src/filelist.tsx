@@ -404,7 +404,7 @@ class FolderTreeItem extends sui.StatelessUIElement<FolderTreeItemProps> {
             return children;
 
         return <>
-            <div className="folder item" role="treeitem" 
+            <div className="folder item" role="treeitem"
                 aria-selected={false}
                 aria-label={lf("Files in folder {0}", folder)}>
                 <i className="folder open outline icon"></i>
