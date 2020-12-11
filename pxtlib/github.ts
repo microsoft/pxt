@@ -1106,6 +1106,41 @@ namespace pxt.github {
             });
     }
 
+    export function resolveMonoRepoVersions(deps: pxt.Map<string>): pxt.Map<string> {
+        deps = Util.clone(deps);
+        // before loading dependencies, ensure that all mono-repo are in sync
+        const slugVersions: pxt.Map<{
+            tag: string;
+            deps: { id: string; ghid: ParsedRepo; }[];
+        }> = {};
+        // group and collect versions
+        Object.keys(deps)
+            .map(id => ({ id, ghid: github.parseRepoId(deps[id]) }))
+            .filter(v => v.ghid?.tag)
+            .forEach(v => {
+                const { id, ghid } = v;
+                // check version
+                let version = slugVersions[ghid.slug];
+                if (!version) {
+                    version = slugVersions[ghid.slug] = {
+                        tag: ghid.tag,
+                        deps: []
+                    }
+                }
+                version.deps.push(v);
+                if (pxt.semver.strcmp(version.tag, ghid.tag) < 0) {
+                    pxt.debug(`dep: resolve later monorepo tag to ${pxt.github.stringifyRepo(ghid)}`)
+                    version.tag = ghid.tag;
+                }
+            });
+        // patch depdencies
+        U.values(slugVersions)
+            .forEach(v => v.deps
+                .forEach(dep => deps[dep.id] = pxt.github.stringifyRepo(dep.ghid)))
+
+        return deps;
+    }
+
     export interface GitJson {
         repo: string;
         commit: pxt.github.Commit;

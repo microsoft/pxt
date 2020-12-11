@@ -662,8 +662,12 @@ namespace pxt {
             }
 
             const loadDepsRecursive = async (deps: pxt.Map<string>, from: Package, isCpp = false) => {
-                if (!deps) deps = from.dependencies(isCpp)
+                if (!deps) deps = from.dependencies(isCpp);
+
                 pxt.debug(`deps: ${from.id}->${Object.keys(deps).join(", ")}`);
+                deps = pxt.github.resolveMonoRepoVersions(deps);
+                pxt.debug(`deps: resolved ${from.id}->${Object.keys(deps).join(", ")}`);
+
                 for (let id of Object.keys(deps)) {
                     let ver = deps[id] || "*"
                     pxt.debug(`dep: load ${from.id}.${id}${isCpp ? "++" : ""}: ${ver}`)
