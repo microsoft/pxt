@@ -163,24 +163,25 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
 
     private packageOf(p: pkg.EditorPackage) {
         const expandedPkg = this.state.expandedPkg;
+        const pkgid = p.getPkgId();
         const del = !pxt.shell.isReadOnly()
-            && p.getPkgId() != pxt.appTarget.id
-            && p.getPkgId() != "built"
-            && p.getPkgId() != "assets"
-            && p.getPkgId() != pxt.appTarget.corepkg
+            && pkgid != pxt.appTarget.id
+            && pkgid != "built"
+            && pkgid != "assets"
+            && pkgid != pxt.appTarget.corepkg
             && p.getKsPkg().config && !p.getKsPkg().config.core
             && p.getKsPkg().level <= 1;
-        const upd = p.getKsPkg() && p.getKsPkg().verProtocol() == "github";
+        const upd = del && p.getKsPkg()?.verProtocol() == "github";
         const meta: pkg.PackageMeta = this.getData("open-pkg-meta:" + p.getPkgId());
         let version = upd ? p.getKsPkg().verArgument().split('#')[1] : undefined; // extract github tag
         if (version && version.length > 20) version = version.substring(0, 7);
-        return [<PackgeTreeItem key={"hd-" + p.getPkgId()}
-            pkg={p} isActive={expandedPkg == p.getPkgId()} onItemClick={this.togglePkg}
+        return [<PackgeTreeItem key={"hd-" + pkgid}
+            pkg={p} isActive={expandedPkg == pkgid} onItemClick={this.togglePkg}
             hasDelete={del} onItemRemove={this.removePkg}
             version={version} hasRefresh={upd} onItemRefresh={this.updatePkg} >
             {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
-            {p.getPkgId()}
-            {expandedPkg == p.getPkgId() ?
+            {pkgid}
+            {expandedPkg == pkgid ?
                 <div role="group" className="menu">
                     {this.filesOf(p)}
                 </div> : undefined}
@@ -498,13 +499,13 @@ class PackgeTreeItem extends sui.StatelessUIElement<PackageTreeItemProps> {
     }
 
     handleRefresh(e: React.MouseEvent<HTMLElement>) {
-        this.props.onItemRefresh(this.props.pkg);
         e.stopPropagation();
+        this.props.onItemRefresh(this.props.pkg);
     }
 
     handleRemove(e: React.MouseEvent<HTMLElement>) {
-        this.props.onItemRemove(this.props.pkg);
         e.stopPropagation();
+        this.props.onItemRemove(this.props.pkg);
     }
 
     private handleButtonKeydown(e: React.KeyboardEvent<HTMLElement>) {
