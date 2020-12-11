@@ -179,7 +179,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
         this.queryFlags = parseQuery();
         let config = await pxt.targetConfigAsync();
         let hash = parseHash(window.location.hash || config.skillMap?.defaultPath);
-        // await this.initLocalizationAsync();
+        await this.initLocalizationAsync();
         this.fetchAndParseSkillMaps(hash.cmd as MarkdownSource, hash.arg);
     }
 
