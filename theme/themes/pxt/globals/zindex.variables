@@ -52,6 +52,8 @@
 @simulatorZIndex: @editorToolsZIndex+1; /* Needs to be on top of @editorToolsZIndex for mobile/tablet view */
 @editorLogoZIndex: ((@blocklyFlyoutZIndex)-1); /* Should be below the flyouts blocklyFlyout and @monacoFlyoutZIndex */
 
+@filelistZIndex: @simulatorZIndex;
+
 /* Tutorial */
 @tutorialCardZIndex: @simulatorZIndex+2;
 @tutorialLightboxCardZIndex: @tutorialCardZIndex+1;

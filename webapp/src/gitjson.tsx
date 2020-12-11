@@ -394,8 +394,8 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         try {
             const ghid = this.parsedRepoId();
             const tags = await pxt.github.listRefsAsync(ghid.slug, "tags")
-            pxt.semver.sortLatestTags(tags)
-            currv = tags[0];
+            const stags = pxt.semver.sortLatestTags(tags)
+            currv = stags[0];
         } catch (e) {
             console.log(e)
         }

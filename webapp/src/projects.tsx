@@ -414,6 +414,7 @@ export class ProjectsMenu extends data.Component<ISettingsProps, {}> {
 
 interface HeroBannerState {
     cardIndex?: number;
+    paused?: boolean;
 }
 
 const HERO_BANNER_DELAY = 10000; // 10 seconds per card
@@ -437,7 +438,7 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
 
     private handleSetCardIndex(index: number) {
         this.stopRefresh();
-        this.setState({ cardIndex: index });
+        this.setState({ cardIndex: index, paused: true });
     }
 
     private handleCardClick() {
@@ -452,7 +453,8 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
     }
 
     private startRefresh() {
-        if (!this.carouselInterval && this.prevGalleries && this.prevGalleries.length) {
+        const { paused } = this.state;
+        if (!paused && !this.carouselInterval && this.prevGalleries && this.prevGalleries.length) {
             pxt.debug(`start refreshing hero carousel`)
             this.carouselInterval = setInterval(this.handleRefreshCard, HERO_BANNER_DELAY);
             this.handleRefreshCard();
@@ -524,7 +526,7 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
                 </sui.Link>
             </div>}
             {cardIndex !== undefined && cards?.length > 1 && <div key="cards" className="dots">
-                {cards.map((card, i) => <button key={i} className={`ui button empty circular label  clear ${i === cardIndex && "active"}`} onClick={handleSetCard(i)}>
+                {cards.map((_, i) => <button key={"dot" + i} className={`ui button empty circular label  clear ${i === cardIndex && "active"}`} onClick={handleSetCard(i)}>
                 </button>)}
             </div>}
         </div>
