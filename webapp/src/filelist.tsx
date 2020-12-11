@@ -113,8 +113,8 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             ffiles.push(f);
         })
         return Object.keys(folders)
-            .map(folder => <FolderTreeItem key={folder} folder={folder}>
-                {this.folderFilesOf(pkg, folder, files)}
+            .map(folder => <FolderTreeItem key={"folder-" + folder} folder={folder}>
+                {this.folderFilesOf(pkg, folder, folders[folder])}
             </FolderTreeItem>)
             .reduce((l, r) => l.concat(r), [])
     }
@@ -157,7 +157,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             const nameStart = folder.length ? folder.length + 1 : 0;
             return (
                 <FileTreeItem
-                    key={"file" + file.getName()}
+                    key={"file-" + file.getName()}
                     file={file}
                     meta={meta}
                     onItemClick={this.setFile}
@@ -399,13 +399,17 @@ class FolderTreeItem extends sui.StatelessUIElement<FolderTreeItemProps> {
 
     renderCore() {
         const { folder, children } = this.props;
+
+        if (!folder)
+            return children;
+
         return <>
-            {folder && <div className="folder item" key={"folder" + folder} role="treeitem" 
+            <div className="folder item" role="treeitem" 
                 aria-selected={false}
                 aria-label={lf("Files in folder {0}", folder)}>
                 <i className="folder open outline icon"></i>
                 {folder}
-            </div>}
+            </div>
             {children}
         </>
     }
