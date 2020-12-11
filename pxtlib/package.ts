@@ -615,7 +615,7 @@ namespace pxt {
                         // if modid does not have a tag, try sniffing it from config
                         // this may be an issue if the user does not create releases
                         // and pulls from master
-                        const modtag = modid?.tag || mod?.config.version;
+                        const modtag = modid?.tag || mod.config?.version;
                         const c= pxt.semver.strcmp(modtag, verid.tag);
                         if (c == 0) {
                             // turns out to be the same versions
