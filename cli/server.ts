@@ -40,7 +40,8 @@ function setupRootDir() {
         path.join(nodeutil.targetDir, "node_modules", `pxt-${pxt.appTarget.id}-sim`, "public"),
         path.join(nodeutil.pxtCoreDir, "built/web"),
         path.join(nodeutil.pxtCoreDir, "webapp/public"),
-        path.join(nodeutil.pxtCoreDir, "common-docs")
+        path.join(nodeutil.pxtCoreDir, "common-docs"),
+        path.join(nodeutil.pxtCoreDir, "docs"),
     ]
     docsDir = path.join(root, "docs")
     packagedDir = path.join(root, "built/packaged")
@@ -1094,6 +1095,8 @@ export function serveAsync(options: ServeOptions) {
         } else if (U.startsWith(pathname, "/docfiles/")) {
             pathname = pathname.slice(10)
             dd = docfilesdirs
+        } else if (U.startsWith(pathname, "./static/")) {
+            pathname = pathname.slice(1);
         }
         for (let dir of dd) {
             let filename = path.resolve(path.join(dir, pathname))
