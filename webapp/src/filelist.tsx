@@ -400,7 +400,8 @@ class FolderTreeItem extends sui.StatelessUIElement<FolderTreeItemProps> {
     renderCore() {
         const { folder, children } = this.props;
         return <>
-            {folder && <div className="folder item" key={"folder" + folder} role="treeitem"
+            {folder && <div className="folder item" key={"folder" + folder} role="treeitem" 
+                aria-selected={false}
                 aria-label={lf("Files in folder {0}", folder)}>
                 <i className="folder open outline icon"></i>
                 {folder}
