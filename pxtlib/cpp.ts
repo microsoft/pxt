@@ -706,6 +706,13 @@ namespace pxt.cpp {
                     })
                 }
 
+                m = /^PXT_EXPORT\((\w+)\)/.exec(ln)
+                if (m) {
+                    if (!res.vmPointers)
+                        res.vmPointers = []
+                    res.vmPointers.push(m[1])
+                }
+
                 m = /^#define\s+PXT_COMM_BASE\s+([0-9a-fx]+)/.exec(ln)
                 if (m)
                     res.commBase = parseInt(m[1])

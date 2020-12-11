@@ -514,7 +514,7 @@ namespace pxt {
         if (!trg) trg = appTarget.compile
 
         if (trg.nativeType == ts.pxtc.NATIVE_TYPE_VM)
-            return ts.pxtc.BINARY_PXT64
+            return trg.useESP ? ts.pxtc.BINARY_ESP : ts.pxtc.BINARY_PXT64
         else if (trg.useUF2 && !trg.switches.rawELF)
             return ts.pxtc.BINARY_UF2
         else if (trg.useELF)

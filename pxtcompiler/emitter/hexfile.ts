@@ -52,6 +52,7 @@ namespace ts.pxtc {
             jmpStartIdx: number;
 
             elfInfo: pxt.elf.Info;
+            espInfo: pxt.esp.Image;
         }
 
         function emptyCtx(): ParsedHex {
@@ -67,6 +68,7 @@ namespace ts.pxtc {
                 jmpStartIdx: undefined,
                 codeStartAddr: undefined,
                 elfInfo: undefined,
+                espInfo: undefined,
             }
         }
 
@@ -157,6 +159,8 @@ namespace ts.pxtc {
             }
         }
 
+        const pointerListMarker = "0108010842424242010801083ed8e98d"
+
         export function setupFor(opts: CompileTarget, extInfo: ExtensionInfo) {
             ctx = cachedCtxs.find(c => c.sha == extInfo.sha)
 
@@ -189,6 +193,43 @@ namespace ts.pxtc {
                     f.value = 0xffffff
                 }
 
+                if (target.useESP) {
+                    const img = pxt.esp.parseB64(hexlines)
+                    const marker = U.fromHex(pointerListMarker)
+                    const hasMarker = (buf: Uint8Array, off: number) => {
+                        for (let i = 0; i < marker.length; ++i)
+                            if (buf[off + i] != marker[i])
+                                return false
+                        return true
+                    }
+                    const droms = img.segments.filter(s => s.isDROM)
+                    U.assert(droms.length == 1)
+                    let found = false
+                    const drom = droms[0]
+                    for (let off = 0; off < drom.data.length; off += 0x20) {
+                        if (hasMarker(drom.data, off)) {
+                            found = true
+                            off += marker.length
+                            for (let ptr of extInfo.vmPointers || []) {
+                                if (ptr == "0") continue
+                                ptr = ptr.replace(/^&/, "")
+                                ctx.funcInfo[ptr] = {
+                                    name: ptr,
+                                    argsFmt: [],
+                                    value: pxt.HF2.read32(drom.data, off)
+                                }
+                                off += 4
+                            }
+                            break
+                        }
+                    }
+                    U.assert(found || (extInfo.vmPointers || []).length == 0)
+                    ctx.espInfo = img
+                    ctx.codeStartAddr = drom.addr + drom.data.length
+                    ctx.codeStartAddrPadded = (ctx.codeStartAddr + 0xff) & ~0xff
+                    ctx.codePaddingSize = ctx.codeStartAddrPadded - ctx.codeStartAddr
+                }
+
                 return
             }
 
@@ -211,7 +252,7 @@ namespace ts.pxtc {
                 ctx.codeStartAddr = ctx.elfInfo.imageMemStart
                 ctx.codeStartAddrPadded = ctx.elfInfo.imageMemStart
 
-                let jmpIdx = hexlines[0].indexOf("0108010842424242010801083ed8e98d")
+                let jmpIdx = hexlines[0].indexOf(pointerListMarker)
                 if (jmpIdx < 0)
                     oops("no jmp table in elf")
 
@@ -588,6 +629,21 @@ namespace ts.pxtc {
                     UF2.writeBytes(uf2, 0, resbuf);
                     return [UF2.serializeFile(uf2)];
                 }
+                return [U.uint8ArrayToString(resbuf)]
+            }
+
+            if (ctx.espInfo) {
+                const img = pxt.esp.cloneStruct(ctx.espInfo)
+                const drom = img.segments.find(s => s.isDROM)
+                let ptr = drom.data.length + ctx.codePaddingSize
+                const trg = new Uint8Array((ptr + buf.length * 2 + 0xff) & ~0xff)
+                trg.set(drom.data)
+                for (let i = 0; i < buf.length; ++i) {
+                    pxt.HF2.write16(trg, ptr, buf[i])
+                    ptr += 2
+                }
+                drom.data = trg
+                const resbuf = pxt.esp.toBuffer(img)
                 return [U.uint8ArrayToString(resbuf)]
             }
 

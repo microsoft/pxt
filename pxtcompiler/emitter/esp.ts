@@ -2,6 +2,7 @@ namespace pxt.esp {
     export interface Segment {
         addr: number
         isMapped: boolean
+        isDROM: boolean
         data: Uint8Array
     }
 
@@ -118,11 +119,10 @@ namespace pxt.esp {
         const align = 0x10000
         const alignMask = align - 1
 
-        image = pxt.U.flatClone(image)
-        image.segments = image.segments.slice()
+        image = cloneStruct(image)
         image.segments.sort((a, b) => a.addr - b.addr)
-        const mapped = image.segments.filter(s => s.isMapped).map(pxt.U.flatClone)
-        const nonMapped = image.segments.filter(s => !s.isMapped).map(pxt.U.flatClone)
+        const mapped = image.segments.filter(s => s.isMapped)
+        const nonMapped = image.segments.filter(s => !s.isMapped)
         image.segments = []
         let foff = image.header.length
 
@@ -172,12 +172,14 @@ namespace pxt.esp {
                 return {
                     addr: 0,
                     isMapped: false,
+                    isDROM: false,
                     data: new Uint8Array(bytes)
                 }
             const seg = nonMapped[0]
             const res: Segment = {
                 addr: seg.addr,
                 isMapped: seg.isMapped,
+                isDROM: seg.isDROM,
                 data: seg.data.slice(0, bytes)
             }
             seg.data = seg.data.slice(bytes)
@@ -262,6 +264,7 @@ namespace pxt.esp {
                 image.segments.push({
                     addr: offset,
                     isMapped: isInSection(offset, "DROM") || isInSection(offset, "IROM"),
+                    isDROM: isInSection(offset, "DROM"),
                     data: data
                 })
         }
@@ -275,5 +278,11 @@ namespace pxt.esp {
 
     export function parseB64(lines: string[]) {
         return parseBuffer(pxt.U.stringToUint8Array(atob(lines.join(""))))
+    }
+
+    export function cloneStruct(img: Image) {
+        const res = U.flatClone(img)
+        res.segments = res.segments.map(U.flatClone)
+        return res
     }
 }
