@@ -35,6 +35,7 @@ function setupRootDir() {
     console.log(`With pxt core at ${nodeutil.pxtCoreDir}`)
     dirs = [
         "built/web",
+        path.join(nodeutil.targetDir, "docs"),
         path.join(nodeutil.targetDir, "built"),
         path.join(nodeutil.targetDir, "sim/public"),
         path.join(nodeutil.targetDir, "node_modules", `pxt-${pxt.appTarget.id}-sim`, "public"),
@@ -915,7 +916,10 @@ export function serveAsync(options: ServeOptions) {
 
         const sendHtml = (s: string, code = 200) => {
             res.writeHead(code, { 'Content-Type': 'text/html; charset=utf8' })
-            res.end(s)
+            res.end(s.replace(
+                /(<img [^>]* src=")(?:\/docs|\.)\/static\/([^">]+)"/g,
+                function (f, pref, addr) { return pref + '/static/' + addr + '"'; }
+            ))
         }
 
         const sendFile = (filename: string) => {
@@ -1069,6 +1073,7 @@ export function serveAsync(options: ServeOptions) {
         if (/^\/(pkg|package)\/.*$/.test(pathname)) {
             pkgPageTestAsync(pathname.replace(/^\/[^\/]+\//, ""))
                 .then(sendHtml)
+                .catch(() => error(404, "Packaged file not found"));
             return
         }
 
@@ -1095,8 +1100,6 @@ export function serveAsync(options: ServeOptions) {
         } else if (U.startsWith(pathname, "/docfiles/")) {
             pathname = pathname.slice(10)
             dd = docfilesdirs
-        } else if (U.startsWith(pathname, "./static/")) {
-            pathname = pathname.slice(1);
         }
         for (let dir of dd) {
             let filename = path.resolve(path.join(dir, pathname))
