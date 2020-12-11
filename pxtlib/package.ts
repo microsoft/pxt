@@ -646,6 +646,7 @@ namespace pxt {
                 if (!deps) deps = from.dependencies(isCpp)
                 for (let id of Object.keys(deps)) {
                     let ver = deps[id] || "*"
+                    pxt.debug(`dep: load ${from.id}.${id}${isCpp ? "++" : ""}: ${ver}`)
                     if (id == "hw" && pxt.hwVariant)
                         id = "hw---" + pxt.hwVariant
                     let mod = from.resolveDep(id)

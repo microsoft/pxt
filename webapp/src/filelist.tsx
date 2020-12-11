@@ -119,11 +119,11 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
 
     private folderOf(pkg: pkg.EditorPackage, folder: string, files: pkg.File[]): JSX.Element {
         return <>
-            {folder && <div className="folder item" role="treeitem"
+            {folder && <div className="folder item" key={"folder" + folder} role="treeitem"
                 aria-label={lf("Files in folder {0}", folder)}>
-                    <i className="folder open outline icon"></i>
-                    {folder}
-                    </div>}
+                <i className="folder open outline icon"></i>
+                {folder}
+            </div>}
             {this.filesFolderOf(pkg, folder, files)}
         </>
     }
@@ -165,7 +165,8 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                 && !file.isReadonly();
             const nameStart = folder.length ? folder.length + 1 : 0;
             return (
-                <FileTreeItem key={"file" + file.getName()}
+                <FileTreeItem
+                    key={"file" + file.getName()}
                     file={file}
                     meta={meta}
                     onItemClick={this.setFile}
@@ -178,7 +179,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                     shareUrl={shareUrl}
                     addLocalizedFile={addLocale && localized}
                     className={(currentFile == file ? "active " : "") + (pkg.isTopLevel() ? "" : "nested ") + (folder ? "folderitem " : "") + "item"}
-                 >
+                >
                     {file.name.slice(nameStart)}
                     {showStar ? "*" : ""}
                     {meta.isGitModified ? " ↑" : ""}
