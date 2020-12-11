@@ -4104,14 +4104,14 @@ function initPacketIO() {
                     broadcast: false,
                     channel: type,
                     data: payload,
-                    fromPacketIO: true
+                    sender: "packetio",
                 }, "*")
             }
         });
 
     window.addEventListener('message', (ev: MessageEvent) => {
         const msg = ev.data
-        if (msg.type == 'messagepacket' && msg.channel == pxt.HF2.CUSTOM_EV_JACDAC && !msg.fromPacketIO)
+        if (msg.type == 'messagepacket' && msg.channel == pxt.HF2.CUSTOM_EV_JACDAC && msg.sender != "packetio")
             pxt.packetio.sendCustomEventAsync(msg.channel, msg.data)
                 .then(() => { }, err => {
                     core.errorNotification("JACDAC: " + err.message)
