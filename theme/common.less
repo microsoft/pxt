@@ -194,8 +194,8 @@ pre {
     margin-top: 0;
     margin-bottom: 0;
     width: 100%;
-    background-color: @simulatorBackground;
-    z-index: @simulatorZIndex;
+    background-color: @filelistBackgroundColor;
+    z-index: @filelistZIndex;
 }
 
 #filelist .simtoolbar {
@@ -241,11 +241,19 @@ pre {
 
 #filelist .nested.item {
     padding: .92857143em 1.14285714em;
-    padding-left: 2rem;
+    padding-left: 1rem;
 }
 
-#filelist .header {
-    background: rgba(0,0,0,0.05);
+#filelist .header.item {
+    background: @filelistHeaderBackground;
+}
+
+#filelist .folder.item {
+    font-weight: bold;
+}
+
+#filelist .folderitem.item {
+    padding-left: 2rem;
 }
 
 #simulators {

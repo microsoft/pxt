@@ -216,6 +216,12 @@
 @serialConsoleBackground: @simulatorBackground;
 
 /*-------------------
+   Filelist
+--------------------*/
+@filelistBackgroundColor: @simulatorBackground;
+@filelistHeaderBackground:  rgba(0,0,0,0.05);
+
+/*-------------------
    Github Diff editor
 --------------------*/
 @githubBackgroundColor: @serialBackgroundColor;
