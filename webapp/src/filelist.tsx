@@ -113,22 +113,13 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             ffiles.push(f);
         })
         return Object.keys(folders)
-            .map(folder => this.folderOf(pkg, folder, folders[folder]))
+            .map(folder => <FolderTreeItem key={folder} folder={folder}>
+                {this.folderFilesOf(pkg, folder, files)}
+            </FolderTreeItem>)
             .reduce((l, r) => l.concat(r), [])
     }
 
-    private folderOf(pkg: pkg.EditorPackage, folder: string, files: pkg.File[]): JSX.Element {
-        return <>
-            {folder && <div className="folder item" key={"folder" + folder} role="treeitem"
-                aria-label={lf("Files in folder {0}", folder)}>
-                <i className="folder open outline icon"></i>
-                {folder}
-            </div>}
-            {this.filesFolderOf(pkg, folder, files)}
-        </>
-    }
-
-    private filesFolderOf(pkg: pkg.EditorPackage, folder: string, files: pkg.File[]): JSX.Element[] {
+    private folderFilesOf(pkg: pkg.EditorPackage, folder: string, files: pkg.File[]): JSX.Element[] {
         const { currentFile } = this.state;
         const header = this.props.parent.state.header;
         const topPkg = pkg.isTopLevel();
@@ -396,6 +387,28 @@ namespace custom {
     }
 }
 
+interface FolderTreeItemProps {
+    folder: string;
+    children: any;
+}
+
+class FolderTreeItem extends sui.StatelessUIElement<FolderTreeItemProps> {
+    constructor(props: FolderTreeItemProps) {
+        super(props);
+    }
+
+    renderCore() {
+        const { folder, children } = this.props;
+        return <>
+            {folder && <div className="folder item" key={"folder" + folder} role="treeitem"
+                aria-label={lf("Files in folder {0}", folder)}>
+                <i className="folder open outline icon"></i>
+                {folder}
+            </div>}
+            {children}
+        </>
+    }
+}
 interface FileTreeItemProps {
     file: pkg.File;
     meta: pkg.FileMeta;

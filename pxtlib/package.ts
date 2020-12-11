@@ -222,6 +222,25 @@ namespace pxt {
                 this.configureAsInvalidPackage(lf("version not specified for {0}", this.id));
                 v = this._verspec;
             }
+            // patch github version numbers
+            else if (this.verProtocol() == "github") {
+                const ghid = pxt.github.parseRepoId(this._verspec);
+                if (ghid && !ghid.tag && this.parent) {
+                    // we have a valid repo but no tag
+                    pxt.debug(`dep: unbound github extensions, trying to resolve tag`)
+                    // check if we've already loaded this slug in the project, in which case we use that version number
+                    const others = pxt.semver.sortLatestTags(Util.values(this.parent?.deps || {})
+                        .map(dep => pxt.github.parseRepoId(dep.version()))
+                        .filter(v => v?.slug === ghid.slug)
+                        .map(v => v.tag));
+                    const best = others[0];
+                    if (best) {
+                        ghid.tag = best;
+                        this.resolvedVersion = v = pxt.github.stringifyRepo(ghid);
+                        pxt.debug(`dep: github patched ${this._verspec} to ${v}`)
+                    }
+                }
+            }
             return Promise.resolve(v)
         }
 
@@ -644,6 +663,7 @@ namespace pxt {
 
             const loadDepsRecursive = async (deps: pxt.Map<string>, from: Package, isCpp = false) => {
                 if (!deps) deps = from.dependencies(isCpp)
+                pxt.debug(`deps: ${from.id}->${Object.keys(deps).join(", ")}`);
                 for (let id of Object.keys(deps)) {
                     let ver = deps[id] || "*"
                     pxt.debug(`dep: load ${from.id}.${id}${isCpp ? "++" : ""}: ${ver}`)
