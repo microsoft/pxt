@@ -1009,7 +1009,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
 
     handleActionClick(action?: pxt.CodeCardAction) {
         const { scr, onClick } = this.props;
-        pxt.tickEvent('projects.actions.click`', {
+        pxt.tickEvent('projects.actions.click', {
             name: scr.name, url: scr.url, cardType: scr.cardType, editor: scr.editor
         }, { interactiveConsent: true })
         return () => onClick(scr, action);
