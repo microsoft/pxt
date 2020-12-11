@@ -426,7 +426,7 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
     U.assert(h.target == pxt.appTarget.id);
 
     if (h.temporary) {
-        // TODO @darzu: lol... what abstraction does this fit?
+        // TODO @darzu: sigh. what is "temporary" mean
         return Promise.resolve()
     }
 
