@@ -1136,7 +1136,13 @@ namespace pxt.github {
         // patch depdencies
         U.values(slugVersions)
             .forEach(v => v.deps
-                .forEach(dep => deps[dep.id] = pxt.github.stringifyRepo(dep.ghid)))
+                .forEach(dep => {
+                    if (dep.ghid.tag !== v.tag) {
+                        pxt.debug(`dep: ${pxt.github.stringifyRepo(dep.ghid)} -> ${v.tag}`);
+                        dep.ghid.tag = v.tag;
+                        deps[dep.id] = pxt.github.stringifyRepo(dep.ghid);
+                    }
+                }))
 
         return deps;
     }
