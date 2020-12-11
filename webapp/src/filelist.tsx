@@ -88,11 +88,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
     }
 
     private filesOf(pkg: pkg.EditorPackage): JSX.Element[] {
-        const { currentFile } = this.state;
-        const header = this.props.parent.state.header;
         const topPkg = pkg.isTopLevel();
-        const shellReadonly = pxt.shell.isReadOnly();
-        const deleteFiles = topPkg && !shellReadonly;
         const langRestrictions = pkg.getLanguageRestrictions();
         let files = pkg.sortedFiles();
 
@@ -108,6 +104,36 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                 }
             });
         }
+        // group files in folders
+        const folders: pxt.Map<pkg.File[]> = {};
+        files.forEach(f => {
+            const i = f.name.lastIndexOf("/");
+            const folder = i < 0 ? "" : f.name.slice(0, i);
+            const ffiles = folders[folder] || (folders[folder] = []);
+            ffiles.push(f);
+        })
+        return Object.keys(folders)
+            .map(folder => this.folderOf(pkg, folder, folders[folder]))
+            .reduce((l, r) => l.concat(r), [])
+    }
+
+    private folderOf(pkg: pkg.EditorPackage, folder: string, files: pkg.File[]): JSX.Element {
+        return <>
+            {folder && <div className="folder item" role="treeitem"
+                aria-label={lf("Files in folder {0}", folder)}>
+                    <i className="folder open outline icon"></i>
+                    {folder}
+                    </div>}
+            {this.filesFolderOf(pkg, folder, files)}
+        </>
+    }
+
+    private filesFolderOf(pkg: pkg.EditorPackage, folder: string, files: pkg.File[]): JSX.Element[] {
+        const { currentFile } = this.state;
+        const header = this.props.parent.state.header;
+        const topPkg = pkg.isTopLevel();
+        const shellReadonly = pxt.shell.isReadOnly();
+        const deleteFiles = topPkg && !shellReadonly;
 
         return files.map(file => {
             const meta: pkg.FileMeta = this.getData("open-meta:" + file.getName())
@@ -137,7 +163,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                 && file.name != pxt.CONFIG_NAME
                 && (usesGitHub || file.name != "main.ts")
                 && !file.isReadonly();
-
+            const nameStart = folder.length ? folder.length + 1 : 0;
             return (
                 <FileTreeItem key={"file" + file.getName()}
                     file={file}
@@ -151,9 +177,9 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                     previewUrl={previewUrl}
                     shareUrl={shareUrl}
                     addLocalizedFile={addLocale && localized}
-                    className={(currentFile == file ? "active " : "") + (pkg.isTopLevel() ? "" : "nested ") + "item"}
-                >
-                    {file.name}
+                    className={(currentFile == file ? "active " : "") + (pkg.isTopLevel() ? "" : "nested ") + (folder ? "folderitem " : "") + "item"}
+                 >
+                    {file.name.slice(nameStart)}
                     {showStar ? "*" : ""}
                     {meta.isGitModified ? " ↑" : ""}
                     {meta.isReadonly ? <sui.Icon icon="lock" /> : null}
