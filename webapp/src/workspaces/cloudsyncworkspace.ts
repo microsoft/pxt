@@ -13,9 +13,12 @@ type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
 
 interface CachedWorkspaceProvider extends WorkspaceProvider {
     getLastModTime(): number,
-    updateCache(otherLastModTime?: number): Promise<boolean>,
-    lastHeaders(): Header[],
+    synchronize(expectedLastModTime?: number): Promise<boolean>,
+    pendingSync(): Promise<boolean>,
     firstSync(): Promise<boolean>,
+    headersSync(): Header[],
+    hasSync(h: Header): boolean,
+    tryGetSync(h: Header): F
 }
 
 function computeLastModTime(hdrs: Header[]): number {
@@ -38,12 +41,12 @@ function createCachedWorkspace(ws: WorkspaceProvider): CachedWorkspaceProvider {
         return cacheModTime;
     }
 
-    let pendingUpdate: Promise<boolean> = updateCacheInternal();
+    let pendingUpdate: Promise<boolean> = synchronizeInternal();
     const firstUpdate = pendingUpdate;
-    async function updateCache(otherLastModTime?:number): Promise<boolean> {
+    async function synchronize(otherLastModTime?:number): Promise<boolean> {
         if (pendingUpdate.isPending())
             return pendingUpdate
-        pendingUpdate = updateCacheInternal(otherLastModTime)
+        pendingUpdate = synchronizeInternal(otherLastModTime)
         return pendingUpdate
     }
 
@@ -54,14 +57,14 @@ function createCachedWorkspace(ws: WorkspaceProvider): CachedWorkspaceProvider {
         cacheModTime = 0
     }
 
-    async function updateCacheInternal(otherLastModTime?:number): Promise<boolean> {
+    async function synchronizeInternal(expectedLastModTime?:number): Promise<boolean> {
         // remember our old cache, we might keep items from it later
         const oldHdrs = cacheHdrs
         const oldHdrsMap = cacheHdrsMap
         const oldProjs = cacheProjs
         const oldModTime = cacheModTime
 
-        if (otherLastModTime && otherLastModTime !== cacheModTime) {
+        if (expectedLastModTime && expectedLastModTime !== cacheModTime) {
             // we've been told to invalidate, but we don't know specific
             // headers yet so do the conservative thing and reset all
             eraseCache()
@@ -137,9 +140,12 @@ function createCachedWorkspace(ws: WorkspaceProvider): CachedWorkspaceProvider {
     const provider: CachedWorkspaceProvider = {
         // cache
         getLastModTime,
-        updateCache,
-        lastHeaders: () => cacheHdrs,
+        synchronize,
+        pendingSync: () => pendingUpdate,
         firstSync: () => firstUpdate,
+        headersSync: () => cacheHdrs,
+        hasSync: h => !!cacheHdrsMap[h.id],
+        tryGetSync: h => cacheProjs[h.id],
         // workspace
         getAsync,
         setAsync,
@@ -151,58 +157,28 @@ function createCachedWorkspace(ws: WorkspaceProvider): CachedWorkspaceProvider {
     return provider;
 }
 
-interface CloudSyncWorkspace extends WorkspaceProvider {
+interface CloudSyncWorkspace extends WorkspaceProvider, CachedWorkspaceProvider {
 }
 
 function createCloudSyncWorkspace(cloud: WorkspaceProvider, cloudLocal: WorkspaceProvider) {
-    let lastHdrs: Header[] = []
-    let lastHdrsMap: {[key: string]: Header};
-    let lastProjs: {[key: string]: F};
-    let lastSync: number = null;
+    const cloudCache = createCachedWorkspace(cloud);
+    const localCache = createCachedWorkspace(cloudLocal);
 
-    async function memCacheInvalidate() {
-        // TODO @darzu: short circuit if full sync ?
-        await synchronize();
-    }
-    async function listAsync(): Promise<Header[]> {
-        if (!lastSync || !lastHdrs.length)
-            await synchronize();
-        return lastHdrs;
-    }
-    async function getAsync(h: Header): Promise<F> {
-        if (!lastSync)
-            await synchronize();
-        if (lastProjs[h.id]) {
-            // cache hit
-            // TODO @darzu: this isn't good for multi-tabs maybe ?
-            return lastProjs[h.id]
-        }
-        const res = await cloudLocal.getAsync(h)
-        lastProjs[h.id] = res
-        return res;
-    }
-    async function setAsync(h: Header, prevVer: any, text?: ScriptText): Promise<string> {
-        if (!lastSync)
-            await synchronize();
-        lastProjs[h.id] = {
-            header: h,
-            version: undefined, // TODO @darzu: 
-            text,
-        }
-        const l = cloud.setAsync(h, prevVer, text)
-        // TODO @darzu: wait for cloud?
-        const r = cloudLocal.setAsync(h, prevVer, text)
-        return await r
-    }
-    async function deleteAsync(h: Header, prevVer: any): Promise<void> {
-        if (!lastSync)
-            await synchronize();
-        throw "not impl"
-    }
-    async function resetAsync() {
-        if (!lastSync)
-            await synchronize();
-        throw "not impl"
+    const firstCachePull = Promise.all([cloudCache.firstSync(), localCache.firstSync()])
+    const pendingCacheSync = () => Promise.all([cloudCache.pendingSync(), localCache.pendingSync()])
+    const getLastModTime = () => Math.max(cloudCache.getLastModTime(), localCache.getLastModTime())
+
+    // TODO @darzu: multi-tab safety for cloudLocal
+    
+    // TODO @darzu: when two workspaces disagree on last mod time, we should sync?
+
+    let pendingSync: Promise<boolean> = synchronizeInternal(); // TODO @darzu: kick this off immediately?
+    const firstSync = pendingSync;
+    async function synchronize(expectedLastModTime?:number): Promise<boolean> {
+        if (pendingSync.isPending())
+            return pendingSync
+        pendingSync = synchronizeInternal()
+        return pendingSync
     }
 
     function resolveConflict(a: Header, b: Header, strat: ConflictStrategy): Header {
@@ -213,17 +189,25 @@ function createCloudSyncWorkspace(cloud: WorkspaceProvider, cloudLocal: Workspac
     async function transfer(h: Header, fromWs: WorkspaceProvider, toWs: WorkspaceProvider): Promise<Header> {
         const fromPrj = await fromWs.getAsync(h)
         
-        // TODO @darzu: 
-        lastProjs[h.id] = fromPrj;
+        // TODO @darzu: caches?
 
         const prevVersion: Version = null // TODO @darzu: what do we do with this version thing...
+        // TODO @darzu: track pending saves
         const toRes: Version = await toWs.setAsync(h, prevVersion, fromPrj.text)
         return h;
     }
-    async function synchronize(): Promise<void> {
+    async function synchronizeInternal(): Promise<boolean> {
+        await pendingCacheSync()
+
+        if (cloudCache.getLastModTime() === localCache.getLastModTime()) {
+            // we're synced up ?
+            return false
+        }
+        // TODO @darzu: compare mod times to see if we need to sync?
+
         // TODO @darzu: re-generalize?
-        const left = cloud;
-        const right = cloudLocal;
+        const left = cloudCache;
+        const right = localCache;
         const strat = {
             conflict: ConflictStrategy.LastWriteWins,
             disjointSets: DisjointSetsStrategy.Synchronize
@@ -266,24 +250,46 @@ function createCloudSyncWorkspace(cloud: WorkspaceProvider, cloudLocal: Workspac
         // TODO @darzu: batching? throttling? incremental?
         const changed = await Promise.all([...lPushPromises, ...rPushPromises])
     
-        // return final results
-        const lRes = [...U.values(lOnly), ...lToPush]
-        const rRes = [...U.values(rOnly), ...rToPush]
+        // TODO @darzu: what about mod time changes?
+        return changed.length >= 0;
+    }
 
-        // TODO @darzu: 
-        lastHdrs = lRes;
-        lastHdrsMap = U.toDictionary(lastHdrs, h => h.id)
-        lastSync = Date.now()
-
-        return;
+    async function listAsync(): Promise<Header[]> {
+        await pendingSync
+        return localCache.listAsync()
+    }
+    async function getAsync(h: Header): Promise<F> {
+        await pendingSync
+        return localCache.getAsync(h)
+    }
+    async function setAsync(h: Header, prevVer: any, text?: ScriptText): Promise<string> {
+        await pendingSync
+        throw "not impl"
+    }
+    async function deleteAsync(h: Header, prevVer: any): Promise<void> {
+        await pendingSync
+        throw "not impl"
+    }
+    async function resetAsync() {
+        await pendingSync
+        throw "not impl"
     }
  
      const provider: CloudSyncWorkspace = {
-         getAsync,
-         setAsync,
-         deleteAsync,
-         listAsync,
-         resetAsync,
+        // cache
+        getLastModTime,
+        synchronize,
+        pendingSync: () => pendingSync,
+        firstSync: () => firstSync,
+        headersSync: () => localCache.headersSync(),
+        hasSync: h => localCache.hasSync(h),
+        tryGetSync: h => localCache.tryGetSync(h),
+        // workspace
+        getAsync,
+        setAsync,
+        deleteAsync,
+        listAsync,
+        resetAsync,
      }
 
      return provider;
