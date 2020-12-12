@@ -235,7 +235,8 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
         stoppedClass: pxt.appTarget.simulator && pxt.appTarget.simulator.stoppedClass,
         invalidatedClass: pxt.appTarget.simulator && pxt.appTarget.simulator.invalidatedClass,
         nestedEditorSim: nestedEditorSim,
-        parentOrigin: parentOrigin
+        parentOrigin: parentOrigin,
+        messageSimulators: pxt.appTarget?.simulator?.messageSimulators
     };
     driver = new pxsim.SimulatorDriver(document.getElementById('simulators'), options);
     config = cfg

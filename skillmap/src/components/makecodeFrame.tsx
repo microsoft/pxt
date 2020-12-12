@@ -110,11 +110,6 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
     protected onMessageReceived = (event: MessageEvent) => {
         const data = event.data as pxt.editor.EditorMessageRequest;
 
-        if ((data.type as string) === "ready") {
-            this.handleWorkspaceReadyEventAsync();
-            return;
-        }
-
         if (data.type === "pxteditor" && data.id && this.pendingMessages[data.id]) {
             this.onResponseReceived(this.pendingMessages[data.id], event.data as pxt.editor.EditorMessageResponse);
             delete this.pendingMessages[data.id];
@@ -130,6 +125,11 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
                 break;
             case "workspacesave":
                 this.handleWorkspaceSaveRequestAsync(data as pxt.editor.EditorWorkspaceSaveRequest);
+                break;
+            case "workspaceevent":
+                if ((data as pxt.editor.EditorWorkspaceEvent).event.type === "createproject") {
+                    this.handleWorkspaceReadyEventAsync();
+                }
                 break;
             default:
                 // console.log(JSON.stringify(data, null, 4));

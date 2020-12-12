@@ -214,6 +214,16 @@ declare namespace pxt {
         invalidatedClass?: string; // CSS class to be applied to the sim iFrame when it needs to be updated (defaults to sepia filter)
         stoppedClass?: string; // CSS class to be applied to the sim iFrame when it isn't running (defaults to grayscale filter)
         keymap?: boolean; // when non-empty and autoRun is disabled, this code is run upon simulator first start
+
+        // a map of allowed simulator channel to URL to handle specific control messages
+        messageSimulators?: pxt.Map<{
+            // the URL to load the simulator, $PARENT_ORIGIN$ will be replaced by the parent
+            // origin to validate messages
+            url: string;
+            // url when localhost developer mode is enabled
+            localHostUrl?: string;
+            aspectRatio?: number;
+        }>;
     }
 
     interface TargetCompileService {
