@@ -1470,7 +1470,6 @@ export class ProjectView
         return this.loadBlocklyAsync()
             .then(() => tutorial.getUsedBlocksAsync(t.tutorialCode, t.tutorial, t.language))
             .then((usedBlocks) => {
-                tutorial.xmlUpgrades(t.tutorialCode, t.language);
                 let editorState: pxt.editor.EditorState = {
                     searchBar: false
                 }
