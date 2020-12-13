@@ -333,6 +333,8 @@ namespace pxsim {
                             this.container.appendChild(wrapper);
                             messageFrame = wrapper.firstElementChild as HTMLIFrameElement;
                             messageFrame.dataset[FRAME_DATA_MESSAGE_CHANNEL] = messageChannel;
+                            pxsim.U.addClass(wrapper, "simmsg")
+                            pxsim.U.addClass(wrapper, "simmsg" + messageChannel)
                             this.startFrame(messageFrame);
                             frames = this.simFrames(); // refresh
                         }
