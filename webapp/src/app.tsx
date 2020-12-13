@@ -4100,7 +4100,8 @@ function initPacketIO() {
             }, "*")
         },
         (type, payload) => {
-            if (type == pxt.HF2.CUSTOM_EV_JACDAC) {
+            const messageSimulators = pxt.appTarget.simulator?.messageSimulators;
+            if (messageSimulators?.[type]) {
                 window.postMessage({
                     type: "messagepacket",
                     broadcast: false,
@@ -4113,10 +4114,12 @@ function initPacketIO() {
 
     window.addEventListener('message', (ev: MessageEvent) => {
         const msg = ev.data
-        if (msg.type == 'messagepacket' && msg.channel == pxt.HF2.CUSTOM_EV_JACDAC && msg.sender != "packetio")
+        if (msg.type === 'messagepacket'
+            && msg.sender !== "packetio"
+            && pxt.appTarget.simulator?.messageSimulators?.[msg.channel])
             pxt.packetio.sendCustomEventAsync(msg.channel, msg.data)
                 .then(() => { }, err => {
-                    core.errorNotification("JACDAC: " + err.message)
+                    core.errorNotification(lf("{0}: {1}", msg.channel, err.message));
                 });
     }, false);
 }
