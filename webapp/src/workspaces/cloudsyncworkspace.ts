@@ -11,12 +11,12 @@ type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
 // TODO @darzu: 
 // cache invalidation
 
-interface CachedWorkspaceProvider extends WorkspaceProvider {
+export interface CachedWorkspaceProvider extends WorkspaceProvider {
     getLastModTime(): number,
     synchronize(expectedLastModTime?: number): Promise<boolean>,
     pendingSync(): Promise<boolean>,
     firstSync(): Promise<boolean>,
-    headersSync(): Header[],
+    listSync(): Header[],
     hasSync(h: Header): boolean,
     tryGetSync(h: Header): F
 }
@@ -30,7 +30,7 @@ function hasChanged(a: Header, b: Header): boolean {
 }
 
 // TODO @darzu: use cases: multi-tab and cloud
-function createCachedWorkspace(ws: WorkspaceProvider): CachedWorkspaceProvider {
+export function createCachedWorkspace(ws: WorkspaceProvider): CachedWorkspaceProvider {
     let cacheHdrs: Header[] = []
     let cacheHdrsMap: {[id: string]: Header} = {};
     let cacheProjs: {[id: string]: F} = {};
@@ -41,6 +41,7 @@ function createCachedWorkspace(ws: WorkspaceProvider): CachedWorkspaceProvider {
         return cacheModTime;
     }
 
+    // TODO @darzu: do we want to kick off the first sync at construction? Side-effects at construction are usually bad..
     let pendingUpdate: Promise<boolean> = synchronizeInternal();
     const firstUpdate = pendingUpdate;
     async function synchronize(otherLastModTime?:number): Promise<boolean> {
@@ -143,7 +144,7 @@ function createCachedWorkspace(ws: WorkspaceProvider): CachedWorkspaceProvider {
         synchronize,
         pendingSync: () => pendingUpdate,
         firstSync: () => firstUpdate,
-        headersSync: () => cacheHdrs,
+        listSync: () => cacheHdrs,
         hasSync: h => !!cacheHdrsMap[h.id],
         tryGetSync: h => cacheProjs[h.id],
         // workspace
@@ -157,10 +158,10 @@ function createCachedWorkspace(ws: WorkspaceProvider): CachedWorkspaceProvider {
     return provider;
 }
 
-interface CloudSyncWorkspace extends WorkspaceProvider, CachedWorkspaceProvider {
+export interface CloudSyncWorkspace extends CachedWorkspaceProvider {
 }
 
-function createCloudSyncWorkspace(cloud: WorkspaceProvider, cloudLocal: WorkspaceProvider) {
+export function createCloudSyncWorkspace(cloud: WorkspaceProvider, cloudLocal: WorkspaceProvider): CloudSyncWorkspace {
     const cloudCache = createCachedWorkspace(cloud);
     const localCache = createCachedWorkspace(cloudLocal);
 
@@ -169,7 +170,6 @@ function createCloudSyncWorkspace(cloud: WorkspaceProvider, cloudLocal: Workspac
     const getLastModTime = () => Math.max(cloudCache.getLastModTime(), localCache.getLastModTime())
 
     // TODO @darzu: multi-tab safety for cloudLocal
-    
     // TODO @darzu: when two workspaces disagree on last mod time, we should sync?
 
     let pendingSync: Promise<boolean> = synchronizeInternal(); // TODO @darzu: kick this off immediately?
@@ -212,6 +212,9 @@ function createCloudSyncWorkspace(cloud: WorkspaceProvider, cloudLocal: Workspac
             conflict: ConflictStrategy.LastWriteWins,
             disjointSets: DisjointSetsStrategy.Synchronize
         }
+
+        // wait for each side to sync
+        await Promise.all([cloudCache.synchronize(), localCache.synchronize()])
 
         // TODO @darzu: short circuit if there aren't changes ?
         const lHdrsList = await left.listAsync()
@@ -264,15 +267,22 @@ function createCloudSyncWorkspace(cloud: WorkspaceProvider, cloudLocal: Workspac
     }
     async function setAsync(h: Header, prevVer: any, text?: ScriptText): Promise<string> {
         await pendingSync
-        throw "not impl"
+        // TODO @darzu: use a queue to sync to backend
+        const cloudPromise = cloudCache.setAsync(h, prevVer, text)
+        // TODO @darzu: also what to do with the return value ?
+        return await localCache.setAsync(h, prevVer, text)
     }
     async function deleteAsync(h: Header, prevVer: any): Promise<void> {
         await pendingSync
-        throw "not impl"
+        // TODO @darzu: use a queue to sync to backend
+        const cloudPromise = cloudCache.deleteAsync(h, prevVer)
+        await localCache.deleteAsync(h, prevVer)
     }
     async function resetAsync() {
         await pendingSync
-        throw "not impl"
+        // TODO @darzu: do we really want to reset the cloud ever?
+        // await Promise.all([cloudCache.resetAsync(), localCache.resetAsync()])
+        return Promise.resolve();
     }
  
      const provider: CloudSyncWorkspace = {
@@ -281,7 +291,7 @@ function createCloudSyncWorkspace(cloud: WorkspaceProvider, cloudLocal: Workspac
         synchronize,
         pendingSync: () => pendingSync,
         firstSync: () => firstSync,
-        headersSync: () => localCache.headersSync(),
+        listSync: () => localCache.listSync(),
         hasSync: h => localCache.hasSync(h),
         tryGetSync: h => localCache.tryGetSync(h),
         // workspace

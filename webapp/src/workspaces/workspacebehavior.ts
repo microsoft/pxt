@@ -71,6 +71,7 @@ export interface SyncResult {
     right: Header[],
 }
 
+// TODO @darzu: this has been moved into cloudsync workspace.. not sure it's still needed here
 export async function synchronize(left: WorkspaceProvider, right: WorkspaceProvider, strat: Strategy): Promise<SyncResult> {
     // TODO @darzu: add "on changes identified" handler so we can show in-progress syncing
 
@@ -139,4 +140,8 @@ export function wrapInMemCache(ws: WorkspaceProvider): SyncWorkspaceProvider & W
         conflict: ConflictStrategy.LastWriteWins,
         disjointSets: DisjointSetsStrategy.Synchronize
     });
+}
+
+export async function migrateOverlap(fromWs: WorkspaceProvider, toWs: WorkspaceProvider) {
+    // TODO @darzu: 
 }

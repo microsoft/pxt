@@ -1,26 +1,33 @@
+import { CachedWorkspaceProvider } from "./cloudsyncworkspace";
+
 type Header = pxt.workspace.Header;
 type ScriptText = pxt.workspace.ScriptText;
 type File = pxt.workspace.File;
 type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
 
-export function createJointWorkspace(primary: WorkspaceProvider, ...others: WorkspaceProvider[]): WorkspaceProvider {
+async function unique<T extends {id: string}>(...listFns: (() => Promise<T[]>)[]) {
+    const allHdrs = (await Promise.all(listFns.map(ls => ls())))
+         .reduce((p, n) => [...p, ...n], [])
+    const seenHdrs: { [key: string]: boolean } = {}
+    // de-duplicate headers (prefering earlier ones)
+    const res = allHdrs.reduce((p, n) => {
+         if (seenHdrs[n.id])
+             return p;
+         seenHdrs[n.id] = true;
+         return [...p, n]
+     }, [])
+     return res;
+}
+
+// TODO @darzu: still useful? else cull
+export function createJointWorkspace2(primary: WorkspaceProvider, ...others: WorkspaceProvider[]): WorkspaceProvider {
     const all: WorkspaceProvider[] = [primary, ...others];
 
     // TODO @darzu: debug logging
-    console.log(`createJointWorkspace`);
+    console.log(`createJointWorkspace2`);
 
     async function listAsync(): Promise<Header[]> {
-       const allHdrs = (await Promise.all(all.map(ws => ws.listAsync())))
-            .reduce((p, n) => [...p, ...n], [])
-       const seenHdrs: { [key: string]: boolean } = {}
-       // de-duplicate headers (prefering earlier ones)
-       const res = allHdrs.reduce((p, n) => {
-            if (seenHdrs[n.id])
-                return p;
-            seenHdrs[n.id] = true;
-            return [...p, n]
-        }, [])
-        return res;
+        return unique(...all.map(ws => ws.listAsync))
     }
     async function getAsync(h: Header): Promise<File> {
         // chose the first matching one
@@ -44,6 +51,82 @@ export function createJointWorkspace(primary: WorkspaceProvider, ...others: Work
     }
 
     const provider: WorkspaceProvider = {
+        getAsync,
+        setAsync,
+        deleteAsync,
+        listAsync,
+        resetAsync,
+    }
+    return provider;
+}
+
+export function createJointWorkspace(...all: CachedWorkspaceProvider[]): CachedWorkspaceProvider {
+    // TODO @darzu: we're assuming they are disjoint for now
+    
+    // TODO @darzu: debug logging
+    console.log(`createJointWorkspace`);
+
+    const firstSync = async () => (await Promise.all(all.map(w => w.firstSync()))).reduce((p, n) => p || n, false)
+    const pendingSync = async () => (await Promise.all(all.map(w => w.pendingSync()))).reduce((p, n) => p || n, false)
+    const getLastModTime = () => Math.max(...all.map(w => w.getLastModTime()))
+
+    async function synchronize(expectedLastModTime?: number): Promise<boolean> {
+        return (await Promise.all(all.map(w => w.synchronize())))  
+            .reduce((p, n) => p || n, false)
+    }
+    function listSync(): Header[] {
+        // return all (assuming disjoint)
+        return all.map(w => w.listSync())
+            .reduce((p, n) => [...p, ...n], [])
+    }
+    async function listAsync(): Promise<Header[]> {
+        await pendingSync()
+        // return all (assuming disjoint)
+        return (await Promise.all(all.map(w => w.listAsync())))
+            .reduce((p, n) => [...p, ...n], [])
+    }
+    function getWorkspaceFor(h: Header): CachedWorkspaceProvider {
+        return all.reduce((p, n) => p || n.hasSync(h) ? n : p, null)
+    }
+    async function getAsync(h: Header): Promise<File> {
+        await pendingSync()
+        // chose the first matching one
+        const ws = getWorkspaceFor(h) ?? all[0]
+        return ws.getAsync(h)
+    }
+    function tryGetSync(h: Header): File {
+        // chose the first matching one
+        const ws = getWorkspaceFor(h) ?? all[0]
+        return ws.tryGetSync(h)
+    }
+    function hasSync(h: Header): boolean {
+        return all.reduce((p, n) => p || n.hasSync(h), false)
+    }
+    async function setAsync(h: Header, prevVer: any, text?: ScriptText): Promise<string> {
+        await pendingSync()
+        const ws = getWorkspaceFor(h) ?? all[0]
+        return ws.setAsync(h, prevVer, text)
+    }
+    async function deleteAsync(h: Header, prevVer: any): Promise<void> {
+        await pendingSync() 
+        const ws = getWorkspaceFor(h)
+        return ws?.deleteAsync(h, prevVer)            
+    }
+    async function resetAsync() {
+        await pendingSync()
+        await Promise.all(all.map(ws => ws.resetAsync()))
+    }
+
+    const provider: CachedWorkspaceProvider = {
+        // cache
+        getLastModTime,
+        synchronize,
+        pendingSync,
+        firstSync,
+        listSync,
+        hasSync,
+        tryGetSync,
+        // workspace
         getAsync,
         setAsync,
         deleteAsync,

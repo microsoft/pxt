@@ -18,11 +18,12 @@ import * as cloudWorkspace from "./cloudworkspace"
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
-import { createJointWorkspace } from "./jointworkspace";
+import { createJointWorkspace, createJointWorkspace2 } from "./jointworkspace";
 import { createBrowserDbWorkspace } from "./browserdbworkspace";
 import { createSynchronizedWorkspace, Synchronizable } from "./synchronizedworkspace";
-import { ConflictStrategy, DisjointSetsStrategy, wrapInMemCache } from "./workspacebehavior";
+import { ConflictStrategy, DisjointSetsStrategy, migrateOverlap, wrapInMemCache } from "./workspacebehavior";
 import { createMemWorkspace, SyncWorkspaceProvider } from "./memworkspace";
+import { CachedWorkspaceProvider, createCachedWorkspace, createCloudSyncWorkspace } from "./cloudsyncworkspace";
 
 // Avoid importing entire crypto-js
 /* tslint:disable:no-submodule-imports */
@@ -40,7 +41,7 @@ let allScripts: File[] = [];
 let headerQ = new U.PromiseQueue();
 
 let impl: WorkspaceProvider;
-let implCache: SyncWorkspaceProvider & Synchronizable;
+let implCache: CachedWorkspaceProvider;
 let implType: WorkspaceKind;
 
 function lookup(id: string): File {
@@ -102,37 +103,48 @@ export function setupWorkspace(kind: WorkspaceKind): void {
     // TODO @darzu: 
     console.log(`choosing workspace: ${kind}`);
     implType = kind ?? "browser";
-    const localUserChoice = chooseWorkspace(implType);
+    const localChoice = chooseWorkspace(implType);
     // TODO @darzu: 
     if (auth.loggedInSync()) {
-        const localCloud = createBrowserDbWorkspace("cloud-local");
-        const cachedCloud = createSynchronizedWorkspace(cloudWorkspace.provider, localCloud, {
-            conflict: ConflictStrategy.LastWriteWins,
-            disjointSets: DisjointSetsStrategy.Synchronize
-        });
+        const cloudApis = cloudWorkspace.provider
+        const localCloud = createBrowserDbWorkspace("cloud-local"); // TODO @darzu: use user choice for this too?
+        // TODO @darzu: 
+        // const cachedCloud = createSynchronizedWorkspace(cloudWorkspace.provider, localCloud, {
+        //     conflict: ConflictStrategy.LastWriteWins,
+        //     disjointSets: DisjointSetsStrategy.Synchronize
+        // });
+        const cloudCache = createCloudSyncWorkspace(cloudApis, localCloud);
+
+        const localChoiceCached = createCachedWorkspace(localChoice)
+
+        // TODO @darzu: do one-time overlap migration
+        // migrateOverlap(localChoiceCached, cloudCache)
 
         // TODO @darzu: improve this
         const msPerMin = 1000 * 60
         const doSync = async () => {
             console.log("synchronizing with the cloud...");
-            const changes = await cachedCloud.syncAsync()
+            const changes = await cloudCache.synchronize()
             console.log(`...changes synced! ${changes}`)
         }
         setInterval(doSync, 5 * msPerMin)
+
+        const joint = createJointWorkspace(cloudCache, localChoiceCached)
+        impl = joint
+        implCache = joint
 
         // TODO @darzu: when synchronization causes changes
         // data.invalidate("header:*");
         // data.invalidate("text:*");
 
         // TODO @darzu: we are assuming these workspaces don't overlapp...
-        impl = createJointWorkspace(cachedCloud, localUserChoice)
+        // impl = createJointWorkspace2(cachedCloud, localChoice)
     }
-    else
-        impl = localUserChoice
-
-    // TODO @darzu: remove allHeaders etc..
-    implCache = wrapInMemCache(impl)
-    implCache.syncAsync();
+    else {
+        // TODO @darzu: review
+        impl = localChoice
+        implCache = createCachedWorkspace(impl)
+    }
 
     // TODO @darzu: 
     // if (changes.length) {
