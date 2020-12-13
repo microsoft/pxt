@@ -129,6 +129,9 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                     window.location.hash = "pub:" + id;
                 }
                 break;
+            case "link":
+                window.open(((/^https:\/\//i.test(url)) || (/^\//i.test(url)) ? url : ''), "_blank");
+                break;
             default:
                 const m = /^\/#tutorial:([a-z0A-Z0-9\-\/]+)$/.exec(url); // Tutorial
                 if (m) this.props.parent.startActivity("tutorial", m[1]);
@@ -411,6 +414,7 @@ export class ProjectsMenu extends data.Component<ISettingsProps, {}> {
 
 interface HeroBannerState {
     cardIndex?: number;
+    paused?: boolean;
 }
 
 const HERO_BANNER_DELAY = 10000; // 10 seconds per card
@@ -434,7 +438,7 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
 
     private handleSetCardIndex(index: number) {
         this.stopRefresh();
-        this.setState({ cardIndex: index });
+        this.setState({ cardIndex: index, paused: true });
     }
 
     private handleCardClick() {
@@ -449,7 +453,8 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
     }
 
     private startRefresh() {
-        if (!this.carouselInterval && this.prevGalleries && this.prevGalleries.length) {
+        const { paused } = this.state;
+        if (!paused && !this.carouselInterval && this.prevGalleries && this.prevGalleries.length) {
             pxt.debug(`start refreshing hero carousel`)
             this.carouselInterval = setInterval(this.handleRefreshCard, HERO_BANNER_DELAY);
             this.handleRefreshCard();
@@ -521,7 +526,7 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
                 </sui.Link>
             </div>}
             {cardIndex !== undefined && cards?.length > 1 && <div key="cards" className="dots">
-                {cards.map((card, i) => <button key={i} className={`ui button empty circular label  clear ${i === cardIndex && "active"}`} onClick={handleSetCard(i)}>
+                {cards.map((_, i) => <button key={"dot" + i} className={`ui button empty circular label  clear ${i === cardIndex && "active"}`} onClick={handleSetCard(i)}>
                 </button>)}
             </div>}
         </div>
@@ -654,11 +659,13 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
         this.setState({})
     }
 
-    handleCardClick(e: any, scr: any, index?: number) {
+    handleCardClick(e: any, scr: pxt.CodeCard, index?: number) {
         const { name } = this.props;
-        if (this.props.setSelected) {
+        if (this.props.setSelected && !(scr && scr.directOpen)) {
             // Set this item as selected
-            pxt.tickEvent("projects.detail.open");
+            pxt.tickEvent("projects.detail.open", {
+                name: scr?.name, url: scr?.url, cardType: scr?.cardType, editor: scr?.editor
+            }, { interactiveConsent: true });
             this.props.setSelected(name, index);
         } else {
             this.props.onClick(scr);
@@ -683,7 +690,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
             } else {
                 const selectedElement = cards[selectedIndex];
                 return <div>
-                    <carousel.Carousel ref="carousel" bleedPercent={20} selectedIndex={selectedIndex}>
+                    <carousel.Carousel ref="carousel" tickId={path} bleedPercent={20} selectedIndex={selectedIndex}>
                         {cards.map((scr, index) =>
                             <ProjectsCodeCard
                                 className="example"
@@ -735,7 +742,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
             const headersToShow = headers
                 .filter(h => !h.tutorial?.metadata?.hideIteration)
                 .slice(0, ProjectsCarousel.NUM_PROJECTS_HOMESCREEN);
-            return <carousel.Carousel bleedPercent={20}>
+            return <carousel.Carousel tickId="myprojects" bleedPercent={20}>
                 {showNewProject ? <div role="button" className="ui card link buttoncard newprojectcard" title={lf("Creates a new empty project")}
                     onClick={this.newProject} onKeyDown={sui.fireClickOnEnter} >
                     <div className="content">
@@ -836,7 +843,7 @@ export interface ProjectsDetailProps extends ISettingsProps {
     youTubePlaylistId?: string;
     buttonLabel?: string;
     url?: string;
-    scr?: any;
+    scr?: pxt.CodeCard;
     onClick: (scr: any, action?: pxt.CodeCardAction) => void;
     cardType: pxt.CodeCardType;
     tags?: string[];
@@ -994,11 +1001,17 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
 
     handleDetailClick() {
         const { scr, onClick } = this.props;
+        pxt.tickEvent('projects.actions.details', {
+            name: scr.name, url: scr.url, cardType: scr.cardType, editor: scr.editor
+        }, { interactiveConsent: true })
         onClick(scr);
     }
 
     handleActionClick(action?: pxt.CodeCardAction) {
         const { scr, onClick } = this.props;
+        pxt.tickEvent('projects.actions.click', {
+            name: scr.name, url: scr.url, cardType: scr.cardType, editor: scr.editor
+        }, { interactiveConsent: true })
         return () => onClick(scr, action);
     }
 

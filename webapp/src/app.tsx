@@ -3563,10 +3563,11 @@ export class ProjectView
     }
 
     private startTutorialAsync(tutorialId: string, tutorialTitle?: string, recipe?: boolean, editorProjectName?: string): Promise<void> {
-        // custom tick for recipe "completion". recipes use links in the markdown to
+        // custom tick for recipe or tutorial "completion". recipes use links in the markdown to
         // progress, so we track when a user "exits" a recipe by loading a new one
-        if (this.state.header?.tutorial?.tutorialRecipe) {
+        if (this.state.header?.tutorial?.tutorial) {
             pxt.tickEvent("recipe.exit", { tutorial: this.state.header?.tutorial?.tutorial, goto: tutorialId });
+            pxt.tickEvent("tutorial.finish", { tutorial: this.state.header?.tutorial?.tutorial });
         }
 
         core.hideDialog();
@@ -3632,6 +3633,7 @@ export class ProjectView
     }
 
     completeTutorialAsync(): Promise<void> {
+        pxt.tickEvent("tutorial.finish", { tutorial: this.state.header?.tutorial?.tutorial });
         pxt.tickEvent("tutorial.complete", { tutorial: this.state.header?.tutorial?.tutorial });
         core.showLoading("leavingtutorial", lf("leaving tutorial..."));
 
@@ -4675,14 +4677,19 @@ document.addEventListener("DOMContentLoaded", () => {
                 // Hide the home screen
                 theEditor.setState({ home: false });
             }
+
             if (hash.cmd && handleHash(hash, true)) {
                 return Promise.resolve();
             }
             if (hasWinRTProject) {
                 return pxt.winrt.loadActivationProject();
             }
-            if (showHome)
+            if (pxt.shell.isNoProject()) {
+                workspace.fireEvent({ type: "createproject", editor: "blocks" });
                 return Promise.resolve();
+            }
+            if (showHome) return Promise.resolve();
+
 
             // default handlers
             const ent = theEditor.settings.fileHistory.filter(e => !!workspace.getHeader(e.id))[0];
