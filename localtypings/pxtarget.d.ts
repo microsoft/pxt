@@ -220,7 +220,7 @@ declare namespace pxt {
             // the URL to load the simulator, $PARENT_ORIGIN$ will be replaced by the parent
             // origin to validate messages
             url: string;
-            // url when localhost developer mode is enabled
+            // url when localhost developer mode is enabled, add localhostmessagesims=1 to enable this mode
             localHostUrl?: string;
             aspectRatio?: number;
         }>;
