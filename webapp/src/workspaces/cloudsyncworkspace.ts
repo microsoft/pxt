@@ -7,7 +7,7 @@ type F = pxt.workspace.File;
 type Version = pxt.workspace.Version;
 type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
 
-// TODO @darzu: 
+// TODO @darzu:
 // cache invalidation
 
 export interface CachedWorkspaceProvider extends WorkspaceProvider {
@@ -33,7 +33,7 @@ export function createCachedWorkspace(ws: WorkspaceProvider): CachedWorkspacePro
     let cacheHdrs: Header[] = []
     let cacheHdrsMap: {[id: string]: Header} = {};
     let cacheProjs: {[id: string]: F} = {};
-    
+
     let cacheModTime: number = 0;
 
     function getLastModTime(): number {
@@ -90,10 +90,10 @@ export function createCachedWorkspace(ws: WorkspaceProvider): CachedWorkspacePro
         }
 
         // save results
-        cacheModTime = newLastModTime      
+        cacheModTime = newLastModTime
         cacheProjs = newProjs
         cacheHdrs = newHdrs
-        cacheHdrsMap = newHdrsMap  
+        cacheHdrsMap = newHdrsMap
         return true;
     }
 
@@ -116,7 +116,7 @@ export function createCachedWorkspace(ws: WorkspaceProvider): CachedWorkspacePro
         cacheProjs[h.id] = {
             header: h,
             text,
-            version: null // TODO @darzu: 
+            version: null // TODO @darzu:
         }
         cacheModTime = Math.max(cacheModTime, h.modificationTime)
         const res = await ws.setAsync(h, prevVer, text)
@@ -127,7 +127,7 @@ export function createCachedWorkspace(ws: WorkspaceProvider): CachedWorkspacePro
         delete cacheProjs[h.id];
         // TODO @darzu: how to handle mod time with delete?
         // TODO @darzu: we should probably enforce soft delete everywhere...
-        cacheModTime = Math.max(cacheModTime, h.modificationTime) 
+        cacheModTime = Math.max(cacheModTime, h.modificationTime)
         const res = await ws.deleteAsync(h, prevVer)
         return res;
     }
@@ -187,7 +187,7 @@ export function createCloudSyncWorkspace(cloud: WorkspaceProvider, cloudLocal: W
     }
     async function transfer(h: Header, fromWs: WorkspaceProvider, toWs: WorkspaceProvider): Promise<Header> {
         const fromPrj = await fromWs.getAsync(h)
-        
+
         // TODO @darzu: caches?
 
         const prevVersion: Version = null // TODO @darzu: what do we do with this version thing...
@@ -217,12 +217,12 @@ export function createCloudSyncWorkspace(cloud: WorkspaceProvider, cloudLocal: W
 
         // TODO @darzu: short circuit if there aren't changes ?
         const lHdrsList = await left.listAsync()
-        const rHdrsList = await right.listAsync()        
+        const rHdrsList = await right.listAsync()
 
         const lHdrs = U.toDictionary(lHdrsList, h => h.id)
         const rHdrs = U.toDictionary(rHdrsList, h => h.id)
         const allHdrsList = [...lHdrsList, ...rHdrsList]
-    
+
         // determine left-only, overlap, and right-only sets
         const overlap = allHdrsList.reduce(
             (p: {[key: string]: Header}, n) => lHdrs[n.id] && rHdrs[n.id] ? (p[n.id] = n) && p : p, {})
@@ -230,28 +230,28 @@ export function createCloudSyncWorkspace(cloud: WorkspaceProvider, cloudLocal: W
             (p: {[key: string]: Header}, n) => lHdrs[n.id] && !rHdrs[n.id] ? (p[n.id] = n) && p : p, {})
         const rOnly = allHdrsList.reduce(
             (p: {[key: string]: Header}, n) => !lHdrs[n.id] && rHdrs[n.id] ? (p[n.id] = n) && p : p, {})
-    
+
         // resolve conflicts
         const conflictResults = U.values(overlap).map(h => resolveConflict(lHdrs[h.id], rHdrs[h.id], strat.conflict))
-        
+
         // update left
         const lChanges = conflictResults.reduce((p: Header[], n) => hasChanged(n, lHdrs[n.id]) ? [...p, n] : p, [])
         let lToPush = lChanges
         if (strat.disjointSets === DisjointSetsStrategy.Synchronize)
             lToPush = [...lToPush, ...U.values(rOnly)]
         const lPushPromises = lToPush.map(h => transfer(h, right, left))
-        
+
         // update right
         const rChanges = conflictResults.reduce((p: Header[], n) => hasChanged(n, rHdrs[n.id]) ? [...p, n] : p, [])
         let rToPush = rChanges
         if (strat.disjointSets === DisjointSetsStrategy.Synchronize)
             rToPush = [...rToPush, ...U.values(lOnly)]
         const rPushPromises = rToPush.map(h => transfer(h, left, right))
-    
+
         // wait
         // TODO @darzu: batching? throttling? incremental?
         const changed = await Promise.all([...lPushPromises, ...rPushPromises])
-    
+
         // TODO @darzu: what about mod time changes?
         return changed.length >= 0;
     }
@@ -283,7 +283,7 @@ export function createCloudSyncWorkspace(cloud: WorkspaceProvider, cloudLocal: W
         // await Promise.all([cloudCache.resetAsync(), localCache.resetAsync()])
         return Promise.resolve();
     }
- 
+
      const provider: CloudSyncWorkspace = {
         // cache
         getLastModTime,

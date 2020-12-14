@@ -45,7 +45,7 @@ let implCache: CachedWorkspaceProvider;
 let implType: WorkspaceKind;
 
 function lookup(id: string): File {
-    // TODO @darzu: 
+    // TODO @darzu:
     // const hdr = implCache.listSync().find(x => x.header.id == id || x.header.path == id)
     // implCache.getSync();
     return allScripts.find(x => x.header.id == id || x.header.path == id);
@@ -87,7 +87,7 @@ function chooseWorkspace(kind: WorkspaceKind = "browser"): pxt.workspace.Workspa
         case "idb":
             return indexedDBWorkspace.provider;
         case "cloud":
-            // TODO @darzu: 
+            // TODO @darzu:
             console.log("CHOOSING CLOUD WORKSPACE");
             return cloudWorkspace.provider;
         case "browser":
@@ -100,15 +100,15 @@ function chooseWorkspace(kind: WorkspaceKind = "browser"): pxt.workspace.Workspa
 export function setupWorkspace(kind: WorkspaceKind): void {
     U.assert(!impl, "workspace set twice");
     pxt.log(`workspace: ${kind}`);
-    // TODO @darzu: 
+    // TODO @darzu:
     console.log(`choosing workspace: ${kind}`);
     implType = kind ?? "browser";
     const localChoice = chooseWorkspace(implType);
-    // TODO @darzu: 
+    // TODO @darzu:
     if (auth.loggedInSync()) {
         const cloudApis = cloudWorkspace.provider
         const localCloud = createBrowserDbWorkspace("cloud-local"); // TODO @darzu: use user choice for this too?
-        // TODO @darzu: 
+        // TODO @darzu:
         // const cachedCloud = createSynchronizedWorkspace(cloudWorkspace.provider, localCloud, {
         //     conflict: ConflictStrategy.LastWriteWins,
         //     disjointSets: DisjointSetsStrategy.Synchronize
@@ -146,18 +146,18 @@ export function setupWorkspace(kind: WorkspaceKind): void {
         implCache = createCachedWorkspace(impl)
     }
 
-    // TODO @darzu: 
+    // TODO @darzu:
     // if (changes.length) {
     //     data.invalidate("header:*");
     //     data.invalidate("text:*");
     // }
-}   
+}
 
 // TODO @darzu: needed?
 export function switchToCloudWorkspace(): string {
     U.assert(implType !== "cloud", "workspace already cloud");
     const prevType = implType;
-    // TODO @darzu: 
+    // TODO @darzu:
     console.log("switchToCloudWorkspace")
     impl = cloudWorkspace.provider;
     implType = "cloud";
@@ -212,9 +212,9 @@ export function getHeaders(withDeleted = false) {
     // let r = allScripts.map(e => e.header)
     let r = implCache.listSync()
         .filter(h =>
-        (withDeleted || !h.isDeleted) 
+        (withDeleted || !h.isDeleted)
         && !h.isBackup
-        // TODO @darzu: 
+        // TODO @darzu:
         // && (!h.cloudUserId || h.cloudUserId === cloudUserId)
         )
     r.sort((a, b) => b.recentUse - a.recentUse)
@@ -1480,7 +1480,7 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
                         ex.text = undefined
                         ex.version = undefined
                         // TODO @darzu: handle data API subscriptions on header changed
-                        console.log(`INVALIDATIN header ${hd.id}`) // TODO @darzu: 
+                        console.log(`INVALIDATIN header ${hd.id}`) // TODO @darzu:
                         data.invalidateHeader("header", hd);
                         data.invalidateHeader("text", hd);
                         data.invalidateHeader("pkg-git-status", hd);
@@ -1577,7 +1577,7 @@ data.mountVirtualApi("headers", {
         p = data.stripProtocol(p)
         const headers = getHeaders()
         if (!p) return Promise.resolve(headers)
-        console.log(`data SEARCH headers:${p}`) // TODO @darzu: 
+        console.log(`data SEARCH headers:${p}`) // TODO @darzu:
         return compiler.projectSearchAsync({ term: p, headers })
             .then((searchResults: pxtc.service.ProjectSearchInfo[]) => searchResults)
             .then(searchResults => {

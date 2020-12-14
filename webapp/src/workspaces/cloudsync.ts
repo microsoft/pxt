@@ -504,8 +504,8 @@ export function refreshToken() {
 
 export function syncAsync(): Promise<void> {
     return Promise.all([
-        githubSyncAsync(), 
-        // TODO @darzu: 
+        githubSyncAsync(),
+        // TODO @darzu:
         // cloud.syncAsync()
         cloudSyncAsync()
     ])

@@ -79,7 +79,7 @@ export async function synchronize(left: WorkspaceProvider, right: WorkspaceProvi
     // idea: never delete, only say "isDeleted" is true; can optimize away later
     /*
     sync scenarios:
-        cloud & cloud cache (last write wins; 
+        cloud & cloud cache (last write wins;
         any workspace & memory workspace (memory leads)
 
     synchronization strategies:
@@ -89,7 +89,7 @@ export async function synchronize(left: WorkspaceProvider, right: WorkspaceProvi
         primary & secondary
             primary always truth ?
     */
-    
+
     const lHdrsList = await left.listAsync()
     const rHdrsList = await right.listAsync()
     const lHdrs = U.toDictionary(lHdrsList, h => h.id)
@@ -106,14 +106,14 @@ export async function synchronize(left: WorkspaceProvider, right: WorkspaceProvi
 
     // resolve conflicts
     const conflictResults = U.values(overlap).map(h => resolveConflict(lHdrs[h.id], rHdrs[h.id], strat.conflict))
-    
+
     // update left
     const lChanges = conflictResults.reduce((p: Header[], n) => hasChanged(n, lHdrs[n.id]) ? [...p, n] : p, [])
     let lToPush = lChanges
     if (strat.disjointSets === DisjointSetsStrategy.Synchronize)
         lToPush = [...lToPush, ...U.values(rOnly)]
     const lPushPromises = lToPush.map(h => transfer(h, right, left))
-    
+
     // update right
     const rChanges = conflictResults.reduce((p: Header[], n) => hasChanged(n, rHdrs[n.id]) ? [...p, n] : p, [])
     let rToPush = rChanges
@@ -143,5 +143,5 @@ export function wrapInMemCache(ws: WorkspaceProvider): SyncWorkspaceProvider & W
 }
 
 export async function migrateOverlap(fromWs: WorkspaceProvider, toWs: WorkspaceProvider) {
-    // TODO @darzu: 
+    // TODO @darzu:
 }

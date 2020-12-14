@@ -21,7 +21,7 @@ export function createBrowserDbWorkspace(namespace: string): BrowserDbWorkspaceP
     // TODO @darzu: debug logging
     (async () => {
         const hdrs: pxt.workspace.Header[] = await headerDb.getAllAsync();
-        const txts: TextDbEntry[] = await textDb.getAllAsync();    
+        const txts: TextDbEntry[] = await textDb.getAllAsync();
         console.log(`createBrowserDbWorkspace: ${prefix}:`);
         console.dir(hdrs)
         console.dir(txts)
@@ -51,7 +51,7 @@ export function createBrowserDbWorkspace(namespace: string): BrowserDbWorkspaceP
             console.log("setAsync with text :)")
         }
 
-        const textEnt: TextDbEntry = { 
+        const textEnt: TextDbEntry = {
             id: h.id,
             files: text,
             _rev: prevVer

@@ -44,7 +44,7 @@ export function createJointWorkspace2(primary: WorkspaceProvider, ...others: Wor
     }
     async function deleteAsync(h: Header, prevVer: any): Promise<void> {
         const matchingWorkspace = await getWorkspaceForAsync(h)
-        return matchingWorkspace?.deleteAsync(h, prevVer)            
+        return matchingWorkspace?.deleteAsync(h, prevVer)
     }
     async function resetAsync() {
        await Promise.all(all.map(ws => ws.resetAsync()))
@@ -62,7 +62,7 @@ export function createJointWorkspace2(primary: WorkspaceProvider, ...others: Wor
 
 export function createJointWorkspace(...all: CachedWorkspaceProvider[]): CachedWorkspaceProvider {
     // TODO @darzu: we're assuming they are disjoint for now
-    
+
     // TODO @darzu: debug logging
     console.log(`createJointWorkspace`);
 
@@ -71,7 +71,7 @@ export function createJointWorkspace(...all: CachedWorkspaceProvider[]): CachedW
     const getLastModTime = () => Math.max(...all.map(w => w.getLastModTime()))
 
     async function synchronize(expectedLastModTime?: number): Promise<boolean> {
-        return (await Promise.all(all.map(w => w.synchronize())))  
+        return (await Promise.all(all.map(w => w.synchronize())))
             .reduce((p, n) => p || n, false)
     }
     function listSync(): Header[] {
@@ -108,9 +108,9 @@ export function createJointWorkspace(...all: CachedWorkspaceProvider[]): CachedW
         return ws.setAsync(h, prevVer, text)
     }
     async function deleteAsync(h: Header, prevVer: any): Promise<void> {
-        await pendingSync() 
+        await pendingSync()
         const ws = getWorkspaceFor(h)
-        return ws?.deleteAsync(h, prevVer)            
+        return ws?.deleteAsync(h, prevVer)
     }
     async function resetAsync() {
         await pendingSync()

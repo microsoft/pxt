@@ -1411,7 +1411,7 @@ namespace ts.pxtc.Util {
     }
 
     export function unreachable(...ns: never[]): never {
-        throw "Type error: this code should be unreachable";
+        throw new Error("Type error: this code should be unreachable");
     }
 }
 
