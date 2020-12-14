@@ -291,7 +291,7 @@ namespace pxsim {
         id: string;
         readonly bus: pxsim.EventBus;
         runOptions: SimulatorRunMessage;
-        private messageListeners: MessageListener[] = [];
+        private readonly messageListeners: MessageListener[] = [];
 
         constructor() {
             // use a stable board id
@@ -301,9 +301,10 @@ namespace pxsim {
 
         public updateView() { }
         public receiveMessage(msg: SimulatorMessage) {
+            if (!runtime || runtime.dead) return;            
             this.dispatchMessage(msg);
         }
-        public dispatchMessage(msg: SimulatorMessage) {
+        private dispatchMessage(msg: SimulatorMessage) {
             for (const listener of this.messageListeners)
                 listener(msg)
         }
