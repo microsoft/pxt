@@ -1,4 +1,3 @@
-import { del } from "request";
 import { ConflictStrategy, DisjointSetsStrategy, Strategy } from "./workspacebehavior";
 import U = pxt.Util;
 
