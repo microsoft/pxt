@@ -367,7 +367,7 @@ namespace pxsim {
                 if (!frame.contentWindow) continue;
 
                 // finally, send the message
-                frame.contentWindow.postMessage(msg, simUrl);
+                frame.contentWindow.postMessage(msg, frame.dataset['origin']);
 
                 // don't start more than 1 recorder
                 if (msg.type == 'recorder'
@@ -387,9 +387,11 @@ namespace pxsim {
             frame.setAttribute('allow', 'autoplay');
             frame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
             frame.className = 'no-select'
-            frame.src = (url || this.getSimUrl()) + '#' + frame.id;
+            const furl = (url || this.getSimUrl()) + '#' + frame.id;
+            frame.src = furl;
             frame.frameBorder = "0";
             frame.dataset['runid'] = this.runId;
+            frame.dataset['origin'] = new URL(furl).origin || "*";
 
             wrapper.appendChild(frame);
 
@@ -627,17 +629,14 @@ namespace pxsim {
         private startFrame(frame: HTMLIFrameElement): boolean {
             if (!this._currentRuntime || !frame.contentWindow) return false;
             const msg = JSON.parse(JSON.stringify(this._currentRuntime)) as pxsim.SimulatorRunMessage;
-            let mc = '';
-            let m = /player=([A-Za-z0-9]+)/i.exec(window.location.href); if (m) mc = m[1];
             msg.frameCounter = ++this.frameCounter;
             msg.options = {
                 theme: this.themes[this.nextFrameId++ % this.themes.length],
-                player: mc
             };
             msg.id = `${msg.options.theme}-${this.nextId()}`;
             frame.dataset['runid'] = this.runId;
             frame.dataset['runtimeid'] = msg.id;
-            frame.contentWindow.postMessage(msg, "*");
+            frame.contentWindow.postMessage(msg, frame.dataset['origin']);
             this.setFrameState(frame);
             return true;
         }
