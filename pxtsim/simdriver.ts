@@ -328,7 +328,7 @@ namespace pxsim {
                         // not found, spin a new one
                         if (!messageFrame) {
                             const useLocalHost = U.isLocalHost() && /localhostmessagesims=1/i.test(window.location.href)
-                            const url = (useLocalHost && messageSimulator.localHostUrl) || messageSimulator.url)
+                            const url = ((useLocalHost && messageSimulator.localHostUrl) || messageSimulator.url)
                                 .replace("$PARENT_ORIGIN$", encodeURIComponent(this.options.parentOrigin || ""))
                             let wrapper = this.createFrame(url);
                             this.container.appendChild(wrapper);
