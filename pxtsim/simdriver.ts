@@ -327,12 +327,15 @@ namespace pxsim {
                         let messageFrame = frames.find(frame => frame.dataset[FRAME_DATA_MESSAGE_CHANNEL] === messageChannel);
                         // not found, spin a new one
                         if (!messageFrame) {
-                            const url = ((U.isLocalHost() && messageSimulator.localHostUrl) || messageSimulator.url)
+                            const useLocalHost = U.isLocalHost() && /localhostmessagesims=1/i.test(window.location.href)
+                            const url = ((useLocalHost && messageSimulator.localHostUrl) || messageSimulator.url)
                                 .replace("$PARENT_ORIGIN$", encodeURIComponent(this.options.parentOrigin || ""))
                             let wrapper = this.createFrame(url);
                             this.container.appendChild(wrapper);
                             messageFrame = wrapper.firstElementChild as HTMLIFrameElement;
                             messageFrame.dataset[FRAME_DATA_MESSAGE_CHANNEL] = messageChannel;
+                            pxsim.U.addClass(wrapper, "simmsg")
+                            pxsim.U.addClass(wrapper, "simmsg" + messageChannel)
                             this.startFrame(messageFrame);
                             frames = this.simFrames(); // refresh
                         }

@@ -289,18 +289,19 @@ namespace pxsim {
     const SERIAL_BUFFER_LENGTH = 16;
     export class BaseBoard {
         id: string;
-        bus: pxsim.EventBus;
+        readonly bus: pxsim.EventBus;
         runOptions: SimulatorRunMessage;
-        messageListeners: MessageListener[] = [];
+        private readonly messageListeners: MessageListener[] = [];
 
         constructor() {
             // use a stable board id
             this.id = Embed.frameid || ("b" + Math.round(Math.random() * 2147483647));
-            this.bus = new pxsim.EventBus(runtime);
+            this.bus = new pxsim.EventBus(runtime, this);
         }
 
         public updateView() { }
         public receiveMessage(msg: SimulatorMessage) {
+            if (!runtime || runtime.dead) return;
             this.dispatchMessage(msg);
         }
         private dispatchMessage(msg: SimulatorMessage) {
