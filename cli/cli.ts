@@ -1042,6 +1042,7 @@ function uploadCoreAsync(opts: UploadOptions) {
             "docsUrl": opts.localDir + "docs.html",
             "multiUrl": opts.localDir + "multi.html",
             "asseteditorUrl": opts.localDir + "asseteditor.html",
+            "skillmapUrl": opts.localDir + "skillmap.html",
             "isStatic": true,
         }
         const targetImagePaths = targetImages.map(k =>
@@ -1089,7 +1090,8 @@ function uploadCoreAsync(opts: UploadOptions) {
         "sim.webmanifest",
         "workerConfig.js",
         "multi.html",
-        "asseteditor.html"
+        "asseteditor.html",
+        "skillmap.html"
     ]
 
     nodeutil.mkdirP("built/uploadrepl")
@@ -1967,37 +1969,53 @@ function buildWebStringsAsync() {
 }
 
 function buildSkillMapAsync(parsed: commandParser.ParsedCommand) {
+    // local serve
     const skillmapRoot = "node_modules/pxt-core/skillmap";
-    // read pxtarget.json, save into 'pxtTargetBundle' global variable
-    let cfg = readLocalPxTarget();
-    nodeutil.writeFileSync(`${skillmapRoot}/public/target.js`, "// eslint-disable-next-line \n" + targetJsPrefix + JSON.stringify(cfg));
-    nodeutil.cp("node_modules/pxt-core/built/pxtlib.js", `${skillmapRoot}/public/`);
-
     if (parsed.flags["serve"]) {
-        return nodeutil.spawnAsync({
-            cmd: os.platform() === "win32" ? "npm.cmd" : "npm",
-            args: ["run-script", "start"],
-            cwd: skillmapRoot,
-            shell: true
-        })
+        return rimrafAsync(`${skillmapRoot}/public/blb`, {})
+            .then(() => rimrafAsync(`${skillmapRoot}/build/assets`, {}))
+            .then(() => {
+                // read pxtarget.json, save into 'pxtTargetBundle' global variable
+                let cfg = readLocalPxTarget();
+                nodeutil.writeFileSync(`${skillmapRoot}/public/blb/target.js`, "// eslint-disable-next-line \n" + targetJsPrefix + JSON.stringify(cfg));
+                nodeutil.cp("node_modules/pxt-core/built/pxtlib.js", `${skillmapRoot}/public/blb`);
+                nodeutil.cp("built/web/semantic.css", `${skillmapRoot}/public/blb`);
+
+                // copy 'assets' over from docs/static
+                nodeutil.cpR("docs/static/skillmap/assets", `${skillmapRoot}/public/assets`);
+                return nodeutil.spawnAsync({
+                    cmd: os.platform() === "win32" ? "npm.cmd" : "npm",
+                    args: ["run-script", "start"],
+                    cwd: skillmapRoot,
+                    shell: true
+                })
+            });
     } else {
+        // OLD WAY, DEPRECATED
+        // go to appropriate stable branches in pxt (6.2) and target (pxt-arcade 1.2)
+        // run "pxt skillmap --serve" in target directory to make sure all files are copied
+        // run "pxt skillmap" to generate built files (also copies into docs/static)
+        // stash changes in target, go to master, delete skillmap folder in docs/static, pop stash
+
+        let cfg = readLocalPxTarget();
+        nodeutil.writeFileSync(`${skillmapRoot}/public/target.js`, "// eslint-disable-next-line \n" + targetJsPrefix + JSON.stringify(cfg));
+        nodeutil.cp("node_modules/pxt-core/built/pxtlib.js", `${skillmapRoot}/public/`);
+
         return nodeutil.spawnAsync({
             cmd: os.platform() === "win32" ? "npm.cmd" : "npm",
             args: ["run-script", "build"],
             cwd: skillmapRoot,
             shell: true
-        }).then(() => {
-            return rimrafAsync("docs/static/skillmap", {})
-        }).then(() => {
+        }).then(() =>  rimrafAsync(`${skillmapRoot}/build/blb`, {}))
+        .then(() =>  rimrafAsync("docs/static/skillmap", {}))
+        .then(() => {
             nodeutil.cpR(`${skillmapRoot}/build`, "docs/static/skillmap");
 
             // patch paths to match updated folder structure
-            // patch <include src="file.html"> to <!-- @include file.html>
             const fn = "docs/static/skillmap/index.html";
             const f = fs.readFileSync(fn, "utf8");
-            const patched = f.replace(/href="\//g, `href="/static/skillmap/`)
-                .replace(/src="\//g, `src="/static/skillmap/`)
-                .replace(/<include src="(\S+)">/gmi, "\n<!-- @include $1 -->\n");
+            const patched = f.replace(/href="\/blb\//g, `href="/static/skillmap/`)
+                .replace(/src="\/blb\//g, `src="/static/skillmap/`);
             fs.writeFileSync("docs/skillmap.html", patched, { encoding: "utf8" });
 
             // remove old index.html
@@ -6634,6 +6652,9 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
         flags: {
             serve: {
                 description: "Serve the skill map locally after building (npm start)"
+            },
+            legacy: {
+                description: "Legacy way of building skillmap (copies files into docs/static of target)"
             }
         }
     }, buildSkillMapAsync);

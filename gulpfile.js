@@ -511,6 +511,26 @@ const copyBlocklyTypings = () => gulp.src("node_modules/pxt-blockly/typings/bloc
 const copyBlockly = gulp.parallel(copyBlocklyCompressed, copyBlocklyEnJs, copyBlocklyEnJson, copyBlocklyMedia, copyBlocklyTypings);
 
 
+/********************************************************
+                      Skillmap
+*********************************************************/
+
+const skillmapRoot = "skillmap";
+const skillmapOut = "built/web/skillmap";
+
+const buildSkillmap = () => exec("npm run build", false, { cwd: skillmapRoot })
+
+const copySkillmapCss = () => gulp.src(`${skillmapRoot}/build/static/css/*`)
+    .pipe(gulp.dest(`${skillmapOut}/css`));
+
+const copySkillmapJs = () => gulp.src(`${skillmapRoot}/build/static/js/*`)
+    .pipe(gulp.dest(`${skillmapOut}/js`));
+
+const copySkillmapHtml = () => rimraf("webapp/public/skillmap.html")
+    .then(() => gulp.src(`${skillmapRoot}/build/index.html`).pipe(concat("skillmap.html")).pipe(gulp.dest("webapp/public")));
+
+const skillmap = gulp.series(buildSkillmap, gulp.parallel(copySkillmapCss, copySkillmapJs, copySkillmapHtml));
+
 
 /********************************************************
                  Tests and Linting
@@ -606,6 +626,7 @@ const buildAll = gulp.series(
     gulp.parallel(pxtjs, pxtdts, pxtapp, pxtworker, pxtembed),
     targetjs,
     gulp.parallel(buildcss, buildSVGIcons),
+    skillmap,
     webapp,
     browserifyWebapp,
     browserifyAssetEditor,
@@ -640,6 +661,7 @@ exports.watch = initWatch;
 exports.watchCli = initWatchCli;
 exports.testlanguageservice = testlanguageservice;
 exports.onlinelearning = onlinelearning;
+exports.skillmap = skillmap;
 
 console.log(`pxt build how to:`)
 console.log(`run "gulp watch" in pxt folder`)

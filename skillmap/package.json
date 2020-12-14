@@ -15,7 +15,9 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build"
+    "prebuild": "mv node_modules/react-scripts/config/webpack.config.js node_modules/react-scripts/config/webpack.config.base.js && cp webpack.config.override.js node_modules/react-scripts/config/webpack.config.js",
+    "build": "react-scripts build",
+    "postbuild": "mv node_modules/react-scripts/config/webpack.config.base.js node_modules/react-scripts/config/webpack.config.js && rm build/static/js/runtime* && rm build/static/js/*.txt"
   },
   "eslintConfig": {
     "extends": [
