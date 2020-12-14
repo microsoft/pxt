@@ -35,12 +35,14 @@ function setupRootDir() {
     console.log(`With pxt core at ${nodeutil.pxtCoreDir}`)
     dirs = [
         "built/web",
+        path.join(nodeutil.targetDir, "docs"),
         path.join(nodeutil.targetDir, "built"),
         path.join(nodeutil.targetDir, "sim/public"),
         path.join(nodeutil.targetDir, "node_modules", `pxt-${pxt.appTarget.id}-sim`, "public"),
         path.join(nodeutil.pxtCoreDir, "built/web"),
         path.join(nodeutil.pxtCoreDir, "webapp/public"),
-        path.join(nodeutil.pxtCoreDir, "common-docs")
+        path.join(nodeutil.pxtCoreDir, "common-docs"),
+        path.join(nodeutil.pxtCoreDir, "docs"),
     ]
     docsDir = path.join(root, "docs")
     packagedDir = path.join(root, "built/packaged")
@@ -914,7 +916,10 @@ export function serveAsync(options: ServeOptions) {
 
         const sendHtml = (s: string, code = 200) => {
             res.writeHead(code, { 'Content-Type': 'text/html; charset=utf8' })
-            res.end(s)
+            res.end(s.replace(
+                /(<img [^>]* src=")(?:\/docs|\.)\/static\/([^">]+)"/g,
+                function (f, pref, addr) { return pref + '/static/' + addr + '"'; }
+            ))
         }
 
         const sendFile = (filename: string) => {
@@ -1068,6 +1073,7 @@ export function serveAsync(options: ServeOptions) {
         if (/^\/(pkg|package)\/.*$/.test(pathname)) {
             pkgPageTestAsync(pathname.replace(/^\/[^\/]+\//, ""))
                 .then(sendHtml)
+                .catch(() => error(404, "Packaged file not found"));
             return
         }
 
