@@ -518,7 +518,7 @@ const copyBlockly = gulp.parallel(copyBlocklyCompressed, copyBlocklyEnJs, copyBl
 const skillmapRoot = "skillmap";
 const skillmapOut = "built/web/skillmap";
 
-const buildSkillmap = () => exec("npm run build", false, { cwd: skillmapRoot })
+const buildSkillmap =  () => exec("npm install", false, { cwd: skillmapRoot }).then(() => exec("npm run build", false, { cwd: skillmapRoot }));
 
 const copySkillmapCss = () => gulp.src(`${skillmapRoot}/build/static/css/*`)
     .pipe(gulp.dest(`${skillmapOut}/css`));
