@@ -301,7 +301,7 @@ namespace pxsim {
 
         public updateView() { }
         public receiveMessage(msg: SimulatorMessage) {
-            if (!runtime || runtime.dead) return;            
+            if (!runtime || runtime.dead) return;
             this.dispatchMessage(msg);
         }
         private dispatchMessage(msg: SimulatorMessage) {
