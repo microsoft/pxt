@@ -16,6 +16,21 @@ import * as editortoolbar from "./editortoolbar";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
+export function xmlUpgrades(code: string[], language?: string,) {
+    compiler.getBlocksAsync()
+        .then(blocksInfo => {
+            pxt.blocks.initializeAndInject(blocksInfo);
+            if (language == "python")
+                return compiler.pySnippetArrayToBlocksAsync(code, blocksInfo);
+            return compiler.decompileBlocksSnippetAsync(code.join("\n"), blocksInfo);
+        }).then(resp => {
+            const blocksXml = resp.outfiles["main.blocks"];
+            if (pxt.editor.upgradeXml) {
+                pxt.editor.upgradeXml(blocksXml);
+            }
+        })
+}
+
 /**
  * We'll run this step when we first start the tutorial to figure out what blocks are used so we can
  * filter the toolbox.
