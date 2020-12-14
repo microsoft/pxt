@@ -367,8 +367,7 @@ namespace pxsim {
                 if (!frame.contentWindow) continue;
 
                 // finally, send the message
-                const origin = frame.dataset['origin'] || simUrl;
-                frame.contentWindow.postMessage(msg, origin);
+                frame.contentWindow.postMessage(msg, frame.dataset['origin']);
 
                 // don't start more than 1 recorder
                 if (msg.type == 'recorder'
@@ -392,7 +391,7 @@ namespace pxsim {
             frame.src = furl;
             frame.frameBorder = "0";
             frame.dataset['runid'] = this.runId;
-            frame.dataset['origin'] = new URL(furl).origin;
+            frame.dataset['origin'] = new URL(furl).origin || "*";
 
             wrapper.appendChild(frame);
 
@@ -637,7 +636,7 @@ namespace pxsim {
             msg.id = `${msg.options.theme}-${this.nextId()}`;
             frame.dataset['runid'] = this.runId;
             frame.dataset['runtimeid'] = msg.id;
-            frame.contentWindow.postMessage(msg, "*");
+            frame.contentWindow.postMessage(msg, frame.dataset['origin']);
             this.setFrameState(frame);
             return true;
         }
