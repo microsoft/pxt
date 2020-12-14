@@ -829,7 +829,7 @@ export class ProjectView
                 this.editorChangeHandler();
             }
         }
-        this.allEditors = [this.pxtJsonEditor, this.gitjsonEditor, this.blocksEditor, this.serialEditor,  this.assetEditor, this.textEditor]
+        this.allEditors = [this.pxtJsonEditor, this.gitjsonEditor, this.blocksEditor, this.serialEditor, this.assetEditor, this.textEditor]
         this.allEditors.forEach(e => e.changeCallback = changeHandler)
         this.editor = this.allEditors[this.allEditors.length - 1]
     }
@@ -4002,7 +4002,7 @@ export class ProjectView
                 {isSidebarTutorial && flyoutOnly && inTutorial && <sidebarTutorial.SidebarTutorialCard ref={ProjectView.tutorialCardId} parent={this} pokeUser={this.state.pokeUserComponent == ProjectView.tutorialCardId} />}
                 {inTutorial && <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
                     {!(isSidebarTutorial && flyoutOnly) && inTutorial && <tutorial.TutorialCard ref={ProjectView.tutorialCardId} parent={this} pokeUser={this.state.pokeUserComponent == ProjectView.tutorialCardId} />}
-                    {flyoutOnly && <tutorial.WorkspaceHeader parent={this}/>}
+                    {flyoutOnly && <tutorial.WorkspaceHeader parent={this} />}
                 </div>}
 
                 <div id="simulator" className="simulator">
@@ -4098,7 +4098,30 @@ function initPacketIO() {
                 id: 'n/a', // TODO
                 data
             }, "*")
+        },
+        (type, payload) => {
+            const messageSimulators = pxt.appTarget.simulator?.messageSimulators;
+            if (messageSimulators?.[type]) {
+                window.postMessage({
+                    type: "messagepacket",
+                    broadcast: false,
+                    channel: type,
+                    data: payload,
+                    sender: "packetio",
+                }, "*")
+            }
         });
+
+    window.addEventListener('message', (ev: MessageEvent) => {
+        const msg = ev.data
+        if (msg.type === 'messagepacket'
+            && msg.sender !== "packetio"
+            && pxt.appTarget.simulator?.messageSimulators?.[msg.channel])
+            pxt.packetio.sendCustomEventAsync(msg.channel, msg.data)
+                .then(() => { }, err => {
+                    core.errorNotification(lf("{0}: {1}", msg.channel, err.message));
+                });
+    }, false);
 }
 
 function initSerial() {
