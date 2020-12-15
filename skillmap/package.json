@@ -11,7 +11,7 @@
     "react-redux": "5.1.1",
     "react-scripts": "3.1.2",
     "redux": "3.7.2",
-    "typescript": "4.0.5"
+    "typescript": "3.7.5"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -20,9 +20,7 @@
     "postbuild": "mv node_modules/react-scripts/config/webpack.config.base.js node_modules/react-scripts/config/webpack.config.js"
   },
   "eslintConfig": {
-    "extends": [
-      "react-app"
-    ]
+    "extends": []
   },
   "browserslist": {
     "production": [
