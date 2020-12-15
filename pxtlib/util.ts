@@ -230,8 +230,9 @@ namespace ts.pxtc.Util {
     }
 
     export function pushRange<T>(trg: T[], src: ArrayLike<T>): void {
-        for (let i = 0; i < src.length; ++i)
-            trg.push(src[i])
+        if (src)
+            for (let i = 0; i < src.length; ++i)
+                trg.push(src[i])
     }
 
     // TS gets lost in type inference when this is passed an array

@@ -249,11 +249,11 @@ function returnDirAsync(logicalDirname: string, depth: number): Promise<FsPkg[]>
                         else return undefined
                     })).then(U.concat)
                 )
-        ])
+        ]))
         // drop empty arrays
-        .then(rs => { console.log({rs}); return rs.filter(r => !!r); }))
+        .then(rs => rs.filter(r => !!r))
         .then(U.concat)
-        .then(r => { console.log({r}); return r; })
+        .then(r => { console.log({r}); return r; });
 }
 
 function isAuthorizedLocalRequest(req: http.IncomingMessage): boolean {
