@@ -11,6 +11,12 @@ import { Carousel } from './Carousel';
 import { Item } from './CarouselItem';
 import { SkillCard } from './SkillCard';
 
+interface SkillCarouselItem extends Item {
+    mapId: string;
+    description?: string;
+    tags?: string[];
+}
+
 interface SkillCarouselProps {
     map: SkillMap;
     requiredMaps: SkillMap[];
@@ -25,7 +31,7 @@ interface SkillCarouselProps {
 
 class SkillCarouselImpl extends React.Component<SkillCarouselProps> {
     protected carouselRef: any;
-    protected items: Item[];
+    protected items: SkillCarouselItem[];
 
     constructor(props: SkillCarouselProps) {
         super(props);
@@ -33,18 +39,18 @@ class SkillCarouselImpl extends React.Component<SkillCarouselProps> {
         this.items = this.getItems(props.map.mapId, props.map.root);
     }
 
-    protected getItems(mapId: string, root: MapActivity): Item[] {
+    protected getItems(mapId: string, root: MapActivity): SkillCarouselItem[] {
         const items = [];
         let activity = root;
         while (activity) {
             items.push({
                 id: activity.activityId,
-                mapId,
                 label: activity.displayName,
-                description: activity.description,
-                tags: activity.tags,
                 url: activity.url,
-                imageUrl: activity.imageUrl
+                imageUrl: activity.imageUrl,
+                mapId,
+                description: activity.description,
+                tags: activity.tags
             });
             activity = activity.next[0]; // TODO still add nonlinear items to array even if we don't render graph
         }
