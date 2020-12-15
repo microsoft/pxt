@@ -105,6 +105,7 @@ function readAssetsAsync(logicalDirname: string): Promise<any> {
 const HEADER_JSON = ".header.json"
 
 async function readPkgAsync(logicalDirname: string, fileContents = false): Promise<FsPkg> {
+    console.log(`pkg ${logicalDirname}`)
     let dirname = path.join(userProjectsDir, logicalDirname)
     let buf = await readFileAsync(path.join(dirname, pxt.CONFIG_NAME))
     let cfg: pxt.PackageConfig = JSON.parse(buf.toString("utf8"))
@@ -231,21 +232,28 @@ function writePkgAsync(logicalDirname: string, data: FsPkg) {
 
 function returnDirAsync(logicalDirname: string, depth: number): Promise<FsPkg[]> {
     logicalDirname = logicalDirname.replace(/^\//, "")
-    let dirname = path.join(userProjectsDir, logicalDirname)
+    const dirname = path.join(userProjectsDir, logicalDirname)
+    console.log(`dir ${dirname}`)
+    // load packages under /projects, 3 level deep
     return existsAsync(path.join(dirname, pxt.CONFIG_NAME))
-        .then(ispkg =>
-            ispkg ? readPkgAsync(logicalDirname).then(r => [r], err => []) :
-                depth <= 1 ? [] :
-                    readdirAsync(dirname)
-                        .then(files =>
-                            Promise.map(files, fn =>
-                                statAsync(path.join(dirname, fn))
-                                    .then<FsPkg[]>(st => {
-                                        if (fn[0] != "." && st.isDirectory())
-                                            return returnDirAsync(logicalDirname + "/" + fn, depth - 1)
-                                        else return []
-                                    })))
-                        .then(U.concat))
+        // read package if pxt.json exists
+        .then(ispkg => Promise.all<FsPkg[]>([
+            // current folder
+            ispkg ? readPkgAsync(logicalDirname).then<FsPkg[]>(r => [r], err => undefined) : Promise.resolve<FsPkg[]>(undefined),
+            // nested packets
+            depth <= 1 ? Promise.resolve<FsPkg[]>(undefined)
+                : readdirAsync(dirname).then(files => Promise.map(files, fn =>
+                    statAsync(path.join(dirname, fn)).then<FsPkg[]>(st => {
+                        if (fn[0] != "." && st.isDirectory())
+                            return returnDirAsync(logicalDirname + "/" + fn, depth - 1)
+                        else return undefined
+                    })).then(U.concat)
+                )
+        ])
+        // drop empty arrays
+        .then(rs => { console.log({rs}); return rs.filter(r => !!r); }))
+        .then(U.concat)
+        .then(r => { console.log({r}); return r; })
 }
 
 function isAuthorizedLocalRequest(req: http.IncomingMessage): boolean {
