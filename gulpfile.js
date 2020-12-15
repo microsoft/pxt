@@ -518,8 +518,8 @@ const copyBlockly = gulp.parallel(copyBlocklyCompressed, copyBlocklyEnJs, copyBl
 const skillmapRoot = "skillmap";
 const skillmapOut = "built/web/skillmap";
 
-const buildSkillmap =  () => exec("npm install", true, { cwd: skillmapRoot })
-    .then(() => exec("npm run build", true, { cwd: skillmapRoot }));
+const buildSkillmap =  () => exec("npm install", false, { cwd: skillmapRoot })
+    .then(() => exec("npm run build", false, { cwd: skillmapRoot }));
 
 const copySkillmapCss = () => gulp.src(`${skillmapRoot}/build/static/css/*`)
     .pipe(gulp.dest(`${skillmapOut}/css`));
@@ -543,7 +543,7 @@ const skillmap = gulp.series(buildSkillmap, gulp.parallel(copySkillmapCss, copyS
 const lint = () => Promise.all(
     ["cli", "pxtblocks", "pxteditor", "pxtlib", "pxtcompiler",
         "pxtpy", "pxtrunner", "pxtsim", "pxtwinrt", "webapp",
-        "docfiles/pxtweb"].map(dirname =>
+        "docfiles/pxtweb", "skillmap"].map(dirname =>
             exec(`node node_modules/tslint/bin/tslint --project ./${dirname}/tsconfig.json`, true)))
     .then(() => console.log("linted"))
 

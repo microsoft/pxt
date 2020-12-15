@@ -9,7 +9,9 @@ import { dispatchOpenActivity, dispatchShowRestartActivityWarning } from '../act
 import { isActivityUnlocked, isMapUnlocked, lookupActivityProgress, } from '../lib/skillMapUtils';
 import { tickEvent } from '../lib/browserUtils';
 
+/* tslint:disable:no-import-side-effect */
 import '../styles/skillcard.css'
+/* tslint:enable:no-import-side-effect */
 
 type SkillCardStatus = "locked" | "notstarted" | "inprogress" | "completed" ;
 

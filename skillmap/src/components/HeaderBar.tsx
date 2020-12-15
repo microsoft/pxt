@@ -50,7 +50,7 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
             </div>
             <div className="spacer" />
             <div className="header-right">
-                {completedHeaderId && <div className="header-button" onClick={this.onSaveClicked}>
+                {completedHeaderId && <div className="header-button" role="button" onClick={this.onSaveClicked}>
                     {lf("SAVE TO MY PROJECTS")}
                 </div>}
                 { items?.length > 0 && <Dropdown icon="setting" className="header-settings" items={items} /> }

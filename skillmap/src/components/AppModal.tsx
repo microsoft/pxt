@@ -43,8 +43,12 @@ export class AppModalImpl extends React.Component<AppModalProps> {
         }
     }
 
+    protected handleOnClose = () => {
+        this.props.dispatchHideModal();
+    }
+
     renderCompletionModal() {
-        const  { type, displayName, dispatchHideModal, completionType, actions } = this.props;
+        const  { type, displayName, completionType, actions } = this.props;
         if (!type) return <div />
 
         const completionModalTitle = completionType === "activity" ? lf("Activity Complete!") : lf("Path Complete!");
@@ -54,7 +58,7 @@ export class AppModalImpl extends React.Component<AppModalProps> {
         const density = 100;
 
         return <div className="confetti-container">
-            <Modal title={completionModalTitle} actions={actions} onClose={() => dispatchHideModal()}>
+            <Modal title={completionModalTitle} actions={actions} onClose={this.handleOnClose}>
                 {completionModalTextSegments[0]}{<strong>{displayName}</strong>}{completionModalTextSegments[1]}
             </Modal>
             {Array(density).fill(0).map((el, i) => {
@@ -68,20 +72,20 @@ export class AppModalImpl extends React.Component<AppModalProps> {
     }
 
     renderRestartWarning() {
-        const  { mapId, activity, dispatchHideModal, dispatchRestartActivity } = this.props;
+        const  { mapId, activity, dispatchRestartActivity } = this.props;
         const restartModalTitle = lf("Restart Activity?");
         const restartModalText = lf("Are you sure you want to restart {0}? You won't lose your path progress but the code have written for this activity will be deleted.", "{0}");
         const restartModalTextSegments = restartModalText.split("{0}");
 
         const actions = [
-            { label: lf("CANCEL"), onClick: () => dispatchHideModal() },
+            { label: lf("CANCEL"), onClick: this.handleOnClose },
             { label: lf("RESTART"), onClick: () => {
                 tickEvent("skillmap.activity.restart", { map: mapId, activity: activity!.activityId });
                 dispatchRestartActivity(mapId, activity!.activityId);
             }}
         ]
 
-        return <Modal title={restartModalTitle} actions={actions} onClose={() => dispatchHideModal()}>
+        return <Modal title={restartModalTitle} actions={actions} onClose={this.handleOnClose}>
             {restartModalTextSegments[0]}{<strong>{activity!.displayName}</strong>}{restartModalTextSegments[1]}
         </Modal>
     }
@@ -99,7 +103,7 @@ export class AppModalImpl extends React.Component<AppModalProps> {
             }}
         ]
 
-        return <Modal title={abuseModalTitle} actions={actions} onClose={() => dispatchHideModal()}>
+        return <Modal title={abuseModalTitle} actions={actions} onClose={this.handleOnClose}>
             <textarea className="report-abuse-text" placeholder={abuseModalText} />
         </Modal>
     }
