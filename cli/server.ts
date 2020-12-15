@@ -252,8 +252,7 @@ function returnDirAsync(logicalDirname: string, depth: number): Promise<FsPkg[]>
         ]))
         // drop empty arrays
         .then(rs => rs.filter(r => !!r))
-        .then(U.concat)
-        .then(r => { console.log({r}); return r; });
+        .then(U.concat);
 }
 
 function isAuthorizedLocalRequest(req: http.IncomingMessage): boolean {
