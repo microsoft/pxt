@@ -518,7 +518,8 @@ const copyBlockly = gulp.parallel(copyBlocklyCompressed, copyBlocklyEnJs, copyBl
 const skillmapRoot = "skillmap";
 const skillmapOut = "built/web/skillmap";
 
-const buildSkillmap =  () => exec("npm install", false, { cwd: skillmapRoot }).then(() => exec("npm run build", false, { cwd: skillmapRoot }));
+const buildSkillmap =  () => exec("npm install", true, { cwd: skillmapRoot })
+    .then(() => exec("npm run build", true, { cwd: skillmapRoot }));
 
 const copySkillmapCss = () => gulp.src(`${skillmapRoot}/build/static/css/*`)
     .pipe(gulp.dest(`${skillmapOut}/css`));
@@ -527,7 +528,10 @@ const copySkillmapJs = () => gulp.src(`${skillmapRoot}/build/static/js/*`)
     .pipe(gulp.dest(`${skillmapOut}/js`));
 
 const copySkillmapHtml = () => rimraf("webapp/public/skillmap.html")
-    .then(() => gulp.src(`${skillmapRoot}/build/index.html`).pipe(concat("skillmap.html")).pipe(gulp.dest("webapp/public")));
+    .then(() => gulp.src(`${skillmapRoot}/build/index.html`)
+                    .pipe(replace(/="\/static\//g, `="/blb/skillmap/`))
+                    .pipe(concat("skillmap.html"))
+                    .pipe(gulp.dest("webapp/public")));
 
 const skillmap = gulp.series(buildSkillmap, gulp.parallel(copySkillmapCss, copySkillmapJs, copySkillmapHtml));
 
