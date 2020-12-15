@@ -105,7 +105,6 @@ function readAssetsAsync(logicalDirname: string): Promise<any> {
 const HEADER_JSON = ".header.json"
 
 async function readPkgAsync(logicalDirname: string, fileContents = false): Promise<FsPkg> {
-    console.log(`pkg ${logicalDirname}`)
     let dirname = path.join(userProjectsDir, logicalDirname)
     let buf = await readFileAsync(path.join(dirname, pxt.CONFIG_NAME))
     let cfg: pxt.PackageConfig = JSON.parse(buf.toString("utf8"))
@@ -233,7 +232,6 @@ function writePkgAsync(logicalDirname: string, data: FsPkg) {
 function returnDirAsync(logicalDirname: string, depth: number): Promise<FsPkg[]> {
     logicalDirname = logicalDirname.replace(/^\//, "")
     const dirname = path.join(userProjectsDir, logicalDirname)
-    console.log(`dir ${dirname}`)
     // load packages under /projects, 3 level deep
     return existsAsync(path.join(dirname, pxt.CONFIG_NAME))
         // read package if pxt.json exists
