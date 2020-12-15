@@ -34,6 +34,8 @@ module.exports = function (webpackEnv) {
           }
         : undefined
     )
-  ),)
+  ))
+
+  config.module.rules = config.module.rules.filter(el => !(el.use && el.use.some(item => !!(item.options && item.options.eslintPath))));
   return config;
 };
