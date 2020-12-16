@@ -298,7 +298,7 @@ function handleWriteCodeRequestAsync(name: string, resp: e.ExtensionResponse, fi
             cfg.files.push(fn + ".asm");
         }
         return mainPackage.savePkgAsync();
-    });
+    }).then(() => mainPackage.saveFilesAsync(true));
 }
 
 function mkEvent(event: string): e.ExtensionEvent {
