@@ -16,7 +16,7 @@ namespace pxt.editor {
     }
 
     export interface WriteExtensionFiles extends ExtensionFiles {
-        requiredDependencies?: pxt.Map<string>;
+        dependencies?: pxt.Map<string>;
     }
 
     export enum PermissionResponses {

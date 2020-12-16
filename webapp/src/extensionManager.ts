@@ -285,14 +285,14 @@ function handleWriteCodeRequestAsync(name: string, resp: e.WriteCodeResponse, fi
     }
 
     let missingDependencies: string[];
-    if (files.requiredDependencies) {
+    if (files.dependencies) {
         // collect missing depdencies
         const cfg = pxt.Util.jsonTryParse(mainPackage.files[pxt.CONFIG_NAME]?.content) as pxt.PackageConfig;
         // maybe we should really match the versions...
         if (cfg?.dependencies) { // give up if cfg is busted
-            missingDependencies = Object.keys(files.requiredDependencies)
+            missingDependencies = Object.keys(files.dependencies)
                 .filter(k => !cfg.dependencies[k]);
-            needsUpdate ||= !!missingDependencies?.length
+            needsUpdate = needsUpdate || !!missingDependencies?.length;
         }
     }
 
@@ -309,7 +309,7 @@ function handleWriteCodeRequestAsync(name: string, resp: e.WriteCodeResponse, fi
         if (files.asm !== undefined && cfg.files.indexOf(fn + ".asm") < 0) {
             cfg.files.push(fn + ".asm");
         }
-        missingDependencies?.forEach(dep => cfg.dependencies[dep] = files.requiredDependencies[dep]);
+        missingDependencies?.forEach(dep => cfg.dependencies[dep] = files.dependencies[dep]);
         return mainPackage.savePkgAsync();
     }).then(() => mainPackage.saveFilesAsync(true));
 }
