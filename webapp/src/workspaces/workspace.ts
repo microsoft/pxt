@@ -15,6 +15,8 @@ import * as compiler from "../compiler"
 import * as auth from "../auth"
 import * as cloud from "../cloud"
 import * as cloudWorkspace from "./cloudworkspace"
+import * as oldbrowserdbworkspace from "./oldbrowserdbworkspace" // TODO @darzu: dbg
+
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
@@ -121,6 +123,12 @@ export function setupWorkspace(kind: WorkspaceKind): void {
 
         // TODO @darzu: do one-time overlap migration
         // migrateOverlap(localChoiceCached, cloudCache)
+
+        const old = oldbrowserdbworkspace.provider;
+        old.listAsync().then(hs => {
+            console.log("OLD:")
+            console.dir(hs.map(h => ({id: h.id, t: h.modificationTime})))
+        })
 
         const joint = createJointWorkspace(cloudCache, localChoiceCached)
         impl = joint
