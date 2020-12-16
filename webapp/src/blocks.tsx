@@ -807,7 +807,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                             .then(() => {
                                 if (!this.functionsDialog) {
                                     const wrapper = document.body.appendChild(document.createElement('div'));
-                                    this.functionsDialog = ReactDOM.render(React.createElement(CreateFunctionDialog, {parent: this.parent}), wrapper) as CreateFunctionDialog;
+                                    this.functionsDialog = ReactDOM.render(React.createElement(CreateFunctionDialog, { parent: this.parent }), wrapper) as CreateFunctionDialog;
                                 }
                                 this.functionsDialog.show(mutation, cb, this.editor);
                             });
@@ -1128,22 +1128,30 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.refreshToolbox();
     }
 
-    private openExtension(extensionName: string) {
+    private async openExtension(extensionName: string) {
         const extension = this.extensions.filter(c => c.config.name == extensionName)[0];
         const parsedRepo = pxt.github.parseRepoId(extension.installedVersion);
-        pxt.packagesConfigAsync()
-            .then((packagesConfig) => {
-                const extensionConfig = extension.config;
-                const repoStatus = pxt.github.repoStatus(parsedRepo, packagesConfig);
-                const repoName = parsedRepo.fullName.substr(parsedRepo.fullName.indexOf(`/`) + 1);
-                const localDebug = pxt.BrowserUtils.isLocalHost() && /^file:/.test(extension.installedVersion) && extensionConfig.extension.localUrl;
-                const debug = pxt.BrowserUtils.isLocalHost() && /debugExtensions/i.test(window.location.href);
-                /* tslint:disable:no-http-string */
-                const url = debug ? "http://localhost:3232/extension.html"
-                    : localDebug ? extensionConfig.extension.localUrl : `https://${parsedRepo.owner}.github.io/${repoName}/`;
-                /* tslint:enable:no-http-string */
-                this.parent.openExtension(extensionConfig.name, url, repoStatus == 0); // repoStatus can only be APPROVED or UNKNOWN at this point
-            });
+        let url = "";
+        let repoStatus = pxt.github.GitRepoStatus.Unknown;
+        const extensionConfig = extension.config;
+        const debug = pxt.BrowserUtils.isLocalHost() && /debugExtensions/i.test(window.location.href);
+        const localDebug = pxt.BrowserUtils.isLocalHost() && /^file:/.test(extension.installedVersion)
+            && extensionConfig?.extension?.localUrl;
+        if (debug)
+            url = "http://localhost:3232/extension.html";
+        else if (localDebug)
+            url = extensionConfig.extension.localUrl;
+        else {
+            const packagesConfig = await pxt.packagesConfigAsync()
+            repoStatus = pxt.github.repoStatus(parsedRepo, packagesConfig);
+            const repoName = parsedRepo.fullName.substr(parsedRepo.fullName.indexOf(`/`) + 1);
+            /* tslint:disable:no-http-string */
+            url = `https://${parsedRepo.owner}.github.io/${repoName}/`;
+        }
+        /* tslint:enable:no-http-string */
+        this.parent.openExtension(extensionConfig.name,
+            url,
+            repoStatus !== pxt.github.GitRepoStatus.Approved);
     }
 
     private partitionBlocks() {
