@@ -15,6 +15,10 @@ namespace pxt.editor {
         asm?: string;
     }
 
+    export interface WriteExtensionFiles extends ExtensionFiles {
+        requiredDependencies?: pxt.Map<string>;
+    }
+
     export enum PermissionResponses {
         Granted,
         Denied,
@@ -177,7 +181,7 @@ namespace pxt.editor {
     export interface WriteCodeRequest extends ExtensionRequest {
         action: ExtWriteCodeType;
 
-        body?: ExtensionFiles;
+        body?: WriteExtensionFiles;
     }
 
     export interface WriteCodeResponse extends ExtensionResponse {

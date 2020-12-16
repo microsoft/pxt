@@ -258,7 +258,7 @@ function handleReadCodeRequest(name: string, resp: e.ReadCodeResponse) {
     };
 }
 
-function handleWriteCodeRequestAsync(name: string, resp: e.ExtensionResponse, files: e.ExtensionFiles) {
+function handleWriteCodeRequestAsync(name: string, resp: e.WriteCodeResponse, files: e.WriteExtensionFiles) {
     const mainPackage = pkg.mainEditorPkg() as pkg.EditorPackage;
     const fn = ts.pxtc.escapeIdentifier(name);
 
@@ -284,6 +284,18 @@ function handleWriteCodeRequestAsync(name: string, resp: e.ExtensionResponse, fi
         mainPackage.setFile(fn + ".asm", files.asm);
     }
 
+    let missingDependencies: string[];
+    if (files.requiredDependencies) {
+        // collect missing depdencies
+        const cfg = pxt.Util.jsonTryParse(mainPackage.files[pxt.CONFIG_NAME]?.content) as pxt.PackageConfig;
+        // maybe we should really match the versions...
+        if (cfg?.dependencies) { // give up if cfg is busted
+            missingDependencies = Object.keys(files.requiredDependencies)
+                .filter(k => !cfg.dependencies[k]);
+            needsUpdate ||= !!missingDependencies?.length
+        }
+    }
+
     return !needsUpdate ? Promise.resolve() : mainPackage.updateConfigAsync(cfg => {
         if (files.json !== undefined && cfg.files.indexOf(fn + ".json") < 0) {
             cfg.files.push(fn + ".json")
@@ -297,6 +309,7 @@ function handleWriteCodeRequestAsync(name: string, resp: e.ExtensionResponse, fi
         if (files.asm !== undefined && cfg.files.indexOf(fn + ".asm") < 0) {
             cfg.files.push(fn + ".asm");
         }
+        missingDependencies?.forEach(dep => cfg.dependencies[dep] = files.requiredDependencies[dep]);
         return mainPackage.savePkgAsync();
     }).then(() => mainPackage.saveFilesAsync(true));
 }
