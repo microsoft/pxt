@@ -25,7 +25,10 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
             items.push({
                 id: "report",
                 label: "Report Abuse",
-                onClick: (id: string) => window.open(this.reportAbuseUrl)
+                onClick: (id: string) => {
+                    tickEvent("skillmap.reportabuse");
+                    window.open(this.reportAbuseUrl);
+                }
             })
         }
 
@@ -68,6 +71,7 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
 
     onSaveClicked = () => {
         const { completedHeaderId } = this.props;
+        tickEvent("skillmap.export");
         window.open(`${editorUrl}#skillmapimport:${completedHeaderId}`)
     }
 }

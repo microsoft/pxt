@@ -11,7 +11,7 @@ import { tickEvent } from '../lib/browserUtils';
 
 import '../styles/skillcard.css'
 
-type SkillCardStatus = "locked" | "notstarted" | "inprogress" | "completed" ;
+type SkillCardStatus = "locked" | "notstarted" | "inprogress" | "completed" | "restarted";
 
 interface SkillCardProps extends Item {
     mapId: string;
@@ -33,11 +33,16 @@ export class SkillCardImpl extends React.Component<SkillCardProps> {
             case "completed":
                 return lf("VIEW CODE");
             case "inprogress":
+            case "restarted":
                 return lf("CONTINUE");
             case "notstarted":
             default:
                 return lf("START");
         }
+    }
+
+    protected isCompleted(status: SkillCardStatus): boolean {
+        return status === "completed" || status === "restarted";
     }
 
     protected handleActionButtonClick = () => {
@@ -49,6 +54,7 @@ export class SkillCardImpl extends React.Component<SkillCardProps> {
             case "completed":
             case "inprogress":
             case "notstarted":
+            case "restarted":
             default:
                 tickEvent("skillmap.activity.open", { map: mapId, activity: id, status: status || "" });
                 return dispatchOpenActivity(mapId, id);
@@ -62,6 +68,7 @@ export class SkillCardImpl extends React.Component<SkillCardProps> {
 
     render() {
         const { label, description, imageUrl, tags, status, currentStep, maxSteps} = this.props;
+        const completed = this.isCompleted(status || "notstarted");
 
         return <div className="skill-card-container">
             <div className={`skill-card ${status || ''}`}>
@@ -71,7 +78,7 @@ export class SkillCardImpl extends React.Component<SkillCardProps> {
                     </div>
                     <div className="skill-card-label">
                         <div className="skill-card-title">
-                            {status === "completed" && <i className={`icon check circle`} />}
+                            {completed && <i className={`icon check circle`} />}
                             {status === "inprogress" && maxSteps &&
                                 <span className="circular-label">{`${currentStep}/${maxSteps}`}</span>
                             }
@@ -90,7 +97,7 @@ export class SkillCardImpl extends React.Component<SkillCardProps> {
                     <div className="skill-card-description">{description}</div>
                     <div className="spacer"></div>
                     <div className="skill-card-action">
-                        {status === "completed" &&
+                        {completed &&
                             <div className="skill-card-button-icon" role="button" onClick={this.handleRestartButtonClick}>
                                 <i className="xicon redo"></i>
                             </div>
@@ -122,7 +129,8 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
 
             if (progress) {
                 if (progress.isCompleted) {
-                    status = "completed";
+                    status = (progress.currentStep && progress.maxSteps && progress.currentStep < progress.maxSteps) ?
+                        "restarted" : "completed";
                 }
                 else if (progress.headerId) {
                     status = "inprogress";
