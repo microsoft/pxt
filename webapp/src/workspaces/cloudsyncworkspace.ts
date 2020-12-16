@@ -58,6 +58,9 @@ export function createCachedWorkspace(ws: WorkspaceProvider): CachedWorkspacePro
     }
 
     async function synchronizeInternal(expectedLastModTime?:number): Promise<boolean> {
+
+        console.log("cachedworkspace: synchronizeInternal (1)")
+
         // remember our old cache, we might keep items from it later
         const oldHdrs = cacheHdrs
         const oldHdrsMap = cacheHdrsMap
@@ -77,6 +80,7 @@ export function createCachedWorkspace(ws: WorkspaceProvider): CachedWorkspacePro
             cacheHdrs = oldHdrs
             cacheHdrsMap = oldHdrsMap
             cacheProjs = oldProjs
+            console.log("cachedworkspace: synchronizeInternal (2)")
             return false
         }
 
@@ -198,6 +202,8 @@ export function createCloudSyncWorkspace(cloud: WorkspaceProvider, cloudLocal: W
     async function synchronizeInternal(): Promise<boolean> {
         await pendingCacheSync()
 
+        console.log("cloudsyncworkspace: synchronizeInternal")
+
         if (cloudCache.getLastModTime() === localCache.getLastModTime()) {
             // we're synced up ?
             return false
@@ -283,6 +289,13 @@ export function createCloudSyncWorkspace(cloud: WorkspaceProvider, cloudLocal: W
         // await Promise.all([cloudCache.resetAsync(), localCache.resetAsync()])
         return Promise.resolve();
     }
+
+
+    // TODO @darzu: debug logging
+    firstSync.then(c => {
+        console.log("first update:")
+        console.dir(localCache.listSync().map(h => ({id: h.id, t: h.modificationTime})))
+    })
 
      const provider: CloudSyncWorkspace = {
         // cache

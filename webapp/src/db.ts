@@ -14,7 +14,10 @@ const PouchDB = require("pouchdb")
 
 let _db: Promise<any> = undefined;
 export function getDbAsync(): Promise<any> {
-    if (_db) return _db;
+    if (_db) {
+        (window as any).db = _db
+        return _db;
+    }
 
     return _db = Promise.resolve()
         .then(() => {

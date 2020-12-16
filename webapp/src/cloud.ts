@@ -27,7 +27,7 @@ export async function listAsync(): Promise<Header[]> {
     return new Promise(async (resolve, reject) => {
         // TODO @darzu: this is causing errors?
         const result = await auth.apiAsync<CloudProject[]>("/api/user/project");
-        console.log("cloud.ts:listAsync"); // TODO @darzu: 
+        console.log("cloud.ts:listAsync"); // TODO @darzu:
         if (result.success) {
             const userId = auth.user()?.id;
             const headers = result.resp.map(proj => {
@@ -37,7 +37,6 @@ export async function listAsync(): Promise<Header[]> {
                 header.cloudCurrent = true;
                 return header;
             });
-            console.dir(headers) // TODO @darzu: 
             resolve(headers);
         } else {
             reject(new Error(result.errmsg));
@@ -46,7 +45,7 @@ export async function listAsync(): Promise<Header[]> {
 }
 
 export function getAsync(h: Header): Promise<File> {
-    console.log(`cloud.ts:getAsync ${h.id}`); // TODO @darzu: 
+    console.log(`cloud.ts:getAsync ${h.id}`); // TODO @darzu:
     return new Promise(async (resolve, reject) => {
         const result = await auth.apiAsync<CloudProject>(`/api/user/project/${h.id}`);
         if (result.success) {
@@ -72,7 +71,7 @@ export function getAsync(h: Header): Promise<File> {
 
 // TODO @darzu: is it okay to export this?
 export function setAsync(h: Header, prevVersion: Version, text?: ScriptText): Promise<Version> {
-    console.log(`cloud.ts:setAsync ${h.id}`); // TODO @darzu: 
+    console.log(`cloud.ts:setAsync ${h.id}`); // TODO @darzu:
     return new Promise(async (resolve, reject) => {
         const userId = auth.user()?.id;
         h.cloudUserId = userId;
@@ -84,7 +83,7 @@ export function setAsync(h: Header, prevVersion: Version, text?: ScriptText): Pr
             text: text ? JSON.stringify(text) : undefined,
             version: prevVersion
         }
-        // TODO @darzu: 
+        // TODO @darzu:
         console.log("setAsync")
         const result = await auth.apiAsync<string>('/api/user/project', project);
         if (result.success) {
@@ -99,19 +98,19 @@ export function setAsync(h: Header, prevVersion: Version, text?: ScriptText): Pr
 }
 
 export function deleteAsync(h: Header, prevVersion: Version, text?: ScriptText): Promise<void> {
-    console.log(`cloud.ts:deleteAsync ${h.id}`); // TODO @darzu: 
+    console.log(`cloud.ts:deleteAsync ${h.id}`); // TODO @darzu:
     return Promise.resolve();
 }
 
 export function resetAsync(): Promise<void> {
-    console.log(`cloud.ts:resetAsync`); // TODO @darzu: 
+    console.log(`cloud.ts:resetAsync`); // TODO @darzu:
     return Promise.resolve();
 }
 
 export async function syncAsync(): Promise<any> {
     if (!auth.hasIdentity()) { return; }
     if (!await auth.loggedIn()) { return; }
-    console.log(`cloud.ts:syncAsync`); // TODO @darzu: 
+    console.log(`cloud.ts:syncAsync`); // TODO @darzu:
     try {
         const userId = auth.user()?.id;
         // Filter to cloud-synced headers owned by the current user.

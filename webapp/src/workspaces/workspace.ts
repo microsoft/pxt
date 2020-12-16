@@ -40,8 +40,9 @@ let allScripts: File[] = [];
 
 let headerQ = new U.PromiseQueue();
 
-let impl: WorkspaceProvider;
-let implCache: CachedWorkspaceProvider;
+let impl: CachedWorkspaceProvider;
+// TODO @darzu:
+// let implCache: CachedWorkspaceProvider;
 let implType: WorkspaceKind;
 
 function lookup(id: string): File {
@@ -107,7 +108,8 @@ export function setupWorkspace(kind: WorkspaceKind): void {
     // TODO @darzu:
     if (auth.loggedInSync()) {
         const cloudApis = cloudWorkspace.provider
-        const localCloud = createBrowserDbWorkspace("cloud-local"); // TODO @darzu: use user choice for this too?
+        // const localCloud = createBrowserDbWorkspace("cloud-local"); // TODO @darzu: use user choice for this too?
+        const localCloud = createBrowserDbWorkspace(""); // TODO @darzu: undo dbg
         // TODO @darzu:
         // const cachedCloud = createSynchronizedWorkspace(cloudWorkspace.provider, localCloud, {
         //     conflict: ConflictStrategy.LastWriteWins,
@@ -120,18 +122,34 @@ export function setupWorkspace(kind: WorkspaceKind): void {
         // TODO @darzu: do one-time overlap migration
         // migrateOverlap(localChoiceCached, cloudCache)
 
-        // TODO @darzu: improve this
-        const msPerMin = 1000 * 60
-        const doSync = async () => {
-            console.log("synchronizing with the cloud...");
-            const changes = await cloudCache.synchronize()
-            console.log(`...changes synced! ${changes}`)
-        }
-        setInterval(doSync, 5 * msPerMin)
-
         const joint = createJointWorkspace(cloudCache, localChoiceCached)
         impl = joint
-        implCache = joint
+        impl = cloudCache // TODO @darzu: undo dbg
+        // implCache = joint
+
+        // TODO @darzu: improve this
+        const msPerMin = 1000 * 60
+        const afterSync = (changed: boolean) => {
+            console.log(`...changes synced! ${changed}`)
+            if (changed) {
+                data.invalidate("header:*");
+                data.invalidate("text:*");
+            }
+        }
+        const doSync = async () => {
+            console.log("synchronizing with the cloud...");
+            console.log("before:")
+            console.dir(joint.listSync().map(j => ({id: j.id, t: j.modificationTime})))
+            const changed = await joint.synchronize()
+            if (changed) {
+                console.log("after:")
+                console.dir(joint.listSync().map(j => ({id: j.id, t: j.modificationTime})))
+            }
+            afterSync(changed)
+        }
+        setInterval(doSync, 5 * msPerMin)
+        // TODO @darzu:
+        joint.firstSync().then(afterSync)
 
         // TODO @darzu: when synchronization causes changes
         // data.invalidate("header:*");
@@ -142,8 +160,8 @@ export function setupWorkspace(kind: WorkspaceKind): void {
     }
     else {
         // TODO @darzu: review
-        impl = localChoice
-        implCache = createCachedWorkspace(impl)
+        const localWs = localChoice
+        impl = createCachedWorkspace(localWs)
     }
 
     // TODO @darzu:
@@ -154,15 +172,15 @@ export function setupWorkspace(kind: WorkspaceKind): void {
 }
 
 // TODO @darzu: needed?
-export function switchToCloudWorkspace(): string {
-    U.assert(implType !== "cloud", "workspace already cloud");
-    const prevType = implType;
-    // TODO @darzu:
-    console.log("switchToCloudWorkspace")
-    impl = cloudWorkspace.provider;
-    implType = "cloud";
-    return prevType;
-}
+// export function switchToCloudWorkspace(): string {
+//     U.assert(implType !== "cloud", "workspace already cloud");
+//     const prevType = implType;
+//     // TODO @darzu:
+//     console.log("switchToCloudWorkspace")
+//     impl = cloudWorkspace.provider;
+//     implType = "cloud";
+//     return prevType;
+// }
 
 // TODO @darzu: needed?
 export function switchToWorkspace(id: WorkspaceKind) {
@@ -197,7 +215,7 @@ async function switchToMemoryWorkspace(reason: string): Promise<void> {
         });
     }
 
-    impl = memoryworkspace.provider;
+    impl = createCachedWorkspace(memoryworkspace.provider); // TODO @darzu: use our new mem workspace
     implType = "mem";
 }
 
@@ -210,7 +228,7 @@ export function getHeaders(withDeleted = false) {
     const cloudUserId = auth.user()?.id;
     // TODO @darzu: use allScripts still?
     // let r = allScripts.map(e => e.header)
-    let r = implCache.listSync()
+    let r = impl.listSync()
         .filter(h =>
         (withDeleted || !h.isDeleted)
         && !h.isBackup
@@ -332,7 +350,8 @@ function checkHeaderSession(h: Header): void {
 
 export function initAsync() {
     if (!impl) {
-        impl = browserworkspace.provider;
+        // TODO @darzu: hmmmm we should be use setupWorkspace
+        impl = createCachedWorkspace(browserworkspace.provider);
         implType = "browser";
     }
 
@@ -494,6 +513,7 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
         } catch (e) {
             // Write failed; use in memory db.
             // TODO @darzu: POLICY
+            console.log("switchToMemoryWorkspace (1)") // TODO @darzu:
             await switchToMemoryWorkspace("write failed");
             ver = await impl.setAsync(h, e.version, toWrite);
         }
@@ -1465,6 +1485,8 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
             // There might be a problem with the native databases. Switch to memory for this session so the user can at
             // least use the editor.
             // TODO @darzu: POLICY
+            console.log("switchToMemoryWorkspace (2)") // TODO @darzu:
+            console.dir(e)
             return switchToMemoryWorkspace("sync failed")
                 .then(() => impl.listAsync());
         })

@@ -18,20 +18,21 @@ export function createBrowserDbWorkspace(namespace: string): BrowserDbWorkspaceP
     const headerDb = new db.Table(`${prefix}header`);
     const textDb = new db.Table(`${prefix}text`);
 
-    // TODO @darzu: debug logging
-    (async () => {
+    // TODO @darzu:
+    const printDbg = async () => {
         const hdrs: pxt.workspace.Header[] = await headerDb.getAllAsync();
-        const txts: TextDbEntry[] = await textDb.getAllAsync();
-        console.log(`createBrowserDbWorkspace: ${prefix}:`);
-        console.dir(hdrs)
-        console.dir(txts)
-    })();
+        // const txts: TextDbEntry[] = await textDb.getAllAsync();
+        console.log(`${prefix}-headers:`);
+        console.dir(hdrs.map(h => ({id: h.id, t: h.modificationTime})))
+    }
+    // TODO @darzu: dbg
+    printDbg();
 
     async function listAsync(): Promise<pxt.workspace.Header[]> {
         const hdrs: pxt.workspace.Header[] = await headerDb.getAllAsync()
-        // TODO @darzu: debug logging
-        console.log(`browser db headers ${prefix}:`)
-        console.dir(hdrs.map(h => h.id))
+        // // TODO @darzu: debug logging
+        // console.log(`browser db headers ${prefix}:`)
+        // console.dir(hdrs.map(h => h.id))
         return hdrs
     }
     async function getAsync(h: Header): Promise<pxt.workspace.File> {
@@ -45,10 +46,10 @@ export function createBrowserDbWorkspace(namespace: string): BrowserDbWorkspaceP
     async function setAsync(h: Header, prevVer: any, text?: ScriptText): Promise<string> {
         // TODO @darzu: debug logging
         if (!text) {
-            console.log("setAsync without text :(")
+            console.log("!!! setAsync without text :(")
             // console.dir(h)
         } else {
-            console.log("setAsync with text :)")
+            console.log(`setAsync ${namespace || "def"}:(${h.id}, ${h.modificationTime}) :)`)
         }
 
         const textEnt: TextDbEntry = {
@@ -58,6 +59,9 @@ export function createBrowserDbWorkspace(namespace: string): BrowserDbWorkspaceP
         }
         const retrev = await textDb.setAsync(textEnt)
         const rev = await headerDb.setAsync(h)
+
+        await printDbg(); // TODO @darzu: dbg
+
         h._rev = rev
         return retrev
     }
