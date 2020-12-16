@@ -16,8 +16,9 @@ import * as editortoolbar from "./editortoolbar";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
-export function xmlUpgrades(code: string[], language?: string,) {
-    compiler.getBlocksAsync()
+export function xmlUpgrades(code: string[], language?: string): Promise<void> {
+    if (pxt.editor.upgradeXml) {
+        return compiler.getBlocksAsync()
         .then(blocksInfo => {
             pxt.blocks.initializeAndInject(blocksInfo);
             if (language == "python")
@@ -25,10 +26,11 @@ export function xmlUpgrades(code: string[], language?: string,) {
             return compiler.decompileBlocksSnippetAsync(code.join("\n"), blocksInfo);
         }).then(resp => {
             const blocksXml = resp.outfiles["main.blocks"];
-            if (pxt.editor.upgradeXml) {
-                pxt.editor.upgradeXml(blocksXml);
-            }
+            pxt.editor.upgradeXml(blocksXml);
         })
+    }
+
+    return Promise.resolve();
 }
 
 /**
