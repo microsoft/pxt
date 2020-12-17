@@ -278,7 +278,7 @@ export class ExtensionManager {
         return status === PermissionStatus.NotYetPrompted;
     }
 
-    private handleDataStreamRequest(name: string, resp: e.DataStreamResponse) {
+    private handleDataStreamRequest(name: string, resp: e.ExtensionResponse) {
         // ASSERT: permission has been granted
         this.streams[name] = true;
     }
