@@ -94,6 +94,8 @@ declare namespace pxt {
     interface PackageExtension {
         // Namespace to add the button under, defaults to package name
         namespace?: string; 
+        // Group to place button in
+        group?: string;
         // Label for the flyout button, defaults to `Editor`
         label?: string; 
         // for new category, category color

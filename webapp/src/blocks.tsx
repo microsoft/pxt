@@ -1366,7 +1366,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                         attributes: {
                             blockId: `EXT${name}_BUTTON`,
                             label: config.extension.label ? Util.rlf(config.extension.label) : Util.lf("Editor"),
-                            weight: 101
+                            weight: 101,
+                            group: config.extension.group
                         },
                         callback: () => {
                             this.openExtension(name);
