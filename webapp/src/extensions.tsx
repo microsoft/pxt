@@ -98,7 +98,9 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
             });
     }
 
-    showExtension(extension: string, url: string, consentRequired: boolean) {
+    showExtension(extension: string, url: string, consentRequired: boolean, trusted?: boolean) {
+        if (trusted)
+            this.manager.trust(this.manager.getExtId(extension));
         let consent = consentRequired ? this.manager.hasConsent(this.manager.getExtId(extension)) : true;
         this.setState({ visible: true, extension: extension, url: url, consent: consent }, () => {
             this.send(extension, { target: pxt.appTarget.id, type: "pxtpkgext", event: "extshown" } as pxt.editor.ShownEvent);
@@ -262,6 +264,8 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
                 return "code";
             case ext.Permissions.AddDependencies:
                 return "plus"
+            case ext.Permissions.Messages:
+                return "microchip"
             default: return "";
         }
     }
@@ -274,6 +278,8 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
                 return lf("Read your code");
             case ext.Permissions.AddDependencies:
                 return lf("Add extensions");
+            case ext.Permissions.Messages:
+                return lf("Send and receive messages");
             default: return ""
         }
     }
@@ -286,6 +292,8 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
                 return lf("The extension will be able to read the code in the current project");
             case ext.Permissions.AddDependencies:
                 return lf("The extension will be able to add extensions in the current project");
+            case ext.Permissions.Messages:
+                return lf("The extension will be able to send and receive messages to devices connected to MakeCode, including physical devices connected with WebUSB.")
             default: return "";
         }
     }

@@ -102,7 +102,7 @@ declare namespace pxt {
         color?: string; 
         // for new category, is category advanced
         advanced?: boolean;
-        // custom editor url, must be register in targetconfig.json under approvedEditorExtensions
+        // trusted custom editor url, must be register in targetconfig.json under trustedEditorExtensionUrls
         url?: string;
         // local debugging URL used when served through pxt serve and debugExtensions=1 mode
         localUrl?: string; 

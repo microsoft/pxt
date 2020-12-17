@@ -2170,9 +2170,9 @@ export class ProjectView
     ////////////           Extentions             /////////////
     ///////////////////////////////////////////////////////////
 
-    openExtension(extension: string, url: string, consentRequired?: boolean) {
-        pxt.tickEvent("app.openextension", { extension: extension });
-        this.extensions.showExtension(extension, url, consentRequired);
+    openExtension(extension: string, url: string, consentRequired?: boolean, trusted?: boolean) {
+        pxt.tickEvent("app.openextension", { extension, trusted: trusted ? 1 : 0 });
+        this.extensions.showExtension(extension, url, consentRequired, trusted);
     }
 
     handleExtensionRequest(request: pxt.editor.ExtensionRequest): void {
