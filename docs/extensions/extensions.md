@@ -134,7 +134,7 @@ function receivedResponse(resp) {
 ...
 ```
 
-### Read and Write user code
+### Read user code
 
 The ``extusercode`` message requests to read the entire set of files in the project. The user will be prompted to give permission. If successfull, the response contains a ``resp`` field with a map of the file names to file contents.
 
