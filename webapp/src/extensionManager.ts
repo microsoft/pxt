@@ -142,6 +142,9 @@ export class ExtensionManager {
     private getPermissions(id: string): e.Permissions<PermissionStatus> {
         if (!this.statuses[id]) {
             this.statuses[id] = {
+                console: PermissionStatus.NotYetPrompted,
+                readUserCode: PermissionStatus.NotYetPrompted,
+                addDependencies: PermissionStatus.NotYetPrompted
             };
         }
         return this.statuses[id]
