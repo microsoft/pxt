@@ -38,12 +38,17 @@ export class ExtensionManager {
 
     // name to enabled
     private streams: pxt.Map<boolean> = {};
+    private messages: pxt.Map<boolean> = {};
 
     constructor(private host: ExtensionHost) {
     }
 
     streamingExtensions(): string[] {
         return Object.keys(this.streams);
+    }
+
+    messagesExtensions(): string[] {
+        return Object.keys(this.messages);
     }
 
     handleExtensionMessage(message: e.ExtensionMessage) {
@@ -92,7 +97,10 @@ export class ExtensionManager {
                 this.sendResponse(resp);
                 break;
             case "extdatastream":
-                return this.permissionOperation(request.extId, Permissions.Console, resp, (name, resp) => this.handleDataStreamRequest(name, resp));
+                if (request?.body?.messages)
+                    return this.permissionOperation(request.extId, Permissions.Messages, resp, (name, resp) => this.handleMessageStreamRequest(name, resp));
+                else
+                    return this.permissionOperation(request.extId, Permissions.Console, resp, (name, resp) => this.handleDataStreamRequest(name, resp));
             case "extquerypermission":
                 const perm = this.getPermissions(request.extId)
                 const r = resp as e.ExtensionResponse;
@@ -270,9 +278,14 @@ export class ExtensionManager {
         return status === PermissionStatus.NotYetPrompted;
     }
 
-    private handleDataStreamRequest(name: string, resp: e.ExtensionResponse) {
+    private handleDataStreamRequest(name: string, resp: e.DataStreamResponse) {
         // ASSERT: permission has been granted
         this.streams[name] = true;
+    }
+
+    private handleMessageStreamRequest(name: string, resp: e.ExtensionResponse) {
+        // ASSERT: permission has been granted
+        this.messages[name] = true;
     }
 }
 
@@ -298,7 +311,7 @@ export async function resolveExtensionUrl(pkg: pxt.Package) {
         url = extension.localUrl;
     else if (extension.url
         && packagesConfig?.trustedEditorExtensionUrls
-        && packagesConfig?.trustedEditorExtensionUrls?.indexOf(extension.url) < 0) {
+        && packagesConfig?.trustedEditorExtensionUrls?.indexOf(extension.url) > -1) {
         // custom url, but not support in editor
         pxt.log(`extension url ${extension.url} trusted`)
         url = extension.url;
