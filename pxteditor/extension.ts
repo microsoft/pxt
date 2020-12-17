@@ -23,8 +23,7 @@ namespace pxt.editor {
     export enum PermissionResponses {
         Granted,
         Denied,
-        NotAvailable,
-        NotYetPrompted
+        NotAvailable
     }
 
     export interface ExtensionMessage extends EditorMessage {

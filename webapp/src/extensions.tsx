@@ -43,28 +43,26 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
 
     processMessage(ev: MessageEvent) {
         const msg = ev.data
-        if (msg.type !== "serial" || msg.type !== "messagepacket") return;
+        if (msg.type !== "serial") return;
 
         const exts = this.manager.streamingExtensions();
         if (!exts || !exts.length) return;
 
+        const smsg = msg as pxsim.SimulatorSerialMessage
+        const data = smsg.data || ""
+        const source = smsg.id || "?"
+        const resp = {
+            target: pxt.appTarget.id,
+            type: "pxtpkgext",
+            event: "extconsole",
+            body: {
+                source,
+                sim: smsg.sim,
+                data
+            }
+        } as pxt.editor.ConsoleEvent;
 
-        let resp: pxt.editor.ExtensionEvent;
-        if (msg.type === "serial") {
-            const smsg = msg as pxsim.SimulatorSerialMessage
-            const data = smsg.data || ""
-            const source = smsg.id || "?"
-            resp = {
-                target: pxt.appTarget.id,
-                type: "pxtpkgext",
-                event: "extconsole",
-                body: {
-                    source,
-                    sim: smsg.sim,
-                    data
-                }
-            } as pxt.editor.ConsoleEvent;
-        } else {
+        /*            
             const smsg = msg as pxsim.SimulatorControlMessage
             const data = smsg.data
             const channel = smsg.channel
@@ -79,7 +77,7 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
                     data
                 }
             } as pxt.editor.MessagePacketEvent;
-        }
+        */
 
         // called by app when a serial entry is read
         exts.forEach(n => this.send(n, resp))
