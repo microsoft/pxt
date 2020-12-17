@@ -1145,9 +1145,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             && pxt.BrowserUtils.isLocalHost()
             && /localeditorextensions=1/i.test(window.location.href)
             && extension.localUrl;
-        if (debug)
+        if (debug) {
+            /* tslint:disable:no-http-string */
             url = "http://localhost:3232/extension.html";
-        else if (localDebug)
+        } else if (localDebug)
             url = extension.localUrl;
         else if (extension.url) {
             if ((packagesConfig?.approvedEditorExtensionUrls || []).indexOf(extension.url) < 0) {
