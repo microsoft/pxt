@@ -23,6 +23,11 @@ The editor extension is configured in the [pxt.json](/extensions/pxt-json) file 
 
 The editor will automatically add an "Editor" button for the editor extension in the extensions category. 
 
+To debug a local extension, from the local dev server, add ``localeditorextensions=1`` to the url
+and add the a ``localUrl`` field.
+
+Custom domain urls are supported but must be registered in the ``targetconfig.json`` package
+configuration section under ``approvedEditorExtensions``.
 ## Protocol
 
 The editor and the editor extension &lt;iframe&gt; communicate using a protocol of IFrame messages. 

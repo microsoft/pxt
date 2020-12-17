@@ -1140,10 +1140,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const parsedRepo = pxt.github.parseRepoId(installedVersion);
         const repoStatus = pxt.github.repoStatus(parsedRepo, packagesConfig);
         let url = "";
-        const debug = pxt.BrowserUtils.isLocalHost() && /debugExtensions/i.test(window.location.href);
+        const debug = pxt.BrowserUtils.isLocalHost() 
+            && /debugextensions=1/i.test(window.location.href);
         const localDebug = !debug
             && pxt.BrowserUtils.isLocalHost()
-            && /^file:/.test(pkg.installedVersion)
+            && /localeditorextensions=1/i.test(window.location.href)
             && extension.localUrl;
         if (debug)
             url = "http://localhost:3232/extension.html";
