@@ -43,18 +43,18 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
 
     processMessage(ev: MessageEvent) {
         const msg = ev.data
-        if (msg.type !== "serial") return;
+        if (msg.type !== "serial" || msg.type !== "messagepacket") return;
 
-        const smsg = msg as pxsim.SimulatorSerialMessage
         const exts = this.manager.streamingExtensions();
         if (!exts || !exts.length) return;
 
-        const data = smsg.data || ""
-        const source = smsg.id || "?"
 
-        // called by app when a serial entry is read
-        exts.forEach(n => {
-            this.send(n, {
+        let resp: pxt.editor.ExtensionEvent;
+        if (msg.type === "serial") {
+            const smsg = msg as pxsim.SimulatorSerialMessage
+            const data = smsg.data || ""
+            const source = smsg.id || "?"
+            resp = {
                 target: pxt.appTarget.id,
                 type: "pxtpkgext",
                 event: "extconsole",
@@ -63,8 +63,26 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
                     sim: smsg.sim,
                     data
                 }
-            } as pxt.editor.ConsoleEvent);
-        })
+            } as pxt.editor.ConsoleEvent;
+        } else {
+            const smsg = msg as pxsim.SimulatorControlMessage
+            const data = smsg.data
+            const channel = smsg.channel
+            const source = smsg.source
+            resp = {
+                target: pxt.appTarget.id,
+                type: "pxtpkgext",
+                event: "extmessagepacket",
+                body: {
+                    source,
+                    channel,
+                    data
+                }
+            } as pxt.editor.MessagePacketEvent;
+        }
+
+        // called by app when a serial entry is read
+        exts.forEach(n => this.send(n, resp))
     }
 
     hide() {

@@ -86,6 +86,18 @@ namespace pxt.editor {
     }
 
     /**
+     * Event fired when a message packet is received
+     */
+    export interface MessagePacketEvent extends ExtensionEvent {
+        event: "extmessagepacket";
+        body: {
+            source?: string;
+            channel: string;
+            data: Uint8Array;
+        }
+    }
+
+    /**
      * Event fired when extension is first shown. Extension
      * should send init request in response
      */
