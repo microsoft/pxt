@@ -1468,7 +1468,6 @@ export class ProjectView
 
         const t = header.tutorial;
         return this.loadBlocklyAsync()
-            .then(() => tutorial.xmlUpgrades(t.tutorialCode, t.language))
             .then(() => tutorial.getUsedBlocksAsync(t.tutorialCode, t.tutorial, t.language))
             .then((usedBlocks) => {
                 let editorState: pxt.editor.EditorState = {
@@ -1527,7 +1526,7 @@ export class ProjectView
         else {
             decompilePromise = compiler.decompileBlocksSnippetAsync(template)
                 .then(resp => {
-                    const blockXML = resp.outfiles["main.blocks"];
+                    const blockXML = tutorial.upgradeTutorialXml(resp.outfiles["main.blocks"], header.targetVersion);
                     if (blockXML) {
                         pkg.mainEditorPkg().setFile("main.blocks", blockXML);
                     }
@@ -3141,7 +3140,9 @@ export class ProjectView
         return compiler.getBlocksAsync()
             .then(blocksInfo => compiler.decompileBlocksSnippetAsync(req.ts, blocksInfo, req))
             .then(resp => {
-                const svg = pxt.blocks.render(resp.outfiles["main.blocks"], {
+                const header = pkg.mainEditorPkg().header;
+                const blocksXml = tutorial.upgradeTutorialXml(resp.outfiles["main.blocks"], header.targetVersion);
+                const svg = pxt.blocks.render(blocksXml, {
                     snippetMode: req.snippetMode || false,
                     layout: req.layout !== undefined ? req.layout : pxt.blocks.BlockLayout.Align,
                     splitSvg: false

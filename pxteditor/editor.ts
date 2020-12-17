@@ -545,9 +545,6 @@ namespace pxt.editor {
         blockId?: string;
     }
 
-
-    export let upgradeXml: (code: string) => void;
-
     export let initExtensionsAsync: (opts: ExtensionOptions) => Promise<ExtensionResult>
         = opts => Promise.resolve<ExtensionResult>({});
 

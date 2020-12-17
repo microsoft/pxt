@@ -13,24 +13,19 @@ import { HintTooltip } from "./hinttooltip";
 import { PlayButton } from "./simtoolbar";
 import { ProjectView } from "./app";
 import * as editortoolbar from "./editortoolbar";
+import * as pkg from "./package";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
-export function xmlUpgrades(code: string[], language?: string): Promise<void> {
-    if (pxt.editor.upgradeXml) {
-        return compiler.getBlocksAsync()
-        .then(blocksInfo => {
-            pxt.blocks.initializeAndInject(blocksInfo);
-            if (language == "python")
-                return compiler.pySnippetArrayToBlocksAsync(code, blocksInfo);
-            return compiler.decompileBlocksSnippetAsync(code.join("\n"), blocksInfo);
-        }).then(resp => {
-            const blocksXml = resp.outfiles["main.blocks"];
-            pxt.editor.upgradeXml(blocksXml);
-        })
+// Run target defined upgrades on the tutorial's XML
+export function upgradeTutorialXml(blocksXml: string, targetVersion: string) {
+    if (pxt.blocks.extensionBlocklyPatch) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(blocksXml, "application/xml");
+        pxt.blocks.extensionBlocklyPatch(targetVersion, doc.documentElement);
+        blocksXml = new XMLSerializer().serializeToString(doc);
     }
-
-    return Promise.resolve();
+    return blocksXml;
 }
 
 /**
@@ -70,6 +65,7 @@ export function getUsedBlocksAsync(code: string[], id: string, language?: string
 
 function getUsedBlocksInternalAsync(code: string[], id: string, language?: string, db?: pxt.BrowserUtils.ITutorialInfoDb, skipCache = false): Promise<pxt.Map<number>> {
     const usedBlocks: pxt.Map<number> = {};
+    const header = pkg.mainEditorPkg().header
     return compiler.getBlocksAsync()
         .then(blocksInfo => {
             pxt.blocks.initializeAndInject(blocksInfo);
@@ -77,8 +73,9 @@ function getUsedBlocksInternalAsync(code: string[], id: string, language?: strin
                 return compiler.pySnippetArrayToBlocksAsync(code, blocksInfo);
             return compiler.decompileBlocksSnippetAsync(code.join("\n"), blocksInfo);
         }).then(resp => {
-            const blocksXml = resp.outfiles["main.blocks"];
+            let blocksXml = resp.outfiles["main.blocks"];
             if (blocksXml) {
+                blocksXml = upgradeTutorialXml(blocksXml, header.targetVersion);
                 const headless = pxt.blocks.loadWorkspaceXml(blocksXml);
                 if (!headless) {
                     pxt.debug(`used blocks xml failed to load\n${blocksXml}`);

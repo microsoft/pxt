@@ -552,13 +552,6 @@ namespace pxt {
             return new pxt.sprite.TilemapData(tilemap, tileset, layers.data());
         }
 
-        public getTileWidth(): number {
-            const tilemaps = this.state.tilemaps.getSnapshot();
-            if (tilemaps.length == 0)
-                return 16; // default tile size
-            return tilemaps[0].data.tileset.tileWidth; // Assuming that all tilemaps have the same size tiles
-        }
-
         public resolveTile(id: string): Tile {
             return this.lookupAsset(AssetType.Tile, id) as Tile;
         }
@@ -823,9 +816,6 @@ namespace pxt {
                 case AssetType.Image:
                     return this.state.images.getByID(name) || this.gallery.images.getByID(name);
                 case AssetType.Tile:
-                    if (name == "myTiles.tile0") {
-                        return this.getTransparency(this.getTileWidth());
-                    }
                     return this.state.tiles.getByID(name) || this.gallery.tiles.getByID(name);
                 case AssetType.Tilemap:
                     return this.state.tilemaps.getByID(name) || this.gallery.tilemaps.getByID(name);
