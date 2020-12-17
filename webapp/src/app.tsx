@@ -1526,8 +1526,9 @@ export class ProjectView
         else {
             decompilePromise = compiler.decompileBlocksSnippetAsync(template)
                 .then(resp => {
-                    const blockXML = tutorial.upgradeTutorialXml(resp.outfiles["main.blocks"], header.targetVersion);
+                    let blockXML = resp.outfiles["main.blocks"];
                     if (blockXML) {
+                        blockXML = tutorial.upgradeTutorialXml(blockXML, header.targetVersion)
                         pkg.mainEditorPkg().setFile("main.blocks", blockXML);
                     }
                 })
