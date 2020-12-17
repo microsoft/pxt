@@ -882,9 +882,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 // Get extension packages
                 this.extensions = pkg.allEditorPkgs()
                     .map(ep => ep.getKsPkg())
-                    // Make sure the package has extensions enabled, and is a github package.
-                    // Extensions are limited to github packages and ghpages, as we infer their url from the installedVersion config
-                    .filter(p => !!p && p.config && !!p.config.extension && /^(file:|github:)/.test(p.installedVersion));
+                    // Make sure the package has extensions enabled.
+                    .filter(p => !!p?.config?.extension);
             })
     }
 
@@ -1140,7 +1139,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const parsedRepo = pxt.github.parseRepoId(installedVersion);
         const repoStatus = pxt.github.repoStatus(parsedRepo, packagesConfig);
         let url = "";
-        const debug = pxt.BrowserUtils.isLocalHost() 
+        const debug = pxt.BrowserUtils.isLocalHost()
             && /debugextensions=1/i.test(window.location.href);
         const localDebug = !debug
             && pxt.BrowserUtils.isLocalHost()
