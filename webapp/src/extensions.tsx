@@ -41,14 +41,11 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
         this.onDeniedDecision = this.onDeniedDecision.bind(this);
     }
 
-    processMessage(ev: MessageEvent) {
-        const msg = ev.data
-        if (msg.type !== "serial") return;
-
+    private processSerialMessage(smsg: pxsim.SimulatorSerialMessage) {
         const exts = this.manager.streamingExtensions();
-        if (!exts || !exts.length) return;
+        if (!exts?.length)
+            return;
 
-        const smsg = msg as pxsim.SimulatorSerialMessage
         const data = smsg.data || ""
         const source = smsg.id || "?"
         const resp = {
@@ -61,26 +58,40 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
                 data
             }
         } as pxt.editor.ConsoleEvent;
-
-        /*            
-            const smsg = msg as pxsim.SimulatorControlMessage
-            const data = smsg.data
-            const channel = smsg.channel
-            const source = smsg.source
-            resp = {
-                target: pxt.appTarget.id,
-                type: "pxtpkgext",
-                event: "extmessagepacket",
-                body: {
-                    source,
-                    channel,
-                    data
-                }
-            } as pxt.editor.MessagePacketEvent;
-        */
-
-        // called by app when a serial entry is read
         exts.forEach(n => this.send(n, resp))
+    }
+
+    private processMessagePacketMessage(smsg: pxsim.SimulatorControlMessage) {
+        const exts = this.manager.messagesExtensions();
+        if (!exts?.length)
+            return;
+
+        const data = smsg.data
+        const channel = smsg.channel
+        const source = smsg.source
+        const resp = {
+            target: pxt.appTarget.id,
+            type: "pxtpkgext",
+            event: "extmessagepacket",
+            body: {
+                source,
+                channel,
+                data
+            }
+        } as pxt.editor.MessagePacketEvent;
+        exts.forEach(n => this.send(n, resp))
+    }
+
+    processMessage(ev: MessageEvent) {
+        const msg = ev.data
+        if (msg?.type === "serial")
+            this.processSerialMessage(msg);
+        else if (msg?.type === "messagepacket")
+            this.processMessagePacketMessage(msg);
+    }
+
+    clear() {
+        
     }
 
     hide() {
