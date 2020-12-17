@@ -1152,7 +1152,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         else if (extension.url) {
             if ((packagesConfig?.approvedEditorExtensionUrls || []).indexOf(extension.url) < 0) {
                 // custom url, but not support in editor
-                core.errorNotification(lf("Sorry, this extension is not allowed."))
+                pxt.log(`extension url ${extension.url} not in approvedEditorExtensionUrls ${packagesConfig?.approvedEditorExtensionUrls}`)
+                core.errorNotification(lf("Sorry, this extension is not registered."))
                 return;
             }
             url = extension.url;
