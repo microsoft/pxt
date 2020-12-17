@@ -262,8 +262,10 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
                 return "terminal"
             case ext.Permissions.ReadUserCode:
                 return "code";
+            case ext.Permissions.AddDependencies:
+                return "plus"
+            default: return "";
         }
-        return "";
     }
 
     getDisplayNameForPermission(permission: ext.Permissions) {
@@ -272,8 +274,10 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
                 return lf("Console output")
             case ext.Permissions.ReadUserCode:
                 return lf("Read your code");
+            case ext.Permissions.AddDependencies:
+                return lf("Add extensions");
+            default: return ""
         }
-        return "";
     }
 
     getDescriptionForPermission(permission: ext.Permissions) {
@@ -282,8 +286,10 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
                 return lf("The extension will be able to read any console output (including device data) streamed to the editor")
             case ext.Permissions.ReadUserCode:
                 return lf("The extension will be able to read the code in the current project");
+            case ext.Permissions.AddDependencies:
+                return lf("The extension will be able to add extensions in the current project");
+            default: return "";
         }
-        return "";
     }
 
     private handleExtensionWrapperRef = (c: HTMLDivElement) => {

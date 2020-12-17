@@ -6,6 +6,7 @@ namespace pxt.editor {
     export interface Permissions<T> {
         console?: T;
         readUserCode?: T;
+        addDependencies?: T;
     }
 
     export interface ExtensionFiles {
@@ -22,7 +23,8 @@ namespace pxt.editor {
     export enum PermissionResponses {
         Granted,
         Denied,
-        NotAvailable
+        NotAvailable,
+        NotYetPrompted
     }
 
     export interface ExtensionMessage extends EditorMessage {
