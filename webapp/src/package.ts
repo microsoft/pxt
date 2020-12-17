@@ -323,10 +323,23 @@ export class EditorPackage {
         if (!parsed) return Promise.resolve();
         return pxt.targetConfigAsync()
             .then(config => pxt.github.latestVersionAsync(parsed.slug, config.packages))
-            .then(tag => { parsed.tag = tag })
-            .then(() => pxt.github.pkgConfigAsync(parsed.fullName, parsed.tag))
-            .catch(core.handleNetworkError)
-            .then(cfg => this.addDepAsync(cfg.name, pxt.github.stringifyRepo(parsed)));
+            .then(tag => {
+                // since all repoes in a mono-repo are tied to the same version number,
+                // we'll update them all to this tag at once.
+                const ghids = Util.values(this.ksPkg.dependencies())
+                    .map(ver => pxt.github.parseRepoId(ver))
+                    .filter(ghid => ghid?.slug === parsed.slug);
+                return Promise.all(ghids.map(ghid => {
+                    ghid.tag = tag;
+                    return pxt.github.pkgConfigAsync(ghid.fullName, ghid.tag)
+                        .catch(core.handleNetworkError)
+                        .then((cfg: pxt.PackageConfig) => ({ ghid, cfg }));
+                }))
+            })
+            .then(updates => this.updateConfigAsync(config =>
+                updates.forEach(({ ghid, cfg }) => config.dependencies[cfg.name] = pxt.github.stringifyRepo(ghid))
+            ))
+            .then(() => this.saveFilesAsync(true));
     }
 
     removeDepAsync(pkgid: string) {
