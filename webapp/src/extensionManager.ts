@@ -3,7 +3,8 @@ import * as pkg from "./package";
 
 export enum Permissions {
     Console,
-    ReadUserCode
+    ReadUserCode,
+    AddDependencies
 }
 
 export enum PermissionStatus {
@@ -105,8 +106,13 @@ export class ExtensionManager {
                 this.sendResponse(resp);
                 break;
             case "extwritecode":
-                handleWriteCodeRequestAsync(this.extIdToName[request.extId], resp, request.body)
+                const handleWriteCode = () => handleWriteCodeRequestAsync(this.extIdToName[request.extId], resp, request.body)
                     .done(() => this.sendResponse(resp));
+                const missingDepdencies = resolveMissingDependencies(request.body as e.WriteExtensionFiles);
+                if (missingDepdencies?.length)
+                    this.permissionOperation(request.extId, Permissions.AddDependencies, resp, handleWriteCode);
+                else // skip permission
+                    handleWriteCode();
                 break;
         }
 
@@ -137,7 +143,8 @@ export class ExtensionManager {
         if (!this.statuses[id]) {
             this.statuses[id] = {
                 console: PermissionStatus.NotYetPrompted,
-                readUserCode: PermissionStatus.NotYetPrompted
+                readUserCode: PermissionStatus.NotYetPrompted,
+                addDependencies: PermissionStatus.NotYetPrompted
             };
         }
         return this.statuses[id]
@@ -189,6 +196,9 @@ export class ExtensionManager {
         switch (permission) {
             case Permissions.Console: status = perm.console; break;
             case Permissions.ReadUserCode: status = perm.readUserCode; break;
+            case Permissions.AddDependencies: status = perm.addDependencies; break;
+            default: // should never happen
+                status = PermissionStatus.NotAvailable; break;
         }
 
         if (status === PermissionStatus.NotYetPrompted) {
@@ -200,6 +210,8 @@ export class ExtensionManager {
                             this.statuses[id].console = newStatus; break;
                         case Permissions.ReadUserCode:
                             this.statuses[id].readUserCode = newStatus; break;
+                        case Permissions.AddDependencies:
+                            this.statuses[id].addDependencies = newStatus; break;
                     }
                     return approved;
                 });
@@ -218,6 +230,9 @@ export class ExtensionManager {
         if (p.console) {
             promises.push(this.checkPermissionAsync(id, Permissions.Console));
         }
+        if (p.addDependencies) {
+            promises.push(this.checkPermissionAsync(id, Permissions.AddDependencies));
+        }
 
         return Promise.all(promises)
             .then(() => statusesToResponses(this.getPermissions(id)))
@@ -230,6 +245,7 @@ export class ExtensionManager {
         switch (permission) {
             case Permissions.Console: status = perm.console; break;
             case Permissions.ReadUserCode: status = perm.readUserCode; break;
+            case Permissions.AddDependencies: status = perm.addDependencies; break;
         }
         return status === PermissionStatus.NotYetPrompted;
     }
@@ -258,7 +274,22 @@ function handleReadCodeRequest(name: string, resp: e.ReadCodeResponse) {
     };
 }
 
-function handleWriteCodeRequestAsync(name: string, resp: e.ExtensionResponse, files: e.ExtensionFiles) {
+function resolveMissingDependencies(files: e.WriteExtensionFiles) {
+    let missingDependencies: string[];
+    if (files?.dependencies) {
+        // collect missing depdencies
+        const mainPackage = pkg.mainEditorPkg() as pkg.EditorPackage;
+        const cfg = pxt.Util.jsonTryParse(mainPackage?.files[pxt.CONFIG_NAME]?.content) as pxt.PackageConfig;
+        // maybe we should really match the versions...
+        if (cfg?.dependencies) { // give up if cfg is busted
+            missingDependencies = Object.keys(files.dependencies)
+                .filter(k => !cfg.dependencies[k]);
+        }
+    }
+    return missingDependencies;
+}
+
+function handleWriteCodeRequestAsync(name: string, resp: e.WriteCodeResponse, files: e.WriteExtensionFiles) {
     const mainPackage = pkg.mainEditorPkg() as pkg.EditorPackage;
     const fn = ts.pxtc.escapeIdentifier(name);
 
@@ -284,6 +315,18 @@ function handleWriteCodeRequestAsync(name: string, resp: e.ExtensionResponse, fi
         mainPackage.setFile(fn + ".asm", files.asm);
     }
 
+    let missingDependencies: string[];
+    if (files.dependencies) {
+        // collect missing depdencies
+        const cfg = pxt.Util.jsonTryParse(mainPackage.files[pxt.CONFIG_NAME]?.content) as pxt.PackageConfig;
+        // maybe we should really match the versions...
+        if (cfg?.dependencies) { // give up if cfg is busted
+            missingDependencies = Object.keys(files.dependencies)
+                .filter(k => !cfg.dependencies[k]);
+            needsUpdate = needsUpdate || !!missingDependencies?.length;
+        }
+    }
+
     return !needsUpdate ? Promise.resolve() : mainPackage.updateConfigAsync(cfg => {
         if (files.json !== undefined && cfg.files.indexOf(fn + ".json") < 0) {
             cfg.files.push(fn + ".json")
@@ -297,8 +340,9 @@ function handleWriteCodeRequestAsync(name: string, resp: e.ExtensionResponse, fi
         if (files.asm !== undefined && cfg.files.indexOf(fn + ".asm") < 0) {
             cfg.files.push(fn + ".asm");
         }
+        missingDependencies?.forEach(dep => cfg.dependencies[dep] = files.dependencies[dep]);
         return mainPackage.savePkgAsync();
-    });
+    }).then(() => mainPackage.saveFilesAsync(true));
 }
 
 function mkEvent(event: string): e.ExtensionEvent {
@@ -321,7 +365,8 @@ function mkResponse(request: e.ExtensionRequest, success = true): e.ExtensionRes
 function statusesToResponses(perm: e.Permissions<PermissionStatus>): e.Permissions<e.PermissionResponses> {
     return {
         readUserCode: statusToResponse(perm.readUserCode),
-        console: statusToResponse(perm.console)
+        console: statusToResponse(perm.console),
+        addDependencies: statusToResponse(perm.addDependencies)
     };
 }
 

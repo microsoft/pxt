@@ -6,6 +6,7 @@ namespace pxt.editor {
     export interface Permissions<T> {
         console?: T;
         readUserCode?: T;
+        addDependencies?: T;
     }
 
     export interface ExtensionFiles {
@@ -13,6 +14,10 @@ namespace pxt.editor {
         json?: string;
         jres?: string;
         asm?: string;
+    }
+
+    export interface WriteExtensionFiles extends ExtensionFiles {
+        dependencies?: pxt.Map<string>;
     }
 
     export enum PermissionResponses {
@@ -78,6 +83,18 @@ namespace pxt.editor {
             source: string;
             sim: boolean;
             data: string;
+        }
+    }
+
+    /**
+     * Event fired when a message packet is received
+     */
+    export interface MessagePacketEvent extends ExtensionEvent {
+        event: "extmessagepacket";
+        body: {
+            source?: string;
+            channel: string;
+            data: Uint8Array;
         }
     }
 
@@ -177,7 +194,7 @@ namespace pxt.editor {
     export interface WriteCodeRequest extends ExtensionRequest {
         action: ExtWriteCodeType;
 
-        body?: ExtensionFiles;
+        body?: WriteExtensionFiles;
     }
 
     export interface WriteCodeResponse extends ExtensionResponse {

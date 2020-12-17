@@ -807,7 +807,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                             .then(() => {
                                 if (!this.functionsDialog) {
                                     const wrapper = document.body.appendChild(document.createElement('div'));
-                                    this.functionsDialog = ReactDOM.render(React.createElement(CreateFunctionDialog, {parent: this.parent}), wrapper) as CreateFunctionDialog;
+                                    this.functionsDialog = ReactDOM.render(React.createElement(CreateFunctionDialog, { parent: this.parent }), wrapper) as CreateFunctionDialog;
                                 }
                                 this.functionsDialog.show(mutation, cb, this.editor);
                             });
@@ -882,9 +882,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 // Get extension packages
                 this.extensions = pkg.allEditorPkgs()
                     .map(ep => ep.getKsPkg())
-                    // Make sure the package has extensions enabled, and is a github package.
-                    // Extensions are limited to github packages and ghpages, as we infer their url from the installedVersion config
-                    .filter(p => !!p && p.config && !!p.config.extension && /^(file:|github:)/.test(p.installedVersion));
+                    // Make sure the package has extensions enabled.
+                    .filter(p => !!p?.config?.extension);
             })
     }
 
@@ -1128,22 +1127,60 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.refreshToolbox();
     }
 
-    private openExtension(extensionName: string) {
-        const extension = this.extensions.filter(c => c.config.name == extensionName)[0];
-        const parsedRepo = pxt.github.parseRepoId(extension.installedVersion);
-        pxt.packagesConfigAsync()
-            .then((packagesConfig) => {
-                const extensionConfig = extension.config;
-                const repoStatus = pxt.github.repoStatus(parsedRepo, packagesConfig);
-                const repoName = parsedRepo.fullName.substr(parsedRepo.fullName.indexOf(`/`) + 1);
-                const localDebug = pxt.BrowserUtils.isLocalHost() && /^file:/.test(extension.installedVersion) && extensionConfig.extension.localUrl;
-                const debug = pxt.BrowserUtils.isLocalHost() && /debugExtensions/i.test(window.location.href);
-                /* tslint:disable:no-http-string */
-                const url = debug ? "http://localhost:3232/extension.html"
-                    : localDebug ? extensionConfig.extension.localUrl : `https://${parsedRepo.owner}.github.io/${repoName}/`;
-                /* tslint:enable:no-http-string */
-                this.parent.openExtension(extensionConfig.name, url, repoStatus == 0); // repoStatus can only be APPROVED or UNKNOWN at this point
-            });
+    private async openExtension(extensionName: string) {
+        const pkg = this.extensions.filter(c => c.config.name === extensionName)[0];
+        if (!pkg?.config.extension)
+            return;
+        const { config, installedVersion } = pkg;
+        const { extension } = config;
+
+        pxt.tickEvent('blocks.extensions.open', { extension: extensionName })
+        const packagesConfig = await pxt.packagesConfigAsync()
+        const parsedRepo = pxt.github.parseRepoId(installedVersion);
+        const repoStatus = pxt.github.repoStatus(parsedRepo, packagesConfig);
+        let url = "";
+        const debug = pxt.BrowserUtils.isLocalHost()
+            && /debugextensions=1/i.test(window.location.href);
+        const localDebug = !debug
+            && pxt.BrowserUtils.isLocalHost()
+            && /localeditorextensions=1/i.test(window.location.href)
+            && extension.localUrl;
+        if (debug) {
+            /* tslint:disable:no-http-string */
+            url = "http://localhost:3232/extension.html";
+        } else if (localDebug)
+            url = extension.localUrl;
+        else if (extension.url) {
+            if ((packagesConfig?.approvedEditorExtensionUrls || []).indexOf(extension.url) < 0) {
+                // custom url, but not support in editor
+                pxt.log(`extension url ${extension.url} not in approvedEditorExtensionUrls ${packagesConfig?.approvedEditorExtensionUrls}`)
+                core.errorNotification(lf("Sorry, this extension is not registered."))
+                return;
+            }
+            url = extension.url;
+        } else if (parsedRepo) {
+            const repoName = parsedRepo.fullName.substr(parsedRepo.fullName.indexOf(`/`) + 1);
+            /* tslint:disable:no-http-string */
+            url = `https://${parsedRepo.owner}.github.io/${repoName}/`;
+        }
+
+        pxt.log(`extension ${config.name}: resolved ${url}`)
+
+        // this should never happen
+        if (repoStatus === pxt.github.GitRepoStatus.Banned) {
+            core.errorNotification(lf("Sorry, this extension is not allowed."))
+            return;
+        }
+
+        // no url registered?
+        if (!url) {
+            core.errorNotification(lf("Sorry, this extension does not have an editor."))
+            return;
+        }
+        /* tslint:enable:no-http-string */
+        this.parent.openExtension(config.name,
+            url,
+            repoStatus !== pxt.github.GitRepoStatus.Approved);
     }
 
     private partitionBlocks() {
@@ -1330,7 +1367,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                         attributes: {
                             blockId: `EXT${name}_BUTTON`,
                             label: config.extension.label ? Util.rlf(config.extension.label) : Util.lf("Editor"),
-                            weight: 101
+                            weight: 101,
+                            group: config.extension.group
                         },
                         callback: () => {
                             this.openExtension(name);

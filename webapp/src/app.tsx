@@ -4582,7 +4582,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const isSandbox = pxt.shell.isSandboxMode() || pxt.shell.isReadOnly();
     const isController = pxt.shell.isControllerMode();
-    const theme = pxt.appTarget.appTheme;
+    let theme = pxt.appTarget.appTheme;
     if (query["ws"]) workspace.setupWorkspace(query["ws"]);
     else if ((theme.allowParentController || isController) && pxt.BrowserUtils.isIFrame()) workspace.setupWorkspace("iframe");
     else if (isSandbox) workspace.setupWorkspace("mem");
@@ -4650,7 +4650,7 @@ document.addEventListener("DOMContentLoaded", () => {
         })
         .then(() => {
             pxt.BrowserUtils.initTheme();
-            pxt.editor.experiments.syncTheme();
+            theme = pxt.editor.experiments.syncTheme();
             // editor messages need to be enabled early, in case workspace provider is IFrame
             if (theme.allowParentController
                 || theme.allowPackageExtensions

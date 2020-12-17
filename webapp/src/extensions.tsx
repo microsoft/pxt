@@ -45,26 +45,42 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
         const msg = ev.data
         if (msg.type !== "serial") return;
 
-        const smsg = msg as pxsim.SimulatorSerialMessage
         const exts = this.manager.streamingExtensions();
         if (!exts || !exts.length) return;
 
+        const smsg = msg as pxsim.SimulatorSerialMessage
         const data = smsg.data || ""
         const source = smsg.id || "?"
+        const resp = {
+            target: pxt.appTarget.id,
+            type: "pxtpkgext",
+            event: "extconsole",
+            body: {
+                source,
+                sim: smsg.sim,
+                data
+            }
+        } as pxt.editor.ConsoleEvent;
 
-        // called by app when a serial entry is read
-        exts.forEach(n => {
-            this.send(n, {
+        /*            
+            const smsg = msg as pxsim.SimulatorControlMessage
+            const data = smsg.data
+            const channel = smsg.channel
+            const source = smsg.source
+            resp = {
                 target: pxt.appTarget.id,
                 type: "pxtpkgext",
-                event: "extconsole",
+                event: "extmessagepacket",
                 body: {
                     source,
-                    sim: smsg.sim,
+                    channel,
                     data
                 }
-            } as pxt.editor.ConsoleEvent);
-        })
+            } as pxt.editor.MessagePacketEvent;
+        */
+
+        // called by app when a serial entry is read
+        exts.forEach(n => this.send(n, resp))
     }
 
     hide() {
@@ -244,8 +260,10 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
                 return "terminal"
             case ext.Permissions.ReadUserCode:
                 return "code";
+            case ext.Permissions.AddDependencies:
+                return "plus"
+            default: return "";
         }
-        return "";
     }
 
     getDisplayNameForPermission(permission: ext.Permissions) {
@@ -254,8 +272,10 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
                 return lf("Console output")
             case ext.Permissions.ReadUserCode:
                 return lf("Read your code");
+            case ext.Permissions.AddDependencies:
+                return lf("Add extensions");
+            default: return ""
         }
-        return "";
     }
 
     getDescriptionForPermission(permission: ext.Permissions) {
@@ -264,8 +284,10 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
                 return lf("The extension will be able to read any console output (including device data) streamed to the editor")
             case ext.Permissions.ReadUserCode:
                 return lf("The extension will be able to read the code in the current project");
+            case ext.Permissions.AddDependencies:
+                return lf("The extension will be able to add extensions in the current project");
+            default: return "";
         }
-        return "";
     }
 
     private handleExtensionWrapperRef = (c: HTMLDivElement) => {
@@ -298,7 +320,7 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
                 {consent ?
                     <div id="extensionWrapper" data-frame={extension} ref={this.handleExtensionWrapperRef}>
                         {permissionRequest ?
-                            <sui.Modal isOpen={true} className="extensionpermissiondialog basic" closeIcon={false} dimmer={true} dimmerClassName="permissiondimmer">
+                            <sui.Modal isOpen={true} closeIcon={false} dimmer={true} dimmerClassName="permissiondimmer">
                                 <div className="permissiondialoginner">
                                     <div className="permissiondialogheader">
                                         {lf("Permission Request")}
@@ -306,7 +328,7 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
                                     <div className="permissiondialogbody">
                                         {lf("Extension {0} is requesting the following permission(s):", permissionExtName)}
                                     </div>
-                                    <div className="ui inverted list">
+                                    <div className="ui list">
                                         {permissionRequest.map(permission =>
                                             <div key={permission.toString()} className="item">
                                                 <sui.Icon icon={`${this.getIconForPermission(permission)} icon`} />
@@ -319,9 +341,9 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
                                     </div>
                                 </div>
                                 <div className="actions">
-                                    <sui.Button text={lf("Deny")} className={`deny inverted`}
+                                    <sui.Button text={lf("Deny")} className={`deny`}
                                         onClick={this.onDeniedDecision} />
-                                    <sui.Button text={lf("Approve")} className={`approve inverted green`}
+                                    <sui.Button text={lf("Approve")} className={`approve green`}
                                         onClick={this.onApprovedDecision} />
                                 </div>
                             </sui.Modal>

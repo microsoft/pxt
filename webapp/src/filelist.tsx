@@ -76,9 +76,10 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
     }
 
     private updatePkg(p: pkg.EditorPackage) {
+        core.showLoading("update", lf("Updating..."))
         pkg.mainEditorPkg().updateDepAsync(p.getPkgId())
             .then(() => this.props.parent.reloadHeaderAsync())
-            .done()
+            .finally(() => core.hideLoading("update"));
     }
 
     private navigateToError(meta: pkg.FileMeta) {

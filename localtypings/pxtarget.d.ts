@@ -43,6 +43,8 @@ declare namespace pxt {
         // "acme-corp/pxt-widget": "min:v0.1.2" - auto-upgrade to that version
         // "acme-corp/pxt-widget": "dv:foo,bar" - add "disablesVariant": ["foo", "bar"] to pxt.json
         upgrades?: pxt.Map<string>;
+        // list of allowed custom editor extension urls, case sensitive
+        approvedEditorExtensionUrls?: string[];
     }
 
     interface ShareConfig {
