@@ -1149,7 +1149,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             url = "http://localhost:3232/extension.html";
         else if (localDebug)
             url = extension.localUrl;
-        else if (extension.url && packagesConfig?.approvedEditorExtensionUrls?.indexOf(extension.url) > -1) {
+        else if (extension.url) {
+            if ((packagesConfig?.approvedEditorExtensionUrls || []).indexOf(extension.url) < 0) {
+                // custom url, but not support in editor
+                core.errorNotification(lf("Sorry, this extension is not allowed."))
+                return;
+            }
             url = extension.url;
         } else if (parsedRepo) {
             const repoName = parsedRepo.fullName.substr(parsedRepo.fullName.indexOf(`/`) + 1);
