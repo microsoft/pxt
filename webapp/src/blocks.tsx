@@ -1159,15 +1159,21 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         pxt.log(`extension ${config.name}: resolved ${url}`)
 
-        // no url registered?
-        if (!url)
-            core.errorNotification(lf("Sorry, this extension does not have an editor."))
-        else {
-            /* tslint:enable:no-http-string */
-            this.parent.openExtension(config.name,
-                url,
-                repoStatus !== pxt.github.GitRepoStatus.Approved);
+        // this should never happen
+        if (repoStatus === pxt.github.GitRepoStatus.Banned) {
+            core.errorNotification(lf("Sorry, this extension is not allowed."))
+            return;
         }
+
+        // no url registered?
+        if (!url) {
+            core.errorNotification(lf("Sorry, this extension does not have an editor."))
+            return;
+        }
+        /* tslint:enable:no-http-string */
+        this.parent.openExtension(config.name,
+            url,
+            repoStatus !== pxt.github.GitRepoStatus.Approved);
     }
 
     private partitionBlocks() {
