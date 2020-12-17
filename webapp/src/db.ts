@@ -37,6 +37,7 @@ export function destroyAsync(): Promise<void> {
     return !_db ? Promise.resolve() : _db.then((db: any) => {
         console.log("destroying db! (2)") // TODO @darzu: dbg
         const res: Promise<any> = db.destroy()
+        res.then(_ => console.log("db destroyed")) // TODO @darzu:
         _db = undefined;
         return res
     }).then(r => {

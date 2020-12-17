@@ -169,7 +169,7 @@ export function setupWorkspace(kind: WorkspaceKind): void {
         // impl = createJointWorkspace2(cachedCloud, localChoice)
     }
     else {
-        console.log("logged in") // TODO @darzu:
+        console.log("logged out") // TODO @darzu:
         // TODO @darzu: review
         const localWs = localChoice
         impl = createCachedWorkspace(localWs)

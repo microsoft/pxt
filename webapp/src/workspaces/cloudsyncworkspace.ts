@@ -27,7 +27,7 @@ function computeLastModTime(hdrs: Header[]): number {
     return hdrs.reduce((p, n) => Math.max(n.modificationTime, p), 0)
 }
 function hasChanged(a: Header, b: Header): boolean {
-    // TODO @darzu: use version uuid instead?
+    // TODO @darzu: use e-tag, _rev, or version uuid instead?
     return a.modificationTime !== b.modificationTime
 }
 
@@ -193,29 +193,29 @@ export function createCloudSyncWorkspace(cloud: WorkspaceProvider, cloudLocal: W
             return a.modificationTime > b.modificationTime ? a : b;
         U.unreachable(strat);
     }
-    async function transfer(h: Header, fromWs: WorkspaceProvider, toWs: WorkspaceProvider): Promise<Header> {
+    async function transfer(fromH: Header, toH: Header, fromWs: WorkspaceProvider, toWs: WorkspaceProvider): Promise<Header> {
         // TODO @darzu: worklist this?
-        // TODO @darzu: respect e-tags and versions
         // TODO @darzu: track pending saves
-        const fromPrj = await fromWs.getAsync(h)
 
-        console.log(`transfer ${h.id}#${h._rev}`) // TODO @darzu: dbg
-        let newVer: Version
-        try {
-            newVer = await toWs.setAsync(h, fromPrj.version, fromPrj.text)
-        } catch (e) {}
+        const newPrj = await fromWs.getAsync(fromH)
 
-        if (!newVer) {
-            // force an update ignore e-tags / versions
-            const old = await toWs.getAsync(h)
-            console.log(`retrying ${h.id} (newV: ${fromPrj.version}, oldV: ${old.version}, _conflict: ${(old as any)._conflict})`) // TODO @darzu: dbg
-            newVer = await toWs.setAsync(h, old.version, fromPrj.text)
-            if (!newVer) {
-                // TODO @darzu: dbg
-                console.log(`! transfer failed for ${h.id}`)
-            }
+        // we need the old project if any exists so we know what prevVersion to pass
+        // TODO @darzu: keep project text version in the header
+        let prevVer = undefined
+        if (toH) {
+            const oldPrj = await toWs.getAsync(toH)
+            if (oldPrj)
+                prevVer = oldPrj.version
         }
-        return h;
+
+        // create a new header
+        // TODO @darzu: how do we do this in an abstraction preserving way?
+        const newH = {...fromH, _rev: toH?._rev ?? undefined}
+        delete (newH as any)["_id"]
+
+        const newVer = await toWs.setAsync(newH, prevVer, newPrj.text)
+
+        return newH;
     }
     async function synchronizeInternal(): Promise<boolean> {
         await pendingCacheSync()
@@ -263,14 +263,14 @@ export function createCloudSyncWorkspace(cloud: WorkspaceProvider, cloudLocal: W
         let lToPush = lChanges
         if (strat.disjointSets === DisjointSetsStrategy.Synchronize)
             lToPush = [...lToPush, ...U.values(rOnly)]
-        const lPushPromises = lToPush.map(h => transfer(h, right, left))
+        const lPushPromises = lToPush.map(h => transfer(rHdrs[h.id], lHdrs[h.id], right, left))
 
         // update right
         const rChanges = conflictResults.reduce((p: Header[], n) => hasChanged(n, rHdrs[n.id]) ? [...p, n] : p, [])
         let rToPush = rChanges
         if (strat.disjointSets === DisjointSetsStrategy.Synchronize)
             rToPush = [...rToPush, ...U.values(lOnly)]
-        const rPushPromises = rToPush.map(h => transfer(h, left, right))
+        const rPushPromises = rToPush.map(h => transfer(lHdrs[h.id], rHdrs[h.id], left, right))
 
         // wait
         // TODO @darzu: batching? throttling? incremental?

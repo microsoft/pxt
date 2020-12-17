@@ -16,7 +16,7 @@ namespace pxt.workspace {
         url: string;
     }
 
-    // TODO @darzu: why can version be "any" ? that's really annoying to reason about
+    // TODO @darzu: why is version "any" ? that's really annoying to reason about. used as: string | ScriptText
     // TODO @darzu: _rev is a string; modificationTime is an int
     export type Version = any;
 
