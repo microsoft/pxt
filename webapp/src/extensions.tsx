@@ -322,7 +322,7 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
                 {consent ?
                     <div id="extensionWrapper" data-frame={extension} ref={this.handleExtensionWrapperRef}>
                         {permissionRequest ?
-                            <sui.Modal isOpen={true} className="extensionpermissiondialog basic" closeIcon={false} dimmer={true} dimmerClassName="permissiondimmer">
+                            <sui.Modal isOpen={true} closeIcon={false} dimmer={true} dimmerClassName="permissiondimmer">
                                 <div className="permissiondialoginner">
                                     <div className="permissiondialogheader">
                                         {lf("Permission Request")}
@@ -330,7 +330,7 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
                                     <div className="permissiondialogbody">
                                         {lf("Extension {0} is requesting the following permission(s):", permissionExtName)}
                                     </div>
-                                    <div className="ui inverted list">
+                                    <div className="ui list">
                                         {permissionRequest.map(permission =>
                                             <div key={permission.toString()} className="item">
                                                 <sui.Icon icon={`${this.getIconForPermission(permission)} icon`} />
@@ -343,9 +343,9 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
                                     </div>
                                 </div>
                                 <div className="actions">
-                                    <sui.Button text={lf("Deny")} className={`deny inverted`}
+                                    <sui.Button text={lf("Deny")} className={`deny`}
                                         onClick={this.onDeniedDecision} />
-                                    <sui.Button text={lf("Approve")} className={`approve inverted green`}
+                                    <sui.Button text={lf("Approve")} className={`approve green`}
                                         onClick={this.onApprovedDecision} />
                                 </div>
                             </sui.Modal>
