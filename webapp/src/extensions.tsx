@@ -90,10 +90,6 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
             this.processMessagePacketMessage(msg);
     }
 
-    clear() {
-        
-    }
-
     hide() {
         this.setState({ visible: false });
 

@@ -91,22 +91,25 @@ export class ExtensionManager {
         }
 
         switch (request.action) {
-            case "extinit":
+            case "extinit": {
                 const ri = resp as pxt.editor.InitializeResponse;
                 ri.target = pxt.appTarget;
                 this.sendResponse(resp);
                 break;
-            case "extdatastream":
+            }
+            case "extdatastream": {
                 if (request?.body?.messages)
                     return this.permissionOperation(request.extId, Permissions.Messages, resp, (name, resp) => this.handleMessageStreamRequest(name, resp));
                 else
                     return this.permissionOperation(request.extId, Permissions.Console, resp, (name, resp) => this.handleDataStreamRequest(name, resp));
-            case "extquerypermission":
+            }
+            case "extquerypermission": {
                 const perm = this.getPermissions(request.extId)
                 const r = resp as e.ExtensionResponse;
                 r.resp = statusesToResponses(perm);
                 this.sendResponse(r);
                 break;
+            }
             case "extrequestpermission":
                 return this.requestPermissionsAsync(request.extId, resp as e.PermissionResponse, request.body);
             case "extusercode":
@@ -307,8 +310,10 @@ export async function resolveExtensionUrl(pkg: pxt.Package) {
     if (debug) {
         /* tslint:disable:no-http-string */
         url = "http://localhost:3232/extension.html";
-    } else if (localDebug)
+    } else if (localDebug) {
         url = extension.localUrl;
+        trusted = /localeditorextensionstrusted=1/.test(window.location.href);
+    }
     else if (extension.url
         && packagesConfig?.trustedEditorExtensionUrls
         && packagesConfig?.trustedEditorExtensionUrls?.indexOf(extension.url) > -1) {
