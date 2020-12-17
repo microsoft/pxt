@@ -1129,29 +1129,45 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private async openExtension(extensionName: string) {
-        const extension = this.extensions.filter(c => c.config.name == extensionName)[0];
-        const parsedRepo = pxt.github.parseRepoId(extension.installedVersion);
+        const pkg = this.extensions.filter(c => c.config.name === extensionName)[0];
+        if (!pkg?.config.extension)
+            return;
+        const { config, installedVersion } = pkg;
+        const { extension } = config;
+
+        pxt.tickEvent('blocks.extensions.open', { extension: extensionName })
+        const packagesConfig = await pxt.packagesConfigAsync()
+        const parsedRepo = pxt.github.parseRepoId(installedVersion);
+        const repoStatus = pxt.github.repoStatus(parsedRepo, packagesConfig);
         let url = "";
-        let repoStatus = pxt.github.GitRepoStatus.Unknown;
-        const extensionConfig = extension.config;
         const debug = pxt.BrowserUtils.isLocalHost() && /debugExtensions/i.test(window.location.href);
-        const localDebug = pxt.BrowserUtils.isLocalHost() && /^file:/.test(extension.installedVersion)
-            && extensionConfig?.extension?.localUrl;
+        const localDebug = !debug
+            && pxt.BrowserUtils.isLocalHost()
+            && /^file:/.test(pkg.installedVersion)
+            && extension.localUrl;
         if (debug)
             url = "http://localhost:3232/extension.html";
         else if (localDebug)
-            url = extensionConfig.extension.localUrl;
-        else {
-            const packagesConfig = await pxt.packagesConfigAsync()
-            repoStatus = pxt.github.repoStatus(parsedRepo, packagesConfig);
+            url = extension.localUrl;
+        else if (extension.url && packagesConfig?.approvedEditorExtensionUrls?.indexOf(extension.url) > -1) {
+            url = extension.url;
+        } else if (parsedRepo) {
             const repoName = parsedRepo.fullName.substr(parsedRepo.fullName.indexOf(`/`) + 1);
             /* tslint:disable:no-http-string */
             url = `https://${parsedRepo.owner}.github.io/${repoName}/`;
         }
-        /* tslint:enable:no-http-string */
-        this.parent.openExtension(extensionConfig.name,
-            url,
-            repoStatus !== pxt.github.GitRepoStatus.Approved);
+
+        pxt.log(`extension ${config.name}: resolved ${url}`)
+
+        // no url registered?
+        if (!url)
+            core.errorNotification(lf("Sorry, this extension does not have an editor."))
+        else {
+            /* tslint:enable:no-http-string */
+            this.parent.openExtension(config.name,
+                url,
+                repoStatus !== pxt.github.GitRepoStatus.Approved);
+        }
     }
 
     private partitionBlocks() {

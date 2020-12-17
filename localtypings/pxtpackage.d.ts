@@ -92,11 +92,18 @@ declare namespace pxt {
     }
 
     interface PackageExtension {
-        namespace?: string; // Namespace to add the button under, defaults to package name
-        label?: string; // Label for the flyout button, defaults to `Editor`
-        color?: string; // for new category, category color
-        advanced?: boolean; // for new category, is category advanced
-        localUrl?: string; // local debugging URL used when served through pxt serve and debugExtensions=1 mode
+        // Namespace to add the button under, defaults to package name
+        namespace?: string; 
+        // Label for the flyout button, defaults to `Editor`
+        label?: string; 
+        // for new category, category color
+        color?: string; 
+        // for new category, is category advanced
+        advanced?: boolean;
+        // custom editor url, must be register in targetconfig.json under approvedEditorExtensions
+        url?: string;
+        // local debugging URL used when served through pxt serve and debugExtensions=1 mode
+        localUrl?: string; 
     }
 
     interface PlatformIOConfig {
