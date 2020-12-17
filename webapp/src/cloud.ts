@@ -27,16 +27,18 @@ export async function listAsync(): Promise<Header[]> {
     return new Promise(async (resolve, reject) => {
         // TODO @darzu: this is causing errors?
         const result = await auth.apiAsync<CloudProject[]>("/api/user/project");
-        console.log("cloud.ts:listAsync"); // TODO @darzu:
+        console.log("cloud.ts:listAsync"); // TODO @darzu: dbg
         if (result.success) {
             const userId = auth.user()?.id;
-            const headers = result.resp.map(proj => {
+            const headers: Header[] = result.resp.map(proj => {
                 const header = JSON.parse(proj.header);
                 header.cloudUserId = userId;
                 header.cloudVersion = proj.version;
                 header.cloudCurrent = true;
                 return header;
             });
+            // TODO @darzu: dbg
+            console.dir(headers.map(h => ({h: h.id, t: h.modificationTime})))
             resolve(headers);
         } else {
             reject(new Error(result.errmsg));
@@ -83,8 +85,6 @@ export function setAsync(h: Header, prevVersion: Version, text?: ScriptText): Pr
             text: text ? JSON.stringify(text) : undefined,
             version: prevVersion
         }
-        // TODO @darzu:
-        console.log("setAsync")
         const result = await auth.apiAsync<string>('/api/user/project', project);
         if (result.success) {
             h.cloudCurrent = true;

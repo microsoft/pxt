@@ -7,8 +7,11 @@ type F = pxt.workspace.File;
 type Version = pxt.workspace.Version;
 type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
 
-// TODO @darzu:
-// cache invalidation
+// TODO @darzu: BIG TODOs
+// [ ] cache invalidation via header sessions
+// [ ] enforce soft-delete
+//      pouchdb uses _delete for soft delete
+// [ ] need to think more about error handling and retries
 
 export interface CachedWorkspaceProvider extends WorkspaceProvider {
     getLastModTime(): number,
@@ -51,6 +54,7 @@ export function createCachedWorkspace(ws: WorkspaceProvider): CachedWorkspacePro
     }
 
     function eraseCache() {
+        console.log("cachedworkspace: eraseCache") // TODO @darzu: dbg
         cacheHdrs = []
         cacheHdrsMap = {}
         cacheProjs = {}
@@ -58,9 +62,6 @@ export function createCachedWorkspace(ws: WorkspaceProvider): CachedWorkspacePro
     }
 
     async function synchronizeInternal(expectedLastModTime?:number): Promise<boolean> {
-
-        console.log("cachedworkspace: synchronizeInternal (1)")
-
         // remember our old cache, we might keep items from it later
         const oldHdrs = cacheHdrs
         const oldHdrsMap = cacheHdrsMap
@@ -80,9 +81,9 @@ export function createCachedWorkspace(ws: WorkspaceProvider): CachedWorkspacePro
             cacheHdrs = oldHdrs
             cacheHdrsMap = oldHdrsMap
             cacheProjs = oldProjs
-            console.log("cachedworkspace: synchronizeInternal (2)")
             return false
         }
+        console.log("cachedworkspace: synchronizeInternal (1)") // TODO @darzu: dbg
 
         // compute header differences and clear old cache entries
         const newHdrsMap = U.toDictionary(newHdrs, h => h.id)
@@ -120,7 +121,7 @@ export function createCachedWorkspace(ws: WorkspaceProvider): CachedWorkspacePro
         cacheProjs[h.id] = {
             header: h,
             text,
-            version: null // TODO @darzu:
+            version: prevVer
         }
         cacheModTime = Math.max(cacheModTime, h.modificationTime)
         const res = await ws.setAsync(h, prevVer, text)
@@ -185,18 +186,35 @@ export function createCloudSyncWorkspace(cloud: WorkspaceProvider, cloudLocal: W
     }
 
     function resolveConflict(a: Header, b: Header, strat: ConflictStrategy): Header {
+        // TODO @darzu: involve the user
+        // TODO @darzu: consider lineage
+        // TODO @darzu: consider diff
         if (strat === ConflictStrategy.LastWriteWins)
             return a.modificationTime > b.modificationTime ? a : b;
         U.unreachable(strat);
     }
     async function transfer(h: Header, fromWs: WorkspaceProvider, toWs: WorkspaceProvider): Promise<Header> {
+        // TODO @darzu: worklist this?
+        // TODO @darzu: respect e-tags and versions
+        // TODO @darzu: track pending saves
         const fromPrj = await fromWs.getAsync(h)
 
-        // TODO @darzu: caches?
+        console.log(`transfer ${h.id}#${h._rev}`) // TODO @darzu: dbg
+        let newVer: Version
+        try {
+            newVer = await toWs.setAsync(h, fromPrj.version, fromPrj.text)
+        } catch (e) {}
 
-        const prevVersion: Version = null // TODO @darzu: what do we do with this version thing...
-        // TODO @darzu: track pending saves
-        const toRes: Version = await toWs.setAsync(h, prevVersion, fromPrj.text)
+        if (!newVer) {
+            // force an update ignore e-tags / versions
+            const old = await toWs.getAsync(h)
+            console.log(`retrying ${h.id} (newV: ${fromPrj.version}, oldV: ${old.version}, _conflict: ${(old as any)._conflict})`) // TODO @darzu: dbg
+            newVer = await toWs.setAsync(h, old.version, fromPrj.text)
+            if (!newVer) {
+                // TODO @darzu: dbg
+                console.log(`! transfer failed for ${h.id}`)
+            }
+        }
         return h;
     }
     async function synchronizeInternal(): Promise<boolean> {

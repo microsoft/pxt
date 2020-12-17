@@ -33,9 +33,16 @@ export function getDbAsync(): Promise<any> {
 }
 
 export function destroyAsync(): Promise<void> {
+    console.log("destroying db! (1)") // TODO @darzu: dbg
     return !_db ? Promise.resolve() : _db.then((db: any) => {
-        db.destroy();
+        console.log("destroying db! (2)") // TODO @darzu: dbg
+        const res: Promise<any> = db.destroy()
         _db = undefined;
+        return res
+    }).then(r => {
+        console.log("destroy res")
+        console.dir(r)
+        return r
     });
 }
 
@@ -78,8 +85,14 @@ export class Table {
             .catch(e => {
                 if (e.status == 409) {
                     // conflict while writing key, ignore.
-                    pxt.debug(`table: set conflict (409)`);
+                    pxt.debug(`table: set conflict (409) for ${obj._id}#${obj._rev}`);
                     return undefined;
+                }
+                if (e.status == 400) {
+                    // bad request; likely _rev format was wrong or something similiar
+                    pxt.debug(`table: ${e.name}:${e.message} for ${obj._id}#${obj._rev}`);
+                    // TODO @darzu: what's the right behavior here? Do we ever expect a 400 in normal operation?
+                    // return undefined;
                 }
                 pxt.reportException(e);
                 pxt.log(`table: set failed, cleaning translation db`)

@@ -1,4 +1,5 @@
 namespace pxt.storage {
+    // TODO @darzu: why is this different from the WorkspaceProvider api?
     interface IStorage {
         removeItem(key: string): void;
         getItem(key: string): string;

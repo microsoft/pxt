@@ -23,6 +23,8 @@ namespace pxt.workspace {
     export interface File {
         header: Header;
         text: ScriptText;
+        // This version field is reserved for the storage mechanism. E.g. PouchDB requires a _rev field containing
+        //  the currently stored version.
         version: Version;
     }
 

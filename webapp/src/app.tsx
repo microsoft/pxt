@@ -3278,6 +3278,7 @@ export class ProjectView
     }
 
     showResetDialog() {
+        console.log("showResetDialog (1)")
         dialogs.showResetDialogAsync().done(r => {
             if (!r) return Promise.resolve();
             return Promise.resolve()
@@ -3285,6 +3286,7 @@ export class ProjectView
                     return pxt.winrt.releaseAllDevicesAsync();
                 })
                 .then(() => {
+                    console.log("showResetDialog (2)")
                     return this.resetWorkspace();
                 });
         });

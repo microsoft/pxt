@@ -109,9 +109,10 @@ export function setupWorkspace(kind: WorkspaceKind): void {
     const localChoice = chooseWorkspace(implType);
     // TODO @darzu:
     if (auth.loggedInSync()) {
+        console.log("logged in") // TODO @darzu:
         const cloudApis = cloudWorkspace.provider
-        // const localCloud = createBrowserDbWorkspace("cloud-local"); // TODO @darzu: use user choice for this too?
-        const localCloud = createBrowserDbWorkspace(""); // TODO @darzu: undo dbg
+        const localCloud = createBrowserDbWorkspace("cloud-local"); // TODO @darzu: use user choice for this too?
+        // const localCloud = createBrowserDbWorkspace(""); // TODO @darzu: undo dbg
         // TODO @darzu:
         // const cachedCloud = createSynchronizedWorkspace(cloudWorkspace.provider, localCloud, {
         //     conflict: ConflictStrategy.LastWriteWins,
@@ -124,15 +125,16 @@ export function setupWorkspace(kind: WorkspaceKind): void {
         // TODO @darzu: do one-time overlap migration
         // migrateOverlap(localChoiceCached, cloudCache)
 
-        const old = oldbrowserdbworkspace.provider;
-        old.listAsync().then(hs => {
-            console.log("OLD:")
-            console.dir(hs.map(h => ({id: h.id, t: h.modificationTime})))
-        })
+        // TODO @darzu: dbg:
+        // const old = oldbrowserdbworkspace.provider;
+        // old.listAsync().then(hs => {
+        //     console.log("OLD browser db:")
+        //     console.dir(hs.map(h => ({id: h.id, t: h.modificationTime})))
+        // })
 
         const joint = createJointWorkspace(cloudCache, localChoiceCached)
         impl = joint
-        impl = cloudCache // TODO @darzu: undo dbg
+        // impl = cloudCache // TODO @darzu: undo dbg
         // implCache = joint
 
         // TODO @darzu: improve this
@@ -167,6 +169,7 @@ export function setupWorkspace(kind: WorkspaceKind): void {
         // impl = createJointWorkspace2(cachedCloud, localChoice)
     }
     else {
+        console.log("logged in") // TODO @darzu:
         // TODO @darzu: review
         const localWs = localChoice
         impl = createCachedWorkspace(localWs)
@@ -649,6 +652,7 @@ export function fixupFileNames(txt: ScriptText) {
 }
 
 
+// TODO @darzu: do we need this raw table? might not have a browser db even
 const scriptDlQ = new U.PromiseQueue();
 const scripts = new db.Table("script"); // cache for published scripts
 export async function getPublishedScriptAsync(id: string) {
@@ -1536,24 +1540,31 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
         });
 }
 
-export function resetAsync() {
+export async function resetAsync() {
     // TODO @darzu: this should just pass through to workspace impl
+    console.log("resetAsync (1)") // TODO @darzu:
     allScripts = []
-    return impl.resetAsync()
-        .then(cloudsync.resetAsync)
-        .then(db.destroyAsync)
-        .then(pxt.BrowserUtils.clearTranslationDbAsync)
-        .then(pxt.BrowserUtils.clearTutorialInfoDbAsync)
-        .then(compiler.clearApiInfoDbAsync)
-        .then(() => {
-            pxt.storage.clearLocal();
-            data.clearCache();
-            // keep local token (localhost and electron) on reset
-            if (Cloud.localToken)
-                pxt.storage.setLocal("local_token", Cloud.localToken);
-        })
-        .then(() => syncAsync()) // sync again to notify other tabs
-        .then(() => { });
+    await impl.resetAsync();
+    console.log("resetAsync (2)") // TODO @darzu:
+    await cloudsync.resetAsync();
+    console.log("resetAsync (3)") // TODO @darzu:
+    await db.destroyAsync();
+    console.log("resetAsync (4)") // TODO @darzu:
+    await pxt.BrowserUtils.clearTranslationDbAsync();
+    console.log("resetAsync (5)") // TODO @darzu:
+    await pxt.BrowserUtils.clearTutorialInfoDbAsync();
+    console.log("resetAsync (6)") // TODO @darzu:
+    await compiler.clearApiInfoDbAsync();
+    console.log("resetAsync (7)") // TODO @darzu:
+    pxt.storage.clearLocal();
+    console.log("resetAsync (8)") // TODO @darzu:
+    data.clearCache();
+    console.log("resetAsync (9)") // TODO @darzu:
+    // keep local token (localhost and electron) on reset
+    if (Cloud.localToken)
+    pxt.storage.setLocal("local_token", Cloud.localToken);
+    await syncAsync() // sync again to notify other tab;
+    console.log("resetAsync (10)") // TODO @darzu:
 }
 
 export function loadedAsync() {
