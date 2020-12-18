@@ -881,10 +881,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     searchField.value = '';
                 }
                 // Get extension packages
-                this.extensions = pkg.allEditorPkgs()
-                    .map(ep => ep.getKsPkg())
-                    // Make sure the package has extensions enabled.
-                    .filter(p => !!p?.config?.extension);
+                this.extensions = (!!pxt.appTarget.appTheme.allowPackageExtensions
+                    && pkg.allEditorPkgs()
+                        .map(ep => ep.getKsPkg())
+                        // Make sure the package has extensions enabled.
+                        .filter(p => !!p?.config?.extension))
+                    || [];
             })
     }
 
