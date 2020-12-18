@@ -45,7 +45,7 @@ declare namespace pxt {
         upgrades?: pxt.Map<string>;
         // list of trusted custom editor extension urls 
         // that can bypass consent and send/receive messages
-        trustedEditorExtensionUrls?: string[];
+        approvedEditorExtensionUrls?: string[];
     }
 
     interface ShareConfig {

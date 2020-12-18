@@ -315,8 +315,8 @@ export async function resolveExtensionUrl(pkg: pxt.Package) {
         trusted = /localeditorextensionstrusted=1/.test(window.location.href);
     }
     else if (extension.url
-        && packagesConfig?.trustedEditorExtensionUrls
-        && packagesConfig?.trustedEditorExtensionUrls?.indexOf(extension.url) > -1) {
+        && packagesConfig?.approvedEditorExtensionUrls
+        && packagesConfig?.approvedEditorExtensionUrls?.indexOf(extension.url) > -1) {
         // custom url, but not support in editor
         pxt.log(`extension url ${extension.url} trusted`)
         url = extension.url;
