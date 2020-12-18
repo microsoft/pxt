@@ -2098,6 +2098,7 @@ export class ProjectView
         this.showKeymap(false); // close keymap if open
         cmds.disconnectAsync(); // turn off any kind of logging
         if (this.editor) this.editor.unloadFileAsync();
+        this.extensions.unload();
         // clear the hash
         pxt.BrowserUtils.changeHash("", true);
         this.editorFile = undefined;

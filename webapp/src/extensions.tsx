@@ -41,6 +41,14 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
         this.onDeniedDecision = this.onDeniedDecision.bind(this);
     }
 
+    unload() {
+        // forget everythings
+        const wrapper = Extensions.getCustomContent();
+        if (wrapper)
+            pxsim.U.removeChildren(wrapper);
+        this.manager.clear();
+    }
+
     private processSerialMessage(smsg: pxsim.SimulatorSerialMessage) {
         const exts = this.manager.streamingExtensions();
         if (!exts?.length)

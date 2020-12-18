@@ -43,6 +43,11 @@ export class ExtensionManager {
     constructor(private host: ExtensionHost) {
     }
 
+    clear() {
+        this.queueLock = false;
+        this.pendingRequests = [];
+    }
+
     streamingExtensions(): string[] {
         return Object.keys(this.streams);
     }
