@@ -816,6 +816,16 @@ namespace pxt {
                 case AssetType.Image:
                     return this.state.images.getByID(name) || this.gallery.images.getByID(name);
                 case AssetType.Tile:
+                    const matchTransparency = /^myTiles\.transparency([0-9]+)$/
+                    const ret = name.match(matchTransparency);
+                    if (ret) {
+                        const tile = this.state.tiles.getByID(name);
+                        if (!tile) {
+                            return this.getTransparency(parseInt(ret[1]));
+                        } else {
+                            return tile;
+                        }
+                    }
                     return this.state.tiles.getByID(name) || this.gallery.tiles.getByID(name);
                 case AssetType.Tilemap:
                     return this.state.tilemaps.getByID(name) || this.gallery.tilemaps.getByID(name);

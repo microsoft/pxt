@@ -1528,7 +1528,7 @@ export class ProjectView
                 .then(resp => {
                     let blockXML = resp.outfiles["main.blocks"];
                     if (blockXML) {
-                        blockXML = tutorial.upgradeTutorialXml(blockXML, header.targetVersion)
+                        blockXML = tutorial.upgradeTutorialXml(blockXML, header.targetVersion);
                         pkg.mainEditorPkg().setFile("main.blocks", blockXML);
                     }
                 })
