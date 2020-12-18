@@ -91,7 +91,7 @@ export class Table {
                 }
                 if (e.status == 400) {
                     // bad request; likely _rev format was wrong or something similiar
-                    pxt.debug(`table: ${e.name}:${e.message} for ${obj._id}#${obj._rev}`);
+                    console.log(`table: bad request ${e.name}:${e.message} for ${obj._id}#${obj._rev}`); // TODO @darzu:
                     // TODO @darzu: what's the right behavior here? Do we ever expect a 400 in normal operation?
                     // return undefined;
                 }

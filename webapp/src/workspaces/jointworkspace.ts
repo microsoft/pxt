@@ -71,7 +71,7 @@ export function createJointWorkspace(...all: CachedWorkspaceProvider[]): CachedW
     const getLastModTime = () => Math.max(...all.map(w => w.getLastModTime()))
 
     async function synchronize(expectedLastModTime?: number): Promise<boolean> {
-        return (await Promise.all(all.map(w => w.synchronize())))
+        return (await Promise.all(all.map(w => w.synchronize(expectedLastModTime))))
             .reduce((p, n) => p || n, false)
     }
     function listSync(): Header[] {

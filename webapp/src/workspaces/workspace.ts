@@ -109,7 +109,8 @@ export function setupWorkspace(kind: WorkspaceKind): void {
     const localChoice = chooseWorkspace(implType);
     // TODO @darzu:
     if (auth.loggedInSync()) {
-        console.log("logged in") // TODO @darzu:
+        console.log("logged in") // TODO @darzu: dbg
+        // TODO @darzu: need per-user cloud-local
         const cloudApis = cloudWorkspace.provider
         const localCloud = createBrowserDbWorkspace("cloud-local"); // TODO @darzu: use user choice for this too?
         // const localCloud = createBrowserDbWorkspace(""); // TODO @darzu: undo dbg

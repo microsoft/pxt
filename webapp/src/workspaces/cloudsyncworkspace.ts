@@ -90,8 +90,10 @@ export function createCachedWorkspace(ws: WorkspaceProvider): CachedWorkspacePro
         const newProjs = oldProjs
         for (let id of Object.keys(newProjs)) {
             const newHdr = newHdrsMap[id]
-            if (!newHdr || hasChanged(newHdr, oldHdrsMap[id]))
+            if (!newHdr || hasChanged(newHdr, oldHdrsMap[id])) {
+                console.log(`DELETE ${id}`) // TODO @darzu: dbg
                 delete newProjs[id]
+            }
         }
 
         // save results
@@ -107,6 +109,7 @@ export function createCachedWorkspace(ws: WorkspaceProvider): CachedWorkspacePro
         return cacheHdrs
     }
     async function getAsync(h: Header): Promise<F> {
+        // TODO @darzu: should the semantics of this check the header version?
         await pendingUpdate;
         if (!cacheProjs[h.id]) {
             // fetch
@@ -118,11 +121,19 @@ export function createCachedWorkspace(ws: WorkspaceProvider): CachedWorkspacePro
     }
     async function setAsync(h: Header, prevVer: Version, text?: ScriptText): Promise<string> {
         await pendingUpdate;
+        // update cached projects
         cacheProjs[h.id] = {
             header: h,
             text,
             version: prevVer
         }
+        // update headers list
+        if (!cacheHdrsMap[h.id]) {
+            cacheHdrs.push(h)
+        }
+        // update headers map
+        cacheHdrsMap[h.id] = h
+        // update mod time
         cacheModTime = Math.max(cacheModTime, h.modificationTime)
         const res = await ws.setAsync(h, prevVer, text)
         return res;
@@ -172,16 +183,20 @@ export function createCloudSyncWorkspace(cloud: WorkspaceProvider, cloudLocal: W
     const firstCachePull = Promise.all([cloudCache.firstSync(), localCache.firstSync()])
     const pendingCacheSync = () => Promise.all([cloudCache.pendingSync(), localCache.pendingSync()])
     const getLastModTime = () => Math.max(cloudCache.getLastModTime(), localCache.getLastModTime())
+    const needsSync = () => cloudCache.getLastModTime() !== localCache.getLastModTime()
+
+    // TODO @darzu:  we could frequently check the last mod times to see if a sync is in order?
 
     // TODO @darzu: multi-tab safety for cloudLocal
     // TODO @darzu: when two workspaces disagree on last mod time, we should sync?
 
-    let pendingSync: Promise<boolean> = synchronizeInternal(); // TODO @darzu: kick this off immediately?
+    let pendingSync: Promise<boolean> = synchronizeInternal();
     const firstSync = pendingSync;
+
     async function synchronize(expectedLastModTime?:number): Promise<boolean> {
         if (pendingSync.isPending())
             return pendingSync
-        pendingSync = synchronizeInternal()
+        pendingSync = synchronizeInternal(expectedLastModTime)
         return pendingSync
     }
 
@@ -196,6 +211,9 @@ export function createCloudSyncWorkspace(cloud: WorkspaceProvider, cloudLocal: W
     async function transfer(fromH: Header, toH: Header, fromWs: WorkspaceProvider, toWs: WorkspaceProvider): Promise<Header> {
         // TODO @darzu: worklist this?
         // TODO @darzu: track pending saves
+
+        // TODO @darzu: dbg
+        console.log(`transfer ${fromH.id}(${fromH.modificationTime},${fromH._rev}) => (${toH.modificationTime},${toH._rev})`)
 
         const newPrj = await fromWs.getAsync(fromH)
 
@@ -217,16 +235,48 @@ export function createCloudSyncWorkspace(cloud: WorkspaceProvider, cloudLocal: W
 
         return newH;
     }
-    async function synchronizeInternal(): Promise<boolean> {
-        await pendingCacheSync()
-
+    async function synchronizeInternal(expectedLastModTime?:number): Promise<boolean> {
         console.log("cloudsyncworkspace: synchronizeInternal")
 
-        if (cloudCache.getLastModTime() === localCache.getLastModTime()) {
-            // we're synced up ?
-            return false
+        // TODO @darzu: error: circular promise resolution chain
+
+        // case 1: everything should be synced up, we're just polling the server
+        //      expectedLastModTime = 0
+        //      we definitely want cloudCache to synchronize
+        //      we don't need localCache to synchronize
+        //      we want to wait on localCache.pendingSync
+        // case 2: we suspect localCache is out of date (from other tab changes)
+        //      expectedLastModTime = someValueFromOtherTab
+        //      we don't need cloudCache to synchronize
+        //      we definitely want localCache to synchronize
+        //      we want to wait on cloudCache.pendingSync
+        // case 3: createCloudSyncWorkspace is first called (first sync)
+        //      expectedLastModTime = 0
+        //      we don't need cloudCache to synchronize
+        //      we don't need localCache to synchronize
+        //      we want to wait on localCache.pendingSync
+        // TODO @darzu: need to think through and compare how this would work with git
+
+        // TODO @darzu: not sure what case would hit this:
+        // if (!expectedLastModTime) {
+        //     // first check if there is a known disagreement before we force each side to deep sync
+        //     if (cloudCache.getLastModTime() !== localCache.getLastModTime())
+        //         expectedLastModTime = getLastModTime();
+        // }
+
+        // wait for each side to sync
+        // TODO @darzu: this isn't symmetric. Can we fix the abstraction so it is?
+        if (!expectedLastModTime) {
+            await Promise.all([cloudCache.synchronize(), localCache.pendingSync()])
+        } else {
+            await Promise.all([cloudCache.pendingSync(), localCache.synchronize(expectedLastModTime)])
         }
-        // TODO @darzu: compare mod times to see if we need to sync?
+
+        // TODO @darzu: mod time isn't sufficient for a set of headers; maybe hash or merkle tree
+        // // short circuit if there aren't changes
+        // if (cloudCache.getLastModTime() === localCache.getLastModTime()) {
+        //     return false
+        // }
 
         // TODO @darzu: re-generalize?
         const left = cloudCache;
@@ -236,12 +286,8 @@ export function createCloudSyncWorkspace(cloud: WorkspaceProvider, cloudLocal: W
             disjointSets: DisjointSetsStrategy.Synchronize
         }
 
-        // wait for each side to sync
-        await Promise.all([cloudCache.synchronize(), localCache.synchronize()])
-
-        // TODO @darzu: short circuit if there aren't changes ?
-        const lHdrsList = await left.listAsync()
-        const rHdrsList = await right.listAsync()
+        const lHdrsList = left.listSync()
+        const rHdrsList = right.listSync()
 
         const lHdrs = U.toDictionary(lHdrsList, h => h.id)
         const rHdrs = U.toDictionary(rHdrsList, h => h.id)
@@ -273,7 +319,7 @@ export function createCloudSyncWorkspace(cloud: WorkspaceProvider, cloudLocal: W
         const rPushPromises = rToPush.map(h => transfer(lHdrs[h.id], rHdrs[h.id], left, right))
 
         // wait
-        // TODO @darzu: batching? throttling? incremental?
+        // TODO @darzu: worklist? batching? throttling? incremental?
         const changed = await Promise.all([...lPushPromises, ...rPushPromises])
 
         // TODO @darzu: what about mod time changes?
@@ -290,7 +336,7 @@ export function createCloudSyncWorkspace(cloud: WorkspaceProvider, cloudLocal: W
     }
     async function setAsync(h: Header, prevVer: any, text?: ScriptText): Promise<string> {
         await pendingSync
-        // TODO @darzu: use a queue to sync to backend
+        // TODO @darzu: use a queue to sync to backend and make sure this promise is part of the pending sync set
         const cloudPromise = cloudCache.setAsync(h, prevVer, text)
         // TODO @darzu: also what to do with the return value ?
         return await localCache.setAsync(h, prevVer, text)
@@ -311,7 +357,7 @@ export function createCloudSyncWorkspace(cloud: WorkspaceProvider, cloudLocal: W
 
     // TODO @darzu: debug logging
     firstSync.then(c => {
-        console.log("first update:")
+        console.log("cloudSyncWS first update:")
         console.dir(localCache.listSync().map(h => ({id: h.id, t: h.modificationTime})))
     })
 
