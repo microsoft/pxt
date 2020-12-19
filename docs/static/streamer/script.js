@@ -188,7 +188,7 @@ function onYouTubeIframeAPIReady() {
                 hardwareCamLabel: "",
                 emojis: "😄🤔😭👀",
                 micDelay: 300,
-                title: "STARTING SOON"
+                title: ""
             };
             return cfg;
         }
@@ -923,8 +923,7 @@ background-image: url(${config.backgroundImage});
             const config = readConfig();
             if (!(config.twitch || config.restream))
                 state.chat = false;
-            const editorConfig = editorConfigs[config.editor];
-            titleEl.innerText = config.title || (editorConfig && `MakeCode for ${editorConfig.name}`) || "";
+            titleEl.innerText = config.title || "";
         }
         function loadChat() {
             const config = readConfig();
