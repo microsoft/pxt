@@ -213,7 +213,7 @@ export function createCloudSyncWorkspace(cloud: WorkspaceProvider, cloudLocal: W
         // TODO @darzu: track pending saves
 
         // TODO @darzu: dbg
-        console.log(`transfer ${fromH.id}(${fromH.modificationTime},${fromH._rev}) => (${toH.modificationTime},${toH._rev})`)
+        console.log(`transfer ${fromH.id}(${fromH.modificationTime},${fromH._rev}) => (${toH?.modificationTime},${toH?._rev})`)
 
         const newPrj = await fromWs.getAsync(fromH)
 
