@@ -1232,16 +1232,24 @@ background-image: url(${config.backgroundImage});
 
             state.addSite = false;
             const config = readConfig();
-            const url: string = normalizeUrl(value);
-            if (url) {
-                addsiteinput.value = "";
-                if (!config.extraSites)
-                    config.extraSites = [];
-                if (config.extraSites.indexOf(url) < 0) {
-                    config.extraSites.push(url);
-                    saveConfig(config);
+
+            // emoji?
+            const em = /(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])*/.exec(value);
+            if (em) {
+                config.emojis = em[0];
+                saveConfig(config);
+            } else {
+                const url: string = normalizeUrl(value);
+                if (url) {
+                    addsiteinput.value = "";
+                    if (!config.extraSites)
+                        config.extraSites = [];
+                    if (config.extraSites.indexOf(url) < 0) {
+                        config.extraSites.push(url);
+                        saveConfig(config);
+                    }
+                    setSite(url)
                 }
-                setSite(url)
             }
             render();
         })
