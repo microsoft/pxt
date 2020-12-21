@@ -65,6 +65,8 @@ namespace pxsim {
         storedState?: Map<any>;
         autoRun?: boolean;
         ipc?: boolean;
+        // single iframe, no message simulators
+        single?: boolean;
     }
 
     export interface HwDebugger {
@@ -296,8 +298,9 @@ namespace pxsim {
             let frames = this.simFrames();
             const simUrl = U.isLocalHost() ? "*" : this.getSimUrl();
 
+            const single = !!this._currentRuntime.single;
             const broadcastmsg = msg as pxsim.SimulatorBroadcastMessage;
-            if (source && broadcastmsg?.broadcast) {
+            if (!single && source && broadcastmsg?.broadcast) {
                 // if the editor is hosted in a multi-editor setting
                 // don't start extra frames
                 const parentWindow = window.parent && window.parent !== window.window
@@ -438,6 +441,7 @@ namespace pxsim {
             this.setState(starting ? SimulatorState.Starting : SimulatorState.Stopped);
             if (unload)
                 this.unload();
+            this.removeEventListeners();
         }
 
         public suspend() {
@@ -589,6 +593,7 @@ namespace pxsim {
                 breakOnStart: opts.breakOnStart,
                 storedState: opts.storedState,
                 ipc: opts.ipc,
+                single: opts.single
             }
             this.start();
         }
