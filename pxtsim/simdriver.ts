@@ -300,7 +300,7 @@ namespace pxsim {
 
             const single = !!this._currentRuntime.single;
             const broadcastmsg = msg as pxsim.SimulatorBroadcastMessage;
-            if (!single && source && broadcastmsg?.broadcast) {
+            if (source && broadcastmsg?.broadcast) {
                 // if the editor is hosted in a multi-editor setting
                 // don't start extra frames
                 const parentWindow = window.parent && window.parent !== window.window
@@ -319,7 +319,7 @@ namespace pxsim {
                             w.postMessage(msg, window.location.origin)
                     })
                     // start second simulator
-                } else {
+                } else if (!single) {
                     const messageChannel = msg.type === "messagepacket" && (msg as SimulatorControlMessage).channel;
                     const messageSimulator = messageChannel &&
                         this.options.messageSimulators &&
