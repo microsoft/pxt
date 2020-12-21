@@ -48,6 +48,7 @@ export function createBrowserDbWorkspace(namespace: string): BrowserDbWorkspaceP
     async function setAsync(h: Header, prevVer: any, text?: ScriptText): Promise<string> {
         // TODO @darzu: debug logging
         if (!text) {
+            // TODO @darzu: trace down why...  this is a real bug
             console.log("!!! setAsync without text :(")
             // console.dir(h)
         } else {
@@ -66,8 +67,12 @@ export function createBrowserDbWorkspace(namespace: string): BrowserDbWorkspaceP
         textVer = await textDb.setAsync(textEnt)
         } catch (e) {}
 
-        if (!textVer)
+        if (!textVer) {
             console.log(`! failed to set text for id:${h.id},pv:${prevVer}`); // TODO @darzu: dbg logging
+            const oldTxt = await textDb.getAsync(h.id)
+            console.dir(`! text ${h.id} actually is: ${oldTxt._rev}`)
+            console.dir(oldTxt)
+        }
 
         let hdrVer: string;
         try {
