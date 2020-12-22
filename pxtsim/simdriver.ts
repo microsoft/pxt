@@ -441,7 +441,6 @@ namespace pxsim {
             this.setState(starting ? SimulatorState.Starting : SimulatorState.Stopped);
             if (unload)
                 this.unload();
-            this.removeEventListeners();
         }
 
         public suspend() {
