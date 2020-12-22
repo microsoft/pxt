@@ -30,7 +30,7 @@ namespace pxtblockly {
             if (this.params.max) this.max_ = parseInt(this.params.max)
         }
 
-        showEditor_() {
+        showEditor_(_opt_e?: Event) {
             // Find out which field we're in (x or y) and set the appropriate max.
             const xField = this.getFieldByName(this.params.xInputName);
             if (xField === this) {
@@ -44,7 +44,7 @@ namespace pxtblockly {
             }
 
             // Call super to render the slider and show the dropdown div
-            super.showEditor_();
+            super.showEditor_(_opt_e);
 
             // Now render the screen in the dropdown div below the slider
             this.renderScreenPicker();
