@@ -298,11 +298,11 @@ namespace pxsim {
             let frames = this.simFrames();
             const simUrl = U.isLocalHost() ? "*" : this.getSimUrl();
 
-            const single = !!this._currentRuntime.single;
             const broadcastmsg = msg as pxsim.SimulatorBroadcastMessage;
             if (source && broadcastmsg?.broadcast) {
                 // if the editor is hosted in a multi-editor setting
                 // don't start extra frames
+                const single = !!this._currentRuntime?.single;
                 const parentWindow = window.parent && window.parent !== window.window
                     ? window.parent : window.opener;
                 if (this.options.nestedEditorSim && parentWindow) {
