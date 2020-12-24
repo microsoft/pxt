@@ -16,6 +16,10 @@ export interface BrowserDbWorkspaceProvider extends pxt.workspace.WorkspaceProvi
 
 // TODO @darzu: very important for _rev and _id
 export function createBrowserDbWorkspace(namespace: string): BrowserDbWorkspaceProvider {
+    if (!namespace) {
+        console.log("BAD default namespace created")
+        console.trace();
+    }
     const prefix = namespace ? namespace + "-" : ""
     const headerDb = new db.Table(`${prefix}header`);
     const textDb = new db.Table(`${prefix}text`);
@@ -39,6 +43,8 @@ export function createBrowserDbWorkspace(namespace: string): BrowserDbWorkspaceP
     }
     async function getAsync(h: Header): Promise<pxt.workspace.File> {
         const resp: TextDbEntry = await textDb.getAsync(h.id)
+        if (!resp)
+            return undefined;
         return {
             header: h,
             text: resp.files,
@@ -52,7 +58,7 @@ export function createBrowserDbWorkspace(namespace: string): BrowserDbWorkspaceP
             console.log("!!! setAsync without text :(")
             // console.dir(h)
         } else {
-            console.log(`setAsync ${namespace || "def"}:(${h.id}, ${h.modificationTime}, ${prevVer}) :)`)
+            console.log(`setAsync ${namespace || "default"}:(${h.id}, ${h.modificationTime}, ${prevVer}) :)`)
         }
 
         const textEnt: TextDbEntry = {

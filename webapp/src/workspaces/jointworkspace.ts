@@ -86,24 +86,26 @@ export function createJointWorkspace(...all: CachedWorkspaceProvider[]): CachedW
             .reduce((p, n) => [...p, ...n], [])
     }
     function getWorkspaceFor(h: Header): CachedWorkspaceProvider {
-        return all.reduce((p, n) => p || n.hasSync(h) ? n : p, null)
+        return all.reduce((p, n) => p || (n.hasSync(h) ? n : null), null)
     }
     async function getAsync(h: Header): Promise<File> {
         await pendingSync()
-        // chose the first matching one
-        const ws = getWorkspaceFor(h) ?? all[0]
-        return ws.getAsync(h)
+        // choose the first matching one
+        const ws = getWorkspaceFor(h)
+        return ws?.getAsync(h) ?? undefined
     }
     function tryGetSync(h: Header): File {
-        // chose the first matching one
-        const ws = getWorkspaceFor(h) ?? all[0]
-        return ws.tryGetSync(h)
+        // choose the first matching one
+        const ws = getWorkspaceFor(h)
+        return ws?.tryGetSync(h) ?? undefined
     }
     function hasSync(h: Header): boolean {
         return all.reduce((p, n) => p || n.hasSync(h), false)
     }
     async function setAsync(h: Header, prevVer: any, text?: ScriptText): Promise<string> {
         await pendingSync()
+        console.log("joint:setAsync")
+        console.dir(all.map(w => w.hasSync(h)))
         const ws = getWorkspaceFor(h) ?? all[0]
         return ws.setAsync(h, prevVer, text)
     }

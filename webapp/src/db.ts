@@ -51,10 +51,16 @@ export class Table {
     constructor(public name: string) { }
 
     getAsync(id: string): Promise<any> {
-        return getDbAsync().then(db => db.get(this.name + "--" + id)).then((v: any) => {
-            v.id = id
-            return v
-        })
+        return getDbAsync().then(db => db.get(this.name + "--" + id))
+            .then((v: any) => {
+                v.id = id
+                return v
+            })
+            .catch(e => {
+                // not found
+                // TODO @darzu: trace users to see if this new behavior breaks assumptions
+                return undefined
+            })
     }
 
     getAllAsync(): Promise<any[]> {

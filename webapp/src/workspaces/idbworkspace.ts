@@ -21,6 +21,7 @@ const KEYPATH = "id";
 // This function migrates existing projectes in pouchDb to indexDb
 // From browserworkspace to idbworkspace
 async function migrateBrowserWorkspaceAsync(): Promise<void> {
+    console.log("BAD migrateBrowserWorkspaceAsync called") // TODO @darzu: this shouldn't be needed
     const db = await getDbAsync();
     const allDbHeaders = await db.getAllAsync<pxt.workspace.Header>(HEADERS_TABLE);
     if (allDbHeaders.length) {
@@ -28,8 +29,10 @@ async function migrateBrowserWorkspaceAsync(): Promise<void> {
         return;
     }
 
+    const ws: WorkspaceProvider = null; // TODO @darzu: browserworkspace.provider
+
     const copyProject = async (h: pxt.workspace.Header): Promise<void> => {
-        const resp = await browserworkspace.provider.getAsync(h);
+        const resp = await ws.getAsync(h);
 
         // Ignore metadata of the previous script so they get re-generated for the new copy
         delete (resp as any)._id;
@@ -38,7 +41,7 @@ async function migrateBrowserWorkspaceAsync(): Promise<void> {
         await setAsync(h, undefined, resp.text);
     };
 
-    const previousHeaders = await browserworkspace.provider.listAsync();
+    const previousHeaders = await ws.listAsync();
 
     await Promise.all(previousHeaders.map(h => copyProject(h)));
 }
@@ -75,7 +78,9 @@ async function getDbAsync(): Promise<pxt.BrowserUtils.IDBWrapper> {
 }
 
 async function listAsync(): Promise<pxt.workspace.Header[]> {
-    await migrateBrowserWorkspaceAsync();
+    // TODO @darzu:
+    console.log("idbworkspace:listAsync")
+    // await migrateBrowserWorkspaceAsync();
     const db = await getDbAsync();
     return db.getAllAsync<pxt.workspace.Header>(HEADERS_TABLE);
 }

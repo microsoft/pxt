@@ -38,6 +38,7 @@ const getPreviousDbPrefix = () => {
 }
 
 async function createAndMigrateBrowserDb(): Promise<BrowserDbWorkspaceProvider> {
+    console.log("BAD createAndMigrateBrowserDb") // TODO @darzu: trace
     const currentDbPrefix = getCurrentDbPrefix();
     let currDb: BrowserDbWorkspaceProvider;
     if (currentDbPrefix) {
@@ -69,6 +70,7 @@ async function createAndMigrateBrowserDb(): Promise<BrowserDbWorkspaceProvider> 
 }
 
 export async function copyProjectToLegacyEditor(h: Header, majorVersion: number): Promise<Header> {
+    console.log("BAD copyProjectToLegacyEditor") // TODO @darzu: trace
     await init();
 
     const prefix = getVersionedDbPrefix(majorVersion);
@@ -86,7 +88,8 @@ export async function copyProjectToLegacyEditor(h: Header, majorVersion: number)
 }
 
 // TODO @darzu: might be a better way to provide this wrapping and handle the migration
-export const provider: WorkspaceProvider = {
+// TODO @darzu: export
+const provider: WorkspaceProvider = {
     listAsync: async () => {
         await init();
         return currentDb.listAsync();
@@ -97,6 +100,7 @@ export const provider: WorkspaceProvider = {
     },
     setAsync: async (h: Header, prevVersion: pxt.workspace.Version, text?: ScriptText) => {
         await init();
+        console.log("BAD setAsync") // TODO @darzu: tracing usage
         return currentDb.setAsync(h, prevVersion, text);
     },
     deleteAsync: async (h: Header, prevVersion: pxt.workspace.Version) => {

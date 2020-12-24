@@ -4493,6 +4493,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const isSandbox = pxt.shell.isSandboxMode() || pxt.shell.isReadOnly();
     const isController = pxt.shell.isControllerMode();
     const theme = pxt.appTarget.appTheme;
+    // TODO @darzu: this is bad. we shouldn't be choosing a workspace in two places (see "chooseWorkspace")
     if (query["ws"]) {
         workspace.setupWorkspace(query["ws"] as workspace.WorkspaceKind)
     }
@@ -4502,7 +4503,9 @@ document.addEventListener("DOMContentLoaded", () => {
     else if (pxt.BrowserUtils.isIpcRenderer()) workspace.setupWorkspace("idb");
     // TODO @darzu: uncomment. this disables filesystem workspace
     //else if (pxt.BrowserUtils.isLocalHost() || pxt.BrowserUtils.isPxtElectron()) workspace.setupWorkspace("fs");
-    else workspace.setupWorkspace("browser");
+    else {
+        workspace.setupWorkspace("browser");
+    }
     Promise.resolve()
         .then(async () => {
             const href = window.location.href;

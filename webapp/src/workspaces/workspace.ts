@@ -95,7 +95,10 @@ function chooseWorkspace(kind: WorkspaceKind = "browser"): pxt.workspace.Workspa
             return cloudWorkspace.provider;
         case "browser":
         default:
-            return browserworkspace.provider
+            // TODO @darzu:
+            console.log("chooseWorkspace browser")
+            return createBrowserDbWorkspace("")
+            // return browserworkspace.provider
     }
 }
 
@@ -363,8 +366,10 @@ function checkHeaderSession(h: Header): void {
 export function initAsync() {
     if (!impl) {
         // TODO @darzu: hmmmm we should be use setupWorkspace
-        impl = createCachedWorkspace(browserworkspace.provider);
-        implType = "browser";
+        console.log("BAD init browser workspace") // TODO @darzu:
+        // TODO @darzu:
+        // impl = createCachedWorkspace(browserworkspace.provider);
+        // implType = "browser";
     }
 
     return syncAsync()
@@ -460,7 +465,48 @@ export function forceSaveAsync(h: Header, text?: ScriptText, isCloud?: boolean):
     return saveAsync(h, text, isCloud);
 }
 
-export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Promise<void> {
+export async function saveAsync(header: Header, text?: ScriptText, isCloud?: boolean): Promise<void> {
+    console.log(`workspace:saveAsync ${header.id}`)
+    // TODO @darzu: port over from saveAsync2
+    let prj = await impl.getAsync(header) // TODO @darzu: dbg
+    if (!prj) {
+        // first save
+        console.log(`first save: ${header.id}`) // TODO @darzu: dbg
+        prj = {
+            header,
+            text,
+            version: null
+        }
+    } else {
+        if (prj.text === text) {
+            // we're getting a double save.. no point
+            console.log("BAD double save!") // TODO @darzu: dbg
+            // TODO @darzu:
+            // return
+        }
+    }
+
+    try {
+        const res = await impl.setAsync(header, prj.version, text);
+        if (!res) {
+            // conflict occured
+            console.log(`conflict occured for ${header.id} at ${prj.version}`) // TODO @darzu: dbg
+            // TODO @darzu: what to do? probably nothing
+        }
+    } catch (e) {
+        // Write failed; use in memory db.
+        // TODO @darzu: POLICY
+        console.log("switchToMemoryWorkspace (1)") // TODO @darzu:
+        console.dir(e)
+        // await switchToMemoryWorkspace("write failed");
+        // await impl.setAsync(header, prj.version, text);
+    }
+
+    return;
+}
+
+export function saveAsync2(h: Header, text?: ScriptText, isCloud?: boolean): Promise<void> {
+    // TODO @darzu: rebuild this
     pxt.debug(`workspace: save ${h.id}`)
     if (h.isDeleted)
         clearHeaderSession(h);
@@ -563,7 +609,7 @@ function computePath(h: Header) {
 
 export function importAsync(h: Header, text: ScriptText, isCloud = false) {
     // TODO @darzu: why does import bypass workspaces or does it?
-    console.log(`importAsync: ${h.id}`);
+    console.log(`importAsync: ${h.id}`); // TODO @darzu: dbg
     h.path = computePath(h)
     const e: File = {
         header: h,
@@ -575,6 +621,7 @@ export function importAsync(h: Header, text: ScriptText, isCloud = false) {
 }
 
 export function installAsync(h0: InstallHeader, text: ScriptText) {
+    console.log(`workspace:installAsync ${h0.pubId}`) // TODO @darzu: dbg
     // TODO @darzu: why do we "install" here? how does that relate to "import"? This is 5 years old...
     U.assert(h0.target == pxt.appTarget.id);
 
@@ -1588,7 +1635,10 @@ export function listAssetsAsync(id: string): Promise<pxt.workspace.Asset[]> {
 }
 
 export function isBrowserWorkspace() {
-    return impl === browserworkspace.provider;
+    // TODO @darzu: trace all uses. this shouldn't be needed
+    console.log("workspace.ts:isBrowserWorkspace")
+    return false
+    // return impl === browserworkspace.provider;
 }
 
 export function fireEvent(ev: pxt.editor.events.Event) {

@@ -3,7 +3,7 @@ import U = pxt.Util;
 
 type Header = pxt.workspace.Header;
 type ScriptText = pxt.workspace.ScriptText;
-type F = pxt.workspace.File;
+type WsFile = pxt.workspace.File;
 type Version = pxt.workspace.Version;
 type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
 
@@ -20,7 +20,7 @@ export interface CachedWorkspaceProvider extends WorkspaceProvider {
     firstSync(): Promise<boolean>,
     listSync(): Header[],
     hasSync(h: Header): boolean,
-    tryGetSync(h: Header): F
+    tryGetSync(h: Header): WsFile
 }
 
 function computeLastModTime(hdrs: Header[]): number {
@@ -35,7 +35,7 @@ function hasChanged(a: Header, b: Header): boolean {
 export function createCachedWorkspace(ws: WorkspaceProvider): CachedWorkspaceProvider {
     let cacheHdrs: Header[] = []
     let cacheHdrsMap: {[id: string]: Header} = {};
-    let cacheProjs: {[id: string]: F} = {};
+    let cacheProjs: {[id: string]: WsFile} = {};
 
     let cacheModTime: number = 0;
 
@@ -108,7 +108,7 @@ export function createCachedWorkspace(ws: WorkspaceProvider): CachedWorkspacePro
         await pendingUpdate;
         return cacheHdrs
     }
-    async function getAsync(h: Header): Promise<F> {
+    async function getAsync(h: Header): Promise<WsFile> {
         // TODO @darzu: should the semantics of this check the header version?
         await pendingUpdate;
         if (!cacheProjs[h.id]) {
@@ -136,6 +136,17 @@ export function createCachedWorkspace(ws: WorkspaceProvider): CachedWorkspacePro
         // update mod time
         cacheModTime = Math.max(cacheModTime, h.modificationTime)
         const res = await ws.setAsync(h, prevVer, text)
+        if (res) {
+            // update cached projec
+            cacheProjs[h.id] = {
+                header: h,
+                text,
+                version: res
+            }
+        } else {
+            // conflict; delete cache
+            delete cacheProjs[h.id]
+        }
         return res;
     }
     async function deleteAsync(h: Header, prevVer: Version): Promise<void> {
@@ -330,12 +341,13 @@ export function createCloudSyncWorkspace(cloud: WorkspaceProvider, cloudLocal: W
         await pendingSync
         return localCache.listAsync()
     }
-    async function getAsync(h: Header): Promise<F> {
+    async function getAsync(h: Header): Promise<WsFile> {
         await pendingSync
         return localCache.getAsync(h)
     }
     async function setAsync(h: Header, prevVer: any, text?: ScriptText): Promise<string> {
         await pendingSync
+        // TODO @darzu: cannot pass prevVer to both of these.. they have different meanings on the different platforms
         // TODO @darzu: use a queue to sync to backend and make sure this promise is part of the pending sync set
         const cloudPromise = cloudCache.setAsync(h, prevVer, text)
         // TODO @darzu: also what to do with the return value ?
