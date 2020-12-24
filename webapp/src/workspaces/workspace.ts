@@ -37,21 +37,37 @@ type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
 type InstallHeader = pxt.workspace.InstallHeader;
 type File = pxt.workspace.File;
 
+// TODO @darzu: todo list:
+// [ ] remove / fix header session methods
+// [ ] remove forceSaveAsync
+// [x] remove allScripts
+// [ ] remove headerQ
+// [ ] invalidate virtual api:
+        // data.invalidateHeader("header", hd);
+        // data.invalidateHeader("text", hd);
+        // data.invalidateHeader("pkg-git-status", hd);
+        // data.invalidate("gh-commits:*"); // invalidate commits just in case
+// [ ] remove syncAsync
+
+
 // TODO @darzu: remove. redudant w/ implCache
-let allScripts: File[] = [];
+// let allScripts: File[] = []; // TODO @darzu: del
 
 let headerQ = new U.PromiseQueue();
 
 let impl: CachedWorkspaceProvider;
-// TODO @darzu:
+// TODO @darzu: del
 // let implCache: CachedWorkspaceProvider;
 let implType: WorkspaceKind;
 
+// TODO @darzu: del
 function lookup(id: string): File {
-    // TODO @darzu:
-    // const hdr = implCache.listSync().find(x => x.header.id == id || x.header.path == id)
+    // TODO @darzu: what is .path used for?
+    const hdr = impl.listSync().find(h => h.id == id || h.path == id)
+    return impl.tryGetSync(hdr)
+    // TODO @darzu: del
     // implCache.getSync();
-    return allScripts.find(x => x.header.id == id || x.header.path == id);
+    // return allScripts.find(x => x.header.id == id || x.header.path == id);
 }
 
 export function gitsha(data: string, encoding: "utf-8" | "base64" = "utf-8") {
@@ -293,7 +309,9 @@ export function restoreFromBackupAsync(h: Header) {
 }
 
 function cleanupBackupsAsync() {
-    const allHeaders = allScripts.map(e => e.header);
+    const allHeaders = impl.listSync();
+    // TODO @darzu: del
+    // const allHeaders = allScripts.map(e => e.header);
     const refMap: pxt.Map<boolean> = {};
 
     // Figure out which scripts have backups
@@ -328,8 +346,9 @@ function maybeSyncHeadersAsync(): Promise<void> {
 function refreshHeadersSession() {
     // TODO @darzu: carefully handle this
     // use # of scripts + time of last mod as key
-    sessionID = allScripts.length + ' ' + allScripts
-        .map(h => h.header.modificationTime)
+    const hdrs = impl.listSync()
+    sessionID = hdrs.length + ' ' + hdrs
+        .map(h => h.modificationTime)
         .reduce((l, r) => Math.max(l, r), 0)
         .toString()
     if (isHeadersSessionOutdated()) {
@@ -541,9 +560,10 @@ export function saveAsync2(h: Header, text?: ScriptText, isCloud?: boolean): Pro
     // perma-delete
     if (h.isDeleted && h.blobVersion_ == "DELETED") {
         // TODO @darzu: "isDelete" is a command flag????? argh..
-        let idx = allScripts.indexOf(e)
-        U.assert(idx >= 0)
-        allScripts.splice(idx, 1)
+        // TODO @darzu: del:
+        // let idx = allScripts.indexOf(e)
+        // U.assert(idx >= 0)
+        // allScripts.splice(idx, 1)
         return headerQ.enqueue(h.id, () =>
             fixupVersionAsync(e).then(() =>
                 impl.deleteAsync ? impl.deleteAsync(h, e.version) : impl.setAsync(h, e.version, {})))
@@ -594,6 +614,7 @@ export function saveAsync2(h: Header, text?: ScriptText, isCloud?: boolean): Pro
 }
 
 function computePath(h: Header) {
+    // TODO @darzu: what's the deal with this path?
     let path = h.name.replace(/[^a-zA-Z0-9]+/g, " ").trim().replace(/ /g, "-")
     if (!path)
         path = "Untitled"; // do not translate
@@ -616,7 +637,8 @@ export function importAsync(h: Header, text: ScriptText, isCloud = false) {
         text: text,
         version: null
     }
-    allScripts.push(e)
+    // TODO @darzu: del
+    // allScripts.push(e)
     return forceSaveAsync(h, text, isCloud)
 }
 
@@ -674,7 +696,7 @@ export function duplicateAsync(h: Header, text: ScriptText, newName?: string): P
 export function createDuplicateName(h: Header) {
     let reducedName = h.name.indexOf("#") > -1 ?
         h.name.substring(0, h.name.lastIndexOf('#')).trim() : h.name;
-    let names = U.toDictionary(allScripts.filter(e => !e.header.isDeleted), e => e.header.name)
+    let names = U.toDictionary(impl.listSync().filter(h => !h.isDeleted), h => h.name)
     let n = 2
     while (names.hasOwnProperty(reducedName + " #" + n))
         n++
@@ -1551,10 +1573,10 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
                 .then(() => impl.listAsync());
         })
         .then(headers => {
-            const existing = U.toDictionary(allScripts || [], h => h.header.id)
             // this is an in-place update the header instances
-            allScripts = headers.map(hd => {
-                let ex = existing[hd.id]
+            // TODO @darzu: del "let"
+            let allScripts = headers.map(hd => {
+                let ex = impl.tryGetSync(hd)
                 if (ex) {
                     if (JSON.stringify(ex.header) !== JSON.stringify(hd)) {
                         U.jsonCopyFrom(ex.header, hd)
@@ -1591,7 +1613,8 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
 export async function resetAsync() {
     // TODO @darzu: this should just pass through to workspace impl
     console.log("resetAsync (1)") // TODO @darzu:
-    allScripts = []
+    // TODO @darzu: del
+    // allScripts = []
     await impl.resetAsync();
     console.log("resetAsync (2)") // TODO @darzu:
     await cloudsync.resetAsync();
