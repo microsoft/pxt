@@ -11,16 +11,22 @@ type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
 // [ ] cache invalidation via header sessions
 // [ ] enforce soft-delete
 //      pouchdb uses _delete for soft delete
-// [ ] need to think more about error handling and retries
+// [ ] error handling: conflicts returned as "undefined"; other errors propegate as exceptions
 
 export interface CachedWorkspaceProvider extends WorkspaceProvider {
     getLastModTime(): number,
-    synchronize(expectedLastModTime?: number): Promise<boolean>,
+    synchronize(expectedLastModTime?: number): Promise<boolean>, // TODO @darzu: name syncAsync?
     pendingSync(): Promise<boolean>,
     firstSync(): Promise<boolean>,
     listSync(): Header[],
     hasSync(h: Header): boolean,
     tryGetSync(h: Header): WsFile
+}
+
+// TODO @darzu: \/ \/ \/ thread through
+export interface SynchronizationReason {
+    pollCloud?: boolean,
+    pollSession?: boolean,
 }
 
 function computeLastModTime(hdrs: Header[]): number {
@@ -36,6 +42,14 @@ export function createCachedWorkspace(ws: WorkspaceProvider): CachedWorkspacePro
     let cacheHdrs: Header[] = []
     let cacheHdrsMap: {[id: string]: Header} = {};
     let cacheProjs: {[id: string]: WsFile} = {};
+
+    // TODO @darzu: thinking through workspace sessions
+    //      per header locks?
+    //      for all headers?
+    // const workspaceID: string = pxt.Util.guidGen();
+    // pxt.storage.setLocal('workspaceheadersessionid:' + h.id, workspaceID);
+    // pxt.storage.removeLocal('workspaceheadersessionid:' + h.id);
+    // const sid = pxt.storage.getLocal('workspaceheadersessionid:' + h.id);
 
     let cacheModTime: number = 0;
 

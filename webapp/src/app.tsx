@@ -263,8 +263,13 @@ export class ProjectView
             }
             this.saveFileAsync().done();
         } else if (active) {
+            // TODO @darzu: new code path:
+            // workspace.syncAsync().then(changed => this.reloadAsync())
+            // reloadAsync: this.loadHeaderAsync()
+            // OR: subscribe to data api, on change, reload
+
             data.invalidate("header:*")
-            if (workspace.isHeadersSessionOutdated()
+            if (workspace.isHeadersSessionOutdated() // TODO @darzu: sync check point
                 || workspace.isHeaderSessionOutdated(this.state.header)) {
                 pxt.debug('workspace: changed, reloading...')
                 let id = this.state.header ? this.state.header.id : '';
@@ -1299,6 +1304,7 @@ export class ProjectView
             return checkAsync.then(() => this.openHome());
 
         let p = Promise.resolve();
+        // TODO @darzu: sync checkpoint
         if (workspace.isHeadersSessionOutdated()) { // reload header before loading
             pxt.log(`sync before load`)
             p = p.then(() => workspace.syncAsync().then(() => { }))

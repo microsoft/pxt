@@ -48,6 +48,7 @@ type File = pxt.workspace.File;
         // data.invalidateHeader("pkg-git-status", hd);
         // data.invalidate("gh-commits:*"); // invalidate commits just in case
 // [ ] remove syncAsync
+// [ ] ensure we don't regress https://github.com/microsoft/pxt/issues/7520
 
 
 // TODO @darzu: remove. redudant w/ implCache
@@ -340,17 +341,21 @@ export function isHeadersSessionOutdated() {
 }
 function maybeSyncHeadersAsync(): Promise<void> {
     if (isHeadersSessionOutdated()) // another tab took control
-        return syncAsync().then(() => { })
+        return syncAsync().then(() => { }) // take back control
     return Promise.resolve();
 }
-function refreshHeadersSession() {
-    // TODO @darzu: carefully handle this
-    // use # of scripts + time of last mod as key
+function computeHeadersSessionID() {
     const hdrs = impl.listSync()
-    sessionID = hdrs.length + ' ' + hdrs
+    return hdrs.length + ' ' + hdrs
         .map(h => h.modificationTime)
         .reduce((l, r) => Math.max(l, r), 0)
         .toString()
+}
+function refreshHeadersSession() {
+    // TODO @darzu: carefully handle this.
+    // use # of scripts + time of last mod as key
+    sessionID = computeHeadersSessionID();
+
     if (isHeadersSessionOutdated()) {
         pxt.storage.setLocal('workspacesessionid', sessionID);
         pxt.debug(`workspace: refreshed headers session to ${sessionID}`);
@@ -882,6 +887,7 @@ const BLOCKSDIFF_PREVIEW_PATH = ".github/makecode/blocksdiff.png";
 const BINARY_JS_PATH = "assets/js/binary.js";
 const VERSION_TXT_PATH = "assets/version.txt";
 export async function commitAsync(hd: Header, options: CommitOptions = {}) {
+    // TODO @darzu: learn how this works
     await cloudsync.ensureGitHubTokenAsync();
 
     let files = await getTextAsync(hd.id)
@@ -1555,10 +1561,20 @@ export async function saveToCloudAsync(h: Header) {
     // return cloudsync.saveToCloudAsync(h)
 }
 
+
+export async function syncAsync(): Promise<pxt.editor.EditorSyncState> {
+    // TODO @darzu: clean up naming, layering
+    // TODO @darzu: handle:
+    //      filters?: pxt.editor.ProjectFilters;
+    //      searchBar?: boolean;
+    return syncAsync2()
+}
+
+
 // this promise is set while a sync is in progress
 // cleared when sync is done.
 let syncAsyncPromise: Promise<pxt.editor.EditorSyncState>;
-export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
+export function syncAsync2(): Promise<pxt.editor.EditorSyncState> {
     // TODO @darzu: this function shouldn't be needed ideally
     pxt.debug("workspace: sync")
     if (syncAsyncPromise) return syncAsyncPromise;
@@ -1584,7 +1600,7 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
                         ex.text = undefined
                         ex.version = undefined
                         // TODO @darzu: handle data API subscriptions on header changed
-                        console.log(`INVALIDATIN header ${hd.id}`) // TODO @darzu:
+                        console.log(`INVALIDATING header ${hd.id}`) // TODO @darzu:
                         data.invalidateHeader("header", hd);
                         data.invalidateHeader("text", hd);
                         data.invalidateHeader("pkg-git-status", hd);

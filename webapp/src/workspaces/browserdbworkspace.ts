@@ -24,6 +24,10 @@ export function createBrowserDbWorkspace(namespace: string): BrowserDbWorkspaceP
     const headerDb = new db.Table(`${prefix}header`);
     const textDb = new db.Table(`${prefix}text`);
 
+    // TODO @darzu: dz:
+    // return pxt.storage.getLocal('workspacesessionid') != sessionID;
+    // pxt.storage.setLocal('workspacesessionid', sessionID);
+
     // TODO @darzu:
     const printDbg = async () => {
         const hdrs: pxt.workspace.Header[] = await headerDb.getAllAsync();
