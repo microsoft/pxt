@@ -1,4 +1,4 @@
-import { CachedWorkspaceProvider } from "./cloudsyncworkspace";
+import { CachedWorkspaceProvider, SynchronizationReason } from "./cloudsyncworkspace";
 
 type Header = pxt.workspace.Header;
 type ScriptText = pxt.workspace.ScriptText;
@@ -68,11 +68,12 @@ export function createJointWorkspace(...all: CachedWorkspaceProvider[]): CachedW
 
     const firstSync = async () => (await Promise.all(all.map(w => w.firstSync()))).reduce((p, n) => p || n, false)
     const pendingSync = async () => (await Promise.all(all.map(w => w.pendingSync()))).reduce((p, n) => p || n, false)
-    const getLastModTime = () => Math.max(...all.map(w => w.getLastModTime()))
+    // TODO @darzu: is this too expensive?
+    const getHeadersHash = () => all.map(w => w.getHeadersHash()).join("|")
 
-    async function synchronize(expectedLastModTime?: number): Promise<boolean> {
-        return (await Promise.all(all.map(w => w.synchronize(expectedLastModTime))))
-            .reduce((p, n) => p || n, false)
+    async function synchronize(reason: SynchronizationReason): Promise<boolean> {
+        const changes = await Promise.all(all.map(w => w.synchronize(reason)))
+        return changes.reduce((p, n) => p || n, false)
     }
     function listSync(): Header[] {
         // return all (assuming disjoint)
@@ -104,6 +105,7 @@ export function createJointWorkspace(...all: CachedWorkspaceProvider[]): CachedW
     }
     async function setAsync(h: Header, prevVer: any, text?: ScriptText): Promise<string> {
         await pendingSync()
+        // TODO @darzu: dbg logging
         console.log("joint:setAsync")
         console.dir(all.map(w => w.hasSync(h)))
         const ws = getWorkspaceFor(h) ?? all[0]
@@ -121,7 +123,7 @@ export function createJointWorkspace(...all: CachedWorkspaceProvider[]): CachedW
 
     const provider: CachedWorkspaceProvider = {
         // cache
-        getLastModTime,
+        getHeadersHash,
         synchronize,
         pendingSync,
         firstSync,

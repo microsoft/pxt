@@ -49,6 +49,7 @@ type File = pxt.workspace.File;
         // data.invalidate("gh-commits:*"); // invalidate commits just in case
 // [ ] remove syncAsync
 // [ ] ensure we don't regress https://github.com/microsoft/pxt/issues/7520
+// [ ] add analytics & hueristics for detecting project loss
 
 
 // TODO @darzu: remove. redudant w/ implCache
@@ -171,7 +172,7 @@ export function setupWorkspace(kind: WorkspaceKind): void {
             console.log("synchronizing with the cloud...");
             console.log("before:")
             console.dir(joint.listSync().map(j => ({id: j.id, t: j.modificationTime})))
-            const changed = await joint.synchronize()
+            const changed = await joint.synchronize({pollStorage: true})
             if (changed) {
                 console.log("after:")
                 console.dir(joint.listSync().map(j => ({id: j.id, t: j.modificationTime})))
@@ -335,30 +336,23 @@ export function getHeader(id: string) {
 
 // this key is the max modificationTime value of the allHeaders
 // it is used to track if allHeaders need to be refreshed (syncAsync)
-let sessionID: string = "";
+let _allHeadersSessionHash: string = "";
 export function isHeadersSessionOutdated() {
-    return pxt.storage.getLocal('workspacesessionid') != sessionID;
+    return pxt.storage.getLocal('workspacesessionid') != _allHeadersSessionHash;
 }
 function maybeSyncHeadersAsync(): Promise<void> {
     if (isHeadersSessionOutdated()) // another tab took control
         return syncAsync().then(() => { }) // take back control
     return Promise.resolve();
 }
-function computeHeadersSessionID() {
-    const hdrs = impl.listSync()
-    return hdrs.length + ' ' + hdrs
-        .map(h => h.modificationTime)
-        .reduce((l, r) => Math.max(l, r), 0)
-        .toString()
-}
 function refreshHeadersSession() {
     // TODO @darzu: carefully handle this.
     // use # of scripts + time of last mod as key
-    sessionID = computeHeadersSessionID();
+    _allHeadersSessionHash = impl.getHeadersHash();
 
     if (isHeadersSessionOutdated()) {
-        pxt.storage.setLocal('workspacesessionid', sessionID);
-        pxt.debug(`workspace: refreshed headers session to ${sessionID}`);
+        pxt.storage.setLocal('workspacesessionid', _allHeadersSessionHash);
+        pxt.debug(`workspace: refreshed headers session to ${_allHeadersSessionHash}`);
         data.invalidate("header:*");
         data.invalidate("text:*");
     }
@@ -1561,15 +1555,22 @@ export async function saveToCloudAsync(h: Header) {
     // return cloudsync.saveToCloudAsync(h)
 }
 
-
 export async function syncAsync(): Promise<pxt.editor.EditorSyncState> {
+    // contract:
+    //  output: this tab's headers session is up to date ...
+    // TODO @darzu: ... and re-acquires headers ?
     // TODO @darzu: clean up naming, layering
     // TODO @darzu: handle:
     //      filters?: pxt.editor.ProjectFilters;
     //      searchBar?: boolean;
+    const storedSessionID = pxt.storage.getLocal('workspacesessionid')
+    const memSessionID = _allHeadersSessionHash;
+    const syncReason = {
+        localStorageDesync: true,
+        cloudPoll: false,
+    }
     return syncAsync2()
 }
-
 
 // this promise is set while a sync is in progress
 // cleared when sync is done.

@@ -14,8 +14,8 @@ type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
 // [ ] error handling: conflicts returned as "undefined"; other errors propegate as exceptions
 
 export interface CachedWorkspaceProvider extends WorkspaceProvider {
-    getLastModTime(): number,
-    synchronize(expectedLastModTime?: number): Promise<boolean>, // TODO @darzu: name syncAsync?
+    getHeadersHash(): string,
+    synchronize(reason: SynchronizationReason): Promise<boolean>, // TODO @darzu: name syncAsync?
     pendingSync(): Promise<boolean>,
     firstSync(): Promise<boolean>,
     listSync(): Header[],
@@ -25,13 +25,19 @@ export interface CachedWorkspaceProvider extends WorkspaceProvider {
 
 // TODO @darzu: \/ \/ \/ thread through
 export interface SynchronizationReason {
-    pollCloud?: boolean,
-    pollSession?: boolean,
+    expectedHeadersHash?: string,
+    pollStorage?: boolean,
 }
 
-function computeLastModTime(hdrs: Header[]): number {
-    return hdrs.reduce((p, n) => Math.max(n.modificationTime, p), 0)
+function computeHeadersHash(hdrs: Header[]): string {
+    // TODO @darzu: should we just do an actual hash?
+    //          [ ] measure perf difference
+    //          [ ] maybe there are some fields we want to ignore; if so, these should likely be moved out of Header interface
+    return hdrs.length + ' ' + hdrs // TODO @darzu: [ ] use the length component in the workspace internals?
+        .map(h => h.modificationTime)
+        .reduce((l, r) => Math.max(l, r), 0)
 }
+
 function hasChanged(a: Header, b: Header): boolean {
     // TODO @darzu: use e-tag, _rev, or version uuid instead?
     return a.modificationTime !== b.modificationTime
@@ -51,19 +57,18 @@ export function createCachedWorkspace(ws: WorkspaceProvider): CachedWorkspacePro
     // pxt.storage.removeLocal('workspaceheadersessionid:' + h.id);
     // const sid = pxt.storage.getLocal('workspaceheadersessionid:' + h.id);
 
-    let cacheModTime: number = 0;
-
-    function getLastModTime(): number {
-        return cacheModTime;
+    let cacheHdrsHash: string = "";
+    function getHeadersHash(): string {
+        return cacheHdrsHash;
     }
 
     // TODO @darzu: do we want to kick off the first sync at construction? Side-effects at construction are usually bad..
-    let pendingUpdate: Promise<boolean> = synchronizeInternal();
+    let pendingUpdate: Promise<boolean> = synchronizeInternal({ pollStorage: true });
     const firstUpdate = pendingUpdate;
-    async function synchronize(otherLastModTime?:number): Promise<boolean> {
+    async function synchronize(reason: SynchronizationReason): Promise<boolean> {
         if (pendingUpdate.isPending())
             return pendingUpdate
-        pendingUpdate = synchronizeInternal(otherLastModTime)
+        pendingUpdate = synchronizeInternal(reason)
         return pendingUpdate
     }
 
@@ -72,25 +77,28 @@ export function createCachedWorkspace(ws: WorkspaceProvider): CachedWorkspacePro
         cacheHdrs = []
         cacheHdrsMap = {}
         cacheProjs = {}
-        cacheModTime = 0
+        cacheHdrsHash = ""
     }
 
-    async function synchronizeInternal(expectedLastModTime?:number): Promise<boolean> {
+    async function synchronizeInternal(reason: SynchronizationReason): Promise<boolean> {
         // remember our old cache, we might keep items from it later
         const oldHdrs = cacheHdrs
         const oldHdrsMap = cacheHdrsMap
         const oldProjs = cacheProjs
-        const oldModTime = cacheModTime
+        const oldHdrsHash = cacheHdrsHash
 
-        if (expectedLastModTime && expectedLastModTime !== cacheModTime) {
-            // we've been told to invalidate, but we don't know specific
-            // headers yet so do the conservative thing and reset all
+        const hashDesync = reason.expectedHeadersHash && reason.expectedHeadersHash !== cacheHdrsHash
+        const needSync = !cacheHdrsHash || hashDesync || reason.pollStorage;
+        if (hashDesync) {
+            // TODO @darzu: does this buy us anything?
             eraseCache()
+        } else if (!needSync) {
+            return false
         }
 
         const newHdrs = await ws.listAsync()
-        const newLastModTime = computeLastModTime(newHdrs);
-        if (newLastModTime === oldModTime) {
+        const newHdrsHash = computeHeadersHash(newHdrs);
+        if (newHdrsHash === oldHdrsHash) {
             // no change, keep the old cache
             cacheHdrs = oldHdrs
             cacheHdrsMap = oldHdrsMap
@@ -111,7 +119,7 @@ export function createCachedWorkspace(ws: WorkspaceProvider): CachedWorkspacePro
         }
 
         // save results
-        cacheModTime = newLastModTime
+        cacheHdrsHash = newHdrsHash
         cacheProjs = newProjs
         cacheHdrs = newHdrs
         cacheHdrsMap = newHdrsMap
@@ -141,14 +149,13 @@ export function createCachedWorkspace(ws: WorkspaceProvider): CachedWorkspacePro
             text,
             version: prevVer
         }
-        // update headers list
+        // update headers list, map and hash
         if (!cacheHdrsMap[h.id]) {
             cacheHdrs.push(h)
         }
-        // update headers map
         cacheHdrsMap[h.id] = h
-        // update mod time
-        cacheModTime = Math.max(cacheModTime, h.modificationTime)
+        cacheHdrsHash = computeHeadersHash(cacheHdrs)
+        // send update to backing storage
         const res = await ws.setAsync(h, prevVer, text)
         if (res) {
             // update cached projec
@@ -160,17 +167,21 @@ export function createCachedWorkspace(ws: WorkspaceProvider): CachedWorkspacePro
         } else {
             // conflict; delete cache
             delete cacheProjs[h.id]
+            // TODO @darzu: fix header(s) after conflict ?
         }
         return res;
     }
     async function deleteAsync(h: Header, prevVer: Version): Promise<void> {
         await pendingUpdate;
+        // update cached projects
         delete cacheProjs[h.id];
-        // TODO @darzu: how to handle mod time with delete?
-        // TODO @darzu: we should probably enforce soft delete everywhere...
-        cacheModTime = Math.max(cacheModTime, h.modificationTime)
-        const res = await ws.deleteAsync(h, prevVer)
-        return res;
+        // update headers list, map and hash
+        delete cacheHdrsMap[h.id];
+        cacheHdrs = cacheHdrs.filter(r => r.id === h.id);
+        cacheHdrsHash = computeHeadersHash(cacheHdrs);
+        // send update to backing storage
+        await ws.deleteAsync(h, prevVer)
+        // TODO @darzu: fix header(s) after conflict ?
     }
     async function resetAsync() {
         await pendingUpdate;
@@ -180,12 +191,12 @@ export function createCachedWorkspace(ws: WorkspaceProvider): CachedWorkspacePro
 
     const provider: CachedWorkspaceProvider = {
         // cache
-        getLastModTime,
+        getHeadersHash,
         synchronize,
         pendingSync: () => pendingUpdate,
         firstSync: () => firstUpdate,
         listSync: () => cacheHdrs,
-        hasSync: h => !!cacheHdrsMap[h.id],
+        hasSync: h => h && !!cacheHdrsMap[h.id],
         tryGetSync: h => cacheProjs[h.id],
         // workspace
         getAsync,
@@ -207,21 +218,21 @@ export function createCloudSyncWorkspace(cloud: WorkspaceProvider, cloudLocal: W
 
     const firstCachePull = Promise.all([cloudCache.firstSync(), localCache.firstSync()])
     const pendingCacheSync = () => Promise.all([cloudCache.pendingSync(), localCache.pendingSync()])
-    const getLastModTime = () => Math.max(cloudCache.getLastModTime(), localCache.getLastModTime())
-    const needsSync = () => cloudCache.getLastModTime() !== localCache.getLastModTime()
+    const getHeadersHash = () => localCache.getHeadersHash()
+    const needsSync = () => cloudCache.getHeadersHash() !== localCache.getHeadersHash()
 
-    // TODO @darzu:  we could frequently check the last mod times to see if a sync is in order?
+    // TODO @darzu: we could frequently check the last mod times to see if a sync is in order?
 
     // TODO @darzu: multi-tab safety for cloudLocal
     // TODO @darzu: when two workspaces disagree on last mod time, we should sync?
 
-    let pendingSync: Promise<boolean> = synchronizeInternal();
-    const firstSync = pendingSync;
+    const firstSync = synchronizeInternal({pollStorage: true});;
+    let pendingSync = firstSync;
 
-    async function synchronize(expectedLastModTime?:number): Promise<boolean> {
+    async function synchronize(reason: SynchronizationReason): Promise<boolean> {
         if (pendingSync.isPending())
             return pendingSync
-        pendingSync = synchronizeInternal(expectedLastModTime)
+        pendingSync = synchronizeInternal(reason)
         return pendingSync
     }
 
@@ -260,7 +271,7 @@ export function createCloudSyncWorkspace(cloud: WorkspaceProvider, cloudLocal: W
 
         return newH;
     }
-    async function synchronizeInternal(expectedLastModTime?:number): Promise<boolean> {
+    async function synchronizeInternal(reason: SynchronizationReason): Promise<boolean> {
         console.log("cloudsyncworkspace: synchronizeInternal")
 
         // TODO @darzu: error: circular promise resolution chain
@@ -290,12 +301,7 @@ export function createCloudSyncWorkspace(cloud: WorkspaceProvider, cloudLocal: W
         // }
 
         // wait for each side to sync
-        // TODO @darzu: this isn't symmetric. Can we fix the abstraction so it is?
-        if (!expectedLastModTime) {
-            await Promise.all([cloudCache.synchronize(), localCache.pendingSync()])
-        } else {
-            await Promise.all([cloudCache.pendingSync(), localCache.synchronize(expectedLastModTime)])
-        }
+        await Promise.all([cloudCache.synchronize(reason), localCache.synchronize(reason)])
 
         // TODO @darzu: mod time isn't sufficient for a set of headers; maybe hash or merkle tree
         // // short circuit if there aren't changes
@@ -389,7 +395,7 @@ export function createCloudSyncWorkspace(cloud: WorkspaceProvider, cloudLocal: W
 
      const provider: CloudSyncWorkspace = {
         // cache
-        getLastModTime,
+        getHeadersHash,
         synchronize,
         pendingSync: () => pendingSync,
         firstSync: () => firstSync,
