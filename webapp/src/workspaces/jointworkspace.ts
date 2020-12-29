@@ -60,6 +60,15 @@ export function createJointWorkspace2(primary: WorkspaceProvider, ...others: Wor
     return provider;
 }
 
+// note: these won't work recursively, but as of now there's no forseen use
+//  case beyond 1 level. If needed, we could use a hash tree/merkle tree.
+function joinHdrsHash(...hashes: string[]): string {
+    return hashes?.join("|") ?? ""
+}
+function splitHdrsHash(hash: string): string[] {
+    return hash?.split("|") ?? []
+}
+
 export function createJointWorkspace(...all: CachedWorkspaceProvider[]): CachedWorkspaceProvider {
     // TODO @darzu: we're assuming they are disjoint for now
 
@@ -69,10 +78,14 @@ export function createJointWorkspace(...all: CachedWorkspaceProvider[]): CachedW
     const firstSync = async () => (await Promise.all(all.map(w => w.firstSync()))).reduce((p, n) => p || n, false)
     const pendingSync = async () => (await Promise.all(all.map(w => w.pendingSync()))).reduce((p, n) => p || n, false)
     // TODO @darzu: is this too expensive?
-    const getHeadersHash = () => all.map(w => w.getHeadersHash()).join("|")
+    const getHeadersHash = () => joinHdrsHash(...all.map(w => w.getHeadersHash()))
 
     async function synchronize(reason: SynchronizationReason): Promise<boolean> {
-        const changes = await Promise.all(all.map(w => w.synchronize(reason)))
+        const expectedHashes = splitHdrsHash(reason.expectedHeadersHash)
+        const changes = await Promise.all(all.map((w, i) => w.synchronize({
+                ...reason,
+                expectedHeadersHash: expectedHashes[i]
+            })))
         return changes.reduce((p, n) => p || n, false)
     }
     function listSync(): Header[] {

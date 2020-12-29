@@ -274,8 +274,7 @@ export function createCloudSyncWorkspace(cloud: WorkspaceProvider, cloudLocal: W
     async function synchronizeInternal(reason: SynchronizationReason): Promise<boolean> {
         console.log("cloudsyncworkspace: synchronizeInternal")
 
-        // TODO @darzu: error: circular promise resolution chain
-
+        // TODO @darzu: review these cases:
         // case 1: everything should be synced up, we're just polling the server
         //      expectedLastModTime = 0
         //      we definitely want cloudCache to synchronize
@@ -293,21 +292,8 @@ export function createCloudSyncWorkspace(cloud: WorkspaceProvider, cloudLocal: W
         //      we want to wait on localCache.pendingSync
         // TODO @darzu: need to think through and compare how this would work with git
 
-        // TODO @darzu: not sure what case would hit this:
-        // if (!expectedLastModTime) {
-        //     // first check if there is a known disagreement before we force each side to deep sync
-        //     if (cloudCache.getLastModTime() !== localCache.getLastModTime())
-        //         expectedLastModTime = getLastModTime();
-        // }
-
         // wait for each side to sync
         await Promise.all([cloudCache.synchronize(reason), localCache.synchronize(reason)])
-
-        // TODO @darzu: mod time isn't sufficient for a set of headers; maybe hash or merkle tree
-        // // short circuit if there aren't changes
-        // if (cloudCache.getLastModTime() === localCache.getLastModTime()) {
-        //     return false
-        // }
 
         // TODO @darzu: re-generalize?
         const left = cloudCache;

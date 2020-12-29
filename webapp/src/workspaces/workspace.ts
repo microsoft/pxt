@@ -38,7 +38,7 @@ type InstallHeader = pxt.workspace.InstallHeader;
 type File = pxt.workspace.File;
 
 // TODO @darzu: todo list:
-// [ ] remove / fix header session methods
+// [x] remove / fix header session methods
 // [ ] remove forceSaveAsync
 // [x] remove allScripts
 // [ ] remove headerQ
@@ -47,9 +47,48 @@ type File = pxt.workspace.File;
         // data.invalidateHeader("text", hd);
         // data.invalidateHeader("pkg-git-status", hd);
         // data.invalidate("gh-commits:*"); // invalidate commits just in case
-// [ ] remove syncAsync
+// [x] remove syncAsync
 // [ ] ensure we don't regress https://github.com/microsoft/pxt/issues/7520
 // [ ] add analytics & hueristics for detecting project loss
+// [ ] handle switchToMemoryWorkspace
+// [ ] soft delete, ensure we are prefering
+// [ ] don't block on network
+//      [ ] 1st load
+//      [ ] ever
+// [ ] 1st time migrate local -> online
+// [ ] multi-user seperation
+//      [ ] client can't change/delete other user content
+// [ ] background work:
+//      [ ] queueing
+//      [ ] updating in the queue
+//      [ ] thorttle, debounce
+//      [ ] batch
+// [ ] don't sync when tab idle, or sync exp backoff
+// [ ] cloud state UX
+//      [ ] project list
+//      [ ] conflict resolution dialog
+//      [ ] in editor
+// [ ] clean up code
+//      [ ] handle all TODO @darzu's
+//      [ ] renames
+//          [ ] synchronize -> syncAsync
+//      [ ] cloudsyncworkspace,
+//      [ ] cloudsync,
+//      [ ] oldbrowserdbworkspace,
+//      [ ] synchronizedworkspace,
+//      [ ] workspacebehavior
+// TESTING:
+// for each:
+//      [ ] create new prj
+//      [ ] delete prj
+//      [ ] mod prj
+//      [ ] reset
+// do:
+//      [ ] online
+//      [ ] offline, signed in
+//      [ ] offline, signed out
+//      [ ] multi-tab
+//      [ ] multi-browser
 
 
 // TODO @darzu: remove. redudant w/ implCache
@@ -1556,20 +1595,33 @@ export async function saveToCloudAsync(h: Header) {
 }
 
 export async function syncAsync(): Promise<pxt.editor.EditorSyncState> {
+    console.log("workspace:syncAsync");
     // contract:
     //  output: this tab's headers session is up to date ...
     // TODO @darzu: ... and re-acquires headers ?
     // TODO @darzu: clean up naming, layering
+    const expectedHeadersHash = pxt.storage.getLocal('workspacesessionid')
+    const changed = await impl.synchronize({
+        expectedHeadersHash,
+    })
     // TODO @darzu: handle:
     //      filters?: pxt.editor.ProjectFilters;
     //      searchBar?: boolean;
-    const storedSessionID = pxt.storage.getLocal('workspacesessionid')
-    const memSessionID = _allHeadersSessionHash;
-    const syncReason = {
-        localStorageDesync: true,
-        cloudPoll: false,
-    }
-    return syncAsync2()
+
+    // TODO @darzu: \/
+    /*
+    // force reload
+    ex.text = undefined
+    ex.version = undefined
+
+    data.invalidateHeader("header", hd);
+    data.invalidateHeader("text", hd);
+    data.invalidateHeader("pkg-git-status", hd);
+    data.invalidate("gh-commits:*"); // invalidate commits just in case
+
+    impl.getSyncState()
+    */
+    return {}
 }
 
 // this promise is set while a sync is in progress
