@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { FieldEditorComponent } from '../blocklyFieldView';
 import { AssetCardView } from "./assetEditor/assetCard";
-import { getUserAssets } from "./assetEditor/store/assetEditorReducer";
+import { getAssets } from "./assetEditor/store/assetEditorReducer";
 import { ImageEditor } from "./ImageEditor/ImageEditor";
 import { setTelemetryFunction } from './ImageEditor/store/imageReducer';
 
@@ -56,11 +56,6 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
             }
         }
 
-        if (currentView === "my-assets" && !this.userAssets) {
-            this.userAssets = getUserAssets();
-        }
-
-
         const toggleClass = currentView === "editor" ? "left" : (currentView === "gallery" ? "center" : "right");
 
         return <div className="image-editor-wrapper">
@@ -82,7 +77,7 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
             <div className="image-editor-gallery-content">
                 <ImageEditor ref="image-editor" singleFrame={this.props.singleFrame} onDoneClicked={this.onDoneClick} />
                 <ImageEditorGallery
-                    items={currentView === "my-assets" ? this.filterAssets(this.userAssets) : this.filterAssets(this.galleryAssets, null, true)}
+                    items={currentView === "my-assets" ? this.filterAssets(this.userAssets) : this.filterAssets(this.galleryAssets, this.asset?.type, true)}
                     hidden={currentView === "editor"}
                     onAssetSelected={this.onAssetSelected} />
                 { showTiles && <ImageEditorGallery
@@ -172,38 +167,7 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
     }
 
     protected updateGalleryAssets(blocksInfo: pxtc.BlocksInfo) {
-        const allImages = pxt.sprite.getGalleryItems(blocksInfo, "Image");
-        const tileAssets: pxt.Asset[] = [];
-        const imageAssets: pxt.Asset[] = [];
-
-        for (const item of allImages) {
-            if (item.tags.indexOf("tile") === -1) {
-                const bitmapData = pxt.sprite.getBitmap(blocksInfo, item.qName).data();
-                imageAssets.push({
-                    internalID: -1,
-                    type: pxt.AssetType.Image,
-                    id: item.qName,
-                    jresData: pxt.sprite.base64EncodeBitmap(bitmapData),
-                    previewURI: item.src,
-                    bitmap: bitmapData,
-                    meta: {}
-                });
-            }
-            else {
-                const bitmapData = pxt.sprite.Bitmap.fromData(pxt.react.getTilemapProject().resolveTile(item.qName).bitmap).data();
-                tileAssets.push({
-                    internalID: -1,
-                    type: pxt.AssetType.Tile,
-                    id: item.qName,
-                    jresData: pxt.sprite.base64EncodeBitmap(bitmapData),
-                    previewURI: item.src,
-                    bitmap: bitmapData,
-                    meta: {}
-                });
-            }
-        }
-
-        this.galleryAssets = imageAssets.concat(tileAssets);
+        this.galleryAssets = getAssets(true);
     }
 
     protected initSingleFrame(value: pxt.ProjectImage, options?: any) {
@@ -277,6 +241,7 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
 
     protected showMyAssets = () => {
         tickImageEditorEvent("gallery-my-assets");
+        this.userAssets = getAssets();
         this.setState({
             currentView: "my-assets",
             tileGalleryVisible: false
@@ -312,7 +277,12 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
 
             // this.ref.setCurrentFrame(selectedBitmap);
 
-            this.ref.openAsset(asset, undefined, true);
+            if (this.state.currentView === "gallery") {
+                this.ref.openGalleryAsset(asset as pxt.Tile | pxt.ProjectImage | pxt.Animation);
+            }
+            else {
+                this.ref.openAsset(asset, undefined, true);
+            }
         }
 
         tickImageEditorEvent("gallery-selection");
@@ -326,7 +296,7 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
     loadJres(jres: string) {
         if (jres) {
             try {
-                this.ref.setCurrentFrame(pxt.sprite.getBitmapFromJResURL(jres));
+                this.ref.setCurrentFrame(pxt.sprite.getBitmapFromJResURL(jres), true);
             } catch (e) {
                 return
             }

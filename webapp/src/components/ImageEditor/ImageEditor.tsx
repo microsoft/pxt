@@ -11,7 +11,7 @@ import { Alert, AlertInfo } from './Alert';
 import { Timeline } from './Timeline';
 import { addKeyListener, removeKeyListener, setStore } from './keyboardShortcuts';
 
-import { dispatchSetInitialState, dispatchImageEdit, dispatchChangeZoom, dispatchOpenAsset, dispatchCloseTileEditor, dispatchDisableResize, dispatchChangeAssetName } from './actions/dispatch';
+import { dispatchSetInitialState, dispatchImageEdit, dispatchChangeZoom, dispatchOpenAsset, dispatchCloseTileEditor, dispatchDisableResize, dispatchChangeAssetName, dispatchChangeImageDimensions, dispatchSetFrames } from './actions/dispatch';
 import { EditorState, AnimationState, TilemapState, GalleryTile, ImageEditorStore } from './store/imageReducer';
 import { imageStateToBitmap, imageStateToTilemap, applyBitmapData } from './util';
 import { Unsubscribe, Action } from 'redux';
@@ -116,6 +116,37 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
         }
         else if (keepPast) {
             this.dispatchOnStore(dispatchChangeAssetName(""));
+        }
+    }
+
+    openGalleryAsset(asset: pxt.Animation | pxt.ProjectImage | pxt.Tile) {
+        const current = this.getAsset();
+
+        const frames = (this.getStore().getState().store.present as AnimationState).frames;
+
+        switch (current.type) {
+            case pxt.AssetType.Animation:
+                switch (asset.type) {
+                    case pxt.AssetType.Image:
+                    case pxt.AssetType.Tile:
+                        this.setCurrentFrame(pxt.sprite.Bitmap.fromData(asset.bitmap), frames.length === 1);
+                        break;
+                    case pxt.AssetType.Animation:
+                        this.dispatchOnStore(dispatchSetFrames(asset.frames.map(b => ({ bitmap: b }))));
+                        break;
+                }
+                break;
+            case pxt.AssetType.Image:
+            case pxt.AssetType.Tile:
+                switch (asset.type) {
+                    case pxt.AssetType.Image:
+                    case pxt.AssetType.Tile:
+                        this.setCurrentFrame(pxt.sprite.Bitmap.fromData(asset.bitmap), true);
+                        break;
+                    case pxt.AssetType.Animation:
+                        this.setCurrentFrame(pxt.sprite.Bitmap.fromData(asset.frames[0]), true);
+                        break;
+                }
         }
     }
 
@@ -240,8 +271,26 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
         }
     }
 
-    setCurrentFrame(bitmap: pxt.sprite.Bitmap) {
-        this.dispatchOnStore(dispatchImageEdit({ bitmap: bitmap.data() }))
+    setCurrentFrame(bitmap: pxt.sprite.Bitmap, shrinkIfNecessary: boolean) {
+        if (!shrinkIfNecessary) {
+            const state = this.getStore().getState();
+            const current = (state.store.present as AnimationState).frames[0];
+
+            if (bitmap.width !== current.bitmap.width || bitmap.height !== current.bitmap.height) {
+                const dimensions: [number, number] = [
+                    Math.max(bitmap.width, current.bitmap.width), Math.max(bitmap.height, current.bitmap.height)
+                ];
+
+                if (current.bitmap.width !== dimensions[0] || current.bitmap.height !== dimensions[1]) {
+                    this.dispatchOnStore(dispatchChangeImageDimensions(dimensions));
+                }
+
+                bitmap = bitmap.copy();
+                bitmap = bitmap.resize(dimensions[0], dimensions[1]);
+            }
+        }
+
+        this.dispatchOnStore(dispatchImageEdit({ bitmap: bitmap.data() }));
     }
 
     disableResize() {

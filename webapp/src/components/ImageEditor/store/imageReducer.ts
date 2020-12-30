@@ -384,6 +384,13 @@ const animationReducer = (state: AnimationState, action: any): AnimationState =>
                 frames: movedFrames,
                 currentFrame: action.oldIndex === state.currentFrame ? action.newIndex : state.currentFrame
             }
+        case actions.SET_FRAMES:
+            tickEvent(`set-frames`);
+            return {
+                ...state,
+                frames: action.frames,
+                currentFrame: 0
+            };
         default:
             return state;
     }

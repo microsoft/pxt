@@ -4687,6 +4687,14 @@ interface SpriteInfo {
     tags?: string;
     frames?: string[];
     blockIdentity?: string;
+    animation?: boolean,
+    animations?: AnimationInfo[];
+}
+
+interface AnimationInfo {
+    frames: number[];
+    flippedHorizontal: boolean;
+    name: string;
 }
 
 
@@ -4848,8 +4856,9 @@ function buildJResSpritesDirectoryAsync(dir: string) {
         let nx = (sheet.width / info.width) | 0
         let ny = (sheet.height / info.height) | 0
         let numSprites = nx * ny
+        const frameQNames: string[] = [];
 
-        for (let y = 0; y + info.height - 1 < sheet.height; y += info.height + info.ySpacing)
+        for (let y = 0; y + info.height - 1 < sheet.height; y += info.height + info.ySpacing) {
             for (let x = 0; x + info.width - 1 < sheet.width; x += info.width + info.xSpacing) {
                 if (info.frames && imgIdx >= info.frames.length) return;
 
@@ -4916,9 +4925,32 @@ function buildJResSpritesDirectoryAsync(dir: string) {
                 ts += `    export const ${key} = ${metaInfo.creator}(hex\`\`);\n`
 
                 pxt.log(`add ${key}; ${JSON.stringify(jresources[key]).length} bytes`)
+                frameQNames.push((metaInfo.star.namespace) + "." + key);
 
                 imgIdx++
             }
+        }
+
+        if (info.animation) {
+            processAnimation(basename, frameQNames.map((name, i) => i));
+        }
+
+        if (info.animations) {
+            for (const animation of info.animations) {
+                processAnimation(animation.name, animation.frames, animation.flippedHorizontal);
+            }
+        }
+
+        function processAnimation(name: string, frames: number[], flippedHorizontal = false) {
+            jresources[name] = {
+                mimeType: "application/mkcd-animation",
+                dataEncoding: "json",
+                data: JSON.stringify({
+                    frames: frames.map(frameIndex => frameQNames[frameIndex]),
+                    flippedHorizontal
+                })
+            } as any
+        }
     }
 }
 

@@ -31,7 +31,7 @@ const topReducer = (state: AssetEditorState = initialState, action: any): AssetE
                 view: action.view
             };
         case actions.UPDATE_USER_ASSETS:
-            const assets = getUserAssets();
+            const assets = getAssets();
             return {
                 ...state,
                 selectedAsset: state.selectedAsset ? assets.find(el => el.id == state.selectedAsset.id) : undefined,
@@ -58,7 +58,7 @@ function getSelectedAsset(state: AssetEditorState, type: pxt.AssetType, id: stri
         || state.galleryAssets.find(el => el.type == type && el.id == id);
 }
 
-export function getUserAssets() {
+export function getAssets(gallery = false): pxt.Asset[] {
     const project = pxt.react.getTilemapProject();
     const imgConv = new pxt.ImageConverter();
 
@@ -81,15 +81,17 @@ export function getUserAssets() {
         return asset;
     };
 
-    const images = project.getAssets(pxt.AssetType.Image).map(imageToGalleryItem).sort(compareInternalId);
-    const tiles = project.getAssets(pxt.AssetType.Tile).map(imageToGalleryItem)
-        .filter(t => !t.id.match(/^myTiles.transparency(8|16|32)$/gi)).sort(compareInternalId);
-    const tilemaps = project.getAssets(pxt.AssetType.Tilemap).map(tilemapToGalleryItem).sort(compareInternalId);
-    const animations = project.getAssets(pxt.AssetType.Animation).map(animationToGalleryItem);
+    const getAssetType = gallery ? project.getGalleryAssets.bind(project) : project.getAssets.bind(project);
+
+    const images = getAssetType(pxt.AssetType.Image).map(imageToGalleryItem).sort(compareInternalId);
+    const tiles = getAssetType(pxt.AssetType.Tile).map(imageToGalleryItem)
+        .filter((t: pxt.Tile) => !t.id.match(/^myTiles.transparency(8|16|32)$/gi)).sort(compareInternalId);
+    const tilemaps = getAssetType(pxt.AssetType.Tilemap).map(tilemapToGalleryItem).sort(compareInternalId);
+    const animations = getAssetType(pxt.AssetType.Animation).map(animationToGalleryItem);
 
     const assets = images.concat(tiles).concat(tilemaps).concat(animations);
 
-    pxt.tickEvent("assets.update", { count: assets.length });
+    pxt.tickEvent(gallery ? "assets.gallery" : "assets.update", { count: assets.length });
 
     return assets;
 }
