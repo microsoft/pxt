@@ -24,13 +24,16 @@ import { SkillCarousel } from './components/SkillCarousel';
 import { parseSkillMap } from './lib/skillMapParser';
 import { parseHash, getMarkdownAsync, MarkdownSource, parseQuery, guidGen } from './lib/browserUtils';
 
-import './App.css';
 import { MakeCodeFrame } from './components/makecodeFrame';
 import { getUserStateAsync, saveUserStateAsync } from './lib/workspaceProvider';
 import { Unsubscribe } from 'redux';
 
+/* tslint:disable:no-import-side-effect */
+import './App.css';
+
 // TODO: this file needs to read colors from the target
 import './arcade.css';
+/* tslint:enable:no-import-side-effect */
 
 (window as any).Promise = Promise;
 
