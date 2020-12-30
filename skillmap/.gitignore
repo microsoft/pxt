@@ -12,6 +12,8 @@
 /build
 /public/target.js
 /public/pxtlib.js
+/public/assets
+/public/blb
 
 # misc
 .DS_Store

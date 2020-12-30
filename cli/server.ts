@@ -1048,6 +1048,11 @@ export function serveAsync(options: ServeOptions) {
             return
         }
 
+        if (pathname == "/--skillmap") {
+            sendFile(path.join(publicDir, 'skillmap.html'));
+            return
+        }
+
         if (/\/-[-]*docs.*$/.test(pathname)) {
             sendFile(path.join(publicDir, 'docs.html'));
             return

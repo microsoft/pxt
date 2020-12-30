@@ -395,6 +395,7 @@ namespace pxt {
         docsUrl?: string; // "/beta---docs"
         multiUrl?: string; // "/beta---multi"
         asseteditorUrl?: string; // "/beta---asseteditor"
+        skillmapUrl?: string; // "/beta---skillmap"
         isStatic?: boolean;
         verprefix?: string; // "v1"
     }

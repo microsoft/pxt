@@ -29,7 +29,7 @@ export function CarouselItem(props: CarouselItemProps) {
 
     const handleClick = () => { if (onSelect) onSelect(item.id); };
 
-    return <div className={`carousel-item ${selected ? 'selected' : ''} ${className || ''}`} onClick={handleClick}>
+    return <div className={`carousel-item ${selected ? 'selected' : ''} ${className || ''}`} onClick={handleClick} role="group">
         <Inner {...item} />
     </div>
 }
