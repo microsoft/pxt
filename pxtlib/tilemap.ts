@@ -1164,7 +1164,7 @@ namespace pxt {
                         try {
                             data = JSON.parse(entry.data);
                         }
-                        catch(e) {
+                        catch (e) {
                             console.warn("could not parse json data of '" + entry.id + "'");
                         }
 
