@@ -4,7 +4,7 @@ import { FieldEditorComponent } from '../blocklyFieldView';
 import { AssetCardView } from "./assetEditor/assetCard";
 import { getAssets } from "./assetEditor/store/assetEditorReducer";
 import { ImageEditor } from "./ImageEditor/ImageEditor";
-import { setTelemetryFunction } from './ImageEditor/store/imageReducer';
+import { GalleryTile, setTelemetryFunction } from './ImageEditor/store/imageReducer';
 
 export interface ImageFieldEditorProps {
     singleFrame: boolean;
@@ -17,6 +17,7 @@ export interface ImageFieldEditorState {
     tileGalleryVisible?: boolean;
     headerVisible?: boolean;
     galleryFilter?: string;
+    editingTile?: boolean;
 }
 
 interface ProjectGalleryItem extends pxt.sprite.GalleryItem {
@@ -24,7 +25,7 @@ interface ProjectGalleryItem extends pxt.sprite.GalleryItem {
     id: string;
 }
 
-export type ImageType = pxt.ProjectImage | pxt.Animation;
+export type ImageType = pxt.ProjectImage | pxt.Animation | pxt.ProjectTilemap;
 
 export class ImageFieldEditor<U extends ImageType> extends React.Component<ImageFieldEditorProps, ImageFieldEditorState> implements FieldEditorComponent<U> {
     protected blocksInfo: pxtc.BlocksInfo;
@@ -48,13 +49,17 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
 
     render() {
         const { showTiles } = this.props;
-        const { currentView, headerVisible } = this.state;
+        const { currentView, headerVisible, editingTile } = this.state;
 
         if (this.asset && !this.galleryAssets) {
             this.updateGalleryAssets();
         }
 
-        const toggleClass = currentView === "editor" ? "left" : (currentView === "gallery" ? "center" : "right");
+        const hasGallery = !this.galleryAssets || editingTile || this.asset.type !== pxt.AssetType.Tilemap;
+
+        let toggleClass = currentView === "editor" ? "left" : (currentView === "gallery" ? "center" : "right");
+
+        if (!hasGallery) toggleClass += " no-gallery"
 
         return <div className="image-editor-wrapper">
             {headerVisible && <div className="gallery-editor-header">
@@ -62,9 +67,9 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
                     <div className="gallery-editor-toggle-label gallery-editor-toggle-left" onClick={this.showEditor} role="button">
                         {lf("Editor")}
                     </div>
-                    <div className="gallery-editor-toggle-label gallery-editor-toggle-center" onClick={this.showGallery} role="button">
+                    {hasGallery && <div className="gallery-editor-toggle-label gallery-editor-toggle-center" onClick={this.showGallery} role="button">
                         {lf("Gallery")}
-                    </div>
+                    </div>}
                     <div className="gallery-editor-toggle-label gallery-editor-toggle-right" onClick={this.showMyAssets} role="button">
                         {lf("My Assets")}
                     </div>
@@ -73,9 +78,9 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
                 { showTiles && <button className="gallery-editor-show-tiles" onClick={this.toggleTileGallery}>{lf("Tile Gallery")}</button>}
             </div>}
             <div className="image-editor-gallery-content">
-                <ImageEditor ref="image-editor" singleFrame={this.props.singleFrame} onDoneClicked={this.onDoneClick} />
+                <ImageEditor ref="image-editor" singleFrame={this.props.singleFrame} onDoneClicked={this.onDoneClick} onTileEditorOpenClose={this.onTileEditorOpenClose} />
                 <ImageEditorGallery
-                    items={currentView === "my-assets" ? this.filterAssets(this.userAssets) : this.filterAssets(this.galleryAssets, this.asset?.type, true)}
+                    items={currentView === "my-assets" ? this.filterAssets(this.userAssets) : this.filterAssets(this.galleryAssets, editingTile ? pxt.AssetType.Tile : this.asset?.type, true)}
                     hidden={currentView === "editor"}
                     onAssetSelected={this.onAssetSelected} />
                 { showTiles && <ImageEditorGallery
@@ -100,12 +105,18 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
     init(value: U, close: () => void, options?: any) {
         this.closeEditor = close;
         this.options = options;
-        if (this.props.singleFrame) {
-            let bitmap = value as pxt.ProjectImage;
-            this.initSingleFrame(bitmap, options);
-        }
-        else {
-            this.initAnimation(value as pxt.Animation, options);
+
+        switch (value.type) {
+            case pxt.AssetType.Image:
+                this.initSingleFrame(value as pxt.ProjectImage, options);
+                break;
+            case pxt.AssetType.Animation:
+                this.initAnimation(value as pxt.Animation, options);
+                break;
+            case pxt.AssetType.Tilemap:
+                this.initTilemap(value as pxt.ProjectTilemap, options);
+                break;
+
         }
 
         this.editID = value.id;
@@ -168,15 +179,6 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
         this.galleryAssets = getAssets(true, this.asset.type);
     }
 
-    protected initSingleFrame(value: pxt.ProjectImage, options?: any) {
-        this.asset = value;
-        this.ref.openAsset(value);
-
-        if (options.disableResize) {
-            this.ref.disableResize();
-        }
-    }
-
     protected filterAssets(assets: pxt.Asset[], type: pxt.AssetType = this.asset?.type, isGallery = false) {
         if (type === undefined) {
             return assets;
@@ -212,6 +214,15 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
         }
     }
 
+    protected initSingleFrame(value: pxt.ProjectImage, options?: any) {
+        this.asset = value;
+        this.ref.openAsset(value);
+
+        if (options.disableResize) {
+            this.ref.disableResize();
+        }
+    }
+
     protected initAnimation(value: pxt.Animation, options?: any) {
         this.asset = value;
         this.ref.openAsset(value);
@@ -219,6 +230,21 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
         if (options.disableResize) {
             this.ref.disableResize();
         }
+    }
+
+    protected initTilemap(asset: pxt.ProjectTilemap, options?: any) {
+        this.asset = asset;
+        let gallery: GalleryTile[];
+
+        // FIXME (riknoll): don't use blocksinfo, use tilemap project instead
+        if (options) {
+            this.blocksInfo = options.blocksInfo;
+
+            gallery = pxt.sprite.filterItems(pxt.sprite.getGalleryItems(this.blocksInfo, "Image"), ["tile"])
+                .map(g => ({ bitmap: pxt.sprite.getBitmap(this.blocksInfo, g.qName).data(), tags: g.tags, qualifiedName: g.qName, tileWidth: 16 }))
+        }
+
+        this.ref.openAsset(asset, gallery);
     }
 
     protected showEditor = () => {
@@ -262,7 +288,10 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
 
     protected onAssetSelected = (asset: pxt.Asset) => {
         if (this.ref) {
-            if (this.state.currentView === "gallery") {
+            if (this.state.editingTile) {
+                this.ref.openInTileEditor(pxt.sprite.Bitmap.fromData((asset as pxt.Tile).bitmap))
+            }
+            else if (this.state.currentView === "gallery") {
                 this.ref.openGalleryAsset(asset as pxt.Tile | pxt.ProjectImage | pxt.Animation);
             }
             else {
@@ -275,6 +304,12 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
         this.setState({
             currentView: "editor",
             tileGalleryVisible: false
+        });
+    }
+
+    protected onTileEditorOpenClose = (open: boolean) => {
+        this.setState({
+            editingTile: open
         });
     }
 

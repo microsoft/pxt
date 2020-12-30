@@ -204,7 +204,7 @@ export function init() {
                 break;
 
             case "tilemap-editor":
-                current.injectElement(<TilemapFieldEditor ref={ refHandler } />);
+                current.injectElement(<ImageFieldEditor ref={ refHandler } singleFrame={true} />);
                 break;
         }
 

@@ -28,6 +28,7 @@ export interface ImageEditorProps {
     asset?: pxt.Asset;
     store?: Store<ImageEditorStore>;
     onDoneClicked?: (value: pxt.Asset) => void;
+    onTileEditorOpenClose?: (open: boolean) => void;
     nested?: boolean;
 }
 
@@ -265,6 +266,10 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
         this.dispatchOnStore(dispatchImageEdit({ bitmap: bitmap.data() }));
     }
 
+    openInTileEditor(bitmap: pxt.sprite.Bitmap) {
+        (this.refs["nested-image-editor"] as ImageEditor).setCurrentFrame(bitmap, false);
+    }
+
     disableResize() {
         this.dispatchOnStore(dispatchDisableResize());
     }
@@ -307,11 +312,13 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
                         tileToEdit: createNewImageAsset(pxt.AssetType.Tile, tileWidth, tileWidth) as pxt.Tile
                     });
                 }
+                if (this.props.onTileEditorOpenClose) this.props.onTileEditorOpenClose(true);
             }
             else {
                 this.setState({
                     editingTile: false
                 });
+                if (this.props.onTileEditorOpenClose) this.props.onTileEditorOpenClose(false);
             }
         }
     }
