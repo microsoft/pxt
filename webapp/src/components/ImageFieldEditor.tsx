@@ -50,10 +50,8 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
         const { showTiles } = this.props;
         const { currentView, headerVisible } = this.state;
 
-        if (this.blocksInfo) {
-            if (!this.galleryAssets) {
-                this.updateGalleryAssets(this.blocksInfo);
-            }
+        if (this.asset && !this.galleryAssets) {
+            this.updateGalleryAssets();
         }
 
         const toggleClass = currentView === "editor" ? "left" : (currentView === "gallery" ? "center" : "right");
@@ -166,8 +164,8 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
         }
     }
 
-    protected updateGalleryAssets(blocksInfo: pxtc.BlocksInfo) {
-        this.galleryAssets = getAssets(true);
+    protected updateGalleryAssets() {
+        this.galleryAssets = getAssets(true, this.asset.type);
     }
 
     protected initSingleFrame(value: pxt.ProjectImage, options?: any) {

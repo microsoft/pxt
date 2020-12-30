@@ -43,6 +43,7 @@ namespace pxt {
         frames: pxt.sprite.BitmapData[];
         flippedHorizontal?: boolean;
         frameIds?: string[];
+        framePreviewURIs?: string[];
         interval: number;
     }
 
