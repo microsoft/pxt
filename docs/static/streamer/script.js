@@ -188,7 +188,7 @@ function onYouTubeIframeAPIReady() {
                 hardwareCamLabel: "",
                 emojis: "😄🤔😭👀",
                 micDelay: 300,
-                title: "STARTING SOON"
+                title: ""
             };
             return cfg;
         }
@@ -923,8 +923,7 @@ background-image: url(${config.backgroundImage});
             const config = readConfig();
             if (!(config.twitch || config.restream))
                 state.chat = false;
-            const editorConfig = editorConfigs[config.editor];
-            titleEl.innerText = config.title || (editorConfig && `MakeCode for ${editorConfig.name}`) || "";
+            titleEl.innerText = config.title || "";
         }
         function loadChat() {
             const config = readConfig();
@@ -1097,16 +1096,27 @@ background-image: url(${config.backgroundImage});
                     return; // ignore click
                 state.addSite = false;
                 const config = readConfig();
-                const url = normalizeUrl(value);
-                if (url) {
+                // emoji?
+                const em = /(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])*/.exec(value);
+                if (em) {
                     addsiteinput.value = "";
-                    if (!config.extraSites)
-                        config.extraSites = [];
-                    if (config.extraSites.indexOf(url) < 0) {
-                        config.extraSites.push(url);
-                        saveConfig(config);
+                    config.emojis = em[0];
+                    saveConfig(config);
+                    state.emoji = /(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])/.exec(value)[0];
+                    setPaintTool("emoji");
+                }
+                else {
+                    const url = normalizeUrl(value);
+                    if (url) {
+                        addsiteinput.value = "";
+                        if (!config.extraSites)
+                            config.extraSites = [];
+                        if (config.extraSites.indexOf(url) < 0) {
+                            config.extraSites.push(url);
+                            saveConfig(config);
+                        }
+                        setSite(url);
                     }
-                    setSite(url);
                 }
                 render();
             });

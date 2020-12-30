@@ -18,6 +18,7 @@ import { initializeSnippetExtensions } from './snippetBuilder';
 import Util = pxt.Util;
 import { DebuggerToolbox } from "./debuggerToolbox";
 import { ErrorList } from "./errorList";
+import { resolveExtensionUrl } from "./extensionManager";
 
 export class Editor extends toolboxeditor.ToolboxEditor {
     editor: Blockly.WorkspaceSvg;
@@ -880,10 +881,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     searchField.value = '';
                 }
                 // Get extension packages
-                this.extensions = pkg.allEditorPkgs()
-                    .map(ep => ep.getKsPkg())
-                    // Make sure the package has extensions enabled.
-                    .filter(p => !!p?.config?.extension);
+                this.extensions = (!!pxt.appTarget.appTheme.allowPackageExtensions
+                    && pkg.allEditorPkgs()
+                        .map(ep => ep.getKsPkg())
+                        // Make sure the package has extensions enabled.
+                        .filter(p => !!p?.config?.extension))
+                    || [];
             })
     }
 
@@ -1131,56 +1134,25 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const pkg = this.extensions.filter(c => c.config.name === extensionName)[0];
         if (!pkg?.config.extension)
             return;
-        const { config, installedVersion } = pkg;
-        const { extension } = config;
-
         pxt.tickEvent('blocks.extensions.open', { extension: extensionName })
-        const packagesConfig = await pxt.packagesConfigAsync()
-        const parsedRepo = pxt.github.parseRepoId(installedVersion);
-        const repoStatus = pxt.github.repoStatus(parsedRepo, packagesConfig);
-        let url = "";
-        const debug = pxt.BrowserUtils.isLocalHost()
-            && /debugextensions=1/i.test(window.location.href);
-        const localDebug = !debug
-            && pxt.BrowserUtils.isLocalHost()
-            && /localeditorextensions=1/i.test(window.location.href)
-            && extension.localUrl;
-        if (debug) {
-            /* tslint:disable:no-http-string */
-            url = "http://localhost:3232/extension.html";
-        } else if (localDebug)
-            url = extension.localUrl;
-        else if (extension.url) {
-            if ((packagesConfig?.approvedEditorExtensionUrls || []).indexOf(extension.url) < 0) {
-                // custom url, but not support in editor
-                pxt.log(`extension url ${extension.url} not in approvedEditorExtensionUrls ${packagesConfig?.approvedEditorExtensionUrls}`)
-                core.errorNotification(lf("Sorry, this extension is not registered."))
-                return;
-            }
-            url = extension.url;
-        } else if (parsedRepo) {
-            const repoName = parsedRepo.fullName.substr(parsedRepo.fullName.indexOf(`/`) + 1);
-            /* tslint:disable:no-http-string */
-            url = `https://${parsedRepo.owner}.github.io/${repoName}/`;
-        }
 
-        pxt.log(`extension ${config.name}: resolved ${url}`)
+        const { name, url, repoStatus, trusted } = await resolveExtensionUrl(pkg);
 
-        // this should never happen
+        // should never happen
         if (repoStatus === pxt.github.GitRepoStatus.Banned) {
             core.errorNotification(lf("Sorry, this extension is not allowed."))
             return;
         }
-
         // no url registered?
         if (!url) {
             core.errorNotification(lf("Sorry, this extension does not have an editor."))
             return;
         }
         /* tslint:enable:no-http-string */
-        this.parent.openExtension(config.name,
+        this.parent.openExtension(name,
             url,
-            repoStatus !== pxt.github.GitRepoStatus.Approved);
+            !trusted && repoStatus !== pxt.github.GitRepoStatus.Approved,
+            trusted);
     }
 
     private partitionBlocks() {

@@ -1,12 +1,14 @@
 namespace pxt.editor {
     export interface DataStreams<T> {
         console?: T;
+        messages?: T;
     }
 
     export interface Permissions<T> {
         console?: T;
         readUserCode?: T;
         addDependencies?: T;
+        messages?: T;
     }
 
     export interface ExtensionFiles {

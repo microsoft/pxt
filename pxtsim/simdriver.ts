@@ -65,6 +65,8 @@ namespace pxsim {
         storedState?: Map<any>;
         autoRun?: boolean;
         ipc?: boolean;
+        // single iframe, no message simulators
+        single?: boolean;
     }
 
     export interface HwDebugger {
@@ -300,6 +302,7 @@ namespace pxsim {
             if (source && broadcastmsg?.broadcast) {
                 // if the editor is hosted in a multi-editor setting
                 // don't start extra frames
+                const single = !!this._currentRuntime?.single;
                 const parentWindow = window.parent && window.parent !== window.window
                     ? window.parent : window.opener;
                 if (this.options.nestedEditorSim && parentWindow) {
@@ -316,7 +319,7 @@ namespace pxsim {
                             w.postMessage(msg, window.location.origin)
                     })
                     // start second simulator
-                } else {
+                } else if (!single) {
                     const messageChannel = msg.type === "messagepacket" && (msg as SimulatorControlMessage).channel;
                     const messageSimulator = messageChannel &&
                         this.options.messageSimulators &&
@@ -589,6 +592,7 @@ namespace pxsim {
                 breakOnStart: opts.breakOnStart,
                 storedState: opts.storedState,
                 ipc: opts.ipc,
+                single: opts.single
             }
             this.start();
         }
