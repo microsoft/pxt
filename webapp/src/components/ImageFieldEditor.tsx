@@ -262,19 +262,6 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
 
     protected onAssetSelected = (asset: pxt.Asset) => {
         if (this.ref) {
-            // let selectedBitmap = pxt.sprite.getBitmap(this.blocksInfo, item.qName);
-
-            // if (!selectedBitmap) {
-            //     const projectItem = item as ProjectGalleryItem;
-            //     const project = pxt.react.getTilemapProject();
-
-            //     const asset = project.lookupAsset(projectItem.assetType, projectItem.id) as pxt.Tile | pxt.ProjectImage;
-
-            //     selectedBitmap = pxt.sprite.Bitmap.fromData(asset.bitmap);
-            // }
-
-            // this.ref.setCurrentFrame(selectedBitmap);
-
             if (this.state.currentView === "gallery") {
                 this.ref.openGalleryAsset(asset as pxt.Tile | pxt.ProjectImage | pxt.Animation);
             }

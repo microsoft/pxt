@@ -93,22 +93,6 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
     }
 
     openAsset(asset: pxt.Asset, gallery?: GalleryTile[], keepPast = false) {
-        // switch (asset.type) {
-        //     case pxt.AssetType.Image:
-        //         this.initSingleFrame(fromData(asset.bitmap), keepPast);
-        //         break;
-        //     case pxt.AssetType.Tile:
-        //         this.initSingleFrame(fromData(asset.bitmap), keepPast);
-        //         this.disableResize();
-        //         break;
-        //     case pxt.AssetType.Animation:
-        //         this.initAnimation(asset.frames.map(fromData), asset.interval, keepPast);
-        //         break;
-        //     case pxt.AssetType.Tilemap:
-        //         this.initTilemap(asset.data, gallery);
-        //         break;
-        // }
-
         this.dispatchOnStore(dispatchOpenAsset(asset, keepPast, gallery))
 
         if (asset.meta.displayName) {
@@ -149,18 +133,6 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
                 }
         }
     }
-
-    // initSingleFrame(value: pxt.sprite.Bitmap, keepPast: boolean) {
-    //     this.dispatchOnStore(dispatchSetInitialFrames([{ bitmap: value.data() }], 100, keepPast))
-    // }
-
-    // initAnimation(frames: pxt.sprite.Bitmap[], interval: number, keepPast: boolean) {
-    //     this.dispatchOnStore(dispatchSetInitialFrames(frames.map(frame => ({ bitmap: frame.data() })), interval, keepPast));
-    // }
-
-    // initTilemap(data: pxt.sprite.TilemapData, gallery: GalleryTile[]) {
-    //     this.dispatchOnStore(dispatchSetInitialTilemap(data.tilemap.data(), data.tileset, gallery, [data.layers], data.nextId, data.projectReferences));
-    // }
 
     onResize() {
         this.dispatchOnStore(dispatchChangeZoom(0));
