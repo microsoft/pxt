@@ -118,7 +118,7 @@ namespace ts.pxtc.service {
 
         if (isTaggedTemplate(fn)) {
             if (python) {
-                return `${fn.name}""" """`
+                return `${fn.name}(""" """)`
             }
             else {
                 return `${fn.name}\`\``
