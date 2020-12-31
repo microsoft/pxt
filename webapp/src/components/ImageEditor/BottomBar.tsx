@@ -273,7 +273,7 @@ function mapStateToProps({store: { present: state, past, future }, editor}: Imag
         onionSkinEnabled: editor.onionSkinEnabled,
         cursorLocation: editor.cursorLocation,
         resizeDisabled: editor.resizeDisabled,
-        assetName: editor.assetName,
+        assetName: state.asset?.meta?.displayName,
         hasUndo: !!past.length,
         hasRedo: !!future.length
     };
