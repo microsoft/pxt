@@ -87,7 +87,7 @@ export function getAssets(gallery = false, firstType = pxt.AssetType.Image): pxt
     const tiles = getAssetType(pxt.AssetType.Tile).map(imageToGalleryItem)
         .filter((t: pxt.Tile) => !t.id.match(/^myTiles.transparency(8|16|32)$/gi)).sort(compareInternalId);
     const tilemaps = getAssetType(pxt.AssetType.Tilemap).map(tilemapToGalleryItem).sort(compareInternalId);
-    const animations = getAssetType(pxt.AssetType.Animation).map(animationToGalleryItem);
+    const animations = getAssetType(pxt.AssetType.Animation).map(animationToGalleryItem).sort(compareInternalId);
 
     let assets: pxt.Asset[] = [];
     switch (firstType) {

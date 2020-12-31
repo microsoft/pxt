@@ -55,7 +55,8 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
             this.updateGalleryAssets();
         }
 
-        const hasGallery = !this.galleryAssets || editingTile || this.asset.type !== pxt.AssetType.Tilemap;
+        // if there isn't an asset, default to showing three so that we don't change shape
+        const hasGallery = !this.asset || editingTile || this.asset.type !== pxt.AssetType.Tilemap;
 
         let toggleClass = currentView === "editor" ? "left" : (currentView === "gallery" ? "center" : "right");
 
