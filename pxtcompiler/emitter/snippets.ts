@@ -116,6 +116,15 @@ namespace ts.pxtc.service {
 
         let preStmt: SnippetNode[] = [];
 
+        if (isTaggedTemplate(fn)) {
+            if (python) {
+                return `${fn.name}""" """`
+            }
+            else {
+                return `${fn.name}\`\``
+            }
+        }
+
         let fnName = ""
         if (decl.kind == SK.Constructor) {
             fnName = getSymbolName(decl.symbol) || decl.parent.name.getText();
@@ -625,4 +634,7 @@ namespace ts.pxtc.service {
         }
     }
 
+    export function isTaggedTemplate(sym: SymbolInfo) {
+        return (sym.attributes.shim && sym.attributes.shim[0] == "@") || sym.attributes.pyConvertToTaggedTemplate;
+    }
 }
