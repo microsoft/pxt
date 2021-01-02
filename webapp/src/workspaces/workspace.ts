@@ -203,7 +203,7 @@ export function setupWorkspace(kind: WorkspaceKind): void {
         const msPerMin = 1000 * 60
         const afterSync = (changed: Header[]) => {
             console.log(`...changes synced! ${!!changed}`)
-            onExternalHeaderChanges(changed)
+            onExternalChangesToHeaders(changed)
         }
         const doSync = async () => {
             console.log("synchronizing with the cloud...");
@@ -1596,17 +1596,17 @@ export async function saveToCloudAsync(h: Header) {
 
 // called when external changes happen to our headers (e.g. multi-tab
 //  scenarios, cloud sync, etc.)
-function onExternalHeaderChanges(changedHdrs: Header[]) {
-    changedHdrs.forEach(hd => {
+function onExternalChangesToHeaders(newHdrs: Header[]) {
+    newHdrs.forEach(hd => {
         data.invalidateHeader("header", hd);
         data.invalidateHeader("text", hd);
         data.invalidateHeader("pkg-git-status", hd);
     })
-    if (changedHdrs.length) {
+    if (newHdrs.length) {
         // TODO @darzu: can we make this more fine grain?
         data.invalidate("gh-commits:*"); // invalidate commits just in case
         console.log(`onExternalHeaderChanges:`)
-        console.dir(changedHdrs.map(toDbg)) // TODO @darzu: dbg
+        console.dir(newHdrs.map(toDbg)) // TODO @darzu: dbg
     }
 }
 
@@ -1620,7 +1620,7 @@ export async function syncAsync(): Promise<pxt.editor.EditorSyncState> {
     const changedHdrs = await impl.synchronize({
         expectedHeadersHash,
     })
-    onExternalHeaderChanges(changedHdrs);
+    onExternalChangesToHeaders(changedHdrs);
     pxt.storage.setLocal('workspacesessionid', impl.getHeadersHash());
     // TODO @darzu: handle:
     //      filters?: pxt.editor.ProjectFilters;
