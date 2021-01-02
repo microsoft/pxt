@@ -4,6 +4,7 @@ type Header = pxt.workspace.Header;
 type ScriptText = pxt.workspace.ScriptText;
 type File = pxt.workspace.File;
 type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
+import U = pxt.Util;
 
 async function unique<T extends {id: string}>(...listFns: (() => Promise<T[]>)[]) {
     const allHdrs = (await Promise.all(listFns.map(ls => ls())))
@@ -75,18 +76,20 @@ export function createJointWorkspace(...all: CachedWorkspaceProvider[]): CachedW
     // TODO @darzu: debug logging
     console.log(`createJointWorkspace`);
 
-    const firstSync = async () => (await Promise.all(all.map(w => w.firstSync()))).reduce((p, n) => p || n, false)
-    const pendingSync = async () => (await Promise.all(all.map(w => w.pendingSync()))).reduce((p, n) => p || n, false)
+    const flattenAndUniqueHdrs = (hs: Header[][]) => U.unique(hs.reduce((p, n) => [...p, ...n], []), h => h.id)
+
+    const firstSync = async () => flattenAndUniqueHdrs(await Promise.all(all.map(w => w.firstSync())))
+    const pendingSync = async () => flattenAndUniqueHdrs(await Promise.all(all.map(w => w.pendingSync())))
     // TODO @darzu: is this too expensive?
     const getHeadersHash = () => joinHdrsHash(...all.map(w => w.getHeadersHash()))
 
-    async function synchronize(reason: SynchronizationReason): Promise<boolean> {
+    async function synchronize(reason: SynchronizationReason): Promise<Header[]> {
         const expectedHashes = splitHdrsHash(reason.expectedHeadersHash)
         const changes = await Promise.all(all.map((w, i) => w.synchronize({
                 ...reason,
                 expectedHeadersHash: expectedHashes[i]
             })))
-        return changes.reduce((p, n) => p || n, false)
+        return flattenAndUniqueHdrs(changes)
     }
     function listSync(): Header[] {
         // return all (assuming disjoint)

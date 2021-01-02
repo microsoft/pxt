@@ -22,10 +22,8 @@ import U = pxt.Util;
 import Cloud = pxt.Cloud;
 import { createJointWorkspace, createJointWorkspace2 } from "./jointworkspace";
 import { createBrowserDbWorkspace } from "./browserdbworkspace";
-import { createSynchronizedWorkspace, Synchronizable } from "./synchronizedworkspace";
-import { ConflictStrategy, DisjointSetsStrategy, migrateOverlap, wrapInMemCache } from "./workspacebehavior";
 import { createMemWorkspace, SyncWorkspaceProvider } from "./memworkspace";
-import { CachedWorkspaceProvider, createCachedWorkspace, createCloudSyncWorkspace } from "./cloudsyncworkspace";
+import { CachedWorkspaceProvider, createCachedWorkspace, createCloudSyncWorkspace, toDbg } from "./cloudsyncworkspace";
 
 // Avoid importing entire crypto-js
 /* tslint:disable:no-submodule-imports */
@@ -38,18 +36,21 @@ type InstallHeader = pxt.workspace.InstallHeader;
 type File = pxt.workspace.File;
 
 // TODO @darzu: todo list:
-// [x] remove / fix header session methods
-// [ ] remove forceSaveAsync
-// [x] remove allScripts
-// [ ] remove headerQ
+// [ ] remove / fix header session methods
+//      [ ] refreshHeadersSession
 // [ ] invalidate virtual api:
         // data.invalidateHeader("header", hd);
         // data.invalidateHeader("text", hd);
         // data.invalidateHeader("pkg-git-status", hd);
         // data.invalidate("gh-commits:*"); // invalidate commits just in case
+// [x] understand commitAsync
+// [ ] remove forceSaveAsync
+// [x] remove allScripts
+// [ ] remove headerQ
 // [x] remove syncAsync
 // [ ] ensure we don't regress https://github.com/microsoft/pxt/issues/7520
-// [ ] add analytics & hueristics for detecting project loss
+// [ ] add analytics
+//      [ ] hueristics for detecting project loss
 // [ ] handle switchToMemoryWorkspace
 // [ ] soft delete, ensure we are prefering
 // [ ] don't block on network
@@ -68,6 +69,7 @@ type File = pxt.workspace.File;
 //      [ ] project list
 //      [ ] conflict resolution dialog
 //      [ ] in editor
+// [ ] refactor out git / github stuff
 // [ ] clean up code
 //      [ ] handle all TODO @darzu's
 //      [ ] renames
@@ -159,7 +161,6 @@ function chooseWorkspace(kind: WorkspaceKind = "browser"): pxt.workspace.Workspa
     }
 }
 
-
 export function setupWorkspace(kind: WorkspaceKind): void {
     U.assert(!impl, "workspace set twice");
     pxt.log(`workspace: ${kind}`);
@@ -200,21 +201,18 @@ export function setupWorkspace(kind: WorkspaceKind): void {
 
         // TODO @darzu: improve this
         const msPerMin = 1000 * 60
-        const afterSync = (changed: boolean) => {
-            console.log(`...changes synced! ${changed}`)
-            if (changed) {
-                data.invalidate("header:*");
-                data.invalidate("text:*");
-            }
+        const afterSync = (changed: Header[]) => {
+            console.log(`...changes synced! ${!!changed}`)
+            onExternalHeaderChanges(changed)
         }
         const doSync = async () => {
             console.log("synchronizing with the cloud...");
             console.log("before:")
-            console.dir(joint.listSync().map(j => ({id: j.id, t: j.modificationTime})))
+            console.dir(joint.listSync().map(toDbg))
             const changed = await joint.synchronize({pollStorage: true})
             if (changed) {
                 console.log("after:")
-                console.dir(joint.listSync().map(j => ({id: j.id, t: j.modificationTime})))
+                console.dir(joint.listSync().map(toDbg))
             }
             afterSync(changed)
         }
@@ -376,16 +374,18 @@ export function getHeader(id: string) {
 // this key is the max modificationTime value of the allHeaders
 // it is used to track if allHeaders need to be refreshed (syncAsync)
 let _allHeadersSessionHash: string = "";
+// TODO @darzu: delete this (unneeded)
 export function isHeadersSessionOutdated() {
     return pxt.storage.getLocal('workspacesessionid') != _allHeadersSessionHash;
 }
+// TODO @darzu: delete this (unneeded)
 function maybeSyncHeadersAsync(): Promise<void> {
     if (isHeadersSessionOutdated()) // another tab took control
         return syncAsync().then(() => { }) // take back control
     return Promise.resolve();
 }
+// TODO @darzu: delete this (unused)
 function refreshHeadersSession() {
-    // TODO @darzu: carefully handle this.
     // use # of scripts + time of last mod as key
     _allHeadersSessionHash = impl.getHeadersHash();
 
@@ -1594,6 +1594,22 @@ export async function saveToCloudAsync(h: Header) {
     // return cloudsync.saveToCloudAsync(h)
 }
 
+// called when external changes happen to our headers (e.g. multi-tab
+//  scenarios, cloud sync, etc.)
+function onExternalHeaderChanges(changedHdrs: Header[]) {
+    changedHdrs.forEach(hd => {
+        data.invalidateHeader("header", hd);
+        data.invalidateHeader("text", hd);
+        data.invalidateHeader("pkg-git-status", hd);
+    })
+    if (changedHdrs.length) {
+        // TODO @darzu: can we make this more fine grain?
+        data.invalidate("gh-commits:*"); // invalidate commits just in case
+        console.log(`onExternalHeaderChanges:`)
+        console.dir(changedHdrs.map(toDbg)) // TODO @darzu: dbg
+    }
+}
+
 export async function syncAsync(): Promise<pxt.editor.EditorSyncState> {
     console.log("workspace:syncAsync");
     // contract:
@@ -1601,9 +1617,11 @@ export async function syncAsync(): Promise<pxt.editor.EditorSyncState> {
     // TODO @darzu: ... and re-acquires headers ?
     // TODO @darzu: clean up naming, layering
     const expectedHeadersHash = pxt.storage.getLocal('workspacesessionid')
-    const changed = await impl.synchronize({
+    const changedHdrs = await impl.synchronize({
         expectedHeadersHash,
     })
+    onExternalHeaderChanges(changedHdrs);
+    pxt.storage.setLocal('workspacesessionid', impl.getHeadersHash());
     // TODO @darzu: handle:
     //      filters?: pxt.editor.ProjectFilters;
     //      searchBar?: boolean;
@@ -1614,10 +1632,6 @@ export async function syncAsync(): Promise<pxt.editor.EditorSyncState> {
     ex.text = undefined
     ex.version = undefined
 
-    data.invalidateHeader("header", hd);
-    data.invalidateHeader("text", hd);
-    data.invalidateHeader("pkg-git-status", hd);
-    data.invalidate("gh-commits:*"); // invalidate commits just in case
 
     impl.getSyncState()
     */

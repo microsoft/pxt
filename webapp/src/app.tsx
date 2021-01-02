@@ -263,7 +263,7 @@ export class ProjectView
             }
             this.saveFileAsync().done();
         } else if (active) {
-            // TODO @darzu: new code path:
+            // TODO @darzu: new code path maybe:
             // workspace.syncAsync().then(changed => this.reloadAsync())
             // reloadAsync: this.loadHeaderAsync()
             // OR: subscribe to data api, on change, reload

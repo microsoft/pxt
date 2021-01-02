@@ -1,4 +1,5 @@
 import * as db from "../db";
+import { toDbg } from "./cloudsyncworkspace";
 
 type Header = pxt.workspace.Header;
 type ScriptText = pxt.workspace.ScriptText;
@@ -33,7 +34,7 @@ export function createBrowserDbWorkspace(namespace: string): BrowserDbWorkspaceP
         const hdrs: pxt.workspace.Header[] = await headerDb.getAllAsync();
         // const txts: TextDbEntry[] = await textDb.getAllAsync();
         console.log(`dbg ${prefix}-headers:`);
-        console.dir(hdrs.map(h => ({id: h.id, t: h.modificationTime})))
+        console.dir(hdrs.map(toDbg))
     }
     // TODO @darzu: dbg
     printDbg();

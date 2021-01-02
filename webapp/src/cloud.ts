@@ -10,6 +10,7 @@ type Header = pxt.workspace.Header;
 type ScriptText = pxt.workspace.ScriptText;
 
 import U = pxt.Util;
+import { toDbg } from "./workspaces/cloudsyncworkspace";
 
 const state = {
     uploadCount: 0,
@@ -38,7 +39,7 @@ export async function listAsync(): Promise<Header[]> {
                 return header;
             });
             // TODO @darzu: dbg
-            console.dir(headers.map(h => ({h: h.id, t: h.modificationTime})))
+            console.dir(headers.map(toDbg))
             resolve(headers);
         } else {
             reject(new Error(result.errmsg));

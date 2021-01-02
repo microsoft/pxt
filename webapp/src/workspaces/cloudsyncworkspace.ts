@@ -15,9 +15,9 @@ type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
 
 export interface CachedWorkspaceProvider extends WorkspaceProvider {
     getHeadersHash(): string,
-    synchronize(reason: SynchronizationReason): Promise<boolean>, // TODO @darzu: name syncAsync?
-    pendingSync(): Promise<boolean>,
-    firstSync(): Promise<boolean>,
+    synchronize(reason: SynchronizationReason): Promise<Header[]>, // TODO @darzu: name syncAsync?
+    pendingSync(): Promise<Header[]>,
+    firstSync(): Promise<Header[]>,
     listSync(): Header[],
     hasSync(h: Header): boolean,
     tryGetSync(h: Header): WsFile
@@ -39,8 +39,8 @@ function computeHeadersHash(hdrs: Header[]): string {
 }
 
 function hasChanged(a: Header, b: Header): boolean {
-    // TODO @darzu: use e-tag, _rev, or version uuid instead?
-    return a.modificationTime !== b.modificationTime
+    // TODO @darzu: use e-tag, _rev, version uuid, or hash instead?
+    return (!!a !== !!b) || a?.modificationTime !== b?.modificationTime
 }
 
 // TODO @darzu: use cases: multi-tab and cloud
@@ -63,9 +63,9 @@ export function createCachedWorkspace(ws: WorkspaceProvider): CachedWorkspacePro
     }
 
     // TODO @darzu: do we want to kick off the first sync at construction? Side-effects at construction are usually bad..
-    let pendingUpdate: Promise<boolean> = synchronizeInternal({ pollStorage: true });
-    const firstUpdate = pendingUpdate;
-    async function synchronize(reason: SynchronizationReason): Promise<boolean> {
+    const firstUpdate = synchronizeInternal({ pollStorage: true });
+    let pendingUpdate = firstUpdate;
+    async function synchronize(reason: SynchronizationReason): Promise<Header[]> {
         if (pendingUpdate.isPending())
             return pendingUpdate
         pendingUpdate = synchronizeInternal(reason)
@@ -80,7 +80,7 @@ export function createCachedWorkspace(ws: WorkspaceProvider): CachedWorkspacePro
         cacheHdrsHash = ""
     }
 
-    async function synchronizeInternal(reason: SynchronizationReason): Promise<boolean> {
+    async function synchronizeInternal(reason: SynchronizationReason): Promise<Header[]> {
         // remember our old cache, we might keep items from it later
         const oldHdrs = cacheHdrs
         const oldHdrsMap = cacheHdrsMap
@@ -93,7 +93,7 @@ export function createCachedWorkspace(ws: WorkspaceProvider): CachedWorkspacePro
             // TODO @darzu: does this buy us anything?
             eraseCache()
         } else if (!needSync) {
-            return false
+            return []
         }
 
         const newHdrs = await ws.listAsync()
@@ -103,19 +103,18 @@ export function createCachedWorkspace(ws: WorkspaceProvider): CachedWorkspacePro
             cacheHdrs = oldHdrs
             cacheHdrsMap = oldHdrsMap
             cacheProjs = oldProjs
-            return false
+            return []
         }
         console.log("cachedworkspace: synchronizeInternal (1)") // TODO @darzu: dbg
 
         // compute header differences and clear old cache entries
         const newHdrsMap = U.toDictionary(newHdrs, h => h.id)
-        const newProjs = oldProjs
-        for (let id of Object.keys(newProjs)) {
-            const newHdr = newHdrsMap[id]
-            if (!newHdr || hasChanged(newHdr, oldHdrsMap[id])) {
-                console.log(`DELETE ${id}`) // TODO @darzu: dbg
-                delete newProjs[id]
-            }
+        const changedHdrIds = U.unique([...oldHdrs, ...newHdrs], h => h.id).map(h => h.id)
+            .filter(id => hasChanged(oldHdrsMap[id], newHdrsMap[id]))
+        const newProjs = oldProjs // TODO @darzu: is there any point in copying here?
+        for (let id of changedHdrIds) {
+            console.log(`cache invalidating ${id}`) // TODO @darzu: dbg
+            delete newProjs[id]
         }
 
         // save results
@@ -123,7 +122,7 @@ export function createCachedWorkspace(ws: WorkspaceProvider): CachedWorkspacePro
         cacheProjs = newProjs
         cacheHdrs = newHdrs
         cacheHdrsMap = newHdrsMap
-        return true;
+        return changedHdrIds.map(i => newHdrsMap[i]);
     }
 
     async function listAsync(): Promise<Header[]> {
@@ -209,6 +208,11 @@ export function createCachedWorkspace(ws: WorkspaceProvider): CachedWorkspacePro
     return provider;
 }
 
+// TODO @darzu: dbging helper
+export function toDbg(h: Header) {
+    return {n: h.name, t: h.modificationTime, id: h.id}
+}
+
 export interface CloudSyncWorkspace extends CachedWorkspaceProvider {
 }
 
@@ -229,7 +233,7 @@ export function createCloudSyncWorkspace(cloud: WorkspaceProvider, cloudLocal: W
     const firstSync = synchronizeInternal({pollStorage: true});;
     let pendingSync = firstSync;
 
-    async function synchronize(reason: SynchronizationReason): Promise<boolean> {
+    async function synchronize(reason: SynchronizationReason): Promise<Header[]> {
         if (pendingSync.isPending())
             return pendingSync
         pendingSync = synchronizeInternal(reason)
@@ -271,7 +275,7 @@ export function createCloudSyncWorkspace(cloud: WorkspaceProvider, cloudLocal: W
 
         return newH;
     }
-    async function synchronizeInternal(reason: SynchronizationReason): Promise<boolean> {
+    async function synchronizeInternal(reason: SynchronizationReason): Promise<Header[]> {
         console.log("cloudsyncworkspace: synchronizeInternal")
 
         // TODO @darzu: review these cases:
@@ -337,10 +341,11 @@ export function createCloudSyncWorkspace(cloud: WorkspaceProvider, cloudLocal: W
 
         // wait
         // TODO @darzu: worklist? batching? throttling? incremental?
-        const changed = await Promise.all([...lPushPromises, ...rPushPromises])
+        const allPushes = await Promise.all([...lPushPromises, ...rPushPromises])
+        const changes = U.unique(allPushes, h => h.id)
 
         // TODO @darzu: what about mod time changes?
-        return changed.length >= 0;
+        return changes
     }
 
     async function listAsync(): Promise<Header[]> {
@@ -376,7 +381,7 @@ export function createCloudSyncWorkspace(cloud: WorkspaceProvider, cloudLocal: W
     // TODO @darzu: debug logging
     firstSync.then(c => {
         console.log("cloudSyncWS first update:")
-        console.dir(localCache.listSync().map(h => ({id: h.id, t: h.modificationTime})))
+        console.dir(localCache.listSync().map(toDbg))
     })
 
      const provider: CloudSyncWorkspace = {

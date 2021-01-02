@@ -1,5 +1,4 @@
 import { createMemWorkspace, SyncWorkspaceProvider } from "./memworkspace";
-import { createSynchronizedWorkspace, Synchronizable } from "./synchronizedworkspace";
 import U = pxt.Util;
 
 type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
@@ -135,12 +134,13 @@ export async function synchronize(left: WorkspaceProvider, right: WorkspaceProvi
     }
 }
 
-export function wrapInMemCache(ws: WorkspaceProvider): SyncWorkspaceProvider & WorkspaceProvider & Synchronizable {
-    return createSynchronizedWorkspace(ws, createMemWorkspace(), {
-        conflict: ConflictStrategy.LastWriteWins,
-        disjointSets: DisjointSetsStrategy.Synchronize
-    });
-}
+// TODO @darzu: use or delete
+// export function wrapInMemCache(ws: WorkspaceProvider): SyncWorkspaceProvider & WorkspaceProvider & Synchronizable {
+//     return createSynchronizedWorkspace(ws, createMemWorkspace(), {
+//         conflict: ConflictStrategy.LastWriteWins,
+//         disjointSets: DisjointSetsStrategy.Synchronize
+//     });
+// }
 
 export async function migrateOverlap(fromWs: WorkspaceProvider, toWs: WorkspaceProvider) {
     // TODO @darzu:
