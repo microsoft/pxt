@@ -371,31 +371,91 @@ export function getHeader(id: string) {
     return null
 }
 
+// TODO @darzu: about workspacesessionid
+/*
+    This represents the last known version of the headers
+    Any mutation should update the session hash.
+        The individual mutation will fail if we're out of sync
+        After we update, we should see if it is what we expected, if not, do a sync
+    We should regularly poll to see if there have been external changes.
+        Strategic points can check to see if there have been external changes.
+
+    if we detect an external change, do sync:
+*/
 // this key is the max modificationTime value of the allHeaders
 // it is used to track if allHeaders need to be refreshed (syncAsync)
 let _allHeadersSessionHash: string = "";
 // TODO @darzu: delete this (unneeded)
+// useful because it is synchronous even though we always do the same thing if it is out of date
 export function isHeadersSessionOutdated() {
     return pxt.storage.getLocal('workspacesessionid') != _allHeadersSessionHash;
 }
-// TODO @darzu: delete this (unneeded)
-function maybeSyncHeadersAsync(): Promise<void> {
-    if (isHeadersSessionOutdated()) // another tab took control
-        return syncAsync().then(() => { }) // take back control
-    return Promise.resolve();
-}
-// TODO @darzu: delete this (unused)
-function refreshHeadersSession() {
-    // use # of scripts + time of last mod as key
-    _allHeadersSessionHash = impl.getHeadersHash();
-
-    if (isHeadersSessionOutdated()) {
-        pxt.storage.setLocal('workspacesessionid', _allHeadersSessionHash);
-        pxt.debug(`workspace: refreshed headers session to ${_allHeadersSessionHash}`);
-        data.invalidate("header:*");
-        data.invalidate("text:*");
+// careful! only set the headers session after you know we were in sync before the mutation.
+async function refreshHeadersSessionAfterMutation() {
+    await syncAsync()
+    const newHash = impl.getHeadersHash()
+    if (_allHeadersSessionHash !== newHash) {
+        _allHeadersSessionHash = newHash;
+        pxt.storage.setLocal('workspacesessionid', newHash);
     }
 }
+// TODO @darzu: delete this (unneeded)
+async function maybeSyncHeadersAsync() {
+    return syncAsync()
+    // if (isHeadersSessionOutdated()) { // another tab made changes
+    //     return syncAsync() // ensure we know what those changes were
+    // }
+    // return Promise.resolve();
+}
+// TODO @darzu: delete this (unused)
+async function refreshHeadersSession() {
+    return await syncAsync()
+
+    // TODO @darzu: del
+    // // use # of scripts + time of last mod as key
+    // _allHeadersSessionHash = impl.getHeadersHash();
+
+    // if (isHeadersSessionOutdated()) {
+    //     pxt.storage.setLocal('workspacesessionid', _allHeadersSessionHash);
+    //     pxt.debug(`workspace: refreshed headers session to ${_allHeadersSessionHash}`);
+    //     console.log(`workspace: refreshed headers session to ${_allHeadersSessionHash}`); // TODO @darzu: dbg
+    //     data.invalidate("header:*");
+    //     data.invalidate("text:*");
+    // }
+}
+// contract post condition: the headers session will be up to date
+export async function syncAsync(): Promise<pxt.editor.EditorSyncState> {
+    console.log("workspace:syncAsync");
+    // TODO @darzu: ... and re-acquires headers ?
+    // TODO @darzu: clean up naming, layering
+    const expectedHeadersHash = pxt.storage.getLocal('workspacesessionid')
+    if (expectedHeadersHash !== _allHeadersSessionHash) {
+        const changedHdrs = await impl.synchronize({
+            expectedHeadersHash,
+        })
+        const newHash = impl.getHeadersHash()
+        _allHeadersSessionHash = newHash;
+        pxt.storage.setLocal('workspacesessionid', newHash);
+        onExternalChangesToHeaders(changedHdrs);
+    }
+    // TODO @darzu: handle:
+    //      filters?: pxt.editor.ProjectFilters;
+    //      searchBar?: boolean;
+
+    // TODO @darzu: \/
+    /*
+    // force reload
+    ex.text = undefined
+    ex.version = undefined
+
+
+    impl.getSyncState()
+    */
+    return {}
+}
+
+// TODO @darzu: check the usage of these three... we need to be really disciplined and ensure this fits
+//      with the all headers session hash usage.
 // this is an identifier for the current frame
 // in order to lock headers for editing
 const workspaceID: string = pxt.Util.guidGen();
@@ -540,6 +600,8 @@ export async function saveAsync(header: Header, text?: ScriptText, isCloud?: boo
             console.log("BAD double save!") // TODO @darzu: dbg
             // TODO @darzu:
             // return
+        }if (!text) {
+            console.log("BAD blank save!")
         }
     }
 
@@ -558,6 +620,8 @@ export async function saveAsync(header: Header, text?: ScriptText, isCloud?: boo
         // await switchToMemoryWorkspace("write failed");
         // await impl.setAsync(header, prj.version, text);
     }
+
+    await refreshHeadersSessionAfterMutation();
 
     return;
 }
@@ -605,7 +669,7 @@ export function saveAsync2(h: Header, text?: ScriptText, isCloud?: boolean): Pro
         return headerQ.enqueue(h.id, () =>
             fixupVersionAsync(e).then(() =>
                 impl.deleteAsync ? impl.deleteAsync(h, e.version) : impl.setAsync(h, e.version, {})))
-            .finally(() => refreshHeadersSession())
+            .finally(() => refreshHeadersSessionAfterMutation())
     }
 
     // check if we have dynamic boards, store board info for home page rendering
@@ -642,12 +706,12 @@ export function saveAsync2(h: Header, text?: ScriptText, isCloud?: boolean): Pro
             h.pubCurrent = false;
             h.blobCurrent_ = false;
             h.saveId = null;
-            // TODO @darzu: more data api syncing..
+            // TODO @darzu: we shouldn't need these invalidates; double check
             data.invalidate("text:" + h.id);
             data.invalidate("pkg-git-status:" + h.id);
         }
 
-        refreshHeadersSession();
+        refreshHeadersSessionAfterMutation();
     });
 }
 
@@ -890,6 +954,7 @@ export function bumpedVersion(cfg: pxt.PackageConfig) {
 }
 
 export async function bumpAsync(hd: Header, newVer = "") {
+    console.log("bumpAsync") // TODO @darzu: dbg
     checkHeaderSession(hd);
 
     let files = await getTextAsync(hd.id)
@@ -1296,6 +1361,9 @@ export async function exportToGithubAsync(hd: Header, repoid: string) {
 export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
     checkHeaderSession(h);
 
+    // TODO @darzu: dbg
+    console.log("recomputeHeaderFlagsAsync")
+
     h.githubCurrent = false
 
     const gitjson: GitJson = JSON.parse(files[GIT_JSON] || "{}")
@@ -1418,7 +1486,11 @@ export function prepareConfigForGithub(content: string, createRelease?: boolean)
     }
 }
 
-export async function initializeGithubRepoAsync(hd: Header, repoid: string, forceTemplateFiles: boolean, binaryJs: boolean) {
+export async function initializeGithubRepoAsync(hd: Header, repoid: string, forceTemplateFiles: boolean, bAinaryJs: boolean) {
+    // TODO @darzu: dbg
+    console.log("initializeGithubRepoAsync")
+    // TODO @darzu: understand this function
+
     await cloudsync.ensureGitHubTokenAsync();
 
     let parsed = pxt.github.parseRepoId(repoid)
@@ -1580,6 +1652,7 @@ export function installByIdAsync(id: string) {
                     }, files)))
 }
 
+// TODO @darzu: no one should call this
 export async function saveToCloudAsync(h: Header) {
     checkHeaderSession(h);
     if (!await auth.loggedIn())
@@ -1610,33 +1683,6 @@ function onExternalChangesToHeaders(newHdrs: Header[]) {
     }
 }
 
-export async function syncAsync(): Promise<pxt.editor.EditorSyncState> {
-    console.log("workspace:syncAsync");
-    // contract:
-    //  output: this tab's headers session is up to date ...
-    // TODO @darzu: ... and re-acquires headers ?
-    // TODO @darzu: clean up naming, layering
-    const expectedHeadersHash = pxt.storage.getLocal('workspacesessionid')
-    const changedHdrs = await impl.synchronize({
-        expectedHeadersHash,
-    })
-    onExternalChangesToHeaders(changedHdrs);
-    pxt.storage.setLocal('workspacesessionid', impl.getHeadersHash());
-    // TODO @darzu: handle:
-    //      filters?: pxt.editor.ProjectFilters;
-    //      searchBar?: boolean;
-
-    // TODO @darzu: \/
-    /*
-    // force reload
-    ex.text = undefined
-    ex.version = undefined
-
-
-    impl.getSyncState()
-    */
-    return {}
-}
 
 // this promise is set while a sync is in progress
 // cleared when sync is done.

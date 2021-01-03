@@ -113,7 +113,8 @@ export function createCachedWorkspace(ws: WorkspaceProvider): CachedWorkspacePro
             .filter(id => hasChanged(oldHdrsMap[id], newHdrsMap[id]))
         const newProjs = oldProjs // TODO @darzu: is there any point in copying here?
         for (let id of changedHdrIds) {
-            console.log(`cache invalidating ${id}`) // TODO @darzu: dbg
+            console.log(`cache invalidating ${id} because:`) // TODO @darzu: dbg
+            console.dir({ old: (oldHdrsMap[id]), new: (newHdrsMap[id]) })
             delete newProjs[id]
         }
 
@@ -210,7 +211,7 @@ export function createCachedWorkspace(ws: WorkspaceProvider): CachedWorkspacePro
 
 // TODO @darzu: dbging helper
 export function toDbg(h: Header) {
-    return {n: h.name, t: h.modificationTime, id: h.id}
+    return {n: h.name, t: h.modificationTime, del: h.isDeleted, id: h.id}
 }
 
 export interface CloudSyncWorkspace extends CachedWorkspaceProvider {
@@ -277,6 +278,7 @@ export function createCloudSyncWorkspace(cloud: WorkspaceProvider, cloudLocal: W
     }
     async function synchronizeInternal(reason: SynchronizationReason): Promise<Header[]> {
         console.log("cloudsyncworkspace: synchronizeInternal")
+        console.dir(reason)
 
         // TODO @darzu: review these cases:
         // case 1: everything should be synced up, we're just polling the server
