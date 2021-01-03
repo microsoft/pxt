@@ -1486,7 +1486,7 @@ export function prepareConfigForGithub(content: string, createRelease?: boolean)
     }
 }
 
-export async function initializeGithubRepoAsync(hd: Header, repoid: string, forceTemplateFiles: boolean, bAinaryJs: boolean) {
+export async function initializeGithubRepoAsync(hd: Header, repoid: string, forceTemplateFiles: boolean, binaryJs: boolean) {
     // TODO @darzu: dbg
     console.log("initializeGithubRepoAsync")
     // TODO @darzu: understand this function
