@@ -113,9 +113,11 @@ export function createCachedWorkspace(ws: WorkspaceProvider): CachedWorkspacePro
             .filter(id => hasChanged(oldHdrsMap[id], newHdrsMap[id]))
         const newProjs = oldProjs // TODO @darzu: is there any point in copying here?
         for (let id of changedHdrIds) {
-            console.log(`cache invalidating ${id} because:`) // TODO @darzu: dbg
-            console.dir({ old: (oldHdrsMap[id]), new: (newHdrsMap[id]) })
-            delete newProjs[id]
+            if (id in newProjs) {
+                console.log(`cache invalidating ${id} because:`) // TODO @darzu: dbg
+                console.dir({ old: (oldHdrsMap[id]), new: (newHdrsMap[id]) })
+                delete newProjs[id]
+            }
         }
 
         // save results

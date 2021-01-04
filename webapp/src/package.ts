@@ -629,6 +629,8 @@ class Host
     }
 
     downloadPackageAsync(pkg: pxt.Package): Promise<void> {
+        console.log("downloadPackageAsync") // TODO @darzu: dbg
+        // TODO @darzu: what is the package abstraction for and why is it different than a workspace?
         let proto = pkg.verProtocol()
         let epkg = getEditorPkg(pkg)
 
@@ -643,7 +645,7 @@ class Host
                         // TODO @darzu: this is happening.
                         return Promise.reject(new Error(`Cannot find text for package '${arg}' in the workspace.`));
                     if (epkg.isTopLevel() && epkg.header)
-                        return workspace.recomputeHeaderFlagsAsync(epkg.header, scr)
+                        return workspace.recomputeHeaderGitFlagsAsync(epkg.header, scr)
                             .then(() => epkg.setFiles(scr))
                     else {
                         epkg.setFiles(scr)

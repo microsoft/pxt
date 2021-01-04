@@ -202,7 +202,7 @@ export function setupWorkspace(kind: WorkspaceKind): void {
         // TODO @darzu: improve this
         const msPerMin = 1000 * 60
         const afterSync = (changed: Header[]) => {
-            console.log(`...changes synced! ${!!changed}`)
+            console.log(`...changes synced! # of changes ${changed.length}`)
             onExternalChangesToHeaders(changed)
         }
         const doSync = async () => {
@@ -582,20 +582,74 @@ export function forceSaveAsync(h: Header, text?: ScriptText, isCloud?: boolean):
     return saveAsync(h, text, isCloud);
 }
 
+// TODO @darzu: for debugging
+function computeDiff(a: {header: Header, text: ScriptText}, b: {header: Header, text: ScriptText}): string {
+    const indent = (s: string) => '\t' + s
+    let res = ''
+
+    if (!a.header || !a.text || !b.header || !b.text) {
+        res += `FULL: a.header:${!!a.header}, a.text:${!!a.text}, b.header:${!!b.header}, b.text:${!!b.text}`
+        return res;
+    }
+
+    // headers
+    type HeaderK = keyof Header
+    const hdrKeys = U.unique([...Object.keys(a.header), ...Object.keys(b.header)], s => s) as HeaderK[]
+    const hasObjChanged = (a: any, b: any) => JSON.stringify(a) !== JSON.stringify(b)
+    const hasHdrChanged = (k: HeaderK) => hasObjChanged(a.header[k], b.header[k])
+    const hdrChanges = hdrKeys.filter(hasHdrChanged)
+    const hdrDels = hdrChanges.filter(k => (k in a.header) && !(k in b.header))
+    const hdrAdds = hdrChanges.filter(k => !(k in a.header) && (k in b.header))
+    const hdrMods = hdrChanges.filter(k => (k in a.header) && (k in b.header))
+
+    res += `HEADER (+${hdrAdds.length}-${hdrDels.length}~${hdrMods.length})`
+    res += '\n'
+    const hdrDelStrs = hdrDels.map(k => `DEL ${k}`)
+    const hdrAddStrs = hdrAdds.map(k => `ADD ${k}: ${JSON.stringify(b.header[k])}`)
+    const hdrModStrs = hdrMods.map(k => `MOD ${k}: ${JSON.stringify(a.header[k])} => ${JSON.stringify(b.header[k])}`)
+    res += [...hdrDelStrs, ...hdrAddStrs, ...hdrModStrs].map(indent).join("\n")
+    res += '\n'
+
+    // files
+    const filenames = U.unique([...Object.keys(a.text ?? {}), ...Object.keys(b.text ?? {})], s => s)
+    const hasFileChanged = (filename: string) => a.text[filename] !== b.text[filename]
+    const fileChanges = filenames.filter(hasFileChanged)
+    const fileDels = fileChanges.filter(k => (k in a.text) && !(k in b.text))
+    const fileAdds = fileChanges.filter(k => !(k in a.text) && (k in b.text))
+    const fileMods = fileChanges.filter(k => (k in a.text) && (k in b.text))
+
+    res += `FILES (+${fileAdds.length}-${fileDels.length}~${fileMods.length})`
+    res += '\n'
+    const fileDelStrs = fileDels.map(k => `DEL ${k}`)
+    const fileAddStrs = fileAdds.map(k => `ADD ${k}`)
+    const fileModStrs = fileMods.map(k => `MOD ${k}: ${a.text[k].length} => ${b.text[k].length}`)
+    res += [...fileDelStrs, ...fileAddStrs, ...fileModStrs].map(indent).join("\n")
+    res += '\n'
+
+    return res;
+}
+
 export async function saveAsync(header: Header, text?: ScriptText, isCloud?: boolean): Promise<void> {
     console.log(`workspace:saveAsync ${header.id}`)
     // TODO @darzu: port over from saveAsync2
-    let prj = await impl.getAsync(header) // TODO @darzu: dbg
-    if (!prj) {
+    let prevProj = await impl.getAsync(header) // TODO @darzu: dbg
+    if (!prevProj) {
         // first save
         console.log(`first save: ${header.id}`) // TODO @darzu: dbg
-        prj = {
+        prevProj = {
             header,
             text,
             version: null
         }
     } else {
-        if (prj.text === text) {
+        const diff = computeDiff(prevProj, {
+            header,
+            text,
+        })
+        console.log(`changes to ${header.id}:`)
+        console.log(diff)
+
+        if (prevProj.text === text) {
             // we're getting a double save.. no point
             console.log("BAD double save!") // TODO @darzu: dbg
             // TODO @darzu:
@@ -606,10 +660,10 @@ export async function saveAsync(header: Header, text?: ScriptText, isCloud?: boo
     }
 
     try {
-        const res = await impl.setAsync(header, prj.version, text);
+        const res = await impl.setAsync(header, prevProj.version, text);
         if (!res) {
             // conflict occured
-            console.log(`conflict occured for ${header.id} at ${prj.version}`) // TODO @darzu: dbg
+            console.log(`conflict occured for ${header.id} at ${prevProj.version}`) // TODO @darzu: dbg
             // TODO @darzu: what to do? probably nothing
         }
     } catch (e) {
@@ -865,8 +919,9 @@ export async function hasPullAsync(hd: Header) {
 }
 
 export async function pullAsync(hd: Header, checkOnly = false) {
+    console.log("pullAsync") // TODO @darzu: dbg
     let files = await getTextAsync(hd.id)
-    await recomputeHeaderFlagsAsync(hd, files)
+    await recomputeHeaderGitFlagsAsync(hd, files)
     let gitjsontext = files[GIT_JSON]
     if (!gitjsontext)
         return PullStatus.NoSourceControl
@@ -1358,7 +1413,7 @@ export async function exportToGithubAsync(hd: Header, repoid: string) {
 
 
 // to be called after loading header in a editor
-export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
+export async function recomputeHeaderGitFlagsAsync(h: Header, files: ScriptText) {
     checkHeaderSession(h);
 
     // TODO @darzu: dbg
