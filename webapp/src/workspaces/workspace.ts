@@ -633,6 +633,12 @@ function computeDiff(a: {header: Header, text: ScriptText}, b: {header: Header, 
 
 export async function saveAsync(header: Header, text?: ScriptText, isCloud?: boolean): Promise<void> {
     console.log(`workspace:saveAsync ${header.id}`)
+    if (!text) {
+        console.log("BAD blank save!")
+        // debugger; // TODO @darzu: dbg
+        // TODO @darzu: just return. that's what old browser workspace and saveAsync2 do in combo
+    }
+
     // TODO @darzu: port over from saveAsync2
     let prevProj = await impl.getAsync(header) // TODO @darzu: dbg
     if (!prevProj) {
@@ -656,9 +662,8 @@ export async function saveAsync(header: Header, text?: ScriptText, isCloud?: boo
             console.log("BAD double save!") // TODO @darzu: dbg
             // TODO @darzu:
             // return
-        }if (!text) {
-            console.log("BAD blank save!")
         }
+
     }
 
     try {

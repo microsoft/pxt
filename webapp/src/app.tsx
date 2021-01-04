@@ -1451,6 +1451,7 @@ export class ProjectView
                 }
 
                 // update recentUse on the header
+                // TODO @darzu: this is saving hte project without text...
                 return workspace.saveAsync(h)
             }).then(() => this.loadTutorialFiltersAsync())
             .finally(() => {
