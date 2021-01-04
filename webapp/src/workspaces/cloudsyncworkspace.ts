@@ -19,7 +19,7 @@ export interface CachedWorkspaceProvider extends WorkspaceProvider {
     pendingSync(): Promise<Header[]>,
     firstSync(): Promise<Header[]>,
     listSync(): Header[],
-    hasSync(h: Header): boolean,
+    getHeaderSync(id: string): Header,
     tryGetSync(h: Header): WsFile
 }
 
@@ -145,11 +145,13 @@ export function createCachedWorkspace(ws: WorkspaceProvider): CachedWorkspacePro
     }
     async function setAsync(h: Header, prevVer: Version, text?: ScriptText): Promise<string> {
         await pendingUpdate;
-        // update cached projects
-        cacheProjs[h.id] = {
-            header: h,
-            text,
-            version: prevVer
+        if (text) {
+            // update cached projects
+            cacheProjs[h.id] = {
+                header: h,
+                text,
+                version: prevVer
+            }
         }
         // update headers list, map and hash
         if (!cacheHdrsMap[h.id]) {
@@ -160,11 +162,13 @@ export function createCachedWorkspace(ws: WorkspaceProvider): CachedWorkspacePro
         // send update to backing storage
         const res = await ws.setAsync(h, prevVer, text)
         if (res) {
-            // update cached projec
-            cacheProjs[h.id] = {
-                header: h,
-                text,
-                version: res
+            if (text) {
+                // update cached project
+                cacheProjs[h.id] = {
+                    header: h,
+                    text,
+                    version: res
+                }
             }
         } else {
             // conflict; delete cache
@@ -198,8 +202,8 @@ export function createCachedWorkspace(ws: WorkspaceProvider): CachedWorkspacePro
         pendingSync: () => pendingUpdate,
         firstSync: () => firstUpdate,
         listSync: () => cacheHdrs,
-        hasSync: h => h && !!cacheHdrsMap[h.id],
         tryGetSync: h => cacheProjs[h.id],
+        getHeaderSync: id => cacheHdrsMap[id],
         // workspace
         getAsync,
         setAsync,
@@ -395,8 +399,8 @@ export function createCloudSyncWorkspace(cloud: WorkspaceProvider, cloudLocal: W
         pendingSync: () => pendingSync,
         firstSync: () => firstSync,
         listSync: () => localCache.listSync(),
-        hasSync: h => localCache.hasSync(h),
         tryGetSync: h => localCache.tryGetSync(h),
+        getHeaderSync: id => localCache.getHeaderSync(id),
         // workspace
         getAsync,
         setAsync,

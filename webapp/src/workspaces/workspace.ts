@@ -107,9 +107,18 @@ let implType: WorkspaceKind;
 
 // TODO @darzu: del
 function lookup(id: string): File {
+    if (!id) {
+        console.log(`! looking up null id`) // TODO @darzu: dbg
+    }
+
     // TODO @darzu: what is .path used for?
-    const hdr = impl.listSync().find(h => h.id == id || h.path == id)
-    return impl.tryGetSync(hdr)
+    const hdr = impl.getHeaderSync(id)
+    const resp = impl.tryGetSync(hdr)
+
+    if (!resp) {
+        console.log(`! lookup for ${id} failed!`) // TODO @darzu: dbg
+    }
+    return resp
     // TODO @darzu: del
     // implCache.getSync();
     // return allScripts.find(x => x.header.id == id || x.header.path == id);
@@ -365,13 +374,22 @@ function cleanupBackupsAsync() {
     }));
 }
 
-export function getHeader(id: string) {
-    maybeSyncHeadersAsync().done();
-    let e = lookup(id)
-    if (e && !e.header.isDeleted)
-        return e.header
+export function getHeader(id: string): Header {
+    maybeSyncHeadersAsync().done(); // TODO @darzu: handle properly
+    const hdr = impl.getHeaderSync(id)
+    if (hdr && !hdr.isDeleted) // TODO @darzu: ensure we're treating soft delete consistently
+        return hdr
+    console.log(`! cannot find header: ${id}`) // TODO @darzu: dbg
     return null
 }
+// TODO @darzu: delete
+// export function getHeader2(id: string) {
+//     maybeSyncHeadersAsync().done();
+//     let e = lookup(id)
+//     if (e && !e.header.isDeleted)
+//         return e.header
+//     return null
+// }
 
 // TODO @darzu: about workspacesessionid
 /*
@@ -499,25 +517,60 @@ export function initAsync() {
         })
 }
 
-export function getTextAsync(id: string): Promise<ScriptText> {
-    return maybeSyncHeadersAsync()
-        .then(() => {
-            let e = lookup(id)
-            if (!e)
-                return Promise.resolve(null as ScriptText)
-            if (e.text)
-                return Promise.resolve(e.text)
-            return headerQ.enqueue(id, () => impl.getAsync(e.header)
-                .then(resp => {
-                    if (!e.text) {
-                        // otherwise we were beaten to it
-                        e.text = fixupFileNames(resp.text);
-                    }
-                    e.version = resp.version;
-                    return e.text
-                }))
-        })
+export async function getTextAsync(id: string): Promise<ScriptText> {
+    await maybeSyncHeadersAsync();
+    const hdr = impl.getHeaderSync(id);
+    if (!hdr) {
+        console.log(`! Lookup failed for ${id}`); // TODO @darzu: dbg
+        return null
+    }
+    const proj = await impl.getAsync(hdr)
+    if (!proj) {
+        // TODO @darzu: this is a bad scenario. we should probably purge the header
+        console.log(`!!! FOUND HEADER BUT NOT PROJECT TEXT FOR: ${id}`); // TODO @darzu: dbg
+        console.dir(hdr)
+        return null
+    }
+    return proj.text
+    // TODO @darzu: incorperate:
+    // return
+    //     .then(() => {
+    //         let e = lookup(id)
+    //         if (!e)
+    //             return Promise.resolve(null as ScriptText)
+    //         if (e.text)
+    //             return Promise.resolve(e.text)
+    //         return headerQ.enqueue(id, () => impl.getAsync(e.header)
+    //             .then(resp => {
+    //                 if (!e.text) {
+    //                     // otherwise we were beaten to it
+    //                     e.text = fixupFileNames(resp.text);
+    //                 }
+    //                 e.version = resp.version;
+    //                 return e.text
+    //             }))
+    //     })
 }
+// TODO @darzu: delete
+// export function getTextAsync2(id: string): Promise<ScriptText> {
+//     return maybeSyncHeadersAsync()
+//         .then(() => {
+//             let e = lookup(id)
+//             if (!e)
+//                 return Promise.resolve(null as ScriptText)
+//             if (e.text)
+//                 return Promise.resolve(e.text)
+//             return headerQ.enqueue(id, () => impl.getAsync(e.header)
+//                 .then(resp => {
+//                     if (!e.text) {
+//                         // otherwise we were beaten to it
+//                         e.text = fixupFileNames(resp.text);
+//                     }
+//                     e.version = resp.version;
+//                     return e.text
+//                 }))
+//         })
+// }
 
 export interface ScriptMeta {
     description: string;
@@ -640,37 +693,51 @@ export async function saveAsync(header: Header, text?: ScriptText, isCloud?: boo
     }
 
     // TODO @darzu: port over from saveAsync2
-    let prevProj = await impl.getAsync(header) // TODO @darzu: dbg
-    if (!prevProj) {
-        // first save
-        console.log(`first save: ${header.id}`) // TODO @darzu: dbg
-        prevProj = {
-            header,
-            text,
-            version: null
+    let newProj: File;
+    if (text) {
+        // header & text insert/update
+        let prevProj = await impl.getAsync(header) // TODO @darzu: dbg
+        if (prevProj) {
+            // update
+            newProj = {
+                ...prevProj,
+                header,
+                text
+            }
+        } else {
+            // new project
+            newProj = {
+                header,
+                text,
+                version: null,
+            }
+            console.log(`first save: ${header.id}`) // TODO @darzu: dbg
+        }
+
+        // TODO @darzu: dbg
+        if (prevProj) {
+            // TODO @darzu: dbg:
+            const diff = computeDiff(prevProj, {
+                header,
+                text,
+            })
+            console.log(`changes to ${header.id}:`)
+            console.log(diff)
         }
     } else {
-        const diff = computeDiff(prevProj, {
+        // header only update
+        newProj = {
             header,
-            text,
-        })
-        console.log(`changes to ${header.id}:`)
-        console.log(diff)
-
-        if (prevProj.text === text) {
-            // we're getting a double save.. no point
-            console.log("BAD double save!") // TODO @darzu: dbg
-            // TODO @darzu:
-            // return
+            text: null,
+            version: null,
         }
-
     }
 
     try {
-        const res = await impl.setAsync(header, prevProj.version, text);
+        const res = await impl.setAsync(newProj.header, newProj.version, newProj.text);
         if (!res) {
             // conflict occured
-            console.log(`conflict occured for ${header.id} at ${prevProj.version}`) // TODO @darzu: dbg
+            console.log(`conflict occured for ${header.id} at ${newProj.version}`) // TODO @darzu: dbg
             // TODO @darzu: what to do? probably nothing
         }
     } catch (e) {

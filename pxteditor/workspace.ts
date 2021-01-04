@@ -29,12 +29,15 @@ namespace pxt.workspace {
     }
 
     export interface WorkspaceProvider {
-        listAsync(): Promise<Header[]>; // called from workspace.syncAsync (including upon startup)
+        listAsync(): Promise<Header[]>;
         /*
         Tries to get the corrisponding File with the current version if it exists.
         If it does not exist, returns undefined.
         */
         getAsync(h: Header): Promise<File>;
+        /*
+        If text is empty, then only update the header.
+        */
         setAsync(h: Header, prevVersion: Version, text?: ScriptText): Promise<Version>;
         deleteAsync?: (h: Header, prevVersion: Version) => Promise<void>;
         resetAsync(): Promise<void>;

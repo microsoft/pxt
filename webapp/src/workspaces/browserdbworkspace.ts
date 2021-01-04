@@ -47,42 +47,42 @@ export function createBrowserDbWorkspace(namespace: string): BrowserDbWorkspaceP
         return hdrs
     }
     async function getAsync(h: Header): Promise<pxt.workspace.File> {
-        const resp: TextDbEntry = await textDb.getAsync(h.id)
-        if (!resp)
-            return undefined;
+        const hdrProm = headerDb.getAsync(h.id)
+        const textProm = textDb.getAsync(h.id)
+        let [hdrResp, textResp] = await Promise.all([hdrProm, textProm]) as [Header, TextDbEntry]
+        if (!hdrResp || !textResp)
+            // TODO @darzu: distinguish these for the caller somehow?
+            return undefined
         return {
-            header: h,
-            text: resp.files,
-            version: resp._rev
+            header: hdrResp,
+            text: textResp.files,
+            version: textResp._rev
         }
     }
     async function setAsync(h: Header, prevVer: any, text?: ScriptText): Promise<string> {
-        // TODO @darzu: debug logging
-        if (!text) {
-            // TODO @darzu: trace down why...  this is a real bug
-            console.log("!!! setAsync without text :(")
-            // console.dir(h)
-        } else {
-            console.log(`setAsync ${namespace || "default"}:(${h.id}, ${h.modificationTime}, ${prevVer}) :)`)
-        }
+        // TODO @darzu: dbg
+        console.log(`setAsync ${namespace || "default"}:(${h.id}, ${h.modificationTime}, ${prevVer}) :)`)
 
-        const textEnt: TextDbEntry = {
-            files: text,
-            id: h.id,
-            _rev: prevVer
-        }
+        let textVer: string = undefined;
+        if (text) {
+            const textEnt: TextDbEntry = {
+                files: text,
+                id: h.id,
+                _rev: prevVer
+            }
 
-        // if we get a 400, we need to fetch the old then do a new
-        let textVer: string;
-        try {
-        textVer = await textDb.setAsync(textEnt)
-        } catch (e) {}
+            // if we get a 400, we need to fetch the old then do a new
+            // TODO @darzu: no we shouldn't; this isn't the right layer to handle storage conflicts
+            try {
+            textVer = await textDb.setAsync(textEnt)
+            } catch (e) {}
 
-        if (!textVer) {
-            console.log(`! failed to set text for id:${h.id},pv:${prevVer}`); // TODO @darzu: dbg logging
-            const oldTxt = await textDb.getAsync(h.id)
-            console.dir(`! text ${h.id} actually is: ${oldTxt._rev}`)
-            console.dir(oldTxt)
+            if (!textVer) {
+                console.log(`! failed to set text for id:${h.id},pv:${prevVer}`); // TODO @darzu: dbg logging
+                const oldTxt = await textDb.getAsync(h.id)
+                console.dir(`! text ${h.id} actually is: ${oldTxt._rev}`)
+                console.dir(oldTxt)
+            }
         }
 
         let hdrVer: string;
@@ -102,6 +102,7 @@ export function createBrowserDbWorkspace(namespace: string): BrowserDbWorkspaceP
                 delete h._rev
             }
             // TODO @darzu: need to rethink error handling here
+            // TODO @darzu: we shouldn't auto-retry on conflict failure
             try {
             hdrVer = await headerDb.setAsync(h)
             } catch (e) {}
@@ -109,11 +110,11 @@ export function createBrowserDbWorkspace(namespace: string): BrowserDbWorkspaceP
                 console.log(`!!! failed AGAIN to set hdr for id:${h.id},old:${JSON.stringify(oldHdr)}`); // TODO @darzu: dbg logging
             }
         }
-
         h._rev = hdrVer
 
         await printDbg(); // TODO @darzu: dbg
 
+        // TODO @darzu: notice undefined means either: "version conflict when setting text" and "no text sent"
         return textVer
     }
     async function deleteAsync(h: Header, prevVer: any): Promise<void> {

@@ -103,7 +103,7 @@ export function createJointWorkspace(...all: CachedWorkspaceProvider[]): CachedW
             .reduce((p, n) => [...p, ...n], [])
     }
     function getWorkspaceFor(h: Header): CachedWorkspaceProvider {
-        return all.reduce((p, n) => p || (n.hasSync(h) ? n : null), null)
+        return all.reduce((p, n) => p || (n.getHeaderSync(h?.id) ? n : null), null)
     }
     async function getAsync(h: Header): Promise<File> {
         await pendingSync()
@@ -116,14 +116,14 @@ export function createJointWorkspace(...all: CachedWorkspaceProvider[]): CachedW
         const ws = getWorkspaceFor(h)
         return ws?.tryGetSync(h) ?? undefined
     }
-    function hasSync(h: Header): boolean {
-        return all.reduce((p, n) => p || n.hasSync(h), false)
+    function getHeaderSync(id: string): Header {
+        return all.reduce((p, n) => p || n.getHeaderSync(id), null as Header)
     }
     async function setAsync(h: Header, prevVer: any, text?: ScriptText): Promise<string> {
         await pendingSync()
         // TODO @darzu: dbg logging
         console.log("joint:setAsync")
-        console.dir(all.map(w => w.hasSync(h)))
+        console.dir(all.map(w => w.getHeaderSync(h.id)))
         const ws = getWorkspaceFor(h) ?? all[0]
         return ws.setAsync(h, prevVer, text)
     }
@@ -144,8 +144,8 @@ export function createJointWorkspace(...all: CachedWorkspaceProvider[]): CachedW
         pendingSync,
         firstSync,
         listSync,
-        hasSync,
         tryGetSync,
+        getHeaderSync,
         // workspace
         getAsync,
         setAsync,
