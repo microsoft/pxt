@@ -44,7 +44,15 @@ code {
     font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
-#root, #root > div {
+#root {
+    width: 100%;
+}
+
+#root.editor {
+    height: 100%;
+}
+
+#root > div {
     width: 100%;
     height: 100%;
 }

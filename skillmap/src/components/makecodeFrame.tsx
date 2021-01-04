@@ -69,6 +69,9 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
         // Show Usabilla widget + footer
         setElementVisible(".usabilla_live_button_container", true);
         setElementVisible("footer", true);
+
+        const root = document.getElementById("root");
+        if (root) pxt.BrowserUtils.removeClass(root, "editor");
     }
 
     render() {
@@ -110,6 +113,9 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
             // Hide Usabilla widget + footer when inside iframe view
             setElementVisible(".usabilla_live_button_container", false);
             setElementVisible("footer", false);
+
+            const root = document.getElementById("root");
+            if (root) pxt.BrowserUtils.addClass(root, "editor");
         }
     }
 
