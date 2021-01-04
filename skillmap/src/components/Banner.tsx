@@ -7,16 +7,22 @@ interface BannerProps {
     title: string;
     description: string;
     icon: string;
+    infoUrl?: string;
 }
 
 export class BannerImpl extends React.Component<BannerProps> {
     render() {
-        const  { title, description, icon } = this.props;
+        const  { title, description, icon, infoUrl } = this.props;
         return <div className="banner">
             <div className="banner-card">
                 <i className={`icon ${icon}`} />
                 <div className="banner-text">
-                    <div className="banner-title">{title}</div>
+                    <div className="banner-title">
+                        <span>{title}</span>
+                        {infoUrl && <a className="banner-info" href={infoUrl} target="_blank" rel="noopener noreferrer">
+                            <i className="icon info circle" />
+                        </a>}
+                    </div>
                     <div className="banner-description">{description}</div>
                 </div>
             </div>
@@ -27,7 +33,8 @@ export class BannerImpl extends React.Component<BannerProps> {
 function mapStateToProps(state: SkillMapState, ownProps: any) {
     return {
         title: state.title,
-        description: state.description
+        description: state.description,
+        infoUrl: state.infoUrl
     };
 }
 
