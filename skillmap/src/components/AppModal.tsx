@@ -4,7 +4,7 @@ import * as React from "react";
 import { connect } from 'react-redux';
 
 import { ModalType, SkillMapState } from '../store/reducer';
-import { dispatchHideModal, dispatchRestartActivity, dispatchOpenActivity } from '../actions/dispatch';
+import { dispatchHideModal, dispatchRestartActivity, dispatchOpenActivity, dispatchResetUser } from '../actions/dispatch';
 import { tickEvent, postAbuseReportAsync } from "../lib/browserUtils";
 
 import { Modal, ModalAction } from './Modal';
@@ -23,6 +23,7 @@ interface AppModalProps {
     dispatchHideModal: () => void;
     dispatchRestartActivity: (mapId: string, activityId: string) => void;
     dispatchOpenActivity: (mapId: string, activityId: string) => void;
+    dispatchResetUser: () => void;
 }
 
 export class AppModalImpl extends React.Component<AppModalProps> {
@@ -38,6 +39,8 @@ export class AppModalImpl extends React.Component<AppModalProps> {
                 return this.renderRestartWarning();
             case "report-abuse":
                 return this.renderReportAbuse();
+            case "reset":
+                return this.renderResetWarning();
             default:
                 return <div/>
         }
@@ -87,6 +90,25 @@ export class AppModalImpl extends React.Component<AppModalProps> {
 
         return <Modal title={restartModalTitle} actions={actions} onClose={this.handleOnClose}>
             {restartModalTextSegments[0]}{<strong>{activity!.displayName}</strong>}{restartModalTextSegments[1]}
+        </Modal>
+    }
+
+    renderResetWarning() {
+        const  { dispatchResetUser, dispatchHideModal } = this.props;
+        const resetModalTitle = lf("Reset All Activities?");
+        const resetModalText = lf("Are you sure you want to reset? This will permanently erase all progress and delete the current projects. This action cannot be undone.");
+
+        const actions = [
+            { label: lf("CANCEL"), onClick: this.handleOnClose },
+            { label: lf("RESET"), onClick: () => {
+                tickEvent("skillmap.reset");
+                dispatchResetUser();
+                dispatchHideModal();
+            }}
+        ]
+
+        return <Modal title={resetModalTitle} actions={actions} onClose={this.handleOnClose}>
+            {resetModalText}
         </Modal>
     }
 
@@ -158,7 +180,8 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
 const mapDispatchToProps = {
     dispatchHideModal,
     dispatchRestartActivity,
-    dispatchOpenActivity
+    dispatchOpenActivity,
+    dispatchResetUser
 };
 
 export const AppModal = connect(mapStateToProps, mapDispatchToProps)(AppModalImpl);

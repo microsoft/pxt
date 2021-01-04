@@ -2,7 +2,7 @@
 import * as React from "react";
 
 import { connect } from 'react-redux';
-import { dispatchSaveAndCloseActivity } from '../actions/dispatch';
+import { dispatchSaveAndCloseActivity, dispatchShowResetUserModal } from '../actions/dispatch';
 import { SkillMapState } from '../store/reducer';
 import { resolvePath, tickEvent } from "../lib/browserUtils";
 
@@ -15,6 +15,7 @@ interface HeaderBarProps {
     showReportAbuse?: boolean;
     completedHeaderId?: string;
     dispatchSaveAndCloseActivity: () => void;
+    dispatchShowResetUserModal: () => void;
 }
 
 export class HeaderBarImpl extends React.Component<HeaderBarProps> {
@@ -24,13 +25,22 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
         if (this.props.showReportAbuse) {
             items.push({
                 id: "report",
-                label: "Report Abuse",
+                label: lf("Report Abuse"),
                 onClick: (id: string) => {
                     tickEvent("skillmap.reportabuse");
                     window.open(this.reportAbuseUrl);
                 }
             })
         }
+
+        items.push({
+            id: "reset",
+            label: lf("Reset"),
+            onClick: () => {
+                tickEvent("skillmap.reset.warning");
+                this.props.dispatchShowResetUserModal();
+            }
+        })
 
         return items;
     }
@@ -96,7 +106,8 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
 
 
 const mapDispatchToProps = {
-    dispatchSaveAndCloseActivity
+    dispatchSaveAndCloseActivity,
+    dispatchShowResetUserModal
 };
 
 export const HeaderBar = connect(mapStateToProps, mapDispatchToProps)(HeaderBarImpl);
