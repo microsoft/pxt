@@ -989,7 +989,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (!this.parent.state.debugging) return;
 
         if (this.debuggerToolbox) {
-            const visibleVars = Blockly.Variables.allUsedVarModels(this.editor).map((variable: any) => variable.name as string);
+            const visibleVars = Blockly.Variables.allUsedVarModels(this.editor)
+                    .map((variable: Blockly.VariableModel) => pxtc.escapeIdentifier(variable.name));
 
             this.debuggerToolbox.setBreakpoint(brk, visibleVars);
         }
