@@ -35,6 +35,16 @@ type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
 type InstallHeader = pxt.workspace.InstallHeader;
 type File = pxt.workspace.File;
 
+// TODO @darzu: cloud specific:
+/*
+MIN BAR:
+[ ] UI around sync time
+[ ] keeping cloud work in the background
+NICE TO HAVE:
+[ ] UI conflict resolution
+[ ] UI around "manual refresh"
+*/
+
 // TODO @darzu: todo list:
 // [ ] remove / fix header session methods
 //      [ ] refreshHeadersSession
@@ -138,7 +148,6 @@ export function copyProjectToLegacyEditor(header: Header, majorVersion: number):
     }
     return browserworkspace.copyProjectToLegacyEditor(header, majorVersion);
 }
-
 
 export type WorkspaceKind = "browser" | "fs" | "file" | "mem" | "memory" | "iframe" | "uwp" | "idb" | "cloud";
 

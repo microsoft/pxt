@@ -366,9 +366,15 @@ export function createCloudSyncWorkspace(cloud: WorkspaceProvider, cloudLocal: W
     }
     async function setAsync(h: Header, prevVer: any, text?: ScriptText): Promise<string> {
         await pendingSync
+
         // TODO @darzu: cannot pass prevVer to both of these.. they have different meanings on the different platforms
         // TODO @darzu: use a queue to sync to backend and make sure this promise is part of the pending sync set
-        const cloudPromise = cloudCache.setAsync(h, prevVer, text)
+        async function cloudSet() {
+            const prevCloudProj = await cloudCache.getAsync(h)
+            const newCloudVer = await cloudCache.setAsync(h, prevCloudProj?.version, text)
+        }
+        cloudSet()
+
         // TODO @darzu: also what to do with the return value ?
         return await localCache.setAsync(h, prevVer, text)
     }

@@ -66,6 +66,8 @@ export function getAsync(h: Header): Promise<File> {
             file.header.cloudVersion = file.version;
             file.header.cloudUserId = userId;
             resolve(file);
+        } else if (result.statusCode === 404) {
+            resolve(null);
         } else {
             reject(new Error(result.errmsg));
         }
