@@ -70,6 +70,8 @@ type File = pxt.workspace.File;
 //      [ ] conflict resolution dialog
 //      [ ] in editor
 // [ ] refactor out git / github stuff
+// [ ] on first save: investigate conflicting save
+// [ ] on first save: investigate NULL save
 // [ ] clean up code
 //      [ ] handle all TODO @darzu's
 //      [ ] renames
