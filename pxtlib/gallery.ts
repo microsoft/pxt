@@ -54,6 +54,16 @@ namespace pxt.gallery {
         return undefined;
     }
 
+    export function parseTemplateProjectJSON(md: string): pxt.Map<string> {
+        const pm = /```assetjson\s+((.|\s)+?)\s*```/i.exec(md);
+
+        if (pm) {
+            pxt.tutorial.parseAssetJson(pm[1]);
+        }
+
+        return {};
+    }
+
     export function parseExampleMarkdown(name: string, md: string): GalleryProject {
         if (!md) return undefined;
 
@@ -77,6 +87,11 @@ namespace pxt.gallery {
             snippetType,
             source
         };
+
+        prj.filesOverride = {
+            ...prj.filesOverride,
+            ...parseTemplateProjectJSON(md)
+        }
 
         if (jres) {
             prj.filesOverride[pxt.TILEMAP_JRES] = jres.jres;

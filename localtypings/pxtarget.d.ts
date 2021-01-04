@@ -43,7 +43,7 @@ declare namespace pxt {
         // "acme-corp/pxt-widget": "min:v0.1.2" - auto-upgrade to that version
         // "acme-corp/pxt-widget": "dv:foo,bar" - add "disablesVariant": ["foo", "bar"] to pxt.json
         upgrades?: pxt.Map<string>;
-        // list of trusted custom editor extension urls 
+        // list of trusted custom editor extension urls
         // that can bypass consent and send/receive messages
         approvedEditorExtensionUrls?: string[];
     }
@@ -945,6 +945,7 @@ declare namespace pxt.tutorial {
         language?: string; // language of code snippet (ts or python)
         templateCode?: string;
         metadata?: TutorialMetadata;
+        assetFiles?: pxt.Map<string>;
         jres?: string; // JRES to be used when generating hints; necessary for tilemaps
     }
 
@@ -995,6 +996,7 @@ declare namespace pxt.tutorial {
         autoexpandStep?: boolean; // autoexpand tutorial card if instruction text overflows
         metadata?: TutorialMetadata; // metadata about the tutorial parsed from the markdown
         language?: string; // native language of snippets ("python" for python, otherwise defaults to typescript)
+        assetFiles?: pxt.Map<string>;
         jres?: string; // JRES to be used when generating hints; necessary for tilemaps
     }
     interface TutorialCompletionInfo {

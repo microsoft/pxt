@@ -1538,26 +1538,36 @@ export class ProjectView
 
     private loadTutorialJresCodeAsync(): Promise<void> {
         const header = pkg.mainEditorPkg().header;
-        if (!header || !header.tutorial || !header.tutorial.jres)
+        if (!header || !header.tutorial || !(header.tutorial.jres || header.tutorial.assetFiles))
             return Promise.resolve();
 
-        const jres = header.tutorial.jres;
+        const tilemapJRes = header.tutorial.jres || header.tutorial.assetFiles?.[pxt.TILEMAP_JRES];
+        const imageJRes = header.tutorial.assetFiles?.[pxt.IMAGES_JRES];
 
         // Delete from the header so that we don't double-load the tiles into
         // the project if the project gets reloaded
         delete header.tutorial.jres;
+        delete header.tutorial.assetFiles;
 
-        let parsed: any;
+        let parsedTilemap: any;
+        let parsedImage: any;
 
         try {
-            parsed = JSON.parse(jres);
+            parsedTilemap = tilemapJRes ? JSON.parse(tilemapJRes) : null;
+            parsedImage = imageJRes ? JSON.parse(imageJRes) : null;
         }
         catch (e) {
             return Promise.reject(e);
         }
 
         const project = pxt.react.getTilemapProject();
-        project.loadTilemapJRes(parsed, true);
+        if (parsedTilemap) {
+            project.loadTilemapJRes(pxt.inflateJRes(parsedTilemap), true);
+        }
+        if (parsedImage) {
+            project.loadAssetsJRes(pxt.inflateJRes(parsedImage));
+        }
+
         return pkg.mainEditorPkg().buildAssetsAsync();
     }
 
@@ -2014,6 +2024,9 @@ export class ProjectView
         if (saveAsBlocks()) {
             pxt.BrowserUtils.browserDownloadText(mpkg.readFile("main.blocks"), pkg.genFileName(".blocks"), { contentType: 'application/xml' });
             return Promise.resolve();
+        }
+        if (saveTutorialTemplate()) {
+            return this.saveTutorialTemplateAsync();
         }
         if (pxt.commands.saveProjectAsync) {
             core.infoNotification(lf("Saving..."))
@@ -2479,7 +2492,7 @@ export class ProjectView
                 return this.saveProjectNameAsync()
                     .then(() => this.saveFileAsync())
                     .then(() => {
-                        if (!pxt.appTarget.compile.hasHex || pxt.appTarget.compile.useMkcd || pxt.appTarget.compile.saveAsPNG || saveAsBlocks()) {
+                        if (!pxt.appTarget.compile.hasHex || pxt.appTarget.compile.useMkcd || pxt.appTarget.compile.saveAsPNG || saveAsBlocks() || saveTutorialTemplate()) {
                             this.saveProjectToFileAsync()
                                 .finally(() => {
                                     this.setState({ isSaving: false });
@@ -3730,6 +3743,14 @@ export class ProjectView
         return null;
     }
 
+    private saveTutorialTemplateAsync() {
+        return pkg.mainEditorPkg().buildAssetsAsync()
+            .then(() => pkg.mainPkg.saveToJsonAsync())
+            .then(project => {
+                pxt.BrowserUtils.browserDownloadText(project.source, pkg.genFileName(".json"))
+            })
+    }
+
     ///////////////////////////////////////////////////////////
     ////////////     User alert/notifications     /////////////
     ///////////////////////////////////////////////////////////
@@ -4475,6 +4496,12 @@ function clearHashChange() {
 function saveAsBlocks(): boolean {
     try {
         return /saveblocks=1/.test(window.location.href) && !!pkg.mainPkg.readFile("main.blocks")
+    } catch (e) { return false; }
+}
+
+function saveTutorialTemplate(): boolean {
+    try {
+        return /save(?:as)?template=1/i.test(window.location.href)
     } catch (e) { return false; }
 }
 
