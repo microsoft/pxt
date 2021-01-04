@@ -346,7 +346,7 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
     let e = lookup(h.id)
     //U.assert(e.header === h)
 
-    if (!isCloud)
+    if (!isCloud) // TODO @darzu: do we still want these old isCloud branches?
         h.recentUse = U.nowSeconds()
 
     if (text || h.isDeleted) {
@@ -379,6 +379,12 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
         if (pxtjson && pxtjson.dependencies)
             h.board = Object.keys(pxtjson.dependencies)
                 .filter(p => !!pxt.bundledSvg(p))[0];
+    }
+
+    // cloud user association
+    if (auth.hasIdentity() && auth.loggedInSync()) {
+        // TODO @darzu: verify this is the right place to stamp this
+        h.cloudUserId = auth.user()?.id
     }
 
     return headerQ.enqueue<void>(h.id, async () => {

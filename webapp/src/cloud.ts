@@ -117,7 +117,8 @@ export async function syncAsync(): Promise<any> {
                     if (local.cloudCurrent) {
                         // No local changes, download latest.
                         const file = await getAsync(local);
-                        workspace.saveAsync(file.header, file.text, file.version);
+                        // TODO @darzu: pass isCloud ?
+                        workspace.saveAsync(file.header, file.text);
                     } else {
                         // Conflict.
                         // TODO: Figure out how to register these.
