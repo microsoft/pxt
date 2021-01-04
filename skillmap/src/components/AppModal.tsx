@@ -96,7 +96,7 @@ export class AppModalImpl extends React.Component<AppModalProps> {
     renderResetWarning() {
         const  { dispatchResetUser, dispatchHideModal } = this.props;
         const resetModalTitle = lf("Reset All Activities?");
-        const resetModalText = lf("Are you sure you want to reset? This will permanently erase all progress and delete the current projects. This action cannot be undone.");
+        const resetModalText = lf("Are you sure you want to reset? This will permanently erase all progress and delete the project created for each tutorial. This action cannot be undone.");
 
         const actions = [
             { label: lf("CANCEL"), onClick: this.handleOnClose },
