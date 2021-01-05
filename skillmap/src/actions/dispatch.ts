@@ -14,6 +14,7 @@ export const dispatchRestartActivity = (mapId: string, activityId: string) => ({
 
 export const dispatchSetUser = (user: UserState) => ({ type: actions.SET_USER, user });
 export const dispatchUpdateUserCompletedTags = () => ({ type: actions.UPDATE_USER_COMPLETED_TAGS });
+export const dispatchResetUser = () => ({ type: actions.RESET_USER });
 
 export const dispatchSetPageTitle = (title: string) => ({ type: actions.SET_PAGE_TITLE, title });
 export const dispatchSetPageDescription = (description: string) => ({ type: actions.SET_PAGE_DESCRIPTION, description });
@@ -23,5 +24,6 @@ export const dispatchSetPageSourceUrl = (url: string, status: PageSourceStatus) 
 export const dispatchShowCompletionModal = (mapId: string, activityId?: string) => ({ type: actions.SHOW_COMPLETION_MODAL, mapId, activityId });
 export const dispatchShowRestartActivityWarning = (mapId: string, activityId: string) => ({ type: actions.SHOW_RESTART_ACTIVITY_MODAL, mapId, activityId });
 export const dispatchShowReportAbuseModal = () => ({ type: actions.SHOW_REPORT_ABUSE_MODAL });
+export const dispatchShowResetUserModal = () => ({ type: actions.SHOW_RESET_USER_MODAL });
 
 export const dispatchHideModal = () => ({ type: actions.HIDE_MODAL });

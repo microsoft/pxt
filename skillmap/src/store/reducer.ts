@@ -2,7 +2,7 @@ import * as actions from '../actions/types'
 import { guidGen } from '../lib/browserUtils';
 import { getCompletedTags, lookupActivityProgress, isMapCompleted } from '../lib/skillMapUtils';
 
-export type ModalType = "restart-warning" | "completion" | "report-abuse";
+export type ModalType = "restart-warning" | "completion" | "report-abuse" | "reset";
 export type PageSourceStatus = "approved" | "banned" | "unknown";
 
 // State for the entire page
@@ -155,6 +155,15 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                 ...state,
                 user: action.user
             };
+        case actions.RESET_USER:
+            return {
+                ...state,
+                user: {
+                    ...state.user,
+                    completedTags: {},
+                    mapProgress: {}
+                }
+            };
         case actions.UPDATE_USER_COMPLETED_TAGS:
             if (!state.pageSourceUrl) return state;
             return {
@@ -202,6 +211,11 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
             return {
                 ...state,
                 modal: { type: "report-abuse", currentMapId: action.mapId, currentActivityId: action.activityId }
+            };
+        case actions.SHOW_RESET_USER_MODAL:
+            return {
+                ...state,
+                modal: { type: "reset" }
             };
         case actions.HIDE_MODAL:
             return {

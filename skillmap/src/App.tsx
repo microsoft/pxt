@@ -142,7 +142,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
                     const { title, description, infoUrl } = metadata;
                     this.props.dispatchSetPageTitle(title);
                     if (description) this.props.dispatchSetPageDescription(description);
-                    if (infoUrl) this.props.dispatchSetPageDescription(infoUrl);
+                    if (infoUrl) this.props.dispatchSetPageInfoUrl(infoUrl);
                 }
 
                 if (status === "banned") {
