@@ -58,7 +58,7 @@ namespace pxt.gallery {
         const pm = /```assetjson\s+((.|\s)+?)\s*```/i.exec(md);
 
         if (pm) {
-            pxt.tutorial.parseAssetJson(pm[1]);
+            return pxt.tutorial.parseAssetJson(pm[1]);
         }
 
         return {};
