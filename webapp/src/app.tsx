@@ -1291,6 +1291,9 @@ export class ProjectView
     }
 
     loadHeaderAsync(h: pxt.workspace.Header, editorState?: pxt.editor.EditorState): Promise<void> {
+        // TODO @darzu: dbg
+        console.log(`loadHeaderAsync: ${h.name}`)
+        console.dir(editorState)
         if (!h)
             return Promise.resolve()
 

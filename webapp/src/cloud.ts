@@ -193,7 +193,7 @@ export async function syncAsyncInternal(): Promise<any> {
                         //return deleteAsync(local, local.cloudVersion);
                         // Mark remote copy as deleted.
                         remote.isDeleted = true;
-                        return setAsync(remote, null, {});
+                        return setAsync(remote, remote.cloudVersion, {});
                     }
                     if (remote.isDeleted) {
                         // Delete local copy.
@@ -212,16 +212,23 @@ export async function syncAsyncInternal(): Promise<any> {
                     return Promise.resolve();
                 }
             } else {
+                if (local.cloudVersion) {
+                    // TODO @darzu: should we abort? should we try to fix things?
+                    console.log(`Project ${local.id} incorrectly thinks it is synced to the cloud (ver: ${local.cloudVersion})`) // TODO @darzu: dbg
+                    return Promise.resolve()
+                }
                 // Local cloud synced project exists, but it didn't make it to the server,
                 // so let's push it now.
                 const text = await workspace.getTextAsync(local.id)
-                return setAsync(local, null, text);
+                return setAsync(local, local.cloudVersion, text);
                 // TODO @darzu: previously Eric thought we should delete the project locally. Which is correct?
-                // delete local.cloudUserId;
-                // delete local.cloudVersion;
-                // delete local.cloudCurrent;
-                // console.log("cloud:syncAsync:saveAsync (3)") // TODO @darzu: dbg
-                // return workspace.forceSaveAsync(local);
+                // // Anomaly. Local cloud synced project exists, but no record of
+                //  // it on remote. We cannot know if there's a conflict. Convert
+                //  // to a local project.
+                //  delete local.cloudUserId;
+                //  delete local.cloudVersion;
+                //  delete local.cloudCurrent;
+                //  return workspace.saveAsync(local);
             }
         });
         tasks = [...tasks, ...remoteHeaders.map(async (remote) => {
@@ -241,6 +248,7 @@ export async function syncAsyncInternal(): Promise<any> {
         // TODO @darzu: should we do this here or in workspace.ts?
         for (let hdr of U.values(localHeaderChanges)) {
             console.log(`INVALIDATING: ${hdr.id}`) // TODO @darzu: dbg
+            // TODO @darzu: this isn't causing the editor to reload
             data.invalidateHeader("header", hdr);
             data.invalidateHeader("text", hdr);
             data.invalidateHeader("pkg-git-status", hdr);

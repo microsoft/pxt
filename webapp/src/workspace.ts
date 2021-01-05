@@ -430,27 +430,31 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
         return Promise.resolve()
 
     let e = lookup(h.id)
-    //U.assert(e.header === h)
-
-    if (!fromCloudSync) // TODO @darzu: do we still want these old isCloud branches?
-        h.recentUse = U.nowSeconds()
-
-    if (text || h.isDeleted) {
-        if (text)
-            e.text = text
-        h.saveId = null
-        // update version on save
+    const newSave = !e
+    if (newSave) {
+        e = {
+            header: h,
+            text,
+            version: null
+        }
+        allScripts.push(e)
     }
+    //U.assert(e.header === h)
 
     const hasUserFileChanges = async () => {
         // we see lots of frequent "saves" that don't come from real changes made by the user. This
         // causes problems for cloud sync since this can cause us to think the user is making when
         // just reading a project. The "correct" solution would be to have a full history and .gitignore
         // file.
-        const prevProj = await impl.getAsync(h)
+        if (newSave) {
+            // new project
+            console.log("new project") // TODO @darzu: dbg
+            return true
+        }
+        const prevProj = e
         const allChanges = computeChangeSummary(prevProj, {header: h, text})
         const ignoredFiles = [GIT_JSON, pxt.SIMSTATE_JSON, pxt.SERIAL_EDITOR_FILE]
-        const ignoredHeaderFields: (keyof Header)[] = ['recentUse', 'modificationTime', 'cloudCurrent', '_rev', '_id' as keyof Header]
+        const ignoredHeaderFields: (keyof Header)[] = ['recentUse', 'modificationTime', 'cloudCurrent', '_rev', '_id' as keyof Header, 'cloudVersion']
         const userChanges: ProjectChanges = {
             header: allChanges.header.filter(f => ignoredHeaderFields.indexOf(f.key) < 0),
             files: allChanges.files.filter(f => ignoredFiles.indexOf(f.key) < 0)
@@ -478,10 +482,21 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
         console.log("non-user change") // TODO @darzu: dbg
     }
 
+    if (!fromCloudSync) // TODO @darzu: do we still want these old isCloud branches?
+        h.recentUse = U.nowSeconds()
+
+    if (text || h.isDeleted) {
+        if (text)
+            e.text = text
+        h.saveId = null
+        // update version on save
+    }
+
     // perma-delete
     if (h.isDeleted && h.blobVersion_ == "DELETED") {
         let idx = allScripts.indexOf(e)
         U.assert(idx >= 0)
+        console.log(`DEL allScripts idx ${idx}`) // TODO @darzu: dbg
         allScripts.splice(idx, 1)
         return headerQ.enqueue(h.id, () =>
             fixupVersionAsync(e).then(() =>
@@ -554,12 +569,6 @@ function computePath(h: Header) {
 
 export function importAsync(h: Header, text: ScriptText, isCloud = false) {
     h.path = computePath(h)
-    const e: File = {
-        header: h,
-        text: text,
-        version: null
-    }
-    allScripts.push(e)
     return forceSaveAsync(h, text, isCloud)
 }
 

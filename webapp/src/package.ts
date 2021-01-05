@@ -3,6 +3,7 @@ import * as data from "./data";
 import * as core from "./core";
 import * as db from "./db";
 import * as compiler from "./compiler";
+import * as auth from "./auth";
 
 import Util = pxt.Util;
 
@@ -405,8 +406,7 @@ export class EditorPackage {
     }
 
     savePkgAsync() {
-        console.log("savePkgAsync (1)") // TODO @darzu: dbg
-        if (this.header.cloudCurrent) return Promise.resolve();
+        if (this.header.cloudCurrent || !auth.loggedInSync()) return Promise.resolve();
         console.log("savePkgAsync (2)") // TODO @darzu: dbg
         this.savingNow++;
         this.updateStatus();
