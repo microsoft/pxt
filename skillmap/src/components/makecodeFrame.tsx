@@ -326,7 +326,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         mapId: currentMapId,
         activityId: currentActivityId,
         activityHeaderId: currentHeaderId,
-        completed: lookupActivityProgress(state.user, currentMapId, currentActivityId)?.isCompleted,
+        completed: lookupActivityProgress(state.user, state.pageSourceUrl, currentMapId, currentActivityId)?.isCompleted,
         activityType: activity.type,
         save: saveState === "saving"
     }

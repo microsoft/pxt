@@ -146,6 +146,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
                         this.props.dispatchAddSkillMap(map);
                     })
                 }
+
                 if (metadata) {
                     const { title, description, infoUrl } = metadata;
                     setPageTitle(title);
@@ -219,9 +220,10 @@ class AppImpl extends React.Component<AppProps, AppState> {
     }
 
     protected applyQueryFlags(user: UserState, maps?: SkillMap[], sourceUrl?: string) {
+        const pageSource = sourceUrl || "default";
         if (this.queryFlags["debugNewUser"] === "true") {
             user.isDebug = true;
-            user.mapProgress = {};
+            user.mapProgress = { [pageSource]: {} };
             user.completedTags = {};
         }
 
@@ -230,7 +232,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
 
             if (maps) {
                 for (const map of maps) {
-                    user.mapProgress[map.mapId] = {
+                    user.mapProgress[pageSource][map.mapId] = {
                         completionState: "completed",
                         mapId: map.mapId,
                         activityState: {}
@@ -238,14 +240,14 @@ class AppImpl extends React.Component<AppProps, AppState> {
 
                     for (const key of Object.keys(map.activities)) {
                         const activity = map.activities[key];
-                        if (!user.mapProgress[map.mapId].activityState[activity.activityId]) {
-                            user.mapProgress[map.mapId].activityState[activity.activityId] = {
+                        if (!user.mapProgress[pageSource][map.mapId].activityState[activity.activityId]) {
+                            user.mapProgress[pageSource][map.mapId].activityState[activity.activityId] = {
                                 activityId: activity.activityId,
                                 isCompleted: true
                             };
                         }
                         else {
-                            user.mapProgress[map.mapId].activityState[activity.activityId].isCompleted = true;
+                            user.mapProgress[pageSource][map.mapId].activityState[activity.activityId].isCompleted = true;
                         }
 
                         if (activity.tags?.length && sourceUrl) {
