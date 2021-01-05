@@ -44,7 +44,15 @@ code {
     font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
-#root, #root > div {
+#root {
+    width: 100%;
+}
+
+#root.editor {
+    height: 100%;
+}
+
+#root > div {
     width: 100%;
     height: 100%;
 }
@@ -141,7 +149,7 @@ code {
     color: var(--inverted-text-color);
 }
 
-.banner-card i {
+.banner-card > i {
     font-size: 5rem;
     line-height: 5rem;
     margin: 2rem 1rem;
@@ -158,6 +166,14 @@ code {
 .banner-title {
     font-size: 2rem;
     margin-bottom: 0.5rem;
+}
+
+.banner-info i, .banner-info i:hover {
+    margin-left: 0.5rem;
+    color: var(--inverted-text-color);
+    font-size: 1.2rem;
+    vertical-align: top;
+    text-decoration: none;
 }
 
 /* SKILL CAROUSEL CONTAINERS */
