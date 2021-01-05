@@ -3747,7 +3747,7 @@ export class ProjectView
         return pkg.mainEditorPkg().buildAssetsAsync()
             .then(() => pkg.mainPkg.saveToJsonAsync())
             .then(project => {
-                pxt.BrowserUtils.browserDownloadText(project.source, pkg.genFileName(".json"))
+                pxt.BrowserUtils.browserDownloadText(project.source, pkg.genFileName(".txt.mkcd"))
             })
     }
 
