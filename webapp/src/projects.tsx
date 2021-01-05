@@ -634,7 +634,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                                 : undefined;
                     const ghid = pxt.github.parseRepoId(scr.githubId);
                     // TODO @darzu: determine downloading, uploading, etc...
-                    const cloudState = scr.cloudCurrent ? "cloud" : "local"
+                    const cloudState = !!scr.cloudUserId ? "cloud" : "local"
                     return <ProjectsCodeCard
                         key={'local' + scr.id + scr.recentUse}
                         // ref={(view) => { if (index === 1) this.latestProject = view }}

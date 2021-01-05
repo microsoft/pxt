@@ -405,14 +405,16 @@ export class EditorPackage {
     }
 
     savePkgAsync() {
-        if (this.header.blobCurrent_) return Promise.resolve();
+        console.log("savePkgAsync (1)") // TODO @darzu: dbg
+        if (this.header.cloudCurrent) return Promise.resolve();
+        console.log("savePkgAsync (2)") // TODO @darzu: dbg
         this.savingNow++;
         this.updateStatus();
         return workspace.saveToCloudAsync(this.header)
             .then(() => {
                 this.savingNow--;
                 this.updateStatus();
-                if (!this.header.blobCurrent_)
+                if (!this.header.cloudCurrent)
                     this.scheduleSave();
             })
     }

@@ -60,7 +60,15 @@ function migratePrefixesAsync(): Promise<void> {
 
 function listAsync(): Promise<pxt.workspace.Header[]> {
     return migratePrefixesAsync()
-        .then(() => headers.getAllAsync());
+        .then(() => headers.getAllAsync() as Promise<Header[]>)
+        .then((hs) => {
+            // TODO @darzu: dbg:
+            console.log("browserworkspace:listAsync")
+            console.dir(hs.map(h =>
+                ({id: h.id, mod: h.modificationTime, del: h.isDeleted, user: h.cloudUserId, cloudCurr: h.cloudCurrent, cloudVer: h.cloudVersion})))
+
+            return hs;
+        });
 }
 
 function getAsync(h: Header): Promise<pxt.workspace.File> {

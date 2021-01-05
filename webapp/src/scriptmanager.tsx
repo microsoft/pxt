@@ -185,7 +185,12 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                 .then(text => workspace.duplicateAsync(header, text, res))
                 .then(clonedHeader => {
                     // If we're cloud synced, update the cloudSync flag
-                    if (this.props.parent.hasCloudSync()) clonedHeader.cloudUserId = auth.user()?.id;
+                    if (this.props.parent.hasCloudSync()) {
+                        // TODO @darzu: double-check duplicate handling
+                        delete clonedHeader.cloudVersion
+                        delete clonedHeader.cloudCurrent
+                        clonedHeader.cloudUserId = auth.user()?.id;
+                    }
 
                     delete clonedHeader.blobId_
                     delete clonedHeader.blobVersion_

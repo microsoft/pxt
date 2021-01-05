@@ -13,6 +13,7 @@ import * as cloudsync from "./cloudsync"
 import * as indexedDBWorkspace from "./idbworkspace";
 import * as compiler from "./compiler"
 import * as auth from "./auth"
+import * as cloud from "./cloud"
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
@@ -355,6 +356,7 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
         if (!isCloud) {
             h.pubCurrent = false
             h.blobCurrent_ = false
+            h.cloudCurrent = false // TODO @darzu: necessary?
             h.modificationTime = U.nowSeconds();
             h.targetVersion = h.targetVersion || "0.0.0";
         }
@@ -381,11 +383,15 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
                 .filter(p => !!pxt.bundledSvg(p))[0];
     }
 
+    // TODO @darzu: is this the right place to stamp this?
     // cloud user association
     if (auth.hasIdentity() && auth.loggedInSync()) {
-        // TODO @darzu: verify this is the right place to stamp this
         h.cloudUserId = auth.user()?.id
+        // h.cloudCurrent = false;
     }
+
+    console.log("SAVE") // TODO @darzu: dbg
+    console.dir(h)
 
     return headerQ.enqueue<void>(h.id, async () => {
         await fixupVersionAsync(e);
@@ -408,6 +414,7 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
         if ((text && !isCloud) || h.isDeleted) {
             h.pubCurrent = false;
             h.blobCurrent_ = false;
+            h.cloudCurrent = false;
             h.saveId = null;
             data.invalidate("text:" + h.id);
             data.invalidate("pkg-git-status:" + h.id);
@@ -1336,9 +1343,12 @@ export function installByIdAsync(id: string) {
                     }, files)))
 }
 
-export function saveToCloudAsync(h: Header) {
+export async function saveToCloudAsync(h: Header) {
     checkHeaderSession(h);
-    return cloudsync.saveToCloudAsync(h)
+    // TODO @darzu: double check
+    const text = await getTextAsync(h.id)
+    return cloud.saveAsync(h, text)
+    // return cloudsync.saveToCloudAsync(h)
 }
 
 // this promise is set while a sync is in progress
