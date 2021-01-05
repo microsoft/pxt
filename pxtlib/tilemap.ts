@@ -41,6 +41,9 @@ namespace pxt {
     export interface Animation extends BaseAsset {
         type: AssetType.Animation;
         frames: pxt.sprite.BitmapData[];
+        flippedHorizontal?: boolean;
+        frameIds?: string[];
+        framePreviewURIs?: string[];
         interval: number;
     }
 
@@ -856,6 +859,20 @@ namespace pxt {
             }
         }
 
+        public getGalleryAssets(type: AssetType.Image): ProjectImage[];
+        public getGalleryAssets(type: AssetType.Tile): Tile[];
+        public getGalleryAssets(type: AssetType.Tilemap): ProjectTilemap[];
+        public getGalleryAssets(type: AssetType.Animation): Animation[];
+        public getGalleryAssets(type: AssetType): Asset[];
+        public getGalleryAssets(type: AssetType) {
+            switch (type) {
+                case AssetType.Image: return this.gallery.images.getSnapshot();
+                case AssetType.Tile: return this.gallery.tiles.getSnapshot();
+                case AssetType.Tilemap: return this.gallery.tilemaps.getSnapshot();
+                case AssetType.Animation: return this.gallery.animations.getSnapshot();
+            }
+        }
+
         public lookupBlockAsset(assetType: AssetType.Image, blockID: string): ProjectImage;
         public lookupBlockAsset(assetType: AssetType.Tile, blockID: string): Tile;
         public lookupBlockAsset(assetType: AssetType.Tilemap, blockID: string): ProjectTilemap;
@@ -1108,6 +1125,8 @@ namespace pxt {
         protected readImages(allJRes: Map<JRes>, isProjectFile = false) {
             const assets: (Tile | ProjectImage | Animation)[] = [];
 
+            const toInflate: Animation[] = [];
+
             for (const key of Object.keys(allJRes)) {
                 const entry = allJRes[key];
 
@@ -1139,11 +1158,57 @@ namespace pxt {
                     })
                 }
                 else if (entry.mimeType === ANIMATION_MIME_TYPE) {
-                    assets.push({
-                        ...decodeAnimation(entry),
-                        internalID: this.getNewInternalId()
-                    });
+                    if (entry.dataEncoding === "json") {
+                        let data: any;
+
+                        try {
+                            data = JSON.parse(entry.data);
+                        }
+                        catch (e) {
+                            console.warn("could not parse json data of '" + entry.id + "'");
+                        }
+
+                        toInflate.push({
+                            internalID: this.getNewInternalId(),
+                            type: AssetType.Animation,
+                            meta: {
+                                displayName: entry.displayName
+                            },
+                            id: entry.id,
+                            frames: [],
+                            frameIds: data.frames,
+                            interval: 100,
+                            flippedHorizontal: data.flippedHorizontal
+                        });
+                    }
+                    else {
+                        assets.push({
+                            ...decodeAnimation(entry),
+                            internalID: this.getNewInternalId()
+                        });
+                    }
                 }
+            }
+
+            for (const animation of toInflate) {
+                animation.frames = animation.frameIds.map(frameId =>
+                    (assets.find(entry => entry.id === frameId) as ProjectImage).bitmap
+                );
+
+                if (animation.flippedHorizontal) {
+                    animation.frames = animation.frames.map(frame => {
+                        const source = sprite.Bitmap.fromData(frame);
+
+                        const flipped = new sprite.Bitmap(frame.width, frame.height);
+                        for (let x = 0; x < flipped.width; x++) {
+                            for (let y = 0; y < flipped.height; y++) {
+                                flipped.set(x, y, source.get(source.width - x - 1, y))
+                            }
+                        }
+                        return flipped.data();
+                    })
+                }
+                assets.push(animation);
             }
 
             return assets;
@@ -1507,10 +1572,17 @@ namespace pxt {
             offset += frameLength;
         }
 
+        let id = jres.id;
+
+        if (!id.startsWith(jres.namespace)) {
+            id = jres.namespace + "." + id;
+            id = id.replace(/\.\./g, ".");
+        }
+
         return {
             type: AssetType.Animation,
             internalID: 0,
-            id: jres.id,
+            id: id,
             interval,
             frames: decodedFrames,
             meta: {

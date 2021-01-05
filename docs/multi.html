@@ -55,17 +55,17 @@
 <body>
     <select id="selectleft">
         <option value="https://makecode.microbit.org/">micro:bit</option>
+        <option value="https://arcade.makecode.com/">Arcade</option>
         <option value="https://makecode.adafruit.com/beta">Adafruit Circuit Playground Express (beta)</option>
-        <option value="https://arcade.makecode.com/beta">Arcade (beta)</option>
-        <option value="https://makecode.calliope.cc/beta">Calliope (beta)</option>
         <option value="https://maker.makecode.com/beta">Maker (beta)</option>
+        <option value="https://makecode.calliope.cc/beta">Calliope (beta)</option>
     </select>
     <select id="selectright">
         <option value="https://makecode.microbit.org/">micro:bit</option>
+        <option value="https://arcade.makecode.com/">Arcade</option>
         <option value="https://makecode.adafruit.com/beta">Adafruit Circuit Playground Express (beta)</option>
-        <option value="https://arcade.makecode.com/beta">Arcade (beta)</option>
+        <option value="https://maker.makecode.com/">Maker</option>
         <option value="https://makecode.calliope.cc/beta">Calliope (beta)</option>
-        <option value="https://maker.makecode.com/">Maker (beta)</option>
     </select>
     <iframe id="left" allow="usb;camera"></iframe>
     <div id="divider"></div>
@@ -88,12 +88,15 @@
             }
             var jacdac = /jacdac=1/.test(window.location.href)
             if (jacdac) {
+                const jacdacUrl = localhost ? "http://localhost:8000" : "https://microsoft.github.io/jacdac-ts";
                 [selectLeft, selectRight].forEach(function (sel) {
                     var opt = document.createElement("option")
-                    opt.value = localhost ? "http://localhost:8000" : "https://microsoft.github.io/jacdac-ts"
+                    opt.value = jacdacUrl;
                     opt.innerText = localhost ? "JACDAC localhost:8000" : "JACDAC (beta)"
                     sel.appendChild(opt)
                 })
+                selectLeft.value = jacdacUrl;
+                selectRight.value = "https://maker.makecode.com/";
             }
             var divider = document.getElementById("divider");
             var flags = "?nestededitorsim=1&editorlayout=ide&nosandbox=1&parentOrigin=" + encodeURIComponent(window.location.origin);

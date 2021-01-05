@@ -1,7 +1,7 @@
 {
   "name": "pxt-core",
-  "version": "6.6.13",
-  "description": "Microsoft MakeCode, also known as Programming Experience Toolkit (PXT), provides Blocks / JavaScript tools and editors",
+  "version": "6.8.11",
+  "description": "Microsoft MakeCode provides Blocks / JavaScript / Python tools and editors",
   "keywords": [
     "TypeScript",
     "JavaScript",
@@ -9,6 +9,8 @@
     "education",
     "microbit",
     "Adafruit",
+    "Arcade",
+    "Python",
     "pxt",
     "Microsoft",
     "Microsoft MakeCode"
@@ -84,7 +86,7 @@
   },
   "devDependencies": {
     "monaco-editor": "0.19.3",
-    "pxt-blockly": "3.0.26",
+    "pxt-blockly": "3.0.27",
     "react": "16.8.3",
     "react-dom": "16.11.0",
     "react-modal": "3.3.2",
@@ -138,6 +140,7 @@
     "test:err": "gulp testerr",
     "test:fmt": "gulp testfmt",
     "test:lang": "gulp testlang",
-    "update": "gulp update"
+    "update": "gulp update",
+    "watch-streamer": "cd docs/static/streamer && tsc -t es6 --watch"
   }
 }

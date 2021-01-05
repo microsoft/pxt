@@ -200,6 +200,7 @@ namespace pxt.editor {
         saveBlocksToTypeScriptAsync(): Promise<string>;
 
         saveFileAsync(): Promise<void>;
+        saveProjectAsync(): Promise<void>;
         loadHeaderAsync(h: pxt.workspace.Header): Promise<void>;
         reloadHeaderAsync(): Promise<void>;
         importProjectAsync(prj: pxt.workspace.Project, editorState?: pxt.editor.EditorState): Promise<void>;
@@ -281,7 +282,7 @@ namespace pxt.editor {
         typecheckNow(): void;
         shouldPreserveUndoStack(): boolean;
 
-        openExtension(extension: string, url: string, consentRequired?: boolean): void;
+        openExtension(extension: string, url: string, consentRequired?: boolean, trusted?: boolean): void;
         handleExtensionRequest(request: ExtensionRequest): void;
 
         fireResize(): void;
@@ -311,7 +312,7 @@ namespace pxt.editor {
 
         editor: IEditor;
 
-        startActivity(activitity: Activity, path: string, title?: string, editor?: string): void;
+        startActivity(activitity: Activity, path: string, title?: string, editor?: string, focus?: boolean, opts?: pxt.editor.ExampleImportOptions): void;
         showLightbox(): void;
         hideLightbox(): void;
         showKeymap(show: boolean): void;

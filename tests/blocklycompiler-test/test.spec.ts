@@ -381,6 +381,10 @@ describe("blockly compiler", function () {
             blockTestAsync("variables_reserved_names").then(done, done);
         });
 
+        it("should change variable names when escaped name matches", (done: () => void) => {
+            blockTestAsync("escaped_name_equal").then(done, done);
+        });
+
         it("should handle collisions with variables declared by the destructuring mutator", (done: () => void) => {
             blockTestAsync("old_radio_mutator").then(done, done);
         });

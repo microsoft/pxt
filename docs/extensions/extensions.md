@@ -23,6 +23,11 @@ The editor extension is configured in the [pxt.json](/extensions/pxt-json) file 
 
 The editor will automatically add an "Editor" button for the editor extension in the extensions category. 
 
+To debug a local extension, from the local dev server, add ``localeditorextensions=1`` to the url
+and add the a ``localUrl`` field.
+
+Custom domain urls are supported but must be registered in the ``targetconfig.json`` package
+configuration section under ``approvedEditorExtensions``.
 ## Protocol
 
 The editor and the editor extension &lt;iframe&gt; communicate using a protocol of IFrame messages. 
@@ -129,7 +134,7 @@ function receivedResponse(resp) {
 ...
 ```
 
-### Read and Write user code
+### Read user code
 
 The ``extusercode`` message requests to read the entire set of files in the project. The user will be prompted to give permission. If successfull, the response contains a ``resp`` field with a map of the file names to file contents.
 

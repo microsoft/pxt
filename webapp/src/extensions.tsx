@@ -41,30 +41,61 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
         this.onDeniedDecision = this.onDeniedDecision.bind(this);
     }
 
-    processMessage(ev: MessageEvent) {
-        const msg = ev.data
-        if (msg.type !== "serial") return;
+    unload() {
+        // forget everythings
+        const wrapper = Extensions.getCustomContent();
+        if (wrapper)
+            pxsim.U.removeChildren(wrapper);
+        this.manager.clear();
+    }
 
-        const smsg = msg as pxsim.SimulatorSerialMessage
+    private processSerialMessage(smsg: pxsim.SimulatorSerialMessage) {
         const exts = this.manager.streamingExtensions();
-        if (!exts || !exts.length) return;
+        if (!exts?.length)
+            return;
 
         const data = smsg.data || ""
         const source = smsg.id || "?"
+        const resp = {
+            target: pxt.appTarget.id,
+            type: "pxtpkgext",
+            event: "extconsole",
+            body: {
+                source,
+                sim: smsg.sim,
+                data
+            }
+        } as pxt.editor.ConsoleEvent;
+        exts.forEach(n => this.send(n, resp))
+    }
 
-        // called by app when a serial entry is read
-        exts.forEach(n => {
-            this.send(n, {
-                target: pxt.appTarget.id,
-                type: "pxtpkgext",
-                event: "extconsole",
-                body: {
-                    source,
-                    sim: smsg.sim,
-                    data
-                }
-            } as pxt.editor.ConsoleEvent);
-        })
+    private processMessagePacketMessage(smsg: pxsim.SimulatorControlMessage) {
+        const exts = this.manager.messagesExtensions();
+        if (!exts?.length)
+            return;
+
+        const data = smsg.data
+        const channel = smsg.channel
+        const source = smsg.source
+        const resp = {
+            target: pxt.appTarget.id,
+            type: "pxtpkgext",
+            event: "extmessagepacket",
+            body: {
+                source,
+                channel,
+                data
+            }
+        } as pxt.editor.MessagePacketEvent;
+        exts.forEach(n => this.send(n, resp))
+    }
+
+    processMessage(ev: MessageEvent) {
+        const msg = ev.data
+        if (msg?.type === "serial")
+            this.processSerialMessage(msg);
+        else if (msg?.type === "messagepacket")
+            this.processMessagePacketMessage(msg);
     }
 
     hide() {
@@ -75,14 +106,16 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
 
         // reload project to update changes from the editor
         core.showLoading("reloadproject", lf("loading..."));
+        this.send(this.state.extension, { target: pxt.appTarget.id, type: "pxtpkgext", event: "exthidden" } as pxt.editor.HiddenEvent);
         this.props.parent.reloadHeaderAsync()
             .done(() => {
-                this.send(this.state.extension, { target: pxt.appTarget.id, type: "pxtpkgext", event: "exthidden" } as pxt.editor.HiddenEvent);
                 core.hideLoading("reloadproject");
             });
     }
 
-    showExtension(extension: string, url: string, consentRequired: boolean) {
+    showExtension(extension: string, url: string, consentRequired: boolean, trusted?: boolean) {
+        if (trusted)
+            this.manager.trust(this.manager.getExtId(extension));
         let consent = consentRequired ? this.manager.hasConsent(this.manager.getExtId(extension)) : true;
         this.setState({ visible: true, extension: extension, url: url, consent: consent }, () => {
             this.send(extension, { target: pxt.appTarget.id, type: "pxtpkgext", event: "extshown" } as pxt.editor.ShownEvent);
@@ -244,8 +277,12 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
                 return "terminal"
             case ext.Permissions.ReadUserCode:
                 return "code";
+            case ext.Permissions.AddDependencies:
+                return "plus"
+            case ext.Permissions.Messages:
+                return "microchip"
+            default: return "";
         }
-        return "";
     }
 
     getDisplayNameForPermission(permission: ext.Permissions) {
@@ -254,8 +291,12 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
                 return lf("Console output")
             case ext.Permissions.ReadUserCode:
                 return lf("Read your code");
+            case ext.Permissions.AddDependencies:
+                return lf("Add extensions");
+            case ext.Permissions.Messages:
+                return lf("Send and receive messages");
+            default: return ""
         }
-        return "";
     }
 
     getDescriptionForPermission(permission: ext.Permissions) {
@@ -264,8 +305,12 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
                 return lf("The extension will be able to read any console output (including device data) streamed to the editor")
             case ext.Permissions.ReadUserCode:
                 return lf("The extension will be able to read the code in the current project");
+            case ext.Permissions.AddDependencies:
+                return lf("The extension will be able to add extensions in the current project");
+            case ext.Permissions.Messages:
+                return lf("The extension will be able to send and receive messages to devices connected to MakeCode, including physical devices connected with WebUSB.")
+            default: return "";
         }
-        return "";
     }
 
     private handleExtensionWrapperRef = (c: HTMLDivElement) => {
@@ -298,7 +343,7 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
                 {consent ?
                     <div id="extensionWrapper" data-frame={extension} ref={this.handleExtensionWrapperRef}>
                         {permissionRequest ?
-                            <sui.Modal isOpen={true} className="extensionpermissiondialog basic" closeIcon={false} dimmer={true} dimmerClassName="permissiondimmer">
+                            <sui.Modal isOpen={true} closeIcon={false} dimmer={true} dimmerClassName="permissiondimmer">
                                 <div className="permissiondialoginner">
                                     <div className="permissiondialogheader">
                                         {lf("Permission Request")}
@@ -306,7 +351,7 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
                                     <div className="permissiondialogbody">
                                         {lf("Extension {0} is requesting the following permission(s):", permissionExtName)}
                                     </div>
-                                    <div className="ui inverted list">
+                                    <div className="ui list">
                                         {permissionRequest.map(permission =>
                                             <div key={permission.toString()} className="item">
                                                 <sui.Icon icon={`${this.getIconForPermission(permission)} icon`} />
@@ -319,9 +364,9 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
                                     </div>
                                 </div>
                                 <div className="actions">
-                                    <sui.Button text={lf("Deny")} className={`deny inverted`}
+                                    <sui.Button text={lf("Deny")} className={`deny`}
                                         onClick={this.onDeniedDecision} />
-                                    <sui.Button text={lf("Approve")} className={`approve inverted green`}
+                                    <sui.Button text={lf("Approve")} className={`approve green`}
                                         onClick={this.onApprovedDecision} />
                                 </div>
                             </sui.Modal>

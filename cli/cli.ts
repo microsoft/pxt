@@ -190,6 +190,54 @@ function initConfigAsync(): Promise<void> {
 function loadGithubToken() {
     if (!pxt.github.token)
         pxt.github.token = process.env["GITHUB_ACCESS_TOKEN"] || process.env["GITHUB_TOKEN"];
+    pxt.github.db = new FileGithubDb(pxt.github.db);
+}
+
+/**
+ * Caches github releases under pxt_modules/.githubcache/...
+ */
+class FileGithubDb implements pxt.github.IGithubDb {
+    constructor(public readonly db: pxt.github.IGithubDb) {
+
+    }
+
+    private loadAsync<T>(repopath: string, tag: string, suffix: string,
+        loader: (r: string, t: string) => Promise<T>): Promise<T> {
+        // only cache releases
+        if (!/^v\d+\.\d+\.\d+$/.test(tag))
+            return loader(repopath, tag);
+
+        const dir = path.join(`pxt_modules`, `.githubcache`, ...repopath.split(/\//g), tag);
+        const fn = path.join(dir, suffix + ".json");
+        // cache hit
+        if (fs.existsSync(fn)) {
+            const json = fs.readFileSync(fn, "utf8");
+            const p = pxt.Util.jsonTryParse(json) as T;
+            if (p) {
+                pxt.debug(`cache hit ${fn}`)
+                return Promise.resolve(p);
+            }
+        }
+
+        // download and cache
+        return loader(repopath, tag)
+            .then(p => {
+                if (p) {
+                    pxt.debug(`cached ${fn}`)
+                    nodeutil.mkdirP(dir);
+                    fs.writeFileSync(fn, JSON.stringify(p), "utf8");
+                }
+                return p;
+            })
+    }
+
+    loadConfigAsync(repopath: string, tag: string): Promise<pxt.PackageConfig> {
+        return this.loadAsync(repopath, tag, "pxt", (r, t) => this.db.loadConfigAsync(r, t));
+    }
+
+    loadPackageAsync(repopath: string, tag: string): Promise<pxt.github.CachedPackage> {
+        return this.loadAsync(repopath, tag, "pkg", (r, t) => this.db.loadPackageAsync(r, t));
+    }
 }
 
 function searchAsync(...query: string[]) {
@@ -436,7 +484,8 @@ function ciAsync() {
                     if (uploadDocs)
                         p = p
                             .then(() => buildWebStringsAsync())
-                            .then(() => crowdin.execCrowdinAsync("upload", "built/webstrings.json"));
+                            .then(() => crowdin.execCrowdinAsync("upload", "built/webstrings.json"))
+                            .then(() => crowdin.execCrowdinAsync("upload", "built/skillmap-strings.json"));
                     if (uploadApiStrings)
                         p = p.then(() => crowdin.execCrowdinAsync("upload", "built/strings.json"))
                     if (uploadDocs || uploadApiStrings)
@@ -993,6 +1042,7 @@ function uploadCoreAsync(opts: UploadOptions) {
             "docsUrl": opts.localDir + "docs.html",
             "multiUrl": opts.localDir + "multi.html",
             "asseteditorUrl": opts.localDir + "asseteditor.html",
+            "skillmapUrl": opts.localDir + "skillmap.html",
             "isStatic": true,
         }
         const targetImagePaths = targetImages.map(k =>
@@ -1040,7 +1090,8 @@ function uploadCoreAsync(opts: UploadOptions) {
         "sim.webmanifest",
         "workerConfig.js",
         "multi.html",
-        "asseteditor.html"
+        "asseteditor.html",
+        "skillmap.html"
     ]
 
     nodeutil.mkdirP("built/uploadrepl")
@@ -1915,6 +1966,63 @@ function buildWebStringsAsync() {
 
     nodeutil.writeFileSync("built/webstrings.json", nodeutil.stringify(webstringsJson()))
     return Promise.resolve()
+}
+
+function buildSkillMapAsync(parsed: commandParser.ParsedCommand) {
+    // local serve
+    const skillmapRoot = "node_modules/pxt-core/skillmap";
+    if (parsed.flags["serve"]) {
+        return rimrafAsync(`${skillmapRoot}/public/blb`, {})
+            .then(() => rimrafAsync(`${skillmapRoot}/build/assets`, {}))
+            .then(() => {
+                // read pxtarget.json, save into 'pxtTargetBundle' global variable
+                let cfg = readLocalPxTarget();
+                nodeutil.writeFileSync(`${skillmapRoot}/public/blb/target.js`, "// eslint-disable-next-line \n" + targetJsPrefix + JSON.stringify(cfg));
+                nodeutil.cp("node_modules/pxt-core/built/pxtlib.js", `${skillmapRoot}/public/blb`);
+                nodeutil.cp("built/web/semantic.css", `${skillmapRoot}/public/blb`);
+
+                // copy 'assets' over from docs/static
+                nodeutil.cpR("docs/static/skillmap/assets", `${skillmapRoot}/public/assets`);
+                return nodeutil.spawnAsync({
+                    cmd: os.platform() === "win32" ? "npm.cmd" : "npm",
+                    args: ["run-script", "start"],
+                    cwd: skillmapRoot,
+                    shell: true
+                })
+            });
+    } else {
+        // OLD WAY, DEPRECATED
+        // go to appropriate stable branches in pxt (6.2) and target (pxt-arcade 1.2)
+        // run "pxt skillmap --serve" in target directory to make sure all files are copied
+        // run "pxt skillmap" to generate built files (also copies into docs/static)
+        // stash changes in target, go to master, delete skillmap folder in docs/static, pop stash
+
+        let cfg = readLocalPxTarget();
+        nodeutil.writeFileSync(`${skillmapRoot}/public/target.js`, "// eslint-disable-next-line \n" + targetJsPrefix + JSON.stringify(cfg));
+        nodeutil.cp("node_modules/pxt-core/built/pxtlib.js", `${skillmapRoot}/public/`);
+
+        return nodeutil.spawnAsync({
+            cmd: os.platform() === "win32" ? "npm.cmd" : "npm",
+            args: ["run-script", "build"],
+            cwd: skillmapRoot,
+            shell: true
+        }).then(() =>  rimrafAsync(`${skillmapRoot}/build/blb`, {}))
+        .then(() =>  rimrafAsync("docs/static/skillmap", {}))
+        .then(() => {
+            nodeutil.cpR(`${skillmapRoot}/build`, "docs/static/skillmap");
+
+            // patch paths to match updated folder structure
+            const fn = "docs/static/skillmap/index.html";
+            const f = fs.readFileSync(fn, "utf8");
+            const patched = f.replace(/href="\/blb\//g, `href="/static/skillmap/`)
+                .replace(/src="\/blb\//g, `src="/static/skillmap/`);
+            fs.writeFileSync("docs/skillmap.html", patched, { encoding: "utf8" });
+
+            // remove old index.html
+            fs.unlinkSync(fn);
+            return Promise.resolve();
+        })
+    }
 }
 
 function updateDefaultProjects(cfg: pxt.TargetBundle) {
@@ -2843,10 +2951,10 @@ function installPackageNameAsync(packageName: string): Promise<void> {
         return addDepAsync(packageName, "*", false);
 
     // github?
-    let parsed = pxt.github.parseRepoId(packageName)
+    const parsed = pxt.github.parseRepoId(packageName)
     if (parsed && parsed.fullName)
         return pxt.packagesConfigAsync()
-            .then(config => (parsed.tag ? Promise.resolve(parsed.tag) : pxt.github.latestVersionAsync(parsed.fullName, config))
+            .then(config => (parsed.tag ? Promise.resolve(parsed.tag) : pxt.github.latestVersionAsync(parsed.slug, config))
                 .then(tag => { parsed.tag = tag })
                 .then(() => pxt.github.pkgConfigAsync(parsed.fullName, parsed.tag))
                 .then(cfg => mainPkg.loadAsync(true)
@@ -3304,7 +3412,7 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
                 if (lastCard)
                     cards.push(lastCard);
                 cards.forEach(card => delete (card as any).id);
-               const newmd = `# ${title || "Community"}
+                const newmd = `# ${title || "Community"}
 
 ${pxt.gallery.codeCardsToMarkdown(cards)}
 
@@ -4597,6 +4705,14 @@ interface SpriteInfo {
     tags?: string;
     frames?: string[];
     blockIdentity?: string;
+    animation?: boolean,
+    animations?: AnimationInfo[];
+}
+
+interface AnimationInfo {
+    frames: number[];
+    flippedHorizontal: boolean;
+    name: string;
 }
 
 
@@ -4758,8 +4874,9 @@ function buildJResSpritesDirectoryAsync(dir: string) {
         let nx = (sheet.width / info.width) | 0
         let ny = (sheet.height / info.height) | 0
         let numSprites = nx * ny
+        const frameQNames: string[] = [];
 
-        for (let y = 0; y + info.height - 1 < sheet.height; y += info.height + info.ySpacing)
+        for (let y = 0; y + info.height - 1 < sheet.height; y += info.height + info.ySpacing) {
             for (let x = 0; x + info.width - 1 < sheet.width; x += info.width + info.xSpacing) {
                 if (info.frames && imgIdx >= info.frames.length) return;
 
@@ -4826,9 +4943,32 @@ function buildJResSpritesDirectoryAsync(dir: string) {
                 ts += `    export const ${key} = ${metaInfo.creator}(hex\`\`);\n`
 
                 pxt.log(`add ${key}; ${JSON.stringify(jresources[key]).length} bytes`)
+                frameQNames.push((metaInfo.star.namespace) + "." + key);
 
                 imgIdx++
             }
+        }
+
+        if (info.animation) {
+            processAnimation(basename, frameQNames.map((name, i) => i));
+        }
+
+        if (info.animations) {
+            for (const animation of info.animations) {
+                processAnimation(animation.name, animation.frames, animation.flippedHorizontal);
+            }
+        }
+
+        function processAnimation(name: string, frames: number[], flippedHorizontal = false) {
+            jresources[name] = {
+                mimeType: "application/mkcd-animation",
+                dataEncoding: "json",
+                data: JSON.stringify({
+                    frames: frames.map(frameIndex => frameQNames[frameIndex]),
+                    flippedHorizontal
+                })
+            } as any
+        }
     }
 }
 
@@ -4899,6 +5039,42 @@ export function buildAsync(parsed: commandParser.ParsedCommand) {
             parseBuildInfo(parsed);
             return buildCoreAsync({ mode, ignoreTests })
         }).then((compileOpts) => { });
+}
+
+export async function buildShareSimJsAsync(parsed: commandParser.ParsedCommand) {
+    const id = parsed.args[0];
+    console.log(`Building sim js for ${id}`);
+    const cwd = process.cwd();
+    const builtFolder = path.join("temp", id);
+    nodeutil.mkdirP(builtFolder);
+    process.chdir(builtFolder);
+
+    const mainPkg = new pxt.MainPackage(new Host());
+    mainPkg._verspec = `pub:${id}`;
+
+    await mainPkg.host().downloadPackageAsync(mainPkg);
+    await mainPkg.installAllAsync();
+    const opts = await mainPkg.getCompileOptionsAsync();
+    const compileResult = pxtc.compile(opts);
+    if (compileResult.diagnostics && compileResult.diagnostics.length > 0) {
+        compileResult.diagnostics.forEach(diag => {
+            console.error(diag.messageText)
+        })
+        throw new Error(`Failed to compile share id: ${id}`);
+    }
+
+    const builtJsInfo = pxtc.buildSimJsInfo(compileResult);
+
+    const outdir = parsed.flags["output"] as string || path.join(cwd, "docs", "static", "builtjs");
+    nodeutil.mkdirP(outdir);
+    const outputLocation = path.join(outdir, `${id}v${pxt.appTarget.versions.target}.json`);
+    fs.writeFileSync(
+        outputLocation,
+        JSON.stringify(builtJsInfo)
+    );
+
+    process.chdir(cwd);
+    console.log(`saved prebuilt ${id} to ${outputLocation}`);
 }
 
 export function gendocsAsync(parsed: commandParser.ParsedCommand) {
@@ -5496,7 +5672,8 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                                     pxt.log(`unable to resolve ${url}`)
                                     broken++;
                                     continue;
-                                }                                                const prj = pxt.gallery.parseExampleMarkdown(card.name, exMd);
+                                }
+                                const prj = pxt.gallery.parseExampleMarkdown(card.name, exMd);
                                 const pkgs: pxt.Map<string> = { "blocksprj": "*" };
                                 pxt.U.jsonMergeFrom(pkgs, prj.dependencies);
 
@@ -6229,6 +6406,20 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
         }
     }, buildAsync);
 
+    p.defineCommand({
+        name: "buildsimjs",
+        help: "build sim js for a share link",
+        argString: "<share id>",
+        flags: {
+            output: {
+                description: "Specifies the output folder for the generated files",
+                argument: "output",
+                type: "string",
+                aliases: ["o"]
+            },
+        },
+    }, buildShareSimJsAsync)
+
     simpleCmd("clean", "removes built folders", cleanAsync);
     advancedCommand("cleangen", "remove generated files", cleanGenAsync);
     simpleCmd("npminstallnative", "install native dependencies", npmInstallNativeAsync);
@@ -6484,6 +6675,21 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
             }
         }
     }, buildSemanticUIAsync);
+
+    p.defineCommand({
+        name: "buildskillmap",
+        aliases: ["skillmap"],
+        advanced: true,
+        help: "Builds the skill map webapp",
+        flags: {
+            serve: {
+                description: "Serve the skill map locally after building (npm start)"
+            },
+            legacy: {
+                description: "Legacy way of building skillmap (copies files into docs/static of target)"
+            }
+        }
+    }, buildSkillMapAsync);
 
     advancedCommand("augmentdocs", "test markdown docs replacements", augmnetDocsAsync, "<temlate.md> <doc.md>");
 

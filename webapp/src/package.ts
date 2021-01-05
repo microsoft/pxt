@@ -323,11 +323,24 @@ export class EditorPackage {
         let parsed = pxt.github.parseRepoId(p.verArgument())
         if (!parsed) return Promise.resolve();
         return pxt.targetConfigAsync()
-            .then(config => pxt.github.latestVersionAsync(parsed.fullName, config.packages))
-            .then(tag => { parsed.tag = tag })
-            .then(() => pxt.github.pkgConfigAsync(parsed.fullName, parsed.tag))
-            .catch(core.handleNetworkError)
-            .then(cfg => this.addDepAsync(cfg.name, pxt.github.stringifyRepo(parsed)));
+            .then(config => pxt.github.latestVersionAsync(parsed.slug, config.packages))
+            .then(tag => {
+                // since all repoes in a mono-repo are tied to the same version number,
+                // we'll update them all to this tag at once.
+                const ghids = Util.values(this.ksPkg.dependencies())
+                    .map(ver => pxt.github.parseRepoId(ver))
+                    .filter(ghid => ghid?.slug === parsed.slug);
+                return Promise.all(ghids.map(ghid => {
+                    ghid.tag = tag;
+                    return pxt.github.pkgConfigAsync(ghid.fullName, ghid.tag)
+                        .catch(core.handleNetworkError)
+                        .then((cfg: pxt.PackageConfig) => ({ ghid, cfg }));
+                }))
+            })
+            .then(updates => this.updateConfigAsync(config =>
+                updates.forEach(({ ghid, cfg }) => config.dependencies[cfg.name] = pxt.github.stringifyRepo(ghid))
+            ))
+            .then(() => this.saveFilesAsync(true));
     }
 
     removeDepAsync(pkgid: string) {
@@ -385,12 +398,15 @@ export class EditorPackage {
         const gj = this.files[pxt.github.GIT_JSON]
         if (gj) {
             const gjc: pxt.github.GitJson = JSON.parse(gj.content)
+            const parsed = pxt.github.parseRepoId(gjc.repo);
             if (gjc.commit) {
-                for (let treeEnt of gjc.commit.tree.tree) {
-                    const f = this.files[treeEnt.path]
-                    if (f && treeEnt.blobContent != null)
+                Object.keys(this.files).forEach(fn => {
+                    const treeEnt = pxt.github.lookupFile(parsed, gjc.commit, fn);
+                    if (treeEnt && treeEnt.blobContent != null) {
+                        const f = this.files[fn];
                         f.setBaseGitContent(treeEnt.blobContent)
-                }
+                    }
+                })
             }
         }
     }

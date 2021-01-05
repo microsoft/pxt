@@ -144,6 +144,23 @@
     }
 }
 
+.gallery-editor-toggle.no-gallery {
+    width: 13rem;
+
+    .gallery-editor-toggle-handle {
+        width: 50%;
+    }
+    .gallery-editor-toggle-label {
+        flex-basis: 50%;
+    }
+}
+
+.gallery-editor-toggle.no-gallery.right {
+    .gallery-editor-toggle-handle {
+        transform: translateX(6.5rem);
+    }
+}
+
 // Microsoft Edge has a bug related to relative z-indices that prevents the handle
 // from appearing below the text, so instead we make the handle transparent and have the text
 // show through
@@ -214,6 +231,10 @@
     justify-content: center;
 
     visibility: hidden;
+
+    .asset-editor-card {
+        margin: 0.2rem 0 0 0.2rem;
+    }
 }
 
 .image-editor-gallery.visible {

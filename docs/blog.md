@@ -1,5 +1,22 @@
 # Microsoft MakeCode Blog
 
+## [Fun MakeCode stuff for CS Education Week 2020](/blog/csed-week/csed-week-2020)
+
+December 4th, 2020 by [Jaqster](https://github.com/jaqster)
+
+Hooray!!! It’s the end of 2020! And Computer Science Education Week is here!
+We’ve got a bunch of fun MakeCode activities for students to do during the week, whether they’re at school or at home.
+
+**[Continue reading this blog post](/blog/csed-week/csed-week-2020)**
+
+## [MakeCode for the micro:bit V2 Release](/blog/microbit/microbit-V2)
+
+November 23rd, 2020 by [Jaqster](https://github.com/jaqster)
+
+We’ve been working closely with the Micro:bit Educational Foundation on supporting the new micro:bit V2 with MakeCode. Here’s a rundown of the new micro:bit features in MakeCode...
+
+**[Continue reading this blog post](/blog/microbit/microbit-V2)**
+
 ## [micro:bit shield for MakeCode Arcade](/blog/microbit/arcade-shield)
 
 October 16th, 2020 by [James Devine](https://github.com/jamesadevine)

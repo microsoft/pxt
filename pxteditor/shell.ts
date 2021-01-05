@@ -9,6 +9,7 @@ namespace pxt.shell {
     let layoutType: EditorLayoutType;
 
     let editorReadonly: boolean = false;
+    let noDefaultProject: boolean = false;
 
     function init() {
         if (layoutType !== undefined) return;
@@ -20,6 +21,7 @@ namespace pxt.shell {
         const controller = /controller=1/i.test(window.location.href) && pxt.BrowserUtils.isIFrame();
         const readonly = /readonly=1/i.test(window.location.href);
         const layout = /editorlayout=(widget|sandbox|ide)/i.exec(window.location.href);
+        const noproject = /noproject=1/i.test(window.location.href);
 
         layoutType = EditorLayoutType.IDE;
         if (nosandbox)
@@ -30,6 +32,7 @@ namespace pxt.shell {
             layoutType = EditorLayoutType.Sandbox;
 
         if (controller && readonly) editorReadonly = true;
+        if (controller && noproject) noDefaultProject = true;
         if (layout) {
             switch (layout[1].toLowerCase()) {
                 case "widget": layoutType = EditorLayoutType.Widget; break;
@@ -54,6 +57,10 @@ namespace pxt.shell {
         return (isSandboxMode()
             && !/[?&]edit=1/i.test(window.location.href)) ||
             (isControllerMode() && editorReadonly);
+    }
+
+    export function isNoProject() {
+        return noDefaultProject;
     }
 
     export function isControllerMode() {

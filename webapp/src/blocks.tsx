@@ -18,6 +18,7 @@ import { initializeSnippetExtensions } from './snippetBuilder';
 import Util = pxt.Util;
 import { DebuggerToolbox } from "./debuggerToolbox";
 import { ErrorList } from "./errorList";
+import { resolveExtensionUrl } from "./extensionManager";
 
 export class Editor extends toolboxeditor.ToolboxEditor {
     editor: Blockly.WorkspaceSvg;
@@ -807,7 +808,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                             .then(() => {
                                 if (!this.functionsDialog) {
                                     const wrapper = document.body.appendChild(document.createElement('div'));
-                                    this.functionsDialog = ReactDOM.render(React.createElement(CreateFunctionDialog, {parent: this.parent}), wrapper) as CreateFunctionDialog;
+                                    this.functionsDialog = ReactDOM.render(React.createElement(CreateFunctionDialog, { parent: this.parent }), wrapper) as CreateFunctionDialog;
                                 }
                                 this.functionsDialog.show(mutation, cb, this.editor);
                             });
@@ -850,9 +851,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     loadFileAsync(file: pkg.File): Promise<void> {
         Util.assert(!this.delayLoadXml);
-        Util.assert(!this.loadingXmlPromise);
+        const init = this.loadingXmlPromise || Promise.resolve();
 
-        return this.loadBlocklyAsync()
+        return init
+            .then(() => this.loadBlocklyAsync())
             .then(() => {
                 pxt.blocks.cleanBlocks();
 
@@ -879,11 +881,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     searchField.value = '';
                 }
                 // Get extension packages
-                this.extensions = pkg.allEditorPkgs()
-                    .map(ep => ep.getKsPkg())
-                    // Make sure the package has extensions enabled, and is a github package.
-                    // Extensions are limited to github packages and ghpages, as we infer their url from the installedVersion config
-                    .filter(p => !!p && p.config && !!p.config.extension && /^(file:|github:)/.test(p.installedVersion));
+                this.extensions = (!!pxt.appTarget.appTheme.allowPackageExtensions
+                    && pkg.allEditorPkgs()
+                        .map(ep => ep.getKsPkg())
+                        // Make sure the package has extensions enabled.
+                        .filter(p => !!p?.config?.extension))
+                    || [];
             })
     }
 
@@ -986,7 +989,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (!this.parent.state.debugging) return;
 
         if (this.debuggerToolbox) {
-            const visibleVars = Blockly.Variables.allUsedVarModels(this.editor).map((variable: any) => variable.name as string);
+            const visibleVars = Blockly.Variables.allUsedVarModels(this.editor)
+                    .map((variable: Blockly.VariableModel) => pxtc.escapeIdentifier(variable.name));
 
             this.debuggerToolbox.setBreakpoint(brk, visibleVars);
         }
@@ -1127,22 +1131,29 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.refreshToolbox();
     }
 
-    private openExtension(extensionName: string) {
-        const extension = this.extensions.filter(c => c.config.name == extensionName)[0];
-        const parsedRepo = pxt.github.parseRepoId(extension.installedVersion);
-        pxt.packagesConfigAsync()
-            .then((packagesConfig) => {
-                const extensionConfig = extension.config;
-                const repoStatus = pxt.github.repoStatus(parsedRepo, packagesConfig);
-                const repoName = parsedRepo.fullName.substr(parsedRepo.fullName.indexOf(`/`) + 1);
-                const localDebug = pxt.BrowserUtils.isLocalHost() && /^file:/.test(extension.installedVersion) && extensionConfig.extension.localUrl;
-                const debug = pxt.BrowserUtils.isLocalHost() && /debugExtensions/i.test(window.location.href);
-                /* tslint:disable:no-http-string */
-                const url = debug ? "http://localhost:3232/extension.html"
-                    : localDebug ? extensionConfig.extension.localUrl : `https://${parsedRepo.owner}.github.io/${repoName}/`;
-                /* tslint:enable:no-http-string */
-                this.parent.openExtension(extensionConfig.name, url, repoStatus == 0); // repoStatus can only be APPROVED or UNKNOWN at this point
-            });
+    private async openExtension(extensionName: string) {
+        const pkg = this.extensions.filter(c => c.config.name === extensionName)[0];
+        if (!pkg?.config.extension)
+            return;
+        pxt.tickEvent('blocks.extensions.open', { extension: extensionName })
+
+        const { name, url, repoStatus, trusted } = await resolveExtensionUrl(pkg);
+
+        // should never happen
+        if (repoStatus === pxt.github.GitRepoStatus.Banned) {
+            core.errorNotification(lf("Sorry, this extension is not allowed."))
+            return;
+        }
+        // no url registered?
+        if (!url) {
+            core.errorNotification(lf("Sorry, this extension does not have an editor."))
+            return;
+        }
+        /* tslint:enable:no-http-string */
+        this.parent.openExtension(name,
+            url,
+            !trusted && repoStatus !== pxt.github.GitRepoStatus.Approved,
+            trusted);
     }
 
     private partitionBlocks() {
@@ -1329,7 +1340,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                         attributes: {
                             blockId: `EXT${name}_BUTTON`,
                             label: config.extension.label ? Util.rlf(config.extension.label) : Util.lf("Editor"),
-                            weight: 101
+                            weight: 101,
+                            group: config.extension.group
                         },
                         callback: () => {
                             this.openExtension(name);

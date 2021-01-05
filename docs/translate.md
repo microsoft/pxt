@@ -20,6 +20,8 @@ MakeCode has the capability for [in context translations](https://support.crowdi
 
 https://youtu.be/OugXfqhWUQo
 
+https://youtu.be/OugXfqhWUQo
+
 ### ~ hint
 
 #### Trouble signing in with Crowdin?
