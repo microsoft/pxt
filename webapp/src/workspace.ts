@@ -18,6 +18,12 @@ import * as cloud from "./cloud"
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
 
+/*
+TODO @darzu: min-bar
+[ ] don't push non-user changes to the cloud
+[ ] ensure the editor reloads when a cloud change is pulled down
+*/
+
 // Avoid importing entire crypto-js
 /* tslint:disable:no-submodule-imports */
 const sha1 = require("crypto-js/sha1");
@@ -333,7 +339,92 @@ export function forceSaveAsync(h: Header, text?: ScriptText, isCloud?: boolean):
     return saveAsync(h, text, isCloud);
 }
 
-export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Promise<void> {
+interface Change<K, V> {
+    kind: 'add' | 'del' | 'mod'
+    key: K,
+    oldVal?: V,
+    newVal?: V,
+}
+interface ProjectChanges {
+    header: Change<keyof Header, string>[],
+    // TODO @darzu:  use hashes instead of lengths?
+    files: Change<string, number>[],
+}
+// TODO @darzu: for debugging
+function stringifyChangeSummary(diff: ProjectChanges): string {
+    const indent = (s: string) => '\t' + s
+    const changeToStr = (c: Change<any,any>) => `${c.kind} ${c.key}: (${c.oldVal || ''}) => (${c.newVal || ''})`
+    let res = ''
+
+    const hdrDels = diff.header.filter(k => k.kind === 'del')
+    const hdrAdds = diff.header.filter(k => k.kind === 'add')
+    const hdrMods = diff.header.filter(k => k.kind === 'mod')
+
+    res += `HEADER (+${hdrAdds.length}-${hdrDels.length}~${hdrMods.length})`
+    res += '\n'
+
+    const hdrStrs = diff.header.map(changeToStr)
+    res += hdrStrs.map(indent).join("\n")
+    res += '\n'
+
+    const fileDels = diff.files.filter(k => k.kind === 'del')
+    const fileAdds = diff.files.filter(k => k.kind === 'add')
+    const fileMods = diff.files.filter(k => k.kind === 'mod')
+
+    res += `FILES (+${fileAdds.length}-${fileDels.length}~${fileMods.length})`
+    res += '\n'
+    const fileStrs = diff.files.map(changeToStr)
+    res += fileStrs.map(indent).join("\n")
+    res += '\n'
+
+    return res;
+}
+function computeChangeSummary(a: {header: Header, text: ScriptText}, b: {header: Header, text: ScriptText}): ProjectChanges {
+    const aHdr = a.header || {} as Header
+    const bHdr = b.header || {} as Header
+    const aTxt = a.text || {}
+    const bTxt = b.text || {}
+
+    // headers
+    type HeaderK = keyof Header
+    const hdrKeys = U.unique([...Object.keys(aHdr), ...Object.keys(bHdr)], s => s) as HeaderK[]
+    const hasObjChanged = (a: any, b: any) => JSON.stringify(a) !== JSON.stringify(b)
+    const hasHdrChanged = (k: HeaderK) => hasObjChanged(aHdr[k], bHdr[k])
+    const hdrChanges = hdrKeys.filter(hasHdrChanged)
+    const hdrDels = hdrChanges.filter(k => (k in aHdr) && !(k in bHdr))
+        .map(k => ({kind: 'del', key: k, oldVal: aHdr[k]}) as Change<HeaderK, string>)
+    const hdrAdds = hdrChanges.filter(k => !(k in aHdr) && (k in bHdr))
+        .map(k => ({kind: 'add', key: k, newVal: bHdr[k]}) as Change<HeaderK, string>)
+    const hdrMods = hdrChanges.filter(k => (k in aHdr) && (k in bHdr))
+        .map(k => ({kind: 'mod', key: k, oldVal: aHdr[k], newVal: bHdr[k]}) as Change<HeaderK, string>)
+
+    // files
+    const filenames = U.unique([...Object.keys(aTxt ?? {}), ...Object.keys(bTxt ?? {})], s => s)
+    const hasFileChanged = (filename: string) => aTxt[filename] !== bTxt[filename]
+    const fileChanges = filenames.filter(hasFileChanged)
+    const fileDels = fileChanges.filter(k => (k in aTxt) && !(k in bTxt))
+        .map(k => ({kind: 'del', key: k, oldVal: aTxt[k].length}) as Change<string, number>)
+    const fileAdds = fileChanges.filter(k => !(k in aTxt) && (k in bTxt))
+        .map(k => ({kind: 'add', key: k, newVal: bTxt[k].length}) as Change<string, number>)
+    const fileMods = fileChanges.filter(k => (k in aTxt) && (k in bTxt))
+        .map(k => ({kind: 'mod', key: k, oldVal: aTxt[k].length, newVal: bTxt[k].length}) as Change<string, number>)
+
+    return {
+        header: [...hdrDels, ...hdrAdds, ...hdrMods],
+        files: [...fileDels, ...fileAdds, ...fileMods],
+    }
+}
+
+export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: boolean): Promise<void> {
+    // TODO @darzu: hunting spurious saves:
+    {
+        const prevProj = lookup(h.id)
+        const diff = computeChangeSummary(prevProj, {header: h, text})
+        console.log(`workspace:saveAsync(${h.name}, ${text?.length}, ${fromCloudSync})`)
+        console.log("diff:")
+        console.log(stringifyChangeSummary(diff))
+    }
+
     pxt.debug(`workspace: save ${h.id}`)
     if (h.isDeleted)
         clearHeaderSession(h);
@@ -347,21 +438,43 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
     let e = lookup(h.id)
     //U.assert(e.header === h)
 
-    if (!isCloud) // TODO @darzu: do we still want these old isCloud branches?
+    if (!fromCloudSync) // TODO @darzu: do we still want these old isCloud branches?
         h.recentUse = U.nowSeconds()
 
     if (text || h.isDeleted) {
         if (text)
             e.text = text
-        if (!isCloud) {
-            h.pubCurrent = false
-            h.blobCurrent_ = false
-            h.cloudCurrent = false // TODO @darzu: necessary?
-            h.modificationTime = U.nowSeconds();
-            h.targetVersion = h.targetVersion || "0.0.0";
-        }
         h.saveId = null
         // update version on save
+    }
+
+    const hasUserFileChanges = () => {
+        // we see lots of frequent "saves" that don't come from real changes made by the user. This
+        // causes problems for cloud sync since this can cause us to think the user is making when
+        // just reading a project. The "correct" solution would be to have a full history and .gitignore
+        // file.
+        const prevProj = lookup(h.id)
+        const changes = computeChangeSummary(prevProj, {header: h, text})
+        const ignoredFiles = [GIT_JSON, pxt.SIMSTATE_JSON, pxt.SERIAL_EDITOR_FILE]
+        const userFileChanges = changes.files.filter(f => ignoredFiles.indexOf(f.key) < 0)
+        if (userFileChanges.length > 0)
+            return true
+        const ignoredHeaderFields: (keyof Header)[] = ['recentUse', 'modificationTime', 'cloudCurrent']
+        const userHeaderChanges = changes.header.filter(f => ignoredHeaderFields.indexOf(f.key) < 0)
+        if (userHeaderChanges.length > 0)
+            return true
+        return false;
+    }
+    const isUserChange = (text || h.isDeleted)
+        && !fromCloudSync
+        && hasUserFileChanges()
+    if (isUserChange) {
+        console.log("USER CHANGE") // TODO @darzu: dbg
+        h.pubCurrent = false
+        h.blobCurrent_ = false
+        h.cloudCurrent = false // TODO @darzu: double check usage
+        h.modificationTime = U.nowSeconds();
+        h.targetVersion = h.targetVersion || "0.0.0";
     }
 
     // perma-delete
@@ -411,7 +524,7 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
             e.version = ver;
         }
 
-        if ((text && !isCloud) || h.isDeleted) {
+        if ((text && !fromCloudSync) || h.isDeleted) {
             h.pubCurrent = false;
             h.blobCurrent_ = false;
             h.cloudCurrent = false;
@@ -699,7 +812,7 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
         tree: []
     }
     const filenames = options.filenamesToCommit || pxt.allPkgFiles(cfg)
-    const ignoredFiles = [GIT_JSON, pxt.SIMSTATE_JSON, pxt.SERIAL_EDITOR_FILE];
+    const ignoredFiles = [GIT_JSON, pxt.SIMSTATE_JSON, pxt.SERIAL_EDITOR_FILE]
     for (const path of filenames.filter(f => ignoredFiles.indexOf(f) < 0)) {
         const fileContent = files[path];
         await addToTree(path, fileContent);
