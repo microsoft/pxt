@@ -399,10 +399,10 @@ function computeChangeSummary(a: {header: Header, text: ScriptText}, b: {header:
         .map(k => ({kind: 'mod', key: k, oldVal: aHdr[k], newVal: bHdr[k]}) as Change<HeaderK, string>)
 
     // files
-    const filenames = U.unique([...Object.keys(aTxt ?? {}), ...Object.keys(bTxt ?? {})], s => s)
+    const filenames = U.unique([...Object.keys(aTxt), ...Object.keys(bTxt)], s => s)
     const hasFileChanged = (filename: string) => aTxt[filename] !== bTxt[filename]
     const fileChanges = filenames.filter(hasFileChanged)
-    const fileDels = fileChanges.filter(k => (k in aTxt) && !(k in bTxt))
+    const fileDels = fileChanges.filter(k => (k in aTxt) && !(k in bTxt) && !!b.text)
         .map(k => ({kind: 'del', key: k, oldVal: aTxt[k].length}) as Change<string, number>)
     const fileAdds = fileChanges.filter(k => !(k in aTxt) && (k in bTxt))
         .map(k => ({kind: 'add', key: k, newVal: bTxt[k].length}) as Change<string, number>)
@@ -417,13 +417,7 @@ function computeChangeSummary(a: {header: Header, text: ScriptText}, b: {header:
 
 export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: boolean): Promise<void> {
     // TODO @darzu: hunting spurious saves:
-    {
-        const prevProj = lookup(h.id)
-        const diff = computeChangeSummary(prevProj, {header: h, text})
-        console.log(`workspace:saveAsync(${h.name}, ${text?.length}, ${fromCloudSync})`)
-        console.log("diff:")
-        console.log(stringifyChangeSummary(diff))
-    }
+    console.log(`workspace:saveAsync(${h.name}, ${text?.length}, ${fromCloudSync})`)
 
     pxt.debug(`workspace: save ${h.id}`)
     if (h.isDeleted)
@@ -448,26 +442,31 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
         // update version on save
     }
 
-    const hasUserFileChanges = () => {
+    const hasUserFileChanges = async () => {
         // we see lots of frequent "saves" that don't come from real changes made by the user. This
         // causes problems for cloud sync since this can cause us to think the user is making when
         // just reading a project. The "correct" solution would be to have a full history and .gitignore
         // file.
-        const prevProj = lookup(h.id)
-        const changes = computeChangeSummary(prevProj, {header: h, text})
+        const prevProj = await impl.getAsync(h)
+        const allChanges = computeChangeSummary(prevProj, {header: h, text})
         const ignoredFiles = [GIT_JSON, pxt.SIMSTATE_JSON, pxt.SERIAL_EDITOR_FILE]
-        const userFileChanges = changes.files.filter(f => ignoredFiles.indexOf(f.key) < 0)
-        if (userFileChanges.length > 0)
-            return true
-        const ignoredHeaderFields: (keyof Header)[] = ['recentUse', 'modificationTime', 'cloudCurrent']
-        const userHeaderChanges = changes.header.filter(f => ignoredHeaderFields.indexOf(f.key) < 0)
-        if (userHeaderChanges.length > 0)
-            return true
-        return false;
+        const ignoredHeaderFields: (keyof Header)[] = ['recentUse', 'modificationTime', 'cloudCurrent', '_rev', '_id' as keyof Header]
+        const userChanges: ProjectChanges = {
+            header: allChanges.header.filter(f => ignoredHeaderFields.indexOf(f.key) < 0),
+            files: allChanges.files.filter(f => ignoredFiles.indexOf(f.key) < 0)
+        }
+
+        // TODO @darzu: dbg
+        console.log("all changes:")
+        console.log(stringifyChangeSummary(allChanges))
+        console.log("user changes:")
+        console.log(stringifyChangeSummary(userChanges))
+
+        return userChanges.header.length > 0 || userChanges.files.length > 0
     }
     const isUserChange = (text || h.isDeleted)
         && !fromCloudSync
-        && hasUserFileChanges()
+        && await hasUserFileChanges()
     if (isUserChange) {
         console.log("USER CHANGE") // TODO @darzu: dbg
         h.pubCurrent = false
@@ -475,6 +474,8 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
         h.cloudCurrent = false // TODO @darzu: double check usage
         h.modificationTime = U.nowSeconds();
         h.targetVersion = h.targetVersion || "0.0.0";
+    } else {
+        console.log("non-user change") // TODO @darzu: dbg
     }
 
     // perma-delete
@@ -524,7 +525,7 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
             e.version = ver;
         }
 
-        if ((text && !fromCloudSync) || h.isDeleted) {
+        if (isUserChange) {
             h.pubCurrent = false;
             h.blobCurrent_ = false;
             h.cloudCurrent = false;
