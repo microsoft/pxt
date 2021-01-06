@@ -38,8 +38,7 @@ let allScripts: File[] = [];
 
 let headerQ = new U.PromiseQueue();
 
-// TODO @darzu: don't export; debugging
-export let impl: WorkspaceProvider;
+let impl: WorkspaceProvider;
 let implType: string;
 
 function lookup(id: string) {
@@ -272,11 +271,9 @@ export function initAsync() {
 }
 
 export function getTextAsync(id: string): Promise<ScriptText> {
-    console.log(`getTextAsync ${id}`) // TODO @darzu: dbg
     return maybeSyncHeadersAsync()
         .then(() => {
             let e = lookup(id)
-            console.log(`found ${id} mod ${e.header.modificationTime}`) // TODO @darzu: dbg
             if (!e)
                 return Promise.resolve(null as ScriptText)
             if (e.text)
@@ -357,48 +354,17 @@ export function forceSaveAsync(h: Header, text?: ScriptText, isCloud?: boolean):
     return saveAsync(h, text, isCloud);
 }
 
-// TODO @darzu: do we actually want to export?
-export interface Change<K, V> {
+interface Change<K, V> {
     kind: 'add' | 'del' | 'mod'
     key: K,
     oldVal?: V,
     newVal?: V,
 }
-export interface ProjectChanges {
+interface ProjectChanges {
     header: Change<keyof Header, string>[],
-    // TODO @darzu:  use hashes instead of lengths?
     files: Change<string, number>[],
 }
-// TODO @darzu: for debugging
-export function stringifyChangeSummary(diff: ProjectChanges): string {
-    const indent = (s: string) => '\t' + s
-    const changeToStr = (c: Change<any,any>) => `${c.kind} ${c.key}: (${c.oldVal || ''}) => (${c.newVal || ''})`
-    let res = ''
-
-    const hdrDels = diff.header.filter(k => k.kind === 'del')
-    const hdrAdds = diff.header.filter(k => k.kind === 'add')
-    const hdrMods = diff.header.filter(k => k.kind === 'mod')
-
-    res += `HEADER (+${hdrAdds.length}-${hdrDels.length}~${hdrMods.length})`
-    res += '\n'
-
-    const hdrStrs = diff.header.map(changeToStr)
-    res += hdrStrs.map(indent).join("\n")
-    res += '\n'
-
-    const fileDels = diff.files.filter(k => k.kind === 'del')
-    const fileAdds = diff.files.filter(k => k.kind === 'add')
-    const fileMods = diff.files.filter(k => k.kind === 'mod')
-
-    res += `FILES (+${fileAdds.length}-${fileDels.length}~${fileMods.length})`
-    res += '\n'
-    const fileStrs = diff.files.map(changeToStr)
-    res += fileStrs.map(indent).join("\n")
-    res += '\n'
-
-    return res;
-}
-export function computeChangeSummary(a: {header: Header, text: ScriptText}, b: {header: Header, text: ScriptText}): ProjectChanges {
+function computeChangeSummary(a: {header: Header, text: ScriptText}, b: {header: Header, text: ScriptText}): ProjectChanges {
     const aHdr = a.header || {} as Header
     const bHdr = b.header || {} as Header
     const aTxt = a.text || {}
@@ -433,12 +399,38 @@ export function computeChangeSummary(a: {header: Header, text: ScriptText}, b: {
         files: [...fileDels, ...fileAdds, ...fileMods],
     }
 }
+// useful for debugging
+function stringifyChangeSummary(diff: ProjectChanges): string {
+    const indent = (s: string) => '\t' + s
+    const changeToStr = (c: Change<any,any>) => `${c.kind} ${c.key}: (${c.oldVal || ''}) => (${c.newVal || ''})`
+    let res = ''
+
+    const hdrDels = diff.header.filter(k => k.kind === 'del')
+    const hdrAdds = diff.header.filter(k => k.kind === 'add')
+    const hdrMods = diff.header.filter(k => k.kind === 'mod')
+
+    res += `HEADER (+${hdrAdds.length}-${hdrDels.length}~${hdrMods.length})`
+    res += '\n'
+
+    const hdrStrs = diff.header.map(changeToStr)
+    res += hdrStrs.map(indent).join("\n")
+    res += '\n'
+
+    const fileDels = diff.files.filter(k => k.kind === 'del')
+    const fileAdds = diff.files.filter(k => k.kind === 'add')
+    const fileMods = diff.files.filter(k => k.kind === 'mod')
+
+    res += `FILES (+${fileAdds.length}-${fileDels.length}~${fileMods.length})`
+    res += '\n'
+    const fileStrs = diff.files.map(changeToStr)
+    res += fileStrs.map(indent).join("\n")
+    res += '\n'
+
+    return res;
+}
 
 export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: boolean): Promise<void> {
-    // TODO @darzu: hunting spurious saves:
-    console.log(`workspace:saveAsync(${h.name}, ${text?.length}, ${fromCloudSync})`)
-
-    pxt.debug(`workspace: save ${h.id}`)
+    pxt.debug(`workspace: save '${h.name}' (${h.id})`)
     if (h.isDeleted)
         clearHeaderSession(h);
     checkHeaderSession(h);
@@ -456,7 +448,6 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
             text,
             version: null
         }
-        console.log("adding new to allScripts") // TODO @darzu: dbg
         allScripts.push(e)
     }
     //U.assert(e.header === h)
@@ -468,7 +459,6 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
         // file.
         if (newSave) {
             // new project
-            console.log("new project") // TODO @darzu: dbg
             return true
         }
         const prevProj = e
@@ -480,43 +470,44 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
             files: allChanges.files.filter(f => ignoredFiles.indexOf(f.key) < 0)
         }
 
-        // TODO @darzu: dbg
-        console.log("all changes:")
-        console.log(stringifyChangeSummary(allChanges))
-        console.log("user changes:")
-        console.log(stringifyChangeSummary(userChanges))
+        const hasUserChanges = userChanges.header.length > 0 || userChanges.files.length > 0
 
-        return userChanges.header.length > 0 || userChanges.files.length > 0
+        if (hasUserChanges) {
+            pxt.debug("user changes:")
+            pxt.debug(stringifyChangeSummary(userChanges))
+        }
+
+        return hasUserChanges;
     }
     const isUserChange = (text || h.isDeleted)
         && !fromCloudSync
         && await hasUserFileChanges()
     if (isUserChange) {
-        console.log("USER CHANGE") // TODO @darzu: dbg
         h.pubCurrent = false
         h.blobCurrent_ = false
-        h.cloudCurrent = false // TODO @darzu: double check usage
+        h.cloudCurrent = false
         h.modificationTime = U.nowSeconds();
         h.targetVersion = h.targetVersion || "0.0.0";
-    } else {
-        console.log("non-user change") // TODO @darzu: dbg
+
+        // cloud user association
+        if (auth.hasIdentity() && auth.loggedInSync()) {
+            h.cloudUserId = auth.user()?.id
+        }
     }
 
-    if (!fromCloudSync) // TODO @darzu: do we still want these old isCloud branches?
+    if (!fromCloudSync)
         h.recentUse = U.nowSeconds()
 
     if (text)
         e.text = text
     if (text || h.isDeleted) {
         h.saveId = null
-        // update version on save
     }
 
     // perma-delete
     if (h.isDeleted && h.blobVersion_ == "DELETED") {
         let idx = allScripts.indexOf(e)
         U.assert(idx >= 0)
-        console.log(`DEL allScripts idx ${idx}`) // TODO @darzu: dbg
         allScripts.splice(idx, 1)
         return headerQ.enqueue(h.id, () =>
             fixupVersionAsync(e).then(() =>
@@ -532,17 +523,6 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
                 .filter(p => !!pxt.bundledSvg(p))[0];
     }
 
-    // TODO @darzu: is this the right place to stamp this?
-    // cloud user association
-    if (auth.hasIdentity() && auth.loggedInSync()) {
-        h.cloudUserId = auth.user()?.id
-        // h.cloudCurrent = false;
-    }
-
-    const saveId = U.guidGen().substr(0, 5) // TODO @darzu: dbg
-    console.log(`SAVE ${h.name} $$${saveId}`) // TODO @darzu: dbg
-    console.dir(h)
-
     return headerQ.enqueue<void>(h.id, async () => {
         await fixupVersionAsync(e);
         let ver: any;
@@ -551,7 +531,6 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
 
         try {
             ver = await impl.setAsync(h, e.version, toWrite);
-            console.log(`local write result ${e.header.name}: ${ver} $$${saveId}`) // TODO @darzu: dbg
         } catch (e) {
             // Write failed; use in memory db.
             await switchToMemoryWorkspace("write failed");
@@ -645,6 +624,9 @@ export function duplicateAsync(h: Header, text: ScriptText, newName?: string): P
     delete h.githubCurrent;
     delete h.githubId;
     delete h.githubTag;
+
+    // drop cloud-related local metadata
+    h = cloud.excludeLocalOnlyMetadataFields(h)
 
     return importAsync(h, dupText)
         .then(() => h)
@@ -1523,10 +1505,8 @@ export function installByIdAsync(id: string) {
 
 export async function saveToCloudAsync(h: Header) {
     checkHeaderSession(h);
-    // TODO @darzu: double check
     const text = await getTextAsync(h.id)
     return cloud.saveAsync(h, text)
-    // return cloudsync.saveToCloudAsync(h)
 }
 
 // this promise is set while a sync is in progress
@@ -1546,7 +1526,6 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
             const existing = U.toDictionary(allScripts || [], h => h.header.id)
             // this is an in-place update the header instances
             allScripts = headers.map(hd => {
-                console.log(`found local: ${hd.name} mod ${hd.modificationTime}`) // TODO @darzu: dbg
                 let ex = existing[hd.id]
                 if (ex) {
                     if (JSON.stringify(ex.header) !== JSON.stringify(hd)) {
@@ -1566,7 +1545,6 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
                         version: undefined,
                     }
                 }
-                console.log(`local pick: ${ex.header.name} mod ${ex.header.modificationTime}`) // TODO @darzu: dbg
                 return ex;
             })
             cloudsync.syncAsync().done() // sync in background
@@ -1672,8 +1650,6 @@ data.mountVirtualApi("text", {
         const m = /^[\w\-]+:([^\/]+)(\/(.*))?/.exec(p)
         return getTextAsync(m[1])
             .then(files => {
-                // TODO @darzu: dbg
-                console.log(`virtual api update for: ${m[1]}`)
                 if (m[3])
                     return files[m[3]]
                 else return files;

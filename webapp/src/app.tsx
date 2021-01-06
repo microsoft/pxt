@@ -263,7 +263,6 @@ export class ProjectView
             }
             this.saveFileAsync().done();
         } else if (active) {
-            console.log(`updateVisibility`) // TODO @darzu: dbg
             data.invalidate("header:*")
             if (workspace.isHeadersSessionOutdated()
                 || workspace.isHeaderSessionOutdated(this.state.header)) {
@@ -1298,9 +1297,6 @@ export class ProjectView
     }
 
     loadHeaderAsync(h: pxt.workspace.Header, editorState?: pxt.editor.EditorState): Promise<void> {
-        // TODO @darzu: dbg
-        console.log(`loadHeaderAsync: ${h.name}`)
-        console.dir(editorState)
         if (!h)
             return Promise.resolve()
 

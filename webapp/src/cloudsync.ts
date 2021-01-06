@@ -564,7 +564,6 @@ function cloudSyncAsync(): Promise<void> {
                 let hd = JSON.parse(files[HEADER_JSON] || "{}") as Header
                 delete files[HEADER_JSON]
 
-                header.cloudUserId = '1234' // TODO @darzu: set real user?
                 header.blobCurrent_ = true
                 header.blobVersion_ = resp.version
                 // TODO copy anything else from the cloud?

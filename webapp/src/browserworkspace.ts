@@ -68,14 +68,6 @@ function migratePrefixesAsync(): Promise<void> {
 function listAsync(): Promise<pxt.workspace.Header[]> {
     return migratePrefixesAsync()
         .then(() => headerDb.getAllAsync() as Promise<Header[]>)
-        .then((hs) => {
-            // TODO @darzu: dbg:
-            console.log("browserworkspace:listAsync")
-            console.dir(hs.map(h =>
-                ({id: h.id, mod: h.modificationTime, del: h.isDeleted, user: h.cloudUserId, cloudCurr: h.cloudCurrent, cloudVer: h.cloudVersion})))
-
-            return hs;
-        });
 }
 
 async function getAsync(h: Header): Promise<pxt.workspace.File> {
@@ -83,7 +75,6 @@ async function getAsync(h: Header): Promise<pxt.workspace.File> {
     const textProm = textDb.getAsync(h.id)
     let [hdrResp, textResp] = await Promise.all([hdrProm, textProm]) as [Header, TextDbEntry]
     if (!hdrResp || !textResp)
-        // TODO @darzu: distinguish these for the caller somehow?
         return undefined
     return {
         header: hdrResp,
@@ -104,13 +95,11 @@ function setCoreAsync(headers: db.Table, texts: db.Table, h: Header, prevVer: an
             files: text,
             _rev: prevVer
         }).then(rev => {
-            console.log(`texts.setAsync: ${rev}`) // TODO @darzu: dbg
             newTextVer = rev
         }))
     const headerRes = textRes
         .then(() => headers.setAsync(h))
         .then(rev => {
-            console.log(`headers.setAsync: ${rev}`) // TODO @darzu: dbg
             h._rev = rev
             return newTextVer
         });

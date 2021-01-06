@@ -734,8 +734,6 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
             const showNewProject = pxt.appTarget.appTheme && !pxt.appTarget.appTheme.hideNewProjectButton;
             const showScriptManagerCard = targetTheme.scriptManager && headers.length > ProjectsCarousel.NUM_PROJECTS_HOMESCREEN;
 
-            // TODO @darzu: determine if project is cloud project
-
             const headersToShow = headers
                 .filter(h => !h.tutorial?.metadata?.hideIteration)
                 .slice(0, ProjectsCarousel.NUM_PROJECTS_HOMESCREEN);
@@ -757,7 +755,6 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                             : scr.tutorialCompleted ? scr.tutorialCompleted.steps
                                 : undefined;
                     const ghid = pxt.github.parseRepoId(scr.githubId);
-                    // TODO @darzu: determine downloading, uploading, etc...
                     const cloudState = !!scr.cloudUserId ? "cloud" : "local"
                     return <ProjectsCodeCard
                         key={'local' + scr.id + scr.recentUse}

@@ -423,7 +423,6 @@ export class EditorPackage {
 
     cloudSavePkgAsync() {
         if (this.header.cloudCurrent || !auth.loggedInSync()) return Promise.resolve();
-        console.log("savePkgAsync (2)") // TODO @darzu: dbg
         this.savingNow++;
         this.updateStatus();
         return workspace.saveToCloudAsync(this.header)
