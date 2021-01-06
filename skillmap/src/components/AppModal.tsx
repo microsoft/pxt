@@ -83,7 +83,7 @@ export class AppModalImpl extends React.Component<AppModalProps> {
         const actions = [
             { label: lf("CANCEL"), onClick: this.handleOnClose },
             { label: lf("RESTART"), onClick: () => {
-                tickEvent("skillmap.activity.restart", { map: mapId, activity: activity!.activityId });
+                tickEvent("skillmap.activity.restart", { path: mapId, activity: activity!.activityId });
                 dispatchRestartActivity(mapId, activity!.activityId);
             }}
         ]
@@ -119,7 +119,7 @@ export class AppModalImpl extends React.Component<AppModalProps> {
 
         const actions = [
             { label: "REPORT", onClick: () => {
-                tickEvent("skillmap.reportabuse", { path: pageSourceUrl || "" });
+                tickEvent("skillmap.reportabuse");
                 postAbuseReportAsync(pageSourceUrl || "", { text: (document.querySelector(".report-abuse-text") as HTMLTextAreaElement).value });
                 dispatchHideModal();
             }}
@@ -149,7 +149,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
             nextActivityId = activity.next?.[0]?.activityId;
 
             actions.push({ label: lf("NEXT"), onClick: () => {
-                tickEvent("skillmap.activity.next", { map: currentMapId, activity: currentActivityId });
+                tickEvent("skillmap.activity.next", { path: currentMapId, activity: currentActivityId });
                 dispatchHideModal();
                 dispatchOpenActivity(currentMapId, nextActivityId || "");
              } });
@@ -158,7 +158,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
             displayName = map.displayName;
 
             actions.push({ label: lf("CERTIFICATE"), onClick: () => {
-                tickEvent("skillmap.certificate", { map: currentMapId });
+                tickEvent("skillmap.certificate", { path: currentMapId });
                 window.open(map.completionUrl)
             }});
         }

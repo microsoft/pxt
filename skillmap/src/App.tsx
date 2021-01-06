@@ -22,7 +22,8 @@ import { AppModal } from './components/AppModal';
 import { SkillCarousel } from './components/SkillCarousel';
 
 import { parseSkillMap } from './lib/skillMapParser';
-import { parseHash, getMarkdownAsync, MarkdownSource, parseQuery, guidGen } from './lib/browserUtils';
+import { parseHash, getMarkdownAsync, MarkdownSource, parseQuery,
+    guidGen, setPageTitle, setPageSourceUrl } from './lib/browserUtils';
 
 import { MakeCodeFrame } from './components/makecodeFrame';
 import { getUserStateAsync, saveUserStateAsync } from './lib/workspaceProvider';
@@ -130,6 +131,13 @@ class AppImpl extends React.Component<AppProps, AppState> {
 
         if (md && fetched && status) {
             try {
+                if (status === "banned") {
+                    this.handleError(lf("This GitHub repository has been banned."));
+                } else {
+                    setPageSourceUrl(fetched);
+                    this.props.dispatchSetPageSourceUrl(fetched, status);
+                }
+
                 const { maps, metadata } = parseSkillMap(md);
                 if (maps?.length > 0) {
                     loadedMaps = maps;
@@ -140,17 +148,13 @@ class AppImpl extends React.Component<AppProps, AppState> {
                 }
                 if (metadata) {
                     const { title, description, infoUrl } = metadata;
+                    setPageTitle(title);
                     this.props.dispatchSetPageTitle(title);
                     if (description) this.props.dispatchSetPageDescription(description);
                     if (infoUrl) this.props.dispatchSetPageInfoUrl(infoUrl);
                 }
 
-                if (status === "banned") {
-                    this.handleError(lf("This GitHub repository has been banned."));
-                } else {
-                    this.props.dispatchSetPageSourceUrl(fetched, status);
-                    this.setState({ error: undefined });
-                }
+                this.setState({ error: undefined });
             } catch {
                 this.handleError();
             }

@@ -193,6 +193,21 @@ export function resolvePath(path: string) {
     return `${isLocal() ? "" : "/static/skillmap"}/${path.replace(/^\//, "")}`
 }
 
+let pageTitle: string;
+let pageSourceUrl: string;
+
+export function setPageTitle(title: string) {
+    pageTitle = title;
+}
+
+export function setPageSourceUrl(url: string) {
+    pageSourceUrl = url;
+}
+
 export function tickEvent(id: string, data?: { [key: string]: string | number }) {
+    data = data || {};
+    data["page"] = pageSourceUrl;
+    data["pageTitle"] = pageTitle;
+
     (window as any).pxtTickEvent?.(id, data);
 }

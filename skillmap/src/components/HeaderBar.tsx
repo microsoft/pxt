@@ -11,6 +11,8 @@ import { isActivityCompleted } from "../lib/skillMapUtils";
 import { editorUrl } from "./makecodeFrame";
 
 interface HeaderBarProps {
+    currentMapId?: string;
+    currentActivityId?: string;
     activityOpen: boolean;
     showReportAbuse?: boolean;
     completedHeaderId?: string;
@@ -75,13 +77,14 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
     }
 
     onBackClicked = () => {
-        tickEvent("skillmap.activity.back");
+        const { currentMapId, currentActivityId } = this.props;
+        tickEvent("skillmap.activity.back", { path: currentMapId || "", activity: currentActivityId || "" });
         this.props.dispatchSaveAndCloseActivity();
     }
 
     onSaveClicked = () => {
-        const { completedHeaderId } = this.props;
-        tickEvent("skillmap.export");
+        const { completedHeaderId, currentMapId, currentActivityId } = this.props;
+        tickEvent("skillmap.export", { path: currentMapId || "", activity: currentActivityId || "" });
         window.open(`${editorUrl}#skillmapimport:${completedHeaderId}`)
     }
 }
@@ -97,8 +100,12 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         }
     }
 
+    const activityOpen = !!state.editorView;
+
     return {
-        activityOpen: !!state.editorView,
+        activityOpen,
+        currentMapId: activityOpen && state.editorView?.currentMapId,
+        currentActivityId: activityOpen && state.editorView?.currentActivityId,
         showReportAbuse: state.pageSourceStatus === "unknown",
         completedHeaderId
     }
