@@ -105,8 +105,10 @@ namespace pxt.blocks {
             return renderWorkspace(options);
         } catch (e) {
             pxt.reportException(e);
-            cleanRenderingWorkspace();
             return undefined;
+        }
+        finally {
+            cleanRenderingWorkspace();
         }
     }
 
