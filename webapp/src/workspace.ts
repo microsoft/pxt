@@ -38,7 +38,8 @@ let allScripts: File[] = [];
 
 let headerQ = new U.PromiseQueue();
 
-let impl: WorkspaceProvider;
+// TODO @darzu: don't export; debugging
+export let impl: WorkspaceProvider;
 let implType: string;
 
 function lookup(id: string) {
@@ -256,9 +257,11 @@ export function initAsync() {
 }
 
 export function getTextAsync(id: string): Promise<ScriptText> {
+    console.log(`getTextAsync ${id}`) // TODO @darzu: dbg
     return maybeSyncHeadersAsync()
         .then(() => {
             let e = lookup(id)
+            console.log(`found ${id} mod ${e.header.modificationTime}`) // TODO @darzu: dbg
             if (!e)
                 return Promise.resolve(null as ScriptText)
             if (e.text)
@@ -339,19 +342,20 @@ export function forceSaveAsync(h: Header, text?: ScriptText, isCloud?: boolean):
     return saveAsync(h, text, isCloud);
 }
 
-interface Change<K, V> {
+// TODO @darzu: do we actually want to export?
+export interface Change<K, V> {
     kind: 'add' | 'del' | 'mod'
     key: K,
     oldVal?: V,
     newVal?: V,
 }
-interface ProjectChanges {
+export interface ProjectChanges {
     header: Change<keyof Header, string>[],
     // TODO @darzu:  use hashes instead of lengths?
     files: Change<string, number>[],
 }
 // TODO @darzu: for debugging
-function stringifyChangeSummary(diff: ProjectChanges): string {
+export function stringifyChangeSummary(diff: ProjectChanges): string {
     const indent = (s: string) => '\t' + s
     const changeToStr = (c: Change<any,any>) => `${c.kind} ${c.key}: (${c.oldVal || ''}) => (${c.newVal || ''})`
     let res = ''
@@ -379,7 +383,7 @@ function stringifyChangeSummary(diff: ProjectChanges): string {
 
     return res;
 }
-function computeChangeSummary(a: {header: Header, text: ScriptText}, b: {header: Header, text: ScriptText}): ProjectChanges {
+export function computeChangeSummary(a: {header: Header, text: ScriptText}, b: {header: Header, text: ScriptText}): ProjectChanges {
     const aHdr = a.header || {} as Header
     const bHdr = b.header || {} as Header
     const aTxt = a.text || {}
@@ -437,6 +441,7 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
             text,
             version: null
         }
+        console.log("adding new to allScripts") // TODO @darzu: dbg
         allScripts.push(e)
     }
     //U.assert(e.header === h)
@@ -485,9 +490,9 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
     if (!fromCloudSync) // TODO @darzu: do we still want these old isCloud branches?
         h.recentUse = U.nowSeconds()
 
+    if (text)
+        e.text = text
     if (text || h.isDeleted) {
-        if (text)
-            e.text = text
         h.saveId = null
         // update version on save
     }
@@ -519,7 +524,8 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
         // h.cloudCurrent = false;
     }
 
-    console.log("SAVE") // TODO @darzu: dbg
+    const saveId = U.guidGen().substr(0, 5) // TODO @darzu: dbg
+    console.log(`SAVE ${h.name} $$${saveId}`) // TODO @darzu: dbg
     console.dir(h)
 
     return headerQ.enqueue<void>(h.id, async () => {
@@ -530,10 +536,15 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
 
         try {
             ver = await impl.setAsync(h, e.version, toWrite);
+            console.log(`local write result ${e.header.name}: ${ver} $$${saveId}`) // TODO @darzu: dbg
         } catch (e) {
             // Write failed; use in memory db.
             await switchToMemoryWorkspace("write failed");
             ver = await impl.setAsync(h, e.version, toWrite);
+        }
+        if (!ver) {
+            // write failed due to conflict
+            console.log('!! write failed!') // TODO @darzu: dbg
         }
 
         if (text) {
@@ -545,6 +556,9 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
             h.blobCurrent_ = false;
             h.cloudCurrent = false;
             h.saveId = null;
+        }
+
+        if (text || h.isDeleted) {
             data.invalidate("text:" + h.id);
             data.invalidate("pkg-git-status:" + h.id);
         }
@@ -1517,6 +1531,7 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
             const existing = U.toDictionary(allScripts || [], h => h.header.id)
             // this is an in-place update the header instances
             allScripts = headers.map(hd => {
+                console.log(`found local: ${hd.name} mod ${hd.modificationTime}`) // TODO @darzu: dbg
                 let ex = existing[hd.id]
                 if (ex) {
                     if (JSON.stringify(ex.header) !== JSON.stringify(hd)) {
@@ -1536,6 +1551,7 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
                         version: undefined,
                     }
                 }
+                console.log(`local pick: ${ex.header.name} mod ${ex.header.modificationTime}`) // TODO @darzu: dbg
                 return ex;
             })
             cloudsync.syncAsync().done() // sync in background
@@ -1641,6 +1657,8 @@ data.mountVirtualApi("text", {
         const m = /^[\w\-]+:([^\/]+)(\/(.*))?/.exec(p)
         return getTextAsync(m[1])
             .then(files => {
+                // TODO @darzu: dbg
+                console.log(`virtual api update for: ${m[1]}`)
                 if (m[3])
                     return files[m[3]]
                 else return files;

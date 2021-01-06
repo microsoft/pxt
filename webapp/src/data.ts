@@ -264,8 +264,11 @@ export function invalidate(prefix: string) {
             ce.lastRefresh = 0;
             if (ce.components.length > 0)
                 queue(lookup(ce.path))
-            if (ce.api.onInvalidated)
+            if (ce.api.onInvalidated) {
+                // TODO @darzu: dbg
+                console.log(`onInvalidated for ${prefix}`)
                 ce.api.onInvalidated();
+            }
         }
     })
 }

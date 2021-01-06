@@ -32,7 +32,8 @@ async function listAsync(): Promise<Header[]> {
             const headers: Header[] = result.resp.map(proj => {
                 const header = JSON.parse(proj.header);
                 header.cloudUserId = userId;
-                header.cloudVersion = proj.version;
+                delete header.cloudVersion // Note: we cannot trust the cloudVersion retrieved from a list operation
+                                           // because Cosmos does not return e-tags each individual item.
                 header.cloudCurrent = true;
                 // TODO @darzu: is there a better place to do this?
                 // browser db fields we don't want to propegate
@@ -120,7 +121,7 @@ export async function saveAsync(h: Header, text?: ScriptText): Promise<void> {
     const res = await setAsync(h, h.cloudVersion, text)
     if (!res) {
         // wait to synchronize
-        await syncAsyncInternal()
+        await syncAsync()
         // console.log(`INVALIDATING due to conflict: ${h.id}`) // TODO @darzu: dbg
         // data.invalidateHeader("header", h);
         // data.invalidateHeader("text", h);
@@ -145,7 +146,7 @@ export async function syncAsync(): Promise<any> {
     return _inProgressSyncAsync
 }
 
-export async function syncAsyncInternal(): Promise<any> {
+async function syncAsyncInternal(): Promise<any> {
     if (!auth.hasIdentity()) { return; }
     if (!await auth.loggedIn()) { return; }
     try {
@@ -162,29 +163,50 @@ export async function syncAsyncInternal(): Promise<any> {
             const remote = remoteHeaderMap[local.id];
             delete remoteHeaderMap[local.id];
             if (remote) {
-                if (local.cloudVersion !== remote.cloudVersion) {
+                // Note that we use modification time to detect differences. If we had full (or partial) history, we could
+                //  use version numbers. However we cannot currently use etags since the Cosmos list operations
+                //  don't return etags per-version. And because of how etags work, the record itself can never
+                //  have the latest etag version.
+                if (local.modificationTime !== remote.modificationTime) {
                     if (local.cloudCurrent) {
                         // No local changes, download latest.
+                        console.log(`remote has new changes ${local.id}`) // TODO @darzu: dbg
                         const remoteFile = await getAsync(local);
                         // TODO @darzu: pass isCloud ?
                         console.log("cloud:syncAsync:saveAsync (1)") // TODO @darzu: dbg
-                        localHeaderChanges[remoteFile.header.id] = remoteFile.header
-                        workspace.saveAsync(remoteFile.header, remoteFile.text, true);
+                        const newHeader = {...local, ...remoteFile.header} // make sure we keep local-only metadata like _rev
+                        localHeaderChanges[remoteFile.header.id] = newHeader
+                        workspace.saveAsync(newHeader, remoteFile.text, true);
                     } else {
-                        // Conflict.
-                        // TODO: Figure out how to register these.
+                        // Possible conflict.
+                        const remoteFile = await getAsync(local);
                         // last write wins.
-                        if (local.modificationTime > remote.modificationTime) {
-                            console.log(`CONFLCIT; local wins ${local.id};`) // TODO @darzu: dbg
-                            // local wins
-                            const text = await workspace.getTextAsync(local.id);
-                            return setAsync(local, remote.cloudVersion, text);
+                        if (local.modificationTime > remoteFile.header.modificationTime) {
+                            if (local.cloudVersion === remoteFile.version) {
+                                // local is one ahead, push as normal
+                                console.log(`local has unsynced changes ${local.id}`) // TODO @darzu: dbg
+                                const text = await workspace.getTextAsync(local.id);
+                                const newVer = await setAsync(local, local.cloudVersion, text);
+                                U.assert(!!newVer, 'Failed to sync local change (1)') // TODO @darzu: dbg
+                            } else {
+                                console.log(`CONFLCIT; local wins ${local.id};`) // TODO @darzu: dbg
+                                // local wins
+                                const text = await workspace.getTextAsync(local.id);
+                                const newVer = await setAsync(local, remoteFile.version, text);
+                                U.assert(!!newVer, 'Failed to sync local change (2)') // TODO @darzu: dbg
+                            }
                         } else {
                             console.log(`CONFLCIT; remote wins ${remote.id};`) // TODO @darzu: dbg
                             // remote wins
-                            const remoteFile = await getAsync(local);
-                            localHeaderChanges[remoteFile.header.id] = remoteFile.header
-                            return workspace.saveAsync(remoteFile.header, remoteFile.text, true);
+                            const newHeader = {...local, ...remoteFile.header} // make sure we keep local-only metadata like _rev
+                            localHeaderChanges[remoteFile.header.id] = newHeader
+                            const localVer = await workspace.saveAsync(newHeader, remoteFile.text, true);
+                            // TODO @darzu: dbg:
+                            const localAgain = await workspace.impl.getAsync(remoteFile.header)
+                            const diff = workspace.computeChangeSummary(remoteFile, localAgain)
+                            console.log(`POST CONFLICT; diff: ${remote.id}`)
+                            console.log(workspace.stringifyChangeSummary(diff))
+                            console.log(`new mod time: ${localAgain.header.modificationTime}`)
                         }
                     }
                 } else {
@@ -193,7 +215,8 @@ export async function syncAsyncInternal(): Promise<any> {
                         //return deleteAsync(local, local.cloudVersion);
                         // Mark remote copy as deleted.
                         remote.isDeleted = true;
-                        return setAsync(remote, remote.cloudVersion, {});
+                        const newVer = await setAsync(remote, local.cloudVersion, {});
+                        U.assert(!!newVer, 'Failed to sync local change (3)') // TODO @darzu: dbg
                     }
                     if (remote.isDeleted) {
                         // Delete local copy.
@@ -201,12 +224,7 @@ export async function syncAsyncInternal(): Promise<any> {
                         console.log("cloud:syncAsync:saveAsync (2)") // TODO @darzu: dbg
                         localHeaderChanges[local.id] = local
                         return workspace.forceSaveAsync(local, {}, true)
-                            .then(() => { data.clearCache(); })
-                    }
-                    if (!local.cloudCurrent) {
-                        // Local changes need to be synced up.
-                        const text = await workspace.getTextAsync(local.id);
-                        return setAsync(local, local.cloudVersion, text);
+                            .then(() => { data.clearCache(); }) // TODO @darzu: is this cache clear necessary?
                     }
                     // Nothing to do. We're up to date locally.
                     return Promise.resolve();
@@ -220,7 +238,8 @@ export async function syncAsyncInternal(): Promise<any> {
                 // Local cloud synced project exists, but it didn't make it to the server,
                 // so let's push it now.
                 const text = await workspace.getTextAsync(local.id)
-                return setAsync(local, local.cloudVersion, text);
+                const newVer = setAsync(local, local.cloudVersion, text);
+                U.assert(!!newVer, 'Failed to sync local change (4)') // TODO @darzu: dbg
                 // TODO @darzu: previously Eric thought we should delete the project locally. Which is correct?
                 // // Anomaly. Local cloud synced project exists, but no record of
                 //  // it on remote. We cannot know if there's a conflict. Convert
@@ -244,14 +263,14 @@ export async function syncAsyncInternal(): Promise<any> {
 
         console.log("done with cloud:syncAsync tasks") // TODO @darzu: dbg
 
-        // notify the rest of the system
-        // TODO @darzu: should we do this here or in workspace.ts?
-        for (let hdr of U.values(localHeaderChanges)) {
-            console.log(`INVALIDATING: ${hdr.id}`) // TODO @darzu: dbg
-            // TODO @darzu: this isn't causing the editor to reload
-            data.invalidateHeader("header", hdr);
-            data.invalidateHeader("text", hdr);
-            data.invalidateHeader("pkg-git-status", hdr);
+        // TODO @darzu: too heavy handed? maybe only reload if the current editor is out of date
+        if (U.values(localHeaderChanges).length) {
+            core.infoNotification(lf("Cloud synchronization finished. Reloading... "));
+            setTimeout(() => {
+                // TODO @darzu: tick event
+                console.log("FORCE RELOAD") // TODO @darzu: dbg
+                location.reload();
+            }, 3000);
         }
     }
     catch (e) {
