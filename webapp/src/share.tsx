@@ -156,7 +156,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                 this.gifRender();
         } else if (this.state.recordingState == ShareRecordingState.ScreenshotSnap || this.state.recordingState === ShareRecordingState.None) {
             // received a screenshot
-            this.setState({ screenshotUri: pxt.BrowserUtils.imageDataToPNG(msg.data), recordingState: ShareRecordingState.None, recordError: undefined })
+            this.setState({ screenshotUri: pxt.BrowserUtils.imageDataToPNG(msg.data, 4), recordingState: ShareRecordingState.None, recordError: undefined })
         } else {
             // ignore
             // make sure simulator is stopped
