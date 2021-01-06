@@ -518,6 +518,8 @@ const copyBlockly = gulp.parallel(copyBlocklyCompressed, copyBlocklyEnJs, copyBl
 const skillmapRoot = "skillmap";
 const skillmapOut = "built/web/skillmap";
 
+const cleanSkillmap = () => rimraf(skillmapOut);
+
 const buildSkillmap =  () => exec("npm install", false, { cwd: skillmapRoot })
     .then(() => exec("npm run build", false, { cwd: skillmapRoot }));
 
@@ -533,7 +535,7 @@ const copySkillmapHtml = () => rimraf("webapp/public/skillmap.html")
                     .pipe(concat("skillmap.html"))
                     .pipe(gulp.dest("webapp/public")));
 
-const skillmap = gulp.series(buildSkillmap, gulp.parallel(copySkillmapCss, copySkillmapJs, copySkillmapHtml));
+const skillmap = gulp.series(cleanSkillmap, buildSkillmap, gulp.parallel(copySkillmapCss, copySkillmapJs, copySkillmapHtml));
 
 
 /********************************************************
