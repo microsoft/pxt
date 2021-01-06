@@ -520,8 +520,23 @@ const skillmapOut = "built/web/skillmap";
 
 const cleanSkillmap = () => rimraf(skillmapOut);
 
+const copyWebpackBase = () => gulp.src([`${skillmapRoot}/node_modules/react-scripts/config/webpack.config.js`])
+    .pipe(concat("webpack.config.base.js"))
+    .pipe(gulp.dest(`${skillmapRoot}/node_modules/react-scripts/config`))
+
+const copyWebpackOverride = () => gulp.src([`${skillmapRoot}/webpack.config.override.js`])
+    .pipe(concat("webpack.config.js"))
+    .pipe(gulp.dest(`${skillmapRoot}/node_modules/react-scripts/config`));
+
+const replaceWebpackBase = () => gulp.src([`${skillmapRoot}/node_modules/react-scripts/config/webpack.config.base.js`])
+    .pipe(concat("webpack.config.js"))
+    .pipe(gulp.dest(`${skillmapRoot}/node_modules/react-scripts/config`));
+
 const buildSkillmap =  () => exec("npm install", false, { cwd: skillmapRoot })
-    .then(() => exec("npm run build", false, { cwd: skillmapRoot }));
+    .then(gulp.series([copyWebpackBase, copyWebpackOverride]))
+    .then(() => exec("npm run build", false, { cwd: skillmapRoot }))
+    .then(replaceWebpackBase)
+    .catch(replaceWebpackBase);
 
 const copySkillmapCss = () => gulp.src(`${skillmapRoot}/build/static/css/*`)
     .pipe(gulp.dest(`${skillmapOut}/css`));
