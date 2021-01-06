@@ -173,7 +173,7 @@ async function syncAsyncInternal(): Promise<any> {
             pxt.log(`${Math.abs(numDiff)} ${numDiff > 0 ? 'more' : 'fewer'} projects found in the cloud.`);
         }
         const lastCloudChange = Math.max(...remoteHeaders.map(h => h.modificationTime))
-        pxt.log(`Last cloud project change was ${U.nowSeconds() - lastCloudChange} seconds ago`);
+        pxt.log(`Last cloud project change was ${agoStr(lastCloudChange)}`);
         console.log("REMOTE") // TODO @darzu: dbg
         console.dir(remoteHeaders)
         const remoteHeaderMap = U.toDictionary(remoteHeaders, h => h.id);
@@ -188,37 +188,35 @@ async function syncAsyncInternal(): Promise<any> {
                 //  don't return etags per-version. And because of how etags work, the record itself can never
                 //  have the latest etag version.
                 if (local.modificationTime !== remote.modificationTime) {
+                    const remoteFile = await getAsync(local);
                     if (local.cloudCurrent) {
                         // No local changes, download latest.
                         console.log(`remote has new changes ${local.id}`) // TODO @darzu: dbg
-                        const remoteFile = await getAsync(local);
                         // TODO @darzu: pass isCloud ?
                         console.log("cloud:syncAsync:saveAsync (1)") // TODO @darzu: dbg
                         const newHeader = {...local, ...remoteFile.header} // make sure we keep local-only metadata like _rev
                         localHeaderChanges[remoteFile.header.id] = newHeader
-                        workspace.saveAsync(newHeader, remoteFile.text, true);
+                        await workspace.saveAsync(newHeader, remoteFile.text, true);
                     } else {
                         // Possible conflict.
-                        const remoteFile = await getAsync(local);
                         const conflictStr = `conflict found for '${local.name}' (${local.id.substr(0, 5)}...). Last cloud change was ${agoStr(remoteFile.header.modificationTime)} and last local change was ${agoStr(local.modificationTime)}.`
                         // last write wins.
                         if (local.modificationTime > remoteFile.header.modificationTime) {
                             if (local.cloudVersion === remoteFile.version) {
                                 // local is one ahead, push as normal
                                 pxt.debug(`local project '${local.name}' has changes that will be pushed to the cloud.`)
-                                const text = await workspace.getTextAsync(local.id);
-                                const newVer = await setAsync(local, local.cloudVersion, text);
-                                U.assert(!!newVer, 'Failed to sync local change (1)') // TODO @darzu: dbg
                             } else {
-                                // local wins
+                                // conflict and local wins
                                 // TODO: Pop a dialog and/or show the user a diff. Better yet, handle merges.
                                 pxt.log(conflictStr + ' Local will overwrite cloud.')
-                                const text = await workspace.getTextAsync(local.id);
-                                const newVer = await setAsync(local, remoteFile.version, text);
-                                U.assert(!!newVer, 'Failed to sync local change (2)') // TODO @darzu: dbg
                             }
+                            const text = await workspace.getTextAsync(local.id);
+                            const newVer = await setAsync(local, remoteFile.version, text);
+                            U.assert(!!newVer, 'Failed to sync local change (1)') // TODO @darzu: dbg
+                            // save to the workspace header again to make sure cloud metadata gets saved
+                            await workspace.saveAsync(local, null, true)
                         } else {
-                            // remote wins
+                            // conflict and remote wins
                             // TODO: Pop a dialog and/or show the user a diff. Better yet, handle merges.
                             pxt.log(conflictStr + ' Cloud will overwrite local.')
                             const newHeader = {...local, ...remoteFile.header} // make sure we keep local-only metadata like _rev
@@ -233,6 +231,8 @@ async function syncAsyncInternal(): Promise<any> {
                         // Mark remote copy as deleted.
                         remote.isDeleted = true;
                         const newVer = await setAsync(remote, local.cloudVersion, {});
+                        const newHeader = {...local, ...remote} // make sure we keep local-only metadata like _rev
+                        await workspace.saveAsync(newHeader, null, true);
                         U.assert(!!newVer, 'Failed to sync local change (3)') // TODO @darzu: dbg
                     }
                     if (remote.isDeleted) {
@@ -255,8 +255,11 @@ async function syncAsyncInternal(): Promise<any> {
                 // Local cloud synced project exists, but it didn't make it to the server,
                 // so let's push it now.
                 const text = await workspace.getTextAsync(local.id)
-                const newVer = setAsync(local, local.cloudVersion, text);
+                const newVer = await setAsync(local, local.cloudVersion, text);
                 U.assert(!!newVer, 'Failed to sync local change (4)') // TODO @darzu: dbg
+                const newHeader = {...local, ...remote} // make sure we keep local-only metadata like _rev
+                await workspace.saveAsync(newHeader, null, true);
+
                 // TODO @darzu: previously Eric thought we should delete the project locally. Which is correct?
                 // // Anomaly. Local cloud synced project exists, but no record of
                 //  // it on remote. We cannot know if there's a conflict. Convert
