@@ -14,6 +14,7 @@ import '../styles/makecode-editor.css'
 
 interface MakeCodeFrameProps {
     save: boolean;
+    mapId: string;
     activityId: string;
     title: string;
     url: string;
@@ -287,14 +288,16 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
     }
 
     protected onEditorLoaded() {
-        tickEvent("skillmap.activity.loaded");
+        const { mapId, activityId } = this.props;
+        tickEvent("skillmap.activity.loaded", { path: mapId, activity: activityId });
         this.setState({
             loaded: true
         });
     }
 
     protected onTutorialFinished() {
-        tickEvent("skillmap.activity.complete");
+        const { mapId, activityId } = this.props;
+        tickEvent("skillmap.activity.complete", { path: mapId, activity: activityId });
         this.finishedActivityState = "saving";
         this.props.dispatchSaveAndCloseActivity();
     }
@@ -320,6 +323,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         url,
         tutorialPath: activity.url,
         title,
+        mapId: currentMapId,
         activityId: currentActivityId,
         activityHeaderId: currentHeaderId,
         completed: lookupActivityProgress(state.user, currentMapId, currentActivityId)?.isCompleted,
