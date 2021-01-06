@@ -97,6 +97,18 @@ function chromifyAsync(canvas: HTMLCanvasElement, title: string): HTMLCanvasElem
     return work;
 }
 
+function scaleImageData(img: ImageData, scale: number): ImageData {
+    const cvs = document.createElement("canvas");
+    cvs.width = img.width * scale;
+    cvs.height = img.height * scale;
+    const ctx = cvs.getContext("2d")
+    ctx.putImageData(img, 0, 0);
+    ctx.imageSmoothingEnabled = false;
+    ctx.scale(scale, scale);
+    ctx.drawImage(cvs, 0, 0);
+    return ctx.getImageData(0, 0, img.width * scale, img.height * scale);
+}
+
 function defaultCanvasAsync(): Promise<HTMLCanvasElement> {
     const cvs = document.createElement("canvas");
     cvs.width = 160;
@@ -172,6 +184,8 @@ declare interface GIFOptions {
 
     maxFrames?: number;
     maxLength?: number;
+
+    scale?: number;
 }
 
 declare interface GIFFrameOptions {
@@ -195,11 +209,14 @@ export class GifEncoder {
     private time: number;
     private cancellationToken: pxt.Util.CancellationToken;
     private renderPromise: Promise<string>;
+    private scale = 1;
 
     constructor(private options: GIFOptions) {
         this.cancellationToken = new pxt.Util.CancellationToken();
         if (!this.options.maxFrames)
             this.options.maxFrames = 64;
+        if (options.scale)
+            this.scale = options.scale
     }
 
     start() {
@@ -240,6 +257,9 @@ export class GifEncoder {
             this.time = t;
         if (delay === undefined)
             delay = t - this.time;
+        if (this.scale != 1) {
+            dataUri = scaleImageData(dataUri, this.scale);
+        }
         pxt.debug(`gif: frame ${delay}ms`);
         this.gif.addFrame(dataUri, { delay });
         this.time = t;
@@ -313,7 +333,8 @@ export function loadGifEncoderAsync(): Promise<GifEncoder> {
         quality: pxt.appTarget.appTheme.simGifQuality || 16,
         transparent: pxt.appTarget.appTheme.simGifTransparent,
         maxFrames: pxt.appTarget.appTheme.simGifMaxFrames || 64,
-        maxLength: pxt.appTarget.appTheme.simScreenshotMaxUriLength || 300000
+        maxLength: pxt.appTarget.appTheme.simScreenshotMaxUriLength || 300000,
+        scale: 2
     };
     return pxt.BrowserUtils.loadScriptAsync("gifjs/gif.js")
         .then(() => new GifEncoder(options));
