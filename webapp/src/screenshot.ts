@@ -97,18 +97,6 @@ function chromifyAsync(canvas: HTMLCanvasElement, title: string): HTMLCanvasElem
     return work;
 }
 
-function scaleImageData(img: ImageData, scale: number): ImageData {
-    const cvs = document.createElement("canvas");
-    cvs.width = img.width * scale;
-    cvs.height = img.height * scale;
-    const ctx = cvs.getContext("2d")
-    ctx.putImageData(img, 0, 0);
-    ctx.imageSmoothingEnabled = false;
-    ctx.scale(scale, scale);
-    ctx.drawImage(cvs, 0, 0);
-    return ctx.getImageData(0, 0, img.width * scale, img.height * scale);
-}
-
 function defaultCanvasAsync(): Promise<HTMLCanvasElement> {
     const cvs = document.createElement("canvas");
     cvs.width = 160;
@@ -258,7 +246,7 @@ export class GifEncoder {
         if (delay === undefined)
             delay = t - this.time;
         if (this.scale != 1) {
-            dataUri = scaleImageData(dataUri, this.scale);
+            dataUri = pxt.BrowserUtils.scaleImageData(dataUri, this.scale);
         }
         pxt.debug(`gif: frame ${delay}ms`);
         this.gif.addFrame(dataUri, { delay });
