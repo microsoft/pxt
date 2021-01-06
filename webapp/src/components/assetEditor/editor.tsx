@@ -114,8 +114,7 @@ export class AssetEditor extends Editor {
                 fieldView = pxt.react.getFieldEditorView("image-editor", asset as pxt.ProjectImage, {
                     initWidth: 16,
                     initHeight: 16,
-                    showTiles: true,
-                    headerVisible: false,
+                    headerVisible: true,
                     blocksInfo: this.blocksInfo
                 });
                 break;
@@ -138,7 +137,7 @@ export class AssetEditor extends Editor {
                 fieldView = pxt.react.getFieldEditorView("tilemap-editor", asset as pxt.ProjectTilemap, {
                     initWidth: 16,
                     initHeight: 16,
-                    headerVisible: false,
+                    headerVisible: true,
                     blocksInfo: this.blocksInfo
                 });
                 break;
@@ -146,8 +145,7 @@ export class AssetEditor extends Editor {
                 fieldView = pxt.react.getFieldEditorView("animation-editor", asset as pxt.Animation, {
                     initWidth: 16,
                     initHeight: 16,
-                    showTiles: true,
-                    headerVisible: false,
+                    headerVisible: true,
                     blocksInfo: this.blocksInfo
                 });
                 break;

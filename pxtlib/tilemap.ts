@@ -142,6 +142,9 @@ namespace pxt {
                     asset = this.add(newValue);
                     this.notifyListener(newValue.internalID);
                 }
+                else {
+                    asset = newValue;
+                }
             }
             else {
                 asset = this.add(newValue);
