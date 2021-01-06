@@ -334,7 +334,7 @@ export function loadGifEncoderAsync(): Promise<GifEncoder> {
         transparent: pxt.appTarget.appTheme.simGifTransparent,
         maxFrames: pxt.appTarget.appTheme.simGifMaxFrames || 64,
         maxLength: pxt.appTarget.appTheme.simScreenshotMaxUriLength || 300000,
-        scale: 2
+        scale: 3
     };
     return pxt.BrowserUtils.loadScriptAsync("gifjs/gif.js")
         .then(() => new GifEncoder(options));
