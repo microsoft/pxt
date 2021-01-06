@@ -1308,11 +1308,27 @@ export class ProjectView
         if (checkAsync)
             return checkAsync.then(() => this.openHome());
 
+        let doSync = false
+        // check our multi-tab session
+        if (workspace.isHeadersSessionOutdated()) {
+             // reload header before loading
+            pxt.log(`multi-tab sync before load`)
+            doSync = true;
+        }
+        // check our cloud sync
+        const RESYNC_TIME_SEC = 5 * 60 // 5 minutes
+        const headerCloudSyncOutdated = auth.loggedInSync()
+            && Util.nowSeconds() - workspace.getHeaderLastCloudSync(h) > RESYNC_TIME_SEC
+        if (headerCloudSyncOutdated) {
+            pxt.log(`cloud sync before load`)
+            doSync = true;
+        }
+
         let p = Promise.resolve();
-        if (workspace.isHeadersSessionOutdated()) { // reload header before loading
-            pxt.log(`sync before load`)
+        if (doSync) {
             p = p.then(() => workspace.syncAsync().then(() => { }))
         }
+
         return p.then(() => {
             workspace.acquireHeaderSession(h);
             if (!h) return Promise.resolve();

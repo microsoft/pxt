@@ -205,12 +205,15 @@ function maybeSyncHeadersAsync(): Promise<void> {
         return syncAsync().then(() => { })
     return Promise.resolve();
 }
-function refreshHeadersSession() {
+export function computeSessionId(hdrs: Header[]): string {
     // use # of scripts + time of last mod as key
-    sessionID = allScripts.length + ' ' + allScripts
-        .map(h => h.header.modificationTime)
+    return hdrs.length + ' ' + hdrs
+        .map(h => h.modificationTime)
         .reduce((l, r) => Math.max(l, r), 0)
         .toString()
+}
+function refreshHeadersSession() {
+    sessionID = computeSessionId(allScripts.map(f => f.header))
     if (isHeadersSessionOutdated()) {
         pxt.storage.setLocal('workspacesessionid', sessionID);
         pxt.debug(`workspace: refreshed headers session to ${sessionID}`);
@@ -240,6 +243,18 @@ function checkHeaderSession(h: Header): void {
         core.errorNotification(lf("This project is already opened elsewhere."))
         pxt.Util.assert(false, "trying to access outdated session")
     }
+}
+// helps know when we last synced with the cloud (in seconds since epoch)
+export function getHeaderLastCloudSync(h: Header): number {
+    return h.cloudLastSyncTime || 0/*never*/
+}
+export function getLastCloudSync(): number {
+    if (!auth.loggedInSync())
+        return 0;
+    const userId = auth.user()?.id;
+    const cloudHeaders = getHeaders(true)
+        .filter(h => h.cloudUserId && h.cloudUserId === userId);
+    return Math.min(...cloudHeaders.map(getHeaderLastCloudSync))
 }
 
 export function initAsync() {
@@ -542,9 +557,9 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
             await switchToMemoryWorkspace("write failed");
             ver = await impl.setAsync(h, e.version, toWrite);
         }
-        if (!ver) {
+        if (!ver && text) {
             // write failed due to conflict
-            console.log('!! write failed!') // TODO @darzu: dbg
+            pxt.debug('write rejected due to version conflict!')
         }
 
         if (text) {

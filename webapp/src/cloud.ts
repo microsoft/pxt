@@ -24,21 +24,32 @@ type CloudProject = {
     version: string;
 };
 
+const localOnlyMetadataFields: (keyof Header)[] = [
+    // different for different local storage instances
+    '_rev', '_id' as keyof Header,
+    // only for tracking local cloud sync state
+    'cloudVersion', 'cloudCurrent', 'cloudLastSyncTime'
+]
+function excludeLocalOnlyMetadataFields(h: Header): Header {
+    const clone = {...h}
+    for (let k of localOnlyMetadataFields)
+        delete clone[k]
+    return clone
+}
+
 async function listAsync(): Promise<Header[]> {
     return new Promise(async (resolve, reject) => {
+        // Note: Cosmos & our backend does not return e-tags each individual item in a list operation
         const result = await auth.apiAsync<CloudProject[]>("/api/user/project");
         if (result.success) {
+            const syncTime = U.nowSeconds()
             const userId = auth.user()?.id;
             const headers: Header[] = result.resp.map(proj => {
-                const header = JSON.parse(proj.header);
+                const rawHeader = JSON.parse(proj.header);
+                const header = excludeLocalOnlyMetadataFields(rawHeader)
                 header.cloudUserId = userId;
-                delete header.cloudVersion // Note: we cannot trust the cloudVersion retrieved from a list operation
-                                           // because Cosmos does not return e-tags each individual item.
                 header.cloudCurrent = true;
-                // TODO @darzu: is there a better place to do this?
-                // browser db fields we don't want to propegate
-                delete header._rev
-                delete (header as any)._id
+                header.cloudLastSyncTime = syncTime
                 return header;
             });
             console.log("cloud:listAsync")
@@ -56,7 +67,8 @@ function getAsync(h: Header): Promise<File> {
         if (result.success) {
             const userId = auth.user()?.id;
             const project = result.resp;
-            const header = JSON.parse(project.header);
+            const rawHeader = JSON.parse(project.header);
+            const header = excludeLocalOnlyMetadataFields(rawHeader)
             const text = JSON.parse(project.text);
             const version = project.version;
             const file: File = {
@@ -67,10 +79,7 @@ function getAsync(h: Header): Promise<File> {
             file.header.cloudCurrent = true;
             file.header.cloudVersion = file.version;
             file.header.cloudUserId = userId;
-            // TODO @darzu: is there a better place to do this?
-            // browser db fields we don't want to propegate
-            delete file.header._rev
-            delete (file.header as any)._id
+            file.header.cloudLastSyncTime = U.nowSeconds();
             console.log("cloud:getAsync")
             console.dir(file.header) // TODO @darzu: dbg
             resolve(file);
@@ -86,13 +95,9 @@ function setAsync(h: Header, prevVersion: Version, text?: ScriptText): Promise<V
         h.cloudUserId = userId;
         h.cloudCurrent = false;
         h.cloudVersion = prevVersion;
-        // TODO @darzu: is there a better place to do this?
-        // browser db fields we don't want to propegate
-        delete h._rev
-        delete (h as any)._id
         const project: CloudProject = {
             id: h.id,
-            header: JSON.stringify(h),
+            header: JSON.stringify(excludeLocalOnlyMetadataFields(h)),
             text: text ? JSON.stringify(text) : undefined,
             version: prevVersion
         }
@@ -102,6 +107,7 @@ function setAsync(h: Header, prevVersion: Version, text?: ScriptText): Promise<V
         if (result.success) {
             h.cloudCurrent = true;
             h.cloudVersion = result.resp;
+            h.cloudLastSyncTime = U.nowSeconds()
             resolve(result.resp);
         } else if (result.statusCode === 409) {
             // conflict
@@ -121,6 +127,7 @@ export async function saveAsync(h: Header, text?: ScriptText): Promise<void> {
     const res = await setAsync(h, h.cloudVersion, text)
     if (!res) {
         // wait to synchronize
+        pxt.debug('save to cloud failed; synchronizing...')
         await syncAsync()
         // console.log(`INVALIDATING due to conflict: ${h.id}`) // TODO @darzu: dbg
         // data.invalidateHeader("header", h);
@@ -130,6 +137,9 @@ export async function saveAsync(h: Header, text?: ScriptText): Promise<void> {
 }
 
 function deleteAsync(h: Header, prevVersion: Version, text?: ScriptText): Promise<void> {
+    // Note: we don't actually want to support permanent delete initiated from the client.
+    // Instead we use soft delete ".isDeleted" so that we have a tombstone to track that a
+    // project used to exist. Without this, we will unintentionally resync deleted projects.
     return Promise.resolve();
 }
 
@@ -139,7 +149,7 @@ function resetAsync(): Promise<void> {
 
 let _inProgressSyncAsync: Promise<any> = Promise.resolve()
 export async function syncAsync(): Promise<any> {
-    // ensure we don't run this twice at once
+    // ensure we don't run this twice
     if (_inProgressSyncAsync.isResolved()) {
         _inProgressSyncAsync = syncAsyncInternal()
     }
@@ -150,11 +160,20 @@ async function syncAsyncInternal(): Promise<any> {
     if (!auth.hasIdentity()) { return; }
     if (!await auth.loggedIn()) { return; }
     try {
+        pxt.log("Synchronizing with the cloud...")
         const userId = auth.user()?.id;
         // Filter to cloud-synced headers owned by the current user.
         const localCloudHeaders = workspace.getHeaders(true)
             .filter(h => h.cloudUserId && h.cloudUserId === userId);
+        const syncStart = U.nowSeconds()
+        const agoStr = (t: number) => `${syncStart - t} seconds ago`
         const remoteHeaders = await listAsync();
+        const numDiff = remoteHeaders.length - localCloudHeaders.length
+        if (numDiff !== 0) {
+            pxt.log(`${Math.abs(numDiff)} ${numDiff > 0 ? 'more' : 'fewer'} projects found in the cloud.`);
+        }
+        const lastCloudChange = Math.max(...remoteHeaders.map(h => h.modificationTime))
+        pxt.log(`Last cloud project change was ${U.nowSeconds() - lastCloudChange} seconds ago`);
         console.log("REMOTE") // TODO @darzu: dbg
         console.dir(remoteHeaders)
         const remoteHeaderMap = U.toDictionary(remoteHeaders, h => h.id);
@@ -163,6 +182,7 @@ async function syncAsyncInternal(): Promise<any> {
             const remote = remoteHeaderMap[local.id];
             delete remoteHeaderMap[local.id];
             if (remote) {
+                local.cloudLastSyncTime = remote.cloudLastSyncTime
                 // Note that we use modification time to detect differences. If we had full (or partial) history, we could
                 //  use version numbers. However we cannot currently use etags since the Cosmos list operations
                 //  don't return etags per-version. And because of how etags work, the record itself can never
@@ -180,33 +200,30 @@ async function syncAsyncInternal(): Promise<any> {
                     } else {
                         // Possible conflict.
                         const remoteFile = await getAsync(local);
+                        const conflictStr = `conflict found for '${local.name}' (${local.id.substr(0, 5)}...). Last cloud change was ${agoStr(remoteFile.header.modificationTime)} and last local change was ${agoStr(local.modificationTime)}.`
                         // last write wins.
                         if (local.modificationTime > remoteFile.header.modificationTime) {
                             if (local.cloudVersion === remoteFile.version) {
                                 // local is one ahead, push as normal
-                                console.log(`local has unsynced changes ${local.id}`) // TODO @darzu: dbg
+                                pxt.debug(`local project '${local.name}' has changes that will be pushed to the cloud.`)
                                 const text = await workspace.getTextAsync(local.id);
                                 const newVer = await setAsync(local, local.cloudVersion, text);
                                 U.assert(!!newVer, 'Failed to sync local change (1)') // TODO @darzu: dbg
                             } else {
-                                console.log(`CONFLCIT; local wins ${local.id};`) // TODO @darzu: dbg
                                 // local wins
+                                // TODO: Pop a dialog and/or show the user a diff. Better yet, handle merges.
+                                pxt.log(conflictStr + ' Local will overwrite cloud.')
                                 const text = await workspace.getTextAsync(local.id);
                                 const newVer = await setAsync(local, remoteFile.version, text);
                                 U.assert(!!newVer, 'Failed to sync local change (2)') // TODO @darzu: dbg
                             }
                         } else {
-                            console.log(`CONFLCIT; remote wins ${remote.id};`) // TODO @darzu: dbg
                             // remote wins
+                            // TODO: Pop a dialog and/or show the user a diff. Better yet, handle merges.
+                            pxt.log(conflictStr + ' Cloud will overwrite local.')
                             const newHeader = {...local, ...remoteFile.header} // make sure we keep local-only metadata like _rev
                             localHeaderChanges[remoteFile.header.id] = newHeader
                             const localVer = await workspace.saveAsync(newHeader, remoteFile.text, true);
-                            // TODO @darzu: dbg:
-                            const localAgain = await workspace.impl.getAsync(remoteFile.header)
-                            const diff = workspace.computeChangeSummary(remoteFile, localAgain)
-                            console.log(`POST CONFLICT; diff: ${remote.id}`)
-                            console.log(workspace.stringifyChangeSummary(diff))
-                            console.log(`new mod time: ${localAgain.header.modificationTime}`)
                         }
                     }
                 } else {
@@ -260,6 +277,9 @@ async function syncAsyncInternal(): Promise<any> {
             }
         })]
         await Promise.all(tasks);
+
+        // sanity check: all cloud headers should have a new sync time
+        U.assert(workspace.getLastCloudSync() >= syncStart, 'Cloud sync failed!');
 
         console.log("done with cloud:syncAsync tasks") // TODO @darzu: dbg
 

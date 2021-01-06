@@ -97,22 +97,24 @@ function setAsync(h: Header, prevVer: any, text?: ScriptText) {
 }
 
 function setCoreAsync(headers: db.Table, texts: db.Table, h: Header, prevVer: any, text?: ScriptText) {
-    let retrev = ""
-    return (!text ? Promise.resolve() :
+    let newTextVer = ""
+    const textRes = (!text ? Promise.resolve() :
         texts.setAsync({
             id: h.id,
             files: text,
             _rev: prevVer
         }).then(rev => {
             console.log(`texts.setAsync: ${rev}`) // TODO @darzu: dbg
-            retrev = rev
+            newTextVer = rev
         }))
+    const headerRes = textRes
         .then(() => headers.setAsync(h))
         .then(rev => {
             console.log(`headers.setAsync: ${rev}`) // TODO @darzu: dbg
             h._rev = rev
-            return retrev
+            return newTextVer
         });
+    return headerRes
 }
 
 export function copyProjectToLegacyEditor(h: Header, majorVersion: number): Promise<Header> {
