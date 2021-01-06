@@ -58,7 +58,7 @@ export class SkillCardImpl extends React.Component<SkillCardProps> {
             case "notstarted":
             case "restarted":
             default:
-                tickEvent("skillmap.activity.open", { map: mapId, activity: id, status: status || "" });
+                tickEvent("skillmap.activity.open", { path: mapId, activity: id, status: status || "" });
                 return dispatchOpenActivity(mapId, id);
         }
     }

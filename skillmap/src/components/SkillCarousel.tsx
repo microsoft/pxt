@@ -59,23 +59,26 @@ class SkillCarouselImpl extends React.Component<SkillCarouselProps> {
     }
 
     protected onItemSelect = (id: string) => {
+        const { map, dispatchChangeSelectedItem } = this.props;
         if (id !== this.props.selectedItem) {
-            tickEvent("skillmap.carousel.item.select", { map: this.props.map.mapId, activity: id });
-            this.props.dispatchChangeSelectedItem(id);
+            tickEvent("skillmap.carousel.item.select", { path: map.mapId, activity: id });
+            dispatchChangeSelectedItem(id);
         } else {
-            tickEvent("skillmap.carousel.item.deselect", { map: this.props.map.mapId, activity: id });
-            this.props.dispatchChangeSelectedItem(undefined);
+            tickEvent("skillmap.carousel.item.deselect", { path: map.mapId, activity: id });
+            dispatchChangeSelectedItem(undefined);
         }
     }
 
     protected handleEndCardClick = () => {
-        tickEvent("skillmap.carousel.endcard.click", { map: this.props.map.mapId });
-        this.props.dispatchShowCompletionModal(this.props.map.mapId);
+        const { map, dispatchShowCompletionModal } = this.props;
+        tickEvent("skillmap.carousel.endcard.click", { path: map.mapId });
+        dispatchShowCompletionModal(map.mapId);
     }
 
     protected handleEndCardTransition = () => {
-        tickEvent("skillmap.carousel.endcard.auto", { map: this.props.map.mapId });
-        this.props.dispatchShowCompletionModal(this.props.map.mapId);
+        const { map, dispatchShowCompletionModal } = this.props;
+        tickEvent("skillmap.carousel.endcard.auto", { path: map.mapId });
+        dispatchShowCompletionModal(map.mapId);
     }
 
     protected handleCarouselRef = (el: Carousel | null) => {
