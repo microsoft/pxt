@@ -197,7 +197,7 @@ export function init() {
 
         switch (fieldEditorId) {
             case "image-editor":
-                current.injectElement(<ImageFieldEditor ref={ refHandler } singleFrame={true} showTiles={options?.showTiles} />);
+                current.injectElement(<ImageFieldEditor ref={ refHandler } singleFrame={true} />);
                 break;
             case "animation-editor":
                 current.injectElement(<ImageFieldEditor ref={ refHandler } singleFrame={false} />);
