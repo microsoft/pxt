@@ -257,7 +257,6 @@ export class GifEncoder {
 
     renderAsync(): Promise<string> {
         if (this.cancellationToken.isCancelled()) return Promise.resolve(undefined);
-
         // keep trying to render until size is small enough
         const tryRenderGifAsync: () => Promise<string> = () => {
             return this.renderGifAsync()
@@ -267,7 +266,9 @@ export class GifEncoder {
                     if (this.options.maxLength && imageUri.length > this.options.maxLength) {
                         const nframes = Math.floor(this.gif.frames.length * this.options.maxLength / imageUri.length) - 1;
                         pxt.log(`gif: size too large (${(imageUri.length / 1000) | 0}kb) reducing frames to ${nframes}`);
+                        console.log("VVN: gif size too big");
                         if (nframes <= 0) {
+                            console.log("WAAAAAY too big...");
                             pxt.log(`gif: simulator image too large, cannot have a single frame`);
                             return undefined;
                         }
@@ -322,7 +323,7 @@ export function loadGifEncoderAsync(): Promise<GifEncoder> {
         transparent: pxt.appTarget.appTheme.simGifTransparent,
         maxFrames: pxt.appTarget.appTheme.simGifMaxFrames || 64,
         maxLength: pxt.appTarget.appTheme.simScreenshotMaxUriLength || 300000,
-        scale: 3
+        scale: 2
     };
     return pxt.BrowserUtils.loadScriptAsync("gifjs/gif.js")
         .then(() => new GifEncoder(options));
