@@ -88,15 +88,26 @@
             }
             var jacdac = /jacdac=1/.test(window.location.href)
             if (jacdac) {
-                const jacdacUrl = localhost ? "http://localhost:8000" : "https://microsoft.github.io/jacdac-ts";
+                const jacdacUrl = "https://microsoft.github.io/jacdac-ts";
                 [selectLeft, selectRight].forEach(function (sel) {
                     var opt = document.createElement("option")
                     opt.value = jacdacUrl;
-                    opt.innerText = localhost ? "JACDAC localhost:8000" : "JACDAC (beta)"
+                    opt.innerText = "JACDAC (beta)"
                     sel.appendChild(opt)
                 })
                 selectLeft.value = jacdacUrl;
                 selectRight.value = "https://maker.makecode.com/";
+
+                if(localhost) {
+                    const jacdacUrl = "http://localhost:8000";
+                    [selectLeft, selectRight].forEach(function (sel) {
+                        var opt = document.createElement("option")
+                        opt.value = jacdacUrl;
+                        opt.innerText = "JACDAC localhost:8000"
+                        sel.appendChild(opt)
+                    })
+                    selectLeft.value = jacdacUrl;
+                }
             }
             var divider = document.getElementById("divider");
             var flags = "?nestededitorsim=1&editorlayout=ide&nosandbox=1&parentOrigin=" + encodeURIComponent(window.location.origin);
