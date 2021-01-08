@@ -163,7 +163,9 @@ function onYouTubeIframeAPIReady() {
         function showSettings() {
             return __awaiter(this, void 0, void 0, function* () {
                 yield loadSettings();
+                state.addSite = false;
                 settings.classList.remove("hidden");
+                render();
             });
         }
         function hideSettings() {
@@ -1097,12 +1099,12 @@ background-image: url(${config.backgroundImage});
                 state.addSite = false;
                 const config = readConfig();
                 // emoji?
-                const em = /(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])*/.exec(value);
+                const em = /(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])+/.exec(value);
                 if (em) {
                     addsiteinput.value = "";
                     config.emojis = em[0];
                     saveConfig(config);
-                    state.emoji = /(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])/.exec(value)[0];
+                    state.emoji = config.emojis.substr(0, 2);
                     setPaintTool("emoji");
                 }
                 else {

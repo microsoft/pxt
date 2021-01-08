@@ -254,7 +254,9 @@ function onYouTubeIframeAPIReady() {
 
     async function showSettings() {
         await loadSettings()
+        state.addSite = false;
         settings.classList.remove("hidden")
+        render();
     }
 
     async function hideSettings() {
@@ -1233,12 +1235,12 @@ background-image: url(${config.backgroundImage});
             const config = readConfig();
 
             // emoji?
-            const em = /(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])*/.exec(value);
+            const em = /(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])+/.exec(value);
             if (em) {
                 addsiteinput.value = "";
                 config.emojis = em[0];
                 saveConfig(config);
-                state.emoji = /(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])/.exec(value)[0];
+                state.emoji = config.emojis.substr(0, 2);
                 setPaintTool("emoji")
             } else {
                 const url: string = normalizeUrl(value);
