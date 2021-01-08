@@ -159,7 +159,7 @@ async function syncAsyncInternal(): Promise<any> {
         if (numDiff !== 0) {
             pxt.log(`${Math.abs(numDiff)} ${numDiff > 0 ? 'more' : 'fewer'} projects found in the cloud.`);
         }
-        const lastCloudChange = Math.max(...remoteHeaders.map(h => h.modificationTime))
+        const lastCloudChange = remoteHeaders.length ? Math.max(...remoteHeaders.map(h => h.modificationTime)) : syncStart
         pxt.log(`Last cloud project change was ${agoStr(lastCloudChange)}`);
         const remoteHeaderMap = U.toDictionary(remoteHeaders, h => h.id);
         const localHeaderChanges: pxt.Map<Header> = {}
@@ -253,7 +253,8 @@ async function syncAsyncInternal(): Promise<any> {
         await Promise.all(tasks);
 
         // sanity check: all cloud headers should have a new sync time
-        U.assert(workspace.getLastCloudSync() >= syncStart, 'Cloud sync failed!');
+        const noCloudProjs = remoteHeaders.length === 0
+        U.assert(noCloudProjs || workspace.getLastCloudSync() >= syncStart, 'Cloud sync failed!');
 
         // TODO: This is too heavy handed. We can be more fine grain here with some work.
         if (U.values(localHeaderChanges).length) {

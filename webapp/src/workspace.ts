@@ -253,6 +253,8 @@ export function getLastCloudSync(): number {
     const userId = auth.user()?.id;
     const cloudHeaders = getHeaders(true)
         .filter(h => h.cloudUserId && h.cloudUserId === userId);
+    if (!cloudHeaders.length)
+        return 0
     return Math.min(...cloudHeaders.map(getHeaderLastCloudSync))
 }
 
@@ -1504,6 +1506,7 @@ export function installByIdAsync(id: string) {
 }
 
 export async function saveToCloudAsync(h: Header) {
+    pxt.debug(`cloud save to ${h.name} (${h.id})`)
     checkHeaderSession(h);
     const text = await getTextAsync(h.id)
     return cloud.saveAsync(h, text)
