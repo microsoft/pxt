@@ -3508,7 +3508,7 @@ export class ProjectView
                             }
                             ghid.tag = tag;
                             pxt.log(`tutorial ${ghid.fullName} tag: ${tag}`);
-                            return pxt.github.downloadPackageAsync(`${ghid.fullName}#${ghid.tag}`, config);
+                            return pxt.github.downloadPackageAsync(`${ghid.slug}#${ghid.tag}`, config);
                         });
                 }).then(gh => {
                     let p = Promise.resolve();
