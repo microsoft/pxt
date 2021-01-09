@@ -77,6 +77,16 @@ namespace pxt.github {
         user: User;
     }
 
+    // local git server
+
+    export function initLocalGitServer(): Promise<void> {
+        console.log("Hello from the git client")
+
+        return Promise.resolve();
+    }
+
+    // proxy
+
     export let forceProxy = false;
 
     function hasProxy() {
@@ -99,13 +109,12 @@ namespace pxt.github {
 
     export let handleGithubNetworkError: (opts: U.HttpRequestOptions, e: any) => boolean;
 
+    // caching
     const isPrivateRepoCache: pxt.Map<boolean> = {};
 
     export interface CachedPackage {
         files: Map<string>;
     }
-
-    // caching
     export interface IGithubDb {
         loadConfigAsync(repopath: string, tag: string): Promise<pxt.PackageConfig>;
         loadPackageAsync(repopath: string, tag: string): Promise<CachedPackage>;

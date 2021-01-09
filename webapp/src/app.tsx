@@ -4730,6 +4730,11 @@ document.addEventListener("DOMContentLoaded", () => {
             else theEditor.newProject();
             return Promise.resolve();
         })
+        .then(() => {
+            // initialize local git server
+            // TODO @darzu:
+            return pxt.github.initLocalGitServer()
+        })
         .catch(e => {
             theEditor.handleCriticalError(e, "Failure in DOM loaded handler");
             throw e;
