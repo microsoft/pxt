@@ -47,7 +47,7 @@ declare namespace pxt.workspace {
         blobVersion_: string;  // version of the cloud blob
         blobCurrent_: boolean; // has the current version of the script been pushed to cloud
 
-        // For cloud sync
+        // For cloud sync (local only metadata)
         cloudVersion: string;     // The cloud-assigned version number (e.g. etag)
         cloudCurrent: boolean;    // Has the current version of the project been pushed to cloud
         cloudLastSyncTime: number; // seconds since epoch
