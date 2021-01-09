@@ -9,6 +9,7 @@ export const PROVIDER_NAME = "github";
 
 export class GithubProvider extends cloudsync.ProviderBase {
     constructor() {
+        // TODO @darzu: do we need to change this URL?
         super(PROVIDER_NAME, lf("GitHub"), "icon github", "https://api.github.com");
         pxt.github.handleGithubNetworkError = (opts: pxt.U.HttpRequestOptions, e: any) => {
             if (e.statusCode == 401 && pxt.github.token) {

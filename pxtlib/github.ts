@@ -111,7 +111,12 @@ namespace pxt.github {
         loadPackageAsync(repopath: string, tag: string): Promise<CachedPackage>;
     }
 
-    function ghRequestAsync(options: U.HttpRequestOptions) {
+    function ghRequestAsync(options: U.HttpRequestOptions): Promise<U.HttpResponse> {
+        // TODO @darzu: option for other git hosts
+        return ghRequestInternalAsync(options);
+    }
+
+    function ghRequestInternalAsync(options: U.HttpRequestOptions): Promise<U.HttpResponse> {
         options.method = options.method ?? "GET";
         // call github request with existing token
         // if the request fails and the token is clear, try again with the token
