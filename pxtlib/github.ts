@@ -1,4 +1,6 @@
 namespace pxt.github {
+    const GIT_API_SERVER = "https://api.github.com";
+
     export interface GHRef {
         ref: string;
         url: string;
@@ -158,7 +160,7 @@ namespace pxt.github {
     }
 
     export function isOrgAsync(owner: string): Promise<boolean> {
-        return ghGetJsonAsync(`https://api.github.com/orgs/${owner}`)
+        return ghGetJsonAsync(`${GIT_API_SERVER}/orgs/${owner}`)
             .then(resp => resp.statusCode == 200);
     }
 
@@ -266,7 +268,7 @@ namespace pxt.github {
 
     function fallbackDownloadTextAsync(parsed: ParsedRepo, commitid: string, filepath: string) {
         return ghRequestAsync({
-            url: "https://api.github.com/repos/" + join(parsed.slug, "contents", parsed.fileName, filepath + "?ref=" + commitid),
+            url: GIT_API_SERVER + "/repos/" + join(parsed.slug, "contents", parsed.fileName, filepath + "?ref=" + commitid),
             method: "GET"
         }).then(resp => {
             const f = resp.json as FileContent
@@ -302,12 +304,12 @@ namespace pxt.github {
 
     export function authenticatedUserAsync(): Promise<User> {
         if (!token) return Promise.resolve(undefined); // no token, bail out
-        return ghGetJsonAsync("https://api.github.com/user");
+        return ghGetJsonAsync(GIT_API_SERVER + "/user");
     }
 
     export function getCommitsAsync(repopath: string, sha: string): Promise<CommitInfo[]> {
         const parsed = parseRepoId(repopath);
-        return ghGetJsonAsync("https://api.github.com/repos/" + parsed.slug + "/commits?sha=" + sha)
+        return ghGetJsonAsync(GIT_API_SERVER + "/repos/" + parsed.slug + "/commits?sha=" + sha)
             .then(objs => objs.map((obj: any) => {
                 const c = obj.commit;
                 c.url = obj.url;
@@ -318,7 +320,7 @@ namespace pxt.github {
 
     export function getCommitAsync(repopath: string, sha: string) {
         const parsed = parseRepoId(repopath);
-        return ghGetJsonAsync("https://api.github.com/repos/" + parsed.slug + "/git/commits/" + sha)
+        return ghGetJsonAsync(GIT_API_SERVER + "/repos/" + parsed.slug + "/git/commits/" + sha)
             .then((commit: Commit) => ghGetJsonAsync(commit.tree.url + "?recursive=1")
                 .then((tree: Tree) => {
                     commit.tree = tree
@@ -348,7 +350,7 @@ namespace pxt.github {
     function ghPostAsync(path: string, data: any, headers?: any, method?: string): Promise<any> {
         // need to handle 204
         return ghRequestAsync({
-            url: /^https:/.test(path) ? path : "https://api.github.com/repos/" + path,
+            url: /^https:/.test(path) ? path : GIT_API_SERVER + "/repos/" + path,
             headers,
             method: method || "POST",
             data: data,
@@ -373,7 +375,7 @@ namespace pxt.github {
     export async function fastForwardAsync(repopath: string, branch: string, commitid: string) {
         const parsed = parseRepoId(repopath);
         const resp = await ghRequestAsync({
-            url: `https://api.github.com/repos/${parsed.slug}/git/refs/heads/${branch}`,
+            url: `${GIT_API_SERVER}/repos/${parsed.slug}/git/refs/heads/${branch}`,
             method: "PATCH",
             allowHttpErrors: true,
             data: {
@@ -387,7 +389,7 @@ namespace pxt.github {
     export async function putFileAsync(repopath: string, path: string, content: string) {
         const parsed = parseRepoId(repopath);
         await ghRequestAsync({
-            url: `https://api.github.com/repos/${pxt.github.join(parsed.slug, "contents", parsed.fileName, path)}`,
+            url: `${GIT_API_SERVER}/repos/${pxt.github.join(parsed.slug, "contents", parsed.fileName, path)}`,
             method: "PUT",
             allowHttpErrors: true,
             data: {
@@ -431,7 +433,7 @@ namespace pxt.github {
     export function mergeAsync(repopath: string, base: string, head: string, message?: string) {
         const parsed = parseRepoId(repopath);
         return ghRequestAsync({
-            url: `https://api.github.com/repos/${parsed.slug}/merges`,
+            url: `${GIT_API_SERVER}/repos/${parsed.slug}/merges`,
             method: "POST",
             successCodes: [201, 204, 409],
             data: {
@@ -452,7 +454,7 @@ namespace pxt.github {
 
     export function getRefAsync(repopath: string, branch: string) {
         branch = branch || "master";
-        return ghGetJsonAsync("https://api.github.com/repos/" + repopath + "/git/refs/heads/" + branch)
+        return ghGetJsonAsync(GIT_API_SERVER + "/repos/" + repopath + "/git/refs/heads/" + branch)
             .then(resolveRefAsync)
             .catch(err => {
                 if (err.statusCode == 404) return undefined;
@@ -512,7 +514,7 @@ namespace pxt.github {
         const proxy = shouldUseProxy(useProxy);
         let head: string = null
         const fetch = !proxy ?
-            ghGetJsonAsync(`https://api.github.com/repos/${parsed.slug}/git/refs/${namespace}/?per_page=100`) :
+            ghGetJsonAsync(`${GIT_API_SERVER}/repos/${parsed.slug}/git/refs/${namespace}/?per_page=100`) :
             // no CDN caching here, bust browser cace
             U.httpGetJsonAsync(pxt.BrowserUtils.cacheBustingUrl(`${pxt.Cloud.apiRoot}gh/${parsed.slug}/refs${noCache ? "?nocache=1" : ""}`))
                 .then(r => {
@@ -555,9 +557,9 @@ namespace pxt.github {
         if (/^[a-f0-9]{40}$/.test(tag))
             return Promise.resolve(tag)
         const parsed = parseRepoId(repopath)
-        return ghGetJsonAsync(`https://api.github.com/repos/${parsed.slug}/git/refs/tags/${tag}`)
+        return ghGetJsonAsync(`${GIT_API_SERVER}/repos/${parsed.slug}/git/refs/tags/${tag}`)
             .then(resolveRefAsync, e =>
-                ghGetJsonAsync(`https://api.github.com/repos/${parsed.slug}/git/refs/heads/${tag}`)
+                ghGetJsonAsync(`${GIT_API_SERVER}/repos/${parsed.slug}/git/refs/heads/${tag}`)
                     .then(resolveRefAsync))
     }
 
@@ -736,7 +738,7 @@ namespace pxt.github {
     }
 
     export function createRepoAsync(name: string, description: string, priv?: boolean) {
-        return ghPostAsync("https://api.github.com/user/repos", {
+        return ghPostAsync(GIT_API_SERVER + "/user/repos", {
             name,
             description,
             private: !!priv,
@@ -755,7 +757,7 @@ namespace pxt.github {
         const parsed = parseRepoId(repo);
         let url: string = undefined;
         try {
-            const status = await ghGetJsonAsync(`https://api.github.com/repos/${parsed.slug}/pages`) // try to get the pages
+            const status = await ghGetJsonAsync(`${GIT_API_SERVER}/repos/${parsed.slug}/pages`) // try to get the pages
             if (status)
                 url = status.html_url;
         } catch (e) { }
@@ -764,7 +766,7 @@ namespace pxt.github {
         if (!url) {
             // enable pages
             try {
-                const r = await ghPostAsync(`https://api.github.com/repos/${parsed.slug}/pages`, {
+                const r = await ghPostAsync(`${GIT_API_SERVER}/repos/${parsed.slug}/pages`, {
                     source: {
                         branch: "master",
                         path: "/"
@@ -783,10 +785,10 @@ namespace pxt.github {
         // we have a URL, update project
         if (url) {
             // check if the repo already has a web site
-            const rep = await ghGetJsonAsync(`https://api.github.com/repos/${repo}`);
+            const rep = await ghGetJsonAsync(`${GIT_API_SERVER}/repos/${repo}`);
             if (rep && !rep.homepage) {
                 try {
-                    await ghPostAsync(`https://api.github.com/repos/${repo}`, { "homepage": url }, undefined, "PATCH");
+                    await ghPostAsync(`${GIT_API_SERVER}/repos/${repo}`, { "homepage": url }, undefined, "PATCH");
                 } catch (e) {
                     // just ignore if fail to update the homepage
                     pxt.tickEvent("github.homepage.error");
@@ -894,7 +896,7 @@ namespace pxt.github {
             }
         }
         // try github apis
-        const r = await ghGetJsonAsync("https://api.github.com/repos/" + rid.slug)
+        const r = await ghGetJsonAsync(GIT_API_SERVER + "/repos/" + rid.slug)
         return mkRepo(r, { config, fullName: rid.fullName, fileName: rid.fileName, tag: rid.tag });
     }
 
@@ -1156,7 +1158,7 @@ namespace pxt.github {
     }
 
     export const GIT_JSON = ".git.json"
-    const GRAPHQL_URL = "https://api.github.com/graphql";
+    const GRAPHQL_URL = GIT_API_SERVER + "/graphql";
 
     export function lookupFile(parsed: ParsedRepo, commit: pxt.github.Commit, path: string) {
         if (!commit)
@@ -1261,7 +1263,7 @@ namespace pxt.github {
     }
 
     export function getPagesStatusAsync(repoPath: string): Promise<GitHubPagesStatus> {
-        return ghGetJsonAsync(`https://api.github.com/repos/${repoPath}/pages`)
+        return ghGetJsonAsync(`${GIT_API_SERVER}/repos/${repoPath}/pages`)
             .catch(e => ({
                 status: null
             }))
