@@ -82,6 +82,15 @@ namespace pxt.github {
     export function initLocalGitServer(): Promise<void> {
         console.log("Hello from the git client")
 
+        const ghWorker = new Worker("/gitserver.js")
+        setInterval(() => {
+            ghWorker.postMessage("hello, worker!")
+        }, 2000)
+        ghWorker.onmessage = (m) => {
+            console.log("from git worker:")
+            console.dir(m.data)
+        }
+
         return Promise.resolve();
     }
 
