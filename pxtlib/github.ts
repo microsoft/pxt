@@ -79,18 +79,25 @@ namespace pxt.github {
 
     // local git server
 
-    export function initLocalGitServer(): Promise<void> {
-        console.log("Hello from the git client")
-
-        const ghWorker = new Worker("/gitserver.js")
-        setInterval(() => {
-            ghWorker.postMessage("hello, worker!")
-        }, 2000)
-        ghWorker.onmessage = (m) => {
-            console.log("from git worker:")
-            console.dir(m.data)
+    let _ghWorker: Worker = undefined;
+    function ghWorker(): Worker {
+        if (!_ghWorker) {
+            _ghWorker = new Worker("/gitserver/main.js")
+            // _ghWorker = new Worker("/gitserver.js")
+            // setInterval(() => {
+            //     ghWorker.postMessage("hello, worker!")
+            // }, 2000)
+            _ghWorker.onmessage = (m) => {
+                console.log("FROM WORKER:")
+                console.dir(m.data)
+            }
         }
+        return _ghWorker;
+    }
 
+    export function initLocalGitServer(): Promise<void> {
+        console.log("Hello from initLocalGitServer")
+        ghWorker();
         return Promise.resolve();
     }
 
@@ -131,7 +138,19 @@ namespace pxt.github {
 
     function ghRequestAsync(options: U.HttpRequestOptions): Promise<U.HttpResponse> {
         // TODO @darzu: option for other git hosts
-        return ghRequestInternalAsync(options);
+        // console.log("ghRequestAsync")
+        // console.dir(options)
+        ghWorker().postMessage(JSON.stringify(options))
+
+        const resp = ghRequestInternalAsync(options);
+
+        resp.then(r => { // TODO @darzu: dbg
+            // console.log("Response from GitHub:")
+            ghWorker().postMessage(JSON.stringify(r))
+            // console.dir(r)
+        })
+
+        return resp
     }
 
     function ghRequestInternalAsync(options: U.HttpRequestOptions): Promise<U.HttpResponse> {

@@ -26,5 +26,9 @@
         "*.variables": "less",
         "*.jres": "json"
     },
-    "git.ignoreLimitWarning": true
+    "git.ignoreLimitWarning": true,
+    "workbench.colorCustomizations": {
+        "activityBar.background": "#3b3500",
+        "activityBar.foreground": "#fcf96b"
+    }
 }
