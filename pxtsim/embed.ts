@@ -24,6 +24,7 @@ namespace pxsim {
         breakOnStart?: boolean;
         storedState?: Map<any>;
         ipc?: boolean;
+        single?: boolean;
     }
 
     export interface SimulatorInstructionsMessage extends SimulatorMessage {
@@ -78,6 +79,13 @@ namespace pxsim {
     export interface SimulatorBroadcastMessage extends SimulatorMessage {
         broadcast: boolean;
     }
+
+    export interface SimulatorControlMessage extends SimulatorBroadcastMessage {
+        type: "messagepacket";
+        channel: string;
+        data: Uint8Array;
+    }
+
     export interface SimulatorEventBusMessage extends SimulatorBroadcastMessage {
         type: "eventbus";
         broadcast: true;

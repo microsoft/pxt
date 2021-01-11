@@ -21,6 +21,7 @@ declare namespace pxt {
     interface TargetConfig {
         packages?: PackagesConfig;
         shareLinks?: ShareConfig;
+        skillMap?: SkillMapConfig;
         // common galleries
         galleries?: pxt.Map<string | GalleryProps>;
         // localized galleries
@@ -42,10 +43,17 @@ declare namespace pxt {
         // "acme-corp/pxt-widget": "min:v0.1.2" - auto-upgrade to that version
         // "acme-corp/pxt-widget": "dv:foo,bar" - add "disablesVariant": ["foo", "bar"] to pxt.json
         upgrades?: pxt.Map<string>;
+        // list of trusted custom editor extension urls
+        // that can bypass consent and send/receive messages
+        approvedEditorExtensionUrls?: string[];
     }
 
     interface ShareConfig {
         approved?: string[];
+    }
+
+    interface SkillMapConfig {
+        defaultPath?: string;
     }
 
     interface AppTarget {
@@ -209,6 +217,16 @@ declare namespace pxt {
         invalidatedClass?: string; // CSS class to be applied to the sim iFrame when it needs to be updated (defaults to sepia filter)
         stoppedClass?: string; // CSS class to be applied to the sim iFrame when it isn't running (defaults to grayscale filter)
         keymap?: boolean; // when non-empty and autoRun is disabled, this code is run upon simulator first start
+
+        // a map of allowed simulator channel to URL to handle specific control messages
+        messageSimulators?: pxt.Map<{
+            // the URL to load the simulator, $PARENT_ORIGIN$ will be replaced by the parent
+            // origin to validate messages
+            url: string;
+            // url when localhost developer mode is enabled, add localhostmessagesims=1 to enable this mode
+            localHostUrl?: string;
+            aspectRatio?: number;
+        }>;
     }
 
     interface TargetCompileService {
@@ -269,6 +287,7 @@ declare namespace pxt {
         TOC?: TOCMenuEntry[];
         hideSideDocs?: boolean;
         homeScreenHero?: string; // home screen hero image
+        homeScreenHeroGallery?: string; // path to markdown file containing the gallery to display on homescreen
         sideDoc?: string; // deprecated
         hasReferenceDocs?: boolean; // if true: the monaco editor will add an option in the context menu to load the reference docs
         feedbackUrl?: string; // is set: a feedback link will show in the settings menu
@@ -858,6 +877,14 @@ declare namespace ts.pxtc {
         ignoreFileResolutionErrors?: boolean; // ignores triple-slash directive errors; debug only
     }
 
+    interface BuiltSimJsInfo {
+        js: string;
+        targetVersion: string;
+        fnArgs?: pxt.Map<String[]>;
+        parts?: string[];
+        usedBuiltinParts?: string[];
+    }
+
     interface UpgradePolicy {
         type: "api" | "blockId" | "missingPackage" | "package" | "blockValue" | "userenum";
         map?: pxt.Map<string>;
@@ -918,6 +945,7 @@ declare namespace pxt.tutorial {
         language?: string; // language of code snippet (ts or python)
         templateCode?: string;
         metadata?: TutorialMetadata;
+        assetFiles?: pxt.Map<string>;
         jres?: string; // JRES to be used when generating hints; necessary for tilemaps
     }
 
@@ -968,6 +996,7 @@ declare namespace pxt.tutorial {
         autoexpandStep?: boolean; // autoexpand tutorial card if instruction text overflows
         metadata?: TutorialMetadata; // metadata about the tutorial parsed from the markdown
         language?: string; // native language of snippets ("python" for python, otherwise defaults to typescript)
+        assetFiles?: pxt.Map<string>;
         jres?: string; // JRES to be used when generating hints; necessary for tilemaps
     }
     interface TutorialCompletionInfo {

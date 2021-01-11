@@ -2254,15 +2254,15 @@ namespace pxt.blocks {
         current.children.forEach(c => escapeVariables(c, e));
 
 
-        function escapeVarName(name: string): string {
-            if (!name) return '_';
+        function escapeVarName(originalName: string): string {
+            if (!originalName) return '_';
 
-            let n = ts.pxtc.escapeIdentifier(name);
+            let n = ts.pxtc.escapeIdentifier(originalName);
 
-            if (e.renames.takenNames[n] || nameIsTaken(n, current)) {
+            if (e.renames.takenNames[n] || nameIsTaken(n, current, originalName)) {
                 let i = 2;
 
-                while (e.renames.takenNames[n + i] || nameIsTaken(n + i, current)) {
+                while (e.renames.takenNames[n + i] || nameIsTaken(n + i, current, originalName)) {
                     i++;
                 }
 
@@ -2272,13 +2272,14 @@ namespace pxt.blocks {
             return n;
         }
 
-        function nameIsTaken(name: string, scope: Scope): boolean {
+        function nameIsTaken(name: string, scope: Scope, originalName: string): boolean {
             if (scope) {
                 for (const varName of Object.keys(scope.declaredVars)) {
                     const info = scope.declaredVars[varName];
-                    if (info.name !== info.escapedName && info.escapedName === name) return true;
+                    if ((originalName !== info.name || info.name !== info.escapedName) && info.escapedName === name)
+                        return true;
                 }
-                return nameIsTaken(name, scope.parent);
+                return nameIsTaken(name, scope.parent, originalName);
             }
 
             return false;

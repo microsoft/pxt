@@ -9,9 +9,11 @@ import { dispatchOpenActivity, dispatchShowRestartActivityWarning } from '../act
 import { isActivityUnlocked, isMapUnlocked, lookupActivityProgress, } from '../lib/skillMapUtils';
 import { tickEvent } from '../lib/browserUtils';
 
+/* tslint:disable:no-import-side-effect */
 import '../styles/skillcard.css'
+/* tslint:enable:no-import-side-effect */
 
-type SkillCardStatus = "locked" | "notstarted" | "inprogress" | "completed" ;
+type SkillCardStatus = "locked" | "notstarted" | "inprogress" | "completed" | "restarted";
 
 interface SkillCardProps extends Item {
     mapId: string;
@@ -33,11 +35,16 @@ export class SkillCardImpl extends React.Component<SkillCardProps> {
             case "completed":
                 return lf("VIEW CODE");
             case "inprogress":
+            case "restarted":
                 return lf("CONTINUE");
             case "notstarted":
             default:
                 return lf("START");
         }
+    }
+
+    protected isCompleted(status: SkillCardStatus): boolean {
+        return status === "completed" || status === "restarted";
     }
 
     protected handleActionButtonClick = () => {
@@ -49,8 +56,9 @@ export class SkillCardImpl extends React.Component<SkillCardProps> {
             case "completed":
             case "inprogress":
             case "notstarted":
+            case "restarted":
             default:
-                tickEvent("skillmap.activity.open", { map: mapId, activity: id, status: status || "" });
+                tickEvent("skillmap.activity.open", { path: mapId, activity: id, status: status || "" });
                 return dispatchOpenActivity(mapId, id);
         }
     }
@@ -62,40 +70,43 @@ export class SkillCardImpl extends React.Component<SkillCardProps> {
 
     render() {
         const { label, description, imageUrl, tags, status, currentStep, maxSteps} = this.props;
+        const completed = this.isCompleted(status || "notstarted");
 
-        return <div className={`skill-card ${status || ''}`}>
-            <div className="skill-card-display">
-                <div className="skill-card-image">
-                    {imageUrl ? <img src={imageUrl} alt={lf("Preview of activity content")} /> : <i className={`icon ${status !== "locked" ? "game" : ""}`} />}
-                </div>
-                <div className="skill-card-label">
-                    <div className="skill-card-title">
-                        {status === "completed" && <i className={`icon check circle`} />}
-                        {status === "inprogress" && maxSteps &&
-                            <span className="circular-label">{`${currentStep}/${maxSteps}`}</span>
-                        }
-                        <span>{label}</span>
+        return <div className="skill-card-container">
+            <div className={`skill-card ${status || ''}`}>
+                <div className="skill-card-display">
+                    <div className="skill-card-image">
+                        {imageUrl ? <img src={imageUrl} alt={lf("Preview of activity content")} /> : <i className={`icon ${status !== "locked" ? "game" : ""}`} />}
                     </div>
-                    <div className="skill-card-tags">
-                        {tags?.map((t, i) => {
-                            return <div key={i}>{t}</div>
-                        })}
-                    </div>
-                </div>
-                {status === "locked" && <div className="skill-card-overlay"><i className="icon lock" /></div>}
-            </div>
-            <div className="skill-card-info">
-                <div className="skill-card-title">{label}</div>
-                <div className="skill-card-description">{description}</div>
-                <div className="spacer"></div>
-                <div className="skill-card-action">
-                    {status === "completed" &&
-                        <div className="skill-card-button-icon" role="button" onClick={this.handleRestartButtonClick}>
-                            <i className="xicon redo"></i>
+                    <div className="skill-card-label">
+                        <div className="skill-card-title">
+                            {completed && <i className={`icon check circle`} />}
+                            {status === "inprogress" && maxSteps &&
+                                <span className="circular-label">{`${currentStep}/${maxSteps}`}</span>
+                            }
+                            <span>{label}</span>
                         </div>
-                    }
-                    <div className="skill-card-button" role="button" onClick={this.handleActionButtonClick}>
-                        {this.getSkillCardActionText()}
+                        <div className="skill-card-tags">
+                            {tags?.map((t, i) => {
+                                return <div key={i}>{t}</div>
+                            })}
+                        </div>
+                    </div>
+                    {status === "locked" && <div className="skill-card-overlay"><i className="icon lock" /></div>}
+                </div>
+                <div className="skill-card-info">
+                    <div className="skill-card-title">{label}</div>
+                    <div className="skill-card-description">{description}</div>
+                    <div className="spacer"></div>
+                    <div className="skill-card-action">
+                        {completed &&
+                            <div className="skill-card-button-icon" role="button" onClick={this.handleRestartButtonClick}>
+                                <i className="xicon redo"></i>
+                            </div>
+                        }
+                        <div className="skill-card-button" role="button" onClick={this.handleActionButtonClick}>
+                            {this.getSkillCardActionText()}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -105,8 +116,7 @@ export class SkillCardImpl extends React.Component<SkillCardProps> {
 
 function mapStateToProps(state: SkillMapState, ownProps: any) {
     const map = state.maps?.[ownProps.mapId];
-
-    const isUnlocked = state.user && map && isActivityUnlocked(state.user, state.maps[ownProps.mapId], ownProps.id);
+    const isUnlocked = state.user && map && isActivityUnlocked(state.user, map, ownProps.id);
 
     let status: SkillCardStatus = isUnlocked ? "notstarted" : "locked";
     let currentStep: number | undefined;
@@ -121,7 +131,8 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
 
             if (progress) {
                 if (progress.isCompleted) {
-                    status = "completed";
+                    status = (progress.currentStep && progress.maxSteps && progress.currentStep < progress.maxSteps) ?
+                        "restarted" : "completed";
                 }
                 else if (progress.headerId) {
                     status = "inprogress";

@@ -1,5 +1,5 @@
 /// <reference path="../../built/pxtlib.d.ts" />
-
+/// <reference path="./field_base.ts" />
 
 namespace pxtblockly {
     import svg = pxt.svgUtil;
@@ -27,10 +27,7 @@ namespace pxtblockly {
     const TOTAL_HEIGHT = Y_PADDING * 2 + BG_PADDING * 2 + PREVIEW_WIDTH;
     const TOTAL_WIDTH = X_PADDING * 2 + BG_PADDING * 2 + PREVIEW_WIDTH;
 
-    export abstract class FieldAssetEditor<U extends FieldAssetEditorOptions, V extends ParsedFieldAssetEditorOptions> extends Blockly.Field implements Blockly.FieldCustom {
-        public isFieldCustom_ = true;
-        public SERIALIZABLE = true;
-
+    export abstract class FieldAssetEditor<U extends FieldAssetEditorOptions, V extends ParsedFieldAssetEditorOptions> extends FieldBase<U> {
         protected asset: pxt.Asset;
         protected params: V;
 
@@ -44,39 +41,25 @@ namespace pxtblockly {
         public isGreyBlock: boolean;
 
         constructor(text: string, params: any, validator?: Function) {
-            super(text, validator);
+            super(text, params, validator);
 
             this.lightMode = params.lightMode;
             this.params = this.parseFieldOptions(params);
             this.blocksInfo = params.blocksInfo;
-
-            this.initState();
         }
 
         protected abstract getAssetType(): pxt.AssetType;
         protected abstract createNewAsset(text?: string): pxt.Asset;
         protected abstract getValueText(): string;
 
-        init() {
-            if (this.isInitialized()) {
-                // Field has already been initialized once.
-                return;
-            }
-            // Build the DOM.
-            this.fieldGroup_ = Blockly.utils.dom.createSvgElement('g', {}, null) as SVGGElement;
-            if (!this.visible_) {
-                (this.fieldGroup_ as any).style.display = 'none';
-            }
-
-            this.initState();
+        onInit() {
             this.redrawPreview();
+        }
 
-            this.updateEditable();
-            (this.sourceBlock_ as Blockly.BlockSvg).getSvgRoot().appendChild(this.fieldGroup_);
-
-            // Force a render.
-            this.render_();
-            (this as any).mouseDownWrapper_ = Blockly.bindEventWithChecks_((this as any).getClickTarget_(), "mousedown", this, (this as any).onMouseDown_)
+        onValueChanged(newValue: string) {
+            this.parseValueText(newValue);
+            this.redrawPreview();
+            return this.getValueText();
         }
 
         showEditor_() {
@@ -161,7 +144,7 @@ namespace pxtblockly {
 
         getDisplayText_() {
             // This is only used when isGreyBlock is true
-            const text = pxt.Util.htmlUnescape(this.value_);
+            const text = pxt.Util.htmlUnescape(this.valueText);
             return text.substr(0, text.indexOf("(")) + "(...)";;
         }
 
@@ -178,28 +161,12 @@ namespace pxtblockly {
         }
 
         getValue() {
-            if (this.isGreyBlock) return pxt.Util.htmlUnescape(this.value_);
+            if (this.isGreyBlock) return pxt.Util.htmlUnescape(this.valueText);
 
             return this.getValueText();
         }
 
-        doValueUpdate_(newValue: string) {
-            if (newValue == null) {
-                return;
-            }
-            this.value_ = newValue;
-
-            if (this.isInitialized()) {
-                this.parseValueText(newValue);
-                this.redrawPreview();
-
-                super.doValueUpdate_(newValue);
-            }
-        }
-
-        dispose() {
-            super.dispose();
-
+        onDispose() {
             pxt.react.getTilemapProject().removeChangeListener(this.getAssetType(), this.assetChangeListener);
         }
 
@@ -257,6 +224,7 @@ namespace pxtblockly {
         }
 
         protected parseValueText(newText: string) {
+            newText = pxt.Util.htmlUnescape(newText);
             if (this.sourceBlock_ && !this.sourceBlock_.isInFlyout) {
                 const project = pxt.react.getTilemapProject();
 
@@ -265,7 +233,6 @@ namespace pxtblockly {
                     this.asset = project.lookupAsset(this.getAssetType(), id);
                 }
                 else {
-                    if (!newText) return;
                     if (this.asset) {
                         if (this.sourceBlock_ && this.asset.meta.blockIDs) {
                             this.asset.meta.blockIDs = this.asset.meta.blockIDs.filter(id => id !== this.sourceBlock_.id);
@@ -308,22 +275,6 @@ namespace pxtblockly {
                 }
                 return res;
             }
-        }
-
-        protected initState() {
-            if (!this.asset && this.sourceBlock_ && !this.sourceBlock_.isInFlyout) {
-                const project = pxt.react.getTilemapProject();
-
-                const id = this.getBlockData();
-                if (id) {
-                    this.asset = project.lookupAsset(this.getAssetType(), id);
-                }
-                if (!this.asset) {
-                    this.asset = this.createNewAsset(this.value_);
-                }
-                this.updateAssetListener();
-            }
-            this.updateAssetMeta();
         }
 
         protected updateAssetMeta() {
@@ -371,18 +322,6 @@ namespace pxtblockly {
 
         protected isTemporaryAsset() {
             return this.asset && !this.asset.meta.displayName;
-        }
-
-        protected getBlockData() {
-            return pxt.blocks.getBlockDataForField(this.sourceBlock_, this.name);
-        }
-
-        protected setBlockData(value: string) {
-            pxt.blocks.setBlockDataForField(this.sourceBlock_, this.name, value);
-        }
-
-        protected isInitialized() {
-            return !!this.fieldGroup_;
         }
     }
 

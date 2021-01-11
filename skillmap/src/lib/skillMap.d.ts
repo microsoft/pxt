@@ -28,6 +28,8 @@ interface MapFinishedPrerequisite {
     mapId: string;
 }
 
+type MapActivityType = "tutorial";
+
 interface MapActivity {
     activityId: string;
 
@@ -35,7 +37,7 @@ interface MapActivity {
     description?: string;
     tags: string[];
 
-    type: "tutorial";
+    type: MapActivityType;
     editor: "blocks" | "js" | "py";
 
     url: string;
@@ -59,6 +61,7 @@ interface UserState {
 interface MapState {
     mapId: string;
     activityState: {[index: string]: ActivityState};
+    completionState: "incomplete" | "transitioning" | "completed";
 }
 
 interface ActivityState {

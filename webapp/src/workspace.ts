@@ -579,11 +579,11 @@ export async function pullAsync(hd: Header, checkOnly = false) {
     let gitjson = JSON.parse(gitjsontext) as GitJson
     let parsed = pxt.github.parseRepoId(gitjson.repo)
     const branch = parsed.tag;
-    const sha = await pxt.github.getRefAsync(parsed.fullName, branch)
+    const sha = await pxt.github.getRefAsync(parsed.slug, branch)
     if (!sha) {
         // 404: branch does not exist, repo is gone or no rights to access repo
         // try to get the list of heads to see if we can access the project
-        const heads = await pxt.github.listRefsAsync(parsed.fullName, "heads");
+        const heads = await pxt.github.listRefsAsync(parsed.slug, "heads");
         if (heads && heads.length)
             return PullStatus.BranchNotFound;
         else
@@ -608,8 +608,9 @@ export async function revertAllAsync(hd: Header) {
     if (!gitjsontext)
         return PullStatus.NoSourceControl
     const gitjson = JSON.parse(gitjsontext) as GitJson
+    const parsed = pxt.github.parseRepoId(hd.githubId)
     const commit = gitjson.commit;
-    const configEntry = pxt.github.lookupFile(commit, pxt.CONFIG_NAME);
+    const configEntry = pxt.github.lookupFile(parsed, commit, pxt.CONFIG_NAME);
     const config = pxt.Package.parseAndValidConfig(configEntry && configEntry.blobContent);
     if (!config)
         return PullStatus.NoSourceControl
@@ -618,7 +619,7 @@ export async function revertAllAsync(hd: Header) {
     revertedFiles[GIT_JSON] = gitjsontext;
     revertedFiles[pxt.CONFIG_NAME] = configEntry.blobContent;
     for (const f of config.files.concat(config.testFiles)) {
-        const entry = pxt.github.lookupFile(commit, f);
+        const entry = pxt.github.lookupFile(parsed, commit, f);
         if (!entry || entry.blobContent === undefined) {
             pxt.log(`cannot revert ${f}, corrupted based commit`)
             return PullStatus.NoSourceControl
@@ -638,12 +639,12 @@ export async function hasMergeConflictMarkersAsync(hd: Header): Promise<boolean>
 export async function prAsync(hd: Header, commitId: string, msg: string) {
     let parsed = pxt.github.parseRepoId(hd.githubId)
     // merge conflict - create a Pull Request
-    const branchName = await pxt.github.getNewBranchNameAsync(parsed.fullName, "merge-")
-    await pxt.github.createNewBranchAsync(parsed.fullName, branchName, commitId)
-    const url = await pxt.github.createPRFromBranchAsync(parsed.fullName, parsed.tag, branchName, msg)
+    const branchName = await pxt.github.getNewBranchNameAsync(parsed.slug, "merge-")
+    await pxt.github.createNewBranchAsync(parsed.slug, branchName, commitId)
+    const url = await pxt.github.createPRFromBranchAsync(parsed.slug, parsed.tag, branchName, msg)
     // force user back to master - we will instruct them to merge PR in github.com website
     // and sync here to get the changes
-    let headCommit = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
+    let headCommit = await pxt.github.getRefAsync(parsed.slug, parsed.tag)
     await githubUpdateToAsync(hd, {
         repo: hd.githubId,
         sha: headCommit,
@@ -661,14 +662,31 @@ export function bumpedVersion(cfg: pxt.PackageConfig) {
 export async function bumpAsync(hd: Header, newVer = "") {
     checkHeaderSession(hd);
 
-    let files = await getTextAsync(hd.id)
-    let cfg = pxt.Package.parseAndValidConfig(files[pxt.CONFIG_NAME]);
+    const files = await getTextAsync(hd.id)
+    const cfg = pxt.Package.parseAndValidConfig(files[pxt.CONFIG_NAME]);
     cfg.version = newVer || bumpedVersion(cfg)
+    const releaseTag = "v" + cfg.version;
+
+    // if any other github repo is referenced, unbound their version
+    // those extensions are part of the same repo and their version will be resolved
+    // at load time
+    if (cfg.dependencies) {
+        const gh = pxt.github.parseRepoId(hd.githubId);
+        Object.keys(cfg.dependencies).forEach(k => {
+            const ver = cfg.dependencies[k];
+            const ghid = /^github:/.test(ver) && pxt.github.parseRepoId(ver);
+            if (ghid && gh.slug === ghid.slug) {
+                cfg.dependencies[k] = `github:${pxt.github.join(gh.slug, ghid.fileName)}`
+                pxt.debug(`patching dep ${k} to ${cfg.dependencies[k]}`)
+            }
+        })
+    }
+
     files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
     await saveAsync(hd, files)
     return await commitAsync(hd, {
         message: cfg.version,
-        createRelease: "v" + cfg.version,
+        createRelease: releaseTag,
         binaryJs: true
     })
 }
@@ -753,7 +771,7 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     }
 
     // create tree
-    let treeId = await pxt.github.createObjectAsync(parsed.fullName, "tree", treeUpdate)
+    let treeId = await pxt.github.createObjectAsync(parsed.slug, "tree", treeUpdate)
     let commit: pxt.github.CreateCommitReq = {
         message: options.message || lf("Update {0}", treeUpdate.tree.map(e => e.path).filter(f => !/\.github\/makecode\//.test(f)).join(", ")),
         parents: [gitjson.commit.sha],
@@ -762,22 +780,23 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     // we are in a merge
     if (gitjson.mergeSha)
         commit.parents.push(gitjson.mergeSha)
-    let commitId = await pxt.github.createObjectAsync(parsed.fullName, "commit", commit)
-    let ok = await pxt.github.fastForwardAsync(parsed.fullName, parsed.tag, commitId)
+    let commitId = await pxt.github.createObjectAsync(parsed.slug, "commit", commit)
+    let ok = await pxt.github.fastForwardAsync(parsed.slug, parsed.tag, commitId)
     let newCommit = commitId
     if (!ok)
-        newCommit = await pxt.github.mergeAsync(parsed.fullName, parsed.tag, commitId)
+        newCommit = await pxt.github.mergeAsync(parsed.slug, parsed.tag, commitId)
 
     if (newCommit == null) {
         return commitId
     } else {
         data.invalidate("gh-commits:*"); // invalid any cached commits
         // if we created a block preview, add as comment
-        if (blocksDiffSha)
+        if (blocksDiffSha) {
             await pxt.github.postCommitComment(
-                parsed.fullName,
+                parsed.slug,
                 commitId,
-                `![${lf("Difference between blocks")}](https://raw.githubusercontent.com/${parsed.fullName}/${commitId}/${BLOCKSDIFF_PREVIEW_PATH})`);
+                `![${lf("Difference between blocks")}](https://raw.githubusercontent.com/${pxt.github.join(parsed.slug, commitId, parsed.fileName, BLOCKSDIFF_PREVIEW_PATH)}`);
+        }
 
         await githubUpdateToAsync(hd, {
             repo: gitjson.repo,
@@ -786,11 +805,11 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
             saveTag: options.createRelease
         })
         if (options.createRelease) {
-            await pxt.github.createReleaseAsync(parsed.fullName, options.createRelease, newCommit)
+            await pxt.github.createReleaseAsync(parsed.slug, options.createRelease, newCommit)
             // ensure pages are on
-            await pxt.github.enablePagesAsync(parsed.fullName);
+            await pxt.github.enablePagesAsync(parsed.slug);
             // clear the cloud cache
-            await pxt.github.listRefsAsync(parsed.fullName, "tags", true, true);
+            await pxt.github.listRefsAsync(parsed.slug, "tags", true, true);
         }
         return ""
     }
@@ -808,18 +827,19 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
             data.content = content.substr(m[0].length);
         }
         const sha = gitsha(data.content, data.encoding)
-        const ex = pxt.github.lookupFile(gitjson.commit, path)
+        const ex = pxt.github.lookupFile(parsed, gitjson.commit, path)
         let res: string;
         if (!ex || ex.sha != sha) {
             // look for unfinished merges
             if (data.encoding == "utf-8" &&
                 pxt.diff.hasMergeConflictMarker(data.content))
                 throw mergeConflictMarkerError();
-            res = await pxt.github.createObjectAsync(parsed.fullName, "blob", data)
+            res = await pxt.github.createObjectAsync(parsed.slug, "blob", data)
             if (data.encoding == "utf-8")
                 U.assert(res == sha, `sha not matching ${res} != ${sha}`)
+            const gitPath = pxt.github.join(parsed.fileName, path)
             treeUpdate.tree.push({
-                "path": path,
+                "path": gitPath,
                 "mode": "100644",
                 "type": "blob",
                 "sha": res,
@@ -844,8 +864,8 @@ export async function restoreCommitAsync(hd: Header, commit: pxt.github.CommitIn
         tree: commit.tree.sha
     }
 
-    const commitId = await pxt.github.createObjectAsync(parsed.fullName, "commit", restored)
-    await pxt.github.fastForwardAsync(parsed.fullName, parsed.tag, commitId)
+    const commitId = await pxt.github.createObjectAsync(parsed.slug, "commit", restored)
+    await pxt.github.fastForwardAsync(parsed.slug, parsed.tag, commitId)
     await githubUpdateToAsync(hd, {
         repo: gitjson.repo,
         sha: commitId,
@@ -882,7 +902,7 @@ function mergeConflictMarkerError() {
 async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
     const { repo, sha, files, justJSON } = options
     const parsed = pxt.github.parseRepoId(repo)
-    const commit = await pxt.github.getCommitAsync(parsed.fullName, sha)
+    const commit = await pxt.github.getCommitAsync(parsed.slug, sha)
     let gitjson: GitJson = JSON.parse(files[GIT_JSON] || "{}")
 
     if (!gitjson.commit) {
@@ -898,8 +918,8 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
 
     const downloadAsync = async (path: string) => {
         downloadedFiles[path] = true
-        const treeEnt = pxt.github.lookupFile(commit, path)
-        const oldEnt = pxt.github.lookupFile(gitjson.commit, path)
+        const treeEnt = pxt.github.lookupFile(parsed, commit, path)
+        const oldEnt = pxt.github.lookupFile(parsed, gitjson.commit, path)
         const hasChanges = files[path] != null && (!oldEnt || oldEnt.blobContent != files[path])
         if (!treeEnt) {
             // file in pxt.json but not in git:
@@ -919,8 +939,11 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
         }
         text = await pxt.github.downloadTextAsync(parsed.fullName, sha, path)
         treeEnt.blobContent = text
-        if (gitsha(text) != treeEnt.sha)
+        if (gitsha(text) != treeEnt.sha
+            // Try adding UTF-8 BOM; this can be stripped over web requests
+            && gitsha(`\uFEFF${text}`) !== treeEnt.sha) {
             U.userError(lf("Corrupt SHA1 on download of '{0}'.", path))
+        }
         if (options.tryDiff3 && hasChanges) {
             if (path == pxt.CONFIG_NAME) {
                 text = pxt.diff.mergeDiff3Config(files[path], oldEnt.blobContent, treeEnt.blobContent);
@@ -959,7 +982,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
         if (hd) // not importing
             U.userError(lf("Invalid pxt.json file."));
         pxt.debug(`github: reconstructing pxt.json`)
-        cfg = pxt.diff.reconstructConfig(files, commit, pxt.appTarget.blocksprj || pxt.appTarget.tsprj);
+        cfg = pxt.diff.reconstructConfig(parsed, files, commit, pxt.appTarget.blocksprj || pxt.appTarget.tsprj);
         files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
     }
     // patch the github references back to local workspaces
@@ -984,7 +1007,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
         await downloadAsync(fn)
 
     if (!cfg.name) {
-        cfg.name = (parsed.project || parsed.fullName).replace(/[^\w\-]/g, "");
+        cfg.name = (parsed.fileName || parsed.project || parsed.fullName).replace(/[^\w\-]/g, "");
         if (!justJSON)
             files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
     }
@@ -1034,8 +1057,8 @@ export async function exportToGithubAsync(hd: Header, repoid: string) {
     const parsed = pxt.github.parseRepoId(repoid);
     const pfiles = pxt.template.packageFiles(hd.name);
     await pxt.github.putFileAsync(parsed.fullName, ".gitignore", pfiles[".gitignore"]);
-    const sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
-    const commit = await pxt.github.getCommitAsync(parsed.fullName, sha)
+    const sha = await pxt.github.getRefAsync(parsed.slug, parsed.tag)
+    const commit = await pxt.github.getCommitAsync(parsed.slug, sha)
     const files = await getTextAsync(hd.id)
     files[GIT_JSON] = JSON.stringify({
         repo: repoid,
@@ -1077,12 +1100,13 @@ export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
     if (!gitjson.commit || !gitjson.commit.tree)
         return
 
+    const parsed = pxt.github.parseRepoId(h.githubId);
     let isCurrent = true
     let needsBlobs = false
     for (let k of Object.keys(files)) {
         if (k == GIT_JSON || k == pxt.SIMSTATE_JSON || k == pxt.SERIAL_EDITOR_FILE)
             continue
-        let treeEnt = pxt.github.lookupFile(gitjson.commit, k)
+        let treeEnt = pxt.github.lookupFile(parsed, gitjson.commit, k)
         if (!treeEnt || treeEnt.type != "blob") {
             isCurrent = false
             continue
@@ -1261,7 +1285,7 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
 
     // try enable github pages
     try {
-        await pxt.github.enablePagesAsync(parsed.fullName);
+        await pxt.github.enablePagesAsync(parsed.slug);
     } catch (e) {
         pxt.reportException(e);
     }
@@ -1277,11 +1301,12 @@ export async function importGithubAsync(id: string): Promise<Header> {
     let isEmpty = false
     let forceTemplateFiles = false;
     try {
-        sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
+        sha = await pxt.github.getRefAsync(parsed.slug, parsed.tag)
         // if the repo does not have a pxt.json file, treat as empty
         // (must be done before)
-        const commit = await pxt.github.getCommitAsync(parsed.fullName, sha)
-        if (!commit.tree.tree.find(f => f.path == pxt.CONFIG_NAME)) {
+        const commit = await pxt.github.getCommitAsync(parsed.slug, sha)
+        const pxtConfigPath = pxt.github.join(parsed.fileName, pxt.CONFIG_NAME);
+        if (!commit.tree.tree.find(f => f.path == pxtConfigPath)) {
             pxt.debug(`github: detected import non-makecode project`)
             if (pxt.shell.isReadOnly())
                 U.userError(lf("This repository looks empty."));
@@ -1289,8 +1314,9 @@ export async function importGithubAsync(id: string): Promise<Header> {
             forceTemplateFiles = false;
             // ask user before modifying project
             const r = await core.confirmAsync({
-                header: lf("Initialize GitHub repository for MakeCode?"),
-                body: lf("We need to add a few files to your GitHub repository to make it work with MakeCode."),
+                header: parsed.fileName ? lf("Add a nested extension to existing GitHub repository?") : lf("Initialize GitHub repository for MakeCode?"),
+                body: parsed.fileName ? lf("We need to add a few files under the /{0} folder to your GitHub repository https://github.com/{1} to create the nested extension.", parsed.fileName, parsed.slug)
+                    : lf("We need to add a few files to your GitHub repository https://github.com/{0} to make it work with MakeCode.", parsed.fullName),
                 agreeLbl: lf("Ok"),
                 hasCloseIcon: true,
                 helpUrl: "/github/import"
@@ -1308,7 +1334,7 @@ export async function importGithubAsync(id: string): Promise<Header> {
             await pxt.github.putFileAsync(parsed.fullName, ".gitignore", "# Initial\n");
             isEmpty = true;
             forceTemplateFiles = true;
-            sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
+            sha = await pxt.github.getRefAsync(parsed.slug, parsed.tag)
         }
         else if (e.statusCode == 404) {
             core.errorNotification(lf("Sorry, that repository looks invalid."));

@@ -69,7 +69,7 @@ namespace pxtblockly {
             }
             else if (newText.trim()) {
                 this.isGreyBlock = true;
-                this.value_ = newText;
+                this.valueText = newText;
             }
 
             return newAsset;
@@ -108,7 +108,7 @@ namespace pxtblockly {
         }
 
         protected getValueText(): string {
-            if (this.isGreyBlock) return pxt.Util.htmlUnescape(this.value_);
+            if (this.isGreyBlock) return pxt.Util.htmlUnescape(this.valueText);
 
             if (this.asset) {
                 return `tilemap\`${this.asset.meta.displayName || this.asset.id}\``;

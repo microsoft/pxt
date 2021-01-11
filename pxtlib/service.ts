@@ -376,6 +376,16 @@ namespace ts.pxtc {
         return parts;
     }
 
+    export function buildSimJsInfo(compileResult: pxtc.CompileResult): pxtc.BuiltSimJsInfo {
+        return {
+            js: compileResult.outfiles[pxtc.BINARY_JS],
+            targetVersion: pxt.appTarget.versions.target,
+            fnArgs: compileResult.usedArguments,
+            parts: pxtc.computeUsedParts(compileResult, "ignorebuiltin"),
+            usedBuiltinParts: pxtc.computeUsedParts(compileResult, "onlybuiltin"),
+        };
+    }
+
     /**
      * Unlocalized category name for a symbol
      */

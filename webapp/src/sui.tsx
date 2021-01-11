@@ -914,6 +914,7 @@ export interface MenuItemProps {
     ariaControls?: string;
     id?: string;
     tabIndex?: number;
+    dataTooltip?: string;
 }
 
 export class MenuItem extends data.Component<MenuItemProps, {}> {
@@ -942,7 +943,8 @@ export class MenuItem extends data.Component<MenuItemProps, {}> {
             position,
             ariaControls,
             id,
-            tabIndex
+            tabIndex,
+            dataTooltip
         } = this.props;
 
         const classes = cx([
@@ -973,6 +975,7 @@ export class MenuItem extends data.Component<MenuItemProps, {}> {
                 aria-controls={ariaControls}
                 aria-selected={active}
                 aria-label={`${content || name}`}
+                data-tooltip={dataTooltip}
             >
                 {icon ? <Icon icon={icon} /> : undefined}
                 {content || name}

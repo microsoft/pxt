@@ -14,6 +14,24 @@ interface AssetCardProps {
 }
 
 class AssetCardImpl extends React.Component<AssetCardProps> {
+    clickHandler = () => {
+        const { type, id } = this.props.asset;
+        this.props.dispatchChangeSelectedAsset(type, id);
+    }
+
+    render() {
+        const { asset, selected } = this.props;
+        return <AssetCardView asset={asset} selected={selected} onClick={this.clickHandler} />
+    }
+}
+
+interface AssetCardCoreProps {
+    asset: pxt.Asset;
+    selected?: boolean;
+    onClick: (selected: pxt.Asset) => void;
+}
+
+export class AssetCardView extends React.Component<AssetCardCoreProps> {
     protected getDisplayIconForAsset(type: pxt.AssetType) {
         switch (type) {
             case pxt.AssetType.Tile:
@@ -29,8 +47,7 @@ class AssetCardImpl extends React.Component<AssetCardProps> {
     }
 
     clickHandler = () => {
-        const { type, id } = this.props.asset;
-        this.props.dispatchChangeSelectedAsset(type, id);
+        this.props.onClick(this.props.asset);
     }
 
     render() {

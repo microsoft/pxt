@@ -232,7 +232,7 @@ function inflateMetadata(section: MarkdownSection): PageMetadata {
     return {
         title: section.attributes["name"] || section.header,
         description: section.attributes["description"],
-        infoUrl: section.attributes["infoUrl"]
+        infoUrl: section.attributes["infourl"]
     }
 }
 

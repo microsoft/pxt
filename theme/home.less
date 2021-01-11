@@ -53,6 +53,27 @@
             text-shadow: -1px 0 rgb(87, 87, 87), 0 1px rgb(87, 87, 87), 1px 0 rgb(87, 87, 87), 0 -1px rgb(87, 87, 87);
         }
     }
+    .getting-started-segment.hero {
+        .action {
+            position: absolute;
+            left: 1rem;
+            bottom: 1rem;
+            margin: 0.5rem;       
+        }
+        .dots {
+            position: absolute;
+            bottom: 2rem;
+            right: 2rem;
+
+            button {
+                margin-right: 1.5rem;
+            }
+
+            button.active {
+                background: @primaryColor;
+            }
+        }
+    }
     .content {
         height: 100%;
     }
@@ -670,6 +691,10 @@
                 }
             }
         }
+    }
+
+    .hero.dots {
+        display: none;
     }
 }
 

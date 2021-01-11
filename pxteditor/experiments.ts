@@ -25,6 +25,7 @@ namespace pxt.editor.experiments {
             pxt.tickEvent("experiments.loaded", r);
             pxt.reloadAppTargetVariant();
         }
+        return pxt.appTarget.appTheme;
     }
 
     export function all(): Experiment[] {

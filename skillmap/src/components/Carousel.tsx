@@ -1,9 +1,11 @@
 import * as React from "react";
+import { ComponentClass } from "react-redux";
 
 import { Item, CarouselItem } from './CarouselItem';
 
+/* tslint:disable:no-import-side-effect */
 import '../styles/carousel.css'
-import { ComponentClass } from "react-redux";
+/* tslint:enable:no-import-side-effect */
 
 interface CarouselProps {
     title?: string;
@@ -41,6 +43,10 @@ export class Carousel extends React.Component<CarouselProps, CarouselState> {
         window.removeEventListener("resize", this.handleScroll);
     }
 
+    scrollTo = (left: number) => {
+        this.carouselRef.scrollTo(left, 0);
+    }
+
     protected handleLeftArrowClick = () => {
         this.carouselRef.scrollBy({ left: - (window.innerWidth / 2) });
     }
@@ -55,6 +61,10 @@ export class Carousel extends React.Component<CarouselProps, CarouselState> {
             showLeft: scrollLeft > this.scrollMargin,
             showRight: ((this.carouselRef.scrollWidth - this.carouselRef.clientWidth) - scrollLeft) > this.scrollMargin
         });
+    }
+
+    protected handleRef = (el: HTMLDivElement | null) => {
+        this.carouselRef = el
     }
 
     render() {
@@ -78,11 +88,11 @@ export class Carousel extends React.Component<CarouselProps, CarouselState> {
                 <span>{title}</span>
                 {titleDecoration && <span className="carousel-subtitle">{titleDecoration}</span>}
             </div>}
-            {showLeft && <div className="carousel-arrow left" onClick={this.handleLeftArrowClick}>
+            {showLeft && <div className="carousel-arrow left" onClick={this.handleLeftArrowClick} role="button">
                 <i className="icon chevron left" />
             </div>}
             <div className="carousel-items">
-                <div className="carousel-items-inner" onScroll={this.handleScroll} ref={(el) => this.carouselRef = el}>
+                <div className="carousel-items-inner" onScroll={this.handleScroll} ref={this.handleRef}>
                     {prependChildren}
                     {items.map((el, i) => {
                         return <CarouselItem key={i} className={itemClassName} item={el} itemTemplate={itemTemplate} selected={selectedItem === el.id} onSelect={onItemSelect} />
@@ -90,7 +100,7 @@ export class Carousel extends React.Component<CarouselProps, CarouselState> {
                     {appendChildren}
                 </div>
             </div>
-            {showRight && <div className="carousel-arrow right" onClick={this.handleRightArrowClick}>
+            {showRight && <div className="carousel-arrow right" onClick={this.handleRightArrowClick} role="button">
                 <i className="icon chevron right" />
             </div>}
         </div>
