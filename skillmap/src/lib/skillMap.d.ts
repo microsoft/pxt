@@ -50,6 +50,7 @@ interface MapActivity {
 type CompletedTags = {[index: string]: number}
 
 interface UserState {
+    version: string;
     isDebug?: boolean;
     id: string;
 

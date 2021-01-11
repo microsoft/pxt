@@ -1,6 +1,6 @@
 import * as actions from '../actions/types'
 import { guidGen } from '../lib/browserUtils';
-import { getCompletedTags, lookupActivityProgress, isMapCompleted } from '../lib/skillMapUtils';
+import { getCompletedTags, lookupActivityProgress, isMapCompleted, applyUserUpgrades } from '../lib/skillMapUtils';
 
 export type ModalType = "restart-warning" | "completion" | "report-abuse" | "reset";
 export type PageSourceStatus = "approved" | "banned" | "unknown";
@@ -33,12 +33,14 @@ interface ModalState {
     currentActivityId?: string;
 }
 
+const userVersion = "0.0.1";
 const initialState: SkillMapState = {
     title: lf("Game Maker Guide"),
     description: lf("Level up your game making skills by completing the tutorials in this guide."),
     pageSourceStatus: "unknown",
     pageSourceUrl: "default",
     user: {
+        version: userVersion,
         isDebug: true,
         id: guidGen(),
         mapProgress: {},
@@ -163,7 +165,7 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
         case actions.SET_USER:
             return {
                 ...state,
-                user: action.user
+                user: applyUserUpgrades(action.user, userVersion, state.pageSourceUrl, state.maps)
             };
         case actions.RESET_USER:
             return {

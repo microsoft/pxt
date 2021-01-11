@@ -68,3 +68,33 @@ export function lookupMapProgress(user: UserState, pageSource: string, mapId: st
 export function lookupActivityProgress(user: UserState, pageSource: string, mapId: string, activityId: string) {
     return lookupMapProgress(user, pageSource, mapId)?.activityState[activityId]
 }
+
+export function applyUserUpgrades(user: UserState, currentVersion: string, pageSource: string, maps: { [key: string]: SkillMap }) {
+    const oldVersion = pxt.semver.parse(user.version || "0.0.0");
+    const newVersion = pxt.semver.parse(currentVersion);
+    let upgradedUser = user;
+
+    if (pxt.semver.cmp(oldVersion, newVersion) === 0) return upgradedUser;
+
+    // version 0.0.0 -> version 0.0.1 upgrade
+    // mapProgress was previously a map of learning path ID to map state
+    // upgrading to key everything on pageSourceUrl
+    if (pxt.semver.cmp(oldVersion, pxt.semver.parse("0.0.0")) === 0) {
+        let oldMaps = user?.mapProgress && Object.keys(user?.mapProgress);
+        // Double-check to see that we have the old format
+        if (oldMaps?.length > 0 && !!user.mapProgress[oldMaps[0]].activityState) {
+            const oldUser = user;
+            const progress: { [key: string]: MapState } = {};
+            const currentMaps = Object.keys(maps);
+            currentMaps.forEach((m) => { if (oldUser.mapProgress[m]) progress[m] = oldUser.mapProgress[m] as any })
+            upgradedUser = {
+                ...oldUser,
+                mapProgress: {
+                    [pageSource]: progress
+                }
+            };
+        }
+    }
+
+    return upgradedUser;
+}
