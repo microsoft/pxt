@@ -70,7 +70,6 @@ namespace pxtblockly {
             else if (newText.trim()) {
                 this.isGreyBlock = true;
                 this.valueText = newText;
-                this.render_();
             }
 
             return newAsset;
