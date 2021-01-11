@@ -2236,7 +2236,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                             return;
                         }
 
-                        const hexFileExtInfo = [options.extinfo, ...(options.otherMultiVariants?.map(el => el.extinfo))];
+                        const hexFileExtInfo = [options.extinfo, ...(options.otherMultiVariants?.map(el => el.extinfo) || [])];
                         for (const extinfo of hexFileExtInfo) {
                             // Place the base HEX image in the hex cache if necessary
                             let sha = extinfo.sha;
