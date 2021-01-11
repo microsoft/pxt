@@ -2127,16 +2127,19 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                             return;
                         }
 
-                        // Place the base HEX image in the hex cache if necessary
-                        let sha = options.extinfo.sha;
-                        let hex: string[] = options.extinfo.hexinfo.hex;
-                        let hexFile = path.join(hexCachePath, sha + ".hex");
+                        const hexFileExtInfo = [options.extinfo, ...(options.otherMultiVariants?.map(el => el.extinfo))];
+                        for (const extinfo of hexFileExtInfo) {
+                            // Place the base HEX image in the hex cache if necessary
+                            let sha = extinfo.sha;
+                            let hex: string[] = extinfo.hexinfo.hex;
+                            let hexFile = path.join(hexCachePath, sha + ".hex");
 
-                        if (fs.existsSync(hexFile)) {
-                            pxt.debug(`native image already in offline cache for project ${dirname}: ${hexFile}`);
-                        } else {
-                            nodeutil.writeFileSync(hexFile, hex.join(os.EOL));
-                            pxt.debug(`created native image in offline cache for project ${dirname}: ${hexFile}`);
+                            if (fs.existsSync(hexFile)) {
+                                pxt.debug(`native image already in offline cache for project ${dirname}: ${hexFile}`);
+                            } else {
+                                nodeutil.writeFileSync(hexFile, hex.join(os.EOL));
+                                pxt.debug(`created native image in offline cache for project ${dirname}: ${hexFile}`);
+                            }
                         }
                     }
 
