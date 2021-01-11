@@ -448,7 +448,6 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
 
     onMarkdownDidRender() {
         this.setShowSeeMore(this.props.parent.state.tutorialOptions.autoexpandStep);
-        window.removeEventListener('resize', this.resizeDebouncer);
     }
 
     componentWillUnmount() {
@@ -460,6 +459,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         this.props.parent.stopPokeUserActivity();
 
         this.removeHintOnClick();
+        window.removeEventListener('resize', this.resizeDebouncer);
     }
 
     private removeHintOnClick() {
