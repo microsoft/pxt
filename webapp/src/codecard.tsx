@@ -119,6 +119,7 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
                 {card.tutorialLength ? <span className={`ui tutorial-progress ${tutorialDone ? "green" : "orange"} left floated label`}><i className={`${tutorialDone ? "trophy" : "circle"} icon`}></i>&nbsp;{lf("{0}/{1}", (card.tutorialStep || 0) + 1, card.tutorialLength)}</span> : undefined}
                 {card.time ? <span key="date" className="date">{pxt.Util.timeSince(card.time)}</span> : null}
                 {card.cloudState === "cloud" &&
+                    // TODO: show richer state i.e. sync-in-progress, conflict occurred, etc.
                     <i className="ui large left floated icon cloud"></i>
                 }
             </div> : undefined}
