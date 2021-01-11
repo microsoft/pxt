@@ -1095,6 +1095,13 @@ function uploadCoreAsync(opts: UploadOptions) {
         "skillmap.html"
     ]
 
+    // expandHtml is manually called on these files before upload
+    // runs <!-- @include --> substitutions, fills in locale, etc
+    let expandFiles = [
+        "index.html",
+        "skillmap.html"
+    ]
+
     nodeutil.mkdirP("built/uploadrepl")
 
     function encodeURLs(urls: string[]) {
@@ -1131,7 +1138,7 @@ function uploadCoreAsync(opts: UploadOptions) {
             data = rdata;
             if (isText) {
                 content = data.toString("utf8")
-                if (fileName == "index.html") {
+                if (expandFiles.indexOf(fileName) >= 0) {
                     if (!opts.localDir) {
                         let m = pxt.appTarget.appTheme as Map<string>
                         for (let k of Object.keys(m)) {
