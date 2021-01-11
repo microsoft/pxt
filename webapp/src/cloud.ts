@@ -222,7 +222,7 @@ async function syncAsyncInternal(): Promise<any> {
                         local.isDeleted = true;
                         localHeaderChanges[local.id] = local
                         return workspace.forceSaveAsync(local, {}, true)
-                            .then(() => { data.clearCache(); }) // TODO @darzu: is this cache clear necessary?
+                            .then(() => { data.clearCache(); })
                     }
                     // Nothing to do. We're up to date locally.
                     return Promise.resolve();

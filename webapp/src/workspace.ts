@@ -18,12 +18,6 @@ import * as cloud from "./cloud"
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
 
-/*
-TODO @darzu: min-bar
-[ ] don't push non-user changes to the cloud
-[ ] ensure the editor reloads when a cloud change is pulled down
-*/
-
 // Avoid importing entire crypto-js
 /* tslint:disable:no-submodule-imports */
 const sha1 = require("crypto-js/sha1");
