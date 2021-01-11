@@ -229,10 +229,12 @@ namespace pxtblockly {
                 const project = pxt.react.getTilemapProject();
 
                 const id = this.getBlockData();
-                if (id) {
-                    this.asset = project.lookupAsset(this.getAssetType(), id);
+                const existing = project.lookupAsset(this.getAssetType(), id);
+                if (existing) {
+                    this.asset = existing;
                 }
                 else {
+                    this.setBlockData(null);
                     if (this.asset) {
                         if (this.sourceBlock_ && this.asset.meta.blockIDs) {
                             this.asset.meta.blockIDs = this.asset.meta.blockIDs.filter(id => id !== this.sourceBlock_.id);
