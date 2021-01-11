@@ -2,6 +2,7 @@ declare namespace pxt {
 
     type CodeCardType = "file" | "example" | "codeExample" | "tutorial" | "side" | "template" | "package" | "hw" | "forumUrl" | "forumExample" | "sharedExample" | "link";
     type CodeCardEditorType = "blocks" | "js" | "py";
+    type CodeCardCloudState = "local" | "cloud";
 
     interface Map<T> {
         [index: string]: T;
@@ -93,19 +94,19 @@ declare namespace pxt {
 
     interface PackageExtension {
         // Namespace to add the button under, defaults to package name
-        namespace?: string; 
+        namespace?: string;
         // Group to place button in
         group?: string;
         // Label for the flyout button, defaults to `Editor`
-        label?: string; 
+        label?: string;
         // for new category, category color
-        color?: string; 
+        color?: string;
         // for new category, is category advanced
         advanced?: boolean;
         // trusted custom editor url, must be register in targetconfig.json under approvedEditorExtensionUrls
         url?: string;
         // local debugging URL used when served through pxt serve and debugExtensions=1 mode
-        localUrl?: string; 
+        localUrl?: string;
     }
 
     interface PlatformIOConfig {
@@ -168,6 +169,7 @@ declare namespace pxt {
         cardType?: CodeCardType;
         editor?: CodeCardEditorType;
         otherActions?: CodeCardAction[];
+        cloudState?: CodeCardCloudState;
         directOpen?: boolean; // skip the details view, directly do the card action
 
         header?: string;

@@ -3,6 +3,7 @@ import * as data from "./data";
 import * as core from "./core";
 import * as db from "./db";
 import * as compiler from "./compiler";
+import * as auth from "./auth";
 
 import Util = pxt.Util;
 
@@ -388,7 +389,7 @@ export class EditorPackage {
         if (!f) {
             f = this.setFile(n, v);
             p = p.then(() => this.updateConfigAsync(cfg => cfg.files.indexOf(n) < 0 ? cfg.files.push(n) : 0))
-            p.then(() => this.savePkgAsync())
+            p.then(() => this.cloudSavePkgAsync())
         }
         return p.then(() => f.setContentAsync(v));
     }
@@ -420,25 +421,25 @@ export class EditorPackage {
         data.invalidate("pkg-status:" + this.header.id)
     }
 
-    savePkgAsync() {
-        if (this.header.blobCurrent) return Promise.resolve();
+    cloudSavePkgAsync() {
+        if (this.header.cloudCurrent || !auth.loggedInSync()) return Promise.resolve();
         this.savingNow++;
         this.updateStatus();
         return workspace.saveToCloudAsync(this.header)
             .then(() => {
                 this.savingNow--;
                 this.updateStatus();
-                if (!this.header.blobCurrent)
-                    this.scheduleSave();
+                if (!this.header.cloudCurrent)
+                    this.scheduleCloudSavePkg();
             })
     }
 
-    private scheduleSave() {
+    private scheduleCloudSavePkg() {
         if (this.saveScheduled) return
         this.saveScheduled = true;
         setTimeout(() => {
             this.saveScheduled = false;
-            this.savePkgAsync().done();
+            this.cloudSavePkgAsync().done();
         }, 5000)
     }
 
@@ -460,7 +461,7 @@ export class EditorPackage {
             }
         }
         return workspace.saveAsync(this.header, this.getAllFiles())
-            .then(() => immediate ? this.savePkgAsync() : this.scheduleSave())
+            .then(() => immediate ? this.cloudSavePkgAsync() : this.scheduleCloudSavePkg())
     }
 
     sortedFiles(): File[] {

@@ -95,7 +95,7 @@ function setEditor(editor: ProjectView) {
 }
 
 export class ProjectView
-    extends data.Component<IAppProps, IAppState>
+    extends auth.Component<IAppProps, IAppState>
     implements IProjectView {
     editor: srceditor.Editor;
     editorFile: pkg.File;
@@ -173,7 +173,6 @@ export class ProjectView
         this.openDeviceSerial = this.openDeviceSerial.bind(this);
         this.toggleGreenScreen = this.toggleGreenScreen.bind(this);
         this.toggleSimulatorFullscreen = this.toggleSimulatorFullscreen.bind(this);
-        this.cloudSignInComplete = this.cloudSignInComplete.bind(this);
         this.toggleSimulatorCollapse = this.toggleSimulatorCollapse.bind(this);
         this.showKeymap = this.showKeymap.bind(this);
         this.toggleKeymap = this.toggleKeymap.bind(this);
@@ -1131,7 +1130,7 @@ export class ProjectView
         return p.setContentAsync(name, content)
             .then(() => {
                 if (open) this.setFile(p.lookupFile("this/" + name));
-                return p.savePkgAsync();
+                return p.cloudSavePkgAsync();
             })
             .then(() => this.reloadHeaderAsync())
     }
@@ -1305,11 +1304,27 @@ export class ProjectView
         if (checkAsync)
             return checkAsync.then(() => this.openHome());
 
+        let doSync = false
+        // check our multi-tab session
+        if (workspace.isHeadersSessionOutdated()) {
+             // reload header before loading
+            pxt.log(`multi-tab sync before load`)
+            doSync = true;
+        }
+        // check our cloud sync
+        const RESYNC_TIME_SEC = 5 * 60 // 5 minutes
+        const headerCloudSyncOutdated = auth.loggedInSync()
+            && Util.nowSeconds() - workspace.getHeaderLastCloudSync(h) > RESYNC_TIME_SEC
+        if (headerCloudSyncOutdated) {
+            pxt.log(`cloud sync before load`)
+            doSync = true;
+        }
+
         let p = Promise.resolve();
-        if (workspace.isHeadersSessionOutdated()) { // reload header before loading
-            pxt.log(`sync before load`)
+        if (doSync) {
             p = p.then(() => workspace.syncAsync().then(() => { }))
         }
+
         return p.then(() => {
             workspace.acquireHeaderSession(h);
             if (!h) return Promise.resolve();
@@ -1341,7 +1356,10 @@ export class ProjectView
             if (editorState.searchBar === undefined) editorState.searchBar = oldEditorState.searchBar;
         }
 
-        if (!h.cloudSync && this.cloudSync()) h.cloudSync = true;
+        // If user is signed in, sync this project to the cloud.
+        if (this.hasCloudSync()) {
+            h.cloudUserId = this.getUser()?.id;
+        }
 
         return compiler.newProjectAsync()
             .then(() => h.backupRef ? workspace.restoreFromBackupAsync(h) : Promise.resolve())
@@ -1772,7 +1790,7 @@ export class ProjectView
                                 cfg.dependencies = {};
                             cfg.dependencies[n] = `pkg:${fn}`;
                         }))
-                        .then(() => mpkg.savePkgAsync())
+                        .then(() => mpkg.cloudSavePkgAsync())
                         .done(() => this.reloadHeaderAsync());
                 }
             }
@@ -2043,62 +2061,6 @@ export class ProjectView
     }
 
     ///////////////////////////////////////////////////////////
-    ////////////             Cloud                 ////////////
-    ///////////////////////////////////////////////////////////
-
-    cloudSync() {
-        return this.hasSync();
-    }
-
-    cloudSignInDialog() {
-        const providers = cloudsync.providers();
-        if (providers.length == 0)
-            return;
-        if (providers.length == 1)
-            providers[0].loginAsync().then(() => {
-                this.cloudSignInComplete();
-            })
-        else {
-            // TODO: Revisit in new cloud sync
-            //this.signInDialog.show();
-        }
-    }
-
-    cloudSignOut() {
-        core.confirmAsync({
-            header: lf("Sign out"),
-            body: lf("You are signing out. Make sure that you commited all your changes, local projects will be deleted."),
-            agreeClass: "red",
-            agreeIcon: "sign out",
-            agreeLbl: lf("Sign out"),
-        }).then(r => {
-            if (r) {
-                const inEditor = !!this.state.header;
-                // Reset the cloud workspace
-                return workspace.resetCloudAsync()
-                    .then(() => {
-                        if (inEditor) {
-                            this.openHome();
-                        }
-                        if (this.home) {
-                            this.home.forceUpdate();
-                        }
-                    })
-            }
-            return Promise.resolve();
-        });
-    }
-
-    cloudSignInComplete() {
-        pxt.log('cloud sign in complete');
-        initLogin();
-        cloudsync.syncAsync()
-            .then(() => {
-                this.forceUpdate();
-            }).done();
-    }
-
-    ///////////////////////////////////////////////////////////
     ////////////             Home                 /////////////
     ///////////////////////////////////////////////////////////
 
@@ -2289,7 +2251,7 @@ export class ProjectView
             pubCurrent: false,
             target: pxt.appTarget.id,
             targetVersion: pxt.appTarget.versions.target,
-            cloudSync: this.cloudSync(),
+            cloudUserId: this.getUser()?.id,
             temporary: options.temporary,
             tutorial: options.tutorial,
             extensionUnderTest: options.extensionUnderTest
@@ -3126,6 +3088,10 @@ export class ProjectView
             });
             this.forceUpdate();
         }
+    }
+
+    hasCloudSync() {
+        return this.isLoggedIn();
     }
 
     showScriptManager() {
@@ -4617,6 +4583,7 @@ document.addEventListener("DOMContentLoaded", () => {
     else if (pxt.winrt.isWinRT()) workspace.setupWorkspace("uwp");
     else if (pxt.BrowserUtils.isIpcRenderer()) workspace.setupWorkspace("idb");
     else if (pxt.BrowserUtils.isLocalHost() || pxt.BrowserUtils.isPxtElectron()) workspace.setupWorkspace("fs");
+    else workspace.setupWorkspace("browser");
     Promise.resolve()
         .then(async () => {
             const href = window.location.href;

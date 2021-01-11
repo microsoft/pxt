@@ -11,8 +11,9 @@ import * as memoryworkspace from "./memoryworkspace"
 import * as iframeworkspace from "./iframeworkspace"
 import * as cloudsync from "./cloudsync"
 import * as indexedDBWorkspace from "./idbworkspace";
-import * as cloudWorkspace from "./cloudworkspace";
 import * as compiler from "./compiler"
+import * as auth from "./auth"
+import * as cloud from "./cloud"
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
@@ -25,14 +26,9 @@ type Header = pxt.workspace.Header;
 type ScriptText = pxt.workspace.ScriptText;
 type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
 type InstallHeader = pxt.workspace.InstallHeader;
+type File = pxt.workspace.File;
 
-interface HeaderWithScript {
-    header: Header;
-    text: ScriptText;
-    version: pxt.workspace.Version;
-}
-
-let allScripts: HeaderWithScript[] = [];
+let allScripts: File[] = [];
 
 let headerQ = new U.PromiseQueue();
 
@@ -83,27 +79,11 @@ export function setupWorkspace(id: string) {
         case "idb":
             impl = indexedDBWorkspace.provider;
             break;
-        case "cloud":
-            impl = cloudWorkspace.provider;
-            break;
         case "browser":
         default:
             impl = browserworkspace.provider
             break;
     }
-}
-
-export function switchToCloudWorkspace(): string {
-    U.assert(implType !== "cloud", "workspace already cloud");
-    const prevType = implType;
-    impl = cloudWorkspace.provider;
-    implType = "cloud";
-    return prevType;
-}
-
-export function switchToWorkspace(id: string) {
-    impl = null;
-    setupWorkspace(id);
 }
 
 async function switchToMemoryWorkspace(reason: string): Promise<void> {
@@ -139,7 +119,11 @@ async function switchToMemoryWorkspace(reason: string): Promise<void> {
 
 export function getHeaders(withDeleted = false) {
     maybeSyncHeadersAsync().done();
-    let r = allScripts.map(e => e.header).filter(h => (withDeleted || !h.isDeleted) && !h.isBackup)
+    const cloudUserId = auth.user()?.id;
+    let r = allScripts.map(e => e.header).filter(h =>
+        (withDeleted || !h.isDeleted) &&
+        !h.isBackup &&
+        (!h.cloudUserId || h.cloudUserId === cloudUserId))
     r.sort((a, b) => b.recentUse - a.recentUse)
     return r
 }
@@ -214,12 +198,15 @@ function maybeSyncHeadersAsync(): Promise<void> {
         return syncAsync().then(() => { })
     return Promise.resolve();
 }
-function refreshHeadersSession() {
+export function computeSessionId(hdrs: Header[]): string {
     // use # of scripts + time of last mod as key
-    sessionID = allScripts.length + ' ' + allScripts
-        .map(h => h.header.modificationTime)
+    return hdrs.length + ' ' + hdrs
+        .map(h => h.modificationTime)
         .reduce((l, r) => Math.max(l, r), 0)
         .toString()
+}
+function refreshHeadersSession() {
+    sessionID = computeSessionId(allScripts.map(f => f.header))
     if (isHeadersSessionOutdated()) {
         pxt.storage.setLocal('workspacesessionid', sessionID);
         pxt.debug(`workspace: refreshed headers session to ${sessionID}`);
@@ -249,6 +236,20 @@ function checkHeaderSession(h: Header): void {
         core.errorNotification(lf("This project is already opened elsewhere."))
         pxt.Util.assert(false, "trying to access outdated session")
     }
+}
+// helps know when we last synced with the cloud (in seconds since epoch)
+export function getHeaderLastCloudSync(h: Header): number {
+    return h.cloudLastSyncTime || 0/*never*/
+}
+export function getLastCloudSync(): number {
+    if (!auth.loggedInSync())
+        return 0;
+    const userId = auth.user()?.id;
+    const cloudHeaders = getHeaders(true)
+        .filter(h => h.cloudUserId && h.cloudUserId === userId);
+    if (!cloudHeaders.length)
+        return 0
+    return Math.min(...cloudHeaders.map(getHeaderLastCloudSync))
 }
 
 export function initAsync() {
@@ -335,7 +336,7 @@ export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptM
         })
 }
 
-function fixupVersionAsync(e: HeaderWithScript) {
+function fixupVersionAsync(e: File) {
     if (e.version !== undefined)
         return Promise.resolve()
     return impl.getAsync(e.header)
@@ -349,8 +350,83 @@ export function forceSaveAsync(h: Header, text?: ScriptText, isCloud?: boolean):
     return saveAsync(h, text, isCloud);
 }
 
-export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Promise<void> {
-    pxt.debug(`workspace: save ${h.id}`)
+interface Change<K, V> {
+    kind: 'add' | 'del' | 'mod'
+    key: K,
+    oldVal?: V,
+    newVal?: V,
+}
+interface ProjectChanges {
+    header: Change<keyof Header, string>[],
+    files: Change<string, number>[],
+}
+function computeChangeSummary(a: {header: Header, text: ScriptText}, b: {header: Header, text: ScriptText}): ProjectChanges {
+    const aHdr = a.header || {} as Header
+    const bHdr = b.header || {} as Header
+    const aTxt = a.text || {}
+    const bTxt = b.text || {}
+
+    // headers
+    type HeaderK = keyof Header
+    const hdrKeys = U.unique([...Object.keys(aHdr), ...Object.keys(bHdr)], s => s) as HeaderK[]
+    const hasObjChanged = (a: any, b: any) => JSON.stringify(a) !== JSON.stringify(b)
+    const hasHdrChanged = (k: HeaderK) => hasObjChanged(aHdr[k], bHdr[k])
+    const hdrChanges = hdrKeys.filter(hasHdrChanged)
+    const hdrDels = hdrChanges.filter(k => (k in aHdr) && !(k in bHdr))
+        .map(k => ({kind: 'del', key: k, oldVal: aHdr[k]}) as Change<HeaderK, string>)
+    const hdrAdds = hdrChanges.filter(k => !(k in aHdr) && (k in bHdr))
+        .map(k => ({kind: 'add', key: k, newVal: bHdr[k]}) as Change<HeaderK, string>)
+    const hdrMods = hdrChanges.filter(k => (k in aHdr) && (k in bHdr))
+        .map(k => ({kind: 'mod', key: k, oldVal: aHdr[k], newVal: bHdr[k]}) as Change<HeaderK, string>)
+
+    // files
+    const filenames = U.unique([...Object.keys(aTxt), ...Object.keys(bTxt)], s => s)
+    const hasFileChanged = (filename: string) => aTxt[filename] !== bTxt[filename]
+    const fileChanges = filenames.filter(hasFileChanged)
+    const fileDels = fileChanges.filter(k => (k in aTxt) && !(k in bTxt) && !!b.text)
+        .map(k => ({kind: 'del', key: k, oldVal: aTxt[k].length}) as Change<string, number>)
+    const fileAdds = fileChanges.filter(k => !(k in aTxt) && (k in bTxt))
+        .map(k => ({kind: 'add', key: k, newVal: bTxt[k].length}) as Change<string, number>)
+    const fileMods = fileChanges.filter(k => (k in aTxt) && (k in bTxt))
+        .map(k => ({kind: 'mod', key: k, oldVal: aTxt[k].length, newVal: bTxt[k].length}) as Change<string, number>)
+
+    return {
+        header: [...hdrDels, ...hdrAdds, ...hdrMods],
+        files: [...fileDels, ...fileAdds, ...fileMods],
+    }
+}
+// useful for debugging
+function stringifyChangeSummary(diff: ProjectChanges): string {
+    const indent = (s: string) => '\t' + s
+    const changeToStr = (c: Change<any,any>) => `${c.kind} ${c.key}: (${c.oldVal || ''}) => (${c.newVal || ''})`
+    let res = ''
+
+    const hdrDels = diff.header.filter(k => k.kind === 'del')
+    const hdrAdds = diff.header.filter(k => k.kind === 'add')
+    const hdrMods = diff.header.filter(k => k.kind === 'mod')
+
+    res += `HEADER (+${hdrAdds.length}-${hdrDels.length}~${hdrMods.length})`
+    res += '\n'
+
+    const hdrStrs = diff.header.map(changeToStr)
+    res += hdrStrs.map(indent).join("\n")
+    res += '\n'
+
+    const fileDels = diff.files.filter(k => k.kind === 'del')
+    const fileAdds = diff.files.filter(k => k.kind === 'add')
+    const fileMods = diff.files.filter(k => k.kind === 'mod')
+
+    res += `FILES (+${fileAdds.length}-${fileDels.length}~${fileMods.length})`
+    res += '\n'
+    const fileStrs = diff.files.map(changeToStr)
+    res += fileStrs.map(indent).join("\n")
+    res += '\n'
+
+    return res;
+}
+
+export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: boolean): Promise<void> {
+    pxt.debug(`workspace: save '${h.name}' (${h.id})`)
     if (h.isDeleted)
         clearHeaderSession(h);
     checkHeaderSession(h);
@@ -361,26 +437,71 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
         return Promise.resolve()
 
     let e = lookup(h.id)
+    const newSave = !e
+    if (newSave) {
+        e = {
+            header: h,
+            text,
+            version: null
+        }
+        allScripts.push(e)
+    }
     //U.assert(e.header === h)
 
-    if (!isCloud)
+    const hasUserFileChanges = async () => {
+        // we see lots of frequent "saves" that don't come from real changes made by the user. This
+        // causes problems for cloud sync since this can cause us to think the user is making when
+        // just reading a project. The "correct" solution would be to have a full history and .gitignore
+        // file.
+        if (newSave) {
+            // new project
+            return true
+        }
+        const prevProj = e
+        const allChanges = computeChangeSummary(prevProj, {header: h, text})
+        const ignoredFiles = [GIT_JSON, pxt.SIMSTATE_JSON, pxt.SERIAL_EDITOR_FILE]
+        const ignoredHeaderFields: (keyof Header)[] = ['recentUse', 'modificationTime', 'cloudCurrent', '_rev', '_id' as keyof Header, 'cloudVersion']
+        const userChanges: ProjectChanges = {
+            header: allChanges.header.filter(f => ignoredHeaderFields.indexOf(f.key) < 0),
+            files: allChanges.files.filter(f => ignoredFiles.indexOf(f.key) < 0)
+        }
+
+        const hasUserChanges = userChanges.header.length > 0 || userChanges.files.length > 0
+
+        if (hasUserChanges) {
+            pxt.debug("user changes:")
+            pxt.debug(stringifyChangeSummary(userChanges))
+        }
+
+        return hasUserChanges;
+    }
+    const isUserChange = (text || h.isDeleted)
+        && !fromCloudSync
+        && await hasUserFileChanges()
+    if (isUserChange) {
+        h.pubCurrent = false
+        h.blobCurrent_ = false
+        h.cloudCurrent = false
+        h.modificationTime = U.nowSeconds();
+        h.targetVersion = h.targetVersion || "0.0.0";
+
+        // cloud user association
+        if (auth.hasIdentity() && auth.loggedInSync()) {
+            h.cloudUserId = auth.user()?.id
+        }
+    }
+
+    if (!fromCloudSync)
         h.recentUse = U.nowSeconds()
 
+    if (text)
+        e.text = text
     if (text || h.isDeleted) {
-        if (text)
-            e.text = text
-        if (!isCloud) {
-            h.pubCurrent = false
-            h.blobCurrent = false
-            h.modificationTime = U.nowSeconds();
-            h.targetVersion = h.targetVersion || "0.0.0";
-        }
         h.saveId = null
-        // update version on save
     }
 
     // perma-delete
-    if (h.isDeleted && h.blobVersion == "DELETED") {
+    if (h.isDeleted && h.blobVersion_ == "DELETED") {
         let idx = allScripts.indexOf(e)
         U.assert(idx >= 0)
         allScripts.splice(idx, 1)
@@ -411,15 +532,23 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
             await switchToMemoryWorkspace("write failed");
             ver = await impl.setAsync(h, e.version, toWrite);
         }
+        if (!ver && text) {
+            // write failed due to conflict
+            pxt.debug('write rejected due to version conflict!')
+        }
 
         if (text) {
             e.version = ver;
         }
 
-        if ((text && !isCloud) || h.isDeleted) {
+        if (isUserChange) {
             h.pubCurrent = false;
-            h.blobCurrent = false;
+            h.blobCurrent_ = false;
+            h.cloudCurrent = false;
             h.saveId = null;
+        }
+
+        if (text || h.isDeleted) {
             data.invalidate("text:" + h.id);
             data.invalidate("pkg-git-status:" + h.id);
         }
@@ -444,12 +573,6 @@ function computePath(h: Header) {
 
 export function importAsync(h: Header, text: ScriptText, isCloud = false) {
     h.path = computePath(h)
-    const e: HeaderWithScript = {
-        header: h,
-        text: text,
-        version: null
-    }
-    allScripts.push(e)
     return forceSaveAsync(h, text, isCloud)
 }
 
@@ -497,6 +620,9 @@ export function duplicateAsync(h: Header, text: ScriptText, newName?: string): P
     delete h.githubCurrent;
     delete h.githubId;
     delete h.githubTag;
+
+    // drop cloud-related local metadata
+    h = cloud.excludeLocalOnlyMetadataFields(h)
 
     return importAsync(h, dupText)
         .then(() => h)
@@ -721,7 +847,7 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
         tree: []
     }
     const filenames = options.filenamesToCommit || pxt.allPkgFiles(cfg)
-    const ignoredFiles = [GIT_JSON, pxt.SIMSTATE_JSON, pxt.SERIAL_EDITOR_FILE];
+    const ignoredFiles = [GIT_JSON, pxt.SIMSTATE_JSON, pxt.SERIAL_EDITOR_FILE]
     for (const path of filenames.filter(f => ignoredFiles.indexOf(f) < 0)) {
         const fileContent = files[path];
         await addToTree(path, fileContent);
@@ -1373,24 +1499,11 @@ export function installByIdAsync(id: string) {
                     }, files)))
 }
 
-export function saveToCloudAsync(h: Header) {
+export async function saveToCloudAsync(h: Header) {
+    pxt.debug(`cloud save to ${h.name} (${h.id})`)
     checkHeaderSession(h);
-    return cloudsync.saveToCloudAsync(h)
-}
-
-export function resetCloudAsync(): Promise<void> {
-    // always sync local scripts before resetting
-    // remove all cloudsync or github repositories
-    return syncAsync().catch(e => { })
-        .then(() => cloudsync.resetAsync())
-        .then(() => Promise.all(allScripts.map(e => e.header).filter(h => h.cloudSync || h.githubId).map(h => {
-            // Remove cloud sync'ed project
-            h.isDeleted = true;
-            h.blobVersion = "DELETED";
-            return forceSaveAsync(h, null, true);
-        })))
-        .then(() => syncAsync())
-        .then(() => { });
+    const text = await getTextAsync(h.id)
+    return cloud.saveAsync(h, text)
 }
 
 // this promise is set while a sync is in progress

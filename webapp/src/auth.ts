@@ -465,10 +465,16 @@ export async function initialUserPreferences(): Promise<UserPreferences | undefi
     return initialUserPreferences_;
 }
 
-function loggedInSync(): boolean {
+export function loggedInSync(): boolean {
     if (!hasIdentity()) { return false; }
     const state = getState();
     return !!state.profile?.id;
+}
+
+export function user(): UserProfile {
+    if (!hasIdentity()) { return null; }
+    const state = getState();
+    return { ...state.profile };
 }
 
 async function fetchUserAsync(): Promise<UserProfile | undefined> {
@@ -637,5 +643,5 @@ data.mountVirtualApi(MODULE, { getSync: authApiHandler });
 
 
 // ClouddWorkspace must be included after we mount our virtual APIs.
-import * as cloudWorkspace from "./cloudworkspace";
+import * as cloudWorkspace from "./cloud";
 cloudWorkspace.init();

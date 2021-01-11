@@ -7,6 +7,7 @@ import * as sui from "./sui";
 import * as core from "./core";
 import * as cloudsync from "./cloudsync";
 import * as auth from "./auth";
+import * as workspace from "./workspace";
 import * as identity from "./identity";
 import * as codecard from "./codecard"
 import * as carousel from "./carousel";
@@ -21,7 +22,7 @@ interface ProjectsState {
     selectedIndex?: number;
 }
 
-export class Projects extends data.Component<ISettingsProps, ProjectsState> {
+export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
 
     constructor(props: ISettingsProps) {
         super(props)
@@ -36,7 +37,6 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         this.chgCode = this.chgCode.bind(this);
         this.importProject = this.importProject.bind(this);
         this.showScriptManager = this.showScriptManager.bind(this);
-        this.cloudSignIn = this.cloudSignIn.bind(this);
         this.setSelected = this.setSelected.bind(this);
     }
 
@@ -163,11 +163,6 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
     showScriptManager() {
         pxt.tickEvent("projects.showall.header", undefined, { interactiveConsent: true });
         this.props.parent.showScriptManager();
-    }
-
-    cloudSignIn() {
-        pxt.tickEvent("projects.signin", undefined, { interactiveConsent: true });
-        this.props.parent.cloudSignInDialog();
     }
 
     renderCore() {
@@ -602,7 +597,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
     }
 
     fetchLocalData(): pxt.workspace.Header[] {
-        const headers: pxt.workspace.Header[] = this.getData("header:*")
+        const headers = workspace.getHeaders();
         return headers;
     }
 
@@ -760,6 +755,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                             : scr.tutorialCompleted ? scr.tutorialCompleted.steps
                                 : undefined;
                     const ghid = pxt.github.parseRepoId(scr.githubId);
+                    const cloudState = !!scr.cloudUserId ? "cloud" : "local"
                     return <ProjectsCodeCard
                         key={'local' + scr.id + scr.recentUse}
                         // ref={(view) => { if (index === 1) this.latestProject = view }}
@@ -771,6 +767,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                         onCardClick={this.handleCardClick}
                         tutorialStep={tutorialStep}
                         tutorialLength={tutoriallength}
+                        cloudState={cloudState}
                     />;
                 })}
                 {showScriptManagerCard ? <div role="button" className="ui card link buttoncard scriptmanagercard" title={lf("See all projects")}

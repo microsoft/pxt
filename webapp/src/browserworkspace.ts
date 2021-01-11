@@ -1,11 +1,18 @@
 import * as db from "./db";
 
-let headers: db.Table;
-let texts: db.Table;
+let headerDb: db.Table;
+let textDb: db.Table;
 
 type Header = pxt.workspace.Header;
 type ScriptText = pxt.workspace.ScriptText;
 type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
+
+type TextDbEntry = {
+    files?: ScriptText,
+    // These are required by PouchDB/CouchDB
+    id: string,
+    _rev: any // This must be set to the return value of the last PouchDB/CouchDB
+}
 
 function migratePrefixesAsync(): Promise<void> {
     const currentVersion = pxt.semver.parse(pxt.appTarget.versions.target);
@@ -14,15 +21,15 @@ function migratePrefixesAsync(): Promise<void> {
 
     if (!currentDbPrefix) {
         // This version does not use a prefix for storing projects, so just use default tables
-        headers = new db.Table("header");
-        texts = new db.Table("text");
+        headerDb = new db.Table("header");
+        textDb = new db.Table("text");
         return Promise.resolve();
     }
 
-    headers = new db.Table(`${currentDbPrefix}-header`);
-    texts = new db.Table(`${currentDbPrefix}-text`);
+    headerDb = new db.Table(`${currentDbPrefix}-header`);
+    textDb = new db.Table(`${currentDbPrefix}-text`);
 
-    return headers.getAllAsync()
+    return headerDb.getAllAsync()
         .then((allDbHeaders) => {
             if (allDbHeaders.length) {
                 // There are already scripts using the prefix, so a migration has already happened
@@ -60,37 +67,43 @@ function migratePrefixesAsync(): Promise<void> {
 
 function listAsync(): Promise<pxt.workspace.Header[]> {
     return migratePrefixesAsync()
-        .then(() => headers.getAllAsync());
+        .then(() => headerDb.getAllAsync() as Promise<Header[]>)
 }
 
-function getAsync(h: Header): Promise<pxt.workspace.File> {
-    return texts.getAsync(h.id)
-        .then(resp => ({
-            header: h,
-            text: resp.files,
-            version: resp._rev
-        }));
+async function getAsync(h: Header): Promise<pxt.workspace.File> {
+    const hdrProm = headerDb.getAsync(h.id)
+    const textProm = textDb.getAsync(h.id)
+    let [hdrResp, textResp] = await Promise.all([hdrProm, textProm]) as [Header, TextDbEntry]
+    if (!hdrResp || !textResp)
+        return undefined
+    return {
+        header: hdrResp,
+        text: textResp.files,
+        version: textResp._rev
+    }
 }
 
 function setAsync(h: Header, prevVer: any, text?: ScriptText) {
-    return setCoreAsync(headers, texts, h, prevVer, text);
+    return setCoreAsync(headerDb, textDb, h, prevVer, text);
 }
 
 function setCoreAsync(headers: db.Table, texts: db.Table, h: Header, prevVer: any, text?: ScriptText) {
-    let retrev = ""
-    return (!text ? Promise.resolve() :
+    let newTextVer = ""
+    const textRes = (!text ? Promise.resolve() :
         texts.setAsync({
             id: h.id,
             files: text,
             _rev: prevVer
         }).then(rev => {
-            retrev = rev
+            newTextVer = rev
         }))
+    const headerRes = textRes
         .then(() => headers.setAsync(h))
         .then(rev => {
             h._rev = rev
-            return retrev
+            return newTextVer
         });
+    return headerRes
 }
 
 export function copyProjectToLegacyEditor(h: Header, majorVersion: number): Promise<Header> {
@@ -110,8 +123,8 @@ export function copyProjectToLegacyEditor(h: Header, majorVersion: number): Prom
 }
 
 function deleteAsync(h: Header, prevVer: any) {
-    return headers.deleteAsync(h)
-        .then(() => texts.deleteAsync({ id: h.id, _rev: h._rev }));
+    return headerDb.deleteAsync(h)
+        .then(() => textDb.deleteAsync({ id: h.id, _rev: h._rev }));
 }
 
 function resetAsync() {
