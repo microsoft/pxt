@@ -831,7 +831,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         if (this.editState.inFloatingLayer(canvasX, canvasY)) {
             color = this.editState.floating.image.get(canvasX - this.editState.layerOffsetX, canvasY - this.editState.layerOffsetY)
         }
-        else {
+        if (!color) {
             color = this.editState.image.get(canvasX, canvasY)
         }
 
