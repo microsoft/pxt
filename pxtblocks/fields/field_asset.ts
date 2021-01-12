@@ -134,6 +134,9 @@ namespace pxtblockly {
         }
 
         render_() {
+            if (this.isGreyBlock && !this.textElement_) {
+                this.createTextElement_();
+            }
             super.render_();
 
             if (!this.isGreyBlock) {
@@ -188,6 +191,7 @@ namespace pxtblockly {
 
             if (this.isGreyBlock) {
                 this.createTextElement_();
+                this.render_();
                 this.updateEditable();
                 return;
             }
