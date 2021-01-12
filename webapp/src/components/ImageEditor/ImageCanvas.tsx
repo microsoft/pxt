@@ -824,8 +824,19 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     protected selectCanvasColor(coord: ClientCoordinates, isRightClick?: boolean) {
         const outer = this.refs["canvas-bounds"] as HTMLDivElement;
         const bounds = outer.getBoundingClientRect();
-        const { canvasX, canvasY } = this.clientToCanvas(coord.clientX, coord.clientY, bounds);
-        const color = this.editState.image.get(Math.floor(canvasX), Math.floor(canvasY));
+        let { canvasX, canvasY } = this.clientToCanvas(coord.clientX, coord.clientY, bounds);
+
+        canvasX = Math.floor(canvasX);
+        canvasY = Math.floor(canvasY);
+
+        let color: number;
+        if (this.editState.inFloatingLayer(canvasX, canvasY)) {
+            color = this.editState.floating.image.get(canvasX - this.editState.layerOffsetX, canvasY - this.editState.layerOffsetY)
+        }
+        if (!color) {
+            color = this.editState.image.get(canvasX, canvasY)
+        }
+
         if (isRightClick) {
             this.props.dispatchChangeBackgroundColor(color);
         } else {
