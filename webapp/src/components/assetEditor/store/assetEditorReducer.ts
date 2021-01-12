@@ -62,32 +62,15 @@ export function getAssets(gallery = false, firstType = pxt.AssetType.Image): pxt
     const project = pxt.react.getTilemapProject();
     const imgConv = new pxt.ImageConverter();
 
-    const imageToGalleryItem = (image: pxt.ProjectImage | pxt.Tile) => {
-        let asset = image as pxt.Asset;
-        asset.previewURI = imgConv.convert("data:image/x-mkcd-f," + image.jresData);
-        return asset;
-    };
-
-    const tilemapToGalleryItem = (asset: pxt.ProjectTilemap) => {
-        let tilemap = asset.data.tilemap;
-        asset.previewURI = pxtblockly.tilemapToImageURI(asset.data, Math.max(tilemap.width, tilemap.height), false);
-        return asset;
-    };
-
-    const animationToGalleryItem = (asset: pxt.Animation) => {
-        if (asset.frames?.length <= 0) return null;
-        asset.framePreviewURIs = asset.frames.map(bitmap => imgConv.convert("data:image/x-mkcd-f," + pxt.sprite.base64EncodeBitmap(bitmap)));
-        asset.previewURI = asset.framePreviewURIs[0];
-        return asset;
-    };
+    const toGalleryItem = <U extends pxt.Asset>(asset: U) => assetToGalleryItem(asset, imgConv) as U;
 
     const getAssetType = gallery ? project.getGalleryAssets.bind(project) : project.getAssets.bind(project);
 
-    const images = getAssetType(pxt.AssetType.Image).map(imageToGalleryItem).sort(compareInternalId);
-    const tiles = getAssetType(pxt.AssetType.Tile).map(imageToGalleryItem)
+    const images = getAssetType(pxt.AssetType.Image).map(toGalleryItem).sort(compareInternalId);
+    const tiles = getAssetType(pxt.AssetType.Tile).map(toGalleryItem)
         .filter((t: pxt.Tile) => !t.id.match(/^myTiles.transparency(8|16|32)$/gi)).sort(compareInternalId);
-    const tilemaps = getAssetType(pxt.AssetType.Tilemap).map(tilemapToGalleryItem).sort(compareInternalId);
-    const animations = getAssetType(pxt.AssetType.Animation).map(animationToGalleryItem).sort(compareInternalId);
+    const tilemaps = getAssetType(pxt.AssetType.Tilemap).map(toGalleryItem).sort(compareInternalId);
+    const animations = getAssetType(pxt.AssetType.Animation).map(toGalleryItem).sort(compareInternalId);
 
     let assets: pxt.Asset[] = [];
     switch (firstType) {
@@ -107,6 +90,25 @@ export function getAssets(gallery = false, firstType = pxt.AssetType.Image): pxt
     pxt.tickEvent(gallery ? "assets.gallery" : "assets.update", { count: assets.length });
 
     return assets;
+}
+
+export function assetToGalleryItem(asset: pxt.Asset, imgConv = new pxt.ImageConverter()) {
+    switch (asset.type) {
+        case pxt.AssetType.Image:
+        case pxt.AssetType.Tile:
+            asset.previewURI = imgConv.convert("data:image/x-mkcd-f," + asset.jresData);
+            return asset;
+
+        case pxt.AssetType.Tilemap:
+            let tilemap = asset.data.tilemap;
+            asset.previewURI = pxtblockly.tilemapToImageURI(asset.data, Math.max(tilemap.width, tilemap.height), false);
+            return asset;
+        case pxt.AssetType.Animation:
+            if (asset.frames?.length <= 0) return null;
+            asset.framePreviewURIs = asset.frames.map(bitmap => imgConv.convert("data:image/x-mkcd-f," + pxt.sprite.base64EncodeBitmap(bitmap)));
+            asset.previewURI = asset.framePreviewURIs[0];
+            return asset;
+    }
 }
 
 export default topReducer;

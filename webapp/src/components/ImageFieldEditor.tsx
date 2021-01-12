@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { FieldEditorComponent } from '../blocklyFieldView';
 import { AssetCardView } from "./assetEditor/assetCard";
-import { getAssets } from "./assetEditor/store/assetEditorReducer";
+import { assetToGalleryItem, getAssets } from "./assetEditor/store/assetEditorReducer";
 import { ImageEditor } from "./ImageEditor/ImageEditor";
 import { GalleryTile, setTelemetryFunction } from './ImageEditor/store/imageReducer';
 
@@ -181,7 +181,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
         }
 
         if (this.asset) {
-            assets = assets.filter(t => t.type !== this.asset.type || t.id !== this.asset.id)
+            assets = assets.map(t => (t.type !== this.asset.type || t.id !== this.asset.id) ? t : assetToGalleryItem(this.getValue()))
         }
 
         if (isGallery) {
@@ -283,7 +283,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
     }
 
     protected onAssetSelected = (asset: pxt.Asset) => {
-        if (this.ref) {
+        if (this.ref && asset.id !== this.asset?.id) {
             if (this.state.editingTile) {
                 this.ref.openInTileEditor(pxt.sprite.Bitmap.fromData((asset as pxt.Tile).bitmap))
             }
