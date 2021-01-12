@@ -95,7 +95,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
 
     let completedHeaderId: string | undefined;
     if (state.editorView?.currentHeaderId) {
-        if (isActivityCompleted(state.user, state.editorView.currentMapId, state.editorView.currentActivityId)) {
+        if (isActivityCompleted(state.user, state.pageSourceUrl, state.editorView.currentMapId, state.editorView.currentActivityId)) {
             completedHeaderId = state.editorView.currentHeaderId;
         }
     }

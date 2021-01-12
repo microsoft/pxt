@@ -50,11 +50,12 @@ interface MapActivity {
 type CompletedTags = {[index: string]: number}
 
 interface UserState {
+    version: string;
     isDebug?: boolean;
     id: string;
-    mapProgress: {[index: string]: MapState};
 
     // Indexed by the skillmap page url
+    mapProgress: {[index: string]: {[mapId: string]: MapState}};
     completedTags: {[index: string]: CompletedTags};
 }
 
