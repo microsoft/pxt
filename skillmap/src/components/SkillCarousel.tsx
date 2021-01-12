@@ -85,9 +85,9 @@ class SkillCarouselImpl extends React.Component<SkillCarouselProps> {
         this.carouselRef = el;
     }
 
-    protected getEndCard(): JSX.Element {
+    protected getEndCard(completed: boolean): JSX.Element {
         return <div className={`end-card ${this.props.completionState === "completed" ? "spin" : ""}`} key="end">
-            <div className="end-card-icon" onClick={this.handleEndCardClick} role="button">
+            <div className="end-card-icon" onClick={completed ? this.handleEndCardClick : undefined} role="button">
                 <i className="icon trophy" onTransitionEnd={this.handleEndCardTransition} />
             </div>
         </div>
@@ -141,7 +141,8 @@ class SkillCarouselImpl extends React.Component<SkillCarouselProps> {
 
     render() {
         const { map, user, selectedItem, pageSourceUrl } = this.props;
-        const endCard = isMapCompleted(user, pageSourceUrl, map) ? [this.getEndCard()] : [];
+        const completed = isMapCompleted(user, pageSourceUrl, map);
+        const endCard = [this.getEndCard(completed)];
         const requirments = this.renderRequirements();
 
         return <Carousel title={map.displayName} items={this.items} itemTemplate={SkillCard} itemClassName="linked"

@@ -35,14 +35,16 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
             })
         }
 
-        items.push({
-            id: "reset",
-            label: lf("Reset All"),
-            onClick: () => {
-                tickEvent("skillmap.reset.warning");
-                this.props.dispatchShowResetUserModal();
-            }
-        })
+        if (!this.props.activityOpen) {
+            items.push({
+                id: "reset",
+                label: lf("Reset All"),
+                onClick: () => {
+                    tickEvent("skillmap.reset.warning");
+                    this.props.dispatchShowResetUserModal();
+                }
+            })
+        }
 
         return items;
     }
