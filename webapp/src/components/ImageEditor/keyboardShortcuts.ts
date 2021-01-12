@@ -5,7 +5,10 @@ import { dispatchChangeZoom, dispatchUndoImageEdit, dispatchRedoImageEdit, dispa
 import { mainStore } from './store/imageStore';
 let store = mainStore;
 
+let lockRefs: number[] = [];
+
 export function addKeyListener() {
+    lockRefs = [];
     document.addEventListener("keydown", handleKeyDown);
     document.addEventListener("keydown", handleUndoRedo, true);
     document.addEventListener("keydown", overrideBlocklyShortcuts, true);
@@ -15,6 +18,26 @@ export function removeKeyListener() {
     document.removeEventListener("keydown", handleKeyDown);
     document.removeEventListener("keydown", handleUndoRedo, true);
     document.removeEventListener("keydown", overrideBlocklyShortcuts, true);
+}
+
+// Disables shortcuts and returns a ref. Enable by passing the ref to release shortcut lock
+export function obtainShortcutLock(): number {
+    let ref = 0;
+    while (!ref) ref = Math.random() * Number.MAX_SAFE_INTEGER
+    lockRefs.push(ref);
+    return ref;
+}
+
+// Enables shortcuts using the ref obtained from obtainShortcutLock
+export function releaseShortcutLock(ref: number) {
+    const index = lockRefs.indexOf(ref)
+    if (index !== -1) {
+        lockRefs.splice(index, 1);
+    }
+}
+
+export function areShortcutsEnabled() {
+    return !lockRefs.length;
 }
 
 export function setStore(newStore?: Store<ImageEditorStore>) {
@@ -41,6 +64,7 @@ function overrideBlocklyShortcuts(event: KeyboardEvent) {
 }
 
 function handleKeyDown(event: KeyboardEvent) {
+    if (!areShortcutsEnabled()) return;
     // Mostly copied from the photoshop shortcuts
     switch (event.key) {
         case "e":

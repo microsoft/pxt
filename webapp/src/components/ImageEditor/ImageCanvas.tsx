@@ -11,6 +11,7 @@ import { GestureTarget, ClientCoordinates, bindGestureEvents, TilemapPatch, crea
 
 import { Edit, EditState, getEdit, getEditState, ToolCursor, tools } from './toolDefinitions';
 import { createTile } from '../../assets';
+import { areShortcutsEnabled } from './keyboardShortcuts';
 
 const IMAGE_MIME_TYPE = "image/x-mkcd-f4"
 
@@ -255,7 +256,8 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     }
 
     protected onKeyDown = (ev: KeyboardEvent): void => {
-        // TODO: we should bail out of this when gallery is open.
+        if (!areShortcutsEnabled()) return;
+
         this.hasInteracted = true;
 
         if (this.shouldHandleCanvasShortcut() && this.editState?.floating?.image) {
