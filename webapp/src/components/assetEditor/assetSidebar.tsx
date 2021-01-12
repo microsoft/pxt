@@ -96,9 +96,12 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
     protected duplicateAssetHandler = () => {
         pxt.tickEvent("assets.duplicate", { type: this.props.asset.type.toString(), gallery: this.props.isGalleryAsset.toString() });
 
+        const asset = this.props.asset;
+        if (!asset.meta?.displayName) asset.meta = { ...asset.meta, displayName: getDisplayNameForAsset(asset, this.props.isGalleryAsset) }
+
         const project = pxt.react.getTilemapProject();
         project.pushUndo();
-        const { type, id } = project.duplicateAsset(this.props.asset);
+        const { type, id } = project.duplicateAsset(asset);
         this.updateAssets().then(() => {
             this.props.dispatchChangeGalleryView(GalleryView.User);
             this.props.dispatchChangeSelectedAsset(type, id);
@@ -170,7 +173,7 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
             { asset && <div className="asset-editor-sidebar-controls">
                 {canEdit && <sui.MenuItem name={lf("Edit")} className="asset-editor-button" icon="edit" onClick={this.editAssetHandler}/>}
                 <sui.MenuItem name={lf("Duplicate")} className="asset-editor-button" icon="copy" onClick={this.duplicateAssetHandler}/>
-                {canCopy && <sui.MenuItem name={lf("Clipboard")} className="asset-editor-button" icon="paste" onClick={this.copyAssetHandler}/>}
+                {canCopy && <sui.MenuItem name={lf("Copy")} className="asset-editor-button" icon="paste" onClick={this.copyAssetHandler}/>}
                 <sui.MenuItem name={lf("Delete")}
                     className={`asset-editor-button delete-asset ${!canDelete ? "disabled" : ""}`}
                     icon="trash"
@@ -204,7 +207,7 @@ function getDisplayNameForAsset(asset: pxt.Asset, isGalleryAsset?: boolean) {
     } else if (asset?.meta?.displayName) {
         return asset.meta.displayName;
     } else {
-        return isGalleryAsset ? pxt.getShortIDForAsset(asset) : lf("Temporary asset");
+        return isGalleryAsset ? asset.id.split('.').pop() : lf("Temporary asset");
     }
 }
 
