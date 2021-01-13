@@ -1370,7 +1370,7 @@ namespace ts.pxtc.Util {
                 const imgdat = ctx.getImageData(0, 0, canvas.width, canvas.height)
                 const d = imgdat.data
                 const bpp = (d[0] & 1) | ((d[1] & 1) << 1) | ((d[2] & 1) << 2)
-                if (bpp > 5)
+                if (bpp > 5 || bpp == 0)
                     return Promise.reject(new Error(lf("Invalid encoded PNG format")))
 
                 function decode(ptr: number, bpp: number, trg: Uint8Array) {
