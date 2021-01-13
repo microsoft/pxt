@@ -144,18 +144,18 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                 )
             }
         case actions.SET_HEADERID_FOR_ACTIVITY:
-            if (!state.editorView) return state;
+            const isCurrentActivity = state.editorView?.currentActivityId === action.activityId && state.editorView?.currentMapId === action.mapId;
             return {
                 ...state,
-                editorView: {
+                editorView: isCurrentActivity ? {
                     ...state.editorView!,
                     currentHeaderId: action.id
-                },
+                } : state.editorView,
                 user: setHeaderIdForActivity(
                     state.user,
                     state.pageSourceUrl,
-                    state.maps[state.editorView!.currentMapId],
-                    state.editorView!.currentActivityId,
+                    state.maps[action.mapId],
+                    action.activityId,
                     action.id,
                     action.currentStep,
                     action.maxSteps
@@ -239,7 +239,7 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
 }
 
 
-export function setHeaderIdForActivity(user: UserState, pageSource: string, map: SkillMap, activityId: string, headerId?: string, currentStep?: number, maxSteps?: number): UserState {
+export function setHeaderIdForActivity(user: UserState, pageSource: string, map: SkillMap, activityId: string, headerId?: string, currentStep?: number, maxSteps?: number, isCompleted = false): UserState {
     const mapId = map.mapId;
     let existing = lookupActivityProgress(user, pageSource, mapId, activityId);
 
@@ -254,7 +254,6 @@ export function setHeaderIdForActivity(user: UserState, pageSource: string, map:
     }
 
     const shouldTransition = isMapCompleted(user, pageSource, map, activityId) && !existing.isCompleted;
-    const isCompleted = existing.isCompleted || currentStep !== undefined && maxSteps !== undefined && currentStep >= maxSteps;
     const currentMapProgress = user.mapProgress?.[pageSource] || {};
 
     return {
@@ -272,7 +271,7 @@ export function setHeaderIdForActivity(user: UserState, pageSource: string, map:
                             headerId,
                             currentStep,
                             maxSteps,
-                            isCompleted
+                            isCompleted: existing.isCompleted || isCompleted
                         }
                     },
                     completionState: shouldTransition ? "transitioning" : currentMapProgress?.[mapId]?.completionState
