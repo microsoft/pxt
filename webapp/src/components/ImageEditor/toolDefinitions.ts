@@ -651,7 +651,7 @@ export class FillEdit extends Edit {
 
     protected doEditCore(state: EditState) {
         const includeActiveLayerData = state.activeLayer !== state.image;
-        const getData = (col: number, row: number) => (includeActiveLayerData ? state.activeLayer.get(col, row) << 8 : 0) + state.image.get(col, row);
+        const getData = (col: number, row: number) => (includeActiveLayerData ? (state.activeLayer.get(col, row) + 1) << 8 : 0) + state.image.get(col, row);
 
         const colorToReplace = getData(this.col, this.row);
         if (colorToReplace === this.color) {
