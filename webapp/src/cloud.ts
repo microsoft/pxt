@@ -271,14 +271,15 @@ async function syncAsyncInternal(): Promise<any> {
         U.assert(noCloudProjs || workspace.getLastCloudSync() >= syncStart, 'Cloud sync failed!');
 
         // TODO: This is too heavy handed. We can be more fine grain here with some work.
-        if (U.values(localHeaderChanges).length) {
+        const elapsed = U.nowSeconds() - syncStart;
+        const numLocalChanges = U.values(localHeaderChanges).length;
+        pxt.log(`Cloud sync finished after ${elapsed} seconds with ${numLocalChanges} local changes.`);
+        if (numLocalChanges) {
             core.infoNotification(lf("Cloud synchronization finished. Reloading... "));
             setTimeout(() => {
-                pxt.debug("Forcing reload.")
+                pxt.log("Forcing reload.")
                 location.reload();
             }, 3000);
-        } else {
-            pxt.debug('Cloud sync finished with no local updates.')
         }
     }
     catch (e) {
