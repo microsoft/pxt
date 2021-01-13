@@ -234,6 +234,8 @@ function checkHeaderSession(h: Header): void {
     if (isHeaderSessionOutdated(h)) {
         pxt.tickEvent(`workspace.conflict.header`);
         core.errorNotification(lf("This project is already opened elsewhere."))
+        pxt.debug(`saved session ID: ${pxt.storage.getLocal('workspaceheadersessionid:' + h.id)}`)
+        pxt.debug(`our session ID: ${workspaceID}`)
         pxt.Util.assert(false, "trying to access outdated session")
     }
 }
