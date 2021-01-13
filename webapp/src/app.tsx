@@ -4589,9 +4589,10 @@ document.addEventListener("DOMContentLoaded", () => {
             const cloudLang = auth.getState()?.preferences?.language;
             // kick of a user preferences check; if the language is different we'll reload
             auth.initialUserPreferences().then((pref) => {
-                if (pref && pref.language !== pxt.BrowserUtils.getCookieLang()) {
+                const cookieLang = pxt.BrowserUtils.getCookieLang()
+                if (cookieLang && pref && pref.language != cookieLang) {
                     pxt.BrowserUtils.setCookieLang(pref.language);
-                    location.reload();
+                    core.infoNotification(lf("Reload the page to apply your new language preference."));
                 }
             })
             let useLang: string = undefined;
