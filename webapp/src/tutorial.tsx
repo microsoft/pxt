@@ -72,6 +72,8 @@ function getUsedBlocksInternalAsync(code: string[], id: string, language?: strin
                     const blk = allblocks[bi];
                     if (!blk.isShadow()) usedBlocks[blk.type] = 1;
                 }
+                headless.dispose();
+
                 if (pxt.options.debug)
                     pxt.debug(JSON.stringify(usedBlocks, null, 2));
 

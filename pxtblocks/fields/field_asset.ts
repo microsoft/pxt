@@ -170,6 +170,7 @@ namespace pxtblockly {
         }
 
         onDispose() {
+            this.disposeOfTemporaryAsset();
             pxt.react.getTilemapProject().removeChangeListener(this.getAssetType(), this.assetChangeListener);
         }
 
