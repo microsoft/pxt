@@ -6,7 +6,7 @@ export const dispatchClearSkillMaps = () => ({ type: actions.CLEAR_SKILL_MAPS })
 export const dispatchChangeSelectedItem = (id?: string) => ({ type: actions.CHANGE_SELECTED_ITEM, id });
 export const dispatchSetSkillMapCompleted = (mapId: string) => ({ type: actions.SET_SKILL_MAP_COMPLETED, mapId });
 
-export const dispatchSetHeaderIdForActivity = (id: string, currentStep: number, maxSteps: number) => ({ type: actions.SET_HEADERID_FOR_ACTIVITY, id, currentStep, maxSteps });
+export const dispatchSetHeaderIdForActivity = (mapId: string, activityId: string, id: string, currentStep: number, maxSteps: number, isCompleted: boolean) => ({ type: actions.SET_HEADERID_FOR_ACTIVITY, mapId, activityId, id, currentStep, maxSteps, isCompleted });
 export const dispatchOpenActivity = (mapId: string, activityId: string) => ({ type: actions.OPEN_ACTIVITY, mapId, activityId });
 export const dispatchCloseActivity = (finished = false) => ({ type: actions.CLOSE_ACTIVITY, finished });
 export const dispatchSaveAndCloseActivity = () => ({ type: actions.SAVE_AND_CLOSE_ACTIVITY });

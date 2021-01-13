@@ -22,7 +22,7 @@ interface MakeCodeFrameProps {
     completed: boolean;
     activityHeaderId?: string;
     activityType: MapActivityType;
-    dispatchSetHeaderIdForActivity: (headerId: string, currentStep: number, maxSteps: number) => void;
+    dispatchSetHeaderIdForActivity: (mapId: string, activityId: string, id: string, currentStep: number, maxSteps: number, isCompleted: boolean) => void;
     dispatchCloseActivity: (finished?: boolean) => void;
     dispatchSaveAndCloseActivity: () => void;
     dispatchUpdateUserCompletedTags: () => void;
@@ -206,7 +206,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
     }
 
     protected async handleWorkspaceSaveRequestAsync(request: pxt.editor.EditorWorkspaceSaveRequest) {
-        const { dispatchSetHeaderIdForActivity, activityHeaderId, activityType, title } = this.props;
+        const { dispatchSetHeaderIdForActivity, activityHeaderId, activityType, title, mapId, activityId } = this.props;
 
         const project = {
             ...request.project,
@@ -243,16 +243,22 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
 
         if (project.header!.tutorial) {
             dispatchSetHeaderIdForActivity(
+                mapId,
+                activityId,
                 project.header.id,
                 (project.header.tutorial.tutorialStep || 0) + 1,
-                project.header.tutorial.tutorialStepInfo!.length
+                project.header.tutorial.tutorialStepInfo!.length,
+                false
             );
         }
         else if (project.header!.tutorialCompleted) {
             dispatchSetHeaderIdForActivity(
+                mapId,
+                activityId,
                 project.header.id,
                 project.header.tutorialCompleted.steps,
-                project.header.tutorialCompleted.steps
+                project.header.tutorialCompleted.steps,
+                true
             );
         }
     }
