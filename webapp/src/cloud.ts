@@ -39,7 +39,6 @@ export function excludeLocalOnlyMetadataFields(h: Header): Header {
 
 async function listAsync(): Promise<Header[]> {
     return new Promise(async (resolve, reject) => {
-        // Note: Cosmos & our backend does not return e-tags each individual item in a list operation
         const result = await auth.apiAsync<CloudProject[]>("/api/user/project");
         if (result.success) {
             const syncTime = U.nowSeconds()
@@ -50,8 +49,12 @@ async function listAsync(): Promise<Header[]> {
                 header.cloudUserId = userId;
                 header.cloudCurrent = true;
                 header.cloudLastSyncTime = syncTime
+                header.cloudVersion = proj.version
                 return header;
             });
+            // TODO @darzu: dbg:
+            console.log("CLOUD LIST:")
+            console.dir(headers.map(h => ({n: h.name, v: h.cloudVersion}))) // TODO @darzu: dbg
             resolve(headers);
         } else {
             reject(new Error(result.errmsg));

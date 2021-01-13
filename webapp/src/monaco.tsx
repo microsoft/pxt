@@ -93,10 +93,21 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                     const hasMarkers = !!snippetWithMarkers
                     const snippetWithoutMarkers = this.python ? si.pySnippet : si.snippet
                     let snippet = hasMarkers ? snippetWithMarkers : snippetWithoutMarkers;
+                    let debugging = false; // TODO @darzu: dbg
+                    if ((snippet || "").indexOf("onEvent") >= 0) {
+                        console.log(`monaco.tsx: ${si.qName}`)
+                        debugging = true;
+                        console.log(`snippet(1):${snippet}`)
+                    }
                     snippet = stripLocalNamespace(snippet);
+                    if (debugging) { // TODO @darzu: dbg
+                        console.log(`snippet(2):${snippet}`)
+                    }
                     let qName = stripLocalNamespace(this.python ? si.pyQName : si.qName);
                     let name = this.python ? si.pyName : si.name;
                     let isMultiLine = snippet && snippet.indexOf("\n") >= 0
+
+
 
                     if (this.python && snippet && isMultiLine && pxt.blocks.hasHandler(si)) {
                         // For python, we want to replace the entire line because when creating
@@ -123,11 +134,19 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                         // if we're past the first ".", i.e. we're doing member completion, be sure to
                         // remove what precedes the "." in the full snippet.
                         // E.g. if the user is typing "mobs.", we want to complete with "spawn" (name) not "mobs.spawn" (qName)
+
+                        if (debugging) { // TODO @darzu: dbg
+                            console.log(`snippet(3):${snippet}`)
+                        }
                         if (completions.isMemberCompletion && snippet) {
                             const nameStart = snippet.lastIndexOf(name);
                             if (nameStart !== -1) {
                                 snippet = snippet.substr(nameStart)
                             }
+                        }
+
+                        if (debugging) { // TODO @darzu: dbg
+                            console.log(`snippet(4):${snippet}`)
                         }
                     }
                     const label = completions.isMemberCompletion ? name : qName

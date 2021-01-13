@@ -110,6 +110,7 @@ namespace ts.pxtc.service {
         // TODO: a lot of this is duplicate logic with blocklyloader.ts:buildBlockFromDef; we should
         //  unify these approaches
         let { apis, takenNames, blocksInfo, screenSize, checker } = context;
+        console.log(`getSnippet: ${fn.qName}`)
 
         const PY_INDENT: string = (pxt as any).py.INDENT;
         const fileType = python ? "python" : "typescript";
@@ -117,6 +118,7 @@ namespace ts.pxtc.service {
         let preStmt: SnippetNode[] = [];
 
         if (isTaggedTemplate(fn)) {
+            console.log("is tagged template!") // TODO @darzu: dbg
             if (python) {
                 return `${fn.name}(""" """)`
             }
@@ -165,9 +167,20 @@ namespace ts.pxtc.service {
         let functionCount = 0;
 
         const element = fn as pxtc.SymbolInfo;
+        let isDebugging = false
+        if (element.qName.indexOf("onEvent") >= 0 || fnName.indexOf("onEvent") >= 0) {
+            // TODO @darzu: dbg
+            console.log(element.qName)
+            console.dir(element)
+            isDebugging = true;
+            console.log(`snippetPrefix(1):${snippetPrefix}`)
+        }
         if (element.attributes.block) {
             if (element.attributes.defaultInstance) {
                 snippetPrefix = element.attributes.defaultInstance;
+                if (isDebugging) {
+                    console.log(`snippetPrefix(2):${snippetPrefix}`) // TODO @darzu: dbg
+                }
                 if (python && snippetPrefix)
                     snippetPrefix = snakify(snippetPrefix);
             }
@@ -195,7 +208,8 @@ namespace ts.pxtc.service {
                         value.retType == nsInfo.qName)
                         .sort((v1, v2) => v1.name.localeCompare(v2.name));
 
-                    if (exactInstances.length) {
+                    if (exactInstances.length === 1) {
+                        // TODO @darzu: this is an issue. if there is more than one exactInstance, we might pick the wrong one.
                         instanceToUse = exactInstances[0];
                     } else {
                         // second choice: use fixed instances whose retType extends type of nsInfo.name
@@ -212,6 +226,9 @@ namespace ts.pxtc.service {
                         namespaceToUse = instanceToUse.namespace;
                     } else {
                         namespaceToUse = nsInfo.namespace;
+                    }
+                    if (isDebugging) {
+                        console.log(`snippetPrefix(3):${snippetPrefix}`) // TODO @darzu: dbg
                     }
 
                     if (namespaceToUse) {
@@ -230,6 +247,9 @@ namespace ts.pxtc.service {
                             varName = `my${varName}`
                         }
                         snippetPrefix = params.thisParameter.defaultValue || varName;
+                        if (isDebugging) {
+                            console.log(`snippetPrefix(4):${snippetPrefix}`) // TODO @darzu: dbg
+                        }
                         if (python && snippetPrefix)
                             snippetPrefix = snakify(snippetPrefix);
                     }
@@ -252,8 +272,18 @@ namespace ts.pxtc.service {
                 snippet = snippet.concat(["(", ...argsWithCommas, ")"]);
             }
         }
+
         let insertText = snippetPrefix ? [snippetPrefix, ".", ...snippet] : snippet;
+        if (isDebugging) { // TODO @darzu: dbg
+            console.log(`snippetPrefix(5): ${snippetPrefix}`)
+            console.log(`insertText(1): ${insertText}`)
+        }
         insertText = addNamespace ? [firstWord(namespaceToUse), ".", ...insertText] : insertText;
+        if (isDebugging) { // TODO @darzu: dbg
+            console.log(`insertText(2): ${insertText}`)
+            console.log(`preStmt:`)
+            console.dir(preStmt)
+        }
 
         if (attrs && attrs.blockSetVariable) {
             if (python) {
@@ -405,7 +435,10 @@ namespace ts.pxtc.service {
                     if (sigs && sigs.length) {
                         return createDefaultFunction(sigs[0], false);
                     }
-                    return emitEmptyFn(name);
+                    const res = emitEmptyFn(name);
+                    console.log("getDefaultValueOfType: emitEmptyFn") // TODO @darzu: dbg
+                    console.log(snippetStringify(res))
+                    return res;
                 }
             }
             if (type.flags & ts.TypeFlags.NumberLike) {
