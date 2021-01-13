@@ -33,14 +33,13 @@ interface ModalState {
     currentActivityId?: string;
 }
 
-const userVersion = "0.0.1";
 const initialState: SkillMapState = {
     title: lf("Game Maker Guide"),
     description: lf("Level up your game making skills by completing the tutorials in this guide."),
     pageSourceStatus: "unknown",
     pageSourceUrl: "default",
     user: {
-        version: userVersion,
+        version: pxt.skillmap.USER_VERSION,
         isDebug: true,
         id: guidGen(),
         mapProgress: {},
@@ -165,7 +164,7 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
         case actions.SET_USER:
             return {
                 ...state,
-                user: applyUserUpgrades(action.user, userVersion, state.pageSourceUrl, state.maps)
+                user: applyUserUpgrades(action.user, pxt.skillmap.USER_VERSION, state.pageSourceUrl, state.maps)
             };
         case actions.RESET_USER:
             return {
