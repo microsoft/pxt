@@ -2127,16 +2127,19 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                             return;
                         }
 
-                        // Place the base HEX image in the hex cache if necessary
-                        let sha = options.extinfo.sha;
-                        let hex: string[] = options.extinfo.hexinfo.hex;
-                        let hexFile = path.join(hexCachePath, sha + ".hex");
+                        const hexFileExtInfo = [options.extinfo, ...(options.otherMultiVariants?.map(el => el.extinfo) || [])];
+                        for (const extinfo of hexFileExtInfo) {
+                            // Place the base HEX image in the hex cache if necessary
+                            let sha = extinfo.sha;
+                            let hex: string[] = extinfo.hexinfo.hex;
+                            let hexFile = path.join(hexCachePath, sha + ".hex");
 
-                        if (fs.existsSync(hexFile)) {
-                            pxt.debug(`native image already in offline cache for project ${dirname}: ${hexFile}`);
-                        } else {
-                            nodeutil.writeFileSync(hexFile, hex.join(os.EOL));
-                            pxt.debug(`created native image in offline cache for project ${dirname}: ${hexFile}`);
+                            if (fs.existsSync(hexFile)) {
+                                pxt.debug(`native image already in offline cache for project ${dirname}: ${hexFile}`);
+                            } else {
+                                nodeutil.writeFileSync(hexFile, hex.join(os.EOL));
+                                pxt.debug(`created native image in offline cache for project ${dirname}: ${hexFile}`);
+                            }
                         }
                     }
 
@@ -4375,14 +4378,15 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
         });
 }
 
-export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
+export async function staticpkgAsync(parsed: commandParser.ParsedCommand) {
     const route = parsed.flags["route"] as string || "/";
     const ghpages = parsed.flags["githubpages"];
     const builtPackaged = parsed.flags["output"] as string || "built/packaged";
     const minify = !!parsed.flags["minify"];
     const bump = !!parsed.flags["bump"];
     const disableAppCache = !!parsed.flags["no-appcache"];
-    const locs = !!parsed.flags["locs"];
+    const locsSrc = parsed.flags["locs-src"] as string;
+    const locs = !!locsSrc || !!parsed.flags["locs"];
     if (parsed.flags["cloud"]) forceCloudBuild = true;
     if (minify && process.env["PXT_ENV"] === undefined) {
         process.env["PXT_ENV"] = "production";
@@ -4390,12 +4394,42 @@ export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
 
     pxt.log(`packaging editor to ${builtPackaged}`)
 
-    let p = rimrafAsync(builtPackaged, {})
-        .then(() => bump ? bumpAsync() : Promise.resolve())
-        .then(() => locs && crowdin.downloadTargetTranslationsAsync())
-        .then(() => internalBuildTargetAsync({ packaged: true }));
-    if (ghpages) return p.then(() => ghpPushAsync(builtPackaged, minify));
-    else return p.then(() => internalStaticPkgAsync(builtPackaged, route, minify, disableAppCache));
+    await rimrafAsync(builtPackaged, {});
+
+    if (bump) {
+        await bumpAsync();
+    }
+
+    if (locs) {
+        await internalGenDocsAsync(false, true);
+        if (locsSrc) {
+            const languages = pxt.appTarget?.appTheme?.availableLocales
+                    .filter(langId => nodeutil.existsDirSync(path.join(locsSrc, langId)));
+
+            await crowdin.buildAllTranslationsAsync(async (fileName: string) => {
+                const output: pxt.Map<pxt.Map<string>> = {};
+
+                for (const langId of languages) {
+                    const srcFilePath = path.join(locsSrc, langId, fileName);
+                    if (nodeutil.fileExistsSync(srcFilePath)) {
+                        output[langId] = pxt.Util.jsonTryParse(fs.readFileSync(srcFilePath, { encoding: "utf8" }));
+                    }
+                }
+
+                return output;
+            });
+        } else {
+            await crowdin.downloadTargetTranslationsAsync();
+        }
+    }
+
+    await internalBuildTargetAsync({ packaged: true });
+
+    if (ghpages) {
+        await ghpPushAsync(builtPackaged, minify)
+    } else {
+        await internalStaticPkgAsync(builtPackaged, route, minify, disableAppCache);
+    }
 }
 
 function internalStaticPkgAsync(builtPackaged: string, label: string, minify: boolean, noAppCache?: boolean) {
@@ -5939,6 +5973,11 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
             locs: {
                 description: "Download localization files and bundle them",
                 aliases: ["locales", "crowdin"]
+            },
+            "locs-src": {
+                description: "Bundle localization files that have already been downloaded to a given directory",
+                argument: "locs-src",
+                type: "string"
             },
             "no-appcache": {
                 description: "Disables application cache"
