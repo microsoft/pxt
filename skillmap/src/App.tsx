@@ -169,7 +169,8 @@ class AppImpl extends React.Component<AppProps, AppState> {
             user = {
                 id: guidGen(),
                 completedTags: {},
-                mapProgress: {}
+                mapProgress: {},
+                version: pxt.skillmap.USER_VERSION
             };
         }
 
