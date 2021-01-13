@@ -4594,7 +4594,7 @@ document.addEventListener("DOMContentLoaded", () => {
             auth.initialUserPreferences().then((pref) => {
                 if (pref && pref.language != pxt.BrowserUtils.getCookieLang()) {
                     pxt.BrowserUtils.setCookieLang(pref.language);
-                    location.reload();
+                    core.infoNotification(lf("Reload the page to apply your new language preference."));
                 }
             })
             let useLang: string = undefined;
