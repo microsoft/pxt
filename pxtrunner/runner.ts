@@ -1054,6 +1054,16 @@ ${linkString}
                     .then(() => {
                         let blocksInfo = pxtc.getBlocksInfo(apis);
                         pxt.blocks.initializeAndInject(blocksInfo);
+                        const tilemapJres = options.assets?.[pxt.TILEMAP_JRES];
+                        const assetsJres = options.assets?.[pxt.IMAGES_JRES];
+                        if (tilemapJres || assetsJres) {
+                            tilemapProject = new TilemapProject();
+                            tilemapProject.loadPackage(mainPkg);
+                            if (tilemapJres)
+                                tilemapProject.loadTilemapJRes(JSON.parse(tilemapJres), true);
+                            if (assetsJres)
+                                tilemapProject.loadAssetsJRes(JSON.parse(assetsJres))
+                        }
                         let bresp = pxtc.decompiler.decompileToBlocks(
                             blocksInfo,
                             program.getSourceFile("main.ts"),
@@ -1073,16 +1083,6 @@ ${linkString}
                             };
                         pxt.debug(bresp.outfiles["main.blocks"])
 
-                        const tilemapJres = options.assets?.[pxt.TILEMAP_JRES];
-                        const assetsJres = options.assets?.[pxt.IMAGES_JRES];
-                        if (tilemapJres || assetsJres) {
-                            tilemapProject = new TilemapProject();
-                            tilemapProject.loadPackage(mainPkg);
-                            if (tilemapJres)
-                                tilemapProject.loadTilemapJRes(JSON.parse(tilemapJres), true);
-                            if (assetsJres)
-                                tilemapProject.loadAssetsJRes(JSON.parse(assetsJres))
-                        }
                         const blocksSvg = pxt.blocks.render(bresp.outfiles["main.blocks"], options);
 
                         if (tilemapJres || assetsJres) {

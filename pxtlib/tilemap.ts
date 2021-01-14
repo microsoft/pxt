@@ -1071,21 +1071,29 @@ namespace pxt {
         loadAssetsJRes(jres: Map<JRes>) {
             jres = inflateJRes(jres);
 
+            const toInflate = [];
+
             for (const key of Object.keys(jres)) {
                 const entry = jres[key];
 
-                if (entry.mimeType === IMAGE_MIME_TYPE) {
-                    this.state.images.add({
-                        internalID: this.getNewInternalId(),
-                        type: AssetType.Image,
-                        id: entry.id,
-                        meta: {
-                            displayName: entry.displayName
-                        },
-                        jresData: entry.data,
-                        bitmap: pxt.sprite.getBitmapFromJResURL(`data:${IMAGE_MIME_TYPE};base64,${entry.data}`).data()
-                    })
+                if (entry.tilemapTile) {
+                    this.state.tiles.add(this.generateImage(entry, AssetType.Tile));
+                } else if (entry.mimeType === IMAGE_MIME_TYPE) {
+                    this.state.images.add(this.generateImage(entry, AssetType.Image));
+                } else if (entry.mimeType === ANIMATION_MIME_TYPE) {
+                    const [animation, needsInflation] = this.generateAnimation(entry)
+                    if (needsInflation) {
+                        toInflate.push(animation);
+                    } else {
+                        this.state.animations.add(animation);
+                    }
                 }
+            }
+
+            for (const animation of toInflate) {
+                this.state.animations.add(
+                    this.inflateAnimation(animation, this.state.images.getSnapshot())
+                );
             }
         }
 
@@ -1112,6 +1120,77 @@ namespace pxt {
             }
         }
 
+        protected generateImage(entry: JRes, type: AssetType.Image): ProjectImage;
+        protected generateImage(entry: JRes, type: AssetType.Tile): Tile;
+        protected generateImage(entry: JRes, type: AssetType.Image | AssetType.Tile): ProjectImage | Tile {
+            return {
+                internalID: this.getNewInternalId(),
+                type: type,
+                id: entry.id,
+                meta: {
+                    displayName: entry.displayName
+                },
+                jresData: entry.data,
+                bitmap: pxt.sprite.getBitmapFromJResURL(`data:${IMAGE_MIME_TYPE};base64,${entry.data}`).data()
+            }
+        }
+
+        protected generateAnimation(entry: JRes): [Animation, boolean] {
+            if (entry.dataEncoding === "json") {
+                let data: any;
+
+                try {
+                    data = JSON.parse(entry.data);
+                }
+                catch (e) {
+                    console.warn("could not parse json data of '" + entry.id + "'");
+                }
+
+                const anim: Animation = {
+                    internalID: this.getNewInternalId(),
+                    type: AssetType.Animation,
+                    meta: {
+                        displayName: entry.displayName
+                    },
+                    id: entry.id,
+                    frames: [],
+                    frameIds: data.frames,
+                    interval: 100,
+                    flippedHorizontal: data.flippedHorizontal
+                };
+
+                return [anim, true];
+
+            } else {
+                return [{
+                    ...decodeAnimation(entry),
+                    internalID: this.getNewInternalId()
+                }, false];
+            }
+        }
+
+        protected inflateAnimation(animation: Animation, assets: (Tile | ProjectImage | Animation)[]): Animation {
+            animation.frames = animation.frameIds.map(frameId =>
+                (assets.find(entry => entry.id === frameId) as ProjectImage).bitmap
+            );
+
+            if (animation.flippedHorizontal) {
+                animation.frames = animation.frames.map(frame => {
+                    const source = sprite.Bitmap.fromData(frame);
+
+                    const flipped = new sprite.Bitmap(frame.width, frame.height);
+                    for (let x = 0; x < flipped.width; x++) {
+                        for (let y = 0; y < flipped.height; y++) {
+                            flipped.set(x, y, source.get(source.width - x - 1, y))
+                        }
+                    }
+                    return flipped.data();
+                })
+            }
+
+            return animation;
+        }
+
         protected generateNewID(type: AssetType, varPrefix: string, namespaceString?: string) {
             varPrefix = varPrefix.replace(/\d+$/, "");
             const prefix = namespaceString ? namespaceString + "." + varPrefix : varPrefix;
@@ -1136,84 +1215,25 @@ namespace pxt {
                 const entry = allJRes[key];
 
                 if (entry.tilemapTile) {
-                    const tile: Tile = {
-                        internalID: this.getNewInternalId(),
-                        type: AssetType.Tile,
-                        jresData: entry.data,
-                        id: entry.id,
-                        meta: {
-                            displayName: entry.displayName
-                        },
-                        bitmap: pxt.sprite.getBitmapFromJResURL(`data:${IMAGE_MIME_TYPE};base64,${entry.data}`).data(),
-                        isProjectTile: isProjectFile
-                    };
-
+                    const tile = this.generateImage(entry, AssetType.Tile);
+                    tile.isProjectTile = isProjectFile;
                     assets.push(tile);
                 }
                 else if (entry.mimeType === IMAGE_MIME_TYPE) {
-                    assets.push({
-                        internalID: this.getNewInternalId(),
-                        type: AssetType.Image,
-                        jresData: entry.data,
-                        meta: {
-                            displayName: entry.displayName
-                        },
-                        id: entry.id,
-                        bitmap: pxt.sprite.getBitmapFromJResURL(`data:${IMAGE_MIME_TYPE};base64,${entry.data}`).data()
-                    })
+                    assets.push(this.generateImage(entry, AssetType.Image));
                 }
                 else if (entry.mimeType === ANIMATION_MIME_TYPE) {
-                    if (entry.dataEncoding === "json") {
-                        let data: any;
-
-                        try {
-                            data = JSON.parse(entry.data);
-                        }
-                        catch (e) {
-                            console.warn("could not parse json data of '" + entry.id + "'");
-                        }
-
-                        toInflate.push({
-                            internalID: this.getNewInternalId(),
-                            type: AssetType.Animation,
-                            meta: {
-                                displayName: entry.displayName
-                            },
-                            id: entry.id,
-                            frames: [],
-                            frameIds: data.frames,
-                            interval: 100,
-                            flippedHorizontal: data.flippedHorizontal
-                        });
-                    }
-                    else {
-                        assets.push({
-                            ...decodeAnimation(entry),
-                            internalID: this.getNewInternalId()
-                        });
+                    const [animation, needsInflation] = this.generateAnimation(entry)
+                    if (needsInflation) {
+                        toInflate.push(animation);
+                    } else {
+                        this.state.animations.add(animation);
                     }
                 }
             }
 
             for (const animation of toInflate) {
-                animation.frames = animation.frameIds.map(frameId =>
-                    (assets.find(entry => entry.id === frameId) as ProjectImage).bitmap
-                );
-
-                if (animation.flippedHorizontal) {
-                    animation.frames = animation.frames.map(frame => {
-                        const source = sprite.Bitmap.fromData(frame);
-
-                        const flipped = new sprite.Bitmap(frame.width, frame.height);
-                        for (let x = 0; x < flipped.width; x++) {
-                            for (let y = 0; y < flipped.height; y++) {
-                                flipped.set(x, y, source.get(source.width - x - 1, y))
-                            }
-                        }
-                        return flipped.data();
-                    })
-                }
-                assets.push(animation);
+                this.state.animations.add(this.inflateAnimation(animation, assets));
             }
 
             return assets;
