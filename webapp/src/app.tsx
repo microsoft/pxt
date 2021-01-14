@@ -1328,12 +1328,12 @@ export class ProjectView
                             if (timeout.isResolved()) {
                                 // We are too late; the editor has already been loaded.
                                 // Call the onChanges handler to update the editor.
-                                pxt.tickEvent('cloud.syncOnProjectOpen.timedout', { 'elapsedSec': elapsed})
+                                pxt.tickEvent(`identity.syncOnProjectOpen.timedout`, { 'elapsedSec': elapsed})
                                 cloud.onChangesSynced(changes)
                             } else {
                                 // We're not too late, update the local var so that the
                                 // first load has the new info.
-                                pxt.tickEvent('cloud.syncOnProjectOpen.syncSuccess', { 'elapsedSec': elapsed })
+                                pxt.tickEvent(`identity.syncOnProjectOpen.syncSuccess`, { 'elapsedSec': elapsed })
                                 h = workspace.getHeader(h.id)
                             }
                         }
@@ -4609,7 +4609,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (cookieLang && pref && pref.language != cookieLang) {
                     pxt.BrowserUtils.setCookieLang(pref.language);
                     core.infoNotification(lf("Reload the page to apply your new language preference."));
-                    pxt.tickEvent(`cloud.preferences.askingUserToReloadToApplyLang`)
+                    pxt.tickEvent(`identity.preferences.askingUserToReloadToApplyLang`)
                 }
             })
             let useLang: string = undefined;

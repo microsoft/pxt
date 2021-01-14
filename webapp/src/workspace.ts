@@ -624,7 +624,7 @@ export function duplicateAsync(h: Header, text: ScriptText, newName?: string): P
     delete h.githubTag;
 
     if (h.cloudVersion) {
-        pxt.tickEvent(`cloud.duplicatingCloudProject`);
+        pxt.tickEvent(`identity.duplicatingCloudProject`);
     }
 
     // drop cloud-related local metadata
@@ -1514,7 +1514,7 @@ export async function saveToCloudAsync(h: Header) {
     if (res !== cloud.CloudSaveResult.NotLoggedIn) {
         const elapsedSec = U.nowSeconds() - saveStart;
         const success = res === cloud.CloudSaveResult.Success
-        pxt.tickEvent(`cloud.saveToCloud`, {elapsedSec, success: success.toString()})
+        pxt.tickEvent(`identity.saveToCloud`, {elapsedSec, success: success.toString()})
         // TODO: update UX to indicate a save finished
         pxt.log(`Project ${h.name} (${h.id.substr(0,4)}...) ${success ? '' : 'NOT '}saved to cloud.`)
     }
