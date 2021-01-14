@@ -140,7 +140,6 @@ export async function resolveExtensionUrl(pkg: pxt.Package) {
 }
 
 function handleUserCodeRequest(name: string, resp: e.ExtensionResponse) {
-    // ASSERT: permission has been granded
     const mainPackage = pkg.mainEditorPkg() as pkg.EditorPackage;
     resp.resp = mainPackage.getAllFiles();
 }
