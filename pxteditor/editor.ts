@@ -216,11 +216,10 @@ namespace pxt.editor {
         importExampleAsync(options: ExampleImportOptions): Promise<void>;
         showScriptManager(): void;
         importProjectDialog(): void;
-        cloudSync(): boolean;
-        cloudSignInDialog(): void;
-        cloudSignOut(): void;
         removeProject(): void;
         editText(): void;
+
+        hasCloudSync(): boolean;
 
         getPreferredEditor(): string;
         saveAndCompile(): void;
@@ -283,7 +282,7 @@ namespace pxt.editor {
         typecheckNow(): void;
         shouldPreserveUndoStack(): boolean;
 
-        openExtension(extension: string, url: string, consentRequired?: boolean): void;
+        openExtension(extension: string, url: string, consentRequired?: boolean, trusted?: boolean): void;
         handleExtensionRequest(request: ExtensionRequest): void;
 
         fireResize(): void;
@@ -313,7 +312,7 @@ namespace pxt.editor {
 
         editor: IEditor;
 
-        startActivity(activitity: Activity, path: string, title?: string, editor?: string): void;
+        startActivity(activitity: Activity, path: string, title?: string, editor?: string, focus?: boolean, opts?: pxt.editor.ExampleImportOptions): void;
         showLightbox(): void;
         hideLightbox(): void;
         showKeymap(show: boolean): void;

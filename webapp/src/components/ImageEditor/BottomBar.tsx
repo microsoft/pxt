@@ -6,6 +6,7 @@ import { dispatchChangeImageDimensions, dispatchUndoImageEdit, dispatchRedoImage
 import { IconButton } from "./Button";
 import { fireClickOnlyOnEnter } from "./util";
 import { isNameTaken } from "../../assets";
+import { obtainShortcutLock, releaseShortcutLock } from "./keyboardShortcuts";
 
 export interface BottomBarProps {
     dispatchChangeImageDimensions: (dimensions: [number, number]) => void;
@@ -40,6 +41,8 @@ export interface BottomBarState {
 }
 
 export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarState> {
+    protected shortcutLock: number;
+
     constructor(props: BottomBarProps) {
         super(props);
         this.state = {};
@@ -79,6 +82,7 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
                             value={width}
                             tabIndex={0}
                             onChange={this.handleWidthChange}
+                            onFocus={this.disableShortcutsOnFocus}
                             onBlur={this.handleDimensionalBlur}
                             onKeyDown={this.handleDimensionalKeydown}
                         />
@@ -96,6 +100,7 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
                             value={height}
                             tabIndex={0}
                             onChange={this.handleHeightChange}
+                            onFocus={this.disableShortcutsOnFocus}
                             onBlur={this.handleDimensionalBlur}
                             onKeyDown={this.handleDimensionalKeydown}
                         />
@@ -121,6 +126,7 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
                         placeholder={lf("Asset Name")}
                         tabIndex={0}
                         onChange={this.handleAssetNameChange}
+                        onFocus={this.disableShortcutsOnFocus}
                         onBlur={this.handleAssetNameBlur}
                         onKeyDown={this.handleDimensionalKeydown}
                     />
@@ -167,6 +173,10 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
                 </div>
             </div>
         );
+    }
+
+    protected disableShortcutsOnFocus = () => {
+        this.setShortcutsEnabled(false);
     }
 
     protected handleWidthChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -220,6 +230,7 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
             width: null,
             height: null
         });
+        this.setShortcutsEnabled(true);
     }
 
     protected handleDimensionalKeydown = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -251,6 +262,7 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
             dispatchChangeAssetName(newName);
         }
         this.setState({ assetName: null, assetNameMessage: null });
+        this.setShortcutsEnabled(true);
     }
 
     protected zoomIn = () => {
@@ -259,6 +271,16 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
 
     protected zoomOut = () => {
         this.props.dispatchChangeZoom(-1)
+    }
+
+    protected setShortcutsEnabled(enabled: boolean) {
+        if (enabled && this.shortcutLock) {
+            releaseShortcutLock(this.shortcutLock);
+            this.shortcutLock = undefined;
+        }
+        else if (!enabled && !this.shortcutLock) {
+            this.shortcutLock = obtainShortcutLock();
+        }
     }
 }
 
@@ -273,7 +295,7 @@ function mapStateToProps({store: { present: state, past, future }, editor}: Imag
         onionSkinEnabled: editor.onionSkinEnabled,
         cursorLocation: editor.cursorLocation,
         resizeDisabled: editor.resizeDisabled,
-        assetName: editor.assetName,
+        assetName: state.asset?.meta?.displayName,
         hasUndo: !!past.length,
         hasRedo: !!future.length
     };

@@ -1,3 +1,5 @@
+import { PageSourceStatus } from "../store/reducer";
+
 const apiRoot = "https://www.makecode.com/api/md";
 export type MarkdownSource = "docs" | "github";
 
@@ -5,16 +7,16 @@ export interface MarkdownFetchResult {
     identifier: string;
     text: string;
     reportId?: string;
+    status: PageSourceStatus;
 }
 
-export function parseHash() {
-    let hash = { cmd: '', arg: '' };
-    // TODO shakao remove testing url later
-    let match = /^#(\w+)(:([:./\-+=\w]+))?/.exec(window.location.hash || "#github:microsoft/pxt-skillmap-sample/skillmap.md")
+export function parseHash(hash?: string) {
+    let parsed = { cmd: '', arg: '' };
+    let match = /^(\w+)(:([:./\-+=\w]+))?/.exec((hash || window.location.hash).replace(/^#/, ""))
     if (match) {
-        hash = { cmd: match[1], arg: match[3] || '' };
+        parsed = { cmd: match[1], arg: match[3] || '' };
     }
-    return hash;
+    return parsed;
 }
 
 export function parseQuery() {
@@ -39,12 +41,14 @@ export async function getMarkdownAsync(source: MarkdownSource, url: string): Pro
     if (!source || !url) return undefined;
 
     let toFetch: string;
+    let status: PageSourceStatus = "unknown";
 
     switch (source) {
         case "docs":
             url = url.trim().replace(/^[\\/]/i, "").replace(/\.md$/i, "");
             const target = (window as any).pxtTargetBundle?.name || "arcade";
             toFetch = `${apiRoot}/${target}/${url}`;
+            status = "approved";
             break;
         case "github":
             return await fetchSkillMapFromGithub(url);
@@ -57,7 +61,8 @@ export async function getMarkdownAsync(source: MarkdownSource, url: string): Pro
 
     return {
         text: markdown,
-        identifier: toFetch
+        identifier: toFetch,
+        status
     };
 }
 
@@ -69,13 +74,17 @@ export async function getMarkdownAsync(source: MarkdownSource, url: string): Pro
 async function fetchSkillMapFromGithub(path: string): Promise<MarkdownFetchResult | undefined> {
     const ghid = pxt.github.parseRepoId(path)
     const config = await pxt.packagesConfigAsync();
-    const status = pxt.github.repoStatus(ghid, config);
+    const repoStatus = pxt.github.repoStatus(ghid, config);
+    let status: PageSourceStatus = "unknown";
 
     let reportId: string | undefined;
-    switch (status) {
+    switch (repoStatus) {
         case pxt.github.GitRepoStatus.Banned:
-            throw lf("This GitHub repository has been banned.");
+            status = "banned";
+            reportId = "https://github.com/" + ghid.fullName;
+            break;
         case pxt.github.GitRepoStatus.Approved:
+            status = "approved";
             reportId = undefined;
             break;
         default:
@@ -83,7 +92,7 @@ async function fetchSkillMapFromGithub(path: string): Promise<MarkdownFetchResul
             break;
     }
 
-    const tag = ghid.tag || await pxt.github.latestVersionAsync(ghid.fullName, config, true);
+    const tag = ghid.tag || await pxt.github.latestVersionAsync(ghid.slug, config, true);
 
     if (!tag) {
         pxt.log(`skillmap github tag not found at ${ghid.fullName}`);
@@ -91,7 +100,7 @@ async function fetchSkillMapFromGithub(path: string): Promise<MarkdownFetchResul
     }
     ghid.tag = tag;
 
-    const gh = await pxt.github.downloadPackageAsync(`${ghid.fullName}#${ghid.tag}`, config);
+    const gh = await pxt.github.downloadPackageAsync(`${ghid.slug}#${ghid.tag}`, config);
 
     if (gh) {
         let fileName = ghid.fileName ||  "skillmap";
@@ -102,7 +111,8 @@ async function fetchSkillMapFromGithub(path: string): Promise<MarkdownFetchResul
         return {
             text: pxt.tutorial.resolveLocalizedMarkdown(ghid, gh.files, fileName),
             identifier: ghid.fullName + "#" + fileName,
-            reportId
+            reportId,
+            status
         }
     }
 
@@ -183,6 +193,21 @@ export function resolvePath(path: string) {
     return `${isLocal() ? "" : "/static/skillmap"}/${path.replace(/^\//, "")}`
 }
 
-export function tickEvent(id: string, data?: { [key: string] : string | number }) {
-    (window as any).pxtTickEvent(id, data);
+let pageTitle: string;
+let pageSourceUrl: string;
+
+export function setPageTitle(title: string) {
+    pageTitle = title;
+}
+
+export function setPageSourceUrl(url: string) {
+    pageSourceUrl = url;
+}
+
+export function tickEvent(id: string, data?: { [key: string]: string | number }) {
+    data = data || {};
+    data["page"] = pageSourceUrl;
+    data["pageTitle"] = pageTitle;
+
+    (window as any).pxtTickEvent?.(id, data);
 }

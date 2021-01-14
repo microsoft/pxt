@@ -538,7 +538,17 @@ namespace pxt.sprite {
             return proj.createNewTile(bitmap.data());
         }
 
-        return proj.resolveTile(literal);
+        switch (literal) {
+            case "myTiles.tile0":
+            case "myTiles.transparency16":
+                return proj.getTransparency(16);
+            case "myTiles.transparency8":
+                return proj.getTransparency(8);
+            case "myTiles.transparency32":
+                return proj.getTransparency(32);
+            default:
+                return proj.resolveTile(literal);
+        }
     }
 
     export function formatByte(value: number, bytes: number) {

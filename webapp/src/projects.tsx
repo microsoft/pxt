@@ -7,6 +7,7 @@ import * as sui from "./sui";
 import * as core from "./core";
 import * as cloudsync from "./cloudsync";
 import * as auth from "./auth";
+import * as workspace from "./workspace";
 import * as identity from "./identity";
 import * as codecard from "./codecard"
 import * as carousel from "./carousel";
@@ -21,7 +22,7 @@ interface ProjectsState {
     selectedIndex?: number;
 }
 
-export class Projects extends data.Component<ISettingsProps, ProjectsState> {
+export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
 
     constructor(props: ISettingsProps) {
         super(props)
@@ -36,7 +37,6 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         this.chgCode = this.chgCode.bind(this);
         this.importProject = this.importProject.bind(this);
         this.showScriptManager = this.showScriptManager.bind(this);
-        this.cloudSignIn = this.cloudSignIn.bind(this);
         this.setSelected = this.setSelected.bind(this);
     }
 
@@ -129,6 +129,9 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                     window.location.hash = "pub:" + id;
                 }
                 break;
+            case "link":
+                window.open(((/^https:\/\//i.test(url)) || (/^\//i.test(url)) ? url : ''), "_blank");
+                break;
             default:
                 const m = /^\/#tutorial:([a-z0A-Z0-9\-\/]+)$/.exec(url); // Tutorial
                 if (m) this.props.parent.startActivity("tutorial", m[1]);
@@ -149,7 +152,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
     }
 
     chgCode(name: string, path: string, loadBlocks: boolean, preferredEditor?: string, template?: pxt.ProjectTemplate) {
-        return this.props.parent.importExampleAsync({ name, path, loadBlocks, preferredEditor, prj: template });
+        return this.props.parent.startActivity("example", path, name, preferredEditor, null, { path, name, loadBlocks, prj: template });
     }
 
     importProject() {
@@ -160,11 +163,6 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
     showScriptManager() {
         pxt.tickEvent("projects.showall.header", undefined, { interactiveConsent: true });
         this.props.parent.showScriptManager();
-    }
-
-    cloudSignIn() {
-        pxt.tickEvent("projects.signin", undefined, { interactiveConsent: true });
-        this.props.parent.cloudSignInDialog();
     }
 
     renderCore() {
@@ -186,15 +184,13 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         // lf("Examples")
         // lf("Tutorials")
 
-        const showHeroBanner = !!targetTheme.homeScreenHero;
 
         const tabClasses = sui.cx([
             'ui segment bottom attached tab active tabsegment'
         ]);
 
         return <div ref="homeContainer" className={tabClasses} role="main">
-            {showHeroBanner ?
-                <div className="ui segment getting-started-segment" style={{ backgroundImage: `url(${encodeURI(targetTheme.homeScreenHero)})` }} /> : undefined}
+            <HeroBanner parent={this.props.parent} />
             <div key={`mystuff_gallerysegment`} className="ui segment gallerysegment mystuff-segment" role="region" aria-label={lf("My Projects")}>
                 <div className="ui heading">
                     <div className="column" style={{ zIndex: 1 }}>
@@ -411,6 +407,127 @@ export class ProjectsMenu extends data.Component<ISettingsProps, {}> {
     }
 }
 
+interface HeroBannerState {
+    cardIndex?: number;
+    paused?: boolean;
+}
+
+const HERO_BANNER_DELAY = 10000; // 10 seconds per card
+class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
+    private prevGalleries: pxt.CodeCard[] = [];
+    private carouselInterval: any = undefined;
+
+    constructor(props: ProjectsCarouselProps) {
+        super(props)
+        this.handleRefreshCard = this.handleRefreshCard.bind(this);
+        this.handleCardClick = this.handleCardClick.bind(this);
+        this.state = {
+        }
+    }
+
+    private handleRefreshCard() {
+        pxt.debug(`next hero carousel`)
+        const cardIndex = this.state.cardIndex !== undefined ? this.state.cardIndex : -1;
+        this.setState({ cardIndex: (cardIndex + 1) % this.prevGalleries.length })
+    }
+
+    private handleSetCardIndex(index: number) {
+        this.stopRefresh();
+        this.setState({ cardIndex: index, paused: true });
+    }
+
+    private handleCardClick() {
+        const card = this.state.cardIndex !== undefined
+            && this.prevGalleries[this.state.cardIndex]
+        if (card)
+            pxt.tickEvent("hero.card.click", {
+                gallery: pxt.appTarget.appTheme.homeScreenHeroGallery,
+                card: card.name,
+                cardIndex: this.state.cardIndex
+            })
+    }
+
+    private startRefresh() {
+        const { paused } = this.state;
+        if (!paused && !this.carouselInterval && this.prevGalleries && this.prevGalleries.length) {
+            pxt.debug(`start refreshing hero carousel`)
+            this.carouselInterval = setInterval(this.handleRefreshCard, HERO_BANNER_DELAY);
+            this.handleRefreshCard();
+        }
+    }
+
+    private stopRefresh() {
+        if (this.carouselInterval) {
+            pxt.debug(`stopping hero carousel`)
+            clearInterval(this.carouselInterval)
+            this.carouselInterval = undefined;
+        }
+    }
+
+    componentWillMount() {
+        this.startRefresh();
+    }
+
+    componentWillUnmount() {
+        this.stopRefresh();
+    }
+
+    fetchGallery(): pxt.CodeCard[] {
+        const targetTheme = pxt.appTarget.appTheme;
+        const path = targetTheme.homeScreenHeroGallery;
+        if (!path) {
+            return this.prevGalleries = [];
+        }
+
+        // fetch gallery
+        let res = this.getData(`gallery:${encodeURIComponent(path)}`) as pxt.gallery.Gallery[];
+        if (res) {
+            if (res instanceof Error) {
+                // ignore;
+            } else {
+                this.prevGalleries = pxt.Util.concat(res.map(g => g.cards))
+                    .filter(card => card.url)
+                    .slice(0, 5); // max 5 cards
+                this.startRefresh();
+            }
+        }
+        return this.prevGalleries || [];
+    }
+
+    renderCore() {
+        const targetTheme = pxt.appTarget.appTheme;
+        const { cardIndex } = this.state;
+        const showHeroBanner = !!targetTheme.homeScreenHero;
+        if (!showHeroBanner)
+            return null; // nothing to see here
+        const cards = this.fetchGallery();
+        const card = (cardIndex !== undefined && cards[cardIndex]) || {
+            imageUrl: targetTheme.homeScreenHero
+        }
+        const handleSetCard = (i: number) => () => this.handleSetCardIndex(i)
+        let url = card.url;
+        // open tutorials in browser
+        if (card.cardType === "tutorial" && /^\//.test(url))
+            url = `#tutorial:${url}`
+
+        return <div className="ui segment getting-started-segment hero"
+            style={{ backgroundImage: `url(${encodeURI(card.largeImageUrl || card.imageUrl)})` }}>
+            {!!card.name && !!url && <div className="action">
+                <sui.Link
+                    className="large primary button transition in fly right"
+                    href={url} onClick={this.handleCardClick}
+                    role="button" title={card.title || card.name} ariaLabel={card.title || card.name}>
+                    {card.label || card.name || lf("Start")}
+                </sui.Link>
+            </div>}
+            {cardIndex !== undefined && cards?.length > 1 && <div key="cards" className="dots">
+                {cards.map((_, i) => <button key={"dot" + i} className={`ui button empty circular label  clear ${i === cardIndex && "active"}`} onClick={handleSetCard(i)}>
+                </button>)}
+            </div>}
+        </div>
+    }
+}
+
 interface ProjectsCarouselProps extends ISettingsProps {
     name: string;
     path?: string;
@@ -480,7 +597,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
     }
 
     fetchLocalData(): pxt.workspace.Header[] {
-        const headers: pxt.workspace.Header[] = this.getData("header:*")
+        const headers = workspace.getHeaders();
         return headers;
     }
 
@@ -537,11 +654,13 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
         this.setState({})
     }
 
-    handleCardClick(e: any, scr: any, index?: number) {
+    handleCardClick(e: any, scr: pxt.CodeCard, index?: number) {
         const { name } = this.props;
-        if (this.props.setSelected) {
+        if (this.props.setSelected && !(scr && scr.directOpen)) {
             // Set this item as selected
-            pxt.tickEvent("projects.detail.open");
+            pxt.tickEvent("projects.detail.open", {
+                name: scr?.name, url: scr?.url, cardType: scr?.cardType, editor: scr?.editor
+            }, { interactiveConsent: true });
             this.props.setSelected(name, index);
         } else {
             this.props.onClick(scr);
@@ -566,7 +685,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
             } else {
                 const selectedElement = cards[selectedIndex];
                 return <div>
-                    <carousel.Carousel ref="carousel" bleedPercent={20} selectedIndex={selectedIndex}>
+                    <carousel.Carousel ref="carousel" tickId={path} bleedPercent={20} selectedIndex={selectedIndex}>
                         {cards.map((scr, index) =>
                             <ProjectsCodeCard
                                 className="example"
@@ -618,7 +737,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
             const headersToShow = headers
                 .filter(h => !h.tutorial?.metadata?.hideIteration)
                 .slice(0, ProjectsCarousel.NUM_PROJECTS_HOMESCREEN);
-            return <carousel.Carousel bleedPercent={20}>
+            return <carousel.Carousel tickId="myprojects" bleedPercent={20}>
                 {showNewProject ? <div role="button" className="ui card link buttoncard newprojectcard" title={lf("Creates a new empty project")}
                     onClick={this.newProject} onKeyDown={sui.fireClickOnEnter} >
                     <div className="content">
@@ -636,17 +755,19 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                             : scr.tutorialCompleted ? scr.tutorialCompleted.steps
                                 : undefined;
                     const ghid = pxt.github.parseRepoId(scr.githubId);
+                    const cloudState = !!scr.cloudUserId ? "cloud" : "local"
                     return <ProjectsCodeCard
                         key={'local' + scr.id + scr.recentUse}
                         // ref={(view) => { if (index === 1) this.latestProject = view }}
                         cardType="file"
-                        name={(ghid && ghid.project) || scr.name}
+                        name={(ghid && pxt.github.join(ghid.project, ghid.fileName)) || scr.name}
                         time={scr.recentUse}
                         url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ""}
                         scr={scr} index={index}
                         onCardClick={this.handleCardClick}
                         tutorialStep={tutorialStep}
                         tutorialLength={tutoriallength}
+                        cloudState={cloudState}
                     />;
                 })}
                 {showScriptManagerCard ? <div role="button" className="ui card link buttoncard scriptmanagercard" title={lf("See all projects")}
@@ -719,7 +840,7 @@ export interface ProjectsDetailProps extends ISettingsProps {
     youTubePlaylistId?: string;
     buttonLabel?: string;
     url?: string;
-    scr?: any;
+    scr?: pxt.CodeCard;
     onClick: (scr: any, action?: pxt.CodeCardAction) => void;
     cardType: pxt.CodeCardType;
     tags?: string[];
@@ -877,11 +998,17 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
 
     handleDetailClick() {
         const { scr, onClick } = this.props;
+        pxt.tickEvent('projects.actions.details', {
+            name: scr.name, url: scr.url, cardType: scr.cardType, editor: scr.editor
+        }, { interactiveConsent: true })
         onClick(scr);
     }
 
     handleActionClick(action?: pxt.CodeCardAction) {
         const { scr, onClick } = this.props;
+        pxt.tickEvent('projects.actions.click', {
+            name: scr.name, url: scr.url, cardType: scr.cardType, editor: scr.editor
+        }, { interactiveConsent: true })
         return () => onClick(scr, action);
     }
 

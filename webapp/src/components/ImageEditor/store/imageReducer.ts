@@ -1,4 +1,4 @@
-import { createNewImageAsset, createTile, lookupAsset } from '../../../assets';
+import { lookupAsset } from '../../../assets';
 import * as actions from '../actions/types'
 import { AlertInfo } from '../Alert';
 
@@ -39,7 +39,8 @@ export enum TileDrawingMode {
 
 // State that goes on the undo/redo stack
 export interface AnimationState {
-    kind: "Animation",
+    kind: "Animation";
+    asset?: pxt.Asset;
     visible: boolean;
     colors: string[];
 
@@ -51,7 +52,8 @@ export interface AnimationState {
 }
 
 export interface TilemapState {
-    kind: "Tilemap"
+    kind: "Tilemap";
+    asset?: pxt.Asset;
     tileset: pxt.TileSet;
     aspectRatioLocked: boolean;
     tilemap: pxt.sprite.ImageState;
@@ -85,7 +87,6 @@ export interface EditorState {
     overlayEnabled?: boolean;
     alert?: AlertInfo;
     resizeDisabled?: boolean;
-    assetName?: string;
 }
 
 export interface GalleryTile {
@@ -203,7 +204,6 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
                 ...state,
                 editor: {
                     ...initialStore.editor,
-                    assetName: restored.assetName,
                     selectedColor: restored.selectedColor,
                     backgroundColor: restored.backgroundColor,
                     tilemapPalette: restored.tilemapPalette,
@@ -216,6 +216,57 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
                     ...state.store,
                     past: action.past || state.store.past,
                     future: action.past ? [] : state.store.future
+                }
+            };
+        case actions.OPEN_ASSET:
+            const toOpen: pxt.Asset = action.asset;
+            const gallery = action.gallery || (action.keepPast ? state.editor.tileGallery : [])
+
+            return {
+                ...state,
+                editor: toOpen.type === pxt.AssetType.Tilemap ? {
+                    ...state.editor,
+                    selectedColor: -1,
+                    backgroundColor: -1,
+                    isTilemap: true,
+                    tilemapPalette: {
+                        category: TileCategory.Forest,
+                        page: 0
+                    },
+                    drawingMode: TileDrawingMode.Default,
+                    overlayEnabled: true,
+                    tileGallery: gallery,
+                    tileGalleryOpen: !!gallery,
+                    referencedTiles: toOpen.data.projectReferences
+                } : {
+                    ...(action.keepPast ? state.editor : initialStore.editor),
+                    isTilemap: false,
+                },
+                store: {
+                    ...state.store,
+                    past: action.keepPast ? state.store.past : [],
+                    present: initialStateForAsset(action.asset, gallery),
+                    future: []
+                }
+            };
+
+        case actions.CHANGE_ASSET_NAME:
+            tickEvent("change-asset-name");
+            return {
+                ...state,
+                store: {
+                    past: [...state.store.past, state.store.present],
+                    present: {
+                        ...state.store.present,
+                        asset: {
+                            ...state.store.present.asset,
+                            meta: {
+                                ...(state.store.present.asset.meta || {}),
+                                displayName: action.name
+                            }
+                        }
+                    },
+                    future: []
                 }
             };
         case actions.UNDO_IMAGE_EDIT:
@@ -242,65 +293,6 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
                     past: [...state.store.past, state.store.present],
                     present: state.store.future[state.store.future.length - 1],
                     future: state.store.future.slice(0, state.store.future.length - 1),
-                }
-            };
-        case actions.SET_INITIAL_FRAMES:
-            return {
-                ...state,
-                editor: {
-                    ...initialStore.editor,
-                    isTilemap: false,
-                },
-                store: {
-                    ...state.store,
-                    past: [],
-                    present: {
-                        kind: "Animation",
-                        visible: true,
-                        colors: pxt.appTarget.runtime.palette.slice(),
-
-                        aspectRatioLocked: false,
-
-                        currentFrame: 0,
-                        frames: action.frames,
-                        interval: action.interval
-                    },
-                    future: []
-                }
-            }
-        case actions.SET_INITIAL_TILEMAP:
-            return {
-                ...state,
-                editor: {
-                    ...state.editor,
-                    selectedColor: -1,
-                    backgroundColor: -1,
-                    isTilemap: true,
-                    tilemapPalette: {
-                        category: TileCategory.Forest,
-                        page: 0
-                    },
-                    drawingMode: TileDrawingMode.Default,
-                    overlayEnabled: true,
-                    tileGallery: action.gallery,
-                    tileGalleryOpen: !!action.gallery,
-                    referencedTiles: action.referencedTiles
-                },
-                store: {
-                    ...state.store,
-                    past: [],
-                    present: {
-                        kind: "Tilemap",
-                        colors: pxt.appTarget.runtime.palette.slice(),
-                        aspectRatioLocked: false,
-                        tilemap: {
-                            bitmap: action.tilemap,
-                            overlayLayers: action.layers
-                        },
-                        tileset: restoreSprites(action.tileset, action.gallery),
-                        nextId: action.nextId
-                    },
-                    future: []
                 }
             };
         default:
@@ -392,6 +384,13 @@ const animationReducer = (state: AnimationState, action: any): AnimationState =>
                 frames: movedFrames,
                 currentFrame: action.oldIndex === state.currentFrame ? action.newIndex : state.currentFrame
             }
+        case actions.SET_FRAMES:
+            tickEvent(`set-frames`);
+            return {
+                ...state,
+                frames: action.frames,
+                currentFrame: 0
+            };
         default:
             return state;
     }
@@ -511,12 +510,6 @@ const editorReducer = (state: EditorState, action: any, store: EditorStore): Edi
             return {
                 ...state,
                 resizeDisabled: true
-            }
-        case actions.CHANGE_ASSET_NAME:
-            tickEvent("change-asset-name");
-            return {
-                ...state,
-                assetName: action.name
             }
     }
     return state;
@@ -680,6 +673,47 @@ function resizeBitmap(data: pxt.sprite.BitmapData, newWidth: number, newHeight: 
 function resizeTilemap(data: pxt.sprite.BitmapData, newWidth: number, newHeight: number) {
     return pxt.sprite.Tilemap.fromData(data).resize(newWidth, newHeight).data();
 }
+
+
+function initialStateForAsset(asset: pxt.Asset, gallery: GalleryTile[]) {
+    if (asset.type === pxt.AssetType.Tilemap) {
+        return initialTilemapStateForAsset(asset, gallery);
+    }
+    else {
+        return initialAnimationStateForAsset(asset);
+    }
+}
+
+function initialAnimationStateForAsset(asset: pxt.ProjectImage | pxt.Animation | pxt.Tile): AnimationState {
+    return {
+        kind: "Animation",
+        asset,
+        visible: true,
+        colors: pxt.appTarget.runtime.palette.slice(),
+
+        aspectRatioLocked: asset.type === pxt.AssetType.Tile,
+
+        currentFrame: 0,
+        frames: asset.type === pxt.AssetType.Animation ? asset.frames.map(bitmap => ({ bitmap })) : [{ bitmap: asset.bitmap }],
+        interval: asset.type === pxt.AssetType.Animation ? asset.interval : 100
+    }
+}
+
+function initialTilemapStateForAsset(asset: pxt.ProjectTilemap, gallery: GalleryTile[]): TilemapState {
+    return {
+        kind: "Tilemap",
+        asset,
+        colors: pxt.appTarget.runtime.palette.slice(),
+        aspectRatioLocked: false,
+        tilemap: {
+            bitmap: asset.data.tilemap.data(),
+            overlayLayers: [asset.data.layers]
+        },
+        tileset: restoreSprites(asset.data.tileset, gallery),
+        nextId: asset.data.nextId
+    }
+}
+
 
 export function setTelemetryFunction(cb: (event: string) => void) {
     tickCallback = cb;

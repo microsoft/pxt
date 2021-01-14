@@ -35,8 +35,14 @@ namespace pxt.editor {
         }
 
         protected resultToText(result: pxt.ProjectImage): string {
-            if (this.isAsset && result.meta.displayName) {
-                result = pxt.react.getTilemapProject().updateAsset(result)
+            if (result.meta?.displayName) {
+                const project = pxt.react.getTilemapProject();
+                if (this.isAsset) {
+                    result = project.updateAsset(result)
+                } else {
+                    this.isAsset = true;
+                    result = project.createNewProjectImage(result.bitmap, result.meta.displayName);
+                }
                 return `assets.image\`${result.meta.displayName}\``
             }
             return pxt.sprite.bitmapToImageLiteral(pxt.sprite.Bitmap.fromData(result.bitmap), this.isPython ? "python" : "typescript");
@@ -49,8 +55,7 @@ namespace pxt.editor {
             return {
                 initWidth: 16,
                 initHeight: 16,
-                blocksInfo: this.host.blocksInfo(),
-                showTiles: true
+                blocksInfo: this.host.blocksInfo()
             };
         }
     }

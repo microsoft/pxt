@@ -3,6 +3,7 @@ import * as data from "./data";
 import * as core from "./core";
 import * as db from "./db";
 import * as compiler from "./compiler";
+import * as auth from "./auth";
 
 import Util = pxt.Util;
 
@@ -322,11 +323,24 @@ export class EditorPackage {
         let parsed = pxt.github.parseRepoId(p.verArgument())
         if (!parsed) return Promise.resolve();
         return pxt.targetConfigAsync()
-            .then(config => pxt.github.latestVersionAsync(parsed.fullName, config.packages))
-            .then(tag => { parsed.tag = tag })
-            .then(() => pxt.github.pkgConfigAsync(parsed.fullName, parsed.tag))
-            .catch(core.handleNetworkError)
-            .then(cfg => this.addDepAsync(cfg.name, pxt.github.stringifyRepo(parsed)));
+            .then(config => pxt.github.latestVersionAsync(parsed.slug, config.packages))
+            .then(tag => {
+                // since all repoes in a mono-repo are tied to the same version number,
+                // we'll update them all to this tag at once.
+                const ghids = Util.values(this.ksPkg.dependencies())
+                    .map(ver => pxt.github.parseRepoId(ver))
+                    .filter(ghid => ghid?.slug === parsed.slug);
+                return Promise.all(ghids.map(ghid => {
+                    ghid.tag = tag;
+                    return pxt.github.pkgConfigAsync(ghid.fullName, ghid.tag)
+                        .catch(core.handleNetworkError)
+                        .then((cfg: pxt.PackageConfig) => ({ ghid, cfg }));
+                }))
+            })
+            .then(updates => this.updateConfigAsync(config =>
+                updates.forEach(({ ghid, cfg }) => config.dependencies[cfg.name] = pxt.github.stringifyRepo(ghid))
+            ))
+            .then(() => this.saveFilesAsync(true));
     }
 
     removeDepAsync(pkgid: string) {
@@ -375,7 +389,7 @@ export class EditorPackage {
         if (!f) {
             f = this.setFile(n, v);
             p = p.then(() => this.updateConfigAsync(cfg => cfg.files.indexOf(n) < 0 ? cfg.files.push(n) : 0))
-            p.then(() => this.savePkgAsync())
+            p.then(() => this.cloudSavePkgAsync())
         }
         return p.then(() => f.setContentAsync(v));
     }
@@ -384,12 +398,15 @@ export class EditorPackage {
         const gj = this.files[pxt.github.GIT_JSON]
         if (gj) {
             const gjc: pxt.github.GitJson = JSON.parse(gj.content)
+            const parsed = pxt.github.parseRepoId(gjc.repo);
             if (gjc.commit) {
-                for (let treeEnt of gjc.commit.tree.tree) {
-                    const f = this.files[treeEnt.path]
-                    if (f && treeEnt.blobContent != null)
+                Object.keys(this.files).forEach(fn => {
+                    const treeEnt = pxt.github.lookupFile(parsed, gjc.commit, fn);
+                    if (treeEnt && treeEnt.blobContent != null) {
+                        const f = this.files[fn];
                         f.setBaseGitContent(treeEnt.blobContent)
-                }
+                    }
+                })
             }
         }
     }
@@ -404,25 +421,25 @@ export class EditorPackage {
         data.invalidate("pkg-status:" + this.header.id)
     }
 
-    savePkgAsync() {
-        if (this.header.blobCurrent) return Promise.resolve();
+    cloudSavePkgAsync() {
+        if (this.header.cloudCurrent || !auth.loggedInSync()) return Promise.resolve();
         this.savingNow++;
         this.updateStatus();
         return workspace.saveToCloudAsync(this.header)
             .then(() => {
                 this.savingNow--;
                 this.updateStatus();
-                if (!this.header.blobCurrent)
-                    this.scheduleSave();
+                if (!this.header.cloudCurrent)
+                    this.scheduleCloudSavePkg();
             })
     }
 
-    private scheduleSave() {
+    private scheduleCloudSavePkg() {
         if (this.saveScheduled) return
         this.saveScheduled = true;
         setTimeout(() => {
             this.saveScheduled = false;
-            this.savePkgAsync().done();
+            this.cloudSavePkgAsync().done();
         }, 5000)
     }
 
@@ -444,7 +461,7 @@ export class EditorPackage {
             }
         }
         return workspace.saveAsync(this.header, this.getAllFiles())
-            .then(() => immediate ? this.savePkgAsync() : this.scheduleSave())
+            .then(() => immediate ? this.cloudSavePkgAsync() : this.scheduleCloudSavePkg())
     }
 
     sortedFiles(): File[] {

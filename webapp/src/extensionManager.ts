@@ -3,7 +3,10 @@ import * as pkg from "./package";
 
 export enum Permissions {
     Console,
-    ReadUserCode
+    ReadUserCode,
+    AddDependencies,
+    // This permission is only available for trusted extensions
+    Messages
 }
 
 export enum PermissionStatus {
@@ -28,19 +31,29 @@ export class ExtensionManager {
     private statuses: pxt.Map<e.Permissions<PermissionStatus>> = {};
     private nameToExtId: pxt.Map<string> = {};
     private extIdToName: pxt.Map<string> = {};
-    private consent: pxt.Map<boolean> = {};
+    private consent: pxt.Map<boolean> = {}
 
     private pendingRequests: PermissionRequest[] = [];
     private queueLock = false;
 
     // name to enabled
     private streams: pxt.Map<boolean> = {};
+    private messages: pxt.Map<boolean> = {};
 
     constructor(private host: ExtensionHost) {
     }
 
+    clear() {
+        this.queueLock = false;
+        this.pendingRequests = [];
+    }
+
     streamingExtensions(): string[] {
         return Object.keys(this.streams);
+    }
+
+    messagesExtensions(): string[] {
+        return Object.keys(this.messages);
     }
 
     handleExtensionMessage(message: e.ExtensionMessage) {
@@ -83,19 +96,25 @@ export class ExtensionManager {
         }
 
         switch (request.action) {
-            case "extinit":
+            case "extinit": {
                 const ri = resp as pxt.editor.InitializeResponse;
                 ri.target = pxt.appTarget;
                 this.sendResponse(resp);
                 break;
-            case "extdatastream":
-                return this.permissionOperation(request.extId, Permissions.Console, resp, (name, resp) => this.handleDataStreamRequest(name, resp));
-            case "extquerypermission":
+            }
+            case "extdatastream": {
+                if (request?.body?.messages)
+                    return this.permissionOperation(request.extId, Permissions.Messages, resp, (name, resp) => this.handleMessageStreamRequest(name, resp));
+                else
+                    return this.permissionOperation(request.extId, Permissions.Console, resp, (name, resp) => this.handleDataStreamRequest(name, resp));
+            }
+            case "extquerypermission": {
                 const perm = this.getPermissions(request.extId)
                 const r = resp as e.ExtensionResponse;
                 r.resp = statusesToResponses(perm);
                 this.sendResponse(r);
                 break;
+            }
             case "extrequestpermission":
                 return this.requestPermissionsAsync(request.extId, resp as e.PermissionResponse, request.body);
             case "extusercode":
@@ -105,8 +124,13 @@ export class ExtensionManager {
                 this.sendResponse(resp);
                 break;
             case "extwritecode":
-                handleWriteCodeRequestAsync(this.extIdToName[request.extId], resp, request.body)
+                const handleWriteCode = () => handleWriteCodeRequestAsync(this.extIdToName[request.extId], resp, request.body)
                     .done(() => this.sendResponse(resp));
+                const missingDepdencies = resolveMissingDependencies(request.body as e.WriteExtensionFiles);
+                if (missingDepdencies?.length)
+                    this.permissionOperation(request.extId, Permissions.AddDependencies, resp, handleWriteCode);
+                else // skip permission
+                    handleWriteCode();
                 break;
         }
 
@@ -133,12 +157,27 @@ export class ExtensionManager {
             });
     }
 
+    trust(extId: string) {
+        const status = PermissionStatus.Granted;
+        this.statuses[extId] = {
+            console: status,
+            readUserCode: status,
+            addDependencies: status,
+            messages: status
+        };
+    }
+
     private getPermissions(id: string): e.Permissions<PermissionStatus> {
         if (!this.statuses[id]) {
+            const status = PermissionStatus.NotYetPrompted;
             this.statuses[id] = {
-                console: PermissionStatus.NotYetPrompted,
-                readUserCode: PermissionStatus.NotYetPrompted
+                console: status,
+                readUserCode: status,
+                addDependencies: status,
+                // must call trust to unlock this
+                messages: PermissionStatus.Denied
             };
+
         }
         return this.statuses[id]
     }
@@ -189,6 +228,10 @@ export class ExtensionManager {
         switch (permission) {
             case Permissions.Console: status = perm.console; break;
             case Permissions.ReadUserCode: status = perm.readUserCode; break;
+            case Permissions.AddDependencies: status = perm.addDependencies; break;
+            case Permissions.Messages: status = perm.messages; break;
+            default: // should never happen
+                status = PermissionStatus.NotAvailable; break;
         }
 
         if (status === PermissionStatus.NotYetPrompted) {
@@ -200,6 +243,9 @@ export class ExtensionManager {
                             this.statuses[id].console = newStatus; break;
                         case Permissions.ReadUserCode:
                             this.statuses[id].readUserCode = newStatus; break;
+                        case Permissions.AddDependencies:
+                            this.statuses[id].addDependencies = newStatus; break;
+                        // messages should never set by the user
                     }
                     return approved;
                 });
@@ -218,6 +264,10 @@ export class ExtensionManager {
         if (p.console) {
             promises.push(this.checkPermissionAsync(id, Permissions.Console));
         }
+        if (p.addDependencies) {
+            promises.push(this.checkPermissionAsync(id, Permissions.AddDependencies));
+        }
+        // the user cannot request messages
 
         return Promise.all(promises)
             .then(() => statusesToResponses(this.getPermissions(id)))
@@ -230,6 +280,8 @@ export class ExtensionManager {
         switch (permission) {
             case Permissions.Console: status = perm.console; break;
             case Permissions.ReadUserCode: status = perm.readUserCode; break;
+            case Permissions.AddDependencies: status = perm.addDependencies; break;
+            case Permissions.Messages: status = perm.messages; break;
         }
         return status === PermissionStatus.NotYetPrompted;
     }
@@ -238,6 +290,50 @@ export class ExtensionManager {
         // ASSERT: permission has been granted
         this.streams[name] = true;
     }
+
+    private handleMessageStreamRequest(name: string, resp: e.ExtensionResponse) {
+        // ASSERT: permission has been granted
+        this.messages[name] = true;
+    }
+}
+
+export async function resolveExtensionUrl(pkg: pxt.Package) {
+    const { config, installedVersion } = pkg;
+    const { extension } = config;
+
+    const packagesConfig = await pxt.packagesConfigAsync()
+    const parsedRepo = pxt.github.parseRepoId(installedVersion);
+    const repoStatus = pxt.github.repoStatus(parsedRepo, packagesConfig);
+    let url = "";
+    let trusted = false;
+    const debug = pxt.BrowserUtils.isLocalHost()
+        && /debugextensions=1/i.test(window.location.href);
+    const localDebug = !debug
+        && pxt.BrowserUtils.isLocalHost()
+        && /localeditorextensions=1/i.test(window.location.href)
+        && extension.localUrl;
+    if (debug) {
+        /* tslint:disable:no-http-string */
+        url = "http://localhost:3232/extension.html";
+    } else if (localDebug) {
+        url = extension.localUrl;
+        trusted = /localeditorextensionstrusted=1/.test(window.location.href);
+    }
+    else if (extension.url
+        && packagesConfig?.approvedEditorExtensionUrls
+        && packagesConfig?.approvedEditorExtensionUrls?.indexOf(extension.url) > -1) {
+        // custom url, but not support in editor
+        pxt.log(`extension url ${extension.url} trusted`)
+        url = extension.url;
+        // must also be approved to be trusted
+        trusted = repoStatus === pxt.github.GitRepoStatus.Approved;
+    } else if (!parsedRepo) {
+        const repoName = parsedRepo.fullName.substr(parsedRepo.fullName.indexOf(`/`) + 1);
+        /* tslint:disable:no-http-string */
+        url = `https://${parsedRepo.owner}.github.io/${repoName}/`;
+    }
+    pxt.log(`extension ${config.name}: resolved ${url}`)
+    return { url, trusted, name: config.name, repoStatus }
 }
 
 function handleUserCodeRequest(name: string, resp: e.ExtensionResponse) {
@@ -258,7 +354,22 @@ function handleReadCodeRequest(name: string, resp: e.ReadCodeResponse) {
     };
 }
 
-function handleWriteCodeRequestAsync(name: string, resp: e.ExtensionResponse, files: e.ExtensionFiles) {
+function resolveMissingDependencies(files: e.WriteExtensionFiles) {
+    let missingDependencies: string[];
+    if (files?.dependencies) {
+        // collect missing depdencies
+        const mainPackage = pkg.mainEditorPkg() as pkg.EditorPackage;
+        const cfg = pxt.Util.jsonTryParse(mainPackage?.files[pxt.CONFIG_NAME]?.content) as pxt.PackageConfig;
+        // maybe we should really match the versions...
+        if (cfg?.dependencies) { // give up if cfg is busted
+            missingDependencies = Object.keys(files.dependencies)
+                .filter(k => !cfg.dependencies[k]);
+        }
+    }
+    return missingDependencies;
+}
+
+function handleWriteCodeRequestAsync(name: string, resp: e.WriteCodeResponse, files: e.WriteExtensionFiles) {
     const mainPackage = pkg.mainEditorPkg() as pkg.EditorPackage;
     const fn = ts.pxtc.escapeIdentifier(name);
 
@@ -284,6 +395,18 @@ function handleWriteCodeRequestAsync(name: string, resp: e.ExtensionResponse, fi
         mainPackage.setFile(fn + ".asm", files.asm);
     }
 
+    let missingDependencies: string[];
+    if (files.dependencies) {
+        // collect missing depdencies
+        const cfg = pxt.Util.jsonTryParse(mainPackage.files[pxt.CONFIG_NAME]?.content) as pxt.PackageConfig;
+        // maybe we should really match the versions...
+        if (cfg?.dependencies) { // give up if cfg is busted
+            missingDependencies = Object.keys(files.dependencies)
+                .filter(k => !cfg.dependencies[k]);
+            needsUpdate = needsUpdate || !!missingDependencies?.length;
+        }
+    }
+
     return !needsUpdate ? Promise.resolve() : mainPackage.updateConfigAsync(cfg => {
         if (files.json !== undefined && cfg.files.indexOf(fn + ".json") < 0) {
             cfg.files.push(fn + ".json")
@@ -297,8 +420,9 @@ function handleWriteCodeRequestAsync(name: string, resp: e.ExtensionResponse, fi
         if (files.asm !== undefined && cfg.files.indexOf(fn + ".asm") < 0) {
             cfg.files.push(fn + ".asm");
         }
-        return mainPackage.savePkgAsync();
-    });
+        missingDependencies?.forEach(dep => cfg.dependencies[dep] = files.dependencies[dep]);
+        return mainPackage.cloudSavePkgAsync();
+    }).then(() => mainPackage.saveFilesAsync(true));
 }
 
 function mkEvent(event: string): e.ExtensionEvent {
@@ -321,7 +445,9 @@ function mkResponse(request: e.ExtensionRequest, success = true): e.ExtensionRes
 function statusesToResponses(perm: e.Permissions<PermissionStatus>): e.Permissions<e.PermissionResponses> {
     return {
         readUserCode: statusToResponse(perm.readUserCode),
-        console: statusToResponse(perm.console)
+        console: statusToResponse(perm.console),
+        addDependencies: statusToResponse(perm.addDependencies),
+        messages: statusToResponse(perm.messages)
     };
 }
 

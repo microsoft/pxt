@@ -96,9 +96,12 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
     protected duplicateAssetHandler = () => {
         pxt.tickEvent("assets.duplicate", { type: this.props.asset.type.toString(), gallery: this.props.isGalleryAsset.toString() });
 
+        const asset = this.props.asset;
+        if (!asset.meta?.displayName) asset.meta = { ...asset.meta, displayName: getDisplayNameForAsset(asset, this.props.isGalleryAsset) }
+
         const project = pxt.react.getTilemapProject();
         project.pushUndo();
-        const { type, id } = project.duplicateAsset(this.props.asset);
+        const { type, id } = project.duplicateAsset(asset);
         this.updateAssets().then(() => {
             this.props.dispatchChangeGalleryView(GalleryView.User);
             this.props.dispatchChangeSelectedAsset(type, id);
@@ -170,8 +173,12 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
             { asset && <div className="asset-editor-sidebar-controls">
                 {canEdit && <sui.MenuItem name={lf("Edit")} className="asset-editor-button" icon="edit" onClick={this.editAssetHandler}/>}
                 <sui.MenuItem name={lf("Duplicate")} className="asset-editor-button" icon="copy" onClick={this.duplicateAssetHandler}/>
-                {canCopy && <sui.MenuItem name={lf("Clipboard")} className="asset-editor-button" icon="paste" onClick={this.copyAssetHandler}/>}
-                {canDelete && <sui.MenuItem name={lf("Delete")} className="asset-editor-button delete-asset" icon="trash" onClick={this.showDeleteModal}/>}
+                {canCopy && <sui.MenuItem name={lf("Copy")} className="asset-editor-button" icon="paste" onClick={this.copyAssetHandler}/>}
+                <sui.MenuItem name={lf("Delete")}
+                    className={`asset-editor-button delete-asset ${!canDelete ? "disabled" : ""}`}
+                    icon="trash"
+                    dataTooltip={!canDelete ? lf("Asset is used in your project.") : undefined}
+                    onClick={canDelete ? this.showDeleteModal : undefined}/>
             </div>}
             <textarea className="asset-editor-sidebar-copy" ref={this.copyTextAreaRefHandler} ></textarea>
             <sui.Modal className="asset-editor-delete-dialog" isOpen={showDeleteModal} onClose={this.hideDeleteModal} closeIcon={true} dimmer={true} header={lf("Delete Asset")} buttons={actions}>
@@ -200,7 +207,7 @@ function getDisplayNameForAsset(asset: pxt.Asset, isGalleryAsset?: boolean) {
     } else if (asset?.meta?.displayName) {
         return asset.meta.displayName;
     } else {
-        return isGalleryAsset ? pxt.getShortIDForAsset(asset) : lf("Temporary asset");
+        return isGalleryAsset ? asset.id.split('.').pop() : lf("Temporary asset");
     }
 }
 

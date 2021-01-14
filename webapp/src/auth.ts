@@ -434,20 +434,18 @@ function internalPrefUpdateAndInvalidate(newPref: Partial<UserPreferences>) {
     // TODO is there a generic way to do this so we don't need to add new branches
     //  for each field that changes?
 
-    const state = getState();
-
     // remember old
-    const oldPref = state.preferences ?? DEFAULT_USER_PREFERENCES()
+    const oldPref = getState().preferences ?? DEFAULT_USER_PREFERENCES()
     // update
     transformUserPreferences({
         ...oldPref,
         ...newPref
     });
     // invalidate fields that change
-    if (oldPref?.highContrast !== state.preferences?.highContrast) {
+    if (oldPref?.highContrast !== getState().preferences?.highContrast) {
         data.invalidate(HIGHCONTRAST)
     }
-    if (oldPref?.language !== state.preferences?.language) {
+    if (oldPref?.language !== getState().preferences?.language) {
         data.invalidate(LANGUAGE)
     }
 }
@@ -465,10 +463,16 @@ export async function initialUserPreferences(): Promise<UserPreferences | undefi
     return initialUserPreferences_;
 }
 
-function loggedInSync(): boolean {
+export function loggedInSync(): boolean {
     if (!hasIdentity()) { return false; }
     const state = getState();
     return !!state.profile?.id;
+}
+
+export function user(): UserProfile {
+    if (!hasIdentity()) { return null; }
+    const state = getState();
+    return { ...state.profile };
 }
 
 async function fetchUserAsync(): Promise<UserProfile | undefined> {
@@ -637,5 +641,5 @@ data.mountVirtualApi(MODULE, { getSync: authApiHandler });
 
 
 // ClouddWorkspace must be included after we mount our virtual APIs.
-import * as cloudWorkspace from "./cloudworkspace";
+import * as cloudWorkspace from "./cloud";
 cloudWorkspace.init();

@@ -230,8 +230,9 @@ namespace ts.pxtc.Util {
     }
 
     export function pushRange<T>(trg: T[], src: ArrayLike<T>): void {
-        for (let i = 0; i < src.length; ++i)
-            trg.push(src[i])
+        if (src)
+            for (let i = 0; i < src.length; ++i)
+                trg.push(src[i])
     }
 
     // TS gets lost in type inference when this is passed an array
@@ -1369,7 +1370,8 @@ namespace ts.pxtc.Util {
                 const imgdat = ctx.getImageData(0, 0, canvas.width, canvas.height)
                 const d = imgdat.data
                 const bpp = (d[0] & 1) | ((d[1] & 1) << 1) | ((d[2] & 1) << 2)
-                if (bpp > 5)
+                // Safari sometimes just reads a buffer full of 0's so we also need to bail if bpp == 0
+                if (bpp > 5 || bpp == 0)
                     return Promise.reject(new Error(lf("Invalid encoded PNG format")))
 
                 function decode(ptr: number, bpp: number, trg: Uint8Array) {

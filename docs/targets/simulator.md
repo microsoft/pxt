@@ -37,3 +37,29 @@ by PXT into the full URL for the resource.
 
 **Warning**: Make sure that all URLs added to this array exist. If any of these URLs fail to resolve,
 the service worker will not install and the simulator will not be cached offline.
+
+## Message simulators
+
+It is possible to register external simulator that will get spawned once a specific channel of a control sim message is detected.
+This feature is used to spawn domain-specific simulators.
+
+To enable this scenario, you will have to add the mapping of control message channels to simulator URLs (and other options)
+in ``pxtarget.json`` under the ``simulator.messageSimulators`` field:
+
+```json
+   ...
+   simulator: {
+       ...
+       messageSimulators: {
+           ...
+           "mychannel": {
+               "url": "url of the simulator$PARENT_ORIGIN$",
+           }
+       }
+   }
+```
+
+When loading the message simulator url, MakeCode expands ``$PARENT_ORIGIN$`` with the URI-encoded origin of the editor.
+You can use this value to validate the origin of iframe messages.
+
+Optionally, you can specify a ``localHostUrl`` that will be used in local development mode.

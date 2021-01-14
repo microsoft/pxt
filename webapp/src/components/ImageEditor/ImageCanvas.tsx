@@ -11,6 +11,7 @@ import { GestureTarget, ClientCoordinates, bindGestureEvents, TilemapPatch, crea
 
 import { Edit, EditState, getEdit, getEditState, ToolCursor, tools } from './toolDefinitions';
 import { createTile } from '../../assets';
+import { areShortcutsEnabled } from './keyboardShortcuts';
 
 const IMAGE_MIME_TYPE = "image/x-mkcd-f4"
 
@@ -255,7 +256,8 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     }
 
     protected onKeyDown = (ev: KeyboardEvent): void => {
-        // TODO: we should bail out of this when gallery is open.
+        if (!areShortcutsEnabled()) return;
+
         this.hasInteracted = true;
 
         if (this.shouldHandleCanvasShortcut() && this.editState?.floating?.image) {
@@ -822,8 +824,19 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     protected selectCanvasColor(coord: ClientCoordinates, isRightClick?: boolean) {
         const outer = this.refs["canvas-bounds"] as HTMLDivElement;
         const bounds = outer.getBoundingClientRect();
-        const { canvasX, canvasY } = this.clientToCanvas(coord.clientX, coord.clientY, bounds);
-        const color = this.editState.image.get(Math.floor(canvasX), Math.floor(canvasY));
+        let { canvasX, canvasY } = this.clientToCanvas(coord.clientX, coord.clientY, bounds);
+
+        canvasX = Math.floor(canvasX);
+        canvasY = Math.floor(canvasY);
+
+        let color: number;
+        if (this.editState.inFloatingLayer(canvasX, canvasY)) {
+            color = this.editState.floating.image.get(canvasX - this.editState.layerOffsetX, canvasY - this.editState.layerOffsetY)
+        }
+        if (!color) {
+            color = this.editState.image.get(canvasX, canvasY)
+        }
+
         if (isRightClick) {
             this.props.dispatchChangeBackgroundColor(color);
         } else {

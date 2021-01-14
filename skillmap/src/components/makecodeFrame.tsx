@@ -8,17 +8,21 @@ import { lookupActivityProgress } from "../lib/skillMapUtils";
 import { SkillMapState } from '../store/reducer';
 import  { dispatchSetHeaderIdForActivity, dispatchCloseActivity, dispatchSaveAndCloseActivity, dispatchUpdateUserCompletedTags } from '../actions/dispatch';
 
+/* tslint:disable:no-import-side-effect */
 import '../styles/makecode-editor.css'
+/* tslint:enable:no-import-side-effect */
 
 interface MakeCodeFrameProps {
     save: boolean;
+    mapId: string;
     activityId: string;
     title: string;
     url: string;
     tutorialPath: string;
     completed: boolean;
     activityHeaderId?: string;
-    dispatchSetHeaderIdForActivity: (headerId: string, currentStep: number, maxSteps: number) => void;
+    activityType: MapActivityType;
+    dispatchSetHeaderIdForActivity: (mapId: string, activityId: string, id: string, currentStep: number, maxSteps: number, isCompleted: boolean) => void;
     dispatchCloseActivity: (finished?: boolean) => void;
     dispatchSaveAndCloseActivity: () => void;
     dispatchUpdateUserCompletedTags: () => void;
@@ -31,12 +35,14 @@ interface MakeCodeFrameState {
     unloading: boolean;
 }
 
-const editorUrl: string = isLocal() ? "http://localhost:3232/index.html" : (window as any).pxtTargetBundle.appTheme.embedUrl
+/* tslint:disable:no-http-string */
+export const editorUrl: string = isLocal() ? "http://localhost:3232/index.html" : (window as any).pxtTargetBundle.appTheme.embedUrl
+/* tslint:enable:no-http-string */
 
 class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFrameState> {
     protected ref: HTMLIFrameElement | undefined;
     protected messageQueue: any[] = [];
-    protected finishedTutorial = false;
+    protected finishedActivityState: "saving" | "finished" | undefined;
     protected nextId: number = 0;
     protected pendingMessages: {[index: string]: any} = {};
 
@@ -60,6 +66,13 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
 
     componentWillUnmount() {
         window.removeEventListener("message", this.onMessageReceived);
+
+        // Show Usabilla widget + footer
+        setElementVisible(".usabilla_live_button_container", true);
+        setElementVisible("footer", true);
+
+        const root = document.getElementById("root");
+        if (root) pxt.BrowserUtils.removeClass(root, "editor");
     }
 
     render() {
@@ -69,6 +82,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
         const loadingText = save ? lf("Saving...") : lf("Loading...")
         const imageAlt = "MakeCode Logo";
 
+        /* tslint:disable:react-iframe-missing-sandbox */
         return <div className="makecode-frame-outer">
             <div className={`makecode-frame-loader ${(loaded && !save) ? "hidden" : ""}`}>
                 <img src={resolvePath("assets/logo.svg")} alt={imageAlt} />
@@ -76,6 +90,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
             </div>
             <iframe className="makecode-frame" src={unloading ? "about:blank" : url} title={title} ref={this.handleFrameRef}></iframe>
         </div>
+        /* tslint:enable:react-iframe-missing-sandbox */
     }
 
 
@@ -89,20 +104,24 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
                 // trying to unload the makecode iframe. Instead, we set the src to about:blank, wait for
                 // that to load, and then unload the iframe
                 if (this.state.unloading) {
-                    this.props.dispatchCloseActivity();
+                    this.props.dispatchCloseActivity(this.finishedActivityState === "finished");
                     this.props.dispatchUpdateUserCompletedTags();
+
+                    this.finishedActivityState = undefined;
                 }
             });
+
+            // Hide Usabilla widget + footer when inside iframe view
+            setElementVisible(".usabilla_live_button_container", false);
+            setElementVisible("footer", false);
+
+            const root = document.getElementById("root");
+            if (root) pxt.BrowserUtils.addClass(root, "editor");
         }
     }
 
     protected onMessageReceived = (event: MessageEvent) => {
         const data = event.data as pxt.editor.EditorMessageRequest;
-
-        if ((data.type as string) === "ready") {
-            this.handleWorkspaceReadyEventAsync();
-            return;
-        }
 
         if (data.type === "pxteditor" && data.id && this.pendingMessages[data.id]) {
             this.onResponseReceived(this.pendingMessages[data.id], event.data as pxt.editor.EditorMessageResponse);
@@ -120,8 +139,13 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
             case "workspacesave":
                 this.handleWorkspaceSaveRequestAsync(data as pxt.editor.EditorWorkspaceSaveRequest);
                 break;
+            case "workspaceevent":
+                if ((data as pxt.editor.EditorWorkspaceEvent).event.type === "createproject") {
+                    this.handleWorkspaceReadyEventAsync();
+                }
+                break;
             default:
-                console.log(JSON.stringify(data, null, 4));
+                // console.log(JSON.stringify(data, null, 4));
         }
     }
 
@@ -129,8 +153,8 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
         const { save } = this.props;
 
         if (original.action === "saveproject" && save) {
-            if (this.finishedTutorial) {
-                this.finishedTutorial = false;
+            if (this.finishedActivityState === "saving") {
+                this.finishedActivityState = "finished";
 
                 // Save again to be sure we get any final edits
                 this.sendMessage({
@@ -143,6 +167,10 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
                     unloading: true
                 });
             }
+        }
+
+        if (original.action === "importproject") {
+            this.onEditorLoaded();
         }
     }
 
@@ -178,7 +206,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
     }
 
     protected async handleWorkspaceSaveRequestAsync(request: pxt.editor.EditorWorkspaceSaveRequest) {
-        const { dispatchSetHeaderIdForActivity, activityHeaderId } = this.props;
+        const { dispatchSetHeaderIdForActivity, activityHeaderId, activityType, title, mapId, activityId } = this.props;
 
         const project = {
             ...request.project,
@@ -188,20 +216,49 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
             }
         };
 
-        await saveProjectAsync(project);
+        // Patch the name, otherwise it will be the name of the GitHub repo
+        if (project.header?.name !== title) {
+            project.header!.name = title;
+            const pxtJSON = project.text!["pxt.json"];
+            if (pxtJSON) {
+                const config = JSON.parse(pxtJSON);
+                config.name = title;
+                project.text!["pxt.json"] = pxt.Package.stringifyConfig(config);
+            }
+        }
+
+        if (project.header.tutorialCompleted) {
+            const existing = await getProjectAsync(project.header.id);
+
+            if (existing?.header?.tutorial) {
+                project.header.tutorial = existing.header.tutorial;
+                project.header.tutorial.tutorialStep = project.header.tutorialCompleted.steps - 1;
+                delete project.header.tutorialCompleted;
+            }
+        }
+
+        if (activityType !== "tutorial" || project.header.tutorial || project.header.tutorialCompleted) {
+            await saveProjectAsync(project);
+        }
 
         if (project.header!.tutorial) {
             dispatchSetHeaderIdForActivity(
+                mapId,
+                activityId,
                 project.header.id,
                 (project.header.tutorial.tutorialStep || 0) + 1,
-                project.header.tutorial.tutorialStepInfo!.length
+                project.header.tutorial.tutorialStepInfo!.length,
+                false
             );
         }
         else if (project.header!.tutorialCompleted) {
             dispatchSetHeaderIdForActivity(
+                mapId,
+                activityId,
                 project.header.id,
                 project.header.tutorialCompleted.steps,
-                project.header.tutorialCompleted.steps
+                project.header.tutorialCompleted.steps,
+                true
             );
         }
     }
@@ -213,7 +270,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
                 type: "pxteditor",
                 action: "importproject",
                 project: project
-            } as pxt.editor.EditorMessageImportProjectRequest)
+            } as pxt.editor.EditorMessageImportProjectRequest, true)
         }
         else {
             this.sendMessage({
@@ -221,33 +278,33 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
                 action: "startactivity",
                 path: this.props.tutorialPath,
                 activityType: "tutorial"
-            } as pxt.editor.EditorMessageStartActivity);
+            } as pxt.editor.EditorMessageStartActivity, true);
         }
     }
 
     protected handleEditorTickEvent(event: pxt.editor.EditorMessageEventRequest) {
         switch (event.tick) {
-            // FIXME: add a better tick; app.editor fires too early
-            case "app.editor":
+            case "tutorial.editorLoaded":
                 this.onEditorLoaded();
                 break;
             case "tutorial.complete":
                 this.onTutorialFinished();
                 break;
-
         }
     }
 
     protected onEditorLoaded() {
-        tickEvent("skillmap.activity.loaded");
+        const { mapId, activityId } = this.props;
+        tickEvent("skillmap.activity.loaded", { path: mapId, activity: activityId });
         this.setState({
             loaded: true
         });
     }
 
     protected onTutorialFinished() {
-        tickEvent("skillmap.activity.complete");
-        this.finishedTutorial = true;
+        const { mapId, activityId } = this.props;
+        tickEvent("skillmap.activity.complete", { path: mapId, activity: activityId });
+        this.finishedActivityState = "saving";
         this.props.dispatchSaveAndCloseActivity();
     }
 }
@@ -265,18 +322,25 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         url = editorUrl.substr(0, editorUrl.length - 1);
     }
 
-    url += `?controller=1&skillsMap=1`;
+    url += `?controller=1&skillsMap=1&noproject=1&nocookiebanner=1`;
     title = activity.displayName;
 
     return {
         url,
         tutorialPath: activity.url,
         title,
+        mapId: currentMapId,
         activityId: currentActivityId,
         activityHeaderId: currentHeaderId,
-        completed: lookupActivityProgress(state.user, currentMapId, currentActivityId)?.isCompleted,
+        completed: lookupActivityProgress(state.user, state.pageSourceUrl, currentMapId, currentActivityId)?.isCompleted,
+        activityType: activity.type,
         save: saveState === "saving"
     }
+}
+
+function setElementVisible(selector: string, visible: boolean) {
+    const el = document.querySelector(selector) as HTMLDivElement;
+    if (el?.style) el.style.display = visible ? "" : "none";
 }
 
 const mapDispatchToProps = {

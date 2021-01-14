@@ -15,19 +15,27 @@ import {
     dispatchSetUser,
     dispatchSetPageSourceUrl
 } from './actions/dispatch';
-import { SkillMapState } from './store/reducer';
+import { PageSourceStatus, SkillMapState } from './store/reducer';
 import { HeaderBar } from './components/HeaderBar';
 import { Banner } from './components/Banner';
 import { AppModal } from './components/AppModal';
 import { SkillCarousel } from './components/SkillCarousel';
 
 import { parseSkillMap } from './lib/skillMapParser';
-import { parseHash, getMarkdownAsync, MarkdownSource, parseQuery, guidGen } from './lib/browserUtils';
+import { parseHash, getMarkdownAsync, MarkdownSource, parseQuery,
+    guidGen, setPageTitle, setPageSourceUrl } from './lib/browserUtils';
 
-import './App.css';
 import { MakeCodeFrame } from './components/makecodeFrame';
 import { getUserStateAsync, saveUserStateAsync } from './lib/workspaceProvider';
 import { Unsubscribe } from 'redux';
+
+/* tslint:disable:no-import-side-effect */
+import './App.css';
+
+// TODO: this file needs to read colors from the target
+import './arcade.css';
+/* tslint:enable:no-import-side-effect */
+
 (window as any).Promise = Promise;
 
 interface AppProps {
@@ -39,7 +47,7 @@ interface AppProps {
     dispatchSetPageDescription: (description: string) => void;
     dispatchSetPageInfoUrl: (infoUrl: string) => void;
     dispatchSetUser: (user: UserState) => void;
-    dispatchSetPageSourceUrl: (url: string) => void;
+    dispatchSetPageSourceUrl: (url: string, status: PageSourceStatus) => void;
 }
 
 interface AppState {
@@ -58,12 +66,19 @@ class AppImpl extends React.Component<AppProps, AppState> {
         window.addEventListener("hashchange", this.handleHashChange);
     }
 
-    protected handleHashChange = (e: HashChangeEvent) => {
-        let hash = parseHash();
+    protected handleHashChange = async (e: HashChangeEvent) => {
+        let config = await pxt.targetConfigAsync();
+        let hash = parseHash(window.location.hash || config.skillMap?.defaultPath);
         this.fetchAndParseSkillMaps(hash.cmd as MarkdownSource, hash.arg);
 
         e.stopPropagation();
         e.preventDefault();
+    }
+
+    protected handleError = (msg?: string) => {
+        const errorMsg = msg || lf("Oops! Couldn't load content, please check the URL and markdown file.");
+        console.error(errorMsg);
+        this.setState({ error: errorMsg });
     }
 
     protected async initLocalizationAsync() {
@@ -110,11 +125,19 @@ class AppImpl extends React.Component<AppProps, AppState> {
 
         const md = result?.text;
         const fetched = result?.identifier;
+        const status = result?.status;
 
         let loadedMaps: SkillMap[] | undefined;
 
-        if (md && fetched) {
+        if (md && fetched && status) {
             try {
+                if (status === "banned") {
+                    this.handleError(lf("This GitHub repository has been banned."));
+                } else {
+                    setPageSourceUrl(fetched);
+                    this.props.dispatchSetPageSourceUrl(fetched, status);
+                }
+
                 const { maps, metadata } = parseSkillMap(md);
                 if (maps?.length > 0) {
                     loadedMaps = maps;
@@ -123,19 +146,21 @@ class AppImpl extends React.Component<AppProps, AppState> {
                         this.props.dispatchAddSkillMap(map);
                     })
                 }
+
                 if (metadata) {
                     const { title, description, infoUrl } = metadata;
+                    setPageTitle(title);
                     this.props.dispatchSetPageTitle(title);
                     if (description) this.props.dispatchSetPageDescription(description);
-                    if (infoUrl) this.props.dispatchSetPageDescription(infoUrl);
+                    if (infoUrl) this.props.dispatchSetPageInfoUrl(infoUrl);
                 }
-                this.props.dispatchSetPageSourceUrl(fetched);
-                this.setState({ error: undefined })
+
+                this.setState({ error: undefined });
             } catch {
-                const errorMsg = lf("Oops! Couldn't load content, please check the URL and markdown file.");
-                console.error(errorMsg);
-                this.setState({ error: errorMsg });
+                this.handleError();
             }
+        } else {
+            this.setState({ error: lf("No content loaded.") })
         }
 
         let user = await getUserStateAsync();
@@ -144,7 +169,8 @@ class AppImpl extends React.Component<AppProps, AppState> {
             user = {
                 id: guidGen(),
                 completedTags: {},
-                mapProgress: {}
+                mapProgress: {},
+                version: pxt.skillmap.USER_VERSION
             };
         }
 
@@ -160,7 +186,8 @@ class AppImpl extends React.Component<AppProps, AppState> {
     async componentDidMount() {
         this.unsubscribeChangeListener = store.subscribe(this.onStoreChange);
         this.queryFlags = parseQuery();
-        let hash = parseHash();
+        let config = await pxt.targetConfigAsync();
+        let hash = parseHash(window.location.hash || config.skillMap?.defaultPath);
         await this.initLocalizationAsync();
         this.fetchAndParseSkillMaps(hash.cmd as MarkdownSource, hash.arg);
     }
@@ -176,10 +203,10 @@ class AppImpl extends React.Component<AppProps, AppState> {
         const { skillMaps, activityOpen } = this.props;
         const { error } = this.state;
         const maps = Object.keys(skillMaps).map((id: string) => skillMaps[id]);
-        return (<div className="app-container">
+        return (<div className={`app-container ${pxt.appTarget.id}`}>
                 <HeaderBar />
                 { activityOpen ? <MakeCodeFrame /> : <div>
-                    <Banner title="Game Maker Guide" icon="map" description={lf("Level up your game making skills by completing the tutorials in this guide.")} />
+                    <Banner icon="map" />
                     <div className="skill-map-container">
                         { error
                             ? <div className="skill-map-error">{error}</div>
@@ -194,9 +221,10 @@ class AppImpl extends React.Component<AppProps, AppState> {
     }
 
     protected applyQueryFlags(user: UserState, maps?: SkillMap[], sourceUrl?: string) {
+        const pageSource = sourceUrl || "default";
         if (this.queryFlags["debugNewUser"] === "true") {
             user.isDebug = true;
-            user.mapProgress = {};
+            user.mapProgress = { [pageSource]: {} };
             user.completedTags = {};
         }
 
@@ -205,21 +233,22 @@ class AppImpl extends React.Component<AppProps, AppState> {
 
             if (maps) {
                 for (const map of maps) {
-                    user.mapProgress[map.mapId] = {
+                    user.mapProgress[pageSource][map.mapId] = {
+                        completionState: "completed",
                         mapId: map.mapId,
                         activityState: {}
                     };
 
                     for (const key of Object.keys(map.activities)) {
                         const activity = map.activities[key];
-                        if (!user.mapProgress[map.mapId].activityState[activity.activityId]) {
-                            user.mapProgress[map.mapId].activityState[activity.activityId] = {
+                        if (!user.mapProgress[pageSource][map.mapId].activityState[activity.activityId]) {
+                            user.mapProgress[pageSource][map.mapId].activityState[activity.activityId] = {
                                 activityId: activity.activityId,
                                 isCompleted: true
                             };
                         }
                         else {
-                            user.mapProgress[map.mapId].activityState[activity.activityId].isCompleted = true;
+                            user.mapProgress[pageSource][map.mapId].activityState[activity.activityId].isCompleted = true;
                         }
 
                         if (activity.tags?.length && sourceUrl) {
