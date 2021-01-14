@@ -880,7 +880,7 @@ namespace ts.pxtc.Util {
     }
 
     export function timeout(ms: number): Promise<void> {
-        return new Promise(resolve => setTimeout(resolve, ms))
+        return new Promise(resolve => setTimeout(() => resolve(), ms))
     }
 
     // node.js overrides this to use process.cpuUsage()
