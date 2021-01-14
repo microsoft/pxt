@@ -38,7 +38,7 @@ To debug a local extension, from the local dev server, add ``localeditorextensio
 and add the a ``localUrl`` field.
 
 Custom domain urls are supported but must be registered in the ``targetconfig.json`` package
-configuration section under ``approvedEditorExtensions``.
+configuration section under ``packages.approvedEditorExtensions``.
 ## Protocol
 
 The editor and the editor extension &lt;iframe&gt; communicate using a protocol of IFrame messages. 
@@ -74,7 +74,7 @@ window.addEventListener("message", function(ev) {
 
 When the user presses the editor extension button:
 
-* The GitHub pages site is loaded in an &lt;iframe&gt; with an extension id in the hashmark, e.g. https://microsoft.github.io/pxt-neoanim/#extid for the extension https://github.com/microsoft/pxt-neoanim.
+* The registered URL site is loaded in an &lt;iframe&gt; with an extension id in the hashmark, e.g. https://microsoft.github.io/pxt-neoanim/#extid for the extension https://github.com/microsoft/pxt-neoanim.
 
 ### ~ hint
 
@@ -147,7 +147,7 @@ function receivedResponse(resp) {
 
 ### Read user code
 
-The ``extusercode`` message requests to read the entire set of files in the project. The user will be prompted to give permission. If successfull, the response contains a ``resp`` field with a map of the file names to file contents.
+The ``extusercode`` message requests to read the entire set of files in the project. If successfull, the response contains a ``resp`` field with a map of the file names to file contents.
 
 ```typescript-ignore
 export interface UserCodeResponse extends ExtensionResponse {
@@ -158,7 +158,7 @@ export interface UserCodeResponse extends ExtensionResponse {
 
 ### Data streams
 
-When available, the editor may stream data coming from the devices. The ``extdatastream`` message requests to stream data. The user will be prompted to give permission. The following message sets a request for serial messages:
+When available, the editor may stream data coming from the devices. The ``extdatastream`` message requests to stream data. The following message sets a request for serial messages:
 
 ```typescript-ignore
 var msg {
