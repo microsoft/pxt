@@ -34,7 +34,7 @@ namespace pxt.runner {
         package?: string;
         jresClass?: string;
         jres?: string;
-        assetjson?: string;
+        assetJSON?: string;
         showEdit?: boolean;
         showJavaScript?: boolean; // default is to show blocks first
         split?: boolean; // split in multiple divs if too big
@@ -1148,14 +1148,14 @@ namespace pxt.runner {
     function readAssetJson(options: ClientRenderOptions) {
         $('.assetjson').each((i, c) => {
             const $c = $(c);
-            options.assetjson = $c.text();
+            options.assetJSON = $c.text();
             c.parentElement.remove();
         });
     }
 
     function mergeAssetJson(options: ClientRenderOptions) {
-        if (!options.assetjson && !options.jres) return undefined;
-        const mergedJson = options.assetjson ? JSON.parse(options.assetjson) : {};
+        if (!options.assetJSON && !options.jres) return undefined;
+        const mergedJson = pxt.tutorial.parseAssetJson(options.assetJSON) || {};
         if (options.jres) {
             const parsedTmapJres = JSON.parse(options.jres);
             mergedJson[pxt.TILEMAP_JRES] = JSON.stringify(parsedTmapJres);

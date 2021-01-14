@@ -416,7 +416,7 @@ ${code}
             [pxt.TILEMAP_JRES]: files[pxt.TILEMAP_JRES],
             [pxt.TILEMAP_CODE]: files[pxt.TILEMAP_CODE],
             [pxt.IMAGES_JRES]: files[pxt.IMAGES_JRES],
-            [pxt.IMAGES_CODE]: files[pxt.IMAGES_CODE]
+            [pxt.IMAGES_CODE]: files[pxt.IMAGES_CODE],
         }
     }
 }
