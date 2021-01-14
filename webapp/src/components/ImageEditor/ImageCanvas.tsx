@@ -499,10 +499,14 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         const { prevFrame: nextFrame, onionSkinEnabled, selectedColor, toolWidth, drawingMode, tool } = this.props;
         const imageState = this.getImageState();
         const activeColor = drawingMode == TileDrawingMode.Wall ? WALL_COLOR : selectedColor;
+        let shouldCenter = false;
 
         if (this.canvas) {
             this.imageWidth = imageState.bitmap.width;
             this.imageHeight = imageState.bitmap.height;
+
+            shouldCenter = this.canvas.width != imageState.bitmap.width * this.cellWidth ||
+                this.canvas.height != imageState.bitmap.height * this.cellWidth;
 
             this.canvas.width = imageState.bitmap.width * this.cellWidth;
             this.canvas.height = imageState.bitmap.height * this.cellWidth;
@@ -568,6 +572,10 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
                     }
                 }
             }
+        }
+
+        if (shouldCenter) {
+            this.zoomToCanvas();
         }
     }
 
