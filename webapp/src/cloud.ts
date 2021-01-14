@@ -135,10 +135,10 @@ function resetAsync(): Promise<void> {
 }
 
 let _inProgressSyncAsync: Promise<any> = Promise.resolve()
-export async function syncAsync(): Promise<any> {
+export async function syncAsync(hdrs?: Header[]): Promise<Header[]> {
     // ensure we don't run this twice
     if (_inProgressSyncAsync.isResolved()) {
-        _inProgressSyncAsync = syncAsyncInternal()
+        _inProgressSyncAsync = syncAsyncInternal(hdrs)
     }
     return _inProgressSyncAsync
 }
@@ -168,18 +168,33 @@ async function transferFromCloud(local: Header | null, remoteFile: File): Promis
     return newHeader
 }
 
-async function syncAsyncInternal(): Promise<any> {
-    if (!auth.hasIdentity()) { return; }
-    if (!await auth.loggedIn()) { return; }
+async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
+    if (!auth.hasIdentity()) { return []; }
+    if (!await auth.loggedIn()) { return []; }
     try {
-        pxt.log("Synchronizing with the cloud...")
+        const partialSync = hdrs && hdrs.length > 0
+        pxt.log(`Synchronizing${partialSync ? ` ${hdrs.length} project(s) ` : " all projects "}with the cloud...`)
         const userId = auth.user()?.id;
         // Filter to cloud-synced headers owned by the current user.
-        const localCloudHeaders = workspace.getHeaders(true)
-            .filter(h => h.cloudUserId && h.cloudUserId === userId);
+        const localCloudHeaders = (hdrs || workspace.getHeaders(true))
+            .filter(h => h.cloudUserId && h.cloudUserId === userId)
         const syncStart = U.nowSeconds()
         const agoStr = (t: number) => `${syncStart - t} seconds ago`
-        const remoteHeaders = await listAsync();
+        const remoteFiles: {[id: string]: File} = {}
+        const getWithCacheAsync = async (h: Header): Promise<File> => {
+            if (!remoteFiles[h.id]) {
+                remoteFiles[h.id] = await getAsync(h)
+            }
+            return remoteFiles[h.id]
+        }
+        if (partialSync) {
+            // during a partial sync, get the full files for each cloud project and
+            // save them to our temporary cache
+            await Promise.all(hdrs.map(h => getWithCacheAsync(h)))
+        }
+        const remoteHeaders = partialSync
+            ? U.values(remoteFiles).map(f => f.header) // a partial set of cloud headers
+            : await listAsync() // all cloud headers
         const numDiff = remoteHeaders.length - localCloudHeaders.length
         if (numDiff !== 0) {
             pxt.log(`${Math.abs(numDiff)} ${numDiff > 0 ? 'more' : 'fewer'} projects found in the cloud.`);
@@ -203,7 +218,7 @@ async function syncAsyncInternal(): Promise<any> {
                 //  don't return etags per-version. And because of how etags work, the record itself can never
                 //  have the latest etag version.
                 if (local.modificationTime !== remote.modificationTime) {
-                    const remoteFile = await getAsync(local);
+                    const remoteFile = await getWithCacheAsync(local);
                     if (local.cloudCurrent) {
                         // No local changes, download latest.
                         await fromCloud(local, remoteFile);
@@ -246,7 +261,7 @@ async function syncAsyncInternal(): Promise<any> {
                     // Nothing to do. We're up to date locally.
                     return Promise.resolve();
                 }
-            } else {
+            } else if (!partialSync) {
                 if (local.cloudVersion) {
                     pxt.debug(`Project ${local.id} incorrectly thinks it is synced to the cloud (ver: ${local.cloudVersion})`)
                     local.cloudVersion = null;
@@ -259,7 +274,7 @@ async function syncAsyncInternal(): Promise<any> {
         tasks = [...tasks, ...remoteHeaders.map(async (remote) => {
             if (remoteHeaderMap[remote.id]) {
                 // Project exists remotely and not locally, download it.
-                const remoteFile = await getAsync(remote);
+                const remoteFile = await getWithCacheAsync(remote);
                 pxt.debug(`importing new cloud project '${remoteFile.header.name}' (${remoteFile.header.id})`)
                 await fromCloud(null, remoteFile)
             }
@@ -268,22 +283,32 @@ async function syncAsyncInternal(): Promise<any> {
 
         // sanity check: all cloud headers should have a new sync time
         const noCloudProjs = remoteHeaders.length === 0
-        U.assert(noCloudProjs || workspace.getLastCloudSync() >= syncStart, 'Cloud sync failed!');
+        U.assert(partialSync || noCloudProjs || workspace.getLastCloudSync() >= syncStart, 'Cloud sync failed!');
 
-        // TODO: This is too heavy handed. We can be more fine grain here with some work.
         const elapsed = U.nowSeconds() - syncStart;
-        const numLocalChanges = U.values(localHeaderChanges).length;
-        pxt.log(`Cloud sync finished after ${elapsed} seconds with ${numLocalChanges} local changes.`);
-        if (numLocalChanges) {
-            core.infoNotification(lf("Cloud synchronization finished. Reloading... "));
-            setTimeout(() => {
-                pxt.log("Forcing reload.")
-                location.reload();
-            }, 3000);
+        const localHeaderChangesList = U.values(localHeaderChanges)
+        pxt.log(`Cloud sync finished after ${elapsed} seconds with ${localHeaderChangesList.length} local changes.`);
+        if (!partialSync) {
+            onChangesSynced(localHeaderChangesList)
         }
+
+        return localHeaderChangesList
     }
     catch (e) {
         pxt.reportException(e);
+    }
+    return [];
+}
+
+export function onChangesSynced(changes: Header[]) {
+    if (changes.length) {
+        // TODO: This is too heavy handed. We can be more fine grain here with some work.
+        //  preferably with just the virtual data APIs we can push updates to the whole editor.
+        core.infoNotification(lf("Cloud synchronization finished. Reloading... "));
+        setTimeout(() => {
+            pxt.log("Forcing reload.")
+            location.reload();
+        }, 3000);
     }
 }
 

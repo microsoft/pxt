@@ -879,6 +879,10 @@ namespace ts.pxtc.Util {
         return Math.round(now() / 1000)
     }
 
+    export function timeout(ms: number): Promise<void> {
+        return new Promise(resolve => setTimeout(() => resolve(), ms))
+    }
+
     // node.js overrides this to use process.cpuUsage()
     export let cpuUs = (): number => {
         // current time in microseconds
