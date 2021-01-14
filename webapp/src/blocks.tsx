@@ -1137,11 +1137,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             return;
         pxt.tickEvent('blocks.extensions.open', { extension: extensionName })
 
-        const { name, url, repoStatus, trusted } = await resolveExtensionUrl(pkg);
+        const { name, url, trusted } = await resolveExtensionUrl(pkg);
 
         // should never happen
-        if (repoStatus === pxt.github.GitRepoStatus.Banned) {
+        if (!trusted) {
             core.errorNotification(lf("Sorry, this extension is not allowed."))
+            pxt.tickEvent('blocks.extensions.untrusted', { extension: extensionName })
             return;
         }
         // no url registered?
@@ -1149,11 +1150,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             core.errorNotification(lf("Sorry, this extension does not have an editor."))
             return;
         }
-        /* tslint:enable:no-http-string */
-        this.parent.openExtension(name,
-            url,
-            !trusted && repoStatus !== pxt.github.GitRepoStatus.Approved,
-            trusted);
+
+        pxt.tickEvent('blocks.extensions.trusted', { extension: extensionName })
+        this.parent.openExtension(name, url);
     }
 
     private partitionBlocks() {

@@ -4,13 +4,6 @@ namespace pxt.editor {
         messages?: T;
     }
 
-    export interface Permissions<T> {
-        console?: T;
-        readUserCode?: T;
-        addDependencies?: T;
-        messages?: T;
-    }
-
     export interface ExtensionFiles {
         code?: string;
         json?: string;
@@ -20,12 +13,6 @@ namespace pxt.editor {
 
     export interface WriteExtensionFiles extends ExtensionFiles {
         dependencies?: pxt.Map<string>;
-    }
-
-    export enum PermissionResponses {
-        Granted,
-        Denied,
-        NotAvailable
     }
 
     export interface ExtensionMessage extends EditorMessage {
@@ -127,34 +114,7 @@ namespace pxt.editor {
     }
 
     export interface DataStreamResponse extends ExtensionResponse {
-        resp: DataStreams<PermissionResponses>;
-    }
-
-    /**
-     * Queries the current permissions granted to the extension.
-     */
-    export type ExtQueryPermissionType = "extquerypermission";
-
-    export interface QueryPermissionRequest extends ExtensionRequest {
-        action: ExtQueryPermissionType;
-    }
-
-    export interface QueryPermissionResponse extends ExtensionResponse {
-        resp: Permissions<PermissionResponses>;
-    }
-
-    /**
-     * Prompts the user for the specified permission
-     */
-    export type ExtRequestPermissionType = "extrequestpermission";
-
-    export interface PermissionRequest extends ExtensionRequest {
-        action: ExtRequestPermissionType;
-        body: Permissions<boolean>;
-    }
-
-    export interface PermissionResponse extends ExtensionResponse {
-        resp: Permissions<PermissionResponses>;
+        resp: DataStreams<boolean>;
     }
 
     /**

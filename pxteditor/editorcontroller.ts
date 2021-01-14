@@ -75,8 +75,6 @@ namespace pxt.editor {
         // package extension messasges
         | ExtInitializeType
         | ExtDataStreamType
-        | ExtQueryPermissionType
-        | ExtRequestPermissionType
         | ExtUserCodeType
         | ExtReadCodeType
         | ExtWriteCodeType
