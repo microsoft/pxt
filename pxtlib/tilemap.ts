@@ -1069,6 +1069,8 @@ namespace pxt {
         }
 
         loadAssetsJRes(jres: Map<JRes>) {
+            jres = inflateJRes(jres);
+
             for (const key of Object.keys(jres)) {
                 const entry = jres[key];
 

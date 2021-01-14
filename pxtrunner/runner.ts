@@ -1073,16 +1073,19 @@ ${linkString}
                             };
                         pxt.debug(bresp.outfiles["main.blocks"])
 
-                        const tilemapJres = options.assets?.[TILEMAP_JRES];
-                        if (tilemapJres) {
+                        const tilemapJres = options.assets?.[pxt.TILEMAP_JRES];
+                        const assetsJres = options.assets?.[pxt.IMAGES_JRES];
+                        if (tilemapJres || assetsJres) {
                             tilemapProject = new TilemapProject();
                             tilemapProject.loadPackage(mainPkg);
-                            tilemapProject.loadTilemapJRes(JSON.parse(tilemapJres), true);
+                            if (tilemapJres)
+                                tilemapProject.loadTilemapJRes(JSON.parse(tilemapJres), true);
+                            if (assetsJres)
+                                tilemapProject.loadAssetsJRes(JSON.parse(assetsJres))
                         }
-
                         const blocksSvg = pxt.blocks.render(bresp.outfiles["main.blocks"], options);
 
-                        if (tilemapJres) {
+                        if (tilemapJres || assetsJres) {
                             tilemapProject = null;
                         }
 
@@ -1133,14 +1136,18 @@ ${linkString}
                         pxt.blocks.initializeAndInject(blocksInfo);
 
                         const tilemapJres = options.assets?.[pxt.TILEMAP_JRES];
-                        if (tilemapJres) {
+                        const assetsJres = options.assets?.[pxt.IMAGES_JRES];
+                        if (tilemapJres || assetsJres) {
                             tilemapProject = new TilemapProject();
                             tilemapProject.loadPackage(mainPkg);
-                            tilemapProject.loadTilemapJRes(JSON.parse(tilemapJres), true);
+                            if (tilemapJres)
+                                tilemapProject.loadTilemapJRes(JSON.parse(tilemapJres), true);
+                            if (assetsJres)
+                                tilemapProject.loadAssetsJRes(JSON.parse(assetsJres))
                         }
                         const blockSvg = pxt.blocks.render(code, options);
 
-                        if (tilemapJres) {
+                        if (tilemapJres || assetsJres) {
                             tilemapProject = null;
                         }
 
