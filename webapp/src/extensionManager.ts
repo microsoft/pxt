@@ -128,7 +128,6 @@ export async function resolveExtensionUrl(pkg: pxt.Package) {
     // ALL EDITOR EXTENSIONS MUST NOW BE IN THE APPROVED LIST
     else if (extension.url
         && repoStatus === pxt.github.GitRepoStatus.Approved
-        && packagesConfig?.approvedEditorExtensionUrls
         && packagesConfig?.approvedEditorExtensionUrls?.indexOf(extension.url) > -1) {
         pxt.log(`extension url ${extension.url} trusted`)
         url = extension.url;

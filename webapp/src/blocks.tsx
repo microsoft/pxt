@@ -1145,11 +1145,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             pxt.tickEvent('blocks.extensions.untrusted', { extension: extensionName })
             return;
         }
-        // no url registered?
-        if (!url) {
-            core.errorNotification(lf("Sorry, this extension does not have an editor."))
-            return;
-        }
 
         pxt.tickEvent('blocks.extensions.trusted', { extension: extensionName })
         this.parent.openExtension(name, url);
