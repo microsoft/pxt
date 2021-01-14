@@ -2,13 +2,24 @@
 
 An editor extension may have an associated editor extension hosted in the Github Pages section of the repo.
 
-## ~ hint
+### ~ warning
 
-A lot of the plumbing has been done for you in this React-based template...
+Editor extension URLs must now be registered in ``targetconfig.json``
+under ``packages.approvedEditorExtensionUrls``:
 
-* [pxt-react-extension-template](https://github.com/microsoft/pxt-react-extension-template/generate) -- a React template to create an extension
+```
+{
+    ...
+    packages: {
+        ...
+        approvedEditorExtensionUrls: [
+            "url to extension"
+        ]
+    }
+}
+```
 
-## ~
+### ~
 
 ## Configuration
 
@@ -161,3 +172,11 @@ var msg {
 ```
 
 If successful, the editor will proxy serial messages to the editor &lt;iframe&gt;.
+
+## ~ hint
+
+A lot of the plumbing has been done for you in this React-based template...
+
+* [pxt-react-extension-template](https://github.com/microsoft/pxt-react-extension-template/generate) -- a React template to create an extension
+
+## ~
