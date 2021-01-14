@@ -10,6 +10,7 @@ namespace pxt.runner {
     export interface SimulateOptions {
         id?: string;
         code?: string;
+        jres?: string;
         highContrast?: boolean;
         light?: boolean;
         fullScreen?: boolean;
@@ -409,6 +410,12 @@ namespace pxt.runner {
         const currentTargetVersion = pxt.appTarget.versions.target;
         let compileResult = await compileAsync(false, opts => {
             if (simOptions.code) opts.fileSystem["main.ts"] = simOptions.code;
+            if (simOptions.jres) {
+                opts.sourceFiles.push(pxt.TILEMAP_JRES, pxt.TILEMAP_CODE)
+                opts.fileSystem[pxt.TILEMAP_JRES] = simOptions.jres;
+                opts.fileSystem[pxt.TILEMAP_CODE] = pxt.emitTilemapsFromJRes(JSON.parse(simOptions.jres));
+                opts.jres = pxt.inflateJRes(JSON.parse(simOptions.jres), opts.jres);
+            }
 
             // Api info needed for py2ts conversion, if project is shared in Python
             if (opts.target.preferredEditor === pxt.PYTHON_PROJECT_NAME) {
