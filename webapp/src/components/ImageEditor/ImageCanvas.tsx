@@ -86,6 +86,8 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     protected tileCache: HTMLCanvasElement[] = [];
     protected hasHover: boolean;
 
+    protected waitingToZoom: boolean;
+
     render() {
         const imageState = this.getImageState();
         const isPortrait = !imageState || (imageState.bitmap.height > imageState.bitmap.width);
@@ -751,14 +753,16 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
 
             const unit = this.getCanvasUnit(bounds);
 
-            const { canvasX, canvasY } = this.clientToCanvas(anchorX, anchorY, bounds);
+            if (unit) {
+                const { canvasX, canvasY } = this.clientToCanvas(anchorX, anchorY, bounds);
 
-            if (isNaN(canvasX) || isNaN(canvasY) || isNaN(oldX) || isNaN(oldY)) {
-                return;
+                if (isNaN(canvasX) || isNaN(canvasY) || isNaN(oldX) || isNaN(oldY)) {
+                    return;
+                }
+
+                this.panX += (oldX - canvasX) * unit;
+                this.panY += (oldY - canvasY) * unit;
             }
-
-            this.panX += (oldX - canvasX) * unit;
-            this.panY += (oldY - canvasY) * unit;
 
             this.applyZoom();
         }
@@ -799,6 +803,20 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             bounds = bounds || outer.getBoundingClientRect();
 
             const unit = this.getCanvasUnit(bounds);
+
+            if (unit === 0) {
+                if (this.waitingToZoom) return;
+                this.waitingToZoom = true;
+                requestAnimationFrame(() => {
+                    if (this.waitingToZoom) {
+                        this.waitingToZoom = false;
+                        this.applyZoom()
+                    }
+                });
+                return;
+            }
+            this.waitingToZoom = false;
+
             const newWidth = unit * this.imageWidth;
             const newHeight = unit * this.imageHeight;
             const minimumVisible = this.imageWidth > 1 && this.imageHeight > 1 ? unit * 2 : unit >> 1;
