@@ -114,7 +114,7 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
                 const packagesConfig = config?.packages;
                 if (!(packagesConfig?.approvedEditorExtensionUrls?.indexOf(url) > -1))
                     pxt.U.userError("Trying to load an unapproved extension")
-                
+
                 // loading
                 this.setState({ visible: true, extension: extension, url: url }, () => {
                     this.send(extension, {
