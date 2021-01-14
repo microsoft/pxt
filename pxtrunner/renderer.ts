@@ -34,6 +34,7 @@ namespace pxt.runner {
         package?: string;
         jresClass?: string;
         jres?: string;
+        assetjson?: string;
         showEdit?: boolean;
         showJavaScript?: boolean; // default is to show blocks first
         split?: boolean; // split in multiple divs if too big
@@ -262,9 +263,10 @@ namespace pxt.runner {
                     if (pxt.appTarget.simulator) padding = (100 / pxt.appTarget.simulator.aspectRatio) + '%';
                     const deps = options.package ? "&deps=" + encodeURIComponent(options.package) : "";
                     const url = getRunUrl(options) + "#nofooter=1" + deps;
-                    const jres = options.jres ? `data-jres="${encodeURIComponent(options.jres)}"` : "";
+                    const assetJson = mergeAssetJson(options);
+                    const assets = assetJson ? `data-assets="${encodeURIComponent(assetJson)}"` : "";
                     const data = encodeURIComponent($js.text());
-                    let $embed = $(`<div class="ui card sim"><div class="ui content"><div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${url}" data-code="${data}" ${jres} allowfullscreen="allowfullscreen" sandbox="allow-popups allow-forms allow-scripts allow-same-origin" frameborder="0"></iframe></div></div></div>`);
+                    let $embed = $(`<div class="ui card sim"><div class="ui content"><div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${url}" data-code="${data}" ${assets} allowfullscreen="allowfullscreen" sandbox="allow-popups allow-forms allow-scripts allow-same-origin" frameborder="0"></iframe></div></div></div>`);
                     $c.append($embed);
 
                     scrollJQueryIntoView($embed);
@@ -1139,8 +1141,27 @@ namespace pxt.runner {
         $('.' + options.jresClass).each((i, c) => {
             const $c = $(c);
             options.jres = $c.text();
-            $c.remove();
+            c.parentElement.remove();
         });
+    }
+
+    function readAssetJson(options: ClientRenderOptions) {
+        $('.assetjson').each((i, c) => {
+            const $c = $(c);
+            options.assetjson = $c.text();
+            c.parentElement.remove();
+        });
+    }
+
+    function mergeAssetJson(options: ClientRenderOptions) {
+        if (!options.assetjson && !options.jres) return undefined;
+        const mergedJson = options.assetjson ? JSON.parse(options.assetjson) : {};
+        if (options.jres) {
+            const parsedTmapJres = JSON.parse(options.jres);
+            mergedJson[pxt.TILEMAP_JRES] = JSON.stringify(parsedTmapJres);
+            mergedJson[pxt.TILEMAP_CODE] = pxt.emitTilemapsFromJRes(parsedTmapJres);
+        }
+        return JSON.stringify(mergedJson);
     }
 
     function renderDirectPython(options?: ClientRenderOptions) {
@@ -1241,14 +1262,16 @@ namespace pxt.runner {
                     </div>
                     </div></div>`)
             const deps = options.package ? "&deps=" + encodeURIComponent(options.package) : "";
-            const jres = options.jres ? encodeURIComponent(options.jres) : "";
+            const assetJson = mergeAssetJson(options);
+            const assets = assetJson ? `data-assets="${encodeURIComponent(assetJson)}"` : "";
+
             const url = getRunUrl(options) + "#nofooter=1" + deps;
             const data = encodeURIComponent($c.text().trim());
             const $simIFrame = $sim.find("iframe");
             $simIFrame.attr("src", url);
             $simIFrame.attr("data-code", data);
-            if (jres) {
-                $simIFrame.attr("data-jres", jres);
+            if (assetJson) {
+                $simIFrame.attr("data-assets", assetJson);
             }
             if (options.snippetReplaceParent) $c = $c.parent();
             $c.replaceWith($sim);
@@ -1263,6 +1286,7 @@ namespace pxt.runner {
 
         mergeConfig(options);
         readJRes(options);
+        readAssetJson(options);
 
         renderQueue = [];
         renderGhost(options);

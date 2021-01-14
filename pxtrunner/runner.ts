@@ -10,7 +10,7 @@ namespace pxt.runner {
     export interface SimulateOptions {
         id?: string;
         code?: string;
-        jres?: string;
+        assets?: string;
         highContrast?: boolean;
         light?: boolean;
         fullScreen?: boolean;
@@ -409,13 +409,21 @@ namespace pxt.runner {
         let didUpgrade = false;
         const currentTargetVersion = pxt.appTarget.versions.target;
         let compileResult = await compileAsync(false, opts => {
-            if (simOptions.code) opts.fileSystem["main.ts"] = simOptions.code;
-            if (simOptions.jres) {
-                opts.sourceFiles.push(pxt.TILEMAP_JRES, pxt.TILEMAP_CODE)
-                opts.fileSystem[pxt.TILEMAP_JRES] = simOptions.jres;
-                opts.fileSystem[pxt.TILEMAP_CODE] = pxt.emitTilemapsFromJRes(JSON.parse(simOptions.jres));
-                opts.jres = pxt.inflateJRes(JSON.parse(simOptions.jres), opts.jres);
+            if (simOptions.assets) {
+                const parsedAssets = JSON.parse(simOptions.assets);
+                for (const key of Object.keys(parsedAssets)) {
+                    const el = parsedAssets[key];
+                    opts.fileSystem[key] = el;
+                    if (opts.sourceFiles.indexOf(key) < 0) {
+                        opts.sourceFiles.push(key);
+                    }
+                    if (/\.jres$/.test(key)) {
+                        const parsedJres = JSON.parse(el)
+                        opts.jres = pxt.inflateJRes(parsedJres, opts.jres);
+                    }
+                }
             }
+            if (simOptions.code) opts.fileSystem["main.ts"] = simOptions.code;
 
             // Api info needed for py2ts conversion, if project is shared in Python
             if (opts.target.preferredEditor === pxt.PYTHON_PROJECT_NAME) {
