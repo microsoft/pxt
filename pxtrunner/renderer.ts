@@ -33,8 +33,8 @@ namespace pxt.runner {
         packageClass?: string;
         package?: string;
         jresClass?: string;
-        jres?: string;
-        assetJSON?: string;
+        assetJSONClass?: string;
+        assetJSON?: Map<string>;
         showEdit?: boolean;
         showJavaScript?: boolean; // default is to show blocks first
         split?: boolean; // split in multiple divs if too big
@@ -59,6 +59,7 @@ namespace pxt.runner {
             codeCardClass: 'lang-codecard',
             packageClass: 'lang-package',
             jresClass: 'lang-jres',
+            assetJSONClass: 'lang-assetsjson',
             projectClass: 'lang-project',
             snippetReplaceParent: true,
             simulator: true,
@@ -218,11 +219,13 @@ namespace pxt.runner {
                 pkg.setPreferredEditor(pxt.JAVASCRIPT_PROJECT_NAME);
             }
 
-            if (options.jres) {
-                host.writeFile(pkg, pxt.TILEMAP_JRES, options.jres);
-                host.writeFile(pkg, pxt.TILEMAP_CODE, pxt.emitTilemapsFromJRes(JSON.parse(options.jres)));
-                pkg.config.files.push(pxt.TILEMAP_JRES);
-                pkg.config.files.push(pxt.TILEMAP_CODE);
+            if (options.assetJSON) {
+                for (const key of Object.keys(options.assetJSON)) {
+                    if (pkg.config.files.indexOf(key) < 0) {
+                        pkg.config.files.push(key);
+                    }
+                    host.writeFile(pkg, key, options.assetJSON[key]);
+                }
             }
 
             const compressed = pkg.compressToFileAsync();
@@ -263,8 +266,7 @@ namespace pxt.runner {
                     if (pxt.appTarget.simulator) padding = (100 / pxt.appTarget.simulator.aspectRatio) + '%';
                     const deps = options.package ? "&deps=" + encodeURIComponent(options.package) : "";
                     const url = getRunUrl(options) + "#nofooter=1" + deps;
-                    const assetJson = mergeAssetJson(options);
-                    const assets = assetJson ? `data-assets="${encodeURIComponent(assetJson)}"` : "";
+                    const assets = options.assetJSON ? `data-assets="${encodeURIComponent(JSON.stringify(options.assetJSON))}"` : "";
                     const data = encodeURIComponent($js.text());
                     let $embed = $(`<div class="ui card sim"><div class="ui content"><div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${url}" data-code="${data}" ${assets} allowfullscreen="allowfullscreen" sandbox="allow-popups allow-forms allow-scripts allow-same-origin" frameborder="0"></iframe></div></div></div>`);
                     $c.append($embed);
@@ -430,7 +432,7 @@ namespace pxt.runner {
                 if (options.snippetReplaceParent) c = c.parent();
                 const segment = $('<div class="ui segment codewidget"/>').append(s);
                 c.replaceWith(segment);
-            }, { package: options.package, snippetMode: false, aspectRatio: options.blocksAspectRatio, jres: options.jres });
+            }, { package: options.package, snippetMode: false, aspectRatio: options.blocksAspectRatio, assets: options.assetJSON });
         }
 
         let snippetCount = 0;
@@ -451,7 +453,7 @@ namespace pxt.runner {
                 hexname: hexname,
                 hex: hex,
             });
-        }, { package: options.package, aspectRatio: options.blocksAspectRatio, jres: options.jres });
+        }, { package: options.package, aspectRatio: options.blocksAspectRatio, assets: options.assetJSON });
     }
 
     function decompileCallInfo(stmt: ts.Statement): pxtc.CallInfo {
@@ -500,7 +502,7 @@ namespace pxt.runner {
                 trs.insertAfter(c);
             }
             fillWithWidget(options, c, js, py, s, r, { showJs: true, showPy: true, hideGutter: true });
-        }, { package: options.package, snippetMode: true, aspectRatio: options.blocksAspectRatio, jres: options.jres });
+        }, { package: options.package, snippetMode: true, aspectRatio: options.blocksAspectRatio, assets: options.assetJSON });
     }
 
     function renderBlocksAsync(options: ClientRenderOptions): Promise<void> {
@@ -509,7 +511,7 @@ namespace pxt.runner {
             if (options.snippetReplaceParent) c = c.parent();
             const segment = $('<div class="ui segment codewidget"/>').append(s);
             c.replaceWith(segment);
-        }, { package: options.package, snippetMode: true, aspectRatio: options.blocksAspectRatio, jres: options.jres });
+        }, { package: options.package, snippetMode: true, aspectRatio: options.blocksAspectRatio, assets: options.assetJSON });
     }
 
     function renderStaticPythonAsync(options: ClientRenderOptions): Promise<void> {
@@ -527,7 +529,7 @@ namespace pxt.runner {
                 highlight($py);
                 fillWithWidget(options, c.parent(), /* js */ $js, /* py */ $py, /* svg */ undefined, r, woptions);
             }
-        }, { package: options.package, snippetMode: true, jres: options.jres });
+        }, { package: options.package, snippetMode: true, assets: options.assetJSON });
     }
 
     function renderBlocksXmlAsync(opts: ClientRenderOptions): Promise<void> {
@@ -559,7 +561,7 @@ namespace pxt.runner {
             if (opts.snippetReplaceParent) c = c.parent();
             const segment = $('<div class="ui segment codewidget"/>').append(s);
             c.replaceWith(segment);
-        }, { package: opts.package, snippetMode: true, aspectRatio: opts.blocksAspectRatio, jres: opts.jres });
+        }, { package: opts.package, snippetMode: true, aspectRatio: opts.blocksAspectRatio, assets: opts.assetJSON });
     }
 
     function renderDiffBlocksXmlAsync(opts: ClientRenderOptions): Promise<void> {
@@ -602,7 +604,7 @@ namespace pxt.runner {
             if (opts.snippetReplaceParent) c = c.parent();
             const segment = $('<div class="ui segment codewidget"/>').append(s);
             c.replaceWith(segment);
-        }, { package: opts.package, snippetMode: true, aspectRatio: opts.blocksAspectRatio, jres: opts.jres });
+        }, { package: opts.package, snippetMode: true, aspectRatio: opts.blocksAspectRatio, assets: opts.assetJSON });
     }
 
 
@@ -1038,7 +1040,7 @@ namespace pxt.runner {
 
             if (replaceParent) c = c.parent();
             c.replaceWith(ul)
-        }, { package: options.package, aspectRatio: options.blocksAspectRatio, jres: options.jres })
+        }, { package: options.package, aspectRatio: options.blocksAspectRatio, assets: options.assetJSON })
     }
 
     function fillCodeCardAsync(c: JQuery, cards: pxt.CodeCard[], options: pxt.docs.codeCard.CodeCardRenderOptions): Promise<void> {
@@ -1136,32 +1138,36 @@ namespace pxt.runner {
         })
     }
 
-    function readJRes(options: ClientRenderOptions) {
-        if (!options.jresClass) return;
-        $('.' + options.jresClass).each((i, c) => {
-            const $c = $(c);
-            options.jres = $c.text();
-            c.parentElement.remove();
-        });
-    }
-
     function readAssetJson(options: ClientRenderOptions) {
-        $('.assetjson').each((i, c) => {
-            const $c = $(c);
-            options.assetJSON = $c.text();
-            c.parentElement.remove();
-        });
-    }
-
-    function mergeAssetJson(options: ClientRenderOptions) {
-        if (!options.assetJSON && !options.jres) return undefined;
-        const mergedJson = pxt.tutorial.parseAssetJson(options.assetJSON) || {};
-        if (options.jres) {
-            const parsedTmapJres = JSON.parse(options.jres);
-            mergedJson[pxt.TILEMAP_JRES] = JSON.stringify(parsedTmapJres);
-            mergedJson[pxt.TILEMAP_CODE] = pxt.emitTilemapsFromJRes(parsedTmapJres);
+        let assetJson: string;
+        let tilemapJres: string;
+        if (options.jresClass) {
+            $(`.${options.jresClass}`).each((i, c) => {
+                const $c = $(c);
+                tilemapJres = $c.text();
+                c.parentElement.remove();
+            });
         }
-        return JSON.stringify(mergedJson);
+        if (options.assetJSONClass) {
+            $(`.${options.assetJSONClass}`).each((i, c) => {
+                const $c = $(c);
+                assetJson = $c.text();
+                c.parentElement.remove();
+            });
+        }
+
+        options.assetJSON = mergeAssetJson(assetJson, tilemapJres);
+
+        function mergeAssetJson(assetJSON: string, tilemapJres: string) {
+            if (!assetJSON && !tilemapJres) return undefined;
+            const mergedJson = pxt.tutorial.parseAssetJson(assetJSON) || {};
+            if (tilemapJres) {
+                const parsedTmapJres = JSON.parse(tilemapJres);
+                mergedJson[pxt.TILEMAP_JRES] = JSON.stringify(parsedTmapJres);
+                mergedJson[pxt.TILEMAP_CODE] = pxt.emitTilemapsFromJRes(parsedTmapJres);
+            }
+            return mergedJson;
+        }
     }
 
     function renderDirectPython(options?: ClientRenderOptions) {
@@ -1262,16 +1268,14 @@ namespace pxt.runner {
                     </div>
                     </div></div>`)
             const deps = options.package ? "&deps=" + encodeURIComponent(options.package) : "";
-            const assetJson = mergeAssetJson(options);
-            const assets = assetJson ? `data-assets="${encodeURIComponent(assetJson)}"` : "";
 
             const url = getRunUrl(options) + "#nofooter=1" + deps;
             const data = encodeURIComponent($c.text().trim());
             const $simIFrame = $sim.find("iframe");
             $simIFrame.attr("src", url);
             $simIFrame.attr("data-code", data);
-            if (assetJson) {
-                $simIFrame.attr("data-assets", assetJson);
+            if (options.assetJSON) {
+                $simIFrame.attr("data-assets", JSON.stringify(options.assetJSON));
             }
             if (options.snippetReplaceParent) $c = $c.parent();
             $c.replaceWith($sim);
@@ -1285,7 +1289,6 @@ namespace pxt.runner {
         if (options.showEdit) options.showEdit = !pxt.BrowserUtils.isIFrame();
 
         mergeConfig(options);
-        readJRes(options);
         readAssetJson(options);
 
         renderQueue = [];
