@@ -1505,7 +1505,10 @@ export async function saveToCloudAsync(h: Header) {
     pxt.debug(`cloud save to ${h.name} (${h.id})`)
     checkHeaderSession(h);
     const text = await getTextAsync(h.id)
-    return cloud.saveAsync(h, text)
+    const res = await cloud.saveAsync(h, text)
+    // TODO: update UX to indicate a save finished
+    pxt.log(`Project ${h.name} (${h.id.substr(0,4)}...) saved to cloud.`)
+    return res;
 }
 
 // this promise is set while a sync is in progress
