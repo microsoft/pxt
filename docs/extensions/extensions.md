@@ -2,7 +2,7 @@
 
 An editor extension may have an associated editor extension hosted in the Github Pages section of the repo.
 
-### ~ warning
+### ~ alert
 
 Editor extension URLs must now be registered in ``targetconfig.json``
 under ``packages.approvedEditorExtensionUrls``:
@@ -28,7 +28,9 @@ The editor extension is configured in the [pxt.json](/extensions/pxt-json) file 
 ```typescript-ignore
 {
     ...
-    extension: {}
+    extension: {
+        url: "url to extension"
+    }
 }
 ```
 
@@ -37,7 +39,7 @@ The editor will automatically add an "Editor" button for the editor extension in
 To debug a local extension, from the local dev server, add ``localeditorextensions=1`` to the url
 and add the a ``localUrl`` field.
 
-Custom domain urls are supported but must be registered in the ``targetconfig.json`` package
+Urls must be registered in the ``targetconfig.json`` package
 configuration section under ``packages.approvedEditorExtensions``.
 ## Protocol
 
