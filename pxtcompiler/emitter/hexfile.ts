@@ -228,6 +228,8 @@ namespace ts.pxtc {
                     ctx.codeStartAddr = drom.addr + drom.data.length
                     ctx.codeStartAddrPadded = (ctx.codeStartAddr + 0xff) & ~0xff
                     ctx.codePaddingSize = ctx.codeStartAddrPadded - ctx.codeStartAddr
+
+                    ctx.codeStartAddrPadded = 0 // still use .startaddr 0 in asm
                 }
 
                 return

@@ -706,7 +706,7 @@ namespace pxt.cpp {
                     })
                 }
 
-                m = /^PXT_EXPORT\((\w+)\)/.exec(ln)
+                m = /^\s*PXT_EXPORT\(([:\&\w]+)\)/.exec(ln)
                 if (m) {
                     if (!res.vmPointers)
                         res.vmPointers = []

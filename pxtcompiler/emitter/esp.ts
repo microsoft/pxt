@@ -244,9 +244,6 @@ namespace pxt.esp {
             const offset = r32(buf, ptr)
             const size = r32(buf, ptr + 4)
 
-            if (offset > 0x40200000 || offset < 0x3ffe0000 || size > 65536)
-                throw new Error(`ESP: strange segment at 0x${offset.toString(16)}`)
-
             ptr += segHdLen
 
             const data = buf.slice(ptr, ptr + size)
