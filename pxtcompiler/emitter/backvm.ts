@@ -47,8 +47,21 @@ ${vtName(info)}_start:
         .short ${info.classNo} ; class-id
         .short 0 ; reserved
         .word ${ifaceInfo.mult} ; hash-mult
-        .word 0,0, 0,0, 0,0, 0,0 ; space for 4 (VM_NUM_CPP_METHODS) native methods
 `;
+
+        if (embedVTs()) {
+            s += `
+            .word pxt::RefRecord_destroy
+            .word pxt::RefRecord_print
+            .word pxt::RefRecord_scan
+            .word pxt::RefRecord_gcsize
+            .word 0,0,0,0 ; keep in sync with VM_NUM_CPP_METHODS
+`
+        } else {
+            s += `
+            .word 0,0, 0,0, 0,0, 0,0 ; space for 4 (VM_NUM_CPP_METHODS) native methods
+`
+        }
 
         s += `
         .balign 4
@@ -118,6 +131,17 @@ ${info.id}_IfaceVT:
         if (!info.classNo)
             additionalClassInfos[info.id] = info
         return info.id + "_VT"
+    }
+
+    function embedVTs() {
+        return target.useESP
+    }
+
+    function vtRef(vt: string) {
+        if (embedVTs())
+            return `0xffffffff, ${vt}`
+        else
+            return `0xffffffff, 0xffffffff ; -> ${vt}`
     }
 
     /* tslint:disable:no-trailing-whitespace */
@@ -212,7 +236,7 @@ _start_${name}:
 
         U.iterMap(bin.hexlits, (k, v) => {
             section(v, SectionType.Literal, () =>
-                `.word 0xffffffff, 0xffffffff ; -> pxt::buffer_vt\n` +
+                `.word ${vtRef("pxt::buffer_vt")}\n` +
                 `.word 0xffffffff ; padding\n` +
                 hexLiteralAsm(k), [], pxt.BuiltInType.BoxedBuffer)
         })
@@ -233,7 +257,7 @@ _start_${name}:
             else oops("invalid vt")
 
             const text =
-                `.word 0xffffffff, 0xffffffff ; -> ${info.vt}\n` +
+                `.word ${vtRef(info.vt)}\n` +
                 info.asm
 
             section(bin.strings[k], SectionType.Literal, () => text, [], tp)
@@ -325,7 +349,7 @@ _start_${name}:
                 writeRaw(`; main`)
             }
 
-            write(`.word 0xffffffff, 0xffffffff ; -> pxt::RefAction_vt`)
+            write(`.word ${vtRef("pxt::RefAction_vtable")}`)
 
             write(`.short 0, ${proc.args.length} ; #args`)
             write(`.short ${proc.captured.length}, 0 ; #cap`)
