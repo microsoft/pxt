@@ -34,7 +34,8 @@ namespace pxtblockly {
         protected blocksInfo: pxtc.BlocksInfo;
         protected lightMode: boolean;
         protected undoRedoState: any;
-        protected pendingEdit = false
+        protected pendingEdit = false;
+        protected isEmpty = false;
 
         // If input is invalid, the subclass can set this to be true. The field will instead
         // render as a grey block and preserve the decompiled code
@@ -235,7 +236,7 @@ namespace pxtblockly {
 
                 const id = this.getBlockData();
                 const existing = project.lookupAsset(this.getAssetType(), id);
-                if (existing) {
+                if (existing && !(newText && this.isEmpty)) {
                     this.asset = existing;
                 }
                 else {
@@ -246,6 +247,7 @@ namespace pxtblockly {
                             project.updateAsset(this.asset);
                         }
                     }
+                    this.isEmpty = !newText;
                     this.asset = this.createNewAsset(newText);
                 }
                 this.updateAssetMeta();
