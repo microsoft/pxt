@@ -691,6 +691,8 @@ namespace pxt.sprite {
     }
 
     export function bitmapToImageLiteral(bitmap: Bitmap, fileType: "typescript" | "python"): string {
+        if (!bitmap || bitmap.height === 0 || bitmap.width === 0) return "";
+
         let res = imageLiteralPrologue(fileType);
 
         if (bitmap) {
