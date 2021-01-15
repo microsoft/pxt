@@ -1227,13 +1227,13 @@ namespace pxt {
                     if (needsInflation) {
                         toInflate.push(animation);
                     } else {
-                        this.state.animations.add(animation);
+                        assets.push(animation);
                     }
                 }
             }
 
             for (const animation of toInflate) {
-                this.state.animations.add(this.inflateAnimation(animation, assets));
+                assets.push(this.inflateAnimation(animation, assets));
             }
 
             return assets;
