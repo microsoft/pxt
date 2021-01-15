@@ -301,8 +301,14 @@ _start_${name}:
 
         if (res.buf) {
             let binstring = ""
-            for (let v of res.buf)
-                binstring += String.fromCharCode(v & 0xff, v >> 8)
+
+            if (embedVTs()) {
+                binstring = hexfile.patchHex(bin, res.buf, false, false)[0]
+            } else {
+                for (let v of res.buf)
+                    binstring += String.fromCharCode(v & 0xff, v >> 8)
+            }
+
             const myhex = ts.pxtc.encodeBase64(binstring)
             bin.writeFile(pxt.outputName(target), myhex)
         }

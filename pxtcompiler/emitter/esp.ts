@@ -115,12 +115,20 @@ namespace pxt.esp {
 
     const segHdLen = 8
 
+    function segToString(seg: Segment) {
+        return `0x${seg.addr.toString(16)} 0x${seg.data.length.toString(16)} bytes; ` +
+            `${seg.isDROM ? "drom " : ""}${seg.isMapped ? "mapped " : ""}${U.toHex(seg.data.slice(0, 20))}...`
+    }
+
     function padSegments(image: Image) {
         const align = 0x10000
         const alignMask = align - 1
 
         image = cloneStruct(image)
         image.segments.sort((a, b) => a.addr - b.addr)
+
+        pxt.debug("esp padding:\n" + image.segments.map(segToString).join("\n") + "\n")
+
         const mapped = image.segments.filter(s => s.isMapped)
         const nonMapped = image.segments.filter(s => !s.isMapped)
         image.segments = []
@@ -141,25 +149,28 @@ namespace pxt.esp {
             if (padLen > 0) {
                 seg = getPaddingSegment(padLen)
             } else {
-                if (((foff + segHdLen) & alignMask) != (seg.addr & alignMask))
-                    throw new Error("oops")
-                mapped.pop()
+                if (((foff + segHdLen) & alignMask) != (seg.addr & alignMask)) {
+                    throw new Error(`pad oops 0 ${foff}+${segHdLen} != ${seg.addr} (mod mask)`)
+                }
+                mapped.shift()
             }
             image.segments.push(seg)
             foff += segHdLen + seg.data.length
             if (foff & 3)
-                throw new Error("oops")
+                throw new Error("pad oops 1")
         }
 
         // append any remaining non-mapped segments
         image.segments = image.segments.concat(nonMapped)
 
+        pxt.debug("esp padded:\n" + image.segments.map(segToString).join("\n") + "\n")
+
         return image
 
         function alignmentNeeded(seg: Segment) {
-            const past = seg.addr & alignMask - segHdLen
-            let padLen = align - (foff & alignMask) + past
-            if (padLen == 0 || padLen == align)
+            const reqd = (seg.addr - segHdLen) & alignMask
+            let padLen = (reqd - foff) & alignMask
+            if (padLen == 0)
                 return 0
             padLen -= segHdLen
             if (padLen < 0)
@@ -183,8 +194,9 @@ namespace pxt.esp {
                 data: seg.data.slice(0, bytes)
             }
             seg.data = seg.data.slice(bytes)
+            seg.addr += res.data.length
             if (seg.data.length == 0)
-                nonMapped.pop()
+                nonMapped.shift()
             return res
         }
     }
@@ -195,8 +207,8 @@ namespace pxt.esp {
         for (const seg of image.segments) {
             size += segHdLen + seg.data.length
         }
-        size = (size + 16) & 15 // align to 16 bytes - last byte will be weak checksum
-        const res = new Uint8Array(size)
+        size = (size + 16) & ~15 // align to 16 bytes - last byte will be weak checksum
+        let res = new Uint8Array(size)
         res.set(image.header)
         res[1] = image.segments.length
         let off = image.header.length
@@ -214,11 +226,14 @@ namespace pxt.esp {
         if (digest) {
             res[23] = 1
             const digest = ts.pxtc.BrowserImpl.sha256buffer(res)
-            return pxt.U.uint8ArrayConcat([res, pxt.U.fromHex(digest)])
+            res = pxt.U.uint8ArrayConcat([res, pxt.U.fromHex(digest)])
         } else {
             res[23] = 0 // disable digest
-            return res
         }
+
+        // console.log("reparsed\n" + parseBuffer(res).segments.map(segToString).join("\n") + "\n")
+
+        return res
     }
 
     export function parseBuffer(buf: Uint8Array) {
