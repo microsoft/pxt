@@ -253,7 +253,7 @@ ${(cards || []).map(
         return md;
 
         function otherActionsToMd(oas: pxt.CodeCardAction[]): string {
-            return oas.map(oa => `* otherAction: ${oa.url} ${oa.editor || "ts"} ${oa.cardType || ""}`)
+            return oas.map(oa => `* otherAction: ${oa.url}, ${oa.editor || ""}, ${oa.cardType || ""}`)
                 .join('\n');
         }
     }
