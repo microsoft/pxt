@@ -1,6 +1,6 @@
 import * as actions from '../actions/types'
 import { guidGen } from '../lib/browserUtils';
-import { getCompletedTags, lookupActivityProgress, isMapCompleted } from '../lib/skillMapUtils';
+import { getCompletedTags, lookupActivityProgress, isMapCompleted, applyUserUpgrades } from '../lib/skillMapUtils';
 
 export type ModalType = "restart-warning" | "completion" | "report-abuse" | "reset";
 export type PageSourceStatus = "approved" | "banned" | "unknown";
@@ -11,7 +11,7 @@ export interface SkillMapState {
     description: string;
     infoUrl?: string;
     user: UserState;
-    pageSourceUrl?: string;
+    pageSourceUrl: string;
     pageSourceStatus: PageSourceStatus;
     maps: { [key: string]: SkillMap };
     selectedItem?: string;
@@ -37,7 +37,9 @@ const initialState: SkillMapState = {
     title: lf("Game Maker Guide"),
     description: lf("Level up your game making skills by completing the tutorials in this guide."),
     pageSourceStatus: "unknown",
+    pageSourceUrl: "default",
     user: {
+        version: pxt.skillmap.USER_VERSION,
         isDebug: true,
         id: guidGen(),
         mapProgress: {},
@@ -55,7 +57,10 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                     ...state.user,
                     mapProgress: {
                         ...state.user.mapProgress,
-                        [action.map.mapId]: { completionState: "incomplete", mapId: action.map.mapId, activityState: { } }
+                        [state.pageSourceUrl] : {
+                            ...state.user.mapProgress?.[state.pageSourceUrl],
+                            [action.map.mapId]: { completionState: "incomplete", mapId: action.map.mapId, activityState: { } }
+                        }
                     }
                 },
                 maps: {
@@ -80,9 +85,12 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                     ...state.user,
                     mapProgress: {
                         ...state.user.mapProgress,
-                        [action.mapId]: {
-                            ...state.user.mapProgress[action.mapId],
-                            completionState: "completed"
+                        [state.pageSourceUrl] : {
+                            ...state.user.mapProgress?.[state.pageSourceUrl],
+                            [action.mapId]: {
+                                ...state.user.mapProgress?.[state.pageSourceUrl]?.[action.mapId],
+                                completionState: "completed"
+                            }
                         }
                     }
                 }
@@ -96,6 +104,7 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                     state: "active",
                     currentHeaderId: lookupActivityProgress(
                         state.user,
+                        state.pageSourceUrl,
                         action.mapId,
                         action.activityId,
                     )?.headerId
@@ -115,7 +124,7 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                 ...state,
                 editorView: undefined,
                 user: action.finished ?
-                    setActivityFinished(state.user, state.maps[state.editorView!.currentMapId], state.editorView!.currentActivityId) :
+                    setActivityFinished(state.user, state.pageSourceUrl, state.maps[state.editorView!.currentMapId], state.editorView!.currentActivityId) :
                     state.user
             };
         case actions.RESTART_ACTIVITY:
@@ -129,22 +138,24 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                 },
                 user: setHeaderIdForActivity(
                     state.user,
+                    state.pageSourceUrl,
                     state.maps[action.mapId],
                     action.activityId
                 )
             }
         case actions.SET_HEADERID_FOR_ACTIVITY:
-            if (!state.editorView) return state;
+            const isCurrentActivity = state.editorView?.currentActivityId === action.activityId && state.editorView?.currentMapId === action.mapId;
             return {
                 ...state,
-                editorView: {
+                editorView: isCurrentActivity ? {
                     ...state.editorView!,
                     currentHeaderId: action.id
-                },
+                } : state.editorView,
                 user: setHeaderIdForActivity(
                     state.user,
-                    state.maps[state.editorView!.currentMapId],
-                    state.editorView!.currentActivityId,
+                    state.pageSourceUrl,
+                    state.maps[action.mapId],
+                    action.activityId,
                     action.id,
                     action.currentStep,
                     action.maxSteps
@@ -153,7 +164,7 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
         case actions.SET_USER:
             return {
                 ...state,
-                user: action.user
+                user: applyUserUpgrades(action.user, pxt.skillmap.USER_VERSION, state.pageSourceUrl, state.maps)
             };
         case actions.RESET_USER:
             return {
@@ -172,7 +183,7 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                     ...state.user,
                     completedTags: {
                         ...state.user.completedTags,
-                        [state.pageSourceUrl]: getCompletedTags(state.user, Object.keys(state.maps).map(key => state.maps[key]))
+                        [state.pageSourceUrl]: getCompletedTags(state.user, state.pageSourceUrl, Object.keys(state.maps).map(key => state.maps[key]))
                     }
                 }
             }
@@ -228,9 +239,9 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
 }
 
 
-export function setHeaderIdForActivity(user: UserState, map: SkillMap, activityId: string, headerId?: string, currentStep?: number, maxSteps?: number): UserState {
+export function setHeaderIdForActivity(user: UserState, pageSource: string, map: SkillMap, activityId: string, headerId?: string, currentStep?: number, maxSteps?: number, isCompleted = false): UserState {
     const mapId = map.mapId;
-    let existing = lookupActivityProgress(user, mapId, activityId);
+    let existing = lookupActivityProgress(user, pageSource, mapId, activityId);
 
     if (!existing) {
         existing = {
@@ -242,34 +253,37 @@ export function setHeaderIdForActivity(user: UserState, map: SkillMap, activityI
         }
     }
 
-    const shouldTransition = isMapCompleted(user, map, activityId) && !existing.isCompleted;
-    const isCompleted = existing.isCompleted || currentStep !== undefined && maxSteps !== undefined && currentStep >= maxSteps;
+    const shouldTransition = isMapCompleted(user, pageSource, map, activityId) && !existing.isCompleted;
+    const currentMapProgress = user.mapProgress?.[pageSource] || {};
 
     return {
         ...user,
         mapProgress: {
             ...user.mapProgress,
-            [mapId]: {
-                ...(user.mapProgress[mapId] || { mapId }),
-                activityState: {
-                    ...(user.mapProgress[mapId]?.activityState || {}),
-                    [activityId]: {
-                        ...existing,
-                        headerId,
-                        currentStep,
-                        maxSteps,
-                        isCompleted
-                    }
-                },
-                completionState: shouldTransition ? "transitioning" : user.mapProgress?.[mapId]?.completionState
+            [pageSource]: {
+                ...currentMapProgress,
+                [mapId]: {
+                    ...(currentMapProgress?.[mapId] || { mapId }),
+                    activityState: {
+                        ...(currentMapProgress?.[mapId]?.activityState || {}),
+                        [activityId]: {
+                            ...existing,
+                            headerId,
+                            currentStep,
+                            maxSteps,
+                            isCompleted: existing.isCompleted || isCompleted
+                        }
+                    },
+                    completionState: shouldTransition ? "transitioning" : currentMapProgress?.[mapId]?.completionState
+                }
             }
         }
     };
 }
 
-export function setActivityFinished(user: UserState, map: SkillMap, activityId: string) {
+export function setActivityFinished(user: UserState, pageSource: string, map: SkillMap, activityId: string) {
     const mapId = map.mapId;
-    let existing = lookupActivityProgress(user, mapId, activityId);
+    let existing = lookupActivityProgress(user, pageSource, mapId, activityId);
 
     if (!existing) {
         existing = {
@@ -280,21 +294,25 @@ export function setActivityFinished(user: UserState, map: SkillMap, activityId: 
         }
     }
 
-    const shouldTransition = isMapCompleted(user, map, activityId) && !existing.isCompleted;
+    const shouldTransition = isMapCompleted(user, pageSource, map, activityId) && !existing.isCompleted;
+    const currentMapProgress = user.mapProgress?.[pageSource] || {};
     return {
         ...user,
         mapProgress: {
             ...user.mapProgress,
-            [mapId]: {
-                ...(user.mapProgress[mapId] || { mapId }),
-                activityState: {
-                    ...(user.mapProgress[mapId]?.activityState || {}),
-                    [activityId]: {
-                        ...existing,
-                        isCompleted: true
-                    }
-                },
-                completionState: shouldTransition ? "transitioning" : user.mapProgress?.[mapId]?.completionState
+            [pageSource]: {
+                ...currentMapProgress,
+                [mapId]: {
+                    ...(currentMapProgress?.[mapId] || { mapId }),
+                    activityState: {
+                        ...(currentMapProgress?.[mapId]?.activityState || {}),
+                        [activityId]: {
+                            ...existing,
+                            isCompleted: true
+                        }
+                    },
+                    completionState: shouldTransition ? "transitioning" : currentMapProgress?.[mapId]?.completionState
+                }
             }
         }
     };

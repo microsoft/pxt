@@ -72,6 +72,8 @@ function getUsedBlocksInternalAsync(code: string[], id: string, language?: strin
                     const blk = allblocks[bi];
                     if (!blk.isShadow()) usedBlocks[blk.type] = 1;
                 }
+                headless.dispose();
+
                 if (pxt.options.debug)
                     pxt.debug(JSON.stringify(usedBlocks, null, 2));
 
@@ -315,6 +317,7 @@ interface TutorialCardProps extends ISettingsProps {
 export class TutorialCard extends data.Component<TutorialCardProps, TutorialCardState> {
     private prevStep: number;
     private cardHeight: number;
+    private resizeDebouncer: () => void;
 
     public focusInitialized: boolean;
 
@@ -339,6 +342,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         this.finishTutorial = this.finishTutorial.bind(this);
         this.toggleExpanded = this.toggleExpanded.bind(this);
         this.onMarkdownDidRender = this.onMarkdownDidRender.bind(this);
+        this.handleResize = this.handleResize.bind(this);
 
     }
 
@@ -433,8 +437,15 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         }
     }
 
+    private handleResize() {
+        const options = this.props.parent.state.tutorialOptions;
+        this.setShowSeeMore(options.autoexpandStep);
+    }
+
     componentDidMount() {
         this.setShowSeeMore(this.props.parent.state.tutorialOptions.autoexpandStep);
+        this.resizeDebouncer = pxt.Util.debounce(this.handleResize, 500);
+        window.addEventListener('resize', this.resizeDebouncer);
     }
 
     onMarkdownDidRender() {
@@ -450,6 +461,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         this.props.parent.stopPokeUserActivity();
 
         this.removeHintOnClick();
+        window.removeEventListener('resize', this.resizeDebouncer);
     }
 
     private removeHintOnClick() {
@@ -501,7 +513,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         const tutorialCard = this.refs['tutorialmessage'] as HTMLElement;
         let show = false;
         if (tutorialCard && tutorialCard.firstElementChild && tutorialCard.firstElementChild.firstElementChild) {
-            show = tutorialCard.clientHeight < tutorialCard.firstElementChild.firstElementChild.scrollHeight;
+            show = tutorialCard.clientHeight <= tutorialCard.firstElementChild.firstElementChild.scrollHeight;
             if (show) {
                 this.cardHeight = tutorialCard.firstElementChild.firstElementChild.scrollHeight;
                 if (autoexpand) this.props.parent.setTutorialInstructionsExpanded(true);

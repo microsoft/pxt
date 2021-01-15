@@ -1,3 +1,4 @@
+
 /// <reference path="./skillMap.d.ts" />
 
 const testMap = ``

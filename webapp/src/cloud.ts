@@ -115,14 +115,23 @@ function setAsync(h: Header, prevVersion: Version, text?: ScriptText): Promise<V
     });
 }
 
-export async function saveAsync(h: Header, text?: ScriptText): Promise<void> {
-    if (!auth.hasIdentity()) { return; }
-    if (!await auth.loggedIn()) { return; }
+export enum CloudSaveResult {
+    Success,
+    SyncError,
+    NotLoggedIn
+}
+export async function saveAsync(h: Header, text?: ScriptText): Promise<CloudSaveResult> {
+    if (!auth.hasIdentity()) { return CloudSaveResult.NotLoggedIn; }
+    if (!await auth.loggedIn()) { return CloudSaveResult.NotLoggedIn; }
     const res = await setAsync(h, h.cloudVersion, text)
     if (!res) {
         // wait to synchronize
         pxt.debug('save to cloud failed; synchronizing...')
+        pxt.tickEvent(`identity.cloudSaveFailedTriggeringFullSync`);
         await syncAsync()
+        return CloudSaveResult.SyncError;
+    } else {
+        return CloudSaveResult.Success;
     }
 }
 
@@ -138,34 +147,85 @@ function resetAsync(): Promise<void> {
 }
 
 let _inProgressSyncAsync: Promise<any> = Promise.resolve()
-export async function syncAsync(): Promise<any> {
+export async function syncAsync(hdrs?: Header[]): Promise<Header[]> {
     // ensure we don't run this twice
     if (_inProgressSyncAsync.isResolved()) {
-        _inProgressSyncAsync = syncAsyncInternal()
+        _inProgressSyncAsync = syncAsyncInternal(hdrs)
     }
     return _inProgressSyncAsync
 }
 
-async function syncAsyncInternal(): Promise<any> {
-    if (!auth.hasIdentity()) { return; }
-    if (!await auth.loggedIn()) { return; }
+async function transferToCloud(local: Header, cloudVersion: string): Promise<Header> {
+    const text = await workspace.getTextAsync(local.id);
+    // since we just fetched the text from storage and we're about to make an update,
+    //  we should acquire the current header session.
+    workspace.acquireHeaderSession(local);
+    const newVer = await setAsync(local, cloudVersion, text);
+    U.assert(!!newVer, 'Failed to sync local change (1)');
+    // save to the workspace header again to make sure cloud metadata gets saved
+    await workspace.saveAsync(local, null, true)
+    return local
+}
+
+async function transferFromCloud(local: Header | null, remoteFile: File): Promise<Header> {
+    const newHeader = {...local || {}, ...remoteFile.header} // make sure we keep local-only metadata like _rev
+    if (local) {
+        // we've decided to overwrite what we have locally with what is in the
+        // the cloud, so acquire the header session
+        workspace.acquireHeaderSession(remoteFile.header)
+        await workspace.saveAsync(newHeader, remoteFile.text, true);
+    } else {
+        await workspace.importAsync(newHeader, remoteFile.text, true)
+    }
+    return newHeader
+}
+
+async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
+    if (!auth.hasIdentity()) { return []; }
+    if (!await auth.loggedIn()) { return []; }
     try {
-        pxt.log("Synchronizing with the cloud...")
+        const partialSync = hdrs && hdrs.length > 0
+        pxt.log(`Synchronizing${partialSync ? ` ${hdrs.length} project(s) ` : " all projects "}with the cloud...`)
         const userId = auth.user()?.id;
         // Filter to cloud-synced headers owned by the current user.
-        const localCloudHeaders = workspace.getHeaders(true)
-            .filter(h => h.cloudUserId && h.cloudUserId === userId);
+        const localCloudHeaders = (hdrs || workspace.getHeaders(true))
+            .filter(h => h.cloudUserId && h.cloudUserId === userId)
         const syncStart = U.nowSeconds()
+        pxt.tickEvent(`identity.sync.start`)
         const agoStr = (t: number) => `${syncStart - t} seconds ago`
-        const remoteHeaders = await listAsync();
+        const remoteFiles: {[id: string]: File} = {}
+        const getWithCacheAsync = async (h: Header): Promise<File> => {
+            if (!remoteFiles[h.id]) {
+                remoteFiles[h.id] = await getAsync(h)
+            }
+            return remoteFiles[h.id]
+        }
+        if (partialSync) {
+            // during a partial sync, get the full files for each cloud project and
+            // save them to our temporary cache
+            await Promise.all(hdrs.map(h => getWithCacheAsync(h)))
+        }
+        const remoteHeaders = partialSync
+            ? U.values(remoteFiles).map(f => f.header) // a partial set of cloud headers
+            : await listAsync() // all cloud headers
         const numDiff = remoteHeaders.length - localCloudHeaders.length
         if (numDiff !== 0) {
             pxt.log(`${Math.abs(numDiff)} ${numDiff > 0 ? 'more' : 'fewer'} projects found in the cloud.`);
         }
+        pxt.tickEvent(`identity.sync.projectNumbers`, {
+            numRemote: remoteHeaders.length,
+            numNonCloudLocal: workspace.getHeaders(true).length - localCloudHeaders.length,
+            numCloudLocal: localCloudHeaders.length
+        })
         const lastCloudChange = remoteHeaders.length ? Math.max(...remoteHeaders.map(h => h.modificationTime)) : syncStart
         pxt.log(`Last cloud project change was ${agoStr(lastCloudChange)}`);
         const remoteHeaderMap = U.toDictionary(remoteHeaders, h => h.id);
         const localHeaderChanges: pxt.Map<Header> = {}
+        const toCloud = transferToCloud;
+        const fromCloud = async (loc: Header, rem: File) => {
+            const newLoc = await transferFromCloud(loc, rem)
+            localHeaderChanges[newLoc.id] = newLoc
+        }
         let tasks = localCloudHeaders.map(async (local) => {
             const remote = remoteHeaderMap[local.id];
             delete remoteHeaderMap[local.id];
@@ -176,12 +236,11 @@ async function syncAsyncInternal(): Promise<any> {
                 //  don't return etags per-version. And because of how etags work, the record itself can never
                 //  have the latest etag version.
                 if (local.modificationTime !== remote.modificationTime) {
-                    const remoteFile = await getAsync(local);
+                    const remoteFile = await getWithCacheAsync(local);
                     if (local.cloudCurrent) {
                         // No local changes, download latest.
-                        const newHeader = {...local, ...remoteFile.header} // make sure we keep local-only metadata like _rev
-                        localHeaderChanges[remoteFile.header.id] = newHeader
-                        await workspace.saveAsync(newHeader, remoteFile.text, true);
+                        await fromCloud(local, remoteFile);
+                        pxt.tickEvent(`identity.sync.noConflict.localProjectUpdatedFromCloud`)
                     } else {
                         // Possible conflict.
                         const conflictStr = `conflict found for '${local.name}' (${local.id.substr(0, 5)}...). Last cloud change was ${agoStr(remoteFile.header.modificationTime)} and last local change was ${agoStr(local.modificationTime)}.`
@@ -190,23 +249,20 @@ async function syncAsyncInternal(): Promise<any> {
                             if (local.cloudVersion === remoteFile.version) {
                                 // local is one ahead, push as normal
                                 pxt.debug(`local project '${local.name}' has changes that will be pushed to the cloud.`)
+                                pxt.tickEvent(`identity.sync.noConflict.localProjectUpdatingToCloud`)
                             } else {
                                 // conflict and local wins
                                 // TODO: Pop a dialog and/or show the user a diff. Better yet, handle merges.
                                 pxt.log(conflictStr + ' Local will overwrite cloud.')
+                                pxt.tickEvent(`identity.sync.conflict.localOverwrittingCloud`)
                             }
-                            const text = await workspace.getTextAsync(local.id);
-                            const newVer = await setAsync(local, remoteFile.version, text);
-                            U.assert(!!newVer, 'Failed to sync local change (1)');
-                            // save to the workspace header again to make sure cloud metadata gets saved
-                            await workspace.saveAsync(local, null, true)
+                            await toCloud(local, remoteFile.version);
                         } else {
                             // conflict and remote wins
                             // TODO: Pop a dialog and/or show the user a diff. Better yet, handle merges.
                             pxt.log(conflictStr + ' Cloud will overwrite local.')
-                            const newHeader = {...local, ...remoteFile.header} // make sure we keep local-only metadata like _rev
-                            localHeaderChanges[remoteFile.header.id] = newHeader
-                            const localVer = await workspace.saveAsync(newHeader, remoteFile.text, true);
+                            pxt.tickEvent(`identity.sync.conflict.cloudOverwritingLocal`)
+                            await fromCloud(local, remoteFile);
                         }
                     }
                 } else {
@@ -215,63 +271,77 @@ async function syncAsyncInternal(): Promise<any> {
                         //return deleteAsync(local, local.cloudVersion);
                         // Mark remote copy as deleted.
                         remote.isDeleted = true;
-                        const newVer = await setAsync(remote, local.cloudVersion, {});
-                        const newHeader = {...local, ...remote} // make sure we keep local-only metadata like _rev
-                        await workspace.saveAsync(newHeader, null, true);
-                        U.assert(!!newVer, 'Failed to sync local change (2)');
+                        await toCloud(local, remote.cloudVersion)
+                        pxt.tickEvent(`identity.sync.localDeleteUpdatedCloud`)
                     }
                     if (remote.isDeleted) {
                         // Delete local copy.
                         local.isDeleted = true;
                         localHeaderChanges[local.id] = local
-                        return workspace.forceSaveAsync(local, {}, true)
+                        await workspace.forceSaveAsync(local, {}, true)
                             .then(() => { data.clearCache(); })
+                        pxt.tickEvent(`identity.sync.cloudDeleteUpdatedLocal`)
                     }
                     // Nothing to do. We're up to date locally.
                     return Promise.resolve();
                 }
-            } else {
+            } else if (!partialSync) {
                 if (local.cloudVersion) {
                     pxt.debug(`Project ${local.id} incorrectly thinks it is synced to the cloud (ver: ${local.cloudVersion})`)
                     local.cloudVersion = null;
+                    pxt.tickEvent(`identity.sync.incorrectlyVersionedLocalProjectPushedToCloud`)
+                } else {
+                    pxt.tickEvent(`identity.sync.orphanedLocalProjectPushedToCloud`)
                 }
                 // Local cloud synced project exists, but it didn't make it to the server,
                 // so let's push it now.
-                const text = await workspace.getTextAsync(local.id)
-                const newVer = await setAsync(local, local.cloudVersion, text);
-                U.assert(!!newVer, 'Failed to sync local change (3)')
-                const newHeader = {...local, ...remote} // make sure we keep local-only metadata like _rev
-                await workspace.saveAsync(newHeader, null, true);
+                await toCloud(local, null)
             }
         });
         tasks = [...tasks, ...remoteHeaders.map(async (remote) => {
             if (remoteHeaderMap[remote.id]) {
                 // Project exists remotely and not locally, download it.
-                const file = await getAsync(remote);
-                localHeaderChanges[file.header.id] = file.header
-                pxt.debug(`importing new cloud project '${file.header.name}' (${file.header.id})`)
-                return workspace.importAsync(file.header, file.text, true)
+                const remoteFile = await getWithCacheAsync(remote);
+                pxt.debug(`importing new cloud project '${remoteFile.header.name}' (${remoteFile.header.id})`)
+                await fromCloud(null, remoteFile)
+                pxt.tickEvent(`identity.sync.importCloudProject`)
             }
         })]
         await Promise.all(tasks);
 
         // sanity check: all cloud headers should have a new sync time
         const noCloudProjs = remoteHeaders.length === 0
-        U.assert(noCloudProjs || workspace.getLastCloudSync() >= syncStart, 'Cloud sync failed!');
-
-        // TODO: This is too heavy handed. We can be more fine grain here with some work.
-        if (U.values(localHeaderChanges).length) {
-            core.infoNotification(lf("Cloud synchronization finished. Reloading... "));
-            setTimeout(() => {
-                pxt.debug("Forcing reload.")
-                location.reload();
-            }, 3000);
-        } else {
-            pxt.debug('Cloud sync finished with no local updates.')
+        const cloudSyncSuccess = partialSync || noCloudProjs || workspace.getLastCloudSync() >= syncStart
+        if (!cloudSyncSuccess) {
+            U.assert(false, 'Cloud sync failed!');
         }
+
+        const elapsed = U.nowSeconds() - syncStart;
+        const localHeaderChangesList = U.values(localHeaderChanges)
+        pxt.log(`Cloud sync finished after ${elapsed} seconds with ${localHeaderChangesList.length} local changes.`);
+        pxt.tickEvent(`identity.sync.finished`, {elapsed})
+        if (!partialSync) {
+            onChangesSynced(localHeaderChangesList)
+        }
+
+        return localHeaderChangesList
     }
     catch (e) {
         pxt.reportException(e);
+    }
+    return [];
+}
+
+export function onChangesSynced(changes: Header[]) {
+    if (changes.length) {
+        // TODO: This is too heavy handed. We can be more fine grain here with some work.
+        //  preferably with just the virtual data APIs we can push updates to the whole editor.
+        core.infoNotification(lf("Cloud synchronization finished. Reloading... "));
+        setTimeout(() => {
+            pxt.log("Forcing reload.")
+            pxt.tickEvent(`identity.sync.forcingReload`)
+            location.reload();
+        }, 3000);
     }
 }
 

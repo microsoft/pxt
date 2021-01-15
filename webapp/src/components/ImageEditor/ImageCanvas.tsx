@@ -11,6 +11,7 @@ import { GestureTarget, ClientCoordinates, bindGestureEvents, TilemapPatch, crea
 
 import { Edit, EditState, getEdit, getEditState, ToolCursor, tools } from './toolDefinitions';
 import { createTile } from '../../assets';
+import { areShortcutsEnabled } from './keyboardShortcuts';
 
 const IMAGE_MIME_TYPE = "image/x-mkcd-f4"
 
@@ -84,6 +85,8 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
 
     protected tileCache: HTMLCanvasElement[] = [];
     protected hasHover: boolean;
+
+    protected waitingToZoom: boolean;
 
     render() {
         const imageState = this.getImageState();
@@ -255,7 +258,8 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     }
 
     protected onKeyDown = (ev: KeyboardEvent): void => {
-        // TODO: we should bail out of this when gallery is open.
+        if (!areShortcutsEnabled()) return;
+
         this.hasInteracted = true;
 
         if (this.shouldHandleCanvasShortcut() && this.editState?.floating?.image) {
@@ -497,10 +501,14 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         const { prevFrame: nextFrame, onionSkinEnabled, selectedColor, toolWidth, drawingMode, tool } = this.props;
         const imageState = this.getImageState();
         const activeColor = drawingMode == TileDrawingMode.Wall ? WALL_COLOR : selectedColor;
+        let shouldCenter = false;
 
         if (this.canvas) {
             this.imageWidth = imageState.bitmap.width;
             this.imageHeight = imageState.bitmap.height;
+
+            shouldCenter = this.canvas.width != imageState.bitmap.width * this.cellWidth ||
+                this.canvas.height != imageState.bitmap.height * this.cellWidth;
 
             this.canvas.width = imageState.bitmap.width * this.cellWidth;
             this.canvas.height = imageState.bitmap.height * this.cellWidth;
@@ -566,6 +574,10 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
                     }
                 }
             }
+        }
+
+        if (shouldCenter) {
+            this.zoomToCanvas();
         }
     }
 
@@ -741,14 +753,16 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
 
             const unit = this.getCanvasUnit(bounds);
 
-            const { canvasX, canvasY } = this.clientToCanvas(anchorX, anchorY, bounds);
+            if (unit) {
+                const { canvasX, canvasY } = this.clientToCanvas(anchorX, anchorY, bounds);
 
-            if (isNaN(canvasX) || isNaN(canvasY) || isNaN(oldX) || isNaN(oldY)) {
-                return;
+                if (isNaN(canvasX) || isNaN(canvasY) || isNaN(oldX) || isNaN(oldY)) {
+                    return;
+                }
+
+                this.panX += (oldX - canvasX) * unit;
+                this.panY += (oldY - canvasY) * unit;
             }
-
-            this.panX += (oldX - canvasX) * unit;
-            this.panY += (oldY - canvasY) * unit;
 
             this.applyZoom();
         }
@@ -789,6 +803,20 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             bounds = bounds || outer.getBoundingClientRect();
 
             const unit = this.getCanvasUnit(bounds);
+
+            if (unit === 0) {
+                if (this.waitingToZoom) return;
+                this.waitingToZoom = true;
+                requestAnimationFrame(() => {
+                    if (this.waitingToZoom) {
+                        this.waitingToZoom = false;
+                        this.applyZoom()
+                    }
+                });
+                return;
+            }
+            this.waitingToZoom = false;
+
             const newWidth = unit * this.imageWidth;
             const newHeight = unit * this.imageHeight;
             const minimumVisible = this.imageWidth > 1 && this.imageHeight > 1 ? unit * 2 : unit >> 1;
@@ -822,8 +850,19 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     protected selectCanvasColor(coord: ClientCoordinates, isRightClick?: boolean) {
         const outer = this.refs["canvas-bounds"] as HTMLDivElement;
         const bounds = outer.getBoundingClientRect();
-        const { canvasX, canvasY } = this.clientToCanvas(coord.clientX, coord.clientY, bounds);
-        const color = this.editState.image.get(Math.floor(canvasX), Math.floor(canvasY));
+        let { canvasX, canvasY } = this.clientToCanvas(coord.clientX, coord.clientY, bounds);
+
+        canvasX = Math.floor(canvasX);
+        canvasY = Math.floor(canvasY);
+
+        let color: number;
+        if (this.editState.inFloatingLayer(canvasX, canvasY)) {
+            color = this.editState.floating.image.get(canvasX - this.editState.layerOffsetX, canvasY - this.editState.layerOffsetY)
+        }
+        if (!color) {
+            color = this.editState.image.get(canvasX, canvasY)
+        }
+
         if (isRightClick) {
             this.props.dispatchChangeBackgroundColor(color);
         } else {

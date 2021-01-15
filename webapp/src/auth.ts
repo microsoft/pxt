@@ -434,20 +434,18 @@ function internalPrefUpdateAndInvalidate(newPref: Partial<UserPreferences>) {
     // TODO is there a generic way to do this so we don't need to add new branches
     //  for each field that changes?
 
-    const state = getState();
-
     // remember old
-    const oldPref = state.preferences ?? DEFAULT_USER_PREFERENCES()
+    const oldPref = getState().preferences ?? DEFAULT_USER_PREFERENCES()
     // update
     transformUserPreferences({
         ...oldPref,
         ...newPref
     });
     // invalidate fields that change
-    if (oldPref?.highContrast !== state.preferences?.highContrast) {
+    if (oldPref?.highContrast !== getState().preferences?.highContrast) {
         data.invalidate(HIGHCONTRAST)
     }
-    if (oldPref?.language !== state.preferences?.language) {
+    if (oldPref?.language !== getState().preferences?.language) {
         data.invalidate(LANGUAGE)
     }
 }

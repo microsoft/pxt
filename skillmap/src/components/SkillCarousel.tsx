@@ -22,7 +22,7 @@ interface SkillCarouselProps {
     requiredMaps: SkillMap[];
     user: UserState;
     selectedItem?: string;
-    pageSourceUrl?: string;
+    pageSourceUrl: string;
     completionState: "incomplete" | "transitioning" | "completed";
     dispatchChangeSelectedItem: (id?: string) => void;
     dispatchShowCompletionModal: (mapId: string, activityId?: string) => void;
@@ -85,9 +85,9 @@ class SkillCarouselImpl extends React.Component<SkillCarouselProps> {
         this.carouselRef = el;
     }
 
-    protected getEndCard(): JSX.Element {
+    protected getEndCard(completed: boolean): JSX.Element {
         return <div className={`end-card ${this.props.completionState === "completed" ? "spin" : ""}`} key="end">
-            <div className="end-card-icon" onClick={this.handleEndCardClick} role="button">
+            <div className="end-card-icon" onClick={completed ? this.handleEndCardClick : undefined} role="button">
                 <i className="icon trophy" onTransitionEnd={this.handleEndCardTransition} />
             </div>
         </div>
@@ -140,8 +140,9 @@ class SkillCarouselImpl extends React.Component<SkillCarouselProps> {
     }
 
     render() {
-        const { map, user, selectedItem } = this.props;
-        const endCard = isMapCompleted(user, map) ? [this.getEndCard()] : [];
+        const { map, user, selectedItem, pageSourceUrl } = this.props;
+        const completed = isMapCompleted(user, pageSourceUrl, map);
+        const endCard = [this.getEndCard(completed)];
         const requirments = this.renderRequirements();
 
         return <Carousel title={map.displayName} items={this.items} itemTemplate={SkillCard} itemClassName="linked"
@@ -155,6 +156,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
     if (!state) return {};
 
     const map: SkillMap = ownProps.map;
+    const mapProgress = state.user?.mapProgress?.[state.pageSourceUrl];
     let requiredMaps: SkillMap[] = [];
 
     if (map.prerequisites?.length && state.pageSourceUrl) {
@@ -168,7 +170,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         user: state.user,
         requiredMaps,
         pageSourceUrl: state.pageSourceUrl,
-        completionState: state.user?.mapProgress?.[map.mapId]?.completionState,
+        completionState: mapProgress?.[map.mapId]?.completionState,
         selectedItem: state.selectedItem && ownProps.map?.activities?.[state.selectedItem] ? state.selectedItem : undefined
     }
 }

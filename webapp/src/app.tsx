@@ -44,6 +44,7 @@ import * as socketbridge from "./socketbridge";
 import * as webusb from "./webusb";
 import * as keymap from "./keymap";
 import * as auth from "./auth";
+import * as cloud from "./cloud";
 import * as user from "./user";
 
 import * as monaco from "./monaco"
@@ -1304,26 +1305,41 @@ export class ProjectView
         if (checkAsync)
             return checkAsync.then(() => this.openHome());
 
-        let doSync = false
+        let p = Promise.resolve();
         // check our multi-tab session
         if (workspace.isHeadersSessionOutdated()) {
              // reload header before loading
             pxt.log(`multi-tab sync before load`)
-            doSync = true;
-        }
-        // check our cloud sync
-        const RESYNC_TIME_SEC = 5 * 60 // 5 minutes
-        const headerCloudSyncOutdated = auth.loggedInSync()
-            && Util.nowSeconds() - workspace.getHeaderLastCloudSync(h) > RESYNC_TIME_SEC
-        if (headerCloudSyncOutdated) {
-            pxt.log(`cloud sync before load`)
-            doSync = true;
-        }
-
-        let p = Promise.resolve();
-        if (doSync) {
             p = p.then(() => workspace.syncAsync().then(() => { }))
         }
+
+        // Try a quick cloud fetch. If it doesn't complete within X second(s),
+        // continue on.
+        const timeoutStart = Util.nowSeconds();
+        const timeout = Util.timeout(1500/*1.5 seconds*/)
+        p = p.then(() => {
+            return Promise.any([
+                timeout,
+                // start a partial cloud sync
+                cloud.syncAsync([h])
+                    .then((changes) => {
+                        if (changes.length) {
+                            const elapsed = Util.nowSeconds() - timeoutStart;
+                            if (timeout.isResolved()) {
+                                // We are too late; the editor has already been loaded.
+                                // Call the onChanges handler to update the editor.
+                                pxt.tickEvent(`identity.syncOnProjectOpen.timedout`, { 'elapsedSec': elapsed})
+                                cloud.onChangesSynced(changes)
+                            } else {
+                                // We're not too late, update the local var so that the
+                                // first load has the new info.
+                                pxt.tickEvent(`identity.syncOnProjectOpen.syncSuccess`, { 'elapsedSec': elapsed })
+                                h = workspace.getHeader(h.id)
+                            }
+                        }
+                    })
+            ])
+        })
 
         return p.then(() => {
             workspace.acquireHeaderSession(h);
@@ -3659,14 +3675,11 @@ export class ProjectView
     exitTutorial(removeProject?: boolean) {
         pxt.tickEvent("tutorial.exit", { tutorial: this.state.header?.tutorial?.tutorial });
         core.showLoading("leavingtutorial", lf("leaving tutorial..."));
-        const tutorial = this.state.header && this.state.header.tutorial;
-        const stayInEditor = tutorial && !!tutorial.tutorialRecipe;
 
         this.exitTutorialAsync(removeProject)
             .finally(() => {
                 core.hideLoading("leavingtutorial");
-                if (!stayInEditor)
-                    this.openHome();
+                this.openHome();
             })
     }
 
@@ -4592,9 +4605,11 @@ document.addEventListener("DOMContentLoaded", () => {
             const cloudLang = auth.getState()?.preferences?.language;
             // kick of a user preferences check; if the language is different we'll reload
             auth.initialUserPreferences().then((pref) => {
-                if (pref && pref.language !== pxt.BrowserUtils.getCookieLang()) {
+                const cookieLang = pxt.BrowserUtils.getCookieLang()
+                if (cookieLang && pref && pref.language != cookieLang) {
                     pxt.BrowserUtils.setCookieLang(pref.language);
-                    location.reload();
+                    core.infoNotification(lf("Reload the page to apply your new language preference."));
+                    pxt.tickEvent(`identity.preferences.askingUserToReloadToApplyLang`)
                 }
             })
             let useLang: string = undefined;

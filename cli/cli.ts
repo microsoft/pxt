@@ -1095,6 +1095,13 @@ function uploadCoreAsync(opts: UploadOptions) {
         "skillmap.html"
     ]
 
+    // expandHtml is manually called on these files before upload
+    // runs <!-- @include --> substitutions, fills in locale, etc
+    let expandFiles = [
+        "index.html",
+        "skillmap.html"
+    ]
+
     nodeutil.mkdirP("built/uploadrepl")
 
     function encodeURLs(urls: string[]) {
@@ -1131,7 +1138,7 @@ function uploadCoreAsync(opts: UploadOptions) {
             data = rdata;
             if (isText) {
                 content = data.toString("utf8")
-                if (fileName == "index.html") {
+                if (expandFiles.indexOf(fileName) >= 0) {
                     if (!opts.localDir) {
                         let m = pxt.appTarget.appTheme as Map<string>
                         for (let k of Object.keys(m)) {
@@ -2236,16 +2243,19 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                             return;
                         }
 
-                        // Place the base HEX image in the hex cache if necessary
-                        let sha = options.extinfo.sha;
-                        let hex: string[] = options.extinfo.hexinfo.hex;
-                        let hexFile = path.join(hexCachePath, sha + ".hex");
+                        const hexFileExtInfo = [options.extinfo, ...(options.otherMultiVariants?.map(el => el.extinfo) || [])];
+                        for (const extinfo of hexFileExtInfo) {
+                            // Place the base HEX image in the hex cache if necessary
+                            let sha = extinfo.sha;
+                            let hex: string[] = extinfo.hexinfo.hex;
+                            let hexFile = path.join(hexCachePath, sha + ".hex");
 
-                        if (fs.existsSync(hexFile)) {
-                            pxt.debug(`native image already in offline cache for project ${dirname}: ${hexFile}`);
-                        } else {
-                            nodeutil.writeFileSync(hexFile, hex.join(os.EOL));
-                            pxt.debug(`created native image in offline cache for project ${dirname}: ${hexFile}`);
+                            if (fs.existsSync(hexFile)) {
+                                pxt.debug(`native image already in offline cache for project ${dirname}: ${hexFile}`);
+                            } else {
+                                nodeutil.writeFileSync(hexFile, hex.join(os.EOL));
+                                pxt.debug(`created native image in offline cache for project ${dirname}: ${hexFile}`);
+                            }
                         }
                     }
 

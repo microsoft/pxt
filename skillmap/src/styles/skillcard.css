@@ -245,14 +245,12 @@
     height: 6rem;
     margin-right: 3rem;
     border-radius: 50%;
-    cursor: pointer;
 
     color: var(--inverted-text-color);
     background-color: var(--primary-color);
 }
 
 .end-card i.icon {
-    opacity: 0;
     font-size: 4rem;
     line-height: 4rem;
     margin: 0;
@@ -269,6 +267,6 @@
 }
 
 .end-card.spin i.icon {
-    opacity: 1;
+    cursor: pointer;
     transform: rotateZ(720deg);
 }

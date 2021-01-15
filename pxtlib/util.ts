@@ -879,6 +879,10 @@ namespace ts.pxtc.Util {
         return Math.round(now() / 1000)
     }
 
+    export function timeout(ms: number): Promise<void> {
+        return new Promise(resolve => setTimeout(() => resolve(), ms))
+    }
+
     // node.js overrides this to use process.cpuUsage()
     export let cpuUs = (): number => {
         // current time in microseconds
@@ -1370,7 +1374,8 @@ namespace ts.pxtc.Util {
                 const imgdat = ctx.getImageData(0, 0, canvas.width, canvas.height)
                 const d = imgdat.data
                 const bpp = (d[0] & 1) | ((d[1] & 1) << 1) | ((d[2] & 1) << 2)
-                if (bpp > 5)
+                // Safari sometimes just reads a buffer full of 0's so we also need to bail if bpp == 0
+                if (bpp > 5 || bpp == 0)
                     return Promise.reject(new Error(lf("Invalid encoded PNG format")))
 
                 function decode(ptr: number, bpp: number, trg: Uint8Array) {

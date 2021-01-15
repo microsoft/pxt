@@ -35,14 +35,16 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
             })
         }
 
-        items.push({
-            id: "reset",
-            label: lf("Reset All"),
-            onClick: () => {
-                tickEvent("skillmap.reset.warning");
-                this.props.dispatchShowResetUserModal();
-            }
-        })
+        if (!this.props.activityOpen) {
+            items.push({
+                id: "reset",
+                label: lf("Reset All"),
+                onClick: () => {
+                    tickEvent("skillmap.reset.warning");
+                    this.props.dispatchShowResetUserModal();
+                }
+            })
+        }
 
         return items;
     }
@@ -95,7 +97,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
 
     let completedHeaderId: string | undefined;
     if (state.editorView?.currentHeaderId) {
-        if (isActivityCompleted(state.user, state.editorView.currentMapId, state.editorView.currentActivityId)) {
+        if (isActivityCompleted(state.user, state.pageSourceUrl, state.editorView.currentMapId, state.editorView.currentActivityId)) {
             completedHeaderId = state.editorView.currentHeaderId;
         }
     }

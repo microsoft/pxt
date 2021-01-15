@@ -14,6 +14,8 @@ namespace pxt.skillmap {
         saveUserStateAsync(user: U): Promise<void>;
     }
 
+    export const USER_VERSION = "0.0.1"
+
     export class IndexedDBWorkspace<U> implements WorkspaceProvider<U> {
         static version = 6;
         static databaseName = "local-skill-map";
@@ -28,8 +30,10 @@ namespace pxt.skillmap {
             this.db = new BrowserUtils.IDBWrapper(IndexedDBWorkspace.databaseName, IndexedDBWorkspace.version, (ev, result) => {
                 const db = result.result as IDBDatabase;
 
-                db.createObjectStore(IndexedDBWorkspace.projectTable, { keyPath: IndexedDBWorkspace.projectKey });
-                db.createObjectStore(IndexedDBWorkspace.userTable, { keyPath: IndexedDBWorkspace.userKey });
+                if (ev.oldVersion < 1) {
+                    db.createObjectStore(IndexedDBWorkspace.projectTable, { keyPath: IndexedDBWorkspace.projectKey });
+                    db.createObjectStore(IndexedDBWorkspace.userTable, { keyPath: IndexedDBWorkspace.userKey });
+                }
             });
         }
 

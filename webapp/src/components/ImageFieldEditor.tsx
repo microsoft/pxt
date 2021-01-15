@@ -2,8 +2,9 @@ import * as React from "react";
 
 import { FieldEditorComponent } from '../blocklyFieldView';
 import { AssetCardView } from "./assetEditor/assetCard";
-import { getAssets } from "./assetEditor/store/assetEditorReducer";
+import { assetToGalleryItem, getAssets } from "./assetEditor/store/assetEditorReducer";
 import { ImageEditor } from "./ImageEditor/ImageEditor";
+import { obtainShortcutLock, releaseShortcutLock } from "./ImageEditor/keyboardShortcuts";
 import { GalleryTile, setTelemetryFunction } from './ImageEditor/store/imageReducer';
 
 export interface ImageFieldEditorProps {
@@ -33,6 +34,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
     protected galleryAssets: pxt.Asset[];
     protected userAssets: pxt.Asset[];
     protected asset: pxt.Asset;
+    protected shortcutLock: number;
 
     constructor(props: ImageFieldEditorProps) {
         super(props);
@@ -181,7 +183,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
         }
 
         if (this.asset) {
-            assets = assets.filter(t => t.type !== this.asset.type || t.id !== this.asset.id)
+            assets = assets.map(t => (t.type !== this.asset.type || t.id !== this.asset.id) ? t : assetToGalleryItem(this.getValue()))
         }
 
         if (isGallery) {
@@ -244,6 +246,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
     }
 
     protected showEditor = () => {
+        this.setImageEditorShortcutsEnabled(true);
         tickImageEditorEvent("gallery-editor");
         this.setState({
             currentView: "editor",
@@ -252,6 +255,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
     }
 
     protected showGallery = () => {
+        this.setImageEditorShortcutsEnabled(false);
         tickImageEditorEvent("gallery-builtin");
         this.setState({
             currentView: "gallery",
@@ -260,6 +264,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
     }
 
     protected showMyAssets = () => {
+        this.setImageEditorShortcutsEnabled(false);
         tickImageEditorEvent("gallery-my-assets");
         this.userAssets = getAssets();
         this.setState({
@@ -283,7 +288,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
     }
 
     protected onAssetSelected = (asset: pxt.Asset) => {
-        if (this.ref) {
+        if (this.ref && asset.id !== this.asset?.id) {
             if (this.state.editingTile) {
                 this.ref.openInTileEditor(pxt.sprite.Bitmap.fromData((asset as pxt.Tile).bitmap))
             }
@@ -301,6 +306,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
             currentView: "editor",
             tileGalleryVisible: false
         });
+        this.setImageEditorShortcutsEnabled(true);
     }
 
     protected onTileEditorOpenClose = (open: boolean) => {
@@ -322,6 +328,16 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
     protected onDoneClick = () => {
         if (this.closeEditor) this.closeEditor();
         if (this.props.doneButtonCallback) this.props.doneButtonCallback();
+    }
+
+    protected setImageEditorShortcutsEnabled(enabled: boolean) {
+        if (enabled && this.shortcutLock) {
+            releaseShortcutLock(this.shortcutLock);
+            this.shortcutLock = undefined;
+        }
+        else if (!enabled && !this.shortcutLock) {
+            this.shortcutLock = obtainShortcutLock();
+        }
     }
 }
 

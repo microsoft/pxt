@@ -513,10 +513,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
     exitTutorial() {
         const tutorialOptions = this.props.parent.state.tutorialOptions;
         pxt.tickEvent("menu.exitTutorial", { tutorial: tutorialOptions?.tutorial }, { interactiveConsent: true });
-        if (tutorialOptions?.tutorialRecipe)
-            this.props.parent.completeTutorialAsync().done();
-        else
-            this.props.parent.exitTutorial();
+        this.props.parent.exitTutorial();
     }
 
     showReportAbuse() {

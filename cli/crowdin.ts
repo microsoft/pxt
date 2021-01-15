@@ -162,8 +162,11 @@ export async function downloadTargetTranslationsAsync(parsed?: commandParser.Par
 }
 
 export async function buildAllTranslationsAsync(langToStringsHandlerAsync: (fileName: string) => Promise<Map<Map<string>>>, singleDir?: string) {
-    await buildTranslationFilesAsync(["sim-strings.json"], "sim");
-    await buildTranslationFilesAsync(["target-strings.json"], "target");
+    await buildTranslationFilesAsync(["sim-strings.json"], "sim-strings.json");
+    await buildTranslationFilesAsync(["target-strings.json"], "target-strings.json");
+    await buildTranslationFilesAsync(["strings.json"], "strings.json", true);
+    await buildTranslationFilesAsync(["skillmap-strings.json"], "skillmap-strings.json", true);
+    await buildTranslationFilesAsync(["webstrings.json"], "webstrings.json", true);
 
     const files: string[] = [];
     pxt.appTarget.bundleddirs
@@ -176,14 +179,14 @@ export async function buildAllTranslationsAsync(langToStringsHandlerAsync: (file
                     .forEach(f => files.push(path.join(locdir, f)))
         });
 
-    await buildTranslationFilesAsync(files, "bundled");
+    await buildTranslationFilesAsync(files, "bundled-strings.json");
 
-    async function buildTranslationFilesAsync(files: string[], outputName: string) {
+    async function buildTranslationFilesAsync(files: string[], outputName: string, topLevel?: boolean) {
         const crowdinDir = pxt.appTarget.id;
         const locs: pxt.Map<pxt.Map<string>> = {};
         for (const filePath of files) {
             const fn = path.basename(filePath);
-            const crowdf = path.join(crowdinDir, fn);
+            const crowdf = topLevel ? fn : path.join(crowdinDir, fn);
             const locdir = path.dirname(filePath);
             const projectdir = path.dirname(locdir);
             pxt.debug(`projectdir: ${projectdir}`);
@@ -204,7 +207,7 @@ export async function buildAllTranslationsAsync(langToStringsHandlerAsync: (file
         }
 
         for (const lang of Object.keys(locs)) {
-            const tf = path.join(`sim/public/locales/${lang}/${outputName}-strings.json`);
+            const tf = path.join(`sim/public/locales/${lang}/${outputName}`);
             pxt.log(`writing ${tf}`);
             const dataLang = locs[lang];
             const langTranslations = stringifyTranslations(dataLang);
