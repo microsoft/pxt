@@ -206,10 +206,16 @@ namespace ts.pxtc {
                     U.assert(droms.length == 1)
                     let found = false
                     const drom = droms[0]
+
+                    ctx.codeStartAddr = drom.addr + drom.data.length
+                    ctx.codeStartAddrPadded = (ctx.codeStartAddr + 0xff) & ~0xff
+                    ctx.codePaddingSize = ctx.codeStartAddrPadded - ctx.codeStartAddr
+
                     for (let off = 0; off < drom.data.length; off += 0x20) {
                         if (hasMarker(drom.data, off)) {
                             found = true
                             off += marker.length
+                            const ptroff = off
                             for (let ptr of extInfo.vmPointers || []) {
                                 if (ptr == "0") continue
                                 ptr = ptr.replace(/^&/, "")
@@ -220,16 +226,14 @@ namespace ts.pxtc {
                                 }
                                 off += 4
                             }
+                            pxt.HF2.write32(drom.data, ptroff, ctx.codeStartAddrPadded)
                             break
                         }
                     }
                     U.assert(found || (extInfo.vmPointers || []).length == 0)
                     ctx.espInfo = img
-                    ctx.codeStartAddr = drom.addr + drom.data.length
-                    ctx.codeStartAddrPadded = (ctx.codeStartAddr + 0xff) & ~0xff
-                    ctx.codePaddingSize = ctx.codeStartAddrPadded - ctx.codeStartAddr
 
-                    ctx.codeStartAddrPadded = 0 // still use .startaddr 0 in asm
+                    ctx.codeStartAddrPadded = 0 // still use .startaddr 0 in asm - that binary is position independent
                 }
 
                 return
