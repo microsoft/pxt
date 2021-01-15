@@ -263,7 +263,8 @@ _start_${name}:
             section(bin.strings[k], SectionType.Literal, () => text, [], tp)
         })
 
-        section("numberLiterals", SectionType.NumberLiterals, () => ctx.dblText.join("\n"))
+        section("numberLiterals", SectionType.NumberLiterals, () => ctx.dblText.join("\n")
+            + "\n.word 0 ; dummy entry to make sure not empty")
 
         const cfg = bin.res.configData || []
         section("configData", SectionType.ConfigData, () => cfg.map(d =>
@@ -301,16 +302,18 @@ _start_${name}:
 
         if (res.buf) {
             let binstring = ""
+            for (let v of res.buf)
+                binstring += String.fromCharCode(v & 0xff, v >> 8)
+            binstring = ts.pxtc.encodeBase64(binstring)
 
             if (embedVTs()) {
-                binstring = hexfile.patchHex(bin, res.buf, false, false)[0]
+                bin.writeFile(pxtc.BINARY_PXT64, binstring)
+                const patched = hexfile.patchHex(bin, res.buf, false, false)[0]
+                bin.writeFile(pxt.outputName(target), ts.pxtc.encodeBase64(patched))
             } else {
-                for (let v of res.buf)
-                    binstring += String.fromCharCode(v & 0xff, v >> 8)
+                bin.writeFile(pxt.outputName(target), binstring)
             }
 
-            const myhex = ts.pxtc.encodeBase64(binstring)
-            bin.writeFile(pxt.outputName(target), myhex)
         }
     }
     /* tslint:enable */

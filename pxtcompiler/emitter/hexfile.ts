@@ -211,6 +211,8 @@ namespace ts.pxtc {
                     ctx.codeStartAddrPadded = (ctx.codeStartAddr + 0xff) & ~0xff
                     ctx.codePaddingSize = ctx.codeStartAddrPadded - ctx.codeStartAddr
 
+                    pxt.debug(`user code start: 0x${ctx.codeStartAddrPadded.toString(16)}; dromlen=${drom.data.length} pad=${ctx.codePaddingSize}`)
+
                     for (let off = 0; off < drom.data.length; off += 0x20) {
                         if (hasMarker(drom.data, off)) {
                             found = true
@@ -585,14 +587,16 @@ namespace ts.pxtc {
         export function patchHex(bin: Binary, buf: number[], shortForm: boolean, useuf2: boolean) {
             let myhex = ctx.hexlines.slice(0, ctx.codeStartIdx)
 
-            let sizeEntry = (buf.length * 2 + 7) >> 3
+            if (!bin.target.useESP) {
+                let sizeEntry = (buf.length * 2 + 7) >> 3
 
-            assert(sizeEntry < 64000, "program too large, bytes: " + buf.length * 2)
+                assert(sizeEntry < 64000, "program too large, bytes: " + buf.length * 2)
 
-            // store the size of the program (in 64 bit words)
-            buf[17] = sizeEntry
-            // store commSize
-            buf[20] = bin.commSize
+                // store the size of the program (in 64 bit words)
+                buf[17] = sizeEntry
+                // store commSize
+                buf[20] = bin.commSize
+            }
 
             let zeros: number[] = []
             for (let i = 0; i < ctx.codePaddingSize >> 1; ++i)
@@ -641,7 +645,7 @@ namespace ts.pxtc {
             if (ctx.espInfo) {
                 const img = pxt.esp.cloneStruct(ctx.espInfo)
                 const drom = img.segments.find(s => s.isDROM)
-                let ptr = drom.data.length + ctx.codePaddingSize
+                let ptr = drom.data.length
                 const trg = new Uint8Array((ptr + buf.length * 2 + 0xff) & ~0xff)
                 trg.set(drom.data)
                 for (let i = 0; i < buf.length; ++i) {
