@@ -782,7 +782,7 @@ namespace pxt.cpp {
                             (!U.startsWith(fi.name, "pxt::") && !U.startsWith(fi.name, "pxtrt::"))) {
                             const wrap = generateVMWrapper(fi, argTypes)
                             const nargs = fi.argsFmt.length - 1
-                            pointersInc += `{ "${fi.name}", (OpFun)${wrap}, ${nargs} },\n`
+                            pointersInc += `{ "${fi.name}", (OpFun)(void*)${wrap}, ${nargs} },\n`
                         }
                     } else
                         pointersInc += "PXT_FNPTR(::" + fi.name + "),\n"
@@ -1021,6 +1021,7 @@ namespace pxt.cpp {
                 allFilesWithExt(".cpp"),
                 allFilesWithExt(".s")
             ]).map(s => s.slice(sourcePath.length - 1)).concat(["main.cpp"])
+            files.push("pointers.cpp")
             res.generatedFiles[sourcePath + "CMakeLists.txt"] =
                 `idf_component_register(\n  SRCS\n` +
                 files.map(f => `    "${f}"\n`).join("") +
