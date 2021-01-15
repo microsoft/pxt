@@ -83,6 +83,7 @@ class ProviderButton extends data.PureComponent<ProviderButtonProps, {}> {
 
     handleLoginClicked = async () => {
         const { provider, rememberMe } = this.props;
+        pxt.tickEvent(`identity.loginClick`, { provider: provider.name, rememberMe: rememberMe.toString() });
         await auth.loginAsync(provider.id, rememberMe, {
             hash: this.props.continuationHash
         });

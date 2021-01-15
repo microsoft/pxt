@@ -1315,6 +1315,7 @@ export class ProjectView
 
         // Try a quick cloud fetch. If it doesn't complete within X second(s),
         // continue on.
+        const timeoutStart = Util.nowSeconds();
         const timeout = Util.timeout(1500/*1.5 seconds*/)
         p = p.then(() => {
             return Promise.any([
@@ -1323,13 +1324,16 @@ export class ProjectView
                 cloud.syncAsync([h])
                     .then((changes) => {
                         if (changes.length) {
+                            const elapsed = Util.nowSeconds() - timeoutStart;
                             if (timeout.isResolved()) {
                                 // We are too late; the editor has already been loaded.
                                 // Call the onChanges handler to update the editor.
+                                pxt.tickEvent(`identity.syncOnProjectOpen.timedout`, { 'elapsedSec': elapsed})
                                 cloud.onChangesSynced(changes)
                             } else {
                                 // We're not too late, update the local var so that the
                                 // first load has the new info.
+                                pxt.tickEvent(`identity.syncOnProjectOpen.syncSuccess`, { 'elapsedSec': elapsed })
                                 h = workspace.getHeader(h.id)
                             }
                         }
@@ -4605,6 +4609,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (cookieLang && pref && pref.language != cookieLang) {
                     pxt.BrowserUtils.setCookieLang(pref.language);
                     core.infoNotification(lf("Reload the page to apply your new language preference."));
+                    pxt.tickEvent(`identity.preferences.askingUserToReloadToApplyLang`)
                 }
             })
             let useLang: string = undefined;
