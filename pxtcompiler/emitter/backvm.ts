@@ -178,7 +178,8 @@ _start_${name}:
                 .word 0, 0 ; last usage time
                 .word ${encodeTime(now)} ; installation time
                 .word ${encodeTime(now)} ; publication time - TODO
-                .space 64 ; reserved
+                .word _img_end-_img_start ; total image size
+                .space 60 ; reserved
                 .string ${JSON.stringify(encodedName)}
                 .space ${paddingSize} ; pad to 128 bytes
 `
@@ -257,6 +258,7 @@ _start_${name}:
         section("opcodeMap", SectionType.OpCodeMap, () => opcm)
         vmsource += "_literals_end:\n"
 
+        vmsource += "_img_end:\n"
         vmsource += "\n; The end.\n"
         bin.writeFile(BINARY_ASM, vmsource)
 
