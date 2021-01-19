@@ -746,7 +746,7 @@ namespace pxt {
                 for (const tm of this.getAssets(AssetType.Tilemap)) {
                     if (skipIDs?.indexOf(tm.id) >= 0) {
                         continue;
-                    } else if (tm.data.tileset.tiles.some(t => t.internalID === asset.internalID)) {
+                    } else if (tm.data.tileset.tiles.some(t => t.id === asset.id)) {
                         return true;
                     }
                 }

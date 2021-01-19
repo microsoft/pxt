@@ -186,6 +186,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
         return {
             id: state.asset?.id,
             internalID: state.asset ? state.asset.internalID : getNewInternalID(),
+            isProjectTile: true,
             type: pxt.AssetType.Tile,
             bitmap: data,
             jresData: pxt.sprite.base64EncodeBitmap(data),
