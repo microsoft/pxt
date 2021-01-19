@@ -29,11 +29,7 @@ export class AssetEditor extends Editor {
         // force refresh to ensure we have a view
 
         return super.loadFileAsync(file, hc)
-            .then(() => compiler.getBlocksAsync()) // make sure to load block definitions
-            .then(info => {
-                this.blocksInfo = info;
-                this.updateGalleryAssets(info);
-            })
+            .then(() => this.updateGalleryAssets())
             .then(() => store.dispatch(dispatchUpdateUserAssets()))
             .then(() => this.parent.forceUpdate());
     }
@@ -71,39 +67,8 @@ export class AssetEditor extends Editor {
         </Provider>
     }
 
-    protected updateGalleryAssets(blocksInfo: pxtc.BlocksInfo) {
-        const allImages = pxt.sprite.getGalleryItems(blocksInfo, "Image");
-        const tileAssets: pxt.Asset[] = [];
-        const imageAssets: pxt.Asset[] = [];
-
-        for (const item of allImages) {
-            if (item.tags.indexOf("tile") === -1) {
-                const bitmapData = pxt.sprite.getBitmap(blocksInfo, item.qName).data();
-                imageAssets.push({
-                    internalID: -1,
-                    type: pxt.AssetType.Image,
-                    id: item.qName,
-                    jresData: pxt.sprite.base64EncodeBitmap(bitmapData),
-                    previewURI: item.src,
-                    bitmap: bitmapData,
-                    meta: {}
-                });
-            }
-            else {
-                const bitmapData = pxt.sprite.Bitmap.fromData(pxt.react.getTilemapProject().resolveTile(item.qName).bitmap).data();
-                tileAssets.push({
-                    internalID: -1,
-                    type: pxt.AssetType.Tile,
-                    id: item.qName,
-                    jresData: pxt.sprite.base64EncodeBitmap(bitmapData),
-                    previewURI: item.src,
-                    bitmap: bitmapData,
-                    meta: {}
-                });
-            }
-        }
-
-        store.dispatch(dispatchUpdateGalleryAssets(imageAssets.concat(tileAssets)));
+    protected updateGalleryAssets() {
+        store.dispatch(dispatchUpdateGalleryAssets());
     }
 
     protected showAssetFieldView = (asset: pxt.Asset, cb?: (result: any) => void) => {

@@ -215,7 +215,7 @@ function mapStateToProps(state: AssetEditorState, ownProps: any) {
     if (!state) return {};
     return {
         asset: state.selectedAsset,
-        isGalleryAsset: state.selectedAsset?.internalID == -1
+        isGalleryAsset: state.selectedAsset?.id.startsWith("sprites.")
     };
 }
 
