@@ -296,6 +296,8 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
                 this.ref.openGalleryAsset(asset as pxt.Tile | pxt.ProjectImage | pxt.Animation);
             }
             else {
+                pxt.react.getTilemapProject().updateAsset(this.ref.getAsset());
+                this.asset = asset;
                 this.ref.openAsset(asset, undefined, true);
             }
         }
