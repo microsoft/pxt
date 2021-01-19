@@ -171,14 +171,16 @@ namespace pxtblockly {
         }
 
         onDispose() {
-            this.disposeOfTemporaryAsset();
+            if (this.sourceBlock_?.workspace && !this.sourceBlock_.workspace.rendered) {
+                this.disposeOfTemporaryAsset();
+            }
             pxt.react.getTilemapProject().removeChangeListener(this.getAssetType(), this.assetChangeListener);
         }
 
         disposeOfTemporaryAsset() {
             if (this.isTemporaryAsset()) {
                 pxt.react.getTilemapProject().removeAsset(this.asset);
-                this.setBlockData("");
+                this.setBlockData(null);
                 this.asset = undefined;
             }
         }
@@ -244,7 +246,13 @@ namespace pxtblockly {
                     if (this.asset) {
                         if (this.sourceBlock_ && this.asset.meta.blockIDs) {
                             this.asset.meta.blockIDs = this.asset.meta.blockIDs.filter(id => id !== this.sourceBlock_.id);
-                            project.updateAsset(this.asset);
+
+                            if (this.asset.meta.blockIDs.length === 0 && !this.asset.meta.displayName) {
+                                project.removeAsset(this.asset);
+                            }
+                            else {
+                                project.updateAsset(this.asset);
+                            }
                         }
                     }
                     this.isEmpty = !newText;
