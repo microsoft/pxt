@@ -33,8 +33,11 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
     protected editID: string;
     protected galleryAssets: pxt.Asset[];
     protected userAssets: pxt.Asset[];
-    protected asset: pxt.Asset;
     protected shortcutLock: number;
+
+    protected get asset() {
+        return this.ref?.getAsset();
+    }
 
     constructor(props: ImageFieldEditorProps) {
         super(props);
@@ -213,7 +216,6 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
     }
 
     protected initSingleFrame(value: pxt.ProjectImage, options?: any) {
-        this.asset = value;
         this.ref.openAsset(value);
 
         if (options.disableResize) {
@@ -222,7 +224,6 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
     }
 
     protected initAnimation(value: pxt.Animation, options?: any) {
-        this.asset = value;
         this.ref.openAsset(value);
 
         if (options.disableResize) {
@@ -231,7 +232,6 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
     }
 
     protected initTilemap(asset: pxt.ProjectTilemap, options?: any) {
-        this.asset = asset;
         let gallery: GalleryTile[];
 
         // FIXME (riknoll): don't use blocksinfo, use tilemap project instead
@@ -296,8 +296,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
                 this.ref.openGalleryAsset(asset as pxt.Tile | pxt.ProjectImage | pxt.Animation);
             }
             else {
-                pxt.react.getTilemapProject().updateAsset(this.ref.getAsset());
-                this.asset = asset;
+                pxt.react.getTilemapProject().updateAsset(this.asset);
                 this.ref.openAsset(asset, undefined, true);
             }
         }
