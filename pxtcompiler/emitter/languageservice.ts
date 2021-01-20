@@ -30,7 +30,7 @@ namespace ts.pxtc.service {
 
                 const isPassThrough = shadowApi.attributes.shim === "TD_ID"
                 if (isPassThrough && shadowApi.parameters.length === 1) {
-                    result =  shadowApi.parameters[0]
+                    result = shadowApi.parameters[0]
                 }
             }
         }
@@ -643,16 +643,19 @@ namespace ts.pxtc.service {
                 || (isPython && !si.pySnippet)
                 || (!isPython && !si.snippet)) {
                 const snippetNode = getSnippet(context, si, n, isPython);
-                const snippet = snippetStringify(snippetNode)
-                const snippetWithMarkers = snippetStringify(snippetNode, true)
+                const snippet = snippetStringify(snippetNode, false)
+                const snippetWithMarkers = snippetStringify(snippetNode, false, true)
+                const snippetQualifiers = snippetGetLeadingQualifiers(snippetNode)
                 const addsDefinitions = snippetAddsDefinitions(snippetNode)
                 if (isPython) {
                     si.pySnippet = snippet
                     si.pySnippetWithMarkers = snippetWithMarkers
+                    si.pySnippetQualifiers = snippetQualifiers
                 }
                 else {
                     si.snippet = snippet
                     si.snippetWithMarkers = snippetWithMarkers
+                    si.snippetQualifiers = snippetQualifiers
                 }
                 si.snippetAddsDefinitions = addsDefinitions
             }

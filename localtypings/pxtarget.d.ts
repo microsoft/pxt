@@ -809,18 +809,21 @@ declare namespace ts.pxtc {
         qName?: string;
         pkg?: string;
         pkgs?: string[]; // for symbols defined in multiple packages
+        blockFields?: ParsedBlockDef;
+        isReadOnly?: boolean;
+        combinedProperties?: string[];
+        pyName?: string;
+        pyQName?: string;
+        // snippet fields
         snippet?: string;
         snippetName?: string;
         snippetWithMarkers?: string; // TODO(dz)
         pySnippet?: string;
         pySnippetName?: string;
         pySnippetWithMarkers?: string; // TODO(dz)
-        blockFields?: ParsedBlockDef;
-        isReadOnly?: boolean;
-        combinedProperties?: string[];
-        pyName?: string;
-        pyQName?: string;
         snippetAddsDefinitions?: boolean;
+        snippetQualifiers?: string[];
+        pySnippetQualifiers?: string[];
     }
 
     interface ApisInfo {

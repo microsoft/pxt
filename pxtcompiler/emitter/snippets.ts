@@ -16,11 +16,14 @@ namespace ts.pxtc.service {
 . . . . .
 """`;
 
-    export type SnippetNode = SnippetReplacePoint | string | SnippetNode[]
+    export type SnippetNode = SnippetReplacePoint | string | SnippetNode[] | SnippetQualifier
     export interface SnippetReplacePoint {
         default: SnippetNode;
         isLiteral?: boolean;
         isDefinition?: boolean;
+    }
+    export interface SnippetQualifier {
+        qualifier: string;
     }
     function isSnippetReplacePoint(n: SnippetNode): n is SnippetReplacePoint {
         return typeof (n) === "object" && (n as SnippetReplacePoint).default !== undefined
@@ -28,12 +31,40 @@ namespace ts.pxtc.service {
     function isSnippetNodeList(n: SnippetNode): n is SnippetNode[] {
         return typeof (n) === "object" && typeof ((n as SnippetNode[]).length) === "number"
     }
+    function isSnippetQualifier(n: SnippetNode): n is SnippetQualifier {
+        return typeof (n) === "object" && typeof ((n as SnippetQualifier).qualifier) === "string"
+    }
+    export function snippetGetLeadingQualifiers(snippet: SnippetNode): string[] {
+        if (isSnippetNodeList(snippet)) {
+            let res: string[] = []
+            for (let s of snippet) {
+                let q = snippetGetLeadingQualifiers(s)
+                if (q.length)
+                    res = [...res, ...q]
+                else
+                    break
+            }
+            return res
+        } else if (isSnippetQualifier(snippet)) {
+            return [snippet.qualifier]
+        }
+        return []
+    }
 
-    export function snippetStringify(snippet: SnippetNode, emitMonacoReplacementPoints = false): string {
+    export function snippetStringify(snippet: SnippetNode, includeLeadingQualifiers = true, emitMonacoReplacementPoints = false): string {
         const namesToReplacementNumbers: { [key: string]: number } = {}
         let nextNum: number = 1
 
-        return internalSnippetStringify(snippet)
+        let res = ''
+        if (includeLeadingQualifiers) {
+            res += snippetGetLeadingQualifiers(snippet).join(".")
+            if (res)
+                res += "."
+        }
+
+        res += internalSnippetStringify(snippet)
+
+        return res;
 
         function internalSnippetStringify(snippet: SnippetNode): string {
             // The format for monaco snippets is:
@@ -45,7 +76,7 @@ namespace ts.pxtc.service {
                         return internalSnippetStringify(snippet.default)
                     }
 
-                    const name = snippetStringify(snippet.default, false)
+                    const name = snippetStringify(snippet.default, false, false)
                     let num = namesToReplacementNumbers[name]
                     if (!num || snippet.isLiteral) {
                         num = nextNum
@@ -68,6 +99,9 @@ namespace ts.pxtc.service {
                 return snippet
                     .map(s => internalSnippetStringify(s))
                     .join("")
+            } else if (isSnippetQualifier(snippet)) {
+                // qualifiers are stringified elsewhere
+                return ""
             } else {
                 return snippet
             }
@@ -435,6 +469,7 @@ namespace ts.pxtc.service {
                     if (sigs && sigs.length) {
                         return createDefaultFunction(sigs[0], false);
                     }
+                    const name = "fn"
                     const res = emitEmptyFn(name);
                     console.log("getDefaultValueOfType: emitEmptyFn") // TODO @darzu: dbg
                     console.log(snippetStringify(res))
