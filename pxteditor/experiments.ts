@@ -173,7 +173,8 @@ namespace pxt.editor.experiments {
             {
                 id: "identity",
                 name: lf("Identity"),
-                description: lf("Login with various identity providers")
+                description: lf("Login with with your Microsoft Account."),
+                feedbackUrl: "https://github.com/microsoft/pxt/issues/7801"
             }
         ].filter(experiment => ids.indexOf(experiment.id) > -1);
     }
