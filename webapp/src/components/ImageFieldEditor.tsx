@@ -78,7 +78,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
             <div className="image-editor-gallery-content">
                 <ImageEditor ref="image-editor" singleFrame={this.props.singleFrame} onDoneClicked={this.onDoneClick} onTileEditorOpenClose={this.onTileEditorOpenClose} />
                 <ImageEditorGallery
-                    items={currentView === "my-assets" ? this.filterAssets(this.userAssets) : this.filterAssets(this.galleryAssets, editingTile ? pxt.AssetType.Tile : this.asset?.type, true, this.state.galleryFilter)}
+                    items={currentView === "my-assets" ? this.filterAssets(this.userAssets) : this.filterAssets(this.galleryAssets, editingTile ? pxt.AssetType.Tile : this.asset?.type, true)}
                     hidden={currentView === "editor"}
                     onAssetSelected={this.onAssetSelected} />
             </div>
@@ -177,7 +177,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
         this.galleryAssets = getAssets(true, this.asset.type);
     }
 
-    protected filterAssets(assets: pxt.Asset[], type: pxt.AssetType = this.asset?.type, isGallery = false, filterString?: string) {
+    protected filterAssets(assets: pxt.Asset[], type: pxt.AssetType = this.asset?.type, isGallery = false) {
         if (type === undefined) {
             return assets;
         }
@@ -186,14 +186,14 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
             assets = assets.map(t => (t.type !== this.asset.type || t.id !== this.asset.id) ? t : assetToGalleryItem(this.getValue()))
         }
 
-        if (filterString) {
+        if (this.state.galleryFilter) {
             assets.forEach(a => {
                 if (!a.meta.tags && this.options) {
                     a.meta.tags = this.blocksInfo.apis.byQName[a.id]?.attributes.tags?.split(" ") || [];
                 }})
 
         // Keep tag filtering unified with pxtlib/spriteutils:filterItems
-            const tags = filterString.split(" ")
+            const tags = this.state.galleryFilter.split(" ")
                 .filter(el => !!el)
                 .map(el => el.toLowerCase());
             const includeTags = tags
