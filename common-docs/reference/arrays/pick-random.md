@@ -6,7 +6,7 @@ Randomly choose an item from an array.
 [""]._pickRandom()
 ```
 
-Rather that generating your own random index for an array to select an item, you can have an item from an array returned to you randomly in single operation. An item is chosen at a random index with in the length of the array.
+Rather that generating your own random index for an array to select an item, you can have an item from an array returned to you randomly in single operation. An item is chosen at a random index within the length of the array.
 
 ```block
 let list: number[] = []
