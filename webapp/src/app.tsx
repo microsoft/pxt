@@ -387,7 +387,7 @@ export class ProjectView
         if (!this.editorFile || this.loadingExample)
             return Promise.resolve()
         return this.saveTypeScriptAsync()
-            .then(() => this.setFileContentAsync());
+            .then(() => this.saveCurrentSourceAsync());
     }
 
     saveProjectAsync(): Promise<void> {
@@ -396,7 +396,7 @@ export class ProjectView
             .then(() => this.state.header && workspace.saveAsync(this.state.header))
     }
 
-    setFileContentAsync(): Promise<void> {
+    saveCurrentSourceAsync(): Promise<void> {
         let txt = this.editor.getCurrentSource()
         if (txt != this.editorFile.content)
             simulator.setDirty();
@@ -2386,7 +2386,7 @@ export class ProjectView
 
         // Python uses the virtual file and not the current editor content, so sync content
         if (fromLanguage == "py") {
-            promise = promise.then(() => this.setFileContentAsync());
+            promise = promise.then(() => this.saveCurrentSourceAsync());
         }
 
         promise = promise
