@@ -29,7 +29,11 @@ export class AssetEditor extends Editor {
         // force refresh to ensure we have a view
 
         return super.loadFileAsync(file, hc)
-            .then(() => this.updateGalleryAssets())
+            .then(() => compiler.getBlocksAsync()) // make sure to load block definitions
+            .then(info => {
+                this.blocksInfo = info;
+                this.updateGalleryAssets();
+            })
             .then(() => store.dispatch(dispatchUpdateUserAssets()))
             .then(() => this.parent.forceUpdate());
     }
