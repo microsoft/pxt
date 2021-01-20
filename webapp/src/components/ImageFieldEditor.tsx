@@ -189,9 +189,10 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
         if (filterString) {
             assets.forEach(a => {
                 if (!a.meta.tags && this.options) {
-                    a.meta.tags = this.blocksInfo.apis.byQName[a.id]?.attributes.tags?.split(" ") || [""];
+                    a.meta.tags = this.blocksInfo.apis.byQName[a.id]?.attributes.tags?.split(" ") || [];
                 }})
 
+        // Keep tag filtering unified with pxtlib/spriteutils:filterItems
             const tags = filterString.split(" ")
                 .filter(el => !!el)
                 .map(el => el.toLowerCase());
@@ -202,6 +203,22 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
                 .map(tag => tag.substring(1));
 
             assets = assets.filter(t => checkInclude(t, includeTags) && checkExclude(t, excludeTags))
+        }
+        function checkInclude(item: pxt.Asset, includeTags: string[]) {
+            const tags = item.meta.tags ? item.meta.tags : [];
+            return includeTags.every(filterTag => {
+                const optFilterTag = `?${filterTag}`;
+                return tags.some(tag =>
+                    tag === filterTag || tag === optFilterTag
+                )
+            });
+        }
+
+        function checkExclude(item: pxt.Asset, excludeTags: string[]) {
+            const tags = item.meta.tags ? item.meta.tags : [];
+            return excludeTags.every(filterTag =>
+                !tags.some(tag => tag === filterTag)
+            );
         }
 
         if (isGallery) {
@@ -227,23 +244,6 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
                 case pxt.AssetType.Tilemap:
                     return assets.filter(t => t.type === pxt.AssetType.Tilemap);
             }
-        }
-
-        function checkInclude(item: pxt.Asset, includeTags: string[]) {
-            const tags = item.meta.tags ? item.meta.tags: [""];
-            return includeTags.every(filterTag => {
-                const optFilterTag = `?${filterTag}`;
-                return tags.some(tag =>
-                    tag === filterTag || tag === optFilterTag
-                )
-            });
-        }
-
-        function checkExclude(item: pxt.Asset, excludeTags: string[]) {
-            const tags = item.meta.tags? item.meta.tags: [""];
-            return excludeTags.every(filterTag =>
-                !tags.some(tag => tag === filterTag)
-            );
         }
     }
 
