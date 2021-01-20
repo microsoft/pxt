@@ -185,6 +185,12 @@ namespace pxtblockly {
             }
         }
 
+        clearTemporaryAssetData() {
+            if (this.isTemporaryAsset()) {
+                this.setBlockData(null);
+            }
+        }
+
         protected onEditorClose(newValue: pxt.Asset) {
             // Subclass
         }
