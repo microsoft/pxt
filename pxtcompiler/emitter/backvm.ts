@@ -228,8 +228,8 @@ _start_${name}:
 
         let idx = 0
         section("ifaceMemberNames", SectionType.IfaceMemberNames, () =>
-            `    .word ${bin.ifaceMembers.length}, 0 ; num. entries\n` + bin.ifaceMembers.map(d =>
-                `    .word ${bin.emitString(d)}, 0  ; ${idx++} .${d}`
+            `    .word ${bin.ifaceMembers.length} ; num. entries\n` + bin.ifaceMembers.map(d =>
+                `    .word ${bin.emitString(d)}  ; ${idx++} .${d}`
             ).join("\n"))
 
         vmsource += "_vtables_end:\n\n"
