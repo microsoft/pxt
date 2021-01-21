@@ -188,6 +188,16 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
 
         if (this.asset) {
             assets = assets.map(t => (t.type !== this.asset.type || t.id !== this.asset.id) ? t : assetToGalleryItem(this.getValue()))
+
+            if (this.state.editingTile) {
+                const tilemap = this.ref.getAsset() as pxt.ProjectTilemap;
+                assets = assets.map(a => {
+                    if (tilemap.data.editedTiles?.indexOf(a.id) >= 0) {
+                        return assetToGalleryItem(tilemap.data.tileset.tiles.find(t => t.id === a.id))
+                    }
+                    return a;
+                });
+            }
         }
 
         if (this.state.galleryFilter && useTags) {
