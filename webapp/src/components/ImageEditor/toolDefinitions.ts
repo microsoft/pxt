@@ -745,7 +745,9 @@ export function rotateEdit(image: EditState, clockwise: boolean, isTilemap: bool
         }
     }
 
-    if ((toFloatingLayer || hasFloatingLayer) && (newImage.width !== newImage.height)) {
+    const isSquareFullImageRotate = newImage.width === newImage.height && newImage.width === image.image.width && image.image.width === image.image.height;
+
+    if ((toFloatingLayer || hasFloatingLayer) && !isSquareFullImageRotate) {
         if (!hasFloatingLayer) {
             for (let x = 0; x < image.width; x++) {
                 for (let y = 0; y < image.height; y++) {
