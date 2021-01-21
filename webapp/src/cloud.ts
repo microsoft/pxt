@@ -342,6 +342,23 @@ export function onChangesSynced(changes: Header[]) {
     }
 }
 
+export async function convertCloudToLocal(userId: string) {
+    if (userId) {
+        const localCloudHeaders = workspace.getHeaders(true)
+            .filter(h => h.cloudUserId && h.cloudUserId === userId);
+        const tasks: Promise<void>[] = [];
+        localCloudHeaders.forEach((h) => {
+            // Clear cloud header and re-save the header.
+            delete h.cloudCurrent;
+            delete h.cloudLastSyncTime;
+            delete h.cloudUserId;
+            delete h.cloudVersion;
+            tasks.push(workspace.saveAsync(h, null, true));
+        });
+        await Promise.all(tasks);
+    }
+}
+
 /**
  * Virtual API
  */

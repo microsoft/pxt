@@ -1713,6 +1713,11 @@ div.simframe.ui.embed {
     div.description {
         line-height: 1.1em;
         margin-bottom: 20px;
+
+        .warning {
+            background-color: #F5BC5F;
+            padding: 6px;
+        }
     }
 
     div.container {
@@ -1769,6 +1774,11 @@ div.simframe.ui.embed {
             overflow: hidden;
         }
 
+        p.warning {
+            background-color: #F5BC5F;
+            padding: 6px;
+        }
+
         div.header-text {
             font-size: 20px;
             white-space: nowrap;
@@ -1802,6 +1812,15 @@ div.simframe.ui.embed {
                 grid-row-end: auto;
                 grid-column-start: 1;
                 grid-column-end: 2;
+                justify-self: start;
+                max-width: 100%;
+            }
+
+            div.row-span-two {
+                grid-row-start: auto;
+                grid-row-end: auto;
+                grid-column-start: 1;
+                grid-column-end: 3;
                 justify-self: start;
                 max-width: 100%;
             }
