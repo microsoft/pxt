@@ -412,6 +412,7 @@ namespace pxt.sprite {
     }
 
     export function filterItems(target: GalleryItem[], tags: string[]) {
+        // Keep this unified with ImageFieldEditor:filterAssets
         tags = tags
             .filter(el => !!el)
             .map(el => el.toLowerCase());
