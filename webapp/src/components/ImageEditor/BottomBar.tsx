@@ -294,7 +294,7 @@ function mapStateToProps({store: { present: state, past, future }, editor}: Imag
         aspectRatioLocked: state.aspectRatioLocked,
         onionSkinEnabled: editor.onionSkinEnabled,
         cursorLocation: editor.cursorLocation,
-        resizeDisabled: editor.resizeDisabled,
+        resizeDisabled: state.asset?.type === pxt.AssetType.Tile,
         assetName: state.asset?.meta?.displayName,
         hasUndo: !!past.length,
         hasRedo: !!future.length
