@@ -353,7 +353,7 @@ export async function convertCloudToLocal(userId: string) {
             delete h.cloudLastSyncTime;
             delete h.cloudUserId;
             delete h.cloudVersion;
-            tasks.push(workspace.saveAsync(h));
+            tasks.push(workspace.saveAsync(h, null, true));
         });
         await Promise.all(tasks);
     }
