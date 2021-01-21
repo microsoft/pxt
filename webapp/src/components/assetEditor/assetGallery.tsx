@@ -115,11 +115,12 @@ class AssetGalleryImpl extends React.Component<AssetGalleryProps, AssetGallerySt
     render() {
         const { view, galleryAssets, userAssets } = this.props;
         const { showCreateModal } = this.state;
+        const isBlocksProject = pkg.mainPkg?.config && pkg.mainPkg.getPreferredEditor() === pxt.BLOCKS_PROJECT_NAME;
 
         return <div className="asset-editor-gallery">
             <AssetTopbar />
             <div className={`asset-editor-card-list ${view !== GalleryView.User ? "hidden" : ""}`}>
-                <AssetCardList assets={userAssets}>
+                <AssetCardList assets={filterAssets(userAssets, isBlocksProject)}>
                     <div className="create-new" role="button" onClick={this.showCreateModal}>
                         <i className="icon huge add circle" />
                         <span>{lf("New Asset")}</span>
@@ -143,6 +144,10 @@ class AssetGalleryImpl extends React.Component<AssetGalleryProps, AssetGallerySt
         </div>
     }
 }
+function filterAssets(assets: pxt.Asset[], includeTemporary: boolean) {
+    return includeTemporary ? assets : assets.filter(asset => !!asset.meta.displayName)
+}
+
 
 function mapStateToProps(state: AssetEditorState, ownProps: any) {
     if (!state) return {};
