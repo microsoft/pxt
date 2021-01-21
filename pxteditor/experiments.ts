@@ -172,8 +172,8 @@ namespace pxt.editor.experiments {
             },
             {
                 id: "identity",
-                name: lf("Identity"),
-                description: lf("Login with with your Microsoft Account."),
+                name: lf("Cloud Save"),
+                description: lf("Sign in and save projects to the cloud."),
                 feedbackUrl: "https://github.com/microsoft/pxt/issues/7801"
             }
         ].filter(experiment => ids.indexOf(experiment.id) > -1);
