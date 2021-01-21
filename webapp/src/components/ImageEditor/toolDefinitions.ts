@@ -789,7 +789,7 @@ export function rotateEdit(image: EditState, clockwise: boolean, isTilemap: bool
 }
 
 export function flipEdit(image: EditState, vertical: boolean, isTilemap: boolean) {
-    const source = image.floating || image;
+    const source = image.floating?.image ? image.floating : image;
 
     const newImage = isTilemap ? new pxt.sprite.Tilemap(source.image.width, source.image.height) :
         new pxt.sprite.Bitmap(source.image.width, source.image.height);
@@ -804,7 +804,7 @@ export function flipEdit(image: EditState, vertical: boolean, isTilemap: boolean
         }
     }
 
-    if (image.floating) {
+    if (image.floating?.image) {
         image.floating = {
             image: newImage,
             overlayLayers: newOverlayLayers
