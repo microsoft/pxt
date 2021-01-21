@@ -81,7 +81,8 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
             <div className="image-editor-gallery-content">
                 <ImageEditor ref="image-editor" singleFrame={this.props.singleFrame} onDoneClicked={this.onDoneClick} onTileEditorOpenClose={this.onTileEditorOpenClose} />
                 <ImageEditorGallery
-                    items={currentView === "my-assets" ? this.filterAssets(this.userAssets) : this.filterAssets(this.galleryAssets, editingTile ? pxt.AssetType.Tile : this.asset?.type, true)}
+                    items={currentView === "my-assets" ? this.filterAssets(this.userAssets, editingTile ? pxt.AssetType.Tile : this.asset?.type) :
+                                                         this.filterAssets(this.galleryAssets, editingTile ? pxt.AssetType.Tile : this.asset?.type, true, true)}
                     hidden={currentView === "editor"}
                     onAssetSelected={this.onAssetSelected} />
             </div>
@@ -180,7 +181,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
         this.galleryAssets = getAssets(true, this.asset.type);
     }
 
-    protected filterAssets(assets: pxt.Asset[], type: pxt.AssetType = this.asset?.type, isGallery = false) {
+    protected filterAssets(assets: pxt.Asset[], type: pxt.AssetType = this.asset?.type, isGallery = false, useTags?: boolean) {
         if (type === undefined) {
             return assets;
         }
@@ -189,7 +190,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
             assets = assets.map(t => (t.type !== this.asset.type || t.id !== this.asset.id) ? t : assetToGalleryItem(this.getValue()))
         }
 
-        if (this.state.galleryFilter) {
+        if (this.state.galleryFilter && useTags) {
             assets.forEach(a => {
                 if (!a.meta.tags && this.options) {
                     a.meta.tags = this.blocksInfo.apis.byQName[a.id]?.attributes.tags?.split(" ") || [];
