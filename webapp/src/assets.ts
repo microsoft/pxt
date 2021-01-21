@@ -20,9 +20,9 @@ export function createProjectImage(bitmap: pxt.sprite.BitmapData) {
     return project.createNewProjectImage(bitmap);
 }
 
-export function createTile(bitmap: pxt.sprite.BitmapData) {
+export function createTile(bitmap: pxt.sprite.BitmapData, id?: string, displayName?: string) {
     const project = pxt.react.getTilemapProject();
-    return project.createNewTile(bitmap);
+    return project.createNewTile(bitmap, id, displayName);
 }
 
 export function lookupAsset(type: pxt.AssetType, id: string) {

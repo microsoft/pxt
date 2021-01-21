@@ -90,6 +90,7 @@ class AssetGalleryImpl extends React.Component<AssetGalleryProps, AssetGallerySt
             case pxt.AssetType.Animation:
                 const animation = asset as pxt.Animation;
                 animation.frames = [new pxt.sprite.Bitmap(16, 16).data()];
+                animation.interval = 200;
                 break;
 
         }
