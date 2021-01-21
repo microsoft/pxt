@@ -202,7 +202,13 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
 
         this.updateCursorLocation(coord);
 
-        if (!this.inBounds(this.cursorLocation[0], this.cursorLocation[1])) return;
+        if (!this.inBounds(this.cursorLocation[0], this.cursorLocation[1])) {
+            if (this.editState?.floating?.image) {
+                this.editState.mergeFloatingLayer();
+                this.props.dispatchImageEdit(this.editState.toImageState());
+            }
+            return;
+        }
 
         this.startEdit(!!isRightClick);
         this.updateEdit(this.cursorLocation[0], this.cursorLocation[1]);

@@ -729,7 +729,8 @@ export class MarqueeEdit extends SelectionEdit {
 }
 
 export function rotateEdit(image: EditState, clockwise: boolean, isTilemap: boolean, toFloatingLayer: boolean) {
-    const source = image.floating || image;
+    const hasFloatingLayer = !!image.floating?.image;
+    const source = hasFloatingLayer ? image.floating : image;
 
     const newImage = isTilemap ? new pxt.sprite.Tilemap(source.image.height, source.image.width) :
         new pxt.sprite.Bitmap(source.image.height, source.image.width);
@@ -744,8 +745,8 @@ export function rotateEdit(image: EditState, clockwise: boolean, isTilemap: bool
         }
     }
 
-    if (toFloatingLayer || image.floating) {
-        if (!image.floating) {
+    if ((toFloatingLayer || hasFloatingLayer) && (newImage.width !== newImage.height)) {
+        if (!hasFloatingLayer) {
             for (let x = 0; x < image.width; x++) {
                 for (let y = 0; y < image.height; y++) {
                     image.image.set(x, y, 0);
