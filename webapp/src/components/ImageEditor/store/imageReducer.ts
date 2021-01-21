@@ -237,7 +237,9 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
                     overlayEnabled: true,
                     tileGallery: gallery,
                     tileGalleryOpen: !!gallery,
-                    referencedTiles: toOpen.data.projectReferences
+                    referencedTiles: toOpen.data.projectReferences,
+                    deletedTiles: action.keepPast ? state.editor.deletedTiles : undefined,
+                    editedTiles: action.keepPast ? state.editor.editedTiles : undefined
                 } : {
                     ...(action.keepPast ? state.editor : initialStore.editor),
                     isTilemap: false,
