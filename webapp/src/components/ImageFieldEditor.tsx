@@ -81,7 +81,8 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
             <div className="image-editor-gallery-content">
                 <ImageEditor ref="image-editor" singleFrame={this.props.singleFrame} onDoneClicked={this.onDoneClick} onTileEditorOpenClose={this.onTileEditorOpenClose} />
                 <ImageEditorGallery
-                    items={currentView === "my-assets" ? this.filterAssets(this.userAssets) : this.filterAssets(this.galleryAssets, editingTile ? pxt.AssetType.Tile : this.asset?.type, true, true)}
+                    items={currentView === "my-assets" ? this.filterAssets(this.userAssets, editingTile ? pxt.AssetType.Tile : this.asset?.type) :
+                                                         this.filterAssets(this.galleryAssets, editingTile ? pxt.AssetType.Tile : this.asset?.type, true, true)}
                     hidden={currentView === "editor"}
                     onAssetSelected={this.onAssetSelected} />
             </div>
@@ -224,7 +225,6 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
             );
         }
 
-        type = this.state.editingTile ? pxt.AssetType.Tile : type;
         if (isGallery) {
             switch (type) {
                 case pxt.AssetType.Animation:
