@@ -1,5 +1,6 @@
 import * as core from "./core";
 import * as data from "./data";
+import * as cloud from "./cloud";
 
 import U = pxt.Util;
 
@@ -394,13 +395,21 @@ export async function updateUserProfile(opts: {
 export async function deleteAccount() {
     if (!await loggedIn()) { return; }
 
+    const userId = getState()?.profile?.id;
+
     await apiAsync('/api/user', null, 'DELETE');
 
     // Clear csrf token so we can no longer make authenticated requests.
     pxt.storage.removeLocal(CSRF_TOKEN);
 
+    // Convert cloud-saved projects to local projects.
+    await cloud.convertCloudToLocal(userId);
+
     // Update state and UI to reflect logged out state.
     clearState();
+
+    // Reload page
+    window.location.reload();
 }
 
 export class Component<TProps, TState> extends data.Component<TProps, TState> {
