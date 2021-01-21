@@ -36,6 +36,9 @@ namespace ts.pxtc {
     }
 
     export function snakify(s: string) {
+        if (!s)
+            return s;
+
         const up = s.toUpperCase()
         const lo = s.toLowerCase()
 
@@ -535,7 +538,7 @@ namespace ts.pxtc {
                             // defined in different packages/extensions, so we want to keep track of that information.
                             // That way, we can make sure each cached extension has a copy of the namespace
                             if (existing.kind === SymbolKind.Module) {
-                                // Reference the existing array of packages where this namespace has been defined 
+                                // Reference the existing array of packages where this namespace has been defined
                                 si.pkgs = existing.pkgs || []
                                 if (existing.pkg !== si.pkg) {
                                     if (!si.pkgs.find(element => element === existing.pkg)) {

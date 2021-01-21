@@ -194,7 +194,8 @@ namespace ts.pxtc.service {
                     isLiteral: true
                 }) as SnippetNode)
 
-        let snippetPrefix = fn.namespace;
+        let snippetPrefix_TODO_RM = fn.namespace;
+        let snippetQualifiers: string[] = (fn.namespace || '').split('.')
         let isInstance = false;
         let addNamespace = false;
         let namespaceToUse = "";
@@ -207,16 +208,24 @@ namespace ts.pxtc.service {
             console.log(element.qName)
             console.dir(element)
             isDebugging = true;
-            console.log(`snippetPrefix(1):${snippetPrefix}`)
+            console.log(`snippetPrefix(1):${snippetPrefix_TODO_RM}`)
+        }
+        if (isDebugging) {
+            console.log(`snippetQualifiers (1): ${JSON.stringify(snippetQualifiers)}`)
         }
         if (element.attributes.block) {
             if (element.attributes.defaultInstance) {
-                snippetPrefix = element.attributes.defaultInstance;
+                snippetPrefix_TODO_RM = element.attributes.defaultInstance;
+                snippetQualifiers = [python ? snakify(element.attributes.defaultInstance) : element.attributes.defaultInstance]
                 if (isDebugging) {
-                    console.log(`snippetPrefix(2):${snippetPrefix}`) // TODO @darzu: dbg
+                    console.log(`snippetPrefix(2):${snippetPrefix_TODO_RM}`) // TODO @darzu: dbg
                 }
-                if (python && snippetPrefix)
-                    snippetPrefix = snakify(snippetPrefix);
+                if (isDebugging) {
+                    console.log(`snippetQualifiers (2): ${JSON.stringify(snippetQualifiers)}`)
+                }
+                if (python && snippetPrefix_TODO_RM) { // TODO @darzu: rm
+                    snippetPrefix_TODO_RM = snakify(snippetPrefix_TODO_RM);
+                }
             }
             else if (element.namespace) { // some blocks don't have a namespace such as parseInt
                 const nsInfo = apis.byQName[element.namespace];
@@ -242,7 +251,7 @@ namespace ts.pxtc.service {
                         value.retType == nsInfo.qName)
                         .sort((v1, v2) => v1.name.localeCompare(v2.name));
 
-                    if (exactInstances.length === 1) {
+                    if (exactInstances.length) {
                         // TODO @darzu: this is an issue. if there is more than one exactInstance, we might pick the wrong one.
                         instanceToUse = exactInstances[0];
                     } else {
@@ -256,13 +265,20 @@ namespace ts.pxtc.service {
                     }
 
                     if (instanceToUse) {
-                        snippetPrefix = `${getName(instanceToUse)}`;
+                        snippetPrefix_TODO_RM = `${getName(instanceToUse)}`;
                         namespaceToUse = instanceToUse.namespace;
+                        snippetQualifiers = [`${getName(instanceToUse)}`]
+                        if (isDebugging) {
+                            console.log(`snippetQualifiers (3a): ${JSON.stringify(snippetQualifiers)}`)
+                        }
                     } else {
                         namespaceToUse = nsInfo.namespace;
+                        if (isDebugging) {
+                            console.log(`snippetQualifiers (3b): ${JSON.stringify(snippetQualifiers)}`)
+                        }
                     }
                     if (isDebugging) {
-                        console.log(`snippetPrefix(3):${snippetPrefix}`) // TODO @darzu: dbg
+                        console.log(`snippetPrefix(3):${snippetPrefix_TODO_RM}`) // TODO @darzu: dbg
                     }
 
                     if (namespaceToUse) {
@@ -280,12 +296,13 @@ namespace ts.pxtc.service {
                             varName = varName[0].toUpperCase() + varName.substring(1)
                             varName = `my${varName}`
                         }
-                        snippetPrefix = params.thisParameter.defaultValue || varName;
+                        snippetPrefix_TODO_RM = params.thisParameter.defaultValue || varName;
+                        snippetQualifiers = [params.thisParameter.defaultValue || varName].map(s => python ? snakify(s) : s)
                         if (isDebugging) {
-                            console.log(`snippetPrefix(4):${snippetPrefix}`) // TODO @darzu: dbg
+                            console.log(`snippetPrefix(4):${snippetPrefix_TODO_RM}`) // TODO @darzu: dbg
                         }
-                        if (python && snippetPrefix)
-                            snippetPrefix = snakify(snippetPrefix);
+                        if (python && snippetPrefix_TODO_RM)
+                            snippetPrefix_TODO_RM = snakify(snippetPrefix_TODO_RM);
                     }
                     isInstance = true;
                 }
@@ -307,12 +324,16 @@ namespace ts.pxtc.service {
             }
         }
 
-        let insertText = snippetPrefix ? [snippetPrefix, ".", ...snippet] : snippet;
+        // let insertText = snippetPrefix_TODO_RM ? [snippetPrefix_TODO_RM, ".", ...snippet] : snippet;
+        let insertText = snippet;
         if (isDebugging) { // TODO @darzu: dbg
-            console.log(`snippetPrefix(5): ${snippetPrefix}`)
+            console.log(`snippetPrefix(5): ${snippetPrefix_TODO_RM}`)
             console.log(`insertText(1): ${insertText}`)
         }
-        insertText = addNamespace ? [firstWord(namespaceToUse), ".", ...insertText] : insertText;
+        if (addNamespace) {
+            snippetQualifiers.unshift(firstWord(namespaceToUse))
+        }
+        // insertText = addNamespace_TODO_RM ? [firstWord(namespaceToUse_TODO_RM), ".", ...insertText] : insertText;
         if (isDebugging) { // TODO @darzu: dbg
             console.log(`insertText(2): ${insertText}`)
             console.log(`preStmt:`)
@@ -337,7 +358,15 @@ namespace ts.pxtc.service {
             }
         }
 
-        return [preStmt, insertText]
+        // TODO @darzu: dbg
+        if (isDebugging) {
+            console.log(`snippetQualifiers: ${JSON.stringify(snippetQualifiers)}`)
+            console.log(`snippetPrefix: ${snippetPrefix_TODO_RM}, addNamespace: ${addNamespace}, namespaceToUse: ${namespaceToUse}`)
+        }
+
+        const qualsAsSnippet: SnippetQualifier[] = snippetQualifiers.map(s => ({ qualifier: s }))
+
+        return [preStmt, ...qualsAsSnippet, insertText]
 
         function getUniqueName(inName: string): string {
             if (takenNames[inName])

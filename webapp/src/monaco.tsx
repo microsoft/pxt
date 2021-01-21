@@ -99,6 +99,11 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                         debugging = true;
                         console.log(`snippet(1):${snippet}`)
                     }
+                    // TODO @darzu: change how we treat qualifiers:
+                    const snippetQuals = (this.python ? si.pySnippetQualifiers : si.snippetQualifiers) || []
+                    console.log(`quals: ${JSON.stringify(snippetQuals)}`) // TODO @darzu: dbg
+                    if (snippetQuals.length)
+                        snippet = [snippetQuals, ''].join('.') + snippet
                     snippet = stripLocalNamespace(snippet);
                     if (debugging) { // TODO @darzu: dbg
                         console.log(`snippet(2):${snippet}`)
@@ -106,8 +111,6 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                     let qName = stripLocalNamespace(this.python ? si.pyQName : si.qName);
                     let name = this.python ? si.pyName : si.name;
                     let isMultiLine = snippet && snippet.indexOf("\n") >= 0
-
-
 
                     if (this.python && snippet && isMultiLine && pxt.blocks.hasHandler(si)) {
                         // For python, we want to replace the entire line because when creating
