@@ -29,6 +29,7 @@ export interface BottomBarProps {
     dispatchChangeAssetName: (name: string) => void;
 
     singleFrame?: boolean;
+    isTilemap?: boolean;
 
     onDoneClick?: () => void;
 }
@@ -214,13 +215,16 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
     }
 
     protected handleDimensionalBlur = () => {
-        const { imageDimensions, dispatchChangeImageDimensions } = this.props;
+        const { imageDimensions, isTilemap, dispatchChangeImageDimensions } = this.props;
 
         const widthVal = parseInt(this.state.width);
         const heightVal = parseInt(this.state.height);
 
-        const width = isNaN(widthVal) ? imageDimensions[0] : Math.min(Math.max(widthVal, 1), 512);
-        const height = isNaN(heightVal) ? imageDimensions[1] : Math.min(Math.max(heightVal, 1), 512);
+        // tilemaps store in location as 1 byte, so max is 255x255
+        const maxSize = isTilemap ? 255 : 512;
+
+        const width = isNaN(widthVal) ? imageDimensions[0] : Math.min(Math.max(widthVal, 1), maxSize);
+        const height = isNaN(heightVal) ? imageDimensions[1] : Math.min(Math.max(heightVal, 1), maxSize);
 
         if (width !== imageDimensions[0] || height !== imageDimensions[1]) {
             dispatchChangeImageDimensions([width, height]);
@@ -297,7 +301,8 @@ function mapStateToProps({store: { present: state, past, future }, editor}: Imag
         resizeDisabled: state.asset?.type === pxt.AssetType.Tile,
         assetName: state.asset?.meta?.displayName,
         hasUndo: !!past.length,
-        hasRedo: !!future.length
+        hasRedo: !!future.length,
+        isTilemap: editor.isTilemap,
     };
 }
 
