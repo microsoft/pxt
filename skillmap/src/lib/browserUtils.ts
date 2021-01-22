@@ -193,6 +193,11 @@ export function resolvePath(path: string) {
     return `${isLocal() ? "" : "/static/skillmap"}/${path.replace(/^\//, "")}`
 }
 
+export function getEditorUrl(embedUrl: string) {
+    const path = /\/([\da-zA-Z\.]+)(?:--)?/i.exec(window.location.pathname);
+    return `${embedUrl.replace(/\/$/, "")}/${path?.[1] || ""}`;
+}
+
 let pageTitle: string;
 let pageSourceUrl: string;
 
