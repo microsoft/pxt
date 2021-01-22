@@ -2,7 +2,7 @@
 import * as React from "react";
 import { connect } from 'react-redux';
 import { saveProjectAsync, getProjectAsync } from "../lib/workspaceProvider";
-import { isLocal, resolvePath, tickEvent } from "../lib/browserUtils";
+import { isLocal, resolvePath, getEditorUrl, tickEvent } from "../lib/browserUtils";
 import { lookupActivityProgress } from "../lib/skillMapUtils";
 
 import { SkillMapState } from '../store/reducer';
@@ -36,7 +36,7 @@ interface MakeCodeFrameState {
 }
 
 /* tslint:disable:no-http-string */
-export const editorUrl: string = isLocal() ? "http://localhost:3232/index.html" : (window as any).pxtTargetBundle.appTheme.embedUrl
+export const editorUrl: string = isLocal() ? "http://localhost:3232/index.html" : getEditorUrl((window as any).pxtTargetBundle.appTheme.embedUrl)
 /* tslint:enable:no-http-string */
 
 class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFrameState> {
