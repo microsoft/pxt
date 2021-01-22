@@ -2,7 +2,7 @@
 
 **Posted on January 22nd, 2021 by [Jaqster](https://github.com/jaqster)**
 
-New Year, New Release! At this time last year we released the first official version of MakeCode Arcade, so we thought we’d celebrate our 1-year birthday by doing another release update!
+New Year, New Release! At this time last year we released the first official version of MakeCode Arcade, so we thought we’d celebrate our first birthday by doing another release update!
 
 Most of the work in this release went into fixing bugs that had accumulated. By the way, THANK YOU if you’ve filed a bug in GitHub - this is super helpful for us!
 
@@ -17,13 +17,13 @@ We all spend a great deal of time in the Image Editor creating the perfect pictu
 * Rotate clockwise
 * Rotate counter-clockwise
 
-![Sprite editor flip tool](/static/blog/arcade/first-birthday-update/flip.gif)
+![Sprite editor flip tool](/static/blog/arcade/update-jan-2021/flip.gif)
 
 ## Animations are now mainstream! 
 
 We’ve finally moved the animations blocks into the built-in editor under the Advanced tab in the Toolbox.  Animations have become so popular that it just made sense to pull them out of an extension and always show these blocks in an Animation Toolbox category. We still have an animation extension available for the older, state-based animation blocks too.
 
-![The Animation blocks category](/static/blog/arcade/first-birthday-update/animation-category.png)
+![The Animation blocks category](/static/blog/arcade/update-jan-2021/animation-category.png)
 
 <Short demo video on how to use Animations – Jaq will post> 
 
@@ -31,7 +31,7 @@ We’ve finally moved the animations blocks into the built-in editor under the A
 
 This has been one of the most requested blocks. In general, randomization is an important aspect of game development, and often times when writing an Arcade game, people want to select a random value from an array. You can of course do this with the "Pick Random" number block for the array indices, but this block makes it so much easier! 
 
-![Get random from list block](/static/blog/arcade/first-birthday-update/get-random-list.png)
+![Get random from list block](/static/blog/arcade/update-jan-2021/get-random-list.png)
 
 ## New Sprite Flags 
 
@@ -41,39 +41,39 @@ Another request from folks has been to provide more granularity in how Sprites i
 * Ghost through Tiles - Sprite doesn’t interact with tiles in a Tile Map (will not trigger Tile Overlap events) 
 * Ghost through Walls - Sprite can pass through walls in a Tile Map 
 
-![New sprite flags](/static/blog/arcade/first-birthday-update/sprite-flags.png)
+![New sprite flags](/static/blog/arcade/update-jan-2021/sprite-flags.png)
 
 The number of different flags you can set on a Sprite are also getting pretty long!  So we decided to pull out the 2 most common properties - "**Stay in Screen**" and "**Bounce on Wall**" as separate blocks to ensure that people can find them.
 
-![Separate sprite flag blocks](/static/blog/arcade/first-birthday-update/sprite-flags2.png)
+![Separate sprite flag blocks](/static/blog/arcade/update-jan-2021/sprite-flags2.png)
 
 ## Asset Editor
 
 The next time you open up a game, you may notice a new button on the top of the Arcade editor screen called "Assets":
 
-![Assets view tab](/static/blog/arcade/first-birthday-update/assets-menu.png)
+![Assets view tab](/static/blog/arcade/update-jan-2021/assets-menu.png)
 
 This is a view that will allow you to see all the assets in your game.
 
-![Asset selection view](/static/blog/arcade/first-birthday-update/assets-view.png)
+![Asset selection view](/static/blog/arcade/update-jan-2021/assets-view.png)
 
 An "Asset" can be: 
 
 * An image – for a Sprite, Projectile, Background, Dialog Frame 
 
-![Image asset](/static/blog/arcade/first-birthday-update/image.png)
+![Image asset](/static/blog/arcade/update-jan-2021/image.png)
 
 * A tile – denoted by the stacked boxes icon 
 
-![Tile asset](/static/blog/arcade/first-birthday-update/tile.png)
+![Tile asset](/static/blog/arcade/update-jan-2021/tile.png)
 
 * An animation – denoted by the film icon (animates when you hover your mouse over it) 
 
-![Annimation asset](/static/blog/arcade/first-birthday-update/animation.gif)
+![Annimation asset](/static/blog/arcade/update-jan-2021/animation.gif)
 
 * A tile map – denoted by the map icon
 
-![Tilemap asset](/static/blog/arcade/first-birthday-update/tilemap.png)
+![Tilemap asset](/static/blog/arcade/update-jan-2021/tilemap.png)
 
 Why did we create this view? For a couple reasons:
 
@@ -84,37 +84,37 @@ In the Asset Editor view, you can:
 
 * Create a new asset by clicking on the green plus (+) icon and selecting the type of asset you want to create.
 
-![Create new asset buttons](/static/blog/arcade/first-birthday-update/create-new-asset.png)
+![Create new asset buttons](/static/blog/arcade/update-jan-2021/create-new-asset.png)
 
 * Edit an existing asset by clicking on the asset and selecting the Edit button.
 
-![Edit the asset button](/static/blog/arcade/first-birthday-update/edit-asset.png)
+![Edit the asset button](/static/blog/arcade/update-jan-2021/edit-asset.png)
 
 * Duplicate an existing asset which will make a copy of the asset and put in your Assets view.
 
-![Duplicate the asset button](/static/blog/arcade/first-birthday-update/duplicate-asset.png)
+![Duplicate the asset button](/static/blog/arcade/update-jan-2021/duplicate-asset.png)
 
 * Copy an existing asset to your clipboard which will actually copy the image, hold it in your computer’s memory, and then allow you to paste it into a blank image editor canvas. 
 
-![Copy the asset button](/static/blog/arcade/first-birthday-update/copy-asset.png)
+![Copy the asset button](/static/blog/arcade/update-jan-2021/copy-asset.png)
 
 * Delete an existing asset - note that this button is disabled if the asset is being used in your program.
 
-![Delete the asset button](/static/blog/arcade/first-birthday-update/delete-asset.png)
+![Delete the asset button](/static/blog/arcade/update-jan-2021/delete-asset.png)
 
 As well as the "Assets" button at the top of the screen, you can also get into the Asset Editor view from any of the image editors. You’ll notice that there’s a new "My Assets" tab at the top of the image editor which allows you to select assets from your asset library.  And there’s also a field for you to name your assets. 
 
-![Image editor](/static/blog/arcade/first-birthday-update/image-editor.png)
+![Image editor](/static/blog/arcade/update-jan-2021/image-editor.png)
 
 There's one thing to note about the new Asset Editor feature for those who program in JavaScript and Python. Named assets are treated differently in code. The ascii representation is no longer embedded in the code, but rather part of the assets namespace and stored in a separate project file.
 
-![Sprite data in JavaScript](/static/blog/arcade/first-birthday-update/javascript.png)
+![Sprite data in JavaScript](/static/blog/arcade/update-jan-2021/javascript.png)
 
 ## Gallery in Tile Editor
 
 Another frequently requested feature was to bring the Gallery view into the Tile Editor so when you are creating your own custom tiles, you can start with one of the existing tiles and just tweak it, rather than having to create your own tiles from scratch.
 
-![Tile gallery](/static/blog/arcade/first-birthday-update/tile-gallery.gif)
+![Tile gallery](/static/blog/arcade/update-jan-2021/tile-gallery.gif)
 
 ## Support for GitHub Extensions in subfolders 
 
@@ -124,21 +124,21 @@ For all of you extension authors out there, we’ve hopefully made your lives a 
 
 For those of you paying close attention, you may have noticed a new "Game Maker Guide" card appear on the Arcade Home page in December.
 
-![Game maker guide](/static/blog/arcade/first-birthday-update/game-maker-guide.png)
+![Game maker guide](/static/blog/arcade/update-jan-2021/game-maker-guide.png)
 
 We are experimenting with a new format for tutorials where there are a series of tutorial activities which build upon each other through progressive levels of difficulty. This helps provide a bit more guidance to students on a recommended progression path It also helps keep individual tutorials shorter.
 
-![Skills map](/static/blog/arcade/first-birthday-update/skills-map.png)
+![Skills map](/static/blog/arcade/update-jan-2021/skills-map.png)
 
 Right now we have 2 learning paths available in the Game Maker Guide – Design a Space Explorer game, and Learn to Make a Platformer. Students must complete a sequence of tutorials in order – once they complete a tutorial, the next tutorial in the series unlocks.
 
-![Tutorial sequence](/static/blog/arcade/first-birthday-update/tutorial-sequence.png)
+![Tutorial sequence](/static/blog/arcade/update-jan-2021/tutorial-sequence.png)
 
 In addition to a progression path, we’re also experimenting with gamification elements. When a student completes a learning path, they receive confetti and a certificate.
 
-![Confetti celebration](/static/blog/arcade/first-birthday-update/confetti.gif)
+![Confetti celebration](/static/blog/arcade/update-jan-2021/confetti.gif)
 
-![Completion certificate](/static/blog/arcade/first-birthday-update/certificate.png)
+![Completion certificate](/static/blog/arcade/update-jan-2021/certificate.png)
 
 This new tutorial format is still a work in progress and we’d love your feedback.
 
