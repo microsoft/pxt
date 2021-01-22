@@ -23,7 +23,7 @@ We all spend a great deal of time in the Image Editor creating the perfect pictu
 
 We’ve finally moved the animations blocks into the built-in editor under the Advanced tab in the Toolbox.  Animations have become so popular that it just made sense to pull them out of an extension and always show these blocks in an Animation Toolbox category.  We still have an animation extension available for the older, state-based animation blocks too.
 
-<AnimationCategory.png> 
+![The Animation blocks category](/static/blog/arcade/first-birthday-update/animation-category.png)
 
 <Short demo video on how to use Animations – Jaq will post> 
 
@@ -39,19 +39,19 @@ Another request from folks has been to provide more granularity in how Sprites i
 * Ghost through Tiles – Sprite doesn’t interact with tiles in a Tile Map (will not trigger Tile Overlap events) 
 * Ghost through Walls – Sprite can pass through walls in a Tile Map 
 
-<SpriteFlags.png> 
+![New sprite flags](/static/blog/arcade/first-birthday-update/sprite-flags.png)
 
-The number of different flags you can set on a Sprite are also getting pretty long!  So we decided to pull out the 2 most common properties – “Stay in Screen” and “Bounce on Wall” as separate blocks to ensure that people can find them.
+The number of different flags you can set on a Sprite are also getting pretty long!  So we decided to pull out the 2 most common properties – "Stay in Screen" and "Bounce on Wall" as separate blocks to ensure that people can find them.
 
 ## Asset Editor
 
-The next time you open up a game, you may notice a new button on the top of the Arcade editor screen called “Assets”:
+The next time you open up a game, you may notice a new button on the top of the Arcade editor screen called "Assets":
 
-<AssetsMenu.png> 
+![Assets view tab](/static/blog/arcade/first-birthday-update/assets-menu.png)
 
 This is a view that will allow you to see all the assets in your game.
 
-<AssetsView.png>
+![Asset selection view](/static/blog/arcade/first-birthday-update/assets-view.png)
 
 An “Asset” can be: 
 
@@ -61,7 +61,7 @@ A picture containing chart
 
 Description automatically generated 
 
-<Image.png> 
+![Tilemap](/static/blog/arcade/first-birthday-update/image.png)
 
 A tile – denoted by the stacked boxes icon 
 
@@ -85,7 +85,8 @@ Chart
 
 Description automatically generated
 
-<Tilemap.png> 
+![Tilemap](/static/blog/arcade/first-birthday-update/tilemap.png)
+
 
 Why did we create this view?  For a couple reasons:
 
@@ -155,23 +156,22 @@ For all of you extension authors out there, we’ve hopefully made your lives a 
 
 ## New Tutorial Format 
 
-For those of you paying close attention, you may have noticed a new “Game Maker Guide” card appear on the Arcade Home page in December.
+For those of you paying close attention, you may have noticed a new "Game Maker Guide" card appear on the Arcade Home page in December.
 
-<GameMakerGuide.png>
+![Game maker guide](/static/blog/arcade/first-birthday-update/game-maker-guide)
 
 We are experimenting with a new format for tutorials where there are a series of tutorial activities which build upon each other through progressive levels of difficulty.  This helps provide a bit more guidance to students on a recommended progression path, and also helps keep individual tutorials shorter.
 
-<SkillsMap.png>
+![Skills map](/static/blog/arcade/first-birthday-update/skills-map.png)
 
 Right now we have 2 learning paths available in the Game Maker Guide – Design a Space Explorer game, and Learn to Make a Platformer.  Students must complete a sequence of tutorials in order – once they complete a tutorial, the next tutorial in the series unlocks.
 
-<TutorialSequence.png>
 
 In addition to a progression path, we’re also experimenting with gamification elements.  When a student completes a learning path, they receive confetti and a certificate.
 
-<Confetti.gif> 
+![Confetti celebration](/static/blog/arcade/first-birthday-update/confetti.gif)
 
-<Certificate.png> 
+![Completion certificate](/static/blog/arcade/first-birthday-update/certificate.png)
 
 This new tutorial format is still a work-in-progress and we’d love your feedback.
 
@@ -180,5 +180,6 @@ If you find any issues, or have suggestions, please log them on GitHub (https://
 If you have questions, or would like to participate in the MakeCode community, please join the Forum (https://forum.makecode.com) or follow us on social @MSMakeCode (https://twitter.com/MSMakeCode).
 
 Happy Making and Coding!
+<br/>
 
 The MakeCode Team
