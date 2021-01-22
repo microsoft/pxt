@@ -33,8 +33,11 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
     protected editID: string;
     protected galleryAssets: pxt.Asset[];
     protected userAssets: pxt.Asset[];
-    protected asset: pxt.Asset;
     protected shortcutLock: number;
+
+    protected get asset() {
+        return this.ref?.getAsset();
+    }
 
     constructor(props: ImageFieldEditorProps) {
         super(props);
@@ -78,7 +81,8 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
             <div className="image-editor-gallery-content">
                 <ImageEditor ref="image-editor" singleFrame={this.props.singleFrame} onDoneClicked={this.onDoneClick} onTileEditorOpenClose={this.onTileEditorOpenClose} />
                 <ImageEditorGallery
-                    items={currentView === "my-assets" ? this.filterAssets(this.userAssets) : this.filterAssets(this.galleryAssets, editingTile ? pxt.AssetType.Tile : this.asset?.type, true)}
+                    items={currentView === "my-assets" ? this.filterAssets(this.userAssets, editingTile ? pxt.AssetType.Tile : this.asset?.type) :
+                                                         this.filterAssets(this.galleryAssets, editingTile ? pxt.AssetType.Tile : this.asset?.type, true, true)}
                     hidden={currentView === "editor"}
                     onAssetSelected={this.onAssetSelected} />
             </div>
@@ -177,13 +181,58 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
         this.galleryAssets = getAssets(true, this.asset.type);
     }
 
-    protected filterAssets(assets: pxt.Asset[], type: pxt.AssetType = this.asset?.type, isGallery = false) {
+    protected filterAssets(assets: pxt.Asset[], type: pxt.AssetType = this.asset?.type, isGallery = false, useTags?: boolean) {
         if (type === undefined) {
             return assets;
         }
 
         if (this.asset) {
             assets = assets.map(t => (t.type !== this.asset.type || t.id !== this.asset.id) ? t : assetToGalleryItem(this.getValue()))
+
+            if (this.state.editingTile) {
+                const tilemap = this.ref.getAsset() as pxt.ProjectTilemap;
+                assets = assets.map(a => {
+                    if (tilemap.data.editedTiles?.indexOf(a.id) >= 0) {
+                        return assetToGalleryItem(tilemap.data.tileset.tiles.find(t => t.id === a.id))
+                    }
+                    return a;
+                });
+            }
+        }
+
+        if (this.state.galleryFilter && useTags) {
+            assets.forEach(a => {
+                if (!a.meta.tags && this.options) {
+                    a.meta.tags = this.blocksInfo.apis.byQName[a.id]?.attributes.tags?.split(" ") || [];
+                }})
+
+        // Keep tag filtering unified with pxtlib/spriteutils:filterItems
+            const tags = this.state.galleryFilter.split(" ")
+                .filter(el => !!el)
+                .map(el => el.toLowerCase());
+            const includeTags = tags
+                .filter(tag => tag.indexOf("!") !== 0);
+            const excludeTags = tags
+                .filter(tag => tag.indexOf("!") === 0 && tag.length > 1)
+                .map(tag => tag.substring(1));
+
+            assets = assets.filter(t => checkInclude(t, includeTags) && checkExclude(t, excludeTags))
+        }
+        function checkInclude(item: pxt.Asset, includeTags: string[]) {
+            const tags = item.meta.tags ? item.meta.tags : [];
+            return includeTags.every(filterTag => {
+                const optFilterTag = `?${filterTag}`;
+                return tags.some(tag =>
+                    tag === filterTag || tag === optFilterTag
+                )
+            });
+        }
+
+        function checkExclude(item: pxt.Asset, excludeTags: string[]) {
+            const tags = item.meta.tags ? item.meta.tags : [];
+            return excludeTags.every(filterTag =>
+                !tags.some(tag => tag === filterTag)
+            );
         }
 
         if (isGallery) {
@@ -213,7 +262,6 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
     }
 
     protected initSingleFrame(value: pxt.ProjectImage, options?: any) {
-        this.asset = value;
         this.ref.openAsset(value);
 
         if (options.disableResize) {
@@ -222,7 +270,6 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
     }
 
     protected initAnimation(value: pxt.Animation, options?: any) {
-        this.asset = value;
         this.ref.openAsset(value);
 
         if (options.disableResize) {
@@ -231,7 +278,6 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
     }
 
     protected initTilemap(asset: pxt.ProjectTilemap, options?: any) {
-        this.asset = asset;
         let gallery: GalleryTile[];
 
         // FIXME (riknoll): don't use blocksinfo, use tilemap project instead
@@ -296,6 +342,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
                 this.ref.openGalleryAsset(asset as pxt.Tile | pxt.ProjectImage | pxt.Animation);
             }
             else {
+                pxt.react.getTilemapProject().updateAsset(this.asset);
                 this.ref.openAsset(asset, undefined, true);
             }
         }

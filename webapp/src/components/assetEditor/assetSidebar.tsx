@@ -177,7 +177,7 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
                 <sui.MenuItem name={lf("Delete")}
                     className={`asset-editor-button delete-asset ${!canDelete ? "disabled" : ""}`}
                     icon="trash"
-                    dataTooltip={!canDelete ? lf("Asset is used in your project.") : undefined}
+                    dataTooltip={!canDelete ? (isGalleryAsset ? lf("Can't delete gallery item") : lf("Asset is used in your project")) : undefined}
                     onClick={canDelete ? this.showDeleteModal : undefined}/>
             </div>}
             <textarea className="asset-editor-sidebar-copy" ref={this.copyTextAreaRefHandler} ></textarea>
@@ -215,7 +215,7 @@ function mapStateToProps(state: AssetEditorState, ownProps: any) {
     if (!state) return {};
     return {
         asset: state.selectedAsset,
-        isGalleryAsset: state.selectedAsset?.internalID == -1
+        isGalleryAsset: state.selectedAsset?.id.startsWith("sprites.")
     };
 }
 

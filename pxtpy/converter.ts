@@ -96,7 +96,7 @@ namespace pxt.py {
         "str": tpString,
         "string": tpString,
         "number": tpNumber,
-        "boolean": tpBoolean,
+        "bool": tpBoolean,
         "void": tpVoid,
         "any": tpAny,
     }

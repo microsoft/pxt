@@ -204,6 +204,7 @@ interface Array<T> {
     /**
      * Return a random value from the array
      */
+    //% help=arrays/pick-random
     //% helper=arrayPickRandom weight=25
     //% blockId="array_pickRandom" block="get random value from %list"
     //% blockNamespace="arrays"

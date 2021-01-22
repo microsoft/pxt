@@ -124,7 +124,20 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 .then((compilationResult) => {
                     this.compilationResult = compilationResult;
                     pxt.tickActivity("blocks.compile");
-                    return this.compilationResult.source;
+
+                    let next = Promise.resolve();
+                    if (willOpenTypeScript && this.parent) {
+                        // If we are opening TypeScript, clean up the temporary assets
+                        // We need to do these steps in this order:
+                        //   1. Remove the block data elements for each field
+                        //   2. Save the XML with the blocks data removed (otherwise reloading the blocks will break)
+                        //   3. Dispose of the temporary assets themselves
+                        clearTemporaryAssetBlockData(this.editor)
+                        next = this.parent.saveCurrentSourceAsync()
+                            .then(() => disposeOfTemporaryAssets(this.editor))
+                    }
+
+                    return next.then(() => this.compilationResult.source)
                 });
         } catch (e) {
             pxt.reportException(e)
@@ -1757,4 +1770,27 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         });
         this.editor.setDebugModeOption(debugging);
     }
+}
+
+function forEachImageField(workspace: Blockly.Workspace, cb: (asset: pxtblockly.FieldAssetEditor<any, any>) => void) {
+    const blocks = workspace.getAllBlocks(false);
+
+    for (const block of blocks) {
+        for (const input of block.inputList) {
+            for (const field of input.fieldRow) {
+                // No need to check for tilemap editor because those are never temporary
+                if (field instanceof pxtblockly.FieldSpriteEditor || field instanceof pxtblockly.FieldAnimationEditor) {
+                    cb(field)
+                }
+            }
+        }
+    }
+}
+
+function disposeOfTemporaryAssets(workspace: Blockly.Workspace) {
+    forEachImageField(workspace, field => field.disposeOfTemporaryAsset());
+}
+
+function clearTemporaryAssetBlockData(workspace: Blockly.Workspace) {
+    forEachImageField(workspace, field => field.clearTemporaryAssetData());
 }

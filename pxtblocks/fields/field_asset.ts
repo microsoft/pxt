@@ -34,7 +34,8 @@ namespace pxtblockly {
         protected blocksInfo: pxtc.BlocksInfo;
         protected lightMode: boolean;
         protected undoRedoState: any;
-        protected pendingEdit = false
+        protected pendingEdit = false;
+        protected isEmpty = false;
 
         // If input is invalid, the subclass can set this to be true. The field will instead
         // render as a grey block and preserve the decompiled code
@@ -170,14 +171,23 @@ namespace pxtblockly {
         }
 
         onDispose() {
+            if (this.sourceBlock_?.workspace && !this.sourceBlock_.workspace.rendered) {
+                this.disposeOfTemporaryAsset();
+            }
             pxt.react.getTilemapProject().removeChangeListener(this.getAssetType(), this.assetChangeListener);
         }
 
         disposeOfTemporaryAsset() {
             if (this.isTemporaryAsset()) {
                 pxt.react.getTilemapProject().removeAsset(this.asset);
-                this.setBlockData("");
+                this.setBlockData(null);
                 this.asset = undefined;
+            }
+        }
+
+        clearTemporaryAssetData() {
+            if (this.isTemporaryAsset()) {
+                this.setBlockData(null);
             }
         }
 
@@ -234,7 +244,7 @@ namespace pxtblockly {
 
                 const id = this.getBlockData();
                 const existing = project.lookupAsset(this.getAssetType(), id);
-                if (existing) {
+                if (existing && !(newText && this.isEmpty)) {
                     this.asset = existing;
                 }
                 else {
@@ -242,9 +252,16 @@ namespace pxtblockly {
                     if (this.asset) {
                         if (this.sourceBlock_ && this.asset.meta.blockIDs) {
                             this.asset.meta.blockIDs = this.asset.meta.blockIDs.filter(id => id !== this.sourceBlock_.id);
-                            project.updateAsset(this.asset);
+
+                            if (this.asset.meta.blockIDs.length === 0 && !this.asset.meta.displayName) {
+                                project.removeAsset(this.asset);
+                            }
+                            else {
+                                project.updateAsset(this.asset);
+                            }
                         }
                     }
+                    this.isEmpty = !newText;
                     this.asset = this.createNewAsset(newText);
                 }
                 this.updateAssetMeta();

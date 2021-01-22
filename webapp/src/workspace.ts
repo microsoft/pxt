@@ -623,6 +623,10 @@ export function duplicateAsync(h: Header, text: ScriptText, newName?: string): P
     delete h.githubId;
     delete h.githubTag;
 
+    if (h.cloudVersion) {
+        pxt.tickEvent(`identity.duplicatingCloudProject`);
+    }
+
     // drop cloud-related local metadata
     h = cloud.excludeLocalOnlyMetadataFields(h)
 
@@ -1504,8 +1508,16 @@ export function installByIdAsync(id: string) {
 export async function saveToCloudAsync(h: Header) {
     pxt.debug(`cloud save to ${h.name} (${h.id})`)
     checkHeaderSession(h);
+    const saveStart = U.nowSeconds()
     const text = await getTextAsync(h.id)
-    return cloud.saveAsync(h, text)
+    const res = await cloud.saveAsync(h, text)
+    if (res !== cloud.CloudSaveResult.NotLoggedIn) {
+        const elapsedSec = U.nowSeconds() - saveStart;
+        const success = res === cloud.CloudSaveResult.Success
+        pxt.tickEvent(`identity.saveToCloud`, {elapsedSec, success: success.toString()})
+        // TODO: update UX to indicate a save finished
+        pxt.log(`Project ${h.name} (${h.id.substr(0,4)}...) ${success ? '' : 'NOT '}saved to cloud.`)
+    }
 }
 
 // this promise is set while a sync is in progress

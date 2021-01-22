@@ -44,6 +44,7 @@ import * as socketbridge from "./socketbridge";
 import * as webusb from "./webusb";
 import * as keymap from "./keymap";
 import * as auth from "./auth";
+import * as cloud from "./cloud";
 import * as user from "./user";
 
 import * as monaco from "./monaco"
@@ -386,7 +387,7 @@ export class ProjectView
         if (!this.editorFile || this.loadingExample)
             return Promise.resolve()
         return this.saveTypeScriptAsync()
-            .then(() => this.setFileContentAsync());
+            .then(() => this.saveCurrentSourceAsync());
     }
 
     saveProjectAsync(): Promise<void> {
@@ -395,7 +396,7 @@ export class ProjectView
             .then(() => this.state.header && workspace.saveAsync(this.state.header))
     }
 
-    setFileContentAsync(): Promise<void> {
+    saveCurrentSourceAsync(): Promise<void> {
         let txt = this.editor.getCurrentSource()
         if (txt != this.editorFile.content)
             simulator.setDirty();
@@ -1304,26 +1305,41 @@ export class ProjectView
         if (checkAsync)
             return checkAsync.then(() => this.openHome());
 
-        let doSync = false
+        let p = Promise.resolve();
         // check our multi-tab session
         if (workspace.isHeadersSessionOutdated()) {
              // reload header before loading
             pxt.log(`multi-tab sync before load`)
-            doSync = true;
-        }
-        // check our cloud sync
-        const RESYNC_TIME_SEC = 5 * 60 // 5 minutes
-        const headerCloudSyncOutdated = auth.loggedInSync()
-            && Util.nowSeconds() - workspace.getHeaderLastCloudSync(h) > RESYNC_TIME_SEC
-        if (headerCloudSyncOutdated) {
-            pxt.log(`cloud sync before load`)
-            doSync = true;
-        }
-
-        let p = Promise.resolve();
-        if (doSync) {
             p = p.then(() => workspace.syncAsync().then(() => { }))
         }
+
+        // Try a quick cloud fetch. If it doesn't complete within X second(s),
+        // continue on.
+        const timeoutStart = Util.nowSeconds();
+        const timeout = Util.timeout(1500/*1.5 seconds*/)
+        p = p.then(() => {
+            return Promise.any([
+                timeout,
+                // start a partial cloud sync
+                cloud.syncAsync([h])
+                    .then((changes) => {
+                        if (changes.length) {
+                            const elapsed = Util.nowSeconds() - timeoutStart;
+                            if (timeout.isResolved()) {
+                                // We are too late; the editor has already been loaded.
+                                // Call the onChanges handler to update the editor.
+                                pxt.tickEvent(`identity.syncOnProjectOpen.timedout`, { 'elapsedSec': elapsed})
+                                cloud.onChangesSynced(changes)
+                            } else {
+                                // We're not too late, update the local var so that the
+                                // first load has the new info.
+                                pxt.tickEvent(`identity.syncOnProjectOpen.syncSuccess`, { 'elapsedSec': elapsed })
+                                h = workspace.getHeader(h.id)
+                            }
+                        }
+                    })
+            ])
+        })
 
         return p.then(() => {
             workspace.acquireHeaderSession(h);
@@ -2370,7 +2386,7 @@ export class ProjectView
 
         // Python uses the virtual file and not the current editor content, so sync content
         if (fromLanguage == "py") {
-            promise = promise.then(() => this.setFileContentAsync());
+            promise = promise.then(() => this.saveCurrentSourceAsync());
         }
 
         promise = promise
@@ -4593,6 +4609,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (cookieLang && pref && pref.language != cookieLang) {
                     pxt.BrowserUtils.setCookieLang(pref.language);
                     core.infoNotification(lf("Reload the page to apply your new language preference."));
+                    pxt.tickEvent(`identity.preferences.askingUserToReloadToApplyLang`)
                 }
             })
             let useLang: string = undefined;

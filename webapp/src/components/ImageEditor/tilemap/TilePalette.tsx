@@ -368,7 +368,8 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
 
         if (!tileset.tiles[selected] || !tileset.tiles[selected].isProjectTile || selected === 0) return;
 
-        dispatchCreateNewTile(createTile(tileset.tiles[selected].bitmap), tileset.tiles.length, backgroundColor);
+        const tile = tileset.tiles[selected];
+        dispatchCreateNewTile(createTile(tile.bitmap, null, tile.meta?.displayName), tileset.tiles.length, backgroundColor);
     }
 
     protected tileDeleteAlertHandler = () => {

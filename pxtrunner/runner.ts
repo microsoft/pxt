@@ -10,6 +10,7 @@ namespace pxt.runner {
     export interface SimulateOptions {
         id?: string;
         code?: string;
+        assets?: string;
         highContrast?: boolean;
         light?: boolean;
         fullScreen?: boolean;
@@ -408,6 +409,20 @@ namespace pxt.runner {
         let didUpgrade = false;
         const currentTargetVersion = pxt.appTarget.versions.target;
         let compileResult = await compileAsync(false, opts => {
+            if (simOptions.assets) {
+                const parsedAssets = JSON.parse(simOptions.assets);
+                for (const key of Object.keys(parsedAssets)) {
+                    const el = parsedAssets[key];
+                    opts.fileSystem[key] = el;
+                    if (opts.sourceFiles.indexOf(key) < 0) {
+                        opts.sourceFiles.push(key);
+                    }
+                    if (/\.jres$/.test(key)) {
+                        const parsedJres = JSON.parse(el)
+                        opts.jres = pxt.inflateJRes(parsedJres, opts.jres);
+                    }
+                }
+            }
             if (simOptions.code) opts.fileSystem["main.ts"] = simOptions.code;
 
             // Api info needed for py2ts conversion, if project is shared in Python
@@ -1008,13 +1023,12 @@ ${linkString}
                     opts.fileSystem["main.ts"] = code;
                 opts.ast = true
 
-                if (options.jres) {
-                    const tilemapTS = pxt.emitTilemapsFromJRes(JSON.parse(options.jres));
-                    if (tilemapTS) {
-                        opts.fileSystem[pxt.TILEMAP_JRES] = options.jres;
-                        opts.fileSystem[pxt.TILEMAP_CODE] = tilemapTS;
-                        opts.sourceFiles.push(pxt.TILEMAP_JRES);
-                        opts.sourceFiles.push(pxt.TILEMAP_CODE);
+                if (options.assets) {
+                    for (const key of Object.keys(options.assets)) {
+                        if (opts.sourceFiles.indexOf(key) < 0) {
+                            opts.sourceFiles.push(key);
+                        }
+                        opts.fileSystem[key] = options.assets[key];
                     }
                 }
 
@@ -1040,6 +1054,16 @@ ${linkString}
                     .then(() => {
                         let blocksInfo = pxtc.getBlocksInfo(apis);
                         pxt.blocks.initializeAndInject(blocksInfo);
+                        const tilemapJres = options.assets?.[pxt.TILEMAP_JRES];
+                        const assetsJres = options.assets?.[pxt.IMAGES_JRES];
+                        if (tilemapJres || assetsJres) {
+                            tilemapProject = new TilemapProject();
+                            tilemapProject.loadPackage(mainPkg);
+                            if (tilemapJres)
+                                tilemapProject.loadTilemapJRes(JSON.parse(tilemapJres), true);
+                            if (assetsJres)
+                                tilemapProject.loadAssetsJRes(JSON.parse(assetsJres))
+                        }
                         let bresp = pxtc.decompiler.decompileToBlocks(
                             blocksInfo,
                             program.getSourceFile("main.ts"),
@@ -1059,15 +1083,9 @@ ${linkString}
                             };
                         pxt.debug(bresp.outfiles["main.blocks"])
 
-                        if (options.jres) {
-                            tilemapProject = new TilemapProject();
-                            tilemapProject.loadPackage(mainPkg);
-                            tilemapProject.loadTilemapJRes(JSON.parse(options.jres), true);
-                        }
-
                         const blocksSvg = pxt.blocks.render(bresp.outfiles["main.blocks"], options);
 
-                        if (options.jres) {
+                        if (tilemapJres || assetsJres) {
                             tilemapProject = null;
                         }
 
@@ -1102,13 +1120,12 @@ ${linkString}
             .then(() => getCompileOptionsAsync(appTarget.compile ? appTarget.compile.hasHex : false))
             .then(opts => {
                 opts.ast = true
-                if (options.jres) {
-                    const tilemapTS = pxt.emitTilemapsFromJRes(JSON.parse(options.jres));
-                    if (tilemapTS) {
-                        opts.fileSystem[pxt.TILEMAP_JRES] = options.jres;
-                        opts.fileSystem[pxt.TILEMAP_CODE] = tilemapTS;
-                        opts.sourceFiles.push(pxt.TILEMAP_JRES);
-                        opts.sourceFiles.push(pxt.TILEMAP_CODE);
+                if (options.assets) {
+                    for (const key of Object.keys(options.assets)) {
+                        if (opts.sourceFiles.indexOf(key) < 0) {
+                            opts.sourceFiles.push(key);
+                        }
+                        opts.fileSystem[key] = options.assets[key];
                     }
                 }
                 const resp = pxtc.compile(opts)
@@ -1118,14 +1135,19 @@ ${linkString}
                         const blocksInfo = pxtc.getBlocksInfo(apis);
                         pxt.blocks.initializeAndInject(blocksInfo);
 
-                        if (options.jres) {
+                        const tilemapJres = options.assets?.[pxt.TILEMAP_JRES];
+                        const assetsJres = options.assets?.[pxt.IMAGES_JRES];
+                        if (tilemapJres || assetsJres) {
                             tilemapProject = new TilemapProject();
                             tilemapProject.loadPackage(mainPkg);
-                            tilemapProject.loadTilemapJRes(JSON.parse(options.jres), true);
+                            if (tilemapJres)
+                                tilemapProject.loadTilemapJRes(JSON.parse(tilemapJres), true);
+                            if (assetsJres)
+                                tilemapProject.loadAssetsJRes(JSON.parse(assetsJres))
                         }
                         const blockSvg = pxt.blocks.render(code, options);
 
-                        if (options.jres) {
+                        if (tilemapJres || assetsJres) {
                             tilemapProject = null;
                         }
 

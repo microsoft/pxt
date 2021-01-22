@@ -40,7 +40,7 @@ const topReducer = (state: AssetEditorState = initialState, action: any): AssetE
         case actions.UPDATE_GALLERY_ASSETS:
             return {
                 ...state,
-                galleryAssets: action.assets
+                galleryAssets: getAssets(true)
             }
         default:
             return state

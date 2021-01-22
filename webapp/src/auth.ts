@@ -1,5 +1,6 @@
 import * as core from "./core";
 import * as data from "./data";
+import * as cloud from "./cloud";
 
 import U = pxt.Util;
 
@@ -394,13 +395,21 @@ export async function updateUserProfile(opts: {
 export async function deleteAccount() {
     if (!await loggedIn()) { return; }
 
+    const userId = getState()?.profile?.id;
+
     await apiAsync('/api/user', null, 'DELETE');
 
     // Clear csrf token so we can no longer make authenticated requests.
     pxt.storage.removeLocal(CSRF_TOKEN);
 
+    // Convert cloud-saved projects to local projects.
+    await cloud.convertCloudToLocal(userId);
+
     // Update state and UI to reflect logged out state.
     clearState();
+
+    // Reload page
+    window.location.reload();
 }
 
 export class Component<TProps, TState> extends data.Component<TProps, TState> {
@@ -558,7 +567,6 @@ const DEV_BACKEND_PROD = "https://www.makecode.com";
 const DEV_BACKEND_STAGING = "https://staging.pxt.io";
 // tslint:disable-next-line:no-http-string
 const DEV_BACKEND_LOCALHOST = "http://localhost:5500";
-const DEV_BACKEND_LOCALHOST_SSL = "https://localhost:5500";
 
 const DEV_BACKEND = DEV_BACKEND_LOCALHOST;
 
@@ -585,7 +593,11 @@ export async function apiAsync<T = any>(url: string, data?: any, method?: string
             success: Math.floor(r.statusCode / 100) === 2,
             errmsg: null
         }
-    }).catch(e => {
+    }).catch(async (e) => {
+        if (!/logout/.test(url) && e.statusCode == 401) {
+            // 401/Unauthorized. logout now.
+            await logout();
+        }
         return {
             statusCode: e.statusCode,
             errmsg: e.message,

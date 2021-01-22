@@ -117,8 +117,10 @@
 
         var codeFromSrc = /code(?:[:=])([^&?]+)/i.exec(window.location.href);
         var codeFromData = undefined;
+        var assetJsonFromData = undefined;
         try {
             codeFromData = window.frameElement ? window.frameElement.getAttribute('data-code') : undefined;
+            assetJsonFromData = window.frameElement ? window.frameElement.getAttribute('data-assets') : undefined;
         } catch (e) {
             /**
              *  Internet Explorer 11 and Microsoft Edge throw an exception when checking
@@ -199,6 +201,7 @@
                     var options = {
                         id: id ? id[1] : undefined,
                         code: code ? decodeURIComponent(code) : undefined,
+                        assets: assetJsonFromData ? decodeURIComponent(assetJsonFromData) : undefined,
                         highContrast: highContrast,
                         light: light,
                         fullScreen: fullScreen,
