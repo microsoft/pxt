@@ -84,6 +84,7 @@ export class AssetEditor extends Editor {
                     initWidth: 16,
                     initHeight: 16,
                     headerVisible: true,
+                    hideMyAssets: true,
                     blocksInfo: this.blocksInfo
                 });
                 break;
@@ -107,6 +108,7 @@ export class AssetEditor extends Editor {
                     initWidth: 16,
                     initHeight: 16,
                     headerVisible: true,
+                    hideMyAssets: true,
                     blocksInfo: this.blocksInfo
                 });
                 break;
@@ -115,6 +117,7 @@ export class AssetEditor extends Editor {
                     initWidth: 16,
                     initHeight: 16,
                     headerVisible: true,
+                    hideMyAssets: true,
                     blocksInfo: this.blocksInfo
                 });
                 break;

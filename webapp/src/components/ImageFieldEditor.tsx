@@ -16,6 +16,7 @@ export interface ImageFieldEditorState {
     currentView: "editor" | "gallery" | "my-assets";
     tileGalleryVisible?: boolean;
     headerVisible?: boolean;
+    hideMyAssets?: boolean;
     galleryFilter?: string;
     editingTile?: boolean;
 }
@@ -50,33 +51,44 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
     }
 
     render() {
-        const { currentView, headerVisible, editingTile } = this.state;
+        const { currentView, headerVisible, editingTile, hideMyAssets } = this.state;
+
+        let showHeader = headerVisible;
+        // If there is no asset, show the gallery to prevent changing shape when it's added
+        const showGallery = !this.asset || editingTile || this.asset.type !== pxt.AssetType.Tilemap;;
+        const showMyAssets = !hideMyAssets && !editingTile;
 
         if (this.asset && !this.galleryAssets) {
             this.updateGalleryAssets();
         }
 
-        // if there isn't an asset, default to showing three so that we don't change shape
-        const hasGallery = !this.asset || editingTile || this.asset.type !== pxt.AssetType.Tilemap;
+        const toggleOptions = [{
+            label: lf("Editor"),
+            view: "editor",
+            onClick: this.showEditor
+        }, {
+            label: lf("Gallery"),
+            view: "gallery",
+            onClick: this.showGallery
+        }, {
+            label: lf("My Assets"),
+            view: "my-assets",
+            onClick: this.showMyAssets
+        }];
 
-        let toggleClass = currentView === "editor" ? "left" : (currentView === "gallery" ? "center" : "right");
-
-        if (!hasGallery) toggleClass += " no-gallery"
+        if (!showGallery && !showMyAssets) {
+            showHeader = false;
+        }
+        else if (!showGallery) {
+            toggleOptions.splice(1, 1);
+        }
+        else if (!showMyAssets) {
+            toggleOptions.splice(2, 1);
+        }
 
         return <div className="image-editor-wrapper">
-            {headerVisible && <div className="gallery-editor-header">
-                <div className={`gallery-editor-toggle ${toggleClass} ${pxt.BrowserUtils.isEdge() ? "edge" : ""}`}>
-                    <div className="gallery-editor-toggle-label gallery-editor-toggle-left" onClick={this.showEditor} role="button">
-                        {lf("Editor")}
-                    </div>
-                    {hasGallery && <div className="gallery-editor-toggle-label gallery-editor-toggle-center" onClick={this.showGallery} role="button">
-                        {lf("Gallery")}
-                    </div>}
-                    <div className="gallery-editor-toggle-label gallery-editor-toggle-right" onClick={this.showMyAssets} role="button">
-                        {lf("My Assets")}
-                    </div>
-                    <div className="gallery-editor-toggle-handle"/>
-                </div>
+            {showHeader && <div className="gallery-editor-header">
+                <ImageEditorToggle options={toggleOptions} view={currentView} />
             </div>}
             <div className="image-editor-gallery-content">
                 <ImageEditor ref="image-editor" singleFrame={this.props.singleFrame} onDoneClicked={this.onDoneClick} onTileEditorOpenClose={this.onTileEditorOpenClose} />
@@ -134,6 +146,10 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
 
             if (options.headerVisible != undefined) {
                 this.setState({ headerVisible: options.headerVisible })
+            }
+
+            if (options.hideMyAssets != undefined) {
+                this.setState({ hideMyAssets: options.hideMyAssets });
             }
         }
     }
@@ -407,6 +423,52 @@ class ImageEditorGallery extends React.Component<ImageEditorGalleryProps, {}> {
 
     clickHandler = (asset: pxt.Asset) => {
         this.props.onAssetSelected(asset);
+    }
+}
+
+interface ImageEditorToggleOption {
+    label: string;
+    view: string;
+    onClick: () => void;
+}
+
+interface ImageEditorToggleProps {
+    options: ImageEditorToggleOption[];
+    view: string;
+}
+
+
+class ImageEditorToggle extends React.Component<ImageEditorToggleProps> {
+    render() {
+        const { options, view } = this.props;
+
+        const threeOptions = options.length > 2;
+        const selected = options.findIndex(o => o.view === view)
+
+        const left = options[0];
+        const center = threeOptions ? options[1] : undefined;
+        const right = threeOptions ? options[2] : options[1];
+
+        let toggleClass: string;
+        if (threeOptions) {
+            toggleClass = ["left", "center", "right"][selected];
+        }
+        else {
+            toggleClass = ["left", "right"][selected] + " no-gallery";
+        }
+
+        return <div className={`gallery-editor-toggle ${toggleClass} ${pxt.BrowserUtils.isEdge() ? "edge" : ""}`}>
+            <div className="gallery-editor-toggle-label gallery-editor-toggle-left" onClick={left.onClick} role="button">
+                {left.label}
+            </div>
+            {center && <div className="gallery-editor-toggle-label gallery-editor-toggle-center" onClick={center.onClick} role="button">
+                {center.label}
+            </div>}
+            <div className="gallery-editor-toggle-label gallery-editor-toggle-right" onClick={right.onClick} role="button">
+                {right.label}
+            </div>
+            <div className="gallery-editor-toggle-handle"/>
+    </div>
     }
 }
 
