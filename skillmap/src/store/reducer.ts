@@ -253,7 +253,9 @@ export function setHeaderIdForActivity(user: UserState, pageSource: string, map:
         }
     }
 
-    const shouldTransition = isMapCompleted(user, pageSource, map, activityId) && !existing.isCompleted;
+    // Only transition the first time a carousel/skill path is completed: we check that the map is completed
+    // (not including the current activity), that the current activity is not YET completed, but about to be
+    const shouldTransition = isMapCompleted(user, pageSource, map, activityId) && !existing.isCompleted && isCompleted;
     const currentMapProgress = user.mapProgress?.[pageSource] || {};
 
     return {
@@ -294,6 +296,8 @@ export function setActivityFinished(user: UserState, pageSource: string, map: Sk
         }
     }
 
+    // Only transition the first time a carousel/skill path is completed: we check that the map is completed
+    // (not including the current activity) and that the current activity is not yet completed
     const shouldTransition = isMapCompleted(user, pageSource, map, activityId) && !existing.isCompleted;
     const currentMapProgress = user.mapProgress?.[pageSource] || {};
     return {
