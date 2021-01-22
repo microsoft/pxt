@@ -25,7 +25,7 @@ We’ve finally moved the animations blocks into the built-in editor under the A
 
 ![The Animation blocks category](/static/blog/arcade/update-jan-2021/animation-category.png)
 
-<Short demo video on how to use Animations – Jaq will post> 
+https://youtu.be/TRjGj80g3Y0
 
 ## New Array Block 
 
