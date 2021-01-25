@@ -102,12 +102,9 @@ namespace pxsim {
             if (options.parentOrigin) {
                 this._allowedOrigins.push(options.parentOrigin)
             }
-            try {
-                const simUrl = new URL(this.getSimUrl())
-                this._allowedOrigins.push(simUrl.origin)
-            } catch (e) {
-                console.error(`Invalid sim url ${this.getSimUrl()}`)
-            }
+
+            this._allowedOrigins.push(this.getSimUrl().origin);
+
             const messageSimulators = options?.messageSimulators
             if (messageSimulators) {
                 Object.keys(messageSimulators)
@@ -284,8 +281,14 @@ namespace pxsim {
             return frames;
         }
 
-        private getSimUrl(): string {
-            return this.options.simUrl || ((window as any).pxtConfig || {}).simUrl || `${location.origin}/sim/simulator.html`;
+        private getSimUrl(): URL {
+            const simUrl = this.options.simUrl || ((window as any).pxtConfig || {}).simUrl || `${location.origin}/sim/simulator.html`;
+            try {
+                return new URL(simUrl);
+            } catch {
+                // Failed to parse set url; try based off origin in case path defined as relative (e.g. /simulator.html)
+                return new URL(simUrl, location.origin);
+            }
         }
 
         public postMessage(msg: pxsim.SimulatorMessage, source?: Window) {
@@ -296,7 +299,6 @@ namespace pxsim {
 
             const depEditors = this.dependentEditors();
             let frames = this.simFrames();
-            const simUrl = U.isLocalHost() ? "*" : this.getSimUrl();
 
             const broadcastmsg = msg as pxsim.SimulatorBroadcastMessage;
             if (source && broadcastmsg?.broadcast) {
