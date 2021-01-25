@@ -79,6 +79,8 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
 
         const imageUrl = card.imageUrl || (card.youTubeId ? `https://img.youtube.com/vi/${card.youTubeId}/0.jpg` : undefined);
 
+        const lastCloudSave = card.cloudState ? Math.min(card.cloudLastSyncTime, card.time) : card.time;
+
         const style = card.style || "card"
         const cardDiv = <div className={`ui ${style} ${color} ${card.onClick ? "link" : ''} ${className ? className : ''}`}
             role={card.role} aria-selected={card.role === "option" ? "true" : undefined} aria-label={ariaLabel} title={card.title}
@@ -111,16 +113,36 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
                 <div className="content">
                     {card.shortName || card.name ? <div className="header">{card.shortName || card.name}</div> : null}
                     {descriptions && descriptions.map((element, index) => {
-                            return <div key={`line${index}`} className={`description tall ${card.icon || card.iconContent || card.imageUrl ? "" : "long"}`}>{renderMd(element)}</div>
-                        })
+                        return <div key={`line${index}`} className={`description tall ${card.icon || card.iconContent || card.imageUrl ? "" : "long"}`}>{renderMd(element)}</div>
+                    })
                     }
                 </div> : undefined}
             {card.time ? <div className="meta">
                 {card.tutorialLength ? <span className={`ui tutorial-progress ${tutorialDone ? "green" : "orange"} left floated label`}><i className={`${tutorialDone ? "trophy" : "circle"} icon`}></i>&nbsp;{lf("{0}/{1}", (card.tutorialStep || 0) + 1, card.tutorialLength)}</span> : undefined}
-                {card.time ? <span key="date" className="date">{pxt.Util.timeSince(card.time)}</span> : null}
-                {card.cloudState === "cloud" &&
-                    // TODO: show richer state i.e. sync-in-progress, conflict occurred, etc.
-                    <i className="ui large left floated icon cloud"></i>
+                {!card.cloudState && card.time && <span key="date" className="date">{pxt.Util.timeSince(card.time)}</span>}
+                {card.cloudState === "saved" &&
+                    // TODO @darzu:
+                    <span key="date" className="date">{pxt.Util.timeSince(lastCloudSave)}</span>
+                }
+                {card.cloudState === "localEdits" &&
+                    // TODO @darzu:
+                    <span key="date" className="date">{pxt.Util.timeSince(lastCloudSave)}*</span>
+                }
+                {card.cloudState === "conflict" &&
+                    // TODO @darzu:
+                    lf("needs attention!")
+                }
+                {card.cloudState === "offline" &&
+                    // TODO @darzu:
+                    lf("offline")
+                }
+                {card.cloudState === "saving" &&
+                    // TODO @darzu:
+                    lf("saving...")
+                }
+                {card.cloudState &&
+                    // TODO @darzu: differetn icons & wordage depending on state
+                    <i className="ui large right floated icon cloud"></i>
                 }
             </div> : undefined}
             {card.extracontent || card.learnMoreUrl || card.buyUrl || card.feedbackUrl ?

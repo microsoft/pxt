@@ -757,19 +757,35 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                             : scr.tutorialCompleted ? scr.tutorialCompleted.steps
                                 : undefined;
                     const ghid = pxt.github.parseRepoId(scr.githubId);
-                    const cloudState = !!scr.cloudUserId ? "cloud" : "local"
+                    function getCloudState(h: pxt.workspace.Header): pxt.CodeCardCloudState {
+                        if (!scr.cloudUserId)
+                            return "" // none
+                        if (!auth.loggedInSync())
+                            return "offline"
+                        if (h.cloudInProgressSyncStartTime > 0)
+                            return "saving"
+                        if (!h.cloudCurrent)
+                            return "localEdits"
+                        if (h.cloudLastSyncTime > 0)
+                            return "saved"
+                        pxt.reportError("cloudsave", `Invalid project cloud state for project ${h.name}(${h.id.substr(0, 4)}..): user: ${scr.cloudUserId}, inProg: ${scr.cloudInProgressSyncStartTime}, cloudCurr: ${scr.cloudCurrent}, lastCloud: ${scr.cloudLastSyncTime}`);
+                        return ""
+                    }
+                    const cloudState = getCloudState(scr);
                     return <ProjectsCodeCard
                         key={'local' + scr.id + scr.recentUse}
                         // ref={(view) => { if (index === 1) this.latestProject = view }}
                         cardType="file"
                         name={(ghid && pxt.github.join(ghid.project, ghid.fileName)) || scr.name}
-                        time={scr.recentUse}
+                        time={scr.modificationTime}
                         url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ""}
                         scr={scr} index={index}
                         onCardClick={this.handleCardClick}
                         tutorialStep={tutorialStep}
                         tutorialLength={tutoriallength}
                         cloudState={cloudState}
+                        // TODO @darzu:
+                        cloudLastSyncTime={scr.cloudLastSyncTime}
                     />;
                 })}
                 {showScriptManagerCard ? <div role="button" className="ui card link buttoncard scriptmanagercard" title={lf("See all projects")}

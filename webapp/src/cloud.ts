@@ -91,6 +91,7 @@ function setAsync(h: Header, prevVersion: Version, text?: ScriptText): Promise<V
         h.cloudUserId = userId;
         h.cloudCurrent = false;
         h.cloudVersion = prevVersion;
+        h.cloudInProgressSyncStartTime = U.nowSeconds();
         const project: CloudProject = {
             id: h.id,
             header: JSON.stringify(excludeLocalOnlyMetadataFields(h)),
@@ -98,6 +99,7 @@ function setAsync(h: Header, prevVersion: Version, text?: ScriptText): Promise<V
             version: prevVersion
         }
         const result = await auth.apiAsync<string>('/api/user/project', project);
+        h.cloudInProgressSyncStartTime = 0;
         if (result.success) {
             h.cloudCurrent = true;
             h.cloudVersion = result.resp;
