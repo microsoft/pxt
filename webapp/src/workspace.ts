@@ -1517,6 +1517,7 @@ export async function saveToCloudAsync(h: Header) {
         pxt.tickEvent(`identity.saveToCloud`, {elapsedSec, success: success.toString()})
         // TODO: update UX to indicate a save finished
         pxt.log(`Project ${h.name} (${h.id.substr(0,4)}...) ${success ? '' : 'NOT '}saved to cloud.`)
+        data.invalidateHeader("header", h);
     }
 }
 

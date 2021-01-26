@@ -5,6 +5,7 @@ import * as data from "./data";
 import * as sui from "./sui";
 import * as githubbutton from "./githubbutton";
 import * as cmds from "./cmds"
+import { getCloudState } from "./cloud";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -227,7 +228,8 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
     }
 
     renderCore() {
-        const { tutorialOptions, projectName, compiling, isSaving, simState, debugging, header, editorState } = this.props.parent.state;
+        const { tutorialOptions, projectName, compiling, isSaving, simState, debugging, editorState } = this.props.parent.state;
+        const header = this.getData(`header:${this.props.parent.state.header.id}`);
 
         const targetTheme = pxt.appTarget.appTheme;
         const isController = pxt.shell.isControllerMode();
@@ -290,6 +292,10 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
             saveButtonClasses = "disabled";
         }
 
+        const cloudState = getCloudState(header);
+        const cloudLastSaved = Math.min(header.modificationTime, header.cloudLastSyncTime)
+        const timeStr = cloudLastSaved * 1000 // TODO @darzu:
+
         return <div id="editortools" className="ui" role="menubar" aria-label={lf("Editor toolbar")}>
             <div id="downloadArea" role="menu" className="ui column items">{headless &&
                 <div className="ui item">
@@ -310,6 +316,12 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                     <div className={`ui right ${showSave ? "labeled" : ""} input projectname-input projectname-computer`}>
                         {showProjectRename && this.getSaveInput(showSave, "fileNameInput2", projectName, showProjectRenameReadonly)}
                         {showGithub && <githubbutton.GithubButton parent={this.props.parent} key={`githubbtn${computer}`} />}
+                    {cloudState && <i className="ui large right floated icon cloud"></i>}
+                    {cloudState === "saving" && <span>{lf("saving...")}</span>}
+                    {cloudState === "offline" && <span>{lf("offline.")}</span>}
+                    {cloudState === "conflict" && <span>{lf("conflict!")}</span>}
+                    {cloudState === "localEdits" && <span>{pxt.Util.timeSince(cloudLastSaved)}*</span>}
+                    {cloudState === "saved" && <span>{pxt.Util.timeSince(cloudLastSaved)}</span>}
                     </div>
                 </div>}
             <div id="editorToolbarArea" role="menu" className="ui column items">

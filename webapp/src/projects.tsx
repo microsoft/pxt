@@ -9,6 +9,7 @@ import * as cloudsync from "./cloudsync";
 import * as auth from "./auth";
 import * as workspace from "./workspace";
 import * as identity from "./identity";
+import * as cloud from "./cloud";
 import * as codecard from "./codecard"
 import * as carousel from "./carousel";
 import { showAboutDialogAsync } from "./dialogs";
@@ -757,21 +758,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                             : scr.tutorialCompleted ? scr.tutorialCompleted.steps
                                 : undefined;
                     const ghid = pxt.github.parseRepoId(scr.githubId);
-                    function getCloudState(h: pxt.workspace.Header): pxt.CodeCardCloudState {
-                        if (!scr.cloudUserId)
-                            return "" // none
-                        if (!auth.loggedInSync())
-                            return "offline"
-                        if (h.cloudInProgressSyncStartTime > 0)
-                            return "saving"
-                        if (!h.cloudCurrent)
-                            return "localEdits"
-                        if (h.cloudLastSyncTime > 0)
-                            return "saved"
-                        pxt.reportError("cloudsave", `Invalid project cloud state for project ${h.name}(${h.id.substr(0, 4)}..): user: ${scr.cloudUserId}, inProg: ${scr.cloudInProgressSyncStartTime}, cloudCurr: ${scr.cloudCurrent}, lastCloud: ${scr.cloudLastSyncTime}`);
-                        return ""
-                    }
-                    const cloudState = getCloudState(scr);
+                    const cloudState = cloud.getCloudState(scr);
                     return <ProjectsCodeCard
                         key={'local' + scr.id + scr.recentUse}
                         // ref={(view) => { if (index === 1) this.latestProject = view }}

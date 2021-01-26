@@ -37,6 +37,21 @@ export function excludeLocalOnlyMetadataFields(h: Header): Header {
     return clone
 }
 
+export function getCloudState(h: pxt.workspace.Header): pxt.CloudStateSummary {
+    if (!h.cloudUserId)
+        return "" // none
+    if (!auth.loggedInSync())
+        return "offline"
+    if (h.cloudInProgressSyncStartTime > 0)
+        return "saving"
+    if (!h.cloudCurrent)
+        return "localEdits"
+    if (h.cloudLastSyncTime > 0)
+        return "saved"
+    pxt.reportError("cloudsave", `Invalid project cloud state for project ${h.name}(${h.id.substr(0, 4)}..): user: ${h.cloudUserId}, inProg: ${h.cloudInProgressSyncStartTime}, cloudCurr: ${h.cloudCurrent}, lastCloud: ${h.cloudLastSyncTime}`);
+    return ""
+}
+
 async function listAsync(): Promise<Header[]> {
     return new Promise(async (resolve, reject) => {
         // Note: Cosmos & our backend does not return e-tags each individual item in a list operation

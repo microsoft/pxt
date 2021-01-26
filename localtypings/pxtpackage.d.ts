@@ -2,7 +2,8 @@ declare namespace pxt {
 
     type CodeCardType = "file" | "example" | "codeExample" | "tutorial" | "side" | "template" | "package" | "hw" | "forumUrl" | "forumExample" | "sharedExample" | "link";
     type CodeCardEditorType = "blocks" | "js" | "py";
-    type CodeCardCloudState = ""/*none*/ | "saved" | "offline" | "saving" | "conflict" | "localEdits";
+
+    type CloudStateSummary = ""/*none*/ | "saved" | "offline" | "saving" | "conflict" | "localEdits";
 
     interface Map<T> {
         [index: string]: T;
@@ -170,7 +171,7 @@ declare namespace pxt {
         editor?: CodeCardEditorType;
         otherActions?: CodeCardAction[];
         cloudLastSyncTime?: number;
-        cloudState?: CodeCardCloudState;
+        cloudState?: CloudStateSummary;
         directOpen?: boolean; // skip the details view, directly do the card action
 
         header?: string;
