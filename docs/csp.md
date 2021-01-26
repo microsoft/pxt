@@ -96,10 +96,10 @@ In the Service Learning unit, students will explore the [United Nations Sustaina
 
 The course materials include:
 
-* Daily Lesson plans in the form of a OneNote notebook
-* PowerPoint decks for classroom lectures with talking points in the Notes section
-* Textbook Blown to Bits: Your Life, Liberty, and Pursuit of Happiness After the Digital Explosion
-* Student projects, labs and activities (with solutions where appropriate)
+* Daily Lesson plans in the form of a OneNote notebook.
+* PowerPoint decks for classroom lectures with talking points in the Notes section.
+* Textbook Blown to Bits: Your Life, Liberty, and Pursuit of Happiness After the Digital Explosion.
+* Student projects, labs and activities (with solutions where appropriate).
 
 ## Stay Connected 
 
