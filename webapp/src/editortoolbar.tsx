@@ -294,7 +294,15 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
 
         const cloudState = getCloudState(header);
         const cloudLastSaved = Math.min(header.modificationTime, header.cloudLastSyncTime)
-        const timeStr = cloudLastSaved * 1000 // TODO @darzu:
+        var options: Intl.DateTimeFormatOptions = {
+            weekday: 'long', hour: 'numeric', minute: 'numeric'
+        };
+        // TODO @darzu: localize
+        const timeStr = new Date(cloudLastSaved * 1000).toLocaleString("en-US", options);
+        // TODO @darzu: offline mode doesn't show up right
+        // TODO @darzu: says "saving..." on first load often
+        // TODO @darzu: pop conflict dialog
+        // TODO @darzu: show different icons
 
         return <div id="editortools" className="ui" role="menubar" aria-label={lf("Editor toolbar")}>
             <div id="downloadArea" role="menu" className="ui column items">{headless &&
@@ -316,13 +324,13 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                     <div className={`ui right ${showSave ? "labeled" : ""} input projectname-input projectname-computer`}>
                         {showProjectRename && this.getSaveInput(showSave, "fileNameInput2", projectName, showProjectRenameReadonly)}
                         {showGithub && <githubbutton.GithubButton parent={this.props.parent} key={`githubbtn${computer}`} />}
+                </div>
                     {cloudState && <i className="ui large right floated icon cloud"></i>}
-                    {cloudState === "saving" && <span>{lf("saving...")}</span>}
-                    {cloudState === "offline" && <span>{lf("offline.")}</span>}
-                    {cloudState === "conflict" && <span>{lf("conflict!")}</span>}
-                    {cloudState === "localEdits" && <span>{pxt.Util.timeSince(cloudLastSaved)}*</span>}
-                    {cloudState === "saved" && <span>{pxt.Util.timeSince(cloudLastSaved)}</span>}
-                    </div>
+                {cloudState === "saving" && <span className="ui">{lf("saving...")}</span>}
+                {cloudState === "offline" && <span className="ui">{lf("offline.")}</span>}
+                {cloudState === "conflict" && <span className="ui">{lf("conflict!")}</span>}
+                {cloudState === "localEdits" && <span className="ui">{timeStr}*</span>}
+                {cloudState === "saved" && <span className="ui">{timeStr}</span>}
                 </div>}
             <div id="editorToolbarArea" role="menu" className="ui column items">
                 {showUndoRedo && <div className="ui icon buttons">{this.getUndoRedo(computer)}</div>}
