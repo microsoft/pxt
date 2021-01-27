@@ -299,9 +299,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         };
         // TODO @darzu: localize
         const timeStr = new Date(cloudLastSaved * 1000).toLocaleString("en-US", options);
-        // TODO @darzu: offline mode doesn't show up right
         // TODO @darzu: says "saving..." on first load often
-        // TODO @darzu: pop conflict dialog
         // TODO @darzu: show different icons
 
         return <div id="editortools" className="ui" role="menubar" aria-label={lf("Editor toolbar")}>

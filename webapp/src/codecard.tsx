@@ -1,6 +1,7 @@
 import * as React from "react";
 import * as sui from "./sui";
 import * as data from "./data";
+import * as cloud from "./cloud";
 
 const repeat = pxt.Util.repeatMap;
 
@@ -66,7 +67,6 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
         const className = card.className;
         const cardType = card.cardType;
         const tutorialDone = card.tutorialLength == card.tutorialStep + 1;
-        const ariaLabel = card.ariaLabel || card.title || card.shortName || card.name;
 
         const descriptions = card && card.description && card.description.split("\n");
 
@@ -79,7 +79,14 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
 
         const imageUrl = card.imageUrl || (card.youTubeId ? `https://img.youtube.com/vi/${card.youTubeId}/0.jpg` : undefined);
 
-        const lastCloudSave = card.cloudState ? Math.min(card.cloudLastSyncTime, card.time) : card.time;
+        // these header-derived properties must be taken from the virtual API system, not the props. Otherwise
+        // they won't update dynamically when headers change.
+        const header = card.projectId ? this.getData<pxt.workspace.Header>(`header:${card.projectId}`) : null;
+        const name = header ? header.name : card.name;
+        const cloudState = header ? cloud.getCloudState(header) : "";
+        const lastCloudSave = cloudState ? Math.min(header.cloudLastSyncTime, header.modificationTime) : card.time;
+
+        const ariaLabel = card.ariaLabel || card.title || card.shortName || name;
 
         const style = card.style || "card"
         const cardDiv = <div className={`ui ${style} ${color} ${card.onClick ? "link" : ''} ${className ? className : ''}`}
@@ -109,9 +116,9 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
                     {card.icon ? <sui.Icon icon={`${'icon ' + card.icon}`} /> : undefined}
                     {card.iconContent || undefined}
                 </div></div> : undefined}
-            {(card.shortName || card.name || descriptions) ?
+            {(card.shortName || name || descriptions) ?
                 <div className="content">
-                    {card.shortName || card.name ? <div className="header">{card.shortName || card.name}</div> : null}
+                    {card.shortName || name ? <div className="header">{card.shortName || name}</div> : null}
                     {descriptions && descriptions.map((element, index) => {
                         return <div key={`line${index}`} className={`description tall ${card.icon || card.iconContent || card.imageUrl ? "" : "long"}`}>{renderMd(element)}</div>
                     })
@@ -119,28 +126,28 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
                 </div> : undefined}
             {card.time ? <div className="meta">
                 {card.tutorialLength ? <span className={`ui tutorial-progress ${tutorialDone ? "green" : "orange"} left floated label`}><i className={`${tutorialDone ? "trophy" : "circle"} icon`}></i>&nbsp;{lf("{0}/{1}", (card.tutorialStep || 0) + 1, card.tutorialLength)}</span> : undefined}
-                {!card.cloudState && card.time && <span key="date" className="date">{pxt.Util.timeSince(card.time)}</span>}
-                {card.cloudState === "saved" &&
+                {!cloudState && card.time && <span key="date" className="date">{pxt.Util.timeSince(card.time)}</span>}
+                {cloudState === "saved" &&
                     // TODO @darzu:
                     <span key="date" className="date">{pxt.Util.timeSince(lastCloudSave)}</span>
                 }
-                {card.cloudState === "localEdits" &&
+                {cloudState === "localEdits" &&
                     // TODO @darzu:
                     <span key="date" className="date">{pxt.Util.timeSince(lastCloudSave)}*</span>
                 }
-                {card.cloudState === "conflict" &&
+                {cloudState === "conflict" &&
                     // TODO @darzu:
                     lf("needs attention!")
                 }
-                {card.cloudState === "offline" &&
+                {cloudState === "offline" &&
                     // TODO @darzu:
                     lf("offline")
                 }
-                {card.cloudState === "saving" &&
+                {cloudState === "saving" &&
                     // TODO @darzu:
                     lf("saving...")
                 }
-                {card.cloudState &&
+                {cloudState &&
                     // TODO @darzu: differetn icons & wordage depending on state
                     <i className="ui large right floated icon cloud"></i>
                 }

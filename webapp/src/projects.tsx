@@ -758,7 +758,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                             : scr.tutorialCompleted ? scr.tutorialCompleted.steps
                                 : undefined;
                     const ghid = pxt.github.parseRepoId(scr.githubId);
-                    const cloudState = cloud.getCloudState(scr);
+
                     return <ProjectsCodeCard
                         key={'local' + scr.id + scr.recentUse}
                         // ref={(view) => { if (index === 1) this.latestProject = view }}
@@ -770,9 +770,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                         onCardClick={this.handleCardClick}
                         tutorialStep={tutorialStep}
                         tutorialLength={tutoriallength}
-                        cloudState={cloudState}
-                        // TODO @darzu:
-                        cloudLastSyncTime={scr.cloudLastSyncTime}
+                        projectId={scr.id}
                     />;
                 })}
                 {showScriptManagerCard ? <div role="button" className="ui card link buttoncard scriptmanagercard" title={lf("See all projects")}

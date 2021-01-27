@@ -354,7 +354,8 @@ export function onChangesSynced(changes: Header[]) {
         setTimeout(() => {
             pxt.log("Forcing reload.")
             pxt.tickEvent(`identity.sync.forcingReload`)
-            location.reload();
+            // TODO @darzu:
+            // location.reload();
         }, 3000);
     }
 }

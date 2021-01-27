@@ -170,9 +170,8 @@ declare namespace pxt {
         cardType?: CodeCardType;
         editor?: CodeCardEditorType;
         otherActions?: CodeCardAction[];
-        cloudLastSyncTime?: number;
-        cloudState?: CloudStateSummary;
         directOpen?: boolean; // skip the details view, directly do the card action
+        projectId?: string; // the project's header ID
 
         header?: string;
 
