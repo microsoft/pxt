@@ -323,12 +323,12 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                         {showProjectRename && this.getSaveInput(showSave, "fileNameInput2", projectName, showProjectRenameReadonly)}
                         {showGithub && <githubbutton.GithubButton parent={this.props.parent} key={`githubbtn${computer}`} />}
                 </div>
-                    {cloudState && <i className="ui large right floated icon cloud"></i>}
-                {cloudState === "saving" && <span className="ui">{lf("saving...")}</span>}
-                {cloudState === "offline" && <span className="ui">{lf("offline.")}</span>}
-                {cloudState === "conflict" && <span className="ui">{lf("conflict!")}</span>}
-                {cloudState === "localEdits" && <span className="ui">{timeStr}*</span>}
-                {cloudState === "saved" && <span className="ui">{timeStr}</span>}
+                {cloudState && <i className="ui large right floated icon cloud cloudState"></i>}
+                {cloudState === "saving" && <span className="ui cloudState">{lf("saving...")}</span>}
+                {cloudState === "offline" && <span className="ui cloudState">{lf("offline.")}</span>}
+                {cloudState === "conflict" && <span className="ui cloudState">{lf("conflict!")}</span>}
+                {cloudState === "localEdits" && <span className="ui cloudState">{timeStr}*</span>}
+                {cloudState === "saved" && <span className="ui cloudState">{timeStr}</span>}
                 </div>}
             <div id="editorToolbarArea" role="menu" className="ui column items">
                 {showUndoRedo && <div className="ui icon buttons">{this.getUndoRedo(computer)}</div>}
