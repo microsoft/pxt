@@ -1511,12 +1511,15 @@ export async function saveToCloudAsync(h: Header) {
     checkHeaderSession(h);
     const saveStart = U.nowSeconds()
     const text = await getTextAsync(h.id)
-    const res = await cloud.saveAsync(h, text)
+    const cloudPromise = cloud.saveAsync(h, text)
+    // As soon as we start a cloud save, we've changed the header to indicate a save is in progress.
+    // We want to invalidate the header in the virtual APIs so that UX can show "saving..."-like states.
+    data.invalidateHeader("header", h);
+    const res = await cloudPromise;
     if (res !== cloud.CloudSaveResult.NotLoggedIn) {
         const elapsedSec = U.nowSeconds() - saveStart;
         const success = res === cloud.CloudSaveResult.Success
-        pxt.tickEvent(`identity.saveToCloud`, {elapsedSec, success: success.toString()})
-        // TODO: update UX to indicate a save finished
+        pxt.tickEvent(`identity.saveToCloud`, { elapsedSec, success: success.toString() })
         pxt.log(`Project ${h.name} (${h.id.substr(0,4)}...) ${success ? '' : 'NOT '}saved to cloud.`)
         data.invalidateHeader("header", h);
     }
