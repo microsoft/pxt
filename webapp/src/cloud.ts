@@ -42,13 +42,14 @@ export function getCloudState(h: pxt.workspace.Header): pxt.CloudStateSummary {
         return "" // none
     if (!auth.loggedInSync())
         return "offline"
-    if (h.cloudInProgressSyncStartTime > 0)
+    const md = getCloudTempMetadata(h.id);
+    if (md.cloudInProgressSyncStartTime > 0)
         return "saving"
     if (!h.cloudCurrent)
         return "localEdits"
     if (h.cloudLastSyncTime > 0)
         return "saved"
-    pxt.reportError("cloudsave", `Invalid project cloud state for project ${h.name}(${h.id.substr(0, 4)}..): user: ${h.cloudUserId}, inProg: ${h.cloudInProgressSyncStartTime}, cloudCurr: ${h.cloudCurrent}, lastCloud: ${h.cloudLastSyncTime}`);
+    pxt.reportError("cloudsave", `Invalid project cloud state for project ${h.name}(${h.id.substr(0, 4)}..): user: ${h.cloudUserId}, inProg: ${md.cloudInProgressSyncStartTime}, cloudCurr: ${h.cloudCurrent}, lastCloud: ${h.cloudLastSyncTime}`);
     return ""
 }
 
@@ -100,13 +101,25 @@ function getAsync(h: Header): Promise<File> {
     });
 }
 
+// temporary per-project cloud metadata is only kept in memory and shouldn't be persisted to storage.
+export interface CloudTempMetadata {
+    cloudInProgressSyncStartTime?: number,
+}
+const temporaryHeaderMetadata: { [key: string]: CloudTempMetadata } = {};
+export function getCloudTempMetadata(headerId: string): CloudTempMetadata {
+    return temporaryHeaderMetadata[headerId] || {};
+}
+function updateCloudTempMetadata(headerId: string, props: Partial<CloudTempMetadata>) {
+    temporaryHeaderMetadata[headerId] = { ...(temporaryHeaderMetadata[headerId] || {}), ...props }
+}
+
 function setAsync(h: Header, prevVersion: Version, text?: ScriptText): Promise<Version> {
     return new Promise(async (resolve, reject) => {
         const userId = auth.user()?.id;
         h.cloudUserId = userId;
         h.cloudCurrent = false;
         h.cloudVersion = prevVersion;
-        h.cloudInProgressSyncStartTime = U.nowSeconds();
+        updateCloudTempMetadata(h.id, { cloudInProgressSyncStartTime: U.nowSeconds() })
         const project: CloudProject = {
             id: h.id,
             header: JSON.stringify(excludeLocalOnlyMetadataFields(h)),
@@ -114,7 +127,7 @@ function setAsync(h: Header, prevVersion: Version, text?: ScriptText): Promise<V
             version: prevVersion
         }
         const result = await auth.apiAsync<string>('/api/user/project', project);
-        h.cloudInProgressSyncStartTime = 0;
+        updateCloudTempMetadata(h.id, { cloudInProgressSyncStartTime: 0 })
         if (result.success) {
             h.cloudCurrent = true;
             h.cloudVersion = result.resp;
@@ -240,11 +253,15 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
             const newLoc = await transferFromCloud(loc, rem)
             localHeaderChanges[newLoc.id] = newLoc
         }
+        let didProjectCountChange = false;
         let tasks = localCloudHeaders.map(async (local) => {
             const remote = remoteHeaderMap[local.id];
             delete remoteHeaderMap[local.id];
             if (remote) {
                 local.cloudLastSyncTime = remote.cloudLastSyncTime
+                if (local.isDeleted !== remote.isDeleted) {
+                    didProjectCountChange = true;
+                }
                 // Note that we use modification time to detect differences. If we had full (or partial) history, we could
                 //  use version numbers. However we cannot currently use etags since the Cosmos list operations
                 //  don't return etags per-version. And because of how etags work, the record itself can never
@@ -319,6 +336,7 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
                 pxt.debug(`importing new cloud project '${remoteFile.header.name}' (${remoteFile.header.id})`)
                 await fromCloud(null, remoteFile)
                 pxt.tickEvent(`identity.sync.importCloudProject`)
+                didProjectCountChange = true;
             }
         })]
         await Promise.all(tasks);
@@ -336,6 +354,11 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
         pxt.tickEvent(`identity.sync.finished`, {elapsed})
         if (!partialSync) {
             onChangesSynced(localHeaderChangesList)
+        }
+        if (didProjectCountChange) {
+            // headers are individually invalidated as they are synced, but if new projects come along we also need to
+            // update the global headers list.
+            data.invalidate("headers:");
         }
 
         return localHeaderChangesList

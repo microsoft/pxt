@@ -51,7 +51,6 @@ declare namespace pxt.workspace {
         cloudVersion: string;     // The cloud-assigned version number (e.g. etag)
         cloudCurrent: boolean;    // Has the current version of the project been pushed to cloud
         cloudLastSyncTime: number; // seconds since epoch
-        cloudInProgressSyncStartTime?: number; // seconds since epoch, falsy if there is no in progres sync
 
         // Used for Updating projects
         backupRef?: string; // guid of backed-up project (present if an update was interrupted)

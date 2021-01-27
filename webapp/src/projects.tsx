@@ -9,7 +9,6 @@ import * as cloudsync from "./cloudsync";
 import * as auth from "./auth";
 import * as workspace from "./workspace";
 import * as identity from "./identity";
-import * as cloud from "./cloud";
 import * as codecard from "./codecard"
 import * as carousel from "./carousel";
 import { showAboutDialogAsync } from "./dialogs";
