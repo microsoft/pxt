@@ -3302,7 +3302,7 @@ export async function validateAndFixPkgConfig(parsed: commandParser.ParsedComman
         cfg.testFiles = trimmedTestFiles;
     }
 
-    const dependentFiles = Object.keys(cfg.fileDependencies);
+    const dependentFiles = cfg.fileDependencies && Object.keys(cfg.fileDependencies);
     const validFilesInFileDependencies = validateFileList("fileDependencies", dependentFiles);
     if (validFilesInFileDependencies) {
         for (const key of dependentFiles) {
