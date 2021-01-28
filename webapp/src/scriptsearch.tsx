@@ -72,8 +72,8 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
     showExtensions(query?: string) {
         this.setState({
             visible: true,
-            defaultSearch: query,
-            searchFor: '',
+            defaultSearch: query || '',
+            searchFor: query || '',
             mode: ScriptSearchMode.Extensions,
             closeIcon: true,
             features: undefined,
@@ -359,7 +359,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
     }
 
     renderCore() {
-        const { mode, closeIcon, visible, searchFor, experimentsState } = this.state;
+        const { mode, closeIcon, visible, searchFor, experimentsState, defaultSearch } = this.state;
 
         if (!visible) return <div></div>;
         const bundles = this.fetchBundled();
@@ -449,6 +449,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                         </div> : undefined}
                     {mode == ScriptSearchMode.Extensions ?
                         <SearchInput key="search"
+                            defaultValue={defaultSearch}
                             ariaMessage={lf("{0} result matching '{1}'", bundles.length + ghdata.data.length + urldata.data.length, searchFor)}
                             placeholder={lf("Search or enter project URL...")}
                             searchHandler={this.handleSearch} inputClassName="fluid" autoFocus={true}
