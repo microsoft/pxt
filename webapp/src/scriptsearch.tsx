@@ -23,6 +23,7 @@ export enum ScriptSearchMode {
 
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 interface ScriptSearchState {
+    defaultSearch?: string;
     searchFor?: string;
     visible?: boolean;
     mode?: ScriptSearchMode;
@@ -71,7 +72,8 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
     showExtensions(query?: string) {
         this.setState({
             visible: true,
-            searchFor: query || '',
+            defaultSearch: query,
+            searchFor: '',
             mode: ScriptSearchMode.Extensions,
             closeIcon: true,
             features: undefined,
@@ -83,6 +85,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         return new Promise((resolve, reject) => {
             this.setState({
                 visible: true,
+                defaultSearch: undefined,
                 searchFor: '',
                 mode: ScriptSearchMode.Boards,
                 closeIcon: !!closeIcon,
@@ -94,7 +97,9 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
 
     showExperiments() {
         this.setState({
-            visible: true, searchFor: '',
+            visible: true,
+            defaultSearch: undefined,
+            searchFor: '',
             mode: ScriptSearchMode.Experiments,
             closeIcon: true,
             experimentsState: pxt.editor.experiments.state(),
