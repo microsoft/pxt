@@ -68,10 +68,10 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         }
     }
 
-    showExtensions() {
+    showExtensions(query?: string) {
         this.setState({
             visible: true,
-            searchFor: '',
+            searchFor: query || '',
             mode: ScriptSearchMode.Extensions,
             closeIcon: true,
             features: undefined,
