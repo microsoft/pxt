@@ -163,6 +163,11 @@ namespace pxsim {
         modalContext?: string;
     }
 
+    export interface SimulatorExtensionsDialogMessage extends SimulatorMessage {
+        type: "extensionsdialog",
+        query: string
+    }
+
     export interface SimulatorRecorderMessage extends SimulatorMessage {
         type: "recorder";
         action: "start" | "stop";
