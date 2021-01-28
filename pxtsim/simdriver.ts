@@ -296,7 +296,6 @@ namespace pxsim {
 
             const depEditors = this.dependentEditors();
             let frames = this.simFrames();
-            const simUrl = U.isLocalHost() ? "*" : this.getSimUrl();
 
             const broadcastmsg = msg as pxsim.SimulatorBroadcastMessage;
             if (source && broadcastmsg?.broadcast) {
@@ -674,12 +673,14 @@ namespace pxsim {
                     }
                     break;
                 }
-                case 'simulator': this.handleSimulatorCommand(msg as pxsim.SimulatorCommandMessage); break; //handled elsewhere
+                case 'simulator':
+                    this.handleSimulatorCommand(msg as pxsim.SimulatorCommandMessage); break; //handled elsewhere
                 case 'serial':
                 case 'pxteditor':
                 case 'screenshot':
                 case 'custom':
                 case 'recorder':
+                case 'extensionsdialog':
                     break; //handled elsewhere
                 case 'debugger': this.handleDebuggerMessage(msg as DebuggerMessage); break;
                 case 'toplevelcodefinished': if (this.options.onTopLevelCodeEnd) this.options.onTopLevelCodeEnd(); break;
