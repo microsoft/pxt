@@ -1,5 +1,13 @@
 # Microsoft MakeCode Blog
 
+## [MakeCode Arcade 1st Birthday Update!](/blog/arcade/update-jan-2021)
+
+January 22nd, 2021 by [Jaqster](https://github.com/jaqster)
+
+New Year, New Release! At this time last year we released the first official version of MakeCode Arcade, so we thought we’d celebrate our first birthday by doing another release update!
+
+**[Continue reading this blog post](/blog/arcade/update-jan-2021)**
+
 ## [Fun MakeCode stuff for CS Education Week 2020](/blog/csed-week/csed-week-2020)
 
 December 4th, 2020 by [Jaqster](https://github.com/jaqster)
