@@ -3,7 +3,8 @@ namespace pxt.editor.experiments {
         id: string; // == field in apptheme also assumes image at /static/experiments/ID.png
         name: string;
         description: string;
-        feedbackUrl: string; // allows user to put feedback
+        feedbackUrl?: string; // allows user to put feedback
+        disableOffline?: boolean;
     }
 
     function key(experiment: Experiment | string): string {
@@ -127,12 +128,14 @@ namespace pxt.editor.experiments {
                 id: "githubEditor",
                 name: lf("GitHub editor"),
                 description: lf("Review, commit and push to GitHub."),
-                feedbackUrl: "https://github.com/microsoft/pxt/issues/6419"
+                feedbackUrl: "https://github.com/microsoft/pxt/issues/6419",
+                disableOffline: true,
             },
             {
                 id: "githubCompiledJs",
                 name: lf("GitHub Pages JavaScript"),
-                description: lf("Commit compiled javascript when creating a release")
+                description: lf("Commit compiled javascript when creating a release"),
+                disableOffline: true,
             },
             {
                 id: "blocksCollapsing",
@@ -174,9 +177,10 @@ namespace pxt.editor.experiments {
                 id: "identity",
                 name: lf("Cloud Save"),
                 description: lf("Sign in and save projects to the cloud."),
-                feedbackUrl: "https://github.com/microsoft/pxt/issues/7801"
+                feedbackUrl: "https://github.com/microsoft/pxt/issues/7801",
+                disableOffline: true,
             }
-        ].filter(experiment => ids.indexOf(experiment.id) > -1);
+        ].filter(experiment => ids.indexOf(experiment.id) > -1 && !(pxt.BrowserUtils.isElectron() && experiment.disableOffline));
     }
 
     export function clear() {
