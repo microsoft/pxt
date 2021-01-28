@@ -641,6 +641,7 @@ namespace pxsim {
             frame.dataset['runid'] = this.runId;
             frame.dataset['runtimeid'] = msg.id;
             frame.contentWindow.postMessage(msg, frame.dataset['origin']);
+            this.applyAspectRatioToFrame(frame);
             this.setFrameState(frame);
             return true;
         }
