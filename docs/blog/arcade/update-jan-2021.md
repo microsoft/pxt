@@ -29,11 +29,12 @@ https://youtu.be/TRjGj80g3Y0
 
 ## Sound Effect Enhancements
 
-Sound effects and music are some of the most memorable features of many retro videogames, and our support has been improved thanks to contributions from [Klaus W](https://github.com/klausw) over 3 fantastic PRs:
+Sound effects and music are some of the most memorable features of many retro videogames, and our support has been improved thanks to contributions from [Klaus W](https://github.com/klausw) over 4 fantastic PRs:
 
 * Adding new noise waveforms [#1177](https://github.com/microsoft/pxt-common-packages/pull/1177)
 * Saving space and improving sine approximation [#1178](https://github.com/microsoft/pxt-common-packages/pull/1178)
 * Make melodies stop correctly when `stop all sounds` is called [#1196](https://github.com/microsoft/pxt-common-packages/pull/1196)
+* Update sound documentation with description of new waveforms [#3002](https://github.com/microsoft/pxt-arcade/pull/3002)
 
 Klaus made a [post on the forum](https://forum.makecode.com/t/sound-effect-demo-no-extensions/5833) with details on how to use this, including a sample game with a ton of custom noises - including drums+bass, modems, crashes, and zaps! You can test some of these out at [https://arcade.makecode.com/91960-59425-02296-62940](https://arcade.makecode.com/91960-59425-02296-62940), and even copy some into your new game!
 
