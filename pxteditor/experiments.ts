@@ -173,7 +173,7 @@ namespace pxt.editor.experiments {
             {
                 id: "identity",
                 name: lf("Cloud Save"),
-                description: lf("Sign in and save projects to the cloud."),
+                description: lf("Create a profile and save projects to the cloud."),
                 feedbackUrl: "https://github.com/microsoft/pxt/issues/7801"
             }
         ].filter(experiment => ids.indexOf(experiment.id) > -1);

@@ -80,11 +80,11 @@ class AccountPanel extends sui.UIElement<AccountPanelProps, {}> {
     handleDeleteAccountClick = async () => {
         const profile = this.getData<auth.UserProfile>(auth.PROFILE)
         const result = await core.confirmAsync({
-            header: lf("Delete Account"),
-            body: lf("You are about to delete your account. YOU CAN NOT UNDO THIS! Are you sure?"),
+            header: lf("Delete Profile"),
+            body: lf("You are about to delete your MakeCode profile. Please note that you cannot undo this. Once you delete, your cloud-saved projects will be converted to local projects on this device."),
             agreeClass: "red",
             agreeIcon: "delete",
-            agreeLbl: lf("Delete my account"),
+            agreeLbl: lf("Delete my profile"),
             confirmationText: profile?.idp?.displayName || profile?.idp?.username || lf("User")
         });
         if (result) {
@@ -113,7 +113,7 @@ class AccountPanel extends sui.UIElement<AccountPanelProps, {}> {
         return (
             <div className="ui card panel">
                 <div className="header-text">
-                    <label>{lf("Account")}</label>
+                    <label>{lf("Profile")}</label>
                 </div>
                 {profile?.idp?.picture?.dataUrl ? avatarElem : initialsElem}
                 <div className="row-span-two">
@@ -132,9 +132,9 @@ class AccountPanel extends sui.UIElement<AccountPanelProps, {}> {
                     <sui.Button text={lf("Sign out")} icon={`xicon ${profile?.idp?.provider}`} ariaLabel={lf("Sign out {0}", profile?.idp?.provider)} onClick={this.handleSignoutClicked} />
                 </div>
                 <div className="row-span-two">
-                    <label className="title">{lf("Delete Account")}</label>
-                    <p>{lf("Permanently delete your account. Your cloud-saved projects will be converted to local projects on this device.")}</p>
-                    <sui.Button ariaLabel={lf("Delete Account")} className="red" text={lf("Delete Account")} onClick={this.handleDeleteAccountClick} />
+                    <label className="title">{lf("Delete Profile")}</label>
+                    <p>{lf("Permanently delete your MakeCode profile. Your cloud-saved projects will be converted to local projects on this device.")}</p>
+                    <sui.Button ariaLabel={lf("Delete Profile")} className="red" text={lf("Delete Profile")} onClick={this.handleDeleteAccountClick} />
                 </div>
             </div>
         );
