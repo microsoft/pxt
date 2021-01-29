@@ -126,9 +126,6 @@ namespace pxt.blocks {
         state.setValue(inputInitAttr, false);
         state.setEventsEnabled(true);
 
-        let addShown = false;
-        let remShown = false;
-
         Blockly.Extensions.apply('inline-svgs', b, false);
 
         addPlusButton();
@@ -261,12 +258,10 @@ namespace pxt.blocks {
         }
 
         function addPlusButton() {
-            addShown = true;
             addButton(buttonAddName, (b as any).ADD_IMAGE_DATAURI, lf("Reveal optional arguments"), buttonDelta);
         }
 
         function addMinusButton() {
-            remShown = true;
             addButton(buttonRemName, (b as any).REMOVE_IMAGE_DATAURI, lf("Hide optional arguments"), -1 * buttonDelta);
         }
 
