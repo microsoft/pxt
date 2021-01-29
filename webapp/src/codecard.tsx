@@ -83,6 +83,9 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
         // they won't update dynamically when headers change.
         const header = card.projectId ? this.getData<pxt.workspace.Header>(`header:${card.projectId}`) : null;
         const name = header ? header.name : card.name;
+        // TODO @darzu: cloud metadata fetch clean up..
+        const cloudMd = card.projectId ? this.getData<cloud.CloudTempMetadata>(`${cloud.HEADER_CLOUDSTATE}:${card.projectId}`) : {};
+        console.log(`codecard render: ${name}`);
         const cloudState = header ? cloud.getCloudState(header) : "";
         const lastCloudSave = cloudState ? Math.min(header.cloudLastSyncTime, header.modificationTime) : card.time;
 
@@ -143,9 +146,9 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
                     // TODO @darzu:
                     lf("offline")
                 }
-                {cloudState === "saving" &&
+                {cloudState === "syncing" &&
                     // TODO @darzu:
-                    lf("saving...")
+                    lf("syncing...")
                 }
                 {cloudState &&
                     // TODO @darzu: differetn icons & wordage depending on state

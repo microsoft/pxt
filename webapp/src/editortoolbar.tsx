@@ -324,7 +324,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                         {showGithub && <githubbutton.GithubButton parent={this.props.parent} key={`githubbtn${computer}`} />}
                 </div>
                 {cloudState && <i className="ui large right floated icon cloud cloudState"></i>}
-                {cloudState === "saving" && <span className="ui cloudState">{lf("saving...")}</span>}
+                {cloudState === "syncing" && <span className="ui cloudState">{lf("saving...")}</span>}
                 {cloudState === "offline" && <span className="ui cloudState">{lf("offline.")}</span>}
                 {cloudState === "conflict" && <span className="ui cloudState">{lf("conflict!")}</span>}
                 {cloudState === "localEdits" && <span className="ui cloudState">{timeStr}*</span>}

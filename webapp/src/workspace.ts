@@ -447,8 +447,10 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
             version: null
         }
         allScripts.push(e)
+    } else {
+        // persist header changes to our local cache
+        e.header = h
     }
-    //U.assert(e.header === h)
 
     const hasUserFileChanges = async () => {
         // we see lots of frequent "saves" that don't come from real changes made by the user. This
@@ -554,6 +556,7 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
             data.invalidate("text:" + h.id);
             data.invalidate("pkg-git-status:" + h.id);
         }
+        // TODO @darzu:
         data.invalidateHeader("header", h);
 
         refreshHeadersSession();
@@ -1512,9 +1515,10 @@ export async function saveToCloudAsync(h: Header) {
     const saveStart = U.nowSeconds()
     const text = await getTextAsync(h.id)
     const cloudPromise = cloud.saveAsync(h, text)
-    // As soon as we start a cloud save, we've changed the header to indicate a save is in progress.
-    // We want to invalidate the header in the virtual APIs so that UX can show "saving..."-like states.
-    data.invalidateHeader("header", h);
+    // TODO @darzu:
+    // // As soon as we start a cloud save, we've changed the header to indicate a save is in progress.
+    // // We want to invalidate the header in the virtual APIs so that UX can show "saving..."-like states.
+    // data.invalidateHeader("header", h);
     const res = await cloudPromise;
     if (res !== cloud.CloudSaveResult.NotLoggedIn) {
         const elapsedSec = U.nowSeconds() - saveStart;

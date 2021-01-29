@@ -12,11 +12,6 @@ type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
 
 import U = pxt.Util;
 
-const state = {
-    uploadCount: 0,
-    downloadCount: 0
-};
-
 type CloudProject = {
     id: string;
     header: string;
@@ -44,7 +39,7 @@ export function getCloudState(h: pxt.workspace.Header): pxt.CloudStateSummary {
         return "offline"
     const md = getCloudTempMetadata(h.id);
     if (md.cloudInProgressSyncStartTime > 0)
-        return "saving"
+        return "syncing"
     if (!h.cloudCurrent)
         return "localEdits"
     if (h.cloudLastSyncTime > 0)
@@ -111,6 +106,7 @@ export function getCloudTempMetadata(headerId: string): CloudTempMetadata {
 }
 function updateCloudTempMetadata(headerId: string, props: Partial<CloudTempMetadata>) {
     temporaryHeaderMetadata[headerId] = { ...(temporaryHeaderMetadata[headerId] || {}), ...props }
+    data.invalidate(`${HEADER_CLOUDSTATE}:${headerId}`);
 }
 
 function setAsync(h: Header, prevVersion: Version, text?: ScriptText): Promise<Version> {
@@ -246,17 +242,21 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
         })
         const lastCloudChange = remoteHeaders.length ? Math.max(...remoteHeaders.map(h => h.modificationTime)) : syncStart
         pxt.log(`Last cloud project change was ${agoStr(lastCloudChange)}`);
-        const remoteHeaderMap = U.toDictionary(remoteHeaders, h => h.id);
+        const remoteHeadersToProcess = U.toDictionary(remoteHeaders, h => h.id);
         const localHeaderChanges: pxt.Map<Header> = {}
         const toCloud = transferToCloud;
         const fromCloud = async (loc: Header, rem: File) => {
             const newLoc = await transferFromCloud(loc, rem)
             localHeaderChanges[newLoc.id] = newLoc
+            return newLoc
         }
         let didProjectCountChange = false;
-        let tasks = localCloudHeaders.map(async (local) => {
-            const remote = remoteHeaderMap[local.id];
-            delete remoteHeaderMap[local.id];
+        let tasks: Promise<Header>[] = localCloudHeaders.map(async (local) => {
+            // track the fact that we're checking for updates on each project
+            updateCloudTempMetadata(local.id, { cloudInProgressSyncStartTime: U.nowSeconds() });
+
+            const remote = remoteHeadersToProcess[local.id];
+            delete remoteHeadersToProcess[local.id];
             if (remote) {
                 local.cloudLastSyncTime = remote.cloudLastSyncTime
                 if (local.isDeleted !== remote.isDeleted) {
@@ -270,8 +270,9 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
                     const remoteFile = await getWithCacheAsync(local);
                     if (local.cloudCurrent) {
                         // No local changes, download latest.
-                        await fromCloud(local, remoteFile);
+                        const newHdr = await fromCloud(local, remoteFile);
                         pxt.tickEvent(`identity.sync.noConflict.localProjectUpdatedFromCloud`)
+                        return newHdr
                     } else {
                         // Possible conflict.
                         const conflictStr = `conflict found for '${local.name}' (${local.id.substr(0, 5)}...). Last cloud change was ${agoStr(remoteFile.header.modificationTime)} and last local change was ${agoStr(local.modificationTime)}.`
@@ -287,13 +288,13 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
                                 pxt.log(conflictStr + ' Local will overwrite cloud.')
                                 pxt.tickEvent(`identity.sync.conflict.localOverwrittingCloud`)
                             }
-                            await toCloud(local, remoteFile.version);
+                            return await toCloud(local, remoteFile.version);
                         } else {
                             // conflict and remote wins
                             // TODO: Pop a dialog and/or show the user a diff. Better yet, handle merges.
                             pxt.log(conflictStr + ' Cloud will overwrite local.')
                             pxt.tickEvent(`identity.sync.conflict.cloudOverwritingLocal`)
-                            await fromCloud(local, remoteFile);
+                            return await fromCloud(local, remoteFile);
                         }
                     }
                 } else {
@@ -302,8 +303,9 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
                         //return deleteAsync(local, local.cloudVersion);
                         // Mark remote copy as deleted.
                         remote.isDeleted = true;
-                        await toCloud(local, remote.cloudVersion)
+                        const newHdr = await toCloud(local, remote.cloudVersion)
                         pxt.tickEvent(`identity.sync.localDeleteUpdatedCloud`)
+                        return newHdr
                     }
                     if (remote.isDeleted) {
                         // Delete local copy.
@@ -312,9 +314,10 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
                         await workspace.forceSaveAsync(local, {}, true)
                             .then(() => { data.clearCache(); })
                         pxt.tickEvent(`identity.sync.cloudDeleteUpdatedLocal`)
+                        return local
                     }
                     // Nothing to do. We're up to date locally.
-                    return Promise.resolve();
+                    return local
                 }
             } else if (!partialSync) {
                 if (local.cloudVersion) {
@@ -326,19 +329,31 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
                 }
                 // Local cloud synced project exists, but it didn't make it to the server,
                 // so let's push it now.
-                await toCloud(local, null)
+                return await toCloud(local, null)
+            }
+            else {
+                // no remote verison so nothing to do
+                return local
             }
         });
-        tasks = [...tasks, ...remoteHeaders.map(async (remote) => {
-            if (remoteHeaderMap[remote.id]) {
-                // Project exists remotely and not locally, download it.
-                const remoteFile = await getWithCacheAsync(remote);
-                pxt.debug(`importing new cloud project '${remoteFile.header.name}' (${remoteFile.header.id})`)
-                await fromCloud(null, remoteFile)
-                pxt.tickEvent(`identity.sync.importCloudProject`)
-                didProjectCountChange = true;
-            }
+        tasks = [...tasks, ...U.values(remoteHeadersToProcess).map(async (remote) => {
+            // Project exists remotely and not locally, download it.
+            const remoteFile = await getWithCacheAsync(remote);
+            // TODO @darzu: woops.... something went off the rails here
+            pxt.debug(`importing new cloud project '${remoteFile.header.name}' (${remoteFile.header.id})`)
+            const res = await fromCloud(null, remoteFile)
+            pxt.tickEvent(`identity.sync.importCloudProject`)
+            didProjectCountChange = true;
+            return res;
         })]
+        tasks = tasks.map(async t => {
+            const newHdr = await t
+            // reset cloud state sync metadata if there is any
+            if (getCloudTempMetadata(newHdr.id).cloudInProgressSyncStartTime > 0) {
+                updateCloudTempMetadata(newHdr.id, { cloudInProgressSyncStartTime: 0 });
+            }
+            return newHdr;
+        })
         await Promise.all(tasks);
 
         // sanity check: all cloud headers should have a new sync time
@@ -358,6 +373,8 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
         if (didProjectCountChange) {
             // headers are individually invalidated as they are synced, but if new projects come along we also need to
             // update the global headers list.
+            // TODO @darzu: maybe causes crashes...
+            // TODO @darzu: this isn't propegating to the home page list yet
             data.invalidate("headers:");
         }
 
@@ -404,24 +421,15 @@ export async function convertCloudToLocal(userId: string) {
  * Virtual API
  */
 
-const MODULE = "cloud";
-const FIELD_UPLOADING = "uploading";
-const FIELD_DOWNLOADING = "downloading";
-const FIELD_WORKING = "working";
-export const UPLOADING = `${MODULE}:${FIELD_UPLOADING}`;
-export const DOWNLOADING = `${MODULE}:${FIELD_DOWNLOADING}`;
-export const WORKING = `${MODULE}:${FIELD_WORKING}`;
+export const HEADER_CLOUDSTATE = "header-cloudstate"
 
-function cloudApiHandler(p: string): any {
-    switch (data.stripProtocol(p)) {
-        case FIELD_UPLOADING: return state.uploadCount > 0;
-        case FIELD_DOWNLOADING: return state.downloadCount > 0;
-        case WORKING: return cloudApiHandler(UPLOADING) || cloudApiHandler(DOWNLOADING);
-    }
-    return null;
+function cloudHeaderMetadataHandler(p: string): any {
+    p = data.stripProtocol(p)
+    if (p == "*") return workspace.getHeaders().map(h => getCloudTempMetadata(h.id))
+    return getCloudTempMetadata(p)
 }
 
 export function init() {
-    // 'cloudws' because 'cloud' protocol is already taken.
-    data.mountVirtualApi("cloudws", { getSync: cloudApiHandler });
+    data.mountVirtualApi(HEADER_CLOUDSTATE, { getSync: cloudHeaderMetadataHandler });
 }
+
