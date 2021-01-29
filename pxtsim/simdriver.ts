@@ -541,7 +541,8 @@ namespace pxsim {
             }
 
             // try default from options
-            r = this._runOptions?.aspectRatio || 1.22;
+            if (r === undefined)
+                r = this._runOptions?.aspectRatio || 1.22;
             
             // apply to css
             frame.parentElement.style.paddingBottom =
@@ -700,6 +701,7 @@ namespace pxsim {
                     break; //handled elsewhere
                 case 'aspectratio': {
                     const asmsg = msg as SimulatorAspectRatioMessage;
+                    console.log("aspect ratio request", asmsg)
                     const frameid = asmsg.frameid;
                     const frame = document.getElementById(frameid) as HTMLIFrameElement;
                     if (frame) {
