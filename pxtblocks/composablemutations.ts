@@ -245,30 +245,17 @@ namespace pxt.blocks {
 
         function updateButtons() {
             const visibleOptions = state.getNumber(numVisibleAttr);
-            const showAdd = visibleOptions !== totalOptions;
+            const showPlus = visibleOptions !== totalOptions;
             const showRemove = visibleOptions !== 0;
 
-            if (!showAdd) {
-                addShown = false;
-                b.removeInput(buttonAddName, true);
-            }
-            if (!showRemove) {
-                remShown = false;
-                b.removeInput(buttonRemName, true);
+            b.removeInput(buttonRemName, true);
+            b.removeInput(buttonAddName, true);
+
+            if (showRemove) {
+                addMinusButton();
             }
 
-            if (showRemove && !remShown) {
-                if (addShown) {
-                    b.removeInput(buttonAddName, true);
-                    addMinusButton();
-                    addPlusButton();
-                }
-                else {
-                    addMinusButton();
-                }
-            }
-
-            if (showAdd && !addShown) {
+            if (showPlus) {
                 addPlusButton();
             }
         }
