@@ -3,8 +3,6 @@ declare namespace pxt {
     type CodeCardType = "file" | "example" | "codeExample" | "tutorial" | "side" | "template" | "package" | "hw" | "forumUrl" | "forumExample" | "sharedExample" | "link";
     type CodeCardEditorType = "blocks" | "js" | "py";
 
-    type CloudStateSummary = ""/*none*/ | "saved" | "offline" | "syncing" | "conflict" | "localEdits";
-
     interface Map<T> {
         [index: string]: T;
     }
