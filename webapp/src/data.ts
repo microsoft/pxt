@@ -4,7 +4,7 @@ import * as core from "./core";
 export type Action = () => void;
 export type DataSubscriber = {
     subscriptions: CacheEntry[];
-    onDataChanged: (changedPath: string) => void;
+    onDataChanged: () => void;
 };
 
 import Cloud = pxt.Cloud;
@@ -167,8 +167,9 @@ function matches(ce: CacheEntry, prefix: string) {
     return ce.path.slice(0, prefix.length) == prefix;
 }
 
-function notify(ce: CacheEntry, changedPath: string) {
+function notify(ce: CacheEntry) {
     if (shouldCache(ce)) saveCache();
+
     let lst = ce.callbackOnce
     if (lst.length > 0) {
         ce.callbackOnce = []
@@ -176,7 +177,7 @@ function notify(ce: CacheEntry, changedPath: string) {
     }
 
     if (ce.components.length > 0)
-        ce.components.forEach(c => Util.nextTick(() => c.onDataChanged(changedPath)))
+        ce.components.forEach(c => Util.nextTick(() => c.onDataChanged()))
 }
 
 function getVirtualApi(path: string) {
@@ -186,7 +187,7 @@ function getVirtualApi(path: string) {
     return virtualApis[m[1]]
 }
 
-function queueUpdate(ce: CacheEntry, changedPath: string) {
+function queue(ce: CacheEntry) {
     if (ce.queued) return
 
     if (ce.api.isOffline && ce.api.isOffline())
@@ -198,7 +199,7 @@ function queueUpdate(ce: CacheEntry, changedPath: string) {
         ce.data = res
         ce.lastRefresh = pxt.Util.now()
         ce.queued = false
-        notify(ce, changedPath)
+        notify(ce)
     }
 
     if (ce.api.isSync)
@@ -256,17 +257,17 @@ export function stripProtocol(path: string) {
     return path
 }
 
-export function invalidate(path: string) {
+export function invalidate(prefix: string) {
     // TODO @darzu:
-    if (path.indexOf("header") >= 0) {
-        console.log(`invalidating: ${path}`);
-    }
-    path = path.replace(/:\*$/, ':'); // remove trailing "*";
+    if (prefix.indexOf("header") >= 0)
+        console.log(`invalidating: ${prefix}`);
+
+    prefix = prefix.replace(/:\*$/, ':'); // remove trailing "*";
     Util.values(cachedData).forEach(ce => {
-        if (matches(ce, path)) {
+        if (matches(ce, prefix)) {
             ce.lastRefresh = 0;
             if (ce.components.length > 0)
-                queueUpdate(lookup(ce.path), path)
+                queue(lookup(ce.path))
             if (ce.api.onInvalidated) {
                 ce.api.onInvalidated();
             }
@@ -292,7 +293,7 @@ export function getAsync<T = any>(path: string) {
         ce.callbackOnce.push(() => {
             resolve(ce.data)
         })
-        queueUpdate(ce, path)
+        queue(ce)
     })
 }
 
@@ -320,7 +321,7 @@ export function getDataWithStatus<T>(path: string): DataFetchResult<T> {
             // The request will not be requeued so we don't want to show it as pending
             fetchRes.status = FetchStatus.Offline;
         } else {
-            queueUpdate(r, path)
+            queue(r)
         }
     }
 
