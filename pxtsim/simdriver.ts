@@ -701,7 +701,6 @@ namespace pxsim {
                     break; //handled elsewhere
                 case 'aspectratio': {
                     const asmsg = msg as SimulatorAspectRatioMessage;
-                    console.log("aspect ratio request", asmsg)
                     const frameid = asmsg.frameid;
                     const frame = document.getElementById(frameid) as HTMLIFrameElement;
                     if (frame) {
