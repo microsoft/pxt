@@ -4,7 +4,7 @@ namespace pxt.editor.experiments {
         name: string;
         description: string;
         feedbackUrl?: string; // allows user to put feedback
-        disableOffline?: boolean;
+        enableOnline?: boolean; // requires internet connection, disable in offline app
     }
 
     function key(experiment: Experiment | string): string {
@@ -32,7 +32,7 @@ namespace pxt.editor.experiments {
     export function all(): Experiment[] {
         const ids = pxt.appTarget.appTheme.experiments;
         if (!ids) return [];
-        return <Experiment[]>[
+        return [
             {
                 id: "print",
                 name: lf("Print Code"),
@@ -129,13 +129,13 @@ namespace pxt.editor.experiments {
                 name: lf("GitHub editor"),
                 description: lf("Review, commit and push to GitHub."),
                 feedbackUrl: "https://github.com/microsoft/pxt/issues/6419",
-                disableOffline: true,
+                enableOnline: true,
             },
             {
                 id: "githubCompiledJs",
                 name: lf("GitHub Pages JavaScript"),
                 description: lf("Commit compiled javascript when creating a release"),
-                disableOffline: true,
+                enableOnline: true,
             },
             {
                 id: "blocksCollapsing",
@@ -178,9 +178,9 @@ namespace pxt.editor.experiments {
                 name: lf("Cloud Save"),
                 description: lf("Sign in and save projects to the cloud."),
                 feedbackUrl: "https://github.com/microsoft/pxt/issues/7801",
-                disableOffline: true,
+                enableOnline: true,
             }
-        ].filter(experiment => ids.indexOf(experiment.id) > -1 && !(pxt.BrowserUtils.isElectron() && experiment.disableOffline));
+        ].filter(experiment => ids.indexOf(experiment.id) > -1 && !(pxt.BrowserUtils.isElectron() && experiment.enableOnline));
     }
 
     export function clear() {
