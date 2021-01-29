@@ -83,10 +83,8 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
         // they won't update dynamically when headers change.
         const header = card.projectId ? this.getData<pxt.workspace.Header>(`header:${card.projectId}`) : null;
         const name = header ? header.name : card.name;
-        // TODO @darzu: cloud metadata fetch clean up..
         const cloudMd = card.projectId ? this.getData<cloud.CloudTempMetadata>(`${cloud.HEADER_CLOUDSTATE}:${card.projectId}`) : {};
-        console.log(`codecard render: ${name}`);
-        const cloudState = header ? cloud.getCloudState(header) : "";
+        const cloudState = header ? cloud.getCloudSummary(header, cloudMd) : "";
         const lastCloudSave = cloudState ? Math.min(header.cloudLastSyncTime, header.modificationTime) : card.time;
 
         const ariaLabel = card.ariaLabel || card.title || card.shortName || name;

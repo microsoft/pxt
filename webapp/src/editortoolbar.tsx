@@ -5,7 +5,7 @@ import * as data from "./data";
 import * as sui from "./sui";
 import * as githubbutton from "./githubbutton";
 import * as cmds from "./cmds"
-import { getCloudState } from "./cloud";
+import * as cloud from "./cloud";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -292,7 +292,8 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
             saveButtonClasses = "disabled";
         }
 
-        const cloudState = getCloudState(header);
+        const cloudMd = this.getData<cloud.CloudTempMetadata>(`${cloud.HEADER_CLOUDSTATE}:${header.id}`);
+        const cloudState = cloud.getCloudSummary(header, cloudMd);
         const cloudLastSaved = Math.min(header.modificationTime, header.cloudLastSyncTime)
         var options: Intl.DateTimeFormatOptions = {
             weekday: 'long', hour: 'numeric', minute: 'numeric'
@@ -323,12 +324,11 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                         {showProjectRename && this.getSaveInput(showSave, "fileNameInput2", projectName, showProjectRenameReadonly)}
                         {showGithub && <githubbutton.GithubButton parent={this.props.parent} key={`githubbtn${computer}`} />}
                 </div>
-                {cloudState && <i className="ui large right floated icon cloud cloudState"></i>}
+                {(cloudState === "syncing" || cloudState === "offline" || cloudState === "conflict")
+                    && <i className="ui large right floated icon cloud cloudState"></i>}
                 {cloudState === "syncing" && <span className="ui cloudState">{lf("saving...")}</span>}
                 {cloudState === "offline" && <span className="ui cloudState">{lf("offline.")}</span>}
                 {cloudState === "conflict" && <span className="ui cloudState">{lf("conflict!")}</span>}
-                {cloudState === "localEdits" && <span className="ui cloudState">{timeStr}*</span>}
-                {cloudState === "saved" && <span className="ui cloudState">{timeStr}</span>}
                 </div>}
             <div id="editorToolbarArea" role="menu" className="ui column items">
                 {showUndoRedo && <div className="ui icon buttons">{this.getUndoRedo(computer)}</div>}

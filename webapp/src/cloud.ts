@@ -32,12 +32,11 @@ export function excludeLocalOnlyMetadataFields(h: Header): Header {
     return clone
 }
 
-export function getCloudState(h: pxt.workspace.Header): pxt.CloudStateSummary {
-    if (!h.cloudUserId)
+export function getCloudSummary(h: pxt.workspace.Header, md: CloudTempMetadata): pxt.CloudStateSummary {
+    if (!h.cloudUserId || !md)
         return "" // none
     if (!auth.loggedInSync())
         return "offline"
-    const md = getCloudTempMetadata(h.id);
     if (md.cloudInProgressSyncStartTime > 0)
         return "syncing"
     if (!h.cloudCurrent)
