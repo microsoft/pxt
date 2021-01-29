@@ -479,9 +479,8 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
 
         return hasUserChanges;
     }
-    const isUserChange = (text || h.isDeleted)
-        && !fromCloudSync
-        && await hasUserFileChanges()
+    const isUserChange = !fromCloudSync
+        && (h.isDeleted || text && await hasUserFileChanges())
     if (isUserChange) {
         h.pubCurrent = false
         h.blobCurrent_ = false
@@ -553,10 +552,13 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
         }
 
         if (text || h.isDeleted) {
+            // TODO @darzu: instead of doing a delayed save in package.ts, we could have
+            //    a virtual API listener in cloud.ts that does a debounce & save so that
+            //    a save will happen from any screen.
             data.invalidate("text:" + h.id);
             data.invalidate("pkg-git-status:" + h.id);
         }
-        // TODO @darzu:
+        // TODO @darzu: double check
         data.invalidateHeader("header", h);
 
         refreshHeadersSession();

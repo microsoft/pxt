@@ -411,6 +411,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                                     label={label}
                                     onCardClick={this.handleCardClick}
                                     onLabelClick={this.handleCheckboxClick}
+                                    projectId={scr.id}
                                 />
                             })}
                         </div>

@@ -150,8 +150,8 @@ export async function saveAsync(h: Header, text?: ScriptText): Promise<CloudSave
     if (!res) {
         // wait to synchronize
         pxt.debug('save to cloud failed; synchronizing...')
-        pxt.tickEvent(`identity.cloudSaveFailedTriggeringFullSync`);
-        await syncAsync()
+        pxt.tickEvent(`identity.cloudSaveFailedTriggeringPartialSync`);
+        await syncAsync([h])
         return CloudSaveResult.SyncError;
     } else {
         return CloudSaveResult.Success;
@@ -259,15 +259,30 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
             delete remoteHeadersToProcess[local.id];
             if (remote) {
                 local.cloudLastSyncTime = remote.cloudLastSyncTime
-                if (local.isDeleted !== remote.isDeleted) {
-                    didProjectCountChange = true;
-                }
                 // Note that we use modification time to detect differences. If we had full (or partial) history, we could
                 //  use version numbers. However we cannot currently use etags since the Cosmos list operations
                 //  don't return etags per-version. And because of how etags work, the record itself can never
                 //  have the latest etag version.
-                if (local.modificationTime !== remote.modificationTime) {
+                if (local.modificationTime !== remote.modificationTime || local.isDeleted !== remote.isDeleted) {
+                    const projShorthand = `'${local.name}' (${local.id.substr(0, 5)}...)`;
                     const remoteFile = await getWithCacheAsync(local);
+                    // delete always wins no matter what
+                    if (local.isDeleted) {
+                        // Mark remote copy as deleted.
+                        pxt.debug(`Propegating ${projShorthand} delete to cloud.`)
+                        const newHdr = await toCloud(local, remoteFile.version)
+                        pxt.tickEvent(`identity.sync.localDeleteUpdatedCloud`)
+                        return newHdr
+                    }
+                    if (remote.isDeleted) {
+                        // Delete local copy.
+                        pxt.debug(`Propegating ${projShorthand} delete from cloud.`)
+                        const newHdr = await fromCloud(local, remoteFile);
+                        didProjectCountChange = true;
+                        pxt.tickEvent(`identity.sync.cloudDeleteUpdatedLocal`)
+                        return newHdr
+                    }
+                    // if it's not a delete...
                     if (local.cloudCurrent) {
                         // No local changes, download latest.
                         const newHdr = await fromCloud(local, remoteFile);
@@ -275,7 +290,7 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
                         return newHdr
                     } else {
                         // Possible conflict.
-                        const conflictStr = `conflict found for '${local.name}' (${local.id.substr(0, 5)}...). Last cloud change was ${agoStr(remoteFile.header.modificationTime)} and last local change was ${agoStr(local.modificationTime)}.`
+                        const conflictStr = `conflict found for ${projShorthand}. Last cloud change was ${agoStr(remoteFile.header.modificationTime)} and last local change was ${agoStr(local.modificationTime)}.`
                         // last write wins.
                         if (local.modificationTime > remoteFile.header.modificationTime) {
                             if (local.cloudVersion === remoteFile.version) {
@@ -297,28 +312,8 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
                             return await fromCloud(local, remoteFile);
                         }
                     }
-                } else {
-                    if (local.isDeleted) {
-                        // Delete remote copy.
-                        //return deleteAsync(local, local.cloudVersion);
-                        // Mark remote copy as deleted.
-                        remote.isDeleted = true;
-                        const newHdr = await toCloud(local, remote.cloudVersion)
-                        pxt.tickEvent(`identity.sync.localDeleteUpdatedCloud`)
-                        return newHdr
-                    }
-                    if (remote.isDeleted) {
-                        // Delete local copy.
-                        local.isDeleted = true;
-                        localHeaderChanges[local.id] = local
-                        await workspace.forceSaveAsync(local, {}, true)
-                            .then(() => { data.clearCache(); })
-                        pxt.tickEvent(`identity.sync.cloudDeleteUpdatedLocal`)
-                        return local
-                    }
-                    // Nothing to do. We're up to date locally.
-                    return local
                 }
+                return local // no changes
             } else if (!partialSync) {
                 if (local.cloudVersion) {
                     pxt.debug(`Project ${local.id} incorrectly thinks it is synced to the cloud (ver: ${local.cloudVersion})`)

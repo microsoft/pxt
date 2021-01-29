@@ -7,7 +7,6 @@ import * as sui from "./sui";
 import * as core from "./core";
 import * as cloudsync from "./cloudsync";
 import * as auth from "./auth";
-import * as workspace from "./workspace";
 import * as identity from "./identity";
 import * as codecard from "./codecard"
 import * as carousel from "./carousel";
@@ -599,7 +598,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
     }
 
     fetchLocalData(): pxt.workspace.Header[] {
-        const headers = this.getData(`headers:`);
+        const headers = this.getData(`headers:`) || [];
         return headers;
     }
 
