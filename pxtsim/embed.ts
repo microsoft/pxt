@@ -168,6 +168,12 @@ namespace pxsim {
         query: string
     }
 
+    export interface SimulatorAspectRatioMessage extends SimulatorMessage {
+        type: "aspectratio",
+        value: number,
+        frameid: string
+    }
+
     export interface SimulatorRecorderMessage extends SimulatorMessage {
         type: "recorder";
         action: "start" | "stop";
