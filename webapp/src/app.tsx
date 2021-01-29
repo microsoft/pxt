@@ -1329,7 +1329,8 @@ export class ProjectView
                                 // We are too late; the editor has already been loaded.
                                 // Call the onChanges handler to update the editor.
                                 pxt.tickEvent(`identity.syncOnProjectOpen.timedout`, { 'elapsedSec': elapsed})
-                                cloud.onChangesSynced(changes)
+                                if (changes.length)
+                                    cloud.forceReloadForCloudSync()
                             } else {
                                 // We're not too late, update the local var so that the
                                 // first load has the new info.

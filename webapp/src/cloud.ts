@@ -361,10 +361,7 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
         const elapsed = U.nowSeconds() - syncStart;
         const localHeaderChangesList = U.values(localHeaderChanges)
         pxt.log(`Cloud sync finished after ${elapsed} seconds with ${localHeaderChangesList.length} local changes.`);
-        pxt.tickEvent(`identity.sync.finished`, {elapsed})
-        if (!partialSync) {
-            onChangesSynced(localHeaderChangesList)
-        }
+        pxt.tickEvent(`identity.sync.finished`, { elapsed })
         if (didProjectCountChange) {
             // headers are individually invalidated as they are synced, but if new projects come along we also need to
             // update the global headers list.
@@ -381,18 +378,15 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
     return [];
 }
 
-export function onChangesSynced(changes: Header[]) {
-    if (changes.length) {
-        // TODO: This is too heavy handed. We can be more fine grain here with some work.
-        //  preferably with just the virtual data APIs we can push updates to the whole editor.
-        core.infoNotification(lf("Cloud synchronization finished. Reloading... "));
-        setTimeout(() => {
-            pxt.log("Forcing reload.")
-            pxt.tickEvent(`identity.sync.forcingReload`)
-            // TODO @darzu:
-            // location.reload();
-        }, 3000);
-    }
+export function forceReloadForCloudSync() {
+    // TODO: This is too heavy handed. We can be more fine grain here with some work.
+    //  preferably with just the virtual data APIs we can push updates to the whole editor.
+    core.infoNotification(lf("Cloud synchronization finished. Reloading... "));
+    setTimeout(() => {
+        pxt.log("Forcing reload.")
+        pxt.tickEvent(`identity.sync.forcingReload`)
+        location.reload();
+    }, 3000);
 }
 
 export async function convertCloudToLocal(userId: string) {
