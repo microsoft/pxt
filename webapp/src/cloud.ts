@@ -32,7 +32,8 @@ export function excludeLocalOnlyMetadataFields(h: Header): Header {
     return clone
 }
 
-export function getCloudSummary(h: pxt.workspace.Header, md: CloudTempMetadata): pxt.CloudStateSummary {
+export type CloudStateSummary = ""/*none*/ | "saved" | "justSaved" | "offline" | "syncing" | "conflict" | "localEdits";
+export function getCloudSummary(h: pxt.workspace.Header, md: CloudTempMetadata): CloudStateSummary {
     if (!h.cloudUserId || !md)
         return "" // none
     if (!auth.loggedInSync())
@@ -41,6 +42,8 @@ export function getCloudSummary(h: pxt.workspace.Header, md: CloudTempMetadata):
         return "syncing"
     if (!h.cloudCurrent)
         return "localEdits"
+    if (md.justSaved)
+        return "justSaved"
     if (h.cloudLastSyncTime > 0)
         return "saved"
     pxt.reportError("cloudsave", `Invalid project cloud state for project ${h.name}(${h.id.substr(0, 4)}..): user: ${h.cloudUserId}, inProg: ${md.cloudInProgressSyncStartTime}, cloudCurr: ${h.cloudCurrent}, lastCloud: ${h.cloudLastSyncTime}`);
@@ -98,13 +101,16 @@ function getAsync(h: Header): Promise<File> {
 // temporary per-project cloud metadata is only kept in memory and shouldn't be persisted to storage.
 export interface CloudTempMetadata {
     cloudInProgressSyncStartTime?: number,
+    justSaved?: boolean,
 }
 const temporaryHeaderMetadata: { [key: string]: CloudTempMetadata } = {};
 export function getCloudTempMetadata(headerId: string): CloudTempMetadata {
     return temporaryHeaderMetadata[headerId] || {};
 }
 function updateCloudTempMetadata(headerId: string, props: Partial<CloudTempMetadata>) {
-    temporaryHeaderMetadata[headerId] = { ...(temporaryHeaderMetadata[headerId] || {}), ...props }
+    const oldMd = temporaryHeaderMetadata[headerId] || {};
+    const newMd = { ...oldMd, ...props }
+    temporaryHeaderMetadata[headerId] = newMd
     data.invalidate(`${HEADER_CLOUDSTATE}:${headerId}`);
 }
 
@@ -122,7 +128,12 @@ function setAsync(h: Header, prevVersion: Version, text?: ScriptText): Promise<V
             version: prevVersion
         }
         const result = await auth.apiAsync<string>('/api/user/project', project);
-        updateCloudTempMetadata(h.id, { cloudInProgressSyncStartTime: 0 })
+        updateCloudTempMetadata(h.id, { cloudInProgressSyncStartTime: 0, justSaved: true })
+        setTimeout(() => {
+            // slightly hacky, but we want to keep around a "saved!" message for a small time after
+            // a save succeeds so we notify metadata subscribers again afte a delay.
+            updateCloudTempMetadata(h.id, { justSaved: false })
+        }, 1000);
         if (result.success) {
             h.cloudCurrent = true;
             h.cloudVersion = result.resp;
