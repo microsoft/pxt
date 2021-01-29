@@ -29,7 +29,7 @@ https://youtu.be/TRjGj80g3Y0
 
 ## Sound Effect Enhancements
 
-Sound effects and music are some of the most memorable pieces of many retro videogames, and our support has been improved thanks to contributions from [Klaus W](https://github.com/klausw) over 3 fantastic PRs
+Sound effects and music are some of the most memorable features of many retro videogames, and our support has been improved thanks to contributions from [Klaus W](https://github.com/klausw) over 3 fantastic PRs:
 
 * Adding new noise waveforms [#1177](https://github.com/microsoft/pxt-common-packages/pull/1177)
 * Saving space and improving sine approximation [#1178](https://github.com/microsoft/pxt-common-packages/pull/1178)
