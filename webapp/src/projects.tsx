@@ -599,7 +599,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
     }
 
     fetchLocalData(): pxt.workspace.Header[] {
-        const headers = workspace.getHeaders();
+        const headers = this.getData(`headers:`);
         return headers;
     }
 
@@ -769,6 +769,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                         onCardClick={this.handleCardClick}
                         tutorialStep={tutorialStep}
                         tutorialLength={tutoriallength}
+                        // TODO @darzu: important loc
                         projectId={scr.id}
                     />;
                 })}
