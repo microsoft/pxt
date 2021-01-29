@@ -552,13 +552,9 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
         }
 
         if (text || h.isDeleted) {
-            // TODO @darzu: instead of doing a delayed save in package.ts, we could have
-            //    a virtual API listener in cloud.ts that does a debounce & save so that
-            //    a save will happen from any screen.
             data.invalidate("text:" + h.id);
             data.invalidate("pkg-git-status:" + h.id);
         }
-        // TODO @darzu: double check
         data.invalidateHeader("header", h);
 
         refreshHeadersSession();
@@ -1517,10 +1513,6 @@ export async function saveToCloudAsync(h: Header) {
     const saveStart = U.nowSeconds()
     const text = await getTextAsync(h.id)
     const cloudPromise = cloud.saveAsync(h, text)
-    // TODO @darzu:
-    // // As soon as we start a cloud save, we've changed the header to indicate a save is in progress.
-    // // We want to invalidate the header in the virtual APIs so that UX can show "saving..."-like states.
-    // data.invalidateHeader("header", h);
     const res = await cloudPromise;
     if (res !== cloud.CloudSaveResult.NotLoggedIn) {
         const elapsedSec = U.nowSeconds() - saveStart;

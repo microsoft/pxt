@@ -129,27 +129,22 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
                 {card.tutorialLength ? <span className={`ui tutorial-progress ${tutorialDone ? "green" : "orange"} left floated label`}><i className={`${tutorialDone ? "trophy" : "circle"} icon`}></i>&nbsp;{lf("{0}/{1}", (card.tutorialStep || 0) + 1, card.tutorialLength)}</span> : undefined}
                 {!cloudState && card.time && <span key="date" className="date">{pxt.Util.timeSince(card.time)}</span>}
                 {cloudState === "saved" || cloudState === "justSaved" &&
-                    // TODO @darzu:
                     <span key="date" className="date">{pxt.Util.timeSince(lastCloudSave)}</span>
                 }
                 {cloudState === "localEdits" &&
-                    // TODO @darzu:
                     <span key="date" className="date">{pxt.Util.timeSince(lastCloudSave)}*</span>
                 }
                 {cloudState === "conflict" &&
-                    // TODO @darzu:
                     lf("needs attention!")
                 }
                 {cloudState === "offline" &&
-                    // TODO @darzu:
                     lf("offline")
                 }
                 {cloudState === "syncing" &&
-                    // TODO @darzu:
                     lf("syncing...")
                 }
                 {cloudState &&
-                    // TODO @darzu: differetn icons & wordage depending on state
+                    // TODO: alternate icons depending on state
                     <i className="ui large right floated icon cloud"></i>
                 }
             </div> : undefined}

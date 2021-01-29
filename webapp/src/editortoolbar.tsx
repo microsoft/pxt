@@ -294,14 +294,6 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
 
         const cloudMd = this.getData<cloud.CloudTempMetadata>(`${cloud.HEADER_CLOUDSTATE}:${header.id}`);
         const cloudState = cloud.getCloudSummary(header, cloudMd);
-        const cloudLastSaved = Math.min(header.modificationTime, header.cloudLastSyncTime)
-        var options: Intl.DateTimeFormatOptions = {
-            weekday: 'long', hour: 'numeric', minute: 'numeric'
-        };
-        // TODO @darzu: localize
-        const timeStr = new Date(cloudLastSaved * 1000).toLocaleString("en-US", options);
-        // TODO @darzu: says "saving..." on first load often
-        // TODO @darzu: show different icons
 
         return <div id="editortools" className="ui" role="menubar" aria-label={lf("Editor toolbar")}>
             <div id="downloadArea" role="menu" className="ui column items">{headless &&

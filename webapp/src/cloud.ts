@@ -344,7 +344,6 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
         tasks = [...tasks, ...U.values(remoteHeadersToProcess).map(async (remote) => {
             // Project exists remotely and not locally, download it.
             const remoteFile = await getWithCacheAsync(remote);
-            // TODO @darzu: woops.... something went off the rails here
             pxt.debug(`importing new cloud project '${remoteFile.header.name}' (${remoteFile.header.id})`)
             const res = await fromCloud(null, remoteFile)
             pxt.tickEvent(`identity.sync.importCloudProject`)
@@ -375,8 +374,6 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
         if (didProjectCountChange) {
             // headers are individually invalidated as they are synced, but if new projects come along we also need to
             // update the global headers list.
-            // TODO @darzu: maybe causes crashes...
-            // TODO @darzu: this isn't propegating to the home page list yet
             data.invalidate("headers:");
         }
 

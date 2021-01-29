@@ -258,10 +258,6 @@ export function stripProtocol(path: string) {
 }
 
 export function invalidate(prefix: string) {
-    // TODO @darzu:
-    if (prefix.indexOf("header") >= 0)
-        console.log(`invalidating: ${prefix}`);
-
     prefix = prefix.replace(/:\*$/, ':'); // remove trailing "*";
     Util.values(cachedData).forEach(ce => {
         if (matches(ce, prefix)) {
