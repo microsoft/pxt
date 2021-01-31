@@ -74,6 +74,7 @@ namespace pxsim {
     }
 
     const FRAME_DATA_MESSAGE_CHANNEL = "messagechannel"
+    const FRAME_ASPECT_RATIO = "aspectratio"
     const MESSAGE_SOURCE = "pxtdriver"
 
     export class SimulatorDriver {
@@ -296,7 +297,6 @@ namespace pxsim {
 
             const depEditors = this.dependentEditors();
             let frames = this.simFrames();
-            const simUrl = U.isLocalHost() ? "*" : this.getSimUrl();
 
             const broadcastmsg = msg as pxsim.SimulatorBroadcastMessage;
             if (source && broadcastmsg?.broadcast) {
@@ -520,15 +520,31 @@ namespace pxsim {
         }
 
         private applyAspectRatioToFrame(frame: HTMLIFrameElement, ratio?: number) {
-            let r = ratio || this._runOptions.aspectRatio;
-            const messageChannel = frame.dataset[FRAME_DATA_MESSAGE_CHANNEL];
-            if (messageChannel) {
-                const messageSimulatorAspectRatio = this.options?.messageSimulators?.[messageChannel]?.aspectRatio;
-                if (messageSimulatorAspectRatio) {
-                    r = messageSimulatorAspectRatio;
+            let r = ratio;
+
+            // no ratio? try stored ratio
+            if (r === undefined) {
+                const rt = parseFloat(frame.dataset[FRAME_ASPECT_RATIO])
+                if (!isNaN(rt))
+                    r = rt;
+            }
+
+            // no ratio?, try messagesims
+            if (r === undefined) {
+                const messageChannel = frame.dataset[FRAME_DATA_MESSAGE_CHANNEL];
+                if (messageChannel) {
+                    const messageSimulatorAspectRatio = this.options?.messageSimulators?.[messageChannel]?.aspectRatio;
+                    if (messageSimulatorAspectRatio) {
+                        r = messageSimulatorAspectRatio;
+                    }
                 }
             }
 
+            // try default from options
+            if (r === undefined)
+                r = this._runOptions?.aspectRatio || 1.22;
+
+            // apply to css
             frame.parentElement.style.paddingBottom =
                 (100 / r) + "%";
         }
@@ -641,6 +657,7 @@ namespace pxsim {
             frame.dataset['runid'] = this.runId;
             frame.dataset['runtimeid'] = msg.id;
             frame.contentWindow.postMessage(msg, frame.dataset['origin']);
+            this.applyAspectRatioToFrame(frame);
             this.setFrameState(frame);
             return true;
         }
@@ -673,13 +690,25 @@ namespace pxsim {
                     }
                     break;
                 }
-                case 'simulator': this.handleSimulatorCommand(msg as pxsim.SimulatorCommandMessage); break; //handled elsewhere
+                case 'simulator':
+                    this.handleSimulatorCommand(msg as pxsim.SimulatorCommandMessage); break; //handled elsewhere
                 case 'serial':
                 case 'pxteditor':
                 case 'screenshot':
                 case 'custom':
                 case 'recorder':
+                case 'extensionsdialog':
                     break; //handled elsewhere
+                case 'aspectratio': {
+                    const asmsg = msg as SimulatorAspectRatioMessage;
+                    const frameid = asmsg.frameid;
+                    const frame = document.getElementById(frameid) as HTMLIFrameElement;
+                    if (frame) {
+                        frame.dataset[FRAME_ASPECT_RATIO] = asmsg.value + "";
+                        this.applyAspectRatioToFrame(frame);
+                    }
+                    break;
+                }
                 case 'debugger': this.handleDebuggerMessage(msg as DebuggerMessage); break;
                 case 'toplevelcodefinished': if (this.options.onTopLevelCodeEnd) this.options.onTopLevelCodeEnd(); break;
                 default:
