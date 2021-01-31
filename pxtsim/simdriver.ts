@@ -543,7 +543,7 @@ namespace pxsim {
             // try default from options
             if (r === undefined)
                 r = this._runOptions?.aspectRatio || 1.22;
-            
+
             // apply to css
             frame.parentElement.style.paddingBottom =
                 (100 / r) + "%";
