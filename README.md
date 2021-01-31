@@ -20,7 +20,7 @@ More info:
 * [About](https://makecode.com/about)
 * [Documentation](https://makecode.com/docs)
 
-Examples of Editors built with PXT:
+Examples of Editors built with MakeCode:
 
 * https://makecode.microbit.org
 * https://arcade.makecode.com
