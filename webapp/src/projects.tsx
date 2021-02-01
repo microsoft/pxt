@@ -768,7 +768,6 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                         onCardClick={this.handleCardClick}
                         tutorialStep={tutorialStep}
                         tutorialLength={tutoriallength}
-                        // TODO @darzu: important loc
                         projectId={scr.id}
                     />;
                 })}
