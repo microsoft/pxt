@@ -905,6 +905,16 @@ namespace pxsim {
             } as SimulatorScreenshotMessage));
         }
 
+        static requestExtensionsDialog(query: string) {
+            const r = runtime;
+            if (!r) return;
+
+            Runtime.postMessage(<SimulatorExtensionsDialogMessage>{
+                type: "extensionsdialog",
+                query
+            })
+        }
+
         static requestToggleRecording() {
             const r = runtime;
             if (!r) return;

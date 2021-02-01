@@ -366,7 +366,7 @@ export function hasIdentity(): boolean {
     // Must read storage for this rather than app theme because this method
     // gets called before experiments are synced to the theme.
     const experimentEnabled = pxt.editor.experiments.isEnabled("identity");
-    return experimentEnabled && identityProviders().length > 0;
+    return !pxt.BrowserUtils.isPxtElectron() && experimentEnabled && identityProviders().length > 0;
 }
 
 export async function loggedIn(): Promise<boolean> {
@@ -568,7 +568,7 @@ const DEV_BACKEND_STAGING = "https://staging.pxt.io";
 // tslint:disable-next-line:no-http-string
 const DEV_BACKEND_LOCALHOST = "http://localhost:5500";
 
-const DEV_BACKEND = DEV_BACKEND_LOCALHOST;
+const DEV_BACKEND = DEV_BACKEND_STAGING;
 
 export async function apiAsync<T = any>(url: string, data?: any, method?: string): Promise<ApiResult<T>> {
     const headers: pxt.Map<string> = {};

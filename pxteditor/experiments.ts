@@ -3,7 +3,8 @@ namespace pxt.editor.experiments {
         id: string; // == field in apptheme also assumes image at /static/experiments/ID.png
         name: string;
         description: string;
-        feedbackUrl: string; // allows user to put feedback
+        feedbackUrl?: string; // allows user to put feedback
+        enableOnline?: boolean; // requires internet connection, disable in offline app
     }
 
     function key(experiment: Experiment | string): string {
@@ -31,7 +32,7 @@ namespace pxt.editor.experiments {
     export function all(): Experiment[] {
         const ids = pxt.appTarget.appTheme.experiments;
         if (!ids) return [];
-        return <Experiment[]>[
+        return [
             {
                 id: "print",
                 name: lf("Print Code"),
@@ -127,12 +128,14 @@ namespace pxt.editor.experiments {
                 id: "githubEditor",
                 name: lf("GitHub editor"),
                 description: lf("Review, commit and push to GitHub."),
-                feedbackUrl: "https://github.com/microsoft/pxt/issues/6419"
+                feedbackUrl: "https://github.com/microsoft/pxt/issues/6419",
+                enableOnline: true,
             },
             {
                 id: "githubCompiledJs",
                 name: lf("GitHub Pages JavaScript"),
-                description: lf("Commit compiled javascript when creating a release")
+                description: lf("Commit compiled javascript when creating a release"),
+                enableOnline: true,
             },
             {
                 id: "blocksCollapsing",
@@ -170,15 +173,14 @@ namespace pxt.editor.experiments {
                 name: lf("Blocks Error List"),
                 description: lf("Show an error list panel for Blocks")
             },
-            /*
             {
                 id: "identity",
                 name: lf("Cloud Save"),
-                description: lf("Sign in and save projects to the cloud."),
-                feedbackUrl: "https://github.com/microsoft/pxt/issues/7801"
+                description: lf("Create a profile and save projects to the cloud."),
+                feedbackUrl: "https://github.com/microsoft/pxt/issues/7801",
+                enableOnline: true,
             }
-            */
-        ].filter(experiment => ids.indexOf(experiment.id) > -1);
+        ].filter(experiment => ids.indexOf(experiment.id) > -1 && !(pxt.BrowserUtils.isPxtElectron() && experiment.enableOnline));
     }
 
     export function clear() {

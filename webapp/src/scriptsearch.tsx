@@ -23,6 +23,7 @@ export enum ScriptSearchMode {
 
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 interface ScriptSearchState {
+    defaultSearch?: string;
     searchFor?: string;
     visible?: boolean;
     mode?: ScriptSearchMode;
@@ -68,10 +69,11 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         }
     }
 
-    showExtensions() {
+    showExtensions(query?: string) {
         this.setState({
             visible: true,
-            searchFor: '',
+            defaultSearch: query || '',
+            searchFor: query || '',
             mode: ScriptSearchMode.Extensions,
             closeIcon: true,
             features: undefined,
@@ -83,6 +85,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         return new Promise((resolve, reject) => {
             this.setState({
                 visible: true,
+                defaultSearch: undefined,
                 searchFor: '',
                 mode: ScriptSearchMode.Boards,
                 closeIcon: !!closeIcon,
@@ -94,7 +97,9 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
 
     showExperiments() {
         this.setState({
-            visible: true, searchFor: '',
+            visible: true,
+            defaultSearch: undefined,
+            searchFor: '',
             mode: ScriptSearchMode.Experiments,
             closeIcon: true,
             experimentsState: pxt.editor.experiments.state(),
@@ -354,7 +359,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
     }
 
     renderCore() {
-        const { mode, closeIcon, visible, searchFor, experimentsState } = this.state;
+        const { mode, closeIcon, visible, searchFor, experimentsState, defaultSearch } = this.state;
 
         if (!visible) return <div></div>;
         const bundles = this.fetchBundled();
@@ -444,6 +449,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                         </div> : undefined}
                     {mode == ScriptSearchMode.Extensions ?
                         <SearchInput key="search"
+                            defaultValue={defaultSearch}
                             ariaMessage={lf("{0} result matching '{1}'", bundles.length + ghdata.data.length + urldata.data.length, searchFor)}
                             placeholder={lf("Search or enter project URL...")}
                             searchHandler={this.handleSearch} inputClassName="fluid" autoFocus={true}
