@@ -177,7 +177,7 @@ export class ProjectView
         this.toggleSimulatorCollapse = this.toggleSimulatorCollapse.bind(this);
         this.showKeymap = this.showKeymap.bind(this);
         this.toggleKeymap = this.toggleKeymap.bind(this);
-        this.initScreenshots();
+        this.initSimulatorMessageHandlers();
 
         // add user hint IDs and callback to hint manager
         this.hintManager.addHint(ProjectView.tutorialCardId, this.tutorialCardHintCallback.bind(this));
@@ -191,12 +191,15 @@ export class ProjectView
                 || !!pxt.appTarget.simulator.emptyRunCode);
     }
 
-    private initScreenshots() {
+    private initSimulatorMessageHandlers() {
         window.addEventListener('message', (ev: MessageEvent) => {
             let msg = ev.data as pxsim.SimulatorMessage;
             if (!msg || !this.state.header) return;
 
-            if (msg.type == "screenshot") {
+            if (msg.type === "extensionsdialog") {
+                const exmsg = msg as pxsim.SimulatorExtensionsDialogMessage;
+                this.showPackageDialog(exmsg.query)
+            } else if (msg.type === "screenshot") {
                 const scmsg = msg as pxsim.SimulatorScreenshotMessage;
                 if (!scmsg.data) return;
                 const handler = this.screenshotHandlers[this.screenshotHandlers.length - 1];
@@ -209,7 +212,7 @@ export class ProjectView
                     screenshot.saveAsync(this.state.header, pngString)
                         .done(() => { pxt.debug('screenshot saved') })
                 }
-            } else if (msg.type == "recorder") {
+            } else if (msg.type === "recorder") {
                 const scmsg = msg as pxsim.SimulatorRecorderMessage;
                 const handler = this.screenshotHandlers[this.screenshotHandlers.length - 1];
                 if (handler)
@@ -3374,8 +3377,8 @@ export class ProjectView
         return this.newProjectDialog.promptUserAsync();
     }
 
-    showPackageDialog() {
-        this.scriptSearch.showExtensions();
+    showPackageDialog(query?: string) {
+        this.scriptSearch.showExtensions(query);
     }
 
     showBoardDialogAsync(features?: string[], closeIcon?: boolean): Promise<void> {
