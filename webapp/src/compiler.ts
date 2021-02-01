@@ -70,7 +70,9 @@ function reportDiagnosticErrors(errors: pxtc.KsDiagnostic[]) {
         errors.filter(err => err.code).forEach(err => counts[err.code] = (counts[err.code] || 0) + 1);
         const errorCounts = JSON.stringify(errors);
         if (errorCounts !== lastErrorCounts) {
-            pxt.tickEvent("diagnostics", counts);
+            for (const errorCode of Object.keys(counts)) {
+                pxt.tickEvent("diagnostics", { errorCode, count: counts[errorCode] });
+            }
             lastErrorCounts = errorCounts;
         }
     } else {
