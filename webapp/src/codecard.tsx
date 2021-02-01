@@ -86,9 +86,6 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
         const cloudMd = card.projectId ? this.getData<cloud.CloudTempMetadata>(`${cloud.HEADER_CLOUDSTATE}:${card.projectId}`) : {};
         const cloudState = header ? cloud.getCloudSummary(header, cloudMd) : "";
         const lastCloudSave = cloudState ? Math.min(header.cloudLastSyncTime, header.modificationTime) : card.time;
-        if (name.indexOf("bar") >= 0) {
-            console.log(`cloudState: ${cloudState}, lastCloudSave: ${lastCloudSave}, str: ${pxt.Util.timeSince(lastCloudSave)}`);
-        }
 
         const ariaLabel = card.ariaLabel || card.title || card.shortName || name;
 
