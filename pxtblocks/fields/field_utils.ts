@@ -153,58 +153,59 @@ namespace pxtblockly {
         const allTiles = ws.getVariablesOfType(pxt.sprite.BLOCKLY_TILESET_TYPE).map(model => pxt.sprite.legacy.blocklyVariableToTile(model.name));
         if (!allTiles.length) return;
 
-        Blockly.Events.disable();
+        try {
+            Blockly.Events.disable();
+            let customMapping: pxt.Tile[] = [];
 
-        let customMapping: pxt.Tile[] = [];
-
-        for (const tile of allTiles) {
-            if (tile.qualifiedName) {
-                customMapping[tile.projectId] = proj.resolveTile(tile.qualifiedName);
+            for (const tile of allTiles) {
+                if (tile.qualifiedName) {
+                    customMapping[tile.projectId] = proj.resolveTile(tile.qualifiedName);
+                }
+                else if (tile.data) {
+                    customMapping[tile.projectId] = proj.createNewTile(tile.data, "myTiles.tile" + tile.projectId);
+                }
+                deleteTilesetTileIfExists(ws, tile);
             }
-            else if (tile.data) {
-                customMapping[tile.projectId] = proj.createNewTile(tile.data, "myTiles.tile" + tile.projectId);
+
+            const tilemaps = getAllBlocksWithTilemaps(ws);
+
+            for (const tilemap of tilemaps) {
+                const legacy = pxt.sprite.legacy.decodeTilemap(tilemap.ref.getInitText(), "typescript");
+
+                const mapping: pxt.Tile[] = [];
+
+                const newData = new pxt.sprite.TilemapData(
+                    legacy.tilemap, {
+                        tileWidth: legacy.tileset.tileWidth,
+                        tiles: legacy.tileset.tiles.map((t, index) => {
+                            if (t.projectId != null) {
+                                return customMapping[t.projectId];
+                            }
+                            if (!mapping[index]) {
+                                mapping[index] = proj.resolveTile(t.qualifiedName)
+                            }
+
+                            return mapping[index];
+                        })
+                    },
+                    legacy.layers
+                );
+
+                tilemap.ref.setValue(pxt.sprite.encodeTilemap(newData, "typescript"));
             }
-            deleteTilesetTileIfExists(ws, tile);
-        }
 
-        const tilemaps = getAllBlocksWithTilemaps(ws);
+            const tilesets = getAllBlocksWithTilesets(ws);
 
-        for (const tilemap of tilemaps) {
-            const legacy = pxt.sprite.legacy.decodeTilemap(tilemap.ref.getInitText(), "typescript");
-
-            const mapping: pxt.Tile[] = [];
-
-            const newData = new pxt.sprite.TilemapData(
-                legacy.tilemap, {
-                    tileWidth: legacy.tileset.tileWidth,
-                    tiles: legacy.tileset.tiles.map((t, index) => {
-                        if (t.projectId != null) {
-                            return customMapping[t.projectId];
-                        }
-                        if (!mapping[index]) {
-                            mapping[index] = proj.resolveTile(t.qualifiedName)
-                        }
-
-                        return mapping[index];
-                    })
-                },
-                legacy.layers
-            );
-
-            tilemap.ref.setValue(pxt.sprite.encodeTilemap(newData, "typescript"));
-        }
-
-        const tilesets = getAllBlocksWithTilesets(ws);
-
-        for (const tileset of tilesets) {
-            // Force a re-render
-            tileset.ref.doValueUpdate_(tileset.ref.getValue());
-            if (tileset.ref.isDirty_) {
-                tileset.ref.forceRerender();
+            for (const tileset of tilesets) {
+                // Force a re-render
+                tileset.ref.doValueUpdate_(tileset.ref.getValue());
+                if (tileset.ref.isDirty_) {
+                    tileset.ref.forceRerender();
+                }
             }
+        } finally {
+            Blockly.Events.enable();
         }
-
-        Blockly.Events.enable();
     }
 
     function getAllFieldsCore<U extends Blockly.Field>(ws: Blockly.Workspace, predicate: (field: Blockly.Field) => boolean): FieldEditorReference<U>[] {
