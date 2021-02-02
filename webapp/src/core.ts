@@ -168,7 +168,9 @@ export interface DialogOptions {
     modalContext?: string;
     hasCloseIcon?: boolean;
     helpUrl?: string;
-    confirmationText?: string;
+    confirmationText?: string;      // Display a text input the user must type to confirm.
+    confirmationCheckbox?: string;  // Display a checkbox the user must check to confirm.
+    confirmationGranted?: boolean;
 }
 
 export function dialogAsync(options: DialogOptions): Promise<void> {
