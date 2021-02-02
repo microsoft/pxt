@@ -21,10 +21,12 @@ namespace pxt.blocks {
             Blockly.Events.disable();
             newBlockIds = Blockly.Xml.domToWorkspace(dom, workspace);
             applyMetaComments(workspace);
+        } catch (e) {
+            pxt.reportException(e);
         } finally {
             Blockly.Events.enable();
-            return newBlockIds;
         }
+        return newBlockIds;
     }
 
     function applyMetaComments(workspace: Blockly.Workspace) {
