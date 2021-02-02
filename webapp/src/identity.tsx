@@ -52,7 +52,7 @@ export class LoginDialog extends auth.Component<LoginDialogProps, LoginDialogSta
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape>
                 <div className="description">
                     <p>{lf("Connect an existing account in order to sign in or signup for the first time.")}</p>
-                    <p><div className="warning">{lf("WARNING: Experimental feature ahead! Before you sign in, please backup any projects you don't want to lose.")}</div></p>
+                    <div className="warning"><p>{lf("WARNING: Experimental feature ahead! Before you sign in, please backup any projects you don't want to lose.")}</p></div>
                 </div>
                 <div className="container">
                     <div className="prompt">

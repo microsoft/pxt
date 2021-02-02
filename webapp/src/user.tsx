@@ -81,17 +81,19 @@ class AccountPanel extends sui.UIElement<AccountPanelProps, {}> {
         const profile = this.getData<auth.UserProfile>(auth.PROFILE)
         const result = await core.confirmAsync({
             header: lf("Delete Profile"),
-            body: lf("You are about to delete your MakeCode profile. Please note that you cannot undo this. Once you delete, your cloud-saved projects will be converted to local projects on this device."),
+            body: lf("Are you sure? This cannot be reversed! Your cloud-saved projects will be converted to local projects on this device."),
             agreeClass: "red",
-            agreeIcon: "delete",
-            agreeLbl: lf("Delete my profile"),
-            confirmationText: profile?.idp?.displayName || profile?.idp?.username || lf("User")
+            agreeIcon: "trash",
+            agreeLbl: lf("Confirm"),
+            disagreeLbl: lf("Back to safety"),
+            disagreeIcon: "arrow right",
+            confirmationCheckbox: lf("I understand this is permanent. No undo.")
         });
         if (result) {
             await auth.deleteAccount();
             // Exit out of the profile screen.
             this.props.parent.hide();
-            core.infoNotification(lf("Account deleted!"));
+            core.infoNotification(lf("Profile deleted!"));
         }
     }
 
@@ -132,9 +134,7 @@ class AccountPanel extends sui.UIElement<AccountPanelProps, {}> {
                     <sui.Button text={lf("Sign out")} icon={`xicon ${profile?.idp?.provider}`} ariaLabel={lf("Sign out {0}", profile?.idp?.provider)} onClick={this.handleSignoutClicked} />
                 </div>
                 <div className="row-span-two">
-                    <label className="title">{lf("Delete Profile")}</label>
-                    <p>{lf("Permanently delete your MakeCode profile. Your cloud-saved projects will be converted to local projects on this device.")}</p>
-                    <sui.Button ariaLabel={lf("Delete Profile")} className="red" text={lf("Delete Profile")} onClick={this.handleDeleteAccountClick} />
+                    <sui.Link className="ui" text={lf("I want to delete my profile")} ariaLabel={lf("delete profile")} onClick={this.handleDeleteAccountClick} />
                 </div>
             </div>
         );

@@ -8,6 +8,7 @@ interface CoreDialogState {
     inputValue?: string;
     inputError?: string;
     confirmationText?: string;
+    confirmationGranted?: boolean;
 }
 
 export class CoreDialog extends React.Component<core.PromptOptions, CoreDialogState> {
@@ -23,13 +24,15 @@ export class CoreDialog extends React.Component<core.PromptOptions, CoreDialogSt
         super(props);
         this.state = {
             inputValue: props.initialValue,
-            inputError: undefined
+            inputError: undefined,
+            confirmationGranted: (props.confirmationText || props.confirmationCheckbox) ? false : undefined
         }
 
         this.hide = this.hide.bind(this);
         this.modalDidOpen = this.modalDidOpen.bind(this);
         this.handleInputChange = this.handleInputChange.bind(this);
-        this.handleConfirmationChange = this.handleConfirmationChange.bind(this);
+        this.handleConfirmationTextChange = this.handleConfirmationTextChange.bind(this);
+        this.handleConfirmationCheckboxChange = this.handleConfirmationCheckboxChange.bind(this);
     }
 
     hide() {
@@ -80,8 +83,18 @@ export class CoreDialog extends React.Component<core.PromptOptions, CoreDialogSt
         this.setState({ inputValue: v.target.value, inputError });
     }
 
-    handleConfirmationChange(v: string) {
-        this.setState({ confirmationText: v })
+    handleConfirmationTextChange(v: string) {
+        this.setState({
+            confirmationText: v,
+            confirmationGranted: this.state.confirmationText === this.props.confirmationText
+
+        })
+    }
+
+    handleConfirmationCheckboxChange(b: boolean) {
+        this.setState({
+            confirmationGranted: b
+        });
     }
 
     render() {
@@ -110,10 +123,9 @@ export class CoreDialog extends React.Component<core.PromptOptions, CoreDialogSt
         // if we have confirmation text (e.g. enter your name), disable the approve button until the
         //  text matches
         options.buttons?.forEach(b => {
-            if (b.approveButton && !!options.confirmationText) {
-                const match = this.state.confirmationText === this.props.confirmationText
+            if (b.approveButton && this.state.confirmationGranted !== undefined) {
                 const disabledClass = " disabled"
-                if (match)
+                if (this.state.confirmationGranted)
                     b.className = b.className.replace(disabledClass, "")
                 else
                     b.className += b.className.indexOf(disabledClass) >= 0 ? "" : disabledClass
@@ -157,9 +169,12 @@ export class CoreDialog extends React.Component<core.PromptOptions, CoreDialogSt
                         <p>Type '{options.confirmationText}' to confirm:</p>
                         <sui.Input ref="confirmationInput" id="confirmationInput"
                             ariaLabel={lf("Type your name to confirm")} autoComplete={false}
-                            value={this.state.confirmationText || ''} onChange={this.handleConfirmationChange}
+                            value={this.state.confirmationText || ''} onChange={this.handleConfirmationTextChange}
                             selectOnMount={!mobile} autoFocus={!mobile} />
                     </>
+                }
+                {!!options.confirmationCheckbox &&
+                    <sui.PlainCheckbox label={options.confirmationCheckbox} isChecked={this.state.confirmationGranted} onChange={this.handleConfirmationCheckboxChange} />
                 }
             </sui.Modal >)
         /* tslint:enable:react-no-dangerous-html */
