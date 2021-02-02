@@ -1523,6 +1523,7 @@ export class ProgressCircle extends React.Component<ProgressCircleProps, {}> {
 
 export interface PlainCheckboxProps {
     label: string;
+    isChecked?: boolean;
     onChange: (v: boolean) => void;
 }
 
@@ -1534,7 +1535,7 @@ export class PlainCheckbox extends data.Component<PlainCheckboxProps, PlainCheck
     constructor(props: PlainCheckboxProps) {
         super(props);
         this.state = {
-            isChecked: false
+            isChecked: this.props.isChecked
         }
         this.setCheckedBit = this.setCheckedBit.bind(this);
     }
