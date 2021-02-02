@@ -341,15 +341,17 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
                 return local
             }
         });
-        tasks = [...tasks, ...U.values(remoteHeadersToProcess).map(async (remote) => {
-            // Project exists remotely and not locally, download it.
-            const remoteFile = await getWithCacheAsync(remote);
-            pxt.debug(`importing new cloud project '${remoteFile.header.name}' (${remoteFile.header.id})`)
-            const res = await fromCloud(null, remoteFile)
-            pxt.tickEvent(`identity.sync.importCloudProject`)
-            didProjectCountChange = true;
-            return res;
-        })]
+        tasks = [...tasks, ...U.values(remoteHeadersToProcess)
+            .filter(h => !h.isDeleted) // don't bother downloading deleted projects
+            .map(async (remote) => {
+                // Project exists remotely and not locally, download it.
+                const remoteFile = await getWithCacheAsync(remote);
+                pxt.debug(`importing new cloud project '${remoteFile.header.name}' (${remoteFile.header.id})`)
+                const res = await fromCloud(null, remoteFile)
+                pxt.tickEvent(`identity.sync.importCloudProject`)
+                didProjectCountChange = true;
+                return res;
+            })]
         tasks = tasks.map(async t => {
             const newHdr = await t
             // reset cloud state sync metadata if there is any
