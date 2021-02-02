@@ -130,3 +130,4 @@ If you decide to use the AP Computer Science Principles with Microsoft MakeCode 
 * Who wrote this course?
 
 >The MakeCode curriculum was written by [Kelli Etheredge](https://www.linkedin.com/in/ketheredge), a Director of Teaching & Learning and an AP Computer Science Principles teacher herself.  Follow her on Twitter [@ketheredge](https://twitter.com/ketheredge).
+
