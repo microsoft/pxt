@@ -1195,7 +1195,7 @@ namespace pxt {
             varPrefix = varPrefix.replace(/\d+$/, "");
             const prefix = namespaceString ? namespaceString + "." + varPrefix : varPrefix;
             let index = 1;
-            while (this.isNameTaken(type, prefix + index)) {
+            while (this.isNameTaken(type, prefix + index) || this.isNameTaken(type, getShortIDCore(type, prefix + index))) {
                 ++index;
             }
             return prefix + index;
