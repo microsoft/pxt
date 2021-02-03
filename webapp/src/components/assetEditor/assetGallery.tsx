@@ -102,7 +102,7 @@ class AssetGalleryImpl extends React.Component<AssetGalleryProps, AssetGallerySt
             case pxt.AssetType.Image:
                 return lf("image");
             case pxt.AssetType.Tile:
-                return lf("tile");
+                return lf("customTile");
             case pxt.AssetType.Tilemap:
                 return lf("level");
             case pxt.AssetType.Animation:
