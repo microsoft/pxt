@@ -1278,7 +1278,7 @@ namespace pxt {
                 out += `${indent}//% fixedInstance jres blockIdentity=images._tile\n`
                 out += `${indent}export const ${key} = image.ofBuffer(hex\`\`);\n`
 
-                tileEntries.push({ keys: [entry.displayName, getShortIDCore(AssetType.Tile, key)], expression: key})
+                tileEntries.push({ keys: [entry.displayName, getShortIDCore(AssetType.Tile, key, true)], expression: key})
             }
 
             if (entry.mimeType === TILEMAP_MIME_TYPE) {
@@ -1316,7 +1316,7 @@ namespace pxt {
 
             if (typeof entry === "string" || entry.mimeType === IMAGE_MIME_TYPE) {
                 let expression: string;
-                let factoryKeys = [getShortIDCore(AssetType.Image, key)]
+                let factoryKeys = [getShortIDCore(AssetType.Image, key, true)]
                 if (typeof entry === "string") {
                     expression = sprite.bitmapToImageLiteral(sprite.getBitmapFromJResURL(entry), "typescript");
                 }
@@ -1333,7 +1333,7 @@ namespace pxt {
                 const animation = decodeAnimation(entry);
 
                 animationEntries.push({
-                    keys: [entry.displayName, getShortIDCore(AssetType.Animation, key)],
+                    keys: [entry.displayName, getShortIDCore(AssetType.Animation, key, true)],
                     expression: `[${animation.frames.map(f =>
                             sprite.bitmapToImageLiteral(sprite.Bitmap.fromData(f), "typescript")
                         ).join(", ")}]`
@@ -1542,7 +1542,7 @@ namespace pxt {
         return getShortIDCore(asset.type, asset.id);
     }
 
-    function getShortIDCore(assetType: pxt.AssetType, id: string) {
+    function getShortIDCore(assetType: pxt.AssetType, id: string, allowNoPrefix = false) {
         let prefix: string;
         switch (assetType) {
             case AssetType.Image:
@@ -1564,7 +1564,7 @@ namespace pxt {
                 const short = id.substr(prefix.length);
                 if (short.indexOf(".") === -1) return short;
             }
-            else {
+            else if (!allowNoPrefix) {
                 return null;
             }
         }
