@@ -34,9 +34,11 @@ namespace pxtblockly {
         protected createNewAsset(text?: string): pxt.Asset {
             const project = pxt.react.getTilemapProject();
             if (text) {
-                const match = /^\s*assets\s*\.\s*image\s*`([^`]+)`\s*$/.exec(text);
+                const match = /^\s*assets\s*\.\s*(image|tile)\s*`([^`]+)`\s*$/.exec(text);
                 if (match) {
-                    const asset = project.lookupAssetByName(pxt.AssetType.Image, match[1].trim());
+                    const asset = project.lookupAssetByName(
+                        match[1] === "image" ? pxt.AssetType.Image : pxt.AssetType.Tile, match[2].trim()
+                    );
                     if (asset) return asset;
                     else if (!this.getBlockData()) {
                         this.isGreyBlock = true;
@@ -63,7 +65,11 @@ namespace pxtblockly {
         }
 
         protected getValueText(): string {
-            if (this.asset && !this.isTemporaryAsset()) return `assets.image\`${this.asset.meta.displayName || this.asset.id.substr(this.asset.id.lastIndexOf(".") + 1)}\``;
+            if (this.asset && !this.isTemporaryAsset()) {
+                const id = this.asset.meta.displayName || this.asset.id.substr(this.asset.id.lastIndexOf(".") + 1);
+                const type = this.asset.type === pxt.AssetType.Image ? "image" : "tile";
+                return `assets.${type}\`${id}\``;
+            }
             return pxt.sprite.bitmapToImageLiteral(this.asset && pxt.sprite.Bitmap.fromData((this.asset as pxt.ProjectImage).bitmap), pxt.editor.FileType.TypeScript);
         }
 
