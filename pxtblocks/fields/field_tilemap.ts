@@ -42,20 +42,9 @@ namespace pxtblockly {
             }
 
             const project = pxt.react.getTilemapProject();
-            const match = /^\s*tilemap\s*`([^`]*)`\s*$/.exec(newText);
 
-            if (match) {
-                const tilemapId = match[1].trim();
-                let resolved = project.lookupAssetByName(pxt.AssetType.Tilemap, tilemapId);
-
-                if (!resolved) {
-                    resolved = project.lookupAsset(pxt.AssetType.Tilemap, tilemapId);
-                }
-
-                if (resolved) {
-                    return resolved;
-                }
-            }
+            const existing = pxt.lookupProjectAssetByTSReference(newText, project);
+            if (existing) return existing;
 
             const tilemap = pxt.sprite.decodeTilemap(newText, "typescript", project) || project.blankTilemap(this.params.tileWidth, this.params.initWidth, this.params.initHeight);
             let newAsset: pxt.ProjectTilemap;
@@ -111,16 +100,10 @@ namespace pxtblockly {
             if (this.isGreyBlock) return pxt.Util.htmlUnescape(this.valueText);
 
             if (this.asset) {
-                return `tilemap\`${this.asset.meta.displayName || this.asset.id}\``;
+                return pxt.getTSReferenceForAsset(this.asset);
             }
 
-            try {
-                return pxt.sprite.encodeTilemap(this.asset.data, "typescript");
-            }
-            catch (e) {
-                // If encoding failed, this is a legacy tilemap. Should get upgraded when the project is loaded
-                return this.getInitText();
-            }
+            return this.getInitText();
         }
 
         protected parseFieldOptions(opts: FieldTilemapOptions): ParsedFieldTilemapOptions {

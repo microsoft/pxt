@@ -43,7 +43,7 @@ namespace pxt.editor {
                     this.isAsset = true;
                     result = project.createNewProjectImage(result.bitmap, result.meta.displayName);
                 }
-                return `assets.image\`${result.meta.displayName}\``
+                return pxt.getTSReferenceForAsset(result, this.isPython);
             }
             return pxt.sprite.bitmapToImageLiteral(pxt.sprite.Bitmap.fromData(result.bitmap), this.isPython ? "python" : "typescript");
         }

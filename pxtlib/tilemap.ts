@@ -1484,6 +1484,60 @@ namespace pxt {
         return !bannedRegex.test(name);
     }
 
+    export function getTSReferenceForAsset(asset: pxt.Asset, isPython = false) {
+        let shortId: string;
+        if (asset.meta?.displayName) {
+            shortId = asset.meta.displayName;
+        }
+        else {
+            shortId = getShortIDForAsset(asset);
+        }
+
+        if (!shortId) {
+            if (asset.type === pxt.AssetType.Image || asset.type === pxt.AssetType.Tile) {
+                // Use the qualified name
+                return asset.id;
+            }
+            return undefined;
+        }
+
+        const leftTick = isPython ? `("""` : "`";
+        const rightTick = isPython ? `""")` : "`";
+
+        switch (asset.type) {
+            case AssetType.Tile:
+                return `assets.tile${leftTick}${shortId}${rightTick}`
+            case AssetType.Image:
+                return `assets.image${leftTick}${shortId}${rightTick}`
+            case AssetType.Animation:
+                return `assets.animation${leftTick}${shortId}${rightTick}`
+            case AssetType.Tilemap:
+                return `tilemap${leftTick}${shortId}${rightTick}`
+        }
+    }
+
+    export function lookupProjectAssetByTSReference(ts: string, project: TilemapProject) {
+        const match = /^\s*(?:(?:assets\s*\.\s*(image|tile|animation|tilemap))|(tilemap))\s*`([^`]+)`\s*$/.exec(ts);
+
+        if (match) {
+            const type = match[1] || match[2];
+            const name = match[3];
+
+            switch (type) {
+                case "tile":
+                    return project.lookupAssetByName(AssetType.Tile, name);
+                case "image":
+                    return project.lookupAssetByName(AssetType.Image, name);
+                case "tilemap":
+                    return project.lookupAssetByName(AssetType.Tilemap, name) || project.lookupAsset(AssetType.Tilemap, name);
+                case "animation":
+                    return project.lookupAssetByName(AssetType.Animation, name);
+            }
+        }
+
+        return undefined
+    }
+
     export function getShortIDForAsset(asset: pxt.Asset) {
         return getShortIDCore(asset.type, asset.id);
     }
@@ -1505,9 +1559,14 @@ namespace pxt {
                 break;
         }
 
-        if (prefix && id.startsWith(prefix)) {
-            const short = id.substr(prefix.length);
-            if (short.indexOf(".") === -1) return short;
+        if (prefix) {
+            if (id.startsWith(prefix)) {
+                const short = id.substr(prefix.length);
+                if (short.indexOf(".") === -1) return short;
+            }
+            else {
+                return null;
+            }
         }
 
         return id;

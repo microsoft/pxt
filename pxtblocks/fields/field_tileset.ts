@@ -94,7 +94,7 @@ namespace pxtblockly {
         getValue() {
             if (this.selectedOption_) {
                 const tile = this.selectedOption_[2];
-                return isGalleryTile(tile) ? tile.id : `assets.tile\`${displayName(tile)}\``
+                return pxt.getTSReferenceForAsset(tile);
             }
             const v = super.getValue();
 
