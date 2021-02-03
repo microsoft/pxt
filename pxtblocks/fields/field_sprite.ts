@@ -38,6 +38,11 @@ namespace pxtblockly {
                 if (match) {
                     const asset = project.lookupAssetByName(pxt.AssetType.Image, match[1].trim());
                     if (asset) return asset;
+                    else if (!this.getBlockData()) {
+                        this.isGreyBlock = true;
+                        this.valueText = text;
+                        return undefined;
+                    }
                 }
             }
 
@@ -46,6 +51,13 @@ namespace pxtblockly {
             }
 
             const bmp = text ? pxt.sprite.imageLiteralToBitmap(text) : new pxt.sprite.Bitmap(this.params.initWidth, this.params.initHeight);
+
+            if (!bmp) {
+                this.isGreyBlock = true;
+                this.valueText = text;
+                return undefined;
+            }
+
             const newAsset = project.createNewProjectImage(bmp.data());
             return newAsset;
         }
