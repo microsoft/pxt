@@ -100,13 +100,13 @@ class AssetGalleryImpl extends React.Component<AssetGalleryProps, AssetGallerySt
     protected getEmptyAssetDisplayName(type: pxt.AssetType): string {
         switch (type) {
             case pxt.AssetType.Image:
-                return lf("image");
+                return lf("myImage");
             case pxt.AssetType.Tile:
-                return lf("customTile");
+                return lf("myTile");
             case pxt.AssetType.Tilemap:
                 return lf("level");
             case pxt.AssetType.Animation:
-                return lf("anim");
+                return lf("myAnim");
             default:
                 return lf("asset")
         }

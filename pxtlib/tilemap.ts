@@ -714,7 +714,10 @@ namespace pxt {
                 }
             }
 
-            return isTaken(name) || isTaken(getShortIDCore(assetType, name));
+            const shortId = getShortIDCore(assetType, name);
+            const checkShortId = shortId && shortId !== name;
+
+            return isTaken(name) || (checkShortId && isTaken(shortId));
         }
 
         /**
