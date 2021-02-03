@@ -447,8 +447,10 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
             version: null
         }
         allScripts.push(e)
+    } else {
+        // persist header changes to our local cache
+        e.header = h
     }
-    //U.assert(e.header === h)
 
     const hasUserFileChanges = async () => {
         // we see lots of frequent "saves" that don't come from real changes made by the user. This
@@ -477,9 +479,8 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
 
         return hasUserChanges;
     }
-    const isUserChange = (text || h.isDeleted)
-        && !fromCloudSync
-        && await hasUserFileChanges()
+    const isUserChange = !fromCloudSync
+        && (h.isDeleted || text && await hasUserFileChanges())
     if (isUserChange) {
         h.pubCurrent = false
         h.blobCurrent_ = false
@@ -554,6 +555,7 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
             data.invalidate("text:" + h.id);
             data.invalidate("pkg-git-status:" + h.id);
         }
+        data.invalidateHeader("header", h);
 
         refreshHeadersSession();
     });
@@ -1510,13 +1512,14 @@ export async function saveToCloudAsync(h: Header) {
     checkHeaderSession(h);
     const saveStart = U.nowSeconds()
     const text = await getTextAsync(h.id)
-    const res = await cloud.saveAsync(h, text)
+    const cloudPromise = cloud.saveAsync(h, text)
+    const res = await cloudPromise;
     if (res !== cloud.CloudSaveResult.NotLoggedIn) {
         const elapsedSec = U.nowSeconds() - saveStart;
         const success = res === cloud.CloudSaveResult.Success
-        pxt.tickEvent(`identity.saveToCloud`, {elapsedSec, success: success.toString()})
-        // TODO: update UX to indicate a save finished
+        pxt.tickEvent(`identity.saveToCloud`, { elapsedSec, success: success.toString() })
         pxt.log(`Project ${h.name} (${h.id.substr(0,4)}...) ${success ? '' : 'NOT '}saved to cloud.`)
+        data.invalidateHeader("header", h);
     }
 }
 
