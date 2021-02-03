@@ -1517,7 +1517,7 @@ namespace pxt {
     }
 
     export function lookupProjectAssetByTSReference(ts: string, project: TilemapProject) {
-        const match = /^\s*(?:(?:assets\s*\.\s*(image|tile|animation|tilemap))|(tilemap))\s*`([^`]+)`\s*$/.exec(ts);
+        const match = /^\s*(?:(?:assets\s*\.\s*(image|tile|animation|tilemap))|(tilemap))\s*(?:`|\(""")([^`"]+)(?:`|"""\))\s*$/.exec(ts);
 
         if (match) {
             const type = match[1] || match[2];
