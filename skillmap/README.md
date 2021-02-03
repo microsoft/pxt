@@ -4,4 +4,12 @@
 ## Building the skillmap locally
 Run `pxt skillmap --serve` in the target directory to build and serve the skillmap locally. This command copies the appropriate built files (`pxtlib.js`, `target.js`, `semantic.css`) into your local skillmap directory to serve, so you may also need to run the appropriate build commands to generate those files.
 
+When running locally, the skillmap iframe will load `localhost:3232`, so you will need to run `pxt serve` in the target directory to load activities. Make sure you have the local token stored in the browser session (you can do this by loading the URL with the localtoken one in a separate tab).
+
 Use the `?nolocalhost=1` flag to load the default content for the skillmap.
+
+## Loading skillmap content
+The skillmap can render markdown from Github or from our docs. The format is:
+
+- `#github:[organization name]/[repository name]/[markdown file name]`
+- `#docs:[relative path to file]` eg `/skillmap/beginner-skillmap`
