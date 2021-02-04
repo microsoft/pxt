@@ -94,7 +94,7 @@ namespace pxtblockly {
         getValue() {
             if (this.selectedOption_) {
                 const tile = this.selectedOption_[2];
-                return isGalleryTile(tile) ? tile.id : `assets.tile\`${displayName(tile)}\``
+                return pxt.getTSReferenceForAsset(tile);
             }
             const v = super.getValue();
 
@@ -148,10 +148,12 @@ namespace pxtblockly {
 
             if (newValue) {
                 // If it's an expression, pull out the id
-                const match = /^\s*assets\s*\.\s*tile\s*`([^`]+)`\s*$/.exec(newValue);
+                const match = pxt.parseAssetTSReference(newValue);
                 if (match) {
-                    newValue = match[1];
+                    newValue = match.name;
                 }
+
+                newValue = newValue.trim();
 
                 for (const option of options) {
                     if (newValue === option[2].id || newValue === option[2].meta.displayName || newValue === pxt.getShortIDForAsset(option[2])) {
@@ -251,9 +253,5 @@ namespace pxtblockly {
 
     function displayName(tile: pxt.Tile) {
         return tile.meta.displayName || pxt.getShortIDForAsset(tile);
-    }
-
-    function isGalleryTile(tile: pxt.Tile) {
-        return tile.id.startsWith("sprites.");
     }
 }
