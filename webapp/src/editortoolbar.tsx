@@ -3,9 +3,10 @@
 import * as React from "react";
 import * as data from "./data";
 import * as sui from "./sui";
-import * as githubbutton from "./githubbutton";
 import * as cmds from "./cmds"
 import * as cloud from "./cloud";
+import { CloudSyncButton } from "./cloudsyncbutton";
+import { GithubButton } from "./githubbutton";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -310,11 +311,13 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                     {compileBtn && this.getCompileButton(mobile)}
                 </div>}
             </div>
-            {(showProjectRename || showGithub) &&
+            {(showProjectRename || showGithub || cloudState) &&
                 <div id="projectNameArea" role="menu" className="ui column items">
                     <div className={`ui right ${showSave ? "labeled" : ""} input projectname-input projectname-computer`}>
                         {showProjectRename && this.getSaveInput(showSave, "fileNameInput2", projectName, showProjectRenameReadonly)}
-                        {showGithub && <githubbutton.GithubButton parent={this.props.parent} key={`githubbtn${computer}`} />}
+                        {showGithub && <GithubButton parent={this.props.parent} key={`githubbtn${computer}`} />}
+                        {/* TODO @darzu: impl */}
+                        {cloudState && <CloudSyncButton parent={this.props.parent} key={`cloudsyncbtn${computer}`} />}
                 </div>
                 {/* TODO: consider make this cloud state indicator a seperate React component so we don't need to update
                     the whole toolbar when there are cloud state changes. However so far, this doesn't seem to be a
