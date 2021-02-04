@@ -2449,7 +2449,6 @@ ${output}</xml>`;
                 const rename = renameMap.getRenameForPosition(name.getStart());
                 if (rename) {
                     return unescapeVarName(rename.name);
-
                 }
             }
             return unescapeVarName(name.text);
@@ -3239,8 +3238,6 @@ ${output}</xml>`;
     }
 
     function getObjectBindingProperties(callback: ts.ArrowFunction): [string[], pxt.Map<string>] {
-
-
         if (callback.parameters.length === 1 && callback.parameters[0].name.kind === SK.ObjectBindingPattern) {
             const elements = (callback.parameters[0].name as ObjectBindingPattern).elements;
 
