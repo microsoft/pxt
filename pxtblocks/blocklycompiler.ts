@@ -1137,7 +1137,7 @@ namespace pxt.blocks {
         if (PICTOGRAPHIC_REGEX) {
             return name.replace(
                 PICTOGRAPHIC_REGEX,
-                s => `Ex${s.codePointAt(0).toString(16)}`
+                s => `E${s.codePointAt(0).toString(16)}X`
             );
         }
         return name;

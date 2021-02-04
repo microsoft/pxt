@@ -3490,8 +3490,8 @@ ${output}</xml>`;
 
     function unescapeVarName(name: string) {
         return name.replace(
-            /Ex([0-9a-f]{4,6})/g,
-            s => String.fromCodePoint(+`0x${s.slice(2)}`)
+            /E([0-9a-f]{4,6})X/g,
+            s => String.fromCodePoint(+`0x${s.slice(1, s.length - 1)}`)
         );
     }
 

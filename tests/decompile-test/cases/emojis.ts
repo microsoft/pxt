@@ -1,19 +1,16 @@
-function Ex1f4d6 () {
+function E1f4d6X () {
 
 }
-function Ex1f469‍Ex2764️‍Ex1f48b‍Ex1f469 () {
+function E1f469X‍E2764X️‍E1f48bX‍E1f469X () {
 
 }
-function Ex1f4da () {
+function E1f4daX () {
 
 }
-Ex1f4da()
-Ex1f4d6()
-Ex1f469‍Ex2764️‍Ex1f48b‍Ex1f469()
+E1f4daX()
+E1f4d6X()
+E1f469X‍E2764X️‍E1f48bX‍E1f469X()
 let a = 10
-let Ex1f603 = 2
-Ex1f603 += 25
-
-testNamespace.numberWithEnumShadow(Ex1f603)
-
-Ex1f603 = null;
+let E1f603X = 2
+E1f603X += 28
+testNamespace.numberWithEnumShadow(E1f603X)
