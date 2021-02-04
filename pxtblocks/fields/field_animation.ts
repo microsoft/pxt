@@ -73,11 +73,8 @@ namespace pxtblockly {
             const project = pxt.react.getTilemapProject();
 
             if (text) {
-                const match = /^\s*assets\s*\.\s*animation\s*`([^`]+)`\s*$/.exec(text);
-                if (match) {
-                    const asset = project.lookupAssetByName(pxt.AssetType.Animation, match[1].trim());
-                    if (asset) return asset;
-                }
+                const existing = pxt.lookupProjectAssetByTSReference(text, project);
+                if (existing) return existing;
 
                 const frames = parseImageArrayString(text);
 
@@ -105,7 +102,7 @@ namespace pxtblockly {
                 ).join(",") + "]"
             }
 
-            return `assets.animation\`${this.asset.meta.displayName || pxt.getShortIDForAsset(this.asset)}\``
+            return pxt.getTSReferenceForAsset(this.asset);
         }
 
         protected redrawPreview() {
