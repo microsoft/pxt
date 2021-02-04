@@ -2445,13 +2445,16 @@ ${output}</xml>`;
         }
 
         function getVariableName(name: ts.Identifier) {
+
+
             if (renameMap) {
                 const rename = renameMap.getRenameForPosition(name.getStart());
                 if (rename) {
-                    return rename.name;
+                    return unescapeVarName(rename.name);
+
                 }
             }
-            return name.text;
+            return unescapeVarName(name.text);
         }
     }
 
@@ -2661,7 +2664,7 @@ ${output}</xml>`;
             let userFunction: FunctionDeclaration;
 
             if (ts.isIdentifier(n.expression)) {
-                userFunction = env.declaredFunctions[n.expression.text];
+                userFunction = env.declaredFunctions[unescapeVarName(n.expression.text)];
             }
 
             if (!asExpression) {
@@ -3238,6 +3241,8 @@ ${output}</xml>`;
     }
 
     function getObjectBindingProperties(callback: ts.ArrowFunction): [string[], pxt.Map<string>] {
+
+
         if (callback.parameters.length === 1 && callback.parameters[0].name.kind === SK.ObjectBindingPattern) {
             const elements = (callback.parameters[0].name as ObjectBindingPattern).elements;
 
@@ -3486,6 +3491,27 @@ ${output}</xml>`;
             default:
                 return false;
         }
+    }
+
+    let PICTOGRAPHIC_REGEX: RegExp;
+    try { // Some browsers do not support unicode property escape, in which case we can just use _ replacement
+        PICTOGRAPHIC_REGEX = new RegExp("\\p{Extended_Pictographic}", "ug")
+    } catch {}
+    function unescapeVarName(name: string) {
+        return name.replace(
+            /Ex([0-9a-fA-F]{4,5})/ug,
+            s => {
+                const res = String.fromCodePoint(+`0x${s.slice(2)}`);
+
+                // TODO: \/
+                // Check that character is actually an emoji and not something sneaky
+                // if (PICTOGRAPHIC_REGEX?.test(res)) {
+                return res;
+                // }
+
+                // return s;
+            }
+        );
     }
 
     function isFunctionExpression(node: Node) {
