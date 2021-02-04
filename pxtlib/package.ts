@@ -405,11 +405,29 @@ namespace pxt {
                                     }
                                 }
                             }
-                            if (!foundYottaConflict && pkgCfg.name === depPkg.id && depPkg._verspec != version && !/^file:/.test(depPkg._verspec) && !/^file:/.test(version)) {
-                                const conflict = new cpp.PkgConflictError(lf("version mismatch for extension {0} (installed: {1}, installing: {2})", depPkg, depPkg._verspec, version));
-                                conflict.pkg0 = depPkg;
-                                conflict.isVersionConflict = true;
-                                conflicts.push(conflict);
+                            if (!foundYottaConflict
+                                && pkgCfg.name === depPkg.id
+                                && depPkg._verspec != version
+                                && !/^file:/.test(depPkg._verspec) && !/^file:/.test(version)) {
+                                // we have a potential version mistmatch here
+                                // check if versions are semver compatible for github refs
+                                const ghCurrent = /^github:/.test(depPkg._verspec)
+                                    && pxt.github.parseRepoId(depPkg._verspec);
+                                const ghNew = /^github:/.test(version)
+                                    && pxt.github.parseRepoId(version);
+                                if (!ghCurrent || !ghNew
+                                    || ghCurrent.fullName !== ghNew.fullName
+                                    // if newversion does not have tag, it's ok
+                                    // note: we are upgrade major versions as well
+                                    || (ghNew.tag && pxt.semver.strcmp(ghCurrent.tag, ghNew.tag) < 0)) {
+                                    const conflict = new cpp.PkgConflictError(lf("version mismatch for extension {0} (installed: {1}, installing: {2})",
+                                        depPkg.id,
+                                        depPkg._verspec,
+                                        version));
+                                    conflict.pkg0 = depPkg;
+                                    conflict.isVersionConflict = true;
+                                    conflicts.push(conflict);
+                                }
                             }
                         });
                     }
