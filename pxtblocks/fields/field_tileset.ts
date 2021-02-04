@@ -254,8 +254,4 @@ namespace pxtblockly {
     function displayName(tile: pxt.Tile) {
         return tile.meta.displayName || pxt.getShortIDForAsset(tile);
     }
-
-    function isGalleryTile(tile: pxt.Tile) {
-        return tile.id.startsWith("sprites.");
-    }
 }
