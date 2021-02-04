@@ -715,7 +715,7 @@ ${output}</xml>`;
                 mChildren.forEach(c => {
                     write(`<${c.nodeName} `, "");
                     Object.keys(c.attributes).forEach(attrName => {
-                        write(`${attrName}="${c.attributes[attrName]}" `, "");
+                        write(`${attrName}="${U.htmlEscape(c.attributes[attrName])}" `, "");
                     });
                     write("/>");
                 });
