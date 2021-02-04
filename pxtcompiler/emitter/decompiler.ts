@@ -715,7 +715,7 @@ ${output}</xml>`;
                 mChildren.forEach(c => {
                     write(`<${c.nodeName} `, "");
                     Object.keys(c.attributes).forEach(attrName => {
-                        write(`${attrName}="${c.attributes[attrName]}" `, "");
+                        write(`${attrName}="${U.htmlEscape(c.attributes[attrName])}" `, "");
                     });
                     write("/>");
                 });
@@ -2448,10 +2448,10 @@ ${output}</xml>`;
             if (renameMap) {
                 const rename = renameMap.getRenameForPosition(name.getStart());
                 if (rename) {
-                    return rename.name;
+                    return unescapeVarName(rename.name);
                 }
             }
-            return name.text;
+            return unescapeVarName(name.text);
         }
     }
 
@@ -2661,7 +2661,7 @@ ${output}</xml>`;
             let userFunction: FunctionDeclaration;
 
             if (ts.isIdentifier(n.expression)) {
-                userFunction = env.declaredFunctions[n.expression.text];
+                userFunction = env.declaredFunctions[unescapeVarName(n.expression.text)];
             }
 
             if (!asExpression) {
@@ -3486,6 +3486,13 @@ ${output}</xml>`;
             default:
                 return false;
         }
+    }
+
+    function unescapeVarName(name: string) {
+        return name.replace(
+            /Ex([0-9a-f]{4,6})/g,
+            s => String.fromCodePoint(+`0x${s.slice(2)}`)
+        );
     }
 
     function isFunctionExpression(node: Node) {
