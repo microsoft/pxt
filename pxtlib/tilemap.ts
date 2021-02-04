@@ -427,7 +427,7 @@ namespace pxt {
         public createNewTile(data: pxt.sprite.BitmapData, id?: string, displayName?: string) {
             this.onChange();
 
-            if (!id || this.state.tiles.isIDTaken(id)) {
+            if (!id || this.isNameTaken(AssetType.Tile, id)) {
                 id = this.generateNewID(AssetType.Tile, pxt.sprite.TILE_PREFIX, pxt.sprite.TILE_NAMESPACE);
             }
 
@@ -701,16 +701,23 @@ namespace pxt {
         }
 
         public isNameTaken(assetType: AssetType, name: string) {
-            switch (assetType) {
-                case AssetType.Image:
-                    return this.state.images.isIDTaken(name) || this.gallery.images.isIDTaken(name);
-                case AssetType.Tile:
-                    return this.state.tiles.isIDTaken(name) || this.gallery.tiles.isIDTaken(name);
-                case AssetType.Tilemap:
-                    return this.state.tilemaps.isIDTaken(name) || this.gallery.tilemaps.isIDTaken(name);
-                case AssetType.Animation:
-                    return this.state.animations.isIDTaken(name) || this.gallery.animations.isIDTaken(name);
+            const isTaken = (id: string) => {
+                switch (assetType) {
+                    case AssetType.Image:
+                        return this.state.images.isIDTaken(id) || this.gallery.images.isIDTaken(id);
+                    case AssetType.Tile:
+                        return this.state.tiles.isIDTaken(id) || this.gallery.tiles.isIDTaken(id);
+                    case AssetType.Tilemap:
+                        return this.state.tilemaps.isIDTaken(id) || this.gallery.tilemaps.isIDTaken(id);
+                    case AssetType.Animation:
+                        return this.state.animations.isIDTaken(id) || this.gallery.animations.isIDTaken(id);
+                }
             }
+
+            const shortId = getShortIDCore(assetType, name);
+            const checkShortId = shortId && shortId !== name;
+
+            return isTaken(name) || (checkShortId && isTaken(shortId));
         }
 
         /**
