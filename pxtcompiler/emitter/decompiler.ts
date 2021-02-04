@@ -2445,8 +2445,6 @@ ${output}</xml>`;
         }
 
         function getVariableName(name: ts.Identifier) {
-
-
             if (renameMap) {
                 const rename = renameMap.getRenameForPosition(name.getStart());
                 if (rename) {
