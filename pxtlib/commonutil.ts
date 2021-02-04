@@ -37,27 +37,6 @@ namespace ts.pxtc.Util {
         return _input.replace(/(&#\d+;)/g, c => String.fromCharCode(Number(c.substr(2, c.length - 3))));
     }
 
-    let PICTOGRAPHIC_REGEX: RegExp;
-    try { // Some browsers do not support unicode property escape, in which case we can just use _ replacement
-        PICTOGRAPHIC_REGEX = new RegExp("\\p{Extended_Pictographic}", "ug")
-    } catch {}
-    export function escapeEmoji(s: string) {
-        if (PICTOGRAPHIC_REGEX) {
-            return s.replace(
-                PICTOGRAPHIC_REGEX,
-                c => `Ex${c.codePointAt(0).toString(16)}`
-            );
-        }
-        return s;
-    }
-
-    export function unescapeEmoji(s: string) {
-        return s.replace(
-            /Ex([0-9a-f]{4,6})/g,
-            c => String.fromCodePoint(+`0x${c.slice(2)}`)
-        );
-    }
-
     export function jsStringQuote(s: string) {
         return s.replace(/[^\w .!?\-$]/g,
             (c) => {

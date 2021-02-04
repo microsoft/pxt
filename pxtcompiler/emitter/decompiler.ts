@@ -2448,10 +2448,11 @@ ${output}</xml>`;
             if (renameMap) {
                 const rename = renameMap.getRenameForPosition(name.getStart());
                 if (rename) {
-                    return pxtc.U.unescapeEmoji(rename.name);
+                    return unescapeVarName(rename.name);
+
                 }
             }
-            return pxtc.U.unescapeEmoji(name.text);
+            return unescapeVarName(name.text);
         }
     }
 
@@ -2661,7 +2662,7 @@ ${output}</xml>`;
             let userFunction: FunctionDeclaration;
 
             if (ts.isIdentifier(n.expression)) {
-                userFunction = env.declaredFunctions[pxtc.U.unescapeEmoji(n.expression.text)];
+                userFunction = env.declaredFunctions[unescapeVarName(n.expression.text)];
             }
 
             if (!asExpression) {
@@ -3238,6 +3239,8 @@ ${output}</xml>`;
     }
 
     function getObjectBindingProperties(callback: ts.ArrowFunction): [string[], pxt.Map<string>] {
+
+
         if (callback.parameters.length === 1 && callback.parameters[0].name.kind === SK.ObjectBindingPattern) {
             const elements = (callback.parameters[0].name as ObjectBindingPattern).elements;
 
@@ -3486,6 +3489,13 @@ ${output}</xml>`;
             default:
                 return false;
         }
+    }
+
+    function unescapeVarName(name: string) {
+        return name.replace(
+            /Ex([0-9a-f]{4,6})/g,
+            s => String.fromCodePoint(+`0x${s.slice(2)}`)
+        );
     }
 
     function isFunctionExpression(node: Node) {
