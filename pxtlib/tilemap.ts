@@ -1516,12 +1516,26 @@ namespace pxt {
         }
     }
 
-    export function lookupProjectAssetByTSReference(ts: string, project: TilemapProject) {
-        const match = /^\s*(?:(?:assets\s*\.\s*(image|tile|animation|tilemap))|(tilemap))\s*(?:`|\(""")([^`"]+)(?:`|"""\))\s*$/.exec(ts);
+    export function parseAssetTSReference(ts: string) {
+        const match = /^\s*(?:(?:assets\s*\.\s*(image|tile|animation|tilemap))|(tilemap))\s*(?:`|\(""")([^`"]+)(?:`|"""\))\s*$/m.exec(ts);
 
         if (match) {
             const type = match[1] || match[2];
-            const name = match[3];
+            const name = match[3].trim();
+
+            return {
+                type, name
+            }
+        }
+
+        return undefined;
+    }
+
+    export function lookupProjectAssetByTSReference(ts: string, project: TilemapProject) {
+        const match = parseAssetTSReference(ts);
+
+        if (match) {
+            const { type, name } = match;
 
             switch (type) {
                 case "tile":

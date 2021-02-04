@@ -148,10 +148,12 @@ namespace pxtblockly {
 
             if (newValue) {
                 // If it's an expression, pull out the id
-                const match = /^\s*assets\s*\.\s*tile\s*`([^`]+)`\s*$/.exec(newValue);
+                const match = pxt.parseAssetTSReference(newValue);
                 if (match) {
-                    newValue = match[1];
+                    newValue = match.name;
                 }
+
+                newValue = newValue.trim();
 
                 for (const option of options) {
                     if (newValue === option[2].id || newValue === option[2].meta.displayName || newValue === pxt.getShortIDForAsset(option[2])) {
