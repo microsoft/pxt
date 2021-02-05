@@ -158,7 +158,9 @@ jobs:
         with:
           node-version: $\{{ matrix.node-version }}
       - name: npm install
-        run: npm install -g pxt
+        run: |
+          npm install -g pxt
+          pxt target @TARGET@
       - name: Checkout current state
         run: |
           git checkout -- .
