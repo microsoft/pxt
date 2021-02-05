@@ -55,18 +55,26 @@
     width: 100%;
     display: flex;
     flex-direction: row;
+    border-bottom: 1px solid @assetTopbarBorder;
 }
 
 .asset-editor-gallery-tab {
+    height: 3rem;
     background-color: @assetUnselected;
+    color: @grey;
     padding: .7em 2em .85em;
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
+    border-color: @assetTopbarBorder;
+    border-style: solid;
+    border-width: 0 1px 1px 0;
 }
 
 .asset-editor-gallery-tab.selected {
     background-color: transparent;
+    border-bottom-color: @blocklySvgColor;
+    color: @black;
 }
 .asset-editor-card-list {
     width: 100%;

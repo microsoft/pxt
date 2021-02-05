@@ -116,7 +116,7 @@ namespace pxt.editor {
 
             if (this.isTilemapLiteral) {
                 project.updateAsset(asset);
-                return this.fileType === "typescript" ? `tilemap\`${asset.id}\`` : `tilemap("""${asset.id}""")`;
+                return pxt.getTSReferenceForAsset(asset, this.fileType === "python");
             }
             else {
                 return pxt.sprite.encodeTilemap(result, this.fileType === "typescript" ? "typescript" : "python");

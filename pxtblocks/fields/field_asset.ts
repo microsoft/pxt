@@ -113,6 +113,8 @@ namespace pxtblockly {
                     if (pxt.assetEquals(this.asset, result)) return;
 
                     this.pendingEdit = true;
+
+                    if (result.meta?.displayName) this.disposeOfTemporaryAsset();
                     this.asset = result;
                     const lastRevision = project.revision();
 
