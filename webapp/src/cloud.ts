@@ -213,6 +213,21 @@ async function transferFromCloud(local: Header | null, remoteFile: File): Promis
     return newHeader
 }
 
+async function resolveConflict(local: Header, remoteFile: File): Promise<Header[]> {
+    // TODO @darzu: 
+    // resolve conflict by creating a copy. To minimize disruption, the copy should always
+    // be of the remote version.
+
+    // import remote project as a new project
+    const newHeader = {...remoteFile.header, 
+        cloudUserId: local.cloudUserId,        
+        cloudLastSyncTime: local.cloudLastSyncTime,
+    };
+    await workspace.importAsync(remoteFile.header, remoteFile.text, true);
+    // upload new project to the cloud
+    // force push local changes over remote project
+}
+
 async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
     if (!auth.hasIdentity()) { return []; }
     if (!await auth.loggedIn()) { return []; }
