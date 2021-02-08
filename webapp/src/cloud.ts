@@ -218,14 +218,22 @@ async function resolveConflict(local: Header, remoteFile: File): Promise<Header[
     // resolve conflict by creating a copy. To minimize disruption, the copy should always
     // be of the remote version.
 
-    // import remote project as a new project
-    const newHeader = {...remoteFile.header, 
+    // copy remote project as a new project
+    let newCopyHdr: Header = {...remoteFile.header, 
+        name: local.name + " - Copy", // TODO @darzu: what should the new name be?
         cloudUserId: local.cloudUserId,        
-        cloudLastSyncTime: local.cloudLastSyncTime,
+        cloudLastSyncTime: U.nowSeconds(),
     };
-    await workspace.importAsync(remoteFile.header, remoteFile.text, true);
+    newCopyHdr = await workspace.installAsync(newCopyHdr, remoteFile.text); // install assigns a new project ID
+
     // upload new project to the cloud
-    // force push local changes over remote project
+    newCopyHdr = await transferToCloud(newCopyHdr, null);
+
+    // force push local changes over remote project 
+    // (now that a copy has been saved to cloud, this is safe)
+    let localOriginalHdr = await transferToCloud(local, remoteFile.version);
+
+    return [newCopyHdr, localOriginalHdr];
 }
 
 async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
@@ -236,8 +244,9 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
         pxt.log(`Synchronizing${partialSync ? ` ${hdrs.length} project(s) ` : " all projects "}with the cloud...`)
         const userId = auth.user()?.id;
         // Filter to cloud-synced headers owned by the current user.
-        const localCloudHeaders = (hdrs || workspace.getHeaders(true))
-            .filter(h => h.cloudUserId && h.cloudUserId === userId)
+        const getLocalCloudHeaders = () => (hdrs || workspace.getHeaders(true))
+            .filter(h => h.cloudUserId && h.cloudUserId === userId);
+        const localCloudHeaders = getLocalCloudHeaders();
         const syncStart = U.nowSeconds()
         pxt.tickEvent(`identity.sync.start`)
         const agoStr = (t: number) => `${syncStart - t} seconds ago`
@@ -276,7 +285,7 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
             return newLoc
         }
         let didProjectCountChange = false;
-        let tasks: Promise<Header>[] = localCloudHeaders.map(async (local) => {
+        let tasks: Promise<void>[] = localCloudHeaders.map(async (local) => {
             // track the fact that we're checking for updates on each project
             updateCloudTempMetadata(local.id, { cloudInProgressSyncStartTime: U.nowSeconds() });
 
@@ -297,7 +306,6 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
                         pxt.debug(`Propegating ${projShorthand} delete to cloud.`)
                         const newHdr = await toCloud(local, remoteFile.version)
                         pxt.tickEvent(`identity.sync.localDeleteUpdatedCloud`)
-                        return newHdr
                     }
                     if (remote.isDeleted) {
                         // Delete local copy.
@@ -305,14 +313,12 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
                         const newHdr = await fromCloud(local, remoteFile);
                         didProjectCountChange = true;
                         pxt.tickEvent(`identity.sync.cloudDeleteUpdatedLocal`)
-                        return newHdr
                     }
                     // if it's not a delete...
                     if (local.cloudCurrent) {
                         // No local changes, download latest.
                         const newHdr = await fromCloud(local, remoteFile);
                         pxt.tickEvent(`identity.sync.noConflict.localProjectUpdatedFromCloud`)
-                        return newHdr
                     } else {
                         // Possible conflict.
                         const conflictStr = `conflict found for ${projShorthand}. Last cloud change was ${agoStr(remoteFile.header.modificationTime)} and last local change was ${agoStr(local.modificationTime)}.`
@@ -322,23 +328,22 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
                                 // local is one ahead, push as normal
                                 pxt.debug(`local project '${local.name}' has changes that will be pushed to the cloud.`)
                                 pxt.tickEvent(`identity.sync.noConflict.localProjectUpdatingToCloud`)
+                                await toCloud(local, remoteFile.version);
                             } else {
-                                // conflict and local wins
-                                // TODO: Pop a dialog and/or show the user a diff. Better yet, handle merges.
-                                pxt.log(conflictStr + ' Local will overwrite cloud.')
-                                pxt.tickEvent(`identity.sync.conflict.localOverwrittingCloud`)
+                                // conflict (and local has the newer change)
+                                pxt.log(conflictStr)
+                                pxt.tickEvent(`identity.sync.conflict.localNewerThanCloud`)
+                                await resolveConflict(local, remoteFile);
                             }
-                            return await toCloud(local, remoteFile.version);
                         } else {
-                            // conflict and remote wins
-                            // TODO: Pop a dialog and/or show the user a diff. Better yet, handle merges.
-                            pxt.log(conflictStr + ' Cloud will overwrite local.')
-                            pxt.tickEvent(`identity.sync.conflict.cloudOverwritingLocal`)
-                            return await fromCloud(local, remoteFile);
+                            // conflict (and remote has the newer change)
+                            pxt.log(conflictStr)
+                            pxt.tickEvent(`identity.sync.conflict.cloudNewerThanLocal`)
+                            await resolveConflict(local, remoteFile);
                         }
                     }
                 }
-                return local // no changes
+                // no changes
             } else if (!partialSync) {
                 if (local.cloudVersion) {
                     pxt.debug(`Project ${local.id} incorrectly thinks it is synced to the cloud (ver: ${local.cloudVersion})`)
@@ -349,11 +354,10 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
                 }
                 // Local cloud synced project exists, but it didn't make it to the server,
                 // so let's push it now.
-                return await toCloud(local, null)
+                await toCloud(local, null)
             }
             else {
                 // no remote verison so nothing to do
-                return local
             }
         });
         tasks = [...tasks, ...U.values(remoteHeadersToProcess)
@@ -365,17 +369,17 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
                 const res = await fromCloud(null, remoteFile)
                 pxt.tickEvent(`identity.sync.importCloudProject`)
                 didProjectCountChange = true;
-                return res;
             })]
-        tasks = tasks.map(async t => {
+            
+        await Promise.all(tasks);
+
+        // reset cloud state sync metadata if there is any
+        getLocalCloudHeaders().forEach(async t => {
             const newHdr = await t
-            // reset cloud state sync metadata if there is any
             if (getCloudTempMetadata(newHdr.id).cloudInProgressSyncStartTime > 0) {
                 updateCloudTempMetadata(newHdr.id, { cloudInProgressSyncStartTime: 0 });
             }
-            return newHdr;
         })
-        await Promise.all(tasks);
 
         // sanity check: all cloud headers should have a new sync time
         const noCloudProjs = remoteHeaders.length === 0
