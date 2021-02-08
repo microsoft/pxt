@@ -2,7 +2,6 @@ declare namespace pxt {
 
     type CodeCardType = "file" | "example" | "codeExample" | "tutorial" | "side" | "template" | "package" | "hw" | "forumUrl" | "forumExample" | "sharedExample" | "link";
     type CodeCardEditorType = "blocks" | "js" | "py";
-    type CodeCardCloudState = "local" | "cloud";
 
     interface Map<T> {
         [index: string]: T;
@@ -169,8 +168,8 @@ declare namespace pxt {
         cardType?: CodeCardType;
         editor?: CodeCardEditorType;
         otherActions?: CodeCardAction[];
-        cloudState?: CodeCardCloudState;
         directOpen?: boolean; // skip the details view, directly do the card action
+        projectId?: string; // the project's header ID
 
         header?: string;
 
