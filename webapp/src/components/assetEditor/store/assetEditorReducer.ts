@@ -111,4 +111,8 @@ export function assetToGalleryItem(asset: pxt.Asset, imgConv = new pxt.ImageConv
     }
 }
 
+export function isGalleryAsset(asset?: pxt.Asset) {
+    return asset?.id.startsWith("sprites.");
+}
+
 export default topReducer;
