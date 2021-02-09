@@ -3,7 +3,6 @@ import { connect } from 'react-redux';
 
 import { SkillMapState } from '../store/reducer';
 import { Item } from './CarouselItem';
-import { SkillCardActionButton } from './SkillCardActionButton';
 
 import { dispatchOpenActivity, dispatchShowRestartActivityWarning } from '../actions/dispatch';
 
@@ -16,19 +15,15 @@ import '../styles/skillcard.css'
 
 type SkillCardStatus = "locked" | "notstarted" | "inprogress" | "completed" | "restarted";
 
-interface SkillCardProps extends Item {
+interface SkillCardActionButtonProps {
     mapId: string;
-    description?: string;
-    imageUrl?: string;
-    tags?: string[];
+    id: string;
     status?: SkillCardStatus;
-    currentStep?: number;
-    maxSteps?: number
     dispatchOpenActivity: (mapId: string, activityId: string) => void;
     dispatchShowRestartActivityWarning: (mapId: string, activityId: string) => void;
 }
 
-export class SkillCardImpl extends React.Component<SkillCardProps> {
+export class SkillCardActionButtonImpl extends React.Component<SkillCardActionButtonProps> {
     protected getSkillCardActionText(): string {
         switch (this.props.status) {
             case "locked":
@@ -70,45 +65,8 @@ export class SkillCardImpl extends React.Component<SkillCardProps> {
     }
 
     render() {
-        const { id, mapId, label, description, imageUrl, tags, status, currentStep, maxSteps} = this.props;
-        const completed = this.isCompleted(status || "notstarted");
-
-        return <div className="skill-card-container">
-            <div className={`skill-card ${status || ''}`}>
-                <div className="skill-card-display">
-                    <div className="skill-card-image">
-                        {imageUrl ? <img src={imageUrl} alt={lf("Preview of activity content")} /> : <i className={`icon ${status !== "locked" ? "game" : ""}`} />}
-                    </div>
-                    <div className="skill-card-label">
-                        <div className="skill-card-title">
-                            {completed && <i className={`icon check circle`} />}
-                            {status === "inprogress" && maxSteps &&
-                                <span className="circular-label">{`${currentStep}/${maxSteps}`}</span>
-                            }
-                            <span>{label}</span>
-                        </div>
-                        <div className="skill-card-tags">
-                            {tags?.map((t, i) => {
-                                return <div key={i}>{t}</div>
-                            })}
-                        </div>
-                    </div>
-                    {status === "locked" && <div className="skill-card-overlay"><i className="icon lock" /></div>}
-                </div>
-                <div className="skill-card-info">
-                    <div className="skill-card-title">{label}</div>
-                    <div className="skill-card-description">{description}</div>
-                    <div className="spacer"></div>
-                    <div className="skill-card-action">
-                        {completed &&
-                            <div className="skill-card-button-icon" role="button" onClick={this.handleRestartButtonClick}>
-                                <i className="xicon redo"></i>
-                            </div>
-                        }
-                        <SkillCardActionButton id={id} mapId={mapId} />
-                    </div>
-                </div>
-            </div>
+        return <div className="skill-card-button" role="button" onClick={this.handleActionButtonClick}>
+            {this.getSkillCardActionText()}
         </div>
     }
 }
@@ -118,9 +76,8 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
     const isUnlocked = state.user && map && isActivityUnlocked(state.user, state.pageSourceUrl, map, ownProps.id);
 
     let status: SkillCardStatus = isUnlocked ? "notstarted" : "locked";
-    let currentStep: number | undefined;
-    let maxSteps: number | undefined;
 
+    // TODO move status calc into utils
     if (state.user) {
         if (map && state.pageSourceUrl && !isMapUnlocked(state.user, map, state.pageSourceUrl)) {
             status = "locked";
@@ -135,17 +92,13 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
                 }
                 else if (progress.headerId) {
                     status = "inprogress";
-                    currentStep = progress?.currentStep;
-                    maxSteps = progress?.maxSteps;
                 }
             }
         }
     }
 
     return {
-        status,
-        currentStep,
-        maxSteps,
+        status
     };
 }
 
@@ -154,4 +107,4 @@ const mapDispatchToProps = {
     dispatchShowRestartActivityWarning
 }
 
-export const SkillCard = connect(mapStateToProps, mapDispatchToProps)(SkillCardImpl);
+export const SkillCardActionButton = connect(mapStateToProps, mapDispatchToProps)(SkillCardActionButtonImpl);

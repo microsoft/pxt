@@ -34,6 +34,7 @@ import './App.css';
 
 // TODO: this file needs to read colors from the target
 import './arcade.css';
+import { SkillGraph } from './components/SkillGraph';
 /* tslint:enable:no-import-side-effect */
 
 (window as any).Promise = Promise;
@@ -156,8 +157,8 @@ class AppImpl extends React.Component<AppProps, AppState> {
                 }
 
                 this.setState({ error: undefined });
-            } catch {
-                this.handleError();
+            } catch (err) {
+                this.handleError(err);
             }
         } else {
             this.setState({ error: lf("No content loaded.") })
@@ -211,7 +212,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
                         { error
                             ? <div className="skill-map-error">{error}</div>
                             : maps?.map((el, i) => {
-                                return <SkillCarousel map={el} key={i} />
+                                return <SkillGraph map={el} key={i} /> //<SkillCarousel map={el} key={i} /> //
                             })}
                     </div>
                 </div>
