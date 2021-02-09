@@ -272,6 +272,8 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
     renderCore() {
         const { visible } = this.state;
         const options = this.props.parent.state.tutorialOptions;
+        const flyoutOnly = this.props.parent.state.editorState && this.props.parent.state.editorState.hasCategories === false;
+        const hideIteration = options.metadata && options.metadata.hideIteration;
         const { tutorialReady, tutorialStepInfo, tutorialStep, tutorialName } = options;
         if (!tutorialReady) return <div />;
 
@@ -288,14 +290,18 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
         } else {
             let onClick = tutorialStep < tutorialStepInfo.length - 1 ? this.next : this.closeHint;
             const actions: sui.ModalButton[] = [{
-                label: lf("Start"),
+                label: lf("Ok"),
                 onclick: onClick,
                 icon: 'check',
                 className: 'green'
             }]
             const classes = this.props.parent.createModalClasses("hintdialog");
 
-            return <sui.Modal isOpen={visible} className={classes}
+            let modalClasses = "hintdialog";
+            modalClasses += flyoutOnly ? " flyoutOnly" : "";
+            modalClasses += hideIteration ? " hideIteration": "";
+
+            return <sui.Modal isOpen={visible} className={modalClasses}
                 closeIcon={false} header={tutorialName} buttons={actions}
                 onClose={onClick} dimmer={true} longer={true}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape>
