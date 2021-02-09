@@ -357,7 +357,7 @@ ${code}
             tutorialCode: tutorialInfo.code,
             tutorialRecipe: !!recipe,
             templateCode: tutorialInfo.templateCode,
-            autoexpandStep: true,
+            autoexpandStep: tutorialInfo.metadata?.autoexpandOff ? false : true,
             metadata: tutorialInfo.metadata,
             language: tutorialInfo.language,
             jres: tutorialInfo.jres,
