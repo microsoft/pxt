@@ -297,11 +297,7 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
             }]
             const classes = this.props.parent.createModalClasses("hintdialog");
 
-            let modalClasses = "hintdialog";
-            modalClasses += flyoutOnly ? " flyoutOnly" : "";
-            modalClasses += hideIteration ? " hideIteration": "";
-
-            return <sui.Modal isOpen={visible} className={modalClasses}
+            return <sui.Modal isOpen={visible} className={classes}
                 closeIcon={false} header={tutorialName} buttons={actions}
                 onClose={onClick} dimmer={true} longer={true}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape>

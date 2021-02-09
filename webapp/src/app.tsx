@@ -3277,6 +3277,7 @@ export class ProjectView
             classes,
             this.rootClasses.indexOf("flyoutOnly") != -1 ? "flyoutOnly" : "",
             this.rootClasses.indexOf("inverted-theme") != -1 ? "inverted-theme" : "",
+            this.rootClasses.indexOf("hideIteration") != -1 ? "hideIteration" : ""
         ]
         return sui.cx(rootClassList);
     }
