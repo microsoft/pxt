@@ -9,13 +9,17 @@ export interface AssetEditorState {
     view: GalleryView;
     assets: pxt.Asset[];
     galleryAssets: pxt.Asset[];
+    filterOpen: boolean;
+    selectedTags: string[];
     selectedAsset?: pxt.Asset;
 }
 
 const initialState: AssetEditorState = {
     view: GalleryView.User,
     assets: [],
-    galleryAssets: []
+    galleryAssets: [],
+    filterOpen: false,
+    selectedTags: []
 }
 
 const topReducer = (state: AssetEditorState = initialState, action: any): AssetEditorState => {
@@ -42,9 +46,30 @@ const topReducer = (state: AssetEditorState = initialState, action: any): AssetE
                 ...state,
                 galleryAssets: getAssets(true)
             }
+        case actions.TOGGLE_FILTER:
+            return {
+                ...state,
+                filterOpen: !state.filterOpen
+            }
+        case actions.TOGGLE_TAG:
+            return {
+                ...state,
+                selectedTags: toggleTag(state, action.tag)
+            }
+
         default:
             return state
     }
+}
+
+function toggleTag(state: AssetEditorState, tag: string) {
+    const index = state.selectedTags.indexOf(tag);
+    if (index < 0) {
+        state.selectedTags.push(tag);
+    } else {
+        state.selectedTags.splice(index);
+    }
+    return state.selectedTags;
 }
 
 function compareInternalId(a: pxt.Asset, b: pxt.Asset) {

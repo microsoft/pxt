@@ -77,9 +77,9 @@
     color: @black;
 }
 .asset-editor-card-list {
-    width: 100%;
+    height: 100%;
     overflow: auto;
-    flex: 1;
+    flex: 4;
 }
 
 .asset-editor-card-list > div {
@@ -134,6 +134,31 @@
         -ms-interpolation-mode: nearest-neighbor;
         object-fit: contain;
     }
+}
+
+.asset-editor-content {
+    flex: 1;
+    overflow: auto;
+    display: flex;
+}
+
+.asset-editor-filter-button {
+    position: absolute;
+    right: 0;
+    width: 2em;
+    height: 2em;
+    border: .2em solid black;
+    cursor: pointer;
+}
+
+.asset-editor-filter {
+    flex: 1;
+    border: .2em solid black;
+}
+
+.asset-editor-filter-tag {
+    display: flex;
+    cursor: pointer;
 }
 
 .asset-editor-button {

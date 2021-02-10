@@ -6,6 +6,7 @@ import { connect } from 'react-redux';
 import { AssetEditorState, GalleryView } from "./store/assetEditorReducer";
 import { dispatchUpdateUserAssets } from './actions/dispatch';
 
+import { AssetFilterPanel } from './assetFilterPanel';
 import { AssetCardList } from "./assetCardList";
 import { AssetTopbar } from "./assetTopbar";
 
@@ -13,6 +14,7 @@ interface AssetGalleryProps {
     view: GalleryView;
     galleryAssets: pxt.Asset[];
     userAssets: pxt.Asset[];
+    filterOpen: boolean;
     showAssetFieldView?: (asset: pxt.Asset, cb: (result: any) => void) => void;
     dispatchUpdateUserAssets?: () => void;
 }
@@ -116,19 +118,25 @@ class AssetGalleryImpl extends React.Component<AssetGalleryProps, AssetGallerySt
         const { view, galleryAssets, userAssets } = this.props;
         const { showCreateModal } = this.state;
         const isBlocksProject = pkg.mainPkg?.config && pkg.mainPkg.getPreferredEditor() === pxt.BLOCKS_PROJECT_NAME;
+        const filterPanelVisible = view == GalleryView.Gallery && this.props.filterOpen;
 
         return <div className="asset-editor-gallery">
             <AssetTopbar />
-            <div className={`asset-editor-card-list ${view !== GalleryView.User ? "hidden" : ""}`}>
-                <AssetCardList assets={filterAssets(userAssets, isBlocksProject)}>
-                    <div className="create-new" role="button" onClick={this.showCreateModal}>
-                        <i className="icon huge add circle" />
-                        <span>{lf("New Asset")}</span>
-                    </div>
-                </AssetCardList>
-            </div>
-            <div className={`asset-editor-card-list ${view !== GalleryView.Gallery ? "hidden" : ""}`}>
-                <AssetCardList assets={galleryAssets} />
+            <div className={"asset-editor-content"}>
+                <div className={`asset-editor-card-list ${view !== GalleryView.User ? "hidden" : ""}`}>
+                    <AssetCardList assets={filterAssets(userAssets, isBlocksProject)}>
+                        <div className="create-new" role="button" onClick={this.showCreateModal}>
+                            <i className="icon huge add circle" />
+                            <span>{lf("New Asset")}</span>
+                        </div>
+                    </AssetCardList>
+                </div>
+                <div className={`asset-editor-card-list ${view !== GalleryView.Gallery ? "hidden" : ""}`}>
+                    <AssetCardList assets={galleryAssets} />
+                </div>
+                <div className={`asset-editor-filter ${!filterPanelVisible ? "hidden" : ""}`}>
+                    <AssetFilterPanel/>
+                </div>
             </div>
             <sui.Modal className="asset-editor-create-dialog" isOpen={showCreateModal} onClose={this.hideCreateModal}
                 closeIcon={true} dimmer={true} header={lf("Create New Asset")}>
@@ -155,7 +163,8 @@ function mapStateToProps(state: AssetEditorState, ownProps: any) {
         ...ownProps,
         view: state.view,
         userAssets: state.assets,
-        galleryAssets: state.galleryAssets
+        galleryAssets: state.galleryAssets,
+        filterOpen: state.filterOpen
     }
 }
 
