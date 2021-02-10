@@ -180,11 +180,10 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
                 {canEdit && <sui.MenuItem name={lf("Edit")} className="asset-editor-button" icon="edit" onClick={this.editAssetHandler}/>}
                 <sui.MenuItem name={lf("Duplicate")} className="asset-editor-button" icon="copy" onClick={this.duplicateAssetHandler}/>
                 {canCopy && <sui.MenuItem name={lf("Copy")} className="asset-editor-button" icon="paste" onClick={this.copyAssetHandler}/>}
-                <sui.MenuItem name={lf("Delete")}
-                    className={`asset-editor-button delete-asset ${!canDelete ? "disabled" : ""}`}
-                    icon="trash"
+                {canDelete && <sui.MenuItem name={lf("Delete Asset")}
+                    className="delete-asset"
                     dataTooltip={!canDelete ? (isGalleryAsset ? lf("Can't delete gallery item") : lf("Asset is used in your project")) : undefined}
-                    onClick={canDelete ? this.showDeleteModal : undefined}/>
+                    onClick={canDelete ? this.showDeleteModal : undefined}/>}
             </div>}
             <textarea className="asset-editor-sidebar-copy" ref={this.copyTextAreaRefHandler} ></textarea>
             <sui.Modal className="asset-editor-delete-dialog" isOpen={showDeleteModal} onClose={this.hideDeleteModal} closeIcon={true} dimmer={true} header={lf("Delete Asset")} buttons={actions}>
