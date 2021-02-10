@@ -1,7 +1,7 @@
 .graph {
     /* border: 1px solid red; */
     width: 100%;
-    height: 22rem;
+    height: 14rem;
     position: relative;
 }
 
@@ -67,5 +67,7 @@
 
 .graph-title {
     font-size: 1.2rem;
+    margin-left: 1rem;
+    margin-top: 1rem;
     font-weight: 700;
 }

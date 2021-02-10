@@ -80,7 +80,7 @@ class SkillGraphImpl extends React.Component<SkillGraphProps> {
     // depth: depth in chart (distance from root)
     // counter: the nth item we've encountered with this depth
     protected getOffset(depth: number, counter: number,): { x: number, y: number } {
-        return { x: (depth + 1) * 120, y: counter * 80 + 80}
+        return { x: (depth + 1) * 120, y: counter * 80 + 10}
     }
 
     render() {
