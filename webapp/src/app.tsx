@@ -4599,7 +4599,7 @@ document.addEventListener("DOMContentLoaded", () => {
     else if (isSandbox) workspace.setupWorkspace("mem");
     else if (pxt.winrt.isWinRT()) workspace.setupWorkspace("uwp");
     else if (pxt.BrowserUtils.isIpcRenderer()) workspace.setupWorkspace("idb");
-    else if (pxt.BrowserUtils.isLocalHost() || pxt.BrowserUtils.isPxtElectron()) workspace.setupWorkspace("fs");
+    else if (pxt.BrowserUtils.isPxtElectron()) workspace.setupWorkspace("fs");
     else workspace.setupWorkspace("browser");
     Promise.resolve()
         .then(async () => {
