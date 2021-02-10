@@ -15,15 +15,25 @@
     margin: 1rem;
 }
 
-.asset-editor-sidebar-name {
+.asset-editor-sidebar-name,
+.asset-editor-sidebar-temp {
     overflow: hidden;
     text-overflow: ellipsis;
     margin-bottom: 0.5rem;
     font-weight: 700;
+}
 
-    &.unnamed {
-        font-weight: 400;
-        font-style: italic;
+.asset-editor-sidebar-temp {
+    display: flex;
+    align-items: center;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    background-color: @assetUnselected;
+
+    i {
+        width: 1.5rem;
+        height: 1.5rem;
+        margin-right: 0.5rem;
     }
 }
 
@@ -105,14 +115,21 @@
 }
 
 .asset-editor-card-label {
+    display: flex;
     position: relative;
     margin-top: -2rem;
+    z-index: 2;
+}
+
+.asset-editor-card-icon {
     height: 2rem;
     width: 2rem;
-    background: @white;
-    z-index: 2;
     line-height: 2rem;
     text-align: center;
+    background: @white;
+    margin-right: 0.25rem;
+
+    i { margin: 0; }
 }
 
 .asset-editor-preview {

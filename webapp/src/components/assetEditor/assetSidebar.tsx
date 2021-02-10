@@ -4,7 +4,7 @@ import * as simulator from "../../simulator";
 import * as sui from "../../sui";
 import { connect } from 'react-redux';
 
-import { AssetEditorState, GalleryView } from './store/assetEditorReducer';
+import { AssetEditorState, GalleryView, isGalleryAsset } from './store/assetEditorReducer';
 import { dispatchChangeGalleryView, dispatchChangeSelectedAsset, dispatchUpdateUserAssets } from './actions/dispatch';
 
 import { AssetPreview } from "./assetPreview";
@@ -165,7 +165,13 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
                 <div className="asset-editor-sidebar-preview">
                     { asset && <AssetPreview asset={asset} />  }
                 </div>
-                <div className={`asset-editor-sidebar-name ${!isNamed ? 'unnamed' : ''}`}>{ name }</div>
+                {isNamed || !asset
+                    ? <div className="asset-editor-sidebar-name">{ name }</div>
+                    : <div className="asset-editor-sidebar-temp">
+                        <i className="icon exclamation triangle" />
+                        <span>{lf("No saved asset name!")}</span>
+                    </div>
+                }
                 {details.map(el => {
                     return <div key={el.name} className="asset-editor-sidebar-detail">{`${el.name}: ${el.value}`}</div>
                 })}
@@ -215,7 +221,7 @@ function mapStateToProps(state: AssetEditorState, ownProps: any) {
     if (!state) return {};
     return {
         asset: state.selectedAsset,
-        isGalleryAsset: state.selectedAsset?.id.startsWith("sprites.")
+        isGalleryAsset: isGalleryAsset(state.selectedAsset)
     };
 }
 
