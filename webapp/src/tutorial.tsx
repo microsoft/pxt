@@ -279,6 +279,9 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
         const tutorialHint = step.hintContentMd;
         const fullText = step.contentMd;
 
+        const hideIteration = options.metadata.hideIteration;
+        const flyoutOnly = options.metadata.flyoutOnly;
+
         if (!step.showDialog) {
             if (!tutorialHint) return <div />;
 
@@ -288,7 +291,7 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
         } else {
             let onClick = tutorialStep < tutorialStepInfo.length - 1 ? this.next : this.closeHint;
             const actions: sui.ModalButton[] = [{
-                label: lf("Ok"),
+                label: hideIteration && flyoutOnly ? lf("Start") : lf("Ok"),
                 onclick: onClick,
                 icon: 'check',
                 className: 'green'
