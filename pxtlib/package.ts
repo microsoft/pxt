@@ -137,7 +137,8 @@ namespace pxt {
                 return Promise.resolve(resp)
             } else if (proto == "pkg") {
                 // the package source is serialized in a file in the package itself
-                const pkgFilesSrc = this.readFile(this.verArgument());
+                const src = this.parent || this; // fall back to current package if no parent
+                const pkgFilesSrc = src.readFile(this.verArgument());
                 const pkgFilesJson = ts.pxtc.Util.jsonTryParse(pkgFilesSrc) as Map<string>;
                 if (!pkgFilesJson)
                     pxt.log(`unable to find ${this.verArgument()}`)
