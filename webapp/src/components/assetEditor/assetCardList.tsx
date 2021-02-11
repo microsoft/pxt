@@ -76,7 +76,7 @@ export class AssetCardList extends React.Component<AssetCardListProps> {
         this.hasUpdatedCards = true;
 
         const columns = Math.floor(parentBounds.width / elementWidth);
-        const rows = Math.floor(this.container.parentElement.getBoundingClientRect().height/ elementWidth)
+        const rows = Math.floor(this.container.parentElement.getBoundingClientRect().height / elementWidth)
 
         let current = this.container.firstElementChild;
         let count = 0;
