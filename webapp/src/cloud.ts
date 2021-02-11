@@ -162,7 +162,10 @@ export async function saveAsync(h: Header, text?: ScriptText): Promise<CloudSave
         pxt.debug('save to cloud failed; synchronizing...')
         pxt.tickEvent(`identity.cloudSaveFailedTriggeringPartialSync`);
         await syncAsync([h])
-        return CloudSaveResult.SyncError;
+        // TODO @darzu: this isn't an error case. If we hit a conflict, it'll naturally hit this
+        //  code.
+        // return CloudSaveResult.SyncError;
+        return CloudSaveResult.Success;
     } else {
         return CloudSaveResult.Success;
     }

@@ -87,7 +87,7 @@ export function setupWorkspace(id: string) {
 }
 
 async function switchToMemoryWorkspace(reason: string): Promise<void> {
-    pxt.log(`workspace: error, switching from ${implType} to memory workspace`);
+    pxt.log(`workspace: error '${reason}', switching from ${implType} to memory workspace`);
 
     const expectedMemWs = pxt.appTarget.appTheme.disableMemoryWorkspaceWarning
         || impl === memoryworkspace.provider
