@@ -76,7 +76,7 @@ let theEditor: ProjectView;
 let hash: { cmd: string, arg: string };
 let pendingEditorRequests: ((p: ProjectView) => void)[];
 
-function getEditorAsync() {
+export function getEditorAsync() {
     if (theEditor) return Promise.resolve(theEditor);
     if (!pendingEditorRequests) pendingEditorRequests = [];
     return new Promise<ProjectView>(resolve => {
@@ -1134,6 +1134,7 @@ export class ProjectView
         return p.setContentAsync(name, content)
             .then(() => {
                 if (open) this.setFile(p.lookupFile("this/" + name));
+                console.log("cloud save from 'updateFileAsync'") // TODO @darzu: dbg
                 return p.cloudSavePkgAsync();
             })
             .then(() => this.reloadHeaderAsync())

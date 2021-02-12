@@ -389,7 +389,11 @@ export class EditorPackage {
         if (!f) {
             f = this.setFile(n, v);
             p = p.then(() => this.updateConfigAsync(cfg => cfg.files.indexOf(n) < 0 ? cfg.files.push(n) : 0))
-            p.then(() => this.cloudSavePkgAsync())
+            p.then(() => {
+                // TODO @darzu: dbg
+                console.log("cloudSavePkgAsync from 'setContentAsync'")
+                this.cloudSavePkgAsync()
+            })
         }
         return p.then(() => f.setContentAsync(v));
     }
@@ -422,6 +426,8 @@ export class EditorPackage {
     }
 
     cloudSavePkgAsync() {
+        // TODO @darzu: 
+        this.header = workspace.getHeader(this.header.id) || this.header // ensure we're working with the latest header
         if (this.header.cloudCurrent || !auth.loggedInSync()) return Promise.resolve();
         this.savingNow++;
         this.updateStatus();
@@ -436,9 +442,11 @@ export class EditorPackage {
 
     private scheduleCloudSavePkg() {
         if (this.saveScheduled) return
+        console.log("scheduling cloud save...");// TODO @darzu: dbg
         this.saveScheduled = true;
         setTimeout(() => {
             this.saveScheduled = false;
+            console.log("...cloudSavePkgAsync after timeout");// TODO @darzu: dbg
             this.cloudSavePkgAsync().done();
         }, 5000)
     }
@@ -460,6 +468,7 @@ export class EditorPackage {
             } catch (e) {
             }
         }
+        console.log("saveFilesAsync");// TODO @darzu: dbg
         return workspace.saveAsync(this.header, this.getAllFiles())
             .then(() => immediate ? this.cloudSavePkgAsync() : this.scheduleCloudSavePkg())
     }

@@ -11,6 +11,7 @@ type ScriptText = pxt.workspace.ScriptText;
 type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
 
 import U = pxt.Util;
+import { getEditorAsync } from "./app";
 
 type CloudProject = {
     id: string;
@@ -216,27 +217,42 @@ async function transferFromCloud(local: Header | null, remoteFile: File): Promis
     return newHeader
 }
 
-async function resolveConflict(local: Header, remoteFile: File): Promise<Header[]> {
-    // TODO @darzu: 
-    // resolve conflict by creating a copy. To minimize disruption, the copy should always
-    // be of the remote version.
+function dbgHdrToString(h: Header): string {
+    return `${h.name} (${h.id.substr(0, 4)}..)@${U.timeSince(h.modificationTime)}`;
+}
 
-    // copy remote project as a new project
-    let newCopyHdr: Header = {...remoteFile.header, 
+async function resolveConflict(local: Header, remoteFile: File) {
+    // TODO @darzu: 
+    // resolve conflict by creating a copy
+    // TODO @darzu: dbg
+    console.log("resolveConflict")
+    console.log(`local: ${dbgHdrToString(local)}`);
+    console.log(`remote: ${dbgHdrToString(remoteFile.header)}`);
+
+    // copy local project as a new project
+    let newCopyHdr: Header = {...excludeLocalOnlyMetadataFields(local),  
         name: local.name + " - Copy", // TODO @darzu: what should the new name be?
         cloudUserId: local.cloudUserId,        
         cloudLastSyncTime: U.nowSeconds(),
     };
-    newCopyHdr = await workspace.installAsync(newCopyHdr, remoteFile.text); // install assigns a new project ID
+    const newCopyText = await workspace.getTextAsync(local.id);
+    console.log(`copy: ${dbgHdrToString(newCopyHdr)}`);// TODO @darzu: dbg
+    newCopyHdr = await workspace.installAsync(newCopyHdr, newCopyText); // install assigns a new project ID
+    console.log(`copy installed: ${dbgHdrToString(newCopyHdr)}`);// TODO @darzu: dbg
+
+    // overwrite local changes in the original project with cloud changes
+    const newLocal = await transferFromCloud(local, remoteFile)
+    console.log(`local updated: ${dbgHdrToString(newLocal)}`);// TODO @darzu: dbg
 
     // upload new project to the cloud
-    newCopyHdr = await transferToCloud(newCopyHdr, null);
+    const newCopyRemoteHdr = await transferToCloud(newCopyHdr, null);
+    console.log(`copy uploaded: ${dbgHdrToString(newCopyRemoteHdr)}`);// TODO @darzu: dbg
 
-    // force push local changes over remote project 
-    // (now that a copy has been saved to cloud, this is safe)
-    let localOriginalHdr = await transferToCloud(local, remoteFile.version);
-
-    return [newCopyHdr, localOriginalHdr];
+    // swap current project to the new copy
+    const editor = await getEditorAsync();
+    console.log("waiting on loadHeaderAsync...")// TODO @darzu: dbg
+    await editor.loadHeaderAsync(newCopyHdr, editor.state.editorState);
+    console.log("... done waiting on loadHeaderAsync")// TODO @darzu: dbg
 }
 
 async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {

@@ -1514,13 +1514,13 @@ export async function saveToCloudAsync(h: Header) {
     const text = await getTextAsync(h.id)
     const cloudPromise = cloud.saveAsync(h, text)
     const res = await cloudPromise;
-    if (res !== cloud.CloudSaveResult.NotLoggedIn) {
-        const elapsedSec = U.nowSeconds() - saveStart;
-        const success = res === cloud.CloudSaveResult.Success
-        pxt.tickEvent(`identity.saveToCloud`, { elapsedSec, success: success.toString() })
-        pxt.log(`Project ${h.name} (${h.id.substr(0,4)}...) ${success ? '' : 'NOT '}saved to cloud.`)
-        data.invalidateHeader("header", h);
-    }
+    if (res === cloud.CloudSaveResult.NotLoggedIn)
+        return; // nothing to do
+    const success = res === cloud.CloudSaveResult.Success
+    const elapsedSec = U.nowSeconds() - saveStart;
+    pxt.tickEvent(`identity.saveToCloud`, { elapsedSec, success: success.toString() })
+    pxt.log(`Project ${h.name} (${h.id.substr(0,4)}...) ${success ? '' : 'NOT '}saved to cloud.`)
+    data.invalidateHeader("header", h);
 }
 
 // this promise is set while a sync is in progress
