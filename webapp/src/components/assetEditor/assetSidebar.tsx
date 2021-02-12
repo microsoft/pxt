@@ -18,7 +18,7 @@ interface AssetSidebarProps {
     asset?: pxt.Asset;
     isGalleryAsset?: boolean;
     showAssetFieldView?: (asset: pxt.Asset, cb: (result: any) => void) => void;
-    dispatchChangeGalleryView: (view: GalleryView) => void;
+    dispatchChangeGalleryView: (view: GalleryView, assetType?: pxt.AssetType, assetId?: string) => void;
     dispatchChangeSelectedAsset: (assetType?: pxt.AssetType, assetId?: string) => void;
     dispatchUpdateUserAssets: () => void;
 }
@@ -103,8 +103,7 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
         project.pushUndo();
         const { type, id } = project.duplicateAsset(asset);
         this.updateAssets().then(() => {
-            this.props.dispatchChangeGalleryView(GalleryView.User);
-            this.props.dispatchChangeSelectedAsset(type, id);
+            this.props.dispatchChangeGalleryView(GalleryView.User, type, id);
         });
     }
 
@@ -146,7 +145,6 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
         project.pushUndo();
         project.removeAsset(this.props.asset);
         this.props.dispatchChangeSelectedAsset();
-        this.props.dispatchChangeGalleryView(GalleryView.User);
         this.updateAssets();
     }
 
