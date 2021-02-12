@@ -909,9 +909,9 @@ namespace pxt.github {
                     fullName: rid.fullName,
                     fileName: rid.fileName,
                     slug: rid.slug,
-                    name: meta.name,
+                    name: rid.fileName ? `${meta.name}-${rid.fileName}` : meta.name,
                     description: meta.description,
-                    defaultBranch: "master",
+                    defaultBranch: meta.defaultBranch || "master",
                     tag: rid.tag,
                     status
                 };
