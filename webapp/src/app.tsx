@@ -3550,7 +3550,7 @@ export class ProjectView
             // add as a dependency itself
             if (pxtJson.files.find(f => /\.ts$/.test(f))) {
                 dependencies = {}
-                dependencies[ghid.project] = pxt.github.toGithubDependencyPath(ghid);
+                dependencies[ghid.project] = pxt.github.toGithubDependencyPath(ghid.slug, ghid.tag);
             }
             else {// just use dependencies from the tutorial
                 pxt.Util.jsonMergeFrom(dependencies, pxtJson.dependencies);
