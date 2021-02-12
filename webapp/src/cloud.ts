@@ -201,7 +201,7 @@ async function transferToCloud(local: Header, cloudVersion: string): Promise<Hea
     U.assert(!!newVer, 'Failed to sync local change (1)');
     // save to the workspace header again to make sure cloud metadata gets saved
     await workspace.saveAsync(local, null, true)
-    return local
+    return workspace.getHeader(local.id)
 }
 
 async function transferFromCloud(local: Header | null, remoteFile: File): Promise<Header> {
@@ -214,7 +214,7 @@ async function transferFromCloud(local: Header | null, remoteFile: File): Promis
     } else {
         await workspace.importAsync(newHeader, remoteFile.text, true)
     }
-    return newHeader
+    return workspace.getHeader(newHeader.id)
 }
 
 function dbgHdrToString(h: Header): string {

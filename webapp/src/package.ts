@@ -180,8 +180,11 @@ export class EditorPackage {
     assetsPkg: EditorPackage;
 
     constructor(private ksPkg: pxt.Package, private topPkg: EditorPackage) {
-        if (ksPkg && ksPkg.verProtocol() == "workspace")
+        // TODO @darzu: assigning header
+        if (ksPkg && ksPkg.verProtocol() == "workspace") {
             this.header = workspace.getHeader(ksPkg.verArgument())
+            console.log("EditorPackage constructor: " + this.header.id); // TODO @darzu: dbg
+        }
     }
 
     getSimState() {
@@ -426,8 +429,10 @@ export class EditorPackage {
     }
 
     cloudSavePkgAsync() {
-        // TODO @darzu: 
-        this.header = workspace.getHeader(this.header.id) || this.header // ensure we're working with the latest header
+        // TODO @darzu: assigning header
+        // TODO @darzu: why is this line necessary? the package layer should not be responsible for cloud saving.
+        // this.header = workspace.getHeader(this.header.id) || this.header // ensure we're working with the latest header
+
         if (this.header.cloudCurrent || !auth.loggedInSync()) return Promise.resolve();
         this.savingNow++;
         this.updateStatus();

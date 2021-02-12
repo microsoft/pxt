@@ -448,8 +448,11 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
         }
         allScripts.push(e)
     } else {
-        // persist header changes to our local cache
-        e.header = h
+        // persist header changes to our local cache, but keep the old
+        // reference around because (unfortunately) other layers (e.g. package.ts)
+        // assume the reference is stable per id.
+        Object.assign(e.header, h)
+        h = e.header;
     }
 
     const hasUserFileChanges = async () => {
