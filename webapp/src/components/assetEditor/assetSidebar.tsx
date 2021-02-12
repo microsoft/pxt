@@ -169,7 +169,7 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
                     ? <div className="asset-editor-sidebar-name">{ name }</div>
                     : <div className="asset-editor-sidebar-temp">
                         <i className="icon exclamation triangle" />
-                        <span>{lf("No saved asset name!")}</span>
+                        <span>{lf("No asset name")}</span>
                     </div>
                 }
                 {details.map(el => {
