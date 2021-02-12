@@ -870,9 +870,9 @@ namespace pxt.github {
             return true;
 
         if (!repo || !config) return false;
-        if (repo.fullName
+        if (repo.slug
             && config.approvedRepos
-            && config.approvedRepos.some(fn => fn.toLowerCase() == repo.fullName.toLowerCase()))
+            && config.approvedRepos.some(fn => fn.toLowerCase() == repo.slug.toLowerCase()))
             return true;
         return false;
     }
