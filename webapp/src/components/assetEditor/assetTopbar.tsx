@@ -1,11 +1,9 @@
 import * as React from "react";
-import { connect } from 'react-redux';
 
 import { GalleryView } from './store/assetEditorReducer';
-import { AssetGalleryTab } from './assetGalleryTab';
+import { AssetGalleryTab } from './assetGalleryTab'
 
 export class AssetTopbar extends React.Component<{}> {
-
     render() {
         return <div className="asset-editor-topbar">
             <AssetGalleryTab title={lf("My Assets")} view={GalleryView.User} />
