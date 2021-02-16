@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 
 import { GalleryView } from './store/assetEditorReducer';
 import { AssetGalleryTab } from './assetGalleryTab';
+
 export class AssetTopbar extends React.Component<{}> {
 
     render() {
