@@ -25,6 +25,10 @@
     --sidebar-label-color: #adadad;
     --input-text-color: #5d5d5d;
 
+    --filter-panel-bg-color: #333333;
+    --filter-panel-text-color: #ffffff;
+    --filter-panel-label-color: #adadad;
+
     --navigator-viewport-color: #ff0000;
     --wall-color: #e95153;
 
@@ -91,6 +95,7 @@
     background-color: #4B7BEC;
     border: 2px solid #4067b3;
     border-bottom: none;
+    display: flex;
 }
 
 .image-editor-gallery-content {
@@ -98,6 +103,7 @@
     overflow: hidden;
     position: relative;
     height: 100%;
+    flex: 6;
 }
 
 .gallery-editor-toggle {
@@ -211,11 +217,94 @@
     line-height: 2.25rem;
 }
 
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+.gallery-filter-button {
+    position: absolute;
+    right: 0;
+    width: 7em;
+    height: 2em;
+    cursor: pointer;
+    display: flex;
+    margin-right: 2em;
+    margin-top: .5em;
+    padding: 0 1em;
+    border-radius: 5px;
+    background-color: white;
+    color: #4b7bec;
+    align-items: center;
+    user-select: none;
+}
+
+.image-editor-gallery-window {
+    display: flex;
+    flex-grow: 1;
+}
+
+.filter-panel-container {
+    background-color: var(--filter-panel-bg-color);
+    flex: 1;
+    user-select: none;
+}
+
+.filter-panel {
+    color: var(--filter-panel-text-color);
+    height: 98%;
+    margin: .5rem;
+    padding: .4rem;
+}
+
+.filter-title {
+    text-align: center;
+    font-weight: bolder;
+    font-size: 1.5rem;
+    margin-top: .5rem;
+    margin-bottom: 2rem;
+}
+
+.filter-subheading-row {
+    color: var(--filter-panel-label-color);
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: .5rem;
+    font-size: .9rem;
+}
+
+.filter-subheading-button {
+    cursor: pointer;
+}
+
+.filter-tag {
+    display: flex;
+    cursor: pointer;
+}
+
+.filter-tag-box {
+    margin-right: .5rem;
+}
+
+.filter-tag-name {
+    text-transform: capitalize;
+}
+
 .image-editor-gallery {
     position: absolute;
     height: 100%;
     width: 100%;
-
     top: 0;
 
     margin-top: -100%;
