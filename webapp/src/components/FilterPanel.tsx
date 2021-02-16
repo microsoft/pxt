@@ -7,14 +7,22 @@ interface FilterTagProps {
 }
 
 export class FilterTag extends React.Component<FilterTagProps> {
+    constructor(props: FilterTagProps) {
+        super(props)
+        this.clickHandler = this.clickHandler.bind(this);
+    }
 
     render() {
         return <div className="filter-tag">
-            <div className="filter-tag-box" role="button" onClick={()=>{this.props.onClick(this.props.tag)}}>
+            <div className="filter-tag-box" role="checkbox" onClick={this.clickHandler} aria-checked={this.props.selected}>
                 <i className={this.props.selected ? `icon check square outline` : `icon square outline`}></i>
             </div>
-            <div className="filter-tag-name" onClick={()=>{this.props.onClick(this.props.tag)}}>{lf(this.props.tag)}</div>
+            <div className="filter-tag-name" role="button" onClick={this.clickHandler}>{lf(this.props.tag)}</div>
         </div>
+    }
+
+    protected clickHandler() {
+        this.props.onClick(this.props.tag);
     }
 }
 

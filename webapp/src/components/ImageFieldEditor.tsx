@@ -229,7 +229,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
     protected getAvailableTags(filterAssets: pxt.Asset[]) {
         let collectedTags: string[] = [];
 
-        if (this.galleryAssets){
+        if (this.galleryAssets) {
             const specialTags = ["tile", "dialog", "background"];
             filterAssets.forEach( (asset) => {
                 if (asset.meta.tags) {
