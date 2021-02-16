@@ -149,28 +149,29 @@ function setAsync(h: Header, prevVersion: Version, text?: ScriptText): Promise<V
     });
 }
 
-export enum CloudSaveResult {
-    Success,
-    SyncError,
-    NotLoggedIn
-}
-export async function saveAsync(h: Header, text?: ScriptText): Promise<CloudSaveResult> {
-    if (!auth.hasIdentity()) { return CloudSaveResult.NotLoggedIn; }
-    if (!await auth.loggedIn()) { return CloudSaveResult.NotLoggedIn; }
-    const res = await setAsync(h, h.cloudVersion, text)
-    if (!res) {
-        // wait to synchronize
-        pxt.debug('save to cloud failed; synchronizing...')
-        pxt.tickEvent(`identity.cloudSaveFailedTriggeringPartialSync`);
-        await syncAsync([h])
-        // TODO @darzu: this isn't an error case. If we hit a conflict, it'll naturally hit this
-        //  code.
-        // return CloudSaveResult.SyncError;
-        return CloudSaveResult.Success;
-    } else {
-        return CloudSaveResult.Success;
-    }
-}
+// TODO @darzu: keep internal.
+// export enum CloudSaveResult {
+//     Success,
+//     SyncError,
+//     NotLoggedIn
+// }
+// async function saveAsync(h: Header, text?: ScriptText): Promise<CloudSaveResult> {
+//     if (!auth.hasIdentity()) { return CloudSaveResult.NotLoggedIn; }
+//     if (!await auth.loggedIn()) { return CloudSaveResult.NotLoggedIn; }
+//     const res = await setAsync(h, h.cloudVersion, text)
+//     if (!res) {
+//         // wait to synchronize
+//         pxt.debug('save to cloud failed; synchronizing...')
+//         pxt.tickEvent(`identity.cloudSaveFailedTriggeringPartialSync`);
+//         await syncAsync([h])
+//         // TODO @darzu: this isn't an error case. If we hit a conflict, it'll naturally hit this
+//         //  code.
+//         // return CloudSaveResult.SyncError;
+//         return CloudSaveResult.Success;
+//     } else {
+//         return CloudSaveResult.Success;
+//     }
+// }
 
 function deleteAsync(h: Header, prevVersion: Version, text?: ScriptText): Promise<void> {
     // Note: we don't actually want to support permanent delete initiated from the client.
@@ -453,6 +454,53 @@ export async function convertCloudToLocal(userId: string) {
     }
 }
 
+// TODO @darzu: 
+const CLOUDSAVE_DEBOUNCE_MS = 3000;
+const CLOUDSAVE_MAX_MS = 15000;
+const headerWorklist: {[headerId: string]: boolean} = {};
+let onHeaderChangeTimeout: number = 0;
+let onHeaderChangeStarted: number = 0;
+const onHeaderChangeSubscriber: data.DataSubscriber = {
+    subscriptions: [],
+    onDataChanged: () => {
+        // TODO @darzu: 
+        // onHeaderChangeDebouncer()
+    }
+};
+async function onHeaderChangeDebouncer(h: Header) {
+    console.log('onHeaderChangeDebouncer'); // TODO @darzu: dbg
+
+    if (!auth.hasIdentity())
+        return
+    if (!await auth.loggedIn())
+        return
+    const hasCloudChange = h.cloudUserId === auth.user().id && !h.cloudCurrent;
+    if (!hasCloudChange)
+        return;
+
+    // we have a change to sync
+    headerWorklist[h.id] = true;
+    clearTimeout(onHeaderChangeTimeout);
+    const doAfter = () => {
+        onHeaderChangeStarted = 0;
+        onHeadersChanged();
+    }; 
+
+    // has it been longer than the max time?
+    if (!onHeaderChangeStarted)
+        onHeaderChangeStarted = U.now();
+    if (CLOUDSAVE_MAX_MS < U.now() - onHeaderChangeStarted) {
+        doAfter()
+    } else {
+        // debounce
+        onHeaderChangeTimeout = setTimeout(doAfter, CLOUDSAVE_DEBOUNCE_MS);
+    }
+}
+async function onHeadersChanged() {
+    // TODO @darzu: impl
+    console.log("DO CLOUD SAVE CHANGES!") // TODO @darzu: dbg
+}
+
 /**
  * Virtual API
  */
@@ -466,6 +514,10 @@ function cloudHeaderMetadataHandler(p: string): any {
 }
 
 export function init() {
+    console.log("cloud init");    
+    // mount our virtual APIs
     data.mountVirtualApi(HEADER_CLOUDSTATE, { getSync: cloudHeaderMetadataHandler });
-}
 
+    // subscribe to header changes
+    data.subscribe(onHeaderChangeSubscriber, "header:*");
+}

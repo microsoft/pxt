@@ -392,11 +392,6 @@ export class EditorPackage {
         if (!f) {
             f = this.setFile(n, v);
             p = p.then(() => this.updateConfigAsync(cfg => cfg.files.indexOf(n) < 0 ? cfg.files.push(n) : 0))
-            p.then(() => {
-                // TODO @darzu: dbg
-                console.log("cloudSavePkgAsync from 'setContentAsync'")
-                this.cloudSavePkgAsync()
-            })
         }
         return p.then(() => f.setContentAsync(v));
     }
@@ -424,45 +419,13 @@ export class EditorPackage {
         this.updateGitJsonCache()
     }
 
-    private updateStatus() {
-        data.invalidate("pkg-status:" + this.header.id)
-    }
-
-    cloudSavePkgAsync() {
-        // TODO @darzu: assigning header
-        // TODO @darzu: why is this line necessary? the package layer should not be responsible for cloud saving.
-        // this.header = workspace.getHeader(this.header.id) || this.header // ensure we're working with the latest header
-
-        if (this.header.cloudCurrent || !auth.loggedInSync()) return Promise.resolve();
-        this.savingNow++;
-        this.updateStatus();
-        return workspace.saveToCloudAsync(this.header)
-            .then(() => {
-                this.savingNow--;
-                this.updateStatus();
-                if (!this.header.cloudCurrent)
-                    this.scheduleCloudSavePkg();
-            })
-    }
-
-    private scheduleCloudSavePkg() {
-        if (this.saveScheduled) return
-        console.log("scheduling cloud save...");// TODO @darzu: dbg
-        this.saveScheduled = true;
-        setTimeout(() => {
-            this.saveScheduled = false;
-            console.log("...cloudSavePkgAsync after timeout");// TODO @darzu: dbg
-            this.cloudSavePkgAsync().done();
-        }, 5000)
-    }
-
     getAllFiles(): pxt.Map<string> {
         let r = Util.mapMap(this.files, (k, f) => f.content)
         delete r[pxt.SERIAL_EDITOR_FILE]
         return r
     }
 
-    saveFilesAsync(immediate?: boolean) {
+    saveFilesAsync(immediate_DEPRECATED?: boolean) { // TODO @darzu: dz
         if (!this.header) return Promise.resolve();
 
         let cfgFile = this.files[pxt.CONFIG_NAME]
@@ -475,7 +438,6 @@ export class EditorPackage {
         }
         console.log("saveFilesAsync");// TODO @darzu: dbg
         return workspace.saveAsync(this.header, this.getAllFiles())
-            .then(() => immediate ? this.cloudSavePkgAsync() : this.scheduleCloudSavePkg())
     }
 
     sortedFiles(): File[] {

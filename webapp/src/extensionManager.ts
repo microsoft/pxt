@@ -222,8 +222,6 @@ function handleWriteCodeRequestAsync(name: string, resp: e.WriteCodeResponse, fi
             cfg.files.push(fn + ".asm");
         }
         missingDependencies?.forEach(dep => cfg.dependencies[dep] = files.dependencies[dep]);
-        console.log("cloud save from 'handleWriteCodeRequestAsync'")// TODO @darzu: dbg
-        return mainPackage.cloudSavePkgAsync();
     }).then(() => mainPackage.saveFilesAsync(true));
 }
 

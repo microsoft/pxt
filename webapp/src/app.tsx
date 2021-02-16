@@ -1134,8 +1134,6 @@ export class ProjectView
         return p.setContentAsync(name, content)
             .then(() => {
                 if (open) this.setFile(p.lookupFile("this/" + name));
-                console.log("cloud save from 'updateFileAsync'") // TODO @darzu: dbg
-                return p.cloudSavePkgAsync();
             })
             .then(() => this.reloadHeaderAsync())
     }
@@ -1811,7 +1809,6 @@ export class ProjectView
                                 cfg.dependencies = {};
                             cfg.dependencies[n] = `pkg:${fn}`;
                         }))
-                        .then(() => mpkg.cloudSavePkgAsync())
                         .done(() => this.reloadHeaderAsync());
                 }
             }
@@ -4086,11 +4083,6 @@ function parseLocalToken() {
     Cloud.localToken = pxt.storage.getLocal("local_token") || "";
 }
 
-function initLogin() {
-    cloudsync.loginCheck()
-    parseLocalToken();
-    auth.authCheck();
-}
 
 function initPacketIO() {
     pxt.debug(`packetio: hook events`)
@@ -4567,7 +4559,11 @@ document.addEventListener("DOMContentLoaded", () => {
         auth.loginCallback(query);
     }
 
-    initLogin();
+    auth.init();
+    cloud.init(); // depends on auth.init() and workspace.ts's top level
+    cloudsync.loginCheck()
+    parseLocalToken();
+    auth.authCheck();
     hash = parseHash();
     appcache.init(() => theEditor.reloadEditor());
     blocklyFieldView.init();
