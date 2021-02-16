@@ -231,19 +231,18 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
 
         if (this.galleryAssets){
             const specialTags = ["tile", "dialog", "background"];
-            filterAssets.forEach(
-                (asset) => {
-                    if (asset.meta.tags) {
-                        asset.meta.tags.forEach(t => {
-                            let sanitizedTag = sanitize(t);
-                            if (specialTags.indexOf(sanitizedTag) == -1) {
-                                if (collectedTags.indexOf(sanitizedTag) < 0) {
-                                    collectedTags.push(sanitizedTag);
-                                }
+            filterAssets.forEach( (asset) => {
+                if (asset.meta.tags) {
+                    asset.meta.tags.forEach(t => {
+                        let sanitizedTag = sanitize(t);
+                        if (specialTags.indexOf(sanitizedTag) == -1) {
+                            if (collectedTags.indexOf(sanitizedTag) < 0) {
+                                collectedTags.push(sanitizedTag);
                             }
-                        });
-                    }
-                })
+                        }
+                    });
+                }
+            })
 
             return collectedTags;
         }
@@ -286,7 +285,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
 
     protected filterAssetsByTag(assets: pxt.Asset[]) {
         if (this.state.gallerySelectedTags.length > 0 && this.state.filterOpen) {
-            assets = assets.filter((asset)=>{
+            assets = assets.filter((asset) => {
                 if (!asset.meta.tags) {
                     return false;
                 }
@@ -299,7 +298,6 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
                 return false;
             })
         }
-
         return assets;
     }
 

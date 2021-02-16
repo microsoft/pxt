@@ -29,8 +29,8 @@ export class FilterPanelSubheading extends React.Component<FilterPanelSubheading
 
     render() {
         return <div className="filter-subheading-row">
-            <div className="filter-subheading-title">{`${this.props.subheading}:`}</div>
-            {this.props.buttonText && <div className="filter-subheading-button" role="button" onClick={this.props.buttonAction}>{this.props.buttonText}</div>}
+            <div className="filter-subheading-title">{`${lf(this.props.subheading)}:`}</div>
+            {this.props.buttonText && <div className="filter-subheading-button" role="button" onClick={this.props.buttonAction}>{lf(this.props.buttonText)}</div>}
         </div>
     }
 }
@@ -51,7 +51,7 @@ export class FilterPanel extends React.Component<FilterPanelProps> {
         const tags = this.props.tagOptions;
         return <div className="filter-panel">
             <div className="filter-title">{lf("Filter")}</div>
-            <FilterPanelSubheading subheading={lf("Categories")} buttonText="Clear" buttonAction={this.props.clearTags}/>
+            <FilterPanelSubheading subheading={"Categories"} buttonText="Clear" buttonAction={this.props.clearTags}/>
             <div className="filter-tag-list">
                 {tags.map(tag => <FilterTag key={tag} tag={tag} selected={this.isTagSelected(tag)} onClick={this.props.tagClickHandler}/>)}
             </div>
