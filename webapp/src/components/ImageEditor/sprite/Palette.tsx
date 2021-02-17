@@ -53,14 +53,18 @@ class PaletteImpl extends React.Component<PaletteProps,{}> {
                 </g>
             </svg>
             <div className="image-editor-color-buttons" onContextMenu={this.preventContextMenu}>
-                {this.props.colors.map((color, index) =>
-                    <div key={index}
+                {this.props.colors.map((color, index) => {
+                    const namedColor = index === 0 ? lf("transparency") : hexToNamedColor(color);
+                    const title = namedColor ?
+                                    lf("Color {0} ({1})", index, namedColor)
+                                    : lf("Color {0}", index);
+                    return <div key={index}
                         className={`image-editor-button ${index === 0 ? "checkerboard" : ""}`}
                         role="button"
-                        title={lf("Color {0}", index)}
+                        title={title}
                         onMouseDown={this.clickHandler(index)}
                         style={index === 0 ? null : { backgroundColor: color }} />
-                )}
+                })}
             </div>
         </div>;
     }
@@ -81,6 +85,43 @@ class PaletteImpl extends React.Component<PaletteProps,{}> {
     }
 
     protected preventContextMenu = (ev: React.MouseEvent<any>) => ev.preventDefault();
+}
+
+function hexToNamedColor(color: string) {
+    switch (color?.toLowerCase()) {
+        case "#ffffff":
+            return lf("white");
+        case "#ff2121":
+            return lf("red");
+        case "#ff93c4":
+            return lf("pink");
+        case "#ff8135":
+            return lf("orange");
+        case "#fff609":
+            return lf("yellow");
+        case "#249ca3":
+            return lf("teal");
+        case "#78dc52":
+            return lf("green");
+        case "#003fad":
+            return lf("blue");
+        case "#87f2ff":
+            return lf("light blue");
+        case "#8e2ec4":
+            return lf("purple");
+        case "#a4839f":
+            return lf("light purple");
+        case "#5c406c":
+            return lf("dark purple");
+        case "#e5cdc4":
+            return lf("tan")
+        case "#91463d":
+            return lf("brown");
+        case "#000000":
+            return lf("black");
+        default:
+            return undefined;
+    }
 }
 
 function mapStateToProps({ store: { present }, editor }: ImageEditorStore, ownProps: any) {
