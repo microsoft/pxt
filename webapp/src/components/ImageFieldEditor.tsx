@@ -1,4 +1,5 @@
 import * as React from "react";
+import * as sui from "../sui";
 
 import { FieldEditorComponent } from '../blocklyFieldView';
 import { AssetCardView } from "./assetEditor/assetCard";
@@ -108,7 +109,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
         return <div className="image-editor-wrapper">
             {showHeader && <div className="gallery-editor-header">
                 <ImageEditorToggle options={toggleOptions} view={currentView} />
-                <div className={`gallery-filter-button ${this.state.currentView === "gallery" ? '' : "hidden"}`} role="button" onClick={this.toggleFilter}>
+                <div className={`gallery-filter-button ${this.state.currentView === "gallery" ? '' : "hidden"}`} role="button" onClick={this.toggleFilter} onKeyDown={sui.fireClickOnEnter}>
                     <div className="gallery-filter-button-icon">
                         <i className="icon filter" />
                     </div>
@@ -232,16 +233,12 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
         if (this.galleryAssets) {
             const specialTags = ["tile", "dialog", "background"];
             filterAssets.forEach( (asset) => {
-                if (asset.meta.tags) {
-                    asset.meta.tags.forEach(t => {
-                        let sanitizedTag = sanitize(t);
-                        if (specialTags.indexOf(sanitizedTag) == -1) {
-                            if (collectedTags.indexOf(sanitizedTag) < 0) {
-                                collectedTags.push(sanitizedTag);
-                            }
-                        }
-                    });
-                }
+                asset.meta.tags?.forEach(t => {
+                    const sanitizedTag = sanitize(t);
+                    if (specialTags.indexOf(sanitizedTag) < 0 && collectedTags.indexOf(sanitizedTag) < 0) {
+                        collectedTags.push(sanitizedTag);
+                    }
+                });
             })
 
             return collectedTags;
@@ -249,7 +246,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
         return [];
 
         function sanitize(tag: string) {
-            let sanitizedTag = (tag.indexOf("!") === 0 || tag.indexOf("?") === 0) && tag.length > 1 ? tag.substring(1) : tag;
+            let sanitizedTag = (tag.indexOf("?") === 0) && tag.length > 1 ? tag.substring(1) : tag;
             sanitizedTag = sanitizedTag.toLowerCase();
 
             return sanitizedTag;
@@ -286,16 +283,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
     protected filterAssetsByTag(assets: pxt.Asset[]) {
         if (this.state.gallerySelectedTags.length > 0 && this.state.filterOpen) {
             assets = assets.filter((asset) => {
-                if (!asset.meta.tags) {
-                    return false;
-                }
-                for (let i = 0; i < asset.meta.tags.length; i++) {
-                    const t = asset.meta.tags[i];
-                    if (this.state.gallerySelectedTags.indexOf(t) >= 0) {
-                        return true;
-                    }
-                }
-                return false;
+                return !!asset.meta.tags?.find(t => this.state.gallerySelectedTags.indexOf(t) >= 0);
             })
         }
         return assets;

@@ -1,9 +1,10 @@
 import * as React from "react";
+import * as sui from "../sui";
 
 interface FilterTagProps {
     tag: string;
     selected: boolean;
-    onClick: (selected: string) => void;
+    onClickHandler: (selected: string) => void;
 }
 
 export class FilterTag extends React.Component<FilterTagProps> {
@@ -14,15 +15,15 @@ export class FilterTag extends React.Component<FilterTagProps> {
 
     render() {
         return <div className="filter-tag">
-            <div className="filter-tag-box" role="checkbox" onClick={this.clickHandler} aria-checked={this.props.selected}>
-                <i className={this.props.selected ? `icon check square outline` : `icon square outline`}></i>
+            <div className="filter-tag-box" role="checkbox" onClick={this.clickHandler} onKeyDown={sui.fireClickOnEnter} aria-checked={this.props.selected}>
+                <i className={`icon square outline ${this.props.selected ? "check" : ""}`}></i>
             </div>
-            <div className="filter-tag-name" role="button" onClick={this.clickHandler}>{lf(this.props.tag)}</div>
+            <div className="filter-tag-name" role="button" onClick={this.clickHandler} onKeyDown={sui.fireClickOnEnter}>{lf(this.props.tag)}</div>
         </div>
     }
 
     protected clickHandler() {
-        this.props.onClick(this.props.tag);
+        this.props.onClickHandler(this.props.tag);
     }
 }
 
@@ -38,7 +39,7 @@ export class FilterPanelSubheading extends React.Component<FilterPanelSubheading
     render() {
         return <div className="filter-subheading-row">
             <div className="filter-subheading-title">{`${lf(this.props.subheading)}:`}</div>
-            {this.props.buttonText && <div className="filter-subheading-button" role="button" onClick={this.props.buttonAction}>{lf(this.props.buttonText)}</div>}
+            {this.props.buttonText && <div className="filter-subheading-button" role="button" onClick={this.props.buttonAction} onKeyDown={sui.fireClickOnEnter} >{lf(this.props.buttonText)}</div>}
         </div>
     }
 }
@@ -52,7 +53,7 @@ interface FilterPanelProps {
 
 export class FilterPanel extends React.Component<FilterPanelProps> {
     protected isTagSelected(tag: string) {
-        return this.props.enabledTags.indexOf(tag.toLowerCase()) < 0 ? false : true;
+        return this.props.enabledTags.indexOf(tag.toLowerCase()) >= 0;
     }
 
     render() {
@@ -61,7 +62,7 @@ export class FilterPanel extends React.Component<FilterPanelProps> {
             <div className="filter-title">{lf("Filter")}</div>
             <FilterPanelSubheading subheading={"Categories"} buttonText="Clear" buttonAction={this.props.clearTags}/>
             <div className="filter-tag-list">
-                {tags.map(tag => <FilterTag key={tag} tag={tag} selected={this.isTagSelected(tag)} onClick={this.props.tagClickHandler}/>)}
+                {tags.map(tag => <FilterTag key={tag} tag={tag} selected={this.isTagSelected(tag)} onClickHandler={this.props.tagClickHandler}/>)}
             </div>
         </div>
     }
