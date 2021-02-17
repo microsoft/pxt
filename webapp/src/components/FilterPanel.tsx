@@ -18,7 +18,7 @@ export class FilterTag extends React.Component<FilterTagProps> {
             <div className="filter-tag-box" role="checkbox" onClick={this.clickHandler} onKeyDown={sui.fireClickOnEnter} aria-checked={this.props.selected}>
                 <i className={`icon square outline ${this.props.selected ? "check" : ""}`}></i>
             </div>
-            <div className="filter-tag-name" role="button" onClick={this.clickHandler} onKeyDown={sui.fireClickOnEnter}>{lf(this.props.tag)}</div>
+            <div className="filter-tag-name" role="button" onClick={this.clickHandler} onKeyDown={sui.fireClickOnEnter}>{pxtc.U.rlf(this.props.tag)}</div>
         </div>
     }
 
@@ -38,8 +38,8 @@ export class FilterPanelSubheading extends React.Component<FilterPanelSubheading
 
     render() {
         return <div className="filter-subheading-row">
-            <div className="filter-subheading-title">{`${lf(this.props.subheading)}:`}</div>
-            {this.props.buttonText && <div className="filter-subheading-button" role="button" onClick={this.props.buttonAction} onKeyDown={sui.fireClickOnEnter} >{lf(this.props.buttonText)}</div>}
+            <div className="filter-subheading-title">{`${this.props.subheading}:`}</div>
+            {this.props.buttonText && <div className="filter-subheading-button" role="button" onClick={this.props.buttonAction} onKeyDown={sui.fireClickOnEnter}>{this.props.buttonText}</div>}
         </div>
     }
 }
@@ -60,7 +60,7 @@ export class FilterPanel extends React.Component<FilterPanelProps> {
         const tags = this.props.tagOptions;
         return <div className="filter-panel">
             <div className="filter-title">{lf("Filter")}</div>
-            <FilterPanelSubheading subheading={"Categories"} buttonText="Clear" buttonAction={this.props.clearTags}/>
+            <FilterPanelSubheading subheading={lf("Categories")} buttonText={lf("Clear")} buttonAction={this.props.clearTags}/>
             <div className="filter-tag-list">
                 {tags.map(tag => <FilterTag key={tag} tag={tag} selected={this.isTagSelected(tag)} onClickHandler={this.props.tagClickHandler}/>)}
             </div>

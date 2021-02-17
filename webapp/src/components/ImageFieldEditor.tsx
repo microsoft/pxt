@@ -229,6 +229,14 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
 
     protected getAvailableTags(filterAssets: pxt.Asset[]) {
         let collectedTags: string[] = [];
+        // Pixel Art Categories -- Add new categories here!
+        // lf("People")
+        // lf("Animals")
+        // lf("Food")
+        // lf("Dungeon")
+        // lf("Forest")
+        // lf("Space")
+        // lf("Aquatic")
 
         if (this.galleryAssets) {
             const specialTags = ["tile", "dialog", "background"];
