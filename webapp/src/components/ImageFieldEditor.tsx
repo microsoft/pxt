@@ -46,9 +46,6 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
 
     constructor(props: ImageFieldEditorProps) {
         super(props);
-        this.toggleFilter = this.toggleFilter.bind(this);
-        this.tagClickHandler = this.tagClickHandler.bind(this);
-        this.clearFilterTags = this.clearFilterTags.bind(this);
 
         this.state = {
             currentView: "editor",
@@ -75,7 +72,8 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
         let filteredAssets = currentView === "my-assets" ? this.filterAssetsByType(this.userAssets, editingTile ? pxt.AssetType.Tile : this.asset?.type) :
             this.filterAssetsByType(this.galleryAssets, editingTile ? pxt.AssetType.Tile : this.asset?.type, true, true)
 
-        const allTags = this.getAvailableTags(filteredAssets);
+        const specialTags = ["tile", "dialog", "background"];
+        const allTags = this.getAvailableTags(filteredAssets, specialTags);
 
         if (currentView === "gallery") {
             filteredAssets = this.filterAssetsByTag(filteredAssets);
@@ -227,7 +225,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
         this.galleryAssets = getAssets(true, this.asset.type);
     }
 
-    protected getAvailableTags(filterAssets: pxt.Asset[]) {
+    protected getAvailableTags(filterAssets: pxt.Asset[], ignoredTags: string[]) {
         let collectedTags: string[] = [];
         // Pixel Art Categories -- Add new categories here!
         // lf("People")
@@ -239,11 +237,10 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
         // lf("Aquatic")
 
         if (this.galleryAssets) {
-            const specialTags = ["tile", "dialog", "background"];
             filterAssets.forEach( (asset) => {
                 asset.meta.tags?.forEach(t => {
                     const sanitizedTag = sanitize(t);
-                    if (specialTags.indexOf(sanitizedTag) < 0 && collectedTags.indexOf(sanitizedTag) < 0) {
+                    if (ignoredTags.indexOf(sanitizedTag) < 0 && collectedTags.indexOf(sanitizedTag) < 0) {
                         collectedTags.push(sanitizedTag);
                     }
                 });
@@ -262,7 +259,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
 
     }
 
-    protected tagClickHandler(tag: string) {
+    protected tagClickHandler = (tag: string) => {
         let selectedTags = this.state.gallerySelectedTags;
         const sanitizedTag = tag.toLowerCase();
         const index = selectedTags.indexOf(sanitizedTag);
@@ -276,13 +273,13 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
         })
     }
 
-    protected clearFilterTags() {
+    protected clearFilterTags = () => {
         this.setState({
             gallerySelectedTags: []
         });
     }
 
-    protected toggleFilter() {
+    protected toggleFilter = () => {
         this.setState({
             filterOpen: !this.state.filterOpen
         });
