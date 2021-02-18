@@ -88,6 +88,12 @@ class PaletteImpl extends React.Component<PaletteProps,{}> {
 }
 
 function hexToNamedColor(color: string) {
+    /**
+     * Default colors for arcade; match the default colors set as palette in
+     * https://github.com/microsoft/pxt-arcade/blob/master/libs/device/pxt.json#L32
+     * and names for those colors described in
+     * https://arcade.makecode.com/reference/scene/background-color#color-number
+     */
     switch (color?.toLowerCase()) {
         case "#ffffff":
             return lf("white");
