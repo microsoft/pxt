@@ -28,6 +28,7 @@ namespace pxt.docs {
         "codeStop": "<!-- stop -->",
         "autoOpen": "<!-- autoOpen -->",
         "autoexpandOff": "<!-- autoexpandOff -->",
+        "preferredEditor": "<!-- preferredEditor -->"
     }
 
     function replaceAll(replIn: string, x: string, y: string) {
