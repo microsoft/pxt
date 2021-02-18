@@ -64,6 +64,8 @@ async function listAsync(): Promise<Header[]> {
                 header.cloudUserId = userId;
                 header.cloudCurrent = true;
                 header.cloudLastSyncTime = syncTime
+                header.cloudVersion = proj.version;
+                console.log(`listAsync remote: ${dbgHdrToString(header)} vs. local: ${dbgHdrToString(workspace.getHeader(header.id))}`); // TODO @darzu: dbg
                 return header;
             });
             resolve(headers);
@@ -92,6 +94,7 @@ function getAsync(h: Header): Promise<File> {
             file.header.cloudVersion = file.version;
             file.header.cloudUserId = userId;
             file.header.cloudLastSyncTime = U.nowSeconds();
+            console.log(`listAsync ${dbgHdrToString(file.header)}`); // TODO @darzu: dbg
             resolve(file);
         } else {
             reject(new Error(result.errmsg));
@@ -218,8 +221,20 @@ async function transferFromCloud(local: Header | null, remoteFile: File): Promis
     return workspace.getHeader(newHeader.id)
 }
 
-function dbgHdrToString(h: Header): string {
-    return `${h.name} (${h.id.substr(0, 4)}..)@${U.timeSince(h.modificationTime)}`;
+// debug helpers
+const _abrvStrs: {[key: string]: string} = {};
+let _abrvNextInt = 1;
+function dbgShorten(s: string): string {
+    if (!s)
+        return "#0";
+    if (!_abrvStrs[s]){
+        _abrvStrs[s] = "#" + _abrvNextInt;
+        _abrvNextInt += 1;
+    }
+    return _abrvStrs[s]
+}
+export function dbgHdrToString(h: Header): string {
+    return `${h.name} ${h.id.substr(0, 4)}..${dbgShorten(h.cloudVersion)}@${U.timeSince(h.modificationTime)}`;
 }
 
 async function resolveConflict(local: Header, remoteFile: File) {
@@ -256,17 +271,20 @@ async function resolveConflict(local: Header, remoteFile: File) {
     console.log("... done waiting on loadHeaderAsync")// TODO @darzu: dbg
 }
 
+function getLocalCloudHeaders(allHdrs?: Header[]) {
+    if (!auth.hasIdentity()) { return []; }
+    if (!auth.loggedInSync()) { return []; }
+    return (allHdrs || workspace.getHeaders(true))
+        .filter(h => h.cloudUserId && h.cloudUserId === auth.user()?.id);
+    }
+
 async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
     if (!auth.hasIdentity()) { return []; }
     if (!await auth.loggedIn()) { return []; }
     try {
         const partialSync = hdrs && hdrs.length > 0
         pxt.log(`Synchronizing${partialSync ? ` ${hdrs.length} project(s) ` : " all projects "}with the cloud...`)
-        const userId = auth.user()?.id;
-        // Filter to cloud-synced headers owned by the current user.
-        const getLocalCloudHeaders = () => (hdrs || workspace.getHeaders(true))
-            .filter(h => h.cloudUserId && h.cloudUserId === userId);
-        const localCloudHeaders = getLocalCloudHeaders();
+        const localCloudHeaders = getLocalCloudHeaders(hdrs);
         const syncStart = U.nowSeconds()
         pxt.tickEvent(`identity.sync.start`)
         const agoStr = (t: number) => `${syncStart - t} seconds ago`
@@ -394,7 +412,7 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
         await Promise.all(tasks);
 
         // reset cloud state sync metadata if there is any
-        getLocalCloudHeaders().forEach(async t => {
+        getLocalCloudHeaders(hdrs).forEach(async t => {
             const newHdr = await t
             if (getCloudTempMetadata(newHdr.id).cloudInProgressSyncStartTime > 0) {
                 updateCloudTempMetadata(newHdr.id, { cloudInProgressSyncStartTime: 0 });
@@ -454,26 +472,35 @@ export async function convertCloudToLocal(userId: string) {
     }
 }
 
-// TODO @darzu: 
 const CLOUDSAVE_DEBOUNCE_MS = 3000;
 const CLOUDSAVE_MAX_MS = 15000;
-const headerWorklist: {[headerId: string]: boolean} = {};
+let headerWorklist: {[headerId: string]: boolean} = {};
 let onHeaderChangeTimeout: number = 0;
 let onHeaderChangeStarted: number = 0;
 const onHeaderChangeSubscriber: data.DataSubscriber = {
     subscriptions: [],
-    onDataChanged: () => {
-        // TODO @darzu: 
-        // onHeaderChangeDebouncer()
+    onDataChanged: (path: string) => {
+        const parts = path.split("header:");
+        U.assert(parts.length === 2, "onHeaderChangeSubscriber has invalid path subscription: " + path)
+        const hdrId = parts[1];
+        console.log("cloud hdr change: " + hdrId)
+        if (hdrId === "*") { 
+            // all headers
+            // TODO https://github.com/microsoft/pxt-arcade/issues/3129: this branch is being hit WAY too often.
+            getLocalCloudHeaders().forEach(h => onHeaderChangeDebouncer(h));
+        } else {
+            const hdr = workspace.getHeader(hdrId);
+            U.assert(!!hdr, "cannot find header with id: " + hdrId);
+            onHeaderChangeDebouncer(hdr);
+        }
     }
 };
 async function onHeaderChangeDebouncer(h: Header) {
     console.log('onHeaderChangeDebouncer'); // TODO @darzu: dbg
+    if (!auth.hasIdentity()) return
+    if (!await auth.loggedIn()) return
 
-    if (!auth.hasIdentity())
-        return
-    if (!await auth.loggedIn())
-        return
+    // do we actually have a significant change?
     const hasCloudChange = h.cloudUserId === auth.user().id && !h.cloudCurrent;
     if (!hasCloudChange)
         return;
@@ -481,24 +508,49 @@ async function onHeaderChangeDebouncer(h: Header) {
     // we have a change to sync
     headerWorklist[h.id] = true;
     clearTimeout(onHeaderChangeTimeout);
-    const doAfter = () => {
+    const doAfter = async () => {
         onHeaderChangeStarted = 0;
-        onHeadersChanged();
+        const hdrs = getLocalCloudHeaders().filter(h => headerWorklist[h.id])
+        await onHeadersChanged(hdrs);
+        headerWorklist = {}; // clear worklist
     }; 
 
     // has it been longer than the max time?
     if (!onHeaderChangeStarted)
         onHeaderChangeStarted = U.now();
     if (CLOUDSAVE_MAX_MS < U.now() - onHeaderChangeStarted) {
-        doAfter()
+        // save/sync now
+        await doAfter()
     } else {
         // debounce
         onHeaderChangeTimeout = setTimeout(doAfter, CLOUDSAVE_DEBOUNCE_MS);
     }
 }
-async function onHeadersChanged() {
-    // TODO @darzu: impl
-    console.log("DO CLOUD SAVE CHANGES!") // TODO @darzu: dbg
+async function onHeadersChanged(hdrs: Header[]) {
+    if (!auth.hasIdentity()) { return; }
+    if (!await auth.loggedIn()) { return; }
+    const saveStart = U.nowSeconds()
+    const saveTasks = hdrs.map(async h => {
+        const text = await workspace.getTextAsync(h.id);
+        console.log(`onHeadersChanged setAsync PRE  ${dbgHdrToString(h)}`);
+        const newVer = await setAsync(h, h.cloudVersion, text);
+        console.log(`onHeadersChanged setAsync POST ${dbgHdrToString(h)}`);
+        // TODO @darzu: do we actually need to save the header again like this?
+        // TODO @darzu: no, this doesn't fix our issue..
+        // await workspace.saveAsync(h, null, true);
+        return newVer
+    });
+    const allRes = await Promise.all(saveTasks);
+    const anyFailed = allRes.some(r => !r);
+    if (anyFailed) {
+        pxt.tickEvent(`identity.cloudSaveFailedTriggeringPartialSync`);
+        // if any saves failed, then we're out of sync with the cloud so resync.
+        await syncAsync(hdrs);
+    } else {
+        // success!
+        const elapsedSec = U.nowSeconds() - saveStart;
+        pxt.tickEvent(`identity.cloudSaveSucceeded`, { elapsedSec });
+    }
 }
 
 /**

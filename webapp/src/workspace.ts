@@ -17,6 +17,7 @@ import * as cloud from "./cloud"
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
+import { dbgHdrToString } from "./cloud";
 
 // Avoid importing entire crypto-js
 /* tslint:disable:no-submodule-imports */
@@ -210,7 +211,8 @@ function refreshHeadersSession() {
     if (isHeadersSessionOutdated()) {
         pxt.storage.setLocal('workspacesessionid', sessionID);
         pxt.debug(`workspace: refreshed headers session to ${sessionID}`);
-        data.invalidate("header:*");
+        console.log("refreshHeadersSession header:*");
+        data.invalidate("header:*"); // TODO @darzu: dbg
         data.invalidate("text:*");
     }
 }
@@ -428,7 +430,7 @@ function stringifyChangeSummary(diff: ProjectChanges): string {
 }
 
 export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: boolean): Promise<void> {
-    pxt.debug(`workspace: save '${h.name}' (${h.id})`)
+    pxt.debug(`workspace: save ${dbgHdrToString(h)}`) // TODO @darzu: dbg?
     if (h.isDeleted)
         clearHeaderSession(h);
     checkHeaderSession(h);
@@ -441,6 +443,7 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
     let e = lookup(h.id)
     const newSave = !e
     if (newSave) {
+        console.log(`saveAsync new! ${dbgHdrToString(h)}`); // TODO @darzu: dbg?
         e = {
             header: h,
             text,
@@ -451,6 +454,9 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
         // persist header changes to our local cache, but keep the old
         // reference around because (unfortunately) other layers (e.g. package.ts)
         // assume the reference is stable per id.
+        if (e.header.cloudVersion !== h.cloudVersion) {
+            console.log(`cloudVersion change ${dbgHdrToString(e.header)} -> ${dbgHdrToString(h)}`); // TODO @darzu: dbg
+        }
         Object.assign(e.header, h)
         h = e.header;
     }
@@ -558,6 +564,7 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
             data.invalidate("text:" + h.id);
             data.invalidate("pkg-git-status:" + h.id);
         }
+        console.log("saveAsync header:"+h.id); // TODO @darzu: dbg
         data.invalidateHeader("header", h);
 
         refreshHeadersSession();
