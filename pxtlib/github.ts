@@ -158,7 +158,7 @@ namespace pxt.github {
     }
 
     export function isOrgAsync(owner: string): Promise<boolean> {
-        return ghGetJsonAsync(`https://api.github.com/orgs/${owner}`)
+        return ghRequestAsync({ url: `https://api.github.com/orgs/${owner}`, method: "GET", allowHttpErrors: true })
             .then(resp => resp.statusCode == 200);
     }
 
@@ -909,9 +909,9 @@ namespace pxt.github {
                     fullName: rid.fullName,
                     fileName: rid.fileName,
                     slug: rid.slug,
-                    name: meta.name,
+                    name: rid.fileName ? `${meta.name}-${rid.fileName}` : meta.name,
                     description: meta.description,
-                    defaultBranch: "master",
+                    defaultBranch: meta.defaultBranch || "master",
                     tag: rid.tag,
                     status
                 };
@@ -983,9 +983,9 @@ namespace pxt.github {
         }
     }
 
-    export function toGithubDependencyPath(id: ParsedRepo): string {
-        let r = "github:" + id.fullName;
-        if (id.tag) r += "#" + id.tag;
+    export function toGithubDependencyPath(path: string, tag?: string): string {
+        let r = "github:" + path;
+        if (tag) r += "#" + tag;
         return r;
     }
 

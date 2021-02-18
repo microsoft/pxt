@@ -78,6 +78,18 @@
             var selectLeft = document.getElementById("selectleft");
             var selectRight = document.getElementById("selectright");
             var localhost = /localhost=1/.test(window.location.href)
+            var beta = /beta=1/.test(window.location.href)
+            if (beta) {
+                const betaUrls = ["https://makecode.microbit.org/beta"];
+                [selectLeft, selectRight].forEach(function (sel) {
+                    betaUrls.forEach(function (betaUrl) {
+                        var opt = document.createElement("option")
+                        opt.value = betaUrl;
+                        opt.innerText = "micro:bit (beta)"
+                        sel.appendChild(opt)
+                    })
+                })
+            }
             if (localhost) {
                 [selectLeft, selectRight].forEach(function (sel) {
                     var opt = document.createElement("option")
@@ -98,7 +110,7 @@
                 selectLeft.value = jacdacUrl;
                 selectRight.value = "https://maker.makecode.com/";
 
-                if(localhost) {
+                if (localhost) {
                     const jacdacUrl = "http://localhost:8000";
                     [selectLeft, selectRight].forEach(function (sel) {
                         var opt = document.createElement("option")

@@ -369,9 +369,8 @@ namespace pxtblockly {
                 this.borderColour = b.getColourTertiary();
             }
             else {
-                let b = this.sourceBlock_ as Blockly.BlockSvg;
-                this.primaryColour = b.getColourTertiary();
-                this.borderColour = b.getColourTertiary();
+                this.primaryColour = "#3D3D3D";
+                this.borderColour = "#2A2A2A";
             }
         }
 

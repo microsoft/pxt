@@ -59,7 +59,7 @@ async function listAsync(): Promise<Header[]> {
             const syncTime = U.nowSeconds()
             const userId = auth.user()?.id;
             const headers: Header[] = result.resp.map(proj => {
-                const rawHeader = JSON.parse(proj.header);
+                const rawHeader: pxt.workspace.Header = JSON.parse(proj.header);
                 const header = excludeLocalOnlyMetadataFields(rawHeader)
                 header.cloudUserId = userId;
                 header.cloudCurrent = true;
@@ -333,14 +333,16 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
             delete remoteHeadersToProcess[local.id];
             if (remote) {
                 local.cloudLastSyncTime = remote.cloudLastSyncTime
-                // Note that we use modification time to detect differences. If we had full (or partial) history, we could
-                //  use version numbers. However we cannot currently use etags since the Cosmos list operations
-                //  don't return etags per-version. And because of how etags work, the record itself can never
-                //  have the latest etag version.
-                if (local.modificationTime !== remote.modificationTime || local.isDeleted !== remote.isDeleted) {
+                // Resolve local and cloud differences.
+                const areDifferent = remote.cloudVersion
+                    ? local.cloudVersion !== remote.cloudVersion
+                    // TODO: once we deploy the backend to correctly return the cloudVersion from listAsync, then
+                    //      always chose the cloud version comparison.
+                    : local.modificationTime !== remote.modificationTime || local.isDeleted !== remote.isDeleted;
+                if (areDifferent) {
                     const projShorthand = `'${local.name}' (${local.id.substr(0, 5)}...)`;
                     const remoteFile = await getWithCacheAsync(local);
-                    // delete always wins no matter what
+                    // delete always wins no matter what.
                     if (local.isDeleted) {
                         // Mark remote copy as deleted.
                         pxt.debug(`Propegating ${projShorthand} delete to cloud.`)

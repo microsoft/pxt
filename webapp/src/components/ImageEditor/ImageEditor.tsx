@@ -308,8 +308,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
                 }
                 else {
                     const tileWidth = (state.store.present as TilemapState).tileset.tileWidth;
-                    const emptyTile =  createNewImageAsset(pxt.AssetType.Tile, tileWidth, tileWidth) as pxt.Tile;
-                    emptyTile.meta = { displayName: lf("tile") } // always generate a display name for tiles
+                    const emptyTile = createNewImageAsset(pxt.AssetType.Tile, tileWidth, tileWidth, lf("myTile")) as pxt.Tile;
                     this.setState({
                         editingTile: true,
                         tileToEdit: emptyTile
