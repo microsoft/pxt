@@ -202,7 +202,8 @@ async function transferToCloud(local: Header, cloudVersion: string): Promise<Hea
     //  we should acquire the current header session.
     workspace.acquireHeaderSession(local);
     const newVer = await setAsync(local, cloudVersion, text);
-    U.assert(!!newVer, 'Failed to sync local change (1)');
+    if (!newVer)
+        return null; // failed to sync to the cloud
     // save to the workspace header again to make sure cloud metadata gets saved
     await workspace.saveAsync(local, null, true)
     return workspace.getHeader(local.id)
@@ -234,6 +235,7 @@ function dbgShorten(s: string): string {
     return _abrvStrs[s]
 }
 export function dbgHdrToString(h: Header): string {
+    if (!h) return "#null"
     return `${h.name} ${h.id.substr(0, 4)}..${dbgShorten(h.cloudVersion)}@${U.timeSince(h.modificationTime)}`;
 }
 
@@ -343,6 +345,7 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
                         // Mark remote copy as deleted.
                         pxt.debug(`Propegating ${projShorthand} delete to cloud.`)
                         const newHdr = await toCloud(local, remoteFile.version)
+                        U.assert(!!newHdr, `Failed to save ${local.id} to the cloud.`);
                         pxt.tickEvent(`identity.sync.localDeleteUpdatedCloud`)
                     }
                     if (remote.isDeleted) {
@@ -360,13 +363,13 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
                     } else {
                         // Possible conflict.
                         const conflictStr = `conflict found for ${projShorthand}. Last cloud change was ${agoStr(remoteFile.header.modificationTime)} and last local change was ${agoStr(local.modificationTime)}.`
-                        // last write wins.
                         if (local.modificationTime > remoteFile.header.modificationTime) {
                             if (local.cloudVersion === remoteFile.version) {
                                 // local is one ahead, push as normal
                                 pxt.debug(`local project '${local.name}' has changes that will be pushed to the cloud.`)
-                                pxt.tickEvent(`identity.sync.noConflict.localProjectUpdatingToCloud`)
-                                await toCloud(local, remoteFile.version);
+                                const newHdr = await toCloud(local, remoteFile.version);
+                                U.assert(!!newHdr, `Failed to save ${local.id} to the cloud.`);
+                                pxt.tickEvent(`identity.sync.noConflict.localProjectUpdatedToCloud`)
                             } else {
                                 // conflict (and local has the newer change)
                                 pxt.log(conflictStr)
@@ -392,7 +395,8 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
                 }
                 // Local cloud synced project exists, but it didn't make it to the server,
                 // so let's push it now.
-                await toCloud(local, null)
+                const newHdr = await toCloud(local, null)
+                U.assert(!!newHdr, `Failed to save ${local.id} to the cloud.`)
             }
             else {
                 // no remote verison so nothing to do
@@ -531,14 +535,10 @@ async function onHeadersChanged(hdrs: Header[]) {
     if (!await auth.loggedIn()) { return; }
     const saveStart = U.nowSeconds()
     const saveTasks = hdrs.map(async h => {
-        const text = await workspace.getTextAsync(h.id);
         console.log(`onHeadersChanged setAsync PRE  ${dbgHdrToString(h)}`);
-        const newVer = await setAsync(h, h.cloudVersion, text);
-        console.log(`onHeadersChanged setAsync POST ${dbgHdrToString(h)}`);
-        // TODO @darzu: do we actually need to save the header again like this?
-        // TODO @darzu: no, this doesn't fix our issue..
-        // await workspace.saveAsync(h, null, true);
-        return newVer
+        const newHdr = await transferToCloud(h, h.cloudVersion);
+        console.log(`onHeadersChanged setAsync POST ${dbgHdrToString(newHdr)}`);
+        return newHdr
     });
     const allRes = await Promise.all(saveTasks);
     const anyFailed = allRes.some(r => !r);
