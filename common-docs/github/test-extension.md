@@ -1,6 +1,6 @@
 # Testing an Extension
 
-Both the extension and a test project are open in separate editors tabs in the browser. You can work on both simultanously as you add and modify your extension code. As you switch between them, each will reload automatically.
+Both the extension and a test project are open in separate editor tabs in the browser. You can work on both simultanously as you add and modify your extension code. As you switch between them, each will reload automatically.
 
 ## API Tests
 
