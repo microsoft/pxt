@@ -122,8 +122,10 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
                         hidden={currentView === "editor"}
                         onAssetSelected={this.onAssetSelected} />
                 </div>
-                <div className={`filter-panel-container ${!filterPanelVisible ? "hidden" : ""}`}>
-                    <FilterPanel enabledTags={this.state.gallerySelectedTags} tagClickHandler={this.tagClickHandler} clearTags={this.clearFilterTags} tagOptions={allTags}/>
+                <div className={`filter-panel-gutter ${!filterPanelVisible ? "hidden" : ""}`}>
+                    <div className={`filter-panel-container`}>
+                        <FilterPanel enabledTags={this.state.gallerySelectedTags} tagClickHandler={this.tagClickHandler} clearTags={this.clearFilterTags} tagOptions={allTags}/>
+                    </div>
                 </div>
             </div>
         </div>

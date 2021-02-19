@@ -32,6 +32,7 @@ interface FilterPanelSubheadingProps {
     subheading: string;
     buttonText?: string;
     buttonAction?: () => void;
+    buttonStyle?: React.CSSProperties;
 }
 
 export class FilterPanelSubheading extends React.Component<FilterPanelSubheadingProps> {
@@ -39,7 +40,7 @@ export class FilterPanelSubheading extends React.Component<FilterPanelSubheading
     render() {
         return <div className="filter-subheading-row">
             <div className="filter-subheading-title">{`${this.props.subheading}:`}</div>
-            {this.props.buttonText && <div className="filter-subheading-button" role="button" onClick={this.props.buttonAction} onKeyDown={sui.fireClickOnEnter}>{this.props.buttonText}</div>}
+            {this.props.buttonText && <div className="filter-subheading-button" role="button" style={this.props.buttonStyle} onClick={this.props.buttonAction} onKeyDown={sui.fireClickOnEnter}>{this.props.buttonText}</div>}
         </div>
     }
 }
@@ -60,7 +61,7 @@ export class FilterPanel extends React.Component<FilterPanelProps> {
         const tags = this.props.tagOptions;
         return <div className="filter-panel">
             <div className="filter-title">{lf("Filter")}</div>
-            <FilterPanelSubheading subheading={lf("Categories")} buttonText={lf("Clear")} buttonAction={this.props.clearTags}/>
+            <FilterPanelSubheading subheading={lf("Categories")} buttonText={lf("Clear")} buttonAction={this.props.clearTags} buttonStyle={this.props.enabledTags.length > 0 ? {'color': 'white'} : {}}/>
             <div className="filter-tag-list">
                 {tags.map(tag => <FilterTag key={tag} tag={tag} selected={this.isTagSelected(tag)} onClickHandler={this.props.tagClickHandler}/>)}
             </div>
