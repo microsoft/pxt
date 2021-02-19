@@ -3,6 +3,7 @@ import * as auth from "./auth";
 import * as ws from "./workspace";
 import * as data from "./data";
 import * as workspace from "./workspace";
+import * as app from "./app";
 
 type Version = pxt.workspace.Version;
 type File = pxt.workspace.File;
@@ -11,7 +12,6 @@ type ScriptText = pxt.workspace.ScriptText;
 type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
 
 import U = pxt.Util;
-import { getEditorAsync } from "./app";
 
 type CloudProject = {
     id: string;
@@ -245,6 +245,7 @@ function getConflictCopyName(hdr: Header): string {
 }
 
 async function resolveConflict(local: Header, remoteFile: File) {
+    // TODO @darzu: show a popup or message to the user
     // TODO @darzu: 
     // resolve conflict by creating a copy
     // TODO @darzu: dbg
@@ -252,24 +253,48 @@ async function resolveConflict(local: Header, remoteFile: File) {
     console.log(`local: ${dbgHdrToString(local)}`);
     console.log(`remote: ${dbgHdrToString(remoteFile.header)}`);
 
-    // copy local project as a new project
+    // TODO @darzu: more error handling.
+    // Note, we do the operations in the following order:
+    // 1. create a local copy
+    // 2. load that new local copy (if we're in the editor already)
+    // 3. overwrite old local version with the new remote version
+    // 4. transfer new local copy to the cloud
+    // We want 2 to happen as quickly as possible so that the user is not seeing
+    //  nor has any chance to edit the old conflicting copy. This minimizes the chances
+    //  that the users creates additional conflicting changes.
+    // Similarly, we also want 3 to happen soon so that the conflict is gone and the user can't make
+    //  conflicting edits any more.
+    // 1 and 2 are local operations and should happen instantly. 
+    // 3 and 4 are network operations and can take a while and are far more likely to fail.
+    // Regarding failure modes:
+    // if 1 fails, we can't do anything to resolve the conflict b/c local storage doesn't work apparently.
+    // if 2 fails, we want to continue with 3 and 4 because those will resolve the conflict (and avoid future conflicts).
+    // if 3 fails, we're in bad shape since the conflict is still around.
+
+    // 1. copy local project as a new project
     const newName = getConflictCopyName(local);
     let newCopyHdr = await workspace.duplicateAsync(local, newName);
     console.log(`copy installed: ${dbgHdrToString(newCopyHdr)}`);// TODO @darzu: dbg
 
-    // overwrite local changes in the original project with cloud changes
-    const newLocal = await transferFromCloud(local, remoteFile)
-    console.log(`local updated: ${dbgHdrToString(newLocal)}`);// TODO @darzu: dbg
+    // 2. swap current project to the new copy
+    if (app.hasEditor()) {
+        // TODO @darzu: confirm this works for resolving conflicts on home screen
+        const editor = await app.getEditorAsync();
+        console.log("waiting on loadHeaderAsync...")// TODO @darzu: dbg
+        await editor.loadHeaderAsync(newCopyHdr, editor.state.editorState);
+        console.log("... done waiting on loadHeaderAsync")// TODO @darzu: dbg
+    }
 
-    // upload new project to the cloud
-    const newCopyRemoteHdr = await transferToCloud(newCopyHdr, null);
-    console.log(`copy uploaded: ${dbgHdrToString(newCopyRemoteHdr)}`);// TODO @darzu: dbg
+    // 3. overwrite local changes in the original project with cloud changes
+    const overwriteLocalPromise = transferFromCloud(local, remoteFile)
 
-    // swap current project to the new copy
-    const editor = await getEditorAsync();
-    console.log("waiting on loadHeaderAsync...")// TODO @darzu: dbg
-    await editor.loadHeaderAsync(newCopyHdr, editor.state.editorState);
-    console.log("... done waiting on loadHeaderAsync")// TODO @darzu: dbg
+    // 4. upload new project to the cloud
+    const uploadNewPromise = transferToCloud(newCopyHdr, null);
+
+    await Promise.all([overwriteLocalPromise, uploadNewPromise]);
+
+    console.log(`local updated: ${dbgHdrToString(overwriteLocalPromise.value())}`);// TODO @darzu: dbg
+    console.log(`copy uploaded: ${dbgHdrToString(uploadNewPromise.value())}`);// TODO @darzu: dbg
 }
 
 function getLocalCloudHeaders(allHdrs?: Header[]) {
