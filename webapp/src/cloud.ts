@@ -299,13 +299,19 @@ async function resolveConflict(local: Header, remoteFile: File) {
     }
 
     // 3. overwrite local changes in the original project with cloud changes 
-    // (let exceptions propegate since there's nothing localy we can do to recover.)
-    const overwrittenLocalHdr = await transferFromCloud(local, remoteFile)
+    try {
+        const overwrittenLocalHdr = await transferFromCloud(local, remoteFile)
+        console.log(`local updated: ${dbgHdrToString(overwrittenLocalHdr)}`);// TODO @darzu: dbg
+    } catch (e) {
+        // let exceptions propegate since there's nothing localy we can do to recover, but log something
+        //  since this is a bad case (may lead to repeat duplication).
+        pxt.reportException(e);
+        pxt.tickEvent(`identity.sync.conflict.overwriteLocalFailed`, {exception: e});
+        throw e;
+    }
 
     // 4. upload new project to the cloud (network op)
     const copyUploadHdr = await transferToCloud(newCopyHdr, null);
-
-    console.log(`local updated: ${dbgHdrToString(overwrittenLocalHdr)}`);// TODO @darzu: dbg
     console.log(`copy uploaded: ${dbgHdrToString(copyUploadHdr)}`);// TODO @darzu: dbg
 }
 
