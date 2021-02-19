@@ -180,10 +180,8 @@ export class EditorPackage {
     assetsPkg: EditorPackage;
 
     constructor(private ksPkg: pxt.Package, private topPkg: EditorPackage) {
-        // TODO @darzu: assigning header
         if (ksPkg && ksPkg.verProtocol() == "workspace") {
             this.header = workspace.getHeader(ksPkg.verArgument())
-            console.log("EditorPackage constructor: " + this.header.id); // TODO @darzu: dbg
         }
     }
 
@@ -343,17 +341,17 @@ export class EditorPackage {
             .then(updates => this.updateConfigAsync(config =>
                 updates.forEach(({ ghid, cfg }) => config.dependencies[cfg.name] = pxt.github.stringifyRepo(ghid))
             ))
-            .then(() => this.saveFilesAsync(true));
+            .then(() => this.saveFilesAsync());
     }
 
     removeDepAsync(pkgid: string) {
         return this.updateConfigAsync(cfg => delete cfg.dependencies[pkgid])
-            .then(() => this.saveFilesAsync(true));
+            .then(() => this.saveFilesAsync());
     }
 
     addDepAsync(pkgid: string, pkgversion: string) {
         return this.updateConfigAsync(cfg => cfg.dependencies[pkgid] = pkgversion)
-            .then(() => this.saveFilesAsync(true));
+            .then(() => this.saveFilesAsync());
     }
 
     getKsPkg() {
@@ -425,7 +423,7 @@ export class EditorPackage {
         return r
     }
 
-    saveFilesAsync(immediate_DEPRECATED?: boolean) { // TODO @darzu: dz
+    saveFilesAsync() {
         if (!this.header) return Promise.resolve();
 
         let cfgFile = this.files[pxt.CONFIG_NAME]
@@ -436,7 +434,6 @@ export class EditorPackage {
             } catch (e) {
             }
         }
-        console.log("saveFilesAsync");// TODO @darzu: dbg
         return workspace.saveAsync(this.header, this.getAllFiles())
     }
 

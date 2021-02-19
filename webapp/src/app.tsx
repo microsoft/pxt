@@ -76,6 +76,10 @@ let theEditor: ProjectView;
 let hash: { cmd: string, arg: string };
 let pendingEditorRequests: ((p: ProjectView) => void)[];
 
+export function hasEditor() {
+    return !!theEditor;
+}
+
 export function getEditorAsync() {
     if (theEditor) return Promise.resolve(theEditor);
     if (!pendingEditorRequests) pendingEditorRequests = [];
@@ -1108,7 +1112,7 @@ export class ProjectView
     removeFile(fn: pkg.File, skipConfirm = false) {
         const removeIt = () => {
             pkg.mainEditorPkg().removeFileAsync(fn.name)
-                .then(() => pkg.mainEditorPkg().saveFilesAsync(true))
+                .then(() => pkg.mainEditorPkg().saveFilesAsync())
                 .then(() => this.reloadHeaderAsync())
                 .done();
         }

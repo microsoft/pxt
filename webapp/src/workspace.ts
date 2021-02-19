@@ -17,7 +17,6 @@ import * as cloud from "./cloud"
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
-import { dbgHdrToString } from "./cloud";
 
 // Avoid importing entire crypto-js
 /* tslint:disable:no-submodule-imports */
@@ -211,8 +210,7 @@ function refreshHeadersSession() {
     if (isHeadersSessionOutdated()) {
         pxt.storage.setLocal('workspacesessionid', sessionID);
         pxt.debug(`workspace: refreshed headers session to ${sessionID}`);
-        console.log("refreshHeadersSession header:*");
-        data.invalidate("header:*"); // TODO @darzu: dbg
+        data.invalidate("header:*");
         data.invalidate("text:*");
     }
 }
@@ -430,7 +428,7 @@ function stringifyChangeSummary(diff: ProjectChanges): string {
 }
 
 export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: boolean): Promise<void> {
-    pxt.debug(`workspace: save ${dbgHdrToString(h)}`) // TODO @darzu: dbg?
+    pxt.debug(`workspace.saveAsync ${dbgHdrToString(h)}`)
     if (h.isDeleted)
         clearHeaderSession(h);
     checkHeaderSession(h);
@@ -443,7 +441,6 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
     let e = lookup(h.id)
     const newSave = !e
     if (newSave) {
-        console.log(`saveAsync new! ${dbgHdrToString(h)}`); // TODO @darzu: dbg?
         e = {
             header: h,
             text,
@@ -454,9 +451,6 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
         // persist header changes to our local cache, but keep the old
         // reference around because (unfortunately) other layers (e.g. package.ts)
         // assume the reference is stable per id.
-        if (e.header.cloudVersion !== h.cloudVersion) {
-            console.log(`cloudVersion change ${dbgHdrToString(e.header)} -> ${dbgHdrToString(h)}`); // TODO @darzu: dbg
-        }
         Object.assign(e.header, h)
         h = e.header;
     }
@@ -564,7 +558,6 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
             data.invalidate("text:" + h.id);
             data.invalidate("pkg-git-status:" + h.id);
         }
-        console.log("saveAsync header:"+h.id); // TODO @darzu: dbg
         data.invalidateHeader("header", h);
 
         refreshHeadersSession();
@@ -1517,23 +1510,6 @@ export function installByIdAsync(id: string) {
                     }, files)))
 }
 
-// TODO @darzu: dbg
-// export async function saveToCloudAsync(h: Header) {
-//     pxt.debug(`cloud save to ${h.name} (${h.id})`)
-//     checkHeaderSession(h);
-//     const saveStart = U.nowSeconds()
-//     const text = await getTextAsync(h.id)
-//     const cloudPromise = cloud.saveAsync(h, text)
-//     const res = await cloudPromise;
-//     if (res === cloud.CloudSaveResult.NotLoggedIn)
-//         return; // nothing to do
-//     const success = res === cloud.CloudSaveResult.Success
-//     const elapsedSec = U.nowSeconds() - saveStart;
-//     pxt.tickEvent(`identity.saveToCloud`, { elapsedSec, success: success.toString() })
-//     pxt.log(`Project ${h.name} (${h.id.substr(0,4)}...) ${success ? '' : 'NOT '}saved to cloud.`)
-//     data.invalidateHeader("header", h);
-// }
-
 // this promise is set while a sync is in progress
 // cleared when sync is done.
 let syncAsyncPromise: Promise<pxt.editor.EditorSyncState>;
@@ -1629,6 +1605,23 @@ export function fireEvent(ev: pxt.editor.events.Event) {
     if (impl.fireEvent)
         return impl.fireEvent(ev)
     // otherwise, NOP
+}
+
+// debug helpers
+const _abrvStrs: {[key: string]: string} = {};
+let _abrvNextInt = 1;
+function dbgShorten(s: string): string {
+    if (!s)
+        return "#0";
+    if (!_abrvStrs[s]){
+        _abrvStrs[s] = "#" + _abrvNextInt;
+        _abrvNextInt += 1;
+    }
+    return _abrvStrs[s]
+}
+export function dbgHdrToString(h: Header): string {
+    if (!h) return "#null"
+    return `${h.name} ${h.id.substr(0, 4)}..v${dbgShorten(h.cloudVersion)}@${h.modificationTime % 100}-${U.timeSince(h.modificationTime)}`;
 }
 
 /*

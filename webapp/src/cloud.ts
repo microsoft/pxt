@@ -65,7 +65,6 @@ async function listAsync(): Promise<Header[]> {
                 header.cloudCurrent = true;
                 header.cloudLastSyncTime = syncTime
                 header.cloudVersion = proj.version;
-                console.log(`listAsync remote: ${dbgHdrToString(header)} vs. local: ${dbgHdrToString(workspace.getHeader(header.id))}`); // TODO @darzu: dbg
                 return header;
             });
             resolve(headers);
@@ -94,7 +93,6 @@ function getAsync(h: Header): Promise<File> {
             file.header.cloudVersion = file.version;
             file.header.cloudUserId = userId;
             file.header.cloudLastSyncTime = U.nowSeconds();
-            console.log(`listAsync ${dbgHdrToString(file.header)}`); // TODO @darzu: dbg
             resolve(file);
         } else {
             reject(new Error(result.errmsg));
@@ -152,30 +150,6 @@ function setAsync(h: Header, prevVersion: Version, text?: ScriptText): Promise<V
     });
 }
 
-// TODO @darzu: keep internal.
-// export enum CloudSaveResult {
-//     Success,
-//     SyncError,
-//     NotLoggedIn
-// }
-// async function saveAsync(h: Header, text?: ScriptText): Promise<CloudSaveResult> {
-//     if (!auth.hasIdentity()) { return CloudSaveResult.NotLoggedIn; }
-//     if (!await auth.loggedIn()) { return CloudSaveResult.NotLoggedIn; }
-//     const res = await setAsync(h, h.cloudVersion, text)
-//     if (!res) {
-//         // wait to synchronize
-//         pxt.debug('save to cloud failed; synchronizing...')
-//         pxt.tickEvent(`identity.cloudSaveFailedTriggeringPartialSync`);
-//         await syncAsync([h])
-//         // TODO @darzu: this isn't an error case. If we hit a conflict, it'll naturally hit this
-//         //  code.
-//         // return CloudSaveResult.SyncError;
-//         return CloudSaveResult.Success;
-//     } else {
-//         return CloudSaveResult.Success;
-//     }
-// }
-
 function deleteAsync(h: Header, prevVersion: Version, text?: ScriptText): Promise<void> {
     // Note: we don't actually want to support permanent delete initiated from the client.
     // Instead we use soft delete ".isDeleted" so that we have a tombstone to track that a
@@ -222,37 +196,15 @@ async function transferFromCloud(local: Header | null, remoteFile: File): Promis
     return workspace.getHeader(newHeader.id)
 }
 
-// debug helpers
-const _abrvStrs: {[key: string]: string} = {};
-let _abrvNextInt = 1;
-function dbgShorten(s: string): string {
-    if (!s)
-        return "#0";
-    if (!_abrvStrs[s]){
-        _abrvStrs[s] = "#" + _abrvNextInt;
-        _abrvNextInt += 1;
-    }
-    return _abrvStrs[s]
-}
-export function dbgHdrToString(h: Header): string {
-    if (!h) return "#null"
-    return `${h.name} ${h.id.substr(0, 4)}..${dbgShorten(h.cloudVersion)}@${U.timeSince(h.modificationTime)}`;
-}
-
 function getConflictCopyName(hdr: Header): string {
     // TODO: do we want a better or more descriptive name?
     return hdr.name + " - Copy";
 }
 
 async function resolveConflict(local: Header, remoteFile: File) {
-    // strategy: resolve conflict by creating a copy
     // TODO @darzu: show a popup or message to the user
 
-    // TODO @darzu: dbg
-    console.log("resolveConflict")
-    console.log(`local: ${dbgHdrToString(local)}`);
-    console.log(`remote: ${dbgHdrToString(remoteFile.header)}`);
-
+    // Strategy: resolve conflict by creating a copy
     // Note, we do the operations in the following order:
     // 1. create a local copy
     // 2. load that new local copy (if we're in the editor already)
@@ -279,8 +231,6 @@ async function resolveConflict(local: Header, remoteFile: File) {
     //  proceed if a basic duplicate operation fails.)
     const newName = getConflictCopyName(local);
     let newCopyHdr = await workspace.duplicateAsync(local, newName);
-    console.log(`copy installed: ${dbgHdrToString(newCopyHdr)}`);// TODO @darzu: dbg
-
     pxt.tickEvent(`identity.sync.conflict.createdDuplicate`);
 
     // 2. swap current project to the new copy
@@ -288,9 +238,7 @@ async function resolveConflict(local: Header, remoteFile: File) {
         if (app.hasEditor()) {
             // TODO @darzu: confirm this works for resolving conflicts on home screen
             const editor = await app.getEditorAsync();
-            console.log("waiting on loadHeaderAsync...")// TODO @darzu: dbg
             await editor.loadHeaderAsync(newCopyHdr, editor.state.editorState);
-            console.log("... done waiting on loadHeaderAsync")// TODO @darzu: dbg
         }
     } catch (e) {
         // we want to swallow this and keep going since step 3. is the essentail one to resolve the conflcit.
@@ -301,7 +249,6 @@ async function resolveConflict(local: Header, remoteFile: File) {
     // 3. overwrite local changes in the original project with cloud changes 
     try {
         const overwrittenLocalHdr = await transferFromCloud(local, remoteFile)
-        console.log(`local updated: ${dbgHdrToString(overwrittenLocalHdr)}`);// TODO @darzu: dbg
     } catch (e) {
         // let exceptions propegate since there's nothing localy we can do to recover, but log something
         //  since this is a bad case (may lead to repeat duplication).
@@ -312,7 +259,6 @@ async function resolveConflict(local: Header, remoteFile: File) {
 
     // 4. upload new project to the cloud (network op)
     const copyUploadHdr = await transferToCloud(newCopyHdr, null);
-    console.log(`copy uploaded: ${dbgHdrToString(copyUploadHdr)}`);// TODO @darzu: dbg
 }
 
 function getLocalCloudHeaders(allHdrs?: Header[]) {
@@ -545,7 +491,6 @@ const onHeaderChangeSubscriber: data.DataSubscriber = {
     }
 };
 async function onHeaderChangeDebouncer(h: Header) {
-    console.log('onHeaderChangeDebouncer'); // TODO @darzu: dbg
     if (!auth.hasIdentity()) return
     if (!await auth.loggedIn()) return
 
@@ -580,9 +525,7 @@ async function onHeadersChanged(hdrs: Header[]) {
     if (!await auth.loggedIn()) { return; }
     const saveStart = U.nowSeconds()
     const saveTasks = hdrs.map(async h => {
-        console.log(`onHeadersChanged setAsync PRE  ${dbgHdrToString(h)}`);
         const newHdr = await transferToCloud(h, h.cloudVersion);
-        console.log(`onHeadersChanged setAsync POST ${dbgHdrToString(newHdr)}`);
         return newHdr
     });
     const allRes = await Promise.all(saveTasks);
