@@ -614,36 +614,36 @@ export function renameAsync(h: Header, newName: string) {
     return cloudsync.renameAsync(h, newName);
 }
 
-export function duplicateAsync(h: Header, text: ScriptText, newName?: string): Promise<Header> {
+export async function duplicateAsync(h: Header, newName?: string): Promise<Header> {
+    const text = await getTextAsync(h.id);
+
     if (!newName)
         newName = createDuplicateName(h);
-    const e = lookup(h.id)
-    U.assert(e.header === h)
-    const h2 = U.flatClone(h)
-    e.header = h2
+
+    let newHdr = U.flatClone(h)
 
     const dupText = U.flatClone(text);
-    h.id = U.guidGen()
-    h.name = newName;
+    newHdr.id = U.guidGen()
+    newHdr.name = newName;
     const cfg = JSON.parse(text[pxt.CONFIG_NAME]) as pxt.PackageConfig;
-    cfg.name = h.name;
+    cfg.name = newHdr.name;
     dupText[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
 
-    delete h._rev;
-    delete (h as any)._id;
-    delete h.githubCurrent;
-    delete h.githubId;
-    delete h.githubTag;
+    delete newHdr._rev;
+    delete (newHdr as any)._id;
+    delete newHdr.githubCurrent;
+    delete newHdr.githubId;
+    delete newHdr.githubTag;
 
-    if (h.cloudVersion) {
+    if (newHdr.cloudVersion) {
         pxt.tickEvent(`identity.duplicatingCloudProject`);
     }
 
     // drop cloud-related local metadata
-    h = cloud.excludeLocalOnlyMetadataFields(h)
+    newHdr = cloud.excludeLocalOnlyMetadataFields(newHdr)
 
-    return importAsync(h, dupText)
-        .then(() => h)
+    return importAsync(newHdr, dupText)
+        .then(() => newHdr)
 }
 
 export function createDuplicateName(h: Header) {

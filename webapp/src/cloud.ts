@@ -239,6 +239,11 @@ export function dbgHdrToString(h: Header): string {
     return `${h.name} ${h.id.substr(0, 4)}..${dbgShorten(h.cloudVersion)}@${U.timeSince(h.modificationTime)}`;
 }
 
+function getConflictCopyName(hdr: Header): string {
+    // TODO: do we want a better or more descriptive name?
+    return hdr.name + " - Copy";
+}
+
 async function resolveConflict(local: Header, remoteFile: File) {
     // TODO @darzu: 
     // resolve conflict by creating a copy
@@ -248,14 +253,8 @@ async function resolveConflict(local: Header, remoteFile: File) {
     console.log(`remote: ${dbgHdrToString(remoteFile.header)}`);
 
     // copy local project as a new project
-    let newCopyHdr: Header = {...excludeLocalOnlyMetadataFields(local),  
-        name: local.name + " - Copy", // TODO @darzu: what should the new name be?
-        cloudUserId: local.cloudUserId,        
-        cloudLastSyncTime: U.nowSeconds(),
-    };
-    const newCopyText = await workspace.getTextAsync(local.id);
-    console.log(`copy: ${dbgHdrToString(newCopyHdr)}`);// TODO @darzu: dbg
-    newCopyHdr = await workspace.installAsync(newCopyHdr, newCopyText); // install assigns a new project ID
+    const newName = getConflictCopyName(local);
+    let newCopyHdr = await workspace.duplicateAsync(local, newName);
     console.log(`copy installed: ${dbgHdrToString(newCopyHdr)}`);// TODO @darzu: dbg
 
     // overwrite local changes in the original project with cloud changes

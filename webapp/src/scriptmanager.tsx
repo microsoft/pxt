@@ -181,8 +181,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         return core.promptAsync(opts).then(res => {
             if (res === null)
                 return false; // null means cancelled
-            return workspace.getTextAsync(header.id)
-                .then(text => workspace.duplicateAsync(header, text, res))
+            return workspace.duplicateAsync(header, res)
                 .then(clonedHeader => {
                     delete clonedHeader.blobId_
                     delete clonedHeader.blobVersion_
