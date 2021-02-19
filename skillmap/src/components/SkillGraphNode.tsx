@@ -52,11 +52,18 @@ export class SkillGraphNodeImpl extends React.Component<SkillGraphNodeProps> {
         // console.log(item.width)
 
         return  <g className={`graph-activity ${selected ? "selected" : ""}`} transform={`translate(${offset.x} ${offset.y})`} onClick={this.handleClick}>
-            {parent && <line x1="0.0" y1="0.0" x2={xdiff} y2={0} stroke="#000" />}
-            {parent && <line x1={xdiff} y1="0.0" x2={xdiff} y2={ydiff} stroke="#000" />}
-            <circle cx="0.0" cy="0.0" r="30.0" fill={`${status === "locked" ? "lightgrey" : "var(--tertiary-color)"}`} />
-            <text textAnchor="middle">{item.width.toString()}</text>
-            <text textAnchor="middle" transform="translate(0, 10)">{item.label}</text>
+            {/* {parent && <line x1="0.0" y1="0.0" x2={xdiff} y2={0} stroke="#000" />}
+            {parent && <line x1={xdiff} y1="0.0" x2={xdiff} y2={ydiff} stroke="#000" />} */}
+            {/* {parent && <path stroke="#000" strokeWidth="40"
+                d={`M 0 0 h ${xdiff} v ${ydiff} v ${-ydiff} h ${-xdiff}`} />}
+            {parent && <path stroke="lightgrey" strokeWidth="36"
+                d={`M 0 0 h ${xdiff} v ${ydiff} v ${-ydiff} h ${-xdiff}`} />} */}
+            <rect x="-25.0" y="-25.0" width="50.0" height="50.0" rx="5" fill={`${status === "locked" ? "lightgrey" : "var(--tertiary-color)"}`} stroke="#000" strokeWidth="2" />
+
+            {status === "locked" ?
+                <text textAnchor="middle" alignmentBaseline="middle" className="graph-icon">{"\uf023"}</text>
+                : <text textAnchor="middle" alignmentBaseline="middle" className="graph-icon">{"\uf11b"}</text>
+            }
         </g>
     }
 }

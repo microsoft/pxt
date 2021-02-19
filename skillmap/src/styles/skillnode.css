@@ -71,3 +71,10 @@
     margin-top: 1rem;
     font-weight: 700;
 }
+
+.graph-icon {
+    fill: #000;
+    font-family: Icons;
+    font-size: 1.75rem;
+    opacity: 0.5;
+}

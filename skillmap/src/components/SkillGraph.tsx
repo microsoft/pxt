@@ -5,6 +5,7 @@ import { SkillMapState } from '../store/reducer';
 import { dispatchChangeSelectedItem, dispatchShowCompletionModal, dispatchSetSkillMapCompleted } from '../actions/dispatch';
 import { SkillGraphNode, SkillGraphItem } from './SkillGraphNode';
 import { SkillCardActionButton } from "./SkillCardActionButton";
+import { SkillGraphPath } from "./SkillGraphPath";
 
 interface SkillGraphProps {
     map: SkillMap;
@@ -115,10 +116,47 @@ class SkillGraphImpl extends React.Component<SkillGraphProps> {
         let currentDepth = 0;
         let yOffset = 0;
 
+
+        let currentDepth2 = 0;
+        let yOffset2 = 0;
         const selected = this.getSelectedItem(selectedItem);
 
         const widthMap: {[key: string]: number} = {}
+        const widthMap2: {[key: string]: number} = {}
 
+        let paths: JSX.Element[] = [];
+        let paths2: JSX.Element[] = [];
+
+        this.items.forEach((el, i) => {
+            // TODO this should be calculated before render time
+
+            const key = el.depth + "";
+            if (!widthMap2[key]) widthMap2[key] = 1;
+            if (currentDepth2 != el.depth) {
+                currentDepth2 = el.depth;
+                yOffset2 = 1;
+            } else {
+                yOffset2 = widthMap2[key];
+            }
+            widthMap2[key] = (widthMap2[key])  + el.width;
+            (el as any).yoffset = yOffset2;
+
+            // function to calculate placement {x, y}
+            // can run on parent node? save parent placement? draw line to previously completed? (for total freedom version -> can be weird)
+            // console.log(el.parent)
+            paths.push(<SkillGraphPath key={`graph-activity-${i}`} item={el}
+                width={30}
+                color="#000"
+                id={el.id}
+                offset={this.getOffset(el.depth, yOffset2)}
+                parentOffset={this.getOffset(el.parent?.depth || 0, (el.parent as any)?.yoffset || 0)} />)
+            paths2.push(<SkillGraphPath key={`graph-activity-${i}`} item={el}
+                    width={26}
+                    color="#BFBFBF"
+                    id={el.id}
+                    offset={this.getOffset(el.depth, yOffset2)}
+                    parentOffset={this.getOffset(el.parent?.depth || 0, (el.parent as any)?.yoffset || 0)} />)
+        })
         // calc max depth, max height, to get size?
         // todo title prereqs (in component??)
         return <div className="skill-graph">
@@ -127,6 +165,8 @@ class SkillGraphImpl extends React.Component<SkillGraphProps> {
             </div>}
             <div className="graph">
                 <svg xmlns="http://www.w3.org/2000/svg" width="600" height="400">
+                    {paths.reverse()}
+                    {paths2.reverse()}
                     {this.items.map((el, i) => {
                         // TODO this should be calculated before render time
 
