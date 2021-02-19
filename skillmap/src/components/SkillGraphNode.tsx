@@ -19,10 +19,12 @@ export interface GraphCoord {
 
 export interface SkillGraphItem extends Item {
     depth: number;
+    width: number;
     mapId: string;
     description?: string;
     tags?: string[];
-    parent?: SkillGraphItem
+    parent?: SkillGraphItem;
+    next?: SkillGraphItem[]
 }
 
 interface SkillGraphNodeProps {
@@ -47,10 +49,14 @@ export class SkillGraphNodeImpl extends React.Component<SkillGraphNodeProps> {
         const xdiff = (parentOffset?.x || 0) - offset.x;
         const ydiff = (parentOffset?.y || 0) - offset.y;
 
+        // console.log(item.width)
+
         return  <g className={`graph-activity ${selected ? "selected" : ""}`} transform={`translate(${offset.x} ${offset.y})`} onClick={this.handleClick}>
-            {parent && <line x1="0.0" y1="0.0" x2={xdiff} y2={ydiff} stroke="#000" />}
+            {parent && <line x1="0.0" y1="0.0" x2={xdiff} y2={0} stroke="#000" />}
+            {parent && <line x1={xdiff} y1="0.0" x2={xdiff} y2={ydiff} stroke="#000" />}
             <circle cx="0.0" cy="0.0" r="30.0" fill={`${status === "locked" ? "lightgrey" : "var(--tertiary-color)"}`} />
-            <text textAnchor="middle">{label}</text>
+            <text textAnchor="middle">{item.width.toString()}</text>
+            <text textAnchor="middle" transform="translate(0, 10)">{item.label}</text>
         </g>
     }
 }
@@ -66,7 +72,6 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         }
         else {
             const progress = lookupActivityProgress(state.user, state.pageSourceUrl, ownProps.mapId, ownProps.id);
-            console.log(ownProps.id)
             if (progress) {
                 if (progress.isCompleted) {
                     status = (progress.currentStep && progress.maxSteps && progress.currentStep < progress.maxSteps) ?

@@ -20,6 +20,7 @@ interface SkillGraphProps {
 
 class SkillGraphImpl extends React.Component<SkillGraphProps> {
     protected items: SkillGraphItem[];
+    // need a list of roots
 
     constructor(props: SkillGraphProps) {
         super(props);
@@ -28,7 +29,7 @@ class SkillGraphImpl extends React.Component<SkillGraphProps> {
     }
 
     protected getItems(mapId: string, root: MapActivity): SkillGraphItem[] {
-        const items = [];
+        const items: SkillGraphItem[] = [];
         const base = root as any;
         base.depth = 0;
         let activities: any[] = [base]; // TODO don't use any
@@ -44,10 +45,13 @@ class SkillGraphImpl extends React.Component<SkillGraphProps> {
                     mapId,
                     description: current.description,
                     tags: current.tags,
+                    width: 1,
                     depth: current.depth,
-                    parent: current.parent
+                    parent: current.parent,
+                    next: current.next
                 }
                 items.push(item);
+                // if (current.parent) current.parent.children.push(item)
                 const next = current.next.map((el: any) => {
                     // todo: should calc counter/yoffset in here??
                     el.depth = current.depth + 1;
@@ -58,7 +62,28 @@ class SkillGraphImpl extends React.Component<SkillGraphProps> {
             }
         }
 
+        items.forEach(el => {
+            // console.log(el)
+            this.setWidths(el)
+        })
+        // this.setWidths(base)
+
+        console.log(items)
         return items;
+    }
+
+    protected setWidths(node: SkillGraphItem) {
+        if (node.next && node.next.length) {
+            // console.log(node.next.length)
+            node.width = 0;
+            for (let child of node.next) {
+                node.width += this.setWidths(child);
+            }
+        } else {
+            node.width = 1;
+        }
+        // console.log(node.label, node.width)
+        return node.width;
     }
 
     protected onItemSelect = (id: string) => {
@@ -92,6 +117,8 @@ class SkillGraphImpl extends React.Component<SkillGraphProps> {
 
         const selected = this.getSelectedItem(selectedItem);
 
+        const widthMap: {[key: string]: number} = {}
+
         // calc max depth, max height, to get size?
         // todo title prereqs (in component??)
         return <div className="skill-graph">
@@ -102,18 +129,24 @@ class SkillGraphImpl extends React.Component<SkillGraphProps> {
                 <svg xmlns="http://www.w3.org/2000/svg" width="600" height="400">
                     {this.items.map((el, i) => {
                         // TODO this should be calculated before render time
+
+                        const key = el.depth + "";
+                        if (!widthMap[key]) widthMap[key] = 1;
                         if (currentDepth != el.depth) {
                             currentDepth = el.depth;
                             yOffset = 1;
                         } else {
-                            yOffset += 1;
+                            yOffset = widthMap[key];
                         }
+                        widthMap[key] = (widthMap[key])  + el.width;
                         (el as any).yoffset = yOffset;
+                        console.log(el.label)
+                        console.log("depth:" + key, "width:" + el.width, "yoff:" + yOffset);
                         // todo: translateX and translateY should be in functions (for easy to vary graph placement)
 
                         // function to calculate placement {x, y}
                         // can run on parent node? save parent placement? draw line to previously completed? (for total freedom version -> can be weird)
-
+                        // console.log(el.parent)
                         return <SkillGraphNode key={`graph-activity-${i}`} item={el}
                             id={el.id}
                             mapId={map.mapId}
@@ -123,7 +156,7 @@ class SkillGraphImpl extends React.Component<SkillGraphProps> {
                             onItemSelect={this.onItemSelect} />
                     })}
                 </svg>
-                {selected && <div className="graph-activity-card"
+                {/* {selected && <div className="graph-activity-card"
                         style={ {
                             position: "absolute",
                             left: this.getOffset(selected.depth, (selected as any)?.yoffset).x + "px",
@@ -135,7 +168,7 @@ class SkillGraphImpl extends React.Component<SkillGraphProps> {
                                 <div className="spacer"></div>
                                 <SkillCardActionButton id={selected.id} mapId={map.mapId} />
                             </div>
-                    </div>}
+                    </div>} */}
             </div>
         </div>
     }
