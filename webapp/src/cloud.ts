@@ -245,15 +245,14 @@ function getConflictCopyName(hdr: Header): string {
 }
 
 async function resolveConflict(local: Header, remoteFile: File) {
+    // strategy: resolve conflict by creating a copy
     // TODO @darzu: show a popup or message to the user
-    // TODO @darzu: 
-    // resolve conflict by creating a copy
+
     // TODO @darzu: dbg
     console.log("resolveConflict")
     console.log(`local: ${dbgHdrToString(local)}`);
     console.log(`remote: ${dbgHdrToString(remoteFile.header)}`);
 
-    // TODO @darzu: more error handling.
     // Note, we do the operations in the following order:
     // 1. create a local copy
     // 2. load that new local copy (if we're in the editor already)
@@ -264,37 +263,50 @@ async function resolveConflict(local: Header, remoteFile: File) {
     //  that the users creates additional conflicting changes.
     // Similarly, we also want 3 to happen soon so that the conflict is gone and the user can't make
     //  conflicting edits any more.
-    // 1 and 2 are local operations and should happen instantly. 
-    // 3 and 4 are network operations and can take a while and are far more likely to fail.
+    // 1, 2, and 3 are local operations and should happen instantly.
+    // 4 is a network operations and can take a while and is far more likely to fail.
     // Regarding failure modes:
     // if 1 fails, we can't do anything to resolve the conflict b/c local storage doesn't work apparently.
-    // if 2 fails, we want to continue with 3 and 4 because those will resolve the conflict (and avoid future conflicts).
-    // if 3 fails, we're in bad shape since the conflict is still around.
+    // if 2 fails, we want to continue with at least 3 because those will resolve the conflict (and avoid future conflicts).
+    //      hopefully 2 failing doesn't mean the user is still in the editor somewhere with a stale copy because that could reintroduce a conflict.
+    // if 3 fails, we're in bad shape since the conflict is still around. There isn't a great way to recover here since we've already
+    //      created a copy but apparently we can't change the original we had.
+    //      Luckily, it's unlikely that 3 will fail if 1 succeeds since both are very similar local storage writes.
+    // if 4 fails, it's not too bad since that just means the duplicate copy is local only until we're able to sync it up to the cloud.
 
     // 1. copy local project as a new project
+    // (let exceptions propegate and fail the whole function since we don't want to
+    //  proceed if a basic duplicate operation fails.)
     const newName = getConflictCopyName(local);
     let newCopyHdr = await workspace.duplicateAsync(local, newName);
     console.log(`copy installed: ${dbgHdrToString(newCopyHdr)}`);// TODO @darzu: dbg
 
+    pxt.tickEvent(`identity.sync.conflict.createdDuplicate`);
+
     // 2. swap current project to the new copy
-    if (app.hasEditor()) {
-        // TODO @darzu: confirm this works for resolving conflicts on home screen
-        const editor = await app.getEditorAsync();
-        console.log("waiting on loadHeaderAsync...")// TODO @darzu: dbg
-        await editor.loadHeaderAsync(newCopyHdr, editor.state.editorState);
-        console.log("... done waiting on loadHeaderAsync")// TODO @darzu: dbg
+    try {
+        if (app.hasEditor()) {
+            // TODO @darzu: confirm this works for resolving conflicts on home screen
+            const editor = await app.getEditorAsync();
+            console.log("waiting on loadHeaderAsync...")// TODO @darzu: dbg
+            await editor.loadHeaderAsync(newCopyHdr, editor.state.editorState);
+            console.log("... done waiting on loadHeaderAsync")// TODO @darzu: dbg
+        }
+    } catch (e) {
+        // we want to swallow this and keep going since step 3. is the essentail one to resolve the conflcit.
+        pxt.reportException(e);
+        pxt.tickEvent(`identity.sync.conflict.reloadEditorFailed`, {exception: e});
     }
 
-    // 3. overwrite local changes in the original project with cloud changes
-    const overwriteLocalPromise = transferFromCloud(local, remoteFile)
+    // 3. overwrite local changes in the original project with cloud changes 
+    // (let exceptions propegate since there's nothing localy we can do to recover.)
+    const overwrittenLocalHdr = await transferFromCloud(local, remoteFile)
 
-    // 4. upload new project to the cloud
-    const uploadNewPromise = transferToCloud(newCopyHdr, null);
+    // 4. upload new project to the cloud (network op)
+    const copyUploadHdr = await transferToCloud(newCopyHdr, null);
 
-    await Promise.all([overwriteLocalPromise, uploadNewPromise]);
-
-    console.log(`local updated: ${dbgHdrToString(overwriteLocalPromise.value())}`);// TODO @darzu: dbg
-    console.log(`copy uploaded: ${dbgHdrToString(uploadNewPromise.value())}`);// TODO @darzu: dbg
+    console.log(`local updated: ${dbgHdrToString(overwrittenLocalHdr)}`);// TODO @darzu: dbg
+    console.log(`copy uploaded: ${dbgHdrToString(copyUploadHdr)}`);// TODO @darzu: dbg
 }
 
 function getLocalCloudHeaders(allHdrs?: Header[]) {
@@ -470,6 +482,7 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
     }
     catch (e) {
         pxt.reportException(e);
+        pxt.tickEvent(`identity.sync.failed`, { exception: e });
     }
     return [];
 }
