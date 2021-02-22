@@ -238,7 +238,9 @@ async function resolveConflict(local: Header, remoteFile: File) {
         if (app.hasEditor()) {
             // TODO @darzu: confirm this works for resolving conflicts on home screen
             const editor = await app.getEditorAsync();
-            await editor.loadHeaderAsync(newCopyHdr, editor.state.editorState);
+            if (!editor.state.home && editor.state.header?.id === local.id) {
+                await editor.loadHeaderAsync(newCopyHdr, editor.state.editorState);
+            }
         }
     } catch (e) {
         // we want to swallow this and keep going since step 3. is the essentail one to resolve the conflcit.
@@ -248,7 +250,7 @@ async function resolveConflict(local: Header, remoteFile: File) {
 
     // 2a. tell the user a conflict occured
     try {
-        core.infoNotification(lf(`Project '${local.name}' was editted on two computers and the changes conflict. Creating backup copy...`));
+        core.infoNotification(lf(`Project '${local.name}' was editted in two places and the changes conflict. Creating backup copy...`));
     } catch (e) {
         // we want to swallow this and keep going since it's non-essential
         pxt.reportException(e);
@@ -487,7 +489,6 @@ const onHeaderChangeSubscriber: data.DataSubscriber = {
         const parts = path.split("header:");
         U.assert(parts.length === 2, "onHeaderChangeSubscriber has invalid path subscription: " + path)
         const hdrId = parts[1];
-        console.log("cloud hdr change: " + hdrId)
         if (hdrId === "*") { 
             // all headers
             // TODO https://github.com/microsoft/pxt-arcade/issues/3129: this branch is being hit WAY too often.
