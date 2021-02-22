@@ -562,7 +562,7 @@ const DEV_BACKEND_STAGING = "https://staging.pxt.io";
 const DEV_BACKEND_LOCALHOST = "http://localhost:5500";
 const DEV_BACKEND_LOCALHOST_SSL = "https://localhost:5500";
 
-const DEV_BACKEND = DEV_BACKEND_LOCALHOST;
+const DEV_BACKEND = DEV_BACKEND_STAGING;
 
 export async function apiAsync<T = any>(url: string, data?: any, method?: string): Promise<ApiResult<T>> {
     const headers: pxt.Map<string> = {};
