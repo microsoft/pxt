@@ -41,18 +41,21 @@ class SkillCarouselImpl extends React.Component<SkillCarouselProps> {
 
     protected getItems(mapId: string, root: MapActivity): SkillCarouselItem[] {
         const items = [];
-        let activity = root;
-        while (activity) {
-            items.push({
-                id: activity.activityId,
-                label: activity.displayName,
-                url: activity.url,
-                imageUrl: activity.imageUrl,
-                mapId,
-                description: activity.description,
-                tags: activity.tags
-            });
-            activity = activity.next[0]; // TODO still add nonlinear items to array even if we don't render graph
+        let activities: MapActivity[] = [root];
+        while (activities.length > 0) {
+            let current = activities.shift();
+            if (current) {
+                items.push({
+                    id: current.activityId,
+                    label: current.displayName,
+                    url: current.url,
+                    imageUrl: current.imageUrl,
+                    mapId,
+                    description: current.description,
+                    tags: current.tags
+                });
+                activities = activities.concat(current.next);
+            }
         }
 
         return items;
