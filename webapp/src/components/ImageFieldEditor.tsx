@@ -1,4 +1,5 @@
 import * as React from "react";
+import * as sui from "../sui";
 
 import { FieldEditorComponent } from '../blocklyFieldView';
 import { AssetCardView } from "./assetEditor/assetCard";
@@ -6,6 +7,7 @@ import { assetToGalleryItem, getAssets } from "./assetEditor/store/assetEditorRe
 import { ImageEditor } from "./ImageEditor/ImageEditor";
 import { obtainShortcutLock, releaseShortcutLock } from "./ImageEditor/keyboardShortcuts";
 import { GalleryTile, setTelemetryFunction } from './ImageEditor/store/imageReducer';
+import { FilterPanel } from './FilterPanel';
 
 export interface ImageFieldEditorProps {
     singleFrame: boolean;
@@ -14,6 +16,8 @@ export interface ImageFieldEditorProps {
 
 export interface ImageFieldEditorState {
     currentView: "editor" | "gallery" | "my-assets";
+    filterOpen: boolean;
+    gallerySelectedTags: string[];
     tileGalleryVisible?: boolean;
     headerVisible?: boolean;
     hideMyAssets?: boolean;
@@ -45,13 +49,16 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
 
         this.state = {
             currentView: "editor",
-            headerVisible: true
+            headerVisible: true,
+            filterOpen: false,
+            gallerySelectedTags: []
         };
         setTelemetryFunction(tickImageEditorEvent);
     }
 
     render() {
-        const { currentView, headerVisible, editingTile, hideMyAssets } = this.state;
+        const { currentView, headerVisible, editingTile, hideMyAssets, filterOpen } = this.state;
+        const filterPanelVisible = this.state.currentView === "gallery" && filterOpen;
 
         let showHeader = headerVisible;
         // If there is no asset, show the gallery to prevent changing shape when it's added
@@ -61,6 +68,17 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
         if (this.asset && !this.galleryAssets) {
             this.updateGalleryAssets();
         }
+
+        let filteredAssets = currentView === "my-assets" ? this.filterAssetsByType(this.userAssets, editingTile ? pxt.AssetType.Tile : this.asset?.type) :
+            this.filterAssetsByType(this.galleryAssets, editingTile ? pxt.AssetType.Tile : this.asset?.type, true, true)
+
+        const specialTags = ["tile", "dialog", "background"];
+        const allTags = this.getAvailableTags(filteredAssets, specialTags);
+
+        if (currentView === "gallery") {
+            filteredAssets = this.filterAssetsByTag(filteredAssets);
+        }
+
 
         const toggleOptions = [{
             label: lf("Editor"),
@@ -89,14 +107,26 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
         return <div className="image-editor-wrapper">
             {showHeader && <div className="gallery-editor-header">
                 <ImageEditorToggle options={toggleOptions} view={currentView} />
+                <div className={`gallery-filter-button ${this.state.currentView === "gallery" ? '' : "hidden"}`} role="button" onClick={this.toggleFilter} onKeyDown={sui.fireClickOnEnter}>
+                    <div className="gallery-filter-button-icon">
+                        <i className="icon filter" />
+                    </div>
+                    <div className="gallery-filter-button-label">{lf("Filter")}</div>
+                </div>
             </div>}
-            <div className="image-editor-gallery-content">
-                <ImageEditor ref="image-editor" singleFrame={this.props.singleFrame} onDoneClicked={this.onDoneClick} onTileEditorOpenClose={this.onTileEditorOpenClose} />
-                <ImageEditorGallery
-                    items={currentView === "my-assets" ? this.filterAssets(this.userAssets, editingTile ? pxt.AssetType.Tile : this.asset?.type) :
-                                                         this.filterAssets(this.galleryAssets, editingTile ? pxt.AssetType.Tile : this.asset?.type, true, true)}
-                    hidden={currentView === "editor"}
-                    onAssetSelected={this.onAssetSelected} />
+            <div className="image-editor-gallery-window">
+                <div className="image-editor-gallery-content">
+                    <ImageEditor ref="image-editor" singleFrame={this.props.singleFrame} onDoneClicked={this.onDoneClick} onTileEditorOpenClose={this.onTileEditorOpenClose} />
+                    <ImageEditorGallery
+                        items={filteredAssets}
+                        hidden={currentView === "editor"}
+                        onAssetSelected={this.onAssetSelected} />
+                </div>
+                <div className={`filter-panel-gutter ${!filterPanelVisible ? "hidden" : ""}`}>
+                    <div className={`filter-panel-container`}>
+                        <FilterPanel enabledTags={this.state.gallerySelectedTags} tagClickHandler={this.tagClickHandler} clearTags={this.clearFilterTags} tagOptions={allTags}/>
+                    </div>
+                </div>
             </div>
         </div>
     }
@@ -197,7 +227,76 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
         this.galleryAssets = getAssets(true, this.asset.type);
     }
 
-    protected filterAssets(assets: pxt.Asset[], type: pxt.AssetType = this.asset?.type, isGallery = false, useTags?: boolean) {
+    protected getAvailableTags(filterAssets: pxt.Asset[], ignoredTags: string[]) {
+        let collectedTags: string[] = [];
+        // Pixel Art Categories -- Add new categories here!
+        // lf("People")
+        // lf("Animals")
+        // lf("Food")
+        // lf("Dungeon")
+        // lf("Forest")
+        // lf("Space")
+        // lf("Aquatic")
+
+        if (this.galleryAssets) {
+            filterAssets.forEach( (asset) => {
+                asset.meta.tags?.forEach(t => {
+                    const sanitizedTag = sanitize(t);
+                    if (ignoredTags.indexOf(sanitizedTag) < 0 && collectedTags.indexOf(sanitizedTag) < 0) {
+                        collectedTags.push(sanitizedTag);
+                    }
+                });
+            })
+
+            return collectedTags;
+        }
+        return [];
+
+        function sanitize(tag: string) {
+            let sanitizedTag = (tag.indexOf("?") === 0) && tag.length > 1 ? tag.substring(1) : tag;
+            sanitizedTag = sanitizedTag.toLowerCase();
+
+            return sanitizedTag;
+        }
+
+    }
+
+    protected tagClickHandler = (tag: string) => {
+        let selectedTags = this.state.gallerySelectedTags;
+        const sanitizedTag = tag.toLowerCase();
+        const index = selectedTags.indexOf(sanitizedTag);
+        if (index < 0) {
+            selectedTags.push(sanitizedTag);
+        } else {
+            selectedTags.splice(index, 1);
+        }
+        this.setState({
+            gallerySelectedTags: selectedTags
+        })
+    }
+
+    protected clearFilterTags = () => {
+        this.setState({
+            gallerySelectedTags: []
+        });
+    }
+
+    protected toggleFilter = () => {
+        this.setState({
+            filterOpen: !this.state.filterOpen
+        });
+    }
+
+    protected filterAssetsByTag(assets: pxt.Asset[]) {
+        if (this.state.gallerySelectedTags.length > 0 && this.state.filterOpen) {
+            assets = assets.filter((asset) => {
+                return !!asset.meta.tags?.find(t => this.state.gallerySelectedTags.indexOf(t) >= 0);
+            })
+        }
+        return assets;
+    }
+
+    protected filterAssetsByType(assets: pxt.Asset[], type: pxt.AssetType = this.asset?.type, isGallery = false, useTags?: boolean) {
         if (type === undefined) {
             return assets;
         }
