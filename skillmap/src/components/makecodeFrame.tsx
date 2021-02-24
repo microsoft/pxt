@@ -3,7 +3,7 @@ import * as React from "react";
 import { connect } from 'react-redux';
 import { saveProjectAsync, getProjectAsync } from "../lib/workspaceProvider";
 import { isLocal, resolvePath, getEditorUrl, tickEvent } from "../lib/browserUtils";
-import { lookupActivityProgress } from "../lib/skillMapUtils";
+import { isActivityCompleted, lookupActivityProgress } from "../lib/skillMapUtils";
 
 import { SkillMapState } from '../store/reducer';
 import  { dispatchSetHeaderIdForActivity, dispatchCloseActivity, dispatchSaveAndCloseActivity, dispatchUpdateUserCompletedTags, dispatchShowCarryoverModal, dispatchSetReloadHeaderState } from '../actions/dispatch';
@@ -341,14 +341,23 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
 
     let url = editorUrl
     let title: string | undefined;
+    const map = state.maps[currentMapId];
 
-    const activity = state.maps[currentMapId].activities[currentActivityId];
+    const activity = map.activities[currentActivityId];
     if (editorUrl.charAt(editorUrl.length - 1) === "/" && !isLocal()) {
         url = editorUrl.substr(0, editorUrl.length - 1);
     }
 
     url += `?controller=1&skillsMap=1&noproject=1&nocookiebanner=1`;
     title = activity.displayName;
+
+    let previousActivityCompleted = false;
+    const previousId = Object.keys(map.activities).find(key => map.activities[key].next.some(a => a.activityId === currentActivityId));
+    if (previousId) {
+        const previousActivityState = lookupActivityProgress(state.user, state.pageSourceUrl, currentMapId, previousId);
+        previousActivityCompleted = !!(previousActivityState?.isCompleted &&
+            previousActivityState.maxSteps === previousActivityState.currentStep);
+    }
 
     return {
         url,
@@ -359,7 +368,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         activityHeaderId: currentHeaderId,
         completed: lookupActivityProgress(state.user, state.pageSourceUrl, currentMapId, currentActivityId)?.isCompleted,
         activityType: activity.type,
-        showCodeCarryoverModal: activity.allowCodeCarryover,
+        showCodeCarryoverModal: activity.allowCodeCarryover && previousActivityCompleted,
         save: saveState === "saving",
         reload: saveState === "reload" || saveState === "reloading" ? saveState : undefined
     }

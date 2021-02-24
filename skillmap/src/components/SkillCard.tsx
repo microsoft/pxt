@@ -71,6 +71,7 @@ export class SkillCardImpl extends React.Component<SkillCardProps> {
     render() {
         const { label, description, imageUrl, tags, status, currentStep, maxSteps} = this.props;
         const completed = this.isCompleted(status || "notstarted");
+        const showRestart = status !== "locked" && status !== "notstarted";
 
         return <div className="skill-card-container">
             <div className={`skill-card ${status || ''}`}>
@@ -99,7 +100,7 @@ export class SkillCardImpl extends React.Component<SkillCardProps> {
                     <div className="skill-card-description">{description}</div>
                     <div className="spacer"></div>
                     <div className="skill-card-action">
-                        {completed &&
+                        {showRestart &&
                             <div className="skill-card-button-icon" role="button" onClick={this.handleRestartButtonClick}>
                                 <i className="xicon redo"></i>
                             </div>
