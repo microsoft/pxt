@@ -80,7 +80,7 @@ function setDiagnostics(operation: "compile" | "decompile" | "typecheck", diagno
                 endColumn: diag.endColumn
             }))
         } as pxt.editor.EditorWorkspaceDiagnostics);
-    }   
+    }
 }
 
 let lastErrorCounts: string = "";
@@ -598,10 +598,10 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
     ];
 
     if (Object.keys(files).some(
-            filename => generatedFiles.indexOf(filename) === -1
+        filename => generatedFiles.indexOf(filename) === -1
             && filename.indexOf("/") === -1
             && pxt.Util.endsWith(filename, ".ts")
-        )) {
+    )) {
         return null;
     }
 
@@ -705,9 +705,9 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
 async function cacheApiInfoAsync(project: pkg.EditorPackage, info: pxtc.ApisInfo) {
     const corePkgs = pxt.Package.corePackages().map(pkg => pkg.name);
     const externalPackages = project.pkgAndDeps()
-            .filter(p => p.id !== "built"
-                        && !p.isTopLevel()
-                        && corePkgs.indexOf(p.getPkgId()) === -1);
+        .filter(p => p.id !== "built"
+            && !p.isTopLevel()
+            && corePkgs.indexOf(p.getPkgId()) === -1);
 
     if (externalPackages.length) {
         const apiList = Object.keys(info.byQName);
