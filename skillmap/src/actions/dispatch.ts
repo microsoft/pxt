@@ -11,7 +11,7 @@ export const dispatchOpenActivity = (mapId: string, activityId: string) => ({ ty
 export const dispatchCloseActivity = (finished = false) => ({ type: actions.CLOSE_ACTIVITY, finished });
 export const dispatchSaveAndCloseActivity = () => ({ type: actions.SAVE_AND_CLOSE_ACTIVITY });
 export const dispatchRestartActivity = (mapId: string, activityId: string) => ({ type: actions.RESTART_ACTIVITY, mapId, activityId });
-
+export const dispatchSetReloadHeaderState = (state: "reloading" | "reload" | "active" ) => ({ type: actions.SET_RELOAD_HEADER_STATE, state });
 export const dispatchSetUser = (user: UserState) => ({ type: actions.SET_USER, user });
 export const dispatchUpdateUserCompletedTags = () => ({ type: actions.UPDATE_USER_COMPLETED_TAGS });
 export const dispatchResetUser = () => ({ type: actions.RESET_USER });
@@ -25,5 +25,6 @@ export const dispatchShowCompletionModal = (mapId: string, activityId?: string) 
 export const dispatchShowRestartActivityWarning = (mapId: string, activityId: string) => ({ type: actions.SHOW_RESTART_ACTIVITY_MODAL, mapId, activityId });
 export const dispatchShowReportAbuseModal = () => ({ type: actions.SHOW_REPORT_ABUSE_MODAL });
 export const dispatchShowResetUserModal = () => ({ type: actions.SHOW_RESET_USER_MODAL });
+export const dispatchShowCarryoverModal = (mapId: string, activityId: string) => ({ type: actions.SHOW_CARRYOVER_MODAL, mapId, activityId });
 
 export const dispatchHideModal = () => ({ type: actions.HIDE_MODAL });

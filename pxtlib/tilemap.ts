@@ -1,7 +1,7 @@
 namespace pxt {
-    const IMAGE_MIME_TYPE = "image/x-mkcd-f4"
-    const TILEMAP_MIME_TYPE = "application/mkcd-tilemap"
-    const ANIMATION_MIME_TYPE = "application/mkcd-animation"
+    export const IMAGE_MIME_TYPE = "image/x-mkcd-f4"
+    export const TILEMAP_MIME_TYPE = "application/mkcd-tilemap"
+    export const ANIMATION_MIME_TYPE = "application/mkcd-animation"
 
     export const enum AssetType {
         Image = "image",

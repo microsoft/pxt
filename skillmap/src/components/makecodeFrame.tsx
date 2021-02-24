@@ -6,7 +6,7 @@ import { isLocal, resolvePath, getEditorUrl, tickEvent } from "../lib/browserUti
 import { lookupActivityProgress } from "../lib/skillMapUtils";
 
 import { SkillMapState } from '../store/reducer';
-import  { dispatchSetHeaderIdForActivity, dispatchCloseActivity, dispatchSaveAndCloseActivity, dispatchUpdateUserCompletedTags } from '../actions/dispatch';
+import  { dispatchSetHeaderIdForActivity, dispatchCloseActivity, dispatchSaveAndCloseActivity, dispatchUpdateUserCompletedTags, dispatchShowCarryoverModal, dispatchSetReloadHeaderState } from '../actions/dispatch';
 
 /* tslint:disable:no-import-side-effect */
 import '../styles/makecode-editor.css'
@@ -14,6 +14,7 @@ import '../styles/makecode-editor.css'
 
 interface MakeCodeFrameProps {
     save: boolean;
+    reload: "reloading" | "reload" | undefined;
     mapId: string;
     activityId: string;
     title: string;
@@ -22,10 +23,13 @@ interface MakeCodeFrameProps {
     completed: boolean;
     activityHeaderId?: string;
     activityType: MapActivityType;
+    showCodeCarryoverModal: boolean;
     dispatchSetHeaderIdForActivity: (mapId: string, activityId: string, id: string, currentStep: number, maxSteps: number, isCompleted: boolean) => void;
     dispatchCloseActivity: (finished?: boolean) => void;
     dispatchSaveAndCloseActivity: () => void;
     dispatchUpdateUserCompletedTags: () => void;
+    dispatchShowCarryoverModal: (mapId: string, activityId: string) => void;
+    dispatchSetReloadHeaderState: (state: "reload" | "reloading" | "active") => void;
 }
 
 interface MakeCodeFrameState {
@@ -45,6 +49,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
     protected finishedActivityState: "saving" | "finished" | undefined;
     protected nextId: number = 0;
     protected pendingMessages: {[index: string]: any} = {};
+    protected isNewActivity: boolean = false;
 
     constructor(props: MakeCodeFrameProps) {
         super(props);
@@ -54,13 +59,22 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
         };
     }
 
-    componentDidUpdate() {
+    async componentDidUpdate() {
         if (this.props.save) {
             this.sendMessage({
                 type: "pxteditor",
                 action: "saveproject",
                 response: false
             } as pxt.editor.EditorMessage, true);
+        }
+
+        if (this.props.reload === "reload") {
+            const project = await getProjectAsync(this.props.activityHeaderId!);
+            this.sendMessage({
+                type: "pxteditor",
+                action: "importproject",
+                project: project
+            } as pxt.editor.EditorMessageImportProjectRequest, true)
         }
     }
 
@@ -170,7 +184,12 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
         }
 
         if (original.action === "importproject") {
-            this.onEditorLoaded();
+            if (this.props.reload === "reload") {
+                this.props.dispatchSetReloadHeaderState("active");
+            }
+            else {
+                this.onEditorLoaded();
+            }
         }
     }
 
@@ -237,7 +256,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
             }
         }
 
-        if (activityType !== "tutorial" || project.header.tutorial || project.header.tutorialCompleted) {
+        if ((activityType !== "tutorial" || project.header.tutorial || project.header.tutorialCompleted) && !this.props.reload) {
             await saveProjectAsync(project);
         }
 
@@ -273,6 +292,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
             } as pxt.editor.EditorMessageImportProjectRequest, true)
         }
         else {
+            this.isNewActivity = true;
             this.sendMessage({
                 type: "pxteditor",
                 action: "startactivity",
@@ -294,11 +314,16 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
     }
 
     protected onEditorLoaded() {
-        const { mapId, activityId } = this.props;
+        const { mapId, activityId, showCodeCarryoverModal } = this.props;
         tickEvent("skillmap.activity.loaded", { path: mapId, activity: activityId });
         this.setState({
             loaded: true
         });
+
+        if (this.isNewActivity) {
+            this.isNewActivity = false;
+            if (showCodeCarryoverModal) this.props.dispatchShowCarryoverModal(mapId, activityId);
+        }
     }
 
     protected onTutorialFinished() {
@@ -334,7 +359,9 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         activityHeaderId: currentHeaderId,
         completed: lookupActivityProgress(state.user, state.pageSourceUrl, currentMapId, currentActivityId)?.isCompleted,
         activityType: activity.type,
-        save: saveState === "saving"
+        showCodeCarryoverModal: activity.allowCodeCarryover,
+        save: saveState === "saving",
+        reload: saveState === "reload" || saveState === "reloading" ? saveState : undefined
     }
 }
 
@@ -347,7 +374,9 @@ const mapDispatchToProps = {
     dispatchSetHeaderIdForActivity,
     dispatchCloseActivity,
     dispatchSaveAndCloseActivity,
-    dispatchUpdateUserCompletedTags
+    dispatchUpdateUserCompletedTags,
+    dispatchShowCarryoverModal,
+    dispatchSetReloadHeaderState
 };
 
 export const MakeCodeFrame = connect(mapStateToProps, mapDispatchToProps)(MakeCodeFrameImpl);

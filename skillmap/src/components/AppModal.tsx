@@ -4,16 +4,19 @@ import * as React from "react";
 import { connect } from 'react-redux';
 
 import { ModalType, SkillMapState } from '../store/reducer';
-import { dispatchHideModal, dispatchRestartActivity, dispatchOpenActivity, dispatchResetUser } from '../actions/dispatch';
+import { dispatchHideModal, dispatchRestartActivity, dispatchOpenActivity, dispatchResetUser, dispatchSetReloadHeaderState } from '../actions/dispatch';
 import { tickEvent, postAbuseReportAsync } from "../lib/browserUtils";
 
 import { Modal, ModalAction } from './Modal';
+import { carryoverProjectCode } from "../lib/codeCarryover";
 
 type CompletionModalType = "map" | "activity";
 
 interface AppModalProps {
     type: ModalType;
     completionType?: CompletionModalType;
+    skillMap?: SkillMap;
+    userState?: UserState;
     mapId: string;
     activity?: MapActivity;
     nextActivityId?: string;
@@ -24,6 +27,7 @@ interface AppModalProps {
     dispatchRestartActivity: (mapId: string, activityId: string) => void;
     dispatchOpenActivity: (mapId: string, activityId: string) => void;
     dispatchResetUser: () => void;
+    dispatchSetReloadHeaderState: (state: "reload" | "reloading" | "active") => void;
 }
 
 export class AppModalImpl extends React.Component<AppModalProps> {
@@ -41,6 +45,8 @@ export class AppModalImpl extends React.Component<AppModalProps> {
                 return this.renderReportAbuse();
             case "reset":
                 return this.renderResetWarning();
+            case "carryover":
+                return this.renderCodeCarryoverModal();
             default:
                 return <div/>
         }
@@ -129,6 +135,39 @@ export class AppModalImpl extends React.Component<AppModalProps> {
             <textarea className="report-abuse-text" placeholder={abuseModalText} />
         </Modal>
     }
+
+    renderCodeCarryoverModal() {
+        const  { dispatchHideModal, skillMap, activity, pageSourceUrl, userState, dispatchSetReloadHeaderState } = this.props;
+        const carryoverModalTitle = lf("Keep code from previous activity?");
+        const carryoverModalText = lf("Do you want to start with your code from the previous activity or start fresh with some starter code?");
+
+        const actions = [
+            { label: lf("START FRESH"), onClick: async () => {
+                tickEvent("skillmap.startfresh");
+
+                dispatchSetReloadHeaderState("reloading")
+
+                await carryoverProjectCode(userState!, pageSourceUrl!, skillMap!, activity!.activityId, false)
+
+                dispatchSetReloadHeaderState("reload");
+                dispatchHideModal();
+            } },
+            { label: lf("KEEP CODE"), onClick: async () => {
+                tickEvent("skillmap.keepcode");
+
+                dispatchSetReloadHeaderState("reloading")
+
+                await carryoverProjectCode(userState!, pageSourceUrl!, skillMap!, activity!.activityId, true)
+
+                dispatchSetReloadHeaderState("reload");
+                dispatchHideModal();
+            } }
+        ]
+
+        return <Modal title={carryoverModalTitle} actions={actions} onClose={this.handleOnClose}>
+            {carryoverModalText}
+        </Modal>
+    }
 }
 
 function mapStateToProps(state: SkillMapState, ownProps: any) {
@@ -171,6 +210,8 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         nextActivityId,
         pageSourceUrl,
         actions,
+        skillMap: state.editorView ? state.maps[state.editorView.currentMapId] : undefined,
+        userState: state.user,
 
         mapId: currentMapId,
         activity: currentMapId && currentActivityId ? state.maps[currentMapId].activities[currentActivityId] : undefined
@@ -181,7 +222,8 @@ const mapDispatchToProps = {
     dispatchHideModal,
     dispatchRestartActivity,
     dispatchOpenActivity,
-    dispatchResetUser
+    dispatchResetUser,
+    dispatchSetReloadHeaderState
 };
 
 export const AppModal = connect(mapStateToProps, mapDispatchToProps)(AppModalImpl);
