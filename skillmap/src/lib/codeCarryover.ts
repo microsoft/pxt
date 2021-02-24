@@ -49,6 +49,8 @@ function mergeJRES(previous: string, next: string) {
 
     const defaultMime = (nextParsed["*"] as pxt.JRes).mimeType;
 
+    // Loop over the base jres so that we can keep track of what ids, names,
+    // and values are already present in the project
     for (const key of Object.keys(nextParsed)) {
         if (key === "*") continue;
 
@@ -70,8 +72,10 @@ function mergeJRES(previous: string, next: string) {
             if (current.displayName) nameMap[current.displayName] = true;
         }
 
-        const valueKey = mimeType + isTile + valueString;
-        valueMap[valueKey] = key;
+        if (mimeType !== pxt.TILEMAP_MIME_TYPE) {
+            const valueKey = mimeType + isTile + valueString;
+            valueMap[valueKey] = key;
+        }
     }
 
 
@@ -97,7 +101,7 @@ function mergeJRES(previous: string, next: string) {
             isTile = !!current.tilemapTile;
         }
 
-        // Skip duplicate entries
+        // Skip duplicate images, tiles, and animations
         const valueKey = mimeType + isTile + valueString;
         if (valueMap[valueKey])  {
             if (isTile) tileMapping[key] = valueMap[valueKey];
@@ -105,8 +109,9 @@ function mergeJRES(previous: string, next: string) {
         }
 
         if (!displayName) {
-            // The assets will disappear if they don't have a display name, so we need to
-            // go ahead and generate some names for them
+            // The assets will disappear if they don't have a display name because they are
+            // not referenced anywhere in the blocks project. We need to generate new names
+            // for them to prevent that from happening
 
             switch (mimeType) {
                 case pxt.IMAGE_MIME_TYPE:
@@ -123,7 +128,7 @@ function mergeJRES(previous: string, next: string) {
             }
         }
 
-        // Display names have to be unique
+        // Display names need to be unique
         if (displayName && nameMap[displayName]) {
             let index = 0;
             while (nameMap[displayName + index]) {
@@ -145,7 +150,9 @@ function mergeJRES(previous: string, next: string) {
             if (isTile) tileMapping[key] = id;
         }
 
-        valueMap[valueKey] = id;
+        if (mimeType !== pxt.TILEMAP_MIME_TYPE) {
+            valueMap[valueKey] = key;
+        }
 
         const entry = {
             ...(isString ? {} : previousParsed[key] as pxt.JRes),
@@ -154,6 +161,7 @@ function mergeJRES(previous: string, next: string) {
             mimeType
         } as any;
 
+        // Only tilemap entries specify an id, other mimes just use the namespace + key
         if (entry.id) entry.id = id;
 
         if (mimeType === pxt.TILEMAP_MIME_TYPE) {
@@ -164,7 +172,7 @@ function mergeJRES(previous: string, next: string) {
         }
     }
 
-    // If any tiles changed ids, we need to fix the entries to point to the new ids
+    // If any tiles changed ids, we need to fix the tilemaps' tilesets to point to the new ids
     for (const key of Object.keys(tilemapEntries)) {
         const entry = tilemapEntries[key];
         entry.tileset = entry.tileset?.map(id => tileMapping[id] || id);
