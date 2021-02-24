@@ -243,7 +243,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
 }
 
 function postSimEditorEvent(subtype: string, exception?: string) {
-    if (pxt.appTarget.appTheme.allowParentController && pxt.BrowserUtils.isIFrame()) {
+    if (pxt.editor.shouldPostHostMessages()) {
         pxt.editor.postHostMessageAsync({
             type: "pxthost",
             action: "simevent",
