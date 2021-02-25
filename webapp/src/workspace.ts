@@ -571,6 +571,10 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
             data.invalidate("pkg-git-status:" + h.id);
         }
         data.invalidateHeader("header", h);
+        if (newSave) {
+            // the count of headers has changed
+            data.invalidate("headers:");
+        }
 
         refreshHeadersSession();
     });

@@ -435,11 +435,6 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
         const localHeaderChangesList = U.values(localHeaderChanges)
         pxt.log(`Cloud sync finished after ${elapsed} seconds with ${localHeaderChangesList.length} local changes.`);
         pxt.tickEvent(`identity.sync.finished`, { elapsed })
-        if (didProjectCountChange) {
-            // headers are individually invalidated as they are synced, but if new projects come along we also need to
-            // update the global headers list.
-            data.invalidate("headers:");
-        }
 
         return localHeaderChangesList
     }

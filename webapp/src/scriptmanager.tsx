@@ -190,7 +190,6 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                     return workspace.saveAsync(clonedHeader);
                 })
                 .then(() => {
-                    data.invalidate("headers:");
                     data.invalidate(`headers:${this.state.searchFor}`);
                     this.setState({ selected: {}, markedNew: { '0': 1 }, sortedBy: 'time', sortedAsc: false });
                     setTimeout(() => {
