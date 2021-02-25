@@ -144,11 +144,6 @@ function buildMapFromSections(header: MarkdownSection, sections: MarkdownSection
         visited[root.activityId] = true;
         reachable[root.activityId] = true;
 
-        // TODO shakao clean
-        // if (root.next.length > 1) {
-        //     error("Branching currently not supported")
-        // }
-
         for (const next of root.next) {
             checkForLoopsRecursive(next, {...visited});
         }

@@ -212,8 +212,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
                         { error
                             ? <div className="skill-map-error">{error}</div>
                             : maps?.map((el, i) => {
-                                // TODO shakao clean up
-                                return <SkillGraph map={el} key={i} /> //<SkillCarousel map={el} key={i} /> //
+                                return <SkillCarousel map={el} key={i} /> // <SkillGraph map={el} key={i} />
                             })}
                     </div>
                 </div>
