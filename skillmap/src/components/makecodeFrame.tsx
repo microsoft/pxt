@@ -3,7 +3,7 @@ import * as React from "react";
 import { connect } from 'react-redux';
 import { saveProjectAsync, getProjectAsync } from "../lib/workspaceProvider";
 import { isLocal, resolvePath, getEditorUrl, tickEvent } from "../lib/browserUtils";
-import { isActivityCompleted, lookupActivityProgress } from "../lib/skillMapUtils";
+import { isActivityCompleted, lookupActivityProgress, lookupPreviousActivityStates } from "../lib/skillMapUtils";
 
 import { SkillMapState } from '../store/reducer';
 import  { dispatchSetHeaderIdForActivity, dispatchCloseActivity, dispatchSaveAndCloseActivity, dispatchUpdateUserCompletedTags, dispatchShowCarryoverModal, dispatchSetReloadHeaderState } from '../actions/dispatch';
@@ -351,13 +351,9 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
     url += `?controller=1&skillsMap=1&noproject=1&nocookiebanner=1`;
     title = activity.displayName;
 
-    let previousActivityCompleted = false;
-    const previousId = Object.keys(map.activities).find(key => map.activities[key].next.some(a => a.activityId === currentActivityId));
-    if (previousId) {
-        const previousActivityState = lookupActivityProgress(state.user, state.pageSourceUrl, currentMapId, previousId);
-        previousActivityCompleted = !!(previousActivityState?.isCompleted &&
-            previousActivityState.maxSteps === previousActivityState.currentStep);
-    }
+    const previous = lookupPreviousActivityStates(state.user, state.pageSourceUrl, map, activity.activityId);
+    const previousActivityCompleted = previous.some(state => state?.isCompleted &&
+        state.maxSteps === state.currentStep);
 
     return {
         url,
