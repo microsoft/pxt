@@ -111,7 +111,7 @@ export class File implements pxt.editor.IFile {
             this.inSyncWithDisk = false;
             this.content = newContent;
             this.updateStatus();
-            return this.epkg.saveFilesAsync()
+            return this.epkg.saveFileAsync(this.name)
                 .then(() => {
                     if (this.content == newContent) {
                         this.inSyncWithDisk = true;
@@ -421,6 +421,12 @@ export class EditorPackage {
         let r = Util.mapMap(this.files, (k, f) => f.content)
         delete r[pxt.SERIAL_EDITOR_FILE]
         return r
+    }
+
+    saveFileAsync(filename: string) {
+        if (!this.header) return Promise.resolve();
+        const content = this.files[filename]?.content
+        return workspace.partialSaveAsync(this.header.id, filename, content);
     }
 
     saveFilesAsync() {

@@ -427,6 +427,18 @@ function stringifyChangeSummary(diff: ProjectChanges): string {
     return res;
 }
 
+export async function partialSaveAsync(id: string, filename: string, content: string): Promise<void> {
+    const prev = lookup(id);
+    if (!prev) {
+        pxt.log("Failed to save to unknown project: " + id);
+        pxt.tickEvent(`workspace.invalidSaveToUnknownProject`);
+        return;
+    }
+    const newTxt = {...prev.text}
+    newTxt[filename] = content;
+    return saveAsync(prev.header, newTxt);
+}
+
 export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: boolean): Promise<void> {
     pxt.debug(`workspace.saveAsync ${dbgHdrToString(h)}`)
     if (h.isDeleted)
