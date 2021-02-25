@@ -3277,6 +3277,7 @@ export class ProjectView
             classes,
             this.rootClasses.indexOf("flyoutOnly") != -1 ? "flyoutOnly" : "",
             this.rootClasses.indexOf("inverted-theme") != -1 ? "inverted-theme" : "",
+            this.rootClasses.indexOf("hideIteration") != -1 ? "hideIteration" : ""
         ]
         return sui.cx(rootClassList);
     }
@@ -3550,7 +3551,7 @@ export class ProjectView
             // add as a dependency itself
             if (pxtJson.files.find(f => /\.ts$/.test(f))) {
                 dependencies = {}
-                dependencies[ghid.project] = pxt.github.toGithubDependencyPath(ghid);
+                dependencies[ghid.project] = pxt.github.toGithubDependencyPath(ghid.slug, ghid.tag);
             }
             else {// just use dependencies from the tutorial
                 pxt.Util.jsonMergeFrom(dependencies, pxtJson.dependencies);
@@ -3714,14 +3715,15 @@ export class ProjectView
 
     getExpandedCardStyle(flyoutOnly?: boolean): any {
         let tc = this.refs[ProjectView.tutorialCardId] as tutorial.TutorialCard;
-        let margin = 2;
+        let headerHeight = 0;
         if (flyoutOnly) {
-            margin += 2;
+            let headers = document.getElementById("headers");
+            headerHeight += headers.offsetHeight;
         }
         if (tc) {
             // maxium offset of 18rem
-            let maxOffset = Math.min(tc.getCardHeight(), parseFloat(getComputedStyle(document.documentElement).fontSize) * 18);
-            return { 'top': "calc(" + maxOffset + "px + " + margin + "em)" };
+            let maxOffset = Math.min(tc.getCardHeight() + headerHeight, parseFloat(getComputedStyle(document.documentElement).fontSize) * 18);
+            return { 'top': "calc(" + maxOffset + "px + 2em)" }; // 2em for margins
         }
         return null;
     }
