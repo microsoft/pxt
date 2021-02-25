@@ -24,6 +24,7 @@ interface MakeCodeFrameProps {
     activityHeaderId?: string;
     activityType: MapActivityType;
     showCodeCarryoverModal: boolean;
+    carryoverModalVisible: boolean;
     dispatchSetHeaderIdForActivity: (mapId: string, activityId: string, id: string, currentStep: number, maxSteps: number, isCompleted: boolean) => void;
     dispatchCloseActivity: (finished?: boolean) => void;
     dispatchSaveAndCloseActivity: () => void;
@@ -90,7 +91,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
     }
 
     render() {
-        const { url, title, save } = this.props;
+        const { url, title, save, carryoverModalVisible } = this.props;
         const { loaded, unloading } = this.state;
 
         const loadingText = save ? lf("Saving...") : lf("Loading...")
@@ -98,7 +99,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
 
         /* tslint:disable:react-iframe-missing-sandbox */
         return <div className="makecode-frame-outer">
-            <div className={`makecode-frame-loader ${(loaded && !save) ? "hidden" : ""}`}>
+            <div className={`makecode-frame-loader ${(loaded && !save && !carryoverModalVisible) ? "hidden" : ""}`}>
                 <img src={resolvePath("assets/logo.svg")} alt={imageAlt} />
                 <div className="makecode-frame-loader-text">{loadingText}</div>
             </div>
@@ -365,6 +366,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         completed: lookupActivityProgress(state.user, state.pageSourceUrl, currentMapId, currentActivityId)?.isCompleted,
         activityType: activity.type,
         showCodeCarryoverModal: activity.allowCodeCarryover && previousActivityCompleted,
+        carryoverModalVisible: state.modal?.type === "carryover",
         save: saveState === "saving",
         reload: saveState === "reload" || saveState === "reloading" ? saveState : undefined
     }
