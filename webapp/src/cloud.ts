@@ -248,15 +248,6 @@ async function resolveConflict(local: Header, remoteFile: File) {
         pxt.tickEvent(`identity.sync.conflict.reloadEditorFailed`, {exception: e});
     }
 
-    // 2a. tell the user a conflict occured
-    try {
-        core.infoNotification(lf(`Project '${local.name}' was editted in two places and the changes conflict. Creating backup copy...`));
-    } catch (e) {
-        // we want to swallow this and keep going since it's non-essential
-        pxt.reportException(e);
-        pxt.tickEvent(`identity.sync.conflict.toastNotificationFailed`, {exception: e});
-    }
-
     // 3. overwrite local changes in the original project with cloud changes 
     try {
         const overwrittenLocalHdr = await transferFromCloud(local, remoteFile)
@@ -270,6 +261,21 @@ async function resolveConflict(local: Header, remoteFile: File) {
 
     // 4. upload new project to the cloud (network op)
     const copyUploadHdr = await transferToCloud(newCopyHdr, null);
+
+    // 5. tell the user a conflict occured
+    try {
+        core.dialogAsync({
+            header: lf(`Project '${local.name}' had a conflict`),
+            body: lf(`Project '${local.name}' was editted in two places and the changes conflict. The changes from this computer (from ${U.timeSince(local.modificationTime)}) have instead been saved to '${newCopyHdr.name}'. The changes made elsewhere (from ${U.timeSince(remoteFile.header.modificationTime)}) remain in '${remoteFile.header.name}'.`),
+            disagreeLbl: lf("Got it!"),
+            disagreeClass: "green",
+            hasCloseIcon: false,
+        });
+    } catch (e) {
+        // we want to swallow this and keep going since it's non-essential
+        pxt.reportException(e);
+        pxt.tickEvent(`identity.sync.conflict.dialogNotificationFailed`, {exception: e});
+    }
 }
 
 function getLocalCloudHeaders(allHdrs?: Header[]) {
