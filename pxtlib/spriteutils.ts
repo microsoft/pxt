@@ -647,6 +647,51 @@ namespace pxt.sprite {
         return result;
     }
 
+    export function addMissingTilemapTilesAndReferences(project: TilemapProject, asset: ProjectTilemap) {
+        const allTiles = project.getProjectTiles(asset.data.tileset.tileWidth, true);
+        asset.data.projectReferences = [];
+
+        for (const tile of allTiles.tiles) {
+            if (!asset.data.tileset.tiles.some(t => t.id === tile.id)) {
+                asset.data.tileset.tiles.push(tile);
+            }
+            if (project.isAssetUsed(tile, null, [asset.id])) {
+                asset.data.projectReferences.push(tile.id);
+            }
+        }
+    }
+
+    export function updateTilemapReferencesFromResult(project: TilemapProject, assetResult: ProjectTilemap) {
+        const result = assetResult.data;
+
+        if (result.deletedTiles) {
+            for (const deleted of result.deletedTiles) {
+                project.deleteTile(deleted);
+            }
+        }
+
+        if (result.editedTiles) {
+            for (const edit of result.editedTiles) {
+                const editedIndex = result.tileset.tiles.findIndex(t => t.id === edit);
+                const edited = result.tileset.tiles[editedIndex];
+
+                if (!edited) continue;
+
+                result.tileset.tiles[editedIndex] = project.updateTile(edited);
+            }
+        }
+
+        for (let i = 0; i < result.tileset.tiles.length; i++) {
+            const tile = result.tileset.tiles[i];
+
+            if (!tile.jresData) {
+                result.tileset.tiles[i] = project.resolveTile(tile.id);
+            }
+        }
+
+        pxt.sprite.trimTilemapTileset(result);
+    }
+
     function imageLiteralPrologue(fileType: "typescript" | "python"): string {
         let res = '';
         switch (fileType) {

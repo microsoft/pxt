@@ -106,7 +106,7 @@ function mergeJRES(previous: string, next: string) {
         // Skip duplicate images, tiles, and animations
         const valueKey = mimeType + isTile + valueString;
         if (valueMap[valueKey])  {
-            if (isTile) tileMapping[key] = valueMap[valueKey];
+            if (isTile) tileMapping[pxt.sprite.TILE_NAMESPACE + "." + key] = pxt.sprite.TILE_NAMESPACE + "." + valueMap[valueKey];
             continue;
         }
 
@@ -149,7 +149,7 @@ function mergeJRES(previous: string, next: string) {
             }
             id = id + index;
             idMap[id] = true;
-            if (isTile) tileMapping[key] = id;
+            if (isTile) tileMapping[pxt.sprite.TILE_NAMESPACE + "." + key] = pxt.sprite.TILE_NAMESPACE + "." + id;
         }
 
         if (mimeType !== pxt.TILEMAP_MIME_TYPE) {

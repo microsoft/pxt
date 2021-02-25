@@ -12,17 +12,7 @@ namespace pxt.editor {
             const tm = this.readTilemap(text);
 
             const project = pxt.react.getTilemapProject();
-            const allTiles = project.getProjectTiles(tm.data.tileset.tileWidth, true);
-            tm.data.projectReferences = [];
-
-            for (const tile of allTiles.tiles) {
-                if (!tm.data.tileset.tiles.some(t => t.id === tile.id)) {
-                    tm.data.tileset.tiles.push(tile);
-                }
-                if (project.isAssetUsed(tile, null, [tm.id])) {
-                    tm.data.projectReferences.push(tile.id);
-                }
-            }
+            pxt.sprite.addMissingTilemapTilesAndReferences(project, tm);
 
             return tm;
         }
@@ -80,46 +70,14 @@ namespace pxt.editor {
             const project = pxt.react.getTilemapProject();
             project.pushUndo();
 
-            const result = asset.data;
-
-            if (result.deletedTiles) {
-                for (const deleted of result.deletedTiles) {
-                    project.deleteTile(deleted);
-                }
-            }
-
-            if (result.editedTiles) {
-                for (const edit of result.editedTiles) {
-                    const editedIndex = result.tileset.tiles.findIndex(t => t.id === edit);
-                    const edited = result.tileset.tiles[editedIndex];
-
-                    // New tiles start with *. We haven't created them yet so ignore
-                    if (!edited || edited.id.startsWith("*")) continue;
-
-                    result.tileset.tiles[editedIndex] = project.updateTile(edited);
-                }
-            }
-
-            for (let i = 0; i < result.tileset.tiles.length; i++) {
-                const tile = result.tileset.tiles[i];
-
-                if (tile.id.startsWith("*")) {
-                    const newTile = project.createNewTile(tile.bitmap);
-                    result.tileset.tiles[i] = newTile;
-                }
-                else if (!tile.jresData) {
-                    result.tileset.tiles[i] = project.resolveTile(tile.id);
-                }
-            }
-
-            pxt.sprite.trimTilemapTileset(result);
+            pxt.sprite.updateTilemapReferencesFromResult(project, asset);
 
             if (this.isTilemapLiteral) {
                 project.updateAsset(asset);
                 return pxt.getTSReferenceForAsset(asset, this.fileType === "python");
             }
             else {
-                return pxt.sprite.encodeTilemap(result, this.fileType === "typescript" ? "typescript" : "python");
+                return pxt.sprite.encodeTilemap(asset.data, this.fileType === "typescript" ? "typescript" : "python");
             }
         }
 
