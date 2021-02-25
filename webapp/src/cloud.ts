@@ -248,7 +248,7 @@ async function resolveConflict(local: Header, remoteFile: File) {
         pxt.tickEvent(`identity.sync.conflict.reloadEditorFailed`, {exception: e});
     }
 
-    // 3. overwrite local changes in the original project with cloud changes 
+    // 3. overwrite local changes in the original project with cloud changes
     try {
         const overwrittenLocalHdr = await transferFromCloud(local, remoteFile)
     } catch (e) {
@@ -419,7 +419,7 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
                 pxt.tickEvent(`identity.sync.importCloudProject`)
                 didProjectCountChange = true;
             })]
-            
+
         await Promise.all(tasks);
 
         // reset cloud state sync metadata if there is any
@@ -490,7 +490,7 @@ const onHeaderChangeSubscriber: data.DataSubscriber = {
         const parts = path.split("header:");
         U.assert(parts.length === 2, "onHeaderChangeSubscriber has invalid path subscription: " + path)
         const hdrId = parts[1];
-        if (hdrId === "*") { 
+        if (hdrId === "*") {
             // all headers
             // TODO https://github.com/microsoft/pxt-arcade/issues/3129: this branch is being hit WAY too often.
             getLocalCloudHeaders().forEach(h => onHeaderChangeDebouncer(h));
@@ -518,7 +518,7 @@ async function onHeaderChangeDebouncer(h: Header) {
         const hdrs = getLocalCloudHeaders().filter(h => headerWorklist[h.id])
         await onHeadersChanged(hdrs);
         headerWorklist = {}; // clear worklist
-    }; 
+    };
 
     // has it been longer than the max time?
     if (!onHeaderChangeStarted)
@@ -565,7 +565,7 @@ function cloudHeaderMetadataHandler(p: string): any {
 }
 
 export function init() {
-    console.log("cloud init");    
+    console.log("cloud init");
     // mount our virtual APIs
     data.mountVirtualApi(HEADER_CLOUDSTATE, { getSync: cloudHeaderMetadataHandler });
 
