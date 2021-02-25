@@ -76,7 +76,11 @@ let theEditor: ProjectView;
 let hash: { cmd: string, arg: string };
 let pendingEditorRequests: ((p: ProjectView) => void)[];
 
-function getEditorAsync() {
+export function hasEditor() {
+    return !!theEditor;
+}
+
+export function getEditorAsync() {
     if (theEditor) return Promise.resolve(theEditor);
     if (!pendingEditorRequests) pendingEditorRequests = [];
     return new Promise<ProjectView>(resolve => {
@@ -1108,7 +1112,7 @@ export class ProjectView
     removeFile(fn: pkg.File, skipConfirm = false) {
         const removeIt = () => {
             pkg.mainEditorPkg().removeFileAsync(fn.name)
-                .then(() => pkg.mainEditorPkg().saveFilesAsync(true))
+                .then(() => pkg.mainEditorPkg().saveFilesAsync())
                 .then(() => this.reloadHeaderAsync())
                 .done();
         }
@@ -1134,7 +1138,6 @@ export class ProjectView
         return p.setContentAsync(name, content)
             .then(() => {
                 if (open) this.setFile(p.lookupFile("this/" + name));
-                return p.cloudSavePkgAsync();
             })
             .then(() => this.reloadHeaderAsync())
     }
@@ -1810,7 +1813,6 @@ export class ProjectView
                                 cfg.dependencies = {};
                             cfg.dependencies[n] = `pkg:${fn}`;
                         }))
-                        .then(() => mpkg.cloudSavePkgAsync())
                         .done(() => this.reloadHeaderAsync());
                 }
             }
@@ -4087,11 +4089,6 @@ function parseLocalToken() {
     Cloud.localToken = pxt.storage.getLocal("local_token") || "";
 }
 
-function initLogin() {
-    cloudsync.loginCheck()
-    parseLocalToken();
-    auth.authCheck();
-}
 
 function initPacketIO() {
     pxt.debug(`packetio: hook events`)
@@ -4568,7 +4565,11 @@ document.addEventListener("DOMContentLoaded", () => {
         auth.loginCallback(query);
     }
 
-    initLogin();
+    auth.init();
+    cloud.init(); // depends on auth.init() and workspace.ts's top level
+    cloudsync.loginCheck()
+    parseLocalToken();
+    auth.authCheck();
     hash = parseHash();
     appcache.init(() => theEditor.reloadEditor());
     blocklyFieldView.init();
@@ -4601,7 +4602,7 @@ document.addEventListener("DOMContentLoaded", () => {
     else if (isSandbox) workspace.setupWorkspace("mem");
     else if (pxt.winrt.isWinRT()) workspace.setupWorkspace("uwp");
     else if (pxt.BrowserUtils.isIpcRenderer()) workspace.setupWorkspace("idb");
-    else if (pxt.BrowserUtils.isLocalHost() || pxt.BrowserUtils.isPxtElectron()) workspace.setupWorkspace("fs");
+    else if (pxt.BrowserUtils.isPxtElectron()) workspace.setupWorkspace("fs");
     else workspace.setupWorkspace("browser");
     Promise.resolve()
         .then(async () => {

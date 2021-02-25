@@ -111,7 +111,7 @@ export class File implements pxt.editor.IFile {
             this.inSyncWithDisk = false;
             this.content = newContent;
             this.updateStatus();
-            return this.epkg.saveFilesAsync()
+            return this.epkg.saveFileAsync(this.name)
                 .then(() => {
                     if (this.content == newContent) {
                         this.inSyncWithDisk = true;
@@ -180,8 +180,9 @@ export class EditorPackage {
     assetsPkg: EditorPackage;
 
     constructor(private ksPkg: pxt.Package, private topPkg: EditorPackage) {
-        if (ksPkg && ksPkg.verProtocol() == "workspace")
+        if (ksPkg && ksPkg.verProtocol() == "workspace") {
             this.header = workspace.getHeader(ksPkg.verArgument())
+        }
     }
 
     getSimState() {
@@ -340,17 +341,17 @@ export class EditorPackage {
             .then(updates => this.updateConfigAsync(config =>
                 updates.forEach(({ ghid, cfg }) => config.dependencies[cfg.name] = pxt.github.stringifyRepo(ghid))
             ))
-            .then(() => this.saveFilesAsync(true));
+            .then(() => this.saveFilesAsync());
     }
 
     removeDepAsync(pkgid: string) {
         return this.updateConfigAsync(cfg => delete cfg.dependencies[pkgid])
-            .then(() => this.saveFilesAsync(true));
+            .then(() => this.saveFilesAsync());
     }
 
     addDepAsync(pkgid: string, pkgversion: string) {
         return this.updateConfigAsync(cfg => cfg.dependencies[pkgid] = pkgversion)
-            .then(() => this.saveFilesAsync(true));
+            .then(() => this.saveFilesAsync());
     }
 
     getKsPkg() {
@@ -389,7 +390,6 @@ export class EditorPackage {
         if (!f) {
             f = this.setFile(n, v);
             p = p.then(() => this.updateConfigAsync(cfg => cfg.files.indexOf(n) < 0 ? cfg.files.push(n) : 0))
-            p.then(() => this.cloudSavePkgAsync())
         }
         return p.then(() => f.setContentAsync(v));
     }
@@ -417,39 +417,19 @@ export class EditorPackage {
         this.updateGitJsonCache()
     }
 
-    private updateStatus() {
-        data.invalidate("pkg-status:" + this.header.id)
-    }
-
-    cloudSavePkgAsync() {
-        if (this.header.cloudCurrent || !auth.loggedInSync()) return Promise.resolve();
-        this.savingNow++;
-        this.updateStatus();
-        return workspace.saveToCloudAsync(this.header)
-            .then(() => {
-                this.savingNow--;
-                this.updateStatus();
-                if (!this.header.cloudCurrent)
-                    this.scheduleCloudSavePkg();
-            })
-    }
-
-    private scheduleCloudSavePkg() {
-        if (this.saveScheduled) return
-        this.saveScheduled = true;
-        setTimeout(() => {
-            this.saveScheduled = false;
-            this.cloudSavePkgAsync().done();
-        }, 5000)
-    }
-
     getAllFiles(): pxt.Map<string> {
         let r = Util.mapMap(this.files, (k, f) => f.content)
         delete r[pxt.SERIAL_EDITOR_FILE]
         return r
     }
 
-    saveFilesAsync(immediate?: boolean) {
+    saveFileAsync(filename: string) {
+        if (!this.header) return Promise.resolve();
+        const content = this.files[filename]?.content
+        return workspace.partialSaveAsync(this.header.id, filename, content);
+    }
+
+    saveFilesAsync() {
         if (!this.header) return Promise.resolve();
 
         let cfgFile = this.files[pxt.CONFIG_NAME]
@@ -461,7 +441,6 @@ export class EditorPackage {
             }
         }
         return workspace.saveAsync(this.header, this.getAllFiles())
-            .then(() => immediate ? this.cloudSavePkgAsync() : this.scheduleCloudSavePkg())
     }
 
     sortedFiles(): File[] {
