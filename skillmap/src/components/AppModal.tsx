@@ -139,7 +139,7 @@ export class AppModalImpl extends React.Component<AppModalProps> {
     renderCodeCarryoverModal() {
         const  { dispatchHideModal, skillMap, activity, pageSourceUrl, userState, dispatchSetReloadHeaderState } = this.props;
         const carryoverModalTitle = lf("Keep code from previous activity?");
-        const carryoverModalText = lf("Do you want to start with your code from the previous activity or start fresh with template code? Your images, tilemaps, tiles, and animations will stick around either way.");
+        const carryoverModalText = lf("Do you want to start with your code from the previous activity or start fresh with starter code? Your images, tilemaps, tiles, and animations will stick around either way.");
 
         const actions = [
             { label: lf("START FRESH"), onClick: async () => {
