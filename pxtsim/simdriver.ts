@@ -513,7 +513,7 @@ namespace pxsim {
             this.frameCleanupTimeout = setTimeout(() => {
                 this.frameCleanupTimeout = 0;
                 this.cleanupFrames();
-            }, 5000);
+            }, 10000);
         }
 
         private applyAspectRatio(ratio?: number) {
