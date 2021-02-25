@@ -477,6 +477,7 @@ namespace pxt {
                 this.config = cfg;
             } catch (e) {
                 this.configureAsInvalidPackage(lf("Syntax error in pxt.json"));
+                pxt.tickEvent("package.invalidConfigEncountered")
             }
 
             const currentConfig = JSON.stringify(this.config);

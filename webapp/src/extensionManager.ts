@@ -421,8 +421,7 @@ function handleWriteCodeRequestAsync(name: string, resp: e.WriteCodeResponse, fi
             cfg.files.push(fn + ".asm");
         }
         missingDependencies?.forEach(dep => cfg.dependencies[dep] = files.dependencies[dep]);
-        return mainPackage.cloudSavePkgAsync();
-    }).then(() => mainPackage.saveFilesAsync(true));
+    }).then(() => mainPackage.saveFilesAsync());
 }
 
 function mkEvent(event: string): e.ExtensionEvent {

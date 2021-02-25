@@ -643,15 +643,12 @@ async function userPreferencesHandlerAsync(path: string): Promise<UserPreference
     return internalUserPreferencesHandler(path);
 }
 
-data.mountVirtualApi(USER_PREF_MODULE, {
-    getSync: userPreferencesHandlerSync,
-    // TODO: virtual apis don't support both sync & async
-    // getAsync: userPreferencesHandlerAsync
-});
+export function init() {
+    data.mountVirtualApi(USER_PREF_MODULE, {
+        getSync: userPreferencesHandlerSync,
+        // TODO: virtual apis don't support both sync & async
+        // getAsync: userPreferencesHandlerAsync
+    });
 
-data.mountVirtualApi(MODULE, { getSync: authApiHandler });
-
-
-// ClouddWorkspace must be included after we mount our virtual APIs.
-import * as cloudWorkspace from "./cloud";
-cloudWorkspace.init();
+    data.mountVirtualApi(MODULE, { getSync: authApiHandler });
+}
