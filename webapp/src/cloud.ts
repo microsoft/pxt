@@ -266,7 +266,7 @@ async function resolveConflict(local: Header, remoteFile: File) {
     try {
         core.dialogAsync({
             header: lf(`Project '${local.name}' had a conflict`),
-            body: lf(`Project '${local.name}' was editted in two places and the changes conflict. The changes from this computer (from ${U.timeSince(local.modificationTime)}) have instead been saved to '${newCopyHdr.name}'. The changes made elsewhere (from ${U.timeSince(remoteFile.header.modificationTime)}) remain in '${remoteFile.header.name}'.`),
+            body: lf(`Project '${local.name}' was edited in two places and the changes conflict. The changes from this computer (from ${U.timeSince(local.modificationTime)}) have instead been saved to '${newCopyHdr.name}'. The changes made elsewhere (from ${U.timeSince(remoteFile.header.modificationTime)}) remain in '${remoteFile.header.name}'.`),
             disagreeLbl: lf("Got it!"),
             disagreeClass: "green",
             hasCloseIcon: false,

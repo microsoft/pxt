@@ -1330,7 +1330,7 @@ export function prepareConfigForGithub(content: string, createRelease?: boolean)
         cfg.supportedTargets = supportedTargets;
     }
 
-    // track target and target version this was last editted in, so we can apply upgrade rules on import.
+    // track target and target version this was last edited in, so we can apply upgrade rules on import.
     cfg.targetVersions = {
         ...cfg.targetVersions,
         target: pxt.appTarget.versions.target,
