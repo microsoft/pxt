@@ -1629,7 +1629,7 @@ let _abrvNextInt = 1;
 function dbgShorten(s: string): string {
     if (!s)
         return "#0";
-    if (!_abrvStrs[s]){
+    if (!_abrvStrs[s]) {
         _abrvStrs[s] = "#" + _abrvNextInt;
         _abrvNextInt += 1;
     }

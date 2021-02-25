@@ -283,7 +283,7 @@ function getLocalCloudHeaders(allHdrs?: Header[]) {
     if (!auth.loggedInSync()) { return []; }
     return (allHdrs || workspace.getHeaders(true))
         .filter(h => h.cloudUserId && h.cloudUserId === auth.user()?.id);
-    }
+}
 
 async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
     if (!auth.hasIdentity()) { return []; }
@@ -423,10 +423,9 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
         await Promise.all(tasks);
 
         // reset cloud state sync metadata if there is any
-        getLocalCloudHeaders(hdrs).forEach(async t => {
-            const newHdr = await t
-            if (getCloudTempMetadata(newHdr.id).cloudInProgressSyncStartTime > 0) {
-                updateCloudTempMetadata(newHdr.id, { cloudInProgressSyncStartTime: 0 });
+        getLocalCloudHeaders(hdrs).forEach(hdr => {
+            if (getCloudTempMetadata(hdr.id).cloudInProgressSyncStartTime > 0) {
+                updateCloudTempMetadata(hdr.id, { cloudInProgressSyncStartTime: 0 });
             }
         })
 
