@@ -7,16 +7,17 @@ import { SkillGraphNode } from './SkillGraphNode';
 import { SkillGraphPath } from "./SkillGraphPath";
 
 import { isActivityUnlocked } from '../lib/skillMapUtils';
-import { GraphCoord, simpleGraph } from '../lib/skillGraphUtils';
+import { GraphCoord, GraphEdgeDirection, orthogonalGraph } from '../lib/skillGraphUtils';
 
 interface GraphItem {
     activity: MapActivity;
-    offset: GraphCoord;
+    position: GraphCoord;
 }
 
 interface GraphPath {
     start: GraphCoord;
     end: GraphCoord;
+    direction?: GraphEdgeDirection;
 }
 
 interface SkillGraphProps {
@@ -44,28 +45,30 @@ class SkillGraphImpl extends React.Component<SkillGraphProps> {
     }
 
     protected getItems(root: MapActivity): { items: GraphItem[], paths: GraphPath[] } {
-        const nodes = simpleGraph(root);
+        const nodes = orthogonalGraph(root);
 
         // Convert into renderable items
         const items: GraphItem[] = [];
         const paths: GraphPath[] = [];
         for (let current of nodes) {
-            const { layer, counter, width } = current;
+            const { depth, offset } = current;
                 items.push({
                     activity: current,
-                    offset: this.getOffset(layer, counter, width)
+                    position: this.getPosition(depth, offset)
                 });
                 if (current.parents && current.parents.length > 0) {
-                    for (let p of current.parents) {
+                    for (let i = 0; i < current.parents.length; i++) {
+                        let p = current.parents[i];
                         paths.push({
-                            start: this.getOffset(p.layer, p.counter, p.width),
-                            end: this.getOffset(layer, counter, width)
+                            start: this.getPosition(p.depth, p.offset),
+                            end: this.getPosition(depth, offset),
+                            direction: current.edges?.[i] || "horizontal"
                         })
                     }
                 }
 
-                this.size.height = Math.max(this.size.height, current.counter);
-                this.size.width = Math.max(this.size.width, current.layer);
+                this.size.height = Math.max(this.size.height, current.offset);
+                this.size.width = Math.max(this.size.width, current.depth);
         }
 
         return { items, paths };
@@ -81,8 +84,8 @@ class SkillGraphImpl extends React.Component<SkillGraphProps> {
     }
 
     // This function converts graph position (no units) to x/y (SVG units)
-    protected getOffset(depth: number, counter: number, width?: number): { x: number, y: number } {
-        return { x: (depth + 1) * 12 * UNIT, y: (counter * 8 + 1) * UNIT}
+    protected getPosition(depth: number, offset: number): { x: number, y: number } {
+        return { x: (depth + 1) * 12 * UNIT, y: (offset * 8 + 6) * UNIT}
     }
 
     render() {
@@ -92,17 +95,17 @@ class SkillGraphImpl extends React.Component<SkillGraphProps> {
                 <span>{map.displayName}</span>
             </div>}
             <div className="graph">
-                <svg xmlns="http://www.w3.org/2000/svg" width={this.size.width * 20 * UNIT} height={this.size.height * 10 * UNIT}>
+                <svg xmlns="http://www.w3.org/2000/svg" width={(this.size.width + 2) * 12 * UNIT} height={(this.size.height + 2) * 8 * UNIT}>
                     {this.paths.map((el, i) => {
-                        return <SkillGraphPath key={`graph-activity-${i}`} strokeWidth={3 * UNIT} color="#000" start={el.start} end={el.end} />
+                        return <SkillGraphPath key={`graph-activity-${i}`} strokeWidth={3 * UNIT} color="#000" start={el.start} end={el.end} direction={el.direction}/>
                     })}
                     {this.paths.map((el, i) => {
-                         return <SkillGraphPath key={`graph-activity-${i}`} strokeWidth={3 * UNIT - 4} color="#BFBFBF" start={el.start}  end={el.end} />
+                         return <SkillGraphPath key={`graph-activity-${i}`} strokeWidth={3 * UNIT - 4} color="#BFBFBF" start={el.start} end={el.end} direction={el.direction} />
                     })}
                     {this.items.map((el, i) => {
                         return <SkillGraphNode key={`graph-activity-${i}`}
                             activityId={el.activity.activityId}
-                            offset={el.offset}
+                            position={el.position}
                             width={5 * UNIT}
                             selected={el.activity.activityId === selectedItem}
                             onItemSelect={this.onItemSelect}
