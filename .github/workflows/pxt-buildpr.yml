@@ -26,6 +26,7 @@ jobs:
         run: |
           npm test
         env:
+          PXT_ENV: production
           CHROME_BIN: chromium-browser
           DISPLAY: :99.0
           CI: true
