@@ -1658,7 +1658,7 @@ namespace pxt {
         const frameWidth = read16Bit(bytes, 2);
         const frameHeight = read16Bit(bytes, 4);
         const frameCount = read16Bit(bytes, 6);
-        const frameLength = (frameWidth * frameHeight) >> 1;
+        const frameLength = Math.ceil((frameWidth * frameHeight) / 2);
 
         let offset = 8;
 
