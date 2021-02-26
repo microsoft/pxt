@@ -1332,7 +1332,7 @@ export class ProjectView
                                 // We are too late; the editor has already been loaded.
                                 // Call the onChanges handler to update the editor.
                                 pxt.tickEvent(`identity.syncOnProjectOpen.timedout`, { 'elapsedSec': elapsed})
-                                if (changes.length)
+                                if (changes.some(header => header.id === h.id))
                                     cloud.forceReloadForCloudSync()
                             } else {
                                 // We're not too late, update the local var so that the
@@ -4560,7 +4560,11 @@ document.addEventListener("DOMContentLoaded", () => {
         auth.loginCallback(query);
     }
 
-    auth.init();
+    // Disable auth in skillmap until it is properly supported.
+    // See https://github.com/microsoft/pxt-arcade/issues/3138
+    const disableAuth = query["skillsMap"] == "1";
+
+    auth.init(disableAuth);
     cloud.init(); // depends on auth.init() and workspace.ts's top level
     cloudsync.loginCheck()
     parseLocalToken();

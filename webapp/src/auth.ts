@@ -24,6 +24,9 @@ const AUTH_LOGIN_STATE = "auth:login-state";
 const AUTH_USER_STATE = "auth:user-state";
 const X_PXT_TARGET = "x-pxt-target";
 
+// initialized by init() call.
+let authDisabled = true;
+
 export type UserProfile = {
     id?: string;
     idp?: {
@@ -366,7 +369,7 @@ export function hasIdentity(): boolean {
     // Must read storage for this rather than app theme because this method
     // gets called before experiments are synced to the theme.
     const experimentEnabled = pxt.editor.experiments.isEnabled("identity");
-    return !pxt.BrowserUtils.isPxtElectron() && experimentEnabled && identityProviders().length > 0;
+    return !authDisabled && !pxt.BrowserUtils.isPxtElectron() && experimentEnabled && identityProviders().length > 0;
 }
 
 export async function loggedIn(): Promise<boolean> {
@@ -643,7 +646,8 @@ async function userPreferencesHandlerAsync(path: string): Promise<UserPreference
     return internalUserPreferencesHandler(path);
 }
 
-export function init() {
+export function init(disableAuth = false) {
+    authDisabled = disableAuth;
     data.mountVirtualApi(USER_PREF_MODULE, {
         getSync: userPreferencesHandlerSync,
         // TODO: virtual apis don't support both sync & async
