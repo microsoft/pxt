@@ -822,7 +822,7 @@ export class ProjectView
         let changeHandler = () => {
             if (this.editorFile) {
                 if (this.editorFile.inSyncWithEditor)
-                    pxt.tickActivity("edit", "edit." + this.editor.getId().replace(/Editor$/, ''))
+                    pxt.tickEvent("activity.edit", { editor: this.editor.getId().replace(/Editor$/, '')}, { interactiveConsent: true } );
                 this.editorFile.markDirty();
             }
             this.lastChangeTime = Util.now();
@@ -2951,7 +2951,7 @@ export class ProjectView
         return (() => {
             const editorId = this.editor ? this.editor.getId().replace(/Editor$/, '') : "unknown";
             if (opts.background) {
-                pxt.tickActivity("autorun", "autorun." + editorId);
+                pxt.tickEvent("activity.autorun", { editor: editorId });
                 if (pxt.storage.getLocal("noAutoRun"))
                     return Promise.resolve()
             } else pxt.tickEvent(opts.debug ? "debug" : "run", { editor: editorId });
