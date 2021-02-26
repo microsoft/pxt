@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { SvgCoord } from './SkillGraph';
+import { SvgCoord } from '../lib/skillGraphUtils';
 import { ActivityStatus } from '../lib/skillMapUtils';
 
 /* tslint:disable:no-import-side-effect */
