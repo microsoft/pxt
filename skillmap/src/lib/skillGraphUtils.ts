@@ -1,22 +1,23 @@
-export interface GraphCoord {
+export interface SvgCoord {
     x: number;
     y: number;
 }
 
-export type GraphEdgeDirection = "horizontal" | "vertical";
-
-interface GraphNode extends MapActivity {
+interface GraphCoord {
     depth: number; // The depth of this node (distance from root)
-    width: number; // The maximum subtree width from this node
     offset: number; // The offset of the node within the layer
+}
+
+interface GraphNode extends MapActivity, GraphCoord {
+    width?: number; // The maximum subtree width from this node
+    edges?: GraphCoord[][]; // Each edge is an array of (depth, offset) pairs
     parents?: GraphNode[];
-    edges?: GraphEdgeDirection[];
 }
 
 export function orthogonalGraph(root: MapActivity): GraphNode[] {
     let activities: GraphNode[] = [root as GraphNode];
 
-    const prevChildPosition: { [key: string]: {depth: number, offset: number} } = {};
+    const prevChildPosition: { [key: string]: GraphCoord } = {};
     const visited: { [key: string]: boolean } = {};
     let totalOffset = 0;
     while (activities.length > 0) {
@@ -79,13 +80,30 @@ export function orthogonalGraph(root: MapActivity): GraphNode[] {
         offsetMap[n.depth].push(n.offset);
     })
 
+    // Shrink long leaf branches
+    nodes.forEach(node => {
+        if ((!node.next || node.next.length == 0) && node.parents?.length == 1) {
+            const parent = node.parents[0];
+            const offsets = offsetMap[node.depth];
+            const siblingOffset = offsets[offsets.indexOf(node.offset) - 1];
+            const distance = siblingOffset ? node.offset - siblingOffset : Math.abs(node.depth - parent.depth) + Math.abs(node.offset - parent.offset);
+            if (distance > 2) {
+                node.depth = parent.depth;
+                node.offset = (siblingOffset || parent.offset) + 1;
+            }
+        }
+    })
+
+    // Calculate edge segments from parent nodes
     nodes.forEach(n => {
         if (n.parents) {
             n.edges = [];
+
             // We will try to flip the edge (draw vertical before horizontal) if
             // there is a parent on the horizontal axis, or more than two parents
             const tryFlipEdge = n.parents.some(p => p.offset == n.offset) || n.parents.length > 2;
             n.parents.forEach(p => {
+                const edge = [{ depth: p.depth, offset: p.offset }];
                 if (tryFlipEdge) {
                     // Grab node index, check the siblings to see if there is space to draw the flipped edge
                     const offsets = offsetMap[n.depth];
@@ -93,28 +111,16 @@ export function orthogonalGraph(root: MapActivity): GraphNode[] {
                     const spaceBelow = n.offset > p.offset && !((offsets[nodeIndex + 1] - offsets[nodeIndex]) < (n.offset - p.offset));
                     const spaceAbove = n.offset < p.offset && !((offsets[nodeIndex] - offsets[nodeIndex - 1]) < (p.offset - n.offset));
                     if (spaceBelow || spaceAbove) {
-                        n.edges?.push("vertical")
+                        edge.push({ depth: p.depth, offset: n.offset });
                     } else {
-                        n.edges?.push("horizontal")
+                        edge.push({ depth: n.depth, offset: p.offset });
                     }
                 } else {
-                    n.edges?.push("horizontal")
+                    edge.push({ depth: n.depth, offset: p.offset });
                 }
+                edge.push({ depth: n.depth, offset: n.offset });
+                n.edges?.push(edge);
             })
-        }
-    })
-
-    // Shrink long leaf branches
-    nodes.forEach(node => {
-        if ((!node.next || node.next.length == 0) && node.parents?.length == 1) {
-            const parent = node.parents[0];
-            if (Math.abs(node.depth - parent.depth) + Math.abs(node.offset - parent.offset) > 2) {
-                const offsets = offsetMap[node.depth];
-                const nodeIndex = offsets.indexOf(node.offset);
-                const siblingOffset = offsets[nodeIndex - 1];
-                node.depth = parent.depth;
-                node.offset = (siblingOffset || parent.offset) + 1;
-            }
         }
     })
 
@@ -122,7 +128,7 @@ export function orthogonalGraph(root: MapActivity): GraphNode[] {
 }
 
 // Simple tree-like layout, does not handle loops very well
-export function simpleGraph(root: MapActivity): GraphNode[] {
+export function treeGraph(root: MapActivity): GraphNode[] {
     let activities: GraphNode[] = [root as GraphNode];
 
     // Pass to set the width of each node
@@ -143,7 +149,7 @@ export function simpleGraph(root: MapActivity): GraphNode[] {
             if (!current.offset) {
                 const parent = current.parents?.map((el: GraphNode) => el.offset) || [0];
                 current.offset = Math.max(offsetMap[current.depth], ...parent);
-                offsetMap[current.depth] = current.offset + current.width;
+                offsetMap[current.depth] = current.offset + current.width!;
             }
 
             // Assign this node as the parent of all children
@@ -161,7 +167,28 @@ export function simpleGraph(root: MapActivity): GraphNode[] {
         }
     }
 
-    return bfsArray(root as GraphNode);
+    const nodes = bfsArray(root as GraphNode);
+    nodes.forEach(n => {
+        if (n.parents) {
+            n.edges = [];
+            n.parents.forEach(p => {
+                // Edge from parent, vertically down, then horizontal to child
+                n.edges?.push([ { depth: p.depth, offset: p.offset },
+                    { depth: n.depth, offset: p.offset },
+                    { depth: n.depth, offset: n.offset } ])
+            })
+        }
+    })
+    return nodes;
+}
+
+function setWidths(node: GraphNode): number {
+    if (!node.next || node.next.length == 0) {
+        node.width = 1;
+    } else {
+        node.width = node.next.map((el: any) => setWidths(el)).reduce((total: number, w: number) => total + w);
+    }
+    return node.width;
 }
 
 function bfsArray(root: GraphNode): GraphNode[] {
@@ -194,13 +221,4 @@ function dfsArray(root: GraphNode): GraphNode[] {
     }
 
     return nodes;
-}
-
-function setWidths(node: GraphNode) {
-    if (!node.next || node.next.length == 0) {
-        node.width = 1;
-    } else {
-        node.width = node.next.map((el: any) => setWidths(el)).reduce((total: number, w: number) => total + w);
-    }
-    return node.width;
 }

@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { GraphCoord } from './SkillGraph';
+import { SvgCoord } from './SkillGraph';
 import { ActivityStatus } from '../lib/skillMapUtils';
 
 /* tslint:disable:no-import-side-effect */
@@ -10,7 +10,7 @@ import '../styles/skillnode.css'
 interface SkillGraphNodeProps {
     activityId: string;
     width: number;
-    position: GraphCoord;
+    position: SvgCoord;
     status: ActivityStatus;
     selected?: boolean;
     onItemSelect?: (id: string) => void;

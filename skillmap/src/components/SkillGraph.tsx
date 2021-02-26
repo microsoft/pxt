@@ -7,17 +7,15 @@ import { SkillGraphNode } from './SkillGraphNode';
 import { SkillGraphPath } from "./SkillGraphPath";
 
 import { isActivityUnlocked } from '../lib/skillMapUtils';
-import { GraphCoord, GraphEdgeDirection, orthogonalGraph } from '../lib/skillGraphUtils';
+import { SvgCoord, orthogonalGraph } from '../lib/skillGraphUtils';
 
 interface GraphItem {
     activity: MapActivity;
-    position: GraphCoord;
+    position: SvgCoord;
 }
 
 interface GraphPath {
-    start: GraphCoord;
-    end: GraphCoord;
-    direction?: GraphEdgeDirection;
+    points: SvgCoord[];
 }
 
 interface SkillGraphProps {
@@ -56,15 +54,13 @@ class SkillGraphImpl extends React.Component<SkillGraphProps> {
                     activity: current,
                     position: this.getPosition(depth, offset)
                 });
-                if (current.parents && current.parents.length > 0) {
-                    for (let i = 0; i < current.parents.length; i++) {
-                        let p = current.parents[i];
-                        paths.push({
-                            start: this.getPosition(p.depth, p.offset),
-                            end: this.getPosition(depth, offset),
-                            direction: current.edges?.[i] || "horizontal"
-                        })
-                    }
+
+                if (current.edges) {
+                    current.edges.forEach(edge => {
+                        const points: SvgCoord[] = [];
+                        edge.forEach(n => points.push(this.getPosition(n.depth, n.offset)));
+                        paths.push({ points });
+                    });
                 }
 
                 this.size.height = Math.max(this.size.height, current.offset);
@@ -84,7 +80,7 @@ class SkillGraphImpl extends React.Component<SkillGraphProps> {
     }
 
     // This function converts graph position (no units) to x/y (SVG units)
-    protected getPosition(depth: number, offset: number): { x: number, y: number } {
+    protected getPosition(depth: number, offset: number): SvgCoord {
         return { x: (depth + 1) * 12 * UNIT, y: (offset * 8 + 6) * UNIT}
     }
 
@@ -97,10 +93,10 @@ class SkillGraphImpl extends React.Component<SkillGraphProps> {
             <div className="graph">
                 <svg xmlns="http://www.w3.org/2000/svg" width={(this.size.width + 2) * 12 * UNIT} height={(this.size.height + 2) * 8 * UNIT}>
                     {this.paths.map((el, i) => {
-                        return <SkillGraphPath key={`graph-activity-${i}`} strokeWidth={3 * UNIT} color="#000" start={el.start} end={el.end} direction={el.direction}/>
+                        return <SkillGraphPath key={`graph-activity-${i}`} strokeWidth={3 * UNIT} color="#000" points={el.points} />
                     })}
                     {this.paths.map((el, i) => {
-                         return <SkillGraphPath key={`graph-activity-${i}`} strokeWidth={3 * UNIT - 4} color="#BFBFBF" start={el.start} end={el.end} direction={el.direction} />
+                         return <SkillGraphPath key={`graph-activity-${i}`} strokeWidth={3 * UNIT - 4} color="#BFBFBF" points={el.points} />
                     })}
                     {this.items.map((el, i) => {
                         return <SkillGraphNode key={`graph-activity-${i}`}

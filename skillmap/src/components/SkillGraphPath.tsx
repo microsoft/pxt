@@ -1,31 +1,35 @@
 import * as React from "react";
 
-import { GraphCoord } from '../lib/skillGraphUtils';
+import { SvgCoord } from '../lib/skillGraphUtils';
 
 /* tslint:disable:no-import-side-effect */
 import '../styles/skillnode.css'
 /* tslint:enable:no-import-side-effect */
 
 interface SkillGraphPathProps {
-    start: GraphCoord;
-    end: GraphCoord;
+    points: SvgCoord[];
     strokeWidth: number;
     color: string;
-    direction?: "vertical" | "horizontal"
 }
 
 export class SkillGraphPath extends React.Component<SkillGraphPathProps> {
     render() {
-        const  { start, end, strokeWidth, color, direction } = this.props;
+        const  { points, strokeWidth, color } = this.props;
 
-        const xdiff = (start?.x || 0) - end.x;
-        const ydiff = (start?.y || 0) - end.y;
-        const path = direction == "vertical"
-            ? `v ${ydiff} h ${xdiff} h ${-xdiff} v ${-ydiff}`
-            : `h ${xdiff} v ${ydiff} v ${-ydiff} h ${-xdiff}`
+        let pathStart = "M 0 0";
+        let pathEnd = "";
+        let start, end: SvgCoord;
+        points.forEach(p => {
+            start = p;
+            if (end) {
+                pathStart += ` l ${(end?.x || 0) - start.x} ${(end?.y || 0) - start.y}`;
+                pathEnd = ` l ${start.x - (end?.x || 0)} ${start.y - (end?.y || 0)} ${pathEnd}`;
+            }
+            end = start;
+        })
 
-        return  <g transform={`translate(${end.x} ${end.y})`}>
-            <path stroke={color} strokeWidth={strokeWidth} d={`M 0 0 ${path}`} />
+        return  <g transform={`translate(${end!.x || 0} ${end!.y || 0})`}>
+            <path stroke={color} strokeWidth={strokeWidth} d={`${pathStart} ${pathEnd}`} />
         </g>
     }
 }
