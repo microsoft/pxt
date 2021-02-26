@@ -14,7 +14,7 @@ interface SkillGraphPathProps {
 
 export class SkillGraphPath extends React.Component<SkillGraphPathProps> {
     render() {
-        const  { points, strokeWidth, color } = this.props;
+        const { points, strokeWidth, color } = this.props;
 
         let pathStart = "M 0 0";
         let pathEnd = "";

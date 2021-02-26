@@ -50,21 +50,21 @@ class SkillGraphImpl extends React.Component<SkillGraphProps> {
         const paths: GraphPath[] = [];
         for (let current of nodes) {
             const { depth, offset } = current;
-                items.push({
-                    activity: current,
-                    position: this.getPosition(depth, offset)
+            items.push({
+                activity: current,
+                position: this.getPosition(depth, offset)
+            });
+
+            if (current.edges) {
+                current.edges.forEach(edge => {
+                    const points: SvgCoord[] = [];
+                    edge.forEach(n => points.push(this.getPosition(n.depth, n.offset)));
+                    paths.push({ points });
                 });
+            }
 
-                if (current.edges) {
-                    current.edges.forEach(edge => {
-                        const points: SvgCoord[] = [];
-                        edge.forEach(n => points.push(this.getPosition(n.depth, n.offset)));
-                        paths.push({ points });
-                    });
-                }
-
-                this.size.height = Math.max(this.size.height, current.offset);
-                this.size.width = Math.max(this.size.width, current.depth);
+            this.size.height = Math.max(this.size.height, current.offset);
+            this.size.width = Math.max(this.size.width, current.depth);
         }
 
         return { items, paths };
