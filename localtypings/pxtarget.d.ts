@@ -959,6 +959,7 @@ declare namespace pxt.tutorial {
         codeStart?: string; // command to run when code starts (MINECRAFT HOC ONLY)
         codeStop?: string; // command to run when code stops (MINECRAFT HOC ONLY)
         autoexpandOff?: boolean // INTERNAL TESTING ONLY
+        preferredEditor?: string // preferred editor for opening the tutorial
     }
 
     interface TutorialStepInfo {
