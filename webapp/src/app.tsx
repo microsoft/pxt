@@ -76,7 +76,11 @@ let theEditor: ProjectView;
 let hash: { cmd: string, arg: string };
 let pendingEditorRequests: ((p: ProjectView) => void)[];
 
-function getEditorAsync() {
+export function hasEditor() {
+    return !!theEditor;
+}
+
+export function getEditorAsync() {
     if (theEditor) return Promise.resolve(theEditor);
     if (!pendingEditorRequests) pendingEditorRequests = [];
     return new Promise<ProjectView>(resolve => {
@@ -1108,7 +1112,7 @@ export class ProjectView
     removeFile(fn: pkg.File, skipConfirm = false) {
         const removeIt = () => {
             pkg.mainEditorPkg().removeFileAsync(fn.name)
-                .then(() => pkg.mainEditorPkg().saveFilesAsync(true))
+                .then(() => pkg.mainEditorPkg().saveFilesAsync())
                 .then(() => this.reloadHeaderAsync())
                 .done();
         }
@@ -1134,7 +1138,6 @@ export class ProjectView
         return p.setContentAsync(name, content)
             .then(() => {
                 if (open) this.setFile(p.lookupFile("this/" + name));
-                return p.cloudSavePkgAsync();
             })
             .then(() => this.reloadHeaderAsync())
     }
@@ -1332,7 +1335,7 @@ export class ProjectView
                                 // We are too late; the editor has already been loaded.
                                 // Call the onChanges handler to update the editor.
                                 pxt.tickEvent(`identity.syncOnProjectOpen.timedout`, { 'elapsedSec': elapsed})
-                                if (changes.length)
+                                if (changes.some(header => header.id === h.id))
                                     cloud.forceReloadForCloudSync()
                             } else {
                                 // We're not too late, update the local var so that the
@@ -1423,6 +1426,13 @@ export class ProjectView
                     if (!file.content) // empty blocks file, open javascript editor
                         file = main.lookupFile("this/" + file.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)) || file
                 }
+
+                // override inferred editor with tutorial editor if present in markdown
+                const tutorialPreferredEditor = h.tutorial?.metadata?.preferredEditor;
+                if (tutorialPreferredEditor) {
+                    file = main.lookupFile("this/" + filenameForEditor(tutorialPreferredEditor)) || file;
+                }
+
                 if (file.name === "main.ts") {
                     this.shouldTryDecompile = true;
                 }
@@ -1550,10 +1560,18 @@ export class ProjectView
 
         let decompilePromise = Promise.resolve();
 
-        if (header.editor === pxt.JAVASCRIPT_PROJECT_NAME) {
+        // If we're starting in the asset editor, always load into TS
+        const preferredEditor = header.tutorial.metadata?.preferredEditor;
+        if (preferredEditor && filenameForEditor(preferredEditor) === pxt.ASSETS_FILE) {
             pkg.mainEditorPkg().setFile("main.ts", template);
         }
-        else if (header.editor === pxt.PYTHON_PROJECT_NAME) {
+
+        const projectname = projectNameForEditor(preferredEditor || header.editor);
+
+        if (projectname === pxt.JAVASCRIPT_PROJECT_NAME) {
+            pkg.mainEditorPkg().setFile("main.ts", template);
+        }
+        else if (projectname === pxt.PYTHON_PROJECT_NAME) {
             decompilePromise = compiler.decompilePythonSnippetAsync(template)
                 .then(pyCode => {
                     if (pyCode) {
@@ -1810,7 +1828,6 @@ export class ProjectView
                                 cfg.dependencies = {};
                             cfg.dependencies[n] = `pkg:${fn}`;
                         }))
-                        .then(() => mpkg.cloudSavePkgAsync())
                         .done(() => this.reloadHeaderAsync());
                 }
             }
@@ -4087,11 +4104,6 @@ function parseLocalToken() {
     Cloud.localToken = pxt.storage.getLocal("local_token") || "";
 }
 
-function initLogin() {
-    cloudsync.loginCheck()
-    parseLocalToken();
-    auth.authCheck();
-}
 
 function initPacketIO() {
     pxt.debug(`packetio: hook events`)
@@ -4529,6 +4541,44 @@ function initExtensionsAsync(): Promise<void> {
         });
 }
 
+function projectNameForEditor(editor: string): string {
+    switch (editor.toLowerCase()) {
+        case "javascript":
+        case "js":
+        case pxt.JAVASCRIPT_PROJECT_NAME:
+            return pxt.JAVASCRIPT_PROJECT_NAME;
+        case "python":
+        case "py":
+        case pxt.PYTHON_PROJECT_NAME:
+            return pxt.PYTHON_PROJECT_NAME;
+        case "blocks":
+        case pxt.BLOCKS_PROJECT_NAME:
+        default:
+            return pxt.BLOCKS_PROJECT_NAME;
+    }
+}
+
+function filenameForEditor(editor: string): string {
+    const file = pkg.getEditorPkg(pkg.mainPkg)?.getMainFile();
+    switch (editor.toLowerCase()) {
+        case "javascript":
+        case "js":
+        case pxt.JAVASCRIPT_PROJECT_NAME:
+            return file.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME);
+        case "python":
+        case "py":
+        case pxt.PYTHON_PROJECT_NAME:
+            return file.getVirtualFileName(pxt.PYTHON_PROJECT_NAME);
+        case "assets":
+        case "asset":
+            return pxt.ASSETS_FILE;
+        case "blocks":
+        case pxt.BLOCKS_PROJECT_NAME:
+        default:
+            return file.getVirtualFileName(pxt.BLOCKS_PROJECT_NAME);
+    }
+}
+
 pxt.winrt.captureInitialActivation();
 document.addEventListener("DOMContentLoaded", () => {
     pxt.perf.recordMilestone(`DOM loaded`)
@@ -4568,7 +4618,15 @@ document.addEventListener("DOMContentLoaded", () => {
         auth.loginCallback(query);
     }
 
-    initLogin();
+    // Disable auth in skillmap until it is properly supported.
+    // See https://github.com/microsoft/pxt-arcade/issues/3138
+    const disableAuth = query["skillsMap"] == "1";
+
+    auth.init(disableAuth);
+    cloud.init(); // depends on auth.init() and workspace.ts's top level
+    cloudsync.loginCheck()
+    parseLocalToken();
+    auth.authCheck();
     hash = parseHash();
     appcache.init(() => theEditor.reloadEditor());
     blocklyFieldView.init();
@@ -4601,7 +4659,7 @@ document.addEventListener("DOMContentLoaded", () => {
     else if (isSandbox) workspace.setupWorkspace("mem");
     else if (pxt.winrt.isWinRT()) workspace.setupWorkspace("uwp");
     else if (pxt.BrowserUtils.isIpcRenderer()) workspace.setupWorkspace("idb");
-    else if (pxt.BrowserUtils.isLocalHost() || pxt.BrowserUtils.isPxtElectron()) workspace.setupWorkspace("fs");
+    else if (pxt.BrowserUtils.isPxtElectron()) workspace.setupWorkspace("fs");
     else workspace.setupWorkspace("browser");
     Promise.resolve()
         .then(async () => {
