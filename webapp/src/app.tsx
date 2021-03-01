@@ -3919,13 +3919,12 @@ export class ProjectView
     private _filelistResizeObserver: ResizeObserver;
     private handleFileListRef = (c: HTMLDivElement) => {
         this.fileListRef = c;
-        const scrollbarWidth = pxt.BrowserUtils.browserScrollbarWidth(); // cache size
-        console.debug({ scrollbarWidth })
         this._filelistResizeObserver = new ResizeObserver(() => {
-            console.log(`filelist resize`)
             const scrollVisible = c.scrollHeight > c.clientHeight;
-            const padding = scrollVisible ? `calc(2em - ${scrollbarWidth}px)` : undefined;
-            this.fileListRef.style.paddingRight = padding;
+            if (scrollVisible)
+                this.fileListRef.classList.remove("invisibleScrollbar");
+            else
+                this.fileListRef.classList.add("invisibleScrollbar");
         })
         this._filelistResizeObserver.observe(c);
     }
@@ -4045,7 +4044,7 @@ export class ProjectView
                 </div>}
 
                 <div id="simulator" className="simulator">
-                    <div id="filelist" ref={this.handleFileListRef} className="ui items">
+                    <div id="filelist" ref={this.handleFileListRef} className="ui items invisibleScrollbar">
                         <div id="boardview" className={`ui vertical editorFloat`} role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0}>
                         </div>
                         <simtoolbar.SimulatorToolbar

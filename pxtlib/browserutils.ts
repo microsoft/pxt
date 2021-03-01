@@ -1268,22 +1268,4 @@ namespace pxt.BrowserUtils {
         if (/[?&]rnd=/.test(url)) return url; // already busted
         return `${url}${url.indexOf('?') > 0 ? "&" : "?"}rnd=${Math.random()}`
     }
-
-    let _browserSrollbarWidth: number;
-    export function browserScrollbarWidth() {
-        if (!_browserSrollbarWidth) {
-            const el = document.createElement('div');
-            try {
-                el.style.overflow = 'scroll';
-                el.style.zIndex = '-100';
-                el.style.position = 'absolute';
-                el.style.left = '2000px';
-                document.body.appendChild(el);
-                _browserSrollbarWidth = el.offsetWidth - el.clientWidth;
-            } finally {
-                document.body.removeChild(el);
-            }
-        }
-        return _browserSrollbarWidth;
-    }
 }
