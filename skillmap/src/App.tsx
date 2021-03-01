@@ -17,9 +17,8 @@ import {
 } from './actions/dispatch';
 import { PageSourceStatus, SkillMapState } from './store/reducer';
 import { HeaderBar } from './components/HeaderBar';
-import { Banner } from './components/Banner';
 import { AppModal } from './components/AppModal';
-import { SkillCarousel } from './components/SkillCarousel';
+import { SkillGraphContainer } from './components/SkillGraphContainer';
 
 import { parseSkillMap } from './lib/skillMapParser';
 import { parseHash, getMarkdownAsync, MarkdownSource, parseQuery,
@@ -34,7 +33,7 @@ import './App.css';
 
 // TODO: this file needs to read colors from the target
 import './arcade.css';
-import { SkillGraph } from './components/SkillGraph';
+import { InfoPanel } from './components/InfoPanel';
 /* tslint:enable:no-import-side-effect */
 
 (window as any).Promise = Promise;
@@ -206,16 +205,13 @@ class AppImpl extends React.Component<AppProps, AppState> {
         const maps = Object.keys(skillMaps).map((id: string) => skillMaps[id]);
         return (<div className={`app-container ${pxt.appTarget.id}`}>
                 <HeaderBar />
-                { activityOpen ? <MakeCodeFrame /> : <div>
-                    <Banner icon="map" />
+                { activityOpen ? <MakeCodeFrame /> :
                     <div className="skill-map-container">
                         { error
                             ? <div className="skill-map-error">{error}</div>
-                            : maps?.map((el, i) => {
-                                return <SkillCarousel map={el} key={i} /> // <SkillGraph map={el} key={i} />
-                            })}
+                            : <SkillGraphContainer maps={maps} />}
+                        { !error && <InfoPanel />}
                     </div>
-                </div>
                 }
                 <AppModal />
             </div>);
