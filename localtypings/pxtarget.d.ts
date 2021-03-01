@@ -227,7 +227,7 @@ declare namespace pxt {
             localHostUrl?: string;
             aspectRatio?: number;
             // don't recycle the iframe between runs
-            permanent?: string;
+            permanent?: boolean;
         }>;
     }
 
