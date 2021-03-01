@@ -3916,17 +3916,18 @@ export class ProjectView
         this.profileDialog = c;
     }
 
-    private _filelistResizeObserver: ResizeObserver;
     private handleFileListRef = (c: HTMLDivElement) => {
         this.fileListRef = c;
-        this._filelistResizeObserver = new ResizeObserver(() => {
-            const scrollVisible = c.scrollHeight > c.clientHeight;
-            if (scrollVisible)
-                this.fileListRef.classList.remove("invisibleScrollbar");
-            else
-                this.fileListRef.classList.add("invisibleScrollbar");
-        })
-        this._filelistResizeObserver.observe(c);
+        if (typeof ResizeObserver !== "undefined") {
+            const observer = new ResizeObserver(() => {
+                const scrollVisible = c.scrollHeight > c.clientHeight;
+                if (scrollVisible)
+                    this.fileListRef.classList.remove("invisibleScrollbar");
+                else
+                    this.fileListRef.classList.add("invisibleScrollbar");
+            })
+            observer.observe(c);
+        }
     }
 
     ///////////////////////////////////////////////////////////
@@ -4044,7 +4045,7 @@ export class ProjectView
                 </div>}
 
                 <div id="simulator" className="simulator">
-                    <div id="filelist" ref={this.handleFileListRef} className="ui items invisibleScrollbar">
+                    <div id="filelist" ref={this.handleFileListRef} className="ui items">
                         <div id="boardview" className={`ui vertical editorFloat`} role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0}>
                         </div>
                         <simtoolbar.SimulatorToolbar
