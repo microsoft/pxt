@@ -23,6 +23,7 @@ namespace pxsim {
             url: string;
             localHostUrl?: string;
             aspectRatio?: number;
+            permanent?: boolean;
         }>;
     }
 
@@ -76,6 +77,7 @@ namespace pxsim {
     const FRAME_DATA_MESSAGE_CHANNEL = "messagechannel"
     const FRAME_ASPECT_RATIO = "aspectratio"
     const MESSAGE_SOURCE = "pxtdriver"
+    const PERMANENT = "permanent"
 
     export class SimulatorDriver {
         private themes = ["blue", "red", "green", "yellow"];
@@ -342,6 +344,8 @@ namespace pxsim {
                             messageFrame.dataset[FRAME_DATA_MESSAGE_CHANNEL] = messageChannel;
                             pxsim.U.addClass(wrapper, "simmsg")
                             pxsim.U.addClass(wrapper, "simmsg" + messageChannel)
+                            if (messageSimulator.permanent)
+                                messageFrame.dataset[PERMANENT]
                             this.startFrame(messageFrame);
                             frames = this.simFrames(); // refresh
                         }
@@ -513,7 +517,7 @@ namespace pxsim {
             this.frameCleanupTimeout = setTimeout(() => {
                 this.frameCleanupTimeout = 0;
                 this.cleanupFrames();
-            }, 10000);
+            }, 5000);
         }
 
         private applyAspectRatio(ratio?: number) {
@@ -556,13 +560,14 @@ namespace pxsim {
             // drop unused extras frames after 5 seconds
             const frames = this.simFrames(true);
             frames.shift(); // drop first frame
-            frames.forEach(frame => {
-                if (this.state == SimulatorState.Stopped
-                    || frame.dataset['runid'] != this.runId) {
-                    if (this.options.removeElement) this.options.removeElement(frame.parentElement);
-                    else frame.parentElement.remove();
-                }
-            });
+            frames.filter(frame => !frame.dataset[PERMANENT])
+                .forEach(frame => {
+                    if (this.state == SimulatorState.Stopped
+                        || frame.dataset['runid'] != this.runId) {
+                        if (this.options.removeElement) this.options.removeElement(frame.parentElement);
+                        else frame.parentElement.remove();
+                    }
+                });
         }
 
         public hide(completeHandler?: () => void) {

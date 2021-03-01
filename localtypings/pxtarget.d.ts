@@ -226,6 +226,8 @@ declare namespace pxt {
             // url when localhost developer mode is enabled, add localhostmessagesims=1 to enable this mode
             localHostUrl?: string;
             aspectRatio?: number;
+            // don't recycle the iframe between runs
+            permanent?: string;
         }>;
     }
 
