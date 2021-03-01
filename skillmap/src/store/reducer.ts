@@ -2,7 +2,7 @@ import * as actions from '../actions/types'
 import { guidGen } from '../lib/browserUtils';
 import { getCompletedTags, lookupActivityProgress, isMapCompleted, applyUserUpgrades } from '../lib/skillMapUtils';
 
-export type ModalType = "restart-warning" | "completion" | "report-abuse" | "reset";
+export type ModalType = "restart-warning" | "completion" | "report-abuse" | "reset" | "carryover";
 export type PageSourceStatus = "approved" | "banned" | "unknown";
 
 // State for the entire page
@@ -24,7 +24,8 @@ export interface EditorViewState {
     currentHeaderId?: string;
     currentMapId: string;
     currentActivityId: string;
-    state: "active" | "saving";
+    allowCodeCarryover: boolean;
+    state: "active" | "saving" | "reload" | "reloading";
 }
 
 interface ModalState {
@@ -96,12 +97,14 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                 }
             }
         case actions.OPEN_ACTIVITY:
+
             return {
                 ...state,
                 editorView: {
                     currentMapId: action.mapId,
                     currentActivityId: action.activityId,
                     state: "active",
+                    allowCodeCarryover: shouldAllowCodeCarryover(state, action.mapId, action.activityId),
                     currentHeaderId: lookupActivityProgress(
                         state.user,
                         state.pageSourceUrl,
@@ -134,7 +137,8 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                 editorView: {
                     state: "active",
                     currentMapId: action.mapId,
-                    currentActivityId: action.activityId
+                    currentActivityId: action.activityId,
+                    allowCodeCarryover: shouldAllowCodeCarryover(state, action.mapId, action.activityId),
                 },
                 user: setHeaderIdForActivity(
                     state.user,
@@ -160,6 +164,14 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                     action.currentStep,
                     action.maxSteps
                 )
+            };
+        case actions.SET_RELOAD_HEADER_STATE:
+            return {
+                ...state,
+                editorView: state.editorView ? {
+                    ...state.editorView,
+                    state: action.state
+                } : undefined
             };
         case actions.SET_USER:
             return {
@@ -212,6 +224,11 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
             return {
                 ...state,
                 modal: { type: "completion", currentMapId: action.mapId, currentActivityId: action.activityId }
+            };
+        case actions.SHOW_CARRYOVER_MODAL:
+            return {
+                ...state,
+                modal: { type: "carryover", currentMapId: action.mapId, currentActivityId: action.activityId }
             };
         case actions.SHOW_RESTART_ACTIVITY_MODAL:
             return {
@@ -281,6 +298,11 @@ export function setHeaderIdForActivity(user: UserState, pageSource: string, map:
             }
         }
     };
+}
+
+export function shouldAllowCodeCarryover(state: SkillMapState, mapId: string, activityId: string) {
+    const map = state.maps[mapId];
+    return !!map.activities[activityId].allowCodeCarryover;
 }
 
 export function setActivityFinished(user: UserState, pageSource: string, map: SkillMap, activityId: string) {

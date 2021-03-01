@@ -457,7 +457,17 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
                 this.ref.openGalleryAsset(asset as pxt.Tile | pxt.ProjectImage | pxt.Animation);
             }
             else {
-                pxt.react.getTilemapProject().updateAsset(this.asset);
+                const project = pxt.react.getTilemapProject();
+                if (this.asset?.type === pxt.AssetType.Tilemap) {
+                    pxt.sprite.updateTilemapReferencesFromResult(project, this.asset);
+                }
+
+                project.updateAsset(this.asset);
+
+                if (asset.type === pxt.AssetType.Tilemap) {
+                    pxt.sprite.addMissingTilemapTilesAndReferences(project, asset);
+                }
+
                 this.ref.openAsset(asset, undefined, true);
             }
         }
