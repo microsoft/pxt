@@ -1,0 +1,22 @@
+.graph {
+    width: 100%;
+    position: relative;
+}
+
+.graph-activity.selected rect {
+    stroke: var(--primary-color);
+    stroke-width: 4px;
+}
+
+.graph-title {
+    font-size: 1.2rem;
+    margin: 1rem 0 0 1rem;
+    font-weight: 700;
+}
+
+.graph-icon {
+    fill: var(--black);
+    font-family: Icons;
+    font-size: 1.75rem;
+    opacity: 0.5;
+}

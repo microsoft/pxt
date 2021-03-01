@@ -1,3 +1,5 @@
+export type ActivityStatus = "locked" | "notstarted" | "inprogress" | "completed" | "restarted";
+
 export function isMapCompleted(user: UserState, pageSource: string, map: SkillMap, skipActivity?: string) {
     if (Object.keys(map?.activities).some(k => !lookupMapProgress(user, pageSource, map.mapId)?.activityState[k]?.isCompleted && k !== skipActivity)) return false;
     return true;
