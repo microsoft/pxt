@@ -25,7 +25,8 @@
         "types": [
             "react",
             "react-dom",
-            "bluebird"
+            "bluebird",
+            "resize-observer-browser"
         ],
         "incremental": false
     },

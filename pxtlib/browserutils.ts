@@ -1270,7 +1270,7 @@ namespace pxt.BrowserUtils {
     }
 
     let _browserSrollbarWidth: number;
-    export function browserSrollbarWidth() {
+    export function browserScrollbarWidth() {
         if (!_browserSrollbarWidth) {
             const el = document.createElement('div');
             try {

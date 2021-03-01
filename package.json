@@ -128,6 +128,7 @@
     "@types/react-dom": "16.0.3",
     "@types/react-redux": "5.0.0",
     "@types/request": "2.48.2",
+    "@types/resize-observer-browser": "^0.1.5",
     "@types/web-bluetooth": "0.0.4"
   },
   "scripts": {
