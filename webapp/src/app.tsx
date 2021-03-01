@@ -126,6 +126,7 @@ export class ProjectView
     chooseHwDialog: projects.ChooseHwDialog;
     prevEditorId: string;
     screenshotHandlers: ((msg: pxt.editor.ScreenshotData) => void)[] = [];
+    fileListRef: HTMLDivElement;
 
     private lastChangeTime: number;
     private reload: boolean;
@@ -1314,7 +1315,7 @@ export class ProjectView
         let p = Promise.resolve();
         // check our multi-tab session
         if (workspace.isHeadersSessionOutdated()) {
-             // reload header before loading
+            // reload header before loading
             pxt.log(`multi-tab sync before load`)
             p = p.then(() => workspace.syncAsync().then(() => { }))
         }
@@ -1334,7 +1335,7 @@ export class ProjectView
                             if (timeout.isResolved()) {
                                 // We are too late; the editor has already been loaded.
                                 // Call the onChanges handler to update the editor.
-                                pxt.tickEvent(`identity.syncOnProjectOpen.timedout`, { 'elapsedSec': elapsed})
+                                pxt.tickEvent(`identity.syncOnProjectOpen.timedout`, { 'elapsedSec': elapsed })
                                 if (changes.some(header => header.id === h.id))
                                     cloud.forceReloadForCloudSync()
                             } else {
@@ -3915,6 +3916,20 @@ export class ProjectView
         this.profileDialog = c;
     }
 
+    private handleFileListRef = (c: HTMLDivElement) => {
+        this.fileListRef = c;
+        if (typeof ResizeObserver !== "undefined") {
+            const observer = new ResizeObserver(() => {
+                const scrollVisible = c.scrollHeight > c.clientHeight;
+                if (scrollVisible)
+                    this.fileListRef.classList.remove("invisibleScrollbar");
+                else
+                    this.fileListRef.classList.add("invisibleScrollbar");
+            })
+            observer.observe(c);
+        }
+    }
+
     ///////////////////////////////////////////////////////////
     ////////////             RENDER               /////////////
     ///////////////////////////////////////////////////////////
@@ -4030,7 +4045,7 @@ export class ProjectView
                 </div>}
 
                 <div id="simulator" className="simulator">
-                    <div id="filelist" className="ui items">
+                    <div id="filelist" ref={this.handleFileListRef} className="ui items">
                         <div id="boardview" className={`ui vertical editorFloat`} role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0}>
                         </div>
                         <simtoolbar.SimulatorToolbar
