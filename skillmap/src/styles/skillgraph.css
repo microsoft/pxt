@@ -1,0 +1,36 @@
+.skill-graph {
+    display: block;
+    max-width: 100%;
+}
+
+.skill-graph-content {
+    display: flex;
+    flex-direction: column;
+    z-index: 50;
+}
+
+.skill-graph-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+}
+
+.skill-graph-background {
+    display: flex;
+    position: absolute;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+}
+
+/* TEMP */
+.background-img {
+    background-color: var(--primary-color);
+    opacity: 0.2;
+    width: 800px;
+    height: 600px;
+}

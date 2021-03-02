@@ -81,17 +81,7 @@ namespace pxtblockly {
                 case pxt.AssetType.Tilemap:
                     editorKind = "tilemap-editor";
                     const project = pxt.react.getTilemapProject();
-                    const allTiles = project.getProjectTiles(this.asset.data.tileset.tileWidth, true);
-                    this.asset.data.projectReferences = [];
-
-                    for (const tile of allTiles.tiles) {
-                        if (!this.asset.data.tileset.tiles.some(t => t.id === tile.id)) {
-                            this.asset.data.tileset.tiles.push(tile);
-                        }
-                        if (project.isAssetUsed(tile, null, [this.asset.id])) {
-                            this.asset.data.projectReferences.push(tile.id);
-                        }
-                    }
+                    pxt.sprite.addMissingTilemapTilesAndReferences(project, this.asset);
                     break;
             }
 

@@ -286,8 +286,6 @@ export async function authCheck(): Promise<UserProfile | undefined> {
 }
 
 export async function loginCallback(qs: pxt.Map<string>) {
-    if (!hasIdentity()) { return; }
-
     let state: AuthState;
     let callbackState: CallbackState = { ...NilCallbackState };
 

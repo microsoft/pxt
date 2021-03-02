@@ -11,6 +11,10 @@ interface SkillMap {
     prerequisites: MapPrerequisite[];
     completionUrl?: string;
 
+    // Indicates whether or not code can be copied from previous activity
+    // for all cards in this skillmap
+    allowCodeCarryover?: boolean;
+
     activities: {[index: string]: MapActivity};
     root: MapActivity;
 }
@@ -42,6 +46,9 @@ interface MapActivity {
 
     url: string;
     imageUrl?: string;
+
+    // Indicates whether or not code can be copied from previous activity
+    allowCodeCarryover?: boolean;
 
     next: MapActivity[];
     nextIds: string[];

@@ -17,9 +17,9 @@ import {
 } from './actions/dispatch';
 import { PageSourceStatus, SkillMapState } from './store/reducer';
 import { HeaderBar } from './components/HeaderBar';
-import { Banner } from './components/Banner';
 import { AppModal } from './components/AppModal';
-import { SkillCarousel } from './components/SkillCarousel';
+import { SkillGraphContainer } from './components/SkillGraphContainer';
+import { InfoPanel } from './components/InfoPanel';
 
 import { parseSkillMap } from './lib/skillMapParser';
 import { parseHash, getMarkdownAsync, MarkdownSource, parseQuery,
@@ -205,16 +205,14 @@ class AppImpl extends React.Component<AppProps, AppState> {
         const maps = Object.keys(skillMaps).map((id: string) => skillMaps[id]);
         return (<div className={`app-container ${pxt.appTarget.id}`}>
                 <HeaderBar />
-                { activityOpen ? <MakeCodeFrame /> : <div>
-                    <Banner icon="map" />
+                { activityOpen ? <MakeCodeFrame /> :
                     <div className="skill-map-container">
                         { error
                             ? <div className="skill-map-error">{error}</div>
-                            : maps?.map((el, i) => {
-                                return <SkillCarousel map={el} key={i} />
-                            })}
+                            : <SkillGraphContainer maps={maps} />
+                        }
+                        { !error && <InfoPanel />}
                     </div>
-                </div>
                 }
                 <AppModal />
             </div>);

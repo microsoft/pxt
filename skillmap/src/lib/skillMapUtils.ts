@@ -1,3 +1,5 @@
+export type ActivityStatus = "locked" | "notstarted" | "inprogress" | "completed" | "restarted";
+
 export function isMapCompleted(user: UserState, pageSource: string, map: SkillMap, skipActivity?: string) {
     if (Object.keys(map?.activities).some(k => !lookupMapProgress(user, pageSource, map.mapId)?.activityState[k]?.isCompleted && k !== skipActivity)) return false;
     return true;
@@ -67,6 +69,19 @@ export function lookupMapProgress(user: UserState, pageSource: string, mapId: st
 
 export function lookupActivityProgress(user: UserState, pageSource: string, mapId: string, activityId: string) {
     return lookupMapProgress(user, pageSource, mapId)?.activityState[activityId]
+}
+
+export function lookupPreviousActivities(map: SkillMap, activityId: string) {
+    return Object.keys(map.activities)
+        .filter(key =>
+            map.activities[key].next.some(activity => activity.activityId === activityId)
+        ).map(key => map.activities[key])
+}
+
+export function lookupPreviousActivityStates(user: UserState, pageSource: string, map: SkillMap, activityId: string): ActivityState[] {
+    const prevActivities = lookupPreviousActivities(map, activityId);
+    return prevActivities.map(activity => lookupActivityProgress(user, pageSource, map.mapId, activity.activityId))
+        .filter(a => !!a) as ActivityState[];
 }
 
 export function applyUserUpgrades(user: UserState, currentVersion: string, pageSource: string, maps: { [key: string]: SkillMap }) {

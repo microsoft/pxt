@@ -24,7 +24,7 @@ interface SkillCarouselProps {
     selectedItem?: string;
     pageSourceUrl: string;
     completionState: "incomplete" | "transitioning" | "completed";
-    dispatchChangeSelectedItem: (id?: string) => void;
+    dispatchChangeSelectedItem: (mapId?: string, activityId?: string) => void;
     dispatchShowCompletionModal: (mapId: string, activityId?: string) => void;
     dispatchSetSkillMapCompleted: (mapId: string) => void;
 }
@@ -41,18 +41,21 @@ class SkillCarouselImpl extends React.Component<SkillCarouselProps> {
 
     protected getItems(mapId: string, root: MapActivity): SkillCarouselItem[] {
         const items = [];
-        let activity = root;
-        while (activity) {
-            items.push({
-                id: activity.activityId,
-                label: activity.displayName,
-                url: activity.url,
-                imageUrl: activity.imageUrl,
-                mapId,
-                description: activity.description,
-                tags: activity.tags
-            });
-            activity = activity.next[0]; // TODO still add nonlinear items to array even if we don't render graph
+        let activities: MapActivity[] = [root];
+        while (activities.length > 0) {
+            let current = activities.shift();
+            if (current) {
+                items.push({
+                    id: current.activityId,
+                    label: current.displayName,
+                    url: current.url,
+                    imageUrl: current.imageUrl,
+                    mapId,
+                    description: current.description,
+                    tags: current.tags
+                });
+                activities = activities.concat(current.next);
+            }
         }
 
         return items;
@@ -62,7 +65,7 @@ class SkillCarouselImpl extends React.Component<SkillCarouselProps> {
         const { map, dispatchChangeSelectedItem } = this.props;
         if (id !== this.props.selectedItem) {
             tickEvent("skillmap.carousel.item.select", { path: map.mapId, activity: id });
-            dispatchChangeSelectedItem(id);
+            dispatchChangeSelectedItem(map.mapId, id);
         } else {
             tickEvent("skillmap.carousel.item.deselect", { path: map.mapId, activity: id });
             dispatchChangeSelectedItem(undefined);
@@ -176,7 +179,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         requiredMaps,
         pageSourceUrl: state.pageSourceUrl,
         completionState: mapProgress?.[map.mapId]?.completionState,
-        selectedItem: state.selectedItem && ownProps.map?.activities?.[state.selectedItem] ? state.selectedItem : undefined
+        selectedItem: state.selectedItem && ownProps.map?.activities?.[state.selectedItem.activityId] ? state.selectedItem.activityId : undefined
     }
 }
 
