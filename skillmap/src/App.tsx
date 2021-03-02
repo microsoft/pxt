@@ -19,6 +19,7 @@ import { PageSourceStatus, SkillMapState } from './store/reducer';
 import { HeaderBar } from './components/HeaderBar';
 import { AppModal } from './components/AppModal';
 import { SkillGraphContainer } from './components/SkillGraphContainer';
+import { InfoPanel } from './components/InfoPanel';
 
 import { parseSkillMap } from './lib/skillMapParser';
 import { parseHash, getMarkdownAsync, MarkdownSource, parseQuery,
@@ -33,7 +34,6 @@ import './App.css';
 
 // TODO: this file needs to read colors from the target
 import './arcade.css';
-import { InfoPanel } from './components/InfoPanel';
 /* tslint:enable:no-import-side-effect */
 
 (window as any).Promise = Promise;
@@ -209,7 +209,8 @@ class AppImpl extends React.Component<AppProps, AppState> {
                     <div className="skill-map-container">
                         { error
                             ? <div className="skill-map-error">{error}</div>
-                            : <SkillGraphContainer maps={maps} />}
+                            : <SkillGraphContainer maps={maps} />
+                        }
                         { !error && <InfoPanel />}
                     </div>
                 }

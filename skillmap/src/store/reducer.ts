@@ -14,7 +14,7 @@ export interface SkillMapState {
     pageSourceUrl: string;
     pageSourceStatus: PageSourceStatus;
     maps: { [key: string]: SkillMap };
-    selectedItem?: string;
+    selectedItem?: { mapId: string, activityId: string };
 
     editorView?: EditorViewState;
     modal?: ModalState;
@@ -76,7 +76,10 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
         case actions.CHANGE_SELECTED_ITEM:
             return {
                 ...state,
-                selectedItem: action.id
+                selectedItem: {
+                    mapId: action.mapId,
+                    activityId: action.activityId
+                }
             };
         case actions.SET_SKILL_MAP_COMPLETED:
             return {

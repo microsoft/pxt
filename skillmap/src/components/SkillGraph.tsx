@@ -21,9 +21,9 @@ interface GraphPath {
 interface SkillGraphProps {
     map: SkillMap;
     user: UserState;
-    selectedItem?: string;
+    selectedActivityId?: string;
     pageSourceUrl: string;
-    dispatchChangeSelectedItem: (id?: string) => void;
+    dispatchChangeSelectedItem: (mapId?: string, activityId?: string) => void;
 }
 
 const UNIT = 10;
@@ -71,10 +71,10 @@ class SkillGraphImpl extends React.Component<SkillGraphProps> {
         return { items, paths };
     }
 
-    protected onItemSelect = (id: string) => {
-        const { dispatchChangeSelectedItem } = this.props;
-        if (id !== this.props.selectedItem) {
-            dispatchChangeSelectedItem(id);
+    protected onItemSelect = (activityId: string) => {
+        const { dispatchChangeSelectedItem, map } = this.props;
+        if (activityId !== this.props.selectedActivityId) {
+            dispatchChangeSelectedItem(map.mapId, activityId);
         } else {
             dispatchChangeSelectedItem(undefined);
         }
@@ -94,7 +94,7 @@ class SkillGraphImpl extends React.Component<SkillGraphProps> {
     }
 
     render() {
-        const { map, user, selectedItem, pageSourceUrl } = this.props;
+        const { map, user, selectedActivityId, pageSourceUrl } = this.props;
         const width = this.getX(this.size.width) + UNIT * PADDING;
         const height = this.getY(this.size.height) + UNIT * PADDING;
         return <svg className="skill-graph" xmlns="http://www.w3.org/2000/svg" width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
@@ -109,7 +109,7 @@ class SkillGraphImpl extends React.Component<SkillGraphProps> {
                     activityId={el.activity.activityId}
                     position={el.position}
                     width={5 * UNIT}
-                    selected={el.activity.activityId === selectedItem}
+                    selected={el.activity.activityId === selectedActivityId}
                     onItemSelect={this.onItemSelect}
                     status={isActivityUnlocked(user, pageSourceUrl, map, el.activity.activityId) ? "notstarted" : "locked"} /> // TODO shakao needs "completed/inprogress"
             })}
@@ -123,7 +123,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
     return {
         user: state.user,
         pageSourceUrl: state.pageSourceUrl,
-        selectedItem: state.selectedItem && ownProps.map?.activities?.[state.selectedItem] ? state.selectedItem : undefined
+        selectedActivityId: state.selectedItem && ownProps.map?.mapId == state.selectedItem.mapId ? state.selectedItem.activityId : undefined
     }
 }
 
