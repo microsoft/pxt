@@ -345,7 +345,7 @@ namespace pxsim {
                             pxsim.U.addClass(wrapper, "simmsg")
                             pxsim.U.addClass(wrapper, "simmsg" + messageChannel)
                             if (messageSimulator.permanent)
-                                messageFrame.dataset[PERMANENT]
+                                messageFrame.dataset[PERMANENT] = "true";
                             this.startFrame(messageFrame);
                             frames = this.simFrames(); // refresh
                         }
