@@ -27,6 +27,7 @@ interface SkillGraphProps {
 }
 
 const UNIT = 10;
+const PADDING = 4;
 
 class SkillGraphImpl extends React.Component<SkillGraphProps> {
     protected items: GraphItem[];
@@ -81,35 +82,38 @@ class SkillGraphImpl extends React.Component<SkillGraphProps> {
 
     // This function converts graph position (no units) to x/y (SVG units)
     protected getPosition(depth: number, offset: number): SvgCoord {
-        return { x: (depth + 1) * 12 * UNIT, y: (offset * 8 + 6) * UNIT}
+        return { x: this.getX(depth), y: this.getY(offset) }
+    }
+
+    protected getX(position: number) {
+        return ((position * 12) + PADDING) * UNIT;
+    }
+
+    protected getY(position: number) {
+        return ((position * 8) + PADDING) * UNIT;
     }
 
     render() {
         const { map, user, selectedItem, pageSourceUrl } = this.props;
-        return <div className="skill-graph">
-            {map.displayName && <div className="graph-title">
-                <span>{map.displayName}</span>
-            </div>}
-            <div className="graph">
-                <svg xmlns="http://www.w3.org/2000/svg" width={(this.size.width + 2) * 12 * UNIT} height={(this.size.height + 2) * 8 * UNIT}>
-                    {this.paths.map((el, i) => {
-                        return <SkillGraphPath key={`graph-activity-${i}`} strokeWidth={3 * UNIT} color="#000" points={el.points} />
-                    })}
-                    {this.paths.map((el, i) => {
-                         return <SkillGraphPath key={`graph-activity-${i}`} strokeWidth={3 * UNIT - 4} color="#BFBFBF" points={el.points} />
-                    })}
-                    {this.items.map((el, i) => {
-                        return <SkillGraphNode key={`graph-activity-${i}`}
-                            activityId={el.activity.activityId}
-                            position={el.position}
-                            width={5 * UNIT}
-                            selected={el.activity.activityId === selectedItem}
-                            onItemSelect={this.onItemSelect}
-                            status={isActivityUnlocked(user, pageSourceUrl, map, el.activity.activityId) ? "notstarted" : "locked"} /> // TODO shakao needs "completed/inprogress"
-                    })}
-                </svg>
-            </div>
-        </div>
+        const width = this.getX(this.size.width) + UNIT * PADDING;
+        const height = this.getY(this.size.height) + UNIT * PADDING;
+        return <svg className="skill-graph" xmlns="http://www.w3.org/2000/svg" width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
+            {this.paths.map((el, i) => {
+                return <SkillGraphPath key={`graph-activity-${i}`} strokeWidth={3 * UNIT} color="#000" points={el.points} />
+            })}
+            {this.paths.map((el, i) => {
+                return <SkillGraphPath key={`graph-activity-${i}`} strokeWidth={3 * UNIT - 4} color="#BFBFBF" points={el.points} />
+            })}
+            {this.items.map((el, i) => {
+                return <SkillGraphNode key={`graph-activity-${i}`}
+                    activityId={el.activity.activityId}
+                    position={el.position}
+                    width={5 * UNIT}
+                    selected={el.activity.activityId === selectedItem}
+                    onItemSelect={this.onItemSelect}
+                    status={isActivityUnlocked(user, pageSourceUrl, map, el.activity.activityId) ? "notstarted" : "locked"} /> // TODO shakao needs "completed/inprogress"
+            })}
+        </svg>
     }
 }
 

@@ -142,19 +142,7 @@ export class AssetEditor extends Editor {
                 break;
             case pxt.AssetType.Tilemap:
                 const project = pxt.react.getTilemapProject();
-                // for tilemaps, fill in all project tiles
-                const allTiles = project.getProjectTiles(asset.data.tileset.tileWidth, true);
-                const referencedTiles = [];
-                for (const tile of allTiles.tiles) {
-                    if (!asset.data.tileset.tiles.some(t => t.id === tile.id)) {
-                        asset.data.tileset.tiles.push(tile);
-                    }
-                    if (project.isAssetUsed(tile, null, [asset.id])) {
-                        referencedTiles.push(tile.id);
-                    }
-                }
-
-                asset.data.projectReferences = referencedTiles;
+                pxt.sprite.addMissingTilemapTilesAndReferences(project, asset);
 
                 fieldView = pxt.react.getFieldEditorView("tilemap-editor", asset as pxt.ProjectTilemap, {
                     initWidth: 16,
@@ -181,7 +169,9 @@ export class AssetEditor extends Editor {
             if (this.parent.isTutorial()) this.unbindTutorialEvents();
 
             const result = fieldView.getResult();
-            if (asset.type == pxt.AssetType.Tilemap) result.data = this.updateTilemapTiles(result.data);
+            if (asset.type == pxt.AssetType.Tilemap) {
+                pxt.sprite.updateTilemapReferencesFromResult(pxt.react.getTilemapProject(), result);
+            }
 
             Promise.resolve(cb(result)).then(() => {
                 // for temporary (unnamed) assets, update the underlying typescript image literal
@@ -197,29 +187,5 @@ export class AssetEditor extends Editor {
         if (this.parent.isTutorial()) this.bindTutorialEvents();
 
         fieldView.show();
-    }
-
-    protected updateTilemapTiles = (data: pxt.sprite.TilemapData): pxt.sprite.TilemapData => {
-        const project = pxt.react.getTilemapProject();
-
-        data.deletedTiles?.forEach(deleted => project.deleteTile(deleted));
-
-        data.editedTiles?.forEach(edited => {
-            const index = data.tileset.tiles.findIndex(t => t.id === edited);
-            const tile = data.tileset.tiles[index];
-
-            if (!tile) return;
-
-            data.tileset.tiles[index] = project.updateTile(tile);
-        })
-
-        data.tileset.tiles.forEach((t, i) => {
-            if (t && !t.jresData) {
-                data.tileset.tiles[i] = project.resolveTile(t.id);
-            }
-        })
-
-        pxt.sprite.trimTilemapTileset(data);
-        return data;
     }
 }

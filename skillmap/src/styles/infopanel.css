@@ -1,0 +1,8 @@
+.info-panel {
+    display: flex;
+    justify-content: center;
+    width: 20rem;
+    margin: 1rem;
+
+    border: 1px solid #000; /* TEMP */
+}

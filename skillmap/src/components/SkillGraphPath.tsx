@@ -2,10 +2,6 @@ import * as React from "react";
 
 import { SvgCoord } from '../lib/skillGraphUtils';
 
-/* tslint:disable:no-import-side-effect */
-import '../styles/skillnode.css'
-/* tslint:enable:no-import-side-effect */
-
 interface SkillGraphPathProps {
     points: SvgCoord[];
     strokeWidth: number;

@@ -110,7 +110,15 @@ function buildMapFromSections(header: MarkdownSection, sections: MarkdownSection
     const result = inflateSkillMap(header);
     const activities = sections.map(inflateActivity);
 
+    // Inherit unless explicitly disallowed
+    if (result.allowCodeCarryover) activities.forEach(a => {
+        if (a.allowCodeCarryover === undefined) {
+            a.allowCodeCarryover = true;
+        }
+    });
+
     result.root = activities[0];
+    result.root.allowCodeCarryover = false;
 
     for (const activity of activities) {
         if (result.activities![activity.activityId]) {
@@ -158,7 +166,9 @@ function inflateSkillMap(section: MarkdownSection): Partial<SkillMap> {
         description: section.attributes["description"],
         completionUrl: section.attributes["completionurl"],
         prerequisites: [],
-        activities: {}
+        activities: {},
+        // defaults to true
+        allowCodeCarryover: section.attributes["allowcodecarryover"] ? !isFalse(section.attributes["allowcodecarryover"]) : true
     };
 
     if (section.attributes["required"]) {
@@ -194,7 +204,9 @@ function inflateActivity(section: MarkdownSection): MapActivity {
         imageUrl: section.attributes["imageurl"],
         tags: parseList(section.attributes["tags"]),
         next: [],
-        nextIds: parseList(section.attributes["next"])
+        nextIds: parseList(section.attributes["next"]),
+        // defaults to true
+        allowCodeCarryover: section.attributes["allowcodecarryover"] ? !isFalse(section.attributes["allowcodecarryover"]) : true
     };
 
     if (section.attributes["type"]) {
@@ -223,6 +235,36 @@ function inflateActivity(section: MarkdownSection): MapActivity {
     if (!result.type) error(`Activity '${result.activityId}' is missing attribute 'type'`);
 
     return result as MapActivity;
+}
+
+function isTrue(value: string | undefined) {
+    if (!value) return false;
+
+    switch (value.toLowerCase().trim()) {
+        case "1":
+        case "yes":
+        case "y":
+        case "on":
+        case "true":
+            return true;
+        default:
+            return false;
+    }
+}
+
+function isFalse(value: string | undefined) {
+    if (!value) return false;
+
+    switch (value.toLowerCase().trim()) {
+        case "0":
+        case "no":
+        case "n":
+        case "off":
+        case "false":
+            return true;
+        default:
+            return false;
+    }
 }
 
 function inflateMetadata(section: MarkdownSection): PageMetadata {
