@@ -541,7 +541,7 @@ async function onHeadersChanged(): Promise<void> {
     // get our work
     const hdrs = getLocalCloudHeaders().filter(h => headerWorklist[h.id])
     headerWorklist = {}; // clear worklist
-    
+
     // start the save
     const saveStart = U.nowSeconds()
     const saveTasks = hdrs.map(async h => {
