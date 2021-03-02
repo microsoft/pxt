@@ -1,5 +1,5 @@
 .graph-activity.selected rect {
-    stroke: var(--primary-color);
+    stroke: var(--hover-color);
     stroke-width: 4px;
 }
 

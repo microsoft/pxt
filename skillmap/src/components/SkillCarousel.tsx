@@ -24,7 +24,7 @@ interface SkillCarouselProps {
     selectedItem?: string;
     pageSourceUrl: string;
     completionState: "incomplete" | "transitioning" | "completed";
-    dispatchChangeSelectedItem: (id?: string) => void;
+    dispatchChangeSelectedItem: (mapId?: string, activityId?: string) => void;
     dispatchShowCompletionModal: (mapId: string, activityId?: string) => void;
     dispatchSetSkillMapCompleted: (mapId: string) => void;
 }
@@ -65,7 +65,7 @@ class SkillCarouselImpl extends React.Component<SkillCarouselProps> {
         const { map, dispatchChangeSelectedItem } = this.props;
         if (id !== this.props.selectedItem) {
             tickEvent("skillmap.carousel.item.select", { path: map.mapId, activity: id });
-            dispatchChangeSelectedItem(id);
+            dispatchChangeSelectedItem(map.mapId, id);
         } else {
             tickEvent("skillmap.carousel.item.deselect", { path: map.mapId, activity: id });
             dispatchChangeSelectedItem(undefined);
@@ -179,7 +179,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         requiredMaps,
         pageSourceUrl: state.pageSourceUrl,
         completionState: mapProgress?.[map.mapId]?.completionState,
-        selectedItem: state.selectedItem && ownProps.map?.activities?.[state.selectedItem] ? state.selectedItem : undefined
+        selectedItem: state.selectedItem && ownProps.map?.activities?.[state.selectedItem.activityId] ? state.selectedItem.activityId : undefined
     }
 }
 
