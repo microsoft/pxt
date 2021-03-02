@@ -4,10 +4,10 @@ import { SvgCoord } from '../lib/skillGraphUtils';
 import { ActivityStatus } from '../lib/skillMapUtils';
 
 /* tslint:disable:no-import-side-effect */
-import '../styles/skillnode.css'
+import '../styles/graphnode.css'
 /* tslint:enable:no-import-side-effect */
 
-interface SkillGraphNodeProps {
+interface GraphNodeProps {
     activityId: string;
     width: number;
     position: SvgCoord;
@@ -16,7 +16,7 @@ interface SkillGraphNodeProps {
     onItemSelect?: (id: string) => void;
 }
 
-export class SkillGraphNode extends React.Component<SkillGraphNodeProps> {
+export class GraphNode extends React.Component<GraphNodeProps> {
     protected handleClick = () => {
         if (this.props.onItemSelect) this.props.onItemSelect(this.props.activityId);
     }

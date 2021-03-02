@@ -2,13 +2,13 @@ import * as React from "react";
 
 import { SvgCoord } from '../lib/skillGraphUtils';
 
-interface SkillGraphPathProps {
+interface GraphPathProps {
     points: SvgCoord[];
     strokeWidth: number;
     color: string;
 }
 
-export class SkillGraphPath extends React.Component<SkillGraphPathProps> {
+export class GraphPath extends React.Component<GraphPathProps> {
     render() {
         const { points, strokeWidth, color } = this.props;
 
