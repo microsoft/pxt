@@ -161,13 +161,15 @@ function resetAsync(): Promise<void> {
     return Promise.resolve();
 }
 
-let _inProgressSyncAsync: Promise<any> = Promise.resolve()
+let inProgressSyncPromise: Promise<any> = Promise.resolve()
 export async function syncAsync(hdrs?: Header[]): Promise<Header[]> {
+    // wait for any pending saves
+    await inProgressSavePromise;
     // ensure we don't run this twice
-    if (_inProgressSyncAsync.isResolved()) {
-        _inProgressSyncAsync = syncAsyncInternal(hdrs)
+    if (inProgressSyncPromise.isResolved()) {
+        inProgressSyncPromise = syncAsyncInternal(hdrs)
     }
-    return _inProgressSyncAsync
+    return inProgressSyncPromise
 }
 
 async function transferToCloud(local: Header, cloudVersion: string): Promise<Header> {
@@ -516,9 +518,7 @@ async function onHeaderChangeDebouncer(h: Header) {
     clearTimeout(onHeaderChangeTimeout);
     const doAfter = async () => {
         onHeaderChangeStarted = 0;
-        const hdrs = getLocalCloudHeaders().filter(h => headerWorklist[h.id])
-        await onHeadersChanged(hdrs);
-        headerWorklist = {}; // clear worklist
+        await onHeadersChanged();
     };
 
     // has it been longer than the max time?
@@ -532,15 +532,29 @@ async function onHeaderChangeDebouncer(h: Header) {
         onHeaderChangeTimeout = setTimeout(doAfter, CLOUDSAVE_DEBOUNCE_MS);
     }
 }
-async function onHeadersChanged(hdrs: Header[]) {
+let inProgressSavePromise: Promise<Header[]> = Promise.resolve([]);
+async function onHeadersChanged(): Promise<void> {
     if (!auth.hasIdentity()) { return; }
     if (!await auth.loggedIn()) { return; }
+
+    // wait on any already pending saves or syncs first
+    await inProgressSavePromise;
+    await inProgressSyncPromise;
+
+    // get our work
+    const hdrs = getLocalCloudHeaders().filter(h => headerWorklist[h.id])
+    headerWorklist = {}; // clear worklist
+    
+    // start the save
     const saveStart = U.nowSeconds()
     const saveTasks = hdrs.map(async h => {
         const newHdr = await transferToCloud(h, h.cloudVersion);
         return newHdr
     });
-    const allRes = await Promise.all(saveTasks);
+    inProgressSavePromise = Promise.all(saveTasks);
+
+    // check the response
+    const allRes = await inProgressSavePromise;
     const anyFailed = allRes.some(r => !r);
     if (anyFailed) {
         pxt.tickEvent(`identity.cloudSaveFailedTriggeringPartialSync`);
