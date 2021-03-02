@@ -3,18 +3,18 @@ import { connect } from 'react-redux';
 
 import { SkillMapState } from '../store/reducer';
 import { dispatchChangeSelectedItem  } from '../actions/dispatch';
-import { SkillGraphNode } from './SkillGraphNode';
-import { SkillGraphPath } from "./SkillGraphPath";
+import { GraphNode } from './GraphNode';
+import { GraphPath } from "./GraphPath";
 
 import { isActivityUnlocked } from '../lib/skillMapUtils';
 import { SvgCoord, orthogonalGraph } from '../lib/skillGraphUtils';
 
-interface GraphItem {
+interface SvgGraphItem {
     activity: MapActivity;
     position: SvgCoord;
 }
 
-interface GraphPath {
+interface SvgGraphPath {
     points: SvgCoord[];
 }
 
@@ -30,8 +30,8 @@ const UNIT = 10;
 const PADDING = 4;
 
 class SkillGraphImpl extends React.Component<SkillGraphProps> {
-    protected items: GraphItem[];
-    protected paths: GraphPath[];
+    protected items: SvgGraphItem[];
+    protected paths: SvgGraphPath[];
     protected size: { width: number, height: number };
 
     constructor(props: SkillGraphProps) {
@@ -43,12 +43,12 @@ class SkillGraphImpl extends React.Component<SkillGraphProps> {
         this.paths = paths;
     }
 
-    protected getItems(root: MapActivity): { items: GraphItem[], paths: GraphPath[] } {
+    protected getItems(root: MapActivity): { items: SvgGraphItem[], paths: SvgGraphPath[] } {
         const nodes = orthogonalGraph(root);
 
         // Convert into renderable items
-        const items: GraphItem[] = [];
-        const paths: GraphPath[] = [];
+        const items: SvgGraphItem[] = [];
+        const paths: SvgGraphPath[] = [];
         for (let current of nodes) {
             const { depth, offset } = current;
             items.push({
@@ -99,13 +99,13 @@ class SkillGraphImpl extends React.Component<SkillGraphProps> {
         const height = this.getY(this.size.height) + UNIT * PADDING;
         return <svg className="skill-graph" xmlns="http://www.w3.org/2000/svg" width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
             {this.paths.map((el, i) => {
-                return <SkillGraphPath key={`graph-activity-${i}`} strokeWidth={3 * UNIT} color="#000" points={el.points} />
+                return <GraphPath key={`graph-activity-${i}`} strokeWidth={3 * UNIT} color="#000" points={el.points} />
             })}
             {this.paths.map((el, i) => {
-                return <SkillGraphPath key={`graph-activity-${i}`} strokeWidth={3 * UNIT - 4} color="#BFBFBF" points={el.points} />
+                return <GraphPath key={`graph-activity-${i}`} strokeWidth={3 * UNIT - 4} color="#BFBFBF" points={el.points} />
             })}
             {this.items.map((el, i) => {
-                return <SkillGraphNode key={`graph-activity-${i}`}
+                return <GraphNode key={`graph-activity-${i}`}
                     activityId={el.activity.activityId}
                     position={el.position}
                     width={5 * UNIT}
