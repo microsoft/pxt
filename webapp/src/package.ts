@@ -369,7 +369,6 @@ export class EditorPackage {
         if (virtual) f.virtual = true;
         this.files[n] = f
         data.invalidate("open-meta:")
-        console.log(`set (not saved) ${n}`) // TODO @darzu: dbg
         return f
     }
 
@@ -423,26 +422,13 @@ export class EditorPackage {
         return r
     }
 
-    async saveFileAsync(filename: string) {
+    saveFileAsync(filename: string) {
         if (!this.header) return Promise.resolve();
         const content = this.files[filename]?.content
-        const res = await workspace.partialSaveAsync(this.header.id, filename, content);
-
-        // TODO @darzu: dbg;
-        const diffWithWorkspace = workspace.computeChangeSummary(
-            { header: this.header, text: this.getAllFiles() },
-            workspace.getCachedProject(this.header.id));
-        console.log(`saving: ${filename}`); // TODO @darzu: dbg
-        if (diffWithWorkspace.files.length > 0 || diffWithWorkspace.header.length > 0) {
-            // we're out of sync with the workspace layer:
-            console.log(workspace.stringifyChangeSummary(diffWithWorkspace));
-        }
-
-        return res;
+        return workspace.partialSaveAsync(this.header.id, filename, content);
     }
 
     saveFilesAsync() {
-        console.log(`saving ${Object.keys(this.getAllFiles()).join(',')}`); // TODO @darzu: dbg
         if (!this.header) return Promise.resolve();
 
         let cfgFile = this.files[pxt.CONFIG_NAME]

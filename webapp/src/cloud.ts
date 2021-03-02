@@ -204,8 +204,6 @@ function getConflictCopyName(hdr: Header): string {
 }
 
 async function resolveConflict(local: Header, remoteFile: File) {
-    // TODO @darzu: show a popup or message to the user
-
     // Strategy: resolve conflict by creating a copy
     // Note, we do the operations in the following order:
     // 1. create a local copy
@@ -238,7 +236,6 @@ async function resolveConflict(local: Header, remoteFile: File) {
     // 2. swap current project to the new copy
     try {
         if (app.hasEditor()) {
-            // TODO @darzu: confirm this works for resolving conflicts on home screen
             const editor = await app.getEditorAsync();
             if (!editor.state.home && editor.state.header?.id === local.id) {
                 await editor.loadHeaderAsync(newCopyHdr, editor.state.editorState);
