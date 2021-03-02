@@ -62,7 +62,7 @@ export class ActionButtonsImpl extends React.Component<ActionButtonsProps> {
 
     render() {
         const { status } = this.props;
-        const completed = this.isCompleted(status || "notstarted");
+        const showRestart = (status && status !== "notstarted" && status !== "locked");
 
         if (status === "locked") return <div />
 
@@ -70,7 +70,7 @@ export class ActionButtonsImpl extends React.Component<ActionButtonsProps> {
             <div className="action-button" role="button" onClick={this.handleActionButtonClick}>
                 {this.getSkillCardActionText()}
             </div>
-            {completed && <div className="action-button" role="button" onClick={this.handleRestartButtonClick}>
+            {showRestart && <div className="action-button" role="button" onClick={this.handleRestartButtonClick}>
                 {lf("RESTART")}
             </div>}
         </div>
