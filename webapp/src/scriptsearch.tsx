@@ -276,6 +276,9 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         try {
             core.showLoading("downloadingpackage", lf("downloading extension..."));
             r = await pxt.github.downloadLastestPackageAsync(scr);
+        }
+        catch (e) {
+            core.handleNetworkError(e);
         } finally {
             core.hideLoading("downloadingpackage");
         }
