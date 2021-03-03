@@ -204,6 +204,10 @@ export class ProjectView
             if (msg.type === "extensionsdialog") {
                 const exmsg = msg as pxsim.SimulatorExtensionsDialogMessage;
                 this.showPackageDialog(exmsg.query)
+            } else if (msg.type === "addextensions") {
+                const exmsg = msg as pxsim.SimulatorAddExtensionsMessage;
+                const extensions = exmsg.extensions;
+                this.addGithubExtensions(extensions);
             } else if (msg.type === "screenshot") {
                 const scmsg = msg as pxsim.SimulatorScreenshotMessage;
                 if (!scmsg.data) return;
@@ -226,6 +230,32 @@ export class ProjectView
                     } as pxt.editor.ScreenshotData)
             }
         }, false);
+    }
+
+    private async addGithubExtensions(extensions: string[]) {
+        pxt.tickEvent('package.addextensions')
+        const p = pkg.mainEditorPkg();
+        if (!p || !extensions?.length)
+            return;
+
+        pxt.debug(`adding extensions ${extensions}`)
+        try {
+            core.showLoading("addextensions", lf("adding extensions..."))
+            let needsReload = false;
+            for (const ghid of extensions.map(ext => pxt.github.parseRepoId(ext)).filter(ghid => !!ghid)) {
+                pxt.debug(`adding ${ghid.fullName}`)
+                const { config, version } = await pxt.github.downloadLastestPackageAsync(ghid);
+                const added = await p.addDependencyAsync(config, version);
+                if (added) {
+                    pxt.debug(`reload needed`)
+                    needsReload = needsReload || added;
+                }
+            }
+            if (needsReload)
+                await this.reloadHeaderAsync();
+        } finally {
+            core.hideLoading("addextensions")
+        }
     }
 
     shouldShowHomeScreen() {

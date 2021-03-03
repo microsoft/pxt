@@ -168,6 +168,14 @@ namespace pxsim {
         query: string
     }
 
+    export interface SimulatorAddExtensionsMessage extends SimulatorMessage {
+        type: "addextensions",
+        /**
+         * List of repositories to add
+         */
+        extensions: string[]
+    }
+
     export interface SimulatorAspectRatioMessage extends SimulatorMessage {
         type: "aspectratio",
         value: number,
