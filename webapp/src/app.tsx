@@ -282,6 +282,9 @@ export class ProjectView
                 await p.setDependencyAsync(config.name, version);
             }
             this.reloadHeaderAsync();
+        }
+        catch (e) {
+            core.handleNetworkError(e);
         } finally {
             core.hideLoading("addextensions")
         }
