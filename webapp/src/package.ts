@@ -577,7 +577,7 @@ export class EditorPackage {
     }
 
     /**
-     * Adds the dependency while handling conflicts, return true if reload is needed
+     * Adds the dependency while handling conflicts, return true the dependency was added
      * @param config 
      * @param version 
      * @param skipConfirm 
@@ -628,7 +628,10 @@ export class EditorPackage {
                         });
                 }
 
-                return addDependencyPromise;
+                return addDependencyPromise
+                    .then(ok => ok
+                        ? this.addDepAsync(config.name, version).then(() => true)
+                        : Promise.resolve(false));
             });
     }
 }

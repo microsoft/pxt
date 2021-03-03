@@ -289,8 +289,8 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         try {
             this.hide();
             core.showLoading("installingextension", lf("installing extension..."))
-            const needsReload = await pkg.mainEditorPkg().addDependencyAsync(config, version, this.state.mode == ScriptSearchMode.Boards)
-            if (needsReload)  //async
+            const added = await pkg.mainEditorPkg().addDependencyAsync(config, version, this.state.mode == ScriptSearchMode.Boards)
+            if (added)  //async
                 this.props.parent.reloadHeaderAsync();
         }
         finally {
