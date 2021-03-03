@@ -434,7 +434,7 @@ export async function partialSaveAsync(id: string, filename: string, content: st
         pxt.tickEvent(`workspace.invalidSaveToUnknownProject`);
         return;
     }
-    const newTxt = {...prev.text}
+    const newTxt = {...await getTextAsync(id)}
     newTxt[filename] = content;
     return saveAsync(prev.header, newTxt);
 }
