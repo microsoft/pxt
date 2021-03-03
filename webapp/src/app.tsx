@@ -263,7 +263,7 @@ export class ProjectView
                         {lf("Add these user-provided extensions to your project?")}
                     </p>
                     <p>
-                        {ghidToBeApproved.map(scr => <a href={`https://github.com/${scr.project}`}>{scr.fullName}</a>).join(", ")}
+                        {ghidToBeApproved.map(scr => <a href={`https://github.com/${scr.project}`}>{scr.fullName}</a>)},
                     </p>
                     <hr />
                     <p>
