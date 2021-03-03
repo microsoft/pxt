@@ -69,6 +69,7 @@ type ProjectCreationOptions = pxt.editor.ProjectCreationOptions;
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
 import { HintManager } from "./hinttooltip";
+import { CodeCardView } from "./codecard";
 
 pxsim.util.injectPolyphils();
 
@@ -238,13 +239,47 @@ export class ProjectView
     private async addOrUpdateGithubExtensions(extensions: string[]) {
         pxt.tickEvent('package.addextensions')
         const p = pkg.mainEditorPkg();
-        if (!p || !extensions?.length)
+        const packageConfig = await pxt.packagesConfigAsync();
+        const ghids = extensions?.map(ext => pxt.github.parseRepoId(ext))
+            // make sure parsing succeeded
+            .filter(ghid => !!ghid)
+            // remove anything banned
+            .filter(ghid => pxt.github.repoStatus(ghid, packageConfig) !== pxt.github.GitRepoStatus.Banned)
+
+        // anything to add?
+        if (!p || !ghids?.length)
             return;
+
+        // need approval
+        const ghidToBeApproved = ghids.filter(ghid =>
+            pxt.github.repoStatus(ghid, packageConfig) !== pxt.github.GitRepoStatus.Approved);
+
+        // let the user approve adding the packages...
+        if (ghidToBeApproved.length) {
+            const ok = await core.confirmAsync({
+                header: lf("Add extensions?"),
+                jsx: <>
+                    <p>
+                        {lf("Add these user-provided extensions to your project?")}
+                    </p>
+                    <p>
+                        {ghidToBeApproved.map(scr => <a href={`https://github.com/${scr.project}`}>{scr.fullName}</a>).join(", ")}
+                    </p>
+                    <hr />
+                    <p>
+                        {lf("User-provided extension are not endorsed by Microsoft.")}
+                    </p>
+                </>
+            })
+            if (!ok)
+                return;
+        }
 
         pxt.debug(`adding extensions ${extensions}`)
         try {
             core.showLoading("addextensions", lf("adding extensions..."))
-            for (const ghid of extensions.map(ext => pxt.github.parseRepoId(ext)).filter(ghid => !!ghid)) {
+            // it's a go, let's add
+            for (const ghid of ghids) {
                 pxt.debug(`adding ${ghid.fullName}`)
                 const { config, version } = await pxt.github.downloadLatestPackageAsync(ghid);
                 await p.setDependencyAsync(config.name, version);
