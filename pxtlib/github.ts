@@ -593,7 +593,7 @@ namespace pxt.github {
             })
     }
 
-    export async function downloadLastestPackageAsync(repo: ParsedRepo): Promise<{ version: string, config: pxt.PackageConfig }> {
+    export async function downloadLatestPackageAsync(repo: ParsedRepo): Promise<{ version: string, config: pxt.PackageConfig }> {
         const packageConfig = await pxt.packagesConfigAsync()
         const tag = await pxt.github.latestVersionAsync(repo.slug, packageConfig)
         // download package into cache

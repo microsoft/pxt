@@ -246,7 +246,7 @@ export class ProjectView
             core.showLoading("addextensions", lf("adding extensions..."))
             for (const ghid of extensions.map(ext => pxt.github.parseRepoId(ext)).filter(ghid => !!ghid)) {
                 pxt.debug(`adding ${ghid.fullName}`)
-                const { config, version } = await pxt.github.downloadLastestPackageAsync(ghid);
+                const { config, version } = await pxt.github.downloadLatestPackageAsync(ghid);
                 await p.setDependencyAsync(config.name, version);
             }
             this.reloadHeaderAsync();
