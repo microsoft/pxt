@@ -36,8 +36,71 @@ let impl: WorkspaceProvider;
 let implType: string;
 
 function lookup(id: string) {
-    return allScripts.find(x => x.header.id == id || x.header.path == id);
+    // TODO @darzu: dbg
+    // return allScripts.find(x => x.header.id == id || x.header.path == id);
+    const h = cachedProjects.list().find(x => x.id == id || x.path == id)
+    if (h)
+        return getCachedProject(h.id)
+    return undefined;
 }
+export function getCachedProject(id: string) {
+    // TODO @darzu:
+    // return allScripts.find(x => x.header.id === id);
+    if (!cachedProjects.has(id))
+        return undefined
+    return {
+        header: cachedProjects.getHeader(id),
+        text: cachedProjects.getText(id),
+        version: cachedProjects.getVersion(id),
+    }
+}
+
+let cachedProjects = makeCachedWorkspace();
+interface CachedWorkspace {
+    list(): Header[];
+    has(id: string): boolean;
+    getHeader(id: string): Header;
+    setHeader(id: string, h: Header): void;
+    getText(id: string): ScriptText;
+    setText(id: string, text: ScriptText): void;
+    getVersion(id: string): pxt.workspace.Version;
+    setVersion(id: string, v: pxt.workspace.Version): void;
+}
+function makeCachedWorkspace(): CachedWorkspace {
+    let projects: {[id: string]: File} = {}
+
+    function list(): Header[] {
+        return U.values(projects).map(f => ({...f.header}))
+    }
+    function has(id: string): boolean {
+        return !!projects[id]
+    }
+    function getHeader(id: string): Header {
+        return projects[id] ? {...projects[id].header} : undefined
+    }
+    function setHeader(id: string, h: Header): void {
+        if (!projects[id])
+            projects[id] = {header: {...h}, text: {}, version: undefined}
+        else
+            projects[id].header = {...h}
+    }
+    function getText(id: string): ScriptText {
+        return projects[id] ? {...projects[id].text} : undefined
+    }
+    function setText(id: string, text: ScriptText): void {
+        projects[id].text = {...text}
+    }
+    function getVersion(id: string): pxt.workspace.Version {
+        return projects[id] ? projects[id].version : undefined
+    }
+    function setVersion(id: string, v: pxt.workspace.Version): void {
+        projects[id].version = v;
+    }
+    return {
+        list, has, getHeader, setHeader, getText, setText, getVersion, setVersion
+    }
+}
+
 
 export function gitsha(data: string, encoding: "utf-8" | "base64" = "utf-8") {
     if (encoding == "base64") {
@@ -120,7 +183,9 @@ async function switchToMemoryWorkspace(reason: string): Promise<void> {
 export function getHeaders(withDeleted = false) {
     maybeSyncHeadersAsync().done();
     const cloudUserId = auth.user()?.id;
-    let r = allScripts.map(e => e.header).filter(h =>
+    // TODO @darzu:
+    // let r = allScripts.map(e => e.header).filter(h =>
+    let r = cachedProjects.list().filter(h =>
         (withDeleted || !h.isDeleted) &&
         !h.isBackup &&
         (!h.cloudUserId || h.cloudUserId === cloudUserId))
@@ -166,7 +231,9 @@ export function restoreFromBackupAsync(h: Header) {
 }
 
 function cleanupBackupsAsync() {
-    const allHeaders = allScripts.map(e => e.header);
+    // TODO @darzu:
+    const allHeaders = cachedProjects.list()
+    // const allHeaders = allScripts.map(e => e.header);
     const refMap: pxt.Map<boolean> = {};
 
     // Figure out which scripts have backups
@@ -206,7 +273,8 @@ export function computeSessionId(hdrs: Header[]): string {
         .toString()
 }
 function refreshHeadersSession() {
-    sessionID = computeSessionId(allScripts.map(f => f.header))
+    sessionID = computeSessionId(cachedProjects.list())
+    // sessionID = computeSessionId(allScripts.map(f => f.header))
     if (isHeadersSessionOutdated()) {
         pxt.storage.setLocal('workspacesessionid', sessionID);
         pxt.debug(`workspace: refreshed headers session to ${sessionID}`);
@@ -352,17 +420,17 @@ export function forceSaveAsync(h: Header, text?: ScriptText, isCloud?: boolean):
     return saveAsync(h, text, isCloud);
 }
 
-interface Change<K, V> {
+export interface Change<K, V> {
     kind: 'add' | 'del' | 'mod'
     key: K,
     oldVal?: V,
     newVal?: V,
 }
-interface ProjectChanges {
+export interface ProjectChanges {
     header: Change<keyof Header, string>[],
     files: Change<string, number>[],
 }
-function computeChangeSummary(a: {header: Header, text: ScriptText}, b: {header: Header, text: ScriptText}): ProjectChanges {
+export function computeChangeSummary(a: {header: Header, text: ScriptText}, b: {header: Header, text: ScriptText}): ProjectChanges {
     const aHdr = a.header || {} as Header
     const bHdr = b.header || {} as Header
     const aTxt = a.text || {}
@@ -398,7 +466,7 @@ function computeChangeSummary(a: {header: Header, text: ScriptText}, b: {header:
     }
 }
 // useful for debugging
-function stringifyChangeSummary(diff: ProjectChanges): string {
+export function stringifyChangeSummary(diff: ProjectChanges): string {
     const indent = (s: string) => '\t' + s
     const changeToStr = (c: Change<any,any>) => `${c.kind} ${c.key}: (${c.oldVal || ''}) => (${c.newVal || ''})`
     let res = ''
@@ -441,6 +509,7 @@ export async function partialSaveAsync(id: string, filename: string, content: st
 
 export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: boolean): Promise<void> {
     pxt.debug(`workspace.saveAsync ${dbgHdrToString(h)}`)
+    console.log(`workspace.saveAsync ${dbgHdrToString(h)} cloud:${fromCloudSync ? 1 : 0} files: ${Object.keys(text || {}).join(', ')}`);
     if (h.isDeleted)
         clearHeaderSession(h);
     checkHeaderSession(h);
@@ -450,24 +519,30 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
     if (h.temporary)
         return Promise.resolve()
 
-    let e = lookup(h.id)
-    const newSave = !e
+    let cachedProj = lookup(h.id)
+    const newSave = !cachedProj
     if (newSave) {
-        e = {
+        cachedProj = {
             header: h,
             text,
             version: null
         }
-        allScripts.push(e)
+        // TODO @darzu:
+        cachedProjects.setHeader(h.id, h);
+        cachedProjects.setText(h.id, text);
+        cachedProjects.setVersion(h.id, null);
+        // allScripts.push(cachedProj)
     } else {
         // persist header changes to our local cache, but keep the old
         // reference around because (unfortunately) other layers (e.g. package.ts)
         // assume the reference is stable per id.
-        Object.assign(e.header, h)
-        h = e.header;
+        // TODO @darzu:
+        // Object.assign(cachedProj.header, h)
+        // h = cachedProj.header;
+        cachedProjects.setHeader(h.id, h)
     }
 
-    const hasUserFileChanges = async () => {
+    const hasUserFileChanges = () => {
         // we see lots of frequent "saves" that don't come from real changes made by the user. This
         // causes problems for cloud sync since this can cause us to think the user is making when
         // just reading a project. The "correct" solution would be to have a full history and .gitignore
@@ -476,7 +551,7 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
             // new project
             return true
         }
-        const prevProj = e
+        const prevProj = cachedProj
         const allChanges = computeChangeSummary(prevProj, {header: h, text})
         const ignoredFiles = [GIT_JSON, pxt.SIMSTATE_JSON, pxt.SERIAL_EDITOR_FILE]
         const ignoredHeaderFields: (keyof Header)[] = ['recentUse', 'modificationTime', 'cloudCurrent', '_rev', '_id' as keyof Header, 'cloudVersion']
@@ -495,7 +570,7 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
         return hasUserChanges;
     }
     const isUserChange = !fromCloudSync
-        && (h.isDeleted || text && await hasUserFileChanges())
+        && (h.isDeleted || text && hasUserFileChanges())
     if (isUserChange) {
         h.pubCurrent = false
         h.blobCurrent_ = false
@@ -513,21 +588,22 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
         h.recentUse = U.nowSeconds()
 
     if (text)
-        e.text = text
+        cachedProj.text = text
     if (text || h.isDeleted) {
         h.saveId = null
     }
 
-    // perma-delete
-    if (h.isDeleted && h.blobVersion_ == "DELETED") {
-        let idx = allScripts.indexOf(e)
-        U.assert(idx >= 0)
-        allScripts.splice(idx, 1)
-        return headerQ.enqueue(h.id, () =>
-            fixupVersionAsync(e).then(() =>
-                impl.deleteAsync ? impl.deleteAsync(h, e.version) : impl.setAsync(h, e.version, {})))
-            .finally(() => refreshHeadersSession())
-    }
+    // TODO @darzu: unused
+    // // perma-delete
+    // if (h.isDeleted && h.blobVersion_ == "DELETED") {
+    //     let idx = allScripts.indexOf(cachedProj)
+    //     U.assert(idx >= 0)
+    //     allScripts.splice(idx, 1)
+    //     return headerQ.enqueue(h.id, () =>
+    //         fixupVersionAsync(cachedProj).then(() =>
+    //             impl.deleteAsync ? impl.deleteAsync(h, cachedProj.version) : impl.setAsync(h, cachedProj.version, {})))
+    //         .finally(() => refreshHeadersSession())
+    // }
 
     // check if we have dynamic boards, store board info for home page rendering
     if (text && pxt.appTarget.simulator && pxt.appTarget.simulator.dynamicBoardDefinition) {
@@ -538,13 +614,13 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
     }
 
     return headerQ.enqueue<void>(h.id, async () => {
-        await fixupVersionAsync(e);
+        await fixupVersionAsync(cachedProj);
         let ver: any;
 
-        const toWrite = text ? e.text : null;
+        const toWrite = text ? cachedProj.text : null;
 
         try {
-            ver = await impl.setAsync(h, e.version, toWrite);
+            ver = await impl.setAsync(h, cachedProj.version, toWrite);
         } catch (e) {
             // Write failed; use in memory db.
             await switchToMemoryWorkspace("write failed");
@@ -556,7 +632,7 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
         }
 
         if (text) {
-            e.version = ver;
+            cachedProj.version = ver;
         }
 
         if (isUserChange) {
@@ -658,7 +734,9 @@ export async function duplicateAsync(h: Header, newName?: string): Promise<Heade
 export function createDuplicateName(h: Header) {
     let reducedName = h.name.indexOf("#") > -1 ?
         h.name.substring(0, h.name.lastIndexOf('#')).trim() : h.name;
-    let names = U.toDictionary(allScripts.filter(e => !e.header.isDeleted), e => e.header.name)
+    // TODO @darzu:
+    let names = U.toDictionary(cachedProjects.list().filter(h => !h.isDeleted), h => h.name)
+    // let names = U.toDictionary(allScripts.list().filter(h => !h.isDeleted), h => h.name)
     let n = 2
     while (names.hasOwnProperty(reducedName + " #" + n))
         n++
@@ -1540,7 +1618,8 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
                 .then(() => impl.listAsync());
         })
         .then(headers => {
-            const existing = U.toDictionary(allScripts || [], h => h.header.id)
+            const existing = U.toDictionary(cachedProjects.list() || [], h => h.id)
+            // const existing = U.toDictionary(allScripts || [], h => h.header.id)
             // this is an in-place update the header instances
             allScripts = headers.map(hd => {
                 let ex = existing[hd.id]
