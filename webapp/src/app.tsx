@@ -202,10 +202,7 @@ export class ProjectView
             let msg = ev.data as pxsim.SimulatorMessage;
             if (!msg || !this.state.header) return;
 
-            if (msg.type === "extensionsdialog") {
-                const exmsg = msg as pxsim.SimulatorExtensionsDialogMessage;
-                this.showPackageDialog(exmsg.query)
-            } else if (msg.type === "addextensions") {
+            if (msg.type === "addextensions") {
                 const exmsg = msg as pxsim.SimulatorAddExtensionsMessage;
                 const extensions = exmsg.extensions;
                 this.addOrUpdateGithubExtensions(extensions);
@@ -3458,8 +3455,8 @@ export class ProjectView
         return this.newProjectDialog.promptUserAsync();
     }
 
-    showPackageDialog(query?: string) {
-        this.scriptSearch.showExtensions(query);
+    showPackageDialog() {
+        this.scriptSearch.showExtensions();
     }
 
     showBoardDialogAsync(features?: string[], closeIcon?: boolean): Promise<void> {
