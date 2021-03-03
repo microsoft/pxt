@@ -232,6 +232,9 @@ export class ProjectView
         }, false);
     }
 
+    /**
+     * Add Github extensions **without** conflict resolution
+     */
     private async addGithubExtensions(extensions: string[]) {
         pxt.tickEvent('package.addextensions')
         const p = pkg.mainEditorPkg();
@@ -241,18 +244,12 @@ export class ProjectView
         pxt.debug(`adding extensions ${extensions}`)
         try {
             core.showLoading("addextensions", lf("adding extensions..."))
-            let needsReload = false;
             for (const ghid of extensions.map(ext => pxt.github.parseRepoId(ext)).filter(ghid => !!ghid)) {
                 pxt.debug(`adding ${ghid.fullName}`)
                 const { config, version } = await pxt.github.downloadLastestPackageAsync(ghid);
-                const added = await p.addDependencyAsync(config, version);
-                if (added) {
-                    pxt.debug(`reload needed`)
-                    needsReload = needsReload || added;
-                }
+                await p.setDependencyAsync(config.name, version);
             }
-            if (needsReload)
-                await this.reloadHeaderAsync();
+            this.reloadHeaderAsync();
         } finally {
             core.hideLoading("addextensions")
         }
