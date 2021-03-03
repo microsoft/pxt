@@ -465,7 +465,7 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
         }
     }
 
-    componentWillMount() {
+    componentDidMount() {
         this.startRefresh();
     }
 
