@@ -207,7 +207,7 @@ export class ProjectView
             } else if (msg.type === "addextensions") {
                 const exmsg = msg as pxsim.SimulatorAddExtensionsMessage;
                 const extensions = exmsg.extensions;
-                this.addGithubExtensions(extensions);
+                this.addOrUpdateGithubExtensions(extensions);
             } else if (msg.type === "screenshot") {
                 const scmsg = msg as pxsim.SimulatorScreenshotMessage;
                 if (!scmsg.data) return;
@@ -235,7 +235,7 @@ export class ProjectView
     /**
      * Add Github extensions **without** conflict resolution
      */
-    private async addGithubExtensions(extensions: string[]) {
+    private async addOrUpdateGithubExtensions(extensions: string[]) {
         pxt.tickEvent('package.addextensions')
         const p = pkg.mainEditorPkg();
         if (!p || !extensions?.length)
