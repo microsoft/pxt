@@ -43,7 +43,7 @@ class SkillGraphImpl extends React.Component<SkillGraphProps> {
         this.paths = paths;
     }
 
-    protected getItems(root: MapActivity): { items: SvgGraphItem[], paths: SvgGraphPath[] } {
+    protected getItems(root: MapNode): { items: SvgGraphItem[], paths: SvgGraphPath[] } {
         const nodes = orthogonalGraph(root);
 
         // Convert into renderable items
@@ -106,6 +106,7 @@ class SkillGraphImpl extends React.Component<SkillGraphProps> {
             })}
             {this.items.map((el, i) => {
                 return <GraphNode key={`graph-activity-${i}`}
+                    kind={el.activity.kind}
                     activityId={el.activity.activityId}
                     position={el.position}
                     width={5 * UNIT}

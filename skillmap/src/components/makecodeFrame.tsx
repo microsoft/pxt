@@ -344,7 +344,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
     let title: string | undefined;
     const map = state.maps[currentMapId];
 
-    const activity = map.activities[currentActivityId];
+    const activity = map.activities[currentActivityId] as MapActivity;
     if (editorUrl.charAt(editorUrl.length - 1) === "/" && !isLocal()) {
         url = editorUrl.substr(0, editorUrl.length - 1);
     }

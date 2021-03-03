@@ -249,7 +249,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
                             user.mapProgress[pageSource][map.mapId].activityState[activity.activityId].isCompleted = true;
                         }
 
-                        if (activity.tags?.length && sourceUrl) {
+                        if (activity.kind === "activity" && activity.tags?.length && sourceUrl) {
                             for (const tag of activity.tags) {
                                 if (!user.completedTags[sourceUrl][tag]) user.completedTags[sourceUrl][tag] = 0;
                                 user.completedTags[sourceUrl][tag]++;
