@@ -603,7 +603,7 @@ namespace pxt.github {
         // return config
         const config = await pkgConfigAsync(repo.fullName, tag)
         const version = `github:${repoWithTag}`
-        
+
         return { version, config };
     }
 
