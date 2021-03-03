@@ -593,6 +593,20 @@ namespace pxt.github {
             })
     }
 
+    export async function downloadLatestPackageAsync(repo: ParsedRepo): Promise<{ version: string, config: pxt.PackageConfig }> {
+        const packageConfig = await pxt.packagesConfigAsync()
+        const tag = await pxt.github.latestVersionAsync(repo.slug, packageConfig)
+        // download package into cache
+        const repoWithTag = `${repo.fullName}#${tag}`;
+        await pxt.github.downloadPackageAsync(repoWithTag, packageConfig)
+
+        // return config
+        const config = await pkgConfigAsync(repo.fullName, tag)
+        const version = `github:${repoWithTag}`
+
+        return { version, config };
+    }
+
     export async function cacheProjectDependenciesAsync(cfg: pxt.PackageConfig): Promise<void> {
         const ghExtensions = Object.keys(cfg.dependencies)
             ?.filter(dep => isGithubId(cfg.dependencies[dep]));

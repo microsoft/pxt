@@ -705,7 +705,7 @@ namespace pxsim {
                 case 'screenshot':
                 case 'custom':
                 case 'recorder':
-                case 'extensionsdialog':
+                case 'addextensions':
                     break; //handled elsewhere
                 case 'aspectratio': {
                     const asmsg = msg as SimulatorAspectRatioMessage;
