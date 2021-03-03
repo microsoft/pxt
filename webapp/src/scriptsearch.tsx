@@ -275,7 +275,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         let r: { version: string, config: pxt.PackageConfig };
         try {
             core.showLoading("downloadingpackage", lf("downloading extension..."));
-            r = await pxt.github.downloadLastestConfigAsync(scr);
+            r = await pxt.github.downloadLastestPackageAsync(scr);
         } finally {
             core.hideLoading("downloadingpackage");
         }
