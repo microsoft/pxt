@@ -347,7 +347,12 @@ export class EditorPackage {
             .then(() => this.saveFilesAsync());
     }
 
-    addDepAsync(pkgid: string, pkgversion: string) {
+    /**
+     * Sets a dependency without conflict validation
+     * @param pkgid
+     * @param pkgversion 
+     */
+    setDependencyAsync(pkgid: string, pkgversion: string) {
         return this.updateConfigAsync(cfg => cfg.dependencies[pkgid] = pkgversion)
             .then(() => this.saveFilesAsync());
     }
@@ -630,7 +635,7 @@ export class EditorPackage {
 
                 return addDependencyPromise
                     .then(ok => ok
-                        ? this.addDepAsync(config.name, version).then(() => true)
+                        ? this.setDependencyAsync(config.name, version).then(() => true)
                         : Promise.resolve(false));
             });
     }
