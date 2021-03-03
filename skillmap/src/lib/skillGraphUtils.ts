@@ -14,7 +14,7 @@ interface GraphNode extends MapActivity, GraphCoord {
     parents?: GraphNode[];
 }
 
-export function orthogonalGraph(root: MapActivity): GraphNode[] {
+export function orthogonalGraph(root: MapNode): GraphNode[] {
     let activities: GraphNode[] = [root as GraphNode];
 
     const prevChildPosition: { [key: string]: GraphCoord } = {};
@@ -46,7 +46,7 @@ export function orthogonalGraph(root: MapActivity): GraphNode[] {
             }
 
             // Assign the current node as the parent of its children
-            const next = current.next.map((el: MapActivity) => {
+            const next = current.next.map((el: MapNode) => {
                 let node = el as GraphNode;
                 if (!node.parents) {
                     node.parents = [current!];
@@ -153,7 +153,7 @@ export function treeGraph(root: MapActivity): GraphNode[] {
             }
 
             // Assign this node as the parent of all children
-            const next = current.next.map((el: MapActivity) => {
+            const next = current.next.map((el: MapNode) => {
                 let node = el as GraphNode;
                 if (!node.parents) {
                     node.parents = [current!];

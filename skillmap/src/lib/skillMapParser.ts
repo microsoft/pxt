@@ -108,7 +108,8 @@ function getSectionsFromText(text: string) {
 
 function buildMapFromSections(header: MarkdownSection, sections: MarkdownSection[]) {
     const result = inflateSkillMap(header);
-    const activities = sections.map(inflateActivity);
+    const nodes = sections.map(inflateMapNode);
+    const activities = nodes.filter(n => n.kind === "activity") as MapActivity[];
 
     // Inherit unless explicitly disallowed
     if (result.allowCodeCarryover) activities.forEach(a => {
@@ -117,10 +118,9 @@ function buildMapFromSections(header: MarkdownSection, sections: MarkdownSection
         }
     });
 
-    result.root = activities[0];
-    result.root.allowCodeCarryover = false;
+    result.root = nodes[0];
 
-    for (const activity of activities) {
+    for (const activity of nodes) {
         if (result.activities![activity.activityId]) {
             error(`Duplicate activity id '${activity.activityId}' in map '${result.mapId}'`);
         }
@@ -128,7 +128,7 @@ function buildMapFromSections(header: MarkdownSection, sections: MarkdownSection
         result.activities![activity.activityId] = activity;
     }
 
-    for (const activity of activities) {
+    for (const activity of nodes) {
         for (const id of activity.nextIds) {
             if (!result.activities![id]) error(`Unknown activity id '${id}' in map '${result.mapId}'`);
             activity.next.push(result.activities![id]);
@@ -139,7 +139,7 @@ function buildMapFromSections(header: MarkdownSection, sections: MarkdownSection
 
     checkForLoopsRecursive(result.root);
 
-    for (const activity of activities) {
+    for (const activity of nodes) {
         if (!reachable[activity.activityId]) {
             console.warn(`Unreachable activity detected '${activity.activityId}' in map '${result.mapId}'`);
         }
@@ -147,7 +147,7 @@ function buildMapFromSections(header: MarkdownSection, sections: MarkdownSection
 
     return result as SkillMap;
 
-    function checkForLoopsRecursive(root: MapActivity, visited: {[index: string]: boolean} = {}) {
+    function checkForLoopsRecursive(root: MapNode, visited: {[index: string]: boolean} = {}) {
         if (visited[root.activityId]) error(`Loop in map '${result.mapId}' detected`);
         visited[root.activityId] = true;
         reachable[root.activityId] = true;
@@ -195,16 +195,39 @@ function inflateSkillMap(section: MarkdownSection): Partial<SkillMap> {
     return result;
 }
 
-function inflateActivity(section: MarkdownSection): MapActivity {
-    const result: Partial<MapActivity> = {
+function inflateMapNode(section: MarkdownSection): MapNode {
+    const base: Partial<MapNode> = {
         activityId: section.header.toLowerCase(),
+        imageUrl: section.attributes["imageurl"],
+        next: [],
         displayName: section.attributes["name"] || section.header,
+        nextIds: parseList(section.attributes["next"])
+    }
+
+    if (section.attributes.kind === "reward" || section.attributes.kind === "completion") {
+        return inflateMapReward(section, base as Partial<MapReward>);
+    }
+    else {
+        return inflateActivity(section, base as Partial<MapActivity>);
+    }
+}
+
+function inflateMapReward(section: MarkdownSection, base: Partial<MapReward>): MapReward {
+    const result: Partial<MapReward> = {
+        ...base,
+        kind: (section.attributes.kind || "reward") as any
+    };
+
+    return result as MapReward;
+}
+
+function inflateActivity(section: MarkdownSection, base: Partial<MapActivity>): MapActivity {
+    const result: Partial<MapActivity> = {
+        ...base,
+        kind: "activity",
         description: section.attributes["description"],
         url: section.attributes["url"],
-        imageUrl: section.attributes["imageurl"],
         tags: parseList(section.attributes["tags"]),
-        next: [],
-        nextIds: parseList(section.attributes["next"]),
         // defaults to true
         allowCodeCarryover: section.attributes["allowcodecarryover"] ? !isFalse(section.attributes["allowcodecarryover"]) : true
     };

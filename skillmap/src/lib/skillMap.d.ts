@@ -15,8 +15,8 @@ interface SkillMap {
     // for all cards in this skillmap
     allowCodeCarryover?: boolean;
 
-    activities: {[index: string]: MapActivity};
-    root: MapActivity;
+    activities: {[index: string]: MapNode};
+    root: MapNode;
 }
 
 type MapPrerequisite = TagPrerequisite | MapFinishedPrerequisite;
@@ -32,12 +32,24 @@ interface MapFinishedPrerequisite {
     mapId: string;
 }
 
+type MapNodeKind = "activity" | "reward" | "completion";
+
+type MapNode = MapActivity | MapReward | MapCompletionNode
+
+interface BaseNode {
+    kind: MapNodeKind;
+    activityId: string;
+    displayName: string;
+    imageUrl?: string;
+
+    next: MapNode[];
+    nextIds: string[];
+}
+
 type MapActivityType = "tutorial";
 
-interface MapActivity {
-    activityId: string;
-
-    displayName: string;
+interface MapActivity extends BaseNode {
+    kind: "activity";
     description?: string;
     tags: string[];
 
@@ -45,13 +57,18 @@ interface MapActivity {
     editor: "blocks" | "js" | "py";
 
     url: string;
-    imageUrl?: string;
 
     // Indicates whether or not code can be copied from previous activity
     allowCodeCarryover?: boolean;
+}
 
-    next: MapActivity[];
-    nextIds: string[];
+interface MapReward extends BaseNode {
+    kind: "reward";
+
+}
+
+interface MapCompletionNode extends MapReward {
+    kind: "completion";
 }
 
 type CompletedTags = {[index: string]: number}

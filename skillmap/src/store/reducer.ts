@@ -305,7 +305,8 @@ export function setHeaderIdForActivity(user: UserState, pageSource: string, map:
 
 export function shouldAllowCodeCarryover(state: SkillMapState, mapId: string, activityId: string) {
     const map = state.maps[mapId];
-    return !!map.activities[activityId].allowCodeCarryover;
+    const activity = map.activities[activityId];
+    return !!(activity?.kind === "activity" && activity.allowCodeCarryover);
 }
 
 export function setActivityFinished(user: UserState, pageSource: string, map: SkillMap, activityId: string) {

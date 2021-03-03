@@ -39,21 +39,23 @@ class SkillCarouselImpl extends React.Component<SkillCarouselProps> {
         this.items = this.getItems(props.map.mapId, props.map.root);
     }
 
-    protected getItems(mapId: string, root: MapActivity): SkillCarouselItem[] {
+    protected getItems(mapId: string, root: MapNode): SkillCarouselItem[] {
         const items = [];
-        let activities: MapActivity[] = [root];
+        let activities: MapNode[] = [root];
         while (activities.length > 0) {
             let current = activities.shift();
             if (current) {
-                items.push({
-                    id: current.activityId,
-                    label: current.displayName,
-                    url: current.url,
-                    imageUrl: current.imageUrl,
-                    mapId,
-                    description: current.description,
-                    tags: current.tags
-                });
+                if (current.kind === "activity") {
+                    items.push({
+                        id: current.activityId,
+                        label: current.displayName,
+                        url: current.url,
+                        imageUrl: current.imageUrl,
+                        mapId,
+                        description: current.description,
+                        tags: current.tags
+                    });
+                }
                 activities = activities.concat(current.next);
             }
         }

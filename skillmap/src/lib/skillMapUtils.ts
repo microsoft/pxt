@@ -30,9 +30,9 @@ export function getCompletedTags(user: UserState, pageSource: string, maps: Skil
 
     for (const map of maps) {
         for (const activityId of Object.keys(map.activities)) {
-            const activity = map.activities[activityId];
-            if (isActivityCompleted(user, pageSource, map.mapId, activity.activityId)) {
-                for (const tag of activity.tags) {
+            const node = map.activities[activityId];
+            if (isActivityCompleted(user, pageSource, map.mapId, node.activityId) && node.kind === "activity") {
+                for (const tag of node.tags) {
                     if (!completed[tag]) completed[tag] = 0;
                     completed[tag] ++;
                 }
@@ -48,7 +48,7 @@ export function isActivityUnlocked(user: UserState, pageSource: string, map: Ski
 
     return checkRecursive(map.root);
 
-    function checkRecursive(root: MapActivity) {
+    function checkRecursive(root: MapNode) {
         if (isActivityCompleted(user, pageSource, map.mapId, root.activityId)) {
             if (root.next.some(activity => activity.activityId === activityId)) {
                 return true;

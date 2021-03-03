@@ -76,13 +76,14 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         }
     }
 
-    const activity = item && state.maps[item.mapId]?.activities[item.activityId];
+    const node = item && state.maps[item.mapId]?.activities[item.activityId];
+    const isActivity = node?.kind === "activity";
     return {
         mapId: item?.mapId,
-        title: activity ? activity.displayName : state.title,
-        description: activity ? activity.description : state.description,
-        imageUrl: activity ? activity.imageUrl : undefined,
-        activity: activity,
+        title: node ? node.displayName : state.title,
+        description: isActivity ? (node as MapActivity).description : state.description,
+        imageUrl: node ? node.imageUrl : undefined,
+        activity: isActivity ? node : undefined,
         status,
         progressText: maxSteps ? `${currentStep}/${maxSteps} ${lf("Steps")}` : lf("Not Started")
     };
