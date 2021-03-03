@@ -1107,6 +1107,13 @@ namespace pxt.github {
             });
     }
 
+    export async function downloadLastestConfigAsync(repo: ParsedRepo) {
+        const packageConfig = await pxt.packagesConfigAsync()
+        const version = await pxt.github.latestVersionAsync(repo.slug, packageConfig)
+        const config = await pxt.github.pkgConfigAsync(repo.fullName, version)
+        return { version, config };
+    }
+
     export function resolveMonoRepoVersions(deps: pxt.Map<string>): pxt.Map<string> {
         deps = Util.clone(deps);
         // before loading dependencies, ensure that all mono-repo are in sync

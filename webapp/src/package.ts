@@ -575,6 +575,62 @@ export class EditorPackage {
             }
         }
     }
+
+    /**
+     * Adds the dependency while handling conflicts, return true if reload is needed
+     * @param config 
+     * @param version 
+     * @param skipConfirm 
+     */
+    addDependencyAsync(config: pxt.PackageConfig, version: string, skipConfirm?: boolean): Promise<boolean> {
+        if (this.topPkg !== this)
+            return this.topPkg.addDependencyAsync(config, version);
+
+        return this.ksPkg.findConflictsAsync(config, version)
+            .then((conflicts) => {
+                let inUse = config.core ? [] // skip conflict checking for a new core package
+                    : conflicts.filter((c) => this.ksPkg.isPackageInUse(c.pkg0.id));
+                let addDependencyPromise = Promise.resolve(true);
+
+                if (inUse.length) {
+                    addDependencyPromise = addDependencyPromise
+                        .then(() => core.confirmAsync({
+                            header: lf("Cannot add {0} extension", config.name),
+                            hideCancel: true,
+                            agreeLbl: lf("Ok"),
+                            body: lf("Remove all the blocks from the {0} extension and try again.", inUse[0].pkg0.id)
+                        }))
+                        .then(() => {
+                            return false;
+                        });
+                } else if (conflicts.length) {
+                    const body = conflicts.length === 1 ?
+                        // Single conflict: "Extension A is..."
+                        lf("Extension {0} is incompatible with {1}. Remove {0} and add {1}?", conflicts[0].pkg0.id, config.name) :
+                        // 2 conflicts: "Extensions A and B are..."; 3+ conflicts: "Extensions A, B, C and D are..."
+                        lf("Extensions {0} and {1} are incompatible with {2}. Remove them and add {2}?", conflicts.slice(0, -1).map((c) => c.pkg0.id).join(", "), conflicts.slice(-1)[0].pkg0.id, config.name);
+
+                    addDependencyPromise = addDependencyPromise
+                        .then(() => skipConfirm
+                            ? Promise.resolve(1)
+                            : core.confirmAsync({
+                                header: lf("Some extensions will be removed"),
+                                agreeLbl: lf("Remove extension(s) and add {0}", config.name),
+                                agreeClass: "pink",
+                                body
+                            }))
+                        .then((buttonPressed) => {
+                            if (buttonPressed !== 0) {
+                                return Promise.all(conflicts.map((c) => this.removeDepAsync(c.pkg0.id)))
+                                    .then(() => true);
+                            }
+                            return Promise.resolve(false);
+                        });
+                }
+
+                return addDependencyPromise;
+            });
+    }
 }
 
 function codeIsEqual(language: pxtc.CodeLang, a: string, b: string) {
