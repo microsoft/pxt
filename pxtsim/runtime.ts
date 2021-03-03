@@ -904,7 +904,7 @@ namespace pxsim {
                 delay: opts && opts.delay
             } as SimulatorScreenshotMessage));
         }
-        
+
         static requestToggleRecording() {
             const r = runtime;
             if (!r) return;
