@@ -259,9 +259,11 @@ export class ProjectView
                     <p>
                         {lf("Add these user-provided extensions to your project?")}
                     </p>
-                    <p>
-                        {ghidToBeApproved.map(scr => <a href={`https://github.com/${scr.project}`}>{scr.fullName}</a>)},
-                    </p>
+                    <ul>
+                        {ghidToBeApproved.map(scr => <li key={scr.fullName}>
+                            <a href={`https://github.com/${scr.project}`}>{scr.fullName}</a>
+                        </li>)}
+                    </ul>
                     <hr />
                     <p>
                         {lf("User-provided extension are not endorsed by Microsoft.")}
