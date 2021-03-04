@@ -221,7 +221,8 @@ namespace pxsim {
 
     export interface RenderReadyResponseMessage extends SimulatorMessage {
         source: "makecode",
-        type: "renderready"
+        type: "renderready",
+        versions: pxt.TargetVersions
     }
 
     export interface RenderBlocksRequestMessage extends SimulatorMessage {
