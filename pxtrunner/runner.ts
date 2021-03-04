@@ -607,7 +607,8 @@ namespace pxt.runner {
                 }, false);
                 window.parent.postMessage(<pxsim.RenderReadyResponseMessage>{
                     source: "makecode",
-                    type: "renderready"
+                    type: "renderready",
+                    versions: pxt.appTarget.versions
                 }, "*");
             })
     }
