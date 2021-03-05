@@ -12,6 +12,7 @@ type ScriptText = pxt.workspace.ScriptText;
 type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
 
 import U = pxt.Util;
+import { dbgHdrToString, isHeaderSessionOutdated } from "./workspace";
 
 type CloudProject = {
     id: string;
@@ -115,7 +116,7 @@ function updateCloudTempMetadata(headerId: string, props: Partial<CloudTempMetad
     data.invalidate(`${HEADER_CLOUDSTATE}:${headerId}`);
 }
 
-function setAsync(h: Header, prevVersion: Version, text?: ScriptText): Promise<Version> {
+function setAsync(h: Header, prevVersion: string, text?: ScriptText): Promise<string> {
     return new Promise(async (resolve, reject) => {
         const userId = auth.user()?.id;
         h.cloudUserId = userId;
@@ -505,6 +506,9 @@ async function onHeaderChangeDebouncer(h: Header) {
     // do we actually have a significant change?
     const hasCloudChange = h.cloudUserId === auth.user().id && !h.cloudCurrent;
     if (!hasCloudChange)
+        return;
+    // is another tab responsible for this project?
+    if (isHeaderSessionOutdated(h))
         return;
 
     // we have a change to sync
