@@ -337,12 +337,13 @@ export class ProjectView
             this.saveFileAsync().done();
         } else if (active) {
             data.invalidate("header:*")
-            if (workspace.isHeadersSessionOutdated()
+            let hdrId = this.state.header ? this.state.header.id : '';
+            const inEditor = !this.state.home && hdrId
+            if ((!inEditor && workspace.isHeadersSessionOutdated())
                 || workspace.isHeaderSessionOutdated(this.state.header)) {
                 pxt.debug('workspace: changed, reloading...')
-                let id = this.state.header ? this.state.header.id : '';
                 workspace.syncAsync()
-                    .done(() => !this.state.home && id ? this.loadHeaderAsync(workspace.getHeader(id), this.state.editorState) : Promise.resolve());
+                    .done(() => inEditor ? this.loadHeaderAsync(workspace.getHeader(hdrId), this.state.editorState) : Promise.resolve());
                 // device scanning restarts in loadheader
             } else if (this.state.resumeOnVisibility) {
                 this.setState({ resumeOnVisibility: false });
