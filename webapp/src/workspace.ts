@@ -506,8 +506,7 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
     if (!fromCloudSync)
         h.recentUse = U.nowSeconds()
 
-    if (!newSave)
-    {
+    if (!newSave) {
         // persist header changes to our local cache, but keep the old
         // reference around because (unfortunately) other layers (e.g. package.ts)
         // assume the reference is stable per id.
