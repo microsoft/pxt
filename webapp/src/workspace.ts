@@ -35,6 +35,10 @@ let headerQ = new U.PromiseQueue();
 let impl: WorkspaceProvider;
 let implType: string;
 
+export function getWorkspaceType(): string {
+    return implType
+}
+
 function lookup(id: string) {
     return allScripts.find(x => x.header.id == id || x.header.path == id);
 }

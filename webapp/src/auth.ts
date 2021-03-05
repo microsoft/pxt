@@ -24,8 +24,7 @@ const AUTH_LOGIN_STATE = "auth:login-state";
 const AUTH_USER_STATE = "auth:user-state";
 const X_PXT_TARGET = "x-pxt-target";
 
-// initialized by init() call.
-let authDisabled = true;
+let authDisabled = false;
 
 export type UserProfile = {
     id?: string;
@@ -644,8 +643,7 @@ async function userPreferencesHandlerAsync(path: string): Promise<UserPreference
     return internalUserPreferencesHandler(path);
 }
 
-export function init(disableAuth = false) {
-    authDisabled = disableAuth;
+export function init() {
     data.mountVirtualApi(USER_PREF_MODULE, {
         getSync: userPreferencesHandlerSync,
         // TODO: virtual apis don't support both sync & async
@@ -653,4 +651,8 @@ export function init(disableAuth = false) {
     });
 
     data.mountVirtualApi(MODULE, { getSync: authApiHandler });
+}
+
+export function enableAuth(enabled = true) {
+    authDisabled = !enabled
 }

@@ -4561,11 +4561,7 @@ document.addEventListener("DOMContentLoaded", () => {
         auth.loginCallback(query);
     }
 
-    // Disable auth in skillmap until it is properly supported.
-    // See https://github.com/microsoft/pxt-arcade/issues/3138
-    const disableAuth = query["skillsMap"] == "1";
-
-    auth.init(disableAuth);
+    auth.init();
     cloud.init(); // depends on auth.init() and workspace.ts's top level
     cloudsync.loginCheck()
     parseLocalToken();
@@ -4604,6 +4600,9 @@ document.addEventListener("DOMContentLoaded", () => {
     else if (pxt.BrowserUtils.isIpcRenderer()) workspace.setupWorkspace("idb");
     else if (pxt.BrowserUtils.isPxtElectron()) workspace.setupWorkspace("fs");
     else workspace.setupWorkspace("browser");
+    // disable auth in iframe scenarios
+    if (workspace.getWorkspaceType() === "iframe")
+        auth.enableAuth(false)
     Promise.resolve()
         .then(async () => {
             const href = window.location.href;
