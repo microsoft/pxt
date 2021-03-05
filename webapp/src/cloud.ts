@@ -27,11 +27,24 @@ const localOnlyMetadataFields: (keyof Header)[] = [
     // only for tracking local cloud sync state
     'cloudVersion', 'cloudCurrent', 'cloudLastSyncTime'
 ]
-export function excludeLocalOnlyMetadataFields(h: Header): Header {
-    const clone = {...h}
-    for (let k of localOnlyMetadataFields)
+const cloudMetadataFields: (keyof Header)[] = [
+    // cloud metadata fields
+    'cloudVersion', 'cloudCurrent', 'cloudLastSyncTime', 'cloudUserId'
+]
+
+function excludeMetadataFields(h: Header, fields: (keyof Header)[]): Header {
+    const clone = { ...h }
+    for (let k of fields)
         delete clone[k]
     return clone
+}
+
+export function excludeLocalOnlyMetadataFields(h: Header): Header {
+    return excludeMetadataFields(h, localOnlyMetadataFields);
+}
+
+export function excludeCloudMetadataFields(h: Header): Header {
+    return excludeMetadataFields(h, cloudMetadataFields);
 }
 
 export type CloudStateSummary = ""/*none*/ | "saved" | "justSaved" | "offline" | "syncing" | "conflict" | "localEdits";
@@ -70,7 +83,7 @@ async function listAsync(): Promise<Header[]> {
             });
             resolve(headers);
         } else {
-            reject(new Error(result.errmsg));
+            reject(result.err);
         }
     });
 }
@@ -96,7 +109,7 @@ function getAsync(h: Header): Promise<File> {
             file.header.cloudLastSyncTime = U.nowSeconds();
             resolve(file);
         } else {
-            reject(new Error(result.errmsg));
+            reject(result.err);
         }
     });
 }
@@ -146,7 +159,7 @@ function setAsync(h: Header, prevVersion: string, text?: ScriptText): Promise<st
             // conflict
             resolve(undefined)
         } else {
-            reject(new Error(result.errmsg));
+            reject(result.err);
         }
     });
 }
@@ -187,7 +200,7 @@ async function transferToCloud(local: Header, cloudVersion: string): Promise<Hea
 }
 
 async function transferFromCloud(local: Header | null, remoteFile: File): Promise<Header> {
-    const newHeader = {...local || {}, ...remoteFile.header} // make sure we keep local-only metadata like _rev
+    const newHeader = { ...local || {}, ...remoteFile.header } // make sure we keep local-only metadata like _rev
     if (local) {
         // we've decided to overwrite what we have locally with what is in the
         // the cloud, so acquire the header session
@@ -245,7 +258,7 @@ async function resolveConflict(local: Header, remoteFile: File) {
     } catch (e) {
         // we want to swallow this and keep going since step 3. is the essentail one to resolve the conflcit.
         pxt.reportException(e);
-        pxt.tickEvent(`identity.sync.conflict.reloadEditorFailed`, {exception: e});
+        pxt.tickEvent(`identity.sync.conflict.reloadEditorFailed`, { exception: e });
     }
 
     // 3. overwrite local changes in the original project with cloud changes
@@ -255,7 +268,7 @@ async function resolveConflict(local: Header, remoteFile: File) {
         // let exceptions propegate since there's nothing localy we can do to recover, but log something
         //  since this is a bad case (may lead to repeat duplication).
         pxt.reportException(e);
-        pxt.tickEvent(`identity.sync.conflict.overwriteLocalFailed`, {exception: e});
+        pxt.tickEvent(`identity.sync.conflict.overwriteLocalFailed`, { exception: e });
         throw e;
     }
 
@@ -268,7 +281,7 @@ async function resolveConflict(local: Header, remoteFile: File) {
             header: lf("Project '{0}' had a conflict", local.name),
             body:
                 lf("Project '{0}' was edited in two places and the changes conflict. The changes from this computer (from {1}) have instead been saved to '{2}'. The changes made elsewhere (from {3}) remain in '{4}'.",
-                local.name, U.timeSince(local.modificationTime), newCopyHdr.name, U.timeSince(remoteFile.header.modificationTime), remoteFile.header.name),
+                    local.name, U.timeSince(local.modificationTime), newCopyHdr.name, U.timeSince(remoteFile.header.modificationTime), remoteFile.header.name),
             disagreeLbl: lf("Got it!"),
             disagreeClass: "green",
             hasCloseIcon: false,
@@ -276,7 +289,7 @@ async function resolveConflict(local: Header, remoteFile: File) {
     } catch (e) {
         // we want to swallow this and keep going since it's non-essential
         pxt.reportException(e);
-        pxt.tickEvent(`identity.sync.conflict.dialogNotificationFailed`, {exception: e});
+        pxt.tickEvent(`identity.sync.conflict.dialogNotificationFailed`, { exception: e });
     }
 }
 
@@ -297,7 +310,7 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
         const syncStart = U.nowSeconds()
         pxt.tickEvent(`identity.sync.start`)
         const agoStr = (t: number) => `${syncStart - t} seconds ago`
-        const remoteFiles: {[id: string]: File} = {}
+        const remoteFiles: { [id: string]: File } = {}
         const getWithCacheAsync = async (h: Header): Promise<File> => {
             if (!remoteFiles[h.id]) {
                 remoteFiles[h.id] = await getAsync(h)
@@ -469,12 +482,9 @@ export async function convertCloudToLocal(userId: string) {
             .filter(h => h.cloudUserId && h.cloudUserId === userId);
         const tasks: Promise<void>[] = [];
         localCloudHeaders.forEach((h) => {
-            // Clear cloud header and re-save the header.
-            delete h.cloudCurrent;
-            delete h.cloudLastSyncTime;
-            delete h.cloudUserId;
-            delete h.cloudVersion;
-            tasks.push(workspace.saveAsync(h, null, true));
+            // Clear cloud metadata and force-resave the header.
+            h = excludeCloudMetadataFields(h);
+            tasks.push(workspace.forceSaveAsync(h, null, true));
         });
         await Promise.all(tasks);
     }
@@ -482,7 +492,7 @@ export async function convertCloudToLocal(userId: string) {
 
 const CLOUDSAVE_DEBOUNCE_MS = 3000;
 const CLOUDSAVE_MAX_MS = 15000;
-let headerWorklist: {[headerId: string]: boolean} = {};
+let headerWorklist: { [headerId: string]: boolean } = {};
 let onHeaderChangeTimeout: number = 0;
 let onHeaderChangeStarted: number = 0;
 const onHeaderChangeSubscriber: data.DataSubscriber = {
