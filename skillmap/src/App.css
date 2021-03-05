@@ -26,9 +26,12 @@
 
     --body-font-family: "Share Tech Mono", Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
 
-    --frame-loader-zindex: 5;
-    --above-frame-zindex: 10;
+    --frame-loader-zindex: 30;
+    --above-frame-zindex: 50;
     --modal-dimmer-zindex: 100;
+
+    --graph-backround-zindex: 10;
+    --above-graph-zindex: 20;
 }
 
 body {

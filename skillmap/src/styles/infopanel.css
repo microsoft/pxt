@@ -1,26 +1,39 @@
 .info-panel {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
     width: 20rem;
     margin: 1rem;
-    z-index: 60;
+    z-index: var(--above-graph-zindex);
     background-color: var(--body-background-color);
 
     border: 1px solid #000; /* TEMP */
 }
 
-.info-panel-image {
+.info-panel > div {
+    margin: 0 1rem 0.5rem;
+}
+
+.info-panel > .info-panel-image {
     width: 100%;
     height: 12rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
     text-align: center;
     background-color: var(--inactive-color);
+    margin: 0 0 1rem 0;
+}
+
+.info-panel-image img {
+    width: 100%;
 }
 
 .info-panel-image i {
     color: var(--white);
     font-size: 5rem;
-    line-height: 12rem;
+    line-height: 5rem;
     vertical-align: top;
 }
 
@@ -30,6 +43,13 @@
     text-align: center;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.info-panel-label {
+    padding: 0.5rem;
+    text-align: center;
+    text-transform: uppercase;
+    background-color: var(--inactive-color);
 }
 
 .info-panel-detail {
@@ -47,24 +67,15 @@
     color: var(--active-color);
     border: 1px solid var(--active-color);
     padding: 0.2rem 0.5rem;
+    margin-right: 0.5rem;
     font-size: 0.8rem;
-}
-
-.info-panel-title,
-.info-panel-description,
-.info-panel-detail,
-.info-panel-tags,
-.info-panel .activity-actions {
-    width: 100%;
-    padding: 0 1rem;
-    margin-top: 0.5rem;
 }
 
 .info-panel .action-button {
     color: var(--active-color);
     border: 1px solid var(--active-color);
     padding: 0.5rem;
-    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
     font-size: 1.2rem;
     text-align: center;
     cursor: pointer;
