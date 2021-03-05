@@ -24,8 +24,7 @@ const AUTH_LOGIN_STATE = "auth:login-state";
 const AUTH_USER_STATE = "auth:user-state";
 const X_PXT_TARGET = "x-pxt-target";
 
-// initialized by init() call.
-let authDisabled = true;
+let authDisabled = false;
 
 export type UserProfile = {
     id?: string;
