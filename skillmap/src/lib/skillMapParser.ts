@@ -291,10 +291,42 @@ function isFalse(value: string | undefined) {
 }
 
 function inflateMetadata(section: MarkdownSection): PageMetadata {
+    const tertiary = section.attributes["tertiarycolor"];
+    const primary = section.attributes["primarycolor"];
+    const secondary = section.attributes["secondarycolor"];
+
     return {
         title: section.attributes["name"] || section.header,
         description: section.attributes["description"],
-        infoUrl: section.attributes["infourl"]
+        infoUrl: section.attributes["infourl"],
+        backgroundImageUrl: section.attributes["backgroundurl"],
+        theme: {
+            backgroundColor: tertiary || "var(--tertiary-color)",
+            pathColor: primary || "#BFBFBF",
+            strokeColor: "#000000",
+            rewardNodeColor: tertiary || "var(--tertiary-color)",
+            rewardNodeForeground: tertiary ? getContrastincColor(tertiary) : "#000000",
+            unlockedNodeColor: secondary || "var(--secondary-color)",
+            unlockedNodeForeground: secondary ? getContrastincColor(secondary) : "#000000",
+            lockedNodeColor: primary || "#BFBFBF",
+            lockedNodeForeground: primary ? getContrastincColor(primary) : "#000000",
+            selectedStrokeColor: "var(--hover-color)",
+            pathOpacity: 0.5,
+        },
+    }
+}
+
+function getContrastincColor(color: string) {
+    color = color.replace("#", "");
+    const r = Number.parseInt(color.slice(0, 2), 16);
+    const g = Number.parseInt(color.slice(2, 4), 16);
+    const b = Number.parseInt(color.slice(4), 16);
+
+    if (r + g + b > 0xff * 3 / 2) {
+        return "#000000"
+    }
+    else {
+        return "#ffffff"
     }
 }
 

@@ -10,6 +10,7 @@ export interface SkillMapState {
     title: string;
     description: string;
     infoUrl?: string;
+    backgroundImageUrl?: string;
     user: UserState;
     pageSourceUrl: string;
     pageSourceStatus: PageSourceStatus;
@@ -18,6 +19,7 @@ export interface SkillMapState {
 
     editorView?: EditorViewState;
     modal?: ModalState;
+    theme: SkillGraphTheme;
 }
 
 export interface EditorViewState {
@@ -45,6 +47,19 @@ const initialState: SkillMapState = {
         id: guidGen(),
         mapProgress: {},
         completedTags: {}
+    },
+    theme: {
+        backgroundColor: "var(--tertiary-color)",
+        pathColor: "#BFBFBF",
+        strokeColor: "#000000",
+        rewardNodeColor: "var(--tertiary-color)",
+        rewardNodeForeground: "#000000",
+        unlockedNodeColor: "var(--secondary-color)",
+        unlockedNodeForeground: "#000000",
+        lockedNodeColor: "#BFBFBF",
+        lockedNodeForeground: "#000000",
+        selectedStrokeColor: "var(--hover-color)",
+        pathOpacity: 0.5,
     },
     maps: {}
 }
@@ -216,6 +231,16 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
             return {
                 ...state,
                 infoUrl: action.infoUrl
+            }
+        case actions.SET_PAGE_BACKGROUND_IMAGE_URL:
+            return {
+                ...state,
+                backgroundImageUrl: action.backgroundImageUrl
+            }
+        case actions.SET_PAGE_THEME:
+            return {
+                ...state,
+                theme: action.theme
             }
         case actions.SET_PAGE_SOURCE_URL:
             return {

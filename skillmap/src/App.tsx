@@ -13,7 +13,9 @@ import {
     dispatchSetPageDescription,
     dispatchSetPageInfoUrl,
     dispatchSetUser,
-    dispatchSetPageSourceUrl
+    dispatchSetPageSourceUrl,
+    dispatchSetPageBackgroundImageUrl,
+    dispatchSetPageTheme,
 } from './actions/dispatch';
 import { PageSourceStatus, SkillMapState } from './store/reducer';
 import { HeaderBar } from './components/HeaderBar';
@@ -41,13 +43,17 @@ import './arcade.css';
 interface AppProps {
     skillMaps: { [key: string]: SkillMap };
     activityOpen: boolean;
+    backgroundImageUrl: string;
+    theme: SkillGraphTheme;
     dispatchAddSkillMap: (map: SkillMap) => void;
     dispatchClearSkillMaps: () => void;
     dispatchSetPageTitle: (title: string) => void;
     dispatchSetPageDescription: (description: string) => void;
     dispatchSetPageInfoUrl: (infoUrl: string) => void;
+    dispatchSetPageBackgroundImageUrl: (backgroundImageUrl: string) => void;
     dispatchSetUser: (user: UserState) => void;
     dispatchSetPageSourceUrl: (url: string, status: PageSourceStatus) => void;
+    dispatchSetPageTheme: (theme: SkillGraphTheme) => void;
 }
 
 interface AppState {
@@ -148,11 +154,13 @@ class AppImpl extends React.Component<AppProps, AppState> {
                 }
 
                 if (metadata) {
-                    const { title, description, infoUrl } = metadata;
+                    const { title, description, infoUrl, backgroundImageUrl, theme } = metadata;
                     setPageTitle(title);
                     this.props.dispatchSetPageTitle(title);
                     if (description) this.props.dispatchSetPageDescription(description);
                     if (infoUrl) this.props.dispatchSetPageInfoUrl(infoUrl);
+                    if (backgroundImageUrl) this.props.dispatchSetPageBackgroundImageUrl(backgroundImageUrl);
+                    if (theme) this.props.dispatchSetPageTheme(theme);
                 }
 
                 this.setState({ error: undefined });
@@ -200,16 +208,16 @@ class AppImpl extends React.Component<AppProps, AppState> {
     }
 
     render() {
-        const { skillMaps, activityOpen } = this.props;
+        const { skillMaps, activityOpen, backgroundImageUrl, theme } = this.props;
         const { error } = this.state;
         const maps = Object.keys(skillMaps).map((id: string) => skillMaps[id]);
         return (<div className={`app-container ${pxt.appTarget.id}`}>
                 <HeaderBar />
                 { activityOpen ? <MakeCodeFrame /> :
-                    <div className="skill-map-container">
+                    <div className="skill-map-container" style={{ backgroundColor: theme.backgroundColor }}>
                         { error
                             ? <div className="skill-map-error">{error}</div>
-                            : <SkillGraphContainer maps={maps} />
+                            : <SkillGraphContainer maps={maps} backgroundImageUrl={backgroundImageUrl} />
                         }
                         { !error && <InfoPanel />}
                     </div>
@@ -275,7 +283,9 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
     if (!state) return {};
     return {
         skillMaps: state.maps,
-        activityOpen: !!state.editorView
+        activityOpen: !!state.editorView,
+        backgroundImageUrl: state.backgroundImageUrl,
+        theme: state.theme
     };
 }
 
@@ -313,7 +323,9 @@ const mapDispatchToProps = {
     dispatchSetPageDescription,
     dispatchSetPageInfoUrl,
     dispatchSetUser,
-    dispatchSetPageSourceUrl
+    dispatchSetPageSourceUrl,
+    dispatchSetPageBackgroundImageUrl,
+    dispatchSetPageTheme
 };
 
 const App = connect(mapStateToProps, mapDispatchToProps)(AppImpl);

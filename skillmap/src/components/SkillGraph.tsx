@@ -23,6 +23,7 @@ interface SkillGraphProps {
     user: UserState;
     selectedActivityId?: string;
     pageSourceUrl: string;
+    theme: SkillGraphTheme;
     dispatchChangeSelectedItem: (mapId?: string, activityId?: string) => void;
 }
 
@@ -94,18 +95,21 @@ class SkillGraphImpl extends React.Component<SkillGraphProps> {
     }
 
     render() {
-        const { map, user, selectedActivityId, pageSourceUrl } = this.props;
+        const { map, user, selectedActivityId, pageSourceUrl, theme } = this.props;
         const width = this.getX(this.size.width) + UNIT * PADDING;
         const height = this.getY(this.size.height) + UNIT * PADDING;
         return <svg className="skill-graph" xmlns="http://www.w3.org/2000/svg" width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
-            {this.paths.map((el, i) => {
-                return <GraphPath key={`graph-activity-${i}`} strokeWidth={3 * UNIT} color="#000" points={el.points} />
-            })}
-            {this.paths.map((el, i) => {
-                return <GraphPath key={`graph-activity-${i}`} strokeWidth={3 * UNIT - 4} color="#BFBFBF" points={el.points} />
-            })}
+            <g opacity={theme.pathOpacity}>
+                {this.paths.map((el, i) => {
+                    return <GraphPath key={`graph-activity-${i}`} strokeWidth={3 * UNIT} color={theme.strokeColor} points={el.points} />
+                })}
+                {this.paths.map((el, i) => {
+                    return <GraphPath key={`graph-activity-${i}`} strokeWidth={3 * UNIT - 4} color={theme.pathColor}  points={el.points} />
+                })}
+            </g>
             {this.items.map((el, i) => {
                 return <GraphNode key={`graph-activity-${i}`}
+                    theme={theme}
                     kind={el.activity.kind}
                     activityId={el.activity.activityId}
                     position={el.position}
@@ -124,6 +128,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
     return {
         user: state.user,
         pageSourceUrl: state.pageSourceUrl,
+        theme: state.theme,
         selectedActivityId: state.selectedItem && ownProps.map?.mapId == state.selectedItem.mapId ? state.selectedItem.activityId : undefined
     }
 }

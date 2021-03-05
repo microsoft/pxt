@@ -1,11 +1,10 @@
-.graph-activity.selected rect {
+.graph-activity.selected rect, .graph-activity.selected circle {
     stroke: var(--hover-color);
     stroke-width: 4px;
 }
 
 .graph-icon {
-    fill: var(--black);
     font-family: Icons;
     font-size: 1.75rem;
-    opacity: 0.5;
+    opacity: 0.8;
 }

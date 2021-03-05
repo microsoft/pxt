@@ -2,6 +2,8 @@ interface PageMetadata {
     title: string;
     description?: string;
     infoUrl?: string;
+    backgroundImageUrl?: string;
+    theme?: SkillGraphTheme
 }
 
 interface SkillMap {
@@ -95,4 +97,18 @@ interface ActivityState {
     headerId?: string;
     currentStep?: number;
     maxSteps?: number;
+}
+
+interface SkillGraphTheme {
+    backgroundColor: string;
+    pathColor: string;
+    strokeColor: string;
+    selectedStrokeColor: string;
+    unlockedNodeColor: string;
+    unlockedNodeForeground: string;
+    lockedNodeColor: string;
+    lockedNodeForeground: string;
+    rewardNodeColor: string;
+    rewardNodeForeground: string;
+    pathOpacity: number;
 }
