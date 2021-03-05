@@ -305,18 +305,18 @@ function inflateMetadata(section: MarkdownSection): PageMetadata {
             pathColor: primary || "#BFBFBF",
             strokeColor: "#000000",
             rewardNodeColor: tertiary || "var(--tertiary-color)",
-            rewardNodeForeground: tertiary ? getContrastincColor(tertiary) : "#000000",
+            rewardNodeForeground: tertiary ? getContrastingColor(tertiary) : "#000000",
             unlockedNodeColor: secondary || "var(--secondary-color)",
-            unlockedNodeForeground: secondary ? getContrastincColor(secondary) : "#000000",
+            unlockedNodeForeground: secondary ? getContrastingColor(secondary) : "#000000",
             lockedNodeColor: primary || "#BFBFBF",
-            lockedNodeForeground: primary ? getContrastincColor(primary) : "#000000",
+            lockedNodeForeground: primary ? getContrastingColor(primary) : "#000000",
             selectedStrokeColor: "var(--hover-color)",
             pathOpacity: 0.5,
-        },
+        }
     }
 }
 
-function getContrastincColor(color: string) {
+function getContrastingColor(color: string) {
     color = color.replace("#", "");
     const r = Number.parseInt(color.slice(0, 2), 16);
     const g = Number.parseInt(color.slice(2, 4), 16);

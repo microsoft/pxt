@@ -23,7 +23,7 @@ export class SkillGraphContainer extends React.Component<SkillGraphContainerProp
             </div>
             <div className="skill-graph-background">
                 {backgroundImageUrl ?
-                    <img src={backgroundImageUrl}/>
+                    <img src={backgroundImageUrl} alt={lf("Background Image")}/>
                     : <div className="background-img"></div>
                 }
             </div>
