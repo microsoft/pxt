@@ -564,23 +564,40 @@ namespace pxt.runner {
             pxt.tickEvent("renderer.job")
             const isXml = /^\s*<xml/.test(msg.code);
 
-            jobPromise = pxt.BrowserUtils.loadBlocklyAsync()
-                .then(() => isXml ? pxt.runner.compileBlocksAsync(msg.code, options) : runner.decompileSnippetAsync(msg.code, msg.options))
-                .then(result => {
-                    const blocksSvg = result.blocksSvg as SVGSVGElement;
-                    return blocksSvg ? pxt.blocks.layout.blocklyToSvgAsync(blocksSvg, 0, 0, blocksSvg.viewBox.baseVal.width, blocksSvg.viewBox.baseVal.height) : undefined;
-                }).then(res => {
-                    window.parent.postMessage(<pxsim.RenderBlocksResponseMessage>{
-                        source: "makecode",
-                        type: "renderblocks",
-                        id: msg.id,
-                        width: res ? res.width : undefined,
-                        height: res ? res.height : undefined,
-                        svg: res ? res.svg : undefined,
-                        uri: res ? res.xml : undefined,
-                        css: res ? res.css : undefined
-                    }, "*");
-                })
+            const doWork = async () => {
+                await pxt.BrowserUtils.loadBlocklyAsync();
+                const result = isXml 
+                    ? await pxt.runner.compileBlocksAsync(msg.code, options) 
+                    : await runner.decompileSnippetAsync(msg.code, msg.options);
+                const blocksSvg = result.blocksSvg as SVGSVGElement;
+                    const width = blocksSvg.viewBox.baseVal.width;
+                    const height = blocksSvg.viewBox.baseVal.height;
+                const res = blocksSvg 
+                    ? await pxt.blocks.layout.blocklyToSvgAsync(blocksSvg, 0, 0, width, height) 
+                    : undefined;
+                // try to render to png
+                let png: string;
+                try {
+                    png = res 
+                    ? await pxt.BrowserUtils.encodeToPngAsync(res.xml, { width, height })
+                    : undefined;
+                } catch(e) {
+                    console.warn(e);
+                }
+                window.parent.postMessage(<pxsim.RenderBlocksResponseMessage>{
+                    source: "makecode",
+                    type: "renderblocks",
+                    id: msg.id,
+                    width: res ? res.width : undefined,
+                    height: res ? res.height : undefined,
+                    svg: res ? res.svg : undefined,
+                    uri: res ? res.xml : undefined,
+                    css: res ? res.css : undefined,
+                    png
+                }, "*");
+            }
+
+            jobPromise = doWork()
                 .catch(e => {
                     window.parent.postMessage(<pxsim.RenderBlocksResponseMessage>{
                         source: "makecode",

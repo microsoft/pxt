@@ -455,6 +455,58 @@ namespace pxt.BrowserUtils {
         return canvas.toDataURL("image/png");
     }
 
+    const MAX_SCREENSHOT_SIZE = 1e6; // max 1Mb
+    export function encodeToPngAsync(dataUri: string, 
+        options?: {
+            width?: number,
+            height?: number,
+            pixelDensity?: number,
+            maxSize?: number,
+            text?: string
+    } ): Promise<string> {
+        const { width, height, pixelDensity = 4, maxSize = MAX_SCREENSHOT_SIZE, text } = options || {};
+
+        return new Promise<string>((resolve, reject) => {
+            const img = new Image;
+
+            img.onload = function () {
+                const cvs = document.createElement("canvas") as HTMLCanvasElement;
+                const ctx = cvs.getContext("2d");
+                cvs.width = (width || img.width) * pixelDensity;
+                cvs.height = (height || img.height) * pixelDensity;    
+
+                if (text) {
+                    ctx.fillStyle = "#fff";
+                    ctx.fillRect(0, 0, cvs.width, cvs.height);
+                }
+                ctx.drawImage(img, 0, 0, width, height, 0, 0, cvs.width, cvs.height);
+                let canvasdata = cvs.toDataURL("image/png");
+                // if the generated image is too big, shrink image
+                while (canvasdata.length > MAX_SCREENSHOT_SIZE) {
+                    cvs.width = (cvs.width / 2) >> 0;
+                    cvs.height = (cvs.height / 2) >> 0;
+                    pxt.log(`screenshot size ${canvasdata.length}b, shrinking to ${cvs.width}x${cvs.height}`)
+                    ctx.drawImage(img, 0, 0, width, height, 0, 0, cvs.width, cvs.height);
+                    canvasdata = cvs.toDataURL("image/png");
+                }
+                if (text) {
+                    let p = pxt.lzmaCompressAsync(text).then(blob => {
+                        const datacvs = pxt.Util.encodeBlobAsync(cvs, blob);
+                        resolve(datacvs.toDataURL("image/png"));
+                    });
+                    p.done();
+                } else {
+                    resolve(canvasdata);
+                }
+            };
+            img.onerror = ev => {
+                pxt.reportError("png", "png rendering failed");
+                resolve(undefined)
+            }
+            img.src = dataUri;
+        })
+    }    
+
     export function resolveCdnUrl(path: string): string {
         // don't expand full urls
         if (/^https?:\/\//i.test(path))
