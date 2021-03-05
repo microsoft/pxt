@@ -4699,10 +4699,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     auth.init();
-    // Disable auth in skillmap until it is properly supported.
-    // See https://github.com/microsoft/pxt-arcade/issues/3138
-    const disableAuth = query["skillsMap"] == "1";
-    auth.enableAuth(!disableAuth)
     cloud.init(); // depends on auth.init() and workspace.ts's top level
     cloudsync.loginCheck()
     parseLocalToken();
