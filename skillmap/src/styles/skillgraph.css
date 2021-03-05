@@ -6,7 +6,7 @@
 .skill-graph-content {
     display: flex;
     flex-direction: column;
-    z-index: 50;
+    z-index: var(--above-graph-zindex);
 }
 
 .skill-graph-wrapper {
@@ -24,7 +24,7 @@
     justify-content: center;
     width: 100%;
     height: 100%;
-    z-index: 10;
+    z-index: var(--graph-backround-zindex);
 }
 
 /* TEMP */
