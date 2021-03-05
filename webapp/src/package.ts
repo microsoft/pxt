@@ -425,6 +425,10 @@ export class EditorPackage {
     saveFileAsync(filename: string) {
         if (!this.header) return Promise.resolve();
         const content = this.files[filename]?.content
+        if (filename === pxt.CONFIG_NAME) {
+            // cfg file changes can cause other changes in the header
+            return this.saveFilesAsync();
+        }
         return workspace.partialSaveAsync(this.header.id, filename, content);
     }
 
