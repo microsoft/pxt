@@ -350,7 +350,7 @@ export class EditorPackage {
     /**
      * Sets a dependency without conflict validation
      * @param pkgid
-     * @param pkgversion 
+     * @param pkgversion
      */
     setDependencyAsync(pkgid: string, pkgversion: string) {
         return this.updateConfigAsync(cfg => cfg.dependencies[pkgid] = pkgversion)
@@ -430,6 +430,10 @@ export class EditorPackage {
     saveFileAsync(filename: string) {
         if (!this.header) return Promise.resolve();
         const content = this.files[filename]?.content
+        if (filename === pxt.CONFIG_NAME) {
+            // cfg file changes can cause other changes in the header
+            return this.saveFilesAsync();
+        }
         return workspace.partialSaveAsync(this.header.id, filename, content);
     }
 
@@ -583,9 +587,9 @@ export class EditorPackage {
 
     /**
      * Adds the dependency while handling conflicts, return true the dependency was added
-     * @param config 
-     * @param version 
-     * @param skipConfirm 
+     * @param config
+     * @param version
+     * @param skipConfirm
      */
     addDependencyAsync(config: pxt.PackageConfig, version: string, skipConfirm?: boolean): Promise<boolean> {
         if (this.topPkg !== this)
