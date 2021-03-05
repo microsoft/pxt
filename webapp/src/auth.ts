@@ -397,19 +397,28 @@ export async function deleteAccount() {
 
     const userId = getState()?.profile?.id;
 
-    await apiAsync('/api/user', null, 'DELETE');
+    const res = await apiAsync('/api/user', null, 'DELETE');
+    if (res.err) {
+        core.handleNetworkError(res.err);
+    } else {
+        try {
+            // Clear csrf token so we can no longer make authenticated requests.
+            pxt.storage.removeLocal(CSRF_TOKEN);
 
-    // Clear csrf token so we can no longer make authenticated requests.
-    pxt.storage.removeLocal(CSRF_TOKEN);
+            try {
+                // Convert cloud-saved projects to local projects.
+                await cloud.convertCloudToLocal(userId);
+            } catch {
+                pxt.tickEvent('auth.profile.cloudToLocalFailed');
+            }
 
-    // Convert cloud-saved projects to local projects.
-    await cloud.convertCloudToLocal(userId);
-
-    // Update state and UI to reflect logged out state.
-    clearState();
-
-    // Reload page
-    window.location.reload();
+            // Update state and UI to reflect logged out state.
+            clearState();
+        }
+        finally {
+            pxt.tickEvent('auth.profile.deleted');
+        }
+    }
 }
 
 export class Component<TProps, TState> extends data.Component<TProps, TState> {
@@ -559,7 +568,7 @@ export type ApiResult<T> = {
     resp: T;
     statusCode: number;
     success: boolean;
-    errmsg: string;
+    err: any;
 };
 
 const DEV_BACKEND_DEFAULT = "";
@@ -591,7 +600,7 @@ export async function apiAsync<T = any>(url: string, data?: any, method?: string
             statusCode: r.statusCode,
             resp: r.json,
             success: Math.floor(r.statusCode / 100) === 2,
-            errmsg: null
+            err: null
         }
     }).catch(async (e) => {
         if (!/logout/.test(url) && e.statusCode == 401) {
@@ -600,7 +609,7 @@ export async function apiAsync<T = any>(url: string, data?: any, method?: string
         }
         return {
             statusCode: e.statusCode,
-            errmsg: e.message,
+            err: e,
             resp: null,
             success: false
         }
