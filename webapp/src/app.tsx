@@ -76,7 +76,11 @@ let theEditor: ProjectView;
 let hash: { cmd: string, arg: string };
 let pendingEditorRequests: ((p: ProjectView) => void)[];
 
-function getEditorAsync() {
+export function hasEditor() {
+    return !!theEditor;
+}
+
+export function getEditorAsync() {
     if (theEditor) return Promise.resolve(theEditor);
     if (!pendingEditorRequests) pendingEditorRequests = [];
     return new Promise<ProjectView>(resolve => {
@@ -265,12 +269,13 @@ export class ProjectView
             this.saveFileAsync().done();
         } else if (active) {
             data.invalidate("header:*")
-            if (workspace.isHeadersSessionOutdated()
+            let hdrId = this.state.header ? this.state.header.id : '';
+            const inEditor = !this.state.home && hdrId
+            if ((!inEditor && workspace.isHeadersSessionOutdated())
                 || workspace.isHeaderSessionOutdated(this.state.header)) {
                 pxt.debug('workspace: changed, reloading...')
-                let id = this.state.header ? this.state.header.id : '';
                 workspace.syncAsync()
-                    .done(() => !this.state.home && id ? this.loadHeaderAsync(workspace.getHeader(id), this.state.editorState) : Promise.resolve());
+                    .done(() => inEditor ? this.loadHeaderAsync(workspace.getHeader(hdrId), this.state.editorState) : Promise.resolve());
                 // device scanning restarts in loadheader
             } else if (this.state.resumeOnVisibility) {
                 this.setState({ resumeOnVisibility: false });
@@ -1105,7 +1110,7 @@ export class ProjectView
     removeFile(fn: pkg.File, skipConfirm = false) {
         const removeIt = () => {
             pkg.mainEditorPkg().removeFileAsync(fn.name)
-                .then(() => pkg.mainEditorPkg().saveFilesAsync(true))
+                .then(() => pkg.mainEditorPkg().saveFilesAsync())
                 .then(() => this.reloadHeaderAsync())
                 .done();
         }
@@ -1131,7 +1136,6 @@ export class ProjectView
         return p.setContentAsync(name, content)
             .then(() => {
                 if (open) this.setFile(p.lookupFile("this/" + name));
-                return p.cloudSavePkgAsync();
             })
             .then(() => this.reloadHeaderAsync())
     }
@@ -1329,7 +1333,7 @@ export class ProjectView
                                 // We are too late; the editor has already been loaded.
                                 // Call the onChanges handler to update the editor.
                                 pxt.tickEvent(`identity.syncOnProjectOpen.timedout`, { 'elapsedSec': elapsed})
-                                if (changes.length)
+                                if (changes.some(header => header.id === h.id))
                                     cloud.forceReloadForCloudSync()
                             } else {
                                 // We're not too late, update the local var so that the
@@ -1807,7 +1811,6 @@ export class ProjectView
                                 cfg.dependencies = {};
                             cfg.dependencies[n] = `pkg:${fn}`;
                         }))
-                        .then(() => mpkg.cloudSavePkgAsync())
                         .done(() => this.reloadHeaderAsync());
                 }
             }
@@ -4082,11 +4085,6 @@ function parseLocalToken() {
     Cloud.localToken = pxt.storage.getLocal("local_token") || "";
 }
 
-function initLogin() {
-    cloudsync.loginCheck()
-    parseLocalToken();
-    auth.authCheck();
-}
 
 function initPacketIO() {
     pxt.debug(`packetio: hook events`)
@@ -4563,7 +4561,11 @@ document.addEventListener("DOMContentLoaded", () => {
         auth.loginCallback(query);
     }
 
-    initLogin();
+    auth.init();
+    cloud.init(); // depends on auth.init() and workspace.ts's top level
+    cloudsync.loginCheck()
+    parseLocalToken();
+    auth.authCheck();
     hash = parseHash();
     appcache.init(() => theEditor.reloadEditor());
     blocklyFieldView.init();
@@ -4596,8 +4598,11 @@ document.addEventListener("DOMContentLoaded", () => {
     else if (isSandbox) workspace.setupWorkspace("mem");
     else if (pxt.winrt.isWinRT()) workspace.setupWorkspace("uwp");
     else if (pxt.BrowserUtils.isIpcRenderer()) workspace.setupWorkspace("idb");
-    else if (pxt.BrowserUtils.isLocalHost() || pxt.BrowserUtils.isPxtElectron()) workspace.setupWorkspace("fs");
+    else if (pxt.BrowserUtils.isPxtElectron()) workspace.setupWorkspace("fs");
     else workspace.setupWorkspace("browser");
+    // disable auth in iframe scenarios
+    if (workspace.getWorkspaceType() === "iframe")
+        auth.enableAuth(false)
     Promise.resolve()
         .then(async () => {
             const href = window.location.href;

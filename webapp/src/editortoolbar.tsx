@@ -319,8 +319,9 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                 {/* TODO: consider make this cloud state indicator a seperate React component so we don't need to update
                     the whole toolbar when there are cloud state changes. However so far, this doesn't seem to be a
                     performance concern. */}
-                {(cloudState === "syncing" || cloudState === "offline" || cloudState === "conflict" || cloudState === "justSaved")
+                {(cloudState === "syncing" || cloudState === "offline" || cloudState === "conflict" || cloudState === "justSaved" || cloudState === "localEdits")
                     && <i className="ui large right floated icon cloud cloudState"></i>}
+                {cloudState === "localEdits" && <span className="ui cloudState">{lf("saving...")}</span>}
                 {cloudState === "syncing" && <span className="ui cloudState">{lf("saving...")}</span>}
                 {cloudState === "justSaved" && <span className="ui cloudState">{lf("saved!")}</span>}
                 {cloudState === "offline" && <span className="ui cloudState">{lf("offline.")}</span>}
