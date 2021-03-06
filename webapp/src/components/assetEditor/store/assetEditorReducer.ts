@@ -26,9 +26,11 @@ const topReducer = (state: AssetEditorState = initialState, action: any): AssetE
                 selectedAsset: getSelectedAsset(state, action.assetType, action.assetId)
             };
         case actions.CHANGE_GALLERY_VIEW:
+            const selectedAsset = !!action.assetId ? getSelectedAsset(state, action.assetType, action.assetId) : state.selectedAsset;
             return {
                 ...state,
-                view: action.view
+                view: action.view,
+                selectedAsset
             };
         case actions.UPDATE_USER_ASSETS:
             const assets = getAssets();
