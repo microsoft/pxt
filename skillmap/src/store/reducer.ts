@@ -50,7 +50,7 @@ const initialState: SkillMapState = {
         completedTags: {}
     },
     theme: {
-        backgroundColor: "var(--tertiary-color)",
+        backgroundColor: "var(--body-background-color)",
         pathColor: "#BFBFBF",
         strokeColor: "#000000",
         rewardNodeColor: "var(--tertiary-color)",

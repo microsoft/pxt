@@ -54,8 +54,9 @@ export class AppModalImpl extends React.Component<AppModalProps> {
     protected getRewardText(type: MapRewardType) {
         switch (type) {
             case "certificate":
-            default:
                 return lf("Certificate");
+            default:
+                return lf("Reward");
         }
     }
 

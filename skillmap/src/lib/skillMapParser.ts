@@ -311,7 +311,7 @@ function inflateMetadata(section: MarkdownSection): PageMetadata {
         infoUrl: section.attributes["infourl"],
         backgroundImageUrl: section.attributes["backgroundurl"],
         theme: {
-            backgroundColor: tertiary || "var(--tertiary-color)",
+            backgroundColor: tertiary || "var(--body-background-color)",
             pathColor: primary || "#BFBFBF",
             strokeColor: "#000000",
             rewardNodeColor: tertiary || "var(--tertiary-color)",

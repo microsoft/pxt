@@ -3,9 +3,11 @@ import { connect } from 'react-redux';
 
 import { SkillMapState } from '../store/reducer';
 import { ActivityActions } from './ActivityActions';
+import { RewardActions } from './RewardActions';
 import { MapActions } from './MapActions';
 
-import { ActivityStatus, isActivityUnlocked, isMapUnlocked, lookupActivityProgress, isActivityCompleted, getActivityStatus } from '../lib/skillMapUtils';
+import { ActivityStatus, isActivityUnlocked, isMapUnlocked, lookupActivityProgress,
+    isActivityCompleted, getActivityStatus, isRewardNode } from '../lib/skillMapUtils';
 
 /* tslint:disable:no-import-side-effect */
 import '../styles/infopanel.css'
@@ -17,7 +19,7 @@ interface InfoPanelProps {
     description: string;
     imageUrl?: string;
     details?: string[];
-    activity?: MapActivity;
+    node?: MapNode;
     status?: ActivityStatus;
 }
 
@@ -45,8 +47,10 @@ export class InfoPanelImpl extends React.Component<InfoPanelProps> {
     }
 
     render() {
-        const  { mapId, title, description, imageUrl, details, activity, status  } = this.props;
+        const  { mapId, title, description, imageUrl, details, node, status  } = this.props;
         const statusLabel = this.getStatusLabel(status);
+        const isActivity = node && !isRewardNode(node);
+        const tags = isActivity && (node as MapActivity).tags || undefined;
         return <div className="info-panel">
             <div className="info-panel-image">
                 {imageUrl
@@ -59,14 +63,16 @@ export class InfoPanelImpl extends React.Component<InfoPanelProps> {
                 <span>{statusLabel}</span>
             </div>}
             <div className="info-panel-description">{description}</div>
-            {activity?.tags && activity.tags.length > 0 && <div className="info-panel-tags">
-                {activity.tags.map((el, i) => <div key={i}>{el}</div>)}
+            {tags && tags.length > 0 && <div className="info-panel-tags">
+                {tags.map((el, i) => <div key={i}>{el}</div>)}
             </div>}
             <div className="info-panel-detail">
                 {details?.map((el, i) => <div key={`detail_${i}`}>{el}</div>)}
             </div>
-            {activity
-                ? <ActivityActions mapId={mapId} activityId={activity.activityId} status={status} />
+            {node
+                ? (isActivity
+                    ? <ActivityActions mapId={mapId} activityId={node.activityId} status={status} />
+                    : <RewardActions mapId={mapId} activityId={node.activityId} status={status} type={(node as MapReward).type} />)
                 : <MapActions />}
         </div>
     }
@@ -82,11 +88,13 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
 
     if (maps) {
         if (selectedItem?.activityId) {
-            const map = maps[selectedItem.mapId];
-            const { status: activityStatus, currentStep, maxSteps } = getActivityStatus(state.user, state.pageSourceUrl, map, selectedItem.activityId);
-            status = activityStatus;
-            details.push(maxSteps ? `${currentStep}/${maxSteps} ${lf("Steps")}` : lf("Not Started"));
-            details.push(isActivity ? (node as MapActivity).type : "");
+            if (isActivity) {
+                const map = maps[selectedItem.mapId];
+                const { status: activityStatus, currentStep, maxSteps } = getActivityStatus(state.user, state.pageSourceUrl, map, selectedItem.activityId);
+                status = activityStatus;
+                details.push(maxSteps ? `${currentStep}/${maxSteps} ${lf("Steps")}` : lf("Not Started"));
+                details.push(isActivity ? (node as MapActivity).type : "");
+            }
         } else if (user) {
             // Count of completed activities (not including reward nodes)
             const mapIds = Object.keys(maps);
@@ -98,7 +106,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
                 const activityIds = Object.keys(activities).filter(el => activities[el].kind == "activity");
                 activityIds.forEach(activityId => total++ && isActivityCompleted(user, pageSourceUrl, mapId, activityId) && completed++);
 
-                rewards += Object.keys(activities).filter(el => activities[el].kind == "reward" || activities[el].kind == "completion").length;
+                rewards += Object.keys(activities).filter(el => isRewardNode(activities[el])).length;
             })
 
             details.push(`${completed}/${total} ${lf("Complete")}`);
@@ -108,10 +116,10 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
 
     return {
         mapId: selectedItem?.mapId,
-        title: node ? node.displayName : state.title,
+        title: node?.displayName || state.title,
         description: isActivity ? (node as MapActivity).description : state.description,
-        imageUrl: node ? node.imageUrl : undefined,
-        activity: isActivity ? node : undefined,
+        imageUrl: node?.imageUrl,
+        node,
         status,
         details
     };

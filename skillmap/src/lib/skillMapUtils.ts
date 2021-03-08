@@ -108,9 +108,19 @@ export function lookupActivityProgress(user: UserState, pageSource: string, mapI
 
 export function lookupPreviousActivities(map: SkillMap, activityId: string) {
     return Object.keys(map.activities)
-        .filter(key =>
-            map.activities[key].next.some(activity => activity.activityId === activityId)
-        ).map(key => map.activities[key])
+        .filter(key => {
+            const activity = map.activities[key];
+            let nextIds: string[] = [];
+            // Replace reward node IDs with the activities following the reward node
+            activity.next.forEach(node => {
+                if (isRewardNode(node)) {
+                    nextIds = nextIds.concat(node.next.map(nextNode => nextNode.activityId))
+                } else {
+                    nextIds.push(node.activityId)
+                }
+            });
+            return nextIds.some(id => id === activityId)
+        }).map(key => map.activities[key])
 }
 
 export function lookupPreviousActivityStates(user: UserState, pageSource: string, map: SkillMap, activityId: string): ActivityState[] {
