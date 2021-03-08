@@ -396,7 +396,7 @@ namespace pxt.BrowserUtils {
                 } else {
                     window.setTimeout(() => window.URL.revokeObjectURL(downloadurl), 0);
                 }
-            } else  {
+            } else {
                 downloadurl = toDownloadDataUri(b64, name);
                 browserDownloadDataUri(downloadurl, name, userContextWindow);
             }
@@ -456,14 +456,14 @@ namespace pxt.BrowserUtils {
     }
 
     const MAX_SCREENSHOT_SIZE = 1e6; // max 1Mb
-    export function encodeToPngAsync(dataUri: string, 
+    export function encodeToPngAsync(dataUri: string,
         options?: {
             width?: number,
             height?: number,
             pixelDensity?: number,
             maxSize?: number,
             text?: string
-    } ): Promise<string> {
+        }): Promise<string> {
         const { width, height, pixelDensity = 4, maxSize = MAX_SCREENSHOT_SIZE, text } = options || {};
 
         return new Promise<string>((resolve, reject) => {
@@ -473,7 +473,7 @@ namespace pxt.BrowserUtils {
                 const cvs = document.createElement("canvas") as HTMLCanvasElement;
                 const ctx = cvs.getContext("2d");
                 cvs.width = (width || img.width) * pixelDensity;
-                cvs.height = (height || img.height) * pixelDensity;    
+                cvs.height = (height || img.height) * pixelDensity;
 
                 if (text) {
                     ctx.fillStyle = "#fff";
@@ -505,7 +505,7 @@ namespace pxt.BrowserUtils {
             }
             img.src = dataUri;
         })
-    }    
+    }
 
     export function resolveCdnUrl(path: string): string {
         // don't expand full urls
@@ -1042,7 +1042,7 @@ namespace pxt.BrowserUtils {
 
     export interface ITutorialInfoDb {
         getAsync(filename: string, code: string[], branch?: string): Promise<TutorialInfoIndexedDbEntry>;
-        setAsync(filename: string, blocks: Map<number>, code: string[], branch?: string ): Promise<void>;
+        setAsync(filename: string, blocks: Map<number>, code: string[], branch?: string): Promise<void>;
         clearAsync(): Promise<void>;
     }
 
@@ -1095,14 +1095,14 @@ namespace pxt.BrowserUtils {
                 });
         }
 
-        setAsync(filename: string, blocks: Map<number>, code: string[], branch?: string ): Promise<void> {
+        setAsync(filename: string, blocks: Map<number>, code: string[], branch?: string): Promise<void> {
             pxt.perf.measureStart("tutorial info db setAsync")
             const key = getTutorialInfoKey(filename, branch);
             const hash = getTutorialInfoHash(code);
             return this.setWithHashAsync(filename, blocks, hash);
         }
 
-        setWithHashAsync(filename: string, blocks: Map<number>, hash: string, branch?: string ): Promise<void> {
+        setWithHashAsync(filename: string, blocks: Map<number>, hash: string, branch?: string): Promise<void> {
             pxt.perf.measureStart("tutorial info db setAsync")
             const key = getTutorialInfoKey(filename, branch);
 
