@@ -396,7 +396,7 @@ namespace pxt.BrowserUtils {
                 } else {
                     window.setTimeout(() => window.URL.revokeObjectURL(downloadurl), 0);
                 }
-            } else  {
+            } else {
                 downloadurl = toDownloadDataUri(b64, name);
                 browserDownloadDataUri(downloadurl, name, userContextWindow);
             }
@@ -453,6 +453,58 @@ namespace pxt.BrowserUtils {
         ctx.scale(scale, scale);
         ctx.drawImage(canvas, 0, 0);
         return canvas.toDataURL("image/png");
+    }
+
+    const MAX_SCREENSHOT_SIZE = 1e6; // max 1Mb
+    export function encodeToPngAsync(dataUri: string,
+        options?: {
+            width?: number,
+            height?: number,
+            pixelDensity?: number,
+            maxSize?: number,
+            text?: string
+        }): Promise<string> {
+        const { width, height, pixelDensity = 4, maxSize = MAX_SCREENSHOT_SIZE, text } = options || {};
+
+        return new Promise<string>((resolve, reject) => {
+            const img = new Image;
+
+            img.onload = function () {
+                const cvs = document.createElement("canvas") as HTMLCanvasElement;
+                const ctx = cvs.getContext("2d");
+                cvs.width = (width || img.width) * pixelDensity;
+                cvs.height = (height || img.height) * pixelDensity;
+
+                if (text) {
+                    ctx.fillStyle = "#fff";
+                    ctx.fillRect(0, 0, cvs.width, cvs.height);
+                }
+                ctx.drawImage(img, 0, 0, width, height, 0, 0, cvs.width, cvs.height);
+                let canvasdata = cvs.toDataURL("image/png");
+                // if the generated image is too big, shrink image
+                while (canvasdata.length > maxSize) {
+                    cvs.width = (cvs.width / 2) >> 0;
+                    cvs.height = (cvs.height / 2) >> 0;
+                    pxt.debug(`screenshot size ${canvasdata.length}b, shrinking to ${cvs.width}x${cvs.height}`)
+                    ctx.drawImage(img, 0, 0, width, height, 0, 0, cvs.width, cvs.height);
+                    canvasdata = cvs.toDataURL("image/png");
+                }
+                if (text) {
+                    let p = pxt.lzmaCompressAsync(text).then(blob => {
+                        const datacvs = pxt.Util.encodeBlobAsync(cvs, blob);
+                        resolve(datacvs.toDataURL("image/png"));
+                    });
+                    p.done();
+                } else {
+                    resolve(canvasdata);
+                }
+            };
+            img.onerror = ev => {
+                pxt.reportError("png", "png rendering failed");
+                resolve(undefined)
+            }
+            img.src = dataUri;
+        })
     }
 
     export function resolveCdnUrl(path: string): string {
@@ -990,7 +1042,7 @@ namespace pxt.BrowserUtils {
 
     export interface ITutorialInfoDb {
         getAsync(filename: string, code: string[], branch?: string): Promise<TutorialInfoIndexedDbEntry>;
-        setAsync(filename: string, blocks: Map<number>, code: string[], branch?: string ): Promise<void>;
+        setAsync(filename: string, blocks: Map<number>, code: string[], branch?: string): Promise<void>;
         clearAsync(): Promise<void>;
     }
 
@@ -1043,14 +1095,14 @@ namespace pxt.BrowserUtils {
                 });
         }
 
-        setAsync(filename: string, blocks: Map<number>, code: string[], branch?: string ): Promise<void> {
+        setAsync(filename: string, blocks: Map<number>, code: string[], branch?: string): Promise<void> {
             pxt.perf.measureStart("tutorial info db setAsync")
             const key = getTutorialInfoKey(filename, branch);
             const hash = getTutorialInfoHash(code);
             return this.setWithHashAsync(filename, blocks, hash);
         }
 
-        setWithHashAsync(filename: string, blocks: Map<number>, hash: string, branch?: string ): Promise<void> {
+        setWithHashAsync(filename: string, blocks: Map<number>, hash: string, branch?: string): Promise<void> {
             pxt.perf.measureStart("tutorial info db setAsync")
             const key = getTutorialInfoKey(filename, branch);
 
