@@ -186,7 +186,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
             user.completedTags[fetched] = {};
         }
 
-        this.applyQueryFlags(user, loadedMaps);
+        this.applyQueryFlags(user, loadedMaps, fetched);
         this.loadedUser = user;
         this.props.dispatchSetUser(user);
     }

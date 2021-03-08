@@ -5,7 +5,7 @@ import { SkillMapState } from '../store/reducer';
 import { ActivityActions } from './ActivityActions';
 import { MapActions } from './MapActions';
 
-import { ActivityStatus, isActivityUnlocked, isMapUnlocked, lookupActivityProgress, isActivityCompleted } from '../lib/skillMapUtils';
+import { ActivityStatus, isActivityUnlocked, isMapUnlocked, lookupActivityProgress, isActivityCompleted, getActivityStatus } from '../lib/skillMapUtils';
 
 /* tslint:disable:no-import-side-effect */
 import '../styles/infopanel.css'
@@ -83,32 +83,8 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
     if (maps) {
         if (selectedItem?.activityId) {
             const map = maps[selectedItem.mapId];
-            const isUnlocked = state.user && map && isActivityUnlocked(user, pageSourceUrl, map, selectedItem.activityId);
-
-            let currentStep: number | undefined;
-            let maxSteps: number | undefined;
-            status = isUnlocked ? "notstarted" : "locked";
-            if (user) {
-                if (map && pageSourceUrl && !isMapUnlocked(user, map, pageSourceUrl)) {
-                    status = "locked";
-                }
-                else {
-                    const progress = lookupActivityProgress(user, pageSourceUrl, selectedItem.mapId, selectedItem.activityId);
-
-                    if (progress) {
-                        if (progress.isCompleted) {
-                            status = (progress.currentStep && progress.maxSteps && progress.currentStep < progress.maxSteps) ?
-                                "restarted" : "completed";
-                        }
-                        else if (progress.headerId) {
-                            status = "inprogress";
-                        }
-                        currentStep = progress?.currentStep;
-                        maxSteps = progress?.maxSteps;
-                    }
-                }
-            }
-
+            const { status: activityStatus, currentStep, maxSteps } = getActivityStatus(state.user, state.pageSourceUrl, map, selectedItem.activityId);
+            status = activityStatus;
             details.push(maxSteps ? `${currentStep}/${maxSteps} ${lf("Steps")}` : lf("Not Started"));
             details.push(isActivity ? (node as MapActivity).type : "");
         } else if (user) {
