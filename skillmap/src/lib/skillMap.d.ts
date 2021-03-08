@@ -44,7 +44,7 @@ interface BaseNode {
     displayName: string;
     imageUrl?: string;
 
-    next: MapNode[];
+    next: BaseNode[];
     nextIds: string[];
 }
 

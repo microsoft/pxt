@@ -50,7 +50,7 @@ export function orthogonalGraph(root: MapNode): GraphNode[] {
             }
 
             // Assign the current node as the parent of its children
-            const next = current.next.map((el: MapNode) => {
+            const next = current.next.map((el: BaseNode) => {
                 let node = el as any;
                 if (!node.parents) {
                     node.parents = [current!];
@@ -157,7 +157,7 @@ export function treeGraph(root: BaseNode): GraphNode[] {
             }
 
             // Assign this node as the parent of all children
-            const next = current.next.map((el: MapNode) => {
+            const next = current.next.map((el: BaseNode) => {
                 let node = el as GraphNode;
                 if (!node.parents) {
                     node.parents = [current!];
@@ -233,7 +233,7 @@ function cloneNode(root: BaseNode): GraphNode {
 
     // Clone all nodes, assign children to cloned nodes
     nodes.forEach(n => clones[n.activityId] = Object.assign({}, n));
-    nodes.forEach(n => n.next = n.next.map(el => clones[el.activityId] as MapNode));
+    Object.keys(clones).forEach(cloneId => clones[cloneId].next = clones[cloneId].nextIds.map(id => clones[id]));
 
     return clones[root.activityId];
 }
