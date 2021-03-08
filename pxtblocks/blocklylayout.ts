@@ -363,7 +363,7 @@ namespace pxt.blocks.layout {
                 let pngUri = imageIconCache[svgUri];
 
                 return (pngUri ? Promise.resolve(pngUri)
-                    : pxt.BrowserUtils.encodeToPngAsync(svgUri, { width, height, pixelDensity: 4 }))
+                    : pxt.BrowserUtils.encodeToPngAsync(svgUri, { width, height, pixelDensity: 2 }))
                     .then(href => {
                         imageIconCache[svgUri] = href;
                         image.setAttributeNS(XLINK_NAMESPACE, "href", href);
