@@ -172,6 +172,7 @@ jobs:
         run: pxt checkpkgcfg
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3
+        continue-on-error: true
         with:
           title: 'Removing missing files from pxt.json'
           commit-message: 'Removing missing files from pxt.json'
