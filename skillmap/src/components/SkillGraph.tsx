@@ -2,7 +2,7 @@ import * as React from "react";
 import { connect } from 'react-redux';
 
 import { SkillMapState } from '../store/reducer';
-import { dispatchChangeSelectedItem  } from '../actions/dispatch';
+import { dispatchChangeSelectedItem, dispatchShowCompletionModal, dispatchSetSkillMapCompleted } from '../actions/dispatch';
 import { GraphNode } from './GraphNode';
 import { GraphPath } from "./GraphPath";
 
@@ -24,7 +24,10 @@ interface SkillGraphProps {
     selectedActivityId?: string;
     pageSourceUrl: string;
     theme: SkillGraphTheme;
+    completionState: "incomplete" | "transitioning" | "completed";
     dispatchChangeSelectedItem: (mapId?: string, activityId?: string) => void;
+    dispatchShowCompletionModal: (mapId: string, activityId?: string) => void;
+    dispatchSetSkillMapCompleted: (mapId: string) => void;
 }
 
 const UNIT = 10;
@@ -72,12 +75,19 @@ class SkillGraphImpl extends React.Component<SkillGraphProps> {
         return { items, paths };
     }
 
-    protected onItemSelect = (activityId: string) => {
-        const { dispatchChangeSelectedItem, map } = this.props;
-        if (activityId !== this.props.selectedActivityId) {
+    protected onItemSelect = (activityId: string, kind: MapNodeKind) => {
+        const { map, completionState, selectedActivityId,
+            dispatchChangeSelectedItem, dispatchShowCompletionModal } = this.props;
+
+        if (kind === "completion" && completionState === "completed") {
             dispatchChangeSelectedItem(map.mapId, activityId);
+            dispatchShowCompletionModal(map.mapId, activityId)
         } else {
-            dispatchChangeSelectedItem(undefined);
+            if (activityId !== selectedActivityId) {
+                dispatchChangeSelectedItem(map.mapId, activityId);
+            } else {
+                dispatchChangeSelectedItem(undefined);
+            }
         }
     }
 
@@ -92,6 +102,15 @@ class SkillGraphImpl extends React.Component<SkillGraphProps> {
 
     protected getY(position: number) {
         return ((position * 8) + PADDING) * UNIT;
+    }
+
+    componentDidUpdate(props: SkillGraphProps) {
+        if (props.completionState === "transitioning") {
+            setTimeout(() => {
+                props.dispatchSetSkillMapCompleted(props.map.mapId)
+                props.dispatchShowCompletionModal(props.map.mapId, props.selectedActivityId)
+            }, 400);
+        }
     }
 
     render() {
@@ -125,16 +144,20 @@ class SkillGraphImpl extends React.Component<SkillGraphProps> {
 function mapStateToProps(state: SkillMapState, ownProps: any) {
     if (!state) return {};
 
+    const mapProgress = state.user?.mapProgress?.[state.pageSourceUrl];
     return {
         user: state.user,
         pageSourceUrl: state.pageSourceUrl,
         theme: state.theme,
-        selectedActivityId: state.selectedItem && ownProps.map?.mapId == state.selectedItem.mapId ? state.selectedItem.activityId : undefined
+        selectedActivityId: state.selectedItem && ownProps.map?.mapId == state.selectedItem.mapId ? state.selectedItem.activityId : undefined,
+        completionState: mapProgress?.[ownProps.map.mapId]?.completionState
     }
 }
 
 const mapDispatchToProps = {
-    dispatchChangeSelectedItem
+    dispatchChangeSelectedItem,
+    dispatchShowCompletionModal,
+    dispatchSetSkillMapCompleted
 };
 
 export const SkillGraph = connect(mapStateToProps, mapDispatchToProps)(SkillGraphImpl);

@@ -236,6 +236,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
 
         if (this.queryFlags["debugCompleted"] === "true") {
             user.isDebug = true;
+            user.mapProgress = { [pageSource]: {} };
 
             if (maps) {
                 for (const map of maps) {

@@ -11,7 +11,7 @@ interface SkillMap {
     displayName: string;
     description?: string;
     prerequisites: MapPrerequisite[];
-    completionUrl?: string;
+    completionUrl?: string; // DEPRECATED, urls should be specified on completion nodes
 
     // Indicates whether or not code can be copied from previous activity
     // for all cards in this skillmap
@@ -64,9 +64,12 @@ interface MapActivity extends BaseNode {
     allowCodeCarryover?: boolean;
 }
 
+type MapRewardType = "certificate";
+
 interface MapReward extends BaseNode {
     kind: "reward";
-
+    type: MapRewardType;
+    url: string;
 }
 
 interface MapCompletionNode extends MapReward {

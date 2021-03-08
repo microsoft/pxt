@@ -119,6 +119,10 @@ export function lookupPreviousActivityStates(user: UserState, pageSource: string
         .filter(a => !!a) as ActivityState[];
 }
 
+export function isRewardNode(node: MapNode) {
+    return node.kind === "reward" || node.kind === "completion";
+}
+
 export function applyUserUpgrades(user: UserState, currentVersion: string, pageSource: string, maps: { [key: string]: SkillMap }) {
     const oldVersion = pxt.semver.parse(user.version || "0.0.0");
     const newVersion = pxt.semver.parse(currentVersion);
