@@ -482,10 +482,10 @@ namespace pxt.BrowserUtils {
                 ctx.drawImage(img, 0, 0, width, height, 0, 0, cvs.width, cvs.height);
                 let canvasdata = cvs.toDataURL("image/png");
                 // if the generated image is too big, shrink image
-                while (canvasdata.length > MAX_SCREENSHOT_SIZE) {
+                while (canvasdata.length > maxSize) {
                     cvs.width = (cvs.width / 2) >> 0;
                     cvs.height = (cvs.height / 2) >> 0;
-                    pxt.log(`screenshot size ${canvasdata.length}b, shrinking to ${cvs.width}x${cvs.height}`)
+                    pxt.debug(`screenshot size ${canvasdata.length}b, shrinking to ${cvs.width}x${cvs.height}`)
                     ctx.drawImage(img, 0, 0, width, height, 0, 0, cvs.width, cvs.height);
                     canvasdata = cvs.toDataURL("image/png");
                 }
