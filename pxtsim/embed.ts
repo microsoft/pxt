@@ -233,6 +233,7 @@ namespace pxsim {
             packageId?: string;
             package?: string;
             snippetMode?: boolean;
+            pixelDensity?: number;
         }
     }
 
