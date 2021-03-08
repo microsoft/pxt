@@ -588,12 +588,11 @@ namespace pxt.runner {
                     source: "makecode",
                     type: "renderblocks",
                     id: msg.id,
-                    width: res ? res.width : undefined,
-                    height: res ? res.height : undefined,
-                    svg: res ? res.svg : undefined,
-                    uri: res ? res.xml : undefined,
-                    css: res ? res.css : undefined,
-                    png
+                    width: res?.width,
+                    height: res?.height,
+                    svg: res?.svg,
+                    uri: png || res?.xml,
+                    css: res?.css
                 }, "*");
             }
 

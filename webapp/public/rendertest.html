@@ -68,18 +68,10 @@
                         img = svg.childNodes.item(0)
                         code.parentElement.insertBefore(img, code)
                     } 
-                    // inject as data uri svg
+                    // inject as data uri
                     {
                         var img = document.createElement("img");
                         img.src = msg.uri;
-                        img.width = msg.width;
-                        img.height = msg.height;
-                        code.parentElement.insertBefore(img, code)
-                    }
-                    // inject as png
-                    {
-                        var img = document.createElement("img");
-                        img.src = msg.png;
                         img.width = msg.width;
                         img.height = msg.height;
                         code.parentElement.insertBefore(img, code)
