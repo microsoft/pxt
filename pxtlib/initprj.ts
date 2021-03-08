@@ -143,7 +143,10 @@ jobs:
             ".github/workflows/cfg-check.yml": `name: Check pxt.json
 
 on:
-  push
+  push:
+    branches:
+      - 'master'
+      - 'main'
 
 jobs:
   check-cfg:
