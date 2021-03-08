@@ -578,9 +578,8 @@ namespace pxt.runner {
                 // try to render to png
                 let png: string;
                 try {
-                    const pixelDensity = (options.pixelDensity | 0) || 1;
                     png = res
-                        ? await pxt.BrowserUtils.encodeToPngAsync(res.xml, { width, height, pixelDensity })
+                        ? await pxt.BrowserUtils.encodeToPngAsync(res.xml, { width, height })
                         : undefined;
                 } catch (e) {
                     console.warn(e);

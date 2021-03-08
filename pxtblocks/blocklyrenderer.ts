@@ -26,7 +26,6 @@ namespace pxt.blocks {
         forceCompilation?: boolean;
         generateSourceMap?: boolean;
         assets?: pxt.Map<string>;
-        pixelDensity?: number;
     }
 
     export function initRenderingWorkspace() {
