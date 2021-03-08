@@ -8,3 +8,15 @@
     font-size: 1.75rem;
     opacity: 0.8;
 }
+
+.graph-icon-x {
+    font-family: xicon;
+    font-size: 1.75rem;
+    opacity: 0.8;
+}
+
+.graph-status-icon {
+    font-family: Icons;
+    font-size: 1rem;
+    opacity: 0.8;
+}

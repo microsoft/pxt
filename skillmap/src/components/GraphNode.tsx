@@ -34,7 +34,22 @@ export class GraphNode extends React.Component<GraphNodeProps> {
                     case "locked":
                         return "\uf023";
                     default:
-                        return "\uf11b";
+                        return "\uf101";
+                }
+        }
+    }
+
+    protected getIconClass(status: ActivityStatus, kind: MapNodeKind): string {
+        switch (kind) {
+            case "reward":
+            case "completion":
+                return "graph-icon"
+            default:
+                switch (status) {
+                    case "locked":
+                        return "graph-icon";
+                    default:
+                        return "graph-icon-x";
                 }
         }
     }
@@ -53,12 +68,34 @@ export class GraphNode extends React.Component<GraphNodeProps> {
             foreground = theme.lockedNodeForeground;
         }
 
+        // Used for positioning the corner circle on completed activities so that it isn't
+        // perfectly aligned with the node
+        const nudgeUnit = width / 50;
+
         return  <g className={`graph-activity ${selected ? "selected" : ""}`} transform={`translate(${position.x} ${position.y})`} onClick={this.handleClick}>
             { kind !== "activity" ?
                 <circle cx={0} cy={0} r={width / 2} fill={fill} stroke={theme.strokeColor} strokeWidth="2" /> :
                 <rect x={-width / 2} y={-width / 2} width={width} height={width} rx={width / 10} fill={fill} stroke="#000" strokeWidth="2" />
             }
-            <text textAnchor="middle" alignmentBaseline="middle" className="graph-icon" dy="2" fill={foreground}>{this.getIcon(status, kind)}</text>
+            { status === "completed" && kind === "activity" &&
+                <g transform={`translate(${(width / 2) - (3 * nudgeUnit)} ${(-width / 2) + (3 * nudgeUnit)})`}>
+                    <circle cx={0} cy={0} r={(width / 4) - nudgeUnit} stroke={theme.strokeColor} strokeWidth="2" fill={fill}/>
+                    <text dy="2"
+                        textAnchor="middle"
+                        alignmentBaseline="middle"
+                        fill={foreground}
+                        className="graph-status-icon">
+                            {"\uf00c"}
+                        </text>
+                </g>
+            }
+            <text dy="2"
+                textAnchor="middle"
+                alignmentBaseline="middle"
+                fill={foreground}
+                className={this.getIconClass(status, kind)}>
+                    {this.getIcon(status, kind)}
+                </text>
         </g>
     }
 }
