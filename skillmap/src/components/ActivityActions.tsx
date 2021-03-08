@@ -17,10 +17,10 @@ interface DispatchProps {
     dispatchShowRestartActivityWarning: (mapId: string, activityId: string) => void;
 }
 
-type ActionButtonsProps = OwnProps & DispatchProps;
+type ActivityActionsProps = OwnProps & DispatchProps;
 
-export class ActionButtonsImpl extends React.Component<ActionButtonsProps> {
-    protected getSkillCardActionText(): string {
+export class ActivityActionsImpl extends React.Component<ActivityActionsProps> {
+    protected getActivityActionText(): string {
         switch (this.props.status) {
             case "locked":
                 return lf("LOCKED");
@@ -68,7 +68,7 @@ export class ActionButtonsImpl extends React.Component<ActionButtonsProps> {
 
         return <div className="activity-actions">
             <div className="action-button" role="button" onClick={this.handleActionButtonClick}>
-                {this.getSkillCardActionText()}
+                {this.getActivityActionText()}
             </div>
             {showRestart && <div className="action-button" role="button" onClick={this.handleRestartButtonClick}>
                 {lf("RESTART")}
@@ -82,4 +82,4 @@ const mapDispatchToProps = {
     dispatchShowRestartActivityWarning
 }
 
-export const ActionButtons = connect<{}, DispatchProps, OwnProps>(null, mapDispatchToProps)(ActionButtonsImpl);
+export const ActivityActions = connect<{}, DispatchProps, OwnProps>(null, mapDispatchToProps)(ActivityActionsImpl);

@@ -337,12 +337,13 @@ export class ProjectView
             this.saveFileAsync().done();
         } else if (active) {
             data.invalidate("header:*")
-            if (workspace.isHeadersSessionOutdated()
+            let hdrId = this.state.header ? this.state.header.id : '';
+            const inEditor = !this.state.home && hdrId
+            if ((!inEditor && workspace.isHeadersSessionOutdated())
                 || workspace.isHeaderSessionOutdated(this.state.header)) {
                 pxt.debug('workspace: changed, reloading...')
-                let id = this.state.header ? this.state.header.id : '';
                 workspace.syncAsync()
-                    .done(() => !this.state.home && id ? this.loadHeaderAsync(workspace.getHeader(id), this.state.editorState) : Promise.resolve());
+                    .done(() => inEditor ? this.loadHeaderAsync(workspace.getHeader(hdrId), this.state.editorState) : Promise.resolve());
                 // device scanning restarts in loadheader
             } else if (this.state.resumeOnVisibility) {
                 this.setState({ resumeOnVisibility: false });
@@ -4697,11 +4698,7 @@ document.addEventListener("DOMContentLoaded", () => {
         auth.loginCallback(query);
     }
 
-    // Disable auth in skillmap until it is properly supported.
-    // See https://github.com/microsoft/pxt-arcade/issues/3138
-    const disableAuth = query["skillsMap"] == "1";
-
-    auth.init(disableAuth);
+    auth.init();
     cloud.init(); // depends on auth.init() and workspace.ts's top level
     cloudsync.loginCheck()
     parseLocalToken();
@@ -4740,6 +4737,9 @@ document.addEventListener("DOMContentLoaded", () => {
     else if (pxt.BrowserUtils.isIpcRenderer()) workspace.setupWorkspace("idb");
     else if (pxt.BrowserUtils.isPxtElectron()) workspace.setupWorkspace("fs");
     else workspace.setupWorkspace("browser");
+    // disable auth in iframe scenarios
+    if (workspace.getWorkspaceType() === "iframe")
+        auth.enableAuth(false)
     Promise.resolve()
         .then(async () => {
             const href = window.location.href;

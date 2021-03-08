@@ -35,6 +35,10 @@ let headerQ = new U.PromiseQueue();
 let impl: WorkspaceProvider;
 let implType: string;
 
+export function getWorkspaceType(): string {
+    return implType
+}
+
 function lookup(id: string) {
     return allScripts.find(x => x.header.id == id || x.header.path == id);
 }
@@ -459,12 +463,6 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
             version: null
         }
         allScripts.push(e)
-    } else {
-        // persist header changes to our local cache, but keep the old
-        // reference around because (unfortunately) other layers (e.g. package.ts)
-        // assume the reference is stable per id.
-        Object.assign(e.header, h)
-        h = e.header;
     }
 
     const hasUserFileChanges = async () => {
@@ -512,6 +510,13 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
     if (!fromCloudSync)
         h.recentUse = U.nowSeconds()
 
+    if (!newSave) {
+        // persist header changes to our local cache, but keep the old
+        // reference around because (unfortunately) other layers (e.g. package.ts)
+        // assume the reference is stable per id.
+        Object.assign(e.header, h)
+        h = e.header;
+    }
     if (text)
         e.text = text
     if (text || h.isDeleted) {
