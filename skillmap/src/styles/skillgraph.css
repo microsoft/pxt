@@ -27,6 +27,11 @@
     z-index: var(--graph-backround-zindex);
 }
 
+.skill-graph-background img {
+    max-width: 80%;
+    max-height: 80%;
+}
+
 /* TEMP */
 .background-img {
     background-color: var(--primary-color);

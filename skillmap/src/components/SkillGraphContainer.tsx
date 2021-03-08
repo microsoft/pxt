@@ -8,11 +8,12 @@ import '../styles/skillgraph.css'
 
 interface SkillGraphContainerProps {
     maps: SkillMap[];
+    backgroundImageUrl: string;
 }
 
 export class SkillGraphContainer extends React.Component<SkillGraphContainerProps> {
     render() {
-        const { maps } = this.props;
+        const { maps, backgroundImageUrl } = this.props;
 
         return <div className="skill-graph-wrapper">
             <div className={`skill-graph-content`}>
@@ -21,8 +22,10 @@ export class SkillGraphContainer extends React.Component<SkillGraphContainerProp
                     })}
             </div>
             <div className="skill-graph-background">
-                {/* TEMP: this div will be replaced by the background image url from markdown */}
-                <div className="background-img"></div>
+                {backgroundImageUrl ?
+                    <img src={backgroundImageUrl} alt={lf("Background Image")}/>
+                    : <div className="background-img"></div>
+                }
             </div>
         </div>
     }
