@@ -1029,6 +1029,8 @@ ${linkString}
     let apiCache: pxt.Map<pxtc.ApisInfo>;
 
     export function decompileSnippetAsync(code: string, options?: blocks.BlocksRenderOptions): Promise<DecompileResult> {
+        const { assets, forceCompilation, snippetMode, generateSourceMap } = options || {};
+
         // code may be undefined or empty!!!
         const packageid = options && options.packageId ? "pub:" + options.packageId :
             options && options.package ? "docs:" + options.package
@@ -1041,18 +1043,18 @@ ${linkString}
                     opts.fileSystem["main.ts"] = code;
                 opts.ast = true
 
-                if (options.assets) {
-                    for (const key of Object.keys(options.assets)) {
+                if (assets) {
+                    for (const key of Object.keys(assets)) {
                         if (opts.sourceFiles.indexOf(key) < 0) {
                             opts.sourceFiles.push(key);
                         }
-                        opts.fileSystem[key] = options.assets[key];
+                        opts.fileSystem[key] = assets[key];
                     }
                 }
 
                 let compileJS: pxtc.CompileResult = undefined;
                 let program: ts.Program;
-                if (options && options.forceCompilation) {
+                if (forceCompilation) {
                     compileJS = pxtc.compile(opts);
                     program = compileJS && compileJS.ast;
                 } else {
@@ -1072,8 +1074,8 @@ ${linkString}
                     .then(() => {
                         let blocksInfo = pxtc.getBlocksInfo(apis);
                         pxt.blocks.initializeAndInject(blocksInfo);
-                        const tilemapJres = options.assets?.[pxt.TILEMAP_JRES];
-                        const assetsJres = options.assets?.[pxt.IMAGES_JRES];
+                        const tilemapJres = assets?.[pxt.TILEMAP_JRES];
+                        const assetsJres = assets?.[pxt.IMAGES_JRES];
                         if (tilemapJres || assetsJres) {
                             tilemapProject = new TilemapProject();
                             tilemapProject.loadPackage(mainPkg);
@@ -1086,8 +1088,8 @@ ${linkString}
                             blocksInfo,
                             program.getSourceFile("main.ts"),
                             {
-                                snippetMode: options && options.snippetMode,
-                                generateSourceMap: options && options.generateSourceMap
+                                snippetMode,
+                                generateSourceMap
                             });
                         if (bresp.diagnostics && bresp.diagnostics.length > 0)
                             bresp.diagnostics.forEach(diag => console.error(diag.messageText));
@@ -1131,6 +1133,8 @@ ${linkString}
     }
 
     export function compileBlocksAsync(code: string, options?: blocks.BlocksRenderOptions): Promise<DecompileResult> {
+        const { assets } = options || {};
+
         const packageid = options && options.packageId ? "pub:" + options.packageId :
             options && options.package ? "docs:" + options.package
                 : null;
@@ -1138,12 +1142,12 @@ ${linkString}
             .then(() => getCompileOptionsAsync(appTarget.compile ? appTarget.compile.hasHex : false))
             .then(opts => {
                 opts.ast = true
-                if (options.assets) {
-                    for (const key of Object.keys(options.assets)) {
+                if (assets) {
+                    for (const key of Object.keys(assets)) {
                         if (opts.sourceFiles.indexOf(key) < 0) {
                             opts.sourceFiles.push(key);
                         }
-                        opts.fileSystem[key] = options.assets[key];
+                        opts.fileSystem[key] = assets[key];
                     }
                 }
                 const resp = pxtc.compile(opts)
@@ -1153,8 +1157,8 @@ ${linkString}
                         const blocksInfo = pxtc.getBlocksInfo(apis);
                         pxt.blocks.initializeAndInject(blocksInfo);
 
-                        const tilemapJres = options.assets?.[pxt.TILEMAP_JRES];
-                        const assetsJres = options.assets?.[pxt.IMAGES_JRES];
+                        const tilemapJres = assets?.[pxt.TILEMAP_JRES];
+                        const assetsJres = assets?.[pxt.IMAGES_JRES];
                         if (tilemapJres || assetsJres) {
                             tilemapProject = new TilemapProject();
                             tilemapProject.loadPackage(mainPkg);
