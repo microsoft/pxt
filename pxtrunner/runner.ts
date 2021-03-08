@@ -566,22 +566,22 @@ namespace pxt.runner {
 
             const doWork = async () => {
                 await pxt.BrowserUtils.loadBlocklyAsync();
-                const result = isXml 
-                    ? await pxt.runner.compileBlocksAsync(msg.code, options) 
+                const result = isXml
+                    ? await pxt.runner.compileBlocksAsync(msg.code, options)
                     : await runner.decompileSnippetAsync(msg.code, msg.options);
                 const blocksSvg = result.blocksSvg as SVGSVGElement;
-                    const width = blocksSvg.viewBox.baseVal.width;
-                    const height = blocksSvg.viewBox.baseVal.height;
-                const res = blocksSvg 
-                    ? await pxt.blocks.layout.blocklyToSvgAsync(blocksSvg, 0, 0, width, height) 
+                const width = blocksSvg.viewBox.baseVal.width;
+                const height = blocksSvg.viewBox.baseVal.height;
+                const res = blocksSvg
+                    ? await pxt.blocks.layout.blocklyToSvgAsync(blocksSvg, 0, 0, width, height)
                     : undefined;
                 // try to render to png
                 let png: string;
                 try {
-                    png = res 
-                    ? await pxt.BrowserUtils.encodeToPngAsync(res.xml, { width, height })
-                    : undefined;
-                } catch(e) {
+                    png = res
+                        ? await pxt.BrowserUtils.encodeToPngAsync(res.xml, { width, height })
+                        : undefined;
+                } catch (e) {
                     console.warn(e);
                 }
                 window.parent.postMessage(<pxsim.RenderBlocksResponseMessage>{
