@@ -81,6 +81,8 @@ code {
     color: var(--inverted-text-color);
     flex-grow: 0;
     flex-shrink: 0;
+
+    z-index: var(--above-frame-zindex);
 }
 
 .header-left, .header-right {
@@ -216,4 +218,24 @@ code {
 /** mscc cookie banner. Can be removed once the banner is out of the checked in pxtweb in doccdn */
 #msccBanner {
     display: none;
+}
+
+
+/*******************************/
+/*****     TABLET VIEW     *****/
+/*******************************/
+
+@media only screen and (max-width: 991px) {
+    .skill-map-container {
+        flex-direction: column;
+    }
+
+    .tablet-spacer {
+        flex-grow: 1;
+    }
+
+    .usabilla_live_button_container {
+        top: 10rem !important;
+        bottom: unset !important;
+    }
 }

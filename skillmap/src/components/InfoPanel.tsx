@@ -16,6 +16,7 @@ import '../styles/infopanel.css'
 interface InfoPanelProps {
     mapId: string;
     title: string;
+    subtitle?: string;
     description: string;
     imageUrl?: string;
     details?: string[];
@@ -47,7 +48,7 @@ export class InfoPanelImpl extends React.Component<InfoPanelProps> {
     }
 
     render() {
-        const  { mapId, title, description, imageUrl, details, node, status  } = this.props;
+        const  { mapId, title, subtitle, description, imageUrl, details, node, status  } = this.props;
         const statusLabel = this.getStatusLabel(status);
         const isActivity = node && !isRewardNode(node);
         const tags = isActivity && (node as MapActivity).tags || undefined;
@@ -57,23 +58,27 @@ export class InfoPanelImpl extends React.Component<InfoPanelProps> {
                 ? <img src={imageUrl} alt={lf("Preview of activity content")} />
                 : <i className={`icon image`} />}
             </div>
-            <div className="info-panel-title">{title}</div>
-            {statusLabel && <div className="info-panel-label">
-                <i className={`ui icon ${this.getStatusIcon(status)}`} />
-                <span>{statusLabel}</span>
-            </div>}
-            <div className="info-panel-description">{description}</div>
-            {tags && tags.length > 0 && <div className="info-panel-tags">
-                {tags.map((el, i) => <div key={i}>{el}</div>)}
-            </div>}
-            <div className="info-panel-detail">
-                {details?.map((el, i) => <div key={`detail_${i}`}>{el}</div>)}
+            <div className="info-panel-content">
+                {subtitle && <div className="info-panel-subtitle">{subtitle}</div>}
+                <div className="info-panel-title">{title}</div>
+                {statusLabel && <div className="info-panel-label">
+                    <i className={`ui icon ${this.getStatusIcon(status)}`} />
+                    <span>{statusLabel}</span>
+                </div>}
+                <div className="info-panel-description">{description}</div>
+                {tags && tags.length > 0 && <div className="info-panel-tags">
+                    {tags.map((el, i) => <div key={i}>{el}</div>)}
+                </div>}
+                <div className="info-panel-detail">
+                    {details?.map((el, i) => <div key={`detail_${i}`}>{el}</div>)}
+                </div>
+                <div className="tablet-spacer" />
+                {node
+                    ? (isActivity
+                        ? <ActivityActions mapId={mapId} activityId={node.activityId} status={status} />
+                        : <RewardActions mapId={mapId} activityId={node.activityId} status={status} type={(node as MapReward).type} />)
+                    : <MapActions />}
             </div>
-            {node
-                ? (isActivity
-                    ? <ActivityActions mapId={mapId} activityId={node.activityId} status={status} />
-                    : <RewardActions mapId={mapId} activityId={node.activityId} status={status} type={(node as MapReward).type} />)
-                : <MapActions />}
         </div>
     }
 }
@@ -85,6 +90,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
 
     const details: string[] = [];
     let status: ActivityStatus | undefined;
+    let subtitle: string | undefined;
 
     if (maps) {
         if (selectedItem?.activityId) {
@@ -95,6 +101,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
                 details.push(maxSteps ? `${currentStep}/${maxSteps} ${lf("Steps")}` : lf("Not Started"));
                 details.push(isActivity ? (node as MapActivity).type : "");
             }
+            if (map) subtitle = map.displayName
         } else if (user) {
             // Count of completed activities (not including reward nodes)
             const mapIds = Object.keys(maps);
@@ -117,6 +124,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
     return {
         mapId: selectedItem?.mapId,
         title: node?.displayName || state.title,
+        subtitle,
         description: isActivity ? (node as MapActivity).description : state.description,
         imageUrl: node?.imageUrl,
         node,

@@ -43,7 +43,7 @@ export class RewardActionsImpl extends React.Component<RewardActionsProps> {
         const { status } = this.props;
         if (status === "locked") return <div />
 
-        return <div className="activity-actions">
+        return <div className="actions">
             <div className="action-button" role="button" onClick={this.handleActionButtonClick}>
                 {this.getRewardActionText()}
             </div>
