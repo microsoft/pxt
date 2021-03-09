@@ -89,9 +89,7 @@ class PaletteImpl extends React.Component<PaletteProps,{}> {
 
 function colorTooltip(index: number, color: string) {
     const namedColor = index === 0 ? lf("transparency") : hexToNamedColor(color);
-    return namedColor ?
-                    lf("Color {0} ({1})", index, namedColor)
-                    : lf("Color {0}", index);
+    return namedColor ? lf("Color {0} ({1})", index, namedColor) : lf("Color {0}", index);
 }
 
 function hexToNamedColor(color: string) {
