@@ -34,9 +34,9 @@ interface MapFinishedPrerequisite {
     mapId: string;
 }
 
-type MapNodeKind = "activity" | "reward" | "completion";
+type MapNodeKind = "activity" | "reward" | "completion" | "layout";
 
-type MapNode = MapActivity | MapReward | MapCompletionNode
+type MapNode = MapActivity | MapReward | MapCompletionNode | MapLayoutNode
 
 interface BaseNode {
     kind: MapNodeKind;
@@ -74,6 +74,10 @@ interface MapReward extends BaseNode {
 
 interface MapCompletionNode extends MapReward {
     kind: "completion";
+}
+
+interface MapLayoutNode extends BaseNode {
+    kind: "layout";
 }
 
 type CompletedTags = {[index: string]: number}
