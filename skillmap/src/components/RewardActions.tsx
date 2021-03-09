@@ -41,7 +41,6 @@ export class RewardActionsImpl extends React.Component<RewardActionsProps> {
 
     render() {
         const { status } = this.props;
-
         if (status === "locked") return <div />
 
         return <div className="activity-actions">

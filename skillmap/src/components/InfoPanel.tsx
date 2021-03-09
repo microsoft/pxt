@@ -88,10 +88,10 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
 
     if (maps) {
         if (selectedItem?.activityId) {
+            const map = maps[selectedItem.mapId];
+            const { status: activityStatus, currentStep, maxSteps } = getActivityStatus(state.user, state.pageSourceUrl, map, selectedItem.activityId);
+            status = activityStatus;
             if (isActivity) {
-                const map = maps[selectedItem.mapId];
-                const { status: activityStatus, currentStep, maxSteps } = getActivityStatus(state.user, state.pageSourceUrl, map, selectedItem.activityId);
-                status = activityStatus;
                 details.push(maxSteps ? `${currentStep}/${maxSteps} ${lf("Steps")}` : lf("Not Started"));
                 details.push(isActivity ? (node as MapActivity).type : "");
             }

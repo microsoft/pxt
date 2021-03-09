@@ -76,10 +76,11 @@ class SkillGraphImpl extends React.Component<SkillGraphProps> {
     }
 
     protected onItemSelect = (activityId: string, kind: MapNodeKind) => {
-        const { map, completionState, selectedActivityId,
+        const { user, pageSourceUrl, map, completionState, selectedActivityId,
             dispatchChangeSelectedItem, dispatchShowCompletionModal } = this.props;
 
-        if (kind === "completion" && completionState === "completed") {
+        const { status } = getActivityStatus(user, pageSourceUrl, map, activityId);
+        if (kind === "completion" && status === "completed") {
             dispatchChangeSelectedItem(map.mapId, activityId);
             dispatchShowCompletionModal(map.mapId, activityId)
         } else {
