@@ -72,7 +72,7 @@ export function orthogonalGraph(root: MapNode): GraphNode[] {
         }
     }
 
-    const nodes = dfsArray(graphNode);
+    const nodes = dfsArray(graphNode).filter(node => node.kind !== "layout");
 
     // Get map of node offsets at each level of the graph
     const offsetMap: { [key: number]: number[] } = {};
@@ -171,7 +171,7 @@ export function treeGraph(root: BaseNode): GraphNode[] {
         }
     }
 
-    const nodes = bfsArray(graphNode);
+    const nodes = bfsArray(graphNode).filter(node => node.kind !== "layout");
     nodes.forEach(n => {
         if (n.parents) {
             n.edges = [];

@@ -206,10 +206,21 @@ function inflateMapNode(section: MarkdownSection): MapNode {
 
     if (section.attributes.kind === "reward" || section.attributes.kind === "completion") {
         return inflateMapReward(section, base as Partial<MapReward>);
-    }
-    else {
+    } else if (section.attributes.kind === "layout") {
+        return inflateMapLayout(section, base as Partial<MapLayoutNode>);
+    } else {
         return inflateActivity(section, base as Partial<MapActivity>);
     }
+}
+
+function inflateMapLayout(section: MarkdownSection, base: Partial<MapLayoutNode>): MapLayoutNode {
+    const result: Partial<MapLayoutNode> = {
+        ...base,
+        kind: "layout",
+        next: []
+    };
+
+    return result as MapLayoutNode;
 }
 
 function inflateMapReward(section: MarkdownSection, base: Partial<MapReward>): MapReward {
