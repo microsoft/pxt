@@ -108,18 +108,11 @@ export function lookupActivityProgress(user: UserState, pageSource: string, mapI
 
 export function lookupPreviousActivities(map: SkillMap, activityId: string) {
     return Object.keys(map.activities)
+        .filter(key => !isRewardNode(map.activities[key]))
         .filter(key => {
-            const activity = map.activities[key];
-            let nextIds: string[] = [];
-            // Replace reward node IDs with the activities following the reward node
-            activity.next.forEach(node => {
-                if (isRewardNode(node)) {
-                    nextIds = nextIds.concat(node.next.map(nextNode => nextNode.activityId))
-                } else {
-                    nextIds.push(node.activityId)
-                }
-            });
-            return nextIds.some(id => id === activityId)
+            return flattenRewardNodeChildren(map.activities[key])
+                .map(el => el.activityId)
+                .some(id => id === activityId);
         }).map(key => map.activities[key])
 }
 
@@ -127,6 +120,16 @@ export function lookupPreviousActivityStates(user: UserState, pageSource: string
     const prevActivities = lookupPreviousActivities(map, activityId);
     return prevActivities.map(activity => lookupActivityProgress(user, pageSource, map.mapId, activity.activityId))
         .filter(a => !!a) as ActivityState[];
+}
+
+export function flattenRewardNodeChildren(node: MapNode): MapNode[] {
+    if (!isRewardNode(node)) {
+        return node.next;
+    } else {
+        let next: MapNode[] = [];
+        node.next.forEach(el => next = next.concat(flattenRewardNodeChildren(el)))
+        return next;
+    }
 }
 
 export function isRewardNode(node: MapNode) {

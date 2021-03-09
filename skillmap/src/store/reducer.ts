@@ -147,11 +147,12 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
 
             // When a node is completed, we mark any following reward nodes as complete also
             const finishedNodes = action.finished ? getFinishedNodes(currentMap, currentActivityId) : [];
-            const selectedItem = finishedNodes.find(el => isRewardNode(el))
+            const selectedItem = finishedNodes.find(el => isRewardNode(el));
+            const existing = selectedItem && state.user.mapProgress[state.pageSourceUrl]?.[currentMap.mapId]?.activityState[selectedItem.activityId];
 
             return {
                 ...state,
-                selectedItem: selectedItem ? {
+                selectedItem: selectedItem && !existing ? {
                     mapId: currentMap.mapId,
                     activityId: selectedItem.activityId
                 } : state.selectedItem,

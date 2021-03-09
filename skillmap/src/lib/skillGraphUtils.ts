@@ -15,7 +15,7 @@ interface GraphNode extends BaseNode, GraphCoord {
 }
 
 export function orthogonalGraph(root: MapNode): GraphNode[] {
-    const graphNode = cloneNode(root);
+    const graphNode = cloneGraph(root);
     let activities: GraphNode[] = [graphNode];
 
     // Compute two coordiantes (depth, offset) for each node. The placement heuristic
@@ -51,7 +51,7 @@ export function orthogonalGraph(root: MapNode): GraphNode[] {
 
             // Assign the current node as the parent of its children
             const next = current.next.map((el: BaseNode) => {
-                let node = el as any;
+                let node = el as GraphNode;
                 if (!node.parents) {
                     node.parents = [current!];
                 } else {
@@ -132,7 +132,7 @@ export function orthogonalGraph(root: MapNode): GraphNode[] {
 
 // Simple tree-like layout, does not handle loops very well
 export function treeGraph(root: BaseNode): GraphNode[] {
-    let graphNode = cloneNode(root);
+    let graphNode = cloneGraph(root);
     let activities: GraphNode[] = [graphNode];
 
     // Pass to set the width of each node
@@ -227,13 +227,13 @@ function dfsArray(root: GraphNode): GraphNode[] {
     return nodes;
 }
 
-function cloneNode(root: BaseNode): GraphNode {
+function cloneGraph(root: BaseNode): GraphNode {
     const nodes = bfsArray(root as GraphNode);
     const clones: { [key: string]: GraphNode} = {};
 
     // Clone all nodes, assign children to cloned nodes
     nodes.forEach(n => clones[n.activityId] = Object.assign({}, n));
-    Object.keys(clones).forEach(cloneId => clones[cloneId].next = clones[cloneId].nextIds.map(id => clones[id]));
+    Object.keys(clones).forEach(cloneId => clones[cloneId].next = clones[cloneId].nextIds.map(id => clones[id] as any));
 
     return clones[root.activityId];
 }
