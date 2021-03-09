@@ -215,8 +215,18 @@ function inflateMapNode(section: MarkdownSection): MapNode {
 function inflateMapReward(section: MarkdownSection, base: Partial<MapReward>): MapReward {
     const result: Partial<MapReward> = {
         ...base,
-        kind: (section.attributes.kind || "reward") as any
+        kind: (section.attributes.kind || "reward") as any,
+        url: section.attributes.url
     };
+
+    if (section.attributes["type"]) {
+        const type = section.attributes["type"].toLowerCase();
+        switch (type) {
+            case "certificate":
+                result.type = type;
+                break;
+        }
+    }
 
     return result as MapReward;
 }
@@ -301,7 +311,7 @@ function inflateMetadata(section: MarkdownSection): PageMetadata {
         infoUrl: section.attributes["infourl"],
         backgroundImageUrl: section.attributes["backgroundurl"],
         theme: {
-            backgroundColor: tertiary || "var(--tertiary-color)",
+            backgroundColor: tertiary || "var(--body-background-color)",
             pathColor: primary || "#BFBFBF",
             strokeColor: "#000000",
             rewardNodeColor: tertiary || "var(--tertiary-color)",

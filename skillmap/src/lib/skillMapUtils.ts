@@ -108,15 +108,32 @@ export function lookupActivityProgress(user: UserState, pageSource: string, mapI
 
 export function lookupPreviousActivities(map: SkillMap, activityId: string) {
     return Object.keys(map.activities)
-        .filter(key =>
-            map.activities[key].next.some(activity => activity.activityId === activityId)
-        ).map(key => map.activities[key])
+        .filter(key => !isRewardNode(map.activities[key]))
+        .filter(key => {
+            return flattenRewardNodeChildren(map.activities[key])
+                .map(el => el.activityId)
+                .some(id => id === activityId);
+        }).map(key => map.activities[key])
 }
 
 export function lookupPreviousActivityStates(user: UserState, pageSource: string, map: SkillMap, activityId: string): ActivityState[] {
     const prevActivities = lookupPreviousActivities(map, activityId);
     return prevActivities.map(activity => lookupActivityProgress(user, pageSource, map.mapId, activity.activityId))
         .filter(a => !!a) as ActivityState[];
+}
+
+export function flattenRewardNodeChildren(node: MapNode): MapNode[] {
+    if (!isRewardNode(node)) {
+        return node.next;
+    } else {
+        let next: MapNode[] = [];
+        node.next.forEach(el => next = next.concat(flattenRewardNodeChildren(el)))
+        return next;
+    }
+}
+
+export function isRewardNode(node: MapNode) {
+    return node.kind === "reward" || node.kind === "completion";
 }
 
 export function applyUserUpgrades(user: UserState, currentVersion: string, pageSource: string, maps: { [key: string]: SkillMap }) {

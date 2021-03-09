@@ -8,15 +8,19 @@ interface GraphCoord {
     offset: number; // The offset of the node within the layer
 }
 
-interface GraphNode extends MapActivity, GraphCoord {
+interface GraphNode extends BaseNode, GraphCoord {
     width?: number; // The maximum subtree width from this node
     edges?: GraphCoord[][]; // Each edge is an array of (depth, offset) pairs
     parents?: GraphNode[];
 }
 
 export function orthogonalGraph(root: MapNode): GraphNode[] {
-    let activities: GraphNode[] = [root as GraphNode];
+    const graphNode = cloneGraph(root);
+    let activities: GraphNode[] = [graphNode];
 
+    // Compute two coordiantes (depth, offset) for each node. The placement heuristic
+    // here is roughly based off of "The DFS-heuristic for orthogonal graph drawing"
+    // found at: https://core.ac.uk/download/pdf/82771879.pdf
     const prevChildPosition: { [key: string]: GraphCoord } = {};
     const visited: { [key: string]: boolean } = {};
     let totalOffset = 0;
@@ -46,7 +50,7 @@ export function orthogonalGraph(root: MapNode): GraphNode[] {
             }
 
             // Assign the current node as the parent of its children
-            const next = current.next.map((el: MapNode) => {
+            const next = current.next.map((el: BaseNode) => {
                 let node = el as GraphNode;
                 if (!node.parents) {
                     node.parents = [current!];
@@ -68,8 +72,7 @@ export function orthogonalGraph(root: MapNode): GraphNode[] {
         }
     }
 
-
-    const nodes = dfsArray(root as GraphNode);
+    const nodes = dfsArray(graphNode);
 
     // Get map of node offsets at each level of the graph
     const offsetMap: { [key: number]: number[] } = {};
@@ -128,11 +131,12 @@ export function orthogonalGraph(root: MapNode): GraphNode[] {
 }
 
 // Simple tree-like layout, does not handle loops very well
-export function treeGraph(root: MapActivity): GraphNode[] {
-    let activities: GraphNode[] = [root as GraphNode];
+export function treeGraph(root: BaseNode): GraphNode[] {
+    let graphNode = cloneGraph(root);
+    let activities: GraphNode[] = [graphNode];
 
     // Pass to set the width of each node
-    setWidths(root as GraphNode);
+    setWidths(graphNode);
 
     // We keep a map of how deep the graph is at this depth
     const offsetMap: { [key: number]: number } = {};
@@ -153,7 +157,7 @@ export function treeGraph(root: MapActivity): GraphNode[] {
             }
 
             // Assign this node as the parent of all children
-            const next = current.next.map((el: MapNode) => {
+            const next = current.next.map((el: BaseNode) => {
                 let node = el as GraphNode;
                 if (!node.parents) {
                     node.parents = [current!];
@@ -167,7 +171,7 @@ export function treeGraph(root: MapActivity): GraphNode[] {
         }
     }
 
-    const nodes = bfsArray(root as GraphNode);
+    const nodes = bfsArray(graphNode);
     nodes.forEach(n => {
         if (n.parents) {
             n.edges = [];
@@ -221,4 +225,15 @@ function dfsArray(root: GraphNode): GraphNode[] {
     }
 
     return nodes;
+}
+
+function cloneGraph(root: BaseNode): GraphNode {
+    const nodes = bfsArray(root as GraphNode);
+    const clones: { [key: string]: GraphNode} = {};
+
+    // Clone all nodes, assign children to cloned nodes
+    nodes.forEach(n => clones[n.activityId] = Object.assign({}, n));
+    Object.keys(clones).forEach(cloneId => clones[cloneId].next = clones[cloneId].nextIds.map(id => clones[id] as any));
+
+    return clones[root.activityId];
 }

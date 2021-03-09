@@ -10,18 +10,13 @@ import { tickEvent, postAbuseReportAsync } from "../lib/browserUtils";
 import { Modal, ModalAction } from './Modal';
 import { carryoverProjectCode } from "../lib/codeCarryover";
 
-type CompletionModalType = "map" | "activity";
-
 interface AppModalProps {
     type: ModalType;
-    completionType?: CompletionModalType;
     skillMap?: SkillMap;
     userState?: UserState;
     mapId: string;
-    activity?: MapActivity;
-    nextActivityId?: string;
+    activity?: MapNode;
     pageSourceUrl?: string;
-    displayName?: string;
     actions?: ModalAction[];
     dispatchHideModal: () => void;
     dispatchRestartActivity: (mapId: string, activityId: string) => void;
@@ -32,11 +27,11 @@ interface AppModalProps {
 
 export class AppModalImpl extends React.Component<AppModalProps> {
     render() {
-        const  { activity, type, completionType } = this.props;
+        const  { activity, type } = this.props;
 
         switch (type) {
             case "completion":
-                if (!activity && completionType !== "map") return <div />
+                if (!activity) return <div />
                 return this.renderCompletionModal();
             case "restart-warning":
                 if (!activity) return <div />
@@ -56,19 +51,37 @@ export class AppModalImpl extends React.Component<AppModalProps> {
         this.props.dispatchHideModal();
     }
 
-    renderCompletionModal() {
-        const  { type, displayName, completionType, actions } = this.props;
-        if (!type) return <div />
+    protected getRewardText(type: MapRewardType) {
+        switch (type) {
+            case "certificate":
+                return lf("Certificate");
+            default:
+                return lf("Reward");
+        }
+    }
 
-        const completionModalTitle = completionType === "activity" ? lf("Activity Complete!") : lf("Path Complete!");
-        const completionModalText = lf("Good work! You've completed {0}. Collect your certificate and keep going!", "{0}");
+    renderCompletionModal() {
+        const  { mapId, skillMap, type, activity } = this.props;
+        if (!type || !skillMap) return <div />
+
+        const reward = activity as MapReward;
+
+        const completionModalTitle = lf("You Did It!");
+        const completionModalText = lf("Congratulations on completing {0}. Take some time to explore any activities you missed, or reset your progress to try again. But first, be sure to claim your reward using the button below.", "{0}");
         const completionModalTextSegments = completionModalText.split("{0}");
 
         const density = 100;
 
+        const actions = [
+            { label: this.getRewardText(reward.type),  onClick: () => {
+                tickEvent("skillmap.certificate", { path: mapId });
+                window.open(reward.url || skillMap.completionUrl);
+            } }
+        ]
+
         return <div className="confetti-container">
-            <Modal title={completionModalTitle} actions={actions} onClose={this.handleOnClose}>
-                {completionModalTextSegments[0]}{<strong>{displayName}</strong>}{completionModalTextSegments[1]}
+            <Modal title={completionModalTitle} actions={actions} className="completion" onClose={this.handleOnClose}>
+                {completionModalTextSegments[0]}{<strong>{skillMap.displayName}</strong>}{completionModalTextSegments[1]}
             </Modal>
             {Array(density).fill(0).map((el, i) => {
                 const style = {
@@ -174,43 +187,16 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
     if (!state) return {};
     const { pageSourceUrl } = state;
     const { currentMapId, currentActivityId, type } = state.modal || {};
-    let nextActivityId: string | undefined;
-    let displayName: string | undefined;
-    let completionType: CompletionModalType | undefined;
-    let actions: ModalAction[] = [];
 
-    if (currentMapId && type !== "restart-warning") {
-        const map = state.maps[currentMapId];
-        if (currentActivityId) {
-            const activity = map.activities[currentActivityId];
-            completionType = "activity";
-            displayName = activity.displayName;
-            nextActivityId = activity.next?.[0]?.activityId;
-
-            actions.push({ label: lf("NEXT"), onClick: () => {
-                tickEvent("skillmap.activity.next", { path: currentMapId, activity: currentActivityId });
-                dispatchHideModal();
-                dispatchOpenActivity(currentMapId, nextActivityId || "");
-             } });
-        } else {
-            completionType = "map";
-            displayName = map.displayName;
-
-            actions.push({ label: lf("CERTIFICATE"), onClick: () => {
-                tickEvent("skillmap.certificate", { path: currentMapId });
-                window.open(map.completionUrl)
-            }});
-        }
-    }
+    // Set the map as currently open map (editorView), or mapId passed into modal
+    const currentMap = state.editorView ?
+        state.maps[state.editorView.currentMapId] :
+        (currentMapId && state.maps[currentMapId]);
 
     return {
         type,
-        completionType,
-        displayName,
-        nextActivityId,
         pageSourceUrl,
-        actions,
-        skillMap: state.editorView ? state.maps[state.editorView.currentMapId] : undefined,
+        skillMap: currentMap,
         userState: state.user,
 
         mapId: currentMapId,

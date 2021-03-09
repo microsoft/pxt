@@ -15,12 +15,12 @@ interface GraphNodeProps {
     status: ActivityStatus;
     theme: SkillGraphTheme;
     selected?: boolean;
-    onItemSelect?: (id: string) => void;
+    onItemSelect?: (id: string, kind: MapNodeKind) => void;
 }
 
 export class GraphNode extends React.Component<GraphNodeProps> {
     protected handleClick = () => {
-        if (this.props.onItemSelect) this.props.onItemSelect(this.props.activityId);
+        if (this.props.onItemSelect) this.props.onItemSelect(this.props.activityId, this.props.kind);
     }
 
     protected getIcon(status: ActivityStatus, kind: MapNodeKind): string {
