@@ -6,7 +6,7 @@ import { dispatchChangeSelectedItem  } from '../actions/dispatch';
 import { GraphNode } from './GraphNode';
 import { GraphPath } from "./GraphPath";
 
-import { isActivityUnlocked } from '../lib/skillMapUtils';
+import { getActivityStatus, isActivityUnlocked } from '../lib/skillMapUtils';
 import { SvgCoord, orthogonalGraph } from '../lib/skillGraphUtils';
 
 interface SvgGraphItem {
@@ -116,7 +116,7 @@ class SkillGraphImpl extends React.Component<SkillGraphProps> {
                     width={5 * UNIT}
                     selected={el.activity.activityId === selectedActivityId}
                     onItemSelect={this.onItemSelect}
-                    status={isActivityUnlocked(user, pageSourceUrl, map, el.activity.activityId) ? "notstarted" : "locked"} /> // TODO shakao needs "completed/inprogress"
+                    status={getActivityStatus(user, pageSourceUrl, map, el.activity.activityId).status} />
             })}
         </svg>
     }

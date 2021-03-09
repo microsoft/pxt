@@ -1,4 +1,9 @@
 export type ActivityStatus = "locked" | "notstarted" | "inprogress" | "completed" | "restarted";
+export interface ActivityStatusInfo {
+    status: ActivityStatus;
+    currentStep?: number;
+    maxSteps?: number;
+}
 
 export function isMapCompleted(user: UserState, pageSource: string, map: SkillMap, skipActivity?: string) {
     if (Object.keys(map?.activities).some(k => !lookupMapProgress(user, pageSource, map.mapId)?.activityState[k]?.isCompleted && k !== skipActivity)) return false;
@@ -23,6 +28,36 @@ export function isMapUnlocked(user: UserState, map: SkillMap, pageSource: string
     }
 
     return true;
+}
+
+export function getActivityStatus(user: UserState, pageSource: string, map: SkillMap, activityId: string): ActivityStatusInfo {
+    const isUnlocked = user && map && isActivityUnlocked(user, pageSource, map, activityId);
+
+    let currentStep: number | undefined;
+    let maxSteps: number | undefined;
+    let status: ActivityStatus = isUnlocked ? "notstarted" : "locked";
+    if (user) {
+        if (map && pageSource && !isMapUnlocked(user, map, pageSource)) {
+            status = "locked";
+        }
+        else {
+            const progress = lookupActivityProgress(user, pageSource, map.mapId, activityId);
+
+            if (progress) {
+                if (progress.isCompleted) {
+                    status = (progress.currentStep && progress.maxSteps && progress.currentStep < progress.maxSteps) ?
+                        "restarted" : "completed";
+                }
+                else if (progress.headerId) {
+                    status = "inprogress";
+                }
+                currentStep = progress?.currentStep;
+                maxSteps = progress?.maxSteps;
+            }
+        }
+    }
+
+    return { status, currentStep, maxSteps };
 }
 
 export function getCompletedTags(user: UserState, pageSource: string, maps: SkillMap[]) {
