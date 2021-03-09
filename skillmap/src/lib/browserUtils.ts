@@ -105,20 +105,31 @@ async function fetchSkillMapFromGithub(path: string): Promise<MarkdownFetchResul
     const gh = await pxt.github.downloadPackageAsync(`${ghid.slug}#${ghid.tag}`, config);
 
     if (gh) {
-        let fileName = ghid.fileName ||  "skillmap";
-        fileName = fileName.replace(/^\/?blob\/main\//, "")
-        fileName = fileName.replace(/^\/?blob\/master\//, "")
-        fileName = fileName.replace(/\.md$/, "")
-
+        const { identifier, fileName } = getSkillmapIdentifier(ghid);
         return {
             text: pxt.tutorial.resolveLocalizedMarkdown(ghid, gh.files, fileName),
-            identifier: ghid.fullName + "#" + fileName,
+            identifier,
             reportId,
             status
         }
     }
 
     return undefined
+}
+
+export function getSkillmapIdentifier(ghid: pxt.github.ParsedRepo) {
+    let fileName = parseGithubFilename(ghid.fileName ||  "skillmap");
+    return {
+        identifier: ghid.fullName + "#" + fileName,
+        fileName: fileName
+    }
+}
+
+function parseGithubFilename(fileName: string) {
+    fileName = fileName.replace(/^\/?blob\/main\//, "");
+    fileName = fileName.replace(/^\/?blob\/master\//, "");
+    fileName = fileName.replace(/\.md$/, "");
+    return fileName;
 }
 
 export async function postAbuseReportAsync(id: string, data: { text: string }): Promise<void> {

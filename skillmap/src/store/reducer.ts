@@ -1,7 +1,7 @@
 import * as actions from '../actions/types'
 import { guidGen } from '../lib/browserUtils';
 import { getCompletedTags, lookupActivityProgress, isMapCompleted,
-    isRewardNode, applyUserUpgrades } from '../lib/skillMapUtils';
+    isRewardNode, applyUserUpgrades, applyUserMigrations } from '../lib/skillMapUtils';
 
 export type ModalType = "restart-warning" | "completion" | "report-abuse" | "reset" | "carryover";
 export type PageSourceStatus = "approved" | "banned" | "unknown";
@@ -15,6 +15,7 @@ export interface SkillMapState {
     user: UserState;
     pageSourceUrl: string;
     pageSourceStatus: PageSourceStatus;
+    alternateSourceUrls?: string[];
     maps: { [key: string]: SkillMap };
     selectedItem?: { mapId: string, activityId: string };
 
@@ -70,16 +71,6 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
         case actions.ADD_SKILL_MAP:
             return {
                 ...state,
-                user: {
-                    ...state.user,
-                    mapProgress: {
-                        ...state.user.mapProgress,
-                        [state.pageSourceUrl] : {
-                            ...state.user.mapProgress?.[state.pageSourceUrl],
-                            [action.map.mapId]: { completionState: "incomplete", mapId: action.map.mapId, activityState: { } }
-                        }
-                    }
-                },
                 maps: {
                     ...state.maps,
                     [action.map.mapId]: action.map
@@ -89,6 +80,18 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
             return {
                 ...state,
                 maps: {}
+            };
+        case actions.CLEAR_METADATA:
+            return {
+                ...state,
+                title: initialState.title,
+                description: initialState.description,
+                infoUrl: initialState.infoUrl,
+                backgroundImageUrl: undefined,
+                alternateSourceUrls: undefined,
+                theme: {
+                    ...initialState.theme
+                }
             };
         case actions.CHANGE_SELECTED_ITEM:
             return {
@@ -116,7 +119,6 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                 }
             }
         case actions.OPEN_ACTIVITY:
-
             return {
                 ...state,
                 editorView: {
@@ -205,9 +207,27 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                 } : undefined
             };
         case actions.SET_USER:
+            const pageSourceUrl = state.pageSourceUrl;
+
+            // Apply data structure upgrades
+            let user = applyUserUpgrades(action.user, pxt.skillmap.USER_VERSION, pageSourceUrl, state.maps);
+
+            // Migrate user projects from alternate pageSourceUrls, if provided
+            if (state.alternateSourceUrls) {
+                user = applyUserMigrations(user, pageSourceUrl, state.alternateSourceUrls)
+            }
+
+            // Fill in empty objects for remaining maps
+            if (!user.mapProgress[pageSourceUrl]) user.mapProgress[pageSourceUrl] = {};
+            Object.keys(state.maps).forEach(mapId => {
+                if (!user.mapProgress[pageSourceUrl][mapId]) {
+                    user.mapProgress[pageSourceUrl][mapId] = { completionState: "incomplete", mapId, activityState: { } };
+                }
+            })
+
             return {
                 ...state,
-                user: applyUserUpgrades(action.user, pxt.skillmap.USER_VERSION, state.pageSourceUrl, state.maps)
+                user
             };
         case actions.RESET_USER:
             return {
@@ -260,6 +280,11 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                 ...state,
                 pageSourceUrl: action.url,
                 pageSourceStatus: action.status
+            }
+        case actions.SET_PAGE_ALTERNATE_URLS:
+            return {
+                ...state,
+                alternateSourceUrls: action.urls
             }
         case actions.SHOW_COMPLETION_MODAL:
             return {

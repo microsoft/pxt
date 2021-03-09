@@ -4,6 +4,7 @@ interface PageMetadata {
     infoUrl?: string;
     backgroundImageUrl?: string;
     theme?: SkillGraphTheme
+    alternateSources?: string[]; // List of alternate pageSourceUrls to import user projects from
 }
 
 interface SkillMap {
