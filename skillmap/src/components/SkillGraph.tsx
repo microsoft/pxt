@@ -58,7 +58,7 @@ class SkillGraphImpl extends React.Component<SkillGraphProps> {
             items.push({
                 activity: current,
                 position: this.getPosition(depth, offset)
-            });
+            } as any);
 
             if (current.edges) {
                 current.edges.forEach(edge => {

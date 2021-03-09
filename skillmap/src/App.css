@@ -87,6 +87,7 @@ code {
     display: flex;
     align-items: center;
     margin: 0 1rem;
+    height: 100%;
 }
 
 .header-right > div {
@@ -121,8 +122,8 @@ code {
 
 .header-button {
     color: var(--invert-active-color);
-    border: 1px solid var(--invert-active-color);
-    padding: 0.5rem;
+    height: 100%;
+    padding: 1rem;
     font-size: 1.2rem;
     text-align: center;
     cursor: pointer;
@@ -130,7 +131,11 @@ code {
     user-select: none;
 }
 
-.header-button:hover {
+.header-button span {
+    line-height: 2rem;
+}
+
+.header-button:hover, .header-settings:hover {
     background-color: var(--hover-color);
     color: var(--invert-hover-text-color);
 }
