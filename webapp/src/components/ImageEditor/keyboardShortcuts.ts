@@ -1,11 +1,15 @@
 
 import { Store } from 'react-redux';
-import { ImageEditorTool, ImageEditorStore } from './store/imageReducer';
-import { dispatchChangeZoom, dispatchUndoImageEdit, dispatchRedoImageEdit, dispatchChangeImageTool, dispatchSwapBackgroundForeground, dispatchChangeSelectedColor} from './actions/dispatch';
+import { ImageEditorTool, ImageEditorStore, TilemapState, AnimationState } from './store/imageReducer';
+import { dispatchChangeZoom, dispatchUndoImageEdit, dispatchRedoImageEdit, dispatchChangeImageTool, dispatchSwapBackgroundForeground, dispatchChangeSelectedColor, dispatchImageEdit} from './actions/dispatch';
 import { mainStore } from './store/imageStore';
+import { EditState, flipEdit, getEditState, rotateEdit } from './toolDefinitions';
 let store = mainStore;
 
+let lockRefs: number[] = [];
+
 export function addKeyListener() {
+    lockRefs = [];
     document.addEventListener("keydown", handleKeyDown);
     document.addEventListener("keydown", handleUndoRedo, true);
     document.addEventListener("keydown", overrideBlocklyShortcuts, true);
@@ -15,6 +19,26 @@ export function removeKeyListener() {
     document.removeEventListener("keydown", handleKeyDown);
     document.removeEventListener("keydown", handleUndoRedo, true);
     document.removeEventListener("keydown", overrideBlocklyShortcuts, true);
+}
+
+// Disables shortcuts and returns a ref. Enable by passing the ref to release shortcut lock
+export function obtainShortcutLock(): number {
+    let ref = 0;
+    while (!ref) ref = Math.random() * Number.MAX_SAFE_INTEGER
+    lockRefs.push(ref);
+    return ref;
+}
+
+// Enables shortcuts using the ref obtained from obtainShortcutLock
+export function releaseShortcutLock(ref: number) {
+    const index = lockRefs.indexOf(ref)
+    if (index !== -1) {
+        lockRefs.splice(index, 1);
+    }
+}
+
+export function areShortcutsEnabled() {
+    return !lockRefs.length;
 }
 
 export function setStore(newStore?: Store<ImageEditorStore>) {
@@ -41,6 +65,7 @@ function overrideBlocklyShortcuts(event: KeyboardEvent) {
 }
 
 function handleKeyDown(event: KeyboardEvent) {
+    if (!areShortcutsEnabled()) return;
     // Mostly copied from the photoshop shortcuts
     switch (event.key) {
         case "e":
@@ -73,6 +98,18 @@ function handleKeyDown(event: KeyboardEvent) {
         case "x":
             swapForegroundBackground();
             break;
+        case "H":
+            flip(false);
+            break;
+        case "V":
+            flip(true);
+            break;
+        case "[":
+            rotate(false);
+            break;
+        case "]":
+            rotate(true);
+            break;
     }
 
     const editorState = store.getState().editor;
@@ -84,6 +121,19 @@ function handleKeyDown(event: KeyboardEvent) {
         // will need to fix the magic 16 here
         if (color >= 0 && color < 16)
             setColor(color);
+    }
+}
+
+function currentEditState(): [EditState, "tilemap" | "animation" | "image"] {
+    const state = store.getState();
+
+    if (state.editor.isTilemap) {
+        const tilemapState = state.store.present as TilemapState;
+        return [getEditState(tilemapState.tilemap, true, state.editor.drawingMode), "tilemap"]
+    }
+    else {
+        const animationState = state.store.present as AnimationState;
+        return [getEditState(animationState.frames[animationState.currentFrame], false, state.editor.drawingMode), animationState.frames.length > 1 ? "animation" : "image" ]
     }
 }
 
@@ -113,4 +163,16 @@ function swapForegroundBackground() {
 
 function dispatchAction(action: any) {
     store.dispatch(action);
+}
+
+export function flip(vertical: boolean) {
+    const [ editState, type ] = currentEditState();
+    const flipped = flipEdit(editState, vertical, type === "tilemap");
+    dispatchAction(dispatchImageEdit(flipped.toImageState()));
+}
+
+export function rotate(clockwise: boolean) {
+    const [ editState, type ] = currentEditState();
+    const rotated = rotateEdit(editState, clockwise, type === "tilemap", type === "animation");
+    dispatchAction(dispatchImageEdit(rotated.toImageState()));
 }

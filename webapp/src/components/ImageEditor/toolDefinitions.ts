@@ -651,7 +651,7 @@ export class FillEdit extends Edit {
 
     protected doEditCore(state: EditState) {
         const includeActiveLayerData = state.activeLayer !== state.image;
-        const getData = (col: number, row: number) => (includeActiveLayerData ? state.activeLayer.get(col, row) << 8 : 0) + state.image.get(col, row);
+        const getData = (col: number, row: number) => (includeActiveLayerData ? (state.activeLayer.get(col, row) + 1) << 8 : 0) + state.image.get(col, row);
 
         const colorToReplace = getData(this.col, this.row);
         if (colorToReplace === this.color) {
@@ -724,6 +724,107 @@ export class MarqueeEdit extends SelectionEdit {
         }
         else if (!this.isMove) {
             state.mergeFloatingLayer();
+        }
+    }
+}
+
+export function rotateEdit(image: EditState, clockwise: boolean, isTilemap: boolean, toFloatingLayer: boolean) {
+    const hasFloatingLayer = !!image.floating?.image;
+    const source = hasFloatingLayer ? image.floating : image;
+
+    const newImage = isTilemap ? new pxt.sprite.Tilemap(source.image.height, source.image.width) :
+        new pxt.sprite.Bitmap(source.image.height, source.image.width);
+    const newOverlayLayers = source.overlayLayers ? source.overlayLayers.map(layer => new pxt.sprite.Bitmap(layer.height, layer.width)) : undefined;
+
+    for (let x = 0; x < source.image.width; x++) {
+        for (let y = 0; y < source.image.height; y++) {
+            rotatePixel(source.image, newImage, x, y);
+            if (newOverlayLayers) {
+                newOverlayLayers.forEach((layer, i) => rotatePixel(source.overlayLayers[i], layer, x, y));
+            }
+        }
+    }
+
+    const isSquareFullImageRotate = newImage.width === newImage.height && newImage.width === image.image.width && image.image.width === image.image.height;
+
+    if ((toFloatingLayer || hasFloatingLayer) && !isSquareFullImageRotate) {
+        if (!hasFloatingLayer) {
+            for (let x = 0; x < image.width; x++) {
+                for (let y = 0; y < image.height; y++) {
+                    image.image.set(x, y, 0);
+                    if (image.overlayLayers) image.overlayLayers.forEach(layer => layer?.set(x, y, 0))
+                }
+            }
+        }
+
+        // If this is a full sized image, center it on the canvas
+        if (newImage.width === image.image.height && newImage.height === image.image.width || newImage.width === image.image.width && newImage.height === image.image.height) {
+            image.layerOffsetX = (image.width >> 1) - (newImage.width >> 1);
+            image.layerOffsetY = (image.height >> 1) - (newImage.height >> 1);
+        }
+
+        image.floating = {
+            image: newImage,
+            overlayLayers: newOverlayLayers
+        };
+    }
+    else {
+        const rotated = new EditState(newImage);
+        rotated.overlayLayers = newOverlayLayers;
+        return rotated;
+    }
+
+
+    return image;
+
+
+    function rotatePixel(src: pxt.sprite.Bitmap, dest: pxt.sprite.Bitmap, x: number, y: number) {
+        if (clockwise) {
+            dest.set(y, x, src.get(x, src.height - y - 1))
+        }
+        else {
+            dest.set(y, x, src.get(src.width - x - 1, y))
+        }
+    }
+}
+
+export function flipEdit(image: EditState, vertical: boolean, isTilemap: boolean) {
+    const source = image.floating?.image ? image.floating : image;
+
+    const newImage = isTilemap ? new pxt.sprite.Tilemap(source.image.width, source.image.height) :
+        new pxt.sprite.Bitmap(source.image.width, source.image.height);
+    const newOverlayLayers = source.overlayLayers ? source.overlayLayers.map(layer => new pxt.sprite.Bitmap(layer.width, layer.height)) : undefined;
+
+    for (let x = 0; x < source.image.width; x++) {
+        for (let y = 0; y < source.image.height; y++) {
+            flipPixel(source.image, newImage, x, y);
+            if (newOverlayLayers) {
+                newOverlayLayers.forEach((layer, i) => flipPixel(source.overlayLayers[i], layer, x, y));
+            }
+        }
+    }
+
+    if (image.floating?.image) {
+        image.floating = {
+            image: newImage,
+            overlayLayers: newOverlayLayers
+        };
+        return image;
+
+    }
+    else {
+        const edit = new EditState(newImage);
+        edit.overlayLayers = newOverlayLayers;
+        return edit;
+    }
+
+
+    function flipPixel(src: pxt.sprite.Bitmap, dest: pxt.sprite.Bitmap, x: number, y: number) {
+        if (vertical) {
+            dest.set(x, y, src.get(x, src.height - y - 1))
+        }
+        else {
+            dest.set(x, y, src.get(src.width - x - 1, y))
         }
     }
 }

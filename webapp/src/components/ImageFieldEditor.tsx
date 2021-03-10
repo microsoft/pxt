@@ -1,20 +1,28 @@
 import * as React from "react";
+import * as sui from "../sui";
 
 import { FieldEditorComponent } from '../blocklyFieldView';
+import { AssetCardView } from "./assetEditor/assetCard";
+import { assetToGalleryItem, getAssets } from "./assetEditor/store/assetEditorReducer";
 import { ImageEditor } from "./ImageEditor/ImageEditor";
-import { setTelemetryFunction } from './ImageEditor/store/imageReducer';
+import { obtainShortcutLock, releaseShortcutLock } from "./ImageEditor/keyboardShortcuts";
+import { GalleryTile, setTelemetryFunction } from './ImageEditor/store/imageReducer';
+import { FilterPanel } from './FilterPanel';
 
 export interface ImageFieldEditorProps {
     singleFrame: boolean;
     doneButtonCallback?: () => void;
-    showTiles?: boolean;
 }
 
 export interface ImageFieldEditorState {
     currentView: "editor" | "gallery" | "my-assets";
+    filterOpen: boolean;
+    gallerySelectedTags: string[];
     tileGalleryVisible?: boolean;
     headerVisible?: boolean;
+    hideMyAssets?: boolean;
     galleryFilter?: string;
+    editingTile?: boolean;
 }
 
 interface ProjectGalleryItem extends pxt.sprite.GalleryItem {
@@ -22,73 +30,103 @@ interface ProjectGalleryItem extends pxt.sprite.GalleryItem {
     id: string;
 }
 
-export type ImageType = pxt.ProjectImage | pxt.Animation;
-
-export class ImageFieldEditor<U extends ImageType> extends React.Component<ImageFieldEditorProps, ImageFieldEditorState> implements FieldEditorComponent<U> {
+export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<ImageFieldEditorProps, ImageFieldEditorState> implements FieldEditorComponent<U> {
     protected blocksInfo: pxtc.BlocksInfo;
     protected ref: ImageEditor;
     protected closeEditor: () => void;
     protected options: any;
-    protected tileGallery: pxt.sprite.GalleryItem[];
-    protected extensionGallery: pxt.sprite.GalleryItem[];
-    protected projectGallery: pxt.sprite.GalleryItem[];
     protected editID: string;
+    protected galleryAssets: pxt.Asset[];
+    protected userAssets: pxt.Asset[];
+    protected shortcutLock: number;
+
+    protected get asset() {
+        return this.ref?.getAsset();
+    }
 
     constructor(props: ImageFieldEditorProps) {
         super(props);
 
         this.state = {
             currentView: "editor",
-            headerVisible: true
+            headerVisible: true,
+            filterOpen: false,
+            gallerySelectedTags: []
         };
         setTelemetryFunction(tickImageEditorEvent);
     }
 
     render() {
-        const { showTiles } = this.props;
-        const { currentView, headerVisible } = this.state;
+        const { currentView, headerVisible, editingTile, hideMyAssets, filterOpen } = this.state;
+        const filterPanelVisible = this.state.currentView === "gallery" && filterOpen;
 
-        if (this.blocksInfo && !this.extensionGallery) {
-            this.extensionGallery = pxt.sprite.getGalleryItems(this.blocksInfo, "Image")
+        let showHeader = headerVisible;
+        // If there is no asset, show the gallery to prevent changing shape when it's added
+        const showGallery = !this.asset || editingTile || this.asset.type !== pxt.AssetType.Tilemap;;
+        const showMyAssets = !hideMyAssets && !editingTile;
+
+        if (this.asset && !this.galleryAssets) {
+            this.updateGalleryAssets();
         }
 
-        if (showTiles && !this.tileGallery) {
-            this.tileGallery = this.getTileGalleryItems();
+        let filteredAssets = currentView === "my-assets" ? this.filterAssetsByType(this.userAssets, editingTile ? pxt.AssetType.Tile : this.asset?.type) :
+            this.filterAssetsByType(this.galleryAssets, editingTile ? pxt.AssetType.Tile : this.asset?.type, true, true)
+
+        const specialTags = ["tile", "dialog", "background"];
+        const allTags = this.getAvailableTags(filteredAssets, specialTags);
+
+        if (currentView === "gallery") {
+            filteredAssets = this.filterAssetsByTag(filteredAssets);
         }
 
-        if (currentView === "my-assets" && !this.projectGallery) {
-            this.projectGallery = this.getProjectGalleryItems();
-        }
 
-        const toggleClass = currentView === "editor" ? "left" : (currentView === "gallery" ? "center" : "right");
+        const toggleOptions = [{
+            label: lf("Editor"),
+            view: "editor",
+            onClick: this.showEditor
+        }, {
+            label: lf("Gallery"),
+            view: "gallery",
+            onClick: this.showGallery
+        }, {
+            label: lf("My Assets"),
+            view: "my-assets",
+            onClick: this.showMyAssets
+        }];
+
+        if (!showGallery && !showMyAssets) {
+            showHeader = false;
+        }
+        else if (!showGallery) {
+            toggleOptions.splice(1, 1);
+        }
+        else if (!showMyAssets) {
+            toggleOptions.splice(2, 1);
+        }
 
         return <div className="image-editor-wrapper">
-            {headerVisible && <div className="gallery-editor-header">
-                <div className={`gallery-editor-toggle ${toggleClass} ${pxt.BrowserUtils.isEdge() ? "edge" : ""}`}>
-                    <div className="gallery-editor-toggle-label gallery-editor-toggle-left" onClick={this.showEditor} role="button">
-                        {lf("Editor")}
+            {showHeader && <div className="gallery-editor-header">
+                <ImageEditorToggle options={toggleOptions} view={currentView} />
+                <div className={`gallery-filter-button ${this.state.currentView === "gallery" ? '' : "hidden"}`} role="button" onClick={this.toggleFilter} onKeyDown={sui.fireClickOnEnter}>
+                    <div className="gallery-filter-button-icon">
+                        <i className="icon filter" />
                     </div>
-                    <div className="gallery-editor-toggle-label gallery-editor-toggle-center" onClick={this.showGallery} role="button">
-                        {lf("Gallery")}
-                    </div>
-                    <div className="gallery-editor-toggle-label gallery-editor-toggle-right" onClick={this.showMyAssets} role="button">
-                        {lf("My Assets")}
-                    </div>
-                    <div className="gallery-editor-toggle-handle"/>
+                    <div className="gallery-filter-button-label">{lf("Filter")}</div>
                 </div>
-                { showTiles && <button className="gallery-editor-show-tiles" onClick={this.toggleTileGallery}>{lf("Tile Gallery")}</button>}
             </div>}
-            <div className="image-editor-gallery-content">
-                <ImageEditor ref="image-editor" singleFrame={this.props.singleFrame} onDoneClicked={this.onDoneClick} />
-                <ImageEditorGallery
-                    items={currentView === "my-assets" ? this.projectGallery.filter(a => (a as ProjectGalleryItem).id !== this.editID) : this.extensionGallery}
-                    hidden={currentView === "editor"}
-                    filterString={this.state.galleryFilter}
-                    onItemSelected={this.onGalleryItemSelect} />
-                { showTiles && <ImageEditorGallery
-                    items={this.tileGallery}
-                    hidden={currentView !== "editor" || !this.state.tileGalleryVisible}
-                    onItemSelected={this.onGalleryItemSelect} /> }
+            <div className="image-editor-gallery-window">
+                <div className="image-editor-gallery-content">
+                    <ImageEditor ref="image-editor" singleFrame={this.props.singleFrame} onDoneClicked={this.onDoneClick} onTileEditorOpenClose={this.onTileEditorOpenClose} />
+                    <ImageEditorGallery
+                        items={filteredAssets}
+                        hidden={currentView === "editor"}
+                        onAssetSelected={this.onAssetSelected} />
+                </div>
+                <div className={`filter-panel-gutter ${!filterPanelVisible ? "hidden" : ""}`}>
+                    <div className={`filter-panel-container`}>
+                        <FilterPanel enabledTags={this.state.gallerySelectedTags} tagClickHandler={this.tagClickHandler} clearTags={this.clearFilterTags} tagOptions={allTags}/>
+                    </div>
+                </div>
             </div>
         </div>
     }
@@ -100,18 +138,29 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
 
     componentWillUnmount() {
         tickImageEditorEvent("image-editor-hidden");
-        this.tileGallery = undefined;
+        this.galleryAssets = undefined;
+        this.userAssets = undefined;
     }
 
     init(value: U, close: () => void, options?: any) {
         this.closeEditor = close;
         this.options = options;
-        if (this.props.singleFrame) {
-            let bitmap = value as pxt.ProjectImage;
-            this.initSingleFrame(bitmap, options);
-        }
-        else {
-            this.initAnimation(value as pxt.Animation, options);
+
+        switch (value.type) {
+            case pxt.AssetType.Image:
+                this.initSingleFrame(value as pxt.ProjectImage, options);
+                break;
+            case pxt.AssetType.Tile:
+                options.disableResize = true;
+                this.initSingleFrame(value as pxt.ProjectImage, options);
+                break;
+            case pxt.AssetType.Animation:
+                this.initAnimation(value as pxt.Animation, options);
+                break;
+            case pxt.AssetType.Tilemap:
+                this.initTilemap(value as pxt.ProjectTilemap, options);
+                break;
+
         }
 
         this.editID = value.id;
@@ -127,6 +176,10 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
 
             if (options.headerVisible != undefined) {
                 this.setState({ headerVisible: options.headerVisible })
+            }
+
+            if (options.hideMyAssets != undefined) {
+                this.setState({ hideMyAssets: options.hideMyAssets });
             }
         }
     }
@@ -170,38 +223,157 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
         }
     }
 
-    protected getTileGalleryItems() {
-        if (!this.extensionGallery) return null;
-
-        const libraryTiles = pxt.sprite.filterItems(this.extensionGallery, ["tile"]);
-
-        return [
-            ...libraryTiles
-        ];
+    protected updateGalleryAssets() {
+        this.galleryAssets = getAssets(true, this.asset.type);
     }
 
-    protected getProjectGalleryItems() {
-        if (!this.extensionGallery) return null;
+    protected getAvailableTags(filterAssets: pxt.Asset[], ignoredTags: string[]) {
+        let collectedTags: string[] = [];
+        // Pixel Art Categories -- Add new categories here!
+        // lf("People")
+        // lf("Animals")
+        // lf("Food")
+        // lf("Dungeon")
+        // lf("Forest")
+        // lf("Space")
+        // lf("Aquatic")
 
-        const project = pxt.react.getTilemapProject();
-        const imgConv = new pxt.ImageConverter();
+        if (this.galleryAssets) {
+            filterAssets.forEach( (asset) => {
+                asset.meta.tags?.forEach(t => {
+                    const sanitizedTag = sanitize(t);
+                    if (ignoredTags.indexOf(sanitizedTag) < 0 && collectedTags.indexOf(sanitizedTag) < 0) {
+                        collectedTags.push(sanitizedTag);
+                    }
+                });
+            })
 
-        const imageToGalleryItem = (image: pxt.ProjectImage | pxt.Tile) => ({
-            qName: image.id,
-            src: imgConv.convert("data:image/x-mkcd-f," + image.jresData),
-            alt: image.meta.displayName || image.id,
-            tags: [],
-            assetType: image.type,
-            id: image.id
-        } as ProjectGalleryItem)
+            return collectedTags;
+        }
+        return [];
 
-        const compareAsset = (a: pxt.Asset, b: pxt.Asset) => a.internalID - b.internalID;
+        function sanitize(tag: string) {
+            let sanitizedTag = (tag.indexOf("?") === 0) && tag.length > 1 ? tag.substring(1) : tag;
+            sanitizedTag = sanitizedTag.toLowerCase();
 
+            return sanitizedTag;
+        }
 
-        const all = (project.getAssets(pxt.AssetType.Image) as (pxt.ProjectImage | pxt.Tile)[]).sort(compareAsset)
-            .concat(project.getAssets(pxt.AssetType.Tile).sort(compareAsset));
+    }
 
-        return all.map(imageToGalleryItem)
+    protected tagClickHandler = (tag: string) => {
+        let selectedTags = this.state.gallerySelectedTags;
+        const sanitizedTag = tag.toLowerCase();
+        const index = selectedTags.indexOf(sanitizedTag);
+        if (index < 0) {
+            selectedTags.push(sanitizedTag);
+        } else {
+            selectedTags.splice(index, 1);
+        }
+        this.setState({
+            gallerySelectedTags: selectedTags
+        })
+    }
+
+    protected clearFilterTags = () => {
+        this.setState({
+            gallerySelectedTags: []
+        });
+    }
+
+    protected toggleFilter = () => {
+        this.setState({
+            filterOpen: !this.state.filterOpen
+        });
+    }
+
+    protected filterAssetsByTag(assets: pxt.Asset[]) {
+        if (this.state.gallerySelectedTags.length > 0 && this.state.filterOpen) {
+            assets = assets.filter((asset) => {
+                return !!asset.meta.tags?.find(t => this.state.gallerySelectedTags.indexOf(t) >= 0);
+            })
+        }
+        return assets;
+    }
+
+    protected filterAssetsByType(assets: pxt.Asset[], type: pxt.AssetType = this.asset?.type, isGallery = false, useTags?: boolean) {
+        if (type === undefined) {
+            return assets;
+        }
+
+        if (this.asset) {
+            assets = assets.map(t => (t.type !== this.asset.type || t.id !== this.asset.id) ? t : assetToGalleryItem(this.getValue()))
+
+            if (this.state.editingTile) {
+                const tilemap = this.ref.getAsset() as pxt.ProjectTilemap;
+                assets = assets.map(a => {
+                    if (tilemap.data.editedTiles?.indexOf(a.id) >= 0) {
+                        return assetToGalleryItem(tilemap.data.tileset.tiles.find(t => t.id === a.id))
+                    }
+                    return a;
+                });
+            }
+        }
+
+        if (this.state.galleryFilter && useTags) {
+            assets.forEach(a => {
+                if (!a.meta.tags && this.options) {
+                    a.meta.tags = this.blocksInfo.apis.byQName[a.id]?.attributes.tags?.split(" ") || [];
+                }})
+
+        // Keep tag filtering unified with pxtlib/spriteutils:filterItems
+            const tags = this.state.galleryFilter.split(" ")
+                .filter(el => !!el)
+                .map(el => el.toLowerCase());
+            const includeTags = tags
+                .filter(tag => tag.indexOf("!") !== 0);
+            const excludeTags = tags
+                .filter(tag => tag.indexOf("!") === 0 && tag.length > 1)
+                .map(tag => tag.substring(1));
+
+            assets = assets.filter(t => checkInclude(t, includeTags) && checkExclude(t, excludeTags))
+        }
+        function checkInclude(item: pxt.Asset, includeTags: string[]) {
+            const tags = item.meta.tags ? item.meta.tags : [];
+            return includeTags.every(filterTag => {
+                const optFilterTag = `?${filterTag}`;
+                return tags.some(tag =>
+                    tag === filterTag || tag === optFilterTag
+                )
+            });
+        }
+
+        function checkExclude(item: pxt.Asset, excludeTags: string[]) {
+            const tags = item.meta.tags ? item.meta.tags : [];
+            return excludeTags.every(filterTag =>
+                !tags.some(tag => tag === filterTag)
+            );
+        }
+
+        if (isGallery) {
+            switch (type) {
+                case pxt.AssetType.Animation:
+                    return assets.filter(t => t.type === pxt.AssetType.Animation || t.type === pxt.AssetType.Tile || t.type === pxt.AssetType.Image);
+                case pxt.AssetType.Image:
+                    return assets.filter(t => t.type === pxt.AssetType.Tile || t.type === pxt.AssetType.Image);
+                case pxt.AssetType.Tile:
+                    return assets.filter(t => t.type === pxt.AssetType.Tile);
+                case pxt.AssetType.Tilemap:
+                    return assets.filter(t => t.type === pxt.AssetType.Tilemap);
+            }
+        }
+        else {
+            switch (type) {
+                case pxt.AssetType.Animation:
+                    return assets.filter(t => t.type === pxt.AssetType.Animation);
+                case pxt.AssetType.Image:
+                    return assets.filter(t => t.type === pxt.AssetType.Tile || t.type === pxt.AssetType.Image);
+                case pxt.AssetType.Tile:
+                    return assets.filter(t => t.type === pxt.AssetType.Tile);
+                case pxt.AssetType.Tilemap:
+                    return assets.filter(t => t.type === pxt.AssetType.Tilemap);
+            }
+        }
     }
 
     protected initSingleFrame(value: pxt.ProjectImage, options?: any) {
@@ -220,7 +392,22 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
         }
     }
 
+    protected initTilemap(asset: pxt.ProjectTilemap, options?: any) {
+        let gallery: GalleryTile[];
+
+        // FIXME (riknoll): don't use blocksinfo, use tilemap project instead
+        if (options) {
+            this.blocksInfo = options.blocksInfo;
+
+            gallery = pxt.sprite.filterItems(pxt.sprite.getGalleryItems(this.blocksInfo, "Image"), ["tile"])
+                .map(g => ({ bitmap: pxt.sprite.getBitmap(this.blocksInfo, g.qName).data(), tags: g.tags, qualifiedName: g.qName, tileWidth: 16 }))
+        }
+
+        this.ref.openAsset(asset, gallery);
+    }
+
     protected showEditor = () => {
+        this.setImageEditorShortcutsEnabled(true);
         tickImageEditorEvent("gallery-editor");
         this.setState({
             currentView: "editor",
@@ -229,6 +416,7 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
     }
 
     protected showGallery = () => {
+        this.setImageEditorShortcutsEnabled(false);
         tickImageEditorEvent("gallery-builtin");
         this.setState({
             currentView: "gallery",
@@ -237,7 +425,9 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
     }
 
     protected showMyAssets = () => {
+        this.setImageEditorShortcutsEnabled(false);
         tickImageEditorEvent("gallery-my-assets");
+        this.userAssets = getAssets();
         this.setState({
             currentView: "my-assets",
             tileGalleryVisible: false
@@ -258,20 +448,28 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
         }
     }
 
-    protected onGalleryItemSelect = (item: pxt.sprite.GalleryItem) => {
-        if (this.ref) {
-            let selectedBitmap = pxt.sprite.getBitmap(this.blocksInfo, item.qName);
-
-            if (!selectedBitmap) {
-                const projectItem = item as ProjectGalleryItem;
-                const project = pxt.react.getTilemapProject();
-
-                const asset = project.lookupAsset(projectItem.assetType, projectItem.id) as pxt.Tile | pxt.ProjectImage;
-
-                selectedBitmap = pxt.sprite.Bitmap.fromData(asset.bitmap);
+    protected onAssetSelected = (asset: pxt.Asset) => {
+        if (this.ref && asset.id !== this.asset?.id) {
+            if (this.state.editingTile) {
+                this.ref.openInTileEditor(pxt.sprite.Bitmap.fromData((asset as pxt.Tile).bitmap))
             }
+            else if (this.state.currentView === "gallery") {
+                this.ref.openGalleryAsset(asset as pxt.Tile | pxt.ProjectImage | pxt.Animation);
+            }
+            else {
+                const project = pxt.react.getTilemapProject();
+                if (this.asset?.type === pxt.AssetType.Tilemap) {
+                    pxt.sprite.updateTilemapReferencesFromResult(project, this.asset);
+                }
 
-            this.ref.setCurrentFrame(selectedBitmap);
+                project.updateAsset(this.asset);
+
+                if (asset.type === pxt.AssetType.Tilemap) {
+                    pxt.sprite.addMissingTilemapTilesAndReferences(project, asset);
+                }
+
+                this.ref.openAsset(asset, undefined, true);
+            }
         }
 
         tickImageEditorEvent("gallery-selection");
@@ -280,12 +478,19 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
             currentView: "editor",
             tileGalleryVisible: false
         });
+        this.setImageEditorShortcutsEnabled(true);
+    }
+
+    protected onTileEditorOpenClose = (open: boolean) => {
+        this.setState({
+            editingTile: open
+        });
     }
 
     loadJres(jres: string) {
         if (jres) {
             try {
-                this.ref.setCurrentFrame(pxt.sprite.getBitmapFromJResURL(jres));
+                this.ref.setCurrentFrame(pxt.sprite.getBitmapFromJResURL(jres), true);
             } catch (e) {
                 return
             }
@@ -296,57 +501,83 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
         if (this.closeEditor) this.closeEditor();
         if (this.props.doneButtonCallback) this.props.doneButtonCallback();
     }
+
+    protected setImageEditorShortcutsEnabled(enabled: boolean) {
+        if (enabled && this.shortcutLock) {
+            releaseShortcutLock(this.shortcutLock);
+            this.shortcutLock = undefined;
+        }
+        else if (!enabled && !this.shortcutLock) {
+            this.shortcutLock = obtainShortcutLock();
+        }
+    }
 }
 
 interface ImageEditorGalleryProps {
-    items?: pxt.sprite.GalleryItem[];
+    items?: pxt.Asset[];
     hidden: boolean;
-    onItemSelected: (item: pxt.sprite.GalleryItem) => void;
-    filterString?: string;
+    onAssetSelected: (item: pxt.Asset) => void;
 }
 
 class ImageEditorGallery extends React.Component<ImageEditorGalleryProps, {}> {
-    protected handlers: (() => void)[] = [];
-
     render() {
-        let { items, hidden, filterString } = this.props;
-
-        if (filterString) {
-            items = pxt.sprite.filterItems(items, filterString.split(" "));
-        }
+        let { items, hidden } = this.props;
 
         return <div className={`image-editor-gallery ${items && !hidden ? "visible" : ""}`}>
-            {items && items.map((item, index) =>
-                <button
-                    key={index}
-                    id={`:${index}`}
-                    role="menuitem"
-                    className="sprite-gallery-button sprite-editor-card"
-                    title={item.alt}
-                    data-value={item.qName}
-                    onClick={this.clickHandler(index)}>
-                        <img src={item.src} data-value={item.qName} alt={item.alt}/>
-                </button>
+            {!hidden && items && items.map((item, index) =>
+                <AssetCardView key={index} asset={item} selected={false} onClick={this.clickHandler} />
             )}
         </div>
     }
 
-    clickHandler(index: number) {
-        if (!this.handlers[index]) {
-            this.handlers[index] = () => {
-                let { items, onItemSelected, filterString, hidden } = this.props;
+    clickHandler = (asset: pxt.Asset) => {
+        this.props.onAssetSelected(asset);
+    }
+}
 
-                if (filterString) {
-                    items = pxt.sprite.filterItems(items, filterString.split(" "));
-                }
+interface ImageEditorToggleOption {
+    label: string;
+    view: string;
+    onClick: () => void;
+}
 
-                if (!hidden && items && items[index]) {
-                    onItemSelected(items[index]);
-                }
-            }
+interface ImageEditorToggleProps {
+    options: ImageEditorToggleOption[];
+    view: string;
+}
+
+
+class ImageEditorToggle extends React.Component<ImageEditorToggleProps> {
+    render() {
+        const { options, view } = this.props;
+
+        const threeOptions = options.length > 2;
+        const selected = options.findIndex(o => o.view === view)
+
+        const left = options[0];
+        const center = threeOptions ? options[1] : undefined;
+        const right = threeOptions ? options[2] : options[1];
+
+        let toggleClass: string;
+        if (threeOptions) {
+            toggleClass = ["left", "center", "right"][selected];
+        }
+        else {
+            toggleClass = ["left", "right"][selected] + " no-gallery";
         }
 
-        return this.handlers[index];
+        return <div className={`gallery-editor-toggle ${toggleClass} ${pxt.BrowserUtils.isEdge() ? "edge" : ""}`}>
+            <div className="gallery-editor-toggle-label gallery-editor-toggle-left" onClick={left.onClick} role="button">
+                {left.label}
+            </div>
+            {center && <div className="gallery-editor-toggle-label gallery-editor-toggle-center" onClick={center.onClick} role="button">
+                {center.label}
+            </div>}
+            <div className="gallery-editor-toggle-label gallery-editor-toggle-right" onClick={right.onClick} role="button">
+                {right.label}
+            </div>
+            <div className="gallery-editor-toggle-handle"/>
+    </div>
     }
 }
 

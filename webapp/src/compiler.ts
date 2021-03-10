@@ -4,7 +4,7 @@ import * as workspace from "./workspace";
 
 import U = pxt.Util;
 
-function setDiagnostics(diagnostics: pxtc.KsDiagnostic[], sourceMap?: pxtc.SourceInterval[]) {
+function setDiagnostics(operation: "compile" | "decompile" | "typecheck", diagnostics: pxtc.KsDiagnostic[], sourceMap?: pxtc.SourceInterval[]) {
     let mainPkg = pkg.mainEditorPkg();
 
     mainPkg.forEachFile(f => f.diagnostics = [])
@@ -60,6 +60,27 @@ function setDiagnostics(diagnostics: pxtc.KsDiagnostic[], sourceMap?: pxtc.Sourc
     const errors = diagnostics.filter(d => d.category == ts.pxtc.DiagnosticCategory.Error);
     f.numDiagnosticsOverride = errors.length
     reportDiagnosticErrors(errors);
+
+    // send message to editor controller if any
+    if (pxt.editor.shouldPostHostMessages()) {
+        pxt.editor.postHostMessageAsync({
+            type: "pxthost",
+            action: "workspacediagnostics",
+            operation,
+            output,
+            diagnostics: diagnostics.map(diag => ({
+                code: diag.code,
+                category: ts.pxtc.DiagnosticCategory[diag.category].toLowerCase(),
+                fileName: diag.fileName,
+                start: diag.start,
+                length: diag.length,
+                line: diag.line,
+                column: diag.column,
+                endLine: diag.endLine,
+                endColumn: diag.endColumn
+            }))
+        } as pxt.editor.EditorWorkspaceDiagnostics);
+    }
 }
 
 let lastErrorCounts: string = "";
@@ -70,7 +91,9 @@ function reportDiagnosticErrors(errors: pxtc.KsDiagnostic[]) {
         errors.filter(err => err.code).forEach(err => counts[err.code] = (counts[err.code] || 0) + 1);
         const errorCounts = JSON.stringify(errors);
         if (errorCounts !== lastErrorCounts) {
-            pxt.tickEvent("diagnostics", counts);
+            for (const errorCode of Object.keys(counts)) {
+                pxt.tickEvent("diagnostics", { errorCode, count: counts[errorCode] });
+            }
             lastErrorCounts = errorCounts;
         }
     } else {
@@ -181,7 +204,7 @@ ${resp.outfiles[pxtc.BINARY_JS]}`;
             }
 
             pkg.mainEditorPkg().outputPkg.setFiles(resp.outfiles)
-            setDiagnostics(resp.diagnostics)
+            setDiagnostics("compile", resp.diagnostics)
 
             return ensureApisInfoAsync()
                 .then(() => {
@@ -263,7 +286,7 @@ export function decompileAsync(fileName: string, blockInfo?: ts.pxtc.BlocksInfo,
                 resp.outfiles[blockFile] = newXml;
             }
             pkg.mainEditorPkg().outputPkg.setFiles(resp.outfiles)
-            setDiagnostics(resp.diagnostics)
+            setDiagnostics("decompile", resp.diagnostics)
             return resp
         })
 }
@@ -509,7 +532,7 @@ export function typecheckAsync() {
             return workerOpAsync("setOptions", { options: opts })
         })
         .then(() => workerOpAsync("allDiags", {}) as Promise<pxtc.CompileResult>)
-        .then(r => setDiagnostics(r.diagnostics, r.sourceMap))
+        .then(r => setDiagnostics("typecheck", r.diagnostics, r.sourceMap))
         .then(ensureApisInfoAsync)
         .catch(catchUserErrorAndSetDiags(null))
     if (!firstTypecheck) firstTypecheck = p;
@@ -575,10 +598,10 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
     ];
 
     if (Object.keys(files).some(
-            filename => generatedFiles.indexOf(filename) === -1
+        filename => generatedFiles.indexOf(filename) === -1
             && filename.indexOf("/") === -1
             && pxt.Util.endsWith(filename, ".ts")
-        )) {
+    )) {
         return null;
     }
 
@@ -641,7 +664,6 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
 
     const result: pxtc.ApisInfo = {
         byQName: {},
-        jres: {}
     };
 
     for (const used of usedPackageInfo) {
@@ -654,11 +676,9 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
         }
 
         pxt.Util.jsonCopyFrom(result.byQName, info.apis.byQName);
-        if (info.apis.jres)
-            pxt.Util.jsonCopyFrom(result.jres, info.apis.jres);
     }
 
-    const jres = pkg.mainPkg.getJRes();
+    result.jres = pkg.mainPkg.getJRes() || {};
 
     for (const qName of Object.keys(result.byQName)) {
         let si = result.byQName[qName]
@@ -666,7 +686,7 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
         let jrname = si.attributes.jres
         if (jrname) {
             if (jrname == "true") jrname = qName
-            let jr = U.lookup(jres || {}, jrname)
+            let jr = U.lookup(result.jres, jrname)
             if (jr && jr.icon && !si.attributes.iconURL) {
                 si.attributes.iconURL = jr.icon
             }
@@ -682,9 +702,9 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
 async function cacheApiInfoAsync(project: pkg.EditorPackage, info: pxtc.ApisInfo) {
     const corePkgs = pxt.Package.corePackages().map(pkg => pkg.name);
     const externalPackages = project.pkgAndDeps()
-            .filter(p => p.id !== "built"
-                        && !p.isTopLevel()
-                        && corePkgs.indexOf(p.getPkgId()) === -1);
+        .filter(p => p.id !== "built"
+            && !p.isTopLevel()
+            && corePkgs.indexOf(p.getPkgId()) === -1);
 
     if (externalPackages.length) {
         const apiList = Object.keys(info.byQName);
@@ -705,11 +725,7 @@ async function cacheApiInfoAsync(project: pkg.EditorPackage, info: pxtc.ApisInfo
                 //  1. If the API's package ID is the same as the external package
                 //  2. If any of the package IDs in the list of packages that defined the API are the same as the external package
                 if (apiInfo.pkg === pkgId || apiInfo.pkgs?.find(element => element === pkgId)) {
-                    // Create a copy of the API info since we want to remove the package list.
-                    // Most info objects won't have a package list
-                    entry.apis.byQName[api] = U.clone(apiInfo);
-                    // strip the pkg array to not store duplicate info
-                    entry.apis.byQName[api].pkgs = []
+                    entry.apis.byQName[api] = cleanApiForCache(apiInfo);
                 }
             }
 
@@ -717,6 +733,34 @@ async function cacheApiInfoAsync(project: pkg.EditorPackage, info: pxtc.ApisInfo
             pxt.debug(`Stored API info for ${getPackageKey(dep)}`);
         }
     }
+}
+
+function cleanApiForCache(apiInfo: pxtc.SymbolInfo) {
+    // Create a copy of the API info since we want to remove the package list.
+    // Most info objects won't have a package list
+    const cachedEntry = U.clone(apiInfo);
+
+    // strip the pkg array to not store duplicate info
+    delete cachedEntry.pkgs;
+
+    // clear translations on blocks before caching
+    const cachedAttrs = U.clone(cachedEntry.attributes)
+    let defChanged = false;
+    if (cachedAttrs._untranslatedBlock) {
+        cachedAttrs.block = cachedAttrs._untranslatedBlock;
+        delete cachedAttrs._untranslatedBlock;
+        defChanged = true;
+    }
+    if (cachedAttrs._untranslatedJsDoc) {
+        cachedAttrs.jsDoc = cachedAttrs._untranslatedJsDoc;
+        delete cachedAttrs._untranslatedJsDoc;
+        defChanged = true;
+    }
+    if (defChanged) {
+        ts.pxtc.updateBlockDef(cachedAttrs);
+    }
+    cachedEntry.attributes = cachedAttrs;
+    return cachedEntry;
 }
 
 export interface UpgradeResult {
@@ -1077,8 +1121,19 @@ class ApiInfoIndexedDb {
                 pxt.perf.measureEnd("compiler db setAsync")
             })
     }
+
+    clearAsync(): Promise<void> {
+        return this.db.deleteAllAsync(ApiInfoIndexedDb.TABLE)
+            .then(() => console.debug(`db: all clean`))
+            .catch(e => {
+                console.error('db: failed to delete all');
+            })
+    }
 }
 
 export function clearApiInfoDbAsync() {
-    return pxt.BrowserUtils.IDBWrapper.deleteDatabaseAsync(ApiInfoIndexedDb.dbName())
+    return ApiInfoIndexedDb.createAsync()
+        .then(db => db.clearAsync())
+        .catch(e => pxt.BrowserUtils.IDBWrapper.deleteDatabaseAsync(ApiInfoIndexedDb.dbName()).then());
+
 }

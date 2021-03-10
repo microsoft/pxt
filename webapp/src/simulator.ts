@@ -235,14 +235,15 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
         stoppedClass: pxt.appTarget.simulator && pxt.appTarget.simulator.stoppedClass,
         invalidatedClass: pxt.appTarget.simulator && pxt.appTarget.simulator.invalidatedClass,
         nestedEditorSim: nestedEditorSim,
-        parentOrigin: parentOrigin
+        parentOrigin: parentOrigin,
+        messageSimulators: pxt.appTarget?.simulator?.messageSimulators
     };
     driver = new pxsim.SimulatorDriver(document.getElementById('simulators'), options);
     config = cfg
 }
 
 function postSimEditorEvent(subtype: string, exception?: string) {
-    if (pxt.appTarget.appTheme.allowParentController && pxt.BrowserUtils.isIFrame()) {
+    if (pxt.editor.shouldPostHostMessages()) {
         pxt.editor.postHostMessageAsync({
             type: "pxthost",
             action: "simevent",
@@ -281,11 +282,13 @@ export interface RunOptions {
 
 export function run(pkg: pxt.MainPackage, debug: boolean,
     res: pxtc.CompileResult, options: RunOptions, trace: boolean) {
-    const js = res.outfiles[pxtc.BINARY_JS]
     const boardDefinition = pxt.appTarget.simulator.boardDefinition;
-    const parts = pxtc.computeUsedParts(res, "ignorebuiltin");
-    const usedBuiltinParts = pxtc.computeUsedParts(res, "onlybuiltin");
-    const fnArgs = res.usedArguments;
+    const {
+        js,
+        fnArgs,
+        parts,
+        usedBuiltinParts,
+    } = pxtc.buildSimJsInfo(res);
     lastCompileResult = res;
     const { mute, highContrast, light, clickTrigger, storedState, autoRun } = options;
     const isIpcRenderer = pxt.BrowserUtils.isIpcRenderer() || undefined;

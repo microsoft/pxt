@@ -27,6 +27,15 @@ CLI_DEPS = \
 	built/pxtsim.js \
 	built/cli.js
 
+WORKER_DEPS = \
+    pxtcompiler/ext-typescript/lib/typescript.js \
+    node_modules/fuse.js/dist/fuse.min.js \
+    node_modules/lzma/src/lzma_worker-min.js \
+    node_modules/dompurify/dist/purify.min.js \
+    built/pxtlib.js \
+    built/pxtcompiler.js \
+    built/pxtpy.js
+
 JS_HEADER = '"use strict"; global.savedModuleExports = module.exports; module.exports = null;'
 
 built/pxtpy.d.ts: built/pxtlib.md5 built/pxtcompiler.md5
@@ -35,6 +44,10 @@ built/pxtblocks.d.ts: built/pxtlib.md5
 built/pxtrunner.d.ts: built/pxtlib.md5 built/pxtsim.md5 built/pxtcompiler.md5 built/pxteditor.md5 built/pxtblocks.md5
 built/cli.d.ts: built/pxtlib.md5 built/pxtcompiler.md5 built/pxtpy.md5 built/pxtsim.md5
 
+built/web/pxtworker.js: built/pxtpy.d.ts $(WORKER_DEPS) Makefile
+	@echo "[cat] $@"
+	@(echo '"use strict";'; cat $(WORKER_DEPS)) > $@
+
 built/pxt.js: built/cli.d.ts $(CLI_DEPS) Makefile
 	@echo "[cat] $@"
 	@(echo $(JS_HEADER); cat $(CLI_DEPS)) > $@
@@ -42,3 +55,7 @@ built/pxt.js: built/cli.d.ts $(CLI_DEPS) Makefile
 cli:
 	@$(MAKE) -j8 built/pxt.js
 	@$(MAKE) built/pxt.js
+
+worker:
+	@$(MAKE) -j8 built/web/pxtworker.js
+	@$(MAKE) built/web/pxtworker.js

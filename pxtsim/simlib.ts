@@ -34,11 +34,21 @@ namespace pxsim {
         public nextNotifyEvent = 1024;
 
         constructor(
-            private runtime: Runtime,
-            private valueToArgs?: EventValueToActionArgs
+            private readonly runtime: Runtime,
+            private readonly board: BaseBoard,
+            private readonly valueToArgs?: EventValueToActionArgs
         ) {
             this.schedulerID = 15; // DEVICE_ID_SCHEDULER
             this.idleEventID = 2; // DEVICE_SCHEDULER_EVT_IDLE
+
+            this.board.addMessageListener(this.handleMessage.bind(this));
+        }
+
+        private handleMessage(msg: pxsim.SimulatorMessage) {
+            if (msg.type === "eventbus") {
+                const ev = <SimulatorEventBusMessage>msg;
+                this.queue(ev.id, ev.eventid, ev.value);
+            }
         }
 
         public setBackgroundHandlerFlag() {
@@ -346,8 +356,8 @@ namespace pxsim {
 
                 // See pxt-common-packages's libs/mixer/melody.cpp for details.
                 // "bits" must be in the range 4..6.
-                const cycle_bits: number[] = [ 0x2df0eb47, 0xc8165a93 ];
-                const mask_456: number[] = [ 0xf, 0x1f, 0x3f ];
+                const cycle_bits: number[] = [0x2df0eb47, 0xc8165a93];
+                const mask_456: number[] = [0xf, 0x1f, 0x3f];
                 for (let i = 0; i < bufferSize; i += 4) {
                     let cycle: number = i / 4;
                     let is_on: boolean;

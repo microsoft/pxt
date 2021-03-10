@@ -1,5 +1,11 @@
 <html>
-
+<head>
+    <style>
+        img {
+            display: block;
+        }
+    </style>
+</head>
 <body>
     <pre id="mycode">
     <code>basic.showString("hello!")</code>
@@ -47,27 +53,29 @@
             switch (msg.type) {
                 case "renderready":
                  //   makeCodeRenderPre(document.getElementById("mycode"))
-                   // makeCodeRenderPre(document.getElementById("mycode2"))
+                    makeCodeRenderPre(document.getElementById("mycode2"))
                     makeCodeRenderPre(document.getElementById("mycode3"))
                     break;
                 case "renderblocks":
                     console.log(msg);
 
                     var id = msg.id;
-                    var img;
+                    var code = document.getElementById(id)
 
-                    var injectAsSvg = true;
-                    if (injectAsSvg) {
+                    // inject as svg
+                    {
                         var svg = new DOMParser().parseFromString(msg.svg, "image/svg+xml");
                         img = svg.childNodes.item(0)
-                    } else {
-                        img = document.createElement("img");
+                        code.parentElement.insertBefore(img, code)
+                    } 
+                    // inject as data uri
+                    {
+                        var img = document.createElement("img");
                         img.src = msg.uri;
                         img.width = msg.width;
                         img.height = msg.height;
+                        code.parentElement.insertBefore(img, code)
                     }
-                    var code = document.getElementById(id)
-                    code.parentElement.insertBefore(img, code)
                     code.parentElement.removeChild(code);
                     break;
             }

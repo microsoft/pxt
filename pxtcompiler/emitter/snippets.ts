@@ -116,6 +116,15 @@ namespace ts.pxtc.service {
 
         let preStmt: SnippetNode[] = [];
 
+        if (isTaggedTemplate(fn)) {
+            if (python) {
+                return `${fn.name}(""" """)`
+            }
+            else {
+                return `${fn.name}\`\``
+            }
+        }
+
         let fnName = ""
         if (decl.kind == SK.Constructor) {
             fnName = getSymbolName(decl.symbol) || decl.parent.name.getText();
@@ -280,27 +289,27 @@ namespace ts.pxtc.service {
             const name = param.name.kind === SK.Identifier ? (param.name as ts.Identifier).text : undefined;
 
             // check for explicit default in the attributes
-            if (attrs && attrs.paramDefl && attrs.paramDefl[name]) {
+            if (attrs?.paramDefl?.[name]) {
+                let deflKind: SyntaxKind;
                 if (typeNode.kind == SK.AnyKeyword) {
                     const defaultName = attrs.paramDefl[name].toUpperCase();
                     if (!Number.isNaN(+defaultName)) {
                         // try to parse as a number
-                        typeNode.kind = SK.NumberKeyword;
+                        deflKind = SK.NumberKeyword;
                     } else if (defaultName == "FALSE" || defaultName == "TRUE") {
                         // try to parse as a bool
-                        typeNode.kind = SK.BooleanKeyword;
+                        deflKind = SK.BooleanKeyword;
                     } else if (defaultName.includes(".")) {
                         // try to parse as an enum
-                        typeNode.kind = SK.EnumKeyword;
+                        deflKind = SK.EnumKeyword;
                     } else {
                         // otherwise it'll be a string
-                        typeNode.kind = SK.StringKeyword;
+                        deflKind = SK.StringKeyword;
                     }
                 }
-                if (typeNode.kind == SK.StringKeyword) {
+                if (typeNode.kind === SK.StringKeyword || deflKind === SK.StringKeyword) {
                     const defaultName = attrs.paramDefl[name];
-                    const snippet = typeNode.kind == SK.StringKeyword && defaultName.indexOf(`"`) != 0 ? `"${defaultName}"` : defaultName;
-                    return snippet
+                    return defaultName.indexOf(`"`) != 0 ? `"${defaultName}"` : defaultName;
                 }
                 return attrs.paramDefl[name];
             }
@@ -625,4 +634,7 @@ namespace ts.pxtc.service {
         }
     }
 
+    export function isTaggedTemplate(sym: SymbolInfo) {
+        return (sym.attributes.shim && sym.attributes.shim[0] == "@") || sym.attributes.pyConvertToTaggedTemplate;
+    }
 }

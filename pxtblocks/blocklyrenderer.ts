@@ -25,7 +25,7 @@ namespace pxt.blocks {
         splitSvg?: boolean;
         forceCompilation?: boolean;
         generateSourceMap?: boolean;
-        jres?: string;
+        assets?: pxt.Map<string>;
     }
 
     export function initRenderingWorkspace() {
@@ -105,8 +105,10 @@ namespace pxt.blocks {
             return renderWorkspace(options);
         } catch (e) {
             pxt.reportException(e);
-            cleanRenderingWorkspace();
             return undefined;
+        }
+        finally {
+            cleanRenderingWorkspace();
         }
     }
 

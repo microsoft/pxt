@@ -96,7 +96,7 @@ namespace pxt.py {
         "str": tpString,
         "string": tpString,
         "number": tpNumber,
-        "boolean": tpBoolean,
+        "bool": tpBoolean,
         "void": tpVoid,
         "any": tpAny,
     }
@@ -212,17 +212,12 @@ namespace pxt.py {
         return mkType({ primType: tp })
     }
 
-    // img/hex literal
-    function isTaggedTemplate(sym: SymbolInfo) {
-        return (sym.attributes.shim && sym.attributes.shim[0] == "@") || sym.attributes.pyConvertToTaggedTemplate;
-    }
-
     function getOrSetSymbolType(sym: SymbolInfo): Type {
         if (!sym.pySymbolType) {
             currErrorCtx = sym.pyQName
 
             if (sym.parameters) {
-                if (isTaggedTemplate(sym)) {
+                if (pxtc.service.isTaggedTemplate(sym)) {
                     sym.parameters = [{
                         "name": "literal",
                         "description": "",
@@ -2236,7 +2231,7 @@ namespace pxt.py {
                 B.mkText(")")
             ]
 
-            if (fun && allargs.length == 1 && isTaggedTemplate(fun))
+            if (fun && allargs.length == 1 && pxtc.service.isTaggedTemplate(fun))
                 nodes = [fn, forceBackticks(allargs[0])]
 
             if (isClass) {

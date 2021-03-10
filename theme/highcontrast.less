@@ -66,6 +66,17 @@
         background-color: @HCbackground !important;
     }
 
+    /* semantic */
+    .ui.toggle.checkbox .box, .ui.toggle.checkbox label,
+    .ui.toggle.checkbox input:focus:checked~.box, .ui.toggle.checkbox input:focus:checked~label,
+    .ui.checkbox+label, .ui.checkbox label,
+    .ui.items>.item .meta {
+        color: @HCtextColor !important;
+    }
+    p > a.ui.link {
+        text-decoration: underline;
+    }
+
     #tutorialcard .prevbutton,
     #tutorialcard .nextbutton {
         &:hover, &:focus {
@@ -348,6 +359,7 @@
         &:focus, &:hover {
             color: @HCtextColor !important;
             border-color: @selected !important;
+            background: @HCbackground !important;
 
             i, span {
                 color: @HCtextColor !important;
@@ -803,6 +815,30 @@
     [data-tooltip]:before {
         box-shadow: 1px 1px 0 0 @HCtextColor!important;
     }
+
+    /* github */
+    #githubEditor {
+        background-color: @HCbackground !important;
+        color: @HCtextColor !important;
+
+        table.diffview {
+            background: @HCbackground !important;
+            color: @HCtextColor !important;
+            .diff-marker, .diff-removed, .diff-added, code.ch-removed, code.ch-added {
+                background: @HCbackground !important;
+                color: @HCtextColor !important;
+            }
+            .diff-marker {
+                border-bottom: 1px solid @HCtextColor !important;
+            }
+            .diff-removed, code.ch-removed {
+                border: 2px dashed #900 !important;
+            }
+            .diff-added, code.ch-added {
+                border: 2px dotted #090 !important;
+            }
+        }
+    }    
 }
 
 /* > Small Monitor */

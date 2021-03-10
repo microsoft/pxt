@@ -1,13 +1,14 @@
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as React from "react";
+import * as auth from "./auth";
 import * as data from "./data";
 import * as sui from "./sui";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
 export interface EditorAccessibilityMenuProps extends ISettingsProps {
-    highContrast: boolean;
+    highContrast?: boolean;
 }
 
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
@@ -67,7 +68,7 @@ export class EditorAccessibilityMenu extends data.Component<EditorAccessibilityM
     }
 
     renderCore() {
-        const { highContrast } = this.props.parent.state;
+        let highContrast = this.getData<boolean>(auth.HIGHCONTRAST)
         const targetTheme = pxt.appTarget.appTheme;
         const hasHome = !pxt.shell.isControllerMode();
 

@@ -4,8 +4,10 @@ import * as core from "./core";
 import * as pkg from "./package";
 import * as ws from "./workspace";
 import * as data from "./data";
+import * as cloud from "./cloud";
 
 type Header = pxt.workspace.Header;
+type File = pxt.workspace.File;
 
 import U = pxt.Util;
 const lf = U.lf
@@ -376,7 +378,7 @@ export async function ensureGitHubTokenAsync() {
 }
 
 // this is generally called by the provier's loginCheck() function
-export function setProvider(impl: IdentityProvider) {
+function setProvider(impl: IdentityProvider) {
     if (impl !== currentProvider) {
         currentProvider = impl
         invalidateData();
@@ -391,12 +393,12 @@ async function syncOneUpAsync(provider: Provider, h: Header) {
     text = U.flatClone(text)
     text[HEADER_JSON] = JSON.stringify(h, null, 4)
 
-    let firstTime = h.blobId == null
+    let firstTime = h.blobId_ == null
 
     let info: FileInfo
 
     try {
-        info = await provider.uploadAsync(h.blobId, h.blobVersion, text)
+        info = await provider.uploadAsync(h.blobId_, h.blobVersion_, text)
     } catch (e) {
         if (e.statusCode == 409) {
             core.warningNotification(lf("Conflict saving {0}; please do a full cloud sync", h.name))
@@ -408,20 +410,20 @@ async function syncOneUpAsync(provider: Provider, h: Header) {
     pxt.debug(`synced up ${info.id}`)
 
     if (firstTime) {
-        h.blobId = info.id
+        h.blobId_ = info.id
     } else {
-        U.assert(h.blobId == info.id)
+        U.assert(h.blobId_ == info.id)
     }
-    h.blobVersion = info.version
+    h.blobVersion_ = info.version
     if (h.saveId === saveId)
-        h.blobCurrent = true
+        h.blobCurrent_ = true
     await ws.saveAsync(h, null, true)
 }
 
 export async function renameAsync(h: Header, newName: string) {
     const provider = currentProvider && currentProvider.hasSync() && currentProvider as Provider;
     try {
-        await provider.updateAsync(h.blobId, newName)
+        await provider.updateAsync(h.blobId_, newName)
     } catch (e) {
 
     }
@@ -501,7 +503,7 @@ export function refreshToken() {
 }
 
 export function syncAsync(): Promise<void> {
-    return Promise.all([githubSyncAsync(), cloudSyncAsync()])
+    return Promise.all([githubSyncAsync(), cloud.syncAsync()])
         .then(() => { });
 }
 
@@ -522,21 +524,20 @@ function cloudSyncAsync(): Promise<void> {
     let updated: pxt.Map<number> = {}
 
     function uninstallAsync(h: Header) {
-        pxt.debug(`uninstall local ${h.blobId}`)
+        pxt.debug(`uninstall local ${h.blobId_}`)
         h.isDeleted = true
-        h.blobVersion = "DELETED"
-        h.blobCurrent = false
+        h.blobVersion_ = "DELETED"
+        h.blobCurrent_ = false
         return ws.saveAsync(h, null, true)
     }
 
     async function resolveConflictAsync(header: Header, cloudHeader: FileInfo) {
         // rename current script
-        let text = await ws.getTextAsync(header.id)
-        let newHd = await ws.duplicateAsync(header, text)
-        header.blobId = null
-        header.blobVersion = null
-        header.blobCurrent = false
-        await ws.saveAsync(header, text)
+        let newHd = await ws.duplicateAsync(header)
+        header.blobId_ = null
+        header.blobVersion_ = null
+        header.blobCurrent_ = false
+        await ws.saveAsync(header)
         // get the cloud version
         await syncDownAsync(newHd, cloudHeader)
         // TODO move the user out of editor, or otherwise force reload
@@ -551,20 +552,19 @@ function cloudSyncAsync(): Promise<void> {
         }
 
         numDown++
-        U.assert(header.blobId == cloudHeader.id)
+        U.assert(header.blobId_ == cloudHeader.id)
         let blobId = cloudHeader.version
-        pxt.debug(`sync down ${header.blobId} - ${blobId}`)
+        pxt.debug(`sync down ${header.blobId_} - ${blobId}`)
         return provider.downloadAsync(cloudHeader.id)
             .catch(core.handleNetworkError)
             .then((resp: FileInfo) => {
-                U.assert(resp.id == header.blobId)
+                U.assert(resp.id == header.blobId_)
                 let files = resp.content
                 let hd = JSON.parse(files[HEADER_JSON] || "{}") as Header
                 delete files[HEADER_JSON]
 
-                header.cloudSync = true
-                header.blobCurrent = true
-                header.blobVersion = resp.version
+                header.blobCurrent_ = true
+                header.blobVersion_ = resp.version
                 // TODO copy anything else from the cloud?
                 header.name = hd.name || header.name || "???"
                 header.id = header.id || hd.id || U.guidGen()
@@ -579,7 +579,7 @@ function cloudSyncAsync(): Promise<void> {
                     header.modificationTime = resp.updatedAt || U.nowSeconds()
                 if (!header.recentUse)
                     header.recentUse = header.modificationTime
-                updated[header.blobId] = 1;
+                updated[header.blobId_] = 1;
 
                 if (!header0)
                     return ws.importAsync(header, files, true)
@@ -613,7 +613,7 @@ function cloudSyncAsync(): Promise<void> {
     }
 
     function syncDeleteAsync(h: Header) {
-        return provider.deleteAsync(h.blobId)
+        return provider.deleteAsync(h.blobId_)
             .then(() => uninstallAsync(h))
     }
 
@@ -625,15 +625,15 @@ function cloudSyncAsync(): Promise<void> {
             // Get all local headers including those that had been deleted
             const allScripts = ws.getHeaders(true)
             const cloudHeaders = U.toDictionary(entries, e => e.id)
-            const existingHeaders = U.toDictionary(allScripts.filter(h => h.blobId), h => h.blobId)
+            const existingHeaders = U.toDictionary(allScripts.filter(h => h.blobId_), h => h.blobId_)
             //console.log('all', allScripts);
             //console.log('cloud', cloudHeaders);
             //console.log('existing', existingHeaders);
             //console.log('syncthese', allScripts.filter(hd => hd.cloudSync));
             // Only syncronize those that have been marked with cloudSync
-            let waitFor = allScripts.filter(hd => hd.cloudSync).map(hd => {
-                if (cloudHeaders.hasOwnProperty(hd.blobId)) {
-                    let chd = cloudHeaders[hd.blobId]
+            let waitFor = allScripts.filter(hd => hd.cloudUserId).map(hd => {
+                if (cloudHeaders.hasOwnProperty(hd.blobId_)) {
+                    let chd = cloudHeaders[hd.blobId_]
 
                     // The script was deleted locally, delete on cloud
                     if (hd.isDeleted) {
@@ -641,8 +641,8 @@ function cloudSyncAsync(): Promise<void> {
                         return syncDeleteAsync(hd)
                     }
 
-                    if (chd.version == hd.blobVersion) {
-                        if (hd.blobCurrent) {
+                    if (chd.version == hd.blobVersion_) {
+                        if (hd.blobCurrent_) {
                             // nothing to do
                             return Promise.resolve()
                         } else {
@@ -650,7 +650,7 @@ function cloudSyncAsync(): Promise<void> {
                             return syncUpAsync(hd)
                         }
                     } else {
-                        if (hd.blobCurrent) {
+                        if (hd.blobCurrent_) {
                             console.log('might have synced down: ', hd.name);
                             return syncDownAsync(hd, chd)
                         } else {
@@ -659,7 +659,7 @@ function cloudSyncAsync(): Promise<void> {
                         }
                     }
                 } else {
-                    if (hd.blobVersion)
+                    if (hd.blobVersion_)
                         // this has been pushed once to the cloud - uninstall wins
                         return uninstallAsync(hd)
                     else {
@@ -758,7 +758,7 @@ function setStatus(s: string) {
     }
 }
 
-function userInitials(username: string): string {
+export function userInitials(username: string): string {
     if (!username) return "?";
     // Parse the user name for user initials
     const initials = username.match(/\b\w/g) || [];

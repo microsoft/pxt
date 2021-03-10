@@ -6,7 +6,8 @@ import * as sui from "./sui";
 import * as tutorial from "./tutorial";
 import * as container from "./container";
 import * as core from "./core";
-import * as cloud from "./cloud";
+import * as auth from "./auth";
+import * as identity from "./identity";
 import * as cloudsync from "./cloudsync";
 import * as pkg from "./package";
 
@@ -93,14 +94,12 @@ class DocsMenuItem extends sui.StatelessUIElement<DocsMenuItemProps> {
 }
 
 export interface SettingsMenuProps extends ISettingsProps {
-    highContrast: boolean;
     greenScreen: boolean;
     accessibleBlocks: boolean;
 }
 
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 export interface SettingsMenuState {
-    highContrast?: boolean;
     greenScreen?: boolean;
     accessibleBlocks?: boolean;
 }
@@ -235,9 +234,6 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
 
     UNSAFE_componentWillReceiveProps(nextProps: SettingsMenuProps) {
         const newState: SettingsMenuState = {};
-        if (nextProps.highContrast != undefined) {
-            newState.highContrast = nextProps.highContrast;
-        }
         if (nextProps.greenScreen !== undefined) {
             newState.greenScreen = nextProps.greenScreen;
         }
@@ -248,13 +244,13 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
     }
 
     shouldComponentUpdate(nextProps: SettingsMenuProps, nextState: SettingsMenuState, nextContext: any): boolean {
-        return this.state.highContrast != nextState.highContrast
-            || this.state.greenScreen != nextState.greenScreen
+        return this.state.greenScreen != nextState.greenScreen
             || this.state.accessibleBlocks != nextState.accessibleBlocks;
     }
 
     renderCore() {
-        const { highContrast, greenScreen, accessibleBlocks } = this.state;
+        const highContrast = this.getData<boolean>(auth.HIGHCONTRAST)
+        const { greenScreen, accessibleBlocks } = this.state;
         const targetTheme = pxt.appTarget.appTheme;
         const packages = pxt.appTarget.cloud && !!pxt.appTarget.cloud.packages;
         const reportAbuse = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing;
@@ -517,10 +513,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
     exitTutorial() {
         const tutorialOptions = this.props.parent.state.tutorialOptions;
         pxt.tickEvent("menu.exitTutorial", { tutorial: tutorialOptions?.tutorial }, { interactiveConsent: true });
-        if (tutorialOptions?.tutorialRecipe)
-            this.props.parent.completeTutorialAsync().then();
-        else
-            this.props.parent.exitTutorial();
+        this.props.parent.exitTutorial();
     }
 
     showReportAbuse() {
@@ -535,7 +528,8 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
     }
 
     renderCore() {
-        const { debugging, home, header, highContrast, greenScreen, accessibleBlocks, simState, tutorialOptions } = this.props.parent.state;
+        const highContrast = this.getData<boolean>(auth.HIGHCONTRAST)
+        const { debugging, home, header, greenScreen, accessibleBlocks, simState, tutorialOptions } = this.props.parent.state;
         if (home) return <div />; // Don't render if we're on the home screen
 
         const targetTheme = pxt.appTarget.appTheme;
@@ -550,7 +544,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         const hideIteration = tutorialOptions && tutorialOptions.metadata && tutorialOptions.metadata.hideIteration;
         const tutorialReportId = tutorialOptions && tutorialOptions.tutorialReportId;
         const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox && !inTutorial && !debugging;
-        const hc = !!this.props.parent.state.highContrast;
+        const hc = highContrast;
         const showShare = !inTutorial && header && pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && !isController && !debugging;
 
         const logo = (hc ? targetTheme.highContrastLogo : undefined) || targetTheme.logo;
@@ -561,10 +555,6 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
 
         const simOpts = pxt.appTarget.simulator;
         const isHeadless = simOpts && simOpts.headless;
-
-        const hasCloud = this.hasCloud();
-        const user = hasCloud ? this.getUser() : undefined;
-        const showCloud = !sandbox && !inTutorial && !debugging && !!user;
 
         const cfg = pkg.mainPkg && pkg.mainPkg.config;
         const languageRestriction = cfg && cfg.languageRestriction;
@@ -607,12 +597,12 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
             <div className="right menu">
                 {debugging ? <sui.ButtonMenuItem className="exit-debugmode-btn" role="menuitem" icon="external" text={lf("Exit Debug Mode")} textClass="landscape only" onClick={this.toggleDebug} /> : undefined}
                 {docMenu ? <container.DocsMenu parent={this.props.parent} editor={editor} /> : undefined}
-                {sandbox || inTutorial || debugging ? undefined : <container.SettingsMenu parent={this.props.parent} highContrast={highContrast} greenScreen={greenScreen} accessibleBlocks={accessibleBlocks} />}
-                {showCloud ? <cloud.UserMenu parent={this.props.parent} /> : undefined}
+                {sandbox || inTutorial || debugging ? undefined : <container.SettingsMenu parent={this.props.parent} greenScreen={greenScreen} accessibleBlocks={accessibleBlocks} />}
                 {sandbox && !targetTheme.hideEmbedEdit ? <sui.Item role="menuitem" icon="external" textClass="mobile hide" text={lf("Edit")} onClick={this.launchFullEditor} /> : undefined}
                 {inTutorial && tutorialReportId ? <sui.ButtonMenuItem className="report-tutorial-btn" role="menuitem" icon="warning circle" text={lf("Report Abuse")} textClass="landscape only" onClick={this.showReportAbuse} /> : undefined}
                 {(inTutorial && !lockedEditor && !hideIteration) && <sui.ButtonMenuItem className="exit-tutorial-btn" role="menuitem" icon="external" text={lf("Exit tutorial")} textClass="landscape only" onClick={this.exitTutorial} />}
 
+                {auth.hasIdentity() ? <identity.UserMenu parent={this.props.parent} continuationHash={"#editor"} /> : undefined}
                 {!sandbox ? <a href={lockedEditor ? undefined : targetTheme.organizationUrl} aria-label={lf("{0} Logo", targetTheme.organization)} role="menuitem" target="blank" rel="noopener" className="ui item logo organization" onClick={lockedEditor ? undefined : this.orgIconClick}>
                     {targetTheme.organizationWideLogo || targetTheme.organizationLogo
                         ? <img className={`ui logo ${targetTheme.organizationWideLogo ? " portrait hide" : ''}`} src={targetTheme.organizationWideLogo || targetTheme.organizationLogo} alt={lf("{0} Logo", targetTheme.organization)} />

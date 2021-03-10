@@ -54,6 +54,16 @@ namespace pxt.gallery {
         return undefined;
     }
 
+    export function parseTemplateProjectJSON(md: string): pxt.Map<string> {
+        const pm = /```assetjson\s+((.|\s)+?)\s*```/i.exec(md);
+
+        if (pm) {
+            return pxt.tutorial.parseAssetJson(pm[1]);
+        }
+
+        return {};
+    }
+
     export function parseExampleMarkdown(name: string, md: string): GalleryProject {
         if (!md) return undefined;
 
@@ -77,6 +87,11 @@ namespace pxt.gallery {
             snippetType,
             source
         };
+
+        prj.filesOverride = {
+            ...prj.filesOverride,
+            ...parseTemplateProjectJSON(md)
+        }
 
         if (jres) {
             prj.filesOverride[pxt.TILEMAP_JRES] = jres.jres;
@@ -124,7 +139,9 @@ namespace pxt.gallery {
     }
 
     export function parseCodeCardsHtml(el: HTMLElement) {
-        const cards: pxt.CodeCard[] = []
+        let cards: pxt.CodeCard[] = []
+
+        // if there are UL/OL elements under el, it's the new format
         let card: any;
         Array.from(el.children)
             .forEach(child => {
@@ -153,7 +170,14 @@ namespace pxt.gallery {
         // flush last card
         if (card)
             cards.push(card);
-        return !!cards.length && cards;
+
+        // try older format
+        if (cards.length === 0 && el.tagName === "CODE") {
+            // legacy JSON format
+            cards = pxt.Util.jsonTryParse(el.textContent);
+        }
+
+        return !!cards?.length && cards;
     }
 
     export function parseGalleryMardown(md: string): Gallery[] {
@@ -206,5 +230,33 @@ namespace pxt.gallery {
     export function loadGalleryAsync(name: string): Promise<Gallery[]> {
         return pxt.Cloud.markdownAsync(name)
             .then(md => parseGalleryMardown(md))
+    }
+
+    export function codeCardsToMarkdown(cards: pxt.CodeCard[]) {
+        const md = `### ~ codecard
+
+${(cards || []).map(
+            card => Object.keys(card)
+                .filter(k => !!(<any>card)[k])
+                .map(k => k === "otherActions"
+                    ? otherActionsToMd((<any>card)[k])
+                    : `* ${k}: ${(<any>card)[k]}`
+                ).join('\n')
+        )
+                .join(
+                    `
+
+---
+
+`)}
+
+### ~
+`
+        return md;
+
+        function otherActionsToMd(oas: pxt.CodeCardAction[]): string {
+            return oas.map(oa => `* otherAction: ${oa.url}, ${oa.editor || ""}, ${oa.cardType || ""}`)
+                .join('\n');
+        }
     }
 }

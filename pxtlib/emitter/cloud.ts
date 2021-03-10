@@ -2,8 +2,8 @@
 namespace pxt.Cloud {
     import Util = pxtc.Util;
 
-    // hit /api/ to stay on same domain and avoid CORS
     export let apiRoot = (pxt.BrowserUtils.isLocalHost() || Util.isNodeJS) ? "https://www.makecode.com/api/" : "/api/";
+
     export let accessToken = "";
     export let localToken = "";
     let _isOnline = true;
@@ -107,7 +107,7 @@ namespace pxt.Cloud {
             return apiRequestWithCdnAsync({ url }).then(r => r.json)
     }
 
-    export function downloadScriptFilesAsync(id: string) {
+    export function downloadScriptFilesAsync(id: string): Promise<Map<string>> {
         return privateRequestAsync({ url: id + "/text", forceLiveEndpoint: true }).then(resp => {
             return JSON.parse(resp.text)
         })

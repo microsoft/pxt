@@ -1,0 +1,22 @@
+.graph-activity.selected rect, .graph-activity.selected circle {
+    stroke: var(--hover-color);
+    stroke-width: 4px;
+}
+
+.graph-icon {
+    font-family: Icons;
+    font-size: 1.75rem;
+    opacity: 0.8;
+}
+
+.graph-icon-x {
+    font-family: xicon;
+    font-size: 1.75rem;
+    opacity: 0.8;
+}
+
+.graph-status-icon {
+    font-family: Icons;
+    font-size: 1rem;
+    opacity: 0.8;
+}

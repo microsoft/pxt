@@ -1334,13 +1334,14 @@ namespace pxt.hexloader {
         let hexurl = ""
 
         showLoading(pxt.U.lf("Compiling (this may take a minute)..."));
+        pxt.tickEvent("cppcompile.start")
         return downloadHexInfoLocalAsync(extInfo)
             .then((hex) => {
                 if (hex) {
                     // Found the hex image in the local server cache, use that
+                    pxt.tickEvent("cppcompile.cachehit")
                     return hex;
                 }
-
                 return getCdnUrlAsync()
                     .then(url => {
                         hexurl = url + "/compile/" + extInfo.sha
@@ -1349,12 +1350,29 @@ namespace pxt.hexloader {
                     .then(r => r, e =>
                         Cloud.privatePostAsync("compile/extension", { data: extInfo.compileData })
                             .then(ret => new Promise<string>((resolve, reject) => {
-                                let tryGet = () => {
+                                let retry = 0;
+                                const delay = 8000; // ms
+                                const maxWait = 120000; // ms
+                                const startTry = U.now();
+                                const tryGet = () => {
+                                    retry++;
+                                    if (U.now() - startTry > maxWait) {
+                                        pxt.log(`abandoning C++ build`)
+                                        pxt.tickEvent("cppcompile.cancel", { retry })
+                                        resolve(null);
+                                        return null;
+                                    }
                                     let url = ret.hex.replace(/\.hex/, ".json")
-                                    pxt.log(`polling C++ build ${url}`)
+                                    pxt.log(`polling C++ build ${url} (attempt #${retry})`)
+                                    pxt.tickEvent("cppcompile.poll", { retry })
                                     return Util.httpGetJsonAsync(url)
                                         .then(json => {
                                             pxt.log(`build log ${url.replace(/\.json$/, ".log")}`);
+                                            pxt.tickEvent("cppcompile.done", {
+                                                success: json?.success ? 1 : 0,
+                                                retry,
+                                                duration: U.now() - startTry
+                                            })
                                             if (!json.success) {
                                                 pxt.log(`build failed`);
                                                 if (json.mbedresponse && json.mbedresponse.result && json.mbedresponse.result.exception)
@@ -1367,8 +1385,9 @@ namespace pxt.hexloader {
                                             }
                                         },
                                             e => {
-                                                setTimeout(tryGet, 1000)
-                                                return null
+                                                pxt.log(`waiting ${(delay / 1000) | 0}s for C++ build...`)
+                                                setTimeout(tryGet, delay)
+                                                return null;
                                             })
                                 }
                                 tryGet();
@@ -1446,7 +1465,7 @@ namespace pxt.hexloader {
                 keys.unshift(newkey)
                 let todel = keys.slice(maxLen)
                 keys = keys.slice(0, maxLen)
-                return U.promiseMapAll(todel, e => host.cacheStoreAsync(e, null))
+                return U.promiseMapAll(todel, e => host.cacheStoreAsync(e, "[]"))
                     .then(() => host.cacheStoreAsync(idxkey, JSON.stringify(keys)))
             })
     }

@@ -83,7 +83,6 @@ namespace pxt.editor {
         pokeUserComponent?: string;
         flashHint?: boolean;
 
-        highContrast?: boolean;
         print?: boolean;
         greenScreen?: boolean;
         accessibleBlocks?: boolean;
@@ -201,6 +200,8 @@ namespace pxt.editor {
         saveBlocksToTypeScriptAsync(): Promise<string>;
 
         saveFileAsync(): Promise<void>;
+        saveCurrentSourceAsync(): Promise<void>;
+        saveProjectAsync(): Promise<void>;
         loadHeaderAsync(h: pxt.workspace.Header): Promise<void>;
         reloadHeaderAsync(): Promise<void>;
         importProjectAsync(prj: pxt.workspace.Project, editorState?: pxt.editor.EditorState): Promise<void>;
@@ -216,11 +217,10 @@ namespace pxt.editor {
         importExampleAsync(options: ExampleImportOptions): Promise<void>;
         showScriptManager(): void;
         importProjectDialog(): void;
-        cloudSync(): boolean;
-        cloudSignInDialog(): void;
-        cloudSignOut(): void;
         removeProject(): void;
         editText(): void;
+
+        hasCloudSync(): boolean;
 
         getPreferredEditor(): string;
         saveAndCompile(): void;
@@ -247,6 +247,7 @@ namespace pxt.editor {
         pokeUserActivity(): void;
         stopPokeUserActivity(): void;
         clearUserPoke(): void;
+        setHintSeen(step: number): void;
 
         anonymousPublishAsync(screenshotUri?: string): Promise<string>;
 
@@ -282,7 +283,7 @@ namespace pxt.editor {
         typecheckNow(): void;
         shouldPreserveUndoStack(): boolean;
 
-        openExtension(extension: string, url: string, consentRequired?: boolean): void;
+        openExtension(extension: string, url: string, consentRequired?: boolean, trusted?: boolean): void;
         handleExtensionRequest(request: ExtensionRequest): void;
 
         fireResize(): void;
@@ -312,7 +313,7 @@ namespace pxt.editor {
 
         editor: IEditor;
 
-        startActivity(activitity: Activity, path: string, title?: string, editor?: string): void;
+        startActivity(activitity: Activity, path: string, title?: string, editor?: string, focus?: boolean, opts?: pxt.editor.ExampleImportOptions): void;
         showLightbox(): void;
         hideLightbox(): void;
         showKeymap(show: boolean): void;
@@ -323,6 +324,9 @@ namespace pxt.editor {
         showShareDialog(title?: string): void;
         showAboutDialog(): void;
 
+        showLoginDialog(continuationHash?: string): void;
+        showProfileDialog(location?: string): void;
+
         showImportUrlDialog(): void;
         showImportFileDialog(options?: ImportFileOptions): void;
         showImportGithubDialog(): void;
@@ -332,7 +336,7 @@ namespace pxt.editor {
         showChooseHwDialog(skipDownload?: boolean): void;
         showExperimentsDialog(): void;
 
-        showPackageDialog(): void;
+        showPackageDialog(query?: string): void;
         showBoardDialogAsync(features?: string[], closeIcon?: boolean): Promise<void>;
         checkForHwVariant(): boolean;
         pairAsync(): Promise<void>;

@@ -72,6 +72,8 @@ function getUsedBlocksInternalAsync(code: string[], id: string, language?: strin
                     const blk = allblocks[bi];
                     if (!blk.isShadow()) usedBlocks[blk.type] = 1;
                 }
+                headless.dispose();
+
                 if (pxt.options.debug)
                     pxt.debug(JSON.stringify(usedBlocks, null, 2));
 
@@ -277,6 +279,9 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
         const tutorialHint = step.hintContentMd;
         const fullText = step.contentMd;
 
+        const hideIteration = options.metadata.hideIteration;
+        const flyoutOnly = options.metadata.flyoutOnly;
+
         if (!step.showDialog) {
             if (!tutorialHint) return <div />;
 
@@ -286,7 +291,7 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
         } else {
             let onClick = tutorialStep < tutorialStepInfo.length - 1 ? this.next : this.closeHint;
             const actions: sui.ModalButton[] = [{
-                label: lf("Start"),
+                label: hideIteration && flyoutOnly ? lf("Start") : lf("Ok"),
                 onclick: onClick,
                 icon: 'check',
                 className: 'green'
@@ -315,6 +320,7 @@ interface TutorialCardProps extends ISettingsProps {
 export class TutorialCard extends data.Component<TutorialCardProps, TutorialCardState> {
     private prevStep: number;
     private cardHeight: number;
+    private resizeDebouncer: () => void;
 
     public focusInitialized: boolean;
 
@@ -339,6 +345,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         this.finishTutorial = this.finishTutorial.bind(this);
         this.toggleExpanded = this.toggleExpanded.bind(this);
         this.onMarkdownDidRender = this.onMarkdownDidRender.bind(this);
+        this.handleResize = this.handleResize.bind(this);
 
     }
 
@@ -433,8 +440,15 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         }
     }
 
+    private handleResize() {
+        const options = this.props.parent.state.tutorialOptions;
+        this.setShowSeeMore(options.autoexpandStep);
+    }
+
     componentDidMount() {
         this.setShowSeeMore(this.props.parent.state.tutorialOptions.autoexpandStep);
+        this.resizeDebouncer = pxt.Util.debounce(this.handleResize, 500);
+        window.addEventListener('resize', this.resizeDebouncer);
     }
 
     onMarkdownDidRender() {
@@ -450,6 +464,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         this.props.parent.stopPokeUserActivity();
 
         this.removeHintOnClick();
+        window.removeEventListener('resize', this.resizeDebouncer);
     }
 
     private removeHintOnClick() {
@@ -501,7 +516,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         const tutorialCard = this.refs['tutorialmessage'] as HTMLElement;
         let show = false;
         if (tutorialCard && tutorialCard.firstElementChild && tutorialCard.firstElementChild.firstElementChild) {
-            show = tutorialCard.clientHeight < tutorialCard.firstElementChild.firstElementChild.scrollHeight;
+            show = tutorialCard.clientHeight <= tutorialCard.firstElementChild.firstElementChild.scrollHeight;
             if (show) {
                 this.cardHeight = tutorialCard.firstElementChild.firstElementChild.scrollHeight;
                 if (autoexpand) this.props.parent.setTutorialInstructionsExpanded(true);
@@ -533,6 +548,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
 
         const th = this.refs["tutorialhint"] as TutorialHint;
         if (!th) return;
+        const currentStep = this.props.parent.state.tutorialOptions.tutorialStep;
 
         if (!visible) {
             if (th.elementRef) th.elementRef.removeEventListener('click', this.expandedHintOnClick);
@@ -547,6 +563,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
             if (!options.tutorialStepInfo[options.tutorialStep].showDialog)
                 document.addEventListener('click', this.closeHint); // add close listener if not modal
             pxt.tickEvent(`tutorial.showhint`, { tutorial: options.tutorial, step: options.tutorialStep });
+            this.props.parent.setHintSeen(currentStep);
         }
         th.showHint(visible, showFullText);
     }

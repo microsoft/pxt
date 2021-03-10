@@ -214,6 +214,15 @@ function pxtcommon() {
 
 // TODO: Copied from Jakefile; should be async
 function updatestrings() {
+    return buildStrings("built/strings.json", ["pxtlib", "pxtblocks", "pxtblocks/fields", "webapp/src"]);
+}
+
+function updateSkillMapStrings() {
+    return buildStrings("built/skillmap-strings.json", ["skillmap/src"], true);
+}
+
+// TODO: Copied from Jakefile; should be async
+function buildStrings(out, rootPaths, recursive) {
     let errCnt = 0;
     const translationStrings = {}
     const translationHelpStrings = {}
@@ -252,7 +261,7 @@ function updatestrings() {
     }
 
     let fileCnt = 0;
-    const paths = ju.expand1(["pxtlib", "pxtblocks", "pxtblocks/fields", "webapp/src"]);
+    const paths = recursive ? ju.expand(rootPaths) : ju.expand1(rootPaths);
     paths.forEach(pth => {
         fileCnt++;
         processLf(pth);
@@ -266,9 +275,9 @@ function updatestrings() {
     fs.writeFileSync("built/localization.json", JSON.stringify({ strings: tr }, null, 1))
     let strings = {};
     tr.forEach((k) => { strings[k] = k; });
-    fs.writeFileSync("built/strings.json", JSON.stringify(strings, null, 2));
+    fs.writeFileSync(out, JSON.stringify(strings, null, 2));
 
-    console.log("Localization extraction: " + fileCnt + " files; " + tr.length + " strings");
+    console.log("Localization extraction: " + fileCnt + " files; " + tr.length + " strings; " + out);
     if (errCnt > 0)
         console.log("%d errors", errCnt);
 
@@ -501,6 +510,47 @@ const copyBlocklyTypings = () => gulp.src("node_modules/pxt-blockly/typings/bloc
 const copyBlockly = gulp.parallel(copyBlocklyCompressed, copyBlocklyEnJs, copyBlocklyEnJson, copyBlocklyMedia, copyBlocklyTypings);
 
 
+/********************************************************
+                      Skillmap
+*********************************************************/
+
+const skillmapRoot = "skillmap";
+const skillmapOut = "built/web/skillmap";
+
+const cleanSkillmap = () => rimraf(skillmapOut);
+
+const copyWebpackBase = () => gulp.src([`${skillmapRoot}/node_modules/react-scripts/config/webpack.config.js`])
+    .pipe(concat("webpack.config.base.js"))
+    .pipe(gulp.dest(`${skillmapRoot}/node_modules/react-scripts/config`))
+
+const copyWebpackOverride = () => gulp.src([`${skillmapRoot}/webpack.config.override.js`])
+    .pipe(concat("webpack.config.js"))
+    .pipe(gulp.dest(`${skillmapRoot}/node_modules/react-scripts/config`));
+
+const replaceWebpackBase = () => gulp.src([`${skillmapRoot}/node_modules/react-scripts/config/webpack.config.base.js`])
+    .pipe(concat("webpack.config.js"))
+    .pipe(gulp.dest(`${skillmapRoot}/node_modules/react-scripts/config`));
+
+const buildSkillmap =  () => exec("npm install", false, { cwd: skillmapRoot })
+    .then(gulp.series([copyWebpackBase, copyWebpackOverride]))
+    .then(() => exec("npm run build", false, { cwd: skillmapRoot }))
+    .then(replaceWebpackBase)
+    .catch(replaceWebpackBase);
+
+const copySkillmapCss = () => gulp.src(`${skillmapRoot}/build/static/css/*`)
+    .pipe(gulp.dest(`${skillmapOut}/css`));
+
+const copySkillmapJs = () => gulp.src(`${skillmapRoot}/build/static/js/*`)
+    .pipe(gulp.dest(`${skillmapOut}/js`));
+
+const copySkillmapHtml = () => rimraf("webapp/public/skillmap.html")
+    .then(() => gulp.src(`${skillmapRoot}/build/index.html`)
+                    .pipe(replace(/="\/static\//g, `="/blb/skillmap/`))
+                    .pipe(concat("skillmap.html"))
+                    .pipe(gulp.dest("webapp/public")));
+
+const skillmap = gulp.series(cleanSkillmap, buildSkillmap, gulp.parallel(copySkillmapCss, copySkillmapJs, copySkillmapHtml));
+
 
 /********************************************************
                  Tests and Linting
@@ -509,7 +559,7 @@ const copyBlockly = gulp.parallel(copyBlocklyCompressed, copyBlocklyEnJs, copyBl
 const lint = () => Promise.all(
     ["cli", "pxtblocks", "pxteditor", "pxtlib", "pxtcompiler",
         "pxtpy", "pxtrunner", "pxtsim", "pxtwinrt", "webapp",
-        "docfiles/pxtweb"].map(dirname =>
+        "docfiles/pxtweb", "skillmap"].map(dirname =>
             exec(`node node_modules/tslint/bin/tslint --project ./${dirname}/tsconfig.json`, true)))
     .then(() => console.log("linted"))
 
@@ -585,6 +635,7 @@ function testTask(testFolder, testFile) {
 
 const buildAll = gulp.series(
     updatestrings,
+    updateSkillMapStrings,
     copyTypescriptServices,
     copyBlocklyTypings,
     gulp.parallel(pxtlib, pxtweb),
@@ -595,6 +646,7 @@ const buildAll = gulp.series(
     gulp.parallel(pxtjs, pxtdts, pxtapp, pxtworker, pxtembed),
     targetjs,
     gulp.parallel(buildcss, buildSVGIcons),
+    skillmap,
     webapp,
     browserifyWebapp,
     browserifyAssetEditor,
@@ -629,6 +681,7 @@ exports.watch = initWatch;
 exports.watchCli = initWatchCli;
 exports.testlanguageservice = testlanguageservice;
 exports.onlinelearning = onlinelearning;
+exports.skillmap = skillmap;
 
 console.log(`pxt build how to:`)
 console.log(`run "gulp watch" in pxt folder`)

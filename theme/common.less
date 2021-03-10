@@ -188,15 +188,31 @@ pre {
 }
 
 #filelist {
-    padding: 1em 2em 1em 2em;
+    padding-top: 1em;
+    padding-right: ~"calc(2em - @{customScrollbarWidth})";
+    padding-bottom: 1em;
+    padding-left: 2em;
     overflow-x: hidden;
-    overflow-y: auto;
     margin-top: 0;
     margin-bottom: 0;
     width: 100%;
-    background-color: @simulatorBackground;
-    z-index: @simulatorZIndex;
+    background-color: @filelistBackgroundColor;
+    z-index: @filelistZIndex;
+
+    // the scroll bar is always visible, but we hide it when needed
+    overflow-y: scroll; 
 }
+
+.invisibleScrollbar::-webkit-scrollbar { 
+    background: transparent !important; 
+}    
+.invisibleScrollbar::-webkit-scrollbar-thumb { 
+    display: none !important;
+}    
+.invisibleScrollbar::-webkit-scrollbar-track { 
+    background: transparent !important; 
+}    
+
 
 #filelist .simtoolbar {
     -webkit-transition: opacity 0.2s; /* Safari */
@@ -241,11 +257,19 @@ pre {
 
 #filelist .nested.item {
     padding: .92857143em 1.14285714em;
-    padding-left: 2rem;
+    padding-left: 1rem;
 }
 
-#filelist .header {
-    background: rgba(0,0,0,0.05);
+#filelist .header.item {
+    background: @filelistHeaderBackground;
+}
+
+#filelist .folder.item {
+    font-weight: bold;
+}
+
+#filelist .folderitem.item {
+    padding-left: 2rem;
 }
 
 #simulators {
@@ -1065,6 +1089,10 @@ p.ui.font.small {
     font-size: 0.95rem;
 }
 
+#projectNameArea .cloudState {
+    color: rgba(0, 0, 0, 0.5);
+}
+
 /*******************************
         Media Adjustments
 *******************************/
@@ -1690,6 +1718,130 @@ div.simframe.ui.embed {
 	image-rendering: optimize-contrast;
 	image-rendering: pixelated;
     -ms-interpolation-mode: nearest-neighbor;
+}
+
+/* Sign in dialog */
+.ui.modal.signindialog {
+    .content {
+        padding: 24px 20px;
+    }
+
+    div.description {
+        margin-bottom: 20px;
+    }
+
+    div.warning {
+        background-color: #F5BC5F;
+        padding: 6px;
+        margin-bottom: 20px;
+    }
+
+    div.container {
+        display: grid;
+        row-gap: 10px;
+        grid-template-rows: 36px auto;
+        grid-template-columns: auto;
+        justify-content: center;
+
+        button {
+            margin: 0;
+        }
+
+        div.prompt {
+            justify-self: center;
+        }
+
+        div.providers {
+            display: grid;
+            row-gap: 20px;
+            grid-template-rows: auto;
+            justify-content: center;
+        }
+    }
+}
+
+/* Profile dialog */
+.profiledialog {
+    .ui.card {
+        margin: 0;
+        margin-right: 14px;
+        margin-bottom: 14px;
+        border-radius: @homeCardBorderRadius;
+        color: @homeCardColor;
+        border: @homeCardBorderSize solid @homeCardBorderColor !important;
+        background-color: @homeCardBackgroundColor;
+
+        button {
+            margin: 0;
+        }
+
+        label.title {
+            font-weight: bold;
+        }
+
+        p.value {
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        p.description {
+            text-overflow: ellipsis;
+            overflow: hidden;
+        }
+
+        p.warning {
+            background-color: #F5BC5F;
+            padding: 6px;
+        }
+
+        div.header-text {
+            font-size: 20px;
+            white-space: nowrap;
+            grid-row-start: 1;
+            grid-row-end: 1;
+            grid-column-start: 1;
+            grid-column-end: 2;
+            justify-self: start;
+        }
+
+        div.profile-pic {
+            grid-row-start: 1;
+            grid-row-end: 1;
+            grid-column-start: 2;
+            grid-column-end: 2;
+            justify-self: end;
+        }
+
+        &.panel {
+            width: fit-content;
+            min-width: 350px;
+            max-width: 500px;
+            padding: 14px;
+            display: inline-grid;
+            row-gap: 20px;
+            grid-template-rows: auto;
+            grid-template-columns: auto;
+
+            div.row {
+                grid-row-start: auto;
+                grid-row-end: auto;
+                grid-column-start: 1;
+                grid-column-end: 2;
+                justify-self: start;
+                max-width: 100%;
+            }
+
+            div.row-span-two {
+                grid-row-start: auto;
+                grid-row-end: auto;
+                grid-column-start: 1;
+                grid-column-end: 3;
+                justify-self: start;
+                max-width: 100%;
+            }
+        }
+    }
 }
 
 .sandbox.simView {

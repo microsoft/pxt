@@ -55,17 +55,17 @@
 <body>
     <select id="selectleft">
         <option value="https://makecode.microbit.org/">micro:bit</option>
+        <option value="https://arcade.makecode.com/">Arcade</option>
         <option value="https://makecode.adafruit.com/beta">Adafruit Circuit Playground Express (beta)</option>
-        <option value="https://arcade.makecode.com/beta">Arcade (beta)</option>
-        <option value="https://makecode.calliope.cc/beta">Calliope (beta)</option>
         <option value="https://maker.makecode.com/beta">Maker (beta)</option>
+        <option value="https://makecode.calliope.cc/beta">Calliope (beta)</option>
     </select>
     <select id="selectright">
         <option value="https://makecode.microbit.org/">micro:bit</option>
+        <option value="https://arcade.makecode.com/">Arcade</option>
         <option value="https://makecode.adafruit.com/beta">Adafruit Circuit Playground Express (beta)</option>
-        <option value="https://arcade.makecode.com/beta">Arcade (beta)</option>
+        <option value="https://maker.makecode.com/">Maker</option>
         <option value="https://makecode.calliope.cc/beta">Calliope (beta)</option>
-        <option value="https://maker.makecode.com/">Maker (beta)</option>
     </select>
     <iframe id="left" allow="usb;camera"></iframe>
     <div id="divider"></div>
@@ -78,6 +78,18 @@
             var selectLeft = document.getElementById("selectleft");
             var selectRight = document.getElementById("selectright");
             var localhost = /localhost=1/.test(window.location.href)
+            var beta = /beta=1/.test(window.location.href)
+            if (beta) {
+                const betaUrls = ["https://makecode.microbit.org/beta"];
+                [selectLeft, selectRight].forEach(function (sel) {
+                    betaUrls.forEach(function (betaUrl) {
+                        var opt = document.createElement("option")
+                        opt.value = betaUrl;
+                        opt.innerText = "micro:bit (beta)"
+                        sel.appendChild(opt)
+                    })
+                })
+            }
             if (localhost) {
                 [selectLeft, selectRight].forEach(function (sel) {
                     var opt = document.createElement("option")
@@ -88,12 +100,26 @@
             }
             var jacdac = /jacdac=1/.test(window.location.href)
             if (jacdac) {
+                const jacdacUrl = "https://microsoft.github.io/jacdac-ts";
                 [selectLeft, selectRight].forEach(function (sel) {
                     var opt = document.createElement("option")
-                    opt.value = localhost ? "http://localhost:8000" : "https://microsoft.github.io/jacdac-ts"
-                    opt.innerText = localhost ? "JACDAC localhost:8000" : "JACDAC (beta)"
+                    opt.value = jacdacUrl;
+                    opt.innerText = "JACDAC (beta)"
                     sel.appendChild(opt)
                 })
+                selectLeft.value = jacdacUrl;
+                selectRight.value = "https://maker.makecode.com/";
+
+                if (localhost) {
+                    const jacdacUrl = "http://localhost:8000";
+                    [selectLeft, selectRight].forEach(function (sel) {
+                        var opt = document.createElement("option")
+                        opt.value = jacdacUrl;
+                        opt.innerText = "JACDAC localhost:8000"
+                        sel.appendChild(opt)
+                    })
+                    selectLeft.value = jacdacUrl;
+                }
             }
             var divider = document.getElementById("divider");
             var flags = "?nestededitorsim=1&editorlayout=ide&nosandbox=1&parentOrigin=" + encodeURIComponent(window.location.origin);

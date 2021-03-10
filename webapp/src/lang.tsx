@@ -3,6 +3,8 @@ import * as codecard from "./codecard"
 import * as sui from "./sui"
 import * as data from "./data"
 import * as core from "./core"
+import * as auth from "./auth"
+import { compose } from "redux";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -72,11 +74,10 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
             return;
         }
 
-        pxt.BrowserUtils.setCookieLang(langId);
-
         if (langId !== initialLang) {
             pxt.tickEvent(`menu.lang.changelang`, { lang: langId });
-            pxt.winrt.releaseAllDevicesAsync()
+            core.setLanguage(langId)
+                .then(() => pxt.winrt.releaseAllDevicesAsync())
                 .then(() => {
                     this.props.parent.reloadEditor();
                 })

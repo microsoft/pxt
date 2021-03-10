@@ -592,6 +592,48 @@ code.lang-filterblocks {
     }
 }
 
+/**
+ * CSS for embedded tutorial used in the skills map
+ */
+.tutorial.tutorial-embed {
+    #filelist, #maineditor, &.sideDocs #sidedocs, .simView #simulators {
+        top: @tutorialEmbedMenuHeight;
+    }
+    .simView #boardview {
+        padding-top: @tutorialEmbedMenuHeight;
+    }
+    .menubar .ui.menu {
+        height: @tutorialEmbedMenuHeight !important;
+        min-height: @tutorialEmbedMenuHeight !important;
+    }
+    #mainmenu {
+        .left.menu, .right.menu {
+            display: none;
+        }
+        .menu {
+            position: absolute;
+            height: @tutorialEmbedMenuHeight;
+            width: 100%;
+        }
+        .ui.item {
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .ui.item.tutorial-menuitem {
+            background: none !important;
+        }
+
+        // In the embedded view, always show the navigation dots even in mobile
+        // (instead of progress circle)
+        .ui.item.mobile.hide {
+            display: flex !important;
+        }
+        .ui.item.mobile.only {
+            display: none !important;
+        }
+    }
+}
+
 /*******************************
         Media Adjustments
 *******************************/

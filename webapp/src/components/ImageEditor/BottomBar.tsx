@@ -6,6 +6,7 @@ import { dispatchChangeImageDimensions, dispatchUndoImageEdit, dispatchRedoImage
 import { IconButton } from "./Button";
 import { fireClickOnlyOnEnter } from "./util";
 import { isNameTaken } from "../../assets";
+import { obtainShortcutLock, releaseShortcutLock } from "./keyboardShortcuts";
 
 export interface BottomBarProps {
     dispatchChangeImageDimensions: (dimensions: [number, number]) => void;
@@ -28,6 +29,7 @@ export interface BottomBarProps {
     dispatchChangeAssetName: (name: string) => void;
 
     singleFrame?: boolean;
+    isTilemap?: boolean;
 
     onDoneClick?: () => void;
 }
@@ -40,6 +42,8 @@ export interface BottomBarState {
 }
 
 export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarState> {
+    protected shortcutLock: number;
+
     constructor(props: BottomBarProps) {
         super(props);
         this.state = {};
@@ -79,6 +83,7 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
                             value={width}
                             tabIndex={0}
                             onChange={this.handleWidthChange}
+                            onFocus={this.disableShortcutsOnFocus}
                             onBlur={this.handleDimensionalBlur}
                             onKeyDown={this.handleDimensionalKeydown}
                         />
@@ -96,6 +101,7 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
                             value={height}
                             tabIndex={0}
                             onChange={this.handleHeightChange}
+                            onFocus={this.disableShortcutsOnFocus}
                             onBlur={this.handleDimensionalBlur}
                             onKeyDown={this.handleDimensionalKeydown}
                         />
@@ -121,6 +127,7 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
                         placeholder={lf("Asset Name")}
                         tabIndex={0}
                         onChange={this.handleAssetNameChange}
+                        onFocus={this.disableShortcutsOnFocus}
                         onBlur={this.handleAssetNameBlur}
                         onKeyDown={this.handleDimensionalKeydown}
                     />
@@ -169,6 +176,10 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
         );
     }
 
+    protected disableShortcutsOnFocus = () => {
+        this.setShortcutsEnabled(false);
+    }
+
     protected handleWidthChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const text = event.target.value;
         const value = parseInt(text);
@@ -204,13 +215,16 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
     }
 
     protected handleDimensionalBlur = () => {
-        const { imageDimensions, dispatchChangeImageDimensions } = this.props;
+        const { imageDimensions, isTilemap, dispatchChangeImageDimensions } = this.props;
 
         const widthVal = parseInt(this.state.width);
         const heightVal = parseInt(this.state.height);
 
-        const width = isNaN(widthVal) ? imageDimensions[0] : Math.min(Math.max(widthVal, 1), 512);
-        const height = isNaN(heightVal) ? imageDimensions[1] : Math.min(Math.max(heightVal, 1), 512);
+        // tilemaps store in location as 1 byte, so max is 255x255
+        const maxSize = isTilemap ? 255 : 512;
+
+        const width = isNaN(widthVal) ? imageDimensions[0] : Math.min(Math.max(widthVal, 1), maxSize);
+        const height = isNaN(heightVal) ? imageDimensions[1] : Math.min(Math.max(heightVal, 1), maxSize);
 
         if (width !== imageDimensions[0] || height !== imageDimensions[1]) {
             dispatchChangeImageDimensions([width, height]);
@@ -220,6 +234,7 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
             width: null,
             height: null
         });
+        this.setShortcutsEnabled(true);
     }
 
     protected handleDimensionalKeydown = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -251,6 +266,7 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
             dispatchChangeAssetName(newName);
         }
         this.setState({ assetName: null, assetNameMessage: null });
+        this.setShortcutsEnabled(true);
     }
 
     protected zoomIn = () => {
@@ -259,6 +275,16 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
 
     protected zoomOut = () => {
         this.props.dispatchChangeZoom(-1)
+    }
+
+    protected setShortcutsEnabled(enabled: boolean) {
+        if (enabled && this.shortcutLock) {
+            releaseShortcutLock(this.shortcutLock);
+            this.shortcutLock = undefined;
+        }
+        else if (!enabled && !this.shortcutLock) {
+            this.shortcutLock = obtainShortcutLock();
+        }
     }
 }
 
@@ -272,10 +298,11 @@ function mapStateToProps({store: { present: state, past, future }, editor}: Imag
         aspectRatioLocked: state.aspectRatioLocked,
         onionSkinEnabled: editor.onionSkinEnabled,
         cursorLocation: editor.cursorLocation,
-        resizeDisabled: editor.resizeDisabled,
-        assetName: editor.assetName,
+        resizeDisabled: state.asset?.type === pxt.AssetType.Tile,
+        assetName: state.asset?.meta?.displayName,
         hasUndo: !!past.length,
-        hasRedo: !!future.length
+        hasRedo: !!future.length,
+        isTilemap: editor.isTilemap,
     };
 }
 

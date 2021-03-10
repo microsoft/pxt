@@ -1252,7 +1252,7 @@ namespace pxt.blocks {
             if (field instanceof pxtblockly.FieldTextInput) {
                 return H.mkStringLiteral(f);
             }
-            else if (field instanceof pxtblockly.FieldTilemap) {
+            else if (field instanceof pxtblockly.FieldTilemap && !field.isGreyBlock) {
                 const project = pxt.react.getTilemapProject();
                 const tmString = field.getValue();
 
@@ -1273,9 +1273,6 @@ namespace pxt.blocks {
                         // and compile as a normal field
                     }
                 }
-            }
-            else if (field instanceof pxtblockly.FieldSpriteEditor && e.options.emitTilemapLiterals) {
-                field.disposeOfTemporaryAsset();
             }
 
             // For some enums in pxt-minecraft, we emit the members as constants that are defined in
@@ -2254,15 +2251,15 @@ namespace pxt.blocks {
         current.children.forEach(c => escapeVariables(c, e));
 
 
-        function escapeVarName(name: string): string {
-            if (!name) return '_';
+        function escapeVarName(originalName: string): string {
+            if (!originalName) return '_';
 
-            let n = ts.pxtc.escapeIdentifier(name);
+            let n = ts.pxtc.escapeIdentifier(originalName);
 
-            if (e.renames.takenNames[n] || nameIsTaken(n, current)) {
+            if (e.renames.takenNames[n] || nameIsTaken(n, current, originalName)) {
                 let i = 2;
 
-                while (e.renames.takenNames[n + i] || nameIsTaken(n + i, current)) {
+                while (e.renames.takenNames[n + i] || nameIsTaken(n + i, current, originalName)) {
                     i++;
                 }
 
@@ -2272,13 +2269,14 @@ namespace pxt.blocks {
             return n;
         }
 
-        function nameIsTaken(name: string, scope: Scope): boolean {
+        function nameIsTaken(name: string, scope: Scope, originalName: string): boolean {
             if (scope) {
                 for (const varName of Object.keys(scope.declaredVars)) {
                     const info = scope.declaredVars[varName];
-                    if (info.name !== info.escapedName && info.escapedName === name) return true;
+                    if ((originalName !== info.name || info.name !== info.escapedName) && info.escapedName === name)
+                        return true;
                 }
-                return nameIsTaken(name, scope.parent);
+                return nameIsTaken(name, scope.parent, originalName);
             }
 
             return false;

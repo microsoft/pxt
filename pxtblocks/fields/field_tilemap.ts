@@ -42,20 +42,9 @@ namespace pxtblockly {
             }
 
             const project = pxt.react.getTilemapProject();
-            const match = /^\s*tilemap\s*`([^`]*)`\s*$/.exec(newText);
 
-            if (match) {
-                const tilemapId = match[1].trim();
-                let resolved = project.lookupAssetByName(pxt.AssetType.Tilemap, tilemapId);
-
-                if (!resolved) {
-                    resolved = project.lookupAsset(pxt.AssetType.Tilemap, tilemapId);
-                }
-
-                if (resolved) {
-                    return resolved;
-                }
-            }
+            const existing = pxt.lookupProjectAssetByTSReference(newText, project);
+            if (existing) return existing;
 
             const tilemap = pxt.sprite.decodeTilemap(newText, "typescript", project) || project.blankTilemap(this.params.tileWidth, this.params.initWidth, this.params.initHeight);
             let newAsset: pxt.ProjectTilemap;
@@ -69,58 +58,24 @@ namespace pxtblockly {
             }
             else if (newText.trim()) {
                 this.isGreyBlock = true;
-                this.value_ = newText;
+                this.valueText = newText;
             }
 
             return newAsset;
         }
 
         protected onEditorClose(newValue: pxt.ProjectTilemap) {
-            const result = newValue.data;
-            const project = pxt.react.getTilemapProject();
-
-            if (result.deletedTiles) {
-                for (const deleted of result.deletedTiles) {
-                    project.deleteTile(deleted);
-                }
-            }
-
-            if (result.editedTiles) {
-                for (const edit of result.editedTiles) {
-                    const editedIndex = result.tileset.tiles.findIndex(t => t.id === edit);
-                    const edited = result.tileset.tiles[editedIndex];
-
-                    if (!edited) continue;
-
-                    result.tileset.tiles[editedIndex] = project.updateTile(edited);
-                }
-            }
-
-            for (let i = 0; i < result.tileset.tiles.length; i++) {
-                const tile = result.tileset.tiles[i];
-
-                if (!tile.jresData) {
-                    result.tileset.tiles[i] = project.resolveTile(tile.id);
-                }
-            }
-
-            pxt.sprite.trimTilemapTileset(result);
+            pxt.sprite.updateTilemapReferencesFromResult(pxt.react.getTilemapProject(), newValue);
         }
 
         protected getValueText(): string {
-            if (this.isGreyBlock) return pxt.Util.htmlUnescape(this.value_);
+            if (this.isGreyBlock) return pxt.Util.htmlUnescape(this.valueText);
 
             if (this.asset) {
-                return `tilemap\`${this.asset.meta.displayName || this.asset.id}\``;
+                return pxt.getTSReferenceForAsset(this.asset);
             }
 
-            try {
-                return pxt.sprite.encodeTilemap(this.asset.data, "typescript");
-            }
-            catch (e) {
-                // If encoding failed, this is a legacy tilemap. Should get upgraded when the project is loaded
-                return this.getInitText();
-            }
+            return this.getInitText();
         }
 
         protected parseFieldOptions(opts: FieldTilemapOptions): ParsedFieldTilemapOptions {

@@ -24,6 +24,7 @@ namespace pxsim {
         breakOnStart?: boolean;
         storedState?: Map<any>;
         ipc?: boolean;
+        single?: boolean;
     }
 
     export interface SimulatorInstructionsMessage extends SimulatorMessage {
@@ -78,6 +79,13 @@ namespace pxsim {
     export interface SimulatorBroadcastMessage extends SimulatorMessage {
         broadcast: boolean;
     }
+
+    export interface SimulatorControlMessage extends SimulatorBroadcastMessage {
+        type: "messagepacket";
+        channel: string;
+        data: Uint8Array;
+    }
+
     export interface SimulatorEventBusMessage extends SimulatorBroadcastMessage {
         type: "eventbus";
         broadcast: true;
@@ -155,6 +163,20 @@ namespace pxsim {
         modalContext?: string;
     }
 
+    export interface SimulatorAddExtensionsMessage extends SimulatorMessage {
+        type: "addextensions",
+        /**
+         * List of repositories to add
+         */
+        extensions: string[]
+    }
+
+    export interface SimulatorAspectRatioMessage extends SimulatorMessage {
+        type: "aspectratio",
+        value: number,
+        frameid: string
+    }
+
     export interface SimulatorRecorderMessage extends SimulatorMessage {
         type: "recorder";
         action: "start" | "stop";
@@ -199,7 +221,8 @@ namespace pxsim {
 
     export interface RenderReadyResponseMessage extends SimulatorMessage {
         source: "makecode",
-        type: "renderready"
+        type: "renderready",
+        versions: pxt.TargetVersions
     }
 
     export interface RenderBlocksRequestMessage extends SimulatorMessage {

@@ -6,6 +6,7 @@ import { dispatchChangeInterval, dispatchChangePreviewAnimating, dispatchChangeO
 import { IconButton } from "./Button";
 import { CursorSizes } from "./CursorSizes";
 import { Toggle } from "./Toggle";
+import { flip, rotate } from "./keyboardShortcuts";
 
 
 export interface TopBarProps {
@@ -38,6 +39,13 @@ export class TopBarImpl extends React.Component<TopBarProps, TopBarState> {
                 <div className="cursor-group">
                     <CursorSizes />
                 </div>
+                <div className="image-editor-seperator"/>
+                <div className="image-transform-group">
+                    <IconButton key="flipv" iconClass="xicon flipvertical" title={lf("Flip vertical")} onClick={this.flipVertical} />
+                    <IconButton key="fliph" iconClass="xicon fliphorizontal" title={lf("Flip horizontal")} onClick={this.flipHorizontal} />
+                    <IconButton key="rotatec" iconClass="xicon rotateright" title={lf("Rotate clockwise")} onClick={this.rotateClockwise} />
+                    <IconButton key="rotatecc" iconClass="xicon rotateleft" title={lf("Rotate counterclockwise")} onClick={this.rotateCounterclockwise} />
+                </div>
                 <div className="spacer"/>
                 { !singleFrame && <div className="image-editor-seperator"/> }
                 { !singleFrame &&
@@ -69,6 +77,12 @@ export class TopBarImpl extends React.Component<TopBarProps, TopBarState> {
     }
 
     protected togglePreviewAnimating = () => this.props.dispatchChangePreviewAnimating(!this.props.previewAnimating);
+
+    protected flipVertical = () => flip(true);
+    protected flipHorizontal = () => flip(false);
+    protected rotateClockwise = () => rotate(true);
+    protected rotateCounterclockwise = () => rotate(false);
+
 
     protected handleIntervalChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         this.setState({ interval: event.target.value });

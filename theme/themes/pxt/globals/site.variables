@@ -83,7 +83,7 @@
 --------------------*/
 
 @useCustomScrollbars: false;
-@customScrollbarWidth: 7px;
+@customScrollbarWidth: 10px;
 
 @thumbBackground: rgba(0, 0, 0, 0.25);
 @thumbInvertedBackground: rgba(255, 255, 255, 0.25);
@@ -146,6 +146,7 @@
 @mobileMenuHeight: 3.5rem;
 @sandboxMobileMenuHeight: 3.0rem;
 @thinMenuHeight: 3rem;
+@tutorialEmbedMenuHeight: 2.25rem;
 
 @tutorialSelectedMenuColor: @primaryColor;
 @editorToggleColor: white;
@@ -213,6 +214,12 @@
 @editorCloseColorHover: darken(@editorCloseColor, 25%);
 @serialConsoleFont: @blocklyFont;
 @serialConsoleBackground: @simulatorBackground;
+
+/*-------------------
+   Filelist
+--------------------*/
+@filelistBackgroundColor: @simulatorBackground;
+@filelistHeaderBackground:  rgba(0,0,0,0.05);
 
 /*-------------------
    Github Diff editor
@@ -368,10 +375,11 @@
 /*-------------------
    Asset Editor
 -------------------*/
-@assetSidebarBorder: #dedede;
+@assetSidebarBorder: #c6c6c6;
 @assetSidebarButton: #f8f8f8;
 @assetSidebarButtonHover: #dedede;
-@assetPreviewBackground: #dedede;
+@assetTopbarBorder: #c6c6c6;
+@assetPreviewBackground: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10px' height='10px'%3E%3Crect x='0' y='0' width='10px' height='10px' fill='white'%3E%3C/rect%3E%3Crect x='0' y='0' width='5px' height='5px' fill='%23dedede'%3E%3C/rect%3E%3Crect x='5' y='5' width='5px' height='5px' fill='%23dedede'%3E%3C/rect%3E%3C/svg%3E");
 @assetUnselected: #e3ddd0;
 @assetTypeButton: @teal;
 

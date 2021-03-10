@@ -384,9 +384,10 @@ namespace pxt.BrowserUtils {
         } = opt;
 
         const createObjectURL = window.URL?.createObjectURL;
+        const asDataUri = pxt.appTarget.appTheme.disableBlobObjectDownload;
         let downloadurl: string;
         try {
-            if (!!createObjectURL) {
+            if (!!createObjectURL && !asDataUri) {
                 const b = new Blob([Util.stringToUint8Array(atob(b64))], { type: contentType });
                 const objUrl = createObjectURL(b);
                 browserDownloadDataUri(objUrl, name, userContextWindow);
@@ -395,7 +396,7 @@ namespace pxt.BrowserUtils {
                 } else {
                     window.setTimeout(() => window.URL.revokeObjectURL(downloadurl), 0);
                 }
-            } else  {
+            } else {
                 downloadurl = toDownloadDataUri(b64, name);
                 browserDownloadDataUri(downloadurl, name, userContextWindow);
             }
@@ -428,15 +429,82 @@ namespace pxt.BrowserUtils {
             })
     }
 
-    export function imageDataToPNG(img: ImageData): string {
+    export function scaleImageData(img: ImageData, scale: number): ImageData {
+        const cvs = document.createElement("canvas");
+        cvs.width = img.width * scale;
+        cvs.height = img.height * scale;
+        const ctx = cvs.getContext("2d")
+        ctx.putImageData(img, 0, 0);
+        ctx.imageSmoothingEnabled = false;
+        ctx.scale(scale, scale);
+        ctx.drawImage(cvs, 0, 0);
+        return ctx.getImageData(0, 0, img.width * scale, img.height * scale);
+    }
+
+    export function imageDataToPNG(img: ImageData, scale = 1): string {
         if (!img) return undefined;
 
         const canvas = document.createElement("canvas")
-        canvas.width = img.width
-        canvas.height = img.height
+        canvas.width = img.width * scale
+        canvas.height = img.height * scale
         const ctx = canvas.getContext("2d")
         ctx.putImageData(img, 0, 0);
+        ctx.imageSmoothingEnabled = false;
+        ctx.scale(scale, scale);
+        ctx.drawImage(canvas, 0, 0);
         return canvas.toDataURL("image/png");
+    }
+
+    const MAX_SCREENSHOT_SIZE = 1e6; // max 1Mb
+    export function encodeToPngAsync(dataUri: string,
+        options?: {
+            width?: number,
+            height?: number,
+            pixelDensity?: number,
+            maxSize?: number,
+            text?: string
+        }): Promise<string> {
+        const { width, height, pixelDensity = 4, maxSize = MAX_SCREENSHOT_SIZE, text } = options || {};
+
+        return new Promise<string>((resolve, reject) => {
+            const img = new Image;
+
+            img.onload = function () {
+                const cvs = document.createElement("canvas") as HTMLCanvasElement;
+                const ctx = cvs.getContext("2d");
+                cvs.width = (width || img.width) * pixelDensity;
+                cvs.height = (height || img.height) * pixelDensity;
+
+                if (text) {
+                    ctx.fillStyle = "#fff";
+                    ctx.fillRect(0, 0, cvs.width, cvs.height);
+                }
+                ctx.drawImage(img, 0, 0, width, height, 0, 0, cvs.width, cvs.height);
+                let canvasdata = cvs.toDataURL("image/png");
+                // if the generated image is too big, shrink image
+                while (canvasdata.length > maxSize) {
+                    cvs.width = (cvs.width / 2) >> 0;
+                    cvs.height = (cvs.height / 2) >> 0;
+                    pxt.debug(`screenshot size ${canvasdata.length}b, shrinking to ${cvs.width}x${cvs.height}`)
+                    ctx.drawImage(img, 0, 0, width, height, 0, 0, cvs.width, cvs.height);
+                    canvasdata = cvs.toDataURL("image/png");
+                }
+                if (text) {
+                    let p = pxt.lzmaCompressAsync(text).then(blob => {
+                        const datacvs = pxt.Util.encodeBlobAsync(cvs, blob);
+                        resolve(datacvs.toDataURL("image/png"));
+                    });
+                    p.then();
+                } else {
+                    resolve(canvasdata);
+                }
+            };
+            img.onerror = ev => {
+                pxt.reportError("png", "png rendering failed");
+                resolve(undefined)
+            }
+            img.src = dataUri;
+        })
     }
 
     export function resolveCdnUrl(path: string): string {
@@ -974,7 +1042,8 @@ namespace pxt.BrowserUtils {
 
     export interface ITutorialInfoDb {
         getAsync(filename: string, code: string[], branch?: string): Promise<TutorialInfoIndexedDbEntry>;
-        setAsync(filename: string, blocks: Map<number>, code: string[], branch?: string ): Promise<void>;
+        setAsync(filename: string, blocks: Map<number>, code: string[], branch?: string): Promise<void>;
+        clearAsync(): Promise<void>;
     }
 
     class TutorialInfoIndexedDb implements ITutorialInfoDb {
@@ -1026,14 +1095,14 @@ namespace pxt.BrowserUtils {
                 });
         }
 
-        setAsync(filename: string, blocks: Map<number>, code: string[], branch?: string ): Promise<void> {
+        setAsync(filename: string, blocks: Map<number>, code: string[], branch?: string): Promise<void> {
             pxt.perf.measureStart("tutorial info db setAsync")
             const key = getTutorialInfoKey(filename, branch);
             const hash = getTutorialInfoHash(code);
             return this.setWithHashAsync(filename, blocks, hash);
         }
 
-        setWithHashAsync(filename: string, blocks: Map<number>, hash: string, branch?: string ): Promise<void> {
+        setWithHashAsync(filename: string, blocks: Map<number>, hash: string, branch?: string): Promise<void> {
             pxt.perf.measureStart("tutorial info db setAsync")
             const key = getTutorialInfoKey(filename, branch);
 
@@ -1048,6 +1117,14 @@ namespace pxt.BrowserUtils {
                     pxt.perf.measureEnd("tutorial info db setAsync")
                 })
         }
+
+        clearAsync(): Promise<void> {
+            return this.db.deleteAllAsync(TutorialInfoIndexedDb.TABLE)
+                .then(() => console.debug(`db: all clean`))
+                .catch(e => {
+                    console.error('db: failed to delete all');
+                })
+        }
     }
 
     let _tutorialInfoDbPromise: Promise<TutorialInfoIndexedDb>;
@@ -1058,15 +1135,23 @@ namespace pxt.BrowserUtils {
     }
 
     export function clearTutorialInfoDbAsync(): Promise<void> {
-        const n = TutorialInfoIndexedDb.dbName();
-        return IDBWrapper.deleteDatabaseAsync(n)
-            .then(() => {
-                _tutorialInfoDbPromise = undefined;
-            })
-            .catch(e => {
-                pxt.log(`db: failed to delete ${n}`);
-                _tutorialInfoDbPromise = undefined;
-            });
+        function deleteDbAsync() {
+            const n = TutorialInfoIndexedDb.dbName();
+            return IDBWrapper.deleteDatabaseAsync(n)
+                .then(() => {
+                    _tutorialInfoDbPromise = undefined;
+                })
+                .catch(e => {
+                    pxt.log(`db: failed to delete ${n}`);
+                    _tutorialInfoDbPromise = undefined;
+                });
+        }
+
+        if (!_tutorialInfoDbPromise)
+            return deleteDbAsync();
+        return _tutorialInfoDbPromise
+            .then(db => db.clearAsync())
+            .catch(e => deleteDbAsync().then());
     }
 
     export interface IPointerEvents {

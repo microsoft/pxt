@@ -11,13 +11,11 @@ import { Alert, AlertInfo } from './Alert';
 import { Timeline } from './Timeline';
 import { addKeyListener, removeKeyListener, setStore } from './keyboardShortcuts';
 
-import { dispatchSetInitialState, dispatchImageEdit, dispatchChangeZoom, dispatchSetInitialFrames, dispatchSetInitialTilemap, dispatchCloseTileEditor, dispatchDisableResize, dispatchChangeAssetName } from './actions/dispatch';
+import { dispatchSetInitialState, dispatchImageEdit, dispatchChangeZoom, dispatchOpenAsset, dispatchCloseTileEditor, dispatchDisableResize, dispatchChangeAssetName, dispatchChangeImageDimensions, dispatchSetFrames } from './actions/dispatch';
 import { EditorState, AnimationState, TilemapState, GalleryTile, ImageEditorStore } from './store/imageReducer';
 import { imageStateToBitmap, imageStateToTilemap, applyBitmapData } from './util';
 import { Unsubscribe, Action } from 'redux';
 import { createNewImageAsset, getNewInternalID } from '../../assets';
-
-const fromData = pxt.sprite.Bitmap.fromData;
 
 export interface ImageEditorSaveState {
     editor: EditorState;
@@ -30,6 +28,7 @@ export interface ImageEditorProps {
     asset?: pxt.Asset;
     store?: Store<ImageEditorStore>;
     onDoneClicked?: (value: pxt.Asset) => void;
+    onTileEditorOpenClose?: (open: boolean) => void;
     nested?: boolean;
 }
 
@@ -42,7 +41,6 @@ export interface ImageEditorState {
 
 export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorState> {
     protected unsubscribeChangeListener: Unsubscribe;
-    protected editingAsset: pxt.Asset;
 
     constructor(props: ImageEditorProps) {
         super(props);
@@ -95,39 +93,46 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
         </div>
     }
 
-    openAsset(asset: pxt.Asset, gallery: GalleryTile[] = []) {
-        this.editingAsset = asset;
-        switch (asset.type) {
-            case pxt.AssetType.Image:
-                this.initSingleFrame(fromData(asset.bitmap));
-                break;
-            case pxt.AssetType.Tile:
-                this.initSingleFrame(fromData(asset.bitmap));
-                this.disableResize();
-                break;
-            case pxt.AssetType.Animation:
-                this.initAnimation(asset.frames.map(fromData), asset.interval);
-                break;
-            case pxt.AssetType.Tilemap:
-                this.initTilemap(asset.data, gallery);
-                break;
-        }
+    openAsset(asset: pxt.Asset, gallery?: GalleryTile[], keepPast = false) {
+        this.dispatchOnStore(dispatchOpenAsset(asset, keepPast, gallery))
 
         if (asset.meta.displayName) {
             this.dispatchOnStore(dispatchChangeAssetName(asset.meta.displayName));
         }
+        else if (keepPast) {
+            this.dispatchOnStore(dispatchChangeAssetName(""));
+        }
     }
 
-    initSingleFrame(value: pxt.sprite.Bitmap) {
-        this.dispatchOnStore(dispatchSetInitialFrames([{ bitmap: value.data() }], 100))
-    }
+    openGalleryAsset(asset: pxt.Animation | pxt.ProjectImage | pxt.Tile) {
+        const current = this.getAsset();
 
-    initAnimation(frames: pxt.sprite.Bitmap[], interval: number) {
-        this.dispatchOnStore(dispatchSetInitialFrames(frames.map(frame => ({ bitmap: frame.data() })), interval));
-    }
+        const frames = (this.getStore().getState().store.present as AnimationState).frames;
 
-    initTilemap(data: pxt.sprite.TilemapData, gallery: GalleryTile[]) {
-        this.dispatchOnStore(dispatchSetInitialTilemap(data.tilemap.data(), data.tileset, gallery, [data.layers], data.nextId, data.projectReferences));
+        switch (current.type) {
+            case pxt.AssetType.Animation:
+                switch (asset.type) {
+                    case pxt.AssetType.Image:
+                    case pxt.AssetType.Tile:
+                        this.setCurrentFrame(pxt.sprite.Bitmap.fromData(asset.bitmap), frames.length === 1);
+                        break;
+                    case pxt.AssetType.Animation:
+                        this.dispatchOnStore(dispatchSetFrames(asset.frames.map(b => ({ bitmap: b }))));
+                        break;
+                }
+                break;
+            case pxt.AssetType.Image:
+            case pxt.AssetType.Tile:
+                switch (asset.type) {
+                    case pxt.AssetType.Image:
+                    case pxt.AssetType.Tile:
+                        this.setCurrentFrame(pxt.sprite.Bitmap.fromData(asset.bitmap), true);
+                        break;
+                    case pxt.AssetType.Animation:
+                        this.setCurrentFrame(pxt.sprite.Bitmap.fromData(asset.frames[0]), true);
+                        break;
+                }
+        }
     }
 
     onResize() {
@@ -143,7 +148,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
     }
 
     getAsset(): pxt.Asset {
-        const type = this.editingAsset.type;
+        const type = this.getStore().getState().store.present.asset.type;
         switch (type) {
             case pxt.AssetType.Tile:
                 return this.getTile();
@@ -157,15 +162,14 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
     }
 
     getImage(): pxt.ProjectImage {
-        const state = this.getStore().getState();
+        const state = this.getStore().getState().store.present;
         const data = this.getCurrentFrame().data();
 
-        const meta: pxt.AssetMetadata = this.editingAsset ? { ...this.editingAsset.meta } : {};
-        meta.displayName = state.editor.assetName || meta.displayName;
+        const meta: pxt.AssetMetadata = state.asset ? { ...state.asset.meta } : {};
 
         return {
-            id: this.editingAsset?.id,
-            internalID: this.editingAsset ? this.editingAsset.internalID : getNewInternalID(),
+            id: state.asset?.id,
+            internalID: state.asset ? state.asset.internalID : getNewInternalID(),
             type: pxt.AssetType.Image,
             bitmap: data,
             jresData: pxt.sprite.base64EncodeBitmap(data),
@@ -174,15 +178,15 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
     }
 
     getTile(): pxt.Tile {
-        const state = this.getStore().getState();
+        const state = this.getStore().getState().store.present;
         const data = this.getCurrentFrame().data();
 
-        const meta: pxt.AssetMetadata = this.editingAsset ? { ...this.editingAsset.meta } : {};
-        meta.displayName = state.editor.assetName || meta.displayName;
+        const meta: pxt.AssetMetadata = state.asset ? { ...state.asset.meta } : {};
 
         return {
-            id: this.editingAsset?.id,
-            internalID: this.editingAsset ? this.editingAsset.internalID : getNewInternalID(),
+            id: state.asset?.id,
+            internalID: state.asset ? state.asset.internalID : getNewInternalID(),
+            isProjectTile: true,
             type: pxt.AssetType.Tile,
             bitmap: data,
             jresData: pxt.sprite.base64EncodeBitmap(data),
@@ -194,12 +198,11 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
         const state = this.getStore().getState();
         const animationState = state.store.present as AnimationState;
 
-        const meta: pxt.AssetMetadata = this.editingAsset ? { ...this.editingAsset.meta } : {};
-        meta.displayName = state.editor.assetName || meta.displayName;
+        const meta: pxt.AssetMetadata = animationState.asset ? { ...animationState.asset.meta } : {};
 
         return {
-            id: this.editingAsset?.id,
-            internalID: this.editingAsset ? this.editingAsset.internalID : getNewInternalID(),
+            id: animationState.asset?.id,
+            internalID: animationState.asset ? animationState.asset.internalID : getNewInternalID(),
             type: pxt.AssetType.Animation,
             interval: animationState.interval,
             frames: animationState.frames.map(frame => imageStateToBitmap(frame).data()),
@@ -217,12 +220,11 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
         out.deletedTiles = state.editor.deletedTiles;
         out.editedTiles = state.editor.editedTiles;
 
-        const meta: pxt.AssetMetadata = this.editingAsset ? { ...this.editingAsset.meta } : {};
-        meta.displayName = state.editor.assetName || meta.displayName;
+        const meta: pxt.AssetMetadata = tilemapState.asset ? { ...tilemapState.asset.meta } : {};
 
         return {
-            id: this.editingAsset?.id,
-            internalID: this.editingAsset ? this.editingAsset.internalID : getNewInternalID(),
+            id: tilemapState.asset?.id,
+            internalID: tilemapState.asset ? tilemapState.asset.internalID : getNewInternalID(),
             type: pxt.AssetType.Tilemap,
             data: out,
             meta
@@ -239,20 +241,34 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
 
     restorePersistentData(oldValue: ImageEditorSaveState) {
         if (oldValue) {
-            if (this.editingAsset) {
-                if (this.editingAsset.meta.displayName) {
-                    oldValue.editor.assetName = this.editingAsset.meta.displayName;
-                }
-                else {
-                    oldValue.editor.assetName = null;
-                }
-            }
             this.dispatchOnStore(dispatchSetInitialState(oldValue.editor, oldValue.past));
         }
     }
 
-    setCurrentFrame(bitmap: pxt.sprite.Bitmap) {
-        this.dispatchOnStore(dispatchImageEdit({ bitmap: bitmap.data() }))
+    setCurrentFrame(bitmap: pxt.sprite.Bitmap, shrinkIfNecessary: boolean) {
+        if (!shrinkIfNecessary) {
+            const state = this.getStore().getState();
+            const current = (state.store.present as AnimationState).frames[0];
+
+            if (bitmap.width !== current.bitmap.width || bitmap.height !== current.bitmap.height) {
+                const dimensions: [number, number] = [
+                    Math.max(bitmap.width, current.bitmap.width), Math.max(bitmap.height, current.bitmap.height)
+                ];
+
+                if (current.bitmap.width !== dimensions[0] || current.bitmap.height !== dimensions[1]) {
+                    this.dispatchOnStore(dispatchChangeImageDimensions(dimensions));
+                }
+
+                bitmap = bitmap.copy();
+                bitmap = bitmap.resize(dimensions[0], dimensions[1]);
+            }
+        }
+
+        this.dispatchOnStore(dispatchImageEdit({ bitmap: bitmap.data() }));
+    }
+
+    openInTileEditor(bitmap: pxt.sprite.Bitmap) {
+        (this.refs["nested-image-editor"] as ImageEditor).setCurrentFrame(bitmap, false);
     }
 
     disableResize() {
@@ -292,16 +308,19 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
                 }
                 else {
                     const tileWidth = (state.store.present as TilemapState).tileset.tileWidth;
+                    const emptyTile = createNewImageAsset(pxt.AssetType.Tile, tileWidth, tileWidth, lf("myTile")) as pxt.Tile;
                     this.setState({
                         editingTile: true,
-                        tileToEdit: createNewImageAsset(pxt.AssetType.Tile, tileWidth, tileWidth) as pxt.Tile
+                        tileToEdit: emptyTile
                     });
                 }
+                if (this.props.onTileEditorOpenClose) this.props.onTileEditorOpenClose(true);
             }
             else {
                 this.setState({
                     editingTile: false
                 });
+                if (this.props.onTileEditorOpenClose) this.props.onTileEditorOpenClose(false);
             }
         }
     }

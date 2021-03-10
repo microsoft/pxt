@@ -1015,7 +1015,7 @@ export async function startAsync(gdbArgs: string[]) {
         trg += "\nmonitor swdp_scan\nattach 1"
         pxt.log("Using Black Magic Probe at " + bmpPort)
         monReset = "run"
-        monResetHalt = "run"
+        monResetHalt = "set {int}0xE000ED0C = 0x05fa0004" // NVIC_SystemReset()
     }
 
     let mapsrc = ""

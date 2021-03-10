@@ -224,7 +224,7 @@ function pairBootloaderAsync(): Promise<void> {
 
 function winrtDeployCoreAsync(r: pxtc.CompileResult, d: pxt.commands.DeployOptions): Promise<void> {
     log(`winrt deploy`)
-    return pxt.Util.promiseTimeout(60000, hidDeployCoreAsync(r, d))
+    return pxt.Util.promiseTimeout(180000, hidDeployCoreAsync(r, d))
         .catch((e) => {
             return pxt.packetio.disconnectAsync()
                 .catch((e) => {
@@ -413,7 +413,7 @@ export async function initAsync() {
     if (pxt.winrt.isWinRT()) {
         log(`deploy: init winrt`)
         pxt.winrt.initWinrtHid(
-            () => pxt.packetio.initAsync(true).then(() => { }),
+            () => pxt.packetio.initAsync(true).then(wrap => wrap?.reconnectAsync()),
             () => pxt.packetio.disconnectAsync()
         );
     }

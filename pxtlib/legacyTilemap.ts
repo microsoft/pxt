@@ -24,9 +24,9 @@ namespace pxt.sprite.legacy {
     }
 
     export function decodeTilemap(literal: string, fileType: "typescript" | "python"): LegacyTilemapData {
-        literal = Util.htmlUnescape(literal).trim();
+        literal = Util.htmlUnescape(literal)?.trim();
 
-        if (!literal.trim()) {
+        if (!literal?.trim()) {
             return new LegacyTilemapData(new Tilemap(16, 16), {tileWidth: 16, tiles: []}, new Bitmap(16, 16).data());
         }
 

@@ -11,16 +11,16 @@ namespace pxt.editor {
         protected textToValue(text: string): pxt.ProjectImage {
             this.isPython = text.indexOf("`") === -1
 
-            const match = /^\s*assets\s*\.\s*image\s*`([^`]*)`\s*$/.exec(text);
+            const match = pxt.parseAssetTSReference(text);
             if (match) {
+                const { type, name } = match;
                 const project = pxt.react.getTilemapProject();
                 this.isAsset = true;
-                const asset = project.lookupAssetByName(pxt.AssetType.Image, match[1].trim());
+                const asset = project.lookupAssetByName(pxt.AssetType.Image, name);
                 if (asset) {
                     return asset;
                 }
                 else {
-                    const name = match[1].trim();
                     const newAsset = project.createNewImage();
 
                     if (name && !project.isNameTaken(pxt.AssetType.Image, name) && pxt.validateAssetName(name)) {
@@ -35,9 +35,15 @@ namespace pxt.editor {
         }
 
         protected resultToText(result: pxt.ProjectImage): string {
-            if (this.isAsset && result.meta.displayName) {
-                result = pxt.react.getTilemapProject().updateAsset(result)
-                return `assets.image\`${result.meta.displayName}\``
+            if (result.meta?.displayName) {
+                const project = pxt.react.getTilemapProject();
+                if (this.isAsset) {
+                    result = project.updateAsset(result)
+                } else {
+                    this.isAsset = true;
+                    result = project.createNewProjectImage(result.bitmap, result.meta.displayName);
+                }
+                return pxt.getTSReferenceForAsset(result, this.isPython);
             }
             return pxt.sprite.bitmapToImageLiteral(pxt.sprite.Bitmap.fromData(result.bitmap), this.isPython ? "python" : "typescript");
         }
@@ -49,8 +55,7 @@ namespace pxt.editor {
             return {
                 initWidth: 16,
                 initHeight: 16,
-                blocksInfo: this.host.blocksInfo(),
-                showTiles: true
+                blocksInfo: this.host.blocksInfo()
             };
         }
     }

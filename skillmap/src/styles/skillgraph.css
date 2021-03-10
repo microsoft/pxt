@@ -1,0 +1,34 @@
+.skill-graph {
+    display: block;
+    max-width: 100%;
+}
+
+.skill-graph-content {
+    display: flex;
+    flex-direction: column;
+    z-index: var(--above-graph-zindex);
+}
+
+.skill-graph-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    position: relative;
+}
+
+.skill-graph-background {
+    display: flex;
+    position: absolute;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    z-index: var(--graph-backround-zindex);
+}
+
+.skill-graph-background img {
+    max-width: 80%;
+    max-height: 80%;
+}

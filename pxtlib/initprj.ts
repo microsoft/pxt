@@ -143,7 +143,10 @@ jobs:
             ".github/workflows/cfg-check.yml": `name: Check pxt.json
 
 on:
-  push
+  push:
+    branches:
+      - 'master'
+      - 'main'
 
 jobs:
   check-cfg:
@@ -158,7 +161,9 @@ jobs:
         with:
           node-version: $\{{ matrix.node-version }}
       - name: npm install
-        run: npm install -g pxt
+        run: |
+          npm install -g pxt
+          pxt target @TARGET@
       - name: Checkout current state
         run: |
           git checkout -- .
@@ -167,6 +172,7 @@ jobs:
         run: pxt checkpkgcfg
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3
+        continue-on-error: true
         with:
           title: 'Removing missing files from pxt.json'
           commit-message: 'Removing missing files from pxt.json'

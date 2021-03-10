@@ -15,8 +15,6 @@ export function showAboutDialogAsync(projectView: pxt.editor.IProjectView) {
     const githubUrl = pxt.appTarget.appTheme.githubUrl;
     const targetTheme = pxt.appTarget.appTheme;
     const versions: pxt.TargetVersions = pxt.appTarget.versions;
-    const showCompile = compileService && compileService.githubCorePackage && compileService.gittag && compileService.serviceId;
-
     const buttons: sui.ModalButton[] = [];
     if (targetTheme.experiments)
         buttons.push({
@@ -28,6 +26,20 @@ export function showAboutDialogAsync(projectView: pxt.editor.IProjectView) {
                 projectView.showExperimentsDialog();
             }
         })
+
+    const compileVariantInfos = (pxt.appTarget.multiVariants?.map(
+        variantName => {
+            const compileService = pxt.U.clone(pxt.appTarget.compileService);
+            const variant = pxt.appTarget.variants[variantName];
+            if (variant?.compileService)
+                pxt.U.jsonCopyFrom(compileService, variant.compileService);
+            return { variantName, compileService };
+        }
+    ) || [{
+        variantName: "",
+        compileService: pxt.appTarget.compileService
+    }])
+        .filter(info => info.compileService && info.compileService.githubCorePackage && info.compileService.gittag && info.compileService.serviceId);
 
     pxt.targetConfigAsync()
         .then(config => {
@@ -47,15 +59,9 @@ export function showAboutDialogAsync(projectView: pxt.editor.IProjectView) {
                                 ? <a target="_blank" rel="noopener noreferrer" href="/offline-app">{lf("An update {0} for {1} is available", latestElectronRelease, pxt.appTarget.title)}</a>
                                 : <p>{lf("{0} is up to date", pxt.appTarget.title)}</p>
                         : undefined}
-                    {githubUrl && versions ?
-                        renderVersionLink(pxt.appTarget.name, versions.target, `${githubUrl}/releases/tag/v${versions.target}`)
-                        : undefined}
-                    {versions ?
-                        renderVersionLink("Microsoft MakeCode", versions.pxt, `https://github.com/Microsoft/pxt/releases/tag/v${versions.pxt}`)
-                        : undefined}
-                    {showCompile ?
-                        renderCompileLink(compileService)
-                        : undefined}
+                    {githubUrl && versions && renderVersionLink(pxt.appTarget.name, versions.target, `${githubUrl}/releases/tag/v${versions.target}`)}
+                    {versions && renderVersionLink("Microsoft MakeCode", versions.pxt, `https://github.com/Microsoft/pxt/releases/tag/v${versions.pxt}`)}
+                    {compileVariantInfos?.length ? compileVariantInfos.map(info => <div key={info.variantName}>{renderCompileLink(info.variantName, info.compileService)}</div>) : undefined}
                     <p><br /></p>
                     <p>
                         {targetTheme.termsOfUseUrl ? <a target="_blank" className="item" href={targetTheme.termsOfUseUrl} rel="noopener noreferrer">{lf("Terms of Use")}</a> : undefined}
@@ -68,7 +74,7 @@ export function showAboutDialogAsync(projectView: pxt.editor.IProjectView) {
 }
 
 
-function renderCompileLink(cs: pxt.TargetCompileService) {
+function renderCompileLink(variantName: string, cs: pxt.TargetCompileService) {
     let url: string;
     let version: string;
     let name: string;

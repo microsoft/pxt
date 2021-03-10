@@ -16,14 +16,17 @@ namespace pxt.blocks {
      */
     export function domToWorkspaceNoEvents(dom: Element, workspace: Blockly.Workspace): string[] {
         pxt.tickEvent(`blocks.domtow`)
+        let newBlockIds: string[] = [];
         try {
             Blockly.Events.disable();
-            const newBlockIds = Blockly.Xml.domToWorkspace(dom, workspace);
+            newBlockIds = Blockly.Xml.domToWorkspace(dom, workspace);
             applyMetaComments(workspace);
-            return newBlockIds;
+        } catch (e) {
+            pxt.reportException(e);
         } finally {
             Blockly.Events.enable();
         }
+        return newBlockIds;
     }
 
     function applyMetaComments(workspace: Blockly.Workspace) {

@@ -14,43 +14,22 @@ Just need a quick answer to a translation question? You can check the [FAQ](#faq
 
 ### ~
 
-## Crowdin project
-
-The Crowdin translation project below contains both the resources and menu items from @homeurl@.
-
-* [https://crowdin.com/project/kindscript](https://crowdin.com/project/kindscript)
-
-If you want to help with translating the editor, please sign in to Crowdin (or join first if you don't already have an account) and send us a translator request.
-
-### ~ hint
-
-#### Sign up to translate
-
-For a quick explaination of how to sign up and join a MakeCode translation team, watch this
-short video:
-
-https://youtu.be/4PqWq50e8C4
-
-### ~
-
 ## Translations in context
 
 MakeCode has the capability for [in context translations](https://support.crowdin.com/in-context-localization/). This allows you to perform translations to text content right at the place where you see it in the editor (or in a documentation page).
 
 https://youtu.be/OugXfqhWUQo
 
+https://youtu.be/OugXfqhWUQo
+
 ### ~ hint
 
-#### In context suppport
+#### Trouble signing in with Crowdin?
 
-In context translation is still being rolled out into the editors. It might not be available for your MakeCode editor yet.
-
-### Currently supported editors
-
-* `/beta` version of [MakeCode Arcade](https://arcade.makecode.com/beta)
-* `/beta` version of [Adafruit Circuit Playground Express](https://makecode.adafruit.com/beta)
-* `/beta` version of [LEGO - EV3](https://makecode.mindstorms.com/beta)
-* The [Maker Editor](https://maker.makecode.com)
+If you have trouble with signing into the in-context translation page,
+you might need to disable ``same site by default cookies``. 
+Go to **chrome://flags/#same-site-by-default-cookies** 
+and set the **SameSite by default cookies** to **Disabled** option.
 
 ### ~
 
@@ -78,6 +57,31 @@ and click **Translate this block**.
 You will be prompted with a dialog that contains the block translatable string.
 
 ![Translation dialog](/static/blog/translations-in-context/block.png)
+
+### Documentation page translation
+
+When on any documention page, click on the **Language** button 
+in the footer and then select **Translate this page** in the dialog.
+
+
+## Crowdin project
+
+The Crowdin translation project below contains both the resources and menu items from @homeurl@.
+
+* [https://crowdin.com/project/kindscript](https://crowdin.com/project/kindscript)
+
+If you want to help with translating the editor, please sign in to Crowdin (or join first if you don't already have an account) and send us a translator request.
+
+### ~ hint
+
+#### Sign up to translate
+
+For a quick explaination of how to sign up and join a MakeCode translation team, watch this
+short video:
+
+https://youtu.be/4PqWq50e8C4
+
+### ~
 
 ## Translation roles
 

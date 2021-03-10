@@ -12,6 +12,8 @@ export interface EditorBounds {
     left: number;
     width: number;
     height: number;
+    horizontalPadding?: number;
+    verticalPadding?: number;
 }
 
 export interface FieldEditorComponent<U> extends React.Component {
@@ -130,7 +132,6 @@ export class FieldEditorView<U> implements pxt.react.FieldEditorView<U> {
         let horizontalPadding = 25;
         let verticalPadding = 25;
 
-
         if (bounds.width - (horizontalPadding * 2) < 500) {
             horizontalPadding = 0;
             verticalPadding = 0;
@@ -140,6 +141,10 @@ export class FieldEditorView<U> implements pxt.react.FieldEditorView<U> {
             verticalPadding = Math.min(bounds.height - 610, 0) / 2;
             horizontalPadding = 0;
         }
+
+        // Override calculated padding if specific values passed in
+        horizontalPadding = (bounds.horizontalPadding != undefined) ? bounds.horizontalPadding : horizontalPadding;
+        verticalPadding = (bounds.horizontalPadding != undefined) ? bounds.verticalPadding : verticalPadding;
 
         this.contentBounds = {
             left: bounds.left + horizontalPadding,
@@ -197,14 +202,14 @@ export function init() {
 
         switch (fieldEditorId) {
             case "image-editor":
-                current.injectElement(<ImageFieldEditor ref={ refHandler } singleFrame={true} showTiles={options?.showTiles} />);
+                current.injectElement(<ImageFieldEditor ref={ refHandler } singleFrame={true} />);
                 break;
             case "animation-editor":
                 current.injectElement(<ImageFieldEditor ref={ refHandler } singleFrame={false} />);
                 break;
 
             case "tilemap-editor":
-                current.injectElement(<TilemapFieldEditor ref={ refHandler } />);
+                current.injectElement(<ImageFieldEditor ref={ refHandler } singleFrame={true} />);
                 break;
         }
 

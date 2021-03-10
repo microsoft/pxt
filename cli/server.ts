@@ -37,12 +37,14 @@ function setupRootDir() {
     console.log(`With pxt core at ${nodeutil.pxtCoreDir}`)
     dirs = [
         "built/web",
+        path.join(nodeutil.targetDir, "docs"),
         path.join(nodeutil.targetDir, "built"),
         path.join(nodeutil.targetDir, "sim/public"),
         path.join(nodeutil.targetDir, "node_modules", `pxt-${pxt.appTarget.id}-sim`, "public"),
         path.join(nodeutil.pxtCoreDir, "built/web"),
         path.join(nodeutil.pxtCoreDir, "webapp/public"),
-        path.join(nodeutil.pxtCoreDir, "common-docs")
+        path.join(nodeutil.pxtCoreDir, "common-docs"),
+        path.join(nodeutil.pxtCoreDir, "docs"),
     ]
     docsDir = path.join(root, "docs")
     packagedDir = path.join(root, "built/packaged")
@@ -231,21 +233,26 @@ function writePkgAsync(logicalDirname: string, data: FsPkg) {
 
 function returnDirAsync(logicalDirname: string, depth: number): Promise<FsPkg[]> {
     logicalDirname = logicalDirname.replace(/^\//, "")
-    let dirname = path.join(userProjectsDir, logicalDirname)
+    const dirname = path.join(userProjectsDir, logicalDirname)
+    // load packages under /projects, 3 level deep
     return existsAsync(path.join(dirname, pxt.CONFIG_NAME))
-        .then(ispkg =>
-            ispkg ? readPkgAsync(logicalDirname).then(r => [r], err => []) :
-                depth <= 1 ? [] :
-                    readdirAsync(dirname)
-                        .then(files =>
-                            U.promiseMapAll(files, fn =>
-                                statAsync(path.join(dirname, fn))
-                                    .then<FsPkg[]>(st => {
-                                        if (fn[0] != "." && st.isDirectory())
-                                            return returnDirAsync(logicalDirname + "/" + fn, depth - 1)
-                                        else return []
-                                    })))
-                        .then(U.concat))
+        // read package if pxt.json exists
+        .then(ispkg => Promise.all<FsPkg[]>([
+            // current folder
+            ispkg ? readPkgAsync(logicalDirname).then<FsPkg[]>(r => [r], err => undefined) : Promise.resolve<FsPkg[]>(undefined),
+            // nested packets
+            depth <= 1 ? Promise.resolve<FsPkg[]>(undefined)
+                : readdirAsync(dirname).then(files => U.promiseMapAll(files, fn =>
+                    statAsync(path.join(dirname, fn)).then<FsPkg[]>(st => {
+                        if (fn[0] != "." && st.isDirectory())
+                            return returnDirAsync(logicalDirname + "/" + fn, depth - 1)
+                        else return undefined
+                    })).then(U.concat)
+                )
+        ]))
+        // drop empty arrays
+        .then(rs => rs.filter(r => !!r))
+        .then(U.concat);
 }
 
 function isAuthorizedLocalRequest(req: http.IncomingMessage): boolean {
@@ -916,7 +923,10 @@ export function serveAsync(options: ServeOptions) {
 
         const sendHtml = (s: string, code = 200) => {
             res.writeHead(code, { 'Content-Type': 'text/html; charset=utf8' })
-            res.end(s)
+            res.end(s.replace(
+                /(<img [^>]* src=")(?:\/docs|\.)\/static\/([^">]+)"/g,
+                function (f, pref, addr) { return pref + '/static/' + addr + '"'; }
+            ))
         }
 
         const sendFile = (filename: string) => {
@@ -1050,6 +1060,11 @@ export function serveAsync(options: ServeOptions) {
             return
         }
 
+        if (pathname == "/--skillmap") {
+            sendFile(path.join(publicDir, 'skillmap.html'));
+            return
+        }
+
         if (/\/-[-]*docs.*$/.test(pathname)) {
             sendFile(path.join(publicDir, 'docs.html'));
             return
@@ -1070,6 +1085,7 @@ export function serveAsync(options: ServeOptions) {
         if (/^\/(pkg|package)\/.*$/.test(pathname)) {
             pkgPageTestAsync(pathname.replace(/^\/[^\/]+\//, ""))
                 .then(sendHtml)
+                .catch(() => error(404, "Packaged file not found"));
             return
         }
 

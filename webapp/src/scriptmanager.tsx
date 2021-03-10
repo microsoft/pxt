@@ -4,6 +4,7 @@ import * as sui from "./sui";
 import * as core from "./core";
 import * as workspace from "./workspace";
 import * as compiler from "./compiler";
+import * as auth from "./auth";
 
 import { SearchInput } from "./components/searchInput";
 import { ProjectsCodeCard } from "./projects";
@@ -180,20 +181,15 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         return core.promptAsync(opts).then(res => {
             if (res === null)
                 return false; // null means cancelled
-            return workspace.getTextAsync(header.id)
-                .then(text => workspace.duplicateAsync(header, text, res))
+            return workspace.duplicateAsync(header, res)
                 .then(clonedHeader => {
-                    // If we're cloud synced, update the cloudSync flag
-                    if (this.props.parent.cloudSync()) clonedHeader.cloudSync = true;
-
-                    delete clonedHeader.blobId
-                    delete clonedHeader.blobVersion
-                    delete clonedHeader.blobCurrent
+                    delete clonedHeader.blobId_
+                    delete clonedHeader.blobVersion_
+                    delete clonedHeader.blobCurrent_
 
                     return workspace.saveAsync(clonedHeader);
                 })
                 .then(() => {
-                    data.invalidate("headers:");
                     data.invalidate(`headers:${this.state.searchFor}`);
                     this.setState({ selected: {}, markedNew: { '0': 1 }, sortedBy: 'time', sortedAsc: false });
                     setTimeout(() => {
@@ -413,6 +409,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                                     label={label}
                                     onCardClick={this.handleCardClick}
                                     onLabelClick={this.handleCheckboxClick}
+                                    projectId={scr.id}
                                 />
                             })}
                         </div>

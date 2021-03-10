@@ -5,6 +5,7 @@ import * as data from "./data";
 import * as sui from "./sui";
 import * as githubbutton from "./githubbutton";
 import * as cmds from "./cmds"
+import * as cloud from "./cloud";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -227,7 +228,8 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
     }
 
     renderCore() {
-        const { tutorialOptions, projectName, compiling, isSaving, simState, debugging, header, editorState } = this.props.parent.state;
+        const { tutorialOptions, projectName, compiling, isSaving, simState, debugging, editorState } = this.props.parent.state;
+        const header = this.getData(`header:${this.props.parent.state.header.id}`);
 
         const targetTheme = pxt.appTarget.appTheme;
         const isController = pxt.shell.isControllerMode();
@@ -290,6 +292,9 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
             saveButtonClasses = "disabled";
         }
 
+        const cloudMd = this.getData<cloud.CloudTempMetadata>(`${cloud.HEADER_CLOUDSTATE}:${header.id}`);
+        const cloudState = cloud.getCloudSummary(header, cloudMd);
+
         return <div id="editortools" className="ui" role="menubar" aria-label={lf("Editor toolbar")}>
             <div id="downloadArea" role="menu" className="ui column items">{headless &&
                 <div className="ui item">
@@ -310,7 +315,17 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                     <div className={`ui right ${showSave ? "labeled" : ""} input projectname-input projectname-computer`}>
                         {showProjectRename && this.getSaveInput(showSave, "fileNameInput2", projectName, showProjectRenameReadonly)}
                         {showGithub && <githubbutton.GithubButton parent={this.props.parent} key={`githubbtn${computer}`} />}
-                    </div>
+                </div>
+                {/* TODO: consider make this cloud state indicator a seperate React component so we don't need to update
+                    the whole toolbar when there are cloud state changes. However so far, this doesn't seem to be a
+                    performance concern. */}
+                {(cloudState === "syncing" || cloudState === "offline" || cloudState === "conflict" || cloudState === "justSaved" || cloudState === "localEdits")
+                    && <i className="ui large right floated icon cloud cloudState"></i>}
+                {cloudState === "localEdits" && <span className="ui cloudState">{lf("saving...")}</span>}
+                {cloudState === "syncing" && <span className="ui cloudState">{lf("saving...")}</span>}
+                {cloudState === "justSaved" && <span className="ui cloudState">{lf("saved!")}</span>}
+                {cloudState === "offline" && <span className="ui cloudState">{lf("offline.")}</span>}
+                {cloudState === "conflict" && <span className="ui cloudState">{lf("conflict!")}</span>}
                 </div>}
             <div id="editorToolbarArea" role="menu" className="ui column items">
                 {showUndoRedo && <div className="ui icon buttons">{this.getUndoRedo(computer)}</div>}

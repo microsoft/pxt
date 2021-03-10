@@ -412,6 +412,7 @@ namespace pxt.sprite {
     }
 
     export function filterItems(target: GalleryItem[], tags: string[]) {
+        // Keep this unified with ImageFieldEditor:filterAssets
         tags = tags
             .filter(el => !!el)
             .map(el => el.toLowerCase());
@@ -538,7 +539,17 @@ namespace pxt.sprite {
             return proj.createNewTile(bitmap.data());
         }
 
-        return proj.resolveTile(literal);
+        switch (literal) {
+            case "myTiles.tile0":
+            case "myTiles.transparency16":
+                return proj.getTransparency(16);
+            case "myTiles.transparency8":
+                return proj.getTransparency(8);
+            case "myTiles.transparency32":
+                return proj.getTransparency(32);
+            default:
+                return proj.resolveTile(literal);
+        }
     }
 
     export function formatByte(value: number, bytes: number) {
@@ -569,16 +580,13 @@ namespace pxt.sprite {
         return result;
     }
 
-    export function imageLiteralToBitmap(text: string, defaultPattern?: string): Bitmap {
+    export function imageLiteralToBitmap(text: string): Bitmap {
         // Strip the tagged template string business and the whitespace. We don't have to exhaustively
         // replace encoded characters because the compiler will catch any disallowed characters and throw
         // an error before the decompilation happens. 96 is backtick and 9 is tab
         text = text.replace(/[ `]|(?:&#96;)|(?:&#9;)|(?:img)/g, "").trim();
         text = text.replace(/^["`\(\)]*/, '').replace(/["`\(\)]*$/, '');
         text = text.replace(/&#10;/g, "\n");
-
-        if (!text && defaultPattern)
-            text = defaultPattern;
 
         const rows = text.split("\n");
 
@@ -609,6 +617,8 @@ namespace pxt.sprite {
                     case "d": case "D": case "O": rowValues.push(13); break;
                     case "e": case "E": case "Y": rowValues.push(14); break;
                     case "f": case "F": case "W": rowValues.push(15); break;
+                    default:
+                        if (!/\s/.test(row[c])) return undefined;
                 }
             }
 
@@ -635,6 +645,51 @@ namespace pxt.sprite {
         }
 
         return result;
+    }
+
+    export function addMissingTilemapTilesAndReferences(project: TilemapProject, asset: ProjectTilemap) {
+        const allTiles = project.getProjectTiles(asset.data.tileset.tileWidth, true);
+        asset.data.projectReferences = [];
+
+        for (const tile of allTiles.tiles) {
+            if (!asset.data.tileset.tiles.some(t => t.id === tile.id)) {
+                asset.data.tileset.tiles.push(tile);
+            }
+            if (project.isAssetUsed(tile, null, [asset.id])) {
+                asset.data.projectReferences.push(tile.id);
+            }
+        }
+    }
+
+    export function updateTilemapReferencesFromResult(project: TilemapProject, assetResult: ProjectTilemap) {
+        const result = assetResult.data;
+
+        if (result.deletedTiles) {
+            for (const deleted of result.deletedTiles) {
+                project.deleteTile(deleted);
+            }
+        }
+
+        if (result.editedTiles) {
+            for (const edit of result.editedTiles) {
+                const editedIndex = result.tileset.tiles.findIndex(t => t.id === edit);
+                const edited = result.tileset.tiles[editedIndex];
+
+                if (!edited) continue;
+
+                result.tileset.tiles[editedIndex] = project.updateTile(edited);
+            }
+        }
+
+        for (let i = 0; i < result.tileset.tiles.length; i++) {
+            const tile = result.tileset.tiles[i];
+
+            if (!tile.jresData) {
+                result.tileset.tiles[i] = project.resolveTile(tile.id);
+            }
+        }
+
+        pxt.sprite.trimTilemapTileset(result);
     }
 
     function imageLiteralPrologue(fileType: "typescript" | "python"): string {
@@ -681,6 +736,8 @@ namespace pxt.sprite {
     }
 
     export function bitmapToImageLiteral(bitmap: Bitmap, fileType: "typescript" | "python"): string {
+        if (!bitmap || bitmap.height === 0 || bitmap.width === 0) return "";
+
         let res = imageLiteralPrologue(fileType);
 
         if (bitmap) {

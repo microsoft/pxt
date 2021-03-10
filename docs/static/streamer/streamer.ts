@@ -46,6 +46,7 @@ interface StreamerState {
     screenshotVideo?: HTMLVideoElement;
     recording?: () => void;
     stingering?: boolean;
+    addSite?: boolean;
 }
 
 interface StreamerConfig {
@@ -170,6 +171,7 @@ function onYouTubeIframeAPIReady() {
     const backgroundvideo = document.getElementById('backgroundvideo') as HTMLVideoElement
     const backgroundyoutube = document.getElementById('backgroundyoutube') as HTMLIFrameElement
     const intro = document.getElementById('intro')
+    const addsiteinput = document.getElementById('addsiteinput') as HTMLInputElement;
     const hasGetDisplayMedia = !!(<any>navigator)?.mediaDevices?.getDisplayMedia;
 
     const cachedFrames: { [url: string]: HTMLIFrameElement } = {}
@@ -203,6 +205,7 @@ function onYouTubeIframeAPIReady() {
         initVideos();
         initSubtitles();
         initAccessibility();
+        initAddSite();
         loadPaint();
         loadEditor()
         loadToolbox()
@@ -251,15 +254,21 @@ function onYouTubeIframeAPIReady() {
 
     async function showSettings() {
         await loadSettings()
+        state.addSite = false;
         settings.classList.remove("hidden")
+        render();
     }
 
     async function hideSettings() {
         settings.classList.add("hidden")
     }
 
+    function settingsVisible() {
+        return !/hidden/.test(settings.className)
+    }
+
     function toggleSettings() {
-        if (/hidden/.test(settings.className))
+        if (!settingsVisible())
             showSettings();
         else
             hideSettings();
@@ -273,7 +282,7 @@ function onYouTubeIframeAPIReady() {
             hardwareCamLabel: "",
             emojis: "😄🤔😭👀",
             micDelay: 300,
-            title: "STARTING SOON"
+            title: ""
         }
         return cfg;
     }
@@ -328,6 +337,7 @@ function onYouTubeIframeAPIReady() {
             state.recording && "recording",
             state.screenshoting && "screenshoting",
             state.stingering && "stingering",
+            state.addSite && "addsite",
             (config.faceCamGreenScreen || config.hardwareCamGreenScreen) && state.thumbnail && "thumbnail",
             config.micDelay === undefined && "micdelayerror",
             !hasGetDisplayMedia && "displaymediaerror",
@@ -406,11 +416,10 @@ function onYouTubeIframeAPIReady() {
             addButton(toolbox, "FullView", "Toggle full screen", toggleFullscreen)
         }
 
-        if (config.extraSites && config.extraSites.length) {
-            addSep(toolbox);
-            config.extraSites.forEach(addSiteButton)
-            addButton(toolbox, "Code", "Reload MakeCode editor", () => startStinger(config.stingerVideo, loadEditor, config.stingerVideoGreenScreen, config.stingerVideoDelay))
-        }
+        addSep(toolbox);
+        addButton(toolbox, "Add", "Add web site", addAddSiteButton)
+        if (config.extraSites) config.extraSites.forEach(addSiteButton)
+        addButton(toolbox, "Code", "Reload MakeCode editor", () => startStinger(config.stingerVideo, loadEditor, config.stingerVideoGreenScreen, config.stingerVideoDelay))
 
         addSep(toolbox)
         if (state.speech)
@@ -474,6 +483,12 @@ function onYouTubeIframeAPIReady() {
             paintbox.append(btn)
         }
 
+        function addAddSiteButton() {
+            state.addSite = true;
+            render();
+            addsiteinput.focus()
+        }
+
         function addSiteButton(url) {
             addButton(toolbox, "SingleBookmark", url, () => setSite(url), false)
         }
@@ -509,8 +524,9 @@ function onYouTubeIframeAPIReady() {
         const ytid = parseYouTubeVideoId(url);
         if (ytid)
             url = createYouTubeEmbedUrl(ytid, true)
-
         startStinger(config.stingerVideo, () => {
+            if (state.sceneIndex === CHAT_SCENE_INDEX || state.sceneIndex == COUNTDOWN_SCENE_INDEX)
+                setScene("right");
             if (config.multiEditor && state.sceneIndex == LEFT_SCENE_INDEX)
                 setFrameUrl(editor2(), url, true);
             else
@@ -916,7 +932,9 @@ function onYouTubeIframeAPIReady() {
             setFrameUrl(editor2(), url, true)
         } else {
             // remove from DOM
-            editor2().remove();
+            const e2 = editor2();
+            if (e2)
+                e2.remove();
         }
 
         loadStyle();
@@ -1051,8 +1069,7 @@ background-image: url(${config.backgroundImage});
         if (!(config.twitch || config.restream))
             state.chat = false;
 
-        const editorConfig = editorConfigs[config.editor]
-        titleEl.innerText = config.title || (editorConfig && `MakeCode for ${editorConfig.name}`) || "";
+        titleEl.innerText = config.title || "";
     }
 
     function loadChat() {
@@ -1206,6 +1223,40 @@ background-image: url(${config.backgroundImage});
         } catch (e) {
             console.log(e)
         }
+    }
+
+    function initAddSite() {
+        accessify(addsiteinput);
+        addsiteinput.addEventListener("click", ev => {
+            const value = addsiteinput.value;
+            if (!value) return; // ignore click
+
+            state.addSite = false;
+            const config = readConfig();
+
+            // emoji?
+            const em = /(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])+/.exec(value);
+            if (em) {
+                addsiteinput.value = "";
+                config.emojis = em[0];
+                saveConfig(config);
+                state.emoji = config.emojis.substr(0, 2);
+                setPaintTool("emoji")
+            } else {
+                const url: string = normalizeUrl(value);
+                if (url) {
+                    addsiteinput.value = "";
+                    if (!config.extraSites)
+                        config.extraSites = [];
+                    if (config.extraSites.indexOf(url) < 0) {
+                        config.extraSites.push(url);
+                        saveConfig(config);
+                    }
+                    setSite(url)
+                }
+            }
+            render();
+        })
     }
 
     function initVideos() {
@@ -1374,7 +1425,7 @@ background-image: url(${config.backgroundImage});
             if (!!data.broadcast) {
                 data.outer = true;
                 const frames = document.querySelectorAll("iframe.site");
-                for(let i = 0; i < frames.length; ++i) {
+                for (let i = 0; i < frames.length; ++i) {
                     const ifrm = frames.item(i) as HTMLIFrameElement;
                     if (ifrm.contentWindow !== source)
                         ifrm.contentWindow.postMessage(data, "*");
@@ -1796,6 +1847,17 @@ background-image: url(${config.backgroundImage});
         a.href = url;
         a.download = name;
         a.click();
+    }
+
+    function normalizeUrl(url: string) {
+        if (!url) return undefined;
+        url = url.trim();
+        const m = /<iframe.*?src="([^"]+)".*?>/i.exec(url)
+        if (m)
+            url = decodeURI(m[1]).replace(/&amp;/g, "&");
+        if (!/^http?s:\/\//i.test(url))
+            url = "https://" + url;
+        return url;
     }
 
     async function loadSettings() {
@@ -2566,6 +2628,14 @@ background-image: url(${config.backgroundImage});
                     updateCountdown(-60); break;
             }
         }
+        // esc
+        if (ev.keyCode === 27) {
+            if (state.addSite) state.addSite = false;
+            if (state.paint) togglePaint();
+            if (settingsVisible()) toggleSettings();
+            if (intro.parentNode) intro.remove();
+            render();
+        }
 
         function setPaintTool(ev, name) {
             state.painttool = name
@@ -2597,15 +2667,21 @@ background-image: url(${config.backgroundImage});
     }
 
     function tickEvent(id, data?: any, opts?: { interactiveConsent?: boolean }) {
-        if (typeof pxt === "undefined" || !pxt.aiTrackException || !pxt.aiTrackEvent) return;
-        if (opts?.interactiveConsent) pxt.setInteractiveConsent(true);
-        const args = tickProps(data);
-        pxt.aiTrackEvent(id, args[0], args[1]);
+        if (typeof pxt === "undefined") return;
+        if (opts?.interactiveConsent && pxt.setInteractiveConsent)
+            pxt.setInteractiveConsent(true);
+        if (pxt.aiTrackEvent) {
+            const args = tickProps(data);
+            pxt.aiTrackEvent(id, args[0], args[1]);
+        }
     }
 
     function trackException(err: any, id: string, data?: any) {
-        const args = tickProps(data);
-        pxt.aiTrackException(err, id, args[0]);
+        if (typeof pxt === "undefined") return;
+        if (pxt.aiTrackException) {
+            const args = tickProps(data);
+            pxt.aiTrackException(err, id, args[0]);
+        }
     }
 
     function tickProps(data) {
@@ -2702,7 +2778,7 @@ background-image: url(${config.backgroundImage});
             }
         } else {
             stingervideo.src = undefined;
-            if(stingerPlayer) stingerPlayer.stopVideo()
+            if (stingerPlayer) stingerPlayer.stopVideo();
             stingervideo.classList.add("hidden");
             stingeryoutube.classList.add("hidden")
             state.stingering = false;
@@ -2718,7 +2794,7 @@ background-image: url(${config.backgroundImage});
             const urls = url.split(/\n/g)
             url = urls[Math.floor(Math.random() * urls.length)];
         }
-        const blob = url.startsWith("blob:") && url.substr("blob:".length);
+        const blob = /^blob:/.test(url) && url.substr("blob:".length);
         if (blob) {
             const file = await db.get(blob)
             if (file)
