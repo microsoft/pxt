@@ -246,6 +246,7 @@ async function resolveConflict(local: Header, remoteFile: File) {
     const newName = getConflictCopyName(local);
     let newCopyHdr = await workspace.duplicateAsync(local, newName);
     pxt.tickEvent(`identity.sync.conflict.createdDuplicate`);
+    let anyError = false;
 
     // 2. swap current project to the new copy
     try {
@@ -259,6 +260,7 @@ async function resolveConflict(local: Header, remoteFile: File) {
         // we want to swallow this and keep going since step 3. is the essentail one to resolve the conflcit.
         pxt.reportException(e);
         pxt.tickEvent(`identity.sync.conflict.reloadEditorFailed`, { exception: e });
+        anyError = true;
     }
 
     // 3. overwrite local changes in the original project with cloud changes
@@ -269,11 +271,17 @@ async function resolveConflict(local: Header, remoteFile: File) {
         //  since this is a bad case (may lead to repeat duplication).
         pxt.reportException(e);
         pxt.tickEvent(`identity.sync.conflict.overwriteLocalFailed`, { exception: e });
+        anyError = true;
         throw e;
     }
 
     // 4. upload new project to the cloud (network op)
     const copyUploadHdr = await transferToCloud(newCopyHdr, null);
+    if (!copyUploadHdr) {
+        // nothing to do but report this
+        pxt.tickEvent(`identity.sync.conflict.uploadCopyToCloudFailed`);
+        anyError = true;
+    }
 
     // 5. tell the user a conflict occured
     try {
@@ -290,6 +298,14 @@ async function resolveConflict(local: Header, remoteFile: File) {
         // we want to swallow this and keep going since it's non-essential
         pxt.reportException(e);
         pxt.tickEvent(`identity.sync.conflict.dialogNotificationFailed`, { exception: e });
+        anyError = true;
+    }
+
+    // 6. tell the cloud
+    if (!anyError) {
+        pxt.tickEvent(`identity.sync.conflict.success`);
+    } else {
+        pxt.tickEvent(`identity.sync.conflict.failed`);
     }
 }
 
