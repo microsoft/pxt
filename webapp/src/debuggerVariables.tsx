@@ -149,7 +149,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         vars.forEach(varInfo => {
             const valueString = renderValue(varInfo.value);
             const typeString = variableType(varInfo);
-            const displayName = varInfo.displayName || varInfo.name
+            const displayName = varInfo.displayName || varInfo.name;
 
             result.push(<DebuggerTableRow key={varInfo.id}
                 describedBy={varInfo.id === previewed ? "debugger-preview" : undefined}
