@@ -102,7 +102,7 @@ class SkillGraphImpl extends React.Component<SkillGraphProps> {
     }
 
     protected getY(position: number) {
-        return ((position * 8) + PADDING) * UNIT;
+        return ((position * 9) + PADDING) * UNIT;
     }
 
     componentDidUpdate(props: SkillGraphProps) {

@@ -19,7 +19,7 @@ export class MapActionsImpl extends React.Component<MapActionsProps> {
     }
 
     render() {
-        return <div className="map-actions">
+        return <div className="actions">
             <div className="action-button" role="button" onClick={this.handleResetButtonClick}>
                 {lf("Reset Progress")}
             </div>
