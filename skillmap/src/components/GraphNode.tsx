@@ -54,6 +54,39 @@ export class GraphNode extends React.Component<GraphNodeProps> {
         }
     }
 
+    protected getNodeMarker(status: string, width: number, theme: SkillGraphTheme): JSX.Element {
+        // Used for positioning the corner circle on completed activities so that it isn't
+        // perfectly aligned with the node
+        const nudgeUnit = width / 50;
+
+        switch (status) {
+            case "completed":
+                return <g transform={`translate(${(width / 2) - (3 * nudgeUnit)} ${(-width / 2) + (3 * nudgeUnit)})`}>
+                    <circle cx={0} cy={0} r={(width / 4) - nudgeUnit} stroke={theme.strokeColor} strokeWidth="2" fill={theme.rewardNodeColor}/>
+                    <text dy="2"
+                        textAnchor="middle"
+                        alignmentBaseline="middle"
+                        fill={theme.rewardNodeForeground}
+                        className="graph-status-icon">
+                            {"\uf00c"}
+                        </text>
+                </g>
+            case "notstarted":
+                return <g transform={`translate(${(width / 2) - (3 * nudgeUnit)} ${(-width / 2) + (3 * nudgeUnit)})`}>
+                    <circle cx={0} cy={0} r={(width / 4) - nudgeUnit} stroke={theme.strokeColor} strokeWidth="2" fill={theme.selectedStrokeColor}/>
+                    <text dy="2"
+                        textAnchor="middle"
+                        alignmentBaseline="middle"
+                        fill={theme.strokeColor}
+                        className="graph-status-icon">
+                            {"\uf12a"}
+                        </text>
+                </g>
+            default:
+                return <g />
+        }
+    }
+
     render() {
         const  { width, position, selected, status, kind, theme } = this.props;
         let fill = theme.unlockedNodeColor;
@@ -68,28 +101,20 @@ export class GraphNode extends React.Component<GraphNodeProps> {
             foreground = theme.lockedNodeForeground;
         }
 
-        // Used for positioning the corner circle on completed activities so that it isn't
-        // perfectly aligned with the node
-        const nudgeUnit = width / 50;
+        const selectedUnit = width / 8;
 
         return  <g className={`graph-activity ${selected ? "selected" : ""}`} transform={`translate(${position.x} ${position.y})`} onClick={this.handleClick}>
+            { selected &&
+                (kind !== "activity" ?
+                    <circle className="highlight" cx={0} cy={0} r={width / 2 + selectedUnit} /> :
+                    <rect className="highlight" x={-width / 2 - selectedUnit} y={-width / 2 - selectedUnit} width={width + 2 * selectedUnit} height={width + 2 * selectedUnit} rx={width / 6} />)
+            }
             { kind !== "activity" ?
                 <circle cx={0} cy={0} r={width / 2} fill={fill} stroke={theme.strokeColor} strokeWidth="2" /> :
                 <rect x={-width / 2} y={-width / 2} width={width} height={width} rx={width / 10} fill={fill} stroke="#000" strokeWidth="2" />
             }
-            { status === "completed" && kind === "activity" &&
-                <g transform={`translate(${(width / 2) - (3 * nudgeUnit)} ${(-width / 2) + (3 * nudgeUnit)})`}>
-                    <circle cx={0} cy={0} r={(width / 4) - nudgeUnit} stroke={theme.strokeColor} strokeWidth="2" fill={fill}/>
-                    <text dy="2"
-                        textAnchor="middle"
-                        alignmentBaseline="middle"
-                        fill={foreground}
-                        className="graph-status-icon">
-                            {"\uf00c"}
-                        </text>
-                </g>
-            }
-            <text dy="2"
+            { kind === "activity" && this.getNodeMarker(status, width, theme) }
+            <text dy="4"
                 textAnchor="middle"
                 alignmentBaseline="middle"
                 fill={foreground}
