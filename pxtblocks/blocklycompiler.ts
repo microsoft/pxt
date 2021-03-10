@@ -1133,7 +1133,7 @@ namespace pxt.blocks {
     try { // Some browsers do not support unicode property escape, in which case we can just use _ replacement
         PICTOGRAPHIC_REGEX = new RegExp("\\p{Extended_Pictographic}", "ug")
     } catch {}
-    function escapePictographic(name: string) {
+    export function escapePictographic(name: string) {
         if (PICTOGRAPHIC_REGEX) {
             return name.replace(
                 PICTOGRAPHIC_REGEX,
