@@ -67,7 +67,6 @@ export function getCloudSummary(h: pxt.workspace.Header, md: CloudTempMetadata):
 
 async function listAsync(): Promise<Header[]> {
     return new Promise(async (resolve, reject) => {
-        // Note: Cosmos & our backend does not return e-tags each individual item in a list operation
         const result = await auth.apiAsync<CloudProject[]>("/api/user/project");
         if (result.success) {
             const syncTime = U.nowSeconds()
