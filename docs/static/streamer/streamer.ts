@@ -2794,7 +2794,7 @@ background-image: url(${config.backgroundImage});
             const urls = url.split(/\n/g)
             url = urls[Math.floor(Math.random() * urls.length)];
         }
-        const blob = url.startsWith("blob:") && url.substr("blob:".length);
+        const blob = /^blob:/.test(url) && url.substr("blob:".length);
         if (blob) {
             const file = await db.get(blob)
             if (file)

@@ -1979,58 +1979,25 @@ function buildWebStringsAsync() {
 function buildSkillMapAsync(parsed: commandParser.ParsedCommand) {
     // local serve
     const skillmapRoot = "node_modules/pxt-core/skillmap";
-    if (parsed.flags["serve"]) {
-        return rimrafAsync(`${skillmapRoot}/public/blb`, {})
-            .then(() => rimrafAsync(`${skillmapRoot}/build/assets`, {}))
-            .then(() => {
-                // read pxtarget.json, save into 'pxtTargetBundle' global variable
-                let cfg = readLocalPxTarget();
-                nodeutil.writeFileSync(`${skillmapRoot}/public/blb/target.js`, "// eslint-disable-next-line \n" + targetJsPrefix + JSON.stringify(cfg));
-                nodeutil.cp("node_modules/pxt-core/built/pxtlib.js", `${skillmapRoot}/public/blb`);
-                nodeutil.cp("built/web/semantic.css", `${skillmapRoot}/public/blb`);
-
-                // copy 'assets' over from docs/static
-                nodeutil.cpR("docs/static/skillmap/assets", `${skillmapRoot}/public/assets`);
-                return nodeutil.spawnAsync({
-                    cmd: os.platform() === "win32" ? "npm.cmd" : "npm",
-                    args: ["run-script", "start"],
-                    cwd: skillmapRoot,
-                    shell: true
-                })
-            });
-    } else {
-        // OLD WAY, DEPRECATED
-        // go to appropriate stable branches in pxt (6.2) and target (pxt-arcade 1.2)
-        // run "pxt skillmap --serve" in target directory to make sure all files are copied
-        // run "pxt skillmap" to generate built files (also copies into docs/static)
-        // stash changes in target, go to master, delete skillmap folder in docs/static, pop stash
-
-        let cfg = readLocalPxTarget();
-        nodeutil.writeFileSync(`${skillmapRoot}/public/target.js`, "// eslint-disable-next-line \n" + targetJsPrefix + JSON.stringify(cfg));
-        nodeutil.cp("node_modules/pxt-core/built/pxtlib.js", `${skillmapRoot}/public/`);
-
-        return nodeutil.spawnAsync({
-            cmd: os.platform() === "win32" ? "npm.cmd" : "npm",
-            args: ["run-script", "build"],
-            cwd: skillmapRoot,
-            shell: true
-        }).then(() =>  rimrafAsync(`${skillmapRoot}/build/blb`, {}))
-        .then(() =>  rimrafAsync("docs/static/skillmap", {}))
+    return rimrafAsync(`${skillmapRoot}/public/blb`, {})
+        .then(() => rimrafAsync(`${skillmapRoot}/build/assets`, {}))
         .then(() => {
-            nodeutil.cpR(`${skillmapRoot}/build`, "docs/static/skillmap");
+            // read pxtarget.json, save into 'pxtTargetBundle' global variable
+            let cfg = readLocalPxTarget();
+            nodeutil.writeFileSync(`${skillmapRoot}/public/blb/target.js`, "// eslint-disable-next-line \n" + targetJsPrefix + JSON.stringify(cfg));
+            nodeutil.cp("node_modules/pxt-core/built/pxtlib.js", `${skillmapRoot}/public/blb`);
+            nodeutil.cp("built/web/semantic.css", `${skillmapRoot}/public/blb`);
+            nodeutil.cp("node_modules/pxt-core/built/web/icons.css", `${skillmapRoot}/public/blb`);
 
-            // patch paths to match updated folder structure
-            const fn = "docs/static/skillmap/index.html";
-            const f = fs.readFileSync(fn, "utf8");
-            const patched = f.replace(/href="\/blb\//g, `href="/static/skillmap/`)
-                .replace(/src="\/blb\//g, `src="/static/skillmap/`);
-            fs.writeFileSync("docs/skillmap.html", patched, { encoding: "utf8" });
-
-            // remove old index.html
-            fs.unlinkSync(fn);
-            return Promise.resolve();
-        })
-    }
+            // copy 'assets' over from docs/static
+            nodeutil.cpR("docs/static/skillmap/assets", `${skillmapRoot}/public/assets`);
+            return nodeutil.spawnAsync({
+                cmd: os.platform() === "win32" ? "npm.cmd" : "npm",
+                args: ["run-script", "start"],
+                cwd: skillmapRoot,
+                shell: true
+            })
+        });
 }
 
 function updateDefaultProjects(cfg: pxt.TargetBundle) {
@@ -6691,13 +6658,10 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
         name: "buildskillmap",
         aliases: ["skillmap"],
         advanced: true,
-        help: "Builds the skill map webapp",
+        help: "Serves the skill map webapp",
         flags: {
             serve: {
                 description: "Serve the skill map locally after building (npm start)"
-            },
-            legacy: {
-                description: "Legacy way of building skillmap (copies files into docs/static of target)"
             }
         }
     }, buildSkillMapAsync);

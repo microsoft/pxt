@@ -1,8 +1,9 @@
 import * as actions from '../actions/types'
 import { guidGen } from '../lib/browserUtils';
-import { getCompletedTags, lookupActivityProgress, isMapCompleted, applyUserUpgrades } from '../lib/skillMapUtils';
+import { getCompletedTags, lookupActivityProgress, isMapCompleted,
+    isRewardNode, applyUserUpgrades } from '../lib/skillMapUtils';
 
-export type ModalType = "restart-warning" | "completion" | "report-abuse" | "reset";
+export type ModalType = "restart-warning" | "completion" | "report-abuse" | "reset" | "carryover";
 export type PageSourceStatus = "approved" | "banned" | "unknown";
 
 // State for the entire page
@@ -10,21 +11,24 @@ export interface SkillMapState {
     title: string;
     description: string;
     infoUrl?: string;
+    backgroundImageUrl?: string;
     user: UserState;
     pageSourceUrl: string;
     pageSourceStatus: PageSourceStatus;
     maps: { [key: string]: SkillMap };
-    selectedItem?: string;
+    selectedItem?: { mapId: string, activityId: string };
 
     editorView?: EditorViewState;
     modal?: ModalState;
+    theme: SkillGraphTheme;
 }
 
 export interface EditorViewState {
     currentHeaderId?: string;
     currentMapId: string;
     currentActivityId: string;
-    state: "active" | "saving";
+    allowCodeCarryover: boolean;
+    state: "active" | "saving" | "reload" | "reloading";
 }
 
 interface ModalState {
@@ -44,6 +48,19 @@ const initialState: SkillMapState = {
         id: guidGen(),
         mapProgress: {},
         completedTags: {}
+    },
+    theme: {
+        backgroundColor: "var(--body-background-color)",
+        pathColor: "#BFBFBF",
+        strokeColor: "#000000",
+        rewardNodeColor: "var(--tertiary-color)",
+        rewardNodeForeground: "#000000",
+        unlockedNodeColor: "var(--secondary-color)",
+        unlockedNodeForeground: "#000000",
+        lockedNodeColor: "#BFBFBF",
+        lockedNodeForeground: "#000000",
+        selectedStrokeColor: "var(--hover-color)",
+        pathOpacity: 0.5,
     },
     maps: {}
 }
@@ -76,7 +93,10 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
         case actions.CHANGE_SELECTED_ITEM:
             return {
                 ...state,
-                selectedItem: action.id
+                selectedItem: {
+                    mapId: action.mapId,
+                    activityId: action.activityId
+                }
             };
         case actions.SET_SKILL_MAP_COMPLETED:
             return {
@@ -96,12 +116,14 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                 }
             }
         case actions.OPEN_ACTIVITY:
+
             return {
                 ...state,
                 editorView: {
                     currentMapId: action.mapId,
                     currentActivityId: action.activityId,
                     state: "active",
+                    allowCodeCarryover: shouldAllowCodeCarryover(state, action.mapId, action.activityId),
                     currentHeaderId: lookupActivityProgress(
                         state.user,
                         state.pageSourceUrl,
@@ -120,11 +142,23 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                 }
             };
         case actions.CLOSE_ACTIVITY:
+            const currentMap = state.maps[state.editorView!.currentMapId];
+            const currentActivityId = state.editorView!.currentActivityId;
+
+            // When a node is completed, we mark any following reward nodes as complete also
+            const finishedNodes = action.finished ? getFinishedNodes(currentMap, currentActivityId) : [];
+            const selectedItem = finishedNodes.find(el => isRewardNode(el));
+            const existing = selectedItem && state.user.mapProgress[state.pageSourceUrl]?.[currentMap.mapId]?.activityState[selectedItem.activityId];
+
             return {
                 ...state,
+                selectedItem: selectedItem && !existing ? {
+                    mapId: currentMap.mapId,
+                    activityId: selectedItem.activityId
+                } : state.selectedItem,
                 editorView: undefined,
                 user: action.finished ?
-                    setActivityFinished(state.user, state.pageSourceUrl, state.maps[state.editorView!.currentMapId], state.editorView!.currentActivityId) :
+                    setActivityFinished(state.user, state.pageSourceUrl, currentMap, finishedNodes.map(n => n.activityId)) :
                     state.user
             };
         case actions.RESTART_ACTIVITY:
@@ -134,7 +168,8 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                 editorView: {
                     state: "active",
                     currentMapId: action.mapId,
-                    currentActivityId: action.activityId
+                    currentActivityId: action.activityId,
+                    allowCodeCarryover: shouldAllowCodeCarryover(state, action.mapId, action.activityId),
                 },
                 user: setHeaderIdForActivity(
                     state.user,
@@ -160,6 +195,14 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                     action.currentStep,
                     action.maxSteps
                 )
+            };
+        case actions.SET_RELOAD_HEADER_STATE:
+            return {
+                ...state,
+                editorView: state.editorView ? {
+                    ...state.editorView,
+                    state: action.state
+                } : undefined
             };
         case actions.SET_USER:
             return {
@@ -202,6 +245,16 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                 ...state,
                 infoUrl: action.infoUrl
             }
+        case actions.SET_PAGE_BACKGROUND_IMAGE_URL:
+            return {
+                ...state,
+                backgroundImageUrl: action.backgroundImageUrl
+            }
+        case actions.SET_PAGE_THEME:
+            return {
+                ...state,
+                theme: action.theme
+            }
         case actions.SET_PAGE_SOURCE_URL:
             return {
                 ...state,
@@ -212,6 +265,11 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
             return {
                 ...state,
                 modal: { type: "completion", currentMapId: action.mapId, currentActivityId: action.activityId }
+            };
+        case actions.SHOW_CARRYOVER_MODAL:
+            return {
+                ...state,
+                modal: { type: "carryover", currentMapId: action.mapId, currentActivityId: action.activityId }
             };
         case actions.SHOW_RESTART_ACTIVITY_MODAL:
             return {
@@ -253,11 +311,7 @@ export function setHeaderIdForActivity(user: UserState, pageSource: string, map:
         }
     }
 
-    // Only transition the first time a carousel/skill path is completed: we check that the map is completed
-    // (not including the current activity), that the current activity is not YET completed, but about to be
-    const shouldTransition = isMapCompleted(user, pageSource, map, activityId) && !existing.isCompleted && isCompleted;
     const currentMapProgress = user.mapProgress?.[pageSource] || {};
-
     return {
         ...user,
         mapProgress: {
@@ -275,30 +329,37 @@ export function setHeaderIdForActivity(user: UserState, pageSource: string, map:
                             maxSteps,
                             isCompleted: existing.isCompleted || isCompleted
                         }
-                    },
-                    completionState: shouldTransition ? "transitioning" : currentMapProgress?.[mapId]?.completionState
+                    }
                 }
             }
         }
     };
 }
 
-export function setActivityFinished(user: UserState, pageSource: string, map: SkillMap, activityId: string) {
-    const mapId = map.mapId;
-    let existing = lookupActivityProgress(user, pageSource, mapId, activityId);
+export function shouldAllowCodeCarryover(state: SkillMapState, mapId: string, activityId: string) {
+    const map = state.maps[mapId];
+    const activity = map.activities[activityId];
+    return !!(activity?.kind === "activity" && activity.allowCodeCarryover);
+}
 
-    if (!existing) {
-        existing = {
-            isCompleted: false,
-            activityId,
+export function setActivityFinished(user: UserState, pageSource: string, map: SkillMap, activityIds: string[]) {
+    const mapId = map.mapId;
+
+    let shouldTransition = false;
+    const completedNodes: {[key: string]: ActivityState} = { } ;
+    activityIds.forEach(el => {
+        let activity = lookupActivityProgress(user, pageSource, mapId, el);
+        // Only auto-transition the first time a completion node is reached
+        shouldTransition = shouldTransition || (isRewardNode(map.activities[el]) && !activity?.isCompleted);
+        completedNodes[el] = (activity || {
+            isCompleted: true,
+            activityId: el,
             headerId: "",
             currentStep: 0
-        }
-    }
+        })
+        completedNodes[el].isCompleted = true;
+    })
 
-    // Only transition the first time a carousel/skill path is completed: we check that the map is completed
-    // (not including the current activity) and that the current activity is not yet completed
-    const shouldTransition = isMapCompleted(user, pageSource, map, activityId) && !existing.isCompleted;
     const currentMapProgress = user.mapProgress?.[pageSource] || {};
     return {
         ...user,
@@ -310,16 +371,22 @@ export function setActivityFinished(user: UserState, pageSource: string, map: Sk
                     ...(currentMapProgress?.[mapId] || { mapId }),
                     activityState: {
                         ...(currentMapProgress?.[mapId]?.activityState || {}),
-                        [activityId]: {
-                            ...existing,
-                            isCompleted: true
-                        }
+                        ...completedNodes
                     },
                     completionState: shouldTransition ? "transitioning" : currentMapProgress?.[mapId]?.completionState
                 }
             }
         }
     };
+}
+
+function getFinishedNodes(map: SkillMap, activityId: string) {
+    const node = map.activities[activityId]
+    const completedNodes: MapNode[] = [node];
+
+    // Reward and completion nodes are automatically marked finished
+    const autoComplete = map.activities[activityId].next.filter(el => isRewardNode(el));
+    return completedNodes.concat(autoComplete);
 }
 
 export default topReducer;

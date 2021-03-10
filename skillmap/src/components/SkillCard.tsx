@@ -6,21 +6,19 @@ import { Item } from './CarouselItem';
 
 import { dispatchOpenActivity, dispatchShowRestartActivityWarning } from '../actions/dispatch';
 
-import { isActivityUnlocked, isMapUnlocked, lookupActivityProgress, } from '../lib/skillMapUtils';
+import { ActivityStatus, isActivityUnlocked, isMapUnlocked, lookupActivityProgress, } from '../lib/skillMapUtils';
 import { tickEvent } from '../lib/browserUtils';
 
 /* tslint:disable:no-import-side-effect */
 import '../styles/skillcard.css'
 /* tslint:enable:no-import-side-effect */
 
-type SkillCardStatus = "locked" | "notstarted" | "inprogress" | "completed" | "restarted";
-
 interface SkillCardProps extends Item {
     mapId: string;
     description?: string;
     imageUrl?: string;
     tags?: string[];
-    status?: SkillCardStatus;
+    status?: ActivityStatus;
     currentStep?: number;
     maxSteps?: number
     dispatchOpenActivity: (mapId: string, activityId: string) => void;
@@ -43,7 +41,7 @@ export class SkillCardImpl extends React.Component<SkillCardProps> {
         }
     }
 
-    protected isCompleted(status: SkillCardStatus): boolean {
+    protected isCompleted(status: ActivityStatus): boolean {
         return status === "completed" || status === "restarted";
     }
 
@@ -71,6 +69,7 @@ export class SkillCardImpl extends React.Component<SkillCardProps> {
     render() {
         const { label, description, imageUrl, tags, status, currentStep, maxSteps} = this.props;
         const completed = this.isCompleted(status || "notstarted");
+        const showRestart = status !== "locked" && status !== "notstarted";
 
         return <div className="skill-card-container">
             <div className={`skill-card ${status || ''}`}>
@@ -99,7 +98,7 @@ export class SkillCardImpl extends React.Component<SkillCardProps> {
                     <div className="skill-card-description">{description}</div>
                     <div className="spacer"></div>
                     <div className="skill-card-action">
-                        {completed &&
+                        {showRestart &&
                             <div className="skill-card-button-icon" role="button" onClick={this.handleRestartButtonClick}>
                                 <i className="xicon redo"></i>
                             </div>
@@ -118,7 +117,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
     const map = state.maps?.[ownProps.mapId];
     const isUnlocked = state.user && map && isActivityUnlocked(state.user, state.pageSourceUrl, map, ownProps.id);
 
-    let status: SkillCardStatus = isUnlocked ? "notstarted" : "locked";
+    let status: ActivityStatus = isUnlocked ? "notstarted" : "locked";
     let currentStep: number | undefined;
     let maxSteps: number | undefined;
 

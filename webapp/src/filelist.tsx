@@ -131,7 +131,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             const meta: pkg.FileMeta = this.getData("open-meta:" + file.getName())
             // we keep this disabled, until implemented for cloud syncing
             // makse no sense for local saves - the star just blinks for half second after every change
-            const showStar = false // !meta.isSaved
+            const showStar = false
             const usesGitHub = !!header && !!header.githubId;
             const isTutorialMd = topPkg
                 && usesGitHub

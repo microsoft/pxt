@@ -1,0 +1,160 @@
+.info-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: 20rem;
+    margin: 1rem;
+    z-index: var(--above-graph-zindex);
+    background-color: var(--body-background-color);
+
+    border: 1px solid #000; /* TEMP */
+}
+
+.info-panel > .info-panel-image {
+    width: 100%;
+    height: 12rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    text-align: center;
+    background-color: var(--inactive-color);
+}
+
+.info-panel-image img {
+    width: 100%;
+}
+
+.info-panel-image i {
+    color: var(--white);
+    font-size: 5rem;
+    line-height: 5rem;
+    vertical-align: top;
+}
+
+.info-panel-content {
+    padding: 1rem;
+}
+
+.info-panel-content > div {
+    margin-bottom: 0.5rem;
+}
+
+.info-panel-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.info-panel-subtitle {
+    font-size: 0.8rem;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+.info-panel-label {
+    padding: 0.5rem;
+    text-align: center;
+    text-transform: uppercase;
+    background-color: var(--inactive-color);
+}
+
+.info-panel-detail {
+    display: flex;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    justify-content: space-between;
+}
+
+.info-panel-tags {
+    display: flex;
+}
+
+.info-panel-tags > div {
+    color: var(--active-color);
+    border: 1px solid var(--active-color);
+    padding: 0.2rem 0.5rem;
+    margin-right: 0.5rem;
+    font-size: 0.8rem;
+}
+
+.info-panel .action-button {
+    color: var(--active-color);
+    border: 1px solid var(--active-color);
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 1.2rem;
+    text-align: center;
+    cursor: pointer;
+    flex: 1;
+    user-select: none;
+    text-transform: uppercase;
+}
+
+.info-panel .action-button:hover {
+    background-color: var(--hover-color);
+}
+
+.locked.action-button,
+.locked.action-button:hover {
+    color: var(--inactive-color);
+    background-color: transparent;
+    border-color: var(--inactive-color);
+    cursor: default;
+}
+
+
+/*******************************/
+/*****     TABLET VIEW     *****/
+/*******************************/
+
+@media only screen and (max-width: 991px) {
+    .info-panel {
+        flex-direction: row;
+        width: unset;
+        height: 16rem;
+    }
+
+    .info-panel > .info-panel-image {
+        height: 100%;
+        width: 16rem;
+    }
+
+    .info-panel-content {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+    }
+
+    .info-panel-title, .info-panel-subtitle {
+        text-align: left;
+    }
+
+    .info-panel-label {
+        position: absolute;
+        right: 0;
+        top: 0;
+        width: 15rem;
+        margin: 1rem;
+    }
+
+    .info-panel .actions {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-evenly;
+        margin-bottom: 0;
+    }
+
+    .info-panel .action-button {
+        flex: 0.5;
+        margin-right: 1rem;
+        margin-bottom: 0;
+    }
+
+    .info-panel .action-button:last-child {
+        margin-right: 0;
+    }
+}

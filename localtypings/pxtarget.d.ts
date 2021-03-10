@@ -226,6 +226,8 @@ declare namespace pxt {
             // url when localhost developer mode is enabled, add localhostmessagesims=1 to enable this mode
             localHostUrl?: string;
             aspectRatio?: number;
+            // don't recycle the iframe between runs
+            permanent?: boolean;
         }>;
     }
 
@@ -958,6 +960,8 @@ declare namespace pxt.tutorial {
         noDiffs?: boolean; // don't automatically generated diffs
         codeStart?: string; // command to run when code starts (MINECRAFT HOC ONLY)
         codeStop?: string; // command to run when code stops (MINECRAFT HOC ONLY)
+        autoexpandOff?: boolean // INTERNAL TESTING ONLY
+        preferredEditor?: string // preferred editor for opening the tutorial
     }
 
     interface TutorialStepInfo {

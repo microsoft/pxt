@@ -4,7 +4,7 @@ import * as simulator from "../../simulator";
 import * as sui from "../../sui";
 import { connect } from 'react-redux';
 
-import { AssetEditorState, GalleryView } from './store/assetEditorReducer';
+import { AssetEditorState, GalleryView, isGalleryAsset } from './store/assetEditorReducer';
 import { dispatchChangeGalleryView, dispatchChangeSelectedAsset, dispatchUpdateUserAssets } from './actions/dispatch';
 
 import { AssetPreview } from "./assetPreview";
@@ -18,7 +18,7 @@ interface AssetSidebarProps {
     asset?: pxt.Asset;
     isGalleryAsset?: boolean;
     showAssetFieldView?: (asset: pxt.Asset, cb: (result: any) => void) => void;
-    dispatchChangeGalleryView: (view: GalleryView) => void;
+    dispatchChangeGalleryView: (view: GalleryView, assetType?: pxt.AssetType, assetId?: string) => void;
     dispatchChangeSelectedAsset: (assetType?: pxt.AssetType, assetId?: string) => void;
     dispatchUpdateUserAssets: () => void;
 }
@@ -103,8 +103,7 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
         project.pushUndo();
         const { type, id } = project.duplicateAsset(asset);
         this.updateAssets().then(() => {
-            this.props.dispatchChangeGalleryView(GalleryView.User);
-            this.props.dispatchChangeSelectedAsset(type, id);
+            this.props.dispatchChangeGalleryView(GalleryView.User, type, id);
         });
     }
 
@@ -146,7 +145,6 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
         project.pushUndo();
         project.removeAsset(this.props.asset);
         this.props.dispatchChangeSelectedAsset();
-        this.props.dispatchChangeGalleryView(GalleryView.User);
         this.updateAssets();
     }
 
@@ -165,7 +163,13 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
                 <div className="asset-editor-sidebar-preview">
                     { asset && <AssetPreview asset={asset} />  }
                 </div>
-                <div className={`asset-editor-sidebar-name ${!isNamed ? 'unnamed' : ''}`}>{ name }</div>
+                {isNamed || !asset
+                    ? <div className="asset-editor-sidebar-name">{ name }</div>
+                    : <div className="asset-editor-sidebar-temp">
+                        <i className="icon exclamation triangle" />
+                        <span>{lf("No asset name")}</span>
+                    </div>
+                }
                 {details.map(el => {
                     return <div key={el.name} className="asset-editor-sidebar-detail">{`${el.name}: ${el.value}`}</div>
                 })}
@@ -174,11 +178,10 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
                 {canEdit && <sui.MenuItem name={lf("Edit")} className="asset-editor-button" icon="edit" onClick={this.editAssetHandler}/>}
                 <sui.MenuItem name={lf("Duplicate")} className="asset-editor-button" icon="copy" onClick={this.duplicateAssetHandler}/>
                 {canCopy && <sui.MenuItem name={lf("Copy")} className="asset-editor-button" icon="paste" onClick={this.copyAssetHandler}/>}
-                <sui.MenuItem name={lf("Delete")}
-                    className={`asset-editor-button delete-asset ${!canDelete ? "disabled" : ""}`}
-                    icon="trash"
+                {canDelete && <sui.MenuItem name={lf("Delete Asset")}
+                    className="delete-asset"
                     dataTooltip={!canDelete ? (isGalleryAsset ? lf("Can't delete gallery item") : lf("Asset is used in your project")) : undefined}
-                    onClick={canDelete ? this.showDeleteModal : undefined}/>
+                    onClick={canDelete ? this.showDeleteModal : undefined}/>}
             </div>}
             <textarea className="asset-editor-sidebar-copy" ref={this.copyTextAreaRefHandler} ></textarea>
             <sui.Modal className="asset-editor-delete-dialog" isOpen={showDeleteModal} onClose={this.hideDeleteModal} closeIcon={true} dimmer={true} header={lf("Delete Asset")} buttons={actions}>
@@ -215,7 +218,7 @@ function mapStateToProps(state: AssetEditorState, ownProps: any) {
     if (!state) return {};
     return {
         asset: state.selectedAsset,
-        isGalleryAsset: state.selectedAsset?.id.startsWith("sprites.")
+        isGalleryAsset: isGalleryAsset(state.selectedAsset)
     };
 }
 

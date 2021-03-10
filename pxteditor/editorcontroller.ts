@@ -68,6 +68,8 @@ namespace pxt.editor {
         | "workspaceloaded"
         | "workspaceevent" // EditorWorspaceEvent
 
+        | "workspacediagnostics" // compilation results
+
         | "event"
         | "simevent"
         | "info" // return info data`
@@ -135,6 +137,23 @@ namespace pxt.editor {
     export interface EditorWorkspaceEvent extends EditorMessageRequest {
         action: "workspaceevent";
         event: pxt.editor.events.Event;
+    }
+
+    export interface EditorWorkspaceDiagnostics extends EditorMessageRequest {
+        action: "workspacediagnostics";
+        operation: "compile" | "decompile" | "typecheck";
+        output: string;
+        diagnostics: {
+            code: number;
+            category: "error" | "warning" | "message";
+            fileName?: string;
+            start?: number;
+            length?: number;
+            line?: number;
+            column?: number;
+            endLine?: number;
+            endColumn?: number;
+        }[];
     }
 
     // UI properties to sync on load
@@ -521,6 +540,13 @@ namespace pxt.editor {
                 error
             }, "*");
         }
+    }
+
+    /**
+     * Determines if host messages should be posted
+     */
+    export function shouldPostHostMessages() {
+        return pxt.appTarget.appTheme.allowParentController && pxt.BrowserUtils.isIFrame();
     }
 
     /**

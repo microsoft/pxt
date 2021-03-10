@@ -34,16 +34,9 @@ namespace pxtblockly {
         protected createNewAsset(text?: string): pxt.Asset {
             const project = pxt.react.getTilemapProject();
             if (text) {
-                const match = /^\s*assets\s*\.\s*image\s*`([^`]+)`\s*$/.exec(text);
-                if (match) {
-                    const asset = project.lookupAssetByName(pxt.AssetType.Image, match[1].trim());
-                    if (asset) return asset;
-                    else if (!this.getBlockData()) {
-                        this.isGreyBlock = true;
-                        this.valueText = text;
-                        return undefined;
-                    }
-                }
+                const asset = pxt.lookupProjectAssetByTSReference(text, project);
+
+                if (asset) return asset;
             }
 
             if (this.getBlockData()) {
@@ -63,7 +56,9 @@ namespace pxtblockly {
         }
 
         protected getValueText(): string {
-            if (this.asset && !this.isTemporaryAsset()) return `assets.image\`${this.asset.meta.displayName || this.asset.id.substr(this.asset.id.lastIndexOf(".") + 1)}\``;
+            if (this.asset && !this.isTemporaryAsset()) {
+                return pxt.getTSReferenceForAsset(this.asset);
+            }
             return pxt.sprite.bitmapToImageLiteral(this.asset && pxt.sprite.Bitmap.fromData((this.asset as pxt.ProjectImage).bitmap), pxt.editor.FileType.TypeScript);
         }
 

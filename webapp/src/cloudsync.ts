@@ -533,12 +533,11 @@ function cloudSyncAsync(): Promise<void> {
 
     async function resolveConflictAsync(header: Header, cloudHeader: FileInfo) {
         // rename current script
-        let text = await ws.getTextAsync(header.id)
-        let newHd = await ws.duplicateAsync(header, text)
+        let newHd = await ws.duplicateAsync(header)
         header.blobId_ = null
         header.blobVersion_ = null
         header.blobCurrent_ = false
-        await ws.saveAsync(header, text)
+        await ws.saveAsync(header)
         // get the cloud version
         await syncDownAsync(newHd, cloudHeader)
         // TODO move the user out of editor, or otherwise force reload

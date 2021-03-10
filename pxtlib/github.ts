@@ -158,7 +158,7 @@ namespace pxt.github {
     }
 
     export function isOrgAsync(owner: string): Promise<boolean> {
-        return ghGetJsonAsync(`https://api.github.com/orgs/${owner}`)
+        return ghRequestAsync({ url: `https://api.github.com/orgs/${owner}`, method: "GET", allowHttpErrors: true })
             .then(resp => resp.statusCode == 200);
     }
 
@@ -593,6 +593,20 @@ namespace pxt.github {
             })
     }
 
+    export async function downloadLatestPackageAsync(repo: ParsedRepo): Promise<{ version: string, config: pxt.PackageConfig }> {
+        const packageConfig = await pxt.packagesConfigAsync()
+        const tag = await pxt.github.latestVersionAsync(repo.slug, packageConfig)
+        // download package into cache
+        const repoWithTag = `${repo.fullName}#${tag}`;
+        await pxt.github.downloadPackageAsync(repoWithTag, packageConfig)
+
+        // return config
+        const config = await pkgConfigAsync(repo.fullName, tag)
+        const version = `github:${repoWithTag}`
+
+        return { version, config };
+    }
+
     export async function cacheProjectDependenciesAsync(cfg: pxt.PackageConfig): Promise<void> {
         const ghExtensions = Object.keys(cfg.dependencies)
             ?.filter(dep => isGithubId(cfg.dependencies[dep]));
@@ -909,9 +923,9 @@ namespace pxt.github {
                     fullName: rid.fullName,
                     fileName: rid.fileName,
                     slug: rid.slug,
-                    name: meta.name,
+                    name: rid.fileName ? `${meta.name}-${rid.fileName}` : meta.name,
                     description: meta.description,
-                    defaultBranch: "master",
+                    defaultBranch: meta.defaultBranch || "master",
                     tag: rid.tag,
                     status
                 };
@@ -983,9 +997,9 @@ namespace pxt.github {
         }
     }
 
-    export function toGithubDependencyPath(id: ParsedRepo): string {
-        let r = "github:" + id.fullName;
-        if (id.tag) r += "#" + id.tag;
+    export function toGithubDependencyPath(path: string, tag?: string): string {
+        let r = "github:" + path;
+        if (tag) r += "#" + tag;
         return r;
     }
 

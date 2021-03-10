@@ -26,9 +26,12 @@
 
     --body-font-family: "Share Tech Mono", Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
 
-    --frame-loader-zindex: 5;
-    --above-frame-zindex: 10;
+    --frame-loader-zindex: 30;
+    --above-frame-zindex: 50;
     --modal-dimmer-zindex: 100;
+
+    --graph-backround-zindex: 10;
+    --above-graph-zindex: 20;
 }
 
 body {
@@ -38,6 +41,7 @@ body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     background-color: var(--body-background-color);
+    overflow: hidden;
 }
 
 code {
@@ -46,6 +50,7 @@ code {
 
 #root {
     width: 100%;
+    height: 100%;
 }
 
 #root.editor {
@@ -76,12 +81,15 @@ code {
     color: var(--inverted-text-color);
     flex-grow: 0;
     flex-shrink: 0;
+
+    z-index: var(--above-frame-zindex);
 }
 
 .header-left, .header-right {
     display: flex;
     align-items: center;
     margin: 0 1rem;
+    height: 100%;
 }
 
 .header-right > div {
@@ -116,8 +124,8 @@ code {
 
 .header-button {
     color: var(--invert-active-color);
-    border: 1px solid var(--invert-active-color);
-    padding: 0.5rem;
+    height: 100%;
+    padding: 1rem;
     font-size: 1.2rem;
     text-align: center;
     cursor: pointer;
@@ -125,7 +133,11 @@ code {
     user-select: none;
 }
 
-.header-button:hover {
+.header-button span {
+    line-height: 2rem;
+}
+
+.header-button:hover, .header-settings:hover {
     background-color: var(--hover-color);
     color: var(--invert-hover-text-color);
 }
@@ -180,7 +192,8 @@ code {
 .skill-map-container {
     flex-grow: 1;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    justify-content: center;
 }
 
 .skill-map-error {
@@ -210,4 +223,24 @@ code {
 /** mscc cookie banner. Can be removed once the banner is out of the checked in pxtweb in doccdn */
 #msccBanner {
     display: none;
+}
+
+
+/*******************************/
+/*****     TABLET VIEW     *****/
+/*******************************/
+
+@media only screen and (max-width: 991px) {
+    .skill-map-container {
+        flex-direction: column;
+    }
+
+    .tablet-spacer {
+        flex-grow: 1;
+    }
+
+    .usabilla_live_button_container {
+        top: 10rem !important;
+        bottom: unset !important;
+    }
 }

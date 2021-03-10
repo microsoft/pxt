@@ -163,9 +163,12 @@ namespace pxsim {
         modalContext?: string;
     }
 
-    export interface SimulatorExtensionsDialogMessage extends SimulatorMessage {
-        type: "extensionsdialog",
-        query: string
+    export interface SimulatorAddExtensionsMessage extends SimulatorMessage {
+        type: "addextensions",
+        /**
+         * List of repositories to add
+         */
+        extensions: string[]
     }
 
     export interface SimulatorAspectRatioMessage extends SimulatorMessage {
@@ -218,7 +221,8 @@ namespace pxsim {
 
     export interface RenderReadyResponseMessage extends SimulatorMessage {
         source: "makecode",
-        type: "renderready"
+        type: "renderready",
+        versions: pxt.TargetVersions
     }
 
     export interface RenderBlocksRequestMessage extends SimulatorMessage {

@@ -31,6 +31,7 @@ export class AssetEditor extends Editor {
         return super.loadFileAsync(file, hc)
             .then(() => compiler.getBlocksAsync()) // make sure to load block definitions
             .then(info => {
+                pxt.blocks.initializeAndInject(info);
                 this.blocksInfo = info;
                 this.updateGalleryAssets();
             })
@@ -39,6 +40,7 @@ export class AssetEditor extends Editor {
     }
 
     unloadFileAsync(): Promise<void> {
+        blocklyFieldView.dismissIfVisible();
         return pkg.mainEditorPkg().buildAssetsAsync();
     }
 
@@ -52,14 +54,27 @@ export class AssetEditor extends Editor {
         store.dispatch(dispatchUpdateUserAssets());
     }
 
-
     resize(e?: Event) {
-        blocklyFieldView.setEditorBounds({
-            top: 0,
-            left: 0,
-            width: window.innerWidth,
-            height: window.innerHeight
-        });
+        const container = this.getAssetEditorDiv();
+        // In tutorial view, the image editor is smaller and has no padding
+        if (container && this.parent.isTutorial()) {
+            const containerRect = container.getBoundingClientRect();
+            blocklyFieldView.setEditorBounds({
+                top: containerRect.top,
+                left: containerRect.left,
+                width: containerRect.width,
+                height: containerRect.height,
+                horizontalPadding: 0,
+                verticalPadding: 0
+            });
+        } else {
+            blocklyFieldView.setEditorBounds({
+                top: 0,
+                left: 0,
+                width: window.innerWidth,
+                height: window.innerHeight
+            });
+        }
     }
 
     display(): JSX.Element {
@@ -69,6 +84,43 @@ export class AssetEditor extends Editor {
                 <AssetGallery showAssetFieldView={this.showAssetFieldView} />
             </div>
         </Provider>
+    }
+
+    protected getAssetEditorDiv() {
+        return document.getElementById("assetEditor");
+    }
+
+    protected getTutorialCardDiv() {
+        return document.getElementById("tutorialcard");
+    }
+
+    protected getTutorialMenuDiv() {
+        return  document.getElementsByClassName("tutorial-menuitem")?.[0];
+    }
+
+    protected handleTutorialClick(ev: MouseEvent) {
+        ev.stopPropagation();
+        ev.preventDefault();
+    }
+
+    protected bindTutorialEvents() {
+        const tutorialCard = this.getTutorialCardDiv();
+        tutorialCard?.addEventListener("mousedown", this.handleTutorialClick);
+
+        const tutorialMenu = this.getTutorialMenuDiv();
+        tutorialMenu?.addEventListener("mousedown", this.handleTutorialClick);
+
+        pxt.BrowserUtils.addClass(document.getElementById("maineditor"), "image-editor-open");
+    }
+
+    protected unbindTutorialEvents() {
+        const tutorialCard = this.getTutorialCardDiv();
+        tutorialCard?.removeEventListener("mousedown", this.handleTutorialClick);
+
+        const tutorialMenu = this.getTutorialMenuDiv();
+        tutorialMenu?.removeEventListener("mousedown", this.handleTutorialClick);
+
+        pxt.BrowserUtils.removeClass(document.getElementById("maineditor"), "image-editor-open");
     }
 
     protected updateGalleryAssets() {
@@ -90,19 +142,7 @@ export class AssetEditor extends Editor {
                 break;
             case pxt.AssetType.Tilemap:
                 const project = pxt.react.getTilemapProject();
-                // for tilemaps, fill in all project tiles
-                const allTiles = project.getProjectTiles(asset.data.tileset.tileWidth, true);
-                const referencedTiles = [];
-                for (const tile of allTiles.tiles) {
-                    if (!asset.data.tileset.tiles.some(t => t.id === tile.id)) {
-                        asset.data.tileset.tiles.push(tile);
-                    }
-                    if (project.isAssetUsed(tile, null, [asset.id])) {
-                        referencedTiles.push(tile.id);
-                    }
-                }
-
-                asset.data.projectReferences = referencedTiles;
+                pxt.sprite.addMissingTilemapTilesAndReferences(project, asset);
 
                 fieldView = pxt.react.getFieldEditorView("tilemap-editor", asset as pxt.ProjectTilemap, {
                     initWidth: 16,
@@ -126,8 +166,12 @@ export class AssetEditor extends Editor {
         }
 
         fieldView.onHide(() => {
+            if (this.parent.isTutorial()) this.unbindTutorialEvents();
+
             const result = fieldView.getResult();
-            if (asset.type == pxt.AssetType.Tilemap) result.data = this.updateTilemapTiles(result.data);
+            if (asset.type == pxt.AssetType.Tilemap) {
+                pxt.sprite.updateTilemapReferencesFromResult(pxt.react.getTilemapProject(), result);
+            }
 
             Promise.resolve(cb(result)).then(() => {
                 // for temporary (unnamed) assets, update the underlying typescript image literal
@@ -138,30 +182,10 @@ export class AssetEditor extends Editor {
                 }
             });
         });
+
+        // Do not close image editor when clicking on previous/next in the tutorial, or menu dots
+        if (this.parent.isTutorial()) this.bindTutorialEvents();
+
         fieldView.show();
-    }
-
-    protected updateTilemapTiles = (data: pxt.sprite.TilemapData): pxt.sprite.TilemapData => {
-        const project = pxt.react.getTilemapProject();
-
-        data.deletedTiles?.forEach(deleted => project.deleteTile(deleted));
-
-        data.editedTiles?.forEach(edited => {
-            const index = data.tileset.tiles.findIndex(t => t.id === edited);
-            const tile = data.tileset.tiles[index];
-
-            if (!tile) return;
-
-            data.tileset.tiles[index] = project.updateTile(tile);
-        })
-
-        data.tileset.tiles.forEach((t, i) => {
-            if (t && !t.jresData) {
-                data.tileset.tiles[i] = project.resolveTile(t.id);
-            }
-        })
-
-        pxt.sprite.trimTilemapTileset(data);
-        return data;
     }
 }

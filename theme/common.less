@@ -188,15 +188,31 @@ pre {
 }
 
 #filelist {
-    padding: 1em 2em 1em 2em;
+    padding-top: 1em;
+    padding-right: ~"calc(2em - @{customScrollbarWidth})";
+    padding-bottom: 1em;
+    padding-left: 2em;
     overflow-x: hidden;
-    overflow-y: auto;
     margin-top: 0;
     margin-bottom: 0;
     width: 100%;
     background-color: @filelistBackgroundColor;
     z-index: @filelistZIndex;
+
+    // the scroll bar is always visible, but we hide it when needed
+    overflow-y: scroll; 
 }
+
+.invisibleScrollbar::-webkit-scrollbar { 
+    background: transparent !important; 
+}    
+.invisibleScrollbar::-webkit-scrollbar-thumb { 
+    display: none !important;
+}    
+.invisibleScrollbar::-webkit-scrollbar-track { 
+    background: transparent !important; 
+}    
+
 
 #filelist .simtoolbar {
     -webkit-transition: opacity 0.2s; /* Safari */
@@ -1711,13 +1727,13 @@ div.simframe.ui.embed {
     }
 
     div.description {
-        line-height: 1.1em;
         margin-bottom: 20px;
+    }
 
-        .warning {
-            background-color: #F5BC5F;
-            padding: 6px;
-        }
+    div.warning {
+        background-color: #F5BC5F;
+        padding: 6px;
+        margin-bottom: 20px;
     }
 
     div.container {
