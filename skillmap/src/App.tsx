@@ -3,7 +3,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
 
-import * as Promise from "bluebird";
 import store from "./store/store";
 
 import {
@@ -37,9 +36,6 @@ import './App.css';
 // TODO: this file needs to read colors from the target
 import './arcade.css';
 /* tslint:enable:no-import-side-effect */
-
-(window as any).Promise = Promise;
-
 interface AppProps {
     skillMaps: { [key: string]: SkillMap };
     activityOpen: boolean;
