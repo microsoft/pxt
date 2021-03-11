@@ -1,3 +1,5 @@
+import { getSkillmapIdentifier } from "./browserUtils";
+
 export type ActivityStatus = "locked" | "notstarted" | "inprogress" | "completed" | "restarted";
 export interface ActivityStatusInfo {
     status: ActivityStatus;
@@ -164,4 +166,26 @@ export function applyUserUpgrades(user: UserState, currentVersion: string, pageS
     }
 
     return upgradedUser;
+}
+
+// Check the list of alternate source URLs; if the user has existing progress
+// keyed to an alternate URL, migrate it to the current pageSourceUrl. Does not
+// override existing progress if found.
+export function applyUserMigrations(user: UserState, pageSource: string, alternateSources: string[]) {
+    if (alternateSources.length === 0) return user;
+
+    const progress: { [key: string]: MapState } = user.mapProgress[pageSource] || {};
+    alternateSources.forEach(sourceUrl => {
+        let { identifier } = getSkillmapIdentifier(pxt.github.parseRepoId(sourceUrl));
+        let oldProgress = user.mapProgress[identifier];
+        if (oldProgress) Object.keys(oldProgress).forEach(mapId => { if (!progress[mapId]) progress[mapId] = oldProgress[mapId] });
+    })
+
+    return {
+        ...user,
+        mapProgress: {
+            ...user.mapProgress,
+            [pageSource]: progress
+        }
+    };
 }
