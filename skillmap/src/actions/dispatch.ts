@@ -4,6 +4,7 @@ import * as actions from './types'
 export const dispatchAddSkillMap = (map: SkillMap) => ({ type: actions.ADD_SKILL_MAP, map });
 export const dispatchClearSkillMaps = () => ({ type: actions.CLEAR_SKILL_MAPS });
 export const dispatchChangeSelectedItem = (id?: string) => ({ type: actions.CHANGE_SELECTED_ITEM, id });
+export const dispatchClearMetadata = () => ({ type: actions.CLEAR_METADATA });
 export const dispatchSetSkillMapCompleted = (mapId: string) => ({ type: actions.SET_SKILL_MAP_COMPLETED, mapId });
 
 export const dispatchSetHeaderIdForActivity = (mapId: string, activityId: string, id: string, currentStep: number, maxSteps: number, isCompleted: boolean) => ({ type: actions.SET_HEADERID_FOR_ACTIVITY, mapId, activityId, id, currentStep, maxSteps, isCompleted });
@@ -20,6 +21,7 @@ export const dispatchSetPageTitle = (title: string) => ({ type: actions.SET_PAGE
 export const dispatchSetPageDescription = (description: string) => ({ type: actions.SET_PAGE_DESCRIPTION, description });
 export const dispatchSetPageInfoUrl = (infoUrl: string) => ({ type: actions.SET_PAGE_INFO_URL, infoUrl });
 export const dispatchSetPageSourceUrl = (url: string, status: PageSourceStatus) => ({ type: actions.SET_PAGE_SOURCE_URL, url, status });
+export const dispatchSetPageAlternateUrls = (urls: string[]) => ({ type: actions.SET_PAGE_ALTERNATE_URLS, urls });
 
 export const dispatchShowCompletionModal = (mapId: string, activityId?: string) => ({ type: actions.SHOW_COMPLETION_MODAL, mapId, activityId });
 export const dispatchShowRestartActivityWarning = (mapId: string, activityId: string) => ({ type: actions.SHOW_RESTART_ACTIVITY_MODAL, mapId, activityId });

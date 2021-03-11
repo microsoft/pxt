@@ -2,6 +2,7 @@ interface PageMetadata {
     title: string;
     description?: string;
     infoUrl?: string;
+    alternateSources?: string[]; // List of alternate pageSourceUrls to import user projects from
 }
 
 interface SkillMap {
