@@ -502,7 +502,7 @@ namespace ts.pxtc.Util {
 
     export async function promiseTimeout<T>(ms: number, promise: T | Promise<T>, msg?: string): Promise<T> {
         let timeoutId: number;
-        let res: () => void;
+        let res: (v?: T | PromiseLike<T>) => void;
 
         const timeoutPromise: Promise<T> = new Promise((resolve, reject) => {
             res = resolve;
