@@ -43,8 +43,9 @@
     margin-bottom: 0.5rem;
 }
 
+.info-panel-content > .info-panel-title,
 .info-panel-content > .info-panel-label {
-    margin: 1rem 0;
+    margin-bottom: 1rem;
 }
 
 /* Component Styles */

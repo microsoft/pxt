@@ -62,11 +62,11 @@ export class GraphNode extends React.Component<GraphNodeProps> {
         switch (status) {
             case "completed":
                 return <g transform={`translate(${(width / 2) - (3 * nudgeUnit)} ${(-width / 2) + (3 * nudgeUnit)})`}>
-                    <circle cx={0} cy={0} r={(width / 4) - nudgeUnit} stroke={theme.strokeColor} strokeWidth="2" fill={theme.rewardNodeColor}/>
+                    <circle cx={0} cy={0} r={(width / 4) - nudgeUnit} stroke={theme.strokeColor} strokeWidth="2" fill={theme.lockedNodeColor}/>
                     <text dy="2"
                         textAnchor="middle"
                         alignmentBaseline="middle"
-                        fill={theme.rewardNodeForeground}
+                        fill={theme.lockedNodeForeground}
                         className="graph-status-icon">
                             {"\uf00c"}
                         </text>
@@ -92,13 +92,13 @@ export class GraphNode extends React.Component<GraphNodeProps> {
         let fill = theme.unlockedNodeColor;
         let foreground = theme.unlockedNodeForeground;
 
-        if (kind !== "activity") {
-            fill = theme.rewardNodeColor;
-            foreground = theme.rewardNodeForeground;
-        }
-        else if (status === "locked") {
+        if (status === "locked") {
             fill = theme.lockedNodeColor;
             foreground = theme.lockedNodeForeground;
+        }
+        else if (kind !== "activity") {
+            fill = theme.rewardNodeColor;
+            foreground = theme.rewardNodeForeground;
         }
 
         const selectedUnit = width / 8;
@@ -106,8 +106,8 @@ export class GraphNode extends React.Component<GraphNodeProps> {
         return  <g className={`graph-activity ${selected ? "selected" : ""}`} transform={`translate(${position.x} ${position.y})`} onClick={this.handleClick}>
             { selected &&
                 (kind !== "activity" ?
-                    <circle className="highlight" cx={0} cy={0} r={width / 2 + selectedUnit} /> :
-                    <rect className="highlight" x={-width / 2 - selectedUnit} y={-width / 2 - selectedUnit} width={width + 2 * selectedUnit} height={width + 2 * selectedUnit} rx={width / 6} />)
+                    <circle className="highlight" cx={0} cy={0} r={width / 2 + selectedUnit} stroke={theme.selectedStrokeColor} /> :
+                    <rect className="highlight" x={-width / 2 - selectedUnit} y={-width / 2 - selectedUnit} width={width + 2 * selectedUnit} height={width + 2 * selectedUnit} rx={width / 6} stroke={theme.selectedStrokeColor} />)
             }
             { kind !== "activity" ?
                 <circle cx={0} cy={0} r={width / 2} fill={fill} stroke={theme.strokeColor} strokeWidth="2" /> :
