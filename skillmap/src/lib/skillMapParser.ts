@@ -312,9 +312,10 @@ function isFalse(value: string | undefined) {
 }
 
 function inflateMetadata(section: MarkdownSection): PageMetadata {
-    const tertiary = section.attributes["tertiarycolor"];
     const primary = section.attributes["primarycolor"];
     const secondary = section.attributes["secondarycolor"];
+    const tertiary = section.attributes["tertiarycolor"];
+    const highlight = section.attributes["highlightcolor"];
 
     return {
         title: section.attributes["name"] || section.header,
@@ -326,13 +327,13 @@ function inflateMetadata(section: MarkdownSection): PageMetadata {
             backgroundColor: tertiary || "var(--body-background-color)",
             pathColor: primary || "#BFBFBF",
             strokeColor: "#000000",
-            rewardNodeColor: tertiary || "var(--tertiary-color)",
-            rewardNodeForeground: tertiary ? getContrastingColor(tertiary) : "#000000",
+            rewardNodeColor: highlight || "var(--primary-color)",
+            rewardNodeForeground: highlight ? getContrastingColor(highlight) : "#000000",
             unlockedNodeColor: secondary || "var(--secondary-color)",
             unlockedNodeForeground: secondary ? getContrastingColor(secondary) : "#000000",
             lockedNodeColor: primary || "#BFBFBF",
             lockedNodeForeground: primary ? getContrastingColor(primary) : "#000000",
-            selectedStrokeColor: "var(--hover-color)",
+            selectedStrokeColor: highlight || "var(--primary-color)",
             pathOpacity: 0.5,
         }
     }
