@@ -270,7 +270,7 @@ async function resolveConflict(local: Header, remoteFile: File) {
         //  since this is a bad case (may lead to repeat duplication).
         pxt.reportException(e);
         pxt.tickEvent(`identity.sync.conflict.overwriteLocalFailed`, { exception: e });
-        anyError = true;
+        pxt.tickEvent(`identity.sync.conflict.failed`);
         throw e;
     }
 
