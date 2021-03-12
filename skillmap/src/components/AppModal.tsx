@@ -207,7 +207,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
         if (input) {
             input.select();
             document.execCommand("copy");
-            }
+        }
     }
 
     renderShareModal() {
@@ -240,7 +240,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
             }
             {loading && <div className="share-loader">
                 <div className="ui active inline loader" />
-                <span>Loading...</span>
+                <span>{lf("Loading...")}</span>
             </div>}
             {data?.shortId && <div className="share-input">
                 <input type="text" readOnly={true} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
