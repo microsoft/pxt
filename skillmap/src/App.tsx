@@ -8,11 +8,13 @@ import store from "./store/store";
 import {
     dispatchAddSkillMap,
     dispatchClearSkillMaps,
+    dispatchClearMetadata,
     dispatchSetPageTitle,
     dispatchSetPageDescription,
     dispatchSetPageInfoUrl,
     dispatchSetUser,
     dispatchSetPageSourceUrl,
+    dispatchSetPageAlternateUrls,
     dispatchSetPageBackgroundImageUrl,
     dispatchSetPageTheme,
 } from './actions/dispatch';
@@ -43,12 +45,14 @@ interface AppProps {
     theme: SkillGraphTheme;
     dispatchAddSkillMap: (map: SkillMap) => void;
     dispatchClearSkillMaps: () => void;
+    dispatchClearMetadata: () => void;
     dispatchSetPageTitle: (title: string) => void;
     dispatchSetPageDescription: (description: string) => void;
     dispatchSetPageInfoUrl: (infoUrl: string) => void;
     dispatchSetPageBackgroundImageUrl: (backgroundImageUrl: string) => void;
     dispatchSetUser: (user: UserState) => void;
     dispatchSetPageSourceUrl: (url: string, status: PageSourceStatus) => void;
+    dispatchSetPageAlternateUrls: (urls: string[]) => void;
     dispatchSetPageTheme: (theme: SkillGraphTheme) => void;
 }
 
@@ -90,7 +94,6 @@ class AppImpl extends React.Component<AppProps, AppState> {
         let force = false;
         let useLang: string | undefined = undefined;
         if (/[&?]translate=1/.test(href) && !pxt.BrowserUtils.isIE()) {
-            console.log(`translation mode`);
             useLang = ts.pxtc.Util.TRANSLATION_LOCALE;
         } else {
             const mlang = /(live)?(force)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
@@ -138,6 +141,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
                 } else {
                     setPageSourceUrl(fetched);
                     this.props.dispatchSetPageSourceUrl(fetched, status);
+                    this.props.dispatchClearMetadata();
                 }
 
                 const { maps, metadata } = parseSkillMap(md);
@@ -150,12 +154,13 @@ class AppImpl extends React.Component<AppProps, AppState> {
                 }
 
                 if (metadata) {
-                    const { title, description, infoUrl, backgroundImageUrl, theme } = metadata;
+                    const { title, description, infoUrl, backgroundImageUrl, theme, alternateSources } = metadata;
                     setPageTitle(title);
                     this.props.dispatchSetPageTitle(title);
                     if (description) this.props.dispatchSetPageDescription(description);
                     if (infoUrl) this.props.dispatchSetPageInfoUrl(infoUrl);
                     if (backgroundImageUrl) this.props.dispatchSetPageBackgroundImageUrl(backgroundImageUrl);
+                    if (alternateSources) this.props.dispatchSetPageAlternateUrls(alternateSources);
                     if (theme) this.props.dispatchSetPageTheme(theme);
                 }
 
@@ -316,11 +321,13 @@ async function updateLocalizationAsync(targetId: string, baseUrl: string, code: 
 const mapDispatchToProps = {
     dispatchAddSkillMap,
     dispatchClearSkillMaps,
+    dispatchClearMetadata,
     dispatchSetPageTitle,
     dispatchSetPageDescription,
     dispatchSetPageInfoUrl,
     dispatchSetUser,
     dispatchSetPageSourceUrl,
+    dispatchSetPageAlternateUrls,
     dispatchSetPageBackgroundImageUrl,
     dispatchSetPageTheme
 };
