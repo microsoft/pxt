@@ -30,5 +30,6 @@ export const dispatchShowRestartActivityWarning = (mapId: string, activityId: st
 export const dispatchShowReportAbuseModal = () => ({ type: actions.SHOW_REPORT_ABUSE_MODAL });
 export const dispatchShowResetUserModal = () => ({ type: actions.SHOW_RESET_USER_MODAL });
 export const dispatchShowCarryoverModal = (mapId: string, activityId: string) => ({ type: actions.SHOW_CARRYOVER_MODAL, mapId, activityId });
+export const dispatchShowShareModal = (mapId: string, activityId: string) => ({ type: actions.SHOW_SHARE_MODAL, mapId, activityId });
 
 export const dispatchHideModal = () => ({ type: actions.HIDE_MODAL });
