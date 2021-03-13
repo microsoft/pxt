@@ -1391,9 +1391,9 @@ export class ProjectView
         const timeoutStart = Util.nowSeconds();
         let timedOut = false;
         p = p.then(() => {
-            return pxt.U.promiseTimeout(
-                1500,
-                // start a partial cloud sync
+            Promise.race([
+                pxt.U.delay(1500)
+                    .then(() => { timedOut = true }),
                 cloud.syncAsync([h])
                     .then(changes => {
                         if (changes.length) {
@@ -1411,15 +1411,8 @@ export class ProjectView
                                 h = workspace.getHeader(h.id)
                             }
                         }
-                    }),
-                "timedout"
-            ).catch(err => {
-                if (err === "timedout") {
-                    timedOut = true
-                } else {
-                    throw err;
-                }
-            });
+                    })
+            ]);
         });
 
         return p.then(() => {
