@@ -7073,5 +7073,5 @@ if (require.main === module) {
             process.exit(1)
         }
     }
-    mainCli(targetdir).then();
+    mainCli(targetdir);
 }

@@ -57,8 +57,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
         }).then(res => {
             if (res) {
                 pkg.mainEditorPkg().removeDepAsync(p.getPkgId())
-                    .then(() => this.props.parent.reloadHeaderAsync())
-                    .then()
+                    .then(() => this.props.parent.reloadHeaderAsync());
             }
         })
     }
@@ -315,7 +314,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
 ` : "",
                 true
             );
-        }).then()
+        });
     }
 
     private addCustomBlocksFile() {

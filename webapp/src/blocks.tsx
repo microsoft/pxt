@@ -1017,13 +1017,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     openTypeScript() {
         pxt.tickEvent("blocks.showjavascript");
         this.parent.closeFlyout();
-        this.parent.openTypeScriptAsync().then();
+        this.parent.openTypeScriptAsync();
     }
 
     openPython() {
         pxt.tickEvent("blocks.showpython");
         this.parent.closeFlyout();
-        this.parent.openPythonAsync().then();
+        this.parent.openPythonAsync();
     }
 
     private cleanUpShadowBlocks() {

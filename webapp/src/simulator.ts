@@ -223,8 +223,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
                                 if (hasTrustedLink && selection == 1) {
                                     window.open(msg.linkButtonHref, '_blank');
                                 }
-                            })
-                            .then();
+                            });
                     }
                     break;
             }

@@ -39,5 +39,5 @@ export function initTutorial() {
         loadSoundAsync('tutorialStep'),
         loadSoundAsync('tutorialNext'),
         loadSoundAsync('click')
-    ]).then();
+    ]);
 }

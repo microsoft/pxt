@@ -215,7 +215,7 @@ export class ProjectView
                 else {
                     const pngString = pxt.BrowserUtils.imageDataToPNG(scmsg.data);
                     if (pxt.appTarget.compile.saveAsPNG)
-                        this.encodeProjectAsPNGAsync(pngString, false).then();
+                        this.encodeProjectAsPNGAsync(pngString, false);
                     screenshot.saveAsync(this.state.header, pngString)
                         .then(() => { pxt.debug('screenshot saved') })
                 }
@@ -334,7 +334,7 @@ export class ProjectView
                 this.suspendSimulator();
                 this.setState({ resumeOnVisibility: true });
             }
-            this.saveFileAsync().then();
+            this.saveFileAsync();
         } else if (active) {
             data.invalidate("header:*")
             let hdrId = this.state.header ? this.state.header.id : '';
@@ -431,7 +431,6 @@ export class ProjectView
                 this.editor.updateToolbox()
             });
         }
-        p.then();
     }
 
     fireResize() {
@@ -529,7 +528,7 @@ export class ProjectView
         if (this.isBlocksActive()) {
             this.blocksEditor.openPython();
         } else if (this.isJavaScriptActive()) {
-            this.openPythonAsync().then();
+            this.openPythonAsync();
         } else {
             // make sure there's .py file
             const mpkg = pkg.mainEditorPkg();
@@ -559,7 +558,7 @@ export class ProjectView
         if (this.isBlocksActive()) {
             this.blocksEditor.openTypeScript();
         } else if (this.isPythonActive()) {
-            this.openTypeScriptAsync().then()
+            this.openTypeScriptAsync();
         } else {
             const files = pkg.mainEditorPkg().files;
             let f = files["main.ts"];
@@ -756,7 +755,7 @@ export class ProjectView
     }
 
     public typecheckNow() {
-        this.saveFileAsync().then(); // don't wait for saving to backend store to finish before typechecking
+        this.saveFileAsync(); // don't wait for saving to backend store to finish before typechecking
         this.typecheck()
     }
 
@@ -836,7 +835,7 @@ export class ProjectView
     private typecheckDebouncer = new pxtc.Util.AdaptiveDebouncer(() => {
         if (this.editor.isIncomplete()) return;
         const start = Util.now();
-        this.saveFileAsync().then(); // don't wait for saving to backend store to finish before typechecking
+        this.saveFileAsync(); // don't wait for saving to backend store to finish before typechecking
         const state = this.editor.snapshotState()
         compiler.typecheckAsync()
             .then(resp => {
@@ -873,7 +872,7 @@ export class ProjectView
     }, 3000, false);
     private editorChangeHandler = Util.debounce(() => {
         if (!this.editor.isIncomplete()) {
-            this.saveFileAsync().then(); // don't wait till save is done
+            this.saveFileAsync(); // don't wait till save is done
             this.typecheck();
         }
         this.markdownChangeHandler();
@@ -1053,7 +1052,7 @@ export class ProjectView
                 return this.editor.loadFileAsync(this.editorFile, hc)
             })
             .then(() => {
-                this.saveFileAsync().then(); // make sure state is up to date
+                this.saveFileAsync(); // make sure state is up to date
                 if (this.editor == this.textEditor || this.editor == this.blocksEditor)
                     this.typecheck();
 
@@ -1180,8 +1179,7 @@ export class ProjectView
         const removeIt = () => {
             pkg.mainEditorPkg().removeFileAsync(fn.name)
                 .then(() => pkg.mainEditorPkg().saveFilesAsync())
-                .then(() => this.reloadHeaderAsync())
-                .then();
+                .then(() => this.reloadHeaderAsync());
         }
 
         if (skipConfirm) {
@@ -1516,7 +1514,7 @@ export class ProjectView
                 })
 
                 pkg.getEditorPkg(pkg.mainPkg).onupdate = () => {
-                    this.loadHeaderAsync(h, this.state.editorState).then()
+                    this.loadHeaderAsync(h, this.state.editorState);
                 }
 
                 pkg.mainPkg.getCompileOptionsAsync()
@@ -1545,8 +1543,7 @@ export class ProjectView
                                     confl.pkg1.id, confl.pkg0.id, confl.settingName)
                             })
                         }
-                    })
-                    .then()
+                    });
 
                 // load side docs
                 const editorForFile = this.pickEditorFor(file);
@@ -1848,8 +1845,7 @@ export class ProjectView
             .then(buf => {
                 let basename = file.name.replace(/.*[\/\\]/, "")
                 return pkg.mainEditorPkg().saveAssetAsync(basename, buf)
-            })
-            .then()
+            });
     }
 
     importHex(data: pxt.cpp.HexFile, options?: pxt.editor.ImportFileOptions) {
@@ -2024,7 +2020,7 @@ export class ProjectView
         } else {
             const importer = this.resourceImporters.filter(fi => fi.canImport(file))[0];
             if (importer) {
-                importer.importAsync(this, file).then();
+                importer.importAsync(this, file);
             } else {
                 core.warningNotification(lf("Oops, don't know how to load this file!"));
             }
@@ -2197,7 +2193,7 @@ export class ProjectView
             this.homeLoaded();
             this.showPackageErrorsOnNextTypecheck();
             return workspace.syncAsync();
-        }).then();
+        });
     }
 
     private homeLoaded() {
@@ -2563,8 +2559,7 @@ export class ProjectView
                             this.saveProjectToFileAsync()
                                 .finally(() => {
                                     this.setState({ isSaving: false });
-                                })
-                                .then();
+                                });
                         }
                         else {
                             this.compile(true);
@@ -2739,8 +2734,7 @@ export class ProjectView
                 }).finally(() => {
                     this.setState({ compiling: false, isSaving: false });
                     if (simRestart) this.runSimulator();
-                })
-                .then();
+                });
         } catch (e) {
             this.setState({ compiling: false, isSaving: false });
             pxt.reportException(e);
@@ -3294,7 +3288,7 @@ export class ProjectView
         })
         if (!this.debouncedSaveProjectName) {
             this.debouncedSaveProjectName = Util.debounce(() => {
-                this.saveProjectNameAsync().then();
+                this.saveProjectNameAsync();
             }, pxt.options.light ? 2000 : 500, false);
         }
         this.debouncedSaveProjectName();
@@ -3404,8 +3398,7 @@ export class ProjectView
                 }
             }, (e) => {
                 core.errorNotification(lf("Sorry, the project url looks invalid."));
-            })
-            .then();
+            });
     }
 
     showImportGithubDialog() {
@@ -3423,8 +3416,7 @@ export class ProjectView
                 }
             }, e => {
                 core.errorNotification(lf("Sorry, that repository looks invalid."));
-            })
-            .then();
+            });
     }
 
     showImportFileDialog(options?: pxt.editor.ImportFileOptions) {
@@ -3929,7 +3921,7 @@ export class ProjectView
         // When the script manager dialog closes, we want to refresh our projects list in case anything has changed
         this.home.forceUpdate();
         // Sync the workspace
-        workspace.syncAsync().then();
+        workspace.syncAsync();
     }
 
     ///////////////////////////////////////////////////////////
@@ -4427,7 +4419,7 @@ function handleHash(newHash: { cmd: string; arg: string }, loading: boolean): bo
         case "header":
             pxt.tickEvent("hash." + newHash.cmd);
             pxt.BrowserUtils.changeHash("");
-            editor.loadHeaderAsync(workspace.getHeader(newHash.arg)).then();
+            editor.loadHeaderAsync(workspace.getHeader(newHash.arg));
             return true;
         case "sandboxproject":
         case "project":
@@ -4865,8 +4857,7 @@ document.addEventListener("DOMContentLoaded", () => {
         .then(() => {
             pxsim.U.remove(document.getElementById('loading'));
             return workspace.loadedAsync();
-        })
-        .then();
+        });
 
     document.addEventListener("visibilitychange", ev => {
         if (theEditor)

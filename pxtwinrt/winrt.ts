@@ -134,7 +134,7 @@ namespace pxt.winrt {
         pxt.log(`resuming`);
         if (packetIO) {
             pxt.log(`reconnet pack io`);
-            packetIO.reconnectAsync().then();
+            packetIO.reconnectAsync();
         }
         initSerial();
     }

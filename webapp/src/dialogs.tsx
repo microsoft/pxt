@@ -70,7 +70,7 @@ export function showAboutDialogAsync(projectView: pxt.editor.IProjectView) {
                     {targetTheme.copyrightText ? <p> {targetTheme.copyrightText} </p> : undefined}
                 </div>
             })
-        }).then();
+        });
 }
 
 
@@ -705,5 +705,5 @@ export function promptTranslateBlock(blockid: string, blockTranslationIds: strin
             </div>
             {blockTranslationIds.map(trid => <div key={`ictr${trid}`} className="ui basic segment">{trid}</div>)}
         </div>
-    }).then();
+    });
 }

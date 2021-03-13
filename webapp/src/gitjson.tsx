@@ -270,7 +270,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
     private handleBranchClick(e: React.MouseEvent<HTMLElement>) {
         pxt.tickEvent("github.branch");
         e.stopPropagation();
-        this.showSwitchBranchDialogAsync().then();
+        this.showSwitchBranchDialogAsync();
     }
 
     private goBack() {
@@ -280,7 +280,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
 
     private handlePullClick(e: React.MouseEvent<HTMLElement>) {
         pxt.tickEvent("github.pull");
-        this.pullAsync().then();
+        this.pullAsync();
     }
 
     async forkAsync(fromError: boolean) {
@@ -357,7 +357,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             // - our oauth app doesnot have write access to the organization, we should tell the user to grant access
             //   or use a token
             core.hideDialog()
-            this.forkAsync(true).then();
+            this.forkAsync(true);
         }
         else if (e.isMergeConflictMarkerError) {
             pxt.tickEvent("github.commitwithconflicts");
@@ -1119,8 +1119,7 @@ ${content}
     }
 
     revertAllFiles() {
-        this.props.parent.revertAllFilesAsync()
-            .then();
+        this.props.parent.revertAllFilesAsync();
     }
 
     renderCore() {
@@ -1457,7 +1456,7 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
     private handleForkClick(e: React.MouseEvent<HTMLElement>) {
         pxt.tickEvent("github.extensionzone.fork", undefined, { interactiveConsent: true });
         e.stopPropagation();
-        this.props.parent.forkAsync(false).then();
+        this.props.parent.forkAsync(false);
     }
 
     private handleSaveClick(e: React.MouseEvent<HTMLElement>) {

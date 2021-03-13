@@ -1528,8 +1528,7 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
         pxt.setHwVariant(cfg.name, card ? card.name : (cfg.description || cfg.name))
         let editor = this.props.parent
         editor.reloadHeaderAsync()
-            .then(() => !this.state.skipDownload && editor.compile())
-            .then()
+            .then(() => !this.state.skipDownload && editor.compile());
     }
 
     renderCore() {

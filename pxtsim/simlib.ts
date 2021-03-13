@@ -487,8 +487,8 @@ namespace pxsim {
                     if (prevStop != instrStopId)
                         return Promise.resolve()
                     return playInstructionsAsync(b)
-                })
-                .then()
+                });
+
         }
 
         export function playInstructionsAsync(b: RefBuffer) {

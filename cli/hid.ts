@@ -166,7 +166,7 @@ export function initAsync(path: string = null): Promise<HF2.Wrapper> {
 
 export function connectSerial(w: HF2.Wrapper) {
     process.stdin.on("data", (buf: Buffer) => {
-        w.sendSerialAsync(new Uint8Array(buf)).then()
+        w.sendSerialAsync(new Uint8Array(buf))
     })
     w.onSerial = (arr, iserr) => {
         let buf = Buffer.from(arr)

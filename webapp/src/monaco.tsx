@@ -534,7 +534,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 });
         });
 
-        core.showLoadingAsync("switchtoblocks", lf("switching to blocks..."), promise).then();
+        core.showLoadingAsync("switchtoblocks", lf("switching to blocks..."), promise);
     }
 
     public showBlockConversionFailedDialog(blockFile: string, programTooLarge: boolean): Promise<void> {

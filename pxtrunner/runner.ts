@@ -521,7 +521,7 @@ namespace pxt.runner {
             case "fileloaded":
                 let fm = m as pxsim.SimulatorFileLoadedMessage;
                 let name = fm.name;
-                setEditorContextAsync(/\.ts$/i.test(name) ? LanguageMode.TypeScript : LanguageMode.Blocks, fm.locale).then();
+                setEditorContextAsync(/\.ts$/i.test(name) ? LanguageMode.TypeScript : LanguageMode.Blocks, fm.locale);
                 break;
             case "popout":
                 let mp = /((\/v[0-9+])\/)?[^\/]*#(doc|md):([^&?:]+)/i.exec(window.location.href);

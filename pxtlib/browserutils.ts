@@ -494,7 +494,6 @@ namespace pxt.BrowserUtils {
                         const datacvs = pxt.Util.encodeBlobAsync(cvs, blob);
                         resolve(datacvs.toDataURL("image/png"));
                     });
-                    p.then();
                 } else {
                     resolve(canvasdata);
                 }

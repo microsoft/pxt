@@ -151,7 +151,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         if (pxt.hasHwVariants())
             this.props.parent.showChooseHwDialog();
         else
-            this.props.parent.showBoardDialogAsync(undefined, true).then();
+            this.props.parent.showBoardDialogAsync(undefined, true);
     }
 
     saveProject() {
