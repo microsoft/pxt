@@ -1,10 +1,10 @@
 {
   "compilerOptions": {
-    "target": "es5",
+    "target": "ES2018",
     "lib": [
       "dom",
       "dom.iterable",
-      "esnext"
+      "ES2018"
     ],
     "allowJs": true,
     "skipLibCheck": true,
@@ -13,12 +13,12 @@
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
-    "module": "esnext",
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "preserve"
+    "jsx": "preserve",
+    "module": "esnext"
   },
   "include": [
     "src"

@@ -1,7 +1,7 @@
 namespace pxt.template {
     export const TS_CONFIG = `{
     "compilerOptions": {
-        "target": "es2017",
+        "target": "ESNext",
         "noImplicitAny": true,
         "outDir": "built",
         "rootDir": "."
