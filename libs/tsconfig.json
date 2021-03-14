@@ -1,6 +1,6 @@
 {
     "compilerOptions": {
-        "target": "esnext",
+        "target": "es2017",
         "noImplicitAny": true,
         "noImplicitReturns": true,
         "outDir": "../built",
