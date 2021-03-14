@@ -7,6 +7,12 @@
         "outDir": "../../built/tests",
         "newLine": "LF",
         "module": "commonjs",
+        "lib": [
+            "dom",
+            "dom.iterable",
+            "es2017",
+            "ES2018.Promise"
+        ],
         "types": [
             "chai",
             "mocha",
