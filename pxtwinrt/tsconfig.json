@@ -1,10 +1,16 @@
 {
     "compilerOptions": {
-        "target": "es2018",
+        "target": "es2017",
         "noImplicitAny": true,
         "noImplicitReturns": true,
         "declaration": true,
         "out": "../built/pxtwinrt.js",
+        "lib": [
+            "dom",
+            "dom.iterable",
+            "es2017",
+            "ES2018.Promise"
+        ],
         "rootDir": ".",
         "newLine": "LF",
         "sourceMap": false,
