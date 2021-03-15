@@ -1444,6 +1444,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 return this.foldFieldEditorRangesAsync()
             }).finally(() => {
                 editorRightArea.removeChild(loading);
+                // Do Not Remove: This is used by the skillmap
+                if (this.parent.isTutorial()) pxt.tickEvent("tutorial.editorLoaded")
             });
     }
 
