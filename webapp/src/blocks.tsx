@@ -189,6 +189,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     this.loadingXml = false;
                     this.loadingXmlPromise = null;
                     pxt.perf.measureEnd("domUpdate loadBlockly")
+                    // Do Not Remove: This is used by the skillmap
+                    if (this.parent.isTutorial()) pxt.tickEvent("tutorial.editorLoaded")
                 });
         }
     }

@@ -3688,7 +3688,6 @@ export class ProjectView
                     temporary: temporary
                 }).then(() => autoChooseBoard ? this.autoChooseBoardAsync(features) : Promise.resolve());
             })
-            .then(() => pxt.tickEvent("tutorial.editorLoaded"))
             .catch((e) => {
                 pxt.reportException(e, { tutorialId });
                 core.warningNotification(lf("Please check your internet connection and check the tutorial is valid."));
