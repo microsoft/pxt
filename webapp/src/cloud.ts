@@ -81,8 +81,10 @@ async function listAsync(): Promise<Header[]> {
                 header.cloudVersion = proj.version;
                 return header;
             });
+            pxt.tickEvent(`identity.cloudApi.list.success`, { count: headers.length });
             resolve(headers);
         } else {
+            pxt.tickEvent(`identity.cloudApi.list.failed`);
             reject(result.err);
         }
     });
@@ -107,8 +109,10 @@ function getAsync(h: Header): Promise<File> {
             file.header.cloudVersion = file.version;
             file.header.cloudUserId = userId;
             file.header.cloudLastSyncTime = U.nowSeconds();
+            pxt.tickEvent(`identity.cloudApi.getProject.success`);
             resolve(file);
         } else {
+            pxt.tickEvent(`identity.cloudApi.getProject.failed`);
             reject(result.err);
         }
     });
@@ -154,11 +158,14 @@ function setAsync(h: Header, prevVersion: string, text?: ScriptText): Promise<st
             h.cloudCurrent = true;
             h.cloudVersion = result.resp;
             h.cloudLastSyncTime = U.nowSeconds()
+            pxt.tickEvent(`identity.cloudApi.setProject.success`);
             resolve(result.resp);
         } else if (result.statusCode === 409) {
             // conflict
+            pxt.tickEvent(`identity.cloudApi.setProject.conflict`);
             resolve(undefined)
         } else {
+            pxt.tickEvent(`identity.cloudApi.setProject.failed`);
             reject(result.err);
         }
     });
