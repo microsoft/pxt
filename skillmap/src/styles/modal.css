@@ -58,6 +58,54 @@
     background-color: var(--hover-color);
 }
 
+/* SHARE MODAL */
+.share-disclaimer {
+    box-shadow: inset 0 0 0 1px #a9d5de, 0 0 0 0 transparent;
+    background-color: #f8ffff;
+    color: #276f86;
+    padding: 1rem;
+    border-radius: 0.25rem;
+    margin: 1rem 0 1.5rem;
+}
+
+.share-loader {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.share-loader .ui.loader {
+    margin-right: 0.15rem;
+}
+
+.share-loader .ui.loader,
+.share-loader .ui.loader:before,
+.share-loader .ui.loader:after {
+    height: 1.2rem;
+    width: 1.2rem;
+}
+
+.share-input {
+    display: flex;
+    margin: 1rem 0rem;
+}
+
+.share-input input {
+    flex: 1;
+    padding: 0 0.5rem;
+    font: var(--body-font-family);
+    outline: none;
+    border: 1px solid var(--inactive-color);
+    border-right-width: 0px;
+}
+
+.share-copy {
+    padding: 0.5rem 1.5rem;
+    background-color: var(--primary-color);
+    color: var(--white);
+    cursor: pointer;
+}
 
 /* COMPLETION CONFETTI */
 .confetti-container {
