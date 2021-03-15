@@ -128,7 +128,11 @@ export function getHeaders(withDeleted = false) {
         (withDeleted || !h.isDeleted) &&
         !h.isBackup &&
         (!h.cloudUserId || h.cloudUserId === cloudUserId))
-    r.sort((a, b) => b.recentUse - a.recentUse)
+    r.sort((a, b) => {
+        const aTime = a.cloudUserId ? Math.min(a.cloudLastSyncTime, a.modificationTime) : a.modificationTime
+        const bTime = b.cloudUserId ? Math.min(b.cloudLastSyncTime, b.modificationTime) : b.modificationTime
+        return bTime - aTime
+    })
     return r
 }
 

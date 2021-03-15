@@ -1,5 +1,4 @@
 .selected .highlight {
-    stroke: var(--hover-color);
     stroke-width: 4px;
     fill: transparent;
 }
