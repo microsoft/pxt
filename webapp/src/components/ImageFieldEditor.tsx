@@ -296,7 +296,10 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
         return assets;
     }
 
-    protected filterAssetsByType(assets: pxt.Asset[], type: pxt.AssetType = this.asset?.type, isGallery = false, useTags?: boolean) {
+    protected filterAssetsByType(assets: pxt.Asset[], type?: pxt.AssetType, isGallery = false, useTags?: boolean) {
+        if (type === undefined) {
+            type = this.asset?.type;
+        }
         if (type === undefined) {
             return assets;
         }

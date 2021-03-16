@@ -234,8 +234,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                 pxt.winrt.releaseAllDevicesAsync()
                     .then(() => {
                         window.location.href = homeUrl + urlPath;
-                    })
-                    .done();
+                    });
             }
         }
         else {

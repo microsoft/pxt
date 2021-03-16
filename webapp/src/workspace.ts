@@ -122,7 +122,7 @@ async function switchToMemoryWorkspace(reason: string): Promise<void> {
 }
 
 export function getHeaders(withDeleted = false) {
-    maybeSyncHeadersAsync().done();
+    maybeSyncHeadersAsync();
     const cloudUserId = auth.user()?.id;
     let r = allScripts.map(e => e.header).filter(h =>
         (withDeleted || !h.isDeleted) &&
@@ -188,7 +188,7 @@ function cleanupBackupsAsync() {
 }
 
 export function getHeader(id: string) {
-    maybeSyncHeadersAsync().done();
+    maybeSyncHeadersAsync();
     let e = lookup(id)
     if (e && !e.header.isDeleted)
         return e.header
@@ -1573,7 +1573,7 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
                 }
                 return ex;
             })
-            cloudsync.syncAsync().done() // sync in background
+            cloudsync.syncAsync(); // sync in background
         })
         .then(() => {
             refreshHeadersSession();

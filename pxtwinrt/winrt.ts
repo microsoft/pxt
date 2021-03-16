@@ -8,7 +8,7 @@ namespace pxt.winrt {
 
     export function promisify<T>(p: Windows.Foundation.IAsyncOperation<T> | Windows.Foundation.Projections.Promise<T>): Promise<T> {
         return new Promise<T>((resolve, reject) => {
-            p.done(v => resolve(v), e => reject(e));
+            p.then(v => resolve(v), e => reject(e));
         })
     }
 
@@ -62,7 +62,7 @@ namespace pxt.winrt {
         if (!isWinRT()) {
             return;
         }
-        initialActivationDeferred = Promise.defer<ActivationArgs>();
+        initialActivationDeferred = pxt.Util.defer<ActivationArgs>();
         const app = Windows.UI.WebUI.WebUIApplication as any;
         app.addEventListener("activated", initialActivationHandler);
     }
@@ -127,19 +127,19 @@ namespace pxt.winrt {
                 () => suspensionDeferral.complete(),
                 (e) => suspensionDeferral.complete()
             )
-            .done();
+            .then();
     }
 
     function resumingHandler(args: ResumingArgs) {
         pxt.log(`resuming`);
         if (packetIO) {
             pxt.log(`reconnet pack io`);
-            packetIO.reconnectAsync().done();
+            packetIO.reconnectAsync();
         }
         initSerial();
     }
 
-    let initialActivationDeferred: Promise.Resolver<ActivationArgs>;
+    let initialActivationDeferred: pxt.Util.DeferredPromise<ActivationArgs>;
     let importHex: (hex: pxt.cpp.HexFile, options?: pxt.editor.ImportFileOptions) => void;
 
     function fileActivationHandler(args: ActivationArgs, openHomeIfFailed = false) {
@@ -158,7 +158,7 @@ namespace pxt.winrt {
                         dataReader.close();
                         return pxt.cpp.unpackSourceFromHexAsync(new Uint8Array(ar));
                     })
-                    .then((hex) => importHex(hex, { openHomeIfFailed }));
+                    .then((hex) => importHex(hex as unknown as pxt.cpp.HexFile, { openHomeIfFailed }));
             }
         }
     }

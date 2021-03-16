@@ -765,7 +765,7 @@ namespace pxt.blocks {
                 const keys = Object.keys(b.block);
                 b.translationIds = Util.values(b.block);
                 keys.forEach(k => pxt.crowdin.inContextLoadAsync(b.block[k])
-                    .done(r => {
+                    .then(r => {
                         b.block[k] = r;
                         // override builtin blockly namespace strings
                         if (/^[A-Z_]+$/.test(k))
