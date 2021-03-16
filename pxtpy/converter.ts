@@ -1043,10 +1043,8 @@ namespace pxt.py {
     }
 
     const numOps: Map<number> = {
-        Add: 1,
         Sub: 1,
         Div: 1,
-        Mod: 1,
         Pow: 1,
         LShift: 1,
         RShift: 1,
@@ -2082,8 +2080,9 @@ namespace pxt.py {
             if (isCallTo(n, "int") && orderedArgs.length === 1 && orderedArgs[0]) {
                 // int() compiles to either Math.trunc or parseInt depending on how it's used. Our builtin
                 // function mapping doesn't handle this well so we special case that here.
+                // TODO: consider generalizing this approach.
                 const arg = orderedArgs[0]
-                const argN = expr(arg) // hack: eagerly evaluate the arg so hopefully we can determine its' type
+                const argN = expr(arg)
                 const argT = typeOf(arg)
                 if (argT.primType === "string") {
                     return B.mkGroup([
