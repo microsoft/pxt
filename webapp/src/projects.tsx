@@ -1274,7 +1274,7 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
             pxt.tickEvent("exitandsave.projectrename", { length: newName && newName.length }, { interactiveConsent: true });
             p = p.then(() => this.props.parent.updateHeaderNameAsync(newName));
         }
-        p.done(() => {
+        p.then(() => {
             this.props.parent.openHome();
         })
     }
@@ -1528,8 +1528,7 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
         pxt.setHwVariant(cfg.name, card ? card.name : (cfg.description || cfg.name))
         let editor = this.props.parent
         editor.reloadHeaderAsync()
-            .then(() => !this.state.skipDownload && editor.compile())
-            .done()
+            .then(() => !this.state.skipDownload && editor.compile());
     }
 
     renderCore() {

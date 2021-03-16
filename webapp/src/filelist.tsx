@@ -54,11 +54,10 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             agreeClass: "red",
             agreeIcon: "trash",
             agreeLbl: lf("Remove it"),
-        }).done(res => {
+        }).then(res => {
             if (res) {
                 pkg.mainEditorPkg().removeDepAsync(p.getPkgId())
-                    .then(() => this.props.parent.reloadHeaderAsync())
-                    .done()
+                    .then(() => this.props.parent.reloadHeaderAsync());
             }
         })
     }
@@ -315,7 +314,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
 ` : "",
                 true
             );
-        }).done()
+        });
     }
 
     private addCustomBlocksFile() {

@@ -27,7 +27,7 @@ export class GithubButton extends sui.UIElement<GithubButtonProps, GithubButtonS
 
     private createRepository(e: React.MouseEvent<HTMLElement>) {
         pxt.tickEvent("github.button.create", undefined, { interactiveConsent: true });
-        this.props.parent.createGitHubRepositoryAsync().done();
+        this.props.parent.createGitHubRepositoryAsync();
     }
 
     private handleClick(e: React.MouseEvent<HTMLElement>) {

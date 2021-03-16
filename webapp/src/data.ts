@@ -206,7 +206,7 @@ function queueNotify(ce: CacheEntry, path: string) {
         final(ce.api.getSync(ce.path))
     else {
         const p = ce.api.getAsync(ce.path);
-        p.done(final)
+        p.then(final)
     }
 }
 

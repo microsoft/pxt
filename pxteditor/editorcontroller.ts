@@ -473,7 +473,7 @@ namespace pxt.editor {
                         });
                     })
                 }
-                p.done(() => sendResponse(data, resp, true, undefined),
+                p.then(() => sendResponse(data, resp, true, undefined),
                     (err) => sendResponse(data, resp, false, err))
             }
 

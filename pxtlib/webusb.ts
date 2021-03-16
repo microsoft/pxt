@@ -251,7 +251,7 @@ namespace pxt.usb {
                 })
                 .then(() => {
                     this.clearDev()
-                    return Promise.delay(500)
+                    return U.delay(500)
                 })
         }
 
@@ -302,7 +302,7 @@ namespace pxt.usb {
                     } else {
                         // give another frame a chance to grab the device
                         this.log(`delay for last known device`)
-                        await Promise.delay(2000);
+                        await U.delay(2000);
                     }
                 }
 
@@ -361,7 +361,7 @@ namespace pxt.usb {
             this.log("start read loop")
             let loop = (): void => {
                 if (!this.ready)
-                    Promise.delay(300).then(loop)
+                    U.delay(300).then(loop)
                 else
                     this.recvPacketAsync()
                         .then(buf => {
@@ -371,12 +371,12 @@ namespace pxt.usb {
                                 loop()
                             } else {
                                 // throttle down if no data coming
-                                Promise.delay(500).then(loop)
+                                U.delay(500).then(loop)
                             }
                         }, err => {
                             if (this.dev)
                                 this.onError(err)
-                            Promise.delay(300).then(loop)
+                            U.delay(300).then(loop)
                         })
             }
             loop()

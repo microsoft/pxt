@@ -1,14 +1,21 @@
 {
     "compilerOptions": {
-        "target": "es5",
+        "target": "es2017",
         "noImplicitAny": true,
         "noImplicitReturns": true,
         "declaration": true,
         "outDir": "../built",
         "module": "commonjs",
+        "lib": [
+            "dom",
+            "dom.iterable",
+            "es2017",
+            "ES2018.Promise"
+        ],
         "rootDir": ".",
         "newLine": "LF",
         "sourceMap": false,
+        "moduleResolution": "node",
         "incremental": false
     }
 }

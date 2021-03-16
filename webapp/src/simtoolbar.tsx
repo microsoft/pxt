@@ -84,7 +84,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
 
     takeScreenshot() {
         pxt.tickEvent("simulator.takescreenshot", { view: 'computer', collapsedTo: '' + !this.props.parent.state.collapseEditorTools }, { interactiveConsent: true });
-        this.props.parent.downloadScreenshotAsync().done();
+        this.props.parent.downloadScreenshotAsync();
     }
 
     renderCore() {
