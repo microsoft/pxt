@@ -100,9 +100,7 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
         core.showLoading("reloadproject", lf("loading..."));
         this.send(this.state.extension, { target: pxt.appTarget.id, type: "pxtpkgext", event: "exthidden" } as pxt.editor.HiddenEvent);
         this.props.parent.reloadHeaderAsync()
-            .done(() => {
-                core.hideLoading("reloadproject");
-            });
+            .then(() => core.hideLoading("reloadproject"));
     }
 
     showExtensionAsync(extension: string, url: string) {

@@ -19,12 +19,3 @@
     font-family: Icons;
     font-size: 1rem;
 }
-
-.graph-activity {
-    cursor: pointer;
-    user-select: none;
-}
-
-.graph-activity:hover .graph-icon, .graph-activity:hover .graph-icon-x {
-    opacity: 0.6;
-}

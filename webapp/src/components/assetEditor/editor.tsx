@@ -36,7 +36,11 @@ export class AssetEditor extends Editor {
                 this.updateGalleryAssets();
             })
             .then(() => store.dispatch(dispatchUpdateUserAssets()))
-            .then(() => this.parent.forceUpdate());
+            .then(() => {
+                this.parent.forceUpdate()
+                // Do Not Remove: This is used by the skillmap
+                if (this.parent.isTutorial()) pxt.tickEvent("tutorial.editorLoaded")
+            });
     }
 
     unloadFileAsync(): Promise<void> {

@@ -521,7 +521,7 @@ namespace pxt.runner {
             case "fileloaded":
                 let fm = m as pxsim.SimulatorFileLoadedMessage;
                 let name = fm.name;
-                setEditorContextAsync(/\.ts$/i.test(name) ? LanguageMode.TypeScript : LanguageMode.Blocks, fm.locale).done();
+                setEditorContextAsync(/\.ts$/i.test(name) ? LanguageMode.TypeScript : LanguageMode.Blocks, fm.locale);
                 break;
             case "popout":
                 let mp = /((\/v[0-9+])\/)?[^\/]*#(doc|md):([^&?:]+)/i.exec(window.location.href);
@@ -612,7 +612,7 @@ namespace pxt.runner {
         }
 
         pxt.editor.initEditorExtensionsAsync()
-            .done(() => {
+            .then(() => {
                 // notify parent that render engine is loaded
                 window.addEventListener("message", function (ev) {
                     const msg = ev.data as pxsim.RenderBlocksRequestMessage;
@@ -647,7 +647,7 @@ namespace pxt.runner {
             $(content).hide()
             $(loading).show()
 
-            Promise.delay(100) // allow UI to update
+            U.delay(100) // allow UI to update
                 .then(() => {
                     switch (doctype) {
                         case "print":
@@ -690,7 +690,7 @@ namespace pxt.runner {
                     if (backButton) $(backButton).show()
                     $(content).show()
                 })
-                .done(() => { });
+                .then(() => { });
         }
 
         function pushHistory() {
@@ -741,7 +741,7 @@ namespace pxt.runner {
             }
         }
         let promise = pxt.editor.initEditorExtensionsAsync();
-        promise.done(() => {
+        promise.then(() => {
             window.addEventListener("message", receiveDocMessage, false);
             window.addEventListener("hashchange", () => {
                 renderHash();
@@ -843,7 +843,7 @@ ${linkString}
 
         // start the work
         let toc: TOCMenuEntry[];
-        return Promise.delay(100)
+        return U.delay(100)
             .then(() => pxt.Cloud.markdownAsync(summaryid))
             .then(summary => {
                 toc = pxt.docs.buildTOC(summary);
@@ -1195,7 +1195,7 @@ ${linkString}
     export let initCallbacks: (() => void)[] = [];
     export function init() {
         initInnerAsync()
-            .done(() => {
+            .then(() => {
                 for (let i = 0; i < initCallbacks.length; ++i) {
                     initCallbacks[i]();
                 }

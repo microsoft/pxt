@@ -103,9 +103,81 @@ namespace pxsim {
             return perf() * 1000;
         }
 
+        const _nextTickResolvedPromise = Promise.resolve();
         export function nextTick(f: () => void) {
-            (<any>Promise)._async._schedule(f)
+            // .then should run as a microtask / at end of loop
+            _nextTickResolvedPromise.then(f);
         }
+
+        export async function delay<T>(duration: number, value: T): Promise<T>;
+        export async function delay(duration: number): Promise<void>
+        export async function delay<T>(duration: number, value?: T): Promise<T> {
+            // tslint:disable-next-line
+            const output = await value;
+            await new Promise<void>(resolve => setTimeout(() => resolve(), duration));
+            return output;
+        }
+
+        export function promiseMapAll<T, V>(values: T[], mapper: (obj: T) => Promise<V>): Promise<V[]> {
+            return Promise.all(values.map(v => mapper(v)));
+        }
+
+        export  function promiseMapAllSeries<T, V>(values: T[], mapper: (obj: T) => Promise<V>): Promise<V[]> {
+            return promisePoolAsync(1, values, mapper);
+        }
+
+        export async function promisePoolAsync<T, V>(maxConcurrent: number, inputValues: T[], handler: (input: T) => Promise<V>): Promise<V[]> {
+            let curr = 0;
+            const promises = [];
+            const output: V[] = [];
+
+            for (let i = 0; i < maxConcurrent; i++) {
+                const thread = (async () => {
+                    while (curr < inputValues.length) {
+                        const id = curr++;
+                        const input = inputValues[id];
+                        output[id] = await handler(input);
+                    }
+                })();
+
+                promises.push(thread);
+            }
+
+            try {
+                await Promise.all(promises);
+            } catch (e) {
+                // do not spawn any more promises after pool failed.
+                curr = inputValues.length;
+                throw e;
+            }
+
+            return output;
+        }
+
+        export async function promiseTimeout<T>(ms: number, promise: T | Promise<T>, msg?: string): Promise<T> {
+            let timeoutId: any;
+            let res: () => void;
+
+            const timeoutPromise: Promise<T> = new Promise((resolve, reject) => {
+                res = resolve;
+                timeoutId = setTimeout(() => {
+                    res = undefined;
+                    clearTimeout(timeoutId);
+                    reject(msg || `Promise timed out after ${ms}ms`);
+                }, ms);
+            });
+
+            return Promise.race([ promise, timeoutPromise ])
+                .then(output => {
+                    // clear any dangling timeout
+                    if (res) {
+                        clearTimeout(timeoutId);
+                        res();
+                    }
+                    return <T>output;
+                });
+        }
+
 
         // this will take lower 8 bits from each character
         export function stringToUint8Array(input: string) {
@@ -342,7 +414,7 @@ namespace pxsim {
 
         protected serialOutBuffer: string = '';
         private messages: SerialMessage[] = [];
-        private serialTimeout: number;
+        private serialTimeout: any;
         private lastSerialTime = 0;
 
         public writeSerial(s: string) {
@@ -486,8 +558,8 @@ namespace pxsim {
             // all events will be processed by concurrent promisified code below, so start afresh
             this.events = []
             // in order semantics for events and handlers
-            return Promise.each(events, (value) => {
-                return Promise.each(this.handlers, (handler) => {
+            return U.promiseMapAllSeries(events, (value) => {
+                return U.promiseMapAllSeries(this.handlers, (handler) => {
                     return this.runtime.runFiberAsync(handler, ...(this.valueToArgs ? this.valueToArgs(value) : [value]))
                 })
             }).then(() => {
@@ -579,7 +651,7 @@ namespace pxsim {
     }
 
     export class TimeoutScheduled {
-        constructor(public id: number, public fn: Function, public totalRuntime: number, public timestampCall: number) { }
+        constructor(public id: any, public fn: Function, public totalRuntime: number, public timestampCall: number) { }
     }
 
     export class PausedTimeout {
@@ -638,9 +710,9 @@ namespace pxsim {
 
         dead = false;
         running = false;
-        idleTimer: number = undefined;
+        idleTimer: any = undefined;
         recording = false;
-        recordingTimer = 0;
+        recordingTimer: any = 0;
         recordingLastImageData: ImageData = undefined;
         recordingWidth: number = undefined;
         startTime = 0;

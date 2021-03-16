@@ -1,12 +1,15 @@
 {
     "compilerOptions": {
-        "target": "es5",
+        "target": "es2017",
         "noImplicitAny": true,
         "noImplicitReturns": true,
         "declaration": true,
         "out": "../../built/tests/tests.spec.js",
         "newLine": "LF",
-        "types": ["chai", "mocha", "bluebird"],
+        "types": [
+            "chai",
+            "mocha"
+        ],
         "sourceMap": false
     },
     "files": [
