@@ -12,6 +12,7 @@ export interface SkillMapState {
     description: string;
     infoUrl?: string;
     backgroundImageUrl?: string;
+    bannerImageUrl?: string;
     user: UserState;
     pageSourceUrl: string;
     pageSourceStatus: PageSourceStatus;
@@ -88,6 +89,7 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                 description: initialState.description,
                 infoUrl: initialState.infoUrl,
                 backgroundImageUrl: undefined,
+                bannerImageUrl: undefined,
                 alternateSourceUrls: undefined,
                 theme: {
                     ...initialState.theme
@@ -269,6 +271,11 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
             return {
                 ...state,
                 backgroundImageUrl: action.backgroundImageUrl
+            }
+        case actions.SET_PAGE_BANNER_IMAGE_URL:
+            return {
+                ...state,
+                bannerImageUrl: action.bannerImageUrl
             }
         case actions.SET_PAGE_THEME:
             return {
