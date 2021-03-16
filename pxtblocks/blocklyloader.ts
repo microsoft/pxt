@@ -1208,23 +1208,6 @@ namespace pxt.blocks {
                 if (Blockly.Names.equals(oldName, varField.getText())) {
                     varField.setValue(newName);
                 }
-            },
-            /**
-             * Add menu option to create getter block for loop variable.
-             * @param {!Array} options List of menu options to add to.
-             * @this Blockly.Block
-             */
-            customContextMenu: function (options: any[]) {
-                if (!this.isCollapsed()) {
-                    let option: any = { enabled: true };
-                    option.text = lf("Create 'get {0}'", name);
-                    let xmlField = goog.dom.createDom('field', null, name);
-                    xmlField.setAttribute('name', 'VAR');
-                    let xmlBlock = goog.dom.createDom('block', null, xmlField) as HTMLElement;
-                    xmlBlock.setAttribute('type', 'variables_get');
-                    option.callback = Blockly.ContextMenu.callbackFactory(this, xmlBlock);
-                    options.push(option);
-                }
             }
         };
 
@@ -1301,7 +1284,7 @@ namespace pxt.blocks {
              * @this Blockly.Block
              */
             customContextMenu: function (options: any[]) {
-                if (!this.isCollapsed()) {
+                if (!this.isCollapsed() && !this.inDebugWorkspace()) {
                     let option: any = { enabled: true };
                     let name = this.getField('VAR').getText();
                     option.text = lf("Create 'get {0}'", name);
@@ -2225,19 +2208,21 @@ namespace pxt.blocks {
              * @this Blockly.Block
              */
             customContextMenu: function (options: any[]) {
-                let option: any = {
-                    enabled: this.workspace.remainingCapacity() > 0
-                };
+                if (!(this.inDebugWorkspace())) {
+                    let option: any = {
+                        enabled: this.workspace.remainingCapacity() > 0
+                    };
 
-                let name = this.getField("VAR").getText();
-                option.text = lf("Create 'get {0}'", name)
+                    let name = this.getField("VAR").getText();
+                    option.text = lf("Create 'get {0}'", name)
 
-                let xmlField = goog.dom.createDom('field', null, name);
-                xmlField.setAttribute('name', 'VAR');
-                let xmlBlock = goog.dom.createDom('block', null, xmlField);
-                xmlBlock.setAttribute('type', "variables_get");
-                option.callback = Blockly.ContextMenu.callbackFactory(this, xmlBlock);
-                options.push(option);
+                    let xmlField = goog.dom.createDom('field', null, name);
+                    xmlField.setAttribute('name', 'VAR');
+                    let xmlBlock = goog.dom.createDom('block', null, xmlField);
+                    xmlBlock.setAttribute('type', "variables_get");
+                    option.callback = Blockly.ContextMenu.callbackFactory(this, xmlBlock);
+                    options.push(option);
+                }
             }
         };
 
