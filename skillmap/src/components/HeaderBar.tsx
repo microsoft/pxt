@@ -77,7 +77,8 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
                 }
                 { items?.length > 0 && <Dropdown icon="setting" className="header-settings" items={items} /> }
                 <div className="header-org-logo">
-                    <img src={resolvePath("assets/microsoft.png")} alt={organizationLogoAlt} />
+                    <img className="header-org-logo-large" src={resolvePath("assets/microsoft.png")} alt={organizationLogoAlt} />
+                    <img className="header-org-logo-small" src={resolvePath("assets/microsoft-square.png")} alt={organizationLogoAlt} />
                 </div>
             </div>
         </div>
@@ -113,7 +114,7 @@ const HeaderBarButton = (props: HeaderBarButtonProps) => {
 
     return <div className="header-button" title={title} role="button" onClick={onClick}>
         <i className={icon} />
-        <span>{label}</span>
+        <span className="header-button-label">{label}</span>
     </div>
 }
 
