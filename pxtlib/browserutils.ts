@@ -494,7 +494,6 @@ namespace pxt.BrowserUtils {
                         const datacvs = pxt.Util.encodeBlobAsync(cvs, blob);
                         resolve(datacvs.toDataURL("image/png"));
                     });
-                    p.done();
                 } else {
                     resolve(canvasdata);
                 }
@@ -731,7 +730,7 @@ namespace pxt.BrowserUtils {
         for (let i = 0; i < 16; ++i)
             md += md + Math.random();
         console.log(`adding entry ${md.length * 2} bytes`);
-        return Promise.delay(1)
+        return U.delay(1)
             .then(() => translationDbAsync())
             .then(db => db.setAsync("foobar", Math.random().toString(), "", null, undefined, md))
             .then(() => pxt.BrowserUtils.storageEstimateAsync())
@@ -1020,7 +1019,7 @@ namespace pxt.BrowserUtils {
             return deleteDbAsync();
         return _translationDbPromise
             .then(db => db.clearAsync())
-            .catch(e => deleteDbAsync().done());
+            .catch(e => deleteDbAsync().then());
     }
 
     export function getTutorialInfoHash(code: string[]) {
@@ -1151,7 +1150,7 @@ namespace pxt.BrowserUtils {
             return deleteDbAsync();
         return _tutorialInfoDbPromise
             .then(db => db.clearAsync())
-            .catch(e => deleteDbAsync().done());
+            .catch(e => deleteDbAsync().then());
     }
 
     export interface IPointerEvents {

@@ -1,6 +1,6 @@
 import { PageSourceStatus } from "../store/reducer";
 
-const apiRoot = "https://www.makecode.com/api/md";
+const apiRoot = "https://www.makecode.com/api";
 export type MarkdownSource = "docs" | "github";
 
 export interface MarkdownFetchResult {
@@ -47,7 +47,7 @@ export async function getMarkdownAsync(source: MarkdownSource, url: string): Pro
         case "docs":
             url = url.trim().replace(/^[\\/]/i, "").replace(/\.md$/i, "");
             const target = (window as any).pxtTargetBundle?.name || "arcade";
-            toFetch = `${apiRoot}/${target}/${url}`;
+            toFetch = `${apiRoot}/md/${target}/${url}`;
             status = "approved";
             break;
         case "github":
@@ -130,6 +130,13 @@ function parseGithubFilename(fileName: string) {
     fileName = fileName.replace(/^\/?blob\/master\//, "");
     fileName = fileName.replace(/\.md$/, "");
     return fileName;
+}
+
+export async function postShareAsync(h?: pxt.workspace.Header, text?: pxt.workspace.ScriptText): Promise<pxt.Cloud.JsonScript | undefined> {
+    if (!h || !text) return undefined;
+
+    const script = await httpPostAsync(`${apiRoot}/scripts`, { ...h, text });
+    return pxt.Util.jsonTryParse(script) as pxt.Cloud.JsonScript;
 }
 
 export async function postAbuseReportAsync(id: string, data: { text: string }): Promise<void> {

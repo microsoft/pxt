@@ -59,7 +59,7 @@ function migratePrefixesAsync(): Promise<void> {
 
             return previousHeaders.getAllAsync()
                 .then((previousHeaders: pxt.workspace.Header[]) => {
-                    return Promise.map(previousHeaders, (h) => copyProject(h));
+                    return pxt.Util.promiseMapAll(previousHeaders, (h) => copyProject(h));
                 })
                 .then(() => { });
         });

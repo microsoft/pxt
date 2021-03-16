@@ -33,7 +33,7 @@ namespace pxtblockly {
     export class FieldAnimationEditor extends FieldAssetEditor<FieldAnimationOptions, ParsedFieldAnimationOptions> {
         protected frames: string[];
         protected preview: svg.Image;
-        protected animateRef: number;
+        protected animateRef: any;
         protected asset: pxt.Animation;
         protected initInterval: number;
 

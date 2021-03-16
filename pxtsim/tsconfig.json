@@ -1,6 +1,6 @@
 {
     "compilerOptions": {
-        "target": "es5",
+        "target": "es2017",
         "noImplicitAny": true,
         "noImplicitReturns": true,
         "noImplicitThis": true,
@@ -8,14 +8,13 @@
         "out": "../built/pxtsim.js",
         "newLine": "LF",
         "sourceMap": false,
+        "moduleResolution": "node",
         "lib": [
             "dom",
             "dom.iterable",
             "scripthost",
-            "es6"
-        ],
-        "types": [
-            "bluebird"
+            "es2017",
+            "ES2018.Promise"
         ],
         "incremental": true
     }

@@ -284,26 +284,30 @@ function buildStrings(out, rootPaths, recursive) {
     return Promise.resolve();
 }
 
-// TODO: Copied from Jakefile; should be async
 function runUglify() {
     if (process.env.PXT_ENV == 'production') {
         console.log("Minifying built/web...")
 
-        const uglify = require("uglify-js");
+        const terser = require("terser");
+        const files = ju.expand("built/web", ".js");
 
-        ju.expand("built/web", ".js").forEach(fn => {
-            console.log("Minifying " + fn)
+        return Promise.all(files.map(fn => {
+            console.log(`Minifying ${fn}`)
 
-            const content = fs.readFileSync(fn, "utf-8")
-            const res = uglify.minify(content);
-
-            if (!res.error) {
-                fs.writeFileSync(fn, res.code, { encoding: "utf8" })
-            }
-            else {
-                console.log("Could not minify " + fn);
-            }
-        });
+            return Promise.resolve()
+                .then(() => fs.readFileSync(fn, "utf-8"))
+                .then(content => terser.minify(content))
+                .then(
+                    res => {
+                        fs.writeFileSync(fn, res.code, { encoding: "utf8" })
+                        console.log(`Finished minifying ${fn}`);
+                    },
+                    err => {
+                        console.log(`Could not minify ${fn}: ${err}`);
+                        throw err;
+                    }
+                );
+        }))
     }
     else {
         console.log("Skipping minification for non-production build")
@@ -341,7 +345,6 @@ const copyJquery = () => gulp.src("node_modules/jquery/dist/jquery.min.js")
 
 const copyWebapp = () =>
     gulp.src([
-        "node_modules/bluebird/js/browser/bluebird.min.js",
         "node_modules/applicationinsights-js/dist/ai.0.js",
         "pxtcompiler/ext-typescript/lib/typescript.js",
         "built/pxtlib.js",

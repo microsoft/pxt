@@ -175,15 +175,18 @@ function resetAsync(): Promise<void> {
     return Promise.resolve();
 }
 
-let inProgressSyncPromise: Promise<any> = Promise.resolve()
+let inProgressSyncPromise: Promise<pxt.workspace.Header[]>;
 export async function syncAsync(hdrs?: Header[]): Promise<Header[]> {
     // wait for any pending saves
     await inProgressSavePromise;
     // ensure we don't run this twice
-    if (inProgressSyncPromise.isResolved()) {
-        inProgressSyncPromise = syncAsyncInternal(hdrs)
+    if (!inProgressSyncPromise) {
+        inProgressSyncPromise = syncAsyncInternal(hdrs).then(res => {
+            inProgressSyncPromise = undefined;
+            return res;
+        });
     }
-    return inProgressSyncPromise
+    return inProgressSyncPromise;
 }
 
 async function transferToCloud(local: Header, cloudVersion: string): Promise<Header> {

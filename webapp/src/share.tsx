@@ -317,7 +317,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
 
                         this.setState({ recordingState: ShareRecordingState.None, screenshotUri: uri, recordError })
                         // give a breather to the browser to render the gif
-                        Promise.delay(1000).then(() => this.props.parent.startSimulator());
+                        pxt.Util.delay(1000).then(() => this.props.parent.startSimulator());
                     })
             });
     }
@@ -325,7 +325,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
     handleCreateGitHubRepository() {
         pxt.tickEvent("share.github.create", undefined, { interactiveConsent: true });
         this.hide();
-        this.props.parent.createGitHubRepositoryAsync().done();
+        this.props.parent.createGitHubRepositoryAsync();
     }
 
     renderCore() {
