@@ -388,6 +388,7 @@ export function setActivityFinished(user: UserState, pageSource: string, map: Sk
             currentStep: 0
         })
         completedNodes[el].isCompleted = true;
+        completedNodes[el].completedTime = Date.now();
     })
 
     const currentMapProgress = user.mapProgress?.[pageSource] || {};

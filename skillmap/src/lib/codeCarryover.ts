@@ -1,4 +1,4 @@
-import { lookupPreviousActivityStates } from "./skillMapUtils";
+import { lookupPreviousCompletedActivityState } from "./skillMapUtils";
 import { getProjectAsync, saveProjectAsync } from "./workspaceProvider";
 
 export async function carryoverProjectCode(user: UserState, pageSource: string, map: SkillMap, activityId: string, carryoverCode: boolean) {
@@ -6,9 +6,8 @@ export async function carryoverProjectCode(user: UserState, pageSource: string, 
 
     const headerId = progress.activityState[activityId]?.headerId;
 
-    const previous = lookupPreviousActivityStates(user, pageSource, map, activityId);
-    const previousHeaderId = previous.find(state => state?.isCompleted &&
-        state.maxSteps === state.currentStep)?.headerId;
+    const previous = lookupPreviousCompletedActivityState(user, pageSource, map, activityId);
+    const previousHeaderId = previous?.headerId;
 
     if (!headerId || !previousHeaderId) return;
 

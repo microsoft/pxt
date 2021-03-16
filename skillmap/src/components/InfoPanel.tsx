@@ -116,7 +116,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
             })
 
             details.push(`${completed}/${total} ${lf("Complete")}`);
-            details.push(`${rewards} ${lf("Rewards")}`)
+            details.push(`${rewards} ${lf("Reward(s)")}`)
         }
     }
 
