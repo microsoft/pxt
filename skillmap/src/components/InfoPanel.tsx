@@ -110,7 +110,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
             mapIds.forEach(mapId => {
                 const activities = maps[mapId].activities;
                 const activityIds = Object.keys(activities).filter(el => activities[el].kind == "activity");
-                activityIds.forEach(activityId => total++ && isActivityCompleted(user, pageSourceUrl, mapId, activityId) && completed++);
+                activityIds.forEach(activityId => ++total && isActivityCompleted(user, pageSourceUrl, mapId, activityId) && ++completed);
 
                 rewards += Object.keys(activities).filter(el => isRewardNode(activities[el])).length;
             })
