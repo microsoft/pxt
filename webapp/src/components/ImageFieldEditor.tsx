@@ -106,12 +106,20 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
 
         return <div className="image-editor-wrapper">
             {showHeader && <div className="gallery-editor-header">
-                <ImageEditorToggle options={toggleOptions} view={currentView} />
-                <div className={`gallery-filter-button ${this.state.currentView === "gallery" ? '' : "hidden"}`} role="button" onClick={this.toggleFilter} onKeyDown={sui.fireClickOnEnter}>
-                    <div className="gallery-filter-button-icon">
-                        <i className="icon filter" />
+                <div className="image-editor-header-left" />
+                <div className="image-editor-header-center">
+                    <ImageEditorToggle options={toggleOptions} view={currentView} />
+                </div>
+                <div className="image-editor-header-right">
+                    <div className={`gallery-filter-button ${this.state.currentView === "gallery" ? '' : "hidden"}`} role="button" onClick={this.toggleFilter} onKeyDown={sui.fireClickOnEnter}>
+                        <div className="gallery-filter-button-icon">
+                            <i className="icon filter" />
+                        </div>
+                        <div className="gallery-filter-button-label">{lf("Filter")}</div>
                     </div>
-                    <div className="gallery-filter-button-label">{lf("Filter")}</div>
+                    {!editingTile && <div className="image-editor-close-button" role="button" onClick={this.onDoneClick}>
+                        <i className="ui icon close"/>
+                    </div>}
                 </div>
             </div>}
             <div className="image-editor-gallery-window">
