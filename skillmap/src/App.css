@@ -135,15 +135,24 @@ code {
     cursor: pointer;
     flex: 1;
     user-select: none;
+    white-space: nowrap;
 }
 
 .header-button .header-button-label {
     line-height: 2rem;
+    white-space: nowrap;
 }
 
 .header-button:hover, .header-settings:hover {
     background-color: var(--hover-color);
     color: var(--invert-hover-text-color);
+}
+
+.header-activity-display-name {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    flex-shrink: 10;
 }
 
 /* TOP BANNER */
