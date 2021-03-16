@@ -67,7 +67,6 @@ export function getCloudSummary(h: pxt.workspace.Header, md: CloudTempMetadata):
 
 async function listAsync(): Promise<Header[]> {
     return new Promise(async (resolve, reject) => {
-        // Note: Cosmos & our backend does not return e-tags each individual item in a list operation
         const result = await auth.apiAsync<CloudProject[]>("/api/user/project");
         if (result.success) {
             const syncTime = U.nowSeconds()
@@ -249,6 +248,7 @@ async function resolveConflict(local: Header, remoteFile: File) {
     const newName = getConflictCopyName(local);
     let newCopyHdr = await workspace.duplicateAsync(local, newName);
     pxt.tickEvent(`identity.sync.conflict.createdDuplicate`);
+    let anyError = false;
 
     // 2. swap current project to the new copy
     try {
@@ -262,6 +262,7 @@ async function resolveConflict(local: Header, remoteFile: File) {
         // we want to swallow this and keep going since step 3. is the essentail one to resolve the conflcit.
         pxt.reportException(e);
         pxt.tickEvent(`identity.sync.conflict.reloadEditorFailed`, { exception: e });
+        anyError = true;
     }
 
     // 3. overwrite local changes in the original project with cloud changes
@@ -272,11 +273,17 @@ async function resolveConflict(local: Header, remoteFile: File) {
         //  since this is a bad case (may lead to repeat duplication).
         pxt.reportException(e);
         pxt.tickEvent(`identity.sync.conflict.overwriteLocalFailed`, { exception: e });
+        pxt.tickEvent(`identity.sync.conflict.failed`);
         throw e;
     }
 
     // 4. upload new project to the cloud (network op)
     const copyUploadHdr = await transferToCloud(newCopyHdr, null);
+    if (!copyUploadHdr) {
+        // nothing to do but report this
+        pxt.tickEvent(`identity.sync.conflict.uploadCopyToCloudFailed`);
+        anyError = true;
+    }
 
     // 5. tell the user a conflict occured
     try {
@@ -293,6 +300,14 @@ async function resolveConflict(local: Header, remoteFile: File) {
         // we want to swallow this and keep going since it's non-essential
         pxt.reportException(e);
         pxt.tickEvent(`identity.sync.conflict.dialogNotificationFailed`, { exception: e });
+        anyError = true;
+    }
+
+    // 6. tell the cloud
+    if (!anyError) {
+        pxt.tickEvent(`identity.sync.conflict.success`);
+    } else {
+        pxt.tickEvent(`identity.sync.conflict.failed`);
     }
 }
 
@@ -357,12 +372,8 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
             if (remote) {
                 local.cloudLastSyncTime = remote.cloudLastSyncTime
                 // Resolve local and cloud differences.
-                const areDifferent = remote.cloudVersion
-                    ? local.cloudVersion !== remote.cloudVersion
-                    // TODO: once we deploy the backend to correctly return the cloudVersion from listAsync, then
-                    //      always chose the cloud version comparison.
-                    : local.modificationTime !== remote.modificationTime || local.isDeleted !== remote.isDeleted;
-                if (areDifferent) {
+                const areDifferentVersions = local.cloudVersion !== remote.cloudVersion;
+                if (areDifferentVersions || !local.cloudCurrent) {
                     const projShorthand = `'${local.name}' (${local.id.substr(0, 5)}...)`;
                     const remoteFile = await getWithCacheAsync(local);
                     // delete always wins no matter what.
@@ -385,28 +396,27 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
                         // No local changes, download latest.
                         const newHdr = await fromCloud(local, remoteFile);
                         pxt.tickEvent(`identity.sync.noConflict.localProjectUpdatedFromCloud`)
+                    } else if (local.cloudVersion === remoteFile.version) {
+                        // Local has unpushed changes, push them now
+                        pxt.debug(`local project '${local.name}' has changes that will be pushed to the cloud.`)
+                        const newHdr = await toCloud(local, remoteFile.version);
+                        U.assert(!!newHdr, `Failed to save ${local.id} to the cloud.`);
+                        pxt.tickEvent(`identity.sync.noConflict.localProjectUpdatedToCloud`)
                     } else {
-                        // Possible conflict.
-                        const conflictStr = `conflict found for ${projShorthand}. Last cloud change was ${agoStr(remoteFile.header.modificationTime)} and last local change was ${agoStr(local.modificationTime)}.`
+                        // Conflict. Local changes exist and we aren't on the latest cloud version.
                         if (local.modificationTime > remoteFile.header.modificationTime) {
-                            if (local.cloudVersion === remoteFile.version) {
-                                // local is one ahead, push as normal
-                                pxt.debug(`local project '${local.name}' has changes that will be pushed to the cloud.`)
-                                const newHdr = await toCloud(local, remoteFile.version);
-                                U.assert(!!newHdr, `Failed to save ${local.id} to the cloud.`);
-                                pxt.tickEvent(`identity.sync.noConflict.localProjectUpdatedToCloud`)
-                            } else {
-                                // conflict (and local has the newer change)
-                                pxt.log(conflictStr)
-                                pxt.tickEvent(`identity.sync.conflict.localNewerThanCloud`)
-                                await resolveConflict(local, remoteFile);
-                            }
-                        } else {
+                            // conflict (and local has the newer change)
+                            pxt.tickEvent(`identity.sync.conflict.localNewerThanCloud`)
+                        } else if (local.modificationTime < remoteFile.header.modificationTime) {
                             // conflict (and remote has the newer change)
-                            pxt.log(conflictStr)
                             pxt.tickEvent(`identity.sync.conflict.cloudNewerThanLocal`)
-                            await resolveConflict(local, remoteFile);
+                        } else {
+                            // this shouldn't happen but log it anyway
+                            pxt.tickEvent(`identity.sync.conflict.bothSameModTimestamp`)
                         }
+                        const conflictStr = `conflict found for ${projShorthand}. Last cloud change was ${agoStr(remoteFile.header.modificationTime)} and last local change was ${agoStr(local.modificationTime)}.`
+                        pxt.log(conflictStr)
+                        await resolveConflict(local, remoteFile);
                     }
                 }
                 // no changes
