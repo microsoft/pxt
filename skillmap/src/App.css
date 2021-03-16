@@ -109,6 +109,10 @@ code {
     height: 100%;
 }
 
+.header-org-logo .header-org-logo-small {
+    display: none;
+}
+
 .header i.icon {
     line-height: 2rem;
     cursor: pointer;
@@ -253,5 +257,13 @@ code {
 @media only screen and (max-width: 767px) {
     .header-button .header-button-label {
         display: none;
+    }
+
+    .header-org-logo .header-org-logo-large {
+        display: none;
+    }
+
+    .header-org-logo .header-org-logo-small {
+        display: block;
     }
 }
