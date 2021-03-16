@@ -1,1 +1,0 @@
-Math.trunc(1.5)
