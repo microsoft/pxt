@@ -133,7 +133,7 @@ code {
     user-select: none;
 }
 
-.header-button span {
+.header-button .header-button-label {
     line-height: 2rem;
 }
 
@@ -242,5 +242,16 @@ code {
     .usabilla_live_button_container {
         top: 10rem !important;
         bottom: unset !important;
+    }
+}
+
+
+/*******************************/
+/*****     MOBILE VIEW     *****/
+/*******************************/
+
+@media only screen and (max-width: 767px) {
+    .header-button .header-button-label {
+        display: none;
     }
 }

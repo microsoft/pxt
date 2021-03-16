@@ -113,7 +113,7 @@ const HeaderBarButton = (props: HeaderBarButtonProps) => {
 
     return <div className="header-button" title={title} role="button" onClick={onClick}>
         <i className={icon} />
-        <span>{label}</span>
+        <span className="header-button-label">{label}</span>
     </div>
 }
 
