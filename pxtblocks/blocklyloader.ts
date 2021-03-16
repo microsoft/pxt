@@ -1480,10 +1480,13 @@ namespace pxt.blocks {
             let eventGroup = Blockly.utils.genUid();
             let topComments = this.getTopComments();
             let ws = this;
+            const editable = !(this.options.debugMode || this.options.readOnly);
 
             // Option to add a workspace comment.
             if (this.options.comments && !BrowserUtils.isIE()) {
-                options.push(Blockly.ContextMenu.workspaceCommentOption(ws, e));
+                const commentOption = Blockly.ContextMenu.workspaceCommentOption(ws, e) as any;
+                commentOption.enabled = commentOption.enabled && editable;
+                options.push(commentOption);
             }
 
 
@@ -1515,7 +1518,7 @@ namespace pxt.blocks {
 
             const deleteOption = {
                 text: deleteCount == 1 ? msg.DELETE_BLOCK : msg.DELETE_ALL_BLOCKS,
-                enabled: deleteCount > 0,
+                enabled: deleteCount > 0 && editable,
                 callback: () => {
                     pxt.tickEvent("blocks.context.delete", undefined, { interactiveConsent: true });
                     if (deleteCount < 2) {
@@ -1533,7 +1536,7 @@ namespace pxt.blocks {
 
             const formatCodeOption = {
                 text: lf("Format Code"),
-                enabled: true,
+                enabled: editable,
                 callback: () => {
                     pxt.tickEvent("blocks.context.format", undefined, { interactiveConsent: true });
                     pxt.blocks.layout.flow(this, { useViewWidth: true });
@@ -1545,7 +1548,7 @@ namespace pxt.blocks {
                 // Option to collapse all top-level (enabled) blocks
                 const collapseAllOption = {
                     text: lf("Collapse Blocks"),
-                    enabled: topBlocks.length && topBlocks.find((b: Blockly.Block) => b.isEnabled() && !b.isCollapsed()),
+                    enabled: topBlocks.length && topBlocks.find((b: Blockly.Block) => b.isEnabled() && !b.isCollapsed()) && editable,
                     callback: () => {
                         pxt.tickEvent("blocks.context.collapse", undefined, { interactiveConsent: true });
                         pxt.blocks.layout.setCollapsedAll(this, true);
@@ -1556,7 +1559,7 @@ namespace pxt.blocks {
                 // Option to expand all collapsed blocks
                 const expandAllOption = {
                     text: lf("Expand Blocks"),
-                    enabled: topBlocks.length && topBlocks.find((b: Blockly.Block) => b.isEnabled() && b.isCollapsed()),
+                    enabled: topBlocks.length && topBlocks.find((b: Blockly.Block) => b.isEnabled() && b.isCollapsed()) && editable,
                     callback: () => {
                         pxt.tickEvent("blocks.context.expand", undefined, { interactiveConsent: true });
                         pxt.blocks.layout.setCollapsedAll(this, false);
