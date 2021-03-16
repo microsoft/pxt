@@ -193,7 +193,8 @@ export function forceUpdate() {
 }
 
 export function renderConfirmDialogAsync(options: core.PromptOptions): Promise<void> {
-    return pxt.Util.delay(10)
+    return Promise.resolve()
+        .delay(10)
         .then(() => {
             const wrapper = document.body.appendChild(document.createElement('div'));
             const newDialog = ReactDOM.render(React.createElement(CoreDialog, options), wrapper);

@@ -159,7 +159,7 @@ export class GithubProvider extends cloudsync.ProviderBase {
             "&response_type=token&client_id=gh-token&redirect_uri=" +
             encodeURIComponent(self)
         window.location.href = login;
-        return pxt.Util.delay(1000);
+        return Promise.delay(1000);
     }
 
     getUserInfoAsync(): Promise<pxt.editor.UserInfo> {

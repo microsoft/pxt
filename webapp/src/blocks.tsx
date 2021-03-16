@@ -189,8 +189,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     this.loadingXml = false;
                     this.loadingXmlPromise = null;
                     pxt.perf.measureEnd("domUpdate loadBlockly")
-                    // Do Not Remove: This is used by the skillmap
-                    if (this.parent.isTutorial()) pxt.tickEvent("tutorial.editorLoaded")
                 });
         }
     }
@@ -819,7 +817,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 .then(() => {
                     // Initialize the "Make a function" button
                     Blockly.Functions.editFunctionExternalHandler = (mutation: Element, cb: Blockly.Functions.ConfirmEditCallback) => {
-                        Util.delay(10)
+                        Promise.delay(10)
                             .then(() => {
                                 if (!this.functionsDialog) {
                                     const wrapper = document.body.appendChild(document.createElement('div'));
@@ -1019,13 +1017,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     openTypeScript() {
         pxt.tickEvent("blocks.showjavascript");
         this.parent.closeFlyout();
-        this.parent.openTypeScriptAsync();
+        this.parent.openTypeScriptAsync().done();
     }
 
     openPython() {
         pxt.tickEvent("blocks.showpython");
         this.parent.closeFlyout();
-        this.parent.openPythonAsync();
+        this.parent.openPythonAsync().done();
     }
 
     private cleanUpShadowBlocks() {

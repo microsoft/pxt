@@ -5,12 +5,10 @@ import { connect } from 'react-redux';
 
 import { ModalType, SkillMapState } from '../store/reducer';
 import { dispatchHideModal, dispatchRestartActivity, dispatchOpenActivity, dispatchResetUser, dispatchSetReloadHeaderState } from '../actions/dispatch';
-import { tickEvent, postAbuseReportAsync, postShareAsync } from "../lib/browserUtils";
-import { lookupActivityProgress } from "../lib/skillMapUtils";
-import { carryoverProjectCode } from "../lib/codeCarryover";
-import { getProjectAsync } from "../lib/workspaceProvider";
+import { tickEvent, postAbuseReportAsync } from "../lib/browserUtils";
 
 import { Modal, ModalAction } from './Modal';
+import { carryoverProjectCode } from "../lib/codeCarryover";
 
 interface AppModalProps {
     type: ModalType;
@@ -27,21 +25,7 @@ interface AppModalProps {
     dispatchSetReloadHeaderState: (state: "reload" | "reloading" | "active") => void;
 }
 
-interface AppModalState {
-    loading?: boolean;
-    data?: ShareModalData;
-}
-
-interface ShareModalData {
-    shortId: string;
-}
-
-export class AppModalImpl extends React.Component<AppModalProps, AppModalState> {
-    constructor (props: AppModalProps) {
-        super(props);
-        this.state = {};
-    }
-
+export class AppModalImpl extends React.Component<AppModalProps> {
     render() {
         const  { activity, type } = this.props;
 
@@ -58,15 +42,12 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                 return this.renderResetWarning();
             case "carryover":
                 return this.renderCodeCarryoverModal();
-            case "share":
-                return this.renderShareModal();
             default:
                 return <div/>
         }
     }
 
     protected handleOnClose = () => {
-        this.setState({ loading: false, data: undefined });
         this.props.dispatchHideModal();
     }
 
@@ -200,59 +181,6 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
             {carryoverModalText}
         </Modal>
     }
-
-    protected handleShareInputClick = (evt: any) => { evt.target.select() }
-    protected handleShareCopyClick = () => {
-        const input = document.querySelector(".share-input input") as HTMLInputElement;
-        if (input) {
-            input.select();
-            document.execCommand("copy");
-        }
-    }
-
-    renderShareModal() {
-        const { userState, pageSourceUrl, mapId, activity } = this.props;
-        const { loading, data } = this.state;
-        const resetModalTitle = data?.shortId ? lf("Share Project") : lf("Publish Project");
-
-        const actions = [];
-        if (!data?.shortId) {
-            actions.push({ label: lf("Cancel"), onClick: () => this.handleOnClose });
-            actions.push({ label: lf("Publish"), onClick: async () => {
-                tickEvent("skillmap.share");
-                this.setState({ loading: true });
-
-                const progress = lookupActivityProgress(userState!, pageSourceUrl!, mapId!, activity!.activityId);
-                const project = await getProjectAsync(progress?.headerId || "");
-                const jsonScript = await postShareAsync(project?.header, project?.text);
-
-                if (jsonScript?.shortid) this.setState({ loading: false, data: { shortId: jsonScript?.shortid} });
-            }});
-        }
-
-
-        return <Modal title={resetModalTitle} actions={actions} onClose={this.handleOnClose}>
-            {data?.shortId ?
-                <div>{ lf("Your project is ready! Use the address below to share your projects.") }</div> :
-                <div className="share-disclaimer">
-                    { lf("You need to publish your project to share it or embed it in other web pages. You acknowledge having consent to publish this project.") }
-                </div>
-            }
-            {loading && <div className="share-loader">
-                <div className="ui active inline loader" />
-                <span>{lf("Loading...")}</span>
-            </div>}
-            {data?.shortId && <div className="share-input">
-                <input type="text" readOnly={true} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
-                    value={`https://makecode.com/${data?.shortId}`} onClick={this.handleShareInputClick}></input>
-                <div className="share-copy" onClick={this.handleShareCopyClick} role="button">
-                    <i className="icon copy" />
-                    {lf("Copy")}
-                </div>
-            </div>}
-        </Modal>
-    }
-
 }
 
 function mapStateToProps(state: SkillMapState, ownProps: any) {

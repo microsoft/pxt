@@ -1,6 +1,6 @@
 {
     "compilerOptions": {
-        "target": "es2017",
+        "target": "es5",
         "noImplicitAny": true,
         "noImplicitReturns": true,
         "declaration": true,
@@ -10,7 +10,8 @@
         "types": [
             "chai",
             "mocha",
-            "node"
+            "node",
+            "bluebird"
         ],
         "sourceMap": false
     },

@@ -13,7 +13,6 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import * as child_process from 'child_process';
-import { promisify } from "util";
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
@@ -30,7 +29,7 @@ import * as gitfs from './gitfs';
 import * as crowdin from './crowdin';
 import * as youtube from './youtube';
 
-const rimraf: (f: string, opts: any, cb: (err: Error, res: any) => void) => void = require('rimraf');
+const rimraf: (f: string, opts: any, cb: (err: any, res: any) => void) => void = require('rimraf');
 
 pxt.docs.requireDOMSanitizer = () => require("sanitize-html");
 
@@ -808,7 +807,7 @@ function gitUploadAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
             let size = 0
             for (let r of missingReqs) size += r.size
             console.log("files missing: ", missingReqs.length, size, "bytes")
-            return U.promiseMapAll(missingReqs,
+            return Promise.map(missingReqs,
                 r => Cloud.privatePostAsync("upload/blob", r)
                     .then(() => {
                         console.log(r.filename + ": OK," + r.size + " " + r.hash)
@@ -1255,12 +1254,12 @@ function uploadCoreAsync(opts: UploadOptions) {
     pxt.log('');
 
     if (opts.localDir)
-        return U.promisePoolAsync(15, opts.fileList, uploadFileAsync)
+        return Promise.map(opts.fileList, uploadFileAsync, { concurrency: 15 })
             .then(() => {
                 pxt.log("Release files written to " + path.join(opts.builtPackaged, opts.localDir))
             })
 
-    return U.promisePoolAsync(15, opts.fileList, uploadFileAsync)
+    return Promise.map(opts.fileList, uploadFileAsync, { concurrency: 15 })
         .then(() =>
             opts.githubOnly
                 ? uploadToGitRepoAsync(opts, uplReqs)
@@ -1292,7 +1291,7 @@ function forEachBundledPkgAsync(f: (pkg: pxt.MainPackage, dirname: string) => Pr
         folders = folders.concat(projects);
     }
 
-    return U.promiseMapAllSeries(folders, (dirname) => {
+    return Promise.mapSeries(folders, (dirname) => {
         const host = new Host();
         const pkgPath = path.join(nodeutil.targetDir, dirname);
         pxt.debug(`building bundled package at ${pkgPath}`)
@@ -1405,8 +1404,8 @@ export function ghpPushAsync(builtPackaged: string, minify = false) {
 
 function maxMTimeAsync(dirs: string[]) {
     let max = 0
-    return U.promiseMapAll(dirs, dn => readDirAsync(dn)
-        .then(files => U.promiseMapAll(files, fn => statAsync(path.join(dn, fn))
+    return Promise.map(dirs, dn => readDirAsync(dn)
+        .then(files => Promise.map(files, fn => statAsync(path.join(dn, fn))
             .then(st => {
                 max = Math.max(st.mtime.getTime(), max)
             }))))
@@ -2374,7 +2373,7 @@ function buildAndWatchAsync(f: () => Promise<string[]>): Promise<void> {
             if (globalConfig.noAutoBuild) return
             pxt.debug('watching ' + dirs.join(', ') + '...');
             let loop = () => {
-                U.delay(1000)
+                Promise.delay(1000)
                     .then(() => maxMTimeAsync(dirs))
                     .then(num => {
                         if (num > currMtime) {
@@ -2579,11 +2578,11 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
 }
 
 
-const readFileAsync: any = promisify(fs.readFile)
-const writeFileAsync: any = promisify(fs.writeFile)
-const readDirAsync = promisify(fs.readdir)
-const statAsync = promisify(fs.stat)
-const rimrafAsync = promisify(rimraf);
+const readFileAsync: any = Promise.promisify(fs.readFile)
+const writeFileAsync: any = Promise.promisify(fs.writeFile)
+const readDirAsync = Promise.promisify(fs.readdir)
+const statAsync = Promise.promisify(fs.stat)
+const rimrafAsync = Promise.promisify(rimraf);
 
 let commonfiles: Map<string> = {}
 
@@ -3101,7 +3100,7 @@ export function initAsync(parsed: commandParser.ParsedCommand) {
     let configMap: Map<string> = JSON.parse(files[pxt.CONFIG_NAME])
     let initPromise = Promise.resolve();
     if (!parsed.flags["useDefaults"]) {
-        initPromise = U.promiseMapAllSeries(["name", "description", "license"], f =>
+        initPromise = Promise.mapSeries(["name", "description", "license"], f =>
             queryAsync(f, configMap[f])
                 .then(r => {
                     configMap[f] = r
@@ -3339,7 +3338,7 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
         lastCard = cards.pop();
     }
     return pxt.discourse.topicsByTag(discourseRoot, tag)
-        .then(topics => U.promiseMapAllSeries(topics, topic => {
+        .then(topics => Promise.mapSeries(topics, topic => {
             pxt.log(`  ${topic.title}`)
             return pxt.discourse.extractSharedIdFromPostUrl(topic.url)
                 .then(id => {
@@ -3840,7 +3839,7 @@ function testDirAsync(parsed: commandParser.ParsedCommand) {
     let currBase = ""
     let errors: string[] = []
 
-    return U.promiseMapAllSeries(tests, (ti) => {
+    return Promise.mapSeries(tests, (ti) => {
         let fn = path.basename(ti.filename)
         console.log(`--- ${fn}`)
         let hexPath = outdir + fn.replace(/\.ts$/, "") + ".hex"
@@ -3957,7 +3956,7 @@ function testPkgConflictsAsync() {
     let trg = nodeutil.getPxtTarget();
     pxt.setAppTarget(trg);
 
-    return U.promiseMapAllSeries(testCases, (tc) => {
+    return Promise.mapSeries(testCases, (tc) => {
         let testFailed = (reason: string) => {
             failures.push({ testCase: tc.id, reason });
         };
@@ -4003,7 +4002,7 @@ function testPkgConflictsAsync() {
 }
 
 function decompileAsync(parsed: commandParser.ParsedCommand) {
-    return U.promiseMapAllSeries(parsed.args, f => {
+    return Promise.mapSeries(parsed.args, f => {
         const outFile = replaceFileExtension(f, ".blocks")
         return decompileAsyncWorker(f, parsed.flags["dep"] as string)
             .then(result => {
@@ -4072,7 +4071,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictSyntaxC
         })
         infos.forEach(info => pxt.log(`${f}:(${info.line},${info.column}): ${info.category} ${info.messageText}`));
     }
-    return U.promiseMapAllSeries(snippets, (snippet: CodeSnippet) => {
+    return Promise.map(snippets, (snippet: CodeSnippet) => {
         const name = snippet.name;
         const fn = snippet.file || snippet.name;
         pxt.log(`  ${fn} (${snippet.type})`);
@@ -4278,7 +4277,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictSyntaxC
                     }
                 ])
             }))
-    }).then((a: any) => {
+    }, { concurrency: 1 }).then((a: any) => {
         pxt.log(`${successes.length}/${successes.length + failures.length} snippets compiled to blocks and python (and back), ${failures.length} failed`)
         if (ignoreCount > 0) {
             pxt.log(`Skipped ${ignoreCount} snippets`)
@@ -5757,7 +5756,7 @@ function internalCacheUsedBlocksAsync(): Promise<Map<pxt.BuiltTutorialInfo>> {
     }
 
     const namespaceRegex = /^\s*namespace\s+[^\s]+\s*{([\S\s]*)}\s*$/im;
-    return U.promiseMapAll(Object.keys(tutorialInfo), (hash: string) => {
+    return Promise.map(Object.keys(tutorialInfo), (hash: string) => {
         const info = tutorialInfo[hash];
         const cache: Map<string> = {};
         let isPy = info.language === "python"
@@ -6112,7 +6111,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
                     if (e.statusCode == 429 && retry++ < 6) {
                         delay *= 2;
                         pxt.log(`retrying in ${delay / 1000} secs...`)
-                        return U.delay(delay)
+                        return Promise.delay(delay)
                             .then(() => workAsync());
                     }
                     reportError({ repo: fullname, title: "build error", body: e.message })
@@ -6136,7 +6135,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
                 fullnames = fullnames.filter(fn => filterRx.test(fn))
             reportLog(`found ${fullnames.length} approved extensions`);
             reportLog(nodeutil.stringify(fullnames));
-            return U.promiseMapAllSeries(fullnames, nextAsync);
+            return Promise.mapSeries(fullnames, nextAsync);
         })
         .then(() => {
             if (errorCount > 0) {
@@ -6181,7 +6180,7 @@ function blockTestsAsync(parsed?: commandParser.ParsedCommand) {
 
     function getBlocksFilesAsync(libsDirectory: string): Promise<BlockTestCase[]> {
         return readDirAsync(libsDirectory)
-            .then(dirs => U.promiseMapAll(dirs, dir => {
+            .then(dirs => Promise.map(dirs, dir => {
                 const dirPath = path.resolve(libsDirectory, dir, "blocks-test");
                 const configPath = path.resolve(libsDirectory, dir, "pxt.json");
                 let packageName: string;
@@ -6192,7 +6191,7 @@ function blockTestsAsync(parsed?: commandParser.ParsedCommand) {
                         .then((configText: string) => {
                             packageName = (JSON.parse(configText) as pxt.PackageConfig).name;
                             return readDirAsync(dirPath)
-                                .then(files => U.promiseMapAll(files.filter(f => U.endsWith(f, ".blocks") && f != "main.blocks"), fn =>
+                                .then(files => Promise.map(files.filter(f => U.endsWith(f, ".blocks") && f != "main.blocks"), fn =>
                                     readFileAsync(path.join(dirPath, fn), "utf8")
                                         .then((contents: string) => testFiles.push({ testName: fn, contents }))))
                         })
@@ -7073,5 +7072,5 @@ if (require.main === module) {
             process.exit(1)
         }
     }
-    mainCli(targetdir);
+    mainCli(targetdir).done();
 }

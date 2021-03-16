@@ -4,7 +4,7 @@ import * as React from "react";
 import { connect } from 'react-redux';
 import { dispatchSaveAndCloseActivity, dispatchShowResetUserModal } from '../actions/dispatch';
 import { SkillMapState } from '../store/reducer';
-import { isLocal, resolvePath, tickEvent } from "../lib/browserUtils";
+import { resolvePath, tickEvent } from "../lib/browserUtils";
 
 import { Dropdown, DropdownItem } from "./Dropdown";
 import { isActivityCompleted } from "../lib/skillMapUtils";
@@ -53,14 +53,13 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
         const { activityOpen, completedHeaderId } = this.props;
         const logoAlt = "MakeCode Logo";
         const organizationLogoAlt = "Microsoft Logo";
-        const logoSrc = (isLocal() || !pxt.appTarget?.appTheme?.logoUrl ) ? resolvePath("assets/logo.svg") : pxt.appTarget?.appTheme?.logo;
 
         const items = this.getSettingItems();
 
         return <div className="header">
             <div className="header-left">
                 <div className="header-logo">
-                    <img src={logoSrc} alt={logoAlt} />
+                    <img src={resolvePath("assets/logo.svg")} alt={logoAlt} />
                 </div>
                 { activityOpen ?
                     <HeaderBarButton icon="icon arrow left" label={lf("Back")} title={lf("Return to activity selection")} onClick={this.onBackClicked}/> :

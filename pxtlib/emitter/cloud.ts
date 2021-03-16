@@ -12,7 +12,7 @@ namespace pxt.Cloud {
     function offlineError(url: string) {
         let e: any = new Error(Util.lf("Cannot access {0} while offline", url));
         e.isOffline = true;
-        return U.delay(1000).then(() => Promise.reject(e))
+        return Promise.delay(1000).then(() => Promise.reject(e))
     }
 
     export function hasAccessToken() {
@@ -187,13 +187,13 @@ namespace pxt.Cloud {
             return localRequestAsync(url).then(resp => {
                 if (resp.statusCode == 404)
                     return privateRequestAsync({ url, method: "GET" })
-                        .then(resp => { return { md: resp.text, etag: <string>resp.headers["etag"] }; });
+                        .then(resp => { return { md: resp.text, etag: resp.headers["etag"] }; });
                 else return { md: resp.text, etag: undefined };
             });
         else {
             const headers: pxt.Map<string> = etag && !useCdnApi() ? { "If-None-Match": etag } : undefined;
             return apiRequestWithCdnAsync({ url, method: "GET", headers })
-                .then(resp => { return { md: resp.text, etag: <string>resp.headers["etag"] }; });
+                .then(resp => { return { md: resp.text, etag: resp.headers["etag"] }; });
         }
     }
 

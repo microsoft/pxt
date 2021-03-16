@@ -13,8 +13,7 @@ namespace pxt.editor {
 
             const match = pxt.parseAssetTSReference(text);
             if (match) {
-                const { type, name: matchedName } = match;
-                const name = matchedName.trim();
+                const { type, name } = match;
                 const project = pxt.react.getTilemapProject();
                 this.isAsset = true;
                 const asset = project.lookupAssetByName(pxt.AssetType.Image, name);

@@ -163,8 +163,7 @@ class BlocklyCompilerTestHost implements pxt.Host {
     }
 }
 
-// @ts-ignore
-function fail(msg: string): never {
+function fail(msg: string) {
     chai.assert(false, msg);
 }
 

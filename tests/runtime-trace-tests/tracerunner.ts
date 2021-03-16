@@ -19,6 +19,7 @@ import { promisify } from 'util';
 
 // setup
 function initGlobals() {
+    Promise = require("bluebird");
     let g = global as any
     g.pxt = pxt;
     g.ts = ts;
@@ -125,9 +126,9 @@ async function testTsOrPy(tsOrPyFile: string): Promise<void> {
         let fnName = isPy ? "py2ts" : "ts2py"
         let errFile = inFile + `.${fnName}_error`;
         return convert(inFile)
-            .catch(e => {
-                writeFileStringSync(errFile, JSON.stringify(e))
-                return `${fnName} failed to convert '${inFile}'. Error saved at:\n${errFile}\nError is:\n${e}\n`
+            .error(r => {
+                writeFileStringSync(errFile, JSON.stringify(r))
+                return `${fnName} failed to convert '${inFile}'. Error saved at:\n${errFile}\nError is:\n${r}\n`
             })
             .then(async outFile => {
                 let outTrace = await runConverted(outFile)
@@ -159,7 +160,7 @@ async function testTsOrPy(tsOrPyFile: string): Promise<void> {
                         `Baseline:\n${baseline}\nIncorrect trace:\n${outTrace}\n` +
                         `Diff traces with:\ncode --diff ${baselineFile} ${errFile}\n`))
                 }
-                return Promise.resolve();
+                return outTrace
             })
     }
 }

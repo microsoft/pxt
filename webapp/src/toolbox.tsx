@@ -895,7 +895,7 @@ export class ToolboxSearch extends data.Component<ToolboxSearchProps, ToolboxSea
 
         // Execute search
         parent.searchAsync(searchTerm)
-            .then((blocks) => {
+            .done((blocks) => {
                 if (blocks.length == 0) {
                     searchAccessibilityLabel = lf("No search results...");
                 } else {

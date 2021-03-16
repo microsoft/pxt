@@ -249,7 +249,7 @@ namespace pxt.github {
                             }
                             current.files[pxt.CONFIG_NAME] = pkg
                             const cfg: pxt.PackageConfig = JSON.parse(pkg)
-                            return U.promiseMapAll(pxt.allPkgFiles(cfg).slice(1),
+                            return Promise.map(pxt.allPkgFiles(cfg).slice(1),
                                 fn => downloadTextAsync(repopath, sha, fn)
                                     .then(text => {
                                         current.files[fn] = text
@@ -487,7 +487,7 @@ namespace pxt.github {
         const endTm = Date.now() + 5 * 60 * 1000
         let refs: RefsResult = null
         while (!refs && Date.now() < endTm) {
-            await U.delay(1000)
+            await Promise.delay(1000)
             try {
                 refs = await listRefsExtAsync(repoInfo.slug, "heads");
             } catch (err) {
@@ -533,10 +533,8 @@ namespace pxt.github {
             }
             return { refs: r, head }
         }, err => {
-            if (err.statusCode == 404)
-                return { refs: {} } as any
-            else
-                return Promise.reject(err)
+            if (err.statusCode == 404) return { refs: {} }
+            else return Promise.reject(err)
         })
     }
 

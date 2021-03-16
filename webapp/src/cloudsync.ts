@@ -210,7 +210,8 @@ export class ProviderBase {
 
             pxt.storage.setLocal(this.name + AUTO_LOGIN, "yes")
             this.loginAsync(undefined, true)
-                .then((resp) => resp && this.setNewToken(resp.accessToken, resp.rememberMe, resp.expiresIn));
+                .then((resp) => resp && this.setNewToken(resp.accessToken, resp.rememberMe, resp.expiresIn))
+                .done();
         } else {
             setProvider(this as any)
         }
@@ -498,7 +499,7 @@ function updateNameAsync(provider: IdentityProvider) {
 
 export function refreshToken() {
     if (currentProvider)
-        currentProvider.loginAsync(undefined, true);
+        currentProvider.loginAsync(undefined, true).done();
 }
 
 export function syncAsync(): Promise<void> {

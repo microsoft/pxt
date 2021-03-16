@@ -148,7 +148,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
 
         core.showLoading("changeheader", lf("loading..."));
         this.props.parent.loadHeaderAsync(header)
-            .then(() => {
+            .done(() => {
                 core.hideLoading("changeheader");
             })
     }

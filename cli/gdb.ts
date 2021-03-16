@@ -5,29 +5,27 @@ import * as fs from 'fs';
 import * as buildengine from './buildengine';
 import * as commandParser from './commandparser';
 
-import { promisify } from "util";
-
 import U = pxt.Util;
 
 const maxDMesgSize = 4096
 
-const openAsync = promisify(fs.open)
-const closeAsync = promisify(fs.close) as (fd: number) => Promise<void>
-const writeAsync = promisify(fs.write)
+const openAsync = Promise.promisify(fs.open)
+const closeAsync = Promise.promisify(fs.close) as (fd: number) => Promise<void>
+const writeAsync = Promise.promisify(fs.write)
 
 let gdbServer: pxt.GDBServer
 let bmpMode = false
 
-const cpExecAsync = promisify(child_process.exec)
+const execAsync: (cmd: string, options?: { cwd?: string }) => Promise<Buffer | string> = Promise.promisify(child_process.exec)
 
 function getBMPSerialPortsAsync(): Promise<string[]> {
     if (process.env["PXT_IGNORE_BMP"])
         return Promise.resolve([])
     if (process.platform == "win32") {
-        return cpExecAsync("wmic PATH Win32_SerialPort get DeviceID, PNPDeviceID")
-            .then(({ stdout, stderr }) => {
+        return execAsync("wmic PATH Win32_SerialPort get DeviceID, PNPDeviceID")
+            .then((buf: Buffer) => {
                 let res: string[] = []
-                stdout.split(/\n/).forEach(ln => {
+                buf.toString("utf8").split(/\n/).forEach(ln => {
                     let m = /^(COM\d+)\s+USB\\VID_(\w+)&PID_(\w+)&MI_(\w+)/.exec(ln)
                     if (m) {
                         const comp = m[1]
@@ -43,11 +41,11 @@ function getBMPSerialPortsAsync(): Promise<string[]> {
             })
     }
     else if (process.platform == "darwin") {
-        return cpExecAsync("ioreg -p IOUSB -l -w 0")
-            .then(({ stdout, stderr }) => {
+        return execAsync("ioreg -p IOUSB -l -w 0")
+            .then((buf: Buffer) => {
                 let res: string[] = []
                 let inBMP = false
-                stdout.split(/\n/).forEach(ln => {
+                buf.toString("utf8").split(/\n/).forEach(ln => {
                     if (ln.indexOf("+-o Black Magic Probe") >= 0)
                         inBMP = true
                     if (!inBMP)

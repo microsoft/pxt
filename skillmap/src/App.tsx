@@ -3,6 +3,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 
+import * as Promise from "bluebird";
 import store from "./store/store";
 
 import {
@@ -16,7 +17,6 @@ import {
     dispatchSetPageSourceUrl,
     dispatchSetPageAlternateUrls,
     dispatchSetPageBackgroundImageUrl,
-    dispatchSetPageBannerImageUrl,
     dispatchSetPageTheme,
 } from './actions/dispatch';
 import { PageSourceStatus, SkillMapState } from './store/reducer';
@@ -39,6 +39,9 @@ import './App.css';
 // TODO: this file needs to read colors from the target
 import './arcade.css';
 /* tslint:enable:no-import-side-effect */
+
+(window as any).Promise = Promise;
+
 interface AppProps {
     skillMaps: { [key: string]: SkillMap };
     activityOpen: boolean;
@@ -51,7 +54,6 @@ interface AppProps {
     dispatchSetPageDescription: (description: string) => void;
     dispatchSetPageInfoUrl: (infoUrl: string) => void;
     dispatchSetPageBackgroundImageUrl: (backgroundImageUrl: string) => void;
-    dispatchSetPageBannerImageUrl: (bannerImageUrl: string) => void;
     dispatchSetUser: (user: UserState) => void;
     dispatchSetPageSourceUrl: (url: string, status: PageSourceStatus) => void;
     dispatchSetPageAlternateUrls: (urls: string[]) => void;
@@ -156,14 +158,12 @@ class AppImpl extends React.Component<AppProps, AppState> {
                 }
 
                 if (metadata) {
-                    const { title, description, infoUrl, backgroundImageUrl,
-                        bannerImageUrl, theme, alternateSources } = metadata;
+                    const { title, description, infoUrl, backgroundImageUrl, theme, alternateSources } = metadata;
                     setPageTitle(title);
                     this.props.dispatchSetPageTitle(title);
                     if (description) this.props.dispatchSetPageDescription(description);
                     if (infoUrl) this.props.dispatchSetPageInfoUrl(infoUrl);
                     if (backgroundImageUrl) this.props.dispatchSetPageBackgroundImageUrl(backgroundImageUrl);
-                    if (bannerImageUrl) this.props.dispatchSetPageBannerImageUrl(bannerImageUrl);
                     if (alternateSources) this.props.dispatchSetPageAlternateUrls(alternateSources);
                     if (theme) this.props.dispatchSetPageTheme(theme);
                 }
@@ -333,7 +333,6 @@ const mapDispatchToProps = {
     dispatchSetPageSourceUrl,
     dispatchSetPageAlternateUrls,
     dispatchSetPageBackgroundImageUrl,
-    dispatchSetPageBannerImageUrl,
     dispatchSetPageTheme
 };
 

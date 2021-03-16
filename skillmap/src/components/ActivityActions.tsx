@@ -1,7 +1,7 @@
 import * as React from "react";
 import { connect } from 'react-redux';
 
-import { dispatchOpenActivity, dispatchShowRestartActivityWarning, dispatchShowShareModal } from '../actions/dispatch';
+import { dispatchOpenActivity, dispatchShowRestartActivityWarning } from '../actions/dispatch';
 
 import { ActivityStatus } from '../lib/skillMapUtils';
 import { tickEvent } from '../lib/browserUtils';
@@ -15,7 +15,6 @@ interface OwnProps {
 interface DispatchProps {
     dispatchOpenActivity: (mapId: string, activityId: string) => void;
     dispatchShowRestartActivityWarning: (mapId: string, activityId: string) => void;
-    dispatchShowShareModal: (mapId: string, activityId: string) => void;
 }
 
 type ActivityActionsProps = OwnProps & DispatchProps;
@@ -61,14 +60,9 @@ export class ActivityActionsImpl extends React.Component<ActivityActionsProps> {
         dispatchShowRestartActivityWarning(mapId, activityId);
     }
 
-    protected handleShareButtonClick = () => {
-        const { mapId, activityId, dispatchShowShareModal } = this.props;
-        dispatchShowShareModal(mapId, activityId);
-    }
-
     render() {
         const { status } = this.props;
-        const activityStarted = (status && status !== "notstarted" && status !== "locked");
+        const showRestart = (status && status !== "notstarted" && status !== "locked");
 
         if (status === "locked") return <div />
 
@@ -76,11 +70,8 @@ export class ActivityActionsImpl extends React.Component<ActivityActionsProps> {
             <div className="action-button" role="button" onClick={this.handleActionButtonClick}>
                 {this.getActivityActionText()}
             </div>
-            {activityStarted && <div className="action-button" role="button" onClick={this.handleRestartButtonClick}>
-                {lf("Restart")}
-            </div>}
-            {activityStarted && <div className="action-button" role="button" onClick={this.handleShareButtonClick}>
-                {lf("Share")}
+            {showRestart && <div className="action-button" role="button" onClick={this.handleRestartButtonClick}>
+                {lf("RESTART")}
             </div>}
         </div>
     }
@@ -88,8 +79,7 @@ export class ActivityActionsImpl extends React.Component<ActivityActionsProps> {
 
 const mapDispatchToProps = {
     dispatchOpenActivity,
-    dispatchShowRestartActivityWarning,
-    dispatchShowShareModal
+    dispatchShowRestartActivityWarning
 }
 
 export const ActivityActions = connect<{}, DispatchProps, OwnProps>(null, mapDispatchToProps)(ActivityActionsImpl);

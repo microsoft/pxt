@@ -9,6 +9,8 @@ import * as crypto from 'crypto';
 import * as path from 'path';
 import * as os from 'os';
 
+Promise = require("bluebird");
+
 import Util = pxt.Util;
 
 export interface SpawnOptions {
@@ -36,7 +38,7 @@ export function addCliFinalizer(f: () => Promise<void>) {
 export function runCliFinalizersAsync() {
     let fins = cliFinalizers
     cliFinalizers = []
-    return pxt.Util.promiseMapAllSeries(fins, f => f())
+    return Promise.mapSeries(fins, f => f())
         .then(() => { })
 }
 
@@ -258,14 +260,10 @@ function sha256(hashData: string): string {
 
 
 function init() {
-    require("promise.prototype.finally").shim();
-    // Make unhandled async rejections throw
-    process.on(
-        'unhandledRejection',
-        e => {
-            throw e
-        }
-    );
+    // no, please, I want to handle my errors myself
+    let async = (<any>Promise)._async
+    async.fatalError = (e: any) => async.throwLater(e);
+
     Util.isNodeJS = true;
     Util.httpRequestCoreAsync = nodeHttpRequestAsync;
     Util.sha256 = sha256;

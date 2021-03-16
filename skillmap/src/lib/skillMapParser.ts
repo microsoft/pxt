@@ -322,7 +322,6 @@ function inflateMetadata(section: MarkdownSection): PageMetadata {
         description: section.attributes["description"],
         infoUrl: section.attributes["infourl"],
         backgroundImageUrl: section.attributes["backgroundurl"],
-        bannerImageUrl: section.attributes["bannerurl"],
         alternateSources: parseList(section.attributes["alternatesources"]),
         theme: {
             backgroundColor: tertiary || "var(--body-background-color)",

@@ -70,7 +70,7 @@ export class ExtensionManager {
                 break;
             case "extwritecode":
                 const handleWriteCode = () => handleWriteCodeRequestAsync(this.extIdToName[request.extId], resp, request.body)
-                    .then(() => this.sendResponse(resp));
+                    .done(() => this.sendResponse(resp));
                 const missingDepdencies = resolveMissingDependencies(request.body as e.WriteExtensionFiles);
                 if (missingDepdencies?.length)
                     this.operation(request.extId, resp, handleWriteCode);

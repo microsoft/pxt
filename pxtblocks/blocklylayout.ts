@@ -339,8 +339,7 @@ namespace pxt.blocks.layout {
                             return dataUri;
                         }).catch(e => {
                             // ignore load error
-                            pxt.debug(`svg render: failed to load ${href}`);
-                            return "";
+                            pxt.debug(`svg render: failed to load ${href}`)
                         }))
                     .then(href => { image.setAttributeNS(XLINK_NAMESPACE, "href", href); })
             });

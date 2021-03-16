@@ -270,7 +270,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
     private handleBranchClick(e: React.MouseEvent<HTMLElement>) {
         pxt.tickEvent("github.branch");
         e.stopPropagation();
-        this.showSwitchBranchDialogAsync();
+        this.showSwitchBranchDialogAsync().done();
     }
 
     private goBack() {
@@ -280,7 +280,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
 
     private handlePullClick(e: React.MouseEvent<HTMLElement>) {
         pxt.tickEvent("github.pull");
-        this.pullAsync();
+        this.pullAsync().done();
     }
 
     async forkAsync(fromError: boolean) {
@@ -357,7 +357,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             // - our oauth app doesnot have write access to the organization, we should tell the user to grant access
             //   or use a token
             core.hideDialog()
-            this.forkAsync(true);
+            this.forkAsync(true).done();
         }
         else if (e.isMergeConflictMarkerError) {
             pxt.tickEvent("github.commitwithconflicts");
@@ -1115,11 +1115,12 @@ ${content}
         const content = pxt.diff.resolveMergeConflictMarker(f.file.content, startMarkerLine, local, remote);
         f.file.setContentAsync(content)
             .then(() => this.props.parent.clearCacheDiff(this.props.cacheKey, f)) // clear cached diff
-            .then(() => this.props.parent.forceUpdate());
+            .done(() => this.props.parent.forceUpdate());
     }
 
     revertAllFiles() {
-        this.props.parent.revertAllFilesAsync();
+        this.props.parent.revertAllFilesAsync()
+            .done();
     }
 
     renderCore() {
@@ -1456,7 +1457,7 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
     private handleForkClick(e: React.MouseEvent<HTMLElement>) {
         pxt.tickEvent("github.extensionzone.fork", undefined, { interactiveConsent: true });
         e.stopPropagation();
-        this.props.parent.forkAsync(false);
+        this.props.parent.forkAsync(false).done();
     }
 
     private handleSaveClick(e: React.MouseEvent<HTMLElement>) {

@@ -125,7 +125,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         title: node?.displayName || state.title,
         subtitle,
         description: isActivity ? (node as MapActivity).description : state.description,
-        imageUrl: node ? node?.imageUrl : state.bannerImageUrl,
+        imageUrl: node?.imageUrl,
         node,
         status,
         details

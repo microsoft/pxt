@@ -247,25 +247,22 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
     protected handleAssetNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         let errorMessage = null;
 
-        const trimmedName = event.target.value.trim(); // validate using the trimmed name
-        const name = event.target.value;               // but don't trim the state otherwise they won't be able to type spaces
-
-        if (!pxt.validateAssetName(trimmedName)) {
+        if (!pxt.validateAssetName(event.target.value)) {
             errorMessage = lf("Names may only contain letters, numbers, '-', '_', and space");
         }
-        else if (isNameTaken(trimmedName) && trimmedName !== this.props.assetName) {
+        else if (isNameTaken(event.target.value) && event.target.value !== this.props.assetName) {
             errorMessage = lf("This name is already used elsewhere in your project");
         }
 
-        this.setState({ assetName: name, assetNameMessage: errorMessage });
+        this.setState({ assetName: event.target.value, assetNameMessage: errorMessage });
     }
 
     protected handleAssetNameBlur = () => {
         const { dispatchChangeAssetName, assetName } = this.props;
 
-        let newName = this.state.assetName.trim();
+        let newName = this.state.assetName;
 
-        if (newName !== assetName && pxt.validateAssetName(newName) && !isNameTaken(newName)) {
+        if (this.state.assetName !== assetName && pxt.validateAssetName(this.state.assetName) && !isNameTaken(this.state.assetName)) {
             dispatchChangeAssetName(newName);
         }
         this.setState({ assetName: null, assetNameMessage: null });

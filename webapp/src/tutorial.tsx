@@ -376,7 +376,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
     finishTutorial() {
         this.closeLightbox();
         this.removeHintOnClick();
-        this.props.parent.completeTutorialAsync();
+        this.props.parent.completeTutorialAsync().done();
     }
 
     private closeLightboxOnEscape = (e: KeyboardEvent) => {
@@ -428,7 +428,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
             tutorialCard.style.animationDuration = '500ms';
             this.lastStep = step;
             pxsim.U.addClass(tutorialCard, animationClasses);
-            pxt.Util.delay(500)
+            Promise.resolve().delay(500)
                 .then(() => pxsim.U.removeClass(tutorialCard, animationClasses));
         }
         if (this.prevStep != step) {

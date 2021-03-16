@@ -3,7 +3,7 @@ import { guidGen } from '../lib/browserUtils';
 import { getCompletedTags, lookupActivityProgress, isMapCompleted,
     isRewardNode, applyUserUpgrades, applyUserMigrations } from '../lib/skillMapUtils';
 
-export type ModalType = "restart-warning" | "completion" | "report-abuse" | "reset" | "carryover" | "share";
+export type ModalType = "restart-warning" | "completion" | "report-abuse" | "reset" | "carryover";
 export type PageSourceStatus = "approved" | "banned" | "unknown";
 
 // State for the entire page
@@ -12,7 +12,6 @@ export interface SkillMapState {
     description: string;
     infoUrl?: string;
     backgroundImageUrl?: string;
-    bannerImageUrl?: string;
     user: UserState;
     pageSourceUrl: string;
     pageSourceStatus: PageSourceStatus;
@@ -89,7 +88,6 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                 description: initialState.description,
                 infoUrl: initialState.infoUrl,
                 backgroundImageUrl: undefined,
-                bannerImageUrl: undefined,
                 alternateSourceUrls: undefined,
                 theme: {
                     ...initialState.theme
@@ -272,11 +270,6 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                 ...state,
                 backgroundImageUrl: action.backgroundImageUrl
             }
-        case actions.SET_PAGE_BANNER_IMAGE_URL:
-            return {
-                ...state,
-                bannerImageUrl: action.bannerImageUrl
-            }
         case actions.SET_PAGE_THEME:
             return {
                 ...state,
@@ -317,11 +310,6 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
             return {
                 ...state,
                 modal: { type: "reset" }
-            };
-        case actions.SHOW_SHARE_MODAL:
-            return {
-                ...state,
-                modal: { type: "share", currentMapId: action.mapId, currentActivityId: action.activityId }
             };
         case actions.HIDE_MODAL:
             return {

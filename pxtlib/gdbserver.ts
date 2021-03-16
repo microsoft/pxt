@@ -38,7 +38,7 @@ namespace pxt {
                     let resp = this.decodeResp(this.dataBuf.slice(1))
                     if (resp != null) {
                         if (ch == '$') {
-                            this.io.sendPacketAsync(this.buildCmd("+"));
+                            this.io.sendPacketAsync(this.buildCmd("+")).done()
                             if (this.onResponse)
                                 this.onResponse(resp)
                             else {
@@ -119,7 +119,7 @@ namespace pxt {
 
         error(msg: string) {
             this.io.error(msg)
-            this.io.disconnectAsync()
+            this.io.disconnectAsync().done()
         }
 
         sendCmdAsync(cmd: string, respTest?: (resp: string) => boolean) {
@@ -136,7 +136,7 @@ namespace pxt {
                                 this.error(`Invalid GDB command response: '${cmd}' -> '${v}'`)
                             resolve(v)
                         }
-                        this.io.sendPacketAsync(cmd2);
+                        this.io.sendPacketAsync(cmd2).done()
                     }))
         }
 
@@ -162,7 +162,7 @@ namespace pxt {
                             resolve(r)
                         }
                     }
-                    this.io.sendPacketAsync(cmd2);
+                    this.io.sendPacketAsync(cmd2).done()
                 }))
         }
 
@@ -214,7 +214,7 @@ namespace pxt {
         }
 
         initAsync() {
-            return U.delay(1000)
+            return Promise.delay(1000)
                 .then(() => this.sendCmdAsync("!")) // extended mode
                 .then(() => this.sendCmdAsync("qSupported"))
                 .then(res => {

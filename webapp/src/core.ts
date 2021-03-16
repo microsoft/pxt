@@ -249,9 +249,9 @@ export function confirmDelete(what: string, cb: () => Promise<void>, multiDelete
         agreeIcon: "trash",
     }).then(res => {
         if (res) {
-            cb()
+            cb().done()
         }
-    })
+    }).done()
 }
 
 export function promptAsync(options: PromptOptions): Promise<string> {

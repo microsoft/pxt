@@ -505,17 +505,17 @@ namespace pxsim {
                 && this.loanedSimulator.querySelector("iframe");
         }
 
-        private frameCleanupTimeout: any = undefined;
+        private frameCleanupTimeout = 0;
         private cancelFrameCleanup() {
             if (this.frameCleanupTimeout) {
                 clearTimeout(this.frameCleanupTimeout);
-                this.frameCleanupTimeout = undefined;
+                this.frameCleanupTimeout = 0;
             }
         }
         private scheduleFrameCleanup() {
             this.cancelFrameCleanup();
             this.frameCleanupTimeout = setTimeout(() => {
-                this.frameCleanupTimeout = undefined;
+                this.frameCleanupTimeout = 0;
                 this.cleanupFrames();
             }, 5000);
         }

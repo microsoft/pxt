@@ -19,6 +19,7 @@ module.exports = function(config) {
 
     // list of files / patterns to load in the browser
     files: [
+      'node_modules/pxt-core/built/web/bluebird.min.js',
       'node_modules/pxt-core/built/web/jquery.js',
       'node_modules/pxt-core/built/web/typescript.js',
       'node_modules/pxt-core/webapp/public/blockly/**/*.js',
