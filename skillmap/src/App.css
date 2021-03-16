@@ -109,6 +109,10 @@ code {
     height: 100%;
 }
 
+.header-org-logo .header-org-logo-small {
+    display: none;
+}
+
 .header i.icon {
     line-height: 2rem;
     cursor: pointer;
@@ -133,7 +137,7 @@ code {
     user-select: none;
 }
 
-.header-button span {
+.header-button .header-button-label {
     line-height: 2rem;
 }
 
@@ -242,5 +246,24 @@ code {
     .usabilla_live_button_container {
         top: 10rem !important;
         bottom: unset !important;
+    }
+}
+
+
+/*******************************/
+/*****     MOBILE VIEW     *****/
+/*******************************/
+
+@media only screen and (max-width: 767px) {
+    .header-button .header-button-label {
+        display: none;
+    }
+
+    .header-org-logo .header-org-logo-large {
+        display: none;
+    }
+
+    .header-org-logo .header-org-logo-small {
+        display: block;
     }
 }
