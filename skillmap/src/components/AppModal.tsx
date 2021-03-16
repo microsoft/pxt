@@ -171,9 +171,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
     renderCodeCarryoverModal() {
         const  { skillMap, activity, pageSourceUrl, userState, dispatchHideModal, dispatchSetReloadHeaderState } = this.props;
         const carryoverModalTitle = lf("Keep code from previous activity?");
-        const carryoverModalText = lf("Do you want to start with your code from {0} \
-            or start fresh with starter code? Your images, tilemaps, \
-            tiles, and animations will stick around either way.");
+        const carryoverModalText = lf("Do you want to start with your code from {0} or start fresh with starter code? Your images, tilemaps, tiles, and animations will stick around either way.");
         const carryoverModalTextSegments = carryoverModalText.split("{0}");
 
         const previousState = lookupPreviousCompletedActivityState(userState!, pageSourceUrl!, skillMap!, activity!.activityId);
