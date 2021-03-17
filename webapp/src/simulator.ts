@@ -71,7 +71,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
             const animationClasses = `${animation} visible transition animating`;
             pxsim.U.addClass(el, animationClasses);
 
-            Promise.resolve().delay(500).then(() => {
+            pxt.Util.delay(500).then(() => {
                 pxsim.U.removeClass(el, animationClasses);
                 el.style.animationDuration = '';
 
@@ -103,7 +103,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
                 el.style.animationDuration = '500ms';
                 const animationClasses = `${animation} visible transition animating`;
                 pxsim.U.addClass(el, animationClasses);
-                Promise.resolve().delay(500).then(() => {
+                pxt.Util.delay(500).then(() => {
                     pxsim.U.removeClass(el, `animating`);
                     el.style.animationDuration = '';
 
@@ -223,8 +223,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
                                 if (hasTrustedLink && selection == 1) {
                                     window.open(msg.linkButtonHref, '_blank');
                                 }
-                            })
-                            .done();
+                            });
                     }
                     break;
             }
@@ -243,7 +242,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
 }
 
 function postSimEditorEvent(subtype: string, exception?: string) {
-    if (pxt.appTarget.appTheme.allowParentController && pxt.BrowserUtils.isIFrame()) {
+    if (pxt.editor.shouldPostHostMessages()) {
         pxt.editor.postHostMessageAsync({
             type: "pxthost",
             action: "simevent",

@@ -35,6 +35,10 @@ let headerQ = new U.PromiseQueue();
 let impl: WorkspaceProvider;
 let implType: string;
 
+export function getWorkspaceType(): string {
+    return implType
+}
+
 function lookup(id: string) {
     return allScripts.find(x => x.header.id == id || x.header.path == id);
 }
@@ -87,7 +91,7 @@ export function setupWorkspace(id: string) {
 }
 
 async function switchToMemoryWorkspace(reason: string): Promise<void> {
-    pxt.log(`workspace: error, switching from ${implType} to memory workspace`);
+    pxt.log(`workspace: error '${reason}', switching from ${implType} to memory workspace`);
 
     const expectedMemWs = pxt.appTarget.appTheme.disableMemoryWorkspaceWarning
         || impl === memoryworkspace.provider
@@ -118,13 +122,17 @@ async function switchToMemoryWorkspace(reason: string): Promise<void> {
 }
 
 export function getHeaders(withDeleted = false) {
-    maybeSyncHeadersAsync().done();
+    maybeSyncHeadersAsync();
     const cloudUserId = auth.user()?.id;
     let r = allScripts.map(e => e.header).filter(h =>
         (withDeleted || !h.isDeleted) &&
         !h.isBackup &&
         (!h.cloudUserId || h.cloudUserId === cloudUserId))
-    r.sort((a, b) => b.recentUse - a.recentUse)
+    r.sort((a, b) => {
+        const aTime = a.cloudUserId ? Math.min(a.cloudLastSyncTime, a.modificationTime) : a.modificationTime
+        const bTime = b.cloudUserId ? Math.min(b.cloudLastSyncTime, b.modificationTime) : b.modificationTime
+        return bTime - aTime
+    })
     return r
 }
 
@@ -180,7 +188,7 @@ function cleanupBackupsAsync() {
 }
 
 export function getHeader(id: string) {
-    maybeSyncHeadersAsync().done();
+    maybeSyncHeadersAsync();
     let e = lookup(id)
     if (e && !e.header.isDeleted)
         return e.header
@@ -427,8 +435,20 @@ function stringifyChangeSummary(diff: ProjectChanges): string {
     return res;
 }
 
+export async function partialSaveAsync(id: string, filename: string, content: string): Promise<void> {
+    const prev = lookup(id);
+    if (!prev) {
+        pxt.log("Failed to save to unknown project: " + id);
+        pxt.tickEvent(`workspace.invalidSaveToUnknownProject`);
+        return;
+    }
+    const newTxt = {...await getTextAsync(id)}
+    newTxt[filename] = content;
+    return saveAsync(prev.header, newTxt);
+}
+
 export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: boolean): Promise<void> {
-    pxt.debug(`workspace: save '${h.name}' (${h.id})`)
+    pxt.debug(`workspace.saveAsync ${dbgHdrToString(h)}`)
     if (h.isDeleted)
         clearHeaderSession(h);
     checkHeaderSession(h);
@@ -447,9 +467,6 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
             version: null
         }
         allScripts.push(e)
-    } else {
-        // persist header changes to our local cache
-        e.header = h
     }
 
     const hasUserFileChanges = async () => {
@@ -497,6 +514,13 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
     if (!fromCloudSync)
         h.recentUse = U.nowSeconds()
 
+    if (!newSave) {
+        // persist header changes to our local cache, but keep the old
+        // reference around because (unfortunately) other layers (e.g. package.ts)
+        // assume the reference is stable per id.
+        Object.assign(e.header, h)
+        h = e.header;
+    }
     if (text)
         e.text = text
     if (text || h.isDeleted) {
@@ -556,6 +580,10 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
             data.invalidate("pkg-git-status:" + h.id);
         }
         data.invalidateHeader("header", h);
+        if (newSave) {
+            // the count of headers has changed
+            data.invalidate("headers:");
+        }
 
         refreshHeadersSession();
     });
@@ -604,36 +632,36 @@ export function renameAsync(h: Header, newName: string) {
     return cloudsync.renameAsync(h, newName);
 }
 
-export function duplicateAsync(h: Header, text: ScriptText, newName?: string): Promise<Header> {
+export async function duplicateAsync(h: Header, newName?: string): Promise<Header> {
+    const text = await getTextAsync(h.id);
+
     if (!newName)
         newName = createDuplicateName(h);
-    const e = lookup(h.id)
-    U.assert(e.header === h)
-    const h2 = U.flatClone(h)
-    e.header = h2
+
+    let newHdr = U.flatClone(h)
 
     const dupText = U.flatClone(text);
-    h.id = U.guidGen()
-    h.name = newName;
+    newHdr.id = U.guidGen()
+    newHdr.name = newName;
     const cfg = JSON.parse(text[pxt.CONFIG_NAME]) as pxt.PackageConfig;
-    cfg.name = h.name;
+    cfg.name = newHdr.name;
     dupText[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
 
-    delete h._rev;
-    delete (h as any)._id;
-    delete h.githubCurrent;
-    delete h.githubId;
-    delete h.githubTag;
+    delete newHdr._rev;
+    delete (newHdr as any)._id;
+    delete newHdr.githubCurrent;
+    delete newHdr.githubId;
+    delete newHdr.githubTag;
 
-    if (h.cloudVersion) {
+    if (newHdr.cloudVersion) {
         pxt.tickEvent(`identity.duplicatingCloudProject`);
     }
 
     // drop cloud-related local metadata
-    h = cloud.excludeLocalOnlyMetadataFields(h)
+    newHdr = cloud.excludeLocalOnlyMetadataFields(newHdr)
 
-    return importAsync(h, dupText)
-        .then(() => h)
+    return importAsync(newHdr, dupText)
+        .then(() => newHdr)
 }
 
 export function createDuplicateName(h: Header) {
@@ -1311,7 +1339,7 @@ export function prepareConfigForGithub(content: string, createRelease?: boolean)
         cfg.supportedTargets = supportedTargets;
     }
 
-    // track target and target version this was last editted in, so we can apply upgrade rules on import.
+    // track target and target version this was last edited in, so we can apply upgrade rules on import.
     cfg.targetVersions = {
         ...cfg.targetVersions,
         target: pxt.appTarget.versions.target,
@@ -1507,22 +1535,6 @@ export function installByIdAsync(id: string) {
                     }, files)))
 }
 
-export async function saveToCloudAsync(h: Header) {
-    pxt.debug(`cloud save to ${h.name} (${h.id})`)
-    checkHeaderSession(h);
-    const saveStart = U.nowSeconds()
-    const text = await getTextAsync(h.id)
-    const cloudPromise = cloud.saveAsync(h, text)
-    const res = await cloudPromise;
-    if (res !== cloud.CloudSaveResult.NotLoggedIn) {
-        const elapsedSec = U.nowSeconds() - saveStart;
-        const success = res === cloud.CloudSaveResult.Success
-        pxt.tickEvent(`identity.saveToCloud`, { elapsedSec, success: success.toString() })
-        pxt.log(`Project ${h.name} (${h.id.substr(0,4)}...) ${success ? '' : 'NOT '}saved to cloud.`)
-        data.invalidateHeader("header", h);
-    }
-}
-
 // this promise is set while a sync is in progress
 // cleared when sync is done.
 let syncAsyncPromise: Promise<pxt.editor.EditorSyncState>;
@@ -1561,7 +1573,7 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
                 }
                 return ex;
             })
-            cloudsync.syncAsync().done() // sync in background
+            cloudsync.syncAsync(); // sync in background
         })
         .then(() => {
             refreshHeadersSession();
@@ -1618,6 +1630,23 @@ export function fireEvent(ev: pxt.editor.events.Event) {
     if (impl.fireEvent)
         return impl.fireEvent(ev)
     // otherwise, NOP
+}
+
+// debug helpers
+const _abrvStrs: {[key: string]: string} = {};
+let _abrvNextInt = 1;
+function dbgShorten(s: string): string {
+    if (!s)
+        return "#0";
+    if (!_abrvStrs[s]) {
+        _abrvStrs[s] = "#" + _abrvNextInt;
+        _abrvNextInt += 1;
+    }
+    return _abrvStrs[s]
+}
+export function dbgHdrToString(h: Header): string {
+    if (!h) return "#null"
+    return `${h.name} ${h.id.substr(0, 4)}..v${dbgShorten(h.cloudVersion)}@${h.modificationTime % 100}-${U.timeSince(h.modificationTime)}`;
 }
 
 /*

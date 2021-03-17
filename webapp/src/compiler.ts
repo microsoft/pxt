@@ -4,7 +4,7 @@ import * as workspace from "./workspace";
 
 import U = pxt.Util;
 
-function setDiagnostics(diagnostics: pxtc.KsDiagnostic[], sourceMap?: pxtc.SourceInterval[]) {
+function setDiagnostics(operation: "compile" | "decompile" | "typecheck", diagnostics: pxtc.KsDiagnostic[], sourceMap?: pxtc.SourceInterval[]) {
     let mainPkg = pkg.mainEditorPkg();
 
     mainPkg.forEachFile(f => f.diagnostics = [])
@@ -60,6 +60,27 @@ function setDiagnostics(diagnostics: pxtc.KsDiagnostic[], sourceMap?: pxtc.Sourc
     const errors = diagnostics.filter(d => d.category == ts.pxtc.DiagnosticCategory.Error);
     f.numDiagnosticsOverride = errors.length
     reportDiagnosticErrors(errors);
+
+    // send message to editor controller if any
+    if (pxt.editor.shouldPostHostMessages()) {
+        pxt.editor.postHostMessageAsync({
+            type: "pxthost",
+            action: "workspacediagnostics",
+            operation,
+            output,
+            diagnostics: diagnostics.map(diag => ({
+                code: diag.code,
+                category: ts.pxtc.DiagnosticCategory[diag.category].toLowerCase(),
+                fileName: diag.fileName,
+                start: diag.start,
+                length: diag.length,
+                line: diag.line,
+                column: diag.column,
+                endLine: diag.endLine,
+                endColumn: diag.endColumn
+            }))
+        } as pxt.editor.EditorWorkspaceDiagnostics);
+    }
 }
 
 let lastErrorCounts: string = "";
@@ -183,7 +204,7 @@ ${resp.outfiles[pxtc.BINARY_JS]}`;
             }
 
             pkg.mainEditorPkg().outputPkg.setFiles(resp.outfiles)
-            setDiagnostics(resp.diagnostics)
+            setDiagnostics("compile", resp.diagnostics)
 
             return ensureApisInfoAsync()
                 .then(() => {
@@ -265,7 +286,7 @@ export function decompileAsync(fileName: string, blockInfo?: ts.pxtc.BlocksInfo,
                 resp.outfiles[blockFile] = newXml;
             }
             pkg.mainEditorPkg().outputPkg.setFiles(resp.outfiles)
-            setDiagnostics(resp.diagnostics)
+            setDiagnostics("decompile", resp.diagnostics)
             return resp
         })
 }
@@ -511,7 +532,7 @@ export function typecheckAsync() {
             return workerOpAsync("setOptions", { options: opts })
         })
         .then(() => workerOpAsync("allDiags", {}) as Promise<pxtc.CompileResult>)
-        .then(r => setDiagnostics(r.diagnostics, r.sourceMap))
+        .then(r => setDiagnostics("typecheck", r.diagnostics, r.sourceMap))
         .then(ensureApisInfoAsync)
         .catch(catchUserErrorAndSetDiags(null))
     if (!firstTypecheck) firstTypecheck = p;
@@ -577,10 +598,10 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
     ];
 
     if (Object.keys(files).some(
-            filename => generatedFiles.indexOf(filename) === -1
+        filename => generatedFiles.indexOf(filename) === -1
             && filename.indexOf("/") === -1
             && pxt.Util.endsWith(filename, ".ts")
-        )) {
+    )) {
         return null;
     }
 
@@ -643,7 +664,6 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
 
     const result: pxtc.ApisInfo = {
         byQName: {},
-        jres: {}
     };
 
     for (const used of usedPackageInfo) {
@@ -656,11 +676,9 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
         }
 
         pxt.Util.jsonCopyFrom(result.byQName, info.apis.byQName);
-        if (info.apis.jres)
-            pxt.Util.jsonCopyFrom(result.jres, info.apis.jres);
     }
 
-    const jres = pkg.mainPkg.getJRes();
+    result.jres = pkg.mainPkg.getJRes() || {};
 
     for (const qName of Object.keys(result.byQName)) {
         let si = result.byQName[qName]
@@ -668,7 +686,7 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
         let jrname = si.attributes.jres
         if (jrname) {
             if (jrname == "true") jrname = qName
-            let jr = U.lookup(jres || {}, jrname)
+            let jr = U.lookup(result.jres, jrname)
             if (jr && jr.icon && !si.attributes.iconURL) {
                 si.attributes.iconURL = jr.icon
             }
@@ -684,9 +702,9 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
 async function cacheApiInfoAsync(project: pkg.EditorPackage, info: pxtc.ApisInfo) {
     const corePkgs = pxt.Package.corePackages().map(pkg => pkg.name);
     const externalPackages = project.pkgAndDeps()
-            .filter(p => p.id !== "built"
-                        && !p.isTopLevel()
-                        && corePkgs.indexOf(p.getPkgId()) === -1);
+        .filter(p => p.id !== "built"
+            && !p.isTopLevel()
+            && corePkgs.indexOf(p.getPkgId()) === -1);
 
     if (externalPackages.length) {
         const apiList = Object.keys(info.byQName);
@@ -944,7 +962,7 @@ export function updatePackagesAsync(packages: pkg.EditorPackage[], token?: pxt.U
 
             return workspace.saveAsync(epkg.header);
         })
-        .then(() => Promise.each(packages, p => {
+        .then(() => U.promiseMapAllSeries(packages, p => {
             if (token) token.throwIfCancelled();
             return epkg.updateDepAsync(p.getPkgId())
                 .then(() => {
@@ -1116,6 +1134,6 @@ class ApiInfoIndexedDb {
 export function clearApiInfoDbAsync() {
     return ApiInfoIndexedDb.createAsync()
         .then(db => db.clearAsync())
-        .catch(e => pxt.BrowserUtils.IDBWrapper.deleteDatabaseAsync(ApiInfoIndexedDb.dbName()).done());
+        .catch(e => pxt.BrowserUtils.IDBWrapper.deleteDatabaseAsync(ApiInfoIndexedDb.dbName()).then());
 
 }

@@ -39,7 +39,9 @@ class PaletteImpl extends React.Component<PaletteProps,{}> {
                         width={HEIGHT * 1.5}
                         height={HEIGHT}
                         stroke="#3c3c3c"
-                        strokeWidth="0.5">
+                        strokeWidth="0.5"
+                    >
+                        <title>{colorTooltip(backgroundColor, colors[backgroundColor])}</title>
                     </rect>
                     <rect
                         fill={selected ? colors[selected] : "url(#alpha-background)"}
@@ -48,20 +50,18 @@ class PaletteImpl extends React.Component<PaletteProps,{}> {
                         width={HEIGHT * 1.5}
                         height={HEIGHT}
                         stroke="#3c3c3c"
-                        strokeWidth="0.5">
+                        strokeWidth="0.5"
+                    >
+                        <title>{colorTooltip(selected, colors[selected])}</title>
                     </rect>
                 </g>
             </svg>
             <div className="image-editor-color-buttons" onContextMenu={this.preventContextMenu}>
                 {this.props.colors.map((color, index) => {
-                    const namedColor = index === 0 ? lf("transparency") : hexToNamedColor(color);
-                    const title = namedColor ?
-                                    lf("Color {0} ({1})", index, namedColor)
-                                    : lf("Color {0}", index);
                     return <div key={index}
                         className={`image-editor-button ${index === 0 ? "checkerboard" : ""}`}
                         role="button"
-                        title={title}
+                        title={colorTooltip(index, color)}
                         onMouseDown={this.clickHandler(index)}
                         style={index === 0 ? null : { backgroundColor: color }} />
                 })}
@@ -85,6 +85,11 @@ class PaletteImpl extends React.Component<PaletteProps,{}> {
     }
 
     protected preventContextMenu = (ev: React.MouseEvent<any>) => ev.preventDefault();
+}
+
+function colorTooltip(index: number, color: string) {
+    const namedColor = index === 0 ? lf("transparency") : hexToNamedColor(color);
+    return namedColor ? lf("Color {0} ({1})", index, namedColor) : lf("Color {0}", index);
 }
 
 function hexToNamedColor(color: string) {

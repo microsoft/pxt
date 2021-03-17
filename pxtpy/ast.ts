@@ -24,7 +24,7 @@ namespace pxt.py {
     }
 
     export interface TypeOptions {
-        union?: Type;
+        unifyWith?: Type;
         classType?: SymbolInfo; // instance type
         moduleType?: SymbolInfo; // class/static member type
         primType?: string;

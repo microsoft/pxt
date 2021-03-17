@@ -65,35 +65,7 @@ namespace pxtblockly {
         }
 
         protected onEditorClose(newValue: pxt.ProjectTilemap) {
-            const result = newValue.data;
-            const project = pxt.react.getTilemapProject();
-
-            if (result.deletedTiles) {
-                for (const deleted of result.deletedTiles) {
-                    project.deleteTile(deleted);
-                }
-            }
-
-            if (result.editedTiles) {
-                for (const edit of result.editedTiles) {
-                    const editedIndex = result.tileset.tiles.findIndex(t => t.id === edit);
-                    const edited = result.tileset.tiles[editedIndex];
-
-                    if (!edited) continue;
-
-                    result.tileset.tiles[editedIndex] = project.updateTile(edited);
-                }
-            }
-
-            for (let i = 0; i < result.tileset.tiles.length; i++) {
-                const tile = result.tileset.tiles[i];
-
-                if (!tile.jresData) {
-                    result.tileset.tiles[i] = project.resolveTile(tile.id);
-                }
-            }
-
-            pxt.sprite.trimTilemapTileset(result);
+            pxt.sprite.updateTilemapReferencesFromResult(pxt.react.getTilemapProject(), newValue);
         }
 
         protected getValueText(): string {

@@ -1,7 +1,7 @@
 namespace pxt.template {
     export const TS_CONFIG = `{
     "compilerOptions": {
-        "target": "es5",
+        "target": "ES5",
         "noImplicitAny": true,
         "outDir": "built",
         "rootDir": "."
@@ -143,7 +143,10 @@ jobs:
             ".github/workflows/cfg-check.yml": `name: Check pxt.json
 
 on:
-  push
+  push:
+    branches:
+      - 'master'
+      - 'main'
 
 jobs:
   check-cfg:
@@ -169,6 +172,7 @@ jobs:
         run: pxt checkpkgcfg
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3
+        continue-on-error: true
         with:
           title: 'Removing missing files from pxt.json'
           commit-message: 'Removing missing files from pxt.json'

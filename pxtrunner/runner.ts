@@ -521,7 +521,7 @@ namespace pxt.runner {
             case "fileloaded":
                 let fm = m as pxsim.SimulatorFileLoadedMessage;
                 let name = fm.name;
-                setEditorContextAsync(/\.ts$/i.test(name) ? LanguageMode.TypeScript : LanguageMode.Blocks, fm.locale).done();
+                setEditorContextAsync(/\.ts$/i.test(name) ? LanguageMode.TypeScript : LanguageMode.Blocks, fm.locale);
                 break;
             case "popout":
                 let mp = /((\/v[0-9+])\/)?[^\/]*#(doc|md):([^&?:]+)/i.exec(window.location.href);
@@ -564,23 +564,39 @@ namespace pxt.runner {
             pxt.tickEvent("renderer.job")
             const isXml = /^\s*<xml/.test(msg.code);
 
-            jobPromise = pxt.BrowserUtils.loadBlocklyAsync()
-                .then(() => isXml ? pxt.runner.compileBlocksAsync(msg.code, options) : runner.decompileSnippetAsync(msg.code, msg.options))
-                .then(result => {
-                    const blocksSvg = result.blocksSvg as SVGSVGElement;
-                    return blocksSvg ? pxt.blocks.layout.blocklyToSvgAsync(blocksSvg, 0, 0, blocksSvg.viewBox.baseVal.width, blocksSvg.viewBox.baseVal.height) : undefined;
-                }).then(res => {
-                    window.parent.postMessage(<pxsim.RenderBlocksResponseMessage>{
-                        source: "makecode",
-                        type: "renderblocks",
-                        id: msg.id,
-                        width: res ? res.width : undefined,
-                        height: res ? res.height : undefined,
-                        svg: res ? res.svg : undefined,
-                        uri: res ? res.xml : undefined,
-                        css: res ? res.css : undefined
-                    }, "*");
-                })
+            const doWork = async () => {
+                await pxt.BrowserUtils.loadBlocklyAsync();
+                const result = isXml
+                    ? await pxt.runner.compileBlocksAsync(msg.code, options)
+                    : await runner.decompileSnippetAsync(msg.code, msg.options);
+                const blocksSvg = result.blocksSvg as SVGSVGElement;
+                const width = blocksSvg.viewBox.baseVal.width;
+                const height = blocksSvg.viewBox.baseVal.height;
+                const res = blocksSvg
+                    ? await pxt.blocks.layout.blocklyToSvgAsync(blocksSvg, 0, 0, width, height)
+                    : undefined;
+                // try to render to png
+                let png: string;
+                try {
+                    png = res
+                        ? await pxt.BrowserUtils.encodeToPngAsync(res.xml, { width, height })
+                        : undefined;
+                } catch (e) {
+                    console.warn(e);
+                }
+                window.parent.postMessage(<pxsim.RenderBlocksResponseMessage>{
+                    source: "makecode",
+                    type: "renderblocks",
+                    id: msg.id,
+                    width: res?.width,
+                    height: res?.height,
+                    svg: res?.svg,
+                    uri: png || res?.xml,
+                    css: res?.css
+                }, "*");
+            }
+
+            jobPromise = doWork()
                 .catch(e => {
                     window.parent.postMessage(<pxsim.RenderBlocksResponseMessage>{
                         source: "makecode",
@@ -596,7 +612,7 @@ namespace pxt.runner {
         }
 
         pxt.editor.initEditorExtensionsAsync()
-            .done(() => {
+            .then(() => {
                 // notify parent that render engine is loaded
                 window.addEventListener("message", function (ev) {
                     const msg = ev.data as pxsim.RenderBlocksRequestMessage;
@@ -607,7 +623,8 @@ namespace pxt.runner {
                 }, false);
                 window.parent.postMessage(<pxsim.RenderReadyResponseMessage>{
                     source: "makecode",
-                    type: "renderready"
+                    type: "renderready",
+                    versions: pxt.appTarget.versions
                 }, "*");
             })
     }
@@ -630,7 +647,7 @@ namespace pxt.runner {
             $(content).hide()
             $(loading).show()
 
-            Promise.delay(100) // allow UI to update
+            U.delay(100) // allow UI to update
                 .then(() => {
                     switch (doctype) {
                         case "print":
@@ -673,7 +690,7 @@ namespace pxt.runner {
                     if (backButton) $(backButton).show()
                     $(content).show()
                 })
-                .done(() => { });
+                .then(() => { });
         }
 
         function pushHistory() {
@@ -724,7 +741,7 @@ namespace pxt.runner {
             }
         }
         let promise = pxt.editor.initEditorExtensionsAsync();
-        promise.done(() => {
+        promise.then(() => {
             window.addEventListener("message", receiveDocMessage, false);
             window.addEventListener("hashchange", () => {
                 renderHash();
@@ -826,7 +843,7 @@ ${linkString}
 
         // start the work
         let toc: TOCMenuEntry[];
-        return Promise.delay(100)
+        return U.delay(100)
             .then(() => pxt.Cloud.markdownAsync(summaryid))
             .then(summary => {
                 toc = pxt.docs.buildTOC(summary);
@@ -1011,6 +1028,8 @@ ${linkString}
     let apiCache: pxt.Map<pxtc.ApisInfo>;
 
     export function decompileSnippetAsync(code: string, options?: blocks.BlocksRenderOptions): Promise<DecompileResult> {
+        const { assets, forceCompilation, snippetMode, generateSourceMap } = options || {};
+
         // code may be undefined or empty!!!
         const packageid = options && options.packageId ? "pub:" + options.packageId :
             options && options.package ? "docs:" + options.package
@@ -1023,18 +1042,18 @@ ${linkString}
                     opts.fileSystem["main.ts"] = code;
                 opts.ast = true
 
-                if (options.assets) {
-                    for (const key of Object.keys(options.assets)) {
+                if (assets) {
+                    for (const key of Object.keys(assets)) {
                         if (opts.sourceFiles.indexOf(key) < 0) {
                             opts.sourceFiles.push(key);
                         }
-                        opts.fileSystem[key] = options.assets[key];
+                        opts.fileSystem[key] = assets[key];
                     }
                 }
 
                 let compileJS: pxtc.CompileResult = undefined;
                 let program: ts.Program;
-                if (options && options.forceCompilation) {
+                if (forceCompilation) {
                     compileJS = pxtc.compile(opts);
                     program = compileJS && compileJS.ast;
                 } else {
@@ -1054,8 +1073,8 @@ ${linkString}
                     .then(() => {
                         let blocksInfo = pxtc.getBlocksInfo(apis);
                         pxt.blocks.initializeAndInject(blocksInfo);
-                        const tilemapJres = options.assets?.[pxt.TILEMAP_JRES];
-                        const assetsJres = options.assets?.[pxt.IMAGES_JRES];
+                        const tilemapJres = assets?.[pxt.TILEMAP_JRES];
+                        const assetsJres = assets?.[pxt.IMAGES_JRES];
                         if (tilemapJres || assetsJres) {
                             tilemapProject = new TilemapProject();
                             tilemapProject.loadPackage(mainPkg);
@@ -1068,8 +1087,8 @@ ${linkString}
                             blocksInfo,
                             program.getSourceFile("main.ts"),
                             {
-                                snippetMode: options && options.snippetMode,
-                                generateSourceMap: options && options.generateSourceMap
+                                snippetMode,
+                                generateSourceMap
                             });
                         if (bresp.diagnostics && bresp.diagnostics.length > 0)
                             bresp.diagnostics.forEach(diag => console.error(diag.messageText));
@@ -1113,6 +1132,8 @@ ${linkString}
     }
 
     export function compileBlocksAsync(code: string, options?: blocks.BlocksRenderOptions): Promise<DecompileResult> {
+        const { assets } = options || {};
+
         const packageid = options && options.packageId ? "pub:" + options.packageId :
             options && options.package ? "docs:" + options.package
                 : null;
@@ -1120,12 +1141,12 @@ ${linkString}
             .then(() => getCompileOptionsAsync(appTarget.compile ? appTarget.compile.hasHex : false))
             .then(opts => {
                 opts.ast = true
-                if (options.assets) {
-                    for (const key of Object.keys(options.assets)) {
+                if (assets) {
+                    for (const key of Object.keys(assets)) {
                         if (opts.sourceFiles.indexOf(key) < 0) {
                             opts.sourceFiles.push(key);
                         }
-                        opts.fileSystem[key] = options.assets[key];
+                        opts.fileSystem[key] = assets[key];
                     }
                 }
                 const resp = pxtc.compile(opts)
@@ -1135,8 +1156,8 @@ ${linkString}
                         const blocksInfo = pxtc.getBlocksInfo(apis);
                         pxt.blocks.initializeAndInject(blocksInfo);
 
-                        const tilemapJres = options.assets?.[pxt.TILEMAP_JRES];
-                        const assetsJres = options.assets?.[pxt.IMAGES_JRES];
+                        const tilemapJres = assets?.[pxt.TILEMAP_JRES];
+                        const assetsJres = assets?.[pxt.IMAGES_JRES];
                         if (tilemapJres || assetsJres) {
                             tilemapProject = new TilemapProject();
                             tilemapProject.loadPackage(mainPkg);
@@ -1174,7 +1195,7 @@ ${linkString}
     export let initCallbacks: (() => void)[] = [];
     export function init() {
         initInnerAsync()
-            .done(() => {
+            .then(() => {
                 for (let i = 0; i < initCallbacks.length; ++i) {
                     initCallbacks[i]();
                 }

@@ -123,7 +123,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
             .forEach((langBlock: HTMLElement) => {
                 promises.push(this.cachedRenderLangSnippetAsync(langBlock, code => {
                     const { fileA, fileB } = pxt.diff.split(code);
-                    return Promise.mapSeries([fileA, fileB],
+                    return pxt.Util.promiseMapAllSeries([fileA, fileB],
                         src => parent.renderPythonAsync({
                             type: "pxteditor",
                             action: "renderpython", ts: src
@@ -191,7 +191,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                 promises.push(this.cachedRenderLangSnippetAsync(langBlock, code =>
                     pxt.BrowserUtils.loadBlocklyAsync()
                         .then(() => compiler.getBlocksAsync())
-                        .then(blocksInfo => Promise.mapSeries([oldSrc, newSrc], src =>
+                        .then(blocksInfo => pxt.Util.promiseMapAllSeries([oldSrc, newSrc], src =>
                             compiler.decompileBlocksSnippetAsync(src, blocksInfo))
                         )
                         .then((resps) => pxt.blocks.decompiledDiffAsync(oldSrc, resps[0], newSrc, resps[1], blocksDiffOptions || {

@@ -70,7 +70,7 @@ export class ExtensionManager {
                 break;
             case "extwritecode":
                 const handleWriteCode = () => handleWriteCodeRequestAsync(this.extIdToName[request.extId], resp, request.body)
-                    .done(() => this.sendResponse(resp));
+                    .then(() => this.sendResponse(resp));
                 const missingDepdencies = resolveMissingDependencies(request.body as e.WriteExtensionFiles);
                 if (missingDepdencies?.length)
                     this.operation(request.extId, resp, handleWriteCode);
@@ -222,8 +222,7 @@ function handleWriteCodeRequestAsync(name: string, resp: e.WriteCodeResponse, fi
             cfg.files.push(fn + ".asm");
         }
         missingDependencies?.forEach(dep => cfg.dependencies[dep] = files.dependencies[dep]);
-        return mainPackage.cloudSavePkgAsync();
-    }).then(() => mainPackage.saveFilesAsync(true));
+    }).then(() => mainPackage.saveFilesAsync());
 }
 
 function mkEvent(event: string): e.ExtensionEvent {

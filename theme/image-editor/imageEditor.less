@@ -98,12 +98,34 @@
     display: flex;
 }
 
+.image-editor-header-left,
+.image-editor-header-right {
+    flex: 1;
+}
+
+.image-editor-header-right {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+
+    & > div {
+        margin-right: 0.5rem;
+    }
+}
+
 .image-editor-gallery-content {
     flex-grow: 1;
     overflow: hidden;
     position: relative;
     height: 100%;
     flex: 9;
+}
+
+.image-editor-close-button {
+    color: @white;
+    font-size: 1.5rem;
+    line-height: 1.5rem;
+    cursor: pointer;
 }
 
 // Tablet + Mobile
@@ -125,6 +147,10 @@
         flex: 3!important;
     }
 
+    .image-editor-header-left {
+        display: none;
+    }
+
     .gallery-editor-toggle {
         margin-left: .25rem!important;
         flex-shrink: 1;
@@ -138,7 +164,6 @@
         flex-shrink: 1;
         width: 2em!important;
         right: .9em!important;
-        margin-right: 0!important;
         justify-content: center!important;
         padding: 0!important;
     }
@@ -269,8 +294,9 @@
     line-height: 2.25rem;
 }
 
+// this impacts all scrollbars in pxt
 ::-webkit-scrollbar {
-    width: 10px;
+    width: @customScrollbarWidth;
 }
 
 ::-webkit-scrollbar-track {
@@ -286,14 +312,10 @@
 }
 
 .gallery-filter-button {
-    position: absolute;
-    right: 0;
     width: 7em;
     height: 2.25rem;
     cursor: pointer;
     display: flex;
-    margin-right: 2em;
-    margin-top: 0.25rem;
     padding: 0 1em;
     border-radius: 5px;
     background-color: white;

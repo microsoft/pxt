@@ -647,15 +647,14 @@ namespace pxsim {
         }
 
         export function runInBackground(a: RefAction) {
-            runtime.runFiberAsync(a).done()
+            runtime.runFiberAsync(a);
         }
 
         export function forever(a: RefAction) {
             function loop() {
                 runtime.runFiberAsync(a)
-                    .then(() => Promise.delay(20))
-                    .then(loop)
-                    .done()
+                    .then(() => U.delay(20))
+                    .then(loop);
             }
             pxtrt.nullCheck(a)
             loop()

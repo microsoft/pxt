@@ -4,7 +4,7 @@ import * as React from "react";
 import { connect } from 'react-redux';
 import { dispatchSaveAndCloseActivity, dispatchShowResetUserModal } from '../actions/dispatch';
 import { SkillMapState } from '../store/reducer';
-import { resolvePath, tickEvent } from "../lib/browserUtils";
+import { isLocal, resolvePath, tickEvent } from "../lib/browserUtils";
 
 import { Dropdown, DropdownItem } from "./Dropdown";
 import { isActivityCompleted } from "../lib/skillMapUtils";
@@ -53,26 +53,33 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
         const { activityOpen, completedHeaderId } = this.props;
         const logoAlt = "MakeCode Logo";
         const organizationLogoAlt = "Microsoft Logo";
+        const logoSrc = (isLocal() || !pxt.appTarget?.appTheme?.logoUrl ) ? resolvePath("assets/logo.svg") : pxt.appTarget?.appTheme?.logo;
 
         const items = this.getSettingItems();
 
         return <div className="header">
             <div className="header-left">
-                { activityOpen
-                    ? <i className="icon arrow left" role="button" onClick={this.onBackClicked} />
-                    : <div className="header-logo">
-                        <img src={resolvePath("assets/logo.svg")} alt={logoAlt} />
-                    </div>
+                <div className="header-logo">
+                    <img src={logoSrc} alt={logoAlt} />
+                </div>
+                { activityOpen ?
+                    <HeaderBarButton icon="icon arrow left" label={lf("Back")} title={lf("Return to activity selection")} onClick={this.onBackClicked}/> :
+                    <HeaderBarButton icon="icon home" label={lf("Home")} title={lf("Return to the editor homepage")} onClick={this.onHomeClicked}/>
                 }
             </div>
             <div className="spacer" />
             <div className="header-right">
-                {completedHeaderId && <div className="header-button" role="button" onClick={this.onSaveClicked}>
-                    {lf("SAVE TO MY PROJECTS")}
-                </div>}
+                {completedHeaderId &&
+                    <HeaderBarButton
+                        icon="icon external"
+                        label={lf("Save to My Projects")}
+                        title={lf("Save this to my projects on {0}", pxt.appTarget.appTheme.homeUrl)}
+                        onClick={this.onSaveClicked} />
+                }
                 { items?.length > 0 && <Dropdown icon="setting" className="header-settings" items={items} /> }
                 <div className="header-org-logo">
-                    <img src={resolvePath("assets/microsoft.png")} alt={organizationLogoAlt} />
+                    <img className="header-org-logo-large" src={resolvePath("assets/microsoft.png")} alt={organizationLogoAlt} />
+                    <img className="header-org-logo-small" src={resolvePath("assets/microsoft-square.png")} alt={organizationLogoAlt} />
                 </div>
             </div>
         </div>
@@ -89,8 +96,28 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
         tickEvent("skillmap.export", { path: currentMapId || "", activity: currentActivityId || "" });
         window.open(`${editorUrl}#skillmapimport:${completedHeaderId}`)
     }
+
+    onHomeClicked = () => {
+        tickEvent("skillmap.home");
+        window.open(pxt.appTarget.appTheme.homeUrl);
+    }
 }
 
+interface HeaderBarButtonProps {
+    icon: string;
+    label: string;
+    title: string;
+    onClick: () => void;
+}
+
+const HeaderBarButton = (props: HeaderBarButtonProps) => {
+    const { icon, label, title, onClick } = props;
+
+    return <div className="header-button" title={title} role="button" onClick={onClick}>
+        <i className={icon} />
+        <span className="header-button-label">{label}</span>
+    </div>
+}
 
 function mapStateToProps(state: SkillMapState, ownProps: any) {
     if (!state) return {};

@@ -267,7 +267,7 @@ namespace pxt.HWDBG {
             .then(stack => {
                 buildFrames(H.decodeU32LE(stack), msg);
                 let maps = [msg.globals].concat(msg.stackframes.map(s => s.locals))
-                return Promise.map(maps, heapExpandMapAsync)
+                return U.promiseMapAll(maps, heapExpandMapAsync)
             })
             .then(() => postMessage(msg))
     }
@@ -311,7 +311,7 @@ namespace pxt.HWDBG {
                     .then(() => hid.reconnectAsync()) // this will reset into app at the end
             })
             .then(() => hid.talkAsync(HF2_DBG_RESTART).catch(e => { }))
-            .then(() => Promise.delay(200))
+            .then(() => U.delay(200))
             .then(() => hid.reconnectAsync())
             .then(clearHalted)
             .then(waitForHaltAsync)
