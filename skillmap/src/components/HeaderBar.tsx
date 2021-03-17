@@ -16,6 +16,7 @@ interface HeaderBarProps {
     activityOpen: boolean;
     showReportAbuse?: boolean;
     completedHeaderId?: string;
+    currentActivityDisplayName?: string;
     dispatchSaveAndCloseActivity: () => void;
     dispatchShowResetUserModal: () => void;
 }
@@ -50,7 +51,7 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
     }
 
     render() {
-        const { activityOpen, completedHeaderId } = this.props;
+        const { activityOpen, completedHeaderId, currentActivityDisplayName } = this.props;
         const logoAlt = "MakeCode Logo";
         const organizationLogoAlt = "Microsoft Logo";
         const logoSrc = (isLocal() || !pxt.appTarget?.appTheme?.logoUrl ) ? resolvePath("assets/logo.svg") : pxt.appTarget?.appTheme?.logo;
@@ -67,9 +68,14 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
                     <HeaderBarButton icon="icon home" label={lf("Home")} title={lf("Return to the editor homepage")} onClick={this.onHomeClicked}/>
                 }
             </div>
+            { currentActivityDisplayName &&
+                <div className="header-activity-display-name" title={currentActivityDisplayName}>
+                    {currentActivityDisplayName}
+                </div>
+            }
             <div className="spacer" />
             <div className="header-right">
-                {completedHeaderId &&
+                { completedHeaderId &&
                     <HeaderBarButton
                         icon="icon external"
                         label={lf("Save to My Projects")}
@@ -130,13 +136,22 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
     }
 
     const activityOpen = !!state.editorView;
+    let currentActivityDisplayName: string | undefined;
+
+    if (state.editorView?.currentActivityId) {
+        const activity = state.maps[state.editorView.currentMapId].activities[state.editorView.currentActivityId];
+        if (activity) {
+            currentActivityDisplayName = activity.displayName;
+        }
+    }
 
     return {
         activityOpen,
         currentMapId: activityOpen && state.editorView?.currentMapId,
         currentActivityId: activityOpen && state.editorView?.currentActivityId,
         showReportAbuse: state.pageSourceStatus === "unknown",
-        completedHeaderId
+        completedHeaderId,
+        currentActivityDisplayName
     }
 }
 
