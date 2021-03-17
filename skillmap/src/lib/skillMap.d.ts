@@ -106,6 +106,7 @@ interface ActivityState {
     headerId?: string;
     currentStep?: number;
     maxSteps?: number;
+    completedTime?: number;
 }
 
 interface SkillGraphTheme {

@@ -124,6 +124,14 @@ export function lookupPreviousActivityStates(user: UserState, pageSource: string
         .filter(a => !!a) as ActivityState[];
 }
 
+// Looks up the most recently completed (user clicked "Finish") parent
+export function lookupPreviousCompletedActivityState(user: UserState, pageSource: string, map: SkillMap, activityId: string) {
+    const previous = lookupPreviousActivityStates(user, pageSource, map, activityId)
+        .filter(state => state?.isCompleted && state.maxSteps === state.currentStep)
+        .sort((a, b) => (b.completedTime || 0) - (a.completedTime || 0));
+    return previous?.[0]
+}
+
 export function flattenRewardNodeChildren(node: MapNode): MapNode[] {
     if (!isRewardNode(node)) {
         return node.next;

@@ -6,7 +6,7 @@ import { connect } from 'react-redux';
 import { ModalType, SkillMapState } from '../store/reducer';
 import { dispatchHideModal, dispatchRestartActivity, dispatchOpenActivity, dispatchResetUser, dispatchSetReloadHeaderState } from '../actions/dispatch';
 import { tickEvent, postAbuseReportAsync, postShareAsync } from "../lib/browserUtils";
-import { lookupActivityProgress } from "../lib/skillMapUtils";
+import { lookupActivityProgress, lookupPreviousCompletedActivityState } from "../lib/skillMapUtils";
 import { carryoverProjectCode } from "../lib/codeCarryover";
 import { getProjectAsync } from "../lib/workspaceProvider";
 
@@ -169,9 +169,15 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
     }
 
     renderCodeCarryoverModal() {
-        const  { dispatchHideModal, skillMap, activity, pageSourceUrl, userState, dispatchSetReloadHeaderState } = this.props;
+        const  { skillMap, activity, pageSourceUrl, userState, dispatchHideModal, dispatchSetReloadHeaderState } = this.props;
         const carryoverModalTitle = lf("Keep code from previous activity?");
-        const carryoverModalText = lf("Do you want to start with your code from the previous activity or start fresh with starter code? Your images, tilemaps, tiles, and animations will stick around either way.");
+        const carryoverModalText = lf("Do you want to start with your code from {0} or start fresh with starter code? Your images, tilemaps, tiles, and animations will stick around either way.");
+        const carryoverModalTextSegments = carryoverModalText.split("{0}");
+
+        const previousState = lookupPreviousCompletedActivityState(userState!, pageSourceUrl!, skillMap!, activity!.activityId);
+        const previous = skillMap!.activities[previousState?.activityId];
+
+        if (!previous) return <div />
 
         const actions = [
             { label: lf("START FRESH"), onClick: async () => {
@@ -197,7 +203,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
         ]
 
         return <Modal title={carryoverModalTitle} actions={actions} onClose={this.handleOnClose}>
-            {carryoverModalText}
+            {carryoverModalTextSegments[0]}{<strong>{previous!.displayName}</strong>}{carryoverModalTextSegments[1]}
         </Modal>
     }
 
