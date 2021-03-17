@@ -71,7 +71,7 @@ function getTokenAsync(): Promise<ImmersiveReaderToken> {
                     return res.resp;
                 } else {
                     pxt.storage.removeLocal("/api/immreader");
-                    console.log("immersive reader fetch token error: " + JSON.stringify(res.errmsg));
+                    console.log("immersive reader fetch token error: " + JSON.stringify(res.err));
                     return Promise.reject(new Error("token"));
                 }
             });
