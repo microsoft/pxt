@@ -130,6 +130,10 @@
 @pyIcon: data-uri(@pyIconUrl);
 @jsIconUrl: "../docs/static/icons/js.svg";
 @jsIcon: data-uri(@jsIconUrl);
+@immersiveReaderUrl: "../docs/static/icons/immersive-reader.svg";
+@immersiveReaderIcon: data-uri(@immersiveReaderUrl);
+@immersiveReaderLightUrl: "../docs/static/icons/immersive-reader-light.svg";
+@immersiveReaderLightIcon: data-uri(@immersiveReaderLightUrl);
 
 @logoFilter: invert(23%) sepia(91%) saturate(1957%) hue-rotate(290deg) brightness(83%) contrast(94%);
 

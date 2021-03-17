@@ -214,6 +214,8 @@ namespace pxt.Cloud {
     export function isOnline() {
         if (typeof navigator !== "undefined" && isNavigatorOnline()) {
             _isOnline = true;
+        } else {
+            _isOnline = false;
         }
         return _isOnline;
     }

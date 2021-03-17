@@ -13,6 +13,7 @@ import { HintTooltip } from "./hinttooltip";
 import { PlayButton } from "./simtoolbar";
 import { ProjectView } from "./app";
 import * as editortoolbar from "./editortoolbar";
+import * as ImmersiveReader from "./immersivereader";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -99,6 +100,11 @@ export class TutorialMenu extends data.Component<ISettingsProps, {}> {
 
     renderCore() {
         let tutorialOptions = this.props.parent.state.tutorialOptions;
+        const tutorialCardContent = tutorialOptions.tutorialStepInfo ?
+            tutorialOptions.tutorialStepInfo[tutorialOptions.tutorialStep].headerContentMd :
+            null;
+        const immersiveReaderEnabled = pxt.appTarget.appTheme.immersiveReader;
+
         if (this.hasActivities) {
             return <TutorialStepCircle parent={this.props.parent} />;
         } else if (tutorialOptions.tutorialStepInfo.length < 8) {
@@ -107,6 +113,8 @@ export class TutorialMenu extends data.Component<ISettingsProps, {}> {
             return <div className="menu">
                 <TutorialMenuItem parent={this.props.parent} className="mobile hide" />
                 <TutorialStepCircle parent={this.props.parent} className="mobile only" />
+
+                {immersiveReaderEnabled && <ImmersiveReader.ImmersiveReaderButton content={tutorialCardContent}/>}
             </div>
         }
     }
@@ -282,6 +290,8 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
         const hideIteration = options.metadata.hideIteration;
         const flyoutOnly = options.metadata.flyoutOnly;
 
+        const immersiveReaderEnabled = pxt.appTarget.appTheme.immersiveReader;
+
         if (!step.showDialog) {
             if (!tutorialHint) return <div />;
 
@@ -290,12 +300,21 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
             </div>
         } else {
             let onClick = tutorialStep < tutorialStepInfo.length - 1 ? this.next : this.closeHint;
-            const actions: sui.ModalButton[] = [{
+            let actions: sui.ModalButton[] = [];
+            if (immersiveReaderEnabled) {
+                actions.push({
+                    className: "immersive-reader-button",
+                    onclick: () => {ImmersiveReader.launchImmersiveReader(fullText)},
+                    ariaLabel: lf("Launch Immersive Reader")
+                })
+            }
+            actions.push({
                 label: hideIteration && flyoutOnly ? lf("Start") : lf("Ok"),
                 onclick: onClick,
                 icon: 'check',
                 className: 'green'
-            }]
+            });
+
             const classes = this.props.parent.createModalClasses("hintdialog");
 
             return <sui.Modal isOpen={visible} className={classes}
