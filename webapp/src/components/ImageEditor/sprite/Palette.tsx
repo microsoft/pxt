@@ -23,7 +23,7 @@ class PaletteImpl extends React.Component<PaletteProps,{}> {
         const width = 3 * SPACER + 2 * HEIGHT;
 
         return <div>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox={`0 0 ${width} ${HEIGHT * 1.5}`} onClick={dispatchSwapBackgroundForeground}>
+            <svg xmlns="http://www.w3.org/2000/svg" className="image-editor-colors" viewBox={`0 0 ${width} ${HEIGHT * 1.5}`} onClick={dispatchSwapBackgroundForeground}>
                 <defs>
                     <pattern id="alpha-background" width="6" height="6" patternUnits="userSpaceOnUse">
                         <rect x="0" y="0" width="6px" height="6px" fill="#aeaeae" />

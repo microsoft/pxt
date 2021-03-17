@@ -139,6 +139,7 @@ export class FieldEditorView<U> implements pxt.react.FieldEditorView<U> {
 
         if (bounds.height - (verticalPadding * 2) < 610) {
             verticalPadding = Math.min(bounds.height - 610, 0) / 2;
+            verticalPadding = verticalPadding < 0 ? 0 : verticalPadding;
             horizontalPadding = 0;
         }
 
