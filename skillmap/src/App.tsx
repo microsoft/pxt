@@ -27,7 +27,7 @@ import { InfoPanel } from './components/InfoPanel';
 
 import { parseSkillMap } from './lib/skillMapParser';
 import { parseHash, getMarkdownAsync, MarkdownSource, parseQuery,
-    guidGen, setPageTitle, setPageSourceUrl } from './lib/browserUtils';
+    guidGen, setPageTitle, setPageSourceUrl, ParsedHash } from './lib/browserUtils';
 
 import { MakeCodeFrame } from './components/makecodeFrame';
 import { getUserStateAsync, saveUserStateAsync } from './lib/workspaceProvider';
@@ -75,12 +75,25 @@ class AppImpl extends React.Component<AppProps, AppState> {
     }
 
     protected handleHashChange = async (e: HashChangeEvent) => {
-        let config = await pxt.targetConfigAsync();
-        let hash = parseHash(window.location.hash || config.skillMap?.defaultPath);
-        this.fetchAndParseSkillMaps(hash.cmd as MarkdownSource, hash.arg);
-
+        await this.parseHashAsync();
         e.stopPropagation();
         e.preventDefault();
+    }
+
+    protected async parseHashAsync() {
+        let config = await pxt.targetConfigAsync();
+        let hash: ParsedHash;
+
+        const possibleAlias = window.location.hash.replace("#", "");
+
+        if (possibleAlias && config.skillMap?.pathAliases?.[possibleAlias]) {
+            hash = parseHash(config.skillMap.pathAliases[possibleAlias]);
+        }
+        else {
+            hash = parseHash(window.location.hash || config.skillMap?.defaultPath);
+        }
+
+        await this.fetchAndParseSkillMaps(hash.cmd as MarkdownSource, hash.arg);
     }
 
     protected handleError = (msg?: string) => {
@@ -199,10 +212,8 @@ class AppImpl extends React.Component<AppProps, AppState> {
     async componentDidMount() {
         this.unsubscribeChangeListener = store.subscribe(this.onStoreChange);
         this.queryFlags = parseQuery();
-        let config = await pxt.targetConfigAsync();
-        let hash = parseHash(window.location.hash || config.skillMap?.defaultPath);
         await this.initLocalizationAsync();
-        this.fetchAndParseSkillMaps(hash.cmd as MarkdownSource, hash.arg);
+        await this.parseHashAsync();
     }
 
     componentWillUnmount() {

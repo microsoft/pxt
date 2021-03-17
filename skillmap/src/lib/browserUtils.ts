@@ -10,7 +10,12 @@ export interface MarkdownFetchResult {
     status: PageSourceStatus;
 }
 
-export function parseHash(hash?: string) {
+export interface ParsedHash {
+    cmd: string;
+    arg: string;
+}
+
+export function parseHash(hash?: string): ParsedHash {
     let parsed = { cmd: '', arg: '' };
     let match = /^(\w+)(:([:./\-+=\w]+))?/.exec((hash || window.location.hash).replace(/^#/, ""))
     if (match) {

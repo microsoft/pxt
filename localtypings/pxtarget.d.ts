@@ -54,6 +54,7 @@ declare namespace pxt {
 
     interface SkillMapConfig {
         defaultPath?: string;
+        pathAliases?: pxt.Map<string>; // map in the format "alias": "path"
     }
 
     interface AppTarget {
