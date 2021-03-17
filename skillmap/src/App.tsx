@@ -68,7 +68,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
 
     protected handleHashChange = async (e: HashChangeEvent) => {
         let config = await pxt.targetConfigAsync();
-        let hash = parseHash(window.location.hash || config.skillMap?.defaultPath);
+        let hash = parseHash(window.location.hash || "#github:https://github.com/microsoft/pxt-game-maker-guide");
         this.fetchAndParseSkillMaps(hash.cmd as MarkdownSource, hash.arg);
 
         e.stopPropagation();
@@ -187,7 +187,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
         this.unsubscribeChangeListener = store.subscribe(this.onStoreChange);
         this.queryFlags = parseQuery();
         let config = await pxt.targetConfigAsync();
-        let hash = parseHash(window.location.hash || config.skillMap?.defaultPath);
+        let hash = parseHash(window.location.hash || "#github:https://github.com/microsoft/pxt-game-maker-guide");
         await this.initLocalizationAsync();
         this.fetchAndParseSkillMaps(hash.cmd as MarkdownSource, hash.arg);
     }
