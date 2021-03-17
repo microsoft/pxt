@@ -35,7 +35,7 @@ function beautifyText(content: string): string {
         const blockRegex = new RegExp(blockLiteral, "g");
         const blocksRemoved = content.replace(blockRegex, (blockDef) => {
             const match = blockDef.match(blockLiteral);
-            return "{"+match[1]+"}";
+            return "{" + match[1] + "}";
         })
         return blocksRemoved;
     }
