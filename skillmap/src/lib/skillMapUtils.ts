@@ -5,6 +5,7 @@ export interface ActivityStatusInfo {
     status: ActivityStatus;
     currentStep?: number;
     maxSteps?: number;
+    completedHeadedId?: string;
 }
 
 export function isMapCompleted(user: UserState, pageSource: string, map: SkillMap, skipActivity?: string) {
@@ -38,6 +39,7 @@ export function getActivityStatus(user: UserState, pageSource: string, map: Skil
     let currentStep: number | undefined;
     let maxSteps: number | undefined;
     let status: ActivityStatus = isUnlocked ? "notstarted" : "locked";
+    let completedHeadedId: string | undefined;
     if (user) {
         if (map && pageSource && !isMapUnlocked(user, map, pageSource)) {
             status = "locked";
@@ -49,6 +51,7 @@ export function getActivityStatus(user: UserState, pageSource: string, map: Skil
                 if (progress.isCompleted) {
                     status = (progress.currentStep && progress.maxSteps && progress.currentStep < progress.maxSteps) ?
                         "restarted" : "completed";
+                    completedHeadedId = progress.headerId;
                 }
                 else if (progress.headerId) {
                     status = "inprogress";
@@ -59,7 +62,7 @@ export function getActivityStatus(user: UserState, pageSource: string, map: Skil
         }
     }
 
-    return { status, currentStep, maxSteps };
+    return { status, currentStep, maxSteps, completedHeadedId };
 }
 
 export function getCompletedTags(user: UserState, pageSource: string, maps: SkillMap[]) {

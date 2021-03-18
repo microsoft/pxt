@@ -5,11 +5,13 @@ import { dispatchOpenActivity, dispatchShowRestartActivityWarning, dispatchShowS
 
 import { ActivityStatus } from '../lib/skillMapUtils';
 import { tickEvent } from '../lib/browserUtils';
+import { editorUrl } from "./makecodeFrame";
 
 interface OwnProps {
     mapId: string;
     activityId: string;
     status?: ActivityStatus;
+    completedHeaderId?: string;
 }
 
 interface DispatchProps {
@@ -66,8 +68,14 @@ export class ActivityActionsImpl extends React.Component<ActivityActionsProps> {
         dispatchShowShareModal(mapId, activityId);
     }
 
+    protected handleSaveToProjectsClick = () => {
+        const { completedHeaderId, mapId, activityId } = this.props;
+        tickEvent("skillmap.export", { path: mapId || "", activity: activityId || "" });
+        window.open(`${editorUrl}#skillmapimport:${completedHeaderId}`)
+    }
+
     render() {
-        const { status } = this.props;
+        const { status, completedHeaderId } = this.props;
         const activityStarted = (status && status !== "notstarted" && status !== "locked");
 
         if (status === "locked") return <div />
@@ -81,6 +89,9 @@ export class ActivityActionsImpl extends React.Component<ActivityActionsProps> {
             </div>}
             {activityStarted && <div className="action-button" role="button" onClick={this.handleShareButtonClick}>
                 {lf("Share")}
+            </div>}
+            {completedHeaderId && <div className="action-button" role="button" onClick={this.handleSaveToProjectsClick}>
+                {lf("Save to My Projects")}
             </div>}
         </div>
     }

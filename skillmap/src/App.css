@@ -153,6 +153,7 @@ code {
     text-overflow: ellipsis;
     overflow: hidden;
     flex-shrink: 10;
+    font-size: 1.2rem;
 }
 
 /* TOP BANNER */
