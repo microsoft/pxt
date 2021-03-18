@@ -93,7 +93,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
 
         const actions = [
             { label: this.getRewardText(reward.type),  onClick: () => {
-                tickEvent("skillmap.certificate", { path: mapId });
+                tickEvent("skillmap.reward", { path: mapId, activity: reward.activityId });
                 window.open(reward.url || skillMap.completionUrl);
             } }
         ]
@@ -181,7 +181,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
 
         const actions = [
             { label: lf("START FRESH"), onClick: async () => {
-                tickEvent("skillmap.startfresh");
+                tickEvent("skillmap.startfresh", { path: skillMap!.mapId, activity: activity!.activityId, previousActivity: previous.activityId });
 
                 dispatchSetReloadHeaderState("reloading")
 
@@ -191,7 +191,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                 dispatchHideModal();
             } },
             { label: lf("KEEP CODE"), onClick: async () => {
-                tickEvent("skillmap.keepcode");
+                tickEvent("skillmap.keepcode", { path: skillMap!.mapId, activity: activity!.activityId, previousActivity: previous.activityId });
 
                 dispatchSetReloadHeaderState("reloading")
 
@@ -209,6 +209,8 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
 
     protected handleShareInputClick = (evt: any) => { evt.target.select() }
     protected handleShareCopyClick = () => {
+        const { mapId, activity } = this.props;
+        tickEvent("skillmap.share.copy", { path: mapId, activity: activity!.activityId });
         const input = document.querySelector(".share-input input") as HTMLInputElement;
         if (input) {
             input.select();
@@ -225,7 +227,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
         if (!data?.shortId) {
             actions.push({ label: lf("Cancel"), onClick: () => this.handleOnClose });
             actions.push({ label: lf("Publish"), onClick: async () => {
-                tickEvent("skillmap.share");
+                tickEvent("skillmap.share", { path: mapId, activity: activity!.activityId });
                 this.setState({ loading: true });
 
                 const progress = lookupActivityProgress(userState!, pageSourceUrl!, mapId!, activity!.activityId);

@@ -4,6 +4,7 @@ import { connect } from 'react-redux';
 import { dispatchOpenActivity, dispatchShowCompletionModal } from '../actions/dispatch';
 
 import { ActivityStatus } from '../lib/skillMapUtils';
+import { tickEvent } from "../lib/browserUtils";
 
 interface OwnProps {
     mapId: string;
@@ -35,6 +36,7 @@ export class RewardActionsImpl extends React.Component<RewardActionsProps> {
             case "locked":
                 break;
             default:
+                tickEvent("skillmap.sidebar.reward", { path: mapId, activity: activityId })
                 return dispatchShowCompletionModal(mapId, activityId)
         }
     }
