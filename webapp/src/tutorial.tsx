@@ -100,9 +100,7 @@ export class TutorialMenu extends data.Component<ISettingsProps, {}> {
 
     renderCore() {
         let tutorialOptions = this.props.parent.state.tutorialOptions;
-        const tutorialCardContent = tutorialOptions.tutorialStepInfo ?
-            tutorialOptions.tutorialStepInfo[tutorialOptions.tutorialStep].headerContentMd :
-            null;
+        const tutorialCardContent = tutorialOptions.tutorialStepInfo?.[tutorialOptions.tutorialStep].headerContentMd
         const immersiveReaderEnabled = pxt.appTarget.appTheme.immersiveReader;
 
         if (this.hasActivities) {
@@ -114,7 +112,7 @@ export class TutorialMenu extends data.Component<ISettingsProps, {}> {
                 <TutorialMenuItem parent={this.props.parent} className="mobile hide" />
                 <TutorialStepCircle parent={this.props.parent} className="mobile only" />
 
-                {immersiveReaderEnabled && <ImmersiveReader.ImmersiveReaderButton content={tutorialCardContent}/>}
+                {immersiveReaderEnabled && <ImmersiveReader.ImmersiveReaderButton content={tutorialCardContent} tutorialOptions={tutorialOptions}/>}
             </div>
         }
     }
@@ -304,7 +302,7 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
             if (immersiveReaderEnabled) {
                 actions.push({
                     className: "immersive-reader-button",
-                    onclick: () => {ImmersiveReader.launchImmersiveReader(fullText)},
+                    onclick: () => {ImmersiveReader.launchImmersiveReader(fullText, options)},
                     ariaLabel: lf("Launch Immersive Reader")
                 })
             }

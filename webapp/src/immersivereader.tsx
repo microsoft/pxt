@@ -14,11 +14,6 @@ export type ImmersiveReaderToken = {
     expiresIn: number;
 }
 
-interface ImmersiveReaderProps {
-    content: string;
-}
-
-
 function beautifyText(content: string): string {
     const cleaningFuncs = [cleanImages, cleanBlockAnnotation, cleanBold];
     let contentWIP = content;
@@ -33,9 +28,8 @@ function beautifyText(content: string): string {
     function cleanBlockAnnotation(content: string): string {
         const blockLiteral = /``\|\|([\w|\s]+:[\w|\s]+)\|\|``/
         const blockRegex = new RegExp(blockLiteral, "g");
-        const blocksRemoved = content.replace(blockRegex, (blockDef) => {
-            const match = blockDef.match(blockLiteral);
-            return "{" + match[1] + "}";
+        const blocksRemoved = content.replace(blockRegex, (matched, word, offset, s) => {
+            return "{" + word + "}";
         })
         return blocksRemoved;
     }
@@ -51,9 +45,8 @@ function beautifyText(content: string): string {
     function cleanBold(content: string): string {
         const boldLiteral = /\*\*([\w|\s]+)\*\*/
         const boldRegex = new RegExp(boldLiteral, "g");
-        const boldRemoved = content.replace(boldRegex, (boldWord) => {
-            const match = boldWord.match(boldLiteral);
-            return "\"" + match[1] + "\""
+        const boldRemoved = content.replace(boldRegex, (matched, word, offset, s) => {
+            return "\"" + word + "\""
         })
         return boldRemoved;
     }
@@ -61,10 +54,10 @@ function beautifyText(content: string): string {
 
 function getTokenAsync(): Promise<ImmersiveReaderToken> {
     if (Cloud.isOnline()) {
-        const storedToken = pxt.storage.getLocal('immReader');
-        const cachedToken: ImmersiveReaderToken = storedToken ? JSON.parse(storedToken) : undefined;
+        const storedTokenString = pxt.storage.getLocal('immReader');
+        const cachedToken: ImmersiveReaderToken = pxt.Util.jsonTryParse(storedTokenString);
 
-        if (!storedToken || (Date.now() / 1000 > cachedToken.expiration)) {
+        if (!cachedToken || (Date.now() / 1000 > cachedToken.expiration)) {
             return auth.apiAsync("/api/immreader").then(res => {
                 if (res.statusCode == 200 ) {
                     pxt.storage.setLocal('immReader', JSON.stringify(res.resp));
@@ -84,8 +77,8 @@ function getTokenAsync(): Promise<ImmersiveReaderToken> {
     }
 }
 
-export function launchImmersiveReader(content: string) {
-    pxt.tickEvent("immersiveReader.launch");
+export function launchImmersiveReader(content: string, tutorialOptions: pxt.tutorial.TutorialOptions) {
+    pxt.tickEvent("immersiveReader.launch", {tutorial: tutorialOptions.tutorial, tutorialStep: tutorialOptions.tutorialStep});
 
     const data = {
         chunks: [{
@@ -113,14 +106,19 @@ export function launchImmersiveReader(content: string) {
     });
 }
 
+
+interface ImmersiveReaderProps {
+    content: string;
+    tutorialOptions: pxt.tutorial.TutorialOptions;
+}
+
 export class ImmersiveReaderButton extends data.Component<ImmersiveReaderProps, {}> {
     private buttonClickHandler = () => {
-        launchImmersiveReader(this.props.content);
+        launchImmersiveReader(this.props.content, this.props.tutorialOptions);
     }
 
     render() {
         return <div className='immersive-reader-button ui item' onClick={this.buttonClickHandler}
-        aria-label={lf("Launch Immersive Reader")} role="button" onKeyDown={sui.fireClickOnEnter} tabIndex={0}>
-        </div>
+            aria-label={lf("Launch Immersive Reader")} role="button" onKeyDown={sui.fireClickOnEnter} tabIndex={0}/>
     }
 }

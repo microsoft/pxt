@@ -816,6 +816,16 @@
         box-shadow: 1px 1px 0 0 @HCtextColor!important;
     }
 
+    /* immersive reader */
+    .modals .ui.button.immersive-reader-button,
+    #mainmenu .immersive-reader-button.ui.item:focus {
+        background-color: white !important;
+        background-image: @immersiveReaderIcon !important;
+        background-repeat: no-repeat !important;
+        background-size: contain !important;
+        background-position: center!important;
+    }
+
     /* github */
     #githubEditor {
         background-color: @HCbackground !important;
@@ -838,7 +848,7 @@
                 border: 2px dotted #090 !important;
             }
         }
-    }    
+    }
 }
 
 /* > Small Monitor */
