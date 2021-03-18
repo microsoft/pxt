@@ -1,3 +1,5 @@
+import { getSkillmapIdentifier } from "./browserUtils";
+
 export type ActivityStatus = "locked" | "notstarted" | "inprogress" | "completed" | "restarted";
 export interface ActivityStatusInfo {
     status: ActivityStatus;
@@ -122,6 +124,14 @@ export function lookupPreviousActivityStates(user: UserState, pageSource: string
         .filter(a => !!a) as ActivityState[];
 }
 
+// Looks up the most recently completed (user clicked "Finish") parent
+export function lookupPreviousCompletedActivityState(user: UserState, pageSource: string, map: SkillMap, activityId: string) {
+    const previous = lookupPreviousActivityStates(user, pageSource, map, activityId)
+        .filter(state => state?.isCompleted && state.maxSteps === state.currentStep)
+        .sort((a, b) => (b.completedTime || 0) - (a.completedTime || 0));
+    return previous?.[0]
+}
+
 export function flattenRewardNodeChildren(node: MapNode): MapNode[] {
     if (!isRewardNode(node)) {
         return node.next;
@@ -164,4 +174,26 @@ export function applyUserUpgrades(user: UserState, currentVersion: string, pageS
     }
 
     return upgradedUser;
+}
+
+// Check the list of alternate source URLs; if the user has existing progress
+// keyed to an alternate URL, migrate it to the current pageSourceUrl. Does not
+// override existing progress if found.
+export function applyUserMigrations(user: UserState, pageSource: string, alternateSources: string[]) {
+    if (alternateSources.length === 0) return user;
+
+    const progress: { [key: string]: MapState } = user.mapProgress[pageSource] || {};
+    alternateSources.forEach(sourceUrl => {
+        let { identifier } = getSkillmapIdentifier(pxt.github.parseRepoId(sourceUrl));
+        let oldProgress = user.mapProgress[identifier];
+        if (oldProgress) Object.keys(oldProgress).forEach(mapId => { if (!progress[mapId]) progress[mapId] = oldProgress[mapId] });
+    })
+
+    return {
+        ...user,
+        mapProgress: {
+            ...user.mapProgress,
+            [pageSource]: progress
+        }
+    };
 }

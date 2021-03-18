@@ -1,6 +1,6 @@
-.graph-activity.selected rect, .graph-activity.selected circle {
-    stroke: var(--hover-color);
+.selected .highlight {
     stroke-width: 4px;
+    fill: transparent;
 }
 
 .graph-icon {
@@ -18,5 +18,13 @@
 .graph-status-icon {
     font-family: Icons;
     font-size: 1rem;
-    opacity: 0.8;
+}
+
+.graph-activity {
+    cursor: pointer;
+    user-select: none;
+}
+
+.graph-activity:hover .graph-icon, .graph-activity:hover .graph-icon-x {
+    opacity: 0.6;
 }

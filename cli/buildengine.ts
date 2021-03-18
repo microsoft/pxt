@@ -8,6 +8,7 @@ import * as nodeutil from './nodeutil';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as child_process from 'child_process';
+import { promisify } from "util";
 import * as hid from './hid';
 
 import U = pxt.Util;
@@ -577,9 +578,9 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
     }
 }
 
-const writeFileAsync: any = Promise.promisify(fs.writeFile)
-const execAsync: (cmd: string, options?: { cwd?: string }) => Promise<Buffer | string> = Promise.promisify(child_process.exec)
-const readDirAsync = Promise.promisify(fs.readdir)
+const writeFileAsync: any = promisify(fs.writeFile)
+const cpExecAsync = promisify(child_process.exec);
+const readDirAsync = promisify(fs.readdir)
 
 function buildFinalCsAsync(res: ts.pxtc.CompileResult) {
     return nodeutil.spawnAsync({
@@ -619,7 +620,7 @@ function msdDeployCoreAsync(res: ts.pxtc.CompileResult): Promise<void> {
                         .then(() => pxt.debug("   wrote to " + drivename))
                         .catch(() => pxt.log(`   failed writing to ${drivename}`));
                 };
-                return Promise.map(drives, d => writeHexFile(d))
+                return U.promiseMapAll(drives, d => writeHexFile(d))
                     .then(() => drives.length);
             }).then(() => { });
     }
@@ -648,17 +649,20 @@ function msdDeployCoreAsync(res: ts.pxtc.CompileResult): Promise<void> {
 function getBoardDrivesAsync(): Promise<string[]> {
     if (process.platform == "win32") {
         const rx = new RegExp("^([A-Z]:)\\s+(\\d+).* " + pxt.appTarget.compile.deployDrives)
-        return execAsync("wmic PATH Win32_LogicalDisk get DeviceID, VolumeName, FileSystem, DriveType")
-            .then((buf: Buffer) => {
-                let res: string[] = []
-                buf.toString("utf8").split(/\n/).forEach(ln => {
-                    let m = rx.exec(ln)
-                    if (m && m[2] == "2") {
-                        res.push(m[1] + "/")
+        return cpExecAsync("wmic PATH Win32_LogicalDisk get DeviceID, VolumeName, FileSystem, DriveType")
+            .then(({ stdout, stderr }) => {
+                let res: string[] = [];
+                stdout
+                    .split(/\n/)
+                    .forEach(ln => {
+                        let m = rx.exec(ln);
+                        if (m && m[2] == "2") {
+                            res.push(m[1] + "/");
+                        }
                     }
-                })
-                return res
-            })
+                );
+                return res;
+            });
     }
     else if (process.platform == "darwin") {
         const rx = new RegExp(pxt.appTarget.compile.deployDrives)

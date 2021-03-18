@@ -4,7 +4,7 @@ import * as React from "react";
 import { connect } from 'react-redux';
 import { dispatchSaveAndCloseActivity, dispatchShowResetUserModal } from '../actions/dispatch';
 import { SkillMapState } from '../store/reducer';
-import { resolvePath, tickEvent } from "../lib/browserUtils";
+import { isLocal, resolvePath, tickEvent } from "../lib/browserUtils";
 
 import { Dropdown, DropdownItem } from "./Dropdown";
 import { isActivityCompleted } from "../lib/skillMapUtils";
@@ -16,6 +16,7 @@ interface HeaderBarProps {
     activityOpen: boolean;
     showReportAbuse?: boolean;
     completedHeaderId?: string;
+    currentActivityDisplayName?: string;
     dispatchSaveAndCloseActivity: () => void;
     dispatchShowResetUserModal: () => void;
 }
@@ -50,25 +51,31 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
     }
 
     render() {
-        const { activityOpen, completedHeaderId } = this.props;
+        const { activityOpen, completedHeaderId, currentActivityDisplayName } = this.props;
         const logoAlt = "MakeCode Logo";
         const organizationLogoAlt = "Microsoft Logo";
+        const logoSrc = (isLocal() || !pxt.appTarget?.appTheme?.logoUrl ) ? resolvePath("assets/logo.svg") : pxt.appTarget?.appTheme?.logo;
 
         const items = this.getSettingItems();
 
         return <div className="header">
             <div className="header-left">
                 <div className="header-logo">
-                    <img src={resolvePath("assets/logo.svg")} alt={logoAlt} />
+                    <img src={logoSrc} alt={logoAlt} />
                 </div>
                 { activityOpen ?
                     <HeaderBarButton icon="icon arrow left" label={lf("Back")} title={lf("Return to activity selection")} onClick={this.onBackClicked}/> :
                     <HeaderBarButton icon="icon home" label={lf("Home")} title={lf("Return to the editor homepage")} onClick={this.onHomeClicked}/>
                 }
             </div>
+            { currentActivityDisplayName &&
+                <div className="header-activity-display-name" title={currentActivityDisplayName}>
+                    {currentActivityDisplayName}
+                </div>
+            }
             <div className="spacer" />
             <div className="header-right">
-                {completedHeaderId &&
+                { completedHeaderId &&
                     <HeaderBarButton
                         icon="icon external"
                         label={lf("Save to My Projects")}
@@ -77,7 +84,8 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
                 }
                 { items?.length > 0 && <Dropdown icon="setting" className="header-settings" items={items} /> }
                 <div className="header-org-logo">
-                    <img src={resolvePath("assets/microsoft.png")} alt={organizationLogoAlt} />
+                    <img className="header-org-logo-large" src={resolvePath("assets/microsoft.png")} alt={organizationLogoAlt} />
+                    <img className="header-org-logo-small" src={resolvePath("assets/microsoft-square.png")} alt={organizationLogoAlt} />
                 </div>
             </div>
         </div>
@@ -113,7 +121,7 @@ const HeaderBarButton = (props: HeaderBarButtonProps) => {
 
     return <div className="header-button" title={title} role="button" onClick={onClick}>
         <i className={icon} />
-        <span>{label}</span>
+        <span className="header-button-label">{label}</span>
     </div>
 }
 
@@ -128,13 +136,22 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
     }
 
     const activityOpen = !!state.editorView;
+    let currentActivityDisplayName: string | undefined;
+
+    if (state.editorView?.currentActivityId) {
+        const activity = state.maps[state.editorView.currentMapId].activities[state.editorView.currentActivityId];
+        if (activity) {
+            currentActivityDisplayName = activity.displayName;
+        }
+    }
 
     return {
         activityOpen,
         currentMapId: activityOpen && state.editorView?.currentMapId,
         currentActivityId: activityOpen && state.editorView?.currentActivityId,
         showReportAbuse: state.pageSourceStatus === "unknown",
-        completedHeaderId
+        completedHeaderId,
+        currentActivityDisplayName
     }
 }
 

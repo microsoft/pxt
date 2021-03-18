@@ -1,9 +1,9 @@
 import * as actions from '../actions/types'
 import { guidGen } from '../lib/browserUtils';
 import { getCompletedTags, lookupActivityProgress, isMapCompleted,
-    isRewardNode, applyUserUpgrades } from '../lib/skillMapUtils';
+    isRewardNode, applyUserUpgrades, applyUserMigrations } from '../lib/skillMapUtils';
 
-export type ModalType = "restart-warning" | "completion" | "report-abuse" | "reset" | "carryover";
+export type ModalType = "restart-warning" | "completion" | "report-abuse" | "reset" | "carryover" | "share";
 export type PageSourceStatus = "approved" | "banned" | "unknown";
 
 // State for the entire page
@@ -12,9 +12,11 @@ export interface SkillMapState {
     description: string;
     infoUrl?: string;
     backgroundImageUrl?: string;
+    bannerImageUrl?: string;
     user: UserState;
     pageSourceUrl: string;
     pageSourceStatus: PageSourceStatus;
+    alternateSourceUrls?: string[];
     maps: { [key: string]: SkillMap };
     selectedItem?: { mapId: string, activityId: string };
 
@@ -53,7 +55,7 @@ const initialState: SkillMapState = {
         backgroundColor: "var(--body-background-color)",
         pathColor: "#BFBFBF",
         strokeColor: "#000000",
-        rewardNodeColor: "var(--tertiary-color)",
+        rewardNodeColor: "var(--primary-color)",
         rewardNodeForeground: "#000000",
         unlockedNodeColor: "var(--secondary-color)",
         unlockedNodeForeground: "#000000",
@@ -70,16 +72,6 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
         case actions.ADD_SKILL_MAP:
             return {
                 ...state,
-                user: {
-                    ...state.user,
-                    mapProgress: {
-                        ...state.user.mapProgress,
-                        [state.pageSourceUrl] : {
-                            ...state.user.mapProgress?.[state.pageSourceUrl],
-                            [action.map.mapId]: { completionState: "incomplete", mapId: action.map.mapId, activityState: { } }
-                        }
-                    }
-                },
                 maps: {
                     ...state.maps,
                     [action.map.mapId]: action.map
@@ -89,6 +81,19 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
             return {
                 ...state,
                 maps: {}
+            };
+        case actions.CLEAR_METADATA:
+            return {
+                ...state,
+                title: initialState.title,
+                description: initialState.description,
+                infoUrl: initialState.infoUrl,
+                backgroundImageUrl: undefined,
+                bannerImageUrl: undefined,
+                alternateSourceUrls: undefined,
+                theme: {
+                    ...initialState.theme
+                }
             };
         case actions.CHANGE_SELECTED_ITEM:
             return {
@@ -116,7 +121,6 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                 }
             }
         case actions.OPEN_ACTIVITY:
-
             return {
                 ...state,
                 editorView: {
@@ -205,9 +209,27 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                 } : undefined
             };
         case actions.SET_USER:
+            const pageSourceUrl = state.pageSourceUrl;
+
+            // Apply data structure upgrades
+            let user = applyUserUpgrades(action.user, pxt.skillmap.USER_VERSION, pageSourceUrl, state.maps);
+
+            // Migrate user projects from alternate pageSourceUrls, if provided
+            if (state.alternateSourceUrls) {
+                user = applyUserMigrations(user, pageSourceUrl, state.alternateSourceUrls)
+            }
+
+            // Fill in empty objects for remaining maps
+            if (!user.mapProgress[pageSourceUrl]) user.mapProgress[pageSourceUrl] = {};
+            Object.keys(state.maps).forEach(mapId => {
+                if (!user.mapProgress[pageSourceUrl][mapId]) {
+                    user.mapProgress[pageSourceUrl][mapId] = { completionState: "incomplete", mapId, activityState: { } };
+                }
+            })
+
             return {
                 ...state,
-                user: applyUserUpgrades(action.user, pxt.skillmap.USER_VERSION, state.pageSourceUrl, state.maps)
+                user
             };
         case actions.RESET_USER:
             return {
@@ -250,6 +272,11 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                 ...state,
                 backgroundImageUrl: action.backgroundImageUrl
             }
+        case actions.SET_PAGE_BANNER_IMAGE_URL:
+            return {
+                ...state,
+                bannerImageUrl: action.bannerImageUrl
+            }
         case actions.SET_PAGE_THEME:
             return {
                 ...state,
@@ -260,6 +287,11 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                 ...state,
                 pageSourceUrl: action.url,
                 pageSourceStatus: action.status
+            }
+        case actions.SET_PAGE_ALTERNATE_URLS:
+            return {
+                ...state,
+                alternateSourceUrls: action.urls
             }
         case actions.SHOW_COMPLETION_MODAL:
             return {
@@ -285,6 +317,11 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
             return {
                 ...state,
                 modal: { type: "reset" }
+            };
+        case actions.SHOW_SHARE_MODAL:
+            return {
+                ...state,
+                modal: { type: "share", currentMapId: action.mapId, currentActivityId: action.activityId }
             };
         case actions.HIDE_MODAL:
             return {
@@ -358,6 +395,7 @@ export function setActivityFinished(user: UserState, pageSource: string, map: Sk
             currentStep: 0
         })
         completedNodes[el].isCompleted = true;
+        completedNodes[el].completedTime = Date.now();
     })
 
     const currentMapProgress = user.mapProgress?.[pageSource] || {};

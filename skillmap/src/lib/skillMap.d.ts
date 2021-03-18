@@ -3,7 +3,9 @@ interface PageMetadata {
     description?: string;
     infoUrl?: string;
     backgroundImageUrl?: string;
+    bannerImageUrl?: string; // Banner image in the info panel when no activity is selected
     theme?: SkillGraphTheme
+    alternateSources?: string[]; // List of alternate pageSourceUrls to import user projects from
 }
 
 interface SkillMap {
@@ -104,6 +106,7 @@ interface ActivityState {
     headerId?: string;
     currentStep?: number;
     maxSteps?: number;
+    completedTime?: number;
 }
 
 interface SkillGraphTheme {

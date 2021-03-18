@@ -534,7 +534,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 });
         });
 
-        core.showLoadingAsync("switchtoblocks", lf("switching to blocks..."), promise).done();
+        core.showLoadingAsync("switchtoblocks", lf("switching to blocks..."), promise);
     }
 
     public showBlockConversionFailedDialog(blockFile: string, programTooLarge: boolean): Promise<void> {
@@ -1150,7 +1150,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 snippetPromise = initPromise.then(() => compiler.snippetAsync(snippetQName, isPython));
             }
 
-            snippetPromise.done(snippet => {
+            snippetPromise.then(snippet => {
                 let mouseTarget = this.editor.getTargetAtClientPoint(pxt.BrowserUtils.getClientX(ev), pxt.BrowserUtils.getClientY(ev));
                 let position = mouseTarget.position;
                 pxt.tickEvent(`monaco.toolbox.insertsnippet`);
@@ -1444,6 +1444,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 return this.foldFieldEditorRangesAsync()
             }).finally(() => {
                 editorRightArea.removeChild(loading);
+                // Do Not Remove: This is used by the skillmap
+                if (this.parent.isTutorial()) pxt.tickEvent("tutorial.editorLoaded")
             });
     }
 

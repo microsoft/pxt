@@ -70,7 +70,7 @@ export function showAboutDialogAsync(projectView: pxt.editor.IProjectView) {
                     {targetTheme.copyrightText ? <p> {targetTheme.copyrightText} </p> : undefined}
                 </div>
             })
-        }).done();
+        });
 }
 
 
@@ -655,7 +655,7 @@ export function showReportAbuseAsync(pubId?: string) {
                 <textarea aria-labelledby="abuseDescriptionLabel"></textarea>
             </div>
         </div>,
-    }).done(res => {
+    }).then(res => {
         if (res) {
             pxt.tickEvent("app.reportabuse.send");
             const id = pxt.Cloud.parseScriptId(urlInput.value as string);
@@ -705,5 +705,5 @@ export function promptTranslateBlock(blockid: string, blockTranslationIds: strin
             </div>
             {blockTranslationIds.map(trid => <div key={`ictr${trid}`} className="ui basic segment">{trid}</div>)}
         </div>
-    }).done();
+    });
 }

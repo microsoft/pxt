@@ -109,6 +109,10 @@ code {
     height: 100%;
 }
 
+.header-org-logo .header-org-logo-small {
+    display: none;
+}
+
 .header i.icon {
     line-height: 2rem;
     cursor: pointer;
@@ -131,15 +135,24 @@ code {
     cursor: pointer;
     flex: 1;
     user-select: none;
+    white-space: nowrap;
 }
 
-.header-button span {
+.header-button .header-button-label {
     line-height: 2rem;
+    white-space: nowrap;
 }
 
 .header-button:hover, .header-settings:hover {
     background-color: var(--hover-color);
     color: var(--invert-hover-text-color);
+}
+
+.header-activity-display-name {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    flex-shrink: 10;
 }
 
 /* TOP BANNER */
@@ -242,5 +255,24 @@ code {
     .usabilla_live_button_container {
         top: 10rem !important;
         bottom: unset !important;
+    }
+}
+
+
+/*******************************/
+/*****     MOBILE VIEW     *****/
+/*******************************/
+
+@media only screen and (max-width: 767px) {
+    .header-button .header-button-label {
+        display: none;
+    }
+
+    .header-org-logo .header-org-logo-large {
+        display: none;
+    }
+
+    .header-org-logo .header-org-logo-small {
+        display: block;
     }
 }
