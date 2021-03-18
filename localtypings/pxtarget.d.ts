@@ -433,6 +433,7 @@ declare namespace pxt {
         disableMemoryWorkspaceWarning?: boolean; // do not warn the user when switching to in memory workspace
         embeddedTutorial?: boolean;
         disableBlobObjectDownload?: boolean; // use data uri downloads instead of object urls
+        immersiveReader?: boolean; // enables the immersive reader for tutorials
     }
 
     interface SocialOptions {
