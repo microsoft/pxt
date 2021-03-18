@@ -156,6 +156,10 @@
         flex-shrink: 1;
     }
 
+    .gallery-editor-toggle-label > span {
+        display: none;
+    }
+
     .gallery-filter-button {
         .gallery-filter-button-label {
             display: none !important;
@@ -194,7 +198,7 @@
     background-color: #4572cf;
     border: 2px solid #4067b3;
     border-radius: 5px;
-    width: 19.5rem;
+    width: 24rem;
     margin-top: 0.25rem;
 
     margin-left: auto;
@@ -202,10 +206,10 @@
     cursor: pointer;
 }
 
-
 .gallery-editor-toggle.right {
     .gallery-editor-toggle-handle {
-        transform: translateX(13rem);
+        /* Subtract small margin for rightmost element */
+        transform: translateX(calc(16rem - 0.2rem));
     }
     .gallery-editor-toggle-right {
         color: #4B7BEC;
@@ -214,7 +218,7 @@
 
 .gallery-editor-toggle.center {
     .gallery-editor-toggle-handle {
-        transform: translateX(6.5rem);
+        transform: translateX(8rem);
     }
     .gallery-editor-toggle-center {
         color: #4B7BEC;
@@ -228,7 +232,7 @@
 }
 
 .gallery-editor-toggle.no-gallery {
-    width: 13rem;
+    width: 16rem;
 
     .gallery-editor-toggle-handle {
         width: 50%;
@@ -240,7 +244,7 @@
 
 .gallery-editor-toggle.no-gallery.right {
     .gallery-editor-toggle-handle {
-        transform: translateX(6.5rem);
+        transform: translateX(8rem);
     }
 }
 
@@ -258,12 +262,21 @@
 }
 
 .gallery-editor-toggle-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     flex-basis: 33%;
     text-align: center;
     color: #ffffff;
     z-index: 1;
     transition: color 0.3s;
     user-select: none;
+
+    & > i {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
 }
 
 .gallery-editor-toggle-handle {
@@ -412,6 +425,10 @@
     .asset-editor-card {
         margin: 0.2rem 0 0 0.2rem;
     }
+
+    .asset-editor-card-icon {
+        display: none;
+    }
 }
 
 .image-editor-gallery.visible {
@@ -452,4 +469,36 @@
 
 :root {
     --editor-height: 31rem;
+}
+
+
+// Mobile Only
+@media only screen and (max-width: @largestMobileScreen) {
+    .gallery-editor-toggle {
+        width: 10rem;
+        margin-left: .25rem!important;
+        flex-shrink: 1;
+    }
+
+    .gallery-editor-toggle.no-gallery {
+        width: 6.5rem;
+    }
+
+    .gallery-editor-toggle.right {
+        .gallery-editor-toggle-handle {
+            transform: translateX(6.5rem);
+        }
+    }
+
+    .gallery-editor-toggle.center {
+        .gallery-editor-toggle-handle {
+            transform: translateX(3.25rem);
+        }
+    }
+
+    .gallery-editor-toggle.no-gallery.right {
+        .gallery-editor-toggle-handle {
+            transform: translateX(3.25rem);
+        }
+    }
 }

@@ -89,14 +89,17 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
         const toggleOptions = [{
             label: lf("Editor"),
             view: "editor",
+            icon: "paint brush",
             onClick: this.showEditor
         }, {
             label: lf("Gallery"),
             view: "gallery",
+            icon: "picture",
             onClick: this.showGallery
         }, {
             label: lf("My Assets"),
             view: "my-assets",
+            icon: "folder",
             onClick: this.showMyAssets
         }];
 
@@ -556,6 +559,7 @@ class ImageEditorGallery extends React.Component<ImageEditorGalleryProps, {}> {
 interface ImageEditorToggleOption {
     label: string;
     view: string;
+    icon?: string;
     onClick: () => void;
 }
 
@@ -586,13 +590,16 @@ class ImageEditorToggle extends React.Component<ImageEditorToggleProps> {
 
         return <div className={`gallery-editor-toggle ${toggleClass} ${pxt.BrowserUtils.isEdge() ? "edge" : ""}`}>
             <div className="gallery-editor-toggle-label gallery-editor-toggle-left" onClick={left.onClick} role="button">
-                {left.label}
+                {left.icon && <i className={`ui icon ${left.icon}`} />}
+                <span>{left.label}</span>
             </div>
             {center && <div className="gallery-editor-toggle-label gallery-editor-toggle-center" onClick={center.onClick} role="button">
-                {center.label}
+                {center.icon && <i className={`ui icon ${center.icon}`} />}
+                <span>{center.label}</span>
             </div>}
             <div className="gallery-editor-toggle-label gallery-editor-toggle-right" onClick={right.onClick} role="button">
-                {right.label}
+                {right.icon && <i className={`ui icon ${right.icon}`} />}
+                <span>{right.label}</span>
             </div>
             <div className="gallery-editor-toggle-handle"/>
     </div>
