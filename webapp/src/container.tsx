@@ -10,6 +10,7 @@ import * as auth from "./auth";
 import * as identity from "./identity";
 import * as cloudsync from "./cloudsync";
 import * as pkg from "./package";
+import * as ImmersiveReader from "./immersivereader";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -538,6 +539,10 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         const homeEnabled = !lockedEditor && !isController;
         const sandbox = pxt.shell.isSandboxMode();
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
+        const tutorialCardContent = inTutorial ? tutorialOptions.tutorialStepInfo?.[tutorialOptions.tutorialStep].headerContentMd :
+            undefined;
+        const immersiveReaderEnabled = pxt.appTarget.appTheme.immersiveReader;
+
         const activityName = tutorialOptions && tutorialOptions.tutorialActivityInfo ?
             tutorialOptions.tutorialActivityInfo[tutorialOptions.tutorialStepInfo[tutorialOptions.tutorialStep].activity].name :
             null;
@@ -591,6 +596,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
             </div>}
             {inTutorial && activityName && <div className="ui item">{activityName}</div>}
             {inTutorial && !hideIteration && <tutorial.TutorialMenu parent={this.props.parent} />}
+            {inTutorial && immersiveReaderEnabled && <ImmersiveReader.ImmersiveReaderButton content={tutorialCardContent} tutorialOptions={tutorialOptions}/>}
             {debugging && !inTutorial ? <sui.MenuItem className="debugger-menu-item centered" icon="large bug" name="Debug Mode" /> : undefined}
             {tsOnly && !sandbox && <sui.MenuItem className="centered" icon="xicon js" name="JavaScript" />}
             {pyOnly && !sandbox && <sui.MenuItem className="centered" icon="xicon python" name="Python" />}

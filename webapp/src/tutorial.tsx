@@ -100,8 +100,6 @@ export class TutorialMenu extends data.Component<ISettingsProps, {}> {
 
     renderCore() {
         let tutorialOptions = this.props.parent.state.tutorialOptions;
-        const tutorialCardContent = tutorialOptions.tutorialStepInfo?.[tutorialOptions.tutorialStep].headerContentMd
-        const immersiveReaderEnabled = pxt.appTarget.appTheme.immersiveReader;
 
         if (this.hasActivities) {
             return <TutorialStepCircle parent={this.props.parent} />;
@@ -111,8 +109,6 @@ export class TutorialMenu extends data.Component<ISettingsProps, {}> {
             return <div className="menu">
                 <TutorialMenuItem parent={this.props.parent} className="mobile hide" />
                 <TutorialStepCircle parent={this.props.parent} className="mobile only" />
-
-                {immersiveReaderEnabled && <ImmersiveReader.ImmersiveReaderButton content={tutorialCardContent} tutorialOptions={tutorialOptions}/>}
             </div>
         }
     }
