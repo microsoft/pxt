@@ -42,7 +42,7 @@ export class GraphNode extends React.Component<GraphNodeProps, GraphNodeState> {
                     case "locked":
                         return "\uf023";
                     case "completed":
-                        return "\uf00c";
+                        return "\uf058";
                     default:
                         return "\uf101";
                 }
