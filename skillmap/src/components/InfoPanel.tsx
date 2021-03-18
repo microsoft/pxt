@@ -22,6 +22,7 @@ interface InfoPanelProps {
     details?: string[];
     node?: MapNode;
     status?: ActivityStatus;
+    completedHeaderId?: string;
 }
 
 export class InfoPanelImpl extends React.Component<InfoPanelProps> {
@@ -48,7 +49,7 @@ export class InfoPanelImpl extends React.Component<InfoPanelProps> {
     }
 
     render() {
-        const  { mapId, title, subtitle, description, imageUrl, details, node, status  } = this.props;
+        const  { mapId, title, subtitle, description, imageUrl, details, node, status, completedHeaderId  } = this.props;
         const statusLabel = this.getStatusLabel(status);
         const isActivity = node && !isRewardNode(node);
         const tags = isActivity && (node as MapActivity).tags || undefined;
@@ -74,7 +75,7 @@ export class InfoPanelImpl extends React.Component<InfoPanelProps> {
                 </div>
                 <div className="tablet-spacer" />
                 {node && (isActivity
-                    ? <ActivityActions mapId={mapId} activityId={node.activityId} status={status} />
+                    ? <ActivityActions mapId={mapId} activityId={node.activityId} status={status} completedHeaderId={completedHeaderId} />
                     : <RewardActions mapId={mapId} activityId={node.activityId} status={status} type={(node as MapReward).type} />)
                 }
             </div>
@@ -90,12 +91,14 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
     const details: string[] = [];
     let status: ActivityStatus | undefined;
     let subtitle: string | undefined;
+    let completedHeaderId: string | undefined;
 
     if (maps) {
         if (selectedItem?.activityId && maps[selectedItem.mapId]) {
             const map = maps[selectedItem.mapId];
-            const { status: activityStatus, currentStep, maxSteps } = getActivityStatus(state.user, state.pageSourceUrl, map, selectedItem.activityId);
+            const { status: activityStatus, currentStep, maxSteps, completedHeadedId: hid } = getActivityStatus(state.user, state.pageSourceUrl, map, selectedItem.activityId);
             status = activityStatus;
+            completedHeaderId = hid;
             if (isActivity) {
                 details.push(maxSteps ? `${currentStep}/${maxSteps} ${lf("Steps")}` : lf("Not Started"));
                 details.push(isActivity ? (node as MapActivity).type : "");
@@ -128,7 +131,8 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         imageUrl: node ? node?.imageUrl : state.bannerImageUrl,
         node,
         status,
-        details
+        details,
+        completedHeaderId
     };
 }
 
