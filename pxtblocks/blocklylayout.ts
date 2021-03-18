@@ -399,12 +399,23 @@ namespace pxt.blocks.layout {
             if (ref != undefined) {
                 commentMap[ref] = comment;
             }
-            else {
-                groups.push(formattable(comment));
-            }
         });
 
         let onStart: Formattable;
+
+        // Sort so that on-start is first, events are second, functions are third, and disabled blocks are last
+        blocks.sort((a, b) => {
+            if (a.isEnabled() === b.isEnabled()) {
+                if (a.type === b.type) return 0;
+                else if (a.type === "function_definition") return 1
+                else if (b.type === "function_definition") return -1;
+                else return a.type.localeCompare(b.type);
+            }
+            else if (a.isEnabled())
+                return -1;
+            else
+                return 1
+        });
 
         blocks.forEach(block => {
             const refs = getBlockData(block).commentRefs;
@@ -438,7 +449,6 @@ namespace pxt.blocks.layout {
         }
 
         // Collect the comments that were not linked to a top-level block
-        // and puth them in on start (if it exists)
         Object.keys(commentMap).sort((a, b) => {
             // These are strings of integers (eg "0", "17", etc.) with no duplicates
             if (a.length === b.length) {
@@ -449,16 +459,15 @@ namespace pxt.blocks.layout {
             }
         }).forEach(key => {
             if (commentMap[key]) {
-                if (onStart) {
-                    if (!onStart.children) {
-                        onStart.children = [];
-                    }
-                    onStart.children.push(formattable(commentMap[key]));
-                }
-                else {
-                    // Stick the comments in the front so that they show up in the top left
-                    groups.unshift(formattable(commentMap[key]));
-                }
+                // Comments go at the end after disabled blocks
+                groups.push(formattable(commentMap[key]));
+            }
+        });
+
+        comments.forEach(comment => {
+            const ref: string = (comment as any).data;
+            if (ref == undefined) {
+                groups.push(formattable(comment));
             }
         });
 
