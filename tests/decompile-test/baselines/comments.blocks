@@ -93,42 +93,31 @@
 <comment pinned="false">Comment</comment>
 </block>
 </next>
-<comment pinned="false">Paragraphs from
-
-single-line comments</comment>
+<comment pinned="false">Paragraphs from&#10;&#10;single-line comments</comment>
 </block>
 </next>
 <comment pinned="false">Whitespace between comments and statement</comment>
 </block>
 </next>
-<comment pinned="false">it
-up</comment>
+<comment pinned="false">it&#10;up</comment>
 </block>
 </next>
 <comment pinned="false">Single multi-line</comment>
 </block>
 </next>
-<comment pinned="false">Text at the top
-
-
-and the bottom</comment>
+<comment pinned="false">Text at the top&#10;&#10;&#10;and the bottom</comment>
 </block>
 </next>
-<comment pinned="false">Multi-line with
-double asterisks</comment>
+<comment pinned="false">Multi-line with&#10;double asterisks</comment>
 </block>
 </next>
-<comment pinned="false">Multi-line with
-asterisks</comment>
+<comment pinned="false">Multi-line with&#10;asterisks</comment>
 </block>
 </next>
-<comment pinned="false">Multi line with
-no asterisks on body</comment>
+<comment pinned="false">Multi line with&#10;no asterisks on body</comment>
 </block>
 </next>
-<comment pinned="false">Multiple
-Single-line
-Comments</comment>
+<comment pinned="false">Multiple&#10;Single-line&#10;Comments</comment>
 </block>
 </next>
 <comment pinned="false">Single-line comment</comment>

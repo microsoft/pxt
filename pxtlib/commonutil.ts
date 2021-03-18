@@ -29,7 +29,7 @@ namespace ts.pxtc.Util {
 
     export function htmlEscape(_input: string) {
         if (!_input) return _input;
-        return _input.replace(/[<>&"']/gu, c => `&#${c.charCodeAt(0)};`);
+        return _input.replace(/[<>&"'\n]/gu, c => `&#${c.charCodeAt(0)};`);
     }
 
     export function htmlUnescape(_input: string) {
