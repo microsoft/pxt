@@ -154,6 +154,7 @@ code {
     overflow: hidden;
     flex-shrink: 10;
     font-size: 1.2rem;
+    font-weight: 700;
 }
 
 /* TOP BANNER */

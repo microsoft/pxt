@@ -71,17 +71,6 @@ export class GraphNode extends React.Component<GraphNodeProps, GraphNodeState> {
         const nudgeUnit = width / 50;
 
         switch (status) {
-            // case "completed":
-            //     return <g transform={`translate(${(width / 2) - (3 * nudgeUnit)} ${(-width / 2) + (3 * nudgeUnit)})`}>
-            //         <circle cx={0} cy={0} r={(width / 4) - nudgeUnit} stroke={theme.strokeColor} strokeWidth="2" fill={theme.lockedNodeColor}/>
-            //         <text dy="2"
-            //             textAnchor="middle"
-            //             alignmentBaseline="middle"
-            //             fill={theme.lockedNodeForeground}
-            //             className="graph-status-icon">
-            //                 {"\uf00c"}
-            //             </text>
-            //     </g>
             case "notstarted":
                 return <g transform={`translate(${(width / 2) - (3 * nudgeUnit)} ${(-width / 2) + (3 * nudgeUnit)})`}>
                     <circle cx={0} cy={0} r={(width / 4) - nudgeUnit} stroke={theme.strokeColor} strokeWidth="2" fill={theme.selectedStrokeColor}/>
