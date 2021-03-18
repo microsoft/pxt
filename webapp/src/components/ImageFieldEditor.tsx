@@ -65,20 +65,26 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
         const showGallery = !this.asset || editingTile || this.asset.type !== pxt.AssetType.Tilemap;;
         const showMyAssets = !hideMyAssets && !editingTile;
 
-        if (this.asset && !this.galleryAssets) {
+        if (this.asset && !this.galleryAssets && showGallery) {
             this.updateGalleryAssets();
         }
 
-        let filteredAssets = currentView === "my-assets" ? this.filterAssetsByType(this.userAssets, editingTile ? pxt.AssetType.Tile : this.asset?.type) :
-            this.filterAssetsByType(this.galleryAssets, editingTile ? pxt.AssetType.Tile : this.asset?.type, true, true)
-
         const specialTags = ["tile", "dialog", "background"];
-        const allTags = this.getAvailableTags(filteredAssets, specialTags);
-
-        if (currentView === "gallery") {
-            filteredAssets = this.filterAssetsByTag(filteredAssets);
+        let allTags: string[] = [];
+        let filteredAssets: pxt.Asset[] = [];
+        switch (currentView) {
+            case "my-assets":
+                filteredAssets = this.filterAssetsByType(this.userAssets, editingTile ? pxt.AssetType.Tile : this.asset?.type);
+                allTags = this.getAvailableTags(filteredAssets, specialTags);
+                break;
+            case "gallery":
+                filteredAssets = this.filterAssetsByType(this.galleryAssets, editingTile ? pxt.AssetType.Tile : this.asset?.type, true, true);
+                allTags = this.getAvailableTags(filteredAssets, specialTags);
+                filteredAssets = this.filterAssetsByTag(filteredAssets);
+                break;
+            default:
+                break;
         }
-
 
         const toggleOptions = [{
             label: lf("Editor"),
@@ -312,7 +318,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
             return assets;
         }
 
-        if (this.asset) {
+        if (this.asset && !isGallery) {
             assets = assets.map(t => (t.type !== this.asset.type || t.id !== this.asset.id) ? t : assetToGalleryItem(this.getValue()))
 
             if (this.state.editingTile) {
@@ -344,6 +350,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
 
             assets = assets.filter(t => checkInclude(t, includeTags) && checkExclude(t, excludeTags))
         }
+
         function checkInclude(item: pxt.Asset, includeTags: string[]) {
             const tags = item.meta.tags ? item.meta.tags : [];
             return includeTags.every(filterTag => {
