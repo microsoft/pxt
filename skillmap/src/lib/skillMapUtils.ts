@@ -191,8 +191,9 @@ export function applyUserMigrations(user: UserState, pageSource: string, alterna
         let identifier = arg;
         switch (cmd) {
             case "github":
-                const ghId = getGithubIdentifier(pxt.github.parseRepoId(arg));
-                identifier = ghId.identifier;
+                const parsed = pxt.github.parseRepoId(arg);
+                const ghId = parsed && getGithubIdentifier(parsed);
+                identifier = ghId?.identifier || arg;
                 break;
             case "docs":
                 identifier = getDocsIdentifier(arg);
