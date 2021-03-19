@@ -143,5 +143,5 @@ You can simply drag the file into the editor, make your changes, and download it
 file in a text editor, copy the new asset data, and replace the contents of your tutorial's ```` ```assetjson ````
 block with it.
 
-The assets are shown as the initial view in a tutorial by using the [@preferredEditor](/writing-docs/tutorials/control-options#preferred-editor-view) option. This option a causes the tutorial to open with the Asset Editor
+The assets are shown as the initial view in a tutorial by using the [@preferredEditor](/writing-docs/tutorials/control-options#preferred-editor-view) option. This option causes the tutorial to open with the Asset Editor
 rather than showing the editor for Blocks or Code.
