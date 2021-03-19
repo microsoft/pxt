@@ -59,12 +59,14 @@ export class ActivityActionsImpl extends React.Component<ActivityActionsProps> {
     }
 
     protected handleRestartButtonClick = () => {
-        const { mapId, activityId, dispatchShowRestartActivityWarning } = this.props;
+        const { mapId, activityId, status, dispatchShowRestartActivityWarning } = this.props;
+        tickEvent("skillmap.sidebar.restart", { path: mapId, activity: activityId, status: status || "" });
         dispatchShowRestartActivityWarning(mapId, activityId);
     }
 
     protected handleShareButtonClick = () => {
-        const { mapId, activityId, dispatchShowShareModal } = this.props;
+        const { mapId, activityId, status, dispatchShowShareModal } = this.props;
+        tickEvent("skillmap.sidebar.share", { path: mapId, activity: activityId, status: status || "" });
         dispatchShowShareModal(mapId, activityId);
     }
 
