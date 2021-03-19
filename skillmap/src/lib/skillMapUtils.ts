@@ -1,4 +1,4 @@
-import { getSkillmapIdentifier } from "./browserUtils";
+import { parseHash, getDocsIdentifier, getGithubIdentifier } from "./browserUtils";
 
 export type ActivityStatus = "locked" | "notstarted" | "inprogress" | "completed" | "restarted";
 export interface ActivityStatusInfo {
@@ -186,10 +186,32 @@ export function applyUserMigrations(user: UserState, pageSource: string, alterna
     if (alternateSources.length === 0) return user;
 
     const progress: { [key: string]: MapState } = user.mapProgress[pageSource] || {};
-    alternateSources.forEach(sourceUrl => {
-        let { identifier } = getSkillmapIdentifier(pxt.github.parseRepoId(sourceUrl));
+    alternateSources.forEach(sourcePath => {
+        const { cmd, arg } = parseHash(sourcePath);
+        let identifier = arg;
+        switch (cmd) {
+            case "github":
+                const ghId = getGithubIdentifier(pxt.github.parseRepoId(arg));
+                identifier = ghId.identifier;
+                break;
+            case "docs":
+                identifier = getDocsIdentifier(arg);
+                break;
+        }
+
         let oldProgress = user.mapProgress[identifier];
-        if (oldProgress) Object.keys(oldProgress).forEach(mapId => { if (!progress[mapId]) progress[mapId] = oldProgress[mapId] });
+        if (oldProgress) Object.keys(oldProgress).forEach(mapId => {
+            if (!progress[mapId]) {
+                progress[mapId] = oldProgress[mapId];
+            } else {
+                const activityProgress = oldProgress[mapId].activityState;
+                Object.keys(activityProgress).forEach(activityId => {
+                    if (!progress[mapId].activityState[activityId]) {
+                        progress[mapId].activityState[activityId] = activityProgress[activityId];
+                    }
+                })
+            }
+        });
     })
 
     return {

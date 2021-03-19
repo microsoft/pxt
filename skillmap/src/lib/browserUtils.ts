@@ -50,9 +50,7 @@ export async function getMarkdownAsync(source: MarkdownSource, url: string): Pro
 
     switch (source) {
         case "docs":
-            url = url.trim().replace(/^[\\/]/i, "").replace(/\.md$/i, "");
-            const target = (window as any).pxtTargetBundle?.name || "arcade";
-            toFetch = `${apiRoot}/md/${target}/${url}`;
+            toFetch = getDocsIdentifier(url);
             status = "approved";
             break;
         case "github":
@@ -110,7 +108,7 @@ async function fetchSkillMapFromGithub(path: string): Promise<MarkdownFetchResul
     const gh = await pxt.github.downloadPackageAsync(`${ghid.slug}#${ghid.tag}`, config);
 
     if (gh) {
-        const { identifier, fileName } = getSkillmapIdentifier(ghid);
+        const { identifier, fileName } = getGithubIdentifier(ghid);
         return {
             text: pxt.tutorial.resolveLocalizedMarkdown(ghid, gh.files, fileName),
             identifier,
@@ -122,7 +120,13 @@ async function fetchSkillMapFromGithub(path: string): Promise<MarkdownFetchResul
     return undefined
 }
 
-export function getSkillmapIdentifier(ghid: pxt.github.ParsedRepo) {
+export function getDocsIdentifier(path: string) {
+    path = path.trim().replace(/^[\\/]/i, "").replace(/\.md$/i, "");
+    const target = (window as any).pxtTargetBundle?.name || "arcade";
+    return `${apiRoot}/md/${target}/${path}`;
+}
+
+export function getGithubIdentifier(ghid: pxt.github.ParsedRepo) {
     let fileName = parseGithubFilename(ghid.fileName ||  "skillmap");
     return {
         identifier: ghid.fullName + "#" + fileName,
