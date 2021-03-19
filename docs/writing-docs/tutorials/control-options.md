@@ -14,6 +14,22 @@ If you want the hints to display by default when each step is encountered, speci
 ### @explicitHints true
 ```
 
+### Preferred editor view
+
+### ~reminder
+
+#### Asset editing support
+
+Support for this option is only available in [Microsoft MakeCode Arcade](https://arcade.makecode.com).
+
+### ~
+
+Typically, when a tutorial starts the default editor view is for the editing code in the language specified for the tutorial. If your tutorial has steps for creating assets (tilemaps, images, tiles, or animations) when the tutorial begins, you can have the Asset Editor displayed instead of the Blocks or Code editors. You specify this with the **@preferredEditor** option using the ``asset`` setting.
+
+```
+### @preferredEditor asset
+```
+
 ### Flyout blocks
 
 To have all of the available blocks in a permanently visible flyout instead of the toolbox, use **@flyoutOnly**. The default setting is ``false``.
