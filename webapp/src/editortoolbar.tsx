@@ -6,6 +6,7 @@ import * as sui from "./sui";
 import * as githubbutton from "./githubbutton";
 import * as cmds from "./cmds"
 import * as cloud from "./cloud";
+import * as auth from "./auth";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -301,7 +302,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         // cloud status
         const cloudMd = this.getData<cloud.CloudTempMetadata>(`${cloud.HEADER_CLOUDSTATE}:${header.id}`);
         const cloudState = cloud.getCloudSummary(header, cloudMd);
-        const showCloudButton = !!cloudState
+        const showCloudButton = !!cloudState && auth.hasIdentity()
         const getCloudIcon = () => {
             if (cloudState === "syncing" || cloudState === "localEdits")
                 return "cloud-saving-b"
