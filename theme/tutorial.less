@@ -59,6 +59,12 @@
     padding-right: 1.3rem !important;
 }
 
+#mainmenu .tutorial-menu {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .tutorial #tutorialcard {
     position: relative;
     z-index: @tutorialCardZIndex;
@@ -650,12 +656,12 @@ code.lang-filterblocks {
             height: @tutorialEmbedMenuHeight;
             width: 100%;
         }
-        .ui.item {
-            margin-left: auto;
-            margin-right: auto;
-        }
         .ui.item.tutorial-menuitem {
             background: none !important;
+        }
+
+        .immersive-reader-button.ui.item {
+            background-size: 1.7rem;
         }
 
         // In the embedded view, always show the navigation dots even in mobile

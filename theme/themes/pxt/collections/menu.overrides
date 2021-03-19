@@ -33,11 +33,6 @@
     background: @invertedBackground;
 }
 
-#mainmenu .menu {
-    display: flex;
-    align-items: center;
-}
-
 #mainmenu > .menu > .ui.item:hover > .icon {
     transform: scale(1.2);
 }

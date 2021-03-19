@@ -100,15 +100,24 @@ export class TutorialMenu extends data.Component<ISettingsProps, {}> {
 
     renderCore() {
         let tutorialOptions = this.props.parent.state.tutorialOptions;
+        const tutorialCardContent = tutorialOptions.tutorialStepInfo?.[tutorialOptions.tutorialStep].headerContentMd
+        const immersiveReaderEnabled = pxt.appTarget.appTheme.immersiveReader;
 
         if (this.hasActivities) {
-            return <TutorialStepCircle parent={this.props.parent} />;
+            return <div className="menu tutorial-menu">
+                <TutorialStepCircle parent={this.props.parent} />
+                {immersiveReaderEnabled && <ImmersiveReader.ImmersiveReaderButton content={tutorialCardContent} tutorialOptions={tutorialOptions}/>}
+            </div>;
         } else if (tutorialOptions.tutorialStepInfo.length < 8) {
-            return <TutorialMenuItem parent={this.props.parent} />;
+            return <div className="menu tutorial-menu">
+                <TutorialMenuItem parent={this.props.parent} />
+                {immersiveReaderEnabled && <ImmersiveReader.ImmersiveReaderButton content={tutorialCardContent} tutorialOptions={tutorialOptions}/>}
+            </div>;
         } else {
-            return <div className="menu">
+            return <div className="menu tutorial-menu">
                 <TutorialMenuItem parent={this.props.parent} className="mobile hide" />
                 <TutorialStepCircle parent={this.props.parent} className="mobile only" />
+                {immersiveReaderEnabled && <ImmersiveReader.ImmersiveReaderButton content={tutorialCardContent} tutorialOptions={tutorialOptions}/>}
             </div>
         }
     }
@@ -299,7 +308,8 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
                 actions.push({
                     className: "immersive-reader-button",
                     onclick: () => {ImmersiveReader.launchImmersiveReader(fullText, options)},
-                    ariaLabel: lf("Launch Immersive Reader")
+                    ariaLabel: lf("Launch Immersive Reader"),
+                    title: lf("Launch Immersive Reader")
                 })
             }
             actions.push({
