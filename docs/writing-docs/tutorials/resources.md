@@ -79,10 +79,10 @@ controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
 ```
 ````
 
-## assetsjson
+## assetjson
 
 If you want a collection of pre-created tilemaps, images, animations, and tiles included as `assets`
-in a tutorial, you can add them inside an ```` ```assetsjson ```` block. This makes the assets
+in a tutorial, you can add them inside an ```` ```assetjson ```` block. This makes the assets
 available in the **Assets Editor**, and to the code in the tutorial, when the tutorial is started.
 
 ### ~reminder
@@ -104,20 +104,20 @@ https://arcade.makecode.com/beta?savetemplate=1
 With the correct URL entered, you can click the save button (the floppy disk button) in the
 editor to download your project as a `.txt.mkcd` file.
 
-Next, define a ```` ```assetsjson ```` block in your tutorial document.
+Next, define a ```` ```assetjson ```` block in your tutorial document.
 
 ````
-```assetsjson
+```assetjson
 
 ```
 ````
 
 The contents of this file can be opened in a separate text editor, copied, and pasted into
-the ```` ```assetsjson ```` block to have them included when the tutorial is run.
+the ```` ```assetjson ```` block to have them included when the tutorial is run.
 The asset block might look something like the following example.
 
 ````
-```assetsjson
+```assetjson
 {
   "README.md": " ",
   "assets.json": "",
@@ -140,7 +140,7 @@ The asset block might look something like the following example.
 
 If you need to modify the assets for the tutoral, reopen and edit the project saved in the `.txt.mkcd` file.
 You can simply drag the file into the editor, make your changes, and download it again. Open the project
-file in a text editor, copy the new asset data, and replace the contents of your tutorial's ```` ```assetsjson ````
+file in a text editor, copy the new asset data, and replace the contents of your tutorial's ```` ```assetjson ````
 block with it.
 
 The assets are shown as the initial view in a tutorial by using the [@preferredEditor](/writing-docs/tutorials/control-options#preferred-editor-view) option. This option a causes the tutorial to open with the Asset Editor
