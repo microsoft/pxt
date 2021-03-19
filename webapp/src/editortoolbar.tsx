@@ -301,7 +301,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         // cloud status
         const cloudMd = this.getData<cloud.CloudTempMetadata>(`${cloud.HEADER_CLOUDSTATE}:${header.id}`);
         const cloudState = cloud.getCloudSummary(header, cloudMd);
-        const showCloudButton = true
+        const showCloudButton = !!cloudState
         const getCloudIcon = () => {
             if (cloudState === "syncing" || cloudState === "localEdits")
                 return "cloud-saving-b"
