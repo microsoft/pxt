@@ -1177,7 +1177,28 @@ namespace ts.pxtc.Util {
         return false;
     }
 
-    export function updateLocalizationAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean, force?: boolean): Promise<void> {
+    interface LocalizationUpdateOptions {
+        targetId: string;
+        baseUrl: string;
+        code: string;
+        pxtBranch: string;
+        targetBranch: string;
+        updateStrings?: boolean;
+        force?: boolean;
+        fetchUnapproved?: boolean;
+    }
+
+    export function updateLocalizationAsync(opts: LocalizationUpdateOptions): Promise<void> {
+        const {
+            targetId,
+            baseUrl,
+            pxtBranch,
+            targetBranch,
+            updateStrings,
+            force,
+            fetchUnapproved,
+        } = opts;
+        let { code } = opts;
         code = normalizeLanguageCode(code)[0];
         if (code === "en-US")
             code = "en"; // special case for built-in language
@@ -1186,23 +1207,27 @@ namespace ts.pxtc.Util {
             return Promise.resolve();
         }
 
+        if (fetchUnapproved) {
+            Util.fetchLiveTranslations = true;
+        }
+
         pxt.debug(`loc: ${code}`);
         return downloadTranslationsAsync(targetId, baseUrl, code,
-            pxtBranch, targetBranch, live,
+            pxtBranch, targetBranch, updateStrings,
             ts.pxtc.Util.TranslationsKind.Editor)
             .then((translations) => {
                 if (translations) {
                     setUserLanguage(code);
                     setLocalizedStrings(translations);
-                    if (live) {
+                    if (updateStrings) {
                         localizeLive = true;
                     }
                 }
 
                 // Download api translations
-                return !live ? ts.pxtc.Util.downloadTranslationsAsync(
+                return !updateStrings ? ts.pxtc.Util.downloadTranslationsAsync(
                     targetId, baseUrl, code,
-                    pxtBranch, targetBranch, live,
+                    pxtBranch, targetBranch, updateStrings,
                     ts.pxtc.Util.TranslationsKind.Apis)
                     .then(trs => {
                         if (trs)

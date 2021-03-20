@@ -119,7 +119,7 @@ namespace pxt.Cloud {
     const FORCE_MARKDOWN_UPDATE = MARKDOWN_EXPIRATION * 24 * 7;
     export async function markdownAsync(docid: string, locale?: string): Promise<string> {
         locale = locale || pxt.Util.userLanguage();
-        const live = pxt.Util.localizeLive;
+        const fetchUnapproved = pxt.Util.fetchLiveTranslations;
         const branch = "";
 
         const db = await pxt.BrowserUtils.translationDbAsync();
@@ -127,7 +127,7 @@ namespace pxt.Cloud {
 
         const downloadAndSetMarkdownAsync = async () => {
             try {
-                const r = await downloadMarkdownAsync(docid, locale, live, entry?.etag);
+                const r = await downloadMarkdownAsync(docid, locale, fetchUnapproved, entry?.etag);
                 await db.setAsync(locale, docid, branch, r.etag, undefined, r.md || entry?.md);
                 return r.md;
             } catch {
@@ -160,7 +160,7 @@ namespace pxt.Cloud {
         return downloadAndSetMarkdownAsync();
     }
 
-    function downloadMarkdownAsync(docid: string, locale?: string, live?: boolean, etag?: string): Promise<{ md: string; etag?: string; }> {
+    function downloadMarkdownAsync(docid: string, locale?: string, fetchUnapproved?: boolean, etag?: string): Promise<{ md: string; etag?: string; }> {
         const packaged = pxt.webConfig?.isStatic;
         const targetVersion = pxt.appTarget.versions && pxt.appTarget.versions.target || '?';
         let url: string;
@@ -181,16 +181,16 @@ namespace pxt.Cloud {
         }
         if (!packaged && locale != "en") {
             url += `&lang=${encodeURIComponent(locale)}`
-            if (live) url += "&live=1"
+            if (fetchUnapproved) url += "&live=1";
         }
-        if (pxt.BrowserUtils.isLocalHost() && !live)
+        if (pxt.BrowserUtils.isLocalHost() && !fetchUnapproved) {
             return localRequestAsync(url).then(resp => {
                 if (resp.statusCode == 404)
                     return privateRequestAsync({ url, method: "GET" })
                         .then(resp => { return { md: resp.text, etag: <string>resp.headers["etag"] }; });
                 else return { md: resp.text, etag: undefined };
             });
-        else {
+        } else {
             const headers: pxt.Map<string> = etag && !useCdnApi() ? { "If-None-Match": etag } : undefined;
             return apiRequestWithCdnAsync({ url, method: "GET", headers })
                 .then(resp => { return { md: resp.text, etag: <string>resp.headers["etag"] }; });

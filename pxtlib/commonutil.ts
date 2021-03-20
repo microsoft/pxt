@@ -57,6 +57,7 @@ namespace ts.pxtc.Util {
     //let _didSetlocalizations = false;
     //let _didReportLocalizationsNotSet = false;
     export let localizeLive = false;
+    export let fetchLiveTranslations = false;
 
     /**
      * Returns the current user language, prepended by "live-" if in live mode
