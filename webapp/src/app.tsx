@@ -4759,13 +4759,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (hashLangMatch && window.location.hash.indexOf(hashLangMatch[0]) >= 0) {
                     pxt.BrowserUtils.changeHash(window.location.hash.replace(hashLangMatch[0], ""));
                 }
-                const hashLang = hashLangMatch ? hashLangMatch[3] : undefined
+                const hashLang = hashLangMatch?.[3];
                 const cookieLang = pxt.BrowserUtils.getCookieLang()
                 // chose the user's language using the following ordering:
                 useLang = hashLang || cloudLang || cookieLang || theme.defaultLocale || (navigator as any).userLanguage || navigator.language;
                 const locstatic = /staticlang=1/i.test(window.location.href);
-                live = !(locstatic || pxt.BrowserUtils.isPxtElectron() || theme.disableLiveTranslations) || (hashLangMatch && !!hashLangMatch[1]);
-                force = !!hashLangMatch && !!hashLangMatch[2];
+                const liveDisabled = locstatic || pxt.BrowserUtils.isPxtElectron() || theme.disableLiveTranslations;
+                live = !liveDisabled && !!hashLangMatch?.[1];
+                force = !!hashLangMatch?.[2];
             }
             const targetId = pxt.appTarget.id;
             const baseUrl = config.commitCdnUrl;
