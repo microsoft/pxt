@@ -106,15 +106,18 @@ class AppImpl extends React.Component<AppProps, AppState> {
         const theme = pxt.appTarget.appTheme;
 
         const href = window.location.href;
+        let fetchUnapproved = false;
         let force = false;
         let useLang: string | undefined = undefined;
         if (/[&?]translate=1/.test(href) && !pxt.BrowserUtils.isIE()) {
             useLang = ts.pxtc.Util.TRANSLATION_LOCALE;
+            fetchUnapproved = true;
         } else {
             const mlang = /(live)?(force)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
             if (mlang && window.location.hash.indexOf(mlang[0]) >= 0) {
                 pxt.BrowserUtils.changeHash(window.location.hash.replace(mlang[0], ""));
             }
+            fetchUnapproved = !!mlang?.[1];
             useLang = mlang ? mlang[3] : (pxt.BrowserUtils.getCookieLang() || theme.defaultLocale || (navigator as any).userLanguage || navigator.language);
             force = !!mlang && !!mlang[2];
         }
@@ -125,15 +128,16 @@ class AppImpl extends React.Component<AppProps, AppState> {
         const pxtBranch = pxt.appTarget.versions.pxtCrowdinBranch;
         const targetBranch = pxt.appTarget.versions.targetCrowdinBranch;
 
-        await updateLocalizationAsync(
-            targetId,
-            baseUrl,
-            useLang!,
-            pxtBranch!,
-            targetBranch!,
-            true,
-            force
-        );
+        await updateLocalizationAsync({
+            targetId: targetId,
+            baseUrl: baseUrl,
+            code: useLang!,
+            pxtBranch: pxtBranch!,
+            targetBranch: targetBranch!,
+            updateStrings: true,
+            force: force,
+            fetchUnapproved: fetchUnapproved,
+        });
 
         if (pxt.Util.isLocaleEnabled(useLang!)) {
             pxt.BrowserUtils.setCookieLang(useLang!);
@@ -305,14 +309,28 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         theme: state.theme
     };
 }
+interface LocalizationUpdateOptions {
+    targetId: string;
+    baseUrl: string;
+    code: string;
+    pxtBranch: string;
+    targetBranch: string;
+    updateStrings?: boolean;
+    force?: boolean;
+    fetchUnapproved?: boolean;
+}
 
-async function updateLocalizationAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean, force?: boolean) {
-    code = pxt.Util.normalizeLanguageCode(code)[0];
-    if (code === "en-US")
-        code = "en"; // special case for built-in language
-    if (code === pxt.Util.userLanguage() || (!pxt.Util.isLocaleEnabled(code) && !force)) {
-        return;
-    }
+async function updateLocalizationAsync(opts: LocalizationUpdateOptions): Promise<void> {
+    const {
+        targetId,
+        baseUrl,
+        pxtBranch,
+        targetBranch,
+        updateStrings,
+        force,
+        fetchUnapproved,
+    } = opts;
+    let { code } = opts;
 
     const translations = await pxt.Util.downloadTranslationsAsync(
         targetId,
@@ -320,14 +338,14 @@ async function updateLocalizationAsync(targetId: string, baseUrl: string, code: 
         code,
         pxtBranch,
         targetBranch,
-        !!live,
+        !!updateStrings,
         ts.pxtc.Util.TranslationsKind.SkillMap
     );
 
     pxt.Util.setUserLanguage(code);
     if (translations) {
         pxt.Util.setLocalizedStrings(translations);
-        if (live) {
+        if (updateStrings) {
             pxt.Util.localizeLive = true;
         }
     }
