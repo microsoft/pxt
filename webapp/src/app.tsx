@@ -4738,7 +4738,6 @@ document.addEventListener("DOMContentLoaded", () => {
         .then(async () => {
             const href = window.location.href;
             let updateStrings = false;
-            let fetchUnapproved = false;
             let force = false;
             const cloudLang = auth.getState()?.preferences?.language;
             // kick of a user preferences check; if the language is different we'll request they reload
@@ -4755,7 +4754,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 console.log(`translation mode`);
                 force = true;
                 updateStrings = true;
-                fetchUnapproved = true;
+                pxt.Util.fetchLiveTranslations = true;
                 useLang = ts.pxtc.Util.TRANSLATION_LOCALE;
             } else {
                 const hashLangMatch = /(live)?(force)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
@@ -4768,17 +4767,16 @@ document.addEventListener("DOMContentLoaded", () => {
                 const cookieLang = pxt.BrowserUtils.getCookieLang()
                 // chose the user's language using the following ordering:
                 useLang = hashLang || cloudLang || cookieLang || theme.defaultLocale || (navigator as any).userLanguage || navigator.language;
+                pxt.Util.fetchLiveTranslations = requestLive;
                 const locstatic = /staticlang=1/i.test(window.location.href);
                 const stringUpdateDisabled = locstatic || pxt.BrowserUtils.isPxtElectron() || theme.disableLiveTranslations;
                 updateStrings = !stringUpdateDisabled || requestLive;
                 force = requestedForce;
-                fetchUnapproved = requestLive;
             }
             const targetId = pxt.appTarget.id;
             const baseUrl = config.commitCdnUrl;
             const pxtBranch = pxt.appTarget.versions.pxtCrowdinBranch;
             const targetBranch = pxt.appTarget.versions.targetCrowdinBranch;
-
             return Util.updateLocalizationAsync({
                     targetId: targetId,
                     baseUrl: baseUrl,
@@ -4787,7 +4785,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     targetBranch: targetBranch,
                     updateStrings: updateStrings,
                     force: force,
-                    fetchUnapproved: fetchUnapproved,
                 }).then(() => {
                     if (pxt.Util.isLocaleEnabled(useLang)) {
                         pxt.BrowserUtils.setCookieLang(useLang);
