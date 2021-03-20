@@ -15,7 +15,13 @@ export type ImmersiveReaderToken = {
 }
 
 function beautifyText(content: string): string {
-    const cleaningFuncs = [cleanImages, cleanBlockAnnotation, cleanBold];
+    const cleaningFuncs = [
+        cleanImages,
+        cleanBlockAnnotation,
+        cleanBold,
+        cleanHorizontalRule,
+        cleanNewLines,
+    ];
     let contentWIP = content;
 
     cleaningFuncs.forEach(clean => {
@@ -24,31 +30,44 @@ function beautifyText(content: string): string {
 
     return contentWIP;
 
-    // Change ``|| around blocks to {}
+    // Change ``|| around blocks to ""
     function cleanBlockAnnotation(content: string): string {
-        const blockLiteral = /``\|\|([\w|\s]+:[\w|\s]+)\|\|``/
-        const blockRegex = new RegExp(blockLiteral, "g");
-        const blocksRemoved = content.replace(blockRegex, (matched, word, offset, s) => {
-            return "{" + word + "}";
-        })
-        return blocksRemoved;
+        return content.replace(
+            /`?`\|\|[\w|\s]+:(.+?)\|\|``?/gu,
+            (matched, word, offset, s) => lf("\"{0}\"", word)
+        );
     }
 
     // Don't show any images
     function cleanImages(content: string): string {
-        const imageRegEx = /(!\[.*\]\(.*\))/g;
-        const imagesRemoved = content.replace(imageRegEx, "");
-        return imagesRemoved;
+        return content.replace(
+            /(!\w*\[[^\]]*\]\w*\([^)]*\))/gu,
+            ""
+        );
     }
 
     // Remove ** around bold text, replace with "
     function cleanBold(content: string): string {
-        const boldLiteral = /\*\*([\w|\s]+)\*\*/
-        const boldRegex = new RegExp(boldLiteral, "g");
-        const boldRemoved = content.replace(boldRegex, (matched, word, offset, s) => {
-            return "\"" + word + "\""
-        })
-        return boldRemoved;
+        return content.replace(
+            /\*\*([^*]+)\*\*/gu,
+            (matched, word, offset, s) => lf("\"{0}\"", word)
+        );
+    }
+
+    // replace horizontal rules with new lines
+    function cleanHorizontalRule(content: string): string {
+        return content.replace(
+            /^\* \* \*$/gum,
+            "- - -"
+        );
+    }
+
+    // replace new lines with break tags so that they don't get smooshed
+    function cleanNewLines(content: string): string {
+        return content.replace(
+            /[\r\n]+/gum,
+            `<br />`
+        );
     }
 }
 
