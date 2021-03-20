@@ -4770,7 +4770,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 useLang = hashLang || cloudLang || cookieLang || theme.defaultLocale || (navigator as any).userLanguage || navigator.language;
                 const locstatic = /staticlang=1/i.test(window.location.href);
                 const stringUpdateDisabled = locstatic || pxt.BrowserUtils.isPxtElectron() || theme.disableLiveTranslations;
-                updateStrings = !stringUpdateDisabled && requestLive;
+                updateStrings = !stringUpdateDisabled || requestLive;
                 force = requestedForce;
                 fetchUnapproved = requestLive;
             }
