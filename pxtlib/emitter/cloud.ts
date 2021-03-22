@@ -183,7 +183,7 @@ namespace pxt.Cloud {
             url += `&lang=${encodeURIComponent(locale)}`
             if (fetchUnapproved) url += "&live=1";
         }
-        if (pxt.BrowserUtils.isLocalHost() && !fetchUnapproved) {
+        if (pxt.BrowserUtils.isLocalHost() && !pxt.Util.liveLocalizationEnabled()) {
             return localRequestAsync(url).then(resp => {
                 if (resp.statusCode == 404)
                     return privateRequestAsync({ url, method: "GET" })
