@@ -119,7 +119,7 @@ namespace pxt.Cloud {
     const FORCE_MARKDOWN_UPDATE = MARKDOWN_EXPIRATION * 24 * 7;
     export async function markdownAsync(docid: string, locale?: string): Promise<string> {
         locale = locale || pxt.Util.userLanguage();
-        const fetchUnapproved = pxt.Util.fetchLiveTranslations;
+        const fetchUnapproved = pxt.Util.unapprovedTranslationsEnabled();
         const branch = "";
 
         const db = await pxt.BrowserUtils.translationDbAsync();

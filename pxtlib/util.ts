@@ -1183,9 +1183,7 @@ namespace ts.pxtc.Util {
         code: string;
         pxtBranch: string;
         targetBranch: string;
-        updateStrings?: boolean;
         force?: boolean;
-        fetchUnapproved?: boolean;
     }
 
     export function updateLocalizationAsync(opts: LocalizationUpdateOptions): Promise<void> {
@@ -1194,9 +1192,7 @@ namespace ts.pxtc.Util {
             baseUrl,
             pxtBranch,
             targetBranch,
-            updateStrings,
             force,
-            fetchUnapproved,
         } = opts;
         let { code } = opts;
         code = normalizeLanguageCode(code)[0];
@@ -1207,27 +1203,22 @@ namespace ts.pxtc.Util {
             return Promise.resolve();
         }
 
-        if (fetchUnapproved) {
-            Util.fetchLiveTranslations = true;
-        }
-
         pxt.debug(`loc: ${code}`);
+
+        const liveUpdateStrings = pxt.Util.liveLocalizationEnabled()
         return downloadTranslationsAsync(targetId, baseUrl, code,
-            pxtBranch, targetBranch, updateStrings,
+            pxtBranch, targetBranch, liveUpdateStrings,
             ts.pxtc.Util.TranslationsKind.Editor)
             .then((translations) => {
                 if (translations) {
                     setUserLanguage(code);
                     setLocalizedStrings(translations);
-                    if (updateStrings) {
-                        localizeLive = true;
-                    }
                 }
 
                 // Download api translations
-                return !updateStrings ? ts.pxtc.Util.downloadTranslationsAsync(
+                return liveUpdateStrings ? ts.pxtc.Util.downloadTranslationsAsync(
                     targetId, baseUrl, code,
-                    pxtBranch, targetBranch, updateStrings,
+                    pxtBranch, targetBranch, liveUpdateStrings,
                     ts.pxtc.Util.TranslationsKind.Apis)
                     .then(trs => {
                         if (trs)

@@ -56,14 +56,30 @@ namespace ts.pxtc.Util {
     let _translationsCache: pxt.Map<pxt.Map<string>> = {};
     //let _didSetlocalizations = false;
     //let _didReportLocalizationsNotSet = false;
-    export let localizeLive = false;
-    export let fetchLiveTranslations = false;
+    let localizeLive = false;
+    let allowUnapprovedTranslations = false;
+
+    export function enableLiveLocalizationUpdates() {
+        localizeLive = true;
+    }
+
+    export function liveLocalizationEnabled() {
+        return localizeLive;
+    }
+
+    export function enableUnapprovedTranslations() {
+        allowUnapprovedTranslations = true;
+    }
+
+    export function unapprovedTranslationsEnabled() {
+        return allowUnapprovedTranslations;
+    }
 
     /**
      * Returns the current user language, prepended by "live-" if in live mode
      */
     export function localeInfo(): string {
-        return `${localizeLive ? "live-" : ""}${userLanguage()}`;
+        return `${allowUnapprovedTranslations ? "live-" : ""}${userLanguage()}`;
     }
     /**
      * Returns current user language iSO-code. Default is `en`.

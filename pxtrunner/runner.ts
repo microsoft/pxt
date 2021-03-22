@@ -207,21 +207,23 @@ namespace pxt.runner {
         Util.assert(!!pxt.appTarget);
 
         const href = window.location.href;
-        let updateStrings = false;
-        let fetchUnapproved = false;
         let force = false;
         let lang: string = undefined;
         if (/[&?]translate=1/.test(href) && !pxt.BrowserUtils.isIE()) {
             lang = ts.pxtc.Util.TRANSLATION_LOCALE;
-            updateStrings = true;
             force = true;
-            fetchUnapproved = true;
+            pxt.Util.enableLiveLocalizationUpdates();
+            pxt.Util.enableUnapprovedTranslations();
         } else {
             const cookieValue = /PXT_LANG=(.*?)(?:;|$)/.exec(document.cookie);
             const mlang = /(live)?(force)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(href);
             lang = mlang ? mlang[3] : (cookieValue && cookieValue[1] || pxt.appTarget.appTheme.defaultLocale || (navigator as any).userLanguage || navigator.language);
-            fetchUnapproved = !!mlang?.[1]
-            updateStrings = !pxt.appTarget.appTheme.disableLiveTranslations || fetchUnapproved;
+            if (!!mlang?.[1]) {
+                pxt.Util.enableUnapprovedTranslations();
+            }
+            if (!pxt.appTarget.appTheme.disableLiveTranslations || pxt.Util.unapprovedTranslationsEnabled()) {
+                pxt.Util.enableLiveLocalizationUpdates();
+            }
             force = !!mlang && !!mlang[2];
         }
         const versions = pxt.appTarget.versions;
@@ -234,9 +236,7 @@ namespace pxt.runner {
                 code: lang,
                 pxtBranch: versions ? versions.pxtCrowdinBranch : "",
                 targetBranch: versions ? versions.targetCrowdinBranch : "",
-                updateStrings: updateStrings,
                 force: force,
-                fetchUnapproved: fetchUnapproved
             })
             .then(() => {
                 mainPkg = new pxt.MainPackage(new Host());
@@ -508,14 +508,17 @@ namespace pxt.runner {
         if (localeInfo != pxt.Util.localeInfo()) {
             const localeLiveRx = /^live-/;
             const fetchLive = localeLiveRx.test(localeInfo);
+            if (fetchLive) {
+                pxt.Util.enableUnapprovedTranslations();
+                pxt.Util.enableLiveLocalizationUpdates();
+            }
+
             return pxt.Util.updateLocalizationAsync({
                 targetId: pxt.appTarget.id,
                 baseUrl: pxt.webConfig.commitCdnUrl,
                 code: localeInfo.replace(localeLiveRx, ''),
                 pxtBranch: pxt.appTarget.versions.pxtCrowdinBranch,
                 targetBranch: pxt.appTarget.versions.targetCrowdinBranch,
-                updateStrings: fetchLive,
-                fetchUnapproved: fetchLive,
             });
         }
 

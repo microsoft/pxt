@@ -106,18 +106,19 @@ class AppImpl extends React.Component<AppProps, AppState> {
         const theme = pxt.appTarget.appTheme;
 
         const href = window.location.href;
-        let fetchUnapproved = false;
         let force = false;
         let useLang: string | undefined = undefined;
         if (/[&?]translate=1/.test(href) && !pxt.BrowserUtils.isIE()) {
             useLang = ts.pxtc.Util.TRANSLATION_LOCALE;
-            fetchUnapproved = true;
+            pxt.Util.enableUnapprovedTranslations();
         } else {
             const mlang = /(live)?(force)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
             if (mlang && window.location.hash.indexOf(mlang[0]) >= 0) {
                 pxt.BrowserUtils.changeHash(window.location.hash.replace(mlang[0], ""));
             }
-            fetchUnapproved = !!mlang?.[1];
+            if (!!mlang?.[1]) {
+                pxt.Util.enableUnapprovedTranslations();
+            }
             useLang = mlang ? mlang[3] : (pxt.BrowserUtils.getCookieLang() || theme.defaultLocale || (navigator as any).userLanguage || navigator.language);
             force = !!mlang && !!mlang[2];
         }
@@ -127,6 +128,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
         const targetId = pxt.appTarget.id;
         const pxtBranch = pxt.appTarget.versions.pxtCrowdinBranch;
         const targetBranch = pxt.appTarget.versions.targetCrowdinBranch;
+        pxt.Util.enableLiveLocalizationUpdates();
 
         await updateLocalizationAsync({
             targetId: targetId,
@@ -134,9 +136,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
             code: useLang!,
             pxtBranch: pxtBranch!,
             targetBranch: targetBranch!,
-            updateStrings: true,
             force: force,
-            fetchUnapproved: fetchUnapproved,
         });
 
         if (pxt.Util.isLocaleEnabled(useLang!)) {
@@ -315,9 +315,7 @@ interface LocalizationUpdateOptions {
     code: string;
     pxtBranch: string;
     targetBranch: string;
-    updateStrings?: boolean;
     force?: boolean;
-    fetchUnapproved?: boolean;
 }
 
 async function updateLocalizationAsync(opts: LocalizationUpdateOptions): Promise<void> {
@@ -326,9 +324,7 @@ async function updateLocalizationAsync(opts: LocalizationUpdateOptions): Promise
         baseUrl,
         pxtBranch,
         targetBranch,
-        updateStrings,
         force,
-        fetchUnapproved,
     } = opts;
     let { code } = opts;
 
@@ -338,16 +334,13 @@ async function updateLocalizationAsync(opts: LocalizationUpdateOptions): Promise
         code,
         pxtBranch,
         targetBranch,
-        !!updateStrings,
+        pxt.Util.liveLocalizationEnabled(),
         ts.pxtc.Util.TranslationsKind.SkillMap
     );
 
     pxt.Util.setUserLanguage(code);
     if (translations) {
         pxt.Util.setLocalizedStrings(translations);
-        if (updateStrings) {
-            pxt.Util.localizeLive = true;
-        }
     }
 }
 
