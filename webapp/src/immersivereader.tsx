@@ -62,10 +62,10 @@ function beautifyText(content: string): string {
         );
     }
 
-    // replace new lines with break tags so that they don't get smooshed
+    // replace consecutive new lines with break tags so that they don't get smooshed
     function cleanNewLines(content: string): string {
         return content.replace(
-            /[\r\n]+/gum,
+            /[\r\n]{2,}/gum,
             `<br />`
         );
     }
