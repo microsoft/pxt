@@ -109,17 +109,19 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
             const mapIds = Object.keys(maps);
             let completed = 0;
             let total = 0;
-            let rewards = 0;
+            let completedRewards = 0;
+            let totalRewards = 0;
             mapIds.forEach(mapId => {
                 const activities = maps[mapId].activities;
                 const activityIds = Object.keys(activities).filter(el => activities[el].kind == "activity");
                 activityIds.forEach(activityId => ++total && isActivityCompleted(user, pageSourceUrl, mapId, activityId) && ++completed);
 
-                rewards += Object.keys(activities).filter(el => isRewardNode(activities[el])).length;
+                const rewardIds = Object.keys(activities).filter(el => isRewardNode(activities[el]));
+                rewardIds.forEach(rewardId => ++totalRewards && isActivityCompleted(user, pageSourceUrl, mapId, rewardId) && ++completedRewards);
             })
 
             details.push(`${completed}/${total} ${lf("Complete")}`);
-            details.push(rewards ? `${rewards} ${lf("Reward(s)")}` : "")
+            details.push(totalRewards ? `${completedRewards}/${totalRewards} ${lf("Reward(s)")}` : "")
         }
     }
 
