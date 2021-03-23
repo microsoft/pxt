@@ -4752,7 +4752,6 @@ document.addEventListener("DOMContentLoaded", () => {
             if (/[&?]translate=1/.test(href) && !pxt.BrowserUtils.isIE()) {
                 console.log(`translation mode`);
                 force = true;
-                pxt.Util.enableUnapprovedTranslations();
                 pxt.Util.enableLiveLocalizationUpdates();
                 useLang = ts.pxtc.Util.TRANSLATION_LOCALE;
             } else {
@@ -4766,9 +4765,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 const cookieLang = pxt.BrowserUtils.getCookieLang()
                 // chose the user's language using the following ordering:
                 useLang = hashLang || cloudLang || cookieLang || theme.defaultLocale || (navigator as any).userLanguage || navigator.language;
-                if (requestLive) {
-                    pxt.Util.enableUnapprovedTranslations();
-                }
+
                 const locstatic = /staticlang=1/i.test(window.location.href);
                 const stringUpdateDisabled = locstatic || pxt.BrowserUtils.isPxtElectron() || theme.disableLiveTranslations;
                 if (!stringUpdateDisabled || requestLive) {

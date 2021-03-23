@@ -57,7 +57,6 @@ namespace ts.pxtc.Util {
     //let _didSetlocalizations = false;
     //let _didReportLocalizationsNotSet = false;
     let localizeLive = false;
-    let allowUnapprovedTranslations = false;
 
     export function enableLiveLocalizationUpdates() {
         localizeLive = true;
@@ -67,19 +66,11 @@ namespace ts.pxtc.Util {
         return localizeLive;
     }
 
-    export function enableUnapprovedTranslations() {
-        allowUnapprovedTranslations = true;
-    }
-
-    export function unapprovedTranslationsEnabled() {
-        return allowUnapprovedTranslations;
-    }
-
     /**
      * Returns the current user language, prepended by "live-" if in live mode
      */
     export function localeInfo(): string {
-        return `${allowUnapprovedTranslations ? "live-" : ""}${userLanguage()}`;
+        return userLanguage();
     }
     /**
      * Returns current user language iSO-code. Default is `en`.

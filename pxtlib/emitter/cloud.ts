@@ -119,7 +119,6 @@ namespace pxt.Cloud {
     const FORCE_MARKDOWN_UPDATE = MARKDOWN_EXPIRATION * 24 * 7;
     export async function markdownAsync(docid: string, locale?: string): Promise<string> {
         locale = locale || pxt.Util.userLanguage();
-        const fetchUnapproved = pxt.Util.unapprovedTranslationsEnabled();
         const branch = "";
 
         const db = await pxt.BrowserUtils.translationDbAsync();
@@ -127,7 +126,7 @@ namespace pxt.Cloud {
 
         const downloadAndSetMarkdownAsync = async () => {
             try {
-                const r = await downloadMarkdownAsync(docid, locale, fetchUnapproved, entry?.etag);
+                const r = await downloadMarkdownAsync(docid, locale, entry?.etag);
                 await db.setAsync(locale, docid, branch, r.etag, undefined, r.md || entry?.md);
                 return r.md;
             } catch {
@@ -160,7 +159,7 @@ namespace pxt.Cloud {
         return downloadAndSetMarkdownAsync();
     }
 
-    function downloadMarkdownAsync(docid: string, locale?: string, fetchUnapproved?: boolean, etag?: string): Promise<{ md: string; etag?: string; }> {
+    function downloadMarkdownAsync(docid: string, locale?: string, etag?: string): Promise<{ md: string; etag?: string; }> {
         const packaged = pxt.webConfig?.isStatic;
         const targetVersion = pxt.appTarget.versions && pxt.appTarget.versions.target || '?';
         let url: string;
@@ -181,7 +180,6 @@ namespace pxt.Cloud {
         }
         if (!packaged && locale != "en") {
             url += `&lang=${encodeURIComponent(locale)}`
-            if (fetchUnapproved) url += "&live=1";
         }
         if (pxt.BrowserUtils.isLocalHost() && !pxt.Util.liveLocalizationEnabled()) {
             return localRequestAsync(url).then(resp => {

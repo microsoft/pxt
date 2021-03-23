@@ -110,14 +110,10 @@ class AppImpl extends React.Component<AppProps, AppState> {
         let useLang: string | undefined = undefined;
         if (/[&?]translate=1/.test(href) && !pxt.BrowserUtils.isIE()) {
             useLang = ts.pxtc.Util.TRANSLATION_LOCALE;
-            pxt.Util.enableUnapprovedTranslations();
         } else {
             const mlang = /(live)?(force)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
             if (mlang && window.location.hash.indexOf(mlang[0]) >= 0) {
                 pxt.BrowserUtils.changeHash(window.location.hash.replace(mlang[0], ""));
-            }
-            if (!!mlang?.[1]) {
-                pxt.Util.enableUnapprovedTranslations();
             }
             useLang = mlang ? mlang[3] : (pxt.BrowserUtils.getCookieLang() || theme.defaultLocale || (navigator as any).userLanguage || navigator.language);
             force = !!mlang && !!mlang[2];

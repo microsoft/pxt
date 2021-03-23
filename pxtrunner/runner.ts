@@ -213,15 +213,12 @@ namespace pxt.runner {
             lang = ts.pxtc.Util.TRANSLATION_LOCALE;
             force = true;
             pxt.Util.enableLiveLocalizationUpdates();
-            pxt.Util.enableUnapprovedTranslations();
         } else {
             const cookieValue = /PXT_LANG=(.*?)(?:;|$)/.exec(document.cookie);
             const mlang = /(live)?(force)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(href);
             lang = mlang ? mlang[3] : (cookieValue && cookieValue[1] || pxt.appTarget.appTheme.defaultLocale || (navigator as any).userLanguage || navigator.language);
-            if (!!mlang?.[1]) {
-                pxt.Util.enableUnapprovedTranslations();
-            }
-            if (!pxt.appTarget.appTheme.disableLiveTranslations || pxt.Util.unapprovedTranslationsEnabled()) {
+
+            if (!pxt.appTarget.appTheme.disableLiveTranslations || !!mlang?.[1]) {
                 pxt.Util.enableLiveLocalizationUpdates();
             }
             force = !!mlang && !!mlang[2];
@@ -509,7 +506,6 @@ namespace pxt.runner {
             const localeLiveRx = /^live-/;
             const fetchLive = localeLiveRx.test(localeInfo);
             if (fetchLive) {
-                pxt.Util.enableUnapprovedTranslations();
                 pxt.Util.enableLiveLocalizationUpdates();
             }
 
