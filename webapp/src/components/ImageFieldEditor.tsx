@@ -448,7 +448,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
     protected showMyAssets = () => {
         this.setImageEditorShortcutsEnabled(false);
         tickImageEditorEvent("gallery-my-assets");
-        this.userAssets = getAssets();
+        this.userAssets = getAssets(undefined, undefined, this.options.temporaryAssets);
         this.setState({
             currentView: "my-assets",
             tileGalleryVisible: false
@@ -483,7 +483,16 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
                     pxt.sprite.updateTilemapReferencesFromResult(project, this.asset);
                 }
 
-                project.updateAsset(this.asset);
+                if (this.asset.meta.displayName) {
+                    project.updateAsset(this.asset);
+                }
+                else if (!asset.meta.displayName) {
+                    // If both are temporary, copy by value
+                    asset = {
+                        ...asset,
+                        id: this.asset.id
+                    }
+                }
 
                 if (asset.type === pxt.AssetType.Tilemap) {
                     pxt.sprite.addMissingTilemapTilesAndReferences(project, asset);

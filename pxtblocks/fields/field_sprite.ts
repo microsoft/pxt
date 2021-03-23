@@ -51,7 +51,18 @@ namespace pxtblockly {
                 return undefined;
             }
 
-            const newAsset = project.createNewProjectImage(bmp.data());
+            const data = bmp.data();
+
+            const newAsset: pxt.ProjectImage = {
+                internalID: -1,
+                id: this.sourceBlock_.id,
+                type: pxt.AssetType.Image,
+                jresData: pxt.sprite.base64EncodeBitmap(data),
+                meta: {
+                },
+                bitmap: data
+            };
+
             return newAsset;
         }
 
