@@ -49,7 +49,7 @@ namespace pxt.tutorial {
     function computeBodyMetadata(body: string) {
         // collect code and infer editor
         let editor: string = undefined;
-        const regex = /``` *(sim|block|blocks|filterblocks|spy|ghost|typescript|ts|js|javascript|template|python|jres|assetjson)?\s*\n([\s\S]*?)\n```/gmi;
+        const regex = /``` *(sim|block|blocks|filterblocks|spy|ghost|typescript|ts|js|javascript|template|python|jres|assetjson)\s*\n([\s\S]*?)\n```/gmi;
         let jres: string;
         let code: string[] = [];
         let templateCode: string;
