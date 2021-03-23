@@ -2700,6 +2700,14 @@ export class ProjectView
                             });
                         }
                     }
+
+                    // restart sim early before deployment
+                    if (simRestart) {
+                        this.runSimulator();
+                        simRestart = false
+                    }
+
+                    // hardware deployment
                     let deployStartTime = Date.now()
                     pxt.tickEvent("deploy.start")
                     return pxt.commands.deployAsync(resp, {
