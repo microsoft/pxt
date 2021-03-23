@@ -1460,6 +1460,7 @@ export class ProjectView
                 return compiler.newProjectAsync();
             }).then(() => compiler.applyUpgradesAsync())
             .then(() => this.loadTutorialJresCodeAsync())
+            .then(() => this.loadTutorialCustomTsAsync())
             .then(() => this.loadTutorialTemplateCodeAsync())
             .then(() => {
                 const main = pkg.getEditorPkg(pkg.mainPkg)
@@ -1689,6 +1690,15 @@ export class ProjectView
         }
 
         return pkg.mainEditorPkg().buildAssetsAsync();
+    }
+
+    private loadTutorialCustomTsAsync(): Promise<void> {
+        const header = pkg.mainEditorPkg().header;
+        if (!header || !header.tutorial || !header.tutorial.customTs)
+            return Promise.resolve();
+
+        const customTs = header.tutorial.customTs;
+        return this.updateFileAsync(pxt.TUTORIAL_CUSTOM_TS, customTs);
     }
 
     removeProject() {
