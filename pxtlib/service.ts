@@ -638,9 +638,12 @@ namespace ts.pxtc {
                 const altLocSrc = fn.attributes.useLoc || fn.attributes.blockAliasFor;
                 const altLocSrcFn = altLocSrc && apis.byQName[altLocSrc];
 
-                const attrLocs = fn.attributes.locs || {};
-                const locJsDoc = loc[fn.qName] || attrLocs[attrJsLocsKey]
-                    || (altLocSrcFn && (loc[altLocSrcFn.qName] || altLocSrcFn.attributes.locs?.[attrJsLocsKey]));
+                const lookupLoc = (locSuff: string, attrKey: string) => {
+                    return loc[fn.qName + locSuff] || fn.attributes.locs?.[attrKey]
+                        || (altLocSrcFn && (loc[altLocSrcFn.qName + locSuff] || altLocSrcFn.attributes.locs?.[attrKey]));
+                }
+
+                const locJsDoc = lookupLoc("", attrJsLocsKey);
                 if (locJsDoc) {
                     fn.attributes._untranslatedJsDoc = fn.attributes.jsDoc;
                     fn.attributes.jsDoc = locJsDoc;
@@ -649,8 +652,7 @@ namespace ts.pxtc {
                 if (fn.parameters) {
                     fn.parameters.forEach(pi => {
                         const paramSuff = `|param|${pi.name}`;
-                        const paramLocs = loc[`${fn.qName}${paramSuff}`] || attrLocs[`${langLower}${paramSuff}`]
-                            || altLocSrcFn && (loc[`${altLocSrcFn.qName}${paramSuff}`] || altLocSrcFn.attributes.locs?.[`${langLower}${paramSuff}`]);
+                        const paramLocs = lookupLoc(paramSuff, langLower + paramSuff);
 
                         if (paramLocs) {
                             pi.description = paramLocs;
@@ -659,7 +661,7 @@ namespace ts.pxtc {
                 }
 
                 const nsDoc = loc['{id:category}' + Util.capitalize(fn.qName)];
-                let locBlock = loc[`${fn.qName}|block`] || attrLocs[attrBlockLocsKey];
+                let locBlock = loc[`${fn.qName}|block`] || fn.attributes.locs?.[attrBlockLocsKey];
 
                 if (!locBlock && altLocSrcFn) {
                     const otherTranslation = loc[`${altLocSrcFn.qName}|block`] || altLocSrcFn.attributes.locs?.[attrBlockLocsKey];
