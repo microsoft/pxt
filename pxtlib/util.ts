@@ -1216,14 +1216,14 @@ namespace ts.pxtc.Util {
                 }
 
                 // Download api translations
-                return liveUpdateStrings ? ts.pxtc.Util.downloadTranslationsAsync(
+                return ts.pxtc.Util.downloadTranslationsAsync(
                     targetId, baseUrl, code,
                     pxtBranch, targetBranch, liveUpdateStrings,
                     ts.pxtc.Util.TranslationsKind.Apis)
                     .then(trs => {
                         if (trs)
                             ts.pxtc.apiLocalizationStrings = trs;
-                    }) : Promise.resolve();
+                    });
             });
     }
 
