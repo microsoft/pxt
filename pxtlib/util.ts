@@ -1177,7 +1177,24 @@ namespace ts.pxtc.Util {
         return false;
     }
 
-    export function updateLocalizationAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean, force?: boolean): Promise<void> {
+    interface LocalizationUpdateOptions {
+        targetId: string;
+        baseUrl: string;
+        code: string;
+        pxtBranch: string;
+        targetBranch: string;
+        force?: boolean;
+    }
+
+    export function updateLocalizationAsync(opts: LocalizationUpdateOptions): Promise<void> {
+        const {
+            targetId,
+            baseUrl,
+            pxtBranch,
+            targetBranch,
+            force,
+        } = opts;
+        let { code } = opts;
         code = normalizeLanguageCode(code)[0];
         if (code === "en-US")
             code = "en"; // special case for built-in language
@@ -1187,27 +1204,26 @@ namespace ts.pxtc.Util {
         }
 
         pxt.debug(`loc: ${code}`);
+
+        const liveUpdateStrings = pxt.Util.liveLocalizationEnabled()
         return downloadTranslationsAsync(targetId, baseUrl, code,
-            pxtBranch, targetBranch, live,
+            pxtBranch, targetBranch, liveUpdateStrings,
             ts.pxtc.Util.TranslationsKind.Editor)
             .then((translations) => {
                 if (translations) {
                     setUserLanguage(code);
                     setLocalizedStrings(translations);
-                    if (live) {
-                        localizeLive = true;
-                    }
                 }
 
                 // Download api translations
-                return !live ? ts.pxtc.Util.downloadTranslationsAsync(
+                return ts.pxtc.Util.downloadTranslationsAsync(
                     targetId, baseUrl, code,
-                    pxtBranch, targetBranch, live,
+                    pxtBranch, targetBranch, liveUpdateStrings,
                     ts.pxtc.Util.TranslationsKind.Apis)
                     .then(trs => {
                         if (trs)
                             ts.pxtc.apiLocalizationStrings = trs;
-                    }) : Promise.resolve();
+                    });
             });
     }
 

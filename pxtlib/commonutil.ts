@@ -56,7 +56,15 @@ namespace ts.pxtc.Util {
     let _translationsCache: pxt.Map<pxt.Map<string>> = {};
     //let _didSetlocalizations = false;
     //let _didReportLocalizationsNotSet = false;
-    export let localizeLive = false;
+    let localizeLive = false;
+
+    export function enableLiveLocalizationUpdates() {
+        localizeLive = true;
+    }
+
+    export function liveLocalizationEnabled() {
+        return localizeLive;
+    }
 
     /**
      * Returns the current user language, prepended by "live-" if in live mode

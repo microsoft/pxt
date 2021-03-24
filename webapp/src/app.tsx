@@ -4745,10 +4745,9 @@ document.addEventListener("DOMContentLoaded", () => {
     Promise.resolve()
         .then(async () => {
             const href = window.location.href;
-            let live = false;
             let force = false;
             const cloudLang = auth.getState()?.preferences?.language;
-            // kick of a user preferences check; if the language is different we'll reload
+            // kick of a user preferences check; if the language is different we'll request they reload
             auth.initialUserPreferences().then((pref) => {
                 const cookieLang = pxt.BrowserUtils.getCookieLang()
                 if (cookieLang && pref && pref.language != cookieLang) {
@@ -4760,46 +4759,52 @@ document.addEventListener("DOMContentLoaded", () => {
             let useLang: string = undefined;
             if (/[&?]translate=1/.test(href) && !pxt.BrowserUtils.isIE()) {
                 console.log(`translation mode`);
-                live = force = true;
+                force = true;
+                pxt.Util.enableLiveLocalizationUpdates();
                 useLang = ts.pxtc.Util.TRANSLATION_LOCALE;
             } else {
                 const hashLangMatch = /(live)?(force)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
                 if (hashLangMatch && window.location.hash.indexOf(hashLangMatch[0]) >= 0) {
                     pxt.BrowserUtils.changeHash(window.location.hash.replace(hashLangMatch[0], ""));
                 }
-                const hashLang = hashLangMatch ? hashLangMatch[3] : undefined
+                const requestLive = !!hashLangMatch?.[1];
+                const requestedForce = !!hashLangMatch?.[2];
+                const hashLang = hashLangMatch?.[3];
                 const cookieLang = pxt.BrowserUtils.getCookieLang()
                 // chose the user's language using the following ordering:
                 useLang = hashLang || cloudLang || cookieLang || theme.defaultLocale || (navigator as any).userLanguage || navigator.language;
+
                 const locstatic = /staticlang=1/i.test(window.location.href);
-                live = !(locstatic || pxt.BrowserUtils.isPxtElectron() || theme.disableLiveTranslations) || (hashLangMatch && !!hashLangMatch[1]);
-                force = !!hashLangMatch && !!hashLangMatch[2];
+                const stringUpdateDisabled = locstatic || pxt.BrowserUtils.isPxtElectron() || theme.disableLiveTranslations;
+                if (!stringUpdateDisabled || requestLive) {
+                    pxt.Util.enableLiveLocalizationUpdates();
+                }
+                force = requestedForce;
             }
             const targetId = pxt.appTarget.id;
             const baseUrl = config.commitCdnUrl;
             const pxtBranch = pxt.appTarget.versions.pxtCrowdinBranch;
             const targetBranch = pxt.appTarget.versions.targetCrowdinBranch;
-            return Util.updateLocalizationAsync(
-                targetId,
-                baseUrl,
-                useLang,
-                pxtBranch,
-                targetBranch,
-                live,
-                force)
-                .then(() => {
+            return Util.updateLocalizationAsync({
+                    targetId: targetId,
+                    baseUrl: baseUrl,
+                    code: useLang,
+                    pxtBranch: pxtBranch,
+                    targetBranch: targetBranch,
+                    force: force,
+                }).then(() => {
                     if (pxt.Util.isLocaleEnabled(useLang)) {
                         pxt.BrowserUtils.setCookieLang(useLang);
                         lang.setInitialLang(useLang);
                     } else {
                         pxt.tickEvent("unavailablelocale", { lang: useLang, force: (force ? "true" : "false") });
                     }
-                    pxt.tickEvent("locale", { lang: pxt.Util.userLanguage(), live: (live ? "true" : "false") });
+                    pxt.tickEvent("locale", { lang: pxt.Util.userLanguage(), live: (pxt.Util.liveLocalizationEnabled() ? "true" : "false") });
                     // Download sim translations and save them in the sim
                     // don't wait!
-                    ts.pxtc.Util.downloadTranslationsAsync(
+                    Util.downloadTranslationsAsync(
                         targetId, baseUrl, useLang,
-                        pxtBranch, targetBranch, live, ts.pxtc.Util.TranslationsKind.Sim)
+                        pxtBranch, targetBranch, pxt.Util.liveLocalizationEnabled(), Util.TranslationsKind.Sim)
                         .then(simStrings => simStrings && simulator.setTranslations(simStrings))
                 });
         })
