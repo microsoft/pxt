@@ -345,11 +345,26 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
         if (partialSync) {
             // during a partial sync, get the full files for each cloud project and
             // save them to our temporary cache
-            await Promise.all(hdrs.map(h => getWithCacheAsync(h)))
+            const res = await Promise.all(hdrs.map(h => getWithCacheAsync(h)))
+            // check for failures
+            hdrs.forEach((_, i) => {
+                if (!res[i]) {
+                    pxt.tickEvent(`identity.sync.failed.prefetchProjectFailed`)
+                }
+            })
         }
-        const remoteHeaders = partialSync
-            ? U.values(remoteFiles).map(f => f.header) // a partial set of cloud headers
-            : await listAsync() // all cloud headers
+        let remoteHeaders: Header[];
+        if (partialSync) {
+            remoteHeaders = U.values(remoteFiles).map(f => f.header) // a partial set of cloud headers
+        }
+        else {
+            try {
+                remoteHeaders = await listAsync() // all cloud headers
+            } catch (e) {
+                pxt.tickEvent(`identity.sync.failed.listFailed`)
+                throw e
+            }
+        }
         const numDiff = remoteHeaders.length - localCloudHeaders.length
         if (numDiff !== 0) {
             pxt.log(`${Math.abs(numDiff)} ${numDiff > 0 ? 'more' : 'fewer'} projects found in the cloud.`);
@@ -383,12 +398,19 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
                 if (areDifferentVersions || !local.cloudCurrent) {
                     const projShorthand = `'${local.name}' (${local.id.substr(0, 5)}...)`;
                     const remoteFile = await getWithCacheAsync(local);
+                    if (!remoteFile) {
+                        pxt.tickEvent(`identity.sync.failed.getProjectFailed`)
+                        throw `Failed to download ${remote.id} from the cloud.`
+                    }
                     // delete always wins no matter what.
                     if (local.isDeleted) {
                         // Mark remote copy as deleted.
                         pxt.debug(`Propegating ${projShorthand} delete to cloud.`)
                         const newHdr = await toCloud(local, remoteFile.version)
-                        U.assert(!!newHdr, `Failed to save ${local.id} to the cloud.`);
+                        if (!newHdr) {
+                            pxt.tickEvent(`identity.sync.failed.localDeleteUpdatedCloudFailed`)
+                            throw `Failed to save ${local.id} to the cloud.`
+                        }
                         pxt.tickEvent(`identity.sync.localDeleteUpdatedCloud`)
                     }
                     if (remote.isDeleted) {
@@ -407,7 +429,10 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
                         // Local has unpushed changes, push them now
                         pxt.debug(`local project '${local.name}' has changes that will be pushed to the cloud.`)
                         const newHdr = await toCloud(local, remoteFile.version);
-                        U.assert(!!newHdr, `Failed to save ${local.id} to the cloud.`);
+                        if (!newHdr) {
+                            pxt.tickEvent(`identity.sync.failed.localProjectUpdatedToCloudFailed`)
+                            throw `Failed to save ${local.id} to the cloud.`
+                        }
                         pxt.tickEvent(`identity.sync.noConflict.localProjectUpdatedToCloud`)
                     } else {
                         // Conflict. Local changes exist and we aren't on the latest cloud version.
@@ -438,7 +463,10 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
                 // Local cloud synced project exists, but it didn't make it to the server,
                 // so let's push it now.
                 const newHdr = await toCloud(local, null)
-                U.assert(!!newHdr, `Failed to save ${local.id} to the cloud.`)
+                if (!newHdr) {
+                    pxt.tickEvent(`identity.sync.failed.orphanedLocalProjectPushedToCloudFailed`)
+                    throw `Failed to save ${local.id} to the cloud.`
+                }
             }
             else {
                 // no remote verison so nothing to do
@@ -449,13 +477,23 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
             .map(async (remote) => {
                 // Project exists remotely and not locally, download it.
                 const remoteFile = await getWithCacheAsync(remote);
+                if (!remoteFile) {
+                    pxt.tickEvent(`identity.sync.failed.importCloudProjectFailed`)
+                    throw `Failed to download ${remote.id} from the cloud.`
+                }
                 pxt.debug(`importing new cloud project '${remoteFile.header.name}' (${remoteFile.header.id})`)
                 const res = await fromCloud(null, remoteFile)
                 pxt.tickEvent(`identity.sync.importCloudProject`)
                 didProjectCountChange = true;
             })]
 
-        await Promise.all(tasks);
+        try {
+            await Promise.all(tasks);
+        }
+        catch (e) {
+            pxt.tickEvent(`identity.sync.failed.taskFailed`)
+            throw e
+        }
 
         // reset cloud state sync metadata if there is any
         getLocalCloudHeaders(hdrs).forEach(hdr => {
@@ -468,6 +506,11 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
         const noCloudProjs = remoteHeaders.length === 0
         const cloudSyncSuccess = partialSync || noCloudProjs || workspace.getLastCloudSync() >= syncStart
         if (!cloudSyncSuccess) {
+            pxt.tickEvent(`identity.sync.failed.syncTimeCheckFailed`, {
+                partialSync: partialSync ? 1 : 0,
+                numCloudProjs: remoteHeaders.length,
+                lastSyncMinusSyncStart: workspace.getLastCloudSync() - syncStart,
+            });
             U.assert(false, 'Cloud sync failed!');
         }
 
