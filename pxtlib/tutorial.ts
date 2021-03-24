@@ -94,6 +94,7 @@ namespace pxt.tutorial {
                         break;
                     case "customts":
                         customTs = m2;
+                        m2 = "";
                         break;
                 }
                 code.push(m1 == "python" ? `\n${m2}\n` : `{\n${m2}\n}`);
