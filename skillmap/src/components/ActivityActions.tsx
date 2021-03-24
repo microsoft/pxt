@@ -1,20 +1,23 @@
 import * as React from "react";
 import { connect } from 'react-redux';
 
-import { dispatchOpenActivity, dispatchShowRestartActivityWarning } from '../actions/dispatch';
+import { dispatchOpenActivity, dispatchShowRestartActivityWarning, dispatchShowShareModal } from '../actions/dispatch';
 
 import { ActivityStatus } from '../lib/skillMapUtils';
 import { tickEvent } from '../lib/browserUtils';
+import { editorUrl } from "./makecodeFrame";
 
 interface OwnProps {
     mapId: string;
     activityId: string;
     status?: ActivityStatus;
+    completedHeaderId?: string;
 }
 
 interface DispatchProps {
     dispatchOpenActivity: (mapId: string, activityId: string) => void;
     dispatchShowRestartActivityWarning: (mapId: string, activityId: string) => void;
+    dispatchShowShareModal: (mapId: string, activityId: string) => void;
 }
 
 type ActivityActionsProps = OwnProps & DispatchProps;
@@ -56,13 +59,26 @@ export class ActivityActionsImpl extends React.Component<ActivityActionsProps> {
     }
 
     protected handleRestartButtonClick = () => {
-        const { mapId, activityId, dispatchShowRestartActivityWarning } = this.props;
+        const { mapId, activityId, status, dispatchShowRestartActivityWarning } = this.props;
+        tickEvent("skillmap.sidebar.restart", { path: mapId, activity: activityId, status: status || "" });
         dispatchShowRestartActivityWarning(mapId, activityId);
     }
 
+    protected handleShareButtonClick = () => {
+        const { mapId, activityId, status, dispatchShowShareModal } = this.props;
+        tickEvent("skillmap.sidebar.share", { path: mapId, activity: activityId, status: status || "" });
+        dispatchShowShareModal(mapId, activityId);
+    }
+
+    protected handleSaveToProjectsClick = () => {
+        const { completedHeaderId, mapId, activityId } = this.props;
+        tickEvent("skillmap.export", { path: mapId || "", activity: activityId || "" });
+        window.open(`${editorUrl}#skillmapimport:${completedHeaderId}`)
+    }
+
     render() {
-        const { status } = this.props;
-        const showRestart = (status && status !== "notstarted" && status !== "locked");
+        const { status, completedHeaderId } = this.props;
+        const activityStarted = (status && status !== "notstarted" && status !== "locked");
 
         if (status === "locked") return <div />
 
@@ -70,8 +86,14 @@ export class ActivityActionsImpl extends React.Component<ActivityActionsProps> {
             <div className="action-button" role="button" onClick={this.handleActionButtonClick}>
                 {this.getActivityActionText()}
             </div>
-            {showRestart && <div className="action-button" role="button" onClick={this.handleRestartButtonClick}>
-                {lf("RESTART")}
+            {activityStarted && <div className="action-button" role="button" onClick={this.handleRestartButtonClick}>
+                {lf("Restart")}
+            </div>}
+            {activityStarted && <div className="action-button" role="button" onClick={this.handleShareButtonClick}>
+                {lf("Share")}
+            </div>}
+            {completedHeaderId && <div className="action-button" role="button" onClick={this.handleSaveToProjectsClick}>
+                {lf("Save to My Projects")}
             </div>}
         </div>
     }
@@ -79,7 +101,8 @@ export class ActivityActionsImpl extends React.Component<ActivityActionsProps> {
 
 const mapDispatchToProps = {
     dispatchOpenActivity,
-    dispatchShowRestartActivityWarning
+    dispatchShowRestartActivityWarning,
+    dispatchShowShareModal
 }
 
 export const ActivityActions = connect<{}, DispatchProps, OwnProps>(null, mapDispatchToProps)(ActivityActionsImpl);

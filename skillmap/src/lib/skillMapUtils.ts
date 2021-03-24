@@ -1,10 +1,11 @@
-import { getSkillmapIdentifier } from "./browserUtils";
+import { parseHash, getDocsIdentifier, getGithubIdentifier } from "./browserUtils";
 
 export type ActivityStatus = "locked" | "notstarted" | "inprogress" | "completed" | "restarted";
 export interface ActivityStatusInfo {
     status: ActivityStatus;
     currentStep?: number;
     maxSteps?: number;
+    completedHeadedId?: string;
 }
 
 export function isMapCompleted(user: UserState, pageSource: string, map: SkillMap, skipActivity?: string) {
@@ -38,6 +39,7 @@ export function getActivityStatus(user: UserState, pageSource: string, map: Skil
     let currentStep: number | undefined;
     let maxSteps: number | undefined;
     let status: ActivityStatus = isUnlocked ? "notstarted" : "locked";
+    let completedHeadedId: string | undefined;
     if (user) {
         if (map && pageSource && !isMapUnlocked(user, map, pageSource)) {
             status = "locked";
@@ -49,6 +51,7 @@ export function getActivityStatus(user: UserState, pageSource: string, map: Skil
                 if (progress.isCompleted) {
                     status = (progress.currentStep && progress.maxSteps && progress.currentStep < progress.maxSteps) ?
                         "restarted" : "completed";
+                    completedHeadedId = progress.headerId;
                 }
                 else if (progress.headerId) {
                     status = "inprogress";
@@ -59,7 +62,7 @@ export function getActivityStatus(user: UserState, pageSource: string, map: Skil
         }
     }
 
-    return { status, currentStep, maxSteps };
+    return { status, currentStep, maxSteps, completedHeadedId };
 }
 
 export function getCompletedTags(user: UserState, pageSource: string, maps: SkillMap[]) {
@@ -124,6 +127,14 @@ export function lookupPreviousActivityStates(user: UserState, pageSource: string
         .filter(a => !!a) as ActivityState[];
 }
 
+// Looks up the most recently completed (user clicked "Finish") parent
+export function lookupPreviousCompletedActivityState(user: UserState, pageSource: string, map: SkillMap, activityId: string) {
+    const previous = lookupPreviousActivityStates(user, pageSource, map, activityId)
+        .filter(state => state?.isCompleted && state.maxSteps === state.currentStep)
+        .sort((a, b) => (b.completedTime || 0) - (a.completedTime || 0));
+    return previous?.[0]
+}
+
 export function flattenRewardNodeChildren(node: MapNode): MapNode[] {
     if (!isRewardNode(node)) {
         return node.next;
@@ -175,10 +186,33 @@ export function applyUserMigrations(user: UserState, pageSource: string, alterna
     if (alternateSources.length === 0) return user;
 
     const progress: { [key: string]: MapState } = user.mapProgress[pageSource] || {};
-    alternateSources.forEach(sourceUrl => {
-        let { identifier } = getSkillmapIdentifier(pxt.github.parseRepoId(sourceUrl));
+    alternateSources.forEach(sourcePath => {
+        const { cmd, arg } = parseHash(sourcePath);
+        let identifier = arg;
+        switch (cmd) {
+            case "github":
+                const parsed = pxt.github.parseRepoId(arg);
+                const ghId = parsed && getGithubIdentifier(parsed);
+                identifier = ghId?.identifier || arg;
+                break;
+            case "docs":
+                identifier = getDocsIdentifier(arg);
+                break;
+        }
+
         let oldProgress = user.mapProgress[identifier];
-        if (oldProgress) Object.keys(oldProgress).forEach(mapId => { if (!progress[mapId]) progress[mapId] = oldProgress[mapId] });
+        if (oldProgress) Object.keys(oldProgress).forEach(mapId => {
+            if (!progress[mapId]) {
+                progress[mapId] = oldProgress[mapId];
+            } else {
+                const activityProgress = oldProgress[mapId].activityState;
+                Object.keys(activityProgress).forEach(activityId => {
+                    if (!progress[mapId].activityState[activityId]) {
+                        progress[mapId].activityState[activityId] = activityProgress[activityId];
+                    }
+                })
+            }
+        });
     })
 
     return {

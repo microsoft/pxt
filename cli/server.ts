@@ -8,6 +8,8 @@ import * as hid from './hid';
 import * as net from 'net';
 import * as crowdin from './crowdin';
 
+import { promisify } from "util";
+
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
 
@@ -59,11 +61,11 @@ function setupProjectsDir() {
     nodeutil.mkdirP(userProjectsDir);
 }
 
-const statAsync = Promise.promisify(fs.stat)
-const readdirAsync = Promise.promisify(fs.readdir)
-const readFileAsync = Promise.promisify(fs.readFile)
-const writeFileAsync: any = Promise.promisify(fs.writeFile)
-const unlinkAsync: any = Promise.promisify(fs.unlink)
+const statAsync = promisify(fs.stat)
+const readdirAsync = promisify(fs.readdir)
+const readFileAsync = promisify(fs.readFile)
+const writeFileAsync: any = promisify(fs.writeFile)
+const unlinkAsync: any = promisify(fs.unlink)
 
 function existsAsync(fn: string): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
@@ -92,7 +94,7 @@ function readAssetsAsync(logicalDirname: string): Promise<any> {
     /* tslint:enable:no-http-string */
     return readdirAsync(dirname)
         .catch(err => [])
-        .then(res => Promise.map(res, fn => statAsync(path.join(dirname, fn)).then(res => ({
+        .then(res => U.promiseMapAll(res, fn => statAsync(path.join(dirname, fn)).then(res => ({
             name: fn,
             size: res.size,
             url: pref + fn
@@ -192,7 +194,7 @@ function writePkgAsync(logicalDirname: string, data: FsPkg) {
 
     nodeutil.mkdirP(dirname)
 
-    return Promise.map(data.files, f =>
+    return U.promiseMapAll(data.files, f =>
         readFileAsync(path.join(dirname, f.name))
             .then(buf => {
                 if (f.name == pxt.CONFIG_NAME) {
@@ -215,7 +217,7 @@ function writePkgAsync(logicalDirname: string, data: FsPkg) {
                 }
             }, err => { }))
         // no conflict, proceed with writing
-        .then(() => Promise.map(data.files, f => {
+        .then(() => U.promiseMapAll(data.files, f => {
             let d = f.name.replace(/\/[^\/]*$/, "")
             if (d != f.name)
                 nodeutil.mkdirP(path.join(dirname, d))
@@ -240,7 +242,7 @@ function returnDirAsync(logicalDirname: string, depth: number): Promise<FsPkg[]>
             ispkg ? readPkgAsync(logicalDirname).then<FsPkg[]>(r => [r], err => undefined) : Promise.resolve<FsPkg[]>(undefined),
             // nested packets
             depth <= 1 ? Promise.resolve<FsPkg[]>(undefined)
-                : readdirAsync(dirname).then(files => Promise.map(files, fn =>
+                : readdirAsync(dirname).then(files => U.promiseMapAll(files, fn =>
                     statAsync(path.join(dirname, fn)).then<FsPkg[]>(st => {
                         if (fn[0] != "." && st.isDirectory())
                             return returnDirAsync(logicalDirname + "/" + fn, depth - 1)
@@ -518,7 +520,7 @@ function initSocketServer(wsPort: number, hostname: string) {
                                 return hio.io.sendPacketAsync(U.fromHex(msg.arg.data))
                                     .then(() => ({}))
                             case "talk":
-                                return Promise.mapSeries(msg.arg.cmds, (obj: any) => {
+                                return U.promiseMapAllSeries(msg.arg.cmds, (obj: any) => {
                                     pxt.debug(`hid talk ${obj.cmd}`)
                                     return hio.talkAsync(obj.cmd, U.fromHex(obj.data))
                                         .then(res => ({ data: U.toHex(res) }))
@@ -533,7 +535,7 @@ function initSocketServer(wsPort: number, hostname: string) {
                                 return null;
                         }
                     })
-                    .done(resp => {
+                    .then(resp => {
                         if (!ws) return;
                         pxt.debug(`hid: resp ${objToString(resp)}`)
                         ws.send(JSON.stringify({
@@ -620,7 +622,7 @@ function initSocketServer(wsPort: number, hostname: string) {
                                 return null;
                         }
                     })
-                    .done(resp => {
+                    .then(resp => {
                         if (!ws) return;
                         pxt.debug(`hid: resp ${objToString(resp)}`)
                         ws.send(JSON.stringify({

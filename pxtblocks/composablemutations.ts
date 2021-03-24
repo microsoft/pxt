@@ -295,11 +295,12 @@ namespace pxt.blocks {
         Blockly.Extensions.apply('inline-svgs', b, false);
 
         let returnValueVisible = true;
-        updateShape();
 
         // When the value input is removed, we disconnect the block that was connected to it. This
         // is the id of whatever block was last connected
         let lastConnectedId: string;
+
+        updateShape();
 
         b.domToMutation = saved => {
             if (saved.hasAttribute("last_connected_id")) {

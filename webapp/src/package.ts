@@ -214,7 +214,7 @@ export class EditorPackage {
                 const f = this.files[pxt.SIMSTATE_JSON]
                 if (!f)
                     return
-                f.setContentAsync(JSON.stringify(this.simState)).done()
+                f.setContentAsync(JSON.stringify(this.simState));
             }, 2000)
         }
     }
@@ -663,7 +663,7 @@ class Host
             // only write config writes
             let epkg = getEditorPkg(module)
             let file = epkg.files[filename];
-            file.setContentAsync(contents, force).done();
+            file.setContentAsync(contents, force);
             return;
         }
         throw Util.oops("trying to write " + module + " / " + filename)

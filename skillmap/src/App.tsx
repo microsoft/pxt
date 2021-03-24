@@ -3,7 +3,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
 
-import * as Promise from "bluebird";
 import store from "./store/store";
 
 import {
@@ -17,6 +16,7 @@ import {
     dispatchSetPageSourceUrl,
     dispatchSetPageAlternateUrls,
     dispatchSetPageBackgroundImageUrl,
+    dispatchSetPageBannerImageUrl,
     dispatchSetPageTheme,
 } from './actions/dispatch';
 import { PageSourceStatus, SkillMapState } from './store/reducer';
@@ -27,7 +27,7 @@ import { InfoPanel } from './components/InfoPanel';
 
 import { parseSkillMap } from './lib/skillMapParser';
 import { parseHash, getMarkdownAsync, MarkdownSource, parseQuery,
-    guidGen, setPageTitle, setPageSourceUrl } from './lib/browserUtils';
+    guidGen, setPageTitle, setPageSourceUrl, ParsedHash } from './lib/browserUtils';
 
 import { MakeCodeFrame } from './components/makecodeFrame';
 import { getUserStateAsync, saveUserStateAsync } from './lib/workspaceProvider';
@@ -39,9 +39,6 @@ import './App.css';
 // TODO: this file needs to read colors from the target
 import './arcade.css';
 /* tslint:enable:no-import-side-effect */
-
-(window as any).Promise = Promise;
-
 interface AppProps {
     skillMaps: { [key: string]: SkillMap };
     activityOpen: boolean;
@@ -54,6 +51,7 @@ interface AppProps {
     dispatchSetPageDescription: (description: string) => void;
     dispatchSetPageInfoUrl: (infoUrl: string) => void;
     dispatchSetPageBackgroundImageUrl: (backgroundImageUrl: string) => void;
+    dispatchSetPageBannerImageUrl: (bannerImageUrl: string) => void;
     dispatchSetUser: (user: UserState) => void;
     dispatchSetPageSourceUrl: (url: string, status: PageSourceStatus) => void;
     dispatchSetPageAlternateUrls: (urls: string[]) => void;
@@ -77,12 +75,25 @@ class AppImpl extends React.Component<AppProps, AppState> {
     }
 
     protected handleHashChange = async (e: HashChangeEvent) => {
-        let config = await pxt.targetConfigAsync();
-        let hash = parseHash(window.location.hash || config.skillMap?.defaultPath);
-        this.fetchAndParseSkillMaps(hash.cmd as MarkdownSource, hash.arg);
-
+        await this.parseHashAsync();
         e.stopPropagation();
         e.preventDefault();
+    }
+
+    protected async parseHashAsync() {
+        let config = await pxt.targetConfigAsync();
+        let hash: ParsedHash;
+
+        const possibleAlias = window.location.hash.replace("#", "");
+
+        if (possibleAlias && config.skillMap?.pathAliases?.[possibleAlias]) {
+            hash = parseHash(config.skillMap.pathAliases[possibleAlias]);
+        }
+        else {
+            hash = parseHash(window.location.hash || config.skillMap?.defaultPath);
+        }
+
+        await this.fetchAndParseSkillMaps(hash.cmd as MarkdownSource, hash.arg);
     }
 
     protected handleError = (msg?: string) => {
@@ -158,12 +169,14 @@ class AppImpl extends React.Component<AppProps, AppState> {
                 }
 
                 if (metadata) {
-                    const { title, description, infoUrl, backgroundImageUrl, theme, alternateSources } = metadata;
+                    const { title, description, infoUrl, backgroundImageUrl,
+                        bannerImageUrl, theme, alternateSources } = metadata;
                     setPageTitle(title);
                     this.props.dispatchSetPageTitle(title);
                     if (description) this.props.dispatchSetPageDescription(description);
                     if (infoUrl) this.props.dispatchSetPageInfoUrl(infoUrl);
                     if (backgroundImageUrl) this.props.dispatchSetPageBackgroundImageUrl(backgroundImageUrl);
+                    if (bannerImageUrl) this.props.dispatchSetPageBannerImageUrl(bannerImageUrl);
                     if (alternateSources) this.props.dispatchSetPageAlternateUrls(alternateSources);
                     if (theme) this.props.dispatchSetPageTheme(theme);
                 }
@@ -199,10 +212,8 @@ class AppImpl extends React.Component<AppProps, AppState> {
     async componentDidMount() {
         this.unsubscribeChangeListener = store.subscribe(this.onStoreChange);
         this.queryFlags = parseQuery();
-        let config = await pxt.targetConfigAsync();
-        let hash = parseHash(window.location.hash || config.skillMap?.defaultPath);
         await this.initLocalizationAsync();
-        this.fetchAndParseSkillMaps(hash.cmd as MarkdownSource, hash.arg);
+        await this.parseHashAsync();
     }
 
     componentWillUnmount() {
@@ -333,6 +344,7 @@ const mapDispatchToProps = {
     dispatchSetPageSourceUrl,
     dispatchSetPageAlternateUrls,
     dispatchSetPageBackgroundImageUrl,
+    dispatchSetPageBannerImageUrl,
     dispatchSetPageTheme
 };
 

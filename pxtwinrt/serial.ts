@@ -17,7 +17,7 @@ namespace pxt.winrt {
         info: DeviceInfo;
         device?: SerialDevice;
         readingOperation?: LoadOperation;
-        cancellingDeferred?: Promise.Resolver<void>;
+        cancellingDeferred?: pxt.Util.DeferredPromise<void>;
     }
 
     export function initSerial() {
@@ -62,11 +62,10 @@ namespace pxt.winrt {
             const port = activePorts[deviceId];
             const currentRead = port.readingOperation;
             if (currentRead) {
-                const deferred = Promise.defer<void>();
+                const deferred = pxt.Util.defer<void>();
                 port.cancellingDeferred = deferred;
                 stoppedReadingOpsPromise = stoppedReadingOpsPromise.then(() => {
-                    return deferred.promise
-                        .timeout(500)
+                    return U.promiseTimeout(500, deferred.promise)
                         .catch((e) => {
                             pxt.reportError("winrt_device", `could not cancel reading operation for a device: ${e.message}`);
                         });
@@ -125,7 +124,7 @@ namespace pxt.winrt {
                 // recognize the device has been plugged in. Without drivers, connection to the device might still fail
                 // the first time, but drivers should be installed by the time the user clicks Download again, at which
                 // point flashing will work without the user ever needing to manually set the device to bootloader
-                return Promise.delay(1500);
+                return U.delay(1500);
             });
     }
 
@@ -175,8 +174,8 @@ namespace pxt.winrt {
                     return Promise.resolve([]);
                 }
 
-                return Promise.map(allDeviceInfo, (devInfo: DeviceInfo) => {
-                    return sd.fromIdAsync(devInfo.id);
+                return U.promiseMapAll(allDeviceInfo, (devInfo: DeviceInfo) => {
+                    return pxt.winrt.promisify(sd.fromIdAsync(devInfo.id));
                 });
             });
     }
@@ -191,7 +190,7 @@ namespace pxt.winrt {
             info: deviceInfo
         };
         Windows.Devices.SerialCommunication.SerialDevice.fromIdAsync(deviceInfo.id)
-            .done((dev: SerialDevice) => {
+            .then((dev: SerialDevice) => {
                 activePorts[deviceInfo.id].device = dev;
                 startDevice(deviceInfo.id);
             });
@@ -230,7 +229,7 @@ namespace pxt.winrt {
                 return;
             }
             port.readingOperation = reader.loadAsync(32);
-            port.readingOperation.done((bytesRead) => {
+            port.readingOperation.then((bytesRead) => {
                 let msg = reader.readString(Math.floor(reader.unconsumedBufferLength / 4) * 4);
                 pxt.Util.bufferSerial(serialBuffers, msg, id);
                 setTimeout(() => readMore(), 1);

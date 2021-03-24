@@ -51,6 +51,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
     protected nextId: number = 0;
     protected pendingMessages: {[index: string]: any} = {};
     protected isNewActivity: boolean = false;
+    protected sentReloadImportRequest: boolean = false;
 
     constructor(props: MakeCodeFrameProps) {
         super(props);
@@ -69,7 +70,8 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
             } as pxt.editor.EditorMessage, true);
         }
 
-        if (this.props.reload === "reload") {
+        if (this.props.reload === "reload" && !this.sentReloadImportRequest) {
+            this.sentReloadImportRequest = true;
             const project = await getProjectAsync(this.props.activityHeaderId!);
             this.sendMessage({
                 type: "pxteditor",

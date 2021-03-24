@@ -8,6 +8,7 @@ import { GraphPath } from "./GraphPath";
 
 import { getActivityStatus, isActivityUnlocked } from '../lib/skillMapUtils';
 import { SvgCoord, orthogonalGraph } from '../lib/skillGraphUtils';
+import { tickEvent } from "../lib/browserUtils";
 
 interface SvgGraphItem {
     activity: MapActivity;
@@ -81,12 +82,15 @@ class SkillGraphImpl extends React.Component<SkillGraphProps> {
 
         const { status } = getActivityStatus(user, pageSourceUrl, map, activityId);
         if (kind === "completion" && status === "completed") {
+            tickEvent("skillmap.graph.reward.select", { path: map.mapId, activity: activityId})
             dispatchChangeSelectedItem(map.mapId, activityId);
             dispatchShowCompletionModal(map.mapId, activityId)
         } else {
             if (activityId !== selectedActivityId) {
+                tickEvent("skillmap.graph.item.select", { path: map.mapId, activity: activityId })
                 dispatchChangeSelectedItem(map.mapId, activityId);
             } else {
+                tickEvent("skillmap.graph.item.deselect", { path: map.mapId, activity: activityId })
                 dispatchChangeSelectedItem(undefined);
             }
         }
@@ -108,6 +112,7 @@ class SkillGraphImpl extends React.Component<SkillGraphProps> {
     componentDidUpdate(props: SkillGraphProps) {
         if (props.completionState === "transitioning") {
             setTimeout(() => {
+                tickEvent("skillmap.graph.reward.auto", { path: props.map.mapId, activity: props.selectedActivityId || "" })
                 props.dispatchSetSkillMapCompleted(props.map.mapId)
                 props.dispatchShowCompletionModal(props.map.mapId, props.selectedActivityId)
             }, 400);

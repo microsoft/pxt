@@ -15,7 +15,16 @@
     opacity: 0.8;
 }
 
+.graph-activity.hover .graph-icon, .graph-activity.hover .graph-icon-x {
+    opacity: 1;
+}
+
 .graph-status-icon {
     font-family: Icons;
     font-size: 1rem;
+}
+
+.graph-activity {
+    cursor: pointer;
+    user-select: none;
 }

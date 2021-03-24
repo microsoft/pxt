@@ -109,14 +109,14 @@ export function initElectron(projectView: ProjectView): void {
     pxtElectron.sendUpdateStatusCheck();
 }
 
-let deployingDeferred: Promise.Resolver<void> = null;
+let deployingDeferred: pxt.Util.DeferredPromise<void> = null;
 export function driveDeployAsync(compileResult: pxtc.CompileResult): Promise<void> {
     if (!pxt.BrowserUtils.isPxtElectron()) {
         return cmds.browserDownloadDeployCoreAsync(compileResult);
     }
 
     if (!deployingDeferred) {
-        deployingDeferred = Promise.defer<void>();
+        deployingDeferred = pxt.Util.defer<void>();
         pxtElectron.sendDriveDeploy(compileResult);
     }
 

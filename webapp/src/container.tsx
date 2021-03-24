@@ -10,6 +10,7 @@ import * as auth from "./auth";
 import * as identity from "./identity";
 import * as cloudsync from "./cloudsync";
 import * as pkg from "./package";
+import * as ImmersiveReader from "./immersivereader";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -151,7 +152,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         if (pxt.hasHwVariants())
             this.props.parent.showChooseHwDialog();
         else
-            this.props.parent.showBoardDialogAsync(undefined, true).done();
+            this.props.parent.showBoardDialogAsync(undefined, true);
     }
 
     saveProject() {
@@ -538,6 +539,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         const homeEnabled = !lockedEditor && !isController;
         const sandbox = pxt.shell.isSandboxMode();
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
+
         const activityName = tutorialOptions && tutorialOptions.tutorialActivityInfo ?
             tutorialOptions.tutorialActivityInfo[tutorialOptions.tutorialStepInfo[tutorialOptions.tutorialStep].activity].name :
             null;

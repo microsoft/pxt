@@ -79,11 +79,69 @@ controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
 ```
 ````
 
+## assetjson
 
-## Custom assets (Arcade beta only)
+If you want a collection of pre-created tilemaps, images, animations, and tiles included as `assets`
+in a tutorial, you can add them inside an ```` ```assetjson ```` block. This makes the assets
+available in the **Assets Editor**, and to the code in the tutorial, when the tutorial is started.
 
-To import all assets (Tilemaps, Images, Animations, and Tiles) into the tutorial at once, use the ```` ```assetsjson ``` ```` language block. You can get the assets for your project by adding `?savetemplate=1` to the end of your URL. For example, the URL for arcade's beta editor would be:
+### ~reminder
+
+#### Asset editing support
+
+Support for creating and importing assets is only available in [Microsoft MakeCode Arcade](https://arcade.makecode.com).
+
+### ~
+
+### Importing custom assets
+
+To import all assets (tilemaps, images, animations, and tiles) into the tutorial at once,
+start the editor by adding `?savetemplate=1` to the end of your URL. For example, the URL
+for Arcade's beta editor would be:
 
 https://arcade.makecode.com/beta?savetemplate=1
 
-With the correct URL entered, you can click the save button (the floppy disk) in the editor to download your project as a `.txt.mkcd` file. The contents of this file can be opened in a text editor and pasted into the ```` ```assetsjson ``` ```` block to configure the tutorial. To reopen and edit the project, simply drag the original `.txt.mkcd` into the editor and repeat the process to download it again.
+With the correct URL entered, you can click the save button (the floppy disk button) in the
+editor to download your project as a `.txt.mkcd` file.
+
+Next, define a ```` ```assetjson ```` block in your tutorial document.
+
+````
+```assetjson
+
+```
+````
+
+The contents of this file can be opened in a separate text editor, copied, and pasted into
+the ```` ```assetjson ```` block to have them included when the tutorial is run.
+The asset block might look something like the following example.
+
+````
+```assetjson
+{
+  "README.md": " ",
+  "assets.json": "",
+  "images.g.jres": "{\n    \"image1\": {\n        \"data\":
+  \"hwQgACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYAYAYAAAAAAAAAAAA
+  AAAAABmBmYAAAAAAAAAAAAAAAAAZmZmAABgBgAAAAAAAAAAAGBmZgAAZgYAAAAAAAAAAAAAZmYAAGYG
+  AAAAAAAAAAAAAGZmAGBmBgAAAAAAAAAAAABmZgBmZgYAAAAAAAAAAGYAZmYAZmYAAAAAAAAAAABmAGZ
+  mYGZmAAAAAAAAAAAAZgZmZmZmBgAAAAAAAAAAAGBmZmZmZgYAAAAAAAAAAABgZmZmZmYAAAAAAAAAAA
+  AAAGZmZmZmAAAAAAAAAAAAAABmZmZmBgAAAAAAAAAAAAAAYGZmZgYAAAAAAAAAAAAAAGBmZmYAAAAAA
+  AAAAAAAAABg9mZmAAAAAAAAAAAAAAAAYPZmZgAAAAAAAAAAAAAAAAD/b2YAAAAAAAAAAAAAAAAA/29m
+  AAAAAAAAAAAAAAAAAP9vZgAAAAAAAAAAAAAAAAD//
+
+  ...
+
+  d1e057830c0eebc87e3e400f2106c8e1f0e5a077\",\n        \"target\": \"1.3.44\",\n
+        \"pxt\": \"6.8.33\"\n    },\n    \"preferredEditor\": \"blocksprj\"\n}\n"
+}
+```
+````
+
+If you need to modify the assets for the tutoral, reopen and edit the project saved in the `.txt.mkcd` file.
+You can simply drag the file into the editor, make your changes, and download it again. Open the project
+file in a text editor, copy the new asset data, and replace the contents of your tutorial's ```` ```assetjson ````
+block with it.
+
+The assets are shown as the initial view in a tutorial by using the [@preferredEditor](/writing-docs/tutorials/control-options#preferred-editor-view) option. This option causes the tutorial to open with the Asset Editor
+rather than showing the editor for Blocks or Code.

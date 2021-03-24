@@ -1,6 +1,6 @@
 import { PageSourceStatus } from "../store/reducer";
 
-const apiRoot = "https://www.makecode.com/api/md";
+const apiRoot = "https://www.makecode.com/api";
 export type MarkdownSource = "docs" | "github";
 
 export interface MarkdownFetchResult {
@@ -10,7 +10,12 @@ export interface MarkdownFetchResult {
     status: PageSourceStatus;
 }
 
-export function parseHash(hash?: string) {
+export interface ParsedHash {
+    cmd: string;
+    arg: string;
+}
+
+export function parseHash(hash?: string): ParsedHash {
     let parsed = { cmd: '', arg: '' };
     let match = /^(\w+)(:([:./\-+=\w]+))?/.exec((hash || window.location.hash).replace(/^#/, ""))
     if (match) {
@@ -45,9 +50,7 @@ export async function getMarkdownAsync(source: MarkdownSource, url: string): Pro
 
     switch (source) {
         case "docs":
-            url = url.trim().replace(/^[\\/]/i, "").replace(/\.md$/i, "");
-            const target = (window as any).pxtTargetBundle?.name || "arcade";
-            toFetch = `${apiRoot}/${target}/${url}`;
+            toFetch = getDocsIdentifier(url);
             status = "approved";
             break;
         case "github":
@@ -105,7 +108,7 @@ async function fetchSkillMapFromGithub(path: string): Promise<MarkdownFetchResul
     const gh = await pxt.github.downloadPackageAsync(`${ghid.slug}#${ghid.tag}`, config);
 
     if (gh) {
-        const { identifier, fileName } = getSkillmapIdentifier(ghid);
+        const { identifier, fileName } = getGithubIdentifier(ghid);
         return {
             text: pxt.tutorial.resolveLocalizedMarkdown(ghid, gh.files, fileName),
             identifier,
@@ -117,7 +120,13 @@ async function fetchSkillMapFromGithub(path: string): Promise<MarkdownFetchResul
     return undefined
 }
 
-export function getSkillmapIdentifier(ghid: pxt.github.ParsedRepo) {
+export function getDocsIdentifier(path: string) {
+    path = path.trim().replace(/^[\\/]/i, "").replace(/\.md$/i, "");
+    const target = (window as any).pxtTargetBundle?.name || "arcade";
+    return `${apiRoot}/md/${target}/${path}`;
+}
+
+export function getGithubIdentifier(ghid: pxt.github.ParsedRepo) {
     let fileName = parseGithubFilename(ghid.fileName ||  "skillmap");
     return {
         identifier: ghid.fullName + "#" + fileName,
@@ -130,6 +139,13 @@ function parseGithubFilename(fileName: string) {
     fileName = fileName.replace(/^\/?blob\/master\//, "");
     fileName = fileName.replace(/\.md$/, "");
     return fileName;
+}
+
+export async function postShareAsync(h?: pxt.workspace.Header, text?: pxt.workspace.ScriptText): Promise<pxt.Cloud.JsonScript | undefined> {
+    if (!h || !text) return undefined;
+
+    const script = await httpPostAsync(`${apiRoot}/scripts`, { ...h, text });
+    return pxt.Util.jsonTryParse(script) as pxt.Cloud.JsonScript;
 }
 
 export async function postAbuseReportAsync(id: string, data: { text: string }): Promise<void> {

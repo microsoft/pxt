@@ -1208,23 +1208,6 @@ namespace pxt.blocks {
                 if (Blockly.Names.equals(oldName, varField.getText())) {
                     varField.setValue(newName);
                 }
-            },
-            /**
-             * Add menu option to create getter block for loop variable.
-             * @param {!Array} options List of menu options to add to.
-             * @this Blockly.Block
-             */
-            customContextMenu: function (options: any[]) {
-                if (!this.isCollapsed()) {
-                    let option: any = { enabled: true };
-                    option.text = lf("Create 'get {0}'", name);
-                    let xmlField = goog.dom.createDom('field', null, name);
-                    xmlField.setAttribute('name', 'VAR');
-                    let xmlBlock = goog.dom.createDom('block', null, xmlField) as HTMLElement;
-                    xmlBlock.setAttribute('type', 'variables_get');
-                    option.callback = Blockly.ContextMenu.callbackFactory(this, xmlBlock);
-                    options.push(option);
-                }
             }
         };
 
@@ -1301,7 +1284,7 @@ namespace pxt.blocks {
              * @this Blockly.Block
              */
             customContextMenu: function (options: any[]) {
-                if (!this.isCollapsed()) {
+                if (!this.isCollapsed() && !this.inDebugWorkspace()) {
                     let option: any = { enabled: true };
                     let name = this.getField('VAR').getText();
                     option.text = lf("Create 'get {0}'", name);
@@ -1497,10 +1480,13 @@ namespace pxt.blocks {
             let eventGroup = Blockly.utils.genUid();
             let topComments = this.getTopComments();
             let ws = this;
+            const editable = !(this.options.debugMode || this.options.readOnly);
 
             // Option to add a workspace comment.
             if (this.options.comments && !BrowserUtils.isIE()) {
-                options.push(Blockly.ContextMenu.workspaceCommentOption(ws, e));
+                const commentOption = Blockly.ContextMenu.workspaceCommentOption(ws, e) as any;
+                commentOption.enabled = commentOption.enabled && editable;
+                options.push(commentOption);
             }
 
 
@@ -1532,7 +1518,7 @@ namespace pxt.blocks {
 
             const deleteOption = {
                 text: deleteCount == 1 ? msg.DELETE_BLOCK : msg.DELETE_ALL_BLOCKS,
-                enabled: deleteCount > 0,
+                enabled: deleteCount > 0 && editable,
                 callback: () => {
                     pxt.tickEvent("blocks.context.delete", undefined, { interactiveConsent: true });
                     if (deleteCount < 2) {
@@ -1550,7 +1536,7 @@ namespace pxt.blocks {
 
             const formatCodeOption = {
                 text: lf("Format Code"),
-                enabled: true,
+                enabled: editable,
                 callback: () => {
                     pxt.tickEvent("blocks.context.format", undefined, { interactiveConsent: true });
                     pxt.blocks.layout.flow(this, { useViewWidth: true });
@@ -1562,7 +1548,7 @@ namespace pxt.blocks {
                 // Option to collapse all top-level (enabled) blocks
                 const collapseAllOption = {
                     text: lf("Collapse Blocks"),
-                    enabled: topBlocks.length && topBlocks.find((b: Blockly.Block) => b.isEnabled() && !b.isCollapsed()),
+                    enabled: topBlocks.length && topBlocks.find((b: Blockly.Block) => b.isEnabled() && !b.isCollapsed()) && editable,
                     callback: () => {
                         pxt.tickEvent("blocks.context.collapse", undefined, { interactiveConsent: true });
                         pxt.blocks.layout.setCollapsedAll(this, true);
@@ -1573,7 +1559,7 @@ namespace pxt.blocks {
                 // Option to expand all collapsed blocks
                 const expandAllOption = {
                     text: lf("Expand Blocks"),
-                    enabled: topBlocks.length && topBlocks.find((b: Blockly.Block) => b.isEnabled() && b.isCollapsed()),
+                    enabled: topBlocks.length && topBlocks.find((b: Blockly.Block) => b.isEnabled() && b.isCollapsed()) && editable,
                     callback: () => {
                         pxt.tickEvent("blocks.context.expand", undefined, { interactiveConsent: true });
                         pxt.blocks.layout.setCollapsedAll(this, false);
@@ -1589,7 +1575,7 @@ namespace pxt.blocks {
                     callback: () => {
                         pxt.tickEvent("blocks.context.screenshot", undefined, { interactiveConsent: true });
                         pxt.blocks.layout.screenshotAsync(this, null, pxt.appTarget.appTheme?.embedBlocksInSnapshot)
-                            .done((uri) => {
+                            .then((uri) => {
                                 if (pxt.BrowserUtils.isSafari())
                                     uri = uri.replace(/^data:image\/[^;]/, 'data:application/octet-stream');
                                 BrowserUtils.browserDownloadDataUri(
@@ -2225,19 +2211,21 @@ namespace pxt.blocks {
              * @this Blockly.Block
              */
             customContextMenu: function (options: any[]) {
-                let option: any = {
-                    enabled: this.workspace.remainingCapacity() > 0
-                };
+                if (!(this.inDebugWorkspace())) {
+                    let option: any = {
+                        enabled: this.workspace.remainingCapacity() > 0
+                    };
 
-                let name = this.getField("VAR").getText();
-                option.text = lf("Create 'get {0}'", name)
+                    let name = this.getField("VAR").getText();
+                    option.text = lf("Create 'get {0}'", name)
 
-                let xmlField = goog.dom.createDom('field', null, name);
-                xmlField.setAttribute('name', 'VAR');
-                let xmlBlock = goog.dom.createDom('block', null, xmlField);
-                xmlBlock.setAttribute('type', "variables_get");
-                option.callback = Blockly.ContextMenu.callbackFactory(this, xmlBlock);
-                options.push(option);
+                    let xmlField = goog.dom.createDom('field', null, name);
+                    xmlField.setAttribute('name', 'VAR');
+                    let xmlBlock = goog.dom.createDom('block', null, xmlField);
+                    xmlBlock.setAttribute('type', "variables_get");
+                    option.callback = Blockly.ContextMenu.callbackFactory(this, xmlBlock);
+                    options.push(option);
+                }
             }
         };
 

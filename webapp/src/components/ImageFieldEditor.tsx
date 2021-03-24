@@ -65,32 +65,41 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
         const showGallery = !this.asset || editingTile || this.asset.type !== pxt.AssetType.Tilemap;;
         const showMyAssets = !hideMyAssets && !editingTile;
 
-        if (this.asset && !this.galleryAssets) {
+        if (this.asset && !this.galleryAssets && showGallery) {
             this.updateGalleryAssets();
         }
 
-        let filteredAssets = currentView === "my-assets" ? this.filterAssetsByType(this.userAssets, editingTile ? pxt.AssetType.Tile : this.asset?.type) :
-            this.filterAssetsByType(this.galleryAssets, editingTile ? pxt.AssetType.Tile : this.asset?.type, true, true)
-
         const specialTags = ["tile", "dialog", "background"];
-        const allTags = this.getAvailableTags(filteredAssets, specialTags);
-
-        if (currentView === "gallery") {
-            filteredAssets = this.filterAssetsByTag(filteredAssets);
+        let allTags: string[] = [];
+        let filteredAssets: pxt.Asset[] = [];
+        switch (currentView) {
+            case "my-assets":
+                filteredAssets = this.filterAssetsByType(this.userAssets, editingTile ? pxt.AssetType.Tile : this.asset?.type);
+                allTags = this.getAvailableTags(filteredAssets, specialTags);
+                break;
+            case "gallery":
+                filteredAssets = this.filterAssetsByType(this.galleryAssets, editingTile ? pxt.AssetType.Tile : this.asset?.type, true, true);
+                allTags = this.getAvailableTags(filteredAssets, specialTags);
+                filteredAssets = this.filterAssetsByTag(filteredAssets);
+                break;
+            default:
+                break;
         }
-
 
         const toggleOptions = [{
             label: lf("Editor"),
             view: "editor",
+            icon: "paint brush",
             onClick: this.showEditor
         }, {
             label: lf("Gallery"),
             view: "gallery",
+            icon: "picture",
             onClick: this.showGallery
         }, {
             label: lf("My Assets"),
             view: "my-assets",
+            icon: "folder",
             onClick: this.showMyAssets
         }];
 
@@ -106,12 +115,20 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
 
         return <div className="image-editor-wrapper">
             {showHeader && <div className="gallery-editor-header">
-                <ImageEditorToggle options={toggleOptions} view={currentView} />
-                <div className={`gallery-filter-button ${this.state.currentView === "gallery" ? '' : "hidden"}`} role="button" onClick={this.toggleFilter} onKeyDown={sui.fireClickOnEnter}>
-                    <div className="gallery-filter-button-icon">
-                        <i className="icon filter" />
+                <div className="image-editor-header-left" />
+                <div className="image-editor-header-center">
+                    <ImageEditorToggle options={toggleOptions} view={currentView} />
+                </div>
+                <div className="image-editor-header-right">
+                    <div className={`gallery-filter-button ${this.state.currentView === "gallery" ? '' : "hidden"}`} role="button" onClick={this.toggleFilter} onKeyDown={sui.fireClickOnEnter}>
+                        <div className="gallery-filter-button-icon">
+                            <i className="icon filter" />
+                        </div>
+                        <div className="gallery-filter-button-label">{lf("Filter")}</div>
                     </div>
-                    <div className="gallery-filter-button-label">{lf("Filter")}</div>
+                    {!editingTile && <div className="image-editor-close-button" role="button" onClick={this.onDoneClick}>
+                        <i className="ui icon close"/>
+                    </div>}
                 </div>
             </div>}
             <div className="image-editor-gallery-window">
@@ -296,12 +313,15 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
         return assets;
     }
 
-    protected filterAssetsByType(assets: pxt.Asset[], type: pxt.AssetType = this.asset?.type, isGallery = false, useTags?: boolean) {
+    protected filterAssetsByType(assets: pxt.Asset[], type?: pxt.AssetType, isGallery = false, useTags?: boolean) {
+        if (type === undefined) {
+            type = this.asset?.type;
+        }
         if (type === undefined) {
             return assets;
         }
 
-        if (this.asset) {
+        if (this.asset && !isGallery) {
             assets = assets.map(t => (t.type !== this.asset.type || t.id !== this.asset.id) ? t : assetToGalleryItem(this.getValue()))
 
             if (this.state.editingTile) {
@@ -333,6 +353,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
 
             assets = assets.filter(t => checkInclude(t, includeTags) && checkExclude(t, excludeTags))
         }
+
         function checkInclude(item: pxt.Asset, includeTags: string[]) {
             const tags = item.meta.tags ? item.meta.tags : [];
             return includeTags.every(filterTag => {
@@ -538,6 +559,7 @@ class ImageEditorGallery extends React.Component<ImageEditorGalleryProps, {}> {
 interface ImageEditorToggleOption {
     label: string;
     view: string;
+    icon?: string;
     onClick: () => void;
 }
 
@@ -568,13 +590,16 @@ class ImageEditorToggle extends React.Component<ImageEditorToggleProps> {
 
         return <div className={`gallery-editor-toggle ${toggleClass} ${pxt.BrowserUtils.isEdge() ? "edge" : ""}`}>
             <div className="gallery-editor-toggle-label gallery-editor-toggle-left" onClick={left.onClick} role="button">
-                {left.label}
+                {left.icon && <i className={`ui icon ${left.icon}`} />}
+                <span>{left.label}</span>
             </div>
             {center && <div className="gallery-editor-toggle-label gallery-editor-toggle-center" onClick={center.onClick} role="button">
-                {center.label}
+                {center.icon && <i className={`ui icon ${center.icon}`} />}
+                <span>{center.label}</span>
             </div>}
             <div className="gallery-editor-toggle-label gallery-editor-toggle-right" onClick={right.onClick} role="button">
-                {right.label}
+                {right.icon && <i className={`ui icon ${right.icon}`} />}
+                <span>{right.label}</span>
             </div>
             <div className="gallery-editor-toggle-handle"/>
     </div>

@@ -54,6 +54,7 @@ declare namespace pxt {
 
     interface SkillMapConfig {
         defaultPath?: string;
+        pathAliases?: pxt.Map<string>; // map in the format "alias": "path"
     }
 
     interface AppTarget {
@@ -433,6 +434,7 @@ declare namespace pxt {
         disableMemoryWorkspaceWarning?: boolean; // do not warn the user when switching to in memory workspace
         embeddedTutorial?: boolean;
         disableBlobObjectDownload?: boolean; // use data uri downloads instead of object urls
+        immersiveReader?: boolean; // enables the immersive reader for tutorials
     }
 
     interface SocialOptions {
