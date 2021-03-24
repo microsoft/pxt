@@ -634,27 +634,39 @@ namespace ts.pxtc {
             .then(loc => Promise.all(Util.values(apis.byQName).map(fn => {
                 if (apiLocalizationStrings)
                     Util.jsonMergeFrom(loc, apiLocalizationStrings);
+
+                const altLocSrc = fn.attributes.useLoc || fn.attributes.blockAliasFor;
+                const altLocSrcFn = altLocSrc && apis.byQName[altLocSrc];
+
                 const attrLocs = fn.attributes.locs || {};
-                const locJsDoc = loc[fn.qName] || attrLocs[attrJsLocsKey];
+                const locJsDoc = loc[fn.qName] || attrLocs[attrJsLocsKey]
+                    || (altLocSrcFn && (loc[altLocSrcFn.qName] || altLocSrcFn.attributes.locs?.[attrJsLocsKey]));
                 if (locJsDoc) {
                     fn.attributes._untranslatedJsDoc = fn.attributes.jsDoc;
                     fn.attributes.jsDoc = locJsDoc;
-                    if (fn.parameters)
-                        fn.parameters.forEach(pi => pi.description = loc[`${fn.qName}|param|${pi.name}`] || attrLocs[`${langLower}|param|${pi.name}`] || pi.description);
                 }
+
+                if (fn.parameters) {
+                    fn.parameters.forEach(pi => {
+                        const paramSuff = `|param|${pi.name}`;
+                        const paramLocs = loc[`${fn.qName}${paramSuff}`] || attrLocs[`${langLower}${paramSuff}`]
+                            || altLocSrcFn && (loc[`${altLocSrcFn.qName}${paramSuff}`] || altLocSrcFn.attributes.locs?.[`${langLower}${paramSuff}`]);
+
+                        if (paramLocs) {
+                            pi.description = paramLocs;
+                        }
+                    });
+                }
+
                 const nsDoc = loc['{id:category}' + Util.capitalize(fn.qName)];
                 let locBlock = loc[`${fn.qName}|block`] || attrLocs[attrBlockLocsKey];
 
-                if (!locBlock && fn.attributes.useLoc) {
-                    const otherFn = apis.byQName[fn.attributes.useLoc];
+                if (!locBlock && altLocSrcFn) {
+                    const otherTranslation = loc[`${altLocSrcFn.qName}|block`] || altLocSrcFn.attributes.locs?.[attrBlockLocsKey];
+                    const isSameBlockDef = fn.attributes.block === (altLocSrcFn.attributes._untranslatedBlock || altLocSrcFn.attributes.block);
 
-                    if (otherFn) {
-                        const otherTranslation = loc[`${otherFn.qName}|block`];
-                        const isSameBlockDef = fn.attributes.block === (otherFn.attributes._untranslatedBlock || otherFn.attributes.block);
-
-                        if (isSameBlockDef && !!otherTranslation) {
-                            locBlock = otherTranslation;
-                        }
+                    if (isSameBlockDef && !!otherTranslation) {
+                        locBlock = otherTranslation;
                     }
                 }
 
