@@ -89,6 +89,11 @@ export function getEditorAsync() {
     });
 }
 
+export function getBlocksEditor() {
+    if (!theEditor) return null;
+    return theEditor.blocksEditor;
+}
+
 function setEditor(editor: ProjectView) {
     theEditor = editor;
     if (pendingEditorRequests) {

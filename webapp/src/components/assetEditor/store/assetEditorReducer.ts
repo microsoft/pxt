@@ -1,4 +1,6 @@
 import * as actions from '../actions/types'
+import * as pkg from '../../../package';
+import { getBlocksEditor } from '../../../app';
 
 export const enum GalleryView {
     User,
@@ -33,7 +35,13 @@ const topReducer = (state: AssetEditorState = initialState, action: any): AssetE
                 selectedAsset
             };
         case actions.UPDATE_USER_ASSETS:
-            const assets = getAssets();
+            let assets = getAssets();
+            let imgConv = new pxt.ImageConverter();
+
+            if (isBlocksProject()) {
+                assets = assets.concat(getBlocksEditor().getTemporaryAssets().map(a => assetToGalleryItem(a, imgConv)));
+            }
+
             return {
                 ...state,
                 selectedAsset: state.selectedAsset ? assets.find(el => el.id == state.selectedAsset.id) : undefined,
@@ -128,6 +136,10 @@ export function assetToGalleryItem(asset: pxt.Asset, imgConv = new pxt.ImageConv
             asset.previewURI = asset.framePreviewURIs[0];
             return asset;
     }
+}
+
+function isBlocksProject() {
+    return pkg.mainPkg?.config?.preferredEditor === pxt.BLOCKS_PROJECT_NAME;
 }
 
 export function isGalleryAsset(asset?: pxt.Asset) {

@@ -196,6 +196,11 @@ namespace pxtblockly {
             return this.asset;
         }
 
+        updateAsset(asset: pxt.Asset) {
+            this.asset = asset;
+            this.setValue(this.getValue());
+        }
+
         protected onEditorClose(newValue: pxt.Asset) {
             // Subclass
         }
@@ -333,6 +338,12 @@ namespace pxtblockly {
 
             if (!this.isTemporaryAsset()) {
                 pxt.react.getTilemapProject().updateAsset(this.asset);
+            }
+            else {
+                this.asset.meta.temporaryInfo = {
+                    blockId: this.sourceBlock_.id,
+                    fieldName: this.name
+                };
             }
         }
 

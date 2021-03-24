@@ -14,6 +14,12 @@ namespace pxt {
         displayName?: string;
         tags?: string[];
         blockIDs?: string[];
+        temporaryInfo?: TemporaryAssetInfo;
+    }
+
+    export interface TemporaryAssetInfo {
+        blockId: string;
+        fieldName: string;
     }
 
     export type Asset = ProjectImage | Tile | Animation | ProjectTilemap;
