@@ -634,27 +634,41 @@ namespace ts.pxtc {
             .then(loc => Promise.all(Util.values(apis.byQName).map(fn => {
                 if (apiLocalizationStrings)
                     Util.jsonMergeFrom(loc, apiLocalizationStrings);
-                const attrLocs = fn.attributes.locs || {};
-                const locJsDoc = loc[fn.qName] || attrLocs[attrJsLocsKey];
+
+                const altLocSrc = fn.attributes.useLoc || fn.attributes.blockAliasFor;
+                const altLocSrcFn = altLocSrc && apis.byQName[altLocSrc];
+
+                const lookupLoc = (locSuff: string, attrKey: string) => {
+                    return loc[fn.qName + locSuff] || fn.attributes.locs?.[attrKey]
+                        || (altLocSrcFn && (loc[altLocSrcFn.qName + locSuff] || altLocSrcFn.attributes.locs?.[attrKey]));
+                }
+
+                const locJsDoc = lookupLoc("", attrJsLocsKey);
                 if (locJsDoc) {
                     fn.attributes._untranslatedJsDoc = fn.attributes.jsDoc;
                     fn.attributes.jsDoc = locJsDoc;
-                    if (fn.parameters)
-                        fn.parameters.forEach(pi => pi.description = loc[`${fn.qName}|param|${pi.name}`] || attrLocs[`${langLower}|param|${pi.name}`] || pi.description);
                 }
-                const nsDoc = loc['{id:category}' + Util.capitalize(fn.qName)];
-                let locBlock = loc[`${fn.qName}|block`] || attrLocs[attrBlockLocsKey];
 
-                if (!locBlock && fn.attributes.useLoc) {
-                    const otherFn = apis.byQName[fn.attributes.useLoc];
+                if (fn.parameters) {
+                    fn.parameters.forEach(pi => {
+                        const paramSuff = `|param|${pi.name}`;
+                        const paramLocs = lookupLoc(paramSuff, langLower + paramSuff);
 
-                    if (otherFn) {
-                        const otherTranslation = loc[`${otherFn.qName}|block`];
-                        const isSameBlockDef = fn.attributes.block === (otherFn.attributes._untranslatedBlock || otherFn.attributes.block);
-
-                        if (isSameBlockDef && !!otherTranslation) {
-                            locBlock = otherTranslation;
+                        if (paramLocs) {
+                            pi.description = paramLocs;
                         }
+                    });
+                }
+
+                const nsDoc = loc['{id:category}' + Util.capitalize(fn.qName)];
+                let locBlock = loc[`${fn.qName}|block`] || fn.attributes.locs?.[attrBlockLocsKey];
+
+                if (!locBlock && altLocSrcFn) {
+                    const otherTranslation = loc[`${altLocSrcFn.qName}|block`] || altLocSrcFn.attributes.locs?.[attrBlockLocsKey];
+                    const isSameBlockDef = fn.attributes.block === (altLocSrcFn.attributes._untranslatedBlock || altLocSrcFn.attributes.block);
+
+                    if (isSameBlockDef && !!otherTranslation) {
+                        locBlock = otherTranslation;
                     }
                 }
 
