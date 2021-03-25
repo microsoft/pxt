@@ -10,7 +10,7 @@ namespace pxt.tutorial {
             return undefined; // error parsing steps
 
         // collect code and infer editor
-        const { code, templateCode, editor, language, jres, assetJson } = computeBodyMetadata(body);
+        const { code, templateCode, editor, language, jres, assetJson, customTs } = computeBodyMetadata(body);
 
         // noDiffs legacy
         if (metadata.diffs === true // enabled in tutorial
@@ -42,12 +42,13 @@ namespace pxt.tutorial {
             metadata,
             language,
             jres,
-            assetFiles
+            assetFiles,
+            customTs
         };
     }
 
     export function getMetadataRegex(): RegExp {
-        return /``` *(sim|block|blocks|filterblocks|spy|ghost|typescript|ts|js|javascript|template|python|jres|assetjson)\s*\n([\s\S]*?)\n```/gmi;
+        return /``` *(sim|block|blocks|filterblocks|spy|ghost|typescript|ts|js|javascript|template|python|jres|assetjson|customts)\s*\n([\s\S]*?)\n```/gmi;
     }
 
     function computeBodyMetadata(body: string) {
@@ -60,6 +61,7 @@ namespace pxt.tutorial {
         let language: string;
         let idx = 0;
         let assetJson: string;
+        let customTs: string;
         // Concatenate all blocks in separate code blocks and decompile so we can detect what blocks are used (for the toolbox)
         body
             .replace(/((?!.)\s)+/g, "\n")
@@ -94,7 +96,10 @@ namespace pxt.tutorial {
                     case "assetjson":
                         assetJson = m2;
                         break;
-
+                    case "customts":
+                        customTs = m2;
+                        m2 = "";
+                        break;
                 }
                 code.push(m1 == "python" ? `\n${m2}\n` : `{\n${m2}\n}`);
                 idx++
@@ -102,7 +107,7 @@ namespace pxt.tutorial {
             });
         // default to blocks
         editor = editor || pxt.BLOCKS_PROJECT_NAME
-        return { code, templateCode, editor, language, jres, assetJson }
+        return { code, templateCode, editor, language, jres, assetJson, customTs }
 
         function checkTutorialEditor(expected: string) {
             if (editor && editor != expected) {
@@ -279,7 +284,7 @@ ${code}
     /* Remove hidden snippets from text */
     function stripHiddenSnippets(str: string): string {
         if (!str) return str;
-        const hiddenSnippetRegex = /```(filterblocks|package|ghost|config|template|jres|assetjson)\s*\n([\s\S]*?)\n```/gmi;
+        const hiddenSnippetRegex = /```(filterblocks|package|ghost|config|template|jres|assetjson|customts)\s*\n([\s\S]*?)\n```/gmi;
         return str.replace(hiddenSnippetRegex, '').trim();
     }
 
@@ -365,7 +370,8 @@ ${code}
             metadata: tutorialInfo.metadata,
             language: tutorialInfo.language,
             jres: tutorialInfo.jres,
-            assetFiles: tutorialInfo.assetFiles
+            assetFiles: tutorialInfo.assetFiles,
+            customTs: tutorialInfo.customTs
         };
 
         return { options: tutorialOptions, editor: tutorialInfo.editor };
