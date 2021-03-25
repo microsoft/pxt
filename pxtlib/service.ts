@@ -477,6 +477,7 @@ namespace ts.pxtc {
                             U.lf("change %{0} %property by %{1}", paramName, paramValue)
                 updateBlockDef(ex.attributes)
                 if (pxt.Util.isTranslationMode()) {
+                    ex.attributes.translationId = ex.attributes.block;
                     pxt.crowdin.inContextLoadAsync(ex.attributes.block)
                         .then(r => {
                             ex.attributes.block = r;
