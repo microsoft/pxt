@@ -93,13 +93,17 @@ Now with the arc functions, they operate on lengths for the vertical and horizon
 
 To get the an angle for the right triangle using the length of the vertical side, use the **Math.asin()** function. A value of `30` degrees is returned for a length of `0.5` of the vertical side.
 
+```typescript-ignore
 let arcSine = Math.asin(0.5)* 180 / Math.PI
+```
 
 ### acos
 
 To get the an angle for the right triangle using the length of the horizontal side, use the **Math.acos()** function. A value of `60` degrees is returned for a length of `0.5` of the horizontal side.
 
+```typescript-ignore
 let arcCosine = Math.acos(0.5)* 180 / Math.PI
+```
 
 ### atan
 
