@@ -72,7 +72,6 @@ export class AssetEditor extends Editor {
                 horizontalPadding: 0,
                 verticalPadding: 0
             });
-            blocklyFieldView.setContainerClass("asset-editor-tutorial");
         } else {
             blocklyFieldView.setEditorBounds({
                 top: 0,
@@ -171,6 +170,10 @@ export class AssetEditor extends Editor {
                 break;
         }
 
+        if (this.parent.isTutorial()) {
+            blocklyFieldView.setContainerClass("asset-editor-tutorial");
+        }
+
         fieldView.onHide(() => {
             if (this.parent.isTutorial()) this.unbindTutorialEvents();
 
@@ -187,6 +190,8 @@ export class AssetEditor extends Editor {
                     })
                 }
             });
+
+            blocklyFieldView.setContainerClass(null);
         });
 
         // Do not close image editor when clicking on previous/next in the tutorial, or menu dots

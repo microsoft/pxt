@@ -188,7 +188,7 @@ export class FieldEditorView<U> implements pxt.react.FieldEditorView<U> {
     }
 
     protected updateContainerClass() {
-        if (this.contentDiv) {
+        if (this.contentDiv && this.containerClass) {
             if (!this.contentDiv.classList.contains(this.containerClass)) {
                 this.contentDiv.classList.add(this.containerClass);
             }
