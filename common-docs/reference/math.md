@@ -87,8 +87,8 @@ let myNumber = 3.9 * 4.2
 Interger division of two numbers `7.8` and `2.6` results in a value of `3` since just the values of `7` and `2` are used from the numbers multiplied.
 
 ```block
-let myInt = Math.imul(7.8, 2.6)
-let myNumber = 7.8 * 2.6
+let myInt = Math.idiv(7.8, 2.6)
+let myNumber = 7.8 / 2.6
 ```
 
 ## Square root
