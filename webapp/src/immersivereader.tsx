@@ -30,10 +30,8 @@ function beautifyText(content: string): string {
         convertBoolAngles
     ];
     let contentWIP = content;
-    console.log("cleaning: \n" + content );
     cleaningFuncs.forEach(clean => {
         contentWIP = clean(contentWIP);
-        console.log("After " + clean.name + ": \n" + contentWIP);
     })
 
     return contentWIP;
