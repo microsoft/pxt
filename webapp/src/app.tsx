@@ -4192,13 +4192,18 @@ function initPacketIO() {
     pxt.packetio.configureEvents(
         () => data.invalidate("packetio:*"),
         (buf, isErr) => {
-            const data = Util.fromUTF8(Util.uint8ArrayToString(buf))
-            //pxt.debug('serial: ' + data)
-            window.postMessage({
-                type: 'serial',
-                id: 'n/a', // TODO
-                data
-            }, "*")
+            try {
+                const data = Util.fromUTF8(Util.uint8ArrayToString(buf))
+                //pxt.debug('serial: ' + data)
+                window.postMessage({
+                    type: 'serial',
+                    id: 'n/a', // TODO
+                    data
+                }, "*")
+            } catch (e) {
+                // data decoding failed, ignore
+                console.debug(`invalid utf8 serial data`, { buf, e })
+            }
         },
         (type, payload) => {
             const messageSimulators = pxt.appTarget.simulator?.messageSimulators;
@@ -4786,27 +4791,27 @@ document.addEventListener("DOMContentLoaded", () => {
             const pxtBranch = pxt.appTarget.versions.pxtCrowdinBranch;
             const targetBranch = pxt.appTarget.versions.targetCrowdinBranch;
             return Util.updateLocalizationAsync({
-                    targetId: targetId,
-                    baseUrl: baseUrl,
-                    code: useLang,
-                    pxtBranch: pxtBranch,
-                    targetBranch: targetBranch,
-                    force: force,
-                }).then(() => {
-                    if (pxt.Util.isLocaleEnabled(useLang)) {
-                        pxt.BrowserUtils.setCookieLang(useLang);
-                        lang.setInitialLang(useLang);
-                    } else {
-                        pxt.tickEvent("unavailablelocale", { lang: useLang, force: (force ? "true" : "false") });
-                    }
-                    pxt.tickEvent("locale", { lang: pxt.Util.userLanguage(), live: (pxt.Util.liveLocalizationEnabled() ? "true" : "false") });
-                    // Download sim translations and save them in the sim
-                    // don't wait!
-                    Util.downloadTranslationsAsync(
-                        targetId, baseUrl, useLang,
-                        pxtBranch, targetBranch, pxt.Util.liveLocalizationEnabled(), Util.TranslationsKind.Sim)
-                        .then(simStrings => simStrings && simulator.setTranslations(simStrings))
-                });
+                targetId: targetId,
+                baseUrl: baseUrl,
+                code: useLang,
+                pxtBranch: pxtBranch,
+                targetBranch: targetBranch,
+                force: force,
+            }).then(() => {
+                if (pxt.Util.isLocaleEnabled(useLang)) {
+                    pxt.BrowserUtils.setCookieLang(useLang);
+                    lang.setInitialLang(useLang);
+                } else {
+                    pxt.tickEvent("unavailablelocale", { lang: useLang, force: (force ? "true" : "false") });
+                }
+                pxt.tickEvent("locale", { lang: pxt.Util.userLanguage(), live: (pxt.Util.liveLocalizationEnabled() ? "true" : "false") });
+                // Download sim translations and save them in the sim
+                // don't wait!
+                Util.downloadTranslationsAsync(
+                    targetId, baseUrl, useLang,
+                    pxtBranch, targetBranch, pxt.Util.liveLocalizationEnabled(), Util.TranslationsKind.Sim)
+                    .then(simStrings => simStrings && simulator.setTranslations(simStrings))
+            });
         })
         .then(() => {
             pxt.BrowserUtils.initTheme();
