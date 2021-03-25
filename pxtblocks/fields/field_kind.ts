@@ -89,6 +89,7 @@ namespace pxtblockly {
                 if (pxt.blocks.isReservedWord(response)) {
                     Blockly.alert(lf("'{0}' is a reserved word and cannot be used.", response),
                         () => promptAndCreateKind(ws, opts, message, cb));
+                    return;
                 }
 
                 const existing = getExistingKindMembers(ws, opts.name);
