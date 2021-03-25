@@ -476,6 +476,20 @@ namespace ts.pxtc {
                         isSet ? U.lf("set %{0} %property to %{1}", paramName, paramValue) :
                             U.lf("change %{0} %property by %{1}", paramName, paramValue)
                 updateBlockDef(ex.attributes)
+                if (pxt.Util.isTranslationMode()) {
+                    ex.attributes.translationId = ex.attributes.block;
+                    // This kicks off async work but doesn't wait; give untranslated values to start with
+                    // to avoid a race causing a crash.
+                    ex.attributes.block = isGet ? `%${paramName} %property` :
+                        isSet ? `set %${paramName} %property to %${paramValue}` :
+                            `change %${paramName} %property by %${paramValue}`;
+                    updateBlockDef(ex.attributes);
+                    pxt.crowdin.inContextLoadAsync(ex.attributes.translationId)
+                        .then(r => {
+                            ex.attributes.block = r;
+                            updateBlockDef(ex.attributes);
+                        });
+                }
                 blocks.push(ex)
             }
 
