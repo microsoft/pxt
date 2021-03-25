@@ -63,11 +63,12 @@ export class AssetEditor extends Editor {
         // In tutorial view, the image editor is smaller and has no padding
         if (container && this.parent.isTutorial()) {
             const containerRect = container.getBoundingClientRect();
+            const editorTools = document.getElementById("editortools");
             blocklyFieldView.setEditorBounds({
                 top: containerRect.top,
                 left: containerRect.left,
                 width: containerRect.width,
-                height: containerRect.height,
+                height: containerRect.height + (editorTools ? editorTools.getBoundingClientRect().height : 0),
                 horizontalPadding: 0,
                 verticalPadding: 0
             });
@@ -169,6 +170,10 @@ export class AssetEditor extends Editor {
                 break;
         }
 
+        if (this.parent.isTutorial()) {
+            blocklyFieldView.setContainerClass("asset-editor-tutorial");
+        }
+
         fieldView.onHide(() => {
             if (this.parent.isTutorial()) this.unbindTutorialEvents();
 
@@ -185,6 +190,8 @@ export class AssetEditor extends Editor {
                     })
                 }
             });
+
+            blocklyFieldView.setContainerClass(null);
         });
 
         // Do not close image editor when clicking on previous/next in the tutorial, or menu dots
