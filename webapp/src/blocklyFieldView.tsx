@@ -40,6 +40,7 @@ export class FieldEditorView<U> implements pxt.react.FieldEditorView<U> {
     protected overlayDiv: HTMLDivElement;
     protected persistentData: any;
     protected hideCallback: () => void;
+    protected containerClass: string;
 
     constructor(protected contentDiv: HTMLDivElement) {
     }
@@ -120,6 +121,14 @@ export class FieldEditorView<U> implements pxt.react.FieldEditorView<U> {
         else this.persistentData = value;
     }
 
+    setContainerClass(className: string) {
+        if (this.contentDiv && this.contentDiv.classList.contains(this.containerClass)) {
+            this.contentDiv.classList.remove(this.containerClass);
+        }
+        this.containerClass = className;
+        this.updateContainerClass();
+    }
+
     protected clearContents() {
         ReactDOM.unmountComponentAtNode(this.contentDiv);
         while (this.contentDiv.firstChild) this.contentDiv.removeChild(this.contentDiv.firstChild);
@@ -177,6 +186,14 @@ export class FieldEditorView<U> implements pxt.react.FieldEditorView<U> {
             this.hide();
         }
     }
+
+    protected updateContainerClass() {
+        if (this.contentDiv) {
+            if (!this.contentDiv.classList.contains(this.containerClass)) {
+                this.contentDiv.classList.add(this.containerClass);
+            }
+        }
+    }
 }
 
 export function setEditorBounds(editorBounds: EditorBounds) {
@@ -184,6 +201,12 @@ export function setEditorBounds(editorBounds: EditorBounds) {
         current.resize(editorBounds)
     }
     cachedBounds = editorBounds;
+}
+
+export function setContainerClass(className: string) {
+    if (current) {
+        current.setContainerClass(className);
+    }
 }
 
 export function init() {

@@ -63,14 +63,16 @@ export class AssetEditor extends Editor {
         // In tutorial view, the image editor is smaller and has no padding
         if (container && this.parent.isTutorial()) {
             const containerRect = container.getBoundingClientRect();
+            const editorTools = document.getElementById("editortools");
             blocklyFieldView.setEditorBounds({
                 top: containerRect.top,
                 left: containerRect.left,
                 width: containerRect.width,
-                height: containerRect.height,
+                height: containerRect.height + (editorTools ? editorTools.getBoundingClientRect().height : 0),
                 horizontalPadding: 0,
                 verticalPadding: 0
             });
+            blocklyFieldView.setContainerClass("asset-editor-tutorial");
         } else {
             blocklyFieldView.setEditorBounds({
                 top: 0,

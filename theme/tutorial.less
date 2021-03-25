@@ -17,6 +17,7 @@
 @avatarSize: 4.5rem;
 @avatarMargin: @avatarSize + 0.5rem;
 @mobileAvatarMargin: 2rem;
+@tutorialCardMaxHeight: 20rem;
 
 @workspaceHeaderHeight: 4rem;
 @sidebarPadding: 1.6rem;
@@ -81,7 +82,7 @@
 }
 
 .tutorial.tutorialExpanded #tutorialcard {
-    max-height: 20rem;
+    max-height: @tutorialCardMaxHeight;
 }
 
 #root.dimmable.dimmed #tutorialcard.tutorialReady {
