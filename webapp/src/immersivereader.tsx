@@ -113,7 +113,7 @@ function beautifyText(content: string): string {
     }
 
     // Replace special characters with ones that can be read aloud
-    function cleanUnicodeEmojis(content:string): string {
+    function cleanUnicodeEmojis(content: string): string {
         return content.replace(
             /[^\x00-\x7F]+/gu, // Anything non-ASCII
             (emoji, capture, offset, s) => {
