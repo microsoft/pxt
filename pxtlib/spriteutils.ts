@@ -50,6 +50,8 @@ namespace pxt.sprite {
         }
 
         constructor(public width: number, public height: number, public x0 = 0, public y0 = 0, buf?: Uint8ClampedArray) {
+            if (!this.width) this.width = 16;
+            if (!this.height) this.height = 16;
             this.buf = buf || new Uint8ClampedArray(this.dataLength());
         }
 
