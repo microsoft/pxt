@@ -400,7 +400,7 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
                     const remoteFile = await getWithCacheAsync(local);
                     if (!remoteFile) {
                         pxt.tickEvent(`identity.sync.failed.getProjectFailed`)
-                        throw `Failed to download ${remote.id} from the cloud.`
+                        throw new Error(`Failed to download ${remote.id} from the cloud.`)
                     }
                     // delete always wins no matter what.
                     if (local.isDeleted) {
@@ -409,7 +409,7 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
                         const newHdr = await toCloud(local, remoteFile.version)
                         if (!newHdr) {
                             pxt.tickEvent(`identity.sync.failed.localDeleteUpdatedCloudFailed`)
-                            throw `Failed to save ${local.id} to the cloud.`
+                            throw new Error(`Failed to save ${local.id} to the cloud.`)
                         }
                         pxt.tickEvent(`identity.sync.localDeleteUpdatedCloud`)
                     }
@@ -431,7 +431,7 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
                         const newHdr = await toCloud(local, remoteFile.version);
                         if (!newHdr) {
                             pxt.tickEvent(`identity.sync.failed.localProjectUpdatedToCloudFailed`)
-                            throw `Failed to save ${local.id} to the cloud.`
+                            throw new Error(`Failed to save ${local.id} to the cloud.`)
                         }
                         pxt.tickEvent(`identity.sync.noConflict.localProjectUpdatedToCloud`)
                     } else {
@@ -465,7 +465,7 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
                 const newHdr = await toCloud(local, null)
                 if (!newHdr) {
                     pxt.tickEvent(`identity.sync.failed.orphanedLocalProjectPushedToCloudFailed`)
-                    throw `Failed to save ${local.id} to the cloud.`
+                    throw new Error(`Failed to save ${local.id} to the cloud.`)
                 }
             }
             else {
@@ -479,7 +479,7 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
                 const remoteFile = await getWithCacheAsync(remote);
                 if (!remoteFile) {
                     pxt.tickEvent(`identity.sync.failed.importCloudProjectFailed`)
-                    throw `Failed to download ${remote.id} from the cloud.`
+                    throw new Error(`Failed to download ${remote.id} from the cloud.`)
                 }
                 pxt.debug(`importing new cloud project '${remoteFile.header.name}' (${remoteFile.header.id})`)
                 const res = await fromCloud(null, remoteFile)
