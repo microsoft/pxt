@@ -62,10 +62,9 @@ function beautifyText(content: string): string {
     }
 
     // Remove any triple tick annotations ```
-    // This RegEx was copied from pxtlib/tutorial.ts
     function cleanMetadata(content: string): string {
         return content.replace(
-            /^``` *(sim|block|blocks|filterblocks|spy|ghost|typescript|ts|js|javascript|template|python|jres|assetjson)?\s*\n([\s\S]*?)\n```$/gum,
+            pxt.tutorial.getMetadataRegex(),
             ""
         );
     }
@@ -112,19 +111,16 @@ function beautifyText(content: string): string {
         )
     }
 
-    // Replace special characters with ones that can be read aloud
+    // Replace unicode emojis with text that can be read aloud
     function cleanUnicodeEmojis(content: string): string {
-        return content.replace(
-            /[^\x00-\x7F]+/gu, // Anything non-ASCII
-            (emoji, capture, offset, s) => {
-                if (emoji == "Ⓐ" || emoji == "🅐") {
-                    return "A";
-                } else if (emoji == "Ⓑ" || emoji == "🅑") {
-                    return "B";
-                } else {
-                    return lf("{0}", emoji);
-                }
-            }
+        const replacedA = content.replace(
+            /[Ⓐ|🅐]/gu,
+            lf("{0}", "A")
+        );
+
+        return replacedA.replace(
+            /[Ⓑ|🅑]/gu,
+            lf("{0}", "B")
         );
     }
 
