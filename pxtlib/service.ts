@@ -476,6 +476,13 @@ namespace ts.pxtc {
                         isSet ? U.lf("set %{0} %property to %{1}", paramName, paramValue) :
                             U.lf("change %{0} %property by %{1}", paramName, paramValue)
                 updateBlockDef(ex.attributes)
+                if (pxt.Util.isTranslationMode()) {
+                    pxt.crowdin.inContextLoadAsync(ex.attributes.block)
+                        .then(r => {
+                            ex.attributes.block = r;
+                            updateBlockDef(ex.attributes);
+                        })
+                }
                 blocks.push(ex)
             }
 
