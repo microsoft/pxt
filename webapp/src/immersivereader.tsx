@@ -77,7 +77,7 @@ function beautifyText(content: string): string {
         let singleWordBold = content.replace(
             /\*\*([^*^\s]+)\*\*|__([^\s^_]+)__/gu,
             (matched, boldStar, boldUnder, offset, s) => {
-                return "\""+ lf("{0}", (boldStar ? boldStar : boldUnder))+"\""
+                return "\"" + lf("{0}", (boldStar ? boldStar : boldUnder)) + "\""
             }
         )
 
