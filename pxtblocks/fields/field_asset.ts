@@ -264,12 +264,7 @@ namespace pxtblockly {
                             this.asset.meta.blockIDs = this.asset.meta.blockIDs.filter(id => id !== this.sourceBlock_.id);
 
                             if (!this.isTemporaryAsset()) {
-                                if (this.asset.meta.blockIDs.length === 0 && !this.asset.meta.displayName) {
-                                    project.removeAsset(this.asset);
-                                }
-                                else {
-                                    project.updateAsset(this.asset);
-                                }
+                                project.updateAsset(this.asset);
                             }
                         }
                     }
