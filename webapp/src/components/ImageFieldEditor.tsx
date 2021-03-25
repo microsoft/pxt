@@ -489,8 +489,9 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
                 else if (!asset.meta.displayName) {
                     // If both are temporary, copy by value
                     asset = {
-                        ...asset,
-                        id: this.asset.id
+                        ...pxt.cloneAsset(asset),
+                        id: this.asset.id,
+                        meta: this.asset.meta
                     }
                 }
 

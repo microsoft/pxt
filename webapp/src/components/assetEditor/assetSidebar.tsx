@@ -91,6 +91,9 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
         project.pushUndo();
         if (!result.meta.displayName && result.meta.temporaryInfo) {
             getBlocksEditor().updateTemporaryAsset(result);
+
+            pkg.mainEditorPkg().lookupFile("this/main.blocks").setContentAsync(getBlocksEditor().getCurrentSource())
+
         }
         else {
             project.updateAsset(result);
