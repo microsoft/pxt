@@ -79,3 +79,31 @@
         }
     }
 }
+
+/* Asset editor tutorial is the max height of the tutorial header */
+@media only screen and (max-height: 900px) {
+    .asset-editor-tutorial {
+        .image-editor-sidebar {
+            width: 10rem;
+        }
+
+        .image-editor-tilemap-minimap {
+            display: none;
+        }
+
+        .image-editor-colors {
+            height: 2rem;
+            width: 100%;
+        }
+
+        .image-editor-color-buttons {
+            padding-left: .5rem;
+            padding-top: 0;
+
+            .image-editor-button {
+                width: 2rem;
+                height: 2rem;
+            }
+        }
+    }
+}
