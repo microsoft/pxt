@@ -20,14 +20,15 @@ function beautifyText(content: string): string {
         cleanImages,
         cleanAltText,
         cleanBlockAnnotation,
-        cleanHintText,
+        cleanMetadata,
         cleanBold,
         cleanItalics,
         cleanNewLines,
         cleanHorizontalRule,
         cleanBlockquotes,
         cleanEmojis,
-        convertBoolAngles
+        cleanUnicodeEmojis,
+        convertToggles
     ];
     let contentWIP = content;
     cleaningFuncs.forEach(clean => {
@@ -60,11 +61,11 @@ function beautifyText(content: string): string {
         );
     }
 
-    // If the ```block ``` annotation is used to display a block in
-    // a modal, remove it
-    function cleanHintText(content: string): string {
+    // Remove any triple tick annotations ```
+    // This RegEx was copied from pxtlib/tutorial.ts
+    function cleanMetadata(content: string): string {
         return content.replace(
-            /^```block$[^`]*^```$/gum,
+            /^``` *(sim|block|blocks|filterblocks|spy|ghost|typescript|ts|js|javascript|template|python|jres|assetjson)?\s*\n([\s\S]*?)\n```$/gum,
             ""
         );
     }
@@ -90,8 +91,8 @@ function beautifyText(content: string): string {
     // replace horizontal rules with new lines
     function cleanHorizontalRule(content: string): string {
         return content.replace(
-            /^\* \* \*$|^- - -$|^<hr\/>$/gum,
-            "<br /><br />"
+            /^\* \* \*$|^- - -$|^<hr\/>$|---/gum,
+            "<br />"
         );
     }
 
@@ -111,11 +112,27 @@ function beautifyText(content: string): string {
         )
     }
 
+    // Replace special characters with ones that can be read aloud
+    function cleanUnicodeEmojis(content:string): string {
+        return content.replace(
+            /[^\x00-\x7F]+/gu, // Anything non-ASCII
+            (emoji, capture, offset, s) => {
+                if (emoji == "Ⓐ" || emoji == "🅐") {
+                    return "A";
+                } else if (emoji == "Ⓑ" || emoji == "🅑") {
+                    return "B";
+                } else {
+                    return lf("{0}", emoji);
+                }
+            }
+        );
+    }
+
     // Remove all emojis because they get read out. Characters that aren't
     // emojis don't get hit by this RegEx, but they're silent
     function cleanEmojis(content: string): string {
         let PICTOGRAPHIC_REGEX: RegExp;
-        try { // Some browsers do not support unicode property escape, in which case we can just use _ replacement
+        try { // Some browsers do not support unicode property escape
             PICTOGRAPHIC_REGEX = new RegExp("\\p{Extended_Pictographic}", "ug")
         } catch {}
         const specialEmojis: string[] = [];
@@ -136,6 +153,7 @@ function beautifyText(content: string): string {
         return content;
     }
 
+    // Remove * and _ italic annotations
     function cleanItalics(content: string): string {
         return content.replace(
             /\*([^*]+)\*|_([^_]+)_/gu,
@@ -144,9 +162,10 @@ function beautifyText(content: string): string {
         );
     }
 
-    function convertBoolAngles(content: string): string {
+    // Change toggles to be surrounded with ` instead of <>
+    function convertToggles(content: string): string {
         return content.replace(
-            /<(true|false)>/gu,
+            /<(true|false|down|up|high|low|on|off|yes|no|win|lose)>/gui,
             (matched, word, offset, s) => {
                 return "`" + lf("{0}", word) + "`";
             }
