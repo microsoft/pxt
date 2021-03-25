@@ -951,6 +951,7 @@ declare namespace pxt.tutorial {
         metadata?: TutorialMetadata;
         assetFiles?: pxt.Map<string>;
         jres?: string; // JRES to be used when generating hints; necessary for tilemaps
+        customTs?: string; // custom typescript code loaded in a separate file for the tutorial
     }
 
     interface TutorialMetadata {
@@ -1004,6 +1005,7 @@ declare namespace pxt.tutorial {
         language?: string; // native language of snippets ("python" for python, otherwise defaults to typescript)
         assetFiles?: pxt.Map<string>;
         jres?: string; // JRES to be used when generating hints; necessary for tilemaps
+        customTs?: string; // custom typescript code loaded in a separate file for the tutorial
     }
     interface TutorialCompletionInfo {
         // id of the tutorial
