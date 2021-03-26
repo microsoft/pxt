@@ -510,6 +510,7 @@ namespace pxt {
     export const TUTORIAL_CODE_START = "_onCodeStart.ts";
     export const TUTORIAL_CODE_STOP = "_onCodeStop.ts";
     export const TUTORIAL_INFO_FILE = "tutorial-info-cache.json";
+    export const TUTORIAL_CUSTOM_TS = "tutorial.custom.ts";
 
     export function outputName(trg: pxtc.CompileTarget = null) {
         if (!trg) trg = appTarget.compile
