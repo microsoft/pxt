@@ -27,8 +27,8 @@ https://youtu.be/OugXfqhWUQo
 #### Trouble signing in with Crowdin?
 
 If you have trouble with signing into the in-context translation page,
-you might need to disable ``same site by default cookies``. 
-Go to **chrome://flags/#same-site-by-default-cookies** 
+you might need to disable ``same site by default cookies``.
+Go to **chrome://flags/#same-site-by-default-cookies**
 and set the **SameSite by default cookies** to **Disabled** option.
 
 ### ~
@@ -60,7 +60,7 @@ You will be prompted with a dialog that contains the block translatable string.
 
 ### Documentation page translation
 
-When on any documention page, click on the **Language** button 
+When on any documention page, click on the **Language** button
 in the footer and then select **Translate this page** in the dialog.
 
 
@@ -85,7 +85,7 @@ https://youtu.be/4PqWq50e8C4
 
 ## Translation roles
 
-Crowdin is a crowd-sourced translation platform with two main actors: **translators** and **proofreaders**. 
+Crowdin is a crowd-sourced translation platform with two main actors: **translators** and **proofreaders**.
 **Translators** add new translations or vote for existing translations. Once a translation is available, a **proofreader** needs
 to **validate** it in order to appear on the MakeCode web sites.
 
@@ -271,12 +271,7 @@ Once a translation is approved by a proofreader it is published to the "live" we
 
 ### Live Translations
 
-To test your changes "live", use **beta** build and the ``?liveforcelang=CODE`` hash argument where ``CODE`` is your language ISO code. For example, to see the french translations:
-
-* https://makecode.microbit.org/beta?liveforcelang=fr
-
-Note that there may be a delay of up to 24 hours before your changes in Crowdin make it into the "live" view.
-Also, the language will only be available in the editor's language selection if the target has enabled that locale - which is why you need to use the hash mentioned above.
+To test your changes "live", use the [in context translations](#translations-in-context) feature to fetch the most recent translations available in any language directly from crowdin.
 
 ### Tutorials
 

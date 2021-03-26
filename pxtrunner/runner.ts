@@ -207,31 +207,34 @@ namespace pxt.runner {
         Util.assert(!!pxt.appTarget);
 
         const href = window.location.href;
-        let live = false;
         let force = false;
         let lang: string = undefined;
         if (/[&?]translate=1/.test(href) && !pxt.BrowserUtils.isIE()) {
             lang = ts.pxtc.Util.TRANSLATION_LOCALE;
-            live = true;
             force = true;
+            pxt.Util.enableLiveLocalizationUpdates();
         } else {
             const cookieValue = /PXT_LANG=(.*?)(?:;|$)/.exec(document.cookie);
             const mlang = /(live)?(force)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(href);
             lang = mlang ? mlang[3] : (cookieValue && cookieValue[1] || pxt.appTarget.appTheme.defaultLocale || (navigator as any).userLanguage || navigator.language);
-            live = !pxt.appTarget.appTheme.disableLiveTranslations || (mlang && !!mlang[1]);
+
+            if (!pxt.appTarget.appTheme.disableLiveTranslations || !!mlang?.[1]) {
+                pxt.Util.enableLiveLocalizationUpdates();
+            }
             force = !!mlang && !!mlang[2];
         }
         const versions = pxt.appTarget.versions;
 
         patchSemantic();
         const cfg = pxt.webConfig
-        return Util.updateLocalizationAsync(
-            pxt.appTarget.id,
-            cfg.commitCdnUrl, lang,
-            versions ? versions.pxtCrowdinBranch : "",
-            versions ? versions.targetCrowdinBranch : "",
-            live,
-            force)
+        return Util.updateLocalizationAsync({
+                targetId: pxt.appTarget.id,
+                baseUrl: cfg.commitCdnUrl,
+                code: lang,
+                pxtBranch: versions ? versions.pxtCrowdinBranch : "",
+                targetBranch: versions ? versions.targetCrowdinBranch : "",
+                force: force,
+            })
             .then(() => {
                 mainPkg = new pxt.MainPackage(new Host());
             })
@@ -501,14 +504,18 @@ namespace pxt.runner {
         editorLanguageMode = mode;
         if (localeInfo != pxt.Util.localeInfo()) {
             const localeLiveRx = /^live-/;
-            return pxt.Util.updateLocalizationAsync(
-                pxt.appTarget.id,
-                pxt.webConfig.commitCdnUrl,
-                localeInfo.replace(localeLiveRx, ''),
-                pxt.appTarget.versions.pxtCrowdinBranch,
-                pxt.appTarget.versions.targetCrowdinBranch,
-                localeLiveRx.test(localeInfo)
-            );
+            const fetchLive = localeLiveRx.test(localeInfo);
+            if (fetchLive) {
+                pxt.Util.enableLiveLocalizationUpdates();
+            }
+
+            return pxt.Util.updateLocalizationAsync({
+                targetId: pxt.appTarget.id,
+                baseUrl: pxt.webConfig.commitCdnUrl,
+                code: localeInfo.replace(localeLiveRx, ''),
+                pxtBranch: pxt.appTarget.versions.pxtCrowdinBranch,
+                targetBranch: pxt.appTarget.versions.targetCrowdinBranch,
+            });
         }
 
         return Promise.resolve();

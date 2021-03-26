@@ -124,16 +124,16 @@ class AppImpl extends React.Component<AppProps, AppState> {
         const targetId = pxt.appTarget.id;
         const pxtBranch = pxt.appTarget.versions.pxtCrowdinBranch;
         const targetBranch = pxt.appTarget.versions.targetCrowdinBranch;
+        pxt.Util.enableLiveLocalizationUpdates();
 
-        await updateLocalizationAsync(
-            targetId,
-            baseUrl,
-            useLang!,
-            pxtBranch!,
-            targetBranch!,
-            true,
-            force
-        );
+        await updateLocalizationAsync({
+            targetId: targetId,
+            baseUrl: baseUrl,
+            code: useLang!,
+            pxtBranch: pxtBranch!,
+            targetBranch: targetBranch!,
+            force: force,
+        });
 
         if (pxt.Util.isLocaleEnabled(useLang!)) {
             pxt.BrowserUtils.setCookieLang(useLang!);
@@ -305,14 +305,24 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         theme: state.theme
     };
 }
+interface LocalizationUpdateOptions {
+    targetId: string;
+    baseUrl: string;
+    code: string;
+    pxtBranch: string;
+    targetBranch: string;
+    force?: boolean;
+}
 
-async function updateLocalizationAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean, force?: boolean) {
-    code = pxt.Util.normalizeLanguageCode(code)[0];
-    if (code === "en-US")
-        code = "en"; // special case for built-in language
-    if (code === pxt.Util.userLanguage() || (!pxt.Util.isLocaleEnabled(code) && !force)) {
-        return;
-    }
+async function updateLocalizationAsync(opts: LocalizationUpdateOptions): Promise<void> {
+    const {
+        targetId,
+        baseUrl,
+        pxtBranch,
+        targetBranch,
+        force,
+    } = opts;
+    let { code } = opts;
 
     const translations = await pxt.Util.downloadTranslationsAsync(
         targetId,
@@ -320,16 +330,13 @@ async function updateLocalizationAsync(targetId: string, baseUrl: string, code: 
         code,
         pxtBranch,
         targetBranch,
-        !!live,
+        pxt.Util.liveLocalizationEnabled(),
         ts.pxtc.Util.TranslationsKind.SkillMap
     );
 
     pxt.Util.setUserLanguage(code);
     if (translations) {
         pxt.Util.setLocalizedStrings(translations);
-        if (live) {
-            pxt.Util.localizeLive = true;
-        }
     }
 }
 

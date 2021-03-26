@@ -1,5 +1,13 @@
 # Microsoft MakeCode Blog
 
+## [MakeCode Arcade Spring Update!](/blog/arcade/update-spring-2021)
+
+March 22nd, 2021 by [Jaqster](https://github.com/jaqster)
+
+I know we just released a major update to [Arcade](/blog/arcade/update-jan-2021) in January, but we couldn’t resist tacking on a few more things! So, we have a small Spring update for you. Here’s what it includes...
+
+**[Continue reading this blog post](/blog/arcade/update-spring-2021)**
+
 ## [MakeCode Arcade 1st Birthday Update!](/blog/arcade/update-jan-2021)
 
 January 22nd, 2021 by [Jaqster](https://github.com/jaqster)
