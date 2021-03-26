@@ -4043,6 +4043,7 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
 
 async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictSyntaxCheck?: boolean): Promise<void> {
     console.log(`### TESTING ${snippets.length} CodeSnippets`)
+    const isLocal = ciBuildInfo().ci === "local";
     pxt.github.forceProxy = true; // avoid throttling in CI machines
     let filenameMatch: RegExp;
     try {
