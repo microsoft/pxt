@@ -818,19 +818,23 @@
 
     /* immersive reader */
     .modals .ui.button.immersive-reader-button,
-    #mainmenu .immersive-reader-button.ui.item:focus {
+    #mainmenu .immersive-reader-button.ui.item:focus,
+    #mainmenu .immersive-reader-button.ui.item:hover {
         background-color: white !important;
         background-image: @immersiveReaderIcon !important;
         background-repeat: no-repeat !important;
-        background-size: contain !important;
+        background-size: 80% !important;
         background-position: center!important;
     }
 
     // skillmap embedded tutorials
     .tutorial.tutorial-embed {
         .immersive-reader-button.ui.item,
-        .immersive-reader-button.ui.item:focus {
-            background-size: 1.7rem;
+        .immersive-reader-button.ui.item:focus,
+        .immersive-reader-button.ui.item:hover {
+            background-size: 80%!important;
+            background-color: transparent!important;
+            filter: none!important;
         }
     }
 
