@@ -4154,121 +4154,120 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
                         })
                     })
             }
-            if (resp.success) {
-                if (/^block/.test(snippet.type)) {
-                    //Similar to pxtc.decompile but allows us to get blocksInfo for round trip
-                    const file = resp.ast.getSourceFile('main.ts');
-                    const apis = pxtc.getApiInfo(resp.ast, opts.jres);
-                    opts.apisInfo = apis
 
-                    // ensure decompile to blocks works
-                    const blocksInfo = pxtc.getBlocksInfo(apis);
-                    const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, {
-                        snippetMode: false,
-                        errorOnGreyBlocks: true
-                    });
-
-                    let blockSuccess = !!bresp.outfiles['main.blocks'];
-                    if (!blockSuccess) {
-                        return addFailure(fn, bresp.diagnostics)
-                    }
-
-                    // decompile to python
-                    let ts1 = opts.fileSystem["main.ts"]
-                    let program = pxtc.getTSProgram(opts);
-                    const decompiled = pxt.py.decompileToPython(program, "main.ts");
-                    let pySuccess = !!decompiled.outfiles['main.py'] && decompiled.success
-                    if (!pySuccess) {
-                        console.log("ts2py error")
-                        return addFailure(fn, decompiled.diagnostics)
-                    }
-                    opts.fileSystem['main.py'] = decompiled.outfiles['main.py']
-                    let py = decompiled.outfiles['main.py']
-
-                    // py to ts
-                    opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
-                    let ts2Res = pxt.py.py2ts(opts)
-
-                    let ts2 = ts2Res.outfiles["main.ts"];
-
-                    if (!ts2) {
-                        console.log("py2ts error!")
-                        console.dir(ts2Res)
-                        let errs = ts2Res.diagnostics.map(pxtc.getDiagnosticString).join()
-                        if (errs)
-                            console.log(errs)
-                        return addFailure(fn, ts2Res.diagnostics)
-                    }
-
-                    let getComparisonString = (s: string): string =>
-                        s.split("\n")
-                            // ignore function names
-                            // e.g. function foobar() {}
-                            //   => function () {}
-                            .map(l => {
-                                let m: RegExpExecArray;
-                                do {
-                                    m = /function(.+)\(/.exec(l)
-                                    if (m && m.length > 1) {
-                                        l = l.replace(`function${m[1]}`, "function")
-                                    }
-                                } while (m && m.length > 1)
-                                return l
-                            })
-                            // ignore type annotations on assignment statements (these tend to get erased)
-                            // e.g. let foo: number = 7
-                            //   => let foo = 7
-                            .map(l => {
-                                let m: RegExpExecArray;
-                                do {
-                                    m = /.+:(.+)[=,)]/.exec(l)
-                                    if (m && m.length > 1) {
-                                        l = l.replace(`:${m[1]}`, "")
-                                    }
-                                } while (m && m.length > 1)
-                                return l
-                            })
-                            // ignore whitespace
-                            .map(l => l.replace(/\s/g, ""))
-                            // ignore linebreak differences
-                            .map(l => l.replace(/\n/g, ""))
-                            // ignore semi-colons
-                            .map(l => l.replace(/\;/g, ""))
-                            // ignore blank lines
-                            .filter(l => l)
-                            .join("")
-
-                    if (pyStrictSyntaxCheck) {
-                        let cmp1 = getComparisonString(ts1)
-                        let cmp2 = getComparisonString(ts2)
-                        let mismatch = cmp1 != cmp2
-                        if (mismatch) {
-                            console.log(`Mismatch. Original:`)
-                            console.log(cmp1)
-                            console.log("decompiled->compiled:")
-                            console.log(cmp2)
-                            console.log("TS mismatch :/")
-                            // TODO: generate more helpful diags
-                            return addFailure(fn, [])
-                        } else {
-                            console.log("TS same :)")
-                        }
-                    }
-
-                    // NOTE: neither of these decompile steps checks that the resulting code is correct or that
-                    // when the code is compiled back to ts it'll behave the same. This could be validated in
-                    // the future.
-
-                    return addSuccess(name)
-                }
-                else {
-                    return addSuccess(fn)
-                }
-            }
-            else {
+            if (!resp.success) {
                 return addFailure(name, resp.diagnostics)
             }
 
+            if (!/^block/.test(snippet.type)) {
+                return addSuccess(fn)
+            }
+
+            //Similar to pxtc.decompile but allows us to get blocksInfo for round trip
+            const file = resp.ast.getSourceFile('main.ts');
+            const apis = pxtc.getApiInfo(resp.ast, opts.jres);
+            opts.apisInfo = apis
+
+            // ensure decompile to blocks works
+            const blocksInfo = pxtc.getBlocksInfo(apis);
+            const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, {
+                snippetMode: false,
+                errorOnGreyBlocks: true
+            });
+
+            let blockSuccess = !!bresp.outfiles['main.blocks'];
+            if (!blockSuccess) {
+                return addFailure(fn, bresp.diagnostics)
+            }
+
+            // decompile to python
+            let ts1 = opts.fileSystem["main.ts"]
+            let program = pxtc.getTSProgram(opts);
+            const decompiled = pxt.py.decompileToPython(program, "main.ts");
+
+            const py = decompiled.outfiles['main.py']
+            let pySuccess = !!py && decompiled.success
+            if (!pySuccess) {
+                console.log("ts2py error")
+                return addFailure(fn, decompiled.diagnostics)
+            }
+            opts.fileSystem['main.py'] = py
+
+            // py to ts
+            opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
+            let ts2Res = pxt.py.py2ts(opts)
+
+            let ts2 = ts2Res.outfiles["main.ts"];
+
+            if (!ts2) {
+                console.log("py2ts error!")
+                console.dir(ts2Res)
+                let errs = ts2Res.diagnostics.map(pxtc.getDiagnosticString).join()
+                if (errs)
+                    console.log(errs)
+                return addFailure(fn, ts2Res.diagnostics)
+            }
+
+            let getComparisonString = (s: string): string =>
+                s.split("\n")
+                    // ignore function names
+                    // e.g. function foobar() {}
+                    //   => function () {}
+                    .map(l => {
+                        let m: RegExpExecArray;
+                        do {
+                            m = /function(.+)\(/.exec(l)
+                            if (m && m.length > 1) {
+                                l = l.replace(`function${m[1]}`, "function")
+                            }
+                        } while (m && m.length > 1)
+                        return l
+                    })
+                    // ignore type annotations on assignment statements (these tend to get erased)
+                    // e.g. let foo: number = 7
+                    //   => let foo = 7
+                    .map(l => {
+                        let m: RegExpExecArray;
+                        do {
+                            m = /.+:(.+)[=,)]/.exec(l)
+                            if (m && m.length > 1) {
+                                l = l.replace(`:${m[1]}`, "")
+                            }
+                        } while (m && m.length > 1)
+                        return l
+                    })
+                    // ignore whitespace
+                    .map(l => l.replace(/\s/g, ""))
+                    // ignore linebreak differences
+                    .map(l => l.replace(/\n/g, ""))
+                    // ignore semi-colons
+                    .map(l => l.replace(/\;/g, ""))
+                    // ignore blank lines
+                    .filter(l => l)
+                    .join("")
+
+            if (pyStrictSyntaxCheck) {
+                let cmp1 = getComparisonString(ts1)
+                let cmp2 = getComparisonString(ts2)
+                let mismatch = cmp1 != cmp2
+                if (mismatch) {
+                    console.log(`Mismatch. Original:`)
+                    console.log(cmp1)
+                    console.log("decompiled->compiled:")
+                    console.log(cmp2)
+                    console.log("TS mismatch :/")
+                    // TODO: generate more helpful diags
+                    return addFailure(fn, [])
+                } else {
+                    console.log("TS same :)")
+                }
+            }
+
+            // NOTE: neither of these decompile steps checks that the resulting code is correct or that
+            // when the code is compiled back to ts it'll behave the same. This could be validated in
+            // the future.
+
+            return addSuccess(name)
         } catch (e) {
             addFailure(name, [
                 {
