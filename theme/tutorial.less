@@ -484,32 +484,46 @@ code.lang-filterblocks {
 #mainmenu .immersive-reader-button.ui.item,
 #mainmenu .immersive-reader-button.ui.item:focus {
     background-image: @immersiveReaderLightIcon;
-    width: 1.8rem;
-    height: 1.8rem;
+    width: 2rem;
+    height: 2rem;
     background-repeat: no-repeat;
-    background-size: contain;
-    margin-top: .4rem;
+    background-size: 80%;
+    background-position: center;
+    border-radius: .2em!important;
+}
+
+#mainmenu .immersive-reader-button:focus,
+#mainmenu .immersive-reader-button:hover {
+    background-color: #096975!important;
+    filter: brightness(0.8);
 }
 
 .modals .immersive-reader-button {
     background-image: @immersiveReaderIcon;
-    width: 1.8rem;
-    height: 1.8rem;
+    width: 2rem;
+    height: 2.8rem;
     background-repeat: no-repeat;
-    background-size: contain;
-    background-color: transparent;
+    background-size: 60%;
+    background-color: #f9fafb;
+    background-position: center;
     box-shadow: none;
     transition: none;
     float: left;
-    margin-top: 10px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    margin-left: 0!important;
 }
 
-.modals .immersive-reader-button:hover, .modals .immersive-reader-button:focus {
+.modals .immersive-reader-button:hover,
+.modals .immersive-reader-button:focus {
     box-shadow: none;
     background-image: @immersiveReaderIcon;
     background-repeat: no-repeat;
     background-size: contain;
-    background-color: transparent
+    background-color: #f9fafb;
+    background-position: center;
+    background-size: 60%;
+    filter: brightness(0.8);
 }
 
 /*******************************
