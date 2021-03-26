@@ -4208,47 +4208,9 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
                 return addFailure(fn, ts2Res.diagnostics)
             }
 
-            let getComparisonString = (s: string): string =>
-                s.split("\n")
-                    // ignore function names
-                    // e.g. function foobar() {}
-                    //   => function () {}
-                    .map(l => {
-                        let m: RegExpExecArray;
-                        do {
-                            m = /function(.+)\(/.exec(l)
-                            if (m && m.length > 1) {
-                                l = l.replace(`function${m[1]}`, "function")
-                            }
-                        } while (m && m.length > 1)
-                        return l
-                    })
-                    // ignore type annotations on assignment statements (these tend to get erased)
-                    // e.g. let foo: number = 7
-                    //   => let foo = 7
-                    .map(l => {
-                        let m: RegExpExecArray;
-                        do {
-                            m = /.+:(.+)[=,)]/.exec(l)
-                            if (m && m.length > 1) {
-                                l = l.replace(`:${m[1]}`, "")
-                            }
-                        } while (m && m.length > 1)
-                        return l
-                    })
-                    // ignore whitespace
-                    .map(l => l.replace(/\s/g, ""))
-                    // ignore linebreak differences
-                    .map(l => l.replace(/\n/g, ""))
-                    // ignore semi-colons
-                    .map(l => l.replace(/\;/g, ""))
-                    // ignore blank lines
-                    .filter(l => l)
-                    .join("")
-
             if (pyStrictSyntaxCheck) {
-                let cmp1 = getComparisonString(ts1)
-                let cmp2 = getComparisonString(ts2)
+                let cmp1 = pyComparisonString(ts1)
+                let cmp2 = pyComparisonString(ts2)
                 let mismatch = cmp1 != cmp2
                 if (mismatch) {
                     console.log(`Mismatch. Original:`)
@@ -4269,18 +4231,16 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
 
             return addSuccess(name)
         } catch (e) {
-            addFailure(name, [
-                {
-                    code: 4242,
-                    category: ts.DiagnosticCategory.Error,
-                    messageText: e.message,
-                    fileName: fn,
-                    start: 1,
-                    line: 1,
-                    length: 1,
-                    column: 1
-                }
-            ]);
+            addFailure(name, [{
+                code: 4242,
+                category: ts.DiagnosticCategory.Error,
+                messageText: e.message,
+                fileName: fn,
+                start: 1,
+                line: 1,
+                length: 1,
+                column: 1
+            }]);
         }
     });
 
@@ -4292,6 +4252,18 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
         const msg = `${failures.length} snippets not compiling in the docs`;
         if (pxt.appTarget.ignoreDocsErrors) pxt.log(msg);
         else U.userError(msg);
+    }
+
+    function pyComparisonString(s: string): string {
+        return s.split("\n")
+            // ignore function names e.g. function foobar() {} => function () {}
+            .map(l => l.replace(/function(.+)\(/g, "function ("))
+            // ignore type annotations on assignment statements (these tend to get erased) let foo: number = 7 => let foo = 7
+            .map(l => l.replace(/(.+):[^=,)]+([=,)])/g, (m, start, op) => start + op))
+            // ignore whitespace, semi-colons
+            .map(l => l.replace(/[\s;]/mg, ""))
+            .filter(l => l)
+            .join("");
     }
 }
 
