@@ -4041,7 +4041,7 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
     });
 }
 
-function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictSyntaxCheck?: boolean): Promise<void> {
+async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictSyntaxCheck?: boolean): Promise<void> {
     console.log(`### TESTING ${snippets.length} CodeSnippets`)
     pxt.github.forceProxy = true; // avoid throttling in CI machines
     let filenameMatch: RegExp;
@@ -4072,7 +4072,8 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictSyntaxC
         })
         infos.forEach(info => pxt.log(`${f}:(${info.line},${info.column}): ${info.category} ${info.messageText}`));
     }
-    return U.promiseMapAllSeries(snippets, (snippet: CodeSnippet) => {
+
+    await U.promiseMapAllSeries(snippets, async (snippet: CodeSnippet) => {
         const name = snippet.name;
         const fn = snippet.file || snippet.name;
         pxt.log(`  ${fn} (${snippet.type})`);
@@ -4108,188 +4109,191 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictSyntaxC
 
         const host = new SnippetHost("snippet" + name, inFiles, snippet.packages);
         host.cache = cache;
-        const pkg = new pxt.MainPackage(host);
-        return pkg.installAllAsync()
-            .then(() => pkg.getCompileOptionsAsync().then(opts => {
-                opts.ast = true
-                let resp: { outfiles: Map<string>, success: boolean, diagnostics: pxtc.KsDiagnostic[], ast?: ts.Program };
-                if (isPy) {
-                    opts.target.preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME
-                    const stsCompRes = pxtc.compile(opts);
-                    const apisInfo = pxtc.getApiInfo(stsCompRes.ast, opts.jres)
-                    if (!apisInfo || !apisInfo.byQName)
-                        throw Error("Failed to get apisInfo")
-                    opts.apisInfo = apisInfo
 
-                    opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
+        try {
+            const pkg = new pxt.MainPackage(host);
+            await pkg.installAllAsync();
+            const opts = await pkg.getCompileOptionsAsync();
 
-                    const { outfiles, diagnostics } = pxt.py.py2ts(opts)
-                    const success = diagnostics.length == 0
-                    resp = { outfiles, success, diagnostics, ast: stsCompRes.ast }
-                } else {
-                    resp = pxtc.compile(opts)
-                }
+            opts.ast = true
+            let resp: { outfiles: Map<string>, success: boolean, diagnostics: pxtc.KsDiagnostic[], ast?: ts.Program };
+            if (isPy) {
+                opts.target.preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME
+                const stsCompRes = pxtc.compile(opts);
+                const apisInfo = pxtc.getApiInfo(stsCompRes.ast, opts.jres)
+                if (!apisInfo || !apisInfo.byQName)
+                    throw Error("Failed to get apisInfo")
+                opts.apisInfo = apisInfo
 
-                if (resp.outfiles && snippet.file) {
-                    const dir = snippet.file
-                        .replace(/\.ts$/, '')
-                        .replace(/\.py$/, '');
-                    nodeutil.mkdirP(dir);
-                    nodeutil.mkdirP(path.join(dir, "built"));
-                    Object.keys(resp.outfiles).forEach(outfile => {
-                        const ofn = path.join(dir, "built", outfile);
-                        pxt.debug(`writing ${ofn}`);
-                        nodeutil.writeFileSync(ofn, resp.outfiles[outfile], 'utf8')
-                    })
-                    pkg.filesToBePublishedAsync()
-                        .then(files => {
-                            Object.keys(files).forEach(f => {
-                                const fn = path.join(dir, f);
-                                pxt.debug(`writing ${fn}`);
-                                nodeutil.writeFileSync(fn, files[f], 'utf8');
-                            })
+                opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
+
+                const { outfiles, diagnostics } = pxt.py.py2ts(opts)
+                const success = diagnostics.length == 0
+                resp = { outfiles, success, diagnostics, ast: stsCompRes.ast }
+            } else {
+                resp = pxtc.compile(opts)
+            }
+
+            if (resp.outfiles && snippet.file) {
+                const dir = snippet.file
+                    .replace(/\.ts$/, '')
+                    .replace(/\.py$/, '');
+                nodeutil.mkdirP(dir);
+                nodeutil.mkdirP(path.join(dir, "built"));
+                Object.keys(resp.outfiles).forEach(outfile => {
+                    const ofn = path.join(dir, "built", outfile);
+                    pxt.debug(`writing ${ofn}`);
+                    nodeutil.writeFileSync(ofn, resp.outfiles[outfile], 'utf8')
+                })
+                pkg.filesToBePublishedAsync()
+                    .then(files => {
+                        Object.keys(files).forEach(f => {
+                            const fn = path.join(dir, f);
+                            pxt.debug(`writing ${fn}`);
+                            nodeutil.writeFileSync(fn, files[f], 'utf8');
                         })
-                }
-                if (resp.success) {
-                    if (/^block/.test(snippet.type)) {
-                        //Similar to pxtc.decompile but allows us to get blocksInfo for round trip
-                        const file = resp.ast.getSourceFile('main.ts');
-                        const apis = pxtc.getApiInfo(resp.ast, opts.jres);
-                        opts.apisInfo = apis
+                    })
+            }
+            if (resp.success) {
+                if (/^block/.test(snippet.type)) {
+                    //Similar to pxtc.decompile but allows us to get blocksInfo for round trip
+                    const file = resp.ast.getSourceFile('main.ts');
+                    const apis = pxtc.getApiInfo(resp.ast, opts.jres);
+                    opts.apisInfo = apis
 
-                        // ensure decompile to blocks works
-                        const blocksInfo = pxtc.getBlocksInfo(apis);
-                        const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, {
-                            snippetMode: false,
-                            errorOnGreyBlocks: true
-                        });
+                    // ensure decompile to blocks works
+                    const blocksInfo = pxtc.getBlocksInfo(apis);
+                    const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, {
+                        snippetMode: false,
+                        errorOnGreyBlocks: true
+                    });
 
-                        let blockSuccess = !!bresp.outfiles['main.blocks'];
-                        if (!blockSuccess) {
-                            return addFailure(fn, bresp.diagnostics)
-                        }
-
-                        // decompile to python
-                        let ts1 = opts.fileSystem["main.ts"]
-                        let program = pxtc.getTSProgram(opts);
-                        const decompiled = pxt.py.decompileToPython(program, "main.ts");
-                        let pySuccess = !!decompiled.outfiles['main.py'] && decompiled.success
-                        if (!pySuccess) {
-                            console.log("ts2py error")
-                            return addFailure(fn, decompiled.diagnostics)
-                        }
-                        opts.fileSystem['main.py'] = decompiled.outfiles['main.py']
-                        let py = decompiled.outfiles['main.py']
-
-                        // py to ts
-                        opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
-                        let ts2Res = pxt.py.py2ts(opts)
-
-                        let ts2 = ts2Res.outfiles["main.ts"];
-
-                        if (!ts2) {
-                            console.log("py2ts error!")
-                            console.dir(ts2Res)
-                            let errs = ts2Res.diagnostics.map(pxtc.getDiagnosticString).join()
-                            if (errs)
-                                console.log(errs)
-                            return addFailure(fn, ts2Res.diagnostics)
-                        }
-
-                        let getComparisonString = (s: string): string =>
-                            s.split("\n")
-                                // ignore function names
-                                // e.g. function foobar() {}
-                                //   => function () {}
-                                .map(l => {
-                                    let m: RegExpExecArray;
-                                    do {
-                                        m = /function(.+)\(/.exec(l)
-                                        if (m && m.length > 1) {
-                                            l = l.replace(`function${m[1]}`, "function")
-                                        }
-                                    } while (m && m.length > 1)
-                                    return l
-                                })
-                                // ignore type annotations on assignment statements (these tend to get erased)
-                                // e.g. let foo: number = 7
-                                //   => let foo = 7
-                                .map(l => {
-                                    let m: RegExpExecArray;
-                                    do {
-                                        m = /.+:(.+)[=,)]/.exec(l)
-                                        if (m && m.length > 1) {
-                                            l = l.replace(`:${m[1]}`, "")
-                                        }
-                                    } while (m && m.length > 1)
-                                    return l
-                                })
-                                // ignore whitespace
-                                .map(l => l.replace(/\s/g, ""))
-                                // ignore linebreak differences
-                                .map(l => l.replace(/\n/g, ""))
-                                // ignore semi-colons
-                                .map(l => l.replace(/\;/g, ""))
-                                // ignore blank lines
-                                .filter(l => l)
-                                .join("")
-
-                        if (pyStrictSyntaxCheck) {
-                            let cmp1 = getComparisonString(ts1)
-                            let cmp2 = getComparisonString(ts2)
-                            let mismatch = cmp1 != cmp2
-                            if (mismatch) {
-                                console.log(`Mismatch. Original:`)
-                                console.log(cmp1)
-                                console.log("decompiled->compiled:")
-                                console.log(cmp2)
-                                console.log("TS mismatch :/")
-                                // TODO: generate more helpful diags
-                                return addFailure(fn, [])
-                            } else {
-                                console.log("TS same :)")
-                            }
-                        }
-
-                        // NOTE: neither of these decompile steps checks that the resulting code is correct or that
-                        // when the code is compiled back to ts it'll behave the same. This could be validated in
-                        // the future.
-
-                        return addSuccess(name)
+                    let blockSuccess = !!bresp.outfiles['main.blocks'];
+                    if (!blockSuccess) {
+                        return addFailure(fn, bresp.diagnostics)
                     }
-                    else {
-                        return addSuccess(fn)
+
+                    // decompile to python
+                    let ts1 = opts.fileSystem["main.ts"]
+                    let program = pxtc.getTSProgram(opts);
+                    const decompiled = pxt.py.decompileToPython(program, "main.ts");
+                    let pySuccess = !!decompiled.outfiles['main.py'] && decompiled.success
+                    if (!pySuccess) {
+                        console.log("ts2py error")
+                        return addFailure(fn, decompiled.diagnostics)
                     }
+                    opts.fileSystem['main.py'] = decompiled.outfiles['main.py']
+                    let py = decompiled.outfiles['main.py']
+
+                    // py to ts
+                    opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
+                    let ts2Res = pxt.py.py2ts(opts)
+
+                    let ts2 = ts2Res.outfiles["main.ts"];
+
+                    if (!ts2) {
+                        console.log("py2ts error!")
+                        console.dir(ts2Res)
+                        let errs = ts2Res.diagnostics.map(pxtc.getDiagnosticString).join()
+                        if (errs)
+                            console.log(errs)
+                        return addFailure(fn, ts2Res.diagnostics)
+                    }
+
+                    let getComparisonString = (s: string): string =>
+                        s.split("\n")
+                            // ignore function names
+                            // e.g. function foobar() {}
+                            //   => function () {}
+                            .map(l => {
+                                let m: RegExpExecArray;
+                                do {
+                                    m = /function(.+)\(/.exec(l)
+                                    if (m && m.length > 1) {
+                                        l = l.replace(`function${m[1]}`, "function")
+                                    }
+                                } while (m && m.length > 1)
+                                return l
+                            })
+                            // ignore type annotations on assignment statements (these tend to get erased)
+                            // e.g. let foo: number = 7
+                            //   => let foo = 7
+                            .map(l => {
+                                let m: RegExpExecArray;
+                                do {
+                                    m = /.+:(.+)[=,)]/.exec(l)
+                                    if (m && m.length > 1) {
+                                        l = l.replace(`:${m[1]}`, "")
+                                    }
+                                } while (m && m.length > 1)
+                                return l
+                            })
+                            // ignore whitespace
+                            .map(l => l.replace(/\s/g, ""))
+                            // ignore linebreak differences
+                            .map(l => l.replace(/\n/g, ""))
+                            // ignore semi-colons
+                            .map(l => l.replace(/\;/g, ""))
+                            // ignore blank lines
+                            .filter(l => l)
+                            .join("")
+
+                    if (pyStrictSyntaxCheck) {
+                        let cmp1 = getComparisonString(ts1)
+                        let cmp2 = getComparisonString(ts2)
+                        let mismatch = cmp1 != cmp2
+                        if (mismatch) {
+                            console.log(`Mismatch. Original:`)
+                            console.log(cmp1)
+                            console.log("decompiled->compiled:")
+                            console.log(cmp2)
+                            console.log("TS mismatch :/")
+                            // TODO: generate more helpful diags
+                            return addFailure(fn, [])
+                        } else {
+                            console.log("TS same :)")
+                        }
+                    }
+
+                    // NOTE: neither of these decompile steps checks that the resulting code is correct or that
+                    // when the code is compiled back to ts it'll behave the same. This could be validated in
+                    // the future.
+
+                    return addSuccess(name)
                 }
                 else {
-                    return addFailure(name, resp.diagnostics)
+                    return addSuccess(fn)
                 }
-            }).catch((e: Error) => {
-                addFailure(name, [
-                    {
-                        code: 4242,
-                        category: ts.DiagnosticCategory.Error,
-                        messageText: e.message,
-                        fileName: fn,
-                        start: 1,
-                        line: 1,
-                        length: 1,
-                        column: 1
-                    }
-                ])
-            }))
-    }).then((a: any) => {
-        pxt.log(`${successes.length}/${successes.length + failures.length} snippets compiled to blocks and python (and back), ${failures.length} failed`)
-        if (ignoreCount > 0) {
-            pxt.log(`Skipped ${ignoreCount} snippets`)
+            }
+            else {
+                return addFailure(name, resp.diagnostics)
+            }
+
+        } catch (e) {
+            addFailure(name, [
+                {
+                    code: 4242,
+                    category: ts.DiagnosticCategory.Error,
+                    messageText: e.message,
+                    fileName: fn,
+                    start: 1,
+                    line: 1,
+                    length: 1,
+                    column: 1
+                }
+            ]);
         }
-    }).then(() => {
-        if (failures.length > 0) {
-            const msg = `${failures.length} snippets not compiling in the docs`;
-            if (pxt.appTarget.ignoreDocsErrors) pxt.log(msg);
-            else U.userError(msg);
-        }
-    })
+    });
+
+    pxt.log(`${successes.length}/${successes.length + failures.length} snippets compiled to blocks and python (and back), ${failures.length} failed`)
+    if (ignoreCount > 0) {
+        pxt.log(`Skipped ${ignoreCount} snippets`)
+    }
+    if (failures.length > 0) {
+        const msg = `${failures.length} snippets not compiling in the docs`;
+        if (pxt.appTarget.ignoreDocsErrors) pxt.log(msg);
+        else U.userError(msg);
+    }
 }
 
 function setBuildEngine() {
