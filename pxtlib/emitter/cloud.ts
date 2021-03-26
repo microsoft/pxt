@@ -181,7 +181,6 @@ namespace pxt.Cloud {
         }
         if (!packaged && locale != "en") {
             url += `&lang=${encodeURIComponent(locale)}`
-            if (live) url += "&live=1"
         }
         if (pxt.BrowserUtils.isLocalHost() && !live)
             return localRequestAsync(url).then(resp => {
