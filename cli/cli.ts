@@ -1980,8 +1980,11 @@ function buildWebStringsAsync() {
 function buildSkillMapAsync(parsed: commandParser.ParsedCommand) {
     // local serve
     const skillmapRoot = "node_modules/pxt-core/skillmap";
+    const docsPath = parsed.flags["docs"];
     return rimrafAsync(`${skillmapRoot}/public/blb`, {})
         .then(() => rimrafAsync(`${skillmapRoot}/build/assets`, {}))
+        .then(() => rimrafAsync(`${skillmapRoot}/public/docs`, {}))
+        .then(() => rimrafAsync(`${skillmapRoot}/public/static`, {}))
         .then(() => {
             // read pxtarget.json, save into 'pxtTargetBundle' global variable
             let cfg = readLocalPxTarget();
@@ -1992,6 +1995,13 @@ function buildSkillMapAsync(parsed: commandParser.ParsedCommand) {
 
             // copy 'assets' over from docs/static
             nodeutil.cpR("docs/static/skillmap/assets", `${skillmapRoot}/public/assets`);
+
+            if (docsPath) {
+                // copy docs over from specified path
+                nodeutil.cpR(`docs/${docsPath}`, `${skillmapRoot}/public/docs/${docsPath}`);
+                nodeutil.cpR(`docs/static/${docsPath}`, `${skillmapRoot}/public/static/${docsPath}`);
+            }
+
             return nodeutil.spawnAsync({
                 cmd: os.platform() === "win32" ? "npm.cmd" : "npm",
                 args: ["run-script", "start"],
@@ -6663,6 +6673,11 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
         flags: {
             serve: {
                 description: "Serve the skill map locally after building (npm start)"
+            },
+            docs: {
+                description: "Path to local docs folder to copy into skillmap",
+                type: "string",
+                argument: "docs"
             }
         }
     }, buildSkillMapAsync);
