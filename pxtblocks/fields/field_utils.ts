@@ -276,4 +276,17 @@ namespace pxtblockly {
 
         return Object.keys(all).map(key => all[key]).filter(t => !!t);
     }
+
+    export function getTemporaryAssets(workspace: Blockly.Workspace, type: pxt.AssetType) {
+        switch (type) {
+            case pxt.AssetType.Image:
+                return getAllFieldsCore(workspace, field => field instanceof FieldSpriteEditor && field.isTemporaryAsset())
+                    .map(f => (f.ref as unknown as FieldSpriteEditor).getAsset());
+            case pxt.AssetType.Animation:
+                return getAllFieldsCore(workspace, field => field instanceof FieldAnimationEditor && field.isTemporaryAsset())
+                    .map(f => (f.ref as unknown as FieldAnimationEditor).getAsset());
+
+            default: return [];
+        }
+    }
 }

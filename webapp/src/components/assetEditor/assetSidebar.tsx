@@ -8,6 +8,7 @@ import { AssetEditorState, GalleryView, isGalleryAsset } from './store/assetEdit
 import { dispatchChangeGalleryView, dispatchChangeSelectedAsset, dispatchUpdateUserAssets } from './actions/dispatch';
 
 import { AssetPreview } from "./assetPreview";
+import { getBlocksEditor } from "../../app";
 
 interface AssetDetail {
     name: string;
@@ -83,12 +84,20 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
         this.props.showAssetFieldView(this.props.asset, this.editAssetDoneHandler);
     }
 
-    protected editAssetDoneHandler = (result: any) => {
+    protected editAssetDoneHandler = (result: pxt.Asset) => {
         pxt.tickEvent("assets.edit", { type: result.type.toString() });
 
         const project = pxt.react.getTilemapProject();
         project.pushUndo();
-        project.updateAsset(result);
+        if (!result.meta.displayName && result.meta.temporaryInfo) {
+            getBlocksEditor().updateTemporaryAsset(result);
+
+            pkg.mainEditorPkg().lookupFile("this/main.blocks").setContentAsync(getBlocksEditor().getCurrentSource())
+
+        }
+        else {
+            project.updateAsset(result);
+        }
         this.props.dispatchChangeGalleryView(GalleryView.User);
         this.updateAssets().then(() => simulator.setDirty());
     }
