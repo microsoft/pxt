@@ -4055,7 +4055,7 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
     }
     snippets = snippets.filter(snippet => filenameMatch.test(snippet.name));
     let ignoreCount = 0
-    const cache: pxt.Map<string> = {};
+    const ghExtensionCache: pxt.Map<string> = {};
     const successes: string[] = []
     interface FailureInfo {
         filename: string
@@ -4096,7 +4096,7 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
                     column: 1
                 }]);
             }
-            return Promise.resolve();
+            return;
         }
 
         let isPy = snippet.ext === "py"
@@ -4108,15 +4108,15 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
             inFiles = { "main.ts": snippet.code, "main.py": "", "main.blocks": "", ...extra }
 
         const host = new SnippetHost("snippet" + name, inFiles, snippet.packages);
-        host.cache = cache;
+        host.cache = ghExtensionCache;
 
         try {
             const pkg = new pxt.MainPackage(host);
             await pkg.installAllAsync();
             const opts = await pkg.getCompileOptionsAsync();
-
             opts.ast = true
-            let resp: { outfiles: Map<string>, success: boolean, diagnostics: pxtc.KsDiagnostic[], ast?: ts.Program };
+
+            let resp: pxtc.CompileResult;
             if (isPy) {
                 opts.target.preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME
                 const stsCompRes = pxtc.compile(opts);
@@ -4128,8 +4128,13 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
                 opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
 
                 const { outfiles, diagnostics } = pxt.py.py2ts(opts)
-                const success = diagnostics.length == 0
-                resp = { outfiles, success, diagnostics, ast: stsCompRes.ast }
+                resp = {
+                    outfiles,
+                    success: diagnostics.length == 0,
+                    diagnostics,
+                    ast: stsCompRes.ast,
+                    times: {}
+                };
             } else {
                 resp = pxtc.compile(opts)
             }
