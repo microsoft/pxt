@@ -535,7 +535,7 @@ namespace ts.pxtc {
                             // defined in different packages/extensions, so we want to keep track of that information.
                             // That way, we can make sure each cached extension has a copy of the namespace
                             if (existing.kind === SymbolKind.Module) {
-                                // Reference the existing array of packages where this namespace has been defined 
+                                // Reference the existing array of packages where this namespace has been defined
                                 si.pkgs = existing.pkgs || []
                                 if (existing.pkg !== si.pkg) {
                                     if (!si.pkgs.find(element => element === existing.pkg)) {
@@ -1291,7 +1291,7 @@ namespace ts.pxtc.service {
         host.opts.fileSystem = prevFS
         for (let k of Object.keys(newFS))
             host.setFile(k, newFS[k]) // update version numbers
-        if (res.diagnostics.length == 0) {
+        if (res.diagnostics.length == 0 || host.opts.clearIncrBuildAndRetryOnError) {
             host.opts.skipPxtModulesEmit = false
             host.opts.skipPxtModulesTSC = false
             const currKey = host.opts.target.isNative ? "native" : "js"
@@ -1306,13 +1306,25 @@ namespace ts.pxtc.service {
                     host.opts.skipPxtModulesEmit = true
             }
             let ts2asm = compile(host.opts, service)
-            res = { sourceMap: res.sourceMap, ...ts2asm }
-            if (res.needsFullRecompile) {
-                pxt.log("trigering full recompile")
+            res = {
+                sourceMap: res.sourceMap,
+                ...ts2asm,
+                success: !ts2asm.diagnostics?.length
+            }
+            // TODO: figure out why sometimes it's persisting with result == false but no diags.
+            // just leaking from mkCompileResult and missing a case somewhere in compile?
+            // if (res.needsFullRecompile) {
+            if (res.needsFullRecompile || ((!res.success || res.diagnostics.length) && host.opts.clearIncrBuildAndRetryOnError)) {
+                pxt.log("triggering full recompile")
                 pxt.tickEvent("compile.fullrecompile")
-                host.opts.skipPxtModulesEmit = false
+                host.opts.skipPxtModulesEmit = false;
                 ts2asm = compile(host.opts, service);
-                res = { sourceMap: res.sourceMap, ...ts2asm }
+                // TODO: it looks like res.success and diagnostics are missing on occasion from compile(..)'s return value.
+                res = {
+                    sourceMap: res.sourceMap,
+                    ...ts2asm,
+                    success: !ts2asm.diagnostics?.length
+                }
             }
             if (res.diagnostics.every(d => !isPxtModulesFilename(d.fileName)))
                 host.pxtModulesOK = currKey

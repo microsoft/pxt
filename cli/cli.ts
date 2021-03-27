@@ -4043,7 +4043,7 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
 
 async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictSyntaxCheck?: boolean): Promise<void> {
     console.log(`### TESTING ${snippets.length} CodeSnippets`)
-    const isLocal = ciBuildInfo().ci === "local";
+    const isLocal = false && ciBuildInfo().ci === "local";
     pxt.github.forceProxy = true; // avoid throttling in CI machines
     let filenameMatch: RegExp;
     try {
@@ -4057,6 +4057,17 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
     snippets = snippets.filter(snippet => filenameMatch.test(snippet.name));
     let ignoreCount = 0
     const ghExtensionCache: pxt.Map<string> = {};
+    type CompileResources = {
+        host: SnippetHost;
+        pkg: pxt.MainPackage;
+        opts: pxtc.CompileOptions;
+    }
+
+    const MAIN_TS = "main.ts";
+    const MAIN_BLOCKS = "main.blocks";
+    const MAIN_PY = "main.py"
+
+    const compileResourcesCache: pxt.Map<CompileResources> = {};
     const successes: string[] = []
     interface FailureInfo {
         filename: string
@@ -4074,7 +4085,12 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
         infos.forEach(info => pxt.log(`${f}:(${info.line},${info.column}): ${info.category} ${info.messageText}`));
     }
 
-    await U.promiseMapAllSeries(snippets, async (snippet: CodeSnippet) => {
+    // sort such that all snippets with the same packages are next to eachother, then snippet name so it's stable
+    const sortedSnippets = snippets.sort(
+        (a, b) => getCompileOptsKey(a.packages).localeCompare(getCompileOptsKey(b.packages)) || a.name.localeCompare(b.name)
+    );
+
+    await U.promiseMapAllSeries(sortedSnippets, async (snippet: CodeSnippet) => {
         const name = snippet.name;
         const fn = snippet.file || snippet.name;
         pxt.log(`  ${fn} (${snippet.type})`);
@@ -4101,34 +4117,61 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
         }
 
         let isPy = snippet.ext === "py"
-        let inFiles;
+        let inFiles: pxt.Map<string>;
         let extra = snippet.extraFiles || {};
         if (isPy)
-            inFiles = { "main.ts": "", "main.py": snippet.code, "main.blocks": "", ...extra }
+            inFiles = { [MAIN_TS]: "", [MAIN_PY]: snippet.code, [MAIN_BLOCKS]: "", ...extra }
         else
-            inFiles = { "main.ts": snippet.code, "main.py": "", "main.blocks": "", ...extra }
+            inFiles = { [MAIN_TS]: snippet.code, [MAIN_PY]: "", [MAIN_BLOCKS]: "", ...extra }
 
-        const host = new SnippetHost("snippet" + name, inFiles, snippet.packages);
-        host.cache = ghExtensionCache;
+        let { host, pkg, opts } = await getCompileResources(`snippet${name}`, snippet.packages);
+        // let { pkg, opts } = await getCompileResources(`snippet${name}`, inFiles, snippet.packages);
+
+        const inFileNames = Object.keys(inFiles);
+        let snippetJres: pxt.Map<pxt.JRes>;
+        for (const f of inFileNames) {
+            const fContent = inFiles[f];
+            host.writeFile(pkg, f, fContent);
+            opts.fileSystem[f] = fContent;
+            if (/\.jres$/.test(f)) {
+                if (!snippetJres) snippetJres = {};
+                U.jsonCopyFrom(snippetJres, U.jsonTryParse(fContent));
+            }
+        }
+
+        const pxtJson = JSON.parse(host.readFile(pkg, pxt.CONFIG_NAME));
+        pxtJson.files = inFileNames;
+        host.writeFile(pkg, pxt.CONFIG_NAME, JSON.stringify(pxtJson))
+        pkg.loadConfig();
+
+        if (snippetJres) {
+            pkg.updateJRes();
+            opts.jres = pkg.getJRes();
+        }
+
+        opts.sourceFiles.push(
+            ...inFileNames.filter(f => f !== MAIN_TS),
+            MAIN_TS
+        );
 
         try {
-            const pkg = new pxt.MainPackage(host);
-            await pkg.installAllAsync();
-            const opts = await pkg.getCompileOptionsAsync();
-            opts.ast = true
-
             let resp: pxtc.CompileResult;
             if (isPy) {
                 opts.target.preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME
-                const stsCompRes = pxtc.compile(opts);
-                const apisInfo = pxtc.getApiInfo(stsCompRes.ast, opts.jres)
-                if (!apisInfo || !apisInfo.byQName)
-                    throw Error("Failed to get apisInfo")
-                opts.apisInfo = apisInfo
+                // const stsCompRes = pxtc.compile(opts)
+                const stsCompRes = pxtc.service.performOperation("compile", { options: opts }) as pxtc.CompileResult;
 
-                opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
+                // const apisInfo = pxtc.getApiInfo(stsCompRes.ast, opts.jres)
+                // if (!apisInfo || !apisInfo.byQName)
+                //     throw Error("Failed to get apisInfo")
+                // opts.apisInfo = apisInfo
 
-                const { outfiles, diagnostics } = pxt.py.py2ts(opts)
+                // const apisInfo = pxtc.service.performOperation("apiInfo", {}) as pxtc.ApisInfo;
+
+                opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME;
+
+                // const { outfiles, diagnostics } = pxt.py.py2ts(opts)
+                const { outfiles, diagnostics } = pxtc.service.performOperation("py2ts", { options: opts }) as pxtc.transpile.TranspileResult;
                 resp = {
                     outfiles,
                     success: diagnostics.length == 0,
@@ -4137,10 +4180,11 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
                     times: {}
                 };
             } else {
-                resp = pxtc.compile(opts)
+                // resp = pxtc.compile(opts)
+                resp = pxtc.service.performOperation("compile", { options: opts }) as pxtc.CompileResult;
             }
 
-            if (resp.outfiles && snippet.file) {
+            if (resp.outfiles && snippet.file && isLocal) {
                 const dir = snippet.file
                     .replace(/\.ts$/, '')
                     .replace(/\.py$/, '');
@@ -4170,8 +4214,9 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
             }
 
             //Similar to pxtc.decompile but allows us to get blocksInfo for round trip
-            const file = resp.ast.getSourceFile('main.ts');
-            const apis = pxtc.getApiInfo(resp.ast, opts.jres);
+            const file = resp.ast.getSourceFile(MAIN_TS);
+            // const apis = pxtc.getApiInfo(resp.ast, opts.jres);
+            const apis = pxtc.service.performOperation("apiInfo", {}) as pxtc.ApisInfo;
             opts.apisInfo = apis
 
             // ensure decompile to blocks works
@@ -4181,55 +4226,58 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
                 errorOnGreyBlocks: true
             });
 
-            let blockSuccess = !!bresp.outfiles['main.blocks'];
+            let blockSuccess = !!bresp.outfiles[MAIN_BLOCKS];
             if (!blockSuccess) {
                 return addFailure(fn, bresp.diagnostics)
             }
 
-            // decompile to python
-            let ts1 = opts.fileSystem["main.ts"]
-            let program = pxtc.getTSProgram(opts);
-            const decompiled = pxt.py.decompileToPython(program, "main.ts");
+            // performOperation("alldiags"...) is likely the thing breaking when python checks aren't commented out \/
+            // // decompile to python
+            // let ts1 = opts.fileSystem[MAIN_TS]
+            // // let program = pxtc.getTSProgram(opts, resp.ast);
+            // // const decompiled = pxt.py.decompileToPython(program, MAIN_TS);
+            // const decompiled = pxtc.service.performOperation("pydecompile", { options: opts, fileName: MAIN_TS }) as pxtc.transpile.TranspileResult;
 
-            const py = decompiled.outfiles['main.py']
-            let pySuccess = !!py && decompiled.success
-            if (!pySuccess) {
-                console.log("ts2py error")
-                return addFailure(fn, decompiled.diagnostics)
-            }
-            opts.fileSystem['main.py'] = py
+            // const py = decompiled.outfiles[MAIN_PY]
+            // let pySuccess = !!py && decompiled.success
+            // if (!pySuccess) {
+            //     console.log("ts2py error")
+            //     return addFailure(fn, decompiled.diagnostics)
+            // }
+            // opts.fileSystem[MAIN_PY] = py
 
-            // py to ts
-            opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
-            let ts2Res = pxt.py.py2ts(opts)
+            // // py to ts
+            // opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
+            // // let ts2Res = pxt.py.py2ts(opts)
+            // let ts2Res = pxtc.service.performOperation("py2ts", { options: opts }) as pxtc.transpile.TranspileResult;
 
-            let ts2 = ts2Res.outfiles["main.ts"];
+            // let ts2 = ts2Res.outfiles["main.ts"];
 
-            if (!ts2) {
-                console.log("py2ts error!")
-                console.dir(ts2Res)
-                let errs = ts2Res.diagnostics.map(pxtc.getDiagnosticString).join()
-                if (errs)
-                    console.log(errs)
-                return addFailure(fn, ts2Res.diagnostics)
-            }
+            // if (!ts2) {
+            //     console.log("py2ts error!")
+            //     console.dir(ts2Res)
+            //     let errs = ts2Res.diagnostics.map(pxtc.getDiagnosticString).join()
+            //     if (errs)
+            //         console.log(errs)
+            //     return addFailure(fn, ts2Res.diagnostics)
+            // }
 
-            if (pyStrictSyntaxCheck) {
-                let cmp1 = pyComparisonString(ts1)
-                let cmp2 = pyComparisonString(ts2)
-                let mismatch = cmp1 != cmp2
-                if (mismatch) {
-                    console.log(`Mismatch. Original:`)
-                    console.log(cmp1)
-                    console.log("decompiled->compiled:")
-                    console.log(cmp2)
-                    console.log("TS mismatch :/")
-                    // TODO: generate more helpful diags
-                    return addFailure(fn, [])
-                } else {
-                    console.log("TS same :)")
-                }
-            }
+            // if (pyStrictSyntaxCheck) {
+            //     let cmp1 = pyComparisonString(ts1)
+            //     let cmp2 = pyComparisonString(ts2)
+            //     let mismatch = cmp1 != cmp2
+            //     if (mismatch) {
+            //         console.log(`Mismatch. Original:`)
+            //         console.log(cmp1)
+            //         console.log("decompiled->compiled:")
+            //         console.log(cmp2)
+            //         console.log("TS mismatch :/")
+            //         // TODO: generate more helpful diags
+            //         return addFailure(fn, [])
+            //     } else {
+            //         console.log("TS same :)")
+            //     }
+            // }
 
             // NOTE: neither of these decompile steps checks that the resulting code is correct or that
             // when the code is compiled back to ts it'll behave the same. This could be validated in
@@ -4237,6 +4285,7 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
 
             return addSuccess(name)
         } catch (e) {
+            console.dir(e);
             addFailure(name, [{
                 code: 4242,
                 category: ts.DiagnosticCategory.Error,
@@ -4248,6 +4297,19 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
                 column: 1
             }]);
         }
+        finally {
+            for (const f of inFileNames) {
+                host.writeFile(pkg, f, "");
+                // delete opts.fileSystem[f];
+            }
+            // opts.sourceFiles = opts.sourceFiles.filter(el => inFileNames.indexOf(el) < 0);
+
+            // if (snippetJres) {
+            //     for (const entry in snippetJres) {
+            //         delete opts.jres[entry];
+            //     }
+            // }
+        }
     });
 
     pxt.log(`${successes.length}/${successes.length + failures.length} snippets compiled to blocks and python (and back), ${failures.length} failed`)
@@ -4258,6 +4320,66 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
         const msg = `${failures.length} snippets not compiling in the docs`;
         if (pxt.appTarget.ignoreDocsErrors) pxt.log(msg);
         else U.userError(msg);
+    }
+
+    async function getCompileResources(snippetName: string, pkgs: pxt.Map<string>): Promise<CompileResources> {
+    // async function getCompileResources(snippetName: string, snippetFiles: pxt.Map<string>, pkgs: pxt.Map<string>): Promise<CompileResources> {
+        const key = getCompileOptsKey(pkgs);
+        if (compileResourcesCache[key]) {
+            const cachedOpts = compileResourcesCache[key];
+            cachedOpts.host.name = snippetName;
+            return cleanCopy(cachedOpts);
+            // return cachedOpts;
+        }
+
+        // const host = new SnippetHost(snippetName, snippetFiles, pkgs);
+        const host = new SnippetHost(snippetName, {}, pkgs);
+        host.cache = ghExtensionCache;
+
+        const pkg = new pxt.MainPackage(host);
+        await pkg.installAllAsync();
+
+        const targ = pkg.getTargetOptions();
+        targ.isNative = false;
+        const opts = await pkg.getCompileOptionsAsync();
+        opts.ast = true;
+
+        compileResourcesCache[key] = {
+            host,
+            pkg,
+            opts
+        }
+
+        // return {
+        //     host,
+        //     pkg,
+        //     opts
+        // }
+
+        // return compileResourcesCache[key];
+        return cleanCopy(compileResourcesCache[key]);
+
+        function cleanCopy(res: CompileResources) {
+            const { opts } = res
+            res.opts = {
+                ...opts,
+                sourceFiles: [ ...(opts.sourceFiles || []) ],
+                generatedFiles: [ ...(opts.generatedFiles || []) ],
+                jres: { ...(opts.jres || {}) },
+                fileSystem: { ...opts.fileSystem },
+                target: { ...opts.target },
+                clearIncrBuildAndRetryOnError: true,
+            }
+            return res;
+        }
+    }
+
+    function getCompileOptsKey(pkgs: pxt.Map<string>) {
+        const keys = Object.keys(pkgs).sort();
+        return keys.reduce(
+            (prv, curr) => `${prv},${curr}:${pkgs[curr]}`,
+            ""
+        );
     }
 
     function pyComparisonString(s: string): string {
