@@ -4068,6 +4068,7 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
     const MAIN_PY = "main.py"
 
     const compileResourcesCache: pxt.Map<CompileResources> = {};
+    const compileOptsCache: pxt.Map<pxtc.CompileOptions> = {};
     const successes: string[] = []
     interface FailureInfo {
         filename: string
@@ -4086,6 +4087,7 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
     }
 
     // sort such that all snippets with the same packages are next to eachother, then snippet name so it's stable
+    // if we add a 'missing package' upgrade rule, then we could miss some here
     const sortedSnippets = snippets.sort(
         (a, b) => getCompileOptsKey(a.packages).localeCompare(getCompileOptsKey(b.packages)) || a.name.localeCompare(b.name)
     );
@@ -4124,35 +4126,53 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
         else
             inFiles = { [MAIN_TS]: snippet.code, [MAIN_PY]: "", [MAIN_BLOCKS]: "", ...extra }
 
-        let { host, pkg, opts } = await getCompileResources(`snippet${name}`, snippet.packages);
-        // let { pkg, opts } = await getCompileResources(`snippet${name}`, inFiles, snippet.packages);
+        // let { host, pkg, opts } = await getCompileResources(`snippet${name}`, snippet.packages);
+        let { host, pkg, opts } = await getCompileResources2(`snippet${name}`, inFiles, snippet.packages);
 
+        // const inFileNames = Object.keys(inFiles);
+        // let snippetJres: pxt.Map<pxt.JRes>;
+        // for (const f of inFileNames) {
+        //     const fContent = inFiles[f];
+        //     host.writeFile(pkg, f, fContent);
+        //     opts.fileSystem[f] = fContent;
+        //     if (/\.jres$/.test(f)) {
+        //         if (!snippetJres) snippetJres = {};
+        //         U.jsonCopyFrom(snippetJres, U.jsonTryParse(fContent));
+        //     }
+        // }
+
+        // const pxtJson = JSON.parse(host.readFile(pkg, pxt.CONFIG_NAME));
+        // pxtJson.files = inFileNames;
+        // host.writeFile(pkg, pxt.CONFIG_NAME, JSON.stringify(pxtJson))
+        // pkg.loadConfig();
+
+        // if (snippetJres) {
+        //     pkg.updateJRes();
+        //     opts.jres = pkg.getJRes();
+        // }
+
+        // opts.sourceFiles.push(
+        //     ...inFileNames.filter(f => f !== MAIN_TS),
+        //     MAIN_TS
+        // );
+
+        // ONLY CACHING COMPILE_OPTS
         const inFileNames = Object.keys(inFiles);
-        let snippetJres: pxt.Map<pxt.JRes>;
+        // const pxtJson = JSON.parse(host.readFile(pkg, pxt.CONFIG_NAME));
+        // pxtJson.files = inFileNames;
+        // host.writeFile(pkg, pxt.CONFIG_NAME, JSON.stringify(pxtJson))
+        // pkg.loadConfig();
         for (const f of inFileNames) {
-            const fContent = inFiles[f];
-            host.writeFile(pkg, f, fContent);
-            opts.fileSystem[f] = fContent;
-            if (/\.jres$/.test(f)) {
-                if (!snippetJres) snippetJres = {};
-                U.jsonCopyFrom(snippetJres, U.jsonTryParse(fContent));
-            }
+            opts.fileSystem[f] = pkg.readFile(f);
         }
 
-        const pxtJson = JSON.parse(host.readFile(pkg, pxt.CONFIG_NAME));
-        pxtJson.files = inFileNames;
-        host.writeFile(pkg, pxt.CONFIG_NAME, JSON.stringify(pxtJson))
-        pkg.loadConfig();
-
-        if (snippetJres) {
-            pkg.updateJRes();
-            opts.jres = pkg.getJRes();
-        }
+        opts.jres = pkg.getJRes();
 
         opts.sourceFiles.push(
             ...inFileNames.filter(f => f !== MAIN_TS),
             MAIN_TS
         );
+        // console.dir(opts.sourceFiles.filter(f => f.indexOf("pxt_") === -1));
 
         try {
             let resp: pxtc.CompileResult;
@@ -4298,17 +4318,22 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
             }]);
         }
         finally {
-            for (const f of inFileNames) {
-                host.writeFile(pkg, f, "");
-                // delete opts.fileSystem[f];
-            }
-            // opts.sourceFiles = opts.sourceFiles.filter(el => inFileNames.indexOf(el) < 0);
+            // for (const f of inFileNames) {
+            //     host.writeFile(pkg, f, "");
+            //     delete opts.fileSystem[f];
+            // }
+            // // opts.sourceFiles = opts.sourceFiles.filter(el => inFileNames.indexOf(el) < 0);
 
             // if (snippetJres) {
             //     for (const entry in snippetJres) {
             //         delete opts.jres[entry];
             //     }
             // }
+
+            for (const f of inFileNames) {
+                delete opts.fileSystem[f];
+                opts.sourceFiles?.pop();
+            }
         }
     });
 
@@ -4323,16 +4348,13 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
     }
 
     async function getCompileResources(snippetName: string, pkgs: pxt.Map<string>): Promise<CompileResources> {
-    // async function getCompileResources(snippetName: string, snippetFiles: pxt.Map<string>, pkgs: pxt.Map<string>): Promise<CompileResources> {
         const key = getCompileOptsKey(pkgs);
         if (compileResourcesCache[key]) {
             const cachedOpts = compileResourcesCache[key];
             cachedOpts.host.name = snippetName;
             return cleanCopy(cachedOpts);
-            // return cachedOpts;
         }
 
-        // const host = new SnippetHost(snippetName, snippetFiles, pkgs);
         const host = new SnippetHost(snippetName, {}, pkgs);
         host.cache = ghExtensionCache;
 
@@ -4341,7 +4363,7 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
 
         const targ = pkg.getTargetOptions();
         targ.isNative = false;
-        const opts = await pkg.getCompileOptionsAsync();
+        const opts = await pkg.getCompileOptionsAsync(targ);
         opts.ast = true;
 
         compileResourcesCache[key] = {
@@ -4350,13 +4372,6 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
             opts
         }
 
-        // return {
-        //     host,
-        //     pkg,
-        //     opts
-        // }
-
-        // return compileResourcesCache[key];
         return cleanCopy(compileResourcesCache[key]);
 
         function cleanCopy(res: CompileResources) {
@@ -4373,6 +4388,32 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
             return res;
         }
     }
+
+        async function getCompileResources2(snippetName: string, snippetFiles: pxt.Map<string>, pkgs: pxt.Map<string>): Promise<CompileResources> {
+            const host = new SnippetHost(snippetName, snippetFiles, pkgs);
+            host.cache = ghExtensionCache;
+
+            const pkg = new pxt.MainPackage(host);
+            await pkg.installAllAsync();
+
+            const key = getCompileOptsKey(pkg.dependencies());
+            if (!compileOptsCache[key]) {
+                const targ = pkg.getTargetOptions();
+                targ.isNative = false;
+                const newOpts = await pkg.getCompileOptionsAsync(targ);
+                newOpts.ast = true;
+                newOpts.clearIncrBuildAndRetryOnError = true;
+                newOpts.sourceFiles = newOpts.sourceFiles?.filter(f => f.indexOf("pxt_modules/") >= 0);
+                compileOptsCache[key] = newOpts;
+            }
+            const opts = compileOptsCache[key];
+
+            return {
+                host,
+                pkg,
+                opts
+            };
+        }
 
     function getCompileOptsKey(pkgs: pxt.Map<string>) {
         const keys = Object.keys(pkgs).sort();
