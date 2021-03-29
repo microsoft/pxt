@@ -181,6 +181,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
         }
 
         this.editID = value.id;
+        let didUpdate = false;
 
         if (options) {
             this.blocksInfo = options.blocksInfo;
@@ -189,16 +190,22 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
                 this.setState({
                     galleryFilter: options.filter
                 });
+                didUpdate = true;
             }
 
             if (options.headerVisible != undefined) {
                 this.setState({ headerVisible: options.headerVisible })
+                didUpdate = true;
             }
 
             if (options.hideMyAssets != undefined) {
                 this.setState({ hideMyAssets: options.hideMyAssets });
+                didUpdate = true;
             }
         }
+
+        // Always update, because we might need to remove the gallery toggle
+        if (!didUpdate) this.forceUpdate();
     }
 
     getValue() {
