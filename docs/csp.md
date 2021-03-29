@@ -4,6 +4,18 @@
 
 The College Board’s [Advanced Placement (AP) Computer Science Principles](https://apcentral.collegeboard.org/courses/ap-computer-science-principles) course is an introductory class for High School students (typically 14-18 years old). While academically rigorous, the AP Computer Science Principles course is designed to attract students of all backgrounds, experience levels, and interests. Therefore, the course covers a wide range of computing topics with a special focus on the impact of technology and computing on students’ lives. The course covers a full academic year, does not require any prerequisites, and an end-of-course exam may be taken to receive college credit.
 
+### ~ reminder
+
+#### Professional Development Opportunities
+
+There are three free professional development opportunities available this summer to help prepare Educators to teach the AP CS Principles with Microsoft MakeCode course for the 2021-2022 academic year. These professional development workshops will focus on the course's Big Ideas, Learning Objectives and Essential Knowledge skills. Additionally, you will learn how Microsoft MakeCode's curriculum meets the course's learning objectives and prepares students for the AP Exam and Create Performance Task. By attending the training and using Microsoft MakeCode's curriculum, you will be prepared with a syllabus, pacing plan, and lesson plans, PowerPoints, student handouts, and resources for every day of the course.  Register below, limited capacity:
+
+* **Workshop 1** : June 14th - 17th (4 full days)
+* **Workshop 2** : June 22nd, June 29th, July 6th, and July 13th (1 day a week for 4 weeks)
+* **[Workshop 3](https://www.infosys.org/infosys-foundation-usa/pathfinders/summer/course-catalogue.html#microsoft-makeCode)** : July 18th - 23th (part of InfoSys Pathfinders Summer Institute)
+
+### ~
+
 The **AP CS Principles with Microsoft MakeCode** curriculum is free and uses web-based technology and tools that can be accessed across platforms and devices. The curriculum is also endorsed and approved by the College Board as aligning with the [CS Principles curriculum framework](https://apcentral.collegeboard.org/courses/ap-computer-science-principles/course?course=ap-computer-science-principles) and [AP CS Principles exam](https://apcentral.collegeboard.org/courses/ap-computer-science-principles/exam).
 
 Some additional features of the Microsoft MakeCode curriculum include: 
