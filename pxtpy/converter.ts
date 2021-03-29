@@ -2387,6 +2387,8 @@ namespace pxt.py {
 
             let scopeV = lookupName(n)
             let v = scopeV?.symbol
+
+            // handle import
             if (v && v.isImport) {
                 return quote(v.name) // it's import X = Y.Z.X, use X not Y.Z.X
             }
@@ -2394,11 +2396,21 @@ namespace pxt.py {
             markUsage(scopeV, n);
 
             if (n.ctx.indexOf("Load") >= 0) {
-                if (v && !v.qName)
+                if (!v)
+                    return quote(getName(n))
+                if (!v?.qName) {
                     error(n, 9561, lf("missing qName"));
-                return quote(v ? v.qName! : getName(n))
-            } else
+                    return quote("unknown")
+                }
+
+                // Note: We track types like String as "String@type" but when actually emitting them
+                // we want to elide the the "@type"
+                const nm = v.qName.replace("@type", "")
+
+                return quote(nm)
+            } else {
                 return possibleDef(n)
+            }
         },
         List: mkArrayExpr,
         Tuple: mkArrayExpr,
