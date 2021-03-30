@@ -4121,15 +4121,15 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
             return;
         }
 
-        let isPy = snippet.ext === "py"
-        let inFiles: pxt.Map<string>;
-        let extra = snippet.extraFiles || {};
-        if (isPy)
-            inFiles = { [MAIN_TS]: "", [MAIN_PY]: snippet.code, [MAIN_BLOCKS]: "", ...extra };
-        else
-            inFiles = { [MAIN_TS]: snippet.code, [MAIN_PY]: "", [MAIN_BLOCKS]: "", ...extra };
+        const isPy = snippet.ext === "py";
+        const inFiles: pxt.Map<string> = {
+            [MAIN_TS]: isPy ? "" : snippet.code,
+            [MAIN_PY]: isPy ? snippet.code : "",
+            [MAIN_BLOCKS]: "",
+            ...(snippet.extraFiles || {})
+        };
 
-        let { pkg, opts } = await getCompileResources(`snippet${name}`, inFiles, snippet.packages);
+        const { pkg, opts } = await getCompileResources(`snippet${name}`, inFiles, snippet.packages);
 
         try {
             opts.target.preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME;
@@ -5486,7 +5486,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
     function addSnippet(snippet: CodeSnippet, entryPath: string, snipIndex: number) {
         snippets.push(snippet);
         const dir = path.join("temp/snippets", snippet.type);
-        const fn = `${dir}/${entryPath.replace(/^\//, '').replace(/\//g, '-').replace(/\.\w+$/, '')}-${snipIndex}.${snippet.ext}`;
+        const fn = `${dir}/${entryPath.replace(/^\//, '').replace(/\//g, '-').replace(/\.\w*$/, '')}-${snipIndex}.${snippet.ext}`;
         nodeutil.mkdirP(dir);
         nodeutil.writeFileSync(fn, snippet.code);
         snippet.file = fn;
