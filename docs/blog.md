@@ -1,5 +1,13 @@
 # Microsoft MakeCode Blog
 
+## [Beginner Skillmap Sneak Peek](/blog/arcade/beginner-skillmap)
+
+March 30th, 2021 by [kiki-lee](https://github.com/kiki-lee)
+
+Next month, Microsoft MakeCode will release a sneak peek of our newest adventure, the Arcade Beginner Skillmap!
+
+**[Continue reading this blog post](/blog/arcade/beginner-skillmap)**
+
 ## [MakeCode Arcade Spring Update!](/blog/arcade/update-spring-2021)
 
 March 22nd, 2021 by [Jaqster](https://github.com/jaqster)
