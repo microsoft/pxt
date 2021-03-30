@@ -863,6 +863,7 @@ declare namespace ts.pxtc {
         skipPxtModulesTSC?: boolean; // skip re-checking of pxt_modules/*
         skipPxtModulesEmit?: boolean; // skip re-emit of pxt_modules/*
         clearIncrBuildAndRetryOnError?: boolean; // on error when compiling in service, try again with a full recompile.
+        errorOnGreyBlocks?: boolean;
 
         otherMultiVariants?: ExtensionTarget[];
 

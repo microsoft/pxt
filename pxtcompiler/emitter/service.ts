@@ -1284,7 +1284,7 @@ namespace ts.pxtc.service {
         addApiInfo(host.opts)
         const prevFS = U.flatClone(host.opts.fileSystem);
         let res = runConversionsAndStoreResults(host.opts);
-        if (res && res.globalNames) {
+        if (res?.globalNames) {
             lastGlobalNames = res.globalNames
         }
         const newFS = host.opts.fileSystem

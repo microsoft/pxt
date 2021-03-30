@@ -29,6 +29,7 @@ import * as pyconv from './pyconv';
 import * as gitfs from './gitfs';
 import * as crowdin from './crowdin';
 import * as youtube from './youtube';
+import { setOptions } from 'marked';
 
 const rimraf: (f: string, opts: any, cb: (err: Error, res: any) => void) => void = require('rimraf');
 
@@ -4043,6 +4044,7 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
 
 async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictSyntaxCheck?: boolean): Promise<void> {
     console.log(`### TESTING ${snippets.length} CodeSnippets`)
+    // const isLocal = ciBuildInfo().ci === "local";
     const isLocal = false && ciBuildInfo().ci === "local";
     pxt.github.forceProxy = true; // avoid throttling in CI machines
     let filenameMatch: RegExp;
@@ -4067,7 +4069,6 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
     const MAIN_BLOCKS = "main.blocks";
     const MAIN_PY = "main.py"
 
-    const compileResourcesCache: pxt.Map<CompileResources> = {};
     const compileOptsCache: pxt.Map<pxtc.CompileOptions> = {};
     const successes: string[] = []
     interface FailureInfo {
@@ -4087,11 +4088,14 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
     }
 
     // sort such that all snippets with the same packages are next to eachother, then snippet name so it's stable
-    // if we add a 'missing package' upgrade rule, then we could miss some here
+    // if we add a 'missing package' upgrade rule, it may cause things to become misordered.
     const sortedSnippets = snippets.sort(
         (a, b) => getCompileOptsKey(a.packages).localeCompare(getCompileOptsKey(b.packages)) || a.name.localeCompare(b.name)
     );
 
+    // If completion time becomes an issue here again,
+    // we can likely use node worker threads as it is HEAVILY cpu bound.
+    // This would require bumping up the minimum node version to 11.7+ / maybe 12+ though.
     await U.promiseMapAllSeries(sortedSnippets, async (snippet: CodeSnippet) => {
         const name = snippet.name;
         const fn = snippet.file || snippet.name;
@@ -4126,40 +4130,23 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
         else
             inFiles = { [MAIN_TS]: snippet.code, [MAIN_PY]: "", [MAIN_BLOCKS]: "", ...extra }
 
-        let { pkg, opts } = await getCompileResources2(`snippet${name}`, inFiles, snippet.packages);
-
-        // ONLY CACHING COMPILE_OPTS
-        const inFileNames = Object.keys(inFiles);
-        for (const f of inFileNames) {
-            opts.fileSystem[f] = pkg.readFile(f);
-        }
-
-        opts.jres = pkg.getJRes();
-
-        opts.sourceFiles.push(
-            ...inFileNames.filter(f => f !== MAIN_TS),
-            MAIN_TS
-        );
+        let { pkg, opts } = await getCompileResources(`snippet${name}`, inFiles, snippet.packages);
 
         try {
-            let resp: pxtc.CompileResult;
+            opts.target.preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME;
+            let resp = compileWithResetOnError(opts);
             if (isPy) {
-                opts.target.preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME
-                const stsCompRes = pxtc.service.performOperation("compile", { options: opts }) as pxtc.CompileResult;
-
-
                 opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME;
+                const { ast } = resp;
 
                 const { outfiles, diagnostics } = pxtc.service.performOperation("py2ts", { options: opts }) as pxtc.transpile.TranspileResult;
                 resp = {
                     outfiles,
                     success: diagnostics.length == 0,
                     diagnostics,
-                    ast: stsCompRes.ast,
+                    ast,
                     times: {}
                 };
-            } else {
-                resp = pxtc.service.performOperation("compile", { options: opts }) as pxtc.CompileResult;
             }
 
             if (resp.outfiles && snippet.file && isLocal) {
@@ -4191,17 +4178,14 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
                 return addSuccess(fn)
             }
 
-            //Similar to pxtc.decompile but allows us to get blocksInfo for round trip
-            const file = resp.ast.getSourceFile(MAIN_TS);
-            const apis = pxtc.service.performOperation("apiInfo", {}) as pxtc.ApisInfo;
-            opts.apisInfo = apis
-
             // ensure decompile to blocks works
-            const blocksInfo = pxtc.getBlocksInfo(apis);
-            const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, {
-                snippetMode: false,
-                errorOnGreyBlocks: true
-            });
+            // clear ast param to avoid generating sourcemap.
+            opts.ast = false;
+            const bresp = pxtc.service.performOperation("decompile", {
+                fileName: MAIN_TS,
+                options: opts,
+            }) as pxtc.CompileResult;
+            opts.ast = true;
 
             let blockSuccess = !!bresp.outfiles[MAIN_BLOCKS];
             if (!blockSuccess) {
@@ -4274,12 +4258,6 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
                 column: 1
             }]);
         }
-        finally {
-            for (const f of inFileNames) {
-                delete opts.fileSystem[f];
-                opts.sourceFiles?.pop();
-            }
-        }
     });
 
     pxt.log(`${successes.length}/${successes.length + failures.length} snippets compiled to blocks and python (and back), ${failures.length} failed`)
@@ -4292,7 +4270,17 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
         else U.userError(msg);
     }
 
-    async function getCompileResources2(snippetName: string, snippetFiles: pxt.Map<string>, pkgs: pxt.Map<string>): Promise<CompileResources> {
+    function compileWithResetOnError(options: pxtc.CompileOptions): pxtc.CompileResult {
+        let resp = pxtc.service.performOperation("compile", { options }) as pxtc.CompileResult;
+        if (!resp.success || resp.diagnostics.length) {
+            pxtc.service.performOperation("reset", {});
+            pxt.log("Compile failed; resetting incremental compile.");
+            resp = pxtc.service.performOperation("compile", { options }) as pxtc.CompileResult;
+        }
+        return resp;
+    }
+
+    async function getCompileResources(snippetName: string, snippetFiles: pxt.Map<string>, pkgs: pxt.Map<string>): Promise<CompileResources> {
         const host = new SnippetHost(snippetName, snippetFiles, pkgs);
         host.cache = ghExtensionCache;
 
@@ -4306,11 +4294,25 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
             const newOpts = await pkg.getCompileOptionsAsync(targ);
             newOpts.ast = true;
             newOpts.clearIncrBuildAndRetryOnError = true;
-            newOpts.sourceFiles = newOpts.sourceFiles?.filter(f => f.indexOf("pxt_modules/") >= 0);
+            newOpts.errorOnGreyBlocks = true;
+            newOpts.snippetMode = true;
             compileOptsCache[key] = newOpts;
         }
+
         const opts = compileOptsCache[key];
         opts.target.preferredEditor = pkg.getPreferredEditor();
+        opts.sourceFiles = opts.sourceFiles?.filter(f => /pxt_modules\//.test(f));
+        for (const key of Object.keys(opts.fileSystem).filter(f => !/pxt_modules\//.test(f))) {
+            opts.fileSystem[key] = "";
+        }
+
+        const inFileNames = pkg.getFiles();
+        for (const f of inFileNames) {
+            opts.fileSystem[f] = pkg.readFile(f);
+        }
+
+        opts.jres = pkg.getJRes();
+        opts.sourceFiles.push(...inFileNames);
 
         return {
             host,
