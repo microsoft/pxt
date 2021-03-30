@@ -4192,20 +4192,19 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
                 return addFailure(fn, bresp.diagnostics)
             }
 
-            // performOperation("alldiags"...) is likely the thing breaking when python checks aren't commented out \/
-            // // decompile to python
-            // let ts1 = opts.fileSystem[MAIN_TS]
-            // // let program = pxtc.getTSProgram(opts, resp.ast);
-            // // const decompiled = pxt.py.decompileToPython(program, MAIN_TS);
-            // const decompiled = pxtc.service.performOperation("pydecompile", { options: opts, fileName: MAIN_TS }) as pxtc.transpile.TranspileResult;
+            // decompile to python
+            const decompiled = pxtc.service.performOperation("pydecompile", {
+                options: opts,
+                fileName: MAIN_TS
+            }) as pxtc.transpile.TranspileResult;
 
-            // const py = decompiled.outfiles[MAIN_PY]
-            // let pySuccess = !!py && decompiled.success
-            // if (!pySuccess) {
-            //     console.log("ts2py error")
-            //     return addFailure(fn, decompiled.diagnostics)
-            // }
-            // opts.fileSystem[MAIN_PY] = py
+            const py = decompiled.outfiles[MAIN_PY]
+            let pySuccess = !!py && decompiled.success
+            if (!pySuccess) {
+                console.log("ts2py error")
+                return addFailure(fn, decompiled.diagnostics)
+            }
+            opts.fileSystem[MAIN_PY] = py
 
             // // py to ts
             // opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
