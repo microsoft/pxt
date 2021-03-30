@@ -5497,7 +5497,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
     function addSnippet(snippet: CodeSnippet, entryPath: string, snipIndex: number) {
         snippets.push(snippet);
         const dir = path.join("temp/snippets", snippet.type);
-        const fn = `${dir}/${entryPath.replace(/^\//, '').replace(/\//g, '-').replace(/\.\w*$/, '')}-${snipIndex}.${snippet.ext}`;
+        const fn = `${dir}/${entryPath.replace(/^\//, '').replace(/[\/\s]/g, '-').replace(/\.\w+$/, '')}-${snipIndex}.${snippet.ext}`;
         if (isLocalBuild()) {
             nodeutil.mkdirP(dir);
             nodeutil.writeFileSync(fn, snippet.code);
