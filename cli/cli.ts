@@ -29,7 +29,6 @@ import * as pyconv from './pyconv';
 import * as gitfs from './gitfs';
 import * as crowdin from './crowdin';
 import * as youtube from './youtube';
-import { setOptions } from 'marked';
 
 const rimraf: (f: string, opts: any, cb: (err: Error, res: any) => void) => void = require('rimraf');
 
