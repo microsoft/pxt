@@ -1605,14 +1605,26 @@ interface CiBuildInfo {
     pullRequest?: boolean;
 }
 
-function ciBuildInfo(): CiBuildInfo {
-    const isTravis = (process.env.TRAVIS === "true");
-    const isGithubAction = (!!process.env.GITHUB_ACTIONS);
-    const isAzurePipelines = (process.env.TF_BUILD === "True");
+function isTravis() {
+    return process.env.TRAVIS === "true";
+}
 
-    if (isTravis) return travisInfo();
-    else if (isGithubAction) return githubActionInfo();
-    else if (isAzurePipelines) return travisInfo(); // azure pipelines uses same info
+function isGithubAction() {
+    return !!process.env.GITHUB_ACTIONS;
+}
+
+function isAzurePipelines() {
+    return process.env.TF_BUILD === "True";
+}
+
+function isLocalBuild() {
+    return !(isTravis() || isGithubAction() || isAzurePipelines());
+}
+
+function ciBuildInfo(): CiBuildInfo {
+    if (isTravis()) return travisInfo();
+    else if (isGithubAction()) return githubActionInfo();
+    else if (isAzurePipelines()) return travisInfo(); // azure pipelines uses same info
     else {
         // local build
         return {
@@ -4043,7 +4055,7 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
 
 async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictSyntaxCheck?: boolean): Promise<void> {
     console.log(`### TESTING ${snippets.length} CodeSnippets`);
-    const isLocal = ciBuildInfo().ci === "local";
+    const isLocal = isLocalBuild();
     pxt.github.forceProxy = true; // avoid throttling in CI machines
     let filenameMatch: RegExp;
     try {
@@ -5486,8 +5498,10 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
         snippets.push(snippet);
         const dir = path.join("temp/snippets", snippet.type);
         const fn = `${dir}/${entryPath.replace(/^\//, '').replace(/\//g, '-').replace(/\.\w*$/, '')}-${snipIndex}.${snippet.ext}`;
-        nodeutil.mkdirP(dir);
-        nodeutil.writeFileSync(fn, snippet.code);
+        if (isLocalBuild()) {
+            nodeutil.mkdirP(dir);
+            nodeutil.writeFileSync(fn, snippet.code);
+        }
         snippet.file = fn;
     }
 
