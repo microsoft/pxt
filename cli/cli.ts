@@ -4187,7 +4187,7 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
             }) as pxtc.CompileResult;
             opts.ast = true;
 
-            let blockSuccess = !!bresp.outfiles[MAIN_BLOCKS];
+            const blockSuccess = !!bresp.outfiles[MAIN_BLOCKS];
             if (!blockSuccess) {
                 return addFailure(fn, bresp.diagnostics)
             }
@@ -4199,45 +4199,46 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
             }) as pxtc.transpile.TranspileResult;
 
             const py = decompiled.outfiles[MAIN_PY]
-            let pySuccess = !!py && decompiled.success
+            const pySuccess = !!py && decompiled.success
             if (!pySuccess) {
-                console.log("ts2py error")
-                return addFailure(fn, decompiled.diagnostics)
+                console.log("ts2py error");
+                return addFailure(fn, decompiled.diagnostics);
             }
             opts.fileSystem[MAIN_PY] = py
 
-            // // py to ts
-            // opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
-            // // let ts2Res = pxt.py.py2ts(opts)
-            // let ts2Res = pxtc.service.performOperation("py2ts", { options: opts }) as pxtc.transpile.TranspileResult;
+            // py to ts
+            const ts1 = opts.fileSystem["main.ts"]
+            opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
+            let ts2Res = pxtc.service.performOperation("py2ts", {
+                options: opts
+            }) as pxtc.transpile.TranspileResult;
 
-            // let ts2 = ts2Res.outfiles["main.ts"];
+            let ts2 = ts2Res.outfiles["main.ts"];
 
-            // if (!ts2) {
-            //     console.log("py2ts error!")
-            //     console.dir(ts2Res)
-            //     let errs = ts2Res.diagnostics.map(pxtc.getDiagnosticString).join()
-            //     if (errs)
-            //         console.log(errs)
-            //     return addFailure(fn, ts2Res.diagnostics)
-            // }
+            if (!ts2) {
+                console.log("py2ts error!");
+                console.dir(ts2Res);
+                let errs = ts2Res.diagnostics.map(pxtc.getDiagnosticString).join();
+                if (errs)
+                    console.log(errs);
+                return addFailure(fn, ts2Res.diagnostics);
+            }
 
-            // if (pyStrictSyntaxCheck) {
-            //     let cmp1 = pyComparisonString(ts1)
-            //     let cmp2 = pyComparisonString(ts2)
-            //     let mismatch = cmp1 != cmp2
-            //     if (mismatch) {
-            //         console.log(`Mismatch. Original:`)
-            //         console.log(cmp1)
-            //         console.log("decompiled->compiled:")
-            //         console.log(cmp2)
-            //         console.log("TS mismatch :/")
-            //         // TODO: generate more helpful diags
-            //         return addFailure(fn, [])
-            //     } else {
-            //         console.log("TS same :)")
-            //     }
-            // }
+            if (pyStrictSyntaxCheck) {
+                let cmp1 = pyComparisonString(ts1);
+                let cmp2 = pyComparisonString(ts2);
+                if (cmp1 != cmp2) {
+                    console.log(`Mismatch. Original:`);
+                    console.log(cmp1);
+                    console.log("decompiled->compiled:");
+                    console.log(cmp2);
+                    console.log("TS mismatch :/");
+                    // TODO: generate more helpful diags
+                    return addFailure(fn, []);
+                } else {
+                    console.log("TS same :)");
+                }
+            }
 
             // NOTE: neither of these decompile steps checks that the resulting code is correct or that
             // when the code is compiled back to ts it'll behave the same. This could be validated in
