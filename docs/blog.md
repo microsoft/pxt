@@ -2,7 +2,7 @@
 
 ## [Beginner Skillmap Sneak Peek](/blog/arcade/beginner-skillmap)
 
-April 30th, 2021 by [kiki-lee](https://github.com/kiki-lee)
+March 30th, 2021 by [kiki-lee](https://github.com/kiki-lee)
 
 Next month, Microsoft MakeCode will release a sneak peek of our newest adventure, the Arcade Beginner Skillmap!
 
