@@ -528,6 +528,44 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         this.props.parent.toggleDebugging();
     }
 
+    componentDidUpdate() {
+        const tutorialOptions = this.props.parent.state.tutorialOptions;
+        const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
+        const header = document.getElementById("mainmenu")
+        if (inTutorial && header && !header.classList.contains("shrink")) {
+            const shrinkHeader = this.shouldShrinkItems();
+            if (shrinkHeader) {
+                header.classList.add("shrink");
+            }
+        }
+
+    }
+
+    shouldShrinkItems(): boolean {
+        const header = document.getElementById("mainmenu")
+        if (header) {
+            let headerWidth = 0;
+            for (let i = 0; i < header.children.length; i++) {
+                headerWidth += addUiSize(header.children[i]);
+            }
+            return headerWidth > window.innerWidth;
+        }
+        return false;
+
+        function addUiSize(elem: Element): number {
+            if (elem.classList.contains("ui")) {
+                return elem.clientWidth;
+            }
+            else {
+                let totalWidth = 0
+                for (let i = 0; i < elem.children.length; i++) {
+                    totalWidth += addUiSize(elem.children[i]);
+                }
+                return totalWidth;
+            }
+        }
+    }
+
     renderCore() {
         const highContrast = this.getData<boolean>(auth.HIGHCONTRAST)
         const { debugging, home, header, greenScreen, accessibleBlocks, simState, tutorialOptions } = this.props.parent.state;
