@@ -4077,7 +4077,7 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
 
     const MAIN_TS = "main.ts";
     const MAIN_BLOCKS = "main.blocks";
-    const MAIN_PY = "main.py"
+    const MAIN_PY = "main.py";
 
     const compileOptsCache: pxt.Map<pxtc.CompileOptions> = {};
     const successes: string[] = []
@@ -4137,7 +4137,7 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
             [MAIN_TS]: isPy ? "" : snippet.code,
             [MAIN_PY]: isPy ? snippet.code : "",
             [MAIN_BLOCKS]: "",
-            ...(snippet.extraFiles || {})
+            ...(snippet.extraFiles || {}),
         };
 
         const { pkg, opts } = await getCompileResources(`snippet${name}`, inFiles, snippet.packages);
@@ -4155,7 +4155,7 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
                     success: diagnostics.length == 0,
                     diagnostics,
                     ast,
-                    times: {}
+                    times: {},
                 };
             }
 
@@ -4168,7 +4168,7 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
                 Object.keys(resp.outfiles).forEach(outfile => {
                     const ofn = path.join(dir, "built", outfile);
                     pxt.debug(`writing ${ofn}`);
-                    nodeutil.writeFileSync(ofn, resp.outfiles[outfile], 'utf8')
+                    nodeutil.writeFileSync(ofn, resp.outfiles[outfile], 'utf8');
                 })
                 pkg.filesToBePublishedAsync()
                     .then(files => {
@@ -4181,11 +4181,11 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
             }
 
             if (!resp.success) {
-                return addFailure(name, resp.diagnostics)
+                return addFailure(name, resp.diagnostics);
             }
 
             if (!/^block/.test(snippet.type)) {
-                return addSuccess(fn)
+                return addSuccess(fn);
             }
 
             // ensure decompile to blocks works
@@ -4199,13 +4199,13 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
 
             const blockSuccess = !!bresp.outfiles[MAIN_BLOCKS];
             if (!blockSuccess) {
-                return addFailure(fn, bresp.diagnostics)
+                return addFailure(fn, bresp.diagnostics);
             }
 
             // decompile to python
             const decompiled = pxtc.service.performOperation("pydecompile", {
                 options: opts,
-                fileName: MAIN_TS
+                fileName: MAIN_TS,
             }) as pxtc.transpile.TranspileResult;
 
             const py = decompiled.outfiles[MAIN_PY];
@@ -4220,7 +4220,7 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
             const ts1 = opts.fileSystem["main.ts"];
             opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME;
             let ts2Res = pxtc.service.performOperation("py2ts", {
-                options: opts
+                options: opts,
             }) as pxtc.transpile.TranspileResult;
 
             let ts2 = ts2Res.outfiles["main.ts"];
@@ -4270,7 +4270,7 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
         }
     });
 
-    pxt.log(`${successes.length}/${successes.length + failures.length} snippets compiled to blocks and python (and back), ${failures.length} failed`)
+    pxt.log(`${successes.length}/${successes.length + failures.length} snippets compiled to blocks and python (and back), ${failures.length} failed`);
     if (ignoreCount > 0) {
         pxt.log(`Skipped ${ignoreCount} snippets`);
     }
