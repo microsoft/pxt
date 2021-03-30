@@ -4043,9 +4043,8 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
 }
 
 async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictSyntaxCheck?: boolean): Promise<void> {
-    console.log(`### TESTING ${snippets.length} CodeSnippets`)
-    // const isLocal = ciBuildInfo().ci === "local";
-    const isLocal = false && ciBuildInfo().ci === "local";
+    console.log(`### TESTING ${snippets.length} CodeSnippets`);
+    const isLocal = ciBuildInfo().ci === "local";
     pxt.github.forceProxy = true; // avoid throttling in CI machines
     let filenameMatch: RegExp;
     try {
@@ -4126,9 +4125,9 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
         let inFiles: pxt.Map<string>;
         let extra = snippet.extraFiles || {};
         if (isPy)
-            inFiles = { [MAIN_TS]: "", [MAIN_PY]: snippet.code, [MAIN_BLOCKS]: "", ...extra }
+            inFiles = { [MAIN_TS]: "", [MAIN_PY]: snippet.code, [MAIN_BLOCKS]: "", ...extra };
         else
-            inFiles = { [MAIN_TS]: snippet.code, [MAIN_PY]: "", [MAIN_BLOCKS]: "", ...extra }
+            inFiles = { [MAIN_TS]: snippet.code, [MAIN_PY]: "", [MAIN_BLOCKS]: "", ...extra };
 
         let { pkg, opts } = await getCompileResources(`snippet${name}`, inFiles, snippet.packages);
 
@@ -4198,17 +4197,17 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
                 fileName: MAIN_TS
             }) as pxtc.transpile.TranspileResult;
 
-            const py = decompiled.outfiles[MAIN_PY]
-            const pySuccess = !!py && decompiled.success
+            const py = decompiled.outfiles[MAIN_PY];
+            const pySuccess = !!py && decompiled.success;
             if (!pySuccess) {
                 console.log("ts2py error");
                 return addFailure(fn, decompiled.diagnostics);
             }
-            opts.fileSystem[MAIN_PY] = py
+            opts.fileSystem[MAIN_PY] = py;
 
             // py to ts
-            const ts1 = opts.fileSystem["main.ts"]
-            opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
+            const ts1 = opts.fileSystem["main.ts"];
+            opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME;
             let ts2Res = pxtc.service.performOperation("py2ts", {
                 options: opts
             }) as pxtc.transpile.TranspileResult;
@@ -4262,7 +4261,7 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
 
     pxt.log(`${successes.length}/${successes.length + failures.length} snippets compiled to blocks and python (and back), ${failures.length} failed`)
     if (ignoreCount > 0) {
-        pxt.log(`Skipped ${ignoreCount} snippets`)
+        pxt.log(`Skipped ${ignoreCount} snippets`);
     }
     if (failures.length > 0) {
         const msg = `${failures.length} snippets not compiling in the docs`;
@@ -5666,13 +5665,13 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                                     || (tutorial.language == "python")) {
                                     tutorial.steps
                                         .filter(step => !!step.contentMd)
-                                        .forEach((step, stepIndex) => getCodeSnippets(`${card.name}-${stepIndex}`, step.contentMd)
+                                        .forEach((step, stepIndex) => getCodeSnippets(`${card.name}-step${stepIndex}`, step.contentMd)
                                             .forEach((snippet, snippetIndex) => {
                                                 snippet.packages = pkgs;
                                                 snippet.extraFiles = extraFiles;
                                                 addSnippet(
                                                     snippet,
-                                                    `tutorial${card.name}-${stepIndex}-${snippetIndex}`,
+                                                    `tutorial/${card.name}-step${stepIndex}${snippetIndex ? `-${snippetIndex}` : ""}`,
                                                     cardIndex
                                                 )
                                             })
