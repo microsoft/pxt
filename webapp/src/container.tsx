@@ -572,11 +572,6 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
             && (sandbox || !(tsOnly || pyOnly)); // show if sandbox or not single language
         const editor = this.props.parent.isPythonActive() ? "Python" : (this.props.parent.isJavaScriptActive() ? "JavaScript" : "Blocks");
 
-        const mainMenuDiv = document.getElementById("mainmenu")
-        if (mainMenuDiv) {
-            mainMenuDiv.classList.remove("shrink");
-        }
-
         /* tslint:disable:react-a11y-anchors */
         return <div id="mainmenu" className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu ${manyTutorialSteps ? "thin" : ""}`} role="menubar" aria-label={lf("Main menu")}>
             {!sandbox ? <div className="left menu">
