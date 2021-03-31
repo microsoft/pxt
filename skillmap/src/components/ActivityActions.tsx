@@ -82,7 +82,8 @@ export class ActivityActionsImpl extends React.Component<ActivityActionsProps> {
 
         if (status === "locked") return <div />
 
-        return <div className="actions">
+        // Apply "grid" class when there are four actions (for a completed activity)
+        return <div className={`actions ${completedHeaderId ? "grid" : ""}`}>
             <div className="action-button" role="button" onClick={this.handleActionButtonClick}>
                 {this.getActivityActionText()}
             </div>
