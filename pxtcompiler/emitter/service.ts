@@ -869,14 +869,13 @@ namespace ts.pxtc.service {
             let opts = cloneCompileOpts(host.opts)
             opts.fileSystem[v.fileName] = src
             addApiInfo(opts);
-            opts.syntaxInfo = {
+            let infoBuilder: Partial<SyntaxInfo> = {
                 position: v.position,
-                type: v.infoType
+                type: v.infoType!
             };
+            let symbols: SymbolInfo[] = [];
 
             const isPython = opts.target.preferredEditor == pxt.PYTHON_PROJECT_NAME;
-            const isSymbolReq = opts.syntaxInfo.type === "symbol";
-            const isSignatureReq = opts.syntaxInfo.type === "signature";
 
             if (isPython) {
                 let res = transpile.pyToTs(opts)
@@ -892,30 +891,30 @@ namespace ts.pxtc.service {
                 const tsAst = prog.getSourceFile(v.fileName)
                 const tc = prog.getTypeChecker()
 
-                if (isSymbolReq || isSignatureReq) {
+                if (infoBuilder.type === "symbol" || infoBuilder.type === "signature") {
                     let tsNode = findInnerMostNodeAtPosition(tsAst, v.position);
                     if (tsNode) {
-                        if (isSymbolReq) {
+                        if (infoBuilder.type === "symbol") {
                             const symbol = tc.getSymbolAtLocation(tsNode);
                             if (symbol) {
                                 let pxtSym = getPxtSymbolFromTsSymbol(symbol, opts.apisInfo, tc)
-                                opts.syntaxInfo.symbols = [pxtSym];
-                                opts.syntaxInfo.beginPos = tsNode.getStart();
-                                opts.syntaxInfo.endPos = tsNode.getEnd();
+                                symbols = [pxtSym];
+                                infoBuilder.beginPos = tsNode.getStart();
+                                infoBuilder.endPos = tsNode.getEnd();
                             }
                         }
-                        else if (isSignatureReq) {
+                        else if (infoBuilder.type === "signature") {
                             const pxtCall = tsNode?.pxt?.callInfo
                             if (pxtCall) {
                                 const pxtSym = opts.apisInfo.byQName[pxtCall.qName]
-                                opts.syntaxInfo.symbols = [pxtSym];
-                                opts.syntaxInfo.beginPos = tsNode.getStart();
-                                opts.syntaxInfo.endPos = tsNode.getEnd();
+                                symbols = [pxtSym];
+                                infoBuilder.beginPos = tsNode.getStart();
+                                infoBuilder.endPos = tsNode.getEnd();
 
                                 const tsCall = getParentCallExpression(tsNode)
                                 if (tsCall) {
                                     const argIdx = findCurrentCallArgIdx(tsCall, tsNode, v.position)
-                                    opts.syntaxInfo.auxResult = argIdx
+                                    infoBuilder.auxResult = argIdx
                                 }
                             }
                         }
@@ -923,7 +922,7 @@ namespace ts.pxtc.service {
                 }
             }
 
-            if (isSymbolReq && !opts.syntaxInfo.symbols?.length) {
+            if (infoBuilder.type === "symbol" && !symbols.length) {
                 const possibleKeyword = getWordAtPosition(v.fileContent, v.position);
                 if (possibleKeyword) {
                     // In python if range() is used in a for-loop, we don't convert
@@ -935,30 +934,30 @@ namespace ts.pxtc.service {
                     if (isPython && possibleKeyword.text === "range") {
                         const apiInfo = getLastApiInfo(opts).apis;
                         if (apiInfo.byQName["_py.range"]) {
-                            opts.syntaxInfo.symbols = [apiInfo.byQName["_py.range"]];
-                            opts.syntaxInfo.beginPos = possibleKeyword.start;
-                            opts.syntaxInfo.endPos = possibleKeyword.end;
+                            symbols = [apiInfo.byQName["_py.range"]];
+                            infoBuilder.beginPos = possibleKeyword.start;
+                            infoBuilder.endPos = possibleKeyword.end;
                         }
                     }
                     else {
                         const help = getHelpForKeyword(possibleKeyword.text, isPython);
 
                         if (help) {
-                            opts.syntaxInfo.auxResult = {
+                            infoBuilder.auxResult = {
                                 documentation: help,
                                 displayString: displayStringForKeyword(possibleKeyword.text, isPython),
                             };
-                            opts.syntaxInfo.beginPos = possibleKeyword.start;
-                            opts.syntaxInfo.endPos = possibleKeyword.end;
+                            infoBuilder.beginPos = possibleKeyword.start;
+                            infoBuilder.endPos = possibleKeyword.end;
                         }
                     }
                 }
             }
 
-            if (opts.syntaxInfo.symbols?.length) {
+            if (symbols.length) {
                 const apiInfo = getLastApiInfo(opts).apis;
                 if (isPython) {
-                    opts.syntaxInfo.symbols = opts.syntaxInfo.symbols.map(s => {
+                    symbols = symbols.map(s => {
                         // symbol info gathered during the py->ts compilation phase
                         // is less precise than the symbol info created when doing
                         // a pass over ts, so we prefer the latter if available
@@ -966,13 +965,17 @@ namespace ts.pxtc.service {
                     })
                 }
 
-                if (isSymbolReq) {
-                    opts.syntaxInfo.auxResult = opts.syntaxInfo.symbols.map(s =>
+                if (infoBuilder.type === "symbol") {
+                    infoBuilder.auxResult = symbols.map(s =>
                         displayStringForSymbol(s, isPython, apiInfo))
                 }
+
+                infoBuilder = { ...infoBuilder, symbols };
             }
 
-            return opts.syntaxInfo
+            const infoRes = infoBuilder as SyntaxInfo;
+            opts.syntaxInfo = infoRes; // TODO(@darzu): is this necessary?
+            return infoRes;
         },
 
         getCompletions: v => {

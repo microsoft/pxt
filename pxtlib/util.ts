@@ -1537,6 +1537,11 @@ namespace ts.pxtc.Util {
                 return res
             })
     }
+
+    // Useful at compile time for exhaustivity checks
+    export function never(x: never): never {
+        throw new Error("Unexpected: " + x);
+    }
 }
 
 namespace ts.pxtc.BrowserImpl {

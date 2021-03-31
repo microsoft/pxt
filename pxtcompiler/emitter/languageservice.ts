@@ -375,7 +375,7 @@ namespace ts.pxtc.service {
             // for Python, we need to transpile into TS and map our location into
             // TS
             const res = transpile.pyToTs(opts)
-            if (res.syntaxInfo && res.syntaxInfo.symbols) {
+            if (res.syntaxInfo && "symbols" in res.syntaxInfo && res.syntaxInfo.symbols) {
                 resultSymbols = completionSymbols(res.syntaxInfo.symbols, COMPLETION_DEFAULT_WEIGHT);
             }
             if (res.globalNames)

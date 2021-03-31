@@ -2685,10 +2685,16 @@ namespace pxt.py {
 
         resetPass(1000)
         infoNode = undefined
-        syntaxInfo = opts.syntaxInfo || {
-            position: 0,
-            type: "symbol"
-        }
+        if (opts.syntaxInfo)
+            syntaxInfo = opts.syntaxInfo;
+        else
+            syntaxInfo = {
+                position: 0,
+                type: "symbol",
+                symbols: [],
+                auxResult: []
+            }
+
         let sourceMap: pxtc.SourceInterval[] = []
         for (let m of modules) {
             try {

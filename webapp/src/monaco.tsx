@@ -192,31 +192,29 @@ class SignatureHelper implements monaco.languages.SignatureHelpProvider {
     /**
      * Provide help for the signature at the given position and document.
      */
-    provideSignatureHelp(model: monaco.editor.IReadOnlyModel, position: monaco.Position, token: monaco.CancellationToken, context: monaco.languages.SignatureHelpContext): monaco.languages.ProviderResult<monaco.languages.SignatureHelpResult> {
+    async provideSignatureHelp(model: monaco.editor.IReadOnlyModel, position: monaco.Position, token: monaco.CancellationToken, context: monaco.languages.SignatureHelpContext): Promise<monaco.languages.SignatureHelpResult> {
         const offset = model.getOffsetAt(position);
         const source = model.getValue();
         const fileName = this.editor.currFile.name;
-        return compiler.syntaxInfoAsync("signature", fileName, offset, source)
-            .then(r => {
-                let sym = r.symbols ? r.symbols[0] : null
-                if (!sym || !sym.parameters) return null;
-                const documentation = pxt.Util.rlf(sym.attributes.jsDoc);
-                let paramInfo: monaco.languages.ParameterInformation[] =
-                    sym.parameters.map(p => ({
-                        label: `${p.name}: ${this.isPython ? p.pyTypeString : p.type}`,
-                        documentation: pxt.Util.rlf(p.description)
-                    }))
-                const res: monaco.languages.SignatureHelp = {
-                    signatures: [{
-                        label: `${this.isPython && sym.pyName ? sym.pyName : sym.name}(${paramInfo.map(p => p.label).join(", ")})`,
-                        documentation,
-                        parameters: paramInfo
-                    }],
-                    activeSignature: 0,
-                    activeParameter: r.auxResult
-                }
-                return { value: res, dispose: () => { } }
-            });
+        const r = await compiler.syntaxInfoAsync("signature", fileName, offset, source);
+        let sym = r.symbols ? r.symbols[0] : null
+        if (!sym || !sym.parameters) return null;
+        const documentation = pxt.Util.rlf(sym.attributes.jsDoc);
+        let paramInfo: monaco.languages.ParameterInformation[] =
+            sym.parameters.map(p => ({
+                label: `${p.name}: ${this.isPython ? p.pyTypeString : p.type}`,
+                documentation: pxt.Util.rlf(p.description)
+            }))
+        const res: monaco.languages.SignatureHelp = {
+            signatures: [{
+                label: `${this.isPython && sym.pyName ? sym.pyName : sym.name}(${paramInfo.map(p => p.label).join(", ")})`,
+                documentation,
+                parameters: paramInfo
+            }],
+            activeSignature: 0,
+            activeParameter: r.auxResult
+        }
+        return { value: res, dispose: () => { } }
     }
 }
 
@@ -239,10 +237,10 @@ class HoverProvider implements monaco.languages.HoverProvider {
         const fileName = this.editor.currFile.name;
         return compiler.syntaxInfoAsync("symbol", fileName, offset, source)
             .then(r => {
-                let sym = r.symbols ? r.symbols[0] : null
+                let sym = isAllSymbolsSyntaxInfo(r) ? r.symbols[0] : null
 
                 let contents: string[];
-                if (sym) {
+                if (isAllSymbolsSyntaxInfo(r)) {
                     const documentation = pxt.Util.rlf(sym.attributes.jsDoc);
 
                     contents = [r.auxResult[0], documentation];
@@ -261,6 +259,10 @@ class HoverProvider implements monaco.languages.HoverProvider {
                 return null;
             });
     }
+}
+
+function isAllSymbolsSyntaxInfo(s: pxtc.SymbolSyntaxInfo): s is pxtc.AllSymbolsSyntaxInfo {
+    return !!(s as pxtc.AllSymbolsSyntaxInfo).symbols
 }
 
 function toMarkdownString(text: string) {
@@ -1196,7 +1198,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const fileName = this.currFile.name;
         compiler.syntaxInfoAsync("symbol", fileName, offset, source)
             .then(info => {
-                if (info?.symbols) {
+                if (isAllSymbolsSyntaxInfo(info)) {
                     for (const s of info.symbols) {
                         if (s.attributes.help) {
                             this.parent.setSideDoc('/reference/' + s.attributes.help.replace(/^\//, ''));

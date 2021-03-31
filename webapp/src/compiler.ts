@@ -261,6 +261,10 @@ export function completionsAsync(fileName: string, position: number, wordStartPo
     });
 }
 
+export function syntaxInfoAsync(infoType: "symbol", fileName: string, position: number, fileContent: string): Promise<pxtc.SymbolSyntaxInfo>
+export function syntaxInfoAsync(infoType: "identifierCompletion", fileName: string, position: number, fileContent: string): Promise<pxtc.IdentifierCompletionInfo>
+export function syntaxInfoAsync(infoType: "memberCompletion", fileName: string, position: number, fileContent: string): Promise<pxtc.MemberCompletionInfo>
+export function syntaxInfoAsync(infoType: "signature", fileName: string, position: number, fileContent: string): Promise<pxtc.SignatureInfo>
 export function syntaxInfoAsync(infoType: pxtc.InfoType, fileName: string, position: number, fileContent: string): Promise<pxtc.SyntaxInfo> {
     return workerOpAsync("syntaxInfo", {
         fileName,

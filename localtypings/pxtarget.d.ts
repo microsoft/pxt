@@ -832,15 +832,57 @@ declare namespace ts.pxtc {
         jres?: pxt.Map<pxt.JRes>;
     }
 
-    type InfoType = "memberCompletion" | "identifierCompletion" | "signature" | "symbol"
-    interface SyntaxInfo {
-        type: InfoType;
+    interface IdentifierCompletionInfo {
+        type: "identifierCompletion";
         position: number;
+        // TODO(@darzu): unoptional or remove
         symbols?: SymbolInfo[];
         beginPos?: number;
         endPos?: number;
-        auxResult?: any;
     }
+    interface AllSymbolsSyntaxInfo {
+        type: "symbol";
+        position: number;
+        // TODO(@darzu): unoptional or remove
+        symbols: SymbolInfo[];
+        beginPos?: number;
+        endPos?: number;
+        // TODO(@darzu): rename
+        auxResult: string[];
+    }
+    interface DetailedSymbolSyntaxInfo {
+        type: "symbol";
+        position: number;
+        // TODO(@darzu): unoptional or remove
+        beginPos?: number;
+        endPos?: number;
+        // TODO(@darzu): rename
+        symbols?: SymbolInfo[];
+        auxResult: {
+            documentation: string,
+            displayString: string
+        };
+    }
+    type SymbolSyntaxInfo = AllSymbolsSyntaxInfo | DetailedSymbolSyntaxInfo
+    interface MemberCompletionInfo {
+        type: "memberCompletion";
+        position: number;
+        // TODO(@darzu): unoptional or remove
+        symbols?: SymbolInfo[];
+        beginPos?: number;
+        endPos?: number;
+    }
+    interface SignatureInfo {
+        type: "signature",
+        position: number;
+        // TODO(@darzu): unoptional or remove
+        symbols?: SymbolInfo[];
+        beginPos?: number;
+        endPos?: number;
+        auxResult?: number; // TODO(@darzu): rename
+    }
+    type SyntaxInfo = IdentifierCompletionInfo | SymbolSyntaxInfo | MemberCompletionInfo | SignatureInfo;
+    type InfoType = "identifierCompletion" | "symbol" | "memberCompletion" | "signature"
 
     interface CompileOptions {
         fileSystem: pxt.Map<string>;
