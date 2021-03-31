@@ -4116,7 +4116,7 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
                 addSuccess(fn);
             } catch (e) {
                 addFailure(
-                    fn,
+                    snippet.src,
                     [createKsDiagnostic(`invalid JSON: ${e.message}`, fn)]
                 );
             }
@@ -4177,7 +4177,7 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
             }
 
             if (!resp.success || resp.diagnostics?.length) {
-                return addFailure(name, resp.diagnostics);
+                return addFailure(snippet.src, resp.diagnostics);
             }
 
             if (!/^block/.test(snippet.type)) {
@@ -4191,7 +4191,7 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
             }) as pxtc.CompileResult;
 
             if (!bresp.success) {
-                return addFailure(fn, bresp.diagnostics);
+                return addFailure(snippet.src, bresp.diagnostics);
             }
 
             // decompile to python
@@ -4204,7 +4204,7 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
             const pySuccess = !!py && decompiled.success;
             if (!pySuccess) {
                 console.log("ts2py error");
-                return addFailure(fn, decompiled.diagnostics);
+                return addFailure(snippet.src, decompiled.diagnostics);
             }
             opts.fileSystem[pxt.MAIN_PY] = py;
 
@@ -4223,7 +4223,7 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
                 let errs = ts2Res.diagnostics.map(pxtc.getDiagnosticString).join();
                 if (errs)
                     console.log(errs);
-                return addFailure(fn, ts2Res.diagnostics);
+                return addFailure(snippet.src, ts2Res.diagnostics);
             }
 
             if (pyStrictSyntaxCheck) {
@@ -4236,7 +4236,7 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
                     console.log(cmp2);
                     console.log("TS mismatch :/");
                     // TODO: generate more helpful diags
-                    return addFailure(fn, []);
+                    return addFailure(snippet.src, []);
                 } else {
                     console.log("TS same :)");
                 }
@@ -4250,7 +4250,7 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
         } catch (e) {
             console.dir(e);
             addFailure(
-                name,
+                snippet.src,
                 [createKsDiagnostic(e.message, fn)]
             );
         }
@@ -4265,9 +4265,9 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
         pxt.log(`${msg}:`);
 
         failures.forEach(failure => {
-            console.error(`-- in ${failure.filename}:`)
+            pxt.log(`-- in ${failure.filename}:`)
             failure.diagnostics.forEach(diag => {
-                console.log(`    ${pxtc.getDiagnosticString(diag)}`);
+                pxt.log(`    ${pxtc.getDiagnosticString(diag)}`);
             });
         });
 
@@ -5528,6 +5528,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
             nodeutil.writeFileSync(fn, snippet.code);
         }
         snippet.file = fn;
+        snippet.src = src;
         existingSnippets[key] = true;
     }
 
@@ -5945,6 +5946,7 @@ export interface CodeSnippet {
     ext: string;
     packages: pxt.Map<string>;
     file?: string;
+    src?: string;
 }
 
 export function getCodeSnippets(fileName: string, md: string): CodeSnippet[] {
