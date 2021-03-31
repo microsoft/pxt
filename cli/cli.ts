@@ -4190,8 +4190,7 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
                 options: opts,
             }) as pxtc.CompileResult;
 
-            const blockSuccess = !!bresp.outfiles[pxt.MAIN_BLOCKS];
-            if (!blockSuccess) {
+            if (!bresp.success) {
                 return addFailure(fn, bresp.diagnostics);
             }
 
@@ -4262,9 +4261,17 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
         pxt.log(`Skipped ${ignoreCount} snippets`);
     }
     if (failures.length > 0) {
-        const msg = `${failures.length} snippets not compiling in the docs`;
-        if (pxt.appTarget.ignoreDocsErrors) pxt.log(msg);
-        else U.userError(msg);
+        const msg = `${failures.length} snippets not compiling in the docs`
+        pxt.log(`${msg}:`);
+
+        failures.forEach(failure => {
+            console.error(`-- in ${failure.filename}:`)
+            failure.diagnostics.forEach(diag => {
+                console.log(`    ${pxtc.getDiagnosticString(diag)}`);
+            });
+        });
+
+        if (!pxt.appTarget.ignoreDocsErrors) U.userError(msg);
     }
 
     function tsServiceCompile(options: pxtc.CompileOptions, retryOnError?: boolean): pxtc.CompileResult {
