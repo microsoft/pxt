@@ -560,11 +560,17 @@ const skillmap = gulp.series(cleanSkillmap, buildSkillmap, gulp.parallel(copySki
                  Tests and Linting
 *********************************************************/
 
-const lint = () => Promise.all(
+const lintOld = () => Promise.all(
     ["cli", "pxtblocks", "pxteditor", "pxtlib", "pxtcompiler",
         "pxtpy", "pxtrunner", "pxtsim", "pxtwinrt", "webapp",
         "docfiles/pxtweb", "skillmap"].map(dirname =>
             exec(`node node_modules/tslint/bin/tslint --project ./${dirname}/tsconfig.json`, true)))
+    .then(() => console.log("linted"))
+const lint = () => Promise.all(
+    ["cli", "pxtblocks", "pxteditor", "pxtlib", "pxtcompiler",
+        "pxtpy", "pxtrunner", "pxtsim", "pxtwinrt", "webapp",
+        "docfiles/pxtweb", "skillmap"].map(dirname =>
+            exec(`node node_modules/eslint/bin/eslint.js ./${dirname}/tsconfig.json --ext .ts,.tsx`, true)))
     .then(() => console.log("linted"))
 
 const testdecompiler = testTask("decompile-test", "decompilerunner.js");
