@@ -73,6 +73,7 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
             }
             <div className="spacer" />
             <div className="header-right">
+                <HeaderBarButton icon="icon bug" title={lf("Report a bug or issue")} onClick={this.onBugClicked}/>
                 { items?.length > 0 && <Dropdown icon="setting" className="header-settings" items={items} /> }
                 <div className="header-org-logo">
                     <img className="header-org-logo-large" src={resolvePath("assets/microsoft.png")} alt={organizationLogoAlt} />
@@ -92,11 +93,16 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
         tickEvent("skillmap.home");
         window.open(pxt.appTarget.appTheme.homeUrl);
     }
+
+    onBugClicked = () => {
+        tickEvent("skillmap.bugreport");
+        (window as any).usabilla_live?.("click");
+    }
 }
 
 interface HeaderBarButtonProps {
     icon: string;
-    label: string;
+    label?: string;
     title: string;
     onClick: () => void;
 }
@@ -104,9 +110,9 @@ interface HeaderBarButtonProps {
 const HeaderBarButton = (props: HeaderBarButtonProps) => {
     const { icon, label, title, onClick } = props;
 
-    return <div className="header-button" title={title} role="button" onClick={onClick}>
+    return <div className={`header-button ${!label ? "icon-only" : ""}`} title={title} role="button" onClick={onClick}>
         <i className={icon} />
-        <span className="header-button-label">{label}</span>
+        {label && <span className="header-button-label">{label}</span>}
     </div>
 }
 

@@ -92,10 +92,6 @@ code {
     height: 100%;
 }
 
-.header-right > div {
-    margin-left: 1rem;
-}
-
 .header-logo {
     width: 3rem;
     height: 3rem;
@@ -103,6 +99,7 @@ code {
 
 .header-org-logo {
     height: 2rem;
+    margin-left: 1rem;
 }
 
 .header-org-logo img {
@@ -136,6 +133,11 @@ code {
     flex: 1;
     user-select: none;
     white-space: nowrap;
+}
+
+.header-button.icon-only {
+    font-size: unset;
+    padding: 1rem 0.5rem;
 }
 
 .header-button .header-button-label {
