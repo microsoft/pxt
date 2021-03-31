@@ -528,40 +528,6 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         this.props.parent.toggleDebugging();
     }
 
-    componentDidUpdate() {
-        const tutorialOptions = this.props.parent.state.tutorialOptions;
-        const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
-        const header = document.getElementById("mainmenu")
-        if (inTutorial && header && !header.classList.contains("shrink") && this.shouldShrinkItems()) {
-            header.classList.add("shrink");
-        }
-    }
-
-    shouldShrinkItems(): boolean {
-        const header = document.getElementById("mainmenu")
-        if (header) {
-            let headerWidth = 0;
-            for (let i = 0; i < header.children.length; i++) {
-                headerWidth += addUiSize(header.children[i]);
-            }
-            return headerWidth > window.innerWidth;
-        }
-        return false;
-
-        function addUiSize(elem: Element): number {
-            if (elem.classList.contains("ui")) {
-                return elem.clientWidth;
-            }
-            else {
-                let totalWidth = 0
-                for (let i = 0; i < elem.children.length; i++) {
-                    totalWidth += addUiSize(elem.children[i]);
-                }
-                return totalWidth;
-            }
-        }
-    }
-
     renderCore() {
         const highContrast = this.getData<boolean>(auth.HIGHCONTRAST)
         const { debugging, home, header, greenScreen, accessibleBlocks, simState, tutorialOptions } = this.props.parent.state;
@@ -573,6 +539,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         const homeEnabled = !lockedEditor && !isController;
         const sandbox = pxt.shell.isSandboxMode();
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
+        const manyTutorialSteps = inTutorial && (tutorialOptions.tutorialStepInfo.length > 10);
 
         const activityName = tutorialOptions && tutorialOptions.tutorialActivityInfo ?
             tutorialOptions.tutorialActivityInfo[tutorialOptions.tutorialStepInfo[tutorialOptions.tutorialStep].activity].name :
@@ -609,7 +576,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         }
 
         /* tslint:disable:react-a11y-anchors */
-        return <div id="mainmenu" className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar" aria-label={lf("Main menu")}>
+        return <div id="mainmenu" className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu ${manyTutorialSteps ? "thin": ""}`} role="menubar" aria-label={lf("Main menu")}>
             {!sandbox ? <div className="left menu">
                 {!targetTheme.hideMenubarLogo &&
                     <a href={(!lockedEditor && isController) ? targetTheme.logoUrl : undefined} aria-label={lf("{0} Logo", targetTheme.boardName)} role="menuitem" target="blank" rel="noopener" className="ui item logo brand" tabIndex={0} onClick={lockedEditor ? undefined : this.brandIconClick} onKeyDown={sui.fireClickOnEnter}>
