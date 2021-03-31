@@ -4209,13 +4209,13 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
             opts.fileSystem[pxt.MAIN_PY] = py;
 
             // py to ts
-            const ts1 = opts.fileSystem["main.ts"];
+            const ts1 = opts.fileSystem[pxt.MAIN_TS];
             opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME;
             let ts2Res = pxtc.service.performOperation("py2ts", {
                 options: opts,
             }) as pxtc.transpile.TranspileResult;
 
-            let ts2 = ts2Res.outfiles["main.ts"];
+            let ts2 = ts2Res.outfiles[pxt.MAIN_TS];
 
             if (!ts2) {
                 console.log("py2ts error!");
