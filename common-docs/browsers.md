@@ -5,7 +5,7 @@ Supported browsers and operating system compatibility are shown in the following
 | | Edge | Chrome | Safari | Firefox |
 | - | - | - | - | - |
 | **Windows** | Windows 7<br/>Windows 8<br/> Windows 8.1<br/>Windows 10 | Windows 7<br/>Windows 8<br/>Windows 8.1<br/>Windows 10 | -- | Windows 7<br/>Windows 8<br/> Windows 8.1<br/>Windows 10 |
-| **Mac** | -- | | OS X 10.9 Mavericks<br/>OS X 10.10 Yosemite<br/>OS X 10.11 El Capitan<br/>macOS 10.12 Sierra | |
+| **Mac** | -- | OS X 10.9 Mavericks<br/>OS X 10.10 Yosemite<br/>OS X 10.11 El Capitan<br/>macOS 10.12 Sierra | OS X 10.9 Mavericks<br/>OS X 10.10 Yosemite<br/>OS X 10.11 El Capitan<br/>macOS 10.12 Sierra | OS X 10.9 Mavericks<br/>OS X 10.10 Yosemite<br/>OS X 10.11 El Capitan<br/>macOS 10.12 Sierra |
 | **iOS** | -- | | | |
 | **Android** | -- | | -- | |
 | **Linux** | -- |  Recent distribution with<br/>latest browser version\* | -- | Recent distribution with<br/>latest browser version\* |
