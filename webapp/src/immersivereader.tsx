@@ -206,7 +206,7 @@ export function launchImmersiveReader(content: string, tutorialOptions: pxt.tuto
     }
 
     const options = {
-        onExit: () => {pxt.tickEvent("immersiveReader.close")}
+        onExit: () => {pxt.tickEvent("immersiveReader.close", {tutorial: tutorialOptions.tutorial, tutorialStep: tutorialOptions.tutorialStep})}
     }
 
     getTokenAsync().then(res => ImmersiveReader.launchAsync(res.token, res.subdomain, data, options)).catch(e => {
