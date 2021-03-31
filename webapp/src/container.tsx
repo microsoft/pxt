@@ -578,7 +578,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         }
 
         /* tslint:disable:react-a11y-anchors */
-        return <div id="mainmenu" className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu ${manyTutorialSteps ? "thin": ""}`} role="menubar" aria-label={lf("Main menu")}>
+        return <div id="mainmenu" className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu ${manyTutorialSteps ? "thin" : ""}`} role="menubar" aria-label={lf("Main menu")}>
             {!sandbox ? <div className="left menu">
                 {!targetTheme.hideMenubarLogo &&
                     <a href={(!lockedEditor && isController) ? targetTheme.logoUrl : undefined} aria-label={lf("{0} Logo", targetTheme.boardName)} role="menuitem" target="blank" rel="noopener" className="ui item logo brand" tabIndex={0} onClick={lockedEditor ? undefined : this.brandIconClick} onKeyDown={sui.fireClickOnEnter}>
