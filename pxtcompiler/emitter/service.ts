@@ -701,8 +701,14 @@ namespace ts.pxtc.service {
                 if (this.opts.fileSystem[fn] != v) {
                     this.fileVersions[fn] = (this.fileVersions[fn] || 0) + 1
                 }
-            })
-            this.opts = o
+            });
+            // shallow copy, but deep copy the file system
+            this.opts = {
+                ...o,
+                fileSystem: {
+                    ...o.fileSystem,
+                },
+            }
             this.projectVer++
         }
 
@@ -851,7 +857,7 @@ namespace ts.pxtc.service {
 
     const operations: ServiceOps = {
         reset: () => {
-            service.cleanupSemanticCache();
+            service = ts.createLanguageService(host)
             lastApiInfo = undefined
             lastGlobalNames = undefined
             host.reset()
@@ -1291,7 +1297,7 @@ namespace ts.pxtc.service {
         host.opts.fileSystem = prevFS
         for (let k of Object.keys(newFS))
             host.setFile(k, newFS[k]) // update version numbers
-        if (res.diagnostics.length == 0 || host.opts.clearIncrBuildAndRetryOnError) {
+        if (res.diagnostics.length == 0) {
             host.opts.skipPxtModulesEmit = false
             host.opts.skipPxtModulesTSC = false
             const currKey = host.opts.target.isNative ? "native" : "js"
@@ -1309,21 +1315,15 @@ namespace ts.pxtc.service {
             res = {
                 sourceMap: res.sourceMap,
                 ...ts2asm,
-                success: !ts2asm.diagnostics?.length
             }
-            // TODO: figure out why sometimes it's persisting with result == false but no diags.
-            // just leaking from mkCompileResult and missing a case somewhere in compile?
-            // if (res.needsFullRecompile) {
             if (res.needsFullRecompile || ((!res.success || res.diagnostics.length) && host.opts.clearIncrBuildAndRetryOnError)) {
-                pxt.log("triggering full recompile")
+                pxt.debug("triggering full recompile")
                 pxt.tickEvent("compile.fullrecompile")
                 host.opts.skipPxtModulesEmit = false;
                 ts2asm = compile(host.opts, service);
-                // TODO: it looks like res.success and diagnostics are missing on occasion from compile(..)'s return value.
                 res = {
                     sourceMap: res.sourceMap,
                     ...ts2asm,
-                    success: !ts2asm.diagnostics?.length
                 }
             }
             if (res.diagnostics.every(d => !isPxtModulesFilename(d.fileName)))

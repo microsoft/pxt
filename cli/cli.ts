@@ -4102,6 +4102,7 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
     const sortedSnippets = snippets.sort(
         (a, b) => getCompileOptsKey(a.packages).localeCompare(getCompileOptsKey(b.packages)) || a.name.localeCompare(b.name)
     );
+    let codeSnippetCount = 0;
 
     // If completion time becomes an issue here again,
     // we can likely use node worker threads as it is HEAVILY cpu bound.
@@ -4118,18 +4119,18 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
                     throw new Error("codecards must be an JSON array")
                 addSuccess(fn);
             } catch (e) {
-                addFailure(fn, [{
-                    code: 4242,
-                    category: ts.DiagnosticCategory.Error,
-                    messageText: "invalid JSON: " + e.message,
-                    fileName: fn,
-                    start: 1,
-                    line: 1,
-                    length: 1,
-                    column: 1
-                }]);
+                addFailure(
+                    fn,
+                    [createKsDiagnostic(`invalid JSON: ${e.message}`, fn)]
+                );
             }
             return;
+        }
+
+        if (++codeSnippetCount % 40 == 0) {
+            // clean up cache every once in a while to speed up / clear up mem
+            // TODO probably this should be handled in the service host as it does become a perf concern
+            cleanService();
         }
 
         const isPy = snippet.ext === "py";
@@ -4140,19 +4141,18 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
             ...(snippet.extraFiles || {}),
         };
 
-        const { pkg, opts } = await getCompileResources(`snippet${name}`, inFiles, snippet.packages);
+        const { pkg, opts } = await getCompileResources(inFiles, snippet.packages);
 
         try {
-            opts.target.preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME;
             let resp = compileWithResetOnError(opts);
             if (isPy) {
                 opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME;
                 const { ast } = resp;
 
-                const { outfiles, diagnostics } = pxtc.service.performOperation("py2ts", { options: opts }) as pxtc.transpile.TranspileResult;
+                const { outfiles, diagnostics, success } = pxtc.service.performOperation("py2ts", { options: opts }) as pxtc.transpile.TranspileResult;
                 resp = {
                     outfiles,
-                    success: diagnostics.length == 0,
+                    success,
                     diagnostics,
                     ast,
                     times: {},
@@ -4180,7 +4180,7 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
                     })
             }
 
-            if (!resp.success) {
+            if (!resp.success || resp.diagnostics?.length) {
                 return addFailure(name, resp.diagnostics);
             }
 
@@ -4257,16 +4257,10 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
             return addSuccess(name)
         } catch (e) {
             console.dir(e);
-            addFailure(name, [{
-                code: 4242,
-                category: ts.DiagnosticCategory.Error,
-                messageText: e.message,
-                fileName: fn,
-                start: 1,
-                line: 1,
-                length: 1,
-                column: 1
-            }]);
+            addFailure(
+                name,
+                [createKsDiagnostic(e.message, fn)]
+            );
         }
     });
 
@@ -4280,18 +4274,30 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
         else U.userError(msg);
     }
 
-    function compileWithResetOnError(options: pxtc.CompileOptions): pxtc.CompileResult {
-        let resp = pxtc.service.performOperation("compile", { options }) as pxtc.CompileResult;
-        if (!resp.success || resp.diagnostics.length) {
-            pxtc.service.performOperation("reset", {});
+    function compileWithResetOnError(options: pxtc.CompileOptions, retryOnError?: false): pxtc.CompileResult {
+        let resp = tryCompile(options);
+        if (retryOnError && (!resp.success || resp.diagnostics.length)) {
             pxt.log("Compile failed; resetting incremental compile.");
-            resp = pxtc.service.performOperation("compile", { options }) as pxtc.CompileResult;
+            cleanService();
+            resp = tryCompile(options);
         }
-        return resp;
+        return resp as pxtc.CompileResult;
+
+        function tryCompile(options: pxtc.CompileOptions): pxtc.CompileResult {
+            const resp = pxtc.service.performOperation("compile", { options }) as pxtc.CompileResult;
+            if ((resp as any).errorMessage) {
+                resp.success = false;
+                if (!resp.diagnostics) {
+                    resp.diagnostics = [];
+                }
+                resp.diagnostics.push(createKsDiagnostic((resp as any).errorMessage));
+            }
+            return resp;
+        }
     }
 
-    async function getCompileResources(snippetName: string, snippetFiles: pxt.Map<string>, pkgs: pxt.Map<string>): Promise<CompileResources> {
-        const host = new SnippetHost(snippetName, snippetFiles, pkgs);
+    async function getCompileResources(snippetFiles: pxt.Map<string>, pkgs: pxt.Map<string>): Promise<CompileResources> {
+        const host = new SnippetHost("codesnippet", snippetFiles, pkgs);
         host.cache = ghExtensionCache;
 
         const pkg = new pxt.MainPackage(host);
@@ -4305,14 +4311,14 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
             newOpts.ast = true;
             newOpts.clearIncrBuildAndRetryOnError = true;
             newOpts.errorOnGreyBlocks = true;
-            newOpts.snippetMode = true;
+            newOpts.snippetMode = false;
             compileOptsCache[key] = newOpts;
         }
 
         const opts = compileOptsCache[key];
-        opts.target.preferredEditor = pkg.getPreferredEditor();
-        opts.sourceFiles = opts.sourceFiles?.filter(f => /pxt_modules\//.test(f));
-        for (const key of Object.keys(opts.fileSystem).filter(f => !/pxt_modules\//.test(f))) {
+        opts.target.preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME;
+        opts.sourceFiles = opts.sourceFiles?.filter(f => pxtc.isPxtModulesFilename(f));
+        for (const key of Object.keys(opts.fileSystem).filter(f => !pxtc.isPxtModulesFilename(f))) {
             opts.fileSystem[key] = "";
         }
 
@@ -4329,6 +4335,24 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
             pkg,
             opts
         };
+    }
+
+    function cleanService() {
+        pxtc.service.performOperation("reset", {});
+        codeSnippetCount = 0;
+    }
+
+    function createKsDiagnostic(message: string, fn = "?", code = 4242) {
+        return {
+            code,
+            category: ts.DiagnosticCategory.Error,
+            messageText: message,
+            fileName: fn,
+            start: 1,
+            line: 1,
+            length: 1,
+            column: 1
+        }
     }
 
     function getCompileOptsKey(pkgs: pxt.Map<string>) {
