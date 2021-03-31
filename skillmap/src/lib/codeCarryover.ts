@@ -25,16 +25,15 @@ function mergeProjectCode(previousProject: pxt.Map<string>, newProject: pxt.Map<
     const configString = carryoverCode ? previousProject[pxt.CONFIG_NAME] : newProject[pxt.CONFIG_NAME];
     const config = pxt.U.jsonTryParse(configString) as pxt.PackageConfig;
 
-    const previousImageJres = appendTemporaryAssets(previousProject["main.blocks"], previousProject[pxt.IMAGES_JRES]);
     const tilemapJres = carryoverCode ?
         mergeJRES(newProject[pxt.TILEMAP_JRES], previousProject[pxt.TILEMAP_JRES]) :
         mergeJRES(previousProject[pxt.TILEMAP_JRES], newProject[pxt.TILEMAP_JRES]);
     const imageJres = carryoverCode ?
         mergeJRES(newProject[pxt.IMAGES_JRES], previousProject[pxt.IMAGES_JRES]) :
-        mergeJRES(previousImageJres, newProject[pxt.IMAGES_JRES]);
+        mergeJRES(appendTemporaryAssets(previousProject["main.blocks"], previousProject[pxt.IMAGES_JRES]), newProject[pxt.IMAGES_JRES]);
 
-    if (tilemapJres && config.files.indexOf(pxt.TILEMAP_JRES) < 0) config.files.push(pxt.TILEMAP_JRES)
-    if (imageJres && config.files.indexOf(pxt.IMAGES_JRES) < 0) config.files.push(pxt.IMAGES_JRES)
+    if (tilemapJres && config?.files?.indexOf(pxt.TILEMAP_JRES) < 0) config.files.push(pxt.TILEMAP_JRES)
+    if (imageJres && config?.files?.indexOf(pxt.IMAGES_JRES) < 0) config.files.push(pxt.IMAGES_JRES)
 
     return {
         ...newProject,
@@ -243,17 +242,18 @@ function appendTemporaryAssets(blocks: string, assets: string) {
 }
 
 /**
- *  <field name="img">img`
+ *  <field name="FIELDNAME">img`
  *      . .
  *      . .
  *  `</field>
  */
 function getImages(text: string): pxt.sprite.BitmapData[] {
-    const imgRegex = /<field name=\"img\">\s*(img`[\s\da-f.#tngrpoyw]+`)\s*<\/field>/gim;
+    const imgRegex = /<field name=\"[\da-zA-Z]+\">\s*(img`[\s\da-f.#tngrpoyw]+`)\s*<\/field>/gim;
     const images: pxt.sprite.BitmapData[] = [];
 
     text.replace(imgRegex, (m, literal) => {
-        images.push(pxt.sprite.imageLiteralToBitmap(literal).data());
+        const data = pxt.sprite.imageLiteralToBitmap(literal)?.data();
+        if (data) images.push(data);
         return m;
     })
 
@@ -261,7 +261,7 @@ function getImages(text: string): pxt.sprite.BitmapData[] {
 }
 
 /**
- *  <field name="frames">[img`
+ *  <field name="FIELDNAME">[img`
  *      . .
  *      . .
  *  `,img`
@@ -270,14 +270,15 @@ function getImages(text: string): pxt.sprite.BitmapData[] {
  *  `]</field>
  */
 function getAnimations(text: string): { frames: pxt.sprite.BitmapData[], interval: number}[] {
-    const animRegex = /<field name=\"frames\">\s*\[((?:img`[\s\da-f.#tngrpoyw]+`,?)+)\]\s*<\/field>.*<shadow type=\"timePicker\"><field name=\"ms\">(\d+)<\/field><\/shadow>/gim;
+    const animRegex = /<field name=\"[\da-zA-Z]+\">\s*\[((?:img`[\s\da-f.#tngrpoyw]+`,?)+)\]\s*<\/field>(?:.*<shadow type=\"timePicker\"><field name=\"ms\">(\d+)<\/field><\/shadow>)?/gim;
     const literals: { frames: pxt.sprite.BitmapData[], interval: number}[] = [];
 
     text.replace(animRegex, (m, f, i) => {
-        const frames: string[] = f.split(",");
+        const frames: pxt.sprite.BitmapData[] = f.split(",")
+            .map((el: string) => pxt.sprite.imageLiteralToBitmap(el)?.data());
         literals.push({
-            frames: frames.map(el => pxt.sprite.imageLiteralToBitmap(el).data()),
-            interval: i
+            frames: frames.filter(frame => !!frame),
+            interval: i || 500
         });
         return m;
     })
