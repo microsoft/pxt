@@ -4075,10 +4075,6 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
         opts: pxtc.CompileOptions;
     }
 
-    const MAIN_TS = "main.ts";
-    const MAIN_BLOCKS = "main.blocks";
-    const MAIN_PY = "main.py";
-
     const compileOptsCache: pxt.Map<pxtc.CompileOptions> = {};
     const successes: string[] = []
     interface FailureInfo {
@@ -4135,16 +4131,16 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
 
         const isPy = snippet.ext === "py";
         const inFiles: pxt.Map<string> = {
-            [MAIN_TS]: isPy ? "" : snippet.code,
-            [MAIN_PY]: isPy ? snippet.code : "",
-            [MAIN_BLOCKS]: "",
+            [pxt.MAIN_TS]: isPy ? "" : snippet.code,
+            [pxt.MAIN_PY]: isPy ? snippet.code : "",
+            [pxt.MAIN_BLOCKS]: "",
             ...(snippet.extraFiles || {}),
         };
 
         const { pkg, opts } = await getCompileResources(inFiles, snippet.packages);
 
         try {
-            let resp = compileWithResetOnError(opts, true);
+            let resp = tsServiceCompile(opts, true);
             if (isPy) {
                 opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME;
                 const { ast } = resp;
@@ -4189,15 +4185,12 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
             }
 
             // ensure decompile to blocks works
-            // clear ast param to avoid generating sourcemap.
-            opts.ast = false;
             const bresp = pxtc.service.performOperation("decompile", {
-                fileName: MAIN_TS,
+                fileName: pxt.MAIN_TS,
                 options: opts,
             }) as pxtc.CompileResult;
-            opts.ast = true;
 
-            const blockSuccess = !!bresp.outfiles[MAIN_BLOCKS];
+            const blockSuccess = !!bresp.outfiles[pxt.MAIN_BLOCKS];
             if (!blockSuccess) {
                 return addFailure(fn, bresp.diagnostics);
             }
@@ -4205,16 +4198,16 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
             // decompile to python
             const decompiled = pxtc.service.performOperation("pydecompile", {
                 options: opts,
-                fileName: MAIN_TS,
+                fileName: pxt.MAIN_TS,
             }) as pxtc.transpile.TranspileResult;
 
-            const py = decompiled.outfiles[MAIN_PY];
+            const py = decompiled.outfiles[pxt.MAIN_PY];
             const pySuccess = !!py && decompiled.success;
             if (!pySuccess) {
                 console.log("ts2py error");
                 return addFailure(fn, decompiled.diagnostics);
             }
-            opts.fileSystem[MAIN_PY] = py;
+            opts.fileSystem[pxt.MAIN_PY] = py;
 
             // py to ts
             const ts1 = opts.fileSystem["main.ts"];
@@ -4274,7 +4267,7 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
         else U.userError(msg);
     }
 
-    function compileWithResetOnError(options: pxtc.CompileOptions, retryOnError?: boolean): pxtc.CompileResult {
+    function tsServiceCompile(options: pxtc.CompileOptions, retryOnError?: boolean): pxtc.CompileResult {
         let resp = tryCompile(options);
         if (retryOnError && (!resp.success || resp.diagnostics.length)) {
             pxt.log("Compile failed; resetting incremental compile.");
@@ -4315,20 +4308,16 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
             compileOptsCache[key] = newOpts;
         }
 
+        const inFileNames = pkg.getFiles();
         const opts = compileOptsCache[key];
         opts.target.preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME;
-        opts.sourceFiles = opts.sourceFiles?.filter(f => pxtc.isPxtModulesFilename(f));
-        for (const key of Object.keys(opts.fileSystem).filter(f => !pxtc.isPxtModulesFilename(f))) {
-            opts.fileSystem[key] = "";
-        }
+        opts.sourceFiles = inFileNames.concat(opts.sourceFiles.filter(f => pxtc.isPxtModulesFilename(f)));
 
-        const inFileNames = pkg.getFiles();
         for (const f of inFileNames) {
             opts.fileSystem[f] = pkg.readFile(f);
         }
 
         opts.jres = pkg.getJRes();
-        opts.sourceFiles.push(...inFileNames);
 
         return {
             host,
