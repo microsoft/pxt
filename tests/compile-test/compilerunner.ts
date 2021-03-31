@@ -14,7 +14,6 @@ const casesDir = path.join(process.cwd(), "tests", "compile-test", "lang-test0")
 const bareDir = path.relative(process.cwd(), path.join("tests", "compile-test", "bare"));
 
 function initGlobals() {
-    Promise = require("bluebird");
     let g = global as any
     g.pxt = pxt;
     g.ts = ts;

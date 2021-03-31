@@ -25,6 +25,10 @@
     --sidebar-label-color: #adadad;
     --input-text-color: #5d5d5d;
 
+    --filter-panel-bg-color: #333333;
+    --filter-panel-text-color: #ffffff;
+    --filter-panel-label-color: #adadad;
+
     --navigator-viewport-color: #ff0000;
     --wall-color: #e95153;
 
@@ -91,13 +95,95 @@
     background-color: #4B7BEC;
     border: 2px solid #4067b3;
     border-bottom: none;
+    display: flex;
+}
+
+.image-editor-header-left,
+.image-editor-header-right {
+    flex: 1;
+}
+
+.image-editor-header-right {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+
+    & > div {
+        margin-right: 0.5rem;
+    }
 }
 
 .image-editor-gallery-content {
     flex-grow: 1;
     overflow: hidden;
     position: relative;
-    height: 100%;
+    flex: 9;
+}
+
+.image-editor-close-button {
+    color: @white;
+    font-size: 1.5rem;
+    line-height: 1.5rem;
+    cursor: pointer;
+}
+
+// Tablet + Mobile
+@media only screen and (max-width: @largestTabletScreen) {
+    .image-editor-gallery-content {
+        flex: 4!important;
+    }
+
+    .filter-tag {
+        padding-top: .7rem!important;
+        padding-bottom: .7rem!important;
+    }
+}
+
+
+// Mobile Only
+@media only screen and (max-width: @largestMobileScreen) {
+    .image-editor-gallery-content {
+        flex: 3!important;
+    }
+
+    .image-editor-header-left {
+        display: none;
+    }
+
+    .gallery-editor-toggle {
+        margin-left: .25rem!important;
+        flex-shrink: 1;
+    }
+
+    .gallery-editor-toggle-label > span {
+        display: none;
+    }
+
+    .gallery-filter-button {
+        .gallery-filter-button-label {
+            display: none !important;
+        }
+        display: flex;
+        flex-shrink: 1;
+        width: 2em!important;
+        right: .9em!important;
+        justify-content: center!important;
+        padding: 0!important;
+    }
+
+
+    .filter-title {
+        font-size: 1.5rem!important;
+    }
+
+    .filter-subheading-row {
+        flex-direction: column!important;
+    }
+
+    .filter-panel-container {
+        margin-left: 10px!important;
+    }
+
 }
 
 .gallery-editor-toggle {
@@ -111,7 +197,7 @@
     background-color: #4572cf;
     border: 2px solid #4067b3;
     border-radius: 5px;
-    width: 19.5rem;
+    width: 24rem;
     margin-top: 0.25rem;
 
     margin-left: auto;
@@ -119,10 +205,10 @@
     cursor: pointer;
 }
 
-
 .gallery-editor-toggle.right {
     .gallery-editor-toggle-handle {
-        transform: translateX(13rem);
+        /* Subtract small margin for rightmost element */
+        transform: translateX(calc(16rem - 0.2rem));
     }
     .gallery-editor-toggle-right {
         color: #4B7BEC;
@@ -131,7 +217,7 @@
 
 .gallery-editor-toggle.center {
     .gallery-editor-toggle-handle {
-        transform: translateX(6.5rem);
+        transform: translateX(8rem);
     }
     .gallery-editor-toggle-center {
         color: #4B7BEC;
@@ -145,7 +231,7 @@
 }
 
 .gallery-editor-toggle.no-gallery {
-    width: 13rem;
+    width: 16rem;
 
     .gallery-editor-toggle-handle {
         width: 50%;
@@ -157,7 +243,7 @@
 
 .gallery-editor-toggle.no-gallery.right {
     .gallery-editor-toggle-handle {
-        transform: translateX(6.5rem);
+        transform: translateX(8rem);
     }
 }
 
@@ -175,12 +261,21 @@
 }
 
 .gallery-editor-toggle-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     flex-basis: 33%;
     text-align: center;
     color: #ffffff;
     z-index: 1;
     transition: color 0.3s;
     user-select: none;
+
+    & > i {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
 }
 
 .gallery-editor-toggle-handle {
@@ -211,11 +306,104 @@
     line-height: 2.25rem;
 }
 
+// this impacts all scrollbars in pxt
+::-webkit-scrollbar {
+    width: @customScrollbarWidth;
+}
+
+::-webkit-scrollbar-track {
+    background: #3c3c3c;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #adadad;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #979797;
+}
+
+.gallery-filter-button {
+    width: 7em;
+    height: 2.25rem;
+    cursor: pointer;
+    display: flex;
+    padding: 0 1em;
+    border-radius: 5px;
+    background-color: white;
+    color: #4b7bec;
+    align-items: center;
+    user-select: none;
+}
+
+.image-editor-gallery-window {
+    display: flex;
+    flex-grow: 1;
+}
+
+.filter-panel-gutter {
+    flex: 2;
+    background-color: var(--editor-bg-color);
+}
+
+.filter-panel-container {
+    background-color: var(--filter-panel-bg-color);
+    flex: 1;
+    user-select: none;
+    margin-left: 20px;
+    padding: .5rem;
+    height: 100%;
+}
+
+.filter-panel {
+    color: var(--filter-panel-text-color);
+    margin: .5rem;
+    margin-top: 0rem;
+    padding: .4rem;
+    padding-top: 1rem;
+}
+
+.filter-title {
+    text-align: center;
+    font-weight: bolder;
+    font-size: 1.8rem;
+    margin-top: .5rem;
+    margin-bottom: 2rem;
+}
+
+.filter-subheading-row {
+    color: var(--filter-panel-label-color);
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: .5rem;
+    font-size: 1.1rem;
+}
+
+.filter-subheading-button {
+    cursor: pointer;
+}
+
+.filter-tag-list {
+    font-size: 1.2rem;
+}
+
+.filter-tag {
+    display: flex;
+    cursor: pointer;
+}
+
+.filter-tag-box {
+    margin-right: .5rem;
+}
+
+.filter-tag-name {
+    text-transform: capitalize;
+}
+
 .image-editor-gallery {
     position: absolute;
     height: 100%;
     width: 100%;
-
     top: 0;
 
     margin-top: -100%;
@@ -229,11 +417,16 @@
     flex-wrap: wrap;
     align-items: stretch;
     justify-content: center;
+    align-content: flex-start;
 
     visibility: hidden;
 
     .asset-editor-card {
         margin: 0.2rem 0 0 0.2rem;
+    }
+
+    .asset-editor-card-icon {
+        display: none;
     }
 }
 
@@ -275,4 +468,36 @@
 
 :root {
     --editor-height: 31rem;
+}
+
+
+// Mobile Only
+@media only screen and (max-width: @largestMobileScreen) {
+    .gallery-editor-toggle {
+        width: 10rem;
+        margin-left: .25rem!important;
+        flex-shrink: 1;
+    }
+
+    .gallery-editor-toggle.no-gallery {
+        width: 6.5rem;
+    }
+
+    .gallery-editor-toggle.right {
+        .gallery-editor-toggle-handle {
+            transform: translateX(6.5rem);
+        }
+    }
+
+    .gallery-editor-toggle.center {
+        .gallery-editor-toggle-handle {
+            transform: translateX(3.25rem);
+        }
+    }
+
+    .gallery-editor-toggle.no-gallery.right {
+        .gallery-editor-toggle-handle {
+            transform: translateX(3.25rem);
+        }
+    }
 }

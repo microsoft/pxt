@@ -4,7 +4,7 @@ import * as core from "./core";
 export type Action = () => void;
 export type DataSubscriber = {
     subscriptions: CacheEntry[];
-    onDataChanged: () => void;
+    onDataChanged: (path: string) => void;
 };
 
 import Cloud = pxt.Cloud;
@@ -167,7 +167,7 @@ function matches(ce: CacheEntry, prefix: string) {
     return ce.path.slice(0, prefix.length) == prefix;
 }
 
-function notify(ce: CacheEntry) {
+function notify(ce: CacheEntry, path: string) {
     if (shouldCache(ce)) saveCache();
 
     let lst = ce.callbackOnce
@@ -177,7 +177,7 @@ function notify(ce: CacheEntry) {
     }
 
     if (ce.components.length > 0)
-        ce.components.forEach(c => Util.nextTick(() => c.onDataChanged()))
+        ce.components.forEach(c => Util.nextTick(() => c.onDataChanged(path)))
 }
 
 function getVirtualApi(path: string) {
@@ -187,7 +187,7 @@ function getVirtualApi(path: string) {
     return virtualApis[m[1]]
 }
 
-function queue(ce: CacheEntry) {
+function queueNotify(ce: CacheEntry, path: string) {
     if (ce.queued) return
 
     if (ce.api.isOffline && ce.api.isOffline())
@@ -199,14 +199,14 @@ function queue(ce: CacheEntry) {
         ce.data = res
         ce.lastRefresh = pxt.Util.now()
         ce.queued = false
-        notify(ce)
+        notify(ce, path)
     }
 
     if (ce.api.isSync)
         final(ce.api.getSync(ce.path))
     else {
         const p = ce.api.getAsync(ce.path);
-        p.done(final)
+        p.then(final)
     }
 }
 
@@ -239,7 +239,7 @@ export interface VirtualApi {
     isSync?: boolean;
     expirationTime?(path: string): number; // in milliseconds
     isOffline?: () => boolean;
-    onInvalidated?: () => void;
+    onInvalidated?: (path: string) => void;
 }
 
 export function mountVirtualApi(protocol: string, handler: VirtualApi) {
@@ -257,15 +257,15 @@ export function stripProtocol(path: string) {
     return path
 }
 
-export function invalidate(prefix: string) {
-    prefix = prefix.replace(/:\*$/, ':'); // remove trailing "*";
+export function invalidate(path: string) {
+    const prefix = path.replace(/:\*$/, ':'); // remove trailing "*";
     Util.values(cachedData).forEach(ce => {
         if (matches(ce, prefix)) {
             ce.lastRefresh = 0;
             if (ce.components.length > 0)
-                queue(lookup(ce.path))
+                queueNotify(lookup(ce.path), path)
             if (ce.api.onInvalidated) {
-                ce.api.onInvalidated();
+                ce.api.onInvalidated(path);
             }
         }
     })
@@ -289,7 +289,7 @@ export function getAsync<T = any>(path: string) {
         ce.callbackOnce.push(() => {
             resolve(ce.data)
         })
-        queue(ce)
+        queueNotify(ce, path)
     })
 }
 
@@ -317,7 +317,7 @@ export function getDataWithStatus<T>(path: string): DataFetchResult<T> {
             // The request will not be requeued so we don't want to show it as pending
             fetchRes.status = FetchStatus.Offline;
         } else {
-            queue(r)
+            queueNotify(r, path)
         }
     }
 

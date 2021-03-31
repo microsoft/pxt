@@ -1,7 +1,7 @@
 import { PageSourceStatus } from "../store/reducer";
 
-const apiRoot = "https://www.makecode.com/api/md";
-export type MarkdownSource = "docs" | "github";
+const apiRoot = "https://www.makecode.com/api";
+export type MarkdownSource = "docs" | "github" | "local";
 
 export interface MarkdownFetchResult {
     identifier: string;
@@ -10,7 +10,12 @@ export interface MarkdownFetchResult {
     status: PageSourceStatus;
 }
 
-export function parseHash(hash?: string) {
+export interface ParsedHash {
+    cmd: string;
+    arg: string;
+}
+
+export function parseHash(hash?: string): ParsedHash {
     let parsed = { cmd: '', arg: '' };
     let match = /^(\w+)(:([:./\-+=\w]+))?/.exec((hash || window.location.hash).replace(/^#/, ""))
     if (match) {
@@ -45,13 +50,13 @@ export async function getMarkdownAsync(source: MarkdownSource, url: string): Pro
 
     switch (source) {
         case "docs":
-            url = url.trim().replace(/^[\\/]/i, "").replace(/\.md$/i, "");
-            const target = (window as any).pxtTargetBundle?.name || "arcade";
-            toFetch = `${apiRoot}/${target}/${url}`;
+            toFetch = getDocsIdentifier(url);
             status = "approved";
             break;
         case "github":
             return await fetchSkillMapFromGithub(url);
+        case "local":
+            return await fetchSkillMapFromLocal(url);
         default:
             toFetch = url;
             break;
@@ -74,7 +79,9 @@ export async function getMarkdownAsync(source: MarkdownSource, url: string): Pro
 async function fetchSkillMapFromGithub(path: string): Promise<MarkdownFetchResult | undefined> {
     const ghid = pxt.github.parseRepoId(path)
     const config = await pxt.packagesConfigAsync();
-    const repoStatus = pxt.github.repoStatus(ghid, config);
+
+    const baseRepo = pxt.github.parseRepoId(ghid.slug);
+    const repoStatus = pxt.github.repoStatus(baseRepo, config);
     let status: PageSourceStatus = "unknown";
 
     let reportId: string | undefined;
@@ -103,20 +110,59 @@ async function fetchSkillMapFromGithub(path: string): Promise<MarkdownFetchResul
     const gh = await pxt.github.downloadPackageAsync(`${ghid.slug}#${ghid.tag}`, config);
 
     if (gh) {
-        let fileName = ghid.fileName ||  "skillmap";
-        fileName = fileName.replace(/^\/?blob\/main\//, "")
-        fileName = fileName.replace(/^\/?blob\/master\//, "")
-        fileName = fileName.replace(/\.md$/, "")
-
+        const { identifier, fileName } = getGithubIdentifier(ghid);
         return {
             text: pxt.tutorial.resolveLocalizedMarkdown(ghid, gh.files, fileName),
-            identifier: ghid.fullName + "#" + fileName,
+            identifier,
             reportId,
             status
         }
     }
 
     return undefined
+}
+
+async function fetchSkillMapFromLocal(path: string): Promise<MarkdownFetchResult | undefined> {
+    if (isLocal()) {
+        path = path.replace(/^\//, "").replace(/\.md$/, "");
+        let res = await fetch("docs/" + path + ".md");
+        let text = await res.text();
+        return {
+            text,
+            identifier: path,
+            status: "approved"
+        }
+    }
+
+    return undefined;
+}
+
+export function getDocsIdentifier(path: string) {
+    path = path.trim().replace(/^[\\/]/i, "").replace(/\.md$/i, "");
+    const target = (window as any).pxtTargetBundle?.name || "arcade";
+    return `${apiRoot}/md/${target}/${path}`;
+}
+
+export function getGithubIdentifier(ghid: pxt.github.ParsedRepo) {
+    let fileName = parseGithubFilename(ghid.fileName ||  "skillmap");
+    return {
+        identifier: ghid.fullName + "#" + fileName,
+        fileName: fileName
+    }
+}
+
+function parseGithubFilename(fileName: string) {
+    fileName = fileName.replace(/^\/?blob\/main\//, "");
+    fileName = fileName.replace(/^\/?blob\/master\//, "");
+    fileName = fileName.replace(/\.md$/, "");
+    return fileName;
+}
+
+export async function postShareAsync(h?: pxt.workspace.Header, text?: pxt.workspace.ScriptText): Promise<pxt.Cloud.JsonScript | undefined> {
+    if (!h || !text) return undefined;
+
+    const script = await httpPostAsync(`${apiRoot}/scripts`, { ...h, text });
+    return pxt.Util.jsonTryParse(script) as pxt.Cloud.JsonScript;
 }
 
 export async function postAbuseReportAsync(id: string, data: { text: string }): Promise<void> {
@@ -191,6 +237,11 @@ export function isLocal() {
 
 export function resolvePath(path: string) {
     return `${isLocal() ? "" : "/static/skillmap"}/${path.replace(/^\//, "")}`
+}
+
+export function getEditorUrl(embedUrl: string) {
+    const path = /\/([\da-zA-Z\.]+)(?:--)?/i.exec(window.location.pathname);
+    return `${embedUrl.replace(/\/$/, "")}/${path?.[1] || ""}`;
 }
 
 let pageTitle: string;

@@ -2,8 +2,6 @@
 
 * [Try out the editors in your browser...](https://makecode.com)
 
-[![Build Status](https://travis-ci.org/microsoft/pxt.svg?branch=master)](https://travis-ci.org/microsoft/pxt)
-
 Microsoft MakeCode is based on the open source project [Microsoft Programming Experience Toolkit (PXT)](https://github.com/microsoft/pxt). ``Microsoft MakeCode`` is the name in the user-facing editors, ``PXT`` is used in all the GitHub sources.
 
 PXT is a framework for creating special-purpose programming experiences for
@@ -22,7 +20,7 @@ More info:
 * [About](https://makecode.com/about)
 * [Documentation](https://makecode.com/docs)
 
-Examples of Editors built with PXT:
+Examples of Editors built with MakeCode:
 
 * https://makecode.microbit.org
 * https://arcade.makecode.com

@@ -9,21 +9,31 @@
     width: @blocklyRowWidthWide;
     height: 100%;
     border-right: 1px solid @assetSidebarBorder;
+    overflow-y: auto;
 }
 
 .asset-editor-sidebar-info {
     margin: 1rem;
 }
 
-.asset-editor-sidebar-name {
+.asset-editor-sidebar-name,
+.asset-editor-sidebar-temp {
     overflow: hidden;
     text-overflow: ellipsis;
     margin-bottom: 0.5rem;
     font-weight: 700;
+}
 
-    &.unnamed {
-        font-weight: 400;
-        font-style: italic;
+.asset-editor-sidebar-temp {
+    display: flex;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    background-color: @assetUnselected;
+
+    i {
+        width: 1.5rem;
+        height: 1.5rem;
+        margin-right: 0.3rem;
     }
 }
 
@@ -55,18 +65,26 @@
     width: 100%;
     display: flex;
     flex-direction: row;
+    border-bottom: 1px solid @assetTopbarBorder;
 }
 
 .asset-editor-gallery-tab {
+    height: 3rem;
     background-color: @assetUnselected;
+    color: @grey;
     padding: .7em 2em .85em;
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
+    border-color: @assetTopbarBorder;
+    border-style: solid;
+    border-width: 0 1px 1px 0;
 }
 
 .asset-editor-gallery-tab.selected {
     background-color: transparent;
+    border-bottom-color: @blocklySvgColor;
+    color: @black;
 }
 .asset-editor-card-list {
     width: 100%;
@@ -96,22 +114,35 @@
     border-width: 2px;
 }
 
+.asset-editor-card.empty-card {
+    background-color: #000000;
+    opacity: 0.05;
+    border: none;
+}
+
 .asset-editor-card-label {
+    display: flex;
     position: relative;
     margin-top: -2rem;
+    z-index: 2;
+}
+
+.asset-editor-card-icon {
     height: 2rem;
     width: 2rem;
-    background: @white;
-    z-index: 2;
     line-height: 2rem;
     text-align: center;
+    background: @white;
+    margin-right: 0.25rem;
+
+    i { margin: 0; }
 }
 
 .asset-editor-preview {
     display: flex;
     width: 100%;
     height: 100%;
-    background: @assetPreviewBackground;
+    background-image: @assetPreviewBackground;
 
     img {
         max-width: 100%;
@@ -171,9 +202,11 @@
 }
 
 .delete-asset {
-    color: @white;
-    background-color: @red;
-    font-weight: 700;
+    margin: 0.5rem;
+    text-align: center;
+    font-size: 0.9rem;
+    cursor: pointer;
+    opacity: 0.9;
 }
 
 .asset-editor-create-options {
@@ -206,4 +239,8 @@
         margin: 1rem;
     }
 
+}
+
+.image-editor-open #tutorialcard {
+    z-index: @blocklyDropdownDivZIndex + 1
 }

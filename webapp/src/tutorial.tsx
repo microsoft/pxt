@@ -13,6 +13,7 @@ import { HintTooltip } from "./hinttooltip";
 import { PlayButton } from "./simtoolbar";
 import { ProjectView } from "./app";
 import * as editortoolbar from "./editortoolbar";
+import * as ImmersiveReader from "./immersivereader";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -72,6 +73,8 @@ function getUsedBlocksInternalAsync(code: string[], id: string, language?: strin
                     const blk = allblocks[bi];
                     if (!blk.isShadow()) usedBlocks[blk.type] = 1;
                 }
+                headless.dispose();
+
                 if (pxt.options.debug)
                     pxt.debug(JSON.stringify(usedBlocks, null, 2));
 
@@ -97,14 +100,24 @@ export class TutorialMenu extends data.Component<ISettingsProps, {}> {
 
     renderCore() {
         let tutorialOptions = this.props.parent.state.tutorialOptions;
+        const tutorialCardContent = tutorialOptions.tutorialStepInfo?.[tutorialOptions.tutorialStep].headerContentMd
+        const immersiveReaderEnabled = pxt.appTarget.appTheme.immersiveReader;
+
         if (this.hasActivities) {
-            return <TutorialStepCircle parent={this.props.parent} />;
+            return <div className="menu tutorial-menu">
+                <TutorialStepCircle parent={this.props.parent} />
+                {immersiveReaderEnabled && <ImmersiveReader.ImmersiveReaderButton content={tutorialCardContent} tutorialOptions={tutorialOptions}/>}
+            </div>;
         } else if (tutorialOptions.tutorialStepInfo.length < 8) {
-            return <TutorialMenuItem parent={this.props.parent} />;
+            return <div className="menu tutorial-menu">
+                <TutorialMenuItem parent={this.props.parent} />
+                {immersiveReaderEnabled && <ImmersiveReader.ImmersiveReaderButton content={tutorialCardContent} tutorialOptions={tutorialOptions}/>}
+            </div>;
         } else {
-            return <div className="menu">
+            return <div className="menu tutorial-menu">
                 <TutorialMenuItem parent={this.props.parent} className="mobile hide" />
                 <TutorialStepCircle parent={this.props.parent} className="mobile only" />
+                {immersiveReaderEnabled && <ImmersiveReader.ImmersiveReaderButton content={tutorialCardContent} tutorialOptions={tutorialOptions}/>}
             </div>
         }
     }
@@ -277,6 +290,11 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
         const tutorialHint = step.hintContentMd;
         const fullText = step.contentMd;
 
+        const hideIteration = options.metadata.hideIteration;
+        const flyoutOnly = options.metadata.flyoutOnly;
+
+        const immersiveReaderEnabled = pxt.appTarget.appTheme.immersiveReader;
+
         if (!step.showDialog) {
             if (!tutorialHint) return <div />;
 
@@ -285,12 +303,22 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
             </div>
         } else {
             let onClick = tutorialStep < tutorialStepInfo.length - 1 ? this.next : this.closeHint;
-            const actions: sui.ModalButton[] = [{
-                label: lf("Start"),
+            let actions: sui.ModalButton[] = [];
+            if (immersiveReaderEnabled) {
+                actions.push({
+                    className: "immersive-reader-button",
+                    onclick: () => {ImmersiveReader.launchImmersiveReader(fullText, options)},
+                    ariaLabel: lf("Launch Immersive Reader"),
+                    title: lf("Launch Immersive Reader")
+                })
+            }
+            actions.push({
+                label: hideIteration && flyoutOnly ? lf("Start") : lf("Ok"),
                 onclick: onClick,
                 icon: 'check',
                 className: 'green'
-            }]
+            });
+
             const classes = this.props.parent.createModalClasses("hintdialog");
 
             return <sui.Modal isOpen={visible} className={classes}
@@ -371,7 +399,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
     finishTutorial() {
         this.closeLightbox();
         this.removeHintOnClick();
-        this.props.parent.completeTutorialAsync().done();
+        this.props.parent.completeTutorialAsync();
     }
 
     private closeLightboxOnEscape = (e: KeyboardEvent) => {
@@ -423,7 +451,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
             tutorialCard.style.animationDuration = '500ms';
             this.lastStep = step;
             pxsim.U.addClass(tutorialCard, animationClasses);
-            Promise.resolve().delay(500)
+            pxt.Util.delay(500)
                 .then(() => pxsim.U.removeClass(tutorialCard, animationClasses));
         }
         if (this.prevStep != step) {

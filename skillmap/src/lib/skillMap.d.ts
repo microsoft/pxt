@@ -2,6 +2,10 @@ interface PageMetadata {
     title: string;
     description?: string;
     infoUrl?: string;
+    backgroundImageUrl?: string;
+    bannerImageUrl?: string; // Banner image in the info panel when no activity is selected
+    theme?: SkillGraphTheme
+    alternateSources?: string[]; // List of alternate pageSourceUrls to import user projects from
 }
 
 interface SkillMap {
@@ -9,10 +13,14 @@ interface SkillMap {
     displayName: string;
     description?: string;
     prerequisites: MapPrerequisite[];
-    completionUrl?: string;
+    completionUrl?: string; // DEPRECATED, urls should be specified on completion nodes
 
-    activities: {[index: string]: MapActivity};
-    root: MapActivity;
+    // Indicates whether or not code can be copied from previous activity
+    // for all cards in this skillmap
+    allowCodeCarryover?: boolean;
+
+    activities: {[index: string]: MapNode};
+    root: MapNode;
 }
 
 type MapPrerequisite = TagPrerequisite | MapFinishedPrerequisite;
@@ -28,12 +36,24 @@ interface MapFinishedPrerequisite {
     mapId: string;
 }
 
+type MapNodeKind = "activity" | "reward" | "completion" | "layout";
+
+type MapNode = MapActivity | MapReward | MapCompletionNode | MapLayoutNode
+
+interface BaseNode {
+    kind: MapNodeKind;
+    activityId: string;
+    displayName: string;
+    imageUrl?: string;
+
+    next: MapNode[];
+    nextIds: string[];
+}
+
 type MapActivityType = "tutorial";
 
-interface MapActivity {
-    activityId: string;
-
-    displayName: string;
+interface MapActivity extends BaseNode {
+    kind: "activity";
     description?: string;
     tags: string[];
 
@@ -41,10 +61,25 @@ interface MapActivity {
     editor: "blocks" | "js" | "py";
 
     url: string;
-    imageUrl?: string;
 
-    next: MapActivity[];
-    nextIds: string[];
+    // Indicates whether or not code can be copied from previous activity
+    allowCodeCarryover?: boolean;
+}
+
+type MapRewardType = "certificate";
+
+interface MapReward extends BaseNode {
+    kind: "reward";
+    type: MapRewardType;
+    url: string;
+}
+
+interface MapCompletionNode extends MapReward {
+    kind: "completion";
+}
+
+interface MapLayoutNode extends BaseNode {
+    kind: "layout";
 }
 
 type CompletedTags = {[index: string]: number}
@@ -71,4 +106,19 @@ interface ActivityState {
     headerId?: string;
     currentStep?: number;
     maxSteps?: number;
+    completedTime?: number;
+}
+
+interface SkillGraphTheme {
+    backgroundColor: string;
+    pathColor: string;
+    strokeColor: string;
+    selectedStrokeColor: string;
+    unlockedNodeColor: string;
+    unlockedNodeForeground: string;
+    lockedNodeColor: string;
+    lockedNodeForeground: string;
+    rewardNodeColor: string;
+    rewardNodeForeground: string;
+    pathOpacity: number;
 }

@@ -1,5 +1,6 @@
 import * as core from "./core";
 import * as data from "./data";
+import * as cloud from "./cloud";
 
 import U = pxt.Util;
 
@@ -22,6 +23,8 @@ const CSRF_TOKEN = "csrf-token";
 const AUTH_LOGIN_STATE = "auth:login-state";
 const AUTH_USER_STATE = "auth:user-state";
 const X_PXT_TARGET = "x-pxt-target";
+
+let authDisabled = false;
 
 export type UserProfile = {
     id?: string;
@@ -282,8 +285,6 @@ export async function authCheck(): Promise<UserProfile | undefined> {
 }
 
 export async function loginCallback(qs: pxt.Map<string>) {
-    if (!hasIdentity()) { return; }
-
     let state: AuthState;
     let callbackState: CallbackState = { ...NilCallbackState };
 
@@ -365,7 +366,7 @@ export function hasIdentity(): boolean {
     // Must read storage for this rather than app theme because this method
     // gets called before experiments are synced to the theme.
     const experimentEnabled = pxt.editor.experiments.isEnabled("identity");
-    return experimentEnabled && identityProviders().length > 0;
+    return !authDisabled && !pxt.BrowserUtils.isPxtElectron() && experimentEnabled && identityProviders().length > 0;
 }
 
 export async function loggedIn(): Promise<boolean> {
@@ -394,13 +395,30 @@ export async function updateUserProfile(opts: {
 export async function deleteAccount() {
     if (!await loggedIn()) { return; }
 
-    await apiAsync('/api/user', null, 'DELETE');
+    const userId = getState()?.profile?.id;
 
-    // Clear csrf token so we can no longer make authenticated requests.
-    pxt.storage.removeLocal(CSRF_TOKEN);
+    const res = await apiAsync('/api/user', null, 'DELETE');
+    if (res.err) {
+        core.handleNetworkError(res.err);
+    } else {
+        try {
+            // Clear csrf token so we can no longer make authenticated requests.
+            pxt.storage.removeLocal(CSRF_TOKEN);
 
-    // Update state and UI to reflect logged out state.
-    clearState();
+            try {
+                // Convert cloud-saved projects to local projects.
+                await cloud.convertCloudToLocal(userId);
+            } catch {
+                pxt.tickEvent('auth.profile.cloudToLocalFailed');
+            }
+
+            // Update state and UI to reflect logged out state.
+            clearState();
+        }
+        finally {
+            pxt.tickEvent('auth.profile.deleted');
+        }
+    }
 }
 
 export class Component<TProps, TState> extends data.Component<TProps, TState> {
@@ -550,7 +568,7 @@ export type ApiResult<T> = {
     resp: T;
     statusCode: number;
     success: boolean;
-    errmsg: string;
+    err: any;
 };
 
 const DEV_BACKEND_DEFAULT = "";
@@ -558,9 +576,8 @@ const DEV_BACKEND_PROD = "https://www.makecode.com";
 const DEV_BACKEND_STAGING = "https://staging.pxt.io";
 // tslint:disable-next-line:no-http-string
 const DEV_BACKEND_LOCALHOST = "http://localhost:5500";
-const DEV_BACKEND_LOCALHOST_SSL = "https://localhost:5500";
 
-const DEV_BACKEND = DEV_BACKEND_LOCALHOST;
+const DEV_BACKEND = DEV_BACKEND_STAGING;
 
 export async function apiAsync<T = any>(url: string, data?: any, method?: string): Promise<ApiResult<T>> {
     const headers: pxt.Map<string> = {};
@@ -583,12 +600,16 @@ export async function apiAsync<T = any>(url: string, data?: any, method?: string
             statusCode: r.statusCode,
             resp: r.json,
             success: Math.floor(r.statusCode / 100) === 2,
-            errmsg: null
+            err: null
         }
-    }).catch(e => {
+    }).catch(async (e) => {
+        if (!/logout/.test(url) && e.statusCode == 401) {
+            // 401/Unauthorized. logout now.
+            await logout();
+        }
         return {
             statusCode: e.statusCode,
-            errmsg: e.message,
+            err: e,
             resp: null,
             success: false
         }
@@ -631,15 +652,16 @@ async function userPreferencesHandlerAsync(path: string): Promise<UserPreference
     return internalUserPreferencesHandler(path);
 }
 
-data.mountVirtualApi(USER_PREF_MODULE, {
-    getSync: userPreferencesHandlerSync,
-    // TODO: virtual apis don't support both sync & async
-    // getAsync: userPreferencesHandlerAsync
-});
+export function init() {
+    data.mountVirtualApi(USER_PREF_MODULE, {
+        getSync: userPreferencesHandlerSync,
+        // TODO: virtual apis don't support both sync & async
+        // getAsync: userPreferencesHandlerAsync
+    });
 
-data.mountVirtualApi(MODULE, { getSync: authApiHandler });
+    data.mountVirtualApi(MODULE, { getSync: authApiHandler });
+}
 
-
-// ClouddWorkspace must be included after we mount our virtual APIs.
-import * as cloudWorkspace from "./cloud";
-cloudWorkspace.init();
+export function enableAuth(enabled = true) {
+    authDisabled = !enabled
+}

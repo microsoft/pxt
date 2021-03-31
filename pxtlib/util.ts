@@ -445,14 +445,138 @@ namespace ts.pxtc.Util {
         return -1;
     }
 
+    const _nextTickResolvedPromise = Promise.resolve();
     export function nextTick(f: () => void) {
-        (<any>Promise)._async._schedule(f)
+        // .then should run as a microtask / at end of loop
+        _nextTickResolvedPromise.then(f);
     }
 
+    export async function delay<T>(duration: number, value: T | Promise<T>): Promise<T>;
+    export async function delay(duration: number): Promise<void>
+    export async function delay<T>(duration: number, value?: T | Promise<T>): Promise<T> {
+        // tslint:disable-next-line
+        const output = await value;
+        await new Promise<void>(resolve => setTimeout(() => resolve(), duration));
+        return output;
+    }
+
+    export function promiseMapAll<T, V>(values: T[], mapper: (obj: T) => Promise<V>): Promise<V[]> {
+        return Promise.all(values.map(v => mapper(v)));
+    }
+
+    export function promiseMapAllSeries<T, V>(values: T[], mapper: (obj: T) => Promise<V>): Promise<V[]> {
+        return promisePoolAsync(1, values, mapper);
+    }
+
+    export async function promisePoolAsync<T, V>(maxConcurrent: number, inputValues: T[], handler: (input: T) => Promise<V>): Promise<V[]> {
+        let curr = 0;
+        const promises = [];
+        const output: V[] = [];
+
+        for (let i = 0; i < maxConcurrent; i++) {
+            const thread = (async () => {
+                while (curr < inputValues.length) {
+                    const id = curr++;
+                    const input = inputValues[id];
+                    output[id] = await handler(input);
+                }
+            })();
+
+            promises.push(thread);
+        }
+
+        try {
+            await Promise.all(promises);
+        } catch (e) {
+            // do not spawn any more promises after pool failed.
+            curr = inputValues.length;
+            throw e;
+        }
+
+        return output;
+    }
 
     export function memoizeString<T>(createNew: (id: string) => T): (id: string) => T {
         return memoize(s => s, createNew)
     }
+
+    export async function promiseTimeout<T>(ms: number, promise: T | Promise<T>, msg?: string): Promise<T> {
+        let timeoutId: number;
+        let res: (v?: T | PromiseLike<T>) => void;
+
+        const timeoutPromise: Promise<T> = new Promise((resolve, reject) => {
+            res = resolve;
+            timeoutId = setTimeout(() => {
+                res = undefined;
+                clearTimeout(timeoutId);
+                reject(msg || `Promise timed out after ${ms}ms`);
+            }, ms);
+        });
+
+        return Promise.race([ promise, timeoutPromise ])
+            .then(output => {
+                // clear any dangling timeout
+                if (res) {
+                    clearTimeout(timeoutId);
+                    res();
+                }
+                return <T>output;
+            });
+    }
+
+    export interface DeferredPromise<T> {
+        resolve: (value: T) => void;
+        reject: (reason: any) => void;
+        promise: Promise<T>;
+    }
+
+    export function defer<T>(): DeferredPromise<T> {
+        let result: T | Promise<T>;
+        let resolve: (value?: unknown) => void;
+        let reject: (reason?: any) => void;
+        let isResolved = false;
+
+        return {
+            resolve: function (value: T) {
+                if (isResolved) {
+                    pxt.debug("Deferred promise already resolved");
+                    return;
+                }
+
+                if (resolve) {
+                    resolve(value);
+                } else {
+                    result = result || new Promise(function (r) { r(value); });
+                }
+
+                isResolved = true;
+            },
+
+            reject: function (reason: any) {
+                if (isResolved) {
+                    pxt.debug("Deferred promise already resolved");
+                    return;
+                }
+
+                if (reject) {
+                    reject(reason);
+                } else {
+                    result = result || new Promise(function (_, j) { j(reason); });
+                }
+
+                isResolved = true;
+            },
+
+            promise: new Promise<T>(function (r, j) {
+                if (result) {
+                    r(result);
+                } else {
+                    resolve = r;
+                    reject = j;
+                }
+            })
+        };
+    };
 
     export function memoize<S, T>(getId: (v: S) => string, createNew: (v: S) => T): (id: S) => T {
         const cache: pxt.Map<T> = {}
@@ -836,7 +960,7 @@ namespace ts.pxtc.Util {
                     }
                     this.waiting.push(f)
                     if (timeout > 0) {
-                        Promise.delay(timeout)
+                        U.delay(timeout)
                             .then(() => {
                                 let idx = this.waiting.indexOf(f)
                                 if (idx >= 0) {
@@ -849,34 +973,16 @@ namespace ts.pxtc.Util {
         }
     }
 
-    export async function promisePoolAsync<T, V>(maxConcurrent: number, inputValues: T[], handler: (input: T) => Promise<V>): Promise<V[]> {
-        let curr = 0;
-        const promises = [];
-        const output: V[] = [];
-
-        for (let i = 0; i < maxConcurrent; i++) {
-            const thread = (async () => {
-                while (curr < inputValues.length) {
-                    const id = curr++;
-                    const input = inputValues[id];
-                    output[id] = await handler(input);
-                }
-            })();
-
-            promises.push(thread);
-        }
-
-        await Promise.all(promises);
-
-        return output;
-    }
-
     export function now(): number {
         return Date.now();
     }
 
     export function nowSeconds(): number {
         return Math.round(now() / 1000)
+    }
+
+    export function timeout(ms: number): Promise<void> {
+        return new Promise(resolve => setTimeout(() => resolve(), ms))
     }
 
     // node.js overrides this to use process.cpuUsage()
@@ -971,7 +1077,7 @@ namespace ts.pxtc.Util {
                     // update expired entries
                     const dt = (Date.now() - entry.time) / 1000;
                     if (dt > 300) // 5min caching time before trying etag again
-                        downloadFromCloudAsync(entry.strings).done();
+                        downloadFromCloudAsync(entry.strings);
                     return entry.strings;
                 } else
                     return downloadFromCloudAsync();
@@ -1071,7 +1177,24 @@ namespace ts.pxtc.Util {
         return false;
     }
 
-    export function updateLocalizationAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean, force?: boolean): Promise<void> {
+    interface LocalizationUpdateOptions {
+        targetId: string;
+        baseUrl: string;
+        code: string;
+        pxtBranch: string;
+        targetBranch: string;
+        force?: boolean;
+    }
+
+    export function updateLocalizationAsync(opts: LocalizationUpdateOptions): Promise<void> {
+        const {
+            targetId,
+            baseUrl,
+            pxtBranch,
+            targetBranch,
+            force,
+        } = opts;
+        let { code } = opts;
         code = normalizeLanguageCode(code)[0];
         if (code === "en-US")
             code = "en"; // special case for built-in language
@@ -1081,27 +1204,26 @@ namespace ts.pxtc.Util {
         }
 
         pxt.debug(`loc: ${code}`);
+
+        const liveUpdateStrings = pxt.Util.liveLocalizationEnabled()
         return downloadTranslationsAsync(targetId, baseUrl, code,
-            pxtBranch, targetBranch, live,
+            pxtBranch, targetBranch, liveUpdateStrings,
             ts.pxtc.Util.TranslationsKind.Editor)
             .then((translations) => {
                 if (translations) {
                     setUserLanguage(code);
                     setLocalizedStrings(translations);
-                    if (live) {
-                        localizeLive = true;
-                    }
                 }
 
                 // Download api translations
-                return !live ? ts.pxtc.Util.downloadTranslationsAsync(
+                return ts.pxtc.Util.downloadTranslationsAsync(
                     targetId, baseUrl, code,
-                    pxtBranch, targetBranch, live,
+                    pxtBranch, targetBranch, liveUpdateStrings,
                     ts.pxtc.Util.TranslationsKind.Apis)
                     .then(trs => {
                         if (trs)
                             ts.pxtc.apiLocalizationStrings = trs;
-                    }) : Promise.resolve();
+                    });
             });
     }
 
@@ -1155,7 +1277,7 @@ namespace ts.pxtc.Util {
         if (live) {
             let errorCount = 0;
 
-            const pAll = Promise.mapSeries(stringFiles, (file) => downloadLiveTranslationsAsync(code, file.path, file.branch)
+            const pAll = U.promiseMapAllSeries(stringFiles, (file) => downloadLiveTranslationsAsync(code, file.path, file.branch)
                 .then(mergeTranslations, e => {
                     console.log(e.message);
                     ++errorCount;

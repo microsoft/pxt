@@ -126,9 +126,6 @@ namespace pxt.blocks {
         state.setValue(inputInitAttr, false);
         state.setEventsEnabled(true);
 
-        let addShown = false;
-        let remShown = false;
-
         Blockly.Extensions.apply('inline-svgs', b, false);
 
         addPlusButton();
@@ -245,41 +242,26 @@ namespace pxt.blocks {
 
         function updateButtons() {
             const visibleOptions = state.getNumber(numVisibleAttr);
-            const showAdd = visibleOptions !== totalOptions;
+            const showPlus = visibleOptions !== totalOptions;
             const showRemove = visibleOptions !== 0;
 
-            if (!showAdd) {
-                addShown = false;
-                b.removeInput(buttonAddName, true);
-            }
-            if (!showRemove) {
-                remShown = false;
-                b.removeInput(buttonRemName, true);
+            b.removeInput(buttonRemName, true);
+            b.removeInput(buttonAddName, true);
+
+            if (showRemove) {
+                addMinusButton();
             }
 
-            if (showRemove && !remShown) {
-                if (addShown) {
-                    b.removeInput(buttonAddName, true);
-                    addMinusButton();
-                    addPlusButton();
-                }
-                else {
-                    addMinusButton();
-                }
-            }
-
-            if (showAdd && !addShown) {
+            if (showPlus) {
                 addPlusButton();
             }
         }
 
         function addPlusButton() {
-            addShown = true;
             addButton(buttonAddName, (b as any).ADD_IMAGE_DATAURI, lf("Reveal optional arguments"), buttonDelta);
         }
 
         function addMinusButton() {
-            remShown = true;
             addButton(buttonRemName, (b as any).REMOVE_IMAGE_DATAURI, lf("Hide optional arguments"), -1 * buttonDelta);
         }
 
@@ -313,11 +295,12 @@ namespace pxt.blocks {
         Blockly.Extensions.apply('inline-svgs', b, false);
 
         let returnValueVisible = true;
-        updateShape();
 
         // When the value input is removed, we disconnect the block that was connected to it. This
         // is the id of whatever block was last connected
         let lastConnectedId: string;
+
+        updateShape();
 
         b.domToMutation = saved => {
             if (saved.hasAttribute("last_connected_id")) {

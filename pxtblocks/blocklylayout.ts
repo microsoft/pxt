@@ -186,55 +186,17 @@ namespace pxt.blocks.layout {
         return toSvgAsync(ws)
             .then(sg => {
                 if (!sg) return Promise.resolve<string>(undefined);
-                return toPngAsyncInternal(
-                    sg.width, sg.height, (pixelDensity | 0) || 4, sg.xml,
-                    encodeBlocks ? JSON.stringify(blockSnippet, null, 2) : null);
+                return pxt.BrowserUtils.encodeToPngAsync(sg.xml,
+                    {
+                        width: sg.width,
+                        height: sg.height,
+                        pixelDensity: (pixelDensity | 0) || 4,
+                        text: encodeBlocks ? JSON.stringify(blockSnippet, null, 2) : null
+                    });
             }).catch(e => {
                 pxt.reportException(e);
                 return undefined;
             })
-    }
-
-    const MAX_SCREENSHOT_SIZE = 1e6; // max 1Mb
-    function toPngAsyncInternal(width: number, height: number, pixelDensity: number, data: string, text?: string): Promise<string> {
-        return new Promise<string>((resolve, reject) => {
-            const cvs = document.createElement("canvas") as HTMLCanvasElement;
-            const ctx = cvs.getContext("2d");
-            const img = new Image;
-
-            cvs.width = width * pixelDensity;
-            cvs.height = height * pixelDensity;
-            img.onload = function () {
-                if (text) {
-                    ctx.fillStyle = "#fff";
-                    ctx.fillRect(0, 0, cvs.width, cvs.height);
-                }
-                ctx.drawImage(img, 0, 0, width, height, 0, 0, cvs.width, cvs.height);
-                let canvasdata = cvs.toDataURL("image/png");
-                // if the generated image is too big, shrink image
-                while (canvasdata.length > MAX_SCREENSHOT_SIZE) {
-                    cvs.width = (cvs.width / 2) >> 0;
-                    cvs.height = (cvs.height / 2) >> 0;
-                    pxt.log(`screenshot size ${canvasdata.length}b, shrinking to ${cvs.width}x${cvs.height}`)
-                    ctx.drawImage(img, 0, 0, width, height, 0, 0, cvs.width, cvs.height);
-                    canvasdata = cvs.toDataURL("image/png");
-                }
-                if (text) {
-                    let p = pxt.lzmaCompressAsync(text).then(blob => {
-                        const datacvs = pxt.Util.encodeBlobAsync(cvs, blob);
-                        resolve(datacvs.toDataURL("image/png"));
-                    });
-                    p.done();
-                } else {
-                    resolve(canvasdata);
-                }
-            };
-            img.onerror = ev => {
-                pxt.reportError("blocks", "blocks screenshot failed");
-                resolve(undefined)
-            }
-            img.src = data;
-        })
     }
 
     const XLINK_NAMESPACE = "http://www.w3.org/1999/xlink";
@@ -377,7 +339,8 @@ namespace pxt.blocks.layout {
                             return dataUri;
                         }).catch(e => {
                             // ignore load error
-                            pxt.debug(`svg render: failed to load ${href}`)
+                            pxt.debug(`svg render: failed to load ${href}`);
+                            return "";
                         }))
                     .then(href => { image.setAttributeNS(XLINK_NAMESPACE, "href", href); })
             });
@@ -401,7 +364,7 @@ namespace pxt.blocks.layout {
                 let pngUri = imageIconCache[svgUri];
 
                 return (pngUri ? Promise.resolve(pngUri)
-                    : toPngAsyncInternal(width, height, 4, svgUri))
+                    : pxt.BrowserUtils.encodeToPngAsync(svgUri, { width, height, pixelDensity: 2 }))
                     .then(href => {
                         imageIconCache[svgUri] = href;
                         image.setAttributeNS(XLINK_NAMESPACE, "href", href);
@@ -436,12 +399,23 @@ namespace pxt.blocks.layout {
             if (ref != undefined) {
                 commentMap[ref] = comment;
             }
-            else {
-                groups.push(formattable(comment));
-            }
         });
 
         let onStart: Formattable;
+
+        // Sort so that on-start is first, events are second, functions are third, and disabled blocks are last
+        blocks.sort((a, b) => {
+            if (a.isEnabled() === b.isEnabled()) {
+                if (a.type === b.type) return 0;
+                else if (a.type === "function_definition") return 1
+                else if (b.type === "function_definition") return -1;
+                else return a.type.localeCompare(b.type);
+            }
+            else if (a.isEnabled())
+                return -1;
+            else
+                return 1
+        });
 
         blocks.forEach(block => {
             const refs = getBlockData(block).commentRefs;
@@ -475,7 +449,6 @@ namespace pxt.blocks.layout {
         }
 
         // Collect the comments that were not linked to a top-level block
-        // and puth them in on start (if it exists)
         Object.keys(commentMap).sort((a, b) => {
             // These are strings of integers (eg "0", "17", etc.) with no duplicates
             if (a.length === b.length) {
@@ -486,16 +459,15 @@ namespace pxt.blocks.layout {
             }
         }).forEach(key => {
             if (commentMap[key]) {
-                if (onStart) {
-                    if (!onStart.children) {
-                        onStart.children = [];
-                    }
-                    onStart.children.push(formattable(commentMap[key]));
-                }
-                else {
-                    // Stick the comments in the front so that they show up in the top left
-                    groups.unshift(formattable(commentMap[key]));
-                }
+                // Comments go at the end after disabled blocks
+                groups.push(formattable(commentMap[key]));
+            }
+        });
+
+        comments.forEach(comment => {
+            const ref: string = (comment as any).data;
+            if (ref == undefined) {
+                groups.push(formattable(comment));
             }
         });
 

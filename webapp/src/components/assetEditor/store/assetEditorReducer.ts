@@ -1,4 +1,6 @@
 import * as actions from '../actions/types'
+import * as pkg from '../../../package';
+import { getBlocksEditor } from '../../../app';
 
 export const enum GalleryView {
     User,
@@ -26,12 +28,20 @@ const topReducer = (state: AssetEditorState = initialState, action: any): AssetE
                 selectedAsset: getSelectedAsset(state, action.assetType, action.assetId)
             };
         case actions.CHANGE_GALLERY_VIEW:
+            const selectedAsset = !!action.assetId ? getSelectedAsset(state, action.assetType, action.assetId) : state.selectedAsset;
             return {
                 ...state,
-                view: action.view
+                view: action.view,
+                selectedAsset
             };
         case actions.UPDATE_USER_ASSETS:
-            const assets = getAssets();
+            let assets = getAssets();
+            let imgConv = new pxt.ImageConverter();
+
+            if (isBlocksProject()) {
+                assets = assets.concat(getBlocksEditor().getTemporaryAssets().map(a => assetToGalleryItem(a, imgConv)));
+            }
+
             return {
                 ...state,
                 selectedAsset: state.selectedAsset ? assets.find(el => el.id == state.selectedAsset.id) : undefined,
@@ -40,7 +50,7 @@ const topReducer = (state: AssetEditorState = initialState, action: any): AssetE
         case actions.UPDATE_GALLERY_ASSETS:
             return {
                 ...state,
-                galleryAssets: action.assets
+                galleryAssets: getAssets(true)
             }
         default:
             return state
@@ -58,7 +68,7 @@ function getSelectedAsset(state: AssetEditorState, type: pxt.AssetType, id: stri
         || state.galleryAssets.find(el => el.type == type && el.id == id);
 }
 
-export function getAssets(gallery = false, firstType = pxt.AssetType.Image): pxt.Asset[] {
+export function getAssets(gallery = false, firstType = pxt.AssetType.Image, tempAssets: pxt.Asset[] = []): pxt.Asset[] {
     const project = pxt.react.getTilemapProject();
     const imgConv = new pxt.ImageConverter();
 
@@ -71,6 +81,23 @@ export function getAssets(gallery = false, firstType = pxt.AssetType.Image): pxt
         .filter((t: pxt.Tile) => !t.id.match(/^myTiles.transparency(8|16|32)$/gi)).sort(compareInternalId);
     const tilemaps = getAssetType(pxt.AssetType.Tilemap).map(toGalleryItem).sort(compareInternalId);
     const animations = getAssetType(pxt.AssetType.Animation).map(toGalleryItem).sort(compareInternalId);
+
+    for (const asset of tempAssets) {
+        switch (asset.type) {
+            case pxt.AssetType.Image:
+                images.push(toGalleryItem(asset));
+                break;
+            case pxt.AssetType.Tile:
+                tiles.push(toGalleryItem(asset));
+                break;
+            case pxt.AssetType.Animation:
+                animations.push(toGalleryItem(asset));
+                break;
+            case pxt.AssetType.Tilemap:
+                tilemaps.push(toGalleryItem(asset));
+                break;
+        }
+    }
 
     let assets: pxt.Asset[] = [];
     switch (firstType) {
@@ -109,6 +136,14 @@ export function assetToGalleryItem(asset: pxt.Asset, imgConv = new pxt.ImageConv
             asset.previewURI = asset.framePreviewURIs[0];
             return asset;
     }
+}
+
+function isBlocksProject() {
+    return pkg.mainPkg?.config?.preferredEditor === pxt.BLOCKS_PROJECT_NAME;
+}
+
+export function isGalleryAsset(asset?: pxt.Asset) {
+    return asset?.id.startsWith("sprites.");
 }
 
 export default topReducer;

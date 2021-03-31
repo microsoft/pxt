@@ -225,7 +225,6 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
             return {
                 ...state,
                 editor: toOpen.type === pxt.AssetType.Tilemap ? {
-                    ...state.editor,
                     selectedColor: -1,
                     backgroundColor: -1,
                     isTilemap: true,
@@ -237,10 +236,27 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
                     overlayEnabled: true,
                     tileGallery: gallery,
                     tileGalleryOpen: !!gallery,
-                    referencedTiles: toOpen.data.projectReferences
+                    referencedTiles: toOpen.data.projectReferences,
+                    previewAnimating: false,
+                    onionSkinEnabled: false,
+
+                    // Properties below this comment carry over if keep past is true
+                    tool: action.keepPast ? state.editor.tool : initialStore.editor.tool,
+                    cursorSize: action.keepPast ? state.editor.cursorSize : initialStore.editor.cursorSize,
+                    editedTiles: action.keepPast ? state.editor.editedTiles : undefined,
+                    deletedTiles: action.keepPast ? state.editor.deletedTiles : undefined
+
                 } : {
-                    ...(action.keepPast ? state.editor : initialStore.editor),
                     isTilemap: false,
+
+                    // Properties below this comment carry over if keep past is true
+                    selectedColor: action.keepPast ? state.editor.selectedColor : initialStore.editor.selectedColor,
+                    backgroundColor: action.keepPast ? state.editor.backgroundColor : initialStore.editor.backgroundColor,
+                    previewAnimating: action.keepPast ? state.editor.previewAnimating : initialStore.editor.previewAnimating,
+                    tool: action.keepPast ? state.editor.tool : initialStore.editor.tool,
+                    onionSkinEnabled: action.keepPast ? state.editor.onionSkinEnabled : initialStore.editor.onionSkinEnabled,
+                    cursorSize: action.keepPast ? state.editor.cursorSize : initialStore.editor.cursorSize,
+                    resizeDisabled: action.keepPast ? state.editor.resizeDisabled : initialStore.editor.resizeDisabled
                 },
                 store: {
                     ...state.store,

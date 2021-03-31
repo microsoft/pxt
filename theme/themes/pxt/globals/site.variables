@@ -83,7 +83,7 @@
 --------------------*/
 
 @useCustomScrollbars: false;
-@customScrollbarWidth: 7px;
+@customScrollbarWidth: 10px;
 
 @thumbBackground: rgba(0, 0, 0, 0.25);
 @thumbInvertedBackground: rgba(255, 255, 255, 0.25);
@@ -130,6 +130,10 @@
 @pyIcon: data-uri(@pyIconUrl);
 @jsIconUrl: "../docs/static/icons/js.svg";
 @jsIcon: data-uri(@jsIconUrl);
+@immersiveReaderUrl: "../docs/static/icons/immersive-reader.svg";
+@immersiveReaderIcon: data-uri(@immersiveReaderUrl);
+@immersiveReaderLightUrl: "../docs/static/icons/immersive-reader-light.svg";
+@immersiveReaderLightIcon: data-uri(@immersiveReaderLightUrl);
 
 @logoFilter: invert(23%) sepia(91%) saturate(1957%) hue-rotate(290deg) brightness(83%) contrast(94%);
 
@@ -375,10 +379,11 @@
 /*-------------------
    Asset Editor
 -------------------*/
-@assetSidebarBorder: #dedede;
+@assetSidebarBorder: #c6c6c6;
 @assetSidebarButton: #f8f8f8;
 @assetSidebarButtonHover: #dedede;
-@assetPreviewBackground: #dedede;
+@assetTopbarBorder: #c6c6c6;
+@assetPreviewBackground: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10px' height='10px'%3E%3Crect x='0' y='0' width='10px' height='10px' fill='white'%3E%3C/rect%3E%3Crect x='0' y='0' width='5px' height='5px' fill='%23dedede'%3E%3C/rect%3E%3Crect x='5' y='5' width='5px' height='5px' fill='%23dedede'%3E%3C/rect%3E%3C/svg%3E");
 @assetUnselected: #e3ddd0;
 @assetTypeButton: @teal;
 

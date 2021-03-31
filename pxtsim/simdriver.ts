@@ -23,6 +23,7 @@ namespace pxsim {
             url: string;
             localHostUrl?: string;
             aspectRatio?: number;
+            permanent?: boolean;
         }>;
     }
 
@@ -74,7 +75,9 @@ namespace pxsim {
     }
 
     const FRAME_DATA_MESSAGE_CHANNEL = "messagechannel"
+    const FRAME_ASPECT_RATIO = "aspectratio"
     const MESSAGE_SOURCE = "pxtdriver"
+    const PERMANENT = "permanent"
 
     export class SimulatorDriver {
         private themes = ["blue", "red", "green", "yellow"];
@@ -102,12 +105,9 @@ namespace pxsim {
             if (options.parentOrigin) {
                 this._allowedOrigins.push(options.parentOrigin)
             }
-            try {
-                const simUrl = new URL(this.getSimUrl())
-                this._allowedOrigins.push(simUrl.origin)
-            } catch (e) {
-                console.error(`Invalid sim url ${this.getSimUrl()}`)
-            }
+
+            this._allowedOrigins.push(this.getSimUrl().origin);
+
             const messageSimulators = options?.messageSimulators
             if (messageSimulators) {
                 Object.keys(messageSimulators)
@@ -284,8 +284,14 @@ namespace pxsim {
             return frames;
         }
 
-        private getSimUrl(): string {
-            return this.options.simUrl || ((window as any).pxtConfig || {}).simUrl || `${location.origin}/sim/simulator.html`;
+        private getSimUrl(): URL {
+            const simUrl = this.options.simUrl || ((window as any).pxtConfig || {}).simUrl || `${location.origin}/sim/simulator.html`;
+            try {
+                return new URL(simUrl);
+            } catch {
+                // Failed to parse set url; try based off origin in case path defined as relative (e.g. /simulator.html)
+                return new URL(simUrl, location.origin);
+            }
         }
 
         public postMessage(msg: pxsim.SimulatorMessage, source?: Window) {
@@ -296,7 +302,6 @@ namespace pxsim {
 
             const depEditors = this.dependentEditors();
             let frames = this.simFrames();
-            const simUrl = U.isLocalHost() ? "*" : this.getSimUrl();
 
             const broadcastmsg = msg as pxsim.SimulatorBroadcastMessage;
             if (source && broadcastmsg?.broadcast) {
@@ -339,6 +344,8 @@ namespace pxsim {
                             messageFrame.dataset[FRAME_DATA_MESSAGE_CHANNEL] = messageChannel;
                             pxsim.U.addClass(wrapper, "simmsg")
                             pxsim.U.addClass(wrapper, "simmsg" + messageChannel)
+                            if (messageSimulator.permanent)
+                                messageFrame.dataset[PERMANENT] = "true";
                             this.startFrame(messageFrame);
                             frames = this.simFrames(); // refresh
                         }
@@ -498,17 +505,17 @@ namespace pxsim {
                 && this.loanedSimulator.querySelector("iframe");
         }
 
-        private frameCleanupTimeout = 0;
+        private frameCleanupTimeout: any = undefined;
         private cancelFrameCleanup() {
             if (this.frameCleanupTimeout) {
                 clearTimeout(this.frameCleanupTimeout);
-                this.frameCleanupTimeout = 0;
+                this.frameCleanupTimeout = undefined;
             }
         }
         private scheduleFrameCleanup() {
             this.cancelFrameCleanup();
             this.frameCleanupTimeout = setTimeout(() => {
-                this.frameCleanupTimeout = 0;
+                this.frameCleanupTimeout = undefined;
                 this.cleanupFrames();
             }, 5000);
         }
@@ -520,15 +527,31 @@ namespace pxsim {
         }
 
         private applyAspectRatioToFrame(frame: HTMLIFrameElement, ratio?: number) {
-            let r = ratio || this._runOptions.aspectRatio;
-            const messageChannel = frame.dataset[FRAME_DATA_MESSAGE_CHANNEL];
-            if (messageChannel) {
-                const messageSimulatorAspectRatio = this.options?.messageSimulators?.[messageChannel]?.aspectRatio;
-                if (messageSimulatorAspectRatio) {
-                    r = messageSimulatorAspectRatio;
+            let r = ratio;
+
+            // no ratio? try stored ratio
+            if (r === undefined) {
+                const rt = parseFloat(frame.dataset[FRAME_ASPECT_RATIO])
+                if (!isNaN(rt))
+                    r = rt;
+            }
+
+            // no ratio?, try messagesims
+            if (r === undefined) {
+                const messageChannel = frame.dataset[FRAME_DATA_MESSAGE_CHANNEL];
+                if (messageChannel) {
+                    const messageSimulatorAspectRatio = this.options?.messageSimulators?.[messageChannel]?.aspectRatio;
+                    if (messageSimulatorAspectRatio) {
+                        r = messageSimulatorAspectRatio;
+                    }
                 }
             }
 
+            // try default from options
+            if (r === undefined)
+                r = this._runOptions?.aspectRatio || 1.22;
+
+            // apply to css
             frame.parentElement.style.paddingBottom =
                 (100 / r) + "%";
         }
@@ -537,13 +560,14 @@ namespace pxsim {
             // drop unused extras frames after 5 seconds
             const frames = this.simFrames(true);
             frames.shift(); // drop first frame
-            frames.forEach(frame => {
-                if (this.state == SimulatorState.Stopped
-                    || frame.dataset['runid'] != this.runId) {
-                    if (this.options.removeElement) this.options.removeElement(frame.parentElement);
-                    else frame.parentElement.remove();
-                }
-            });
+            frames.filter(frame => !frame.dataset[PERMANENT])
+                .forEach(frame => {
+                    if (this.state == SimulatorState.Stopped
+                        || frame.dataset['runid'] != this.runId) {
+                        if (this.options.removeElement) this.options.removeElement(frame.parentElement);
+                        else frame.parentElement.remove();
+                    }
+                });
         }
 
         public hide(completeHandler?: () => void) {
@@ -641,6 +665,7 @@ namespace pxsim {
             frame.dataset['runid'] = this.runId;
             frame.dataset['runtimeid'] = msg.id;
             frame.contentWindow.postMessage(msg, frame.dataset['origin']);
+            this.applyAspectRatioToFrame(frame);
             this.setFrameState(frame);
             return true;
         }
@@ -673,13 +698,25 @@ namespace pxsim {
                     }
                     break;
                 }
-                case 'simulator': this.handleSimulatorCommand(msg as pxsim.SimulatorCommandMessage); break; //handled elsewhere
+                case 'simulator':
+                    this.handleSimulatorCommand(msg as pxsim.SimulatorCommandMessage); break; //handled elsewhere
                 case 'serial':
                 case 'pxteditor':
                 case 'screenshot':
                 case 'custom':
                 case 'recorder':
+                case 'addextensions':
                     break; //handled elsewhere
+                case 'aspectratio': {
+                    const asmsg = msg as SimulatorAspectRatioMessage;
+                    const frameid = asmsg.frameid;
+                    const frame = document.getElementById(frameid) as HTMLIFrameElement;
+                    if (frame) {
+                        frame.dataset[FRAME_ASPECT_RATIO] = asmsg.value + "";
+                        this.applyAspectRatioToFrame(frame);
+                    }
+                    break;
+                }
                 case 'debugger': this.handleDebuggerMessage(msg as DebuggerMessage); break;
                 case 'toplevelcodefinished': if (this.options.onTopLevelCodeEnd) this.options.onTopLevelCodeEnd(); break;
                 default:

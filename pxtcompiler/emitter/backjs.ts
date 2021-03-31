@@ -554,7 +554,7 @@ function ${id}(s) {
                     write(`if ((${args[0]}) && (${args[0]}).vtable) {`)
                 }
                 if (topExpr.callingConvention == ir.CallingConvention.Promise) {
-                    write(`(function(cb) { ${text}.done(cb) })(buildResume(s, ${loc}));`)
+                    write(`(function(cb) { ${text}.then(cb) })(buildResume(s, ${loc}));`)
                 } else {
                     write(`setupResume(s, ${loc});`)
                     write(`${text};`)

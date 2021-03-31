@@ -29,6 +29,7 @@ export interface BottomBarProps {
     dispatchChangeAssetName: (name: string) => void;
 
     singleFrame?: boolean;
+    isTilemap?: boolean;
 
     onDoneClick?: () => void;
 }
@@ -214,13 +215,16 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
     }
 
     protected handleDimensionalBlur = () => {
-        const { imageDimensions, dispatchChangeImageDimensions } = this.props;
+        const { imageDimensions, isTilemap, dispatchChangeImageDimensions } = this.props;
 
         const widthVal = parseInt(this.state.width);
         const heightVal = parseInt(this.state.height);
 
-        const width = isNaN(widthVal) ? imageDimensions[0] : Math.min(Math.max(widthVal, 1), 512);
-        const height = isNaN(heightVal) ? imageDimensions[1] : Math.min(Math.max(heightVal, 1), 512);
+        // tilemaps store in location as 1 byte, so max is 255x255
+        const maxSize = isTilemap ? 255 : 512;
+
+        const width = isNaN(widthVal) ? imageDimensions[0] : Math.min(Math.max(widthVal, 1), maxSize);
+        const height = isNaN(heightVal) ? imageDimensions[1] : Math.min(Math.max(heightVal, 1), maxSize);
 
         if (width !== imageDimensions[0] || height !== imageDimensions[1]) {
             dispatchChangeImageDimensions([width, height]);
@@ -243,22 +247,25 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
     protected handleAssetNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         let errorMessage = null;
 
-        if (!pxt.validateAssetName(event.target.value)) {
+        const trimmedName = event.target.value.trim(); // validate using the trimmed name
+        const name = event.target.value;               // but don't trim the state otherwise they won't be able to type spaces
+
+        if (!pxt.validateAssetName(trimmedName)) {
             errorMessage = lf("Names may only contain letters, numbers, '-', '_', and space");
         }
-        else if (isNameTaken(event.target.value) && event.target.value !== this.props.assetName) {
+        else if (isNameTaken(trimmedName) && trimmedName !== this.props.assetName) {
             errorMessage = lf("This name is already used elsewhere in your project");
         }
 
-        this.setState({ assetName: event.target.value, assetNameMessage: errorMessage });
+        this.setState({ assetName: name, assetNameMessage: errorMessage });
     }
 
     protected handleAssetNameBlur = () => {
         const { dispatchChangeAssetName, assetName } = this.props;
 
-        let newName = this.state.assetName;
+        let newName = this.state.assetName.trim();
 
-        if (this.state.assetName !== assetName && pxt.validateAssetName(this.state.assetName) && !isNameTaken(this.state.assetName)) {
+        if (newName !== assetName && pxt.validateAssetName(newName) && !isNameTaken(newName)) {
             dispatchChangeAssetName(newName);
         }
         this.setState({ assetName: null, assetNameMessage: null });
@@ -294,10 +301,11 @@ function mapStateToProps({store: { present: state, past, future }, editor}: Imag
         aspectRatioLocked: state.aspectRatioLocked,
         onionSkinEnabled: editor.onionSkinEnabled,
         cursorLocation: editor.cursorLocation,
-        resizeDisabled: editor.resizeDisabled,
+        resizeDisabled: state.asset?.type === pxt.AssetType.Tile,
         assetName: state.asset?.meta?.displayName,
         hasUndo: !!past.length,
-        hasRedo: !!future.length
+        hasRedo: !!future.length,
+        isTilemap: editor.isTilemap,
     };
 }
 

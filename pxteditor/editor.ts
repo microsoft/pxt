@@ -200,6 +200,7 @@ namespace pxt.editor {
         saveBlocksToTypeScriptAsync(): Promise<string>;
 
         saveFileAsync(): Promise<void>;
+        saveCurrentSourceAsync(): Promise<void>;
         saveProjectAsync(): Promise<void>;
         loadHeaderAsync(h: pxt.workspace.Header): Promise<void>;
         reloadHeaderAsync(): Promise<void>;
@@ -335,7 +336,7 @@ namespace pxt.editor {
         showChooseHwDialog(skipDownload?: boolean): void;
         showExperimentsDialog(): void;
 
-        showPackageDialog(): void;
+        showPackageDialog(query?: string): void;
         showBoardDialogAsync(features?: string[], closeIcon?: boolean): Promise<void>;
         checkForHwVariant(): boolean;
         pairAsync(): Promise<void>;

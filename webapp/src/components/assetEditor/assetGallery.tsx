@@ -90,6 +90,7 @@ class AssetGalleryImpl extends React.Component<AssetGalleryProps, AssetGallerySt
             case pxt.AssetType.Animation:
                 const animation = asset as pxt.Animation;
                 animation.frames = [new pxt.sprite.Bitmap(16, 16).data()];
+                animation.interval = 200;
                 break;
 
         }
@@ -99,13 +100,13 @@ class AssetGalleryImpl extends React.Component<AssetGalleryProps, AssetGallerySt
     protected getEmptyAssetDisplayName(type: pxt.AssetType): string {
         switch (type) {
             case pxt.AssetType.Image:
-                return lf("image");
+                return lf("myImage");
             case pxt.AssetType.Tile:
-                return lf("tile");
+                return lf("myTile");
             case pxt.AssetType.Tilemap:
                 return lf("level");
             case pxt.AssetType.Animation:
-                return lf("anim");
+                return lf("myAnim");
             default:
                 return lf("asset")
         }
@@ -114,11 +115,12 @@ class AssetGalleryImpl extends React.Component<AssetGalleryProps, AssetGallerySt
     render() {
         const { view, galleryAssets, userAssets } = this.props;
         const { showCreateModal } = this.state;
+        const isBlocksProject = pkg.mainPkg?.config && pkg.mainPkg.getPreferredEditor() === pxt.BLOCKS_PROJECT_NAME;
 
         return <div className="asset-editor-gallery">
             <AssetTopbar />
             <div className={`asset-editor-card-list ${view !== GalleryView.User ? "hidden" : ""}`}>
-                <AssetCardList assets={userAssets}>
+                <AssetCardList assets={filterAssets(userAssets, isBlocksProject)}>
                     <div className="create-new" role="button" onClick={this.showCreateModal}>
                         <i className="icon huge add circle" />
                         <span>{lf("New Asset")}</span>
@@ -142,6 +144,10 @@ class AssetGalleryImpl extends React.Component<AssetGalleryProps, AssetGallerySt
         </div>
     }
 }
+function filterAssets(assets: pxt.Asset[], includeTemporary: boolean) {
+    return includeTemporary ? assets : assets.filter(asset => !!asset.meta.displayName)
+}
+
 
 function mapStateToProps(state: AssetEditorState, ownProps: any) {
     if (!state) return {};

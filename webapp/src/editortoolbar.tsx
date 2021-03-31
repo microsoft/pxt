@@ -5,6 +5,8 @@ import * as data from "./data";
 import * as sui from "./sui";
 import * as githubbutton from "./githubbutton";
 import * as cmds from "./cmds"
+import * as cloud from "./cloud";
+import * as auth from "./auth";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -28,6 +30,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         this.startStopSimulator = this.startStopSimulator.bind(this);
         this.toggleDebugging = this.toggleDebugging.bind(this);
         this.toggleCollapsed = this.toggleCollapsed.bind(this);
+        this.cloudButtonClick = this.cloudButtonClick.bind(this);
     }
 
     saveProjectName(name: string, view?: string) {
@@ -80,6 +83,11 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
     toggleCollapsed() {
         pxt.tickEvent("editortools.portraitToggleCollapse", { collapsed: this.getCollapsedState(), headless: this.getHeadlessState() }, { interactiveConsent: true });
         this.props.parent.toggleSimulatorCollapse();
+    }
+
+    cloudButtonClick(view?: string) {
+        pxt.tickEvent("editortools.cloud", { view: view, collapsed: this.getCollapsedState() }, { interactiveConsent: true });
+        // TODO: do anything?
     }
 
     private getCollapsedState(): string {
@@ -138,7 +146,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         if (pxt.hasHwVariants())
             this.props.parent.showChooseHwDialog(true);
         else
-            this.props.parent.showBoardDialogAsync(undefined, true).done();
+            this.props.parent.showBoardDialogAsync(undefined, true);
 
     }
 
@@ -152,7 +160,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
     }
 
     protected onDisconnectClick = () => {
-        cmds.showDisconnectAsync().done();
+        cmds.showDisconnectAsync();
     }
 
     protected getCompileButton(view: View): JSX.Element[] {
@@ -227,7 +235,8 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
     }
 
     renderCore() {
-        const { tutorialOptions, projectName, compiling, isSaving, simState, debugging, header, editorState } = this.props.parent.state;
+        const { tutorialOptions, projectName, compiling, isSaving, simState, debugging, editorState } = this.props.parent.state;
+        const header = this.getData(`header:${this.props.parent.state.header.id}`);
 
         const targetTheme = pxt.appTarget.appTheme;
         const isController = pxt.shell.isControllerMode();
@@ -290,6 +299,28 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
             saveButtonClasses = "disabled";
         }
 
+        // cloud status
+        const cloudMd = this.getData<cloud.CloudTempMetadata>(`${cloud.HEADER_CLOUDSTATE}:${header.id}`);
+        const cloudState = cloud.getCloudSummary(header, cloudMd);
+        const showCloudButton = !!cloudState && auth.hasIdentity()
+        const getCloudIcon = () => {
+            if (cloudState === "syncing" || cloudState === "localEdits")
+                return "cloud-saving-b"
+            if (cloudState === "conflict" || cloudState === "offline")
+                return "cloud-error-b"
+            return "cloud-saved-b"
+        }
+        const getCloudTooltip = () => {
+            if (cloudState === "syncing" || cloudState === "localEdits")
+                return lf("Saving project to the cloud...")
+            if (cloudState === "conflict")
+                return lf("Project was edited in two places and the changes conflict.")
+            if (cloudState === "offline")
+                return lf("Unable to connect to the cloud.")
+            return lf("Project saved to the cloud.")
+        }
+        const cloudButton = <EditorToolbarButton icon={"xicon " + getCloudIcon()} className={`editortools-btn`} title={getCloudTooltip()} onButtonClick={this.cloudButtonClick} view='computer' />;
+
         return <div id="editortools" className="ui" role="menubar" aria-label={lf("Editor toolbar")}>
             <div id="downloadArea" role="menu" className="ui column items">{headless &&
                 <div className="ui item">
@@ -310,7 +341,8 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                     <div className={`ui right ${showSave ? "labeled" : ""} input projectname-input projectname-computer`}>
                         {showProjectRename && this.getSaveInput(showSave, "fileNameInput2", projectName, showProjectRenameReadonly)}
                         {showGithub && <githubbutton.GithubButton parent={this.props.parent} key={`githubbtn${computer}`} />}
-                    </div>
+                        {showCloudButton && cloudButton}
+                </div>
                 </div>}
             <div id="editorToolbarArea" role="menu" className="ui column items">
                 {showUndoRedo && <div className="ui icon buttons">{this.getUndoRedo(computer)}</div>}

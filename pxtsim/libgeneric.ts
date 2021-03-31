@@ -301,7 +301,7 @@ namespace pxsim {
             if (v instanceof RefRecord) {
                 if (v.vtable.toStringMethod) {
                     runtime.runFiberAsync(v.vtable.toStringMethod as any, v)
-                        .done(() => {
+                        .then(() => {
                             cb(runtime.currFrame.retval + "")
                         })
                     return

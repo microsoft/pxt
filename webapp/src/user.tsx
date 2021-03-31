@@ -58,6 +58,7 @@ export class ProfileDialog extends auth.Component<ProfileDialogProps, ProfileDia
             >
                 <AccountPanel parent={this} />
                 <GitHubPanel parent={this} />
+                <FeedbackPanel parent={this} />
             </sui.Modal>
         );
     }
@@ -79,18 +80,20 @@ class AccountPanel extends sui.UIElement<AccountPanelProps, {}> {
     handleDeleteAccountClick = async () => {
         const profile = this.getData<auth.UserProfile>(auth.PROFILE)
         const result = await core.confirmAsync({
-            header: lf("Delete Account"),
-            body: lf("You are about to delete your account. YOU CAN NOT UNDO THIS! Are you sure?"),
+            header: lf("Delete Profile"),
+            body: lf("Are you sure? This cannot be reversed! Your cloud-saved projects will be converted to local projects on this device."),
             agreeClass: "red",
-            agreeIcon: "delete",
-            agreeLbl: lf("Delete my account"),
-            confirmationText: profile?.idp?.displayName || profile?.idp?.username || lf("User")
+            agreeIcon: "trash",
+            agreeLbl: lf("Confirm"),
+            disagreeLbl: lf("Back to safety"),
+            disagreeIcon: "arrow right",
+            confirmationCheckbox: lf("I understand this is permanent. No undo.")
         });
         if (result) {
             await auth.deleteAccount();
             // Exit out of the profile screen.
             this.props.parent.hide();
-            core.infoNotification(lf("Account deleted!"));
+            core.infoNotification(lf("Profile deleted!"));
         }
     }
 
@@ -112,28 +115,26 @@ class AccountPanel extends sui.UIElement<AccountPanelProps, {}> {
         return (
             <div className="ui card panel">
                 <div className="header-text">
-                    <label>{lf("Account")}</label>
+                    <label>{lf("Profile")}</label>
                 </div>
                 {profile?.idp?.picture?.dataUrl ? avatarElem : initialsElem}
-                <div className="row">
+                <div className="row-span-two">
                     <label className="title">{lf("Name")}</label>
                     <p className="value">{profile?.idp?.displayName}</p>
                 </div>
-                <div className="row">
+                <div className="row-span-two">
                     <label className="title">{lf("Username")}</label>
                     <p className="value">{profile?.idp?.username}</p>
                 </div>
-                <div className="row">
+                <div className="row-span-two">
                     <label className="title">{lf("Provider")}</label>
                     <p className="value">{provider.name}</p>
                 </div>
-                <div className="row">
+                <div className="row-span-two">
                     <sui.Button text={lf("Sign out")} icon={`xicon ${profile?.idp?.provider}`} ariaLabel={lf("Sign out {0}", profile?.idp?.provider)} onClick={this.handleSignoutClicked} />
                 </div>
-                <div className="row">
-                    <label className="title">{lf("Delete Account")}</label>
-                    <p className="description">{lf("Warning: Deleting your account will delete your cloud-saved projects! No undo. If you want to preserve your projects, save them to disk first.")}</p>
-                    <sui.Button ariaLabel={lf("Delete Account")} className="red" text={lf("Delete Account")} onClick={this.handleDeleteAccountClick} />
+                <div className="row-span-two">
+                    <sui.Link className="ui" text={lf("I want to delete my profile")} ariaLabel={lf("delete profile")} onClick={this.handleDeleteAccountClick} />
                 </div>
             </div>
         );
@@ -157,11 +158,11 @@ class GitHubPanel extends sui.UIElement<GitHubPanelProps, {}> {
         const user = github.user();
         return (
             <>
-                <div className="row">
+                <div className="row-span-two">
                     <label className="title">{lf("Name")}</label>
                     <p className="value">{user?.name}</p>
                 </div>
-                <div className="row">
+                <div className="row-span-two">
                     <label className="title">{lf("Username")}</label>
                     <p className="value">{user?.userName}</p>
                 </div>
@@ -179,7 +180,7 @@ class GitHubPanel extends sui.UIElement<GitHubPanelProps, {}> {
 
     renderUnlink(): JSX.Element {
         return (
-            <div className="row">
+            <div className="row-span-two">
                 <sui.Button text={lf("Unlink")} icon="github" ariaLabel={lf("Unlink GitHub")} onClick={this.handleUnlinkClicked} />
             </div>
         );
@@ -187,7 +188,7 @@ class GitHubPanel extends sui.UIElement<GitHubPanelProps, {}> {
 
     renderDisconnected(): JSX.Element {
         return (
-            <div className="row">
+            <div className="row-span-two">
                 <p className="description">{lf("You haven't linked a GitHub account.")}</p>
             </div>
         )
@@ -207,6 +208,28 @@ class GitHubPanel extends sui.UIElement<GitHubPanelProps, {}> {
                 {user ? this.renderUsername() : undefined}
                 {user ? this.renderUnlink() : undefined}
                 {!user ? this.renderDisconnected() : undefined}
+            </div>
+        );
+    }
+}
+
+type FeedbackPanelProps = PanelProps & {
+};
+
+class FeedbackPanel extends sui.UIElement<FeedbackPanelProps, {}> {
+
+    renderCore() {
+        return (
+            <div className="ui card panel">
+                <div className="header-text">
+                    <label>{lf("Feedback")}</label>
+                </div>
+                <div className="row-span-two">
+                    {lf("What do you think about this feature? Is there something you'd like to change? Did you encounter issues? Please let us know on GitHub.")}
+                </div>
+                <div className="row-span-two">
+                    <sui.Link className="ui" text={lf("Feedback")} icon="external alternate" ariaLabel={lf("Provide feedback at GitHub")} href="https://github.com/microsoft/pxt-arcade/issues/new/choose" target="_blank" onKeyDown={sui.fireClickOnEnter} />
+                </div>
             </div>
         );
     }

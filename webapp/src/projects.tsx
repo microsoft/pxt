@@ -7,7 +7,6 @@ import * as sui from "./sui";
 import * as core from "./core";
 import * as cloudsync from "./cloudsync";
 import * as auth from "./auth";
-import * as workspace from "./workspace";
 import * as identity from "./identity";
 import * as codecard from "./codecard"
 import * as carousel from "./carousel";
@@ -105,10 +104,11 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
     chgGallery(scr: pxt.CodeCard, action?: pxt.CodeCardAction) {
         let editor: string = (action && action.editor) || "blocks";
         if (editor == "js") editor = "ts";
-        pxt.tickEvent("projects.gallery", { name: scr.name, cardType: scr.cardType, editor });
         const url = action ? action.url : scr.url;
+        const type = action?.cardType || scr.cardType
         const editorPref = editor + "prj";
-        switch (scr.cardType) {
+        pxt.tickEvent("projects.gallery", { name: scr.name, cardType: type, editor });
+        switch (type) {
             case "template":
                 const prj = pxt.Util.clone(pxt.appTarget.blocksprj);
                 prj.config.dependencies = {}; // clear all dependencies
@@ -122,6 +122,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                 this.props.parent.startActivity("tutorial", url, scr.name, editorPref);
                 break;
             case "sharedExample":
+                console.log("shared example")
                 let id = pxt.github.normalizeRepoId(url) || pxt.Cloud.parseScriptId(url);
                 if (!id) {
                     core.errorNotification(lf("Sorry, the project url looks invalid."));
@@ -452,7 +453,6 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
         if (!paused && !this.carouselInterval && this.prevGalleries && this.prevGalleries.length) {
             pxt.debug(`start refreshing hero carousel`)
             this.carouselInterval = setInterval(this.handleRefreshCard, HERO_BANNER_DELAY);
-            this.handleRefreshCard();
         }
     }
 
@@ -464,7 +464,7 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
         }
     }
 
-    componentWillMount() {
+    componentDidMount() {
         this.startRefresh();
     }
 
@@ -597,7 +597,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
     }
 
     fetchLocalData(): pxt.workspace.Header[] {
-        const headers = workspace.getHeaders();
+        const headers = this.getData(`headers:`) || [];
         return headers;
     }
 
@@ -755,19 +755,19 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                             : scr.tutorialCompleted ? scr.tutorialCompleted.steps
                                 : undefined;
                     const ghid = pxt.github.parseRepoId(scr.githubId);
-                    const cloudState = !!scr.cloudUserId ? "cloud" : "local"
+
                     return <ProjectsCodeCard
                         key={'local' + scr.id + scr.recentUse}
                         // ref={(view) => { if (index === 1) this.latestProject = view }}
                         cardType="file"
                         name={(ghid && pxt.github.join(ghid.project, ghid.fileName)) || scr.name}
-                        time={scr.recentUse}
+                        time={scr.modificationTime}
                         url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ""}
                         scr={scr} index={index}
                         onCardClick={this.handleCardClick}
                         tutorialStep={tutorialStep}
                         tutorialLength={tutoriallength}
-                        cloudState={cloudState}
+                        projectId={scr.id}
                     />;
                 })}
                 {showScriptManagerCard ? <div role="button" className="ui card link buttoncard scriptmanagercard" title={lf("See all projects")}
@@ -863,12 +863,13 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         this.linkRef = React.createRef<HTMLAnchorElement>();
     }
 
-    protected isLink() {
+    protected isLink(actionType?: pxt.CodeCardType) {
         const { cardType, url, youTubeId, youTubePlaylistId } = this.props;
+        const type = actionType || cardType;
 
-        return isCodeCardWithLink(cardType) && (youTubeId || youTubePlaylistId || url);
+        return isCodeCardWithLink(type) && (youTubeId || youTubePlaylistId || url);
 
-        function isCodeCardWithLink(value: string) {
+        function isCodeCardWithLink(value: pxt.CodeCardType) {
             switch (value) {
                 case "file":
                 case "example":
@@ -899,10 +900,12 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         let clickLabel = lf("Show Instructions");
         if (cardType == "tutorial")
             clickLabel = lf("Start Tutorial");
-        else if (cardType == "codeExample" || cardType == "example" || cardType == "sharedExample")
+        else if (cardType == "codeExample" || cardType == "example")
             clickLabel = lf("Open Example");
         else if (cardType == "forumUrl")
             clickLabel = lf("Open in Forum");
+        else if (cardType == "sharedExample")
+            clickLabel = lf("Open in Editor");
         else if (cardType == "template")
             clickLabel = lf("New Project");
         else if (youTubeId)
@@ -916,29 +919,33 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         switch (type) {
             case "tutorial":
             case "example":
-            case "sharedExample":
                 if (action && action.editor) return action.editor;
                 return "blocks";
             case "codeExample":
                 if (action && action.editor) return action.editor;
                 return "js";
+            case "sharedExample":
+                return action?.editor;
             default:
                 return null;
         }
     }
 
-    protected getActionIcon(onClick: any, type: string, editor?: pxt.CodeCardEditorType): JSX.Element {
+    protected getActionIcon(onClick: any, type: pxt.CodeCardType, editor?: pxt.CodeCardEditorType): JSX.Element {
         const { youTubeId, youTubePlaylistId } = this.props;
         let icon = "file text";
         switch (type) {
             case "tutorial":
             case "example":
-            case "sharedExample":
                 icon = "xicon blocks"
                 if (editor) icon = `xicon ${editor}`;
                 break;
             case "codeExample":
                 icon = `xicon ${editor || "js"}`;
+                break;
+            case "sharedExample":
+                icon = "pencil"
+                if (editor) icon = `xicon ${editor}`;
                 break;
             case "forumUrl":
                 icon = "comments"
@@ -951,7 +958,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                 if (youTubeId || youTubePlaylistId) icon = "youtube";
                 break;
         }
-        return this.isLink() && type != "forumExample" // TODO (shakao)  migrate forumurl to otherAction json in md
+        return this.isLink(type) && type != "forumExample" // TODO (shakao)  migrate forumurl to otherAction json in md
             ? <sui.Link role="button" className="link button attached" icon={icon} href={this.getUrl()} target="_blank" tabIndex={-1} />
             : <sui.Item role="button" className="button attached" icon={icon} onClick={onClick} tabIndex={-1} />
     }
@@ -969,7 +976,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         }
     }
 
-    protected getActionCard(text: string, type: string, onClick: any, autoFocus?: boolean, action?: pxt.CodeCardAction, key?: string): JSX.Element {
+    protected getActionCard(text: string, type: pxt.CodeCardType, onClick: any, autoFocus?: boolean, action?: pxt.CodeCardAction, key?: string): JSX.Element {
         const editor = this.getActionEditor(type, action);
         const title = this.getActionTitle(editor);
         return <div className={`card-action ui items ${editor || ""}`} key={key}>
@@ -991,7 +998,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                     onClick={onClick}
                     onKeyDown={sui.fireClickOnEnter}
                     autoFocus={autoFocus}
-                    title={lf("Open in {0}", title)}
+                    title={lf("Open in {0}", title || lf("Editor"))}
                 />}
         </div>
     }
@@ -1048,7 +1055,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         const tagColors: pxt.Map<string> = pxt.appTarget.appTheme.tagColors || {};
         const descriptions = description && description.split("\n");
         const image = largeImageUrl || (youTubeId && `https://img.youtube.com/vi/${youTubeId}/0.jpg`);
-        const video = !pxt.BrowserUtils.isElectron() && videoUrl;
+        const video = !pxt.BrowserUtils.isElectron() && !pxt.BrowserUtils.isIOS() && videoUrl;
         const showVideoOrImage = !pxt.appTarget.appTheme.hideHomeDetailsVideo;
         const youTubeWatchUrl = pxt.youtube.watchUrl(youTubeId, youTubePlaylistId)
 
@@ -1092,9 +1099,10 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                     {this.getActionCard(clickLabel, cardType, this.handleDetailClick, true)}
                     {otherActions && otherActions.map((el, i) => {
                         let onClick = this.handleActionClick(el);
-                        return this.getActionCard(clickLabel, el.cardType || cardType, onClick, false, el, `action${i}`);
+                        let label = el.cardType ? this.getClickLabel(el.cardType) : clickLabel;
+                        return this.getActionCard(label, el.cardType || cardType, onClick, false, el, `action${i}`);
                     })}
-                    {cardType === "forumUrl" &&
+                    {cardType === "forumUrl" && (!otherActions || otherActions.length == 0) &&
                         // TODO (jwunderl) temporarily disabled in electron re: https://github.com/microsoft/pxt-arcade/issues/2346;
                         // reenable CORS issue is fixed.
                         !pxt.BrowserUtils.isPxtElectron() &&
@@ -1266,7 +1274,7 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
             pxt.tickEvent("exitandsave.projectrename", { length: newName && newName.length }, { interactiveConsent: true });
             p = p.then(() => this.props.parent.updateHeaderNameAsync(newName));
         }
-        p.done(() => {
+        p.then(() => {
             this.props.parent.openHome();
         })
     }
@@ -1520,8 +1528,7 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
         pxt.setHwVariant(cfg.name, card ? card.name : (cfg.description || cfg.name))
         let editor = this.props.parent
         editor.reloadHeaderAsync()
-            .then(() => !this.state.skipDownload && editor.compile())
-            .done()
+            .then(() => !this.state.skipDownload && editor.compile());
     }
 
     renderCore() {

@@ -54,6 +54,7 @@ declare namespace pxt {
 
     interface SkillMapConfig {
         defaultPath?: string;
+        pathAliases?: pxt.Map<string>; // map in the format "alias": "path"
     }
 
     interface AppTarget {
@@ -226,6 +227,8 @@ declare namespace pxt {
             // url when localhost developer mode is enabled, add localhostmessagesims=1 to enable this mode
             localHostUrl?: string;
             aspectRatio?: number;
+            // don't recycle the iframe between runs
+            permanent?: boolean;
         }>;
     }
 
@@ -431,6 +434,7 @@ declare namespace pxt {
         disableMemoryWorkspaceWarning?: boolean; // do not warn the user when switching to in memory workspace
         embeddedTutorial?: boolean;
         disableBlobObjectDownload?: boolean; // use data uri downloads instead of object urls
+        immersiveReader?: boolean; // enables the immersive reader for tutorials
     }
 
     interface SocialOptions {
@@ -949,6 +953,7 @@ declare namespace pxt.tutorial {
         metadata?: TutorialMetadata;
         assetFiles?: pxt.Map<string>;
         jres?: string; // JRES to be used when generating hints; necessary for tilemaps
+        customTs?: string; // custom typescript code loaded in a separate file for the tutorial
     }
 
     interface TutorialMetadata {
@@ -960,6 +965,8 @@ declare namespace pxt.tutorial {
         noDiffs?: boolean; // don't automatically generated diffs
         codeStart?: string; // command to run when code starts (MINECRAFT HOC ONLY)
         codeStop?: string; // command to run when code stops (MINECRAFT HOC ONLY)
+        autoexpandOff?: boolean // INTERNAL TESTING ONLY
+        preferredEditor?: string // preferred editor for opening the tutorial
     }
 
     interface TutorialStepInfo {
@@ -1000,6 +1007,7 @@ declare namespace pxt.tutorial {
         language?: string; // native language of snippets ("python" for python, otherwise defaults to typescript)
         assetFiles?: pxt.Map<string>;
         jres?: string; // JRES to be used when generating hints; necessary for tilemaps
+        customTs?: string; // custom typescript code loaded in a separate file for the tutorial
     }
     interface TutorialCompletionInfo {
         // id of the tutorial

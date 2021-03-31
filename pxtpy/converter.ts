@@ -96,7 +96,7 @@ namespace pxt.py {
         "str": tpString,
         "string": tpString,
         "number": tpNumber,
-        "boolean": tpBoolean,
+        "bool": tpBoolean,
         "void": tpVoid,
         "any": tpAny,
     }
@@ -401,9 +401,9 @@ namespace pxt.py {
     }
 
     function canonicalize(t: Type): Type {
-        if (t.union) {
-            t.union = canonicalize(t.union)
-            return t.union
+        if (t.unifyWith) {
+            t.unifyWith = canonicalize(t.unifyWith)
+            return t.unifyWith
         }
         return t
     }
@@ -575,7 +575,7 @@ namespace pxt.py {
             return
 
         if (t0.primType === "any") {
-            t0.union = t1
+            t0.unifyWith = t1
             return
         }
 
@@ -584,12 +584,12 @@ namespace pxt.py {
 
         if (c0 && c1) {
             if (c0 === c1) {
-                t0.union = t1 // no type-state change here - actual change would be in arguments only
+                t0.unifyWith = t1 // no type-state change here - actual change would be in arguments only
                 if (t0.typeArgs && t1.typeArgs) {
                     for (let i = 0; i < Math.min(t0.typeArgs.length, t1.typeArgs.length); ++i)
                         unify(a, t0.typeArgs[i], t1.typeArgs[i])
                 }
-                t0.union = t1
+                t0.unifyWith = t1
             } else {
                 typeError(a, t0, t1)
             }
@@ -598,7 +598,7 @@ namespace pxt.py {
         } else {
             // the type state actually changes here
             numUnifies++
-            t0.union = t1
+            t0.unifyWith = t1
             // detect late unifications
             // if (currIteration > 2) error(a, `unify ${t2s(t0)} ${t2s(t1)}`)
         }
@@ -2077,6 +2077,30 @@ namespace pxt.py {
                 return B.mkText("super")
             }
 
+            if (isCallTo(n, "int") && orderedArgs.length === 1 && orderedArgs[0]) {
+                // int() compiles to either Math.trunc or parseInt depending on how it's used. Our builtin
+                // function mapping doesn't handle this well so we special case that here.
+                // TODO: consider generalizing this approach.
+                const arg = orderedArgs[0]
+                const argN = expr(arg)
+                const argT = typeOf(arg)
+                if (argT.primType === "string") {
+                    return B.mkGroup([
+                        B.mkText(`parseInt`),
+                        B.mkText("("),
+                        argN,
+                        B.mkText(")")
+                    ]);
+                } else if (argT.primType === "number") {
+                    return B.mkGroup([
+                        B.mkInfix(B.mkText(`Math`), ".", B.mkText(`trunc`)),
+                        B.mkText("("),
+                        argN,
+                        B.mkText(")")
+                    ]);
+                }
+            }
+
             if (!fun) {
                 let over = U.lookup(py2TsFunMap, nm!)
                 if (over)
@@ -2363,6 +2387,8 @@ namespace pxt.py {
 
             let scopeV = lookupName(n)
             let v = scopeV?.symbol
+
+            // handle import
             if (v && v.isImport) {
                 return quote(v.name) // it's import X = Y.Z.X, use X not Y.Z.X
             }
@@ -2370,11 +2396,21 @@ namespace pxt.py {
             markUsage(scopeV, n);
 
             if (n.ctx.indexOf("Load") >= 0) {
-                if (v && !v.qName)
+                if (!v)
+                    return quote(getName(n))
+                if (!v?.qName) {
                     error(n, 9561, lf("missing qName"));
-                return quote(v ? v.qName! : getName(n))
-            } else
+                    return quote("unknown")
+                }
+
+                // Note: We track types like String as "String@type" but when actually emitting them
+                // we want to elide the the "@type"
+                const nm = v.qName.replace("@type", "")
+
+                return quote(nm)
+            } else {
                 return possibleDef(n)
+            }
         },
         List: mkArrayExpr,
         Tuple: mkArrayExpr,

@@ -13,6 +13,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import * as child_process from 'child_process';
+import { promisify } from "util";
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
@@ -29,7 +30,7 @@ import * as gitfs from './gitfs';
 import * as crowdin from './crowdin';
 import * as youtube from './youtube';
 
-const rimraf: (f: string, opts: any, cb: (err: any, res: any) => void) => void = require('rimraf');
+const rimraf: (f: string, opts: any, cb: (err: Error, res: any) => void) => void = require('rimraf');
 
 pxt.docs.requireDOMSanitizer = () => require("sanitize-html");
 
@@ -807,7 +808,7 @@ function gitUploadAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
             let size = 0
             for (let r of missingReqs) size += r.size
             console.log("files missing: ", missingReqs.length, size, "bytes")
-            return Promise.map(missingReqs,
+            return U.promiseMapAll(missingReqs,
                 r => Cloud.privatePostAsync("upload/blob", r)
                     .then(() => {
                         console.log(r.filename + ": OK," + r.size + " " + r.hash)
@@ -1254,12 +1255,12 @@ function uploadCoreAsync(opts: UploadOptions) {
     pxt.log('');
 
     if (opts.localDir)
-        return Promise.map(opts.fileList, uploadFileAsync, { concurrency: 15 })
+        return U.promisePoolAsync(15, opts.fileList, uploadFileAsync)
             .then(() => {
                 pxt.log("Release files written to " + path.join(opts.builtPackaged, opts.localDir))
             })
 
-    return Promise.map(opts.fileList, uploadFileAsync, { concurrency: 15 })
+    return U.promisePoolAsync(15, opts.fileList, uploadFileAsync)
         .then(() =>
             opts.githubOnly
                 ? uploadToGitRepoAsync(opts, uplReqs)
@@ -1291,7 +1292,7 @@ function forEachBundledPkgAsync(f: (pkg: pxt.MainPackage, dirname: string) => Pr
         folders = folders.concat(projects);
     }
 
-    return Promise.mapSeries(folders, (dirname) => {
+    return U.promiseMapAllSeries(folders, (dirname) => {
         const host = new Host();
         const pkgPath = path.join(nodeutil.targetDir, dirname);
         pxt.debug(`building bundled package at ${pkgPath}`)
@@ -1404,8 +1405,8 @@ export function ghpPushAsync(builtPackaged: string, minify = false) {
 
 function maxMTimeAsync(dirs: string[]) {
     let max = 0
-    return Promise.map(dirs, dn => readDirAsync(dn)
-        .then(files => Promise.map(files, fn => statAsync(path.join(dn, fn))
+    return U.promiseMapAll(dirs, dn => readDirAsync(dn)
+        .then(files => U.promiseMapAll(files, fn => statAsync(path.join(dn, fn))
             .then(st => {
                 max = Math.max(st.mtime.getTime(), max)
             }))))
@@ -1979,58 +1980,35 @@ function buildWebStringsAsync() {
 function buildSkillMapAsync(parsed: commandParser.ParsedCommand) {
     // local serve
     const skillmapRoot = "node_modules/pxt-core/skillmap";
-    if (parsed.flags["serve"]) {
-        return rimrafAsync(`${skillmapRoot}/public/blb`, {})
-            .then(() => rimrafAsync(`${skillmapRoot}/build/assets`, {}))
-            .then(() => {
-                // read pxtarget.json, save into 'pxtTargetBundle' global variable
-                let cfg = readLocalPxTarget();
-                nodeutil.writeFileSync(`${skillmapRoot}/public/blb/target.js`, "// eslint-disable-next-line \n" + targetJsPrefix + JSON.stringify(cfg));
-                nodeutil.cp("node_modules/pxt-core/built/pxtlib.js", `${skillmapRoot}/public/blb`);
-                nodeutil.cp("built/web/semantic.css", `${skillmapRoot}/public/blb`);
-
-                // copy 'assets' over from docs/static
-                nodeutil.cpR("docs/static/skillmap/assets", `${skillmapRoot}/public/assets`);
-                return nodeutil.spawnAsync({
-                    cmd: os.platform() === "win32" ? "npm.cmd" : "npm",
-                    args: ["run-script", "start"],
-                    cwd: skillmapRoot,
-                    shell: true
-                })
-            });
-    } else {
-        // OLD WAY, DEPRECATED
-        // go to appropriate stable branches in pxt (6.2) and target (pxt-arcade 1.2)
-        // run "pxt skillmap --serve" in target directory to make sure all files are copied
-        // run "pxt skillmap" to generate built files (also copies into docs/static)
-        // stash changes in target, go to master, delete skillmap folder in docs/static, pop stash
-
-        let cfg = readLocalPxTarget();
-        nodeutil.writeFileSync(`${skillmapRoot}/public/target.js`, "// eslint-disable-next-line \n" + targetJsPrefix + JSON.stringify(cfg));
-        nodeutil.cp("node_modules/pxt-core/built/pxtlib.js", `${skillmapRoot}/public/`);
-
-        return nodeutil.spawnAsync({
-            cmd: os.platform() === "win32" ? "npm.cmd" : "npm",
-            args: ["run-script", "build"],
-            cwd: skillmapRoot,
-            shell: true
-        }).then(() =>  rimrafAsync(`${skillmapRoot}/build/blb`, {}))
-        .then(() =>  rimrafAsync("docs/static/skillmap", {}))
+    const docsPath = parsed.flags["docs"];
+    return rimrafAsync(`${skillmapRoot}/public/blb`, {})
+        .then(() => rimrafAsync(`${skillmapRoot}/build/assets`, {}))
+        .then(() => rimrafAsync(`${skillmapRoot}/public/docs`, {}))
+        .then(() => rimrafAsync(`${skillmapRoot}/public/static`, {}))
         .then(() => {
-            nodeutil.cpR(`${skillmapRoot}/build`, "docs/static/skillmap");
+            // read pxtarget.json, save into 'pxtTargetBundle' global variable
+            let cfg = readLocalPxTarget();
+            nodeutil.writeFileSync(`${skillmapRoot}/public/blb/target.js`, "// eslint-disable-next-line \n" + targetJsPrefix + JSON.stringify(cfg));
+            nodeutil.cp("node_modules/pxt-core/built/pxtlib.js", `${skillmapRoot}/public/blb`);
+            nodeutil.cp("built/web/semantic.css", `${skillmapRoot}/public/blb`);
+            nodeutil.cp("node_modules/pxt-core/built/web/icons.css", `${skillmapRoot}/public/blb`);
 
-            // patch paths to match updated folder structure
-            const fn = "docs/static/skillmap/index.html";
-            const f = fs.readFileSync(fn, "utf8");
-            const patched = f.replace(/href="\/blb\//g, `href="/static/skillmap/`)
-                .replace(/src="\/blb\//g, `src="/static/skillmap/`);
-            fs.writeFileSync("docs/skillmap.html", patched, { encoding: "utf8" });
+            // copy 'assets' over from docs/static
+            nodeutil.cpR("docs/static/skillmap/assets", `${skillmapRoot}/public/assets`);
 
-            // remove old index.html
-            fs.unlinkSync(fn);
-            return Promise.resolve();
-        })
-    }
+            if (docsPath) {
+                // copy docs over from specified path
+                nodeutil.cpR(`docs/${docsPath}`, `${skillmapRoot}/public/docs/${docsPath}`);
+                nodeutil.cpR(`docs/static/${docsPath}`, `${skillmapRoot}/public/static/${docsPath}`);
+            }
+
+            return nodeutil.spawnAsync({
+                cmd: os.platform() === "win32" ? "npm.cmd" : "npm",
+                args: ["run-script", "start"],
+                cwd: skillmapRoot,
+                shell: true
+            })
+        });
 }
 
 function updateDefaultProjects(cfg: pxt.TargetBundle) {
@@ -2406,7 +2384,7 @@ function buildAndWatchAsync(f: () => Promise<string[]>): Promise<void> {
             if (globalConfig.noAutoBuild) return
             pxt.debug('watching ' + dirs.join(', ') + '...');
             let loop = () => {
-                Promise.delay(1000)
+                U.delay(1000)
                     .then(() => maxMTimeAsync(dirs))
                     .then(num => {
                         if (num > currMtime) {
@@ -2611,11 +2589,11 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
 }
 
 
-const readFileAsync: any = Promise.promisify(fs.readFile)
-const writeFileAsync: any = Promise.promisify(fs.writeFile)
-const readDirAsync = Promise.promisify(fs.readdir)
-const statAsync = Promise.promisify(fs.stat)
-const rimrafAsync = Promise.promisify(rimraf);
+const readFileAsync: any = promisify(fs.readFile)
+const writeFileAsync: any = promisify(fs.writeFile)
+const readDirAsync = promisify(fs.readdir)
+const statAsync = promisify(fs.stat)
+const rimrafAsync = promisify(rimraf);
 
 let commonfiles: Map<string> = {}
 
@@ -3133,7 +3111,7 @@ export function initAsync(parsed: commandParser.ParsedCommand) {
     let configMap: Map<string> = JSON.parse(files[pxt.CONFIG_NAME])
     let initPromise = Promise.resolve();
     if (!parsed.flags["useDefaults"]) {
-        initPromise = Promise.mapSeries(["name", "description", "license"], f =>
+        initPromise = U.promiseMapAllSeries(["name", "description", "license"], f =>
             queryAsync(f, configMap[f])
                 .then(r => {
                     configMap[f] = r
@@ -3302,7 +3280,7 @@ export async function validateAndFixPkgConfig(parsed: commandParser.ParsedComman
         cfg.testFiles = trimmedTestFiles;
     }
 
-    const dependentFiles = Object.keys(cfg.fileDependencies);
+    const dependentFiles = cfg.fileDependencies && Object.keys(cfg.fileDependencies);
     const validFilesInFileDependencies = validateFileList("fileDependencies", dependentFiles);
     if (validFilesInFileDependencies) {
         for (const key of dependentFiles) {
@@ -3371,7 +3349,7 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
         lastCard = cards.pop();
     }
     return pxt.discourse.topicsByTag(discourseRoot, tag)
-        .then(topics => Promise.mapSeries(topics, topic => {
+        .then(topics => U.promiseMapAllSeries(topics, topic => {
             pxt.log(`  ${topic.title}`)
             return pxt.discourse.extractSharedIdFromPostUrl(topic.url)
                 .then(id => {
@@ -3872,7 +3850,7 @@ function testDirAsync(parsed: commandParser.ParsedCommand) {
     let currBase = ""
     let errors: string[] = []
 
-    return Promise.mapSeries(tests, (ti) => {
+    return U.promiseMapAllSeries(tests, (ti) => {
         let fn = path.basename(ti.filename)
         console.log(`--- ${fn}`)
         let hexPath = outdir + fn.replace(/\.ts$/, "") + ".hex"
@@ -3989,7 +3967,7 @@ function testPkgConflictsAsync() {
     let trg = nodeutil.getPxtTarget();
     pxt.setAppTarget(trg);
 
-    return Promise.mapSeries(testCases, (tc) => {
+    return U.promiseMapAllSeries(testCases, (tc) => {
         let testFailed = (reason: string) => {
             failures.push({ testCase: tc.id, reason });
         };
@@ -4035,7 +4013,7 @@ function testPkgConflictsAsync() {
 }
 
 function decompileAsync(parsed: commandParser.ParsedCommand) {
-    return Promise.mapSeries(parsed.args, f => {
+    return U.promiseMapAllSeries(parsed.args, f => {
         const outFile = replaceFileExtension(f, ".blocks")
         return decompileAsyncWorker(f, parsed.flags["dep"] as string)
             .then(result => {
@@ -4104,7 +4082,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictSyntaxC
         })
         infos.forEach(info => pxt.log(`${f}:(${info.line},${info.column}): ${info.category} ${info.messageText}`));
     }
-    return Promise.map(snippets, (snippet: CodeSnippet) => {
+    return U.promiseMapAllSeries(snippets, (snippet: CodeSnippet) => {
         const name = snippet.name;
         const fn = snippet.file || snippet.name;
         pxt.log(`  ${fn} (${snippet.type})`);
@@ -4310,7 +4288,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictSyntaxC
                     }
                 ])
             }))
-    }, { concurrency: 1 }).then((a: any) => {
+    }).then((a: any) => {
         pxt.log(`${successes.length}/${successes.length + failures.length} snippets compiled to blocks and python (and back), ${failures.length} failed`)
         if (ignoreCount > 0) {
             pxt.log(`Skipped ${ignoreCount} snippets`)
@@ -5789,7 +5767,7 @@ function internalCacheUsedBlocksAsync(): Promise<Map<pxt.BuiltTutorialInfo>> {
     }
 
     const namespaceRegex = /^\s*namespace\s+[^\s]+\s*{([\S\s]*)}\s*$/im;
-    return Promise.map(Object.keys(tutorialInfo), (hash: string) => {
+    return U.promiseMapAll(Object.keys(tutorialInfo), (hash: string) => {
         const info = tutorialInfo[hash];
         const cache: Map<string> = {};
         let isPy = info.language === "python"
@@ -6144,7 +6122,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
                     if (e.statusCode == 429 && retry++ < 6) {
                         delay *= 2;
                         pxt.log(`retrying in ${delay / 1000} secs...`)
-                        return Promise.delay(delay)
+                        return U.delay(delay)
                             .then(() => workAsync());
                     }
                     reportError({ repo: fullname, title: "build error", body: e.message })
@@ -6168,7 +6146,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
                 fullnames = fullnames.filter(fn => filterRx.test(fn))
             reportLog(`found ${fullnames.length} approved extensions`);
             reportLog(nodeutil.stringify(fullnames));
-            return Promise.mapSeries(fullnames, nextAsync);
+            return U.promiseMapAllSeries(fullnames, nextAsync);
         })
         .then(() => {
             if (errorCount > 0) {
@@ -6213,7 +6191,7 @@ function blockTestsAsync(parsed?: commandParser.ParsedCommand) {
 
     function getBlocksFilesAsync(libsDirectory: string): Promise<BlockTestCase[]> {
         return readDirAsync(libsDirectory)
-            .then(dirs => Promise.map(dirs, dir => {
+            .then(dirs => U.promiseMapAll(dirs, dir => {
                 const dirPath = path.resolve(libsDirectory, dir, "blocks-test");
                 const configPath = path.resolve(libsDirectory, dir, "pxt.json");
                 let packageName: string;
@@ -6224,7 +6202,7 @@ function blockTestsAsync(parsed?: commandParser.ParsedCommand) {
                         .then((configText: string) => {
                             packageName = (JSON.parse(configText) as pxt.PackageConfig).name;
                             return readDirAsync(dirPath)
-                                .then(files => Promise.map(files.filter(f => U.endsWith(f, ".blocks") && f != "main.blocks"), fn =>
+                                .then(files => U.promiseMapAll(files.filter(f => U.endsWith(f, ".blocks") && f != "main.blocks"), fn =>
                                     readFileAsync(path.join(dirPath, fn), "utf8")
                                         .then((contents: string) => testFiles.push({ testName: fn, contents }))))
                         })
@@ -6691,13 +6669,15 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
         name: "buildskillmap",
         aliases: ["skillmap"],
         advanced: true,
-        help: "Builds the skill map webapp",
+        help: "Serves the skill map webapp",
         flags: {
             serve: {
                 description: "Serve the skill map locally after building (npm start)"
             },
-            legacy: {
-                description: "Legacy way of building skillmap (copies files into docs/static of target)"
+            docs: {
+                description: "Path to local docs folder to copy into skillmap",
+                type: "string",
+                argument: "docs"
             }
         }
     }, buildSkillMapAsync);
@@ -7108,5 +7088,5 @@ if (require.main === module) {
             process.exit(1)
         }
     }
-    mainCli(targetdir).done();
+    mainCli(targetdir);
 }

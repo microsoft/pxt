@@ -1117,6 +1117,7 @@ export interface ModalButton {
     disabled?: boolean;
     approveButton?: boolean;
     labelPosition?: "left" | "right";
+    ariaLabel?: string;
 }
 
 export interface ModalProps extends ReactModal.Props {
@@ -1356,7 +1357,9 @@ class ModalButtonElement extends data.PureComponent<ModalButton, {}> {
             labelPosition={action.labelPosition}
             className={`approve ${action.icon ? `icon ${action.labelPosition ? action.labelPosition : 'right'} labeled` : ''} ${action.className || ''} ${action.loading ? "loading disabled" : ""} ${action.disabled ? "disabled" : ""}`}
             onClick={this.handleClick}
-            onKeyDown={fireClickOnEnter} />
+            onKeyDown={fireClickOnEnter}
+            ariaLabel={this.props.ariaLabel ? this.props.ariaLabel : this.props.label}
+            title={this.props.title}/>
     }
 }
 
@@ -1523,6 +1526,7 @@ export class ProgressCircle extends React.Component<ProgressCircleProps, {}> {
 
 export interface PlainCheckboxProps {
     label: string;
+    isChecked?: boolean;
     onChange: (v: boolean) => void;
 }
 
@@ -1534,7 +1538,7 @@ export class PlainCheckbox extends data.Component<PlainCheckboxProps, PlainCheck
     constructor(props: PlainCheckboxProps) {
         super(props);
         this.state = {
-            isChecked: false
+            isChecked: this.props.isChecked
         }
         this.setCheckedBit = this.setCheckedBit.bind(this);
     }

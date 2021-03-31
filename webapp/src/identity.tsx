@@ -51,7 +51,10 @@ export class LoginDialog extends auth.Component<LoginDialogProps, LoginDialogSta
                 closeIcon={true} header={lf("Sign in or Signup")}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape>
                 <div className="description">
-                    <p>{lf("Connect an existing account in order to sign in or signup for the first time.")}</p>
+                    <p>{lf("Connect an existing account in order to sign in or signup for the first time.")} <sui.Link className="ui" text={lf("Learn more")} icon="external alternate" ariaLabel={lf("Learn more")} href="https://aka.ms/cloudsave" target="_blank" onKeyDown={sui.fireClickOnEnter} /></p>
+                </div>
+                <div className="warning">
+                    <p>{lf("WARNING: Experimental feature ahead! Before you sign in, please backup any projects you don't want to lose.")}</p>
                 </div>
                 <div className="container">
                     <div className="prompt">
@@ -83,6 +86,7 @@ class ProviderButton extends data.PureComponent<ProviderButtonProps, {}> {
 
     handleLoginClicked = async () => {
         const { provider, rememberMe } = this.props;
+        pxt.tickEvent(`identity.loginClick`, { provider: provider.name, rememberMe: rememberMe.toString() });
         await auth.loginAsync(provider.id, rememberMe, {
             hash: this.props.continuationHash
         });

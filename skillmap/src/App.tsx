@@ -3,27 +3,31 @@
 import React from 'react';
 import { connect } from 'react-redux';
 
-import * as Promise from "bluebird";
 import store from "./store/store";
 
 import {
     dispatchAddSkillMap,
     dispatchClearSkillMaps,
+    dispatchClearMetadata,
     dispatchSetPageTitle,
     dispatchSetPageDescription,
     dispatchSetPageInfoUrl,
     dispatchSetUser,
-    dispatchSetPageSourceUrl
+    dispatchSetPageSourceUrl,
+    dispatchSetPageAlternateUrls,
+    dispatchSetPageBackgroundImageUrl,
+    dispatchSetPageBannerImageUrl,
+    dispatchSetPageTheme,
 } from './actions/dispatch';
 import { PageSourceStatus, SkillMapState } from './store/reducer';
 import { HeaderBar } from './components/HeaderBar';
-import { Banner } from './components/Banner';
 import { AppModal } from './components/AppModal';
-import { SkillCarousel } from './components/SkillCarousel';
+import { SkillGraphContainer } from './components/SkillGraphContainer';
+import { InfoPanel } from './components/InfoPanel';
 
 import { parseSkillMap } from './lib/skillMapParser';
 import { parseHash, getMarkdownAsync, MarkdownSource, parseQuery,
-    guidGen, setPageTitle, setPageSourceUrl } from './lib/browserUtils';
+    guidGen, setPageTitle, setPageSourceUrl, ParsedHash } from './lib/browserUtils';
 
 import { MakeCodeFrame } from './components/makecodeFrame';
 import { getUserStateAsync, saveUserStateAsync } from './lib/workspaceProvider';
@@ -35,19 +39,23 @@ import './App.css';
 // TODO: this file needs to read colors from the target
 import './arcade.css';
 /* tslint:enable:no-import-side-effect */
-
-(window as any).Promise = Promise;
-
 interface AppProps {
     skillMaps: { [key: string]: SkillMap };
     activityOpen: boolean;
+    backgroundImageUrl: string;
+    theme: SkillGraphTheme;
     dispatchAddSkillMap: (map: SkillMap) => void;
     dispatchClearSkillMaps: () => void;
+    dispatchClearMetadata: () => void;
     dispatchSetPageTitle: (title: string) => void;
     dispatchSetPageDescription: (description: string) => void;
     dispatchSetPageInfoUrl: (infoUrl: string) => void;
+    dispatchSetPageBackgroundImageUrl: (backgroundImageUrl: string) => void;
+    dispatchSetPageBannerImageUrl: (bannerImageUrl: string) => void;
     dispatchSetUser: (user: UserState) => void;
     dispatchSetPageSourceUrl: (url: string, status: PageSourceStatus) => void;
+    dispatchSetPageAlternateUrls: (urls: string[]) => void;
+    dispatchSetPageTheme: (theme: SkillGraphTheme) => void;
 }
 
 interface AppState {
@@ -67,12 +75,25 @@ class AppImpl extends React.Component<AppProps, AppState> {
     }
 
     protected handleHashChange = async (e: HashChangeEvent) => {
-        let config = await pxt.targetConfigAsync();
-        let hash = parseHash(window.location.hash || config.skillMap?.defaultPath);
-        this.fetchAndParseSkillMaps(hash.cmd as MarkdownSource, hash.arg);
-
+        await this.parseHashAsync();
         e.stopPropagation();
         e.preventDefault();
+    }
+
+    protected async parseHashAsync() {
+        let config = await pxt.targetConfigAsync();
+        let hash: ParsedHash;
+
+        const possibleAlias = window.location.hash.replace("#", "");
+
+        if (possibleAlias && config.skillMap?.pathAliases?.[possibleAlias]) {
+            hash = parseHash(config.skillMap.pathAliases[possibleAlias]);
+        }
+        else {
+            hash = parseHash(window.location.hash || config.skillMap?.defaultPath);
+        }
+
+        await this.fetchAndParseSkillMaps(hash.cmd as MarkdownSource, hash.arg);
     }
 
     protected handleError = (msg?: string) => {
@@ -88,7 +109,6 @@ class AppImpl extends React.Component<AppProps, AppState> {
         let force = false;
         let useLang: string | undefined = undefined;
         if (/[&?]translate=1/.test(href) && !pxt.BrowserUtils.isIE()) {
-            console.log(`translation mode`);
             useLang = ts.pxtc.Util.TRANSLATION_LOCALE;
         } else {
             const mlang = /(live)?(force)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
@@ -104,16 +124,16 @@ class AppImpl extends React.Component<AppProps, AppState> {
         const targetId = pxt.appTarget.id;
         const pxtBranch = pxt.appTarget.versions.pxtCrowdinBranch;
         const targetBranch = pxt.appTarget.versions.targetCrowdinBranch;
+        pxt.Util.enableLiveLocalizationUpdates();
 
-        await updateLocalizationAsync(
-            targetId,
-            baseUrl,
-            useLang!,
-            pxtBranch!,
-            targetBranch!,
-            true,
-            force
-        );
+        await updateLocalizationAsync({
+            targetId: targetId,
+            baseUrl: baseUrl,
+            code: useLang!,
+            pxtBranch: pxtBranch!,
+            targetBranch: targetBranch!,
+            force: force,
+        });
 
         if (pxt.Util.isLocaleEnabled(useLang!)) {
             pxt.BrowserUtils.setCookieLang(useLang!);
@@ -136,6 +156,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
                 } else {
                     setPageSourceUrl(fetched);
                     this.props.dispatchSetPageSourceUrl(fetched, status);
+                    this.props.dispatchClearMetadata();
                 }
 
                 const { maps, metadata } = parseSkillMap(md);
@@ -148,16 +169,21 @@ class AppImpl extends React.Component<AppProps, AppState> {
                 }
 
                 if (metadata) {
-                    const { title, description, infoUrl } = metadata;
+                    const { title, description, infoUrl, backgroundImageUrl,
+                        bannerImageUrl, theme, alternateSources } = metadata;
                     setPageTitle(title);
                     this.props.dispatchSetPageTitle(title);
                     if (description) this.props.dispatchSetPageDescription(description);
                     if (infoUrl) this.props.dispatchSetPageInfoUrl(infoUrl);
+                    if (backgroundImageUrl) this.props.dispatchSetPageBackgroundImageUrl(backgroundImageUrl);
+                    if (bannerImageUrl) this.props.dispatchSetPageBannerImageUrl(bannerImageUrl);
+                    if (alternateSources) this.props.dispatchSetPageAlternateUrls(alternateSources);
+                    if (theme) this.props.dispatchSetPageTheme(theme);
                 }
 
                 this.setState({ error: undefined });
-            } catch {
-                this.handleError();
+            } catch (err) {
+                this.handleError(err);
             }
         } else {
             this.setState({ error: lf("No content loaded.") })
@@ -178,7 +204,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
             user.completedTags[fetched] = {};
         }
 
-        this.applyQueryFlags(user, loadedMaps);
+        this.applyQueryFlags(user, loadedMaps, fetched);
         this.loadedUser = user;
         this.props.dispatchSetUser(user);
     }
@@ -186,10 +212,8 @@ class AppImpl extends React.Component<AppProps, AppState> {
     async componentDidMount() {
         this.unsubscribeChangeListener = store.subscribe(this.onStoreChange);
         this.queryFlags = parseQuery();
-        let config = await pxt.targetConfigAsync();
-        let hash = parseHash(window.location.hash || config.skillMap?.defaultPath);
         await this.initLocalizationAsync();
-        this.fetchAndParseSkillMaps(hash.cmd as MarkdownSource, hash.arg);
+        await this.parseHashAsync();
     }
 
     componentWillUnmount() {
@@ -200,21 +224,19 @@ class AppImpl extends React.Component<AppProps, AppState> {
     }
 
     render() {
-        const { skillMaps, activityOpen } = this.props;
+        const { skillMaps, activityOpen, backgroundImageUrl, theme } = this.props;
         const { error } = this.state;
         const maps = Object.keys(skillMaps).map((id: string) => skillMaps[id]);
         return (<div className={`app-container ${pxt.appTarget.id}`}>
                 <HeaderBar />
-                { activityOpen ? <MakeCodeFrame /> : <div>
-                    <Banner icon="map" />
-                    <div className="skill-map-container">
+                { activityOpen ? <MakeCodeFrame /> :
+                    <div className="skill-map-container" style={{ backgroundColor: theme.backgroundColor }}>
                         { error
                             ? <div className="skill-map-error">{error}</div>
-                            : maps?.map((el, i) => {
-                                return <SkillCarousel map={el} key={i} />
-                            })}
+                            : <SkillGraphContainer maps={maps} backgroundImageUrl={backgroundImageUrl} />
+                        }
+                        { !error && <InfoPanel />}
                     </div>
-                </div>
                 }
                 <AppModal />
             </div>);
@@ -230,6 +252,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
 
         if (this.queryFlags["debugCompleted"] === "true") {
             user.isDebug = true;
+            user.mapProgress = { [pageSource]: {} };
 
             if (maps) {
                 for (const map of maps) {
@@ -251,7 +274,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
                             user.mapProgress[pageSource][map.mapId].activityState[activity.activityId].isCompleted = true;
                         }
 
-                        if (activity.tags?.length && sourceUrl) {
+                        if (activity.kind === "activity" && activity.tags?.length && sourceUrl) {
                             for (const tag of activity.tags) {
                                 if (!user.completedTags[sourceUrl][tag]) user.completedTags[sourceUrl][tag] = 0;
                                 user.completedTags[sourceUrl][tag]++;
@@ -277,17 +300,29 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
     if (!state) return {};
     return {
         skillMaps: state.maps,
-        activityOpen: !!state.editorView
+        activityOpen: !!state.editorView,
+        backgroundImageUrl: state.backgroundImageUrl,
+        theme: state.theme
     };
 }
+interface LocalizationUpdateOptions {
+    targetId: string;
+    baseUrl: string;
+    code: string;
+    pxtBranch: string;
+    targetBranch: string;
+    force?: boolean;
+}
 
-async function updateLocalizationAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean, force?: boolean) {
-    code = pxt.Util.normalizeLanguageCode(code)[0];
-    if (code === "en-US")
-        code = "en"; // special case for built-in language
-    if (code === pxt.Util.userLanguage() || (!pxt.Util.isLocaleEnabled(code) && !force)) {
-        return;
-    }
+async function updateLocalizationAsync(opts: LocalizationUpdateOptions): Promise<void> {
+    const {
+        targetId,
+        baseUrl,
+        pxtBranch,
+        targetBranch,
+        force,
+    } = opts;
+    let { code } = opts;
 
     const translations = await pxt.Util.downloadTranslationsAsync(
         targetId,
@@ -295,27 +330,29 @@ async function updateLocalizationAsync(targetId: string, baseUrl: string, code: 
         code,
         pxtBranch,
         targetBranch,
-        !!live,
+        pxt.Util.liveLocalizationEnabled(),
         ts.pxtc.Util.TranslationsKind.SkillMap
     );
 
     pxt.Util.setUserLanguage(code);
     if (translations) {
         pxt.Util.setLocalizedStrings(translations);
-        if (live) {
-            pxt.Util.localizeLive = true;
-        }
     }
 }
 
 const mapDispatchToProps = {
     dispatchAddSkillMap,
     dispatchClearSkillMaps,
+    dispatchClearMetadata,
     dispatchSetPageTitle,
     dispatchSetPageDescription,
     dispatchSetPageInfoUrl,
     dispatchSetUser,
-    dispatchSetPageSourceUrl
+    dispatchSetPageSourceUrl,
+    dispatchSetPageAlternateUrls,
+    dispatchSetPageBackgroundImageUrl,
+    dispatchSetPageBannerImageUrl,
+    dispatchSetPageTheme
 };
 
 const App = connect(mapStateToProps, mapDispatchToProps)(AppImpl);

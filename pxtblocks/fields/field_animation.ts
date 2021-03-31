@@ -33,7 +33,7 @@ namespace pxtblockly {
     export class FieldAnimationEditor extends FieldAssetEditor<FieldAnimationOptions, ParsedFieldAnimationOptions> {
         protected frames: string[];
         protected preview: svg.Image;
-        protected animateRef: number;
+        protected animateRef: any;
         protected asset: pxt.Animation;
         protected initInterval: number;
 
@@ -73,23 +73,42 @@ namespace pxtblockly {
             const project = pxt.react.getTilemapProject();
 
             if (text) {
-                const match = /^\s*assets\s*\.\s*animation\s*`([^`]+)`\s*$/.exec(text);
-                if (match) {
-                    const asset = project.lookupAssetByName(pxt.AssetType.Animation, match[1].trim());
-                    if (asset) return asset;
-                }
+                const existing = pxt.lookupProjectAssetByTSReference(text, project);
+                if (existing) return existing;
 
                 const frames = parseImageArrayString(text);
 
                 if (frames && frames.length) {
-                    return project.createNewAnimationFromData(frames, this.getParentInterval());
+                    const id = this.sourceBlock_.id;
+
+                    const newAnimation: pxt.Animation = {
+                        internalID: -1,
+                        id,
+                        type: pxt.AssetType.Animation,
+                        frames,
+                        interval: this.getParentInterval(),
+                        meta: { },
+                    };
+                    return newAnimation;
                 }
 
                 const asset = project.lookupAssetByName(pxt.AssetType.Animation, text.trim());
                     if (asset) return asset;
             }
 
-            return project.createNewAnimation(this.params.initWidth, this.params.initHeight);
+            const id = this.sourceBlock_.id;
+            const bitmap = new pxt.sprite.Bitmap(this.params.initWidth, this.params.initHeight).data()
+
+            const newAnimation: pxt.Animation = {
+                internalID: -1,
+                id,
+                type: pxt.AssetType.Animation,
+                frames: [bitmap],
+                interval: 500,
+                meta: {},
+            };
+
+            return newAnimation;
         }
 
         protected onEditorClose(newValue: pxt.Animation) {
@@ -105,7 +124,7 @@ namespace pxtblockly {
                 ).join(",") + "]"
             }
 
-            return `assets.animation\`${this.asset.meta.displayName || pxt.getShortIDForAsset(this.asset)}\``
+            return pxt.getTSReferenceForAsset(this.asset);
         }
 
         protected redrawPreview() {

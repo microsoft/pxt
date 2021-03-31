@@ -117,8 +117,10 @@
 
         var codeFromSrc = /code(?:[:=])([^&?]+)/i.exec(window.location.href);
         var codeFromData = undefined;
+        var assetJsonFromData = undefined;
         try {
             codeFromData = window.frameElement ? window.frameElement.getAttribute('data-code') : undefined;
+            assetJsonFromData = window.frameElement ? window.frameElement.getAttribute('data-assets') : undefined;
         } catch (e) {
             /**
              *  Internet Explorer 11 and Microsoft Edge throw an exception when checking
@@ -183,7 +185,7 @@
             if (footer) pxt.runner.initFooter(document.getElementById('footer'), id);
             if (hex) {
                 console.log('compiling script to hex')
-                pxt.runner.generateHexFileAsync(options).done(function(hex) {
+                pxt.runner.generateHexFileAsync(options).then(function(hex) {
                     $(loading).remove();
                     var name = pxt.appTarget.id + '-' + ts.pxt.BINARY_HEX;
                     var uri = pxt.BrowserUtils.browserDownloadBinText(hex, name, { maintainObjectURL: true });
@@ -199,6 +201,7 @@
                     var options = {
                         id: id ? id[1] : undefined,
                         code: code ? decodeURIComponent(code) : undefined,
+                        assets: assetJsonFromData ? decodeURIComponent(assetJsonFromData) : undefined,
                         highContrast: highContrast,
                         light: light,
                         fullScreen: fullScreen,
@@ -207,7 +210,7 @@
                         single: single
                     };
                     console.log('simulating script')
-                    pxt.runner.simulateAsync(sims, options).done(function() {
+                    pxt.runner.simulateAsync(sims, options).then(function() {
                         console.log('simulator started...')
                         $(loading).remove();
                     })

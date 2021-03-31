@@ -61,7 +61,7 @@ export function showAboutDialogAsync(projectView: pxt.editor.IProjectView) {
                         : undefined}
                     {githubUrl && versions && renderVersionLink(pxt.appTarget.name, versions.target, `${githubUrl}/releases/tag/v${versions.target}`)}
                     {versions && renderVersionLink("Microsoft MakeCode", versions.pxt, `https://github.com/Microsoft/pxt/releases/tag/v${versions.pxt}`)}
-                    {compileVariantInfos?.length && compileVariantInfos.map(info => <div key={info.variantName}>{renderCompileLink(info.variantName, info.compileService)}</div>)}
+                    {compileVariantInfos?.length ? compileVariantInfos.map(info => <div key={info.variantName}>{renderCompileLink(info.variantName, info.compileService)}</div>) : undefined}
                     <p><br /></p>
                     <p>
                         {targetTheme.termsOfUseUrl ? <a target="_blank" className="item" href={targetTheme.termsOfUseUrl} rel="noopener noreferrer">{lf("Terms of Use")}</a> : undefined}
@@ -70,7 +70,7 @@ export function showAboutDialogAsync(projectView: pxt.editor.IProjectView) {
                     {targetTheme.copyrightText ? <p> {targetTheme.copyrightText} </p> : undefined}
                 </div>
             })
-        }).done();
+        });
 }
 
 
@@ -655,7 +655,7 @@ export function showReportAbuseAsync(pubId?: string) {
                 <textarea aria-labelledby="abuseDescriptionLabel"></textarea>
             </div>
         </div>,
-    }).done(res => {
+    }).then(res => {
         if (res) {
             pxt.tickEvent("app.reportabuse.send");
             const id = pxt.Cloud.parseScriptId(urlInput.value as string);
@@ -705,5 +705,5 @@ export function promptTranslateBlock(blockid: string, blockTranslationIds: strin
             </div>
             {blockTranslationIds.map(trid => <div key={`ictr${trid}`} className="ui basic segment">{trid}</div>)}
         </div>
-    }).done();
+    });
 }
