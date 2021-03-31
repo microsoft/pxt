@@ -96,7 +96,7 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
 
     onBugClicked = () => {
         tickEvent("skillmap.bugreport");
-        (window as any).usabilla_live && (window as any).usabilla_live("click");
+        (window as any).usabilla_live?.("click");
     }
 }
 
