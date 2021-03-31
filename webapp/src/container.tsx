@@ -605,7 +605,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
                 {sandbox || inTutorial || debugging ? undefined : <container.SettingsMenu parent={this.props.parent} greenScreen={greenScreen} accessibleBlocks={accessibleBlocks} />}
                 {sandbox && !targetTheme.hideEmbedEdit ? <sui.Item role="menuitem" icon="external" textClass="mobile hide" text={lf("Edit")} onClick={this.launchFullEditor} /> : undefined}
                 {inTutorial && tutorialReportId ? <sui.ButtonMenuItem className="report-tutorial-btn" role="menuitem" icon="warning circle" text={lf("Report Abuse")} textClass="landscape only" onClick={this.showReportAbuse} /> : undefined}
-                {(inTutorial && !lockedEditor && !hideIteration) && <sui.ButtonMenuItem className="exit-tutorial-btn" role="menuitem" icon="external" text={lf("Exit tutorial")} textClass="landscape only" onClick={this.exitTutorial} />}
+                {(inTutorial && !lockedEditor && !hideIteration) && <sui.ButtonMenuItem className="exit-tutorial-btn" role="menuitem" icon="sign out" text={lf("Exit tutorial")} textClass="landscape only" onClick={this.exitTutorial} />}
 
                 {auth.hasIdentity() ? <identity.UserMenu parent={this.props.parent} continuationHash={"#editor"} /> : undefined}
                 {!sandbox ? <a href={lockedEditor ? undefined : targetTheme.organizationUrl} aria-label={lf("{0} Logo", targetTheme.organization)} role="menuitem" target="blank" rel="noopener" className="ui item logo organization" onClick={lockedEditor ? undefined : this.orgIconClick}>
