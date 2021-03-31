@@ -4144,7 +4144,7 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
         const { pkg, opts } = await getCompileResources(inFiles, snippet.packages);
 
         try {
-            let resp = compileWithResetOnError(opts);
+            let resp = compileWithResetOnError(opts, true);
             if (isPy) {
                 opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME;
                 const { ast } = resp;
@@ -4274,7 +4274,7 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
         else U.userError(msg);
     }
 
-    function compileWithResetOnError(options: pxtc.CompileOptions, retryOnError?: false): pxtc.CompileResult {
+    function compileWithResetOnError(options: pxtc.CompileOptions, retryOnError?: boolean): pxtc.CompileResult {
         let resp = tryCompile(options);
         if (retryOnError && (!resp.success || resp.diagnostics.length)) {
             pxt.log("Compile failed; resetting incremental compile.");
@@ -5485,6 +5485,8 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
     let urls: any = {};
     let checked = 0;
     let broken = 0;
+    // only check each snippet once.
+    const existingSnippets: pxt.Map<boolean> = {};
     let snippets: CodeSnippet[] = [];
 
     const maxFileSize = checkFileSize(nodeutil.allFiles("docs", 10, true, true, ".ignorelargefiles"));
@@ -5518,7 +5520,10 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
             }
         });
 
-    function addSnippet(snippet: CodeSnippet, entryPath: string, snipIndex: number) {
+    function addSnippet(snippet: CodeSnippet, entryPath: string, snipIndex: number, src: string) {
+        const key = `${src}${snipIndex}`;
+        if (existingSnippets[key])
+            return;
         snippets.push(snippet);
         const dir = path.join("temp/snippets", snippet.type);
         const fn = `${dir}/${entryPath.replace(/^\//, '').replace(/[\/\s]/g, '-').replace(/\.\w+$/, '')}-${snipIndex}.${snippet.ext}`;
@@ -5527,6 +5532,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
             nodeutil.writeFileSync(fn, snippet.code);
         }
         snippet.file = fn;
+        existingSnippets[key] = true;
     }
 
     function pushUrl(url: string, toc: boolean) {
@@ -5649,7 +5655,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
         }
 
         // look for snippets
-        getCodeSnippets(entrypath, md).forEach((snippet, snipIndex) => addSnippet(snippet, entrypath, snipIndex));
+        getCodeSnippets(entrypath, md).forEach((snippet, snipIndex) => addSnippet(snippet, entrypath, snipIndex, entrypath));
     }
 
     nodeutil.mkdirP("temp");
@@ -5706,10 +5712,12 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                                             .forEach((snippet, snippetIndex) => {
                                                 snippet.packages = pkgs;
                                                 snippet.extraFiles = extraFiles;
+                                                const indexInStep = snippetIndex ? `-${snippetIndex}` : "";
                                                 addSnippet(
                                                     snippet,
-                                                    `tutorial/${card.name}-step${stepIndex}${snippetIndex ? `-${snippetIndex}` : ""}`,
-                                                    cardIndex
+                                                    `tutorial/${card.name}-${indexInStep}step`,
+                                                    stepIndex,
+                                                    url + (indexInStep)
                                                 )
                                             })
                                         );
@@ -5722,7 +5730,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                                         ext: "ts",
                                         packages: pkgs,
                                         extraFiles: extraFiles
-                                    }, "tutorial" + gal.name, cardIndex);
+                                    }, "tutorial" + gal.name, cardIndex, url);
                                 }
                             }
 
@@ -5757,7 +5765,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                                     ext: "ts",
                                     extraFiles,
                                     packages: pkgs
-                                }, "example" + gal.name, cardIndex);
+                                }, `example/${url}`, 0, url);
                             }
                             break;
                         }
