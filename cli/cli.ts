@@ -4309,6 +4309,8 @@ async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictS
             targ.isNative = false;
             const newOpts = await pkg.getCompileOptionsAsync(targ);
             newOpts.ast = true;
+            // TODO: this being necessary implies a bug somewhere in the incremental compile
+            // that is resulting in erroneous compile errors.
             newOpts.clearIncrBuildAndRetryOnError = true;
             newOpts.errorOnGreyBlocks = true;
             newOpts.snippetMode = false;
