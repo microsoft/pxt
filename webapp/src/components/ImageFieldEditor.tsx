@@ -120,12 +120,12 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
                     <ImageEditorToggle options={toggleOptions} view={currentView} />
                 </div>
                 <div className="image-editor-header-right">
-                    <div className={`gallery-filter-button ${this.state.currentView === "gallery" ? '' : "hidden"}`} role="button" onClick={this.toggleFilter} onKeyDown={sui.fireClickOnEnter}>
+                    {this.state.galleryFilter && <div className={`gallery-filter-button ${this.state.currentView === "gallery" ? '' : "hidden"}`} role="button" onClick={this.toggleFilter} onKeyDown={sui.fireClickOnEnter}>
                         <div className="gallery-filter-button-icon">
                             <i className="icon filter" />
                         </div>
                         <div className="gallery-filter-button-label">{lf("Filter")}</div>
-                    </div>
+                    </div>}
                     {!editingTile && <div className="image-editor-close-button" role="button" onClick={this.onDoneClick}>
                         <i className="ui icon close"/>
                     </div>}
