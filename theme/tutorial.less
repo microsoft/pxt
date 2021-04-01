@@ -696,6 +696,20 @@ code.lang-filterblocks {
 
 /* > Small Monitor */
 @media only screen and (min-width: @computerBreakpoint) {
+    .thin {
+        .landscape.only {
+            display: none;
+        }
+
+        .portrait.hide {
+            display: none;
+        }
+
+        .portrait.only {
+            display: block!important;
+            height: auto!important;
+        }
+    }
 }
 
 /* Large Monitor */
