@@ -21,7 +21,6 @@ module.exports = {
     "plugins": [
         "eslint-plugin-import",
         "@typescript-eslint",
-        "@typescript-eslint/tslint",
         "@microsoft/sdl",
         "eslint-plugin-react",
         "jsx-a11y",
@@ -146,22 +145,5 @@ module.exports = {
         "@microsoft/sdl/react-iframe-missing-sandbox": "error",
         "@typescript-eslint/no-implied-eval": "error",
         "react/no-danger": "error",
-
-        // Old tslint shims
-        "@typescript-eslint/tslint/config": [
-            "error",
-            {
-                "rules": {
-                    "match-default-export-name": true,
-                    "whitespace": [
-                        true,
-                        "check-branch",
-                        "check-decl",
-                        "check-operator",
-                        "check-type"
-                    ]
-                }
-            }
-        ]
     }
 };
