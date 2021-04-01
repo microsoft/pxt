@@ -5302,7 +5302,6 @@ interface AnalyserNode extends AudioNode {
     getFloatTimeDomainData(array: Float32Array): void;
 }
 
-// eslint-disable-next-line no-var
 declare var AnalyserNode: {
     prototype: AnalyserNode;
     new(): AnalyserNode;
@@ -5315,7 +5314,6 @@ interface ANGLE_instanced_arrays {
     readonly VERTEX_ATTRIB_ARRAY_DIVISOR_ANGLE: number;
 }
 
-// eslint-disable-next-line no-var
 declare var ANGLE_instanced_arrays: {
     prototype: ANGLE_instanced_arrays;
     new(): ANGLE_instanced_arrays;
@@ -5328,7 +5326,6 @@ interface AnimationEvent extends Event {
     initAnimationEvent(typeArg: string, canBubbleArg: boolean, cancelableArg: boolean, animationNameArg: string, elapsedTimeArg: number): void;
 }
 
-// eslint-disable-next-line no-var
 declare var AnimationEvent: {
     prototype: AnimationEvent;
     new(typeArg: string, eventInitDict?: AnimationEventInit): AnimationEvent;
@@ -5370,7 +5367,6 @@ interface ApplicationCache extends EventTarget {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var ApplicationCache: {
     prototype: ApplicationCache;
     new(): ApplicationCache;
@@ -5390,7 +5386,6 @@ interface Attr extends Node {
     value: string;
 }
 
-// eslint-disable-next-line no-var
 declare var Attr: {
     prototype: Attr;
     new(): Attr;
@@ -5406,7 +5401,6 @@ interface AudioBuffer {
     getChannelData(channel: number): Float32Array;
 }
 
-// eslint-disable-next-line no-var
 declare var AudioBuffer: {
     prototype: AudioBuffer;
     new(): AudioBuffer;
@@ -5432,7 +5426,6 @@ interface AudioBufferSourceNode extends AudioNode {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var AudioBufferSourceNode: {
     prototype: AudioBufferSourceNode;
     new(): AudioBufferSourceNode;
@@ -5481,7 +5474,6 @@ interface AudioContext extends AudioContextBase {
     suspend(): Promise<void>;
 }
 
-// eslint-disable-next-line no-var
 declare var AudioContext: {
     prototype: AudioContext;
     new(): AudioContext;
@@ -5491,7 +5483,6 @@ interface AudioDestinationNode extends AudioNode {
     readonly maxChannelCount: number;
 }
 
-// eslint-disable-next-line no-var
 declare var AudioDestinationNode: {
     prototype: AudioDestinationNode;
     new(): AudioDestinationNode;
@@ -5505,7 +5496,6 @@ interface AudioListener {
     setVelocity(x: number, y: number, z: number): void;
 }
 
-// eslint-disable-next-line no-var
 declare var AudioListener: {
     prototype: AudioListener;
     new(): AudioListener;
@@ -5525,7 +5515,6 @@ interface AudioNode extends EventTarget {
     disconnect(destination: AudioParam, output?: number): void;
 }
 
-// eslint-disable-next-line no-var
 declare var AudioNode: {
     prototype: AudioNode;
     new(): AudioNode;
@@ -5542,7 +5531,6 @@ interface AudioParam {
     setValueCurveAtTime(values: Float32Array, startTime: number, duration: number): AudioParam;
 }
 
-// eslint-disable-next-line no-var
 declare var AudioParam: {
     prototype: AudioParam;
     new(): AudioParam;
@@ -5554,7 +5542,6 @@ interface AudioProcessingEvent extends Event {
     readonly playbackTime: number;
 }
 
-// eslint-disable-next-line no-var
 declare var AudioProcessingEvent: {
     prototype: AudioProcessingEvent;
     new(): AudioProcessingEvent;
@@ -5569,7 +5556,6 @@ interface AudioTrack {
     readonly sourceBuffer: SourceBuffer;
 }
 
-// eslint-disable-next-line no-var
 declare var AudioTrack: {
     prototype: AudioTrack;
     new(): AudioTrack;
@@ -5595,7 +5581,6 @@ interface AudioTrackList extends EventTarget {
     [index: number]: AudioTrack;
 }
 
-// eslint-disable-next-line no-var
 declare var AudioTrackList: {
     prototype: AudioTrackList;
     new(): AudioTrackList;
@@ -5605,7 +5590,6 @@ interface BarProp {
     readonly visible: boolean;
 }
 
-// eslint-disable-next-line no-var
 declare var BarProp: {
     prototype: BarProp;
     new(): BarProp;
@@ -5615,7 +5599,6 @@ interface BeforeUnloadEvent extends Event {
     returnValue: any;
 }
 
-// eslint-disable-next-line no-var
 declare var BeforeUnloadEvent: {
     prototype: BeforeUnloadEvent;
     new(): BeforeUnloadEvent;
@@ -5630,7 +5613,6 @@ interface BiquadFilterNode extends AudioNode {
     getFrequencyResponse(frequencyHz: Float32Array, magResponse: Float32Array, phaseResponse: Float32Array): void;
 }
 
-// eslint-disable-next-line no-var
 declare var BiquadFilterNode: {
     prototype: BiquadFilterNode;
     new(): BiquadFilterNode;
@@ -5644,7 +5626,6 @@ interface Blob {
     slice(start?: number, end?: number, contentType?: string): Blob;
 }
 
-// eslint-disable-next-line no-var
 declare var Blob: {
     prototype: Blob;
     new (blobParts?: any[], options?: BlobPropertyBag): Blob;
@@ -5660,7 +5641,6 @@ interface Cache {
     put(request: RequestInfo, response: Response): Promise<void>;
 }
 
-// eslint-disable-next-line no-var
 declare var Cache: {
     prototype: Cache;
     new(): Cache;
@@ -5674,7 +5654,6 @@ interface CacheStorage {
     open(cacheName: string): Promise<Cache>;
 }
 
-// eslint-disable-next-line no-var
 declare var CacheStorage: {
     prototype: CacheStorage;
     new(): CacheStorage;
@@ -5684,7 +5663,6 @@ interface CanvasGradient {
     addColorStop(offset: number, color: string): void;
 }
 
-// eslint-disable-next-line no-var
 declare var CanvasGradient: {
     prototype: CanvasGradient;
     new(): CanvasGradient;
@@ -5694,7 +5672,6 @@ interface CanvasPattern {
     setTransform(matrix: SVGMatrix): void;
 }
 
-// eslint-disable-next-line no-var
 declare var CanvasPattern: {
     prototype: CanvasPattern;
     new(): CanvasPattern;
@@ -5755,7 +5732,6 @@ interface CanvasRenderingContext2D extends Object, CanvasPathMethods {
     translate(x: number, y: number): void;
 }
 
-// eslint-disable-next-line no-var
 declare var CanvasRenderingContext2D: {
     prototype: CanvasRenderingContext2D;
     new(): CanvasRenderingContext2D;
@@ -5764,7 +5740,6 @@ declare var CanvasRenderingContext2D: {
 interface CDATASection extends Text {
 }
 
-// eslint-disable-next-line no-var
 declare var CDATASection: {
     prototype: CDATASection;
     new(): CDATASection;
@@ -5773,7 +5748,6 @@ declare var CDATASection: {
 interface ChannelMergerNode extends AudioNode {
 }
 
-// eslint-disable-next-line no-var
 declare var ChannelMergerNode: {
     prototype: ChannelMergerNode;
     new(): ChannelMergerNode;
@@ -5782,7 +5756,6 @@ declare var ChannelMergerNode: {
 interface ChannelSplitterNode extends AudioNode {
 }
 
-// eslint-disable-next-line no-var
 declare var ChannelSplitterNode: {
     prototype: ChannelSplitterNode;
     new(): ChannelSplitterNode;
@@ -5798,7 +5771,6 @@ interface CharacterData extends Node, ChildNode {
     substringData(offset: number, count: number): string;
 }
 
-// eslint-disable-next-line no-var
 declare var CharacterData: {
     prototype: CharacterData;
     new(): CharacterData;
@@ -5813,7 +5785,6 @@ interface ClientRect {
     readonly width: number;
 }
 
-// eslint-disable-next-line no-var
 declare var ClientRect: {
     prototype: ClientRect;
     new(): ClientRect;
@@ -5825,7 +5796,6 @@ interface ClientRectList {
     [index: number]: ClientRect;
 }
 
-// eslint-disable-next-line no-var
 declare var ClientRectList: {
     prototype: ClientRectList;
     new(): ClientRectList;
@@ -5835,7 +5805,6 @@ interface ClipboardEvent extends Event {
     readonly clipboardData: DataTransfer;
 }
 
-// eslint-disable-next-line no-var
 declare var ClipboardEvent: {
     prototype: ClipboardEvent;
     new(type: string, eventInitDict?: ClipboardEventInit): ClipboardEvent;
@@ -5848,7 +5817,6 @@ interface CloseEvent extends Event {
     initCloseEvent(typeArg: string, canBubbleArg: boolean, cancelableArg: boolean, wasCleanArg: boolean, codeArg: number, reasonArg: string): void;
 }
 
-// eslint-disable-next-line no-var
 declare var CloseEvent: {
     prototype: CloseEvent;
     new(typeArg: string, eventInitDict?: CloseEventInit): CloseEvent;
@@ -5858,7 +5826,6 @@ interface Comment extends CharacterData {
     text: string;
 }
 
-// eslint-disable-next-line no-var
 declare var Comment: {
     prototype: Comment;
     new(): Comment;
@@ -5870,7 +5837,6 @@ interface CompositionEvent extends UIEvent {
     initCompositionEvent(typeArg: string, canBubbleArg: boolean, cancelableArg: boolean, viewArg: Window, dataArg: string, locale: string): void;
 }
 
-// eslint-disable-next-line no-var
 declare var CompositionEvent: {
     prototype: CompositionEvent;
     new(typeArg: string, eventInitDict?: CompositionEventInit): CompositionEvent;
@@ -5901,7 +5867,6 @@ interface Console {
     warn(message?: any, ...optionalParams: any[]): void;
 }
 
-// eslint-disable-next-line no-var
 declare var Console: {
     prototype: Console;
     new(): Console;
@@ -5912,7 +5877,6 @@ interface ConvolverNode extends AudioNode {
     normalize: boolean;
 }
 
-// eslint-disable-next-line no-var
 declare var ConvolverNode: {
     prototype: ConvolverNode;
     new(): ConvolverNode;
@@ -5928,7 +5892,6 @@ interface Coordinates {
     readonly speed: number | null;
 }
 
-// eslint-disable-next-line no-var
 declare var Coordinates: {
     prototype: Coordinates;
     new(): Coordinates;
@@ -5938,7 +5901,6 @@ interface Crypto extends Object, RandomSource {
     readonly subtle: SubtleCrypto;
 }
 
-// eslint-disable-next-line no-var
 declare var Crypto: {
     prototype: Crypto;
     new(): Crypto;
@@ -5951,7 +5913,6 @@ interface CryptoKey {
     readonly usages: string[];
 }
 
-// eslint-disable-next-line no-var
 declare var CryptoKey: {
     prototype: CryptoKey;
     new(): CryptoKey;
@@ -5962,7 +5923,6 @@ interface CryptoKeyPair {
     publicKey: CryptoKey;
 }
 
-// eslint-disable-next-line no-var
 declare var CryptoKeyPair: {
     prototype: CryptoKeyPair;
     new(): CryptoKeyPair;
@@ -5971,14 +5931,12 @@ declare var CryptoKeyPair: {
 interface CSS {
     supports(property: string, value?: string): boolean;
 }
-// eslint-disable-next-line no-var
 declare var CSS: CSS;
 
 interface CSSConditionRule extends CSSGroupingRule {
     conditionText: string;
 }
 
-// eslint-disable-next-line no-var
 declare var CSSConditionRule: {
     prototype: CSSConditionRule;
     new(): CSSConditionRule;
@@ -5988,7 +5946,6 @@ interface CSSFontFaceRule extends CSSRule {
     readonly style: CSSStyleDeclaration;
 }
 
-// eslint-disable-next-line no-var
 declare var CSSFontFaceRule: {
     prototype: CSSFontFaceRule;
     new(): CSSFontFaceRule;
@@ -6000,7 +5957,6 @@ interface CSSGroupingRule extends CSSRule {
     insertRule(rule: string, index: number): number;
 }
 
-// eslint-disable-next-line no-var
 declare var CSSGroupingRule: {
     prototype: CSSGroupingRule;
     new(): CSSGroupingRule;
@@ -6012,7 +5968,6 @@ interface CSSImportRule extends CSSRule {
     readonly styleSheet: CSSStyleSheet;
 }
 
-// eslint-disable-next-line no-var
 declare var CSSImportRule: {
     prototype: CSSImportRule;
     new(): CSSImportRule;
@@ -6023,7 +5978,6 @@ interface CSSKeyframeRule extends CSSRule {
     readonly style: CSSStyleDeclaration;
 }
 
-// eslint-disable-next-line no-var
 declare var CSSKeyframeRule: {
     prototype: CSSKeyframeRule;
     new(): CSSKeyframeRule;
@@ -6037,7 +5991,6 @@ interface CSSKeyframesRule extends CSSRule {
     findRule(rule: string): CSSKeyframeRule;
 }
 
-// eslint-disable-next-line no-var
 declare var CSSKeyframesRule: {
     prototype: CSSKeyframesRule;
     new(): CSSKeyframesRule;
@@ -6047,7 +6000,6 @@ interface CSSMediaRule extends CSSConditionRule {
     readonly media: MediaList;
 }
 
-// eslint-disable-next-line no-var
 declare var CSSMediaRule: {
     prototype: CSSMediaRule;
     new(): CSSMediaRule;
@@ -6058,7 +6010,6 @@ interface CSSNamespaceRule extends CSSRule {
     readonly prefix: string;
 }
 
-// eslint-disable-next-line no-var
 declare var CSSNamespaceRule: {
     prototype: CSSNamespaceRule;
     new(): CSSNamespaceRule;
@@ -6071,7 +6022,6 @@ interface CSSPageRule extends CSSRule {
     readonly style: CSSStyleDeclaration;
 }
 
-// eslint-disable-next-line no-var
 declare var CSSPageRule: {
     prototype: CSSPageRule;
     new(): CSSPageRule;
@@ -6096,7 +6046,6 @@ interface CSSRule {
     readonly VIEWPORT_RULE: number;
 }
 
-// eslint-disable-next-line no-var
 declare var CSSRule: {
     prototype: CSSRule;
     new(): CSSRule;
@@ -6120,7 +6069,6 @@ interface CSSRuleList {
     [index: number]: CSSRule;
 }
 
-// eslint-disable-next-line no-var
 declare var CSSRuleList: {
     prototype: CSSRuleList;
     new(): CSSRuleList;
@@ -6482,7 +6430,6 @@ interface CSSStyleDeclaration {
     [index: number]: string;
 }
 
-// eslint-disable-next-line no-var
 declare var CSSStyleDeclaration: {
     prototype: CSSStyleDeclaration;
     new(): CSSStyleDeclaration;
@@ -6494,7 +6441,6 @@ interface CSSStyleRule extends CSSRule {
     readonly style: CSSStyleDeclaration;
 }
 
-// eslint-disable-next-line no-var
 declare var CSSStyleRule: {
     prototype: CSSStyleRule;
     new(): CSSStyleRule;
@@ -6521,7 +6467,6 @@ interface CSSStyleSheet extends StyleSheet {
     removeRule(lIndex: number): void;
 }
 
-// eslint-disable-next-line no-var
 declare var CSSStyleSheet: {
     prototype: CSSStyleSheet;
     new(): CSSStyleSheet;
@@ -6530,7 +6475,6 @@ declare var CSSStyleSheet: {
 interface CSSSupportsRule extends CSSConditionRule {
 }
 
-// eslint-disable-next-line no-var
 declare var CSSSupportsRule: {
     prototype: CSSSupportsRule;
     new(): CSSSupportsRule;
@@ -6541,7 +6485,6 @@ interface CustomEvent extends Event {
     initCustomEvent(typeArg: string, canBubbleArg: boolean, cancelableArg: boolean, detailArg: any): void;
 }
 
-// eslint-disable-next-line no-var
 declare var CustomEvent: {
     prototype: CustomEvent;
     new(typeArg: string, eventInitDict?: CustomEventInit): CustomEvent;
@@ -6555,7 +6498,6 @@ interface DataCue extends TextTrackCue {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var DataCue: {
     prototype: DataCue;
     new(): DataCue;
@@ -6573,7 +6515,6 @@ interface DataTransfer {
     setDragImage(image: Element, x: number, y: number): void;
 }
 
-// eslint-disable-next-line no-var
 declare var DataTransfer: {
     prototype: DataTransfer;
     new(): DataTransfer;
@@ -6587,7 +6528,6 @@ interface DataTransferItem {
     webkitGetAsEntry(): any;
 }
 
-// eslint-disable-next-line no-var
 declare var DataTransferItem: {
     prototype: DataTransferItem;
     new(): DataTransferItem;
@@ -6602,7 +6542,6 @@ interface DataTransferItemList {
     [index: number]: DataTransferItem;
 }
 
-// eslint-disable-next-line no-var
 declare var DataTransferItemList: {
     prototype: DataTransferItemList;
     new(): DataTransferItemList;
@@ -6616,7 +6555,6 @@ interface DeferredPermissionRequest {
     deny(): void;
 }
 
-// eslint-disable-next-line no-var
 declare var DeferredPermissionRequest: {
     prototype: DeferredPermissionRequest;
     new(): DeferredPermissionRequest;
@@ -6626,7 +6564,6 @@ interface DelayNode extends AudioNode {
     readonly delayTime: AudioParam;
 }
 
-// eslint-disable-next-line no-var
 declare var DelayNode: {
     prototype: DelayNode;
     new(): DelayNode;
@@ -6638,7 +6575,6 @@ interface DeviceAcceleration {
     readonly z: number | null;
 }
 
-// eslint-disable-next-line no-var
 declare var DeviceAcceleration: {
     prototype: DeviceAcceleration;
     new(): DeviceAcceleration;
@@ -6648,7 +6584,6 @@ interface DeviceLightEvent extends Event {
     readonly value: number;
 }
 
-// eslint-disable-next-line no-var
 declare var DeviceLightEvent: {
     prototype: DeviceLightEvent;
     new(typeArg: string, eventInitDict?: DeviceLightEventInit): DeviceLightEvent;
@@ -6662,7 +6597,6 @@ interface DeviceMotionEvent extends Event {
     initDeviceMotionEvent(type: string, bubbles: boolean, cancelable: boolean, acceleration: DeviceAccelerationDict | null, accelerationIncludingGravity: DeviceAccelerationDict | null, rotationRate: DeviceRotationRateDict | null, interval: number | null): void;
 }
 
-// eslint-disable-next-line no-var
 declare var DeviceMotionEvent: {
     prototype: DeviceMotionEvent;
     new(typeArg: string, eventInitDict?: DeviceMotionEventInit): DeviceMotionEvent;
@@ -6676,7 +6610,6 @@ interface DeviceOrientationEvent extends Event {
     initDeviceOrientationEvent(type: string, bubbles: boolean, cancelable: boolean, alpha: number | null, beta: number | null, gamma: number | null, absolute: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var DeviceOrientationEvent: {
     prototype: DeviceOrientationEvent;
     new(typeArg: string, eventInitDict?: DeviceOrientationEventInit): DeviceOrientationEvent;
@@ -6688,7 +6621,6 @@ interface DeviceRotationRate {
     readonly gamma: number | null;
 }
 
-// eslint-disable-next-line no-var
 declare var DeviceRotationRate: {
     prototype: DeviceRotationRate;
     new(): DeviceRotationRate;
@@ -7491,7 +7423,6 @@ interface Document extends Node, GlobalEventHandlers, NodeSelector, DocumentEven
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var Document: {
     prototype: Document;
     new(): Document;
@@ -7501,7 +7432,6 @@ interface DocumentFragment extends Node, NodeSelector, ParentNode {
     getElementById(elementId: string): HTMLElement | null;
 }
 
-// eslint-disable-next-line no-var
 declare var DocumentFragment: {
     prototype: DocumentFragment;
     new(): DocumentFragment;
@@ -7516,7 +7446,6 @@ interface DocumentType extends Node, ChildNode {
     readonly systemId: string;
 }
 
-// eslint-disable-next-line no-var
 declare var DocumentType: {
     prototype: DocumentType;
     new(): DocumentType;
@@ -7527,7 +7456,6 @@ interface DOMError {
     toString(): string;
 }
 
-// eslint-disable-next-line no-var
 declare var DOMError: {
     prototype: DOMError;
     new(): DOMError;
@@ -7567,7 +7495,6 @@ interface DOMException {
     readonly WRONG_DOCUMENT_ERR: number;
 }
 
-// eslint-disable-next-line no-var
 declare var DOMException: {
     prototype: DOMException;
     new(message?: string, name?: string): DOMException;
@@ -7607,7 +7534,6 @@ interface DOMImplementation {
     hasFeature(feature: string | null, version: string | null): boolean;
 }
 
-// eslint-disable-next-line no-var
 declare var DOMImplementation: {
     prototype: DOMImplementation;
     new(): DOMImplementation;
@@ -7617,7 +7543,6 @@ interface DOMParser {
     parseFromString(source: string, mimeType: string): Document;
 }
 
-// eslint-disable-next-line no-var
 declare var DOMParser: {
     prototype: DOMParser;
     new(): DOMParser;
@@ -7627,7 +7552,6 @@ interface DOMSettableTokenList extends DOMTokenList {
     value: string;
 }
 
-// eslint-disable-next-line no-var
 declare var DOMSettableTokenList: {
     prototype: DOMSettableTokenList;
     new(): DOMSettableTokenList;
@@ -7640,7 +7564,6 @@ interface DOMStringList {
     [index: number]: string;
 }
 
-// eslint-disable-next-line no-var
 declare var DOMStringList: {
     prototype: DOMStringList;
     new(): DOMStringList;
@@ -7650,7 +7573,6 @@ interface DOMStringMap {
     [name: string]: string | undefined;
 }
 
-// eslint-disable-next-line no-var
 declare var DOMStringMap: {
     prototype: DOMStringMap;
     new(): DOMStringMap;
@@ -7667,7 +7589,6 @@ interface DOMTokenList {
     [index: number]: string;
 }
 
-// eslint-disable-next-line no-var
 declare var DOMTokenList: {
     prototype: DOMTokenList;
     new(): DOMTokenList;
@@ -7679,7 +7600,6 @@ interface DragEvent extends MouseEvent {
     msConvertURL(file: File, targetType: string, targetURL?: string): void;
 }
 
-// eslint-disable-next-line no-var
 declare var DragEvent: {
     prototype: DragEvent;
     new(type: "drag" | "dragend" | "dragenter" | "dragexit" | "dragleave" | "dragover" | "dragstart" | "drop", dragEventInit?: { dataTransfer?: DataTransfer }): DragEvent;
@@ -7694,7 +7614,6 @@ interface DynamicsCompressorNode extends AudioNode {
     readonly threshold: AudioParam;
 }
 
-// eslint-disable-next-line no-var
 declare var DynamicsCompressorNode: {
     prototype: DynamicsCompressorNode;
     new(): DynamicsCompressorNode;
@@ -7831,7 +7750,6 @@ interface Element extends Node, GlobalEventHandlers, ElementTraversal, NodeSelec
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var Element: {
     prototype: Element;
     new(): Element;
@@ -7846,7 +7764,6 @@ interface ErrorEvent extends Event {
     initErrorEvent(typeArg: string, canBubbleArg: boolean, cancelableArg: boolean, messageArg: string, filenameArg: string, linenoArg: number): void;
 }
 
-// eslint-disable-next-line no-var
 declare var ErrorEvent: {
     prototype: ErrorEvent;
     new(type: string, errorEventInitDict?: ErrorEventInit): ErrorEvent;
@@ -7876,7 +7793,6 @@ interface Event {
     readonly CAPTURING_PHASE: number;
 }
 
-// eslint-disable-next-line no-var
 declare var Event: {
     prototype: Event;
     new(typeArg: string, eventInitDict?: EventInit): Event;
@@ -7891,7 +7807,6 @@ interface EventTarget {
     removeEventListener(type: string, listener?: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
 }
 
-// eslint-disable-next-line no-var
 declare var EventTarget: {
     prototype: EventTarget;
     new(): EventTarget;
@@ -7900,7 +7815,6 @@ declare var EventTarget: {
 interface EXT_frag_depth {
 }
 
-// eslint-disable-next-line no-var
 declare var EXT_frag_depth: {
     prototype: EXT_frag_depth;
     new(): EXT_frag_depth;
@@ -7911,7 +7825,6 @@ interface EXT_texture_filter_anisotropic {
     readonly TEXTURE_MAX_ANISOTROPY_EXT: number;
 }
 
-// eslint-disable-next-line no-var
 declare var EXT_texture_filter_anisotropic: {
     prototype: EXT_texture_filter_anisotropic;
     new(): EXT_texture_filter_anisotropic;
@@ -7929,7 +7842,6 @@ interface ExtensionScriptApis {
     registerGenericPersistentCallbackHandler(callbackHandler: any): void;
 }
 
-// eslint-disable-next-line no-var
 declare var ExtensionScriptApis: {
     prototype: ExtensionScriptApis;
     new(): ExtensionScriptApis;
@@ -7938,7 +7850,6 @@ declare var ExtensionScriptApis: {
 interface External {
 }
 
-// eslint-disable-next-line no-var
 declare var External: {
     prototype: External;
     new(): External;
@@ -7950,7 +7861,6 @@ interface File extends Blob {
     readonly webkitRelativePath: string;
 }
 
-// eslint-disable-next-line no-var
 declare var File: {
     prototype: File;
     new (parts: (ArrayBuffer | ArrayBufferView | Blob | string)[], filename: string, properties?: FilePropertyBag): File;
@@ -7962,7 +7872,6 @@ interface FileList {
     [index: number]: File;
 }
 
-// eslint-disable-next-line no-var
 declare var FileList: {
     prototype: FileList;
     new(): FileList;
@@ -7980,7 +7889,6 @@ interface FileReader extends EventTarget, MSBaseReader {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var FileReader: {
     prototype: FileReader;
     new(): FileReader;
@@ -7991,7 +7899,6 @@ interface FocusEvent extends UIEvent {
     initFocusEvent(typeArg: string, canBubbleArg: boolean, cancelableArg: boolean, viewArg: Window, detailArg: number, relatedTargetArg: EventTarget): void;
 }
 
-// eslint-disable-next-line no-var
 declare var FocusEvent: {
     prototype: FocusEvent;
     new(typeArg: string, eventInitDict?: FocusEventInit): FocusEvent;
@@ -8006,7 +7913,6 @@ interface FocusNavigationEvent extends Event {
     requestFocus(): void;
 }
 
-// eslint-disable-next-line no-var
 declare var FocusNavigationEvent: {
     prototype: FocusNavigationEvent;
     new(type: string, eventInitDict?: FocusNavigationEventInit): FocusNavigationEvent;
@@ -8021,7 +7927,6 @@ interface FormData {
     set(name: string, value: string | Blob, fileName?: string): void;
 }
 
-// eslint-disable-next-line no-var
 declare var FormData: {
     prototype: FormData;
     new (form?: HTMLFormElement): FormData;
@@ -8031,7 +7936,6 @@ interface GainNode extends AudioNode {
     readonly gain: AudioParam;
 }
 
-// eslint-disable-next-line no-var
 declare var GainNode: {
     prototype: GainNode;
     new(): GainNode;
@@ -8047,7 +7951,6 @@ interface Gamepad {
     readonly timestamp: number;
 }
 
-// eslint-disable-next-line no-var
 declare var Gamepad: {
     prototype: Gamepad;
     new(): Gamepad;
@@ -8058,7 +7961,6 @@ interface GamepadButton {
     readonly value: number;
 }
 
-// eslint-disable-next-line no-var
 declare var GamepadButton: {
     prototype: GamepadButton;
     new(): GamepadButton;
@@ -8068,7 +7970,6 @@ interface GamepadEvent extends Event {
     readonly gamepad: Gamepad;
 }
 
-// eslint-disable-next-line no-var
 declare var GamepadEvent: {
     prototype: GamepadEvent;
     new(typeArg: string, eventInitDict?: GamepadEventInit): GamepadEvent;
@@ -8080,7 +7981,6 @@ interface Geolocation {
     watchPosition(successCallback: PositionCallback, errorCallback?: PositionErrorCallback, options?: PositionOptions): number;
 }
 
-// eslint-disable-next-line no-var
 declare var Geolocation: {
     prototype: Geolocation;
     new(): Geolocation;
@@ -8091,7 +7991,6 @@ interface HashChangeEvent extends Event {
     readonly oldURL: string | null;
 }
 
-// eslint-disable-next-line no-var
 declare var HashChangeEvent: {
     prototype: HashChangeEvent;
     new(typeArg: string, eventInitDict?: HashChangeEventInit): HashChangeEvent;
@@ -8106,7 +8005,6 @@ interface Headers {
     set(name: string, value: string): void;
 }
 
-// eslint-disable-next-line no-var
 declare var Headers: {
     prototype: Headers;
     new(init?: Headers | string[][] | object): Headers;
@@ -8123,7 +8021,6 @@ interface History {
     replaceState(data: any, title: string, url?: string | null): void;
 }
 
-// eslint-disable-next-line no-var
 declare var History: {
     prototype: History;
     new(): History;
@@ -8136,7 +8033,6 @@ interface HTMLAllCollection {
     [index: number]: Element;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLAllCollection: {
     prototype: HTMLAllCollection;
     new(): HTMLAllCollection;
@@ -8228,7 +8124,6 @@ interface HTMLAnchorElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLAnchorElement: {
     prototype: HTMLAnchorElement;
     new(): HTMLAnchorElement;
@@ -8305,7 +8200,6 @@ interface HTMLAppletElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLAppletElement: {
     prototype: HTMLAppletElement;
     new(): HTMLAppletElement;
@@ -8376,7 +8270,6 @@ interface HTMLAreaElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLAreaElement: {
     prototype: HTMLAreaElement;
     new(): HTMLAreaElement;
@@ -8385,7 +8278,6 @@ declare var HTMLAreaElement: {
 interface HTMLAreasCollection extends HTMLCollectionBase {
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLAreasCollection: {
     prototype: HTMLAreasCollection;
     new(): HTMLAreasCollection;
@@ -8398,7 +8290,6 @@ interface HTMLAudioElement extends HTMLMediaElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLAudioElement: {
     prototype: HTMLAudioElement;
     new(): HTMLAudioElement;
@@ -8419,7 +8310,6 @@ interface HTMLBaseElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLBaseElement: {
     prototype: HTMLBaseElement;
     new(): HTMLBaseElement;
@@ -8440,7 +8330,6 @@ interface HTMLBaseFontElement extends HTMLElement, DOML2DeprecatedColorProperty 
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLBaseFontElement: {
     prototype: HTMLBaseFontElement;
     new(): HTMLBaseFontElement;
@@ -8497,7 +8386,6 @@ interface HTMLBodyElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLBodyElement: {
     prototype: HTMLBodyElement;
     new(): HTMLBodyElement;
@@ -8514,7 +8402,6 @@ interface HTMLBRElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLBRElement: {
     prototype: HTMLBRElement;
     new(): HTMLBRElement;
@@ -8590,7 +8477,6 @@ interface HTMLButtonElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLButtonElement: {
     prototype: HTMLButtonElement;
     new(): HTMLButtonElement;
@@ -8628,7 +8514,6 @@ interface HTMLCanvasElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLCanvasElement: {
     prototype: HTMLCanvasElement;
     new(): HTMLCanvasElement;
@@ -8653,7 +8538,6 @@ interface HTMLCollection extends HTMLCollectionBase {
     namedItem(name: string): Element | null;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLCollection: {
     prototype: HTMLCollection;
     new(): HTMLCollection;
@@ -8667,7 +8551,6 @@ interface HTMLDataElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLDataElement: {
     prototype: HTMLDataElement;
     new(): HTMLDataElement;
@@ -8681,7 +8564,6 @@ interface HTMLDataListElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLDataListElement: {
     prototype: HTMLDataListElement;
     new(): HTMLDataListElement;
@@ -8695,7 +8577,6 @@ interface HTMLDirectoryElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLDirectoryElement: {
     prototype: HTMLDirectoryElement;
     new(): HTMLDirectoryElement;
@@ -8716,7 +8597,6 @@ interface HTMLDivElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLDivElement: {
     prototype: HTMLDivElement;
     new(): HTMLDivElement;
@@ -8730,7 +8610,6 @@ interface HTMLDListElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLDListElement: {
     prototype: HTMLDListElement;
     new(): HTMLDListElement;
@@ -8743,7 +8622,6 @@ interface HTMLDocument extends Document {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLDocument: {
     prototype: HTMLDocument;
     new(): HTMLDocument;
@@ -8919,7 +8797,6 @@ interface HTMLElement extends Element {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLElement: {
     prototype: HTMLElement;
     new(): HTMLElement;
@@ -8978,7 +8855,6 @@ interface HTMLEmbedElement extends HTMLElement, GetSVGDocument {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLEmbedElement: {
     prototype: HTMLEmbedElement;
     new(): HTMLEmbedElement;
@@ -9022,7 +8898,6 @@ interface HTMLFieldSetElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLFieldSetElement: {
     prototype: HTMLFieldSetElement;
     new(): HTMLFieldSetElement;
@@ -9039,7 +8914,6 @@ interface HTMLFontElement extends HTMLElement, DOML2DeprecatedColorProperty, DOM
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLFontElement: {
     prototype: HTMLFontElement;
     new(): HTMLFontElement;
@@ -9049,7 +8923,6 @@ interface HTMLFormControlsCollection extends HTMLCollectionBase {
     namedItem(name: string): HTMLCollection | Element | null;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLFormControlsCollection: {
     prototype: HTMLFormControlsCollection;
     new(): HTMLFormControlsCollection;
@@ -9130,7 +9003,6 @@ interface HTMLFormElement extends HTMLElement {
     [name: string]: any;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLFormElement: {
     prototype: HTMLFormElement;
     new(): HTMLFormElement;
@@ -9207,7 +9079,6 @@ interface HTMLFrameElement extends HTMLElement, GetSVGDocument {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLFrameElement: {
     prototype: HTMLFrameElement;
     new(): HTMLFrameElement;
@@ -9278,7 +9149,6 @@ interface HTMLFrameSetElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLFrameSetElement: {
     prototype: HTMLFrameSetElement;
     new(): HTMLFrameSetElement;
@@ -9292,7 +9162,6 @@ interface HTMLHeadElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLHeadElement: {
     prototype: HTMLHeadElement;
     new(): HTMLHeadElement;
@@ -9309,7 +9178,6 @@ interface HTMLHeadingElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLHeadingElement: {
     prototype: HTMLHeadingElement;
     new(): HTMLHeadingElement;
@@ -9334,7 +9202,6 @@ interface HTMLHRElement extends HTMLElement, DOML2DeprecatedColorProperty, DOML2
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLHRElement: {
     prototype: HTMLHRElement;
     new(): HTMLHRElement;
@@ -9351,7 +9218,6 @@ interface HTMLHtmlElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLHtmlElement: {
     prototype: HTMLHtmlElement;
     new(): HTMLHtmlElement;
@@ -9439,7 +9305,6 @@ interface HTMLIFrameElement extends HTMLElement, GetSVGDocument {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLIFrameElement: {
     prototype: HTMLIFrameElement;
     new(): HTMLIFrameElement;
@@ -9533,7 +9398,6 @@ interface HTMLImageElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLImageElement: {
     prototype: HTMLImageElement;
     new(): HTMLImageElement;
@@ -9748,7 +9612,6 @@ interface HTMLInputElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLInputElement: {
     prototype: HTMLInputElement;
     new(): HTMLInputElement;
@@ -9769,7 +9632,6 @@ interface HTMLLabelElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLLabelElement: {
     prototype: HTMLLabelElement;
     new(): HTMLLabelElement;
@@ -9790,7 +9652,6 @@ interface HTMLLegendElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLLegendElement: {
     prototype: HTMLLegendElement;
     new(): HTMLLegendElement;
@@ -9808,7 +9669,6 @@ interface HTMLLIElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLLIElement: {
     prototype: HTMLLIElement;
     new(): HTMLLIElement;
@@ -9856,7 +9716,6 @@ interface HTMLLinkElement extends HTMLElement, LinkStyle {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLLinkElement: {
     prototype: HTMLLinkElement;
     new(): HTMLLinkElement;
@@ -9877,7 +9736,6 @@ interface HTMLMapElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLMapElement: {
     prototype: HTMLMapElement;
     new(): HTMLMapElement;
@@ -9912,7 +9770,6 @@ interface HTMLMarqueeElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLMarqueeElement: {
     prototype: HTMLMarqueeElement;
     new(): HTMLMarqueeElement;
@@ -10097,7 +9954,6 @@ interface HTMLMediaElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLMediaElement: {
     prototype: HTMLMediaElement;
     new(): HTMLMediaElement;
@@ -10121,7 +9977,6 @@ interface HTMLMenuElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLMenuElement: {
     prototype: HTMLMenuElement;
     new(): HTMLMenuElement;
@@ -10158,7 +10013,6 @@ interface HTMLMetaElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLMetaElement: {
     prototype: HTMLMetaElement;
     new(): HTMLMetaElement;
@@ -10177,7 +10031,6 @@ interface HTMLMeterElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLMeterElement: {
     prototype: HTMLMeterElement;
     new(): HTMLMeterElement;
@@ -10198,7 +10051,6 @@ interface HTMLModElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLModElement: {
     prototype: HTMLModElement;
     new(): HTMLModElement;
@@ -10318,7 +10170,6 @@ interface HTMLObjectElement extends HTMLElement, GetSVGDocument {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLObjectElement: {
     prototype: HTMLObjectElement;
     new(): HTMLObjectElement;
@@ -10337,7 +10188,6 @@ interface HTMLOListElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLOListElement: {
     prototype: HTMLOListElement;
     new(): HTMLOListElement;
@@ -10379,7 +10229,6 @@ interface HTMLOptGroupElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLOptGroupElement: {
     prototype: HTMLOptGroupElement;
     new(): HTMLOptGroupElement;
@@ -10421,7 +10270,6 @@ interface HTMLOptionElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLOptionElement: {
     prototype: HTMLOptionElement;
     new(): HTMLOptionElement;
@@ -10434,7 +10282,6 @@ interface HTMLOptionsCollection extends HTMLCollectionOf<HTMLOptionElement> {
     remove(index: number): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLOptionsCollection: {
     prototype: HTMLOptionsCollection;
     new(): HTMLOptionsCollection;
@@ -10459,7 +10306,6 @@ interface HTMLOutputElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLOutputElement: {
     prototype: HTMLOutputElement;
     new(): HTMLOutputElement;
@@ -10477,7 +10323,6 @@ interface HTMLParagraphElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLParagraphElement: {
     prototype: HTMLParagraphElement;
     new(): HTMLParagraphElement;
@@ -10506,7 +10351,6 @@ interface HTMLParamElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLParamElement: {
     prototype: HTMLParamElement;
     new(): HTMLParamElement;
@@ -10519,7 +10363,6 @@ interface HTMLPictureElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLPictureElement: {
     prototype: HTMLPictureElement;
     new(): HTMLPictureElement;
@@ -10536,7 +10379,6 @@ interface HTMLPreElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLPreElement: {
     prototype: HTMLPreElement;
     new(): HTMLPreElement;
@@ -10565,7 +10407,6 @@ interface HTMLProgressElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLProgressElement: {
     prototype: HTMLProgressElement;
     new(): HTMLProgressElement;
@@ -10582,7 +10423,6 @@ interface HTMLQuoteElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLQuoteElement: {
     prototype: HTMLQuoteElement;
     new(): HTMLQuoteElement;
@@ -10626,7 +10466,6 @@ interface HTMLScriptElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLScriptElement: {
     prototype: HTMLScriptElement;
     new(): HTMLScriptElement;
@@ -10726,7 +10565,6 @@ interface HTMLSelectElement extends HTMLElement {
     [name: string]: any;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLSelectElement: {
     prototype: HTMLSelectElement;
     new(): HTMLSelectElement;
@@ -10754,7 +10592,6 @@ interface HTMLSourceElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLSourceElement: {
     prototype: HTMLSourceElement;
     new(): HTMLSourceElement;
@@ -10767,7 +10604,6 @@ interface HTMLSpanElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLSpanElement: {
     prototype: HTMLSpanElement;
     new(): HTMLSpanElement;
@@ -10789,7 +10625,6 @@ interface HTMLStyleElement extends HTMLElement, LinkStyle {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLStyleElement: {
     prototype: HTMLStyleElement;
     new(): HTMLStyleElement;
@@ -10810,7 +10645,6 @@ interface HTMLTableCaptionElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLTableCaptionElement: {
     prototype: HTMLTableCaptionElement;
     new(): HTMLTableCaptionElement;
@@ -10868,7 +10702,6 @@ interface HTMLTableCellElement extends HTMLElement, HTMLTableAlignment {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLTableCellElement: {
     prototype: HTMLTableCellElement;
     new(): HTMLTableCellElement;
@@ -10893,7 +10726,6 @@ interface HTMLTableColElement extends HTMLElement, HTMLTableAlignment {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLTableColElement: {
     prototype: HTMLTableColElement;
     new(): HTMLTableColElement;
@@ -10906,7 +10738,6 @@ interface HTMLTableDataCellElement extends HTMLTableCellElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLTableDataCellElement: {
     prototype: HTMLTableDataCellElement;
     new(): HTMLTableDataCellElement;
@@ -11022,7 +10853,6 @@ interface HTMLTableElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLTableElement: {
     prototype: HTMLTableElement;
     new(): HTMLTableElement;
@@ -11039,7 +10869,6 @@ interface HTMLTableHeaderCellElement extends HTMLTableCellElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLTableHeaderCellElement: {
     prototype: HTMLTableHeaderCellElement;
     new(): HTMLTableHeaderCellElement;
@@ -11083,7 +10912,6 @@ interface HTMLTableRowElement extends HTMLElement, HTMLTableAlignment {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLTableRowElement: {
     prototype: HTMLTableRowElement;
     new(): HTMLTableRowElement;
@@ -11114,7 +10942,6 @@ interface HTMLTableSectionElement extends HTMLElement, HTMLTableAlignment {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLTableSectionElement: {
     prototype: HTMLTableSectionElement;
     new(): HTMLTableSectionElement;
@@ -11128,7 +10955,6 @@ interface HTMLTemplateElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLTemplateElement: {
     prototype: HTMLTemplateElement;
     new(): HTMLTemplateElement;
@@ -11238,7 +11064,6 @@ interface HTMLTextAreaElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLTextAreaElement: {
     prototype: HTMLTextAreaElement;
     new(): HTMLTextAreaElement;
@@ -11252,7 +11077,6 @@ interface HTMLTimeElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLTimeElement: {
     prototype: HTMLTimeElement;
     new(): HTMLTimeElement;
@@ -11269,7 +11093,6 @@ interface HTMLTitleElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLTitleElement: {
     prototype: HTMLTitleElement;
     new(): HTMLTitleElement;
@@ -11293,7 +11116,6 @@ interface HTMLTrackElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLTrackElement: {
     prototype: HTMLTrackElement;
     new(): HTMLTrackElement;
@@ -11312,7 +11134,6 @@ interface HTMLUListElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLUListElement: {
     prototype: HTMLUListElement;
     new(): HTMLUListElement;
@@ -11325,7 +11146,6 @@ interface HTMLUnknownElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLUnknownElement: {
     prototype: HTMLUnknownElement;
     new(): HTMLUnknownElement;
@@ -11383,7 +11203,6 @@ interface HTMLVideoElement extends HTMLMediaElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLVideoElement: {
     prototype: HTMLVideoElement;
     new(): HTMLVideoElement;
@@ -11404,7 +11223,6 @@ interface IDBCursor {
     readonly PREV_NO_DUPLICATE: string;
 }
 
-// eslint-disable-next-line no-var
 declare var IDBCursor: {
     prototype: IDBCursor;
     new(): IDBCursor;
@@ -11418,7 +11236,6 @@ interface IDBCursorWithValue extends IDBCursor {
     readonly value: any;
 }
 
-// eslint-disable-next-line no-var
 declare var IDBCursorWithValue: {
     prototype: IDBCursorWithValue;
     new(): IDBCursorWithValue;
@@ -11447,7 +11264,6 @@ interface IDBDatabase extends EventTarget {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var IDBDatabase: {
     prototype: IDBDatabase;
     new(): IDBDatabase;
@@ -11459,7 +11275,6 @@ interface IDBFactory {
     open(name: string, version?: number): IDBOpenDBRequest;
 }
 
-// eslint-disable-next-line no-var
 declare var IDBFactory: {
     prototype: IDBFactory;
     new(): IDBFactory;
@@ -11478,7 +11293,6 @@ interface IDBIndex {
     openKeyCursor(range?: IDBKeyRange | IDBValidKey, direction?: IDBCursorDirection): IDBRequest;
 }
 
-// eslint-disable-next-line no-var
 declare var IDBIndex: {
     prototype: IDBIndex;
     new(): IDBIndex;
@@ -11491,7 +11305,6 @@ interface IDBKeyRange {
     readonly upperOpen: boolean;
 }
 
-// eslint-disable-next-line no-var
 declare var IDBKeyRange: {
     prototype: IDBKeyRange;
     new(): IDBKeyRange;
@@ -11519,7 +11332,6 @@ interface IDBObjectStore {
     put(value: any, key?: IDBKeyRange | IDBValidKey): IDBRequest;
 }
 
-// eslint-disable-next-line no-var
 declare var IDBObjectStore: {
     prototype: IDBObjectStore;
     new(): IDBObjectStore;
@@ -11539,7 +11351,6 @@ interface IDBOpenDBRequest extends IDBRequest {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var IDBOpenDBRequest: {
     prototype: IDBOpenDBRequest;
     new(): IDBOpenDBRequest;
@@ -11564,7 +11375,6 @@ interface IDBRequest extends EventTarget {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var IDBRequest: {
     prototype: IDBRequest;
     new(): IDBRequest;
@@ -11594,7 +11404,6 @@ interface IDBTransaction extends EventTarget {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var IDBTransaction: {
     prototype: IDBTransaction;
     new(): IDBTransaction;
@@ -11608,7 +11417,6 @@ interface IDBVersionChangeEvent extends Event {
     readonly oldVersion: number;
 }
 
-// eslint-disable-next-line no-var
 declare var IDBVersionChangeEvent: {
     prototype: IDBVersionChangeEvent;
     new(): IDBVersionChangeEvent;
@@ -11618,7 +11426,6 @@ interface IIRFilterNode extends AudioNode {
     getFrequencyResponse(frequencyHz: Float32Array, magResponse: Float32Array, phaseResponse: Float32Array): void;
 }
 
-// eslint-disable-next-line no-var
 declare var IIRFilterNode: {
     prototype: IIRFilterNode;
     new(): IIRFilterNode;
@@ -11630,7 +11437,6 @@ interface ImageData {
     readonly width: number;
 }
 
-// eslint-disable-next-line no-var
 declare var ImageData: {
     prototype: ImageData;
     new(width: number, height: number): ImageData;
@@ -11647,7 +11453,6 @@ interface IntersectionObserver {
     unobserve(target: Element): void;
 }
 
-// eslint-disable-next-line no-var
 declare var IntersectionObserver: {
     prototype: IntersectionObserver;
     new(callback: IntersectionObserverCallback, options?: IntersectionObserverInit): IntersectionObserver;
@@ -11663,7 +11468,6 @@ interface IntersectionObserverEntry {
     readonly isIntersecting: boolean;
 }
 
-// eslint-disable-next-line no-var
 declare var IntersectionObserverEntry: {
     prototype: IntersectionObserverEntry;
     new(intersectionObserverEntryInit: IntersectionObserverEntryInit): IntersectionObserverEntry;
@@ -11693,7 +11497,6 @@ interface KeyboardEvent extends UIEvent {
     readonly DOM_KEY_LOCATION_STANDARD: number;
 }
 
-// eslint-disable-next-line no-var
 declare var KeyboardEvent: {
     prototype: KeyboardEvent;
     new(typeArg: string, eventInitDict?: KeyboardEventInit): KeyboardEvent;
@@ -11710,7 +11513,6 @@ interface ListeningStateChangedEvent extends Event {
     readonly state: ListeningState;
 }
 
-// eslint-disable-next-line no-var
 declare var ListeningStateChangedEvent: {
     prototype: ListeningStateChangedEvent;
     new(): ListeningStateChangedEvent;
@@ -11732,7 +11534,6 @@ interface Location {
     toString(): string;
 }
 
-// eslint-disable-next-line no-var
 declare var Location: {
     prototype: Location;
     new(): Location;
@@ -11743,7 +11544,6 @@ interface LongRunningScriptDetectedEvent extends Event {
     stopPageScriptExecution: boolean;
 }
 
-// eslint-disable-next-line no-var
 declare var LongRunningScriptDetectedEvent: {
     prototype: LongRunningScriptDetectedEvent;
     new(): LongRunningScriptDetectedEvent;
@@ -11756,7 +11556,6 @@ interface MediaDeviceInfo {
     readonly label: string;
 }
 
-// eslint-disable-next-line no-var
 declare var MediaDeviceInfo: {
     prototype: MediaDeviceInfo;
     new(): MediaDeviceInfo;
@@ -11777,7 +11576,6 @@ interface MediaDevices extends EventTarget {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var MediaDevices: {
     prototype: MediaDevices;
     new(): MediaDevices;
@@ -11786,7 +11584,6 @@ declare var MediaDevices: {
 interface MediaElementAudioSourceNode extends AudioNode {
 }
 
-// eslint-disable-next-line no-var
 declare var MediaElementAudioSourceNode: {
     prototype: MediaElementAudioSourceNode;
     new(): MediaElementAudioSourceNode;
@@ -11797,7 +11594,6 @@ interface MediaEncryptedEvent extends Event {
     readonly initDataType: string;
 }
 
-// eslint-disable-next-line no-var
 declare var MediaEncryptedEvent: {
     prototype: MediaEncryptedEvent;
     new(type: string, eventInitDict?: MediaEncryptedEventInit): MediaEncryptedEvent;
@@ -11813,7 +11609,6 @@ interface MediaError {
     readonly MS_MEDIA_ERR_ENCRYPTED: number;
 }
 
-// eslint-disable-next-line no-var
 declare var MediaError: {
     prototype: MediaError;
     new(): MediaError;
@@ -11829,7 +11624,6 @@ interface MediaKeyMessageEvent extends Event {
     readonly messageType: MediaKeyMessageType;
 }
 
-// eslint-disable-next-line no-var
 declare var MediaKeyMessageEvent: {
     prototype: MediaKeyMessageEvent;
     new(type: string, eventInitDict?: MediaKeyMessageEventInit): MediaKeyMessageEvent;
@@ -11840,7 +11634,6 @@ interface MediaKeys {
     setServerCertificate(serverCertificate: any): Promise<void>;
 }
 
-// eslint-disable-next-line no-var
 declare var MediaKeys: {
     prototype: MediaKeys;
     new(): MediaKeys;
@@ -11858,7 +11651,6 @@ interface MediaKeySession extends EventTarget {
     update(response: any): Promise<void>;
 }
 
-// eslint-disable-next-line no-var
 declare var MediaKeySession: {
     prototype: MediaKeySession;
     new(): MediaKeySession;
@@ -11871,7 +11663,6 @@ interface MediaKeyStatusMap {
     has(keyId: any): boolean;
 }
 
-// eslint-disable-next-line no-var
 declare var MediaKeyStatusMap: {
     prototype: MediaKeyStatusMap;
     new(): MediaKeyStatusMap;
@@ -11883,7 +11674,6 @@ interface MediaKeySystemAccess {
     getConfiguration(): MediaKeySystemConfiguration;
 }
 
-// eslint-disable-next-line no-var
 declare var MediaKeySystemAccess: {
     prototype: MediaKeySystemAccess;
     new(): MediaKeySystemAccess;
@@ -11899,7 +11689,6 @@ interface MediaList {
     [index: number]: string;
 }
 
-// eslint-disable-next-line no-var
 declare var MediaList: {
     prototype: MediaList;
     new(): MediaList;
@@ -11912,7 +11701,6 @@ interface MediaQueryList {
     removeListener(listener: MediaQueryListListener): void;
 }
 
-// eslint-disable-next-line no-var
 declare var MediaQueryList: {
     prototype: MediaQueryList;
     new(): MediaQueryList;
@@ -11928,7 +11716,6 @@ interface MediaSource extends EventTarget {
     removeSourceBuffer(sourceBuffer: SourceBuffer): void;
 }
 
-// eslint-disable-next-line no-var
 declare var MediaSource: {
     prototype: MediaSource;
     new(): MediaSource;
@@ -11963,7 +11750,6 @@ interface MediaStream extends EventTarget {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var MediaStream: {
     prototype: MediaStream;
     new(streamOrTracks?: MediaStream | MediaStreamTrack[]): MediaStream;
@@ -11972,7 +11758,6 @@ declare var MediaStream: {
 interface MediaStreamAudioSourceNode extends AudioNode {
 }
 
-// eslint-disable-next-line no-var
 declare var MediaStreamAudioSourceNode: {
     prototype: MediaStreamAudioSourceNode;
     new(): MediaStreamAudioSourceNode;
@@ -11984,7 +11769,6 @@ interface MediaStreamError {
     readonly name: string;
 }
 
-// eslint-disable-next-line no-var
 declare var MediaStreamError: {
     prototype: MediaStreamError;
     new(): MediaStreamError;
@@ -11994,7 +11778,6 @@ interface MediaStreamErrorEvent extends Event {
     readonly error: MediaStreamError | null;
 }
 
-// eslint-disable-next-line no-var
 declare var MediaStreamErrorEvent: {
     prototype: MediaStreamErrorEvent;
     new(typeArg: string, eventInitDict?: MediaStreamErrorEventInit): MediaStreamErrorEvent;
@@ -12004,7 +11787,6 @@ interface MediaStreamEvent extends Event {
     readonly stream: MediaStream | null;
 }
 
-// eslint-disable-next-line no-var
 declare var MediaStreamEvent: {
     prototype: MediaStreamEvent;
     new(type: string, eventInitDict: MediaStreamEventInit): MediaStreamEvent;
@@ -12042,7 +11824,6 @@ interface MediaStreamTrack extends EventTarget {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var MediaStreamTrack: {
     prototype: MediaStreamTrack;
     new(): MediaStreamTrack;
@@ -12052,7 +11833,6 @@ interface MediaStreamTrackEvent extends Event {
     readonly track: MediaStreamTrack;
 }
 
-// eslint-disable-next-line no-var
 declare var MediaStreamTrackEvent: {
     prototype: MediaStreamTrackEvent;
     new(typeArg: string, eventInitDict?: MediaStreamTrackEventInit): MediaStreamTrackEvent;
@@ -12063,7 +11843,6 @@ interface MessageChannel {
     readonly port2: MessagePort;
 }
 
-// eslint-disable-next-line no-var
 declare var MessageChannel: {
     prototype: MessageChannel;
     new(): MessageChannel;
@@ -12077,7 +11856,6 @@ interface MessageEvent extends Event {
     initMessageEvent(typeArg: string, canBubbleArg: boolean, cancelableArg: boolean, dataArg: any, originArg: string, lastEventIdArg: string, sourceArg: Window): void;
 }
 
-// eslint-disable-next-line no-var
 declare var MessageEvent: {
     prototype: MessageEvent;
     new(type: string, eventInitDict?: MessageEventInit): MessageEvent;
@@ -12098,7 +11876,6 @@ interface MessagePort extends EventTarget {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var MessagePort: {
     prototype: MessagePort;
     new(): MessagePort;
@@ -12111,7 +11888,6 @@ interface MimeType {
     readonly type: string;
 }
 
-// eslint-disable-next-line no-var
 declare var MimeType: {
     prototype: MimeType;
     new(): MimeType;
@@ -12124,7 +11900,6 @@ interface MimeTypeArray {
     [index: number]: Plugin;
 }
 
-// eslint-disable-next-line no-var
 declare var MimeTypeArray: {
     prototype: MimeTypeArray;
     new(): MimeTypeArray;
@@ -12159,7 +11934,6 @@ interface MouseEvent extends UIEvent {
     initMouseEvent(typeArg: string, canBubbleArg: boolean, cancelableArg: boolean, viewArg: Window, detailArg: number, screenXArg: number, screenYArg: number, clientXArg: number, clientYArg: number, ctrlKeyArg: boolean, altKeyArg: boolean, shiftKeyArg: boolean, metaKeyArg: boolean, buttonArg: number, relatedTargetArg: EventTarget | null): void;
 }
 
-// eslint-disable-next-line no-var
 declare var MouseEvent: {
     prototype: MouseEvent;
     new(typeArg: string, eventInitDict?: MouseEventInit): MouseEvent;
@@ -12186,7 +11960,6 @@ interface MSApp {
     readonly IDLE: string;
     readonly NORMAL: string;
 }
-// eslint-disable-next-line no-var
 declare var MSApp: MSApp;
 
 interface MSAppAsyncOperationEventMap {
@@ -12210,7 +11983,6 @@ interface MSAppAsyncOperation extends EventTarget {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var MSAppAsyncOperation: {
     prototype: MSAppAsyncOperation;
     new(): MSAppAsyncOperation;
@@ -12224,7 +11996,6 @@ interface MSAssertion {
     readonly type: MSCredentialType;
 }
 
-// eslint-disable-next-line no-var
 declare var MSAssertion: {
     prototype: MSAssertion;
     new(): MSAssertion;
@@ -12235,7 +12006,6 @@ interface MSBlobBuilder {
     getBlob(contentType?: string): Blob;
 }
 
-// eslint-disable-next-line no-var
 declare var MSBlobBuilder: {
     prototype: MSBlobBuilder;
     new(): MSBlobBuilder;
@@ -12246,7 +12016,6 @@ interface MSCredentials {
     makeCredential(accountInfo: MSAccountInfo, params: MSCredentialParameters[], challenge?: string): Promise<MSAssertion>;
 }
 
-// eslint-disable-next-line no-var
 declare var MSCredentials: {
     prototype: MSCredentials;
     new(): MSCredentials;
@@ -12259,7 +12028,6 @@ interface MSFIDOCredentialAssertion extends MSAssertion {
     readonly transportHints: MSTransportType[];
 }
 
-// eslint-disable-next-line no-var
 declare var MSFIDOCredentialAssertion: {
     prototype: MSFIDOCredentialAssertion;
     new(): MSFIDOCredentialAssertion;
@@ -12271,7 +12039,6 @@ interface MSFIDOSignature {
     readonly signature: string;
 }
 
-// eslint-disable-next-line no-var
 declare var MSFIDOSignature: {
     prototype: MSFIDOSignature;
     new(): MSFIDOSignature;
@@ -12281,7 +12048,6 @@ interface MSFIDOSignatureAssertion extends MSAssertion {
     readonly signature: MSFIDOSignature;
 }
 
-// eslint-disable-next-line no-var
 declare var MSFIDOSignatureAssertion: {
     prototype: MSFIDOSignatureAssertion;
     new(): MSFIDOSignatureAssertion;
@@ -12293,7 +12059,6 @@ interface MSGesture {
     stop(): void;
 }
 
-// eslint-disable-next-line no-var
 declare var MSGesture: {
     prototype: MSGesture;
     new(): MSGesture;
@@ -12325,7 +12090,6 @@ interface MSGestureEvent extends UIEvent {
     readonly MSGESTURE_FLAG_NONE: number;
 }
 
-// eslint-disable-next-line no-var
 declare var MSGestureEvent: {
     prototype: MSGestureEvent;
     new(): MSGestureEvent;
@@ -12341,7 +12105,6 @@ interface MSGraphicsTrust {
     readonly status: string;
 }
 
-// eslint-disable-next-line no-var
 declare var MSGraphicsTrust: {
     prototype: MSGraphicsTrust;
     new(): MSGraphicsTrust;
@@ -12378,7 +12141,6 @@ interface MSHTMLWebViewElement extends HTMLElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var MSHTMLWebViewElement: {
     prototype: MSHTMLWebViewElement;
     new(): MSHTMLWebViewElement;
@@ -12407,7 +12169,6 @@ interface MSInputMethodContext extends EventTarget {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var MSInputMethodContext: {
     prototype: MSInputMethodContext;
     new(): MSInputMethodContext;
@@ -12429,7 +12190,6 @@ interface MSManipulationEvent extends UIEvent {
     readonly MS_MANIPULATION_STATE_STOPPED: number;
 }
 
-// eslint-disable-next-line no-var
 declare var MSManipulationEvent: {
     prototype: MSManipulationEvent;
     new(): MSManipulationEvent;
@@ -12454,7 +12214,6 @@ interface MSMediaKeyError {
     readonly MS_MEDIA_KEYERR_UNKNOWN: number;
 }
 
-// eslint-disable-next-line no-var
 declare var MSMediaKeyError: {
     prototype: MSMediaKeyError;
     new(): MSMediaKeyError;
@@ -12471,7 +12230,6 @@ interface MSMediaKeyMessageEvent extends Event {
     readonly message: Uint8Array;
 }
 
-// eslint-disable-next-line no-var
 declare var MSMediaKeyMessageEvent: {
     prototype: MSMediaKeyMessageEvent;
     new(): MSMediaKeyMessageEvent;
@@ -12481,7 +12239,6 @@ interface MSMediaKeyNeededEvent extends Event {
     readonly initData: Uint8Array | null;
 }
 
-// eslint-disable-next-line no-var
 declare var MSMediaKeyNeededEvent: {
     prototype: MSMediaKeyNeededEvent;
     new(): MSMediaKeyNeededEvent;
@@ -12492,7 +12249,6 @@ interface MSMediaKeys {
     createSession(type: string, initData: Uint8Array, cdmData?: Uint8Array): MSMediaKeySession;
 }
 
-// eslint-disable-next-line no-var
 declare var MSMediaKeys: {
     prototype: MSMediaKeys;
     new(keySystem: string): MSMediaKeys;
@@ -12508,7 +12264,6 @@ interface MSMediaKeySession extends EventTarget {
     update(key: Uint8Array): void;
 }
 
-// eslint-disable-next-line no-var
 declare var MSMediaKeySession: {
     prototype: MSMediaKeySession;
     new(): MSMediaKeySession;
@@ -12532,7 +12287,6 @@ interface MSPointerEvent extends MouseEvent {
     initPointerEvent(typeArg: string, canBubbleArg: boolean, cancelableArg: boolean, viewArg: Window, detailArg: number, screenXArg: number, screenYArg: number, clientXArg: number, clientYArg: number, ctrlKeyArg: boolean, altKeyArg: boolean, shiftKeyArg: boolean, metaKeyArg: boolean, buttonArg: number, relatedTargetArg: EventTarget, offsetXArg: number, offsetYArg: number, widthArg: number, heightArg: number, pressure: number, rotation: number, tiltX: number, tiltY: number, pointerIdArg: number, pointerType: any, hwTimestampArg: number, isPrimary: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var MSPointerEvent: {
     prototype: MSPointerEvent;
     new(typeArg: string, eventInitDict?: PointerEventInit): MSPointerEvent;
@@ -12544,7 +12298,6 @@ interface MSRangeCollection {
     [index: number]: Range;
 }
 
-// eslint-disable-next-line no-var
 declare var MSRangeCollection: {
     prototype: MSRangeCollection;
     new(): MSRangeCollection;
@@ -12555,7 +12308,6 @@ interface MSSiteModeEvent extends Event {
     readonly buttonID: number;
 }
 
-// eslint-disable-next-line no-var
 declare var MSSiteModeEvent: {
     prototype: MSSiteModeEvent;
     new(): MSSiteModeEvent;
@@ -12567,7 +12319,6 @@ interface MSStream {
     msDetachStream(): any;
 }
 
-// eslint-disable-next-line no-var
 declare var MSStream: {
     prototype: MSStream;
     new(): MSStream;
@@ -12586,7 +12337,6 @@ interface MSStreamReader extends EventTarget, MSBaseReader {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var MSStreamReader: {
     prototype: MSStreamReader;
     new(): MSStreamReader;
@@ -12618,7 +12368,6 @@ interface MSWebViewAsyncOperation extends EventTarget {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var MSWebViewAsyncOperation: {
     prototype: MSWebViewAsyncOperation;
     new(): MSWebViewAsyncOperation;
@@ -12635,7 +12384,6 @@ interface MSWebViewSettings {
     isJavaScriptEnabled: boolean;
 }
 
-// eslint-disable-next-line no-var
 declare var MSWebViewSettings: {
     prototype: MSWebViewSettings;
     new(): MSWebViewSettings;
@@ -12653,7 +12401,6 @@ interface MutationEvent extends Event {
     readonly REMOVAL: number;
 }
 
-// eslint-disable-next-line no-var
 declare var MutationEvent: {
     prototype: MutationEvent;
     new(): MutationEvent;
@@ -12668,7 +12415,6 @@ interface MutationObserver {
     takeRecords(): MutationRecord[];
 }
 
-// eslint-disable-next-line no-var
 declare var MutationObserver: {
     prototype: MutationObserver;
     new(callback: MutationCallback): MutationObserver;
@@ -12686,7 +12432,6 @@ interface MutationRecord {
     readonly type: string;
 }
 
-// eslint-disable-next-line no-var
 declare var MutationRecord: {
     prototype: MutationRecord;
     new(): MutationRecord;
@@ -12704,7 +12449,6 @@ interface NamedNodeMap {
     [index: number]: Attr;
 }
 
-// eslint-disable-next-line no-var
 declare var NamedNodeMap: {
     prototype: NamedNodeMap;
     new(): NamedNodeMap;
@@ -12715,7 +12459,6 @@ interface NavigationCompletedEvent extends NavigationEvent {
     readonly webErrorStatus: number;
 }
 
-// eslint-disable-next-line no-var
 declare var NavigationCompletedEvent: {
     prototype: NavigationCompletedEvent;
     new(): NavigationCompletedEvent;
@@ -12725,7 +12468,6 @@ interface NavigationEvent extends Event {
     readonly uri: string;
 }
 
-// eslint-disable-next-line no-var
 declare var NavigationEvent: {
     prototype: NavigationEvent;
     new(): NavigationEvent;
@@ -12735,7 +12477,6 @@ interface NavigationEventWithReferrer extends NavigationEvent {
     readonly referer: string;
 }
 
-// eslint-disable-next-line no-var
 declare var NavigationEventWithReferrer: {
     prototype: NavigationEventWithReferrer;
     new(): NavigationEventWithReferrer;
@@ -12765,7 +12506,6 @@ interface Navigator extends Object, NavigatorID, NavigatorOnLine, NavigatorConte
     vibrate(pattern: number | number[]): boolean;
 }
 
-// eslint-disable-next-line no-var
 declare var Navigator: {
     prototype: Navigator;
     new(): Navigator;
@@ -12823,7 +12563,6 @@ interface Node extends EventTarget {
     readonly TEXT_NODE: number;
 }
 
-// eslint-disable-next-line no-var
 declare var Node: {
     prototype: Node;
     new(): Node;
@@ -12851,7 +12590,6 @@ interface NodeFilter {
     acceptNode(n: Node): number;
 }
 
-// eslint-disable-next-line no-var
 declare var NodeFilter: {
     readonly FILTER_ACCEPT: number;
     readonly FILTER_REJECT: number;
@@ -12881,7 +12619,6 @@ interface NodeIterator {
     previousNode(): Node;
 }
 
-// eslint-disable-next-line no-var
 declare var NodeIterator: {
     prototype: NodeIterator;
     new(): NodeIterator;
@@ -12893,7 +12630,6 @@ interface NodeList {
     [index: number]: Node;
 }
 
-// eslint-disable-next-line no-var
 declare var NodeList: {
     prototype: NodeList;
     new(): NodeList;
@@ -12925,7 +12661,6 @@ interface Notification extends EventTarget {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var Notification: {
     prototype: Notification;
     new(title: string, options?: NotificationOptions): Notification;
@@ -12935,7 +12670,6 @@ declare var Notification: {
 interface OES_element_index_uint {
 }
 
-// eslint-disable-next-line no-var
 declare var OES_element_index_uint: {
     prototype: OES_element_index_uint;
     new(): OES_element_index_uint;
@@ -12945,7 +12679,6 @@ interface OES_standard_derivatives {
     readonly FRAGMENT_SHADER_DERIVATIVE_HINT_OES: number;
 }
 
-// eslint-disable-next-line no-var
 declare var OES_standard_derivatives: {
     prototype: OES_standard_derivatives;
     new(): OES_standard_derivatives;
@@ -12955,7 +12688,6 @@ declare var OES_standard_derivatives: {
 interface OES_texture_float {
 }
 
-// eslint-disable-next-line no-var
 declare var OES_texture_float: {
     prototype: OES_texture_float;
     new(): OES_texture_float;
@@ -12964,7 +12696,6 @@ declare var OES_texture_float: {
 interface OES_texture_float_linear {
 }
 
-// eslint-disable-next-line no-var
 declare var OES_texture_float_linear: {
     prototype: OES_texture_float_linear;
     new(): OES_texture_float_linear;
@@ -12974,7 +12705,6 @@ interface OES_texture_half_float {
     readonly HALF_FLOAT_OES: number;
 }
 
-// eslint-disable-next-line no-var
 declare var OES_texture_half_float: {
     prototype: OES_texture_half_float;
     new(): OES_texture_half_float;
@@ -12984,7 +12714,6 @@ declare var OES_texture_half_float: {
 interface OES_texture_half_float_linear {
 }
 
-// eslint-disable-next-line no-var
 declare var OES_texture_half_float_linear: {
     prototype: OES_texture_half_float_linear;
     new(): OES_texture_half_float_linear;
@@ -12994,7 +12723,6 @@ interface OfflineAudioCompletionEvent extends Event {
     readonly renderedBuffer: AudioBuffer;
 }
 
-// eslint-disable-next-line no-var
 declare var OfflineAudioCompletionEvent: {
     prototype: OfflineAudioCompletionEvent;
     new(): OfflineAudioCompletionEvent;
@@ -13015,7 +12743,6 @@ interface OfflineAudioContext extends AudioContextBase {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var OfflineAudioContext: {
     prototype: OfflineAudioContext;
     new(numberOfChannels: number, length: number, sampleRate: number): OfflineAudioContext;
@@ -13039,7 +12766,6 @@ interface OscillatorNode extends AudioNode {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var OscillatorNode: {
     prototype: OscillatorNode;
     new(): OscillatorNode;
@@ -13054,7 +12780,6 @@ interface OverflowEvent extends UIEvent {
     readonly VERTICAL: number;
 }
 
-// eslint-disable-next-line no-var
 declare var OverflowEvent: {
     prototype: OverflowEvent;
     new(): OverflowEvent;
@@ -13067,7 +12792,6 @@ interface PageTransitionEvent extends Event {
     readonly persisted: boolean;
 }
 
-// eslint-disable-next-line no-var
 declare var PageTransitionEvent: {
     prototype: PageTransitionEvent;
     new(): PageTransitionEvent;
@@ -13087,7 +12811,6 @@ interface PannerNode extends AudioNode {
     setVelocity(x: number, y: number, z: number): void;
 }
 
-// eslint-disable-next-line no-var
 declare var PannerNode: {
     prototype: PannerNode;
     new(): PannerNode;
@@ -13096,7 +12819,6 @@ declare var PannerNode: {
 interface Path2D extends Object, CanvasPathMethods {
 }
 
-// eslint-disable-next-line no-var
 declare var Path2D: {
     prototype: Path2D;
     new(path?: Path2D): Path2D;
@@ -13117,7 +12839,6 @@ interface PaymentAddress {
     toJSON(): any;
 }
 
-// eslint-disable-next-line no-var
 declare var PaymentAddress: {
     prototype: PaymentAddress;
     new(): PaymentAddress;
@@ -13142,7 +12863,6 @@ interface PaymentRequest extends EventTarget {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var PaymentRequest: {
     prototype: PaymentRequest;
     new(methodData: PaymentMethodData[], details: PaymentDetails, options?: PaymentOptions): PaymentRequest;
@@ -13152,7 +12872,6 @@ interface PaymentRequestUpdateEvent extends Event {
     updateWith(d: Promise<PaymentDetails>): void;
 }
 
-// eslint-disable-next-line no-var
 declare var PaymentRequestUpdateEvent: {
     prototype: PaymentRequestUpdateEvent;
     new(type: string, eventInitDict?: PaymentRequestUpdateEventInit): PaymentRequestUpdateEvent;
@@ -13170,7 +12889,6 @@ interface PaymentResponse {
     toJSON(): any;
 }
 
-// eslint-disable-next-line no-var
 declare var PaymentResponse: {
     prototype: PaymentResponse;
     new(): PaymentResponse;
@@ -13194,7 +12912,6 @@ interface Performance {
     toJSON(): any;
 }
 
-// eslint-disable-next-line no-var
 declare var Performance: {
     prototype: Performance;
     new(): Performance;
@@ -13207,7 +12924,6 @@ interface PerformanceEntry {
     readonly startTime: number;
 }
 
-// eslint-disable-next-line no-var
 declare var PerformanceEntry: {
     prototype: PerformanceEntry;
     new(): PerformanceEntry;
@@ -13216,7 +12932,6 @@ declare var PerformanceEntry: {
 interface PerformanceMark extends PerformanceEntry {
 }
 
-// eslint-disable-next-line no-var
 declare var PerformanceMark: {
     prototype: PerformanceMark;
     new(): PerformanceMark;
@@ -13225,7 +12940,6 @@ declare var PerformanceMark: {
 interface PerformanceMeasure extends PerformanceEntry {
 }
 
-// eslint-disable-next-line no-var
 declare var PerformanceMeasure: {
     prototype: PerformanceMeasure;
     new(): PerformanceMeasure;
@@ -13241,7 +12955,6 @@ interface PerformanceNavigation {
     readonly TYPE_RESERVED: number;
 }
 
-// eslint-disable-next-line no-var
 declare var PerformanceNavigation: {
     prototype: PerformanceNavigation;
     new(): PerformanceNavigation;
@@ -13276,7 +12989,6 @@ interface PerformanceNavigationTiming extends PerformanceEntry {
     readonly unloadEventStart: number;
 }
 
-// eslint-disable-next-line no-var
 declare var PerformanceNavigationTiming: {
     prototype: PerformanceNavigationTiming;
     new(): PerformanceNavigationTiming;
@@ -13296,7 +13008,6 @@ interface PerformanceResourceTiming extends PerformanceEntry {
     readonly responseStart: number;
 }
 
-// eslint-disable-next-line no-var
 declare var PerformanceResourceTiming: {
     prototype: PerformanceResourceTiming;
     new(): PerformanceResourceTiming;
@@ -13328,7 +13039,6 @@ interface PerformanceTiming {
     toJSON(): any;
 }
 
-// eslint-disable-next-line no-var
 declare var PerformanceTiming: {
     prototype: PerformanceTiming;
     new(): PerformanceTiming;
@@ -13358,7 +13068,6 @@ interface PerfWidgetExternal {
     resizeWindow(width: number, height: number): void;
 }
 
-// eslint-disable-next-line no-var
 declare var PerfWidgetExternal: {
     prototype: PerfWidgetExternal;
     new(): PerfWidgetExternal;
@@ -13367,7 +13076,6 @@ declare var PerfWidgetExternal: {
 interface PeriodicWave {
 }
 
-// eslint-disable-next-line no-var
 declare var PeriodicWave: {
     prototype: PeriodicWave;
     new(): PeriodicWave;
@@ -13378,7 +13086,6 @@ interface PermissionRequest extends DeferredPermissionRequest {
     defer(): void;
 }
 
-// eslint-disable-next-line no-var
 declare var PermissionRequest: {
     prototype: PermissionRequest;
     new(): PermissionRequest;
@@ -13388,7 +13095,6 @@ interface PermissionRequestedEvent extends Event {
     readonly permissionRequest: PermissionRequest;
 }
 
-// eslint-disable-next-line no-var
 declare var PermissionRequestedEvent: {
     prototype: PermissionRequestedEvent;
     new(): PermissionRequestedEvent;
@@ -13405,7 +13111,6 @@ interface Plugin {
     [index: number]: MimeType;
 }
 
-// eslint-disable-next-line no-var
 declare var Plugin: {
     prototype: Plugin;
     new(): Plugin;
@@ -13419,7 +13124,6 @@ interface PluginArray {
     [index: number]: Plugin;
 }
 
-// eslint-disable-next-line no-var
 declare var PluginArray: {
     prototype: PluginArray;
     new(): PluginArray;
@@ -13443,7 +13147,6 @@ interface PointerEvent extends MouseEvent {
     initPointerEvent(typeArg: string, canBubbleArg: boolean, cancelableArg: boolean, viewArg: Window, detailArg: number, screenXArg: number, screenYArg: number, clientXArg: number, clientYArg: number, ctrlKeyArg: boolean, altKeyArg: boolean, shiftKeyArg: boolean, metaKeyArg: boolean, buttonArg: number, relatedTargetArg: EventTarget, offsetXArg: number, offsetYArg: number, widthArg: number, heightArg: number, pressure: number, rotation: number, tiltX: number, tiltY: number, pointerIdArg: number, pointerType: any, hwTimestampArg: number, isPrimary: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var PointerEvent: {
     prototype: PointerEvent;
     new(typeArg: string, eventInitDict?: PointerEventInit): PointerEvent;
@@ -13454,7 +13157,6 @@ interface PopStateEvent extends Event {
     initPopStateEvent(typeArg: string, canBubbleArg: boolean, cancelableArg: boolean, stateArg: any): void;
 }
 
-// eslint-disable-next-line no-var
 declare var PopStateEvent: {
     prototype: PopStateEvent;
     new(typeArg: string, eventInitDict?: PopStateEventInit): PopStateEvent;
@@ -13465,7 +13167,6 @@ interface Position {
     readonly timestamp: number;
 }
 
-// eslint-disable-next-line no-var
 declare var Position: {
     prototype: Position;
     new(): Position;
@@ -13480,7 +13181,6 @@ interface PositionError {
     readonly TIMEOUT: number;
 }
 
-// eslint-disable-next-line no-var
 declare var PositionError: {
     prototype: PositionError;
     new(): PositionError;
@@ -13493,7 +13193,6 @@ interface ProcessingInstruction extends CharacterData {
     readonly target: string;
 }
 
-// eslint-disable-next-line no-var
 declare var ProcessingInstruction: {
     prototype: ProcessingInstruction;
     new(): ProcessingInstruction;
@@ -13506,7 +13205,6 @@ interface ProgressEvent extends Event {
     initProgressEvent(typeArg: string, canBubbleArg: boolean, cancelableArg: boolean, lengthComputableArg: boolean, loadedArg: number, totalArg: number): void;
 }
 
-// eslint-disable-next-line no-var
 declare var ProgressEvent: {
     prototype: ProgressEvent;
     new(type: string, eventInitDict?: ProgressEventInit): ProgressEvent;
@@ -13518,7 +13216,6 @@ interface PushManager {
     subscribe(options?: PushSubscriptionOptionsInit): Promise<PushSubscription>;
 }
 
-// eslint-disable-next-line no-var
 declare var PushManager: {
     prototype: PushManager;
     new(): PushManager;
@@ -13532,7 +13229,6 @@ interface PushSubscription {
     unsubscribe(): Promise<boolean>;
 }
 
-// eslint-disable-next-line no-var
 declare var PushSubscription: {
     prototype: PushSubscription;
     new(): PushSubscription;
@@ -13543,7 +13239,6 @@ interface PushSubscriptionOptions {
     readonly userVisibleOnly: boolean;
 }
 
-// eslint-disable-next-line no-var
 declare var PushSubscriptionOptions: {
     prototype: PushSubscriptionOptions;
     new(): PushSubscriptionOptions;
@@ -13584,7 +13279,6 @@ interface Range {
     readonly START_TO_START: number;
 }
 
-// eslint-disable-next-line no-var
 declare var Range: {
     prototype: Range;
     new(): Range;
@@ -13600,7 +13294,6 @@ interface ReadableStream {
     getReader(): ReadableStreamReader;
 }
 
-// eslint-disable-next-line no-var
 declare var ReadableStream: {
     prototype: ReadableStream;
     new(): ReadableStream;
@@ -13612,7 +13305,6 @@ interface ReadableStreamReader {
     releaseLock(): void;
 }
 
-// eslint-disable-next-line no-var
 declare var ReadableStreamReader: {
     prototype: ReadableStreamReader;
     new(): ReadableStreamReader;
@@ -13635,7 +13327,6 @@ interface Request extends Object, Body {
     clone(): Request;
 }
 
-// eslint-disable-next-line no-var
 declare var Request: {
     prototype: Request;
     new(input: Request | string, init?: RequestInit): Request;
@@ -13653,7 +13344,6 @@ interface Response extends Object, Body {
     clone(): Response;
 }
 
-// eslint-disable-next-line no-var
 declare var Response: {
     prototype: Response;
     new(body?: any, init?: ResponseInit): Response;
@@ -13682,7 +13372,6 @@ interface RTCDtlsTransport extends RTCStatsProvider {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var RTCDtlsTransport: {
     prototype: RTCDtlsTransport;
     new(transport: RTCIceTransport): RTCDtlsTransport;
@@ -13692,7 +13381,6 @@ interface RTCDtlsTransportStateChangedEvent extends Event {
     readonly state: RTCDtlsTransportState;
 }
 
-// eslint-disable-next-line no-var
 declare var RTCDtlsTransportStateChangedEvent: {
     prototype: RTCDtlsTransportStateChangedEvent;
     new(): RTCDtlsTransportStateChangedEvent;
@@ -13716,7 +13404,6 @@ interface RTCDtmfSender extends EventTarget {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var RTCDtmfSender: {
     prototype: RTCDtmfSender;
     new(sender: RTCRtpSender): RTCDtmfSender;
@@ -13726,7 +13413,6 @@ interface RTCDTMFToneChangeEvent extends Event {
     readonly tone: string;
 }
 
-// eslint-disable-next-line no-var
 declare var RTCDTMFToneChangeEvent: {
     prototype: RTCDTMFToneChangeEvent;
     new(typeArg: string, eventInitDict: RTCDTMFToneChangeEventInit): RTCDTMFToneChangeEvent;
@@ -13739,7 +13425,6 @@ interface RTCIceCandidate {
     toJSON(): any;
 }
 
-// eslint-disable-next-line no-var
 declare var RTCIceCandidate: {
     prototype: RTCIceCandidate;
     new(candidateInitDict?: RTCIceCandidateInit): RTCIceCandidate;
@@ -13749,7 +13434,6 @@ interface RTCIceCandidatePairChangedEvent extends Event {
     readonly pair: RTCIceCandidatePair;
 }
 
-// eslint-disable-next-line no-var
 declare var RTCIceCandidatePairChangedEvent: {
     prototype: RTCIceCandidatePairChangedEvent;
     new(): RTCIceCandidatePairChangedEvent;
@@ -13773,7 +13457,6 @@ interface RTCIceGatherer extends RTCStatsProvider {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var RTCIceGatherer: {
     prototype: RTCIceGatherer;
     new(options: RTCIceGatherOptions): RTCIceGatherer;
@@ -13783,7 +13466,6 @@ interface RTCIceGathererEvent extends Event {
     readonly candidate: RTCIceCandidateDictionary | RTCIceCandidateComplete;
 }
 
-// eslint-disable-next-line no-var
 declare var RTCIceGathererEvent: {
     prototype: RTCIceGathererEvent;
     new(): RTCIceGathererEvent;
@@ -13815,7 +13497,6 @@ interface RTCIceTransport extends RTCStatsProvider {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var RTCIceTransport: {
     prototype: RTCIceTransport;
     new(): RTCIceTransport;
@@ -13825,7 +13506,6 @@ interface RTCIceTransportStateChangedEvent extends Event {
     readonly state: RTCIceTransportState;
 }
 
-// eslint-disable-next-line no-var
 declare var RTCIceTransportStateChangedEvent: {
     prototype: RTCIceTransportStateChangedEvent;
     new(): RTCIceTransportStateChangedEvent;
@@ -13874,7 +13554,6 @@ interface RTCPeerConnection extends EventTarget {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var RTCPeerConnection: {
     prototype: RTCPeerConnection;
     new(configuration: RTCConfiguration): RTCPeerConnection;
@@ -13884,7 +13563,6 @@ interface RTCPeerConnectionIceEvent extends Event {
     readonly candidate: RTCIceCandidate;
 }
 
-// eslint-disable-next-line no-var
 declare var RTCPeerConnectionIceEvent: {
     prototype: RTCPeerConnectionIceEvent;
     new(type: string, eventInitDict: RTCPeerConnectionIceEventInit): RTCPeerConnectionIceEvent;
@@ -13910,7 +13588,6 @@ interface RTCRtpReceiver extends RTCStatsProvider {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var RTCRtpReceiver: {
     prototype: RTCRtpReceiver;
     new(transport: RTCDtlsTransport | RTCSrtpSdesTransport, kind: string, rtcpTransport?: RTCDtlsTransport): RTCRtpReceiver;
@@ -13938,7 +13615,6 @@ interface RTCRtpSender extends RTCStatsProvider {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var RTCRtpSender: {
     prototype: RTCRtpSender;
     new(track: MediaStreamTrack, transport: RTCDtlsTransport | RTCSrtpSdesTransport, rtcpTransport?: RTCDtlsTransport): RTCRtpSender;
@@ -13951,7 +13627,6 @@ interface RTCSessionDescription {
     toJSON(): any;
 }
 
-// eslint-disable-next-line no-var
 declare var RTCSessionDescription: {
     prototype: RTCSessionDescription;
     new(descriptionInitDict?: RTCSessionDescriptionInit): RTCSessionDescription;
@@ -13970,7 +13645,6 @@ interface RTCSrtpSdesTransport extends EventTarget {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var RTCSrtpSdesTransport: {
     prototype: RTCSrtpSdesTransport;
     new(transport: RTCIceTransport, encryptParameters: RTCSrtpSdesParameters, decryptParameters: RTCSrtpSdesParameters): RTCSrtpSdesTransport;
@@ -13981,7 +13655,6 @@ interface RTCSsrcConflictEvent extends Event {
     readonly ssrc: number;
 }
 
-// eslint-disable-next-line no-var
 declare var RTCSsrcConflictEvent: {
     prototype: RTCSsrcConflictEvent;
     new(): RTCSsrcConflictEvent;
@@ -13992,7 +13665,6 @@ interface RTCStatsProvider extends EventTarget {
     msGetStats(): Promise<RTCStatsReport>;
 }
 
-// eslint-disable-next-line no-var
 declare var RTCStatsProvider: {
     prototype: RTCStatsProvider;
     new(): RTCStatsProvider;
@@ -14003,7 +13675,6 @@ interface ScopedCredential {
     readonly type: ScopedCredentialType;
 }
 
-// eslint-disable-next-line no-var
 declare var ScopedCredential: {
     prototype: ScopedCredential;
     new(): ScopedCredential;
@@ -14014,7 +13685,6 @@ interface ScopedCredentialInfo {
     readonly publicKey: CryptoKey;
 }
 
-// eslint-disable-next-line no-var
 declare var ScopedCredentialInfo: {
     prototype: ScopedCredentialInfo;
     new(): ScopedCredentialInfo;
@@ -14049,7 +13719,6 @@ interface Screen extends EventTarget {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var Screen: {
     prototype: Screen;
     new(): Screen;
@@ -14060,7 +13729,6 @@ interface ScriptNotifyEvent extends Event {
     readonly value: string;
 }
 
-// eslint-disable-next-line no-var
 declare var ScriptNotifyEvent: {
     prototype: ScriptNotifyEvent;
     new(): ScriptNotifyEvent;
@@ -14079,7 +13747,6 @@ interface ScriptProcessorNode extends AudioNode {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var ScriptProcessorNode: {
     prototype: ScriptProcessorNode;
     new(): ScriptProcessorNode;
@@ -14114,7 +13781,6 @@ interface Selection {
     toString(): string;
 }
 
-// eslint-disable-next-line no-var
 declare var Selection: {
     prototype: Selection;
     new(): Selection;
@@ -14135,7 +13801,6 @@ interface ServiceWorker extends EventTarget, AbstractWorker {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var ServiceWorker: {
     prototype: ServiceWorker;
     new(): ServiceWorker;
@@ -14160,7 +13825,6 @@ interface ServiceWorkerContainer extends EventTarget {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var ServiceWorkerContainer: {
     prototype: ServiceWorkerContainer;
     new(): ServiceWorkerContainer;
@@ -14174,7 +13838,6 @@ interface ServiceWorkerMessageEvent extends Event {
     readonly source: ServiceWorker | MessagePort | null;
 }
 
-// eslint-disable-next-line no-var
 declare var ServiceWorkerMessageEvent: {
     prototype: ServiceWorkerMessageEvent;
     new(type: string, eventInitDict?: ServiceWorkerMessageEventInit): ServiceWorkerMessageEvent;
@@ -14202,7 +13865,6 @@ interface ServiceWorkerRegistration extends EventTarget {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var ServiceWorkerRegistration: {
     prototype: ServiceWorkerRegistration;
     new(): ServiceWorkerRegistration;
@@ -14223,7 +13885,6 @@ interface SourceBuffer extends EventTarget {
     remove(start: number, end: number): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SourceBuffer: {
     prototype: SourceBuffer;
     new(): SourceBuffer;
@@ -14235,7 +13896,6 @@ interface SourceBufferList extends EventTarget {
     [index: number]: SourceBuffer;
 }
 
-// eslint-disable-next-line no-var
 declare var SourceBufferList: {
     prototype: SourceBufferList;
     new(): SourceBufferList;
@@ -14261,7 +13921,6 @@ interface SpeechSynthesis extends EventTarget {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SpeechSynthesis: {
     prototype: SpeechSynthesis;
     new(): SpeechSynthesis;
@@ -14274,7 +13933,6 @@ interface SpeechSynthesisEvent extends Event {
     readonly utterance: SpeechSynthesisUtterance | null;
 }
 
-// eslint-disable-next-line no-var
 declare var SpeechSynthesisEvent: {
     prototype: SpeechSynthesisEvent;
     new(type: string, eventInitDict?: SpeechSynthesisEventInit): SpeechSynthesisEvent;
@@ -14310,7 +13968,6 @@ interface SpeechSynthesisUtterance extends EventTarget {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SpeechSynthesisUtterance: {
     prototype: SpeechSynthesisUtterance;
     new(text?: string): SpeechSynthesisUtterance;
@@ -14324,7 +13981,6 @@ interface SpeechSynthesisVoice {
     readonly voiceURI: string;
 }
 
-// eslint-disable-next-line no-var
 declare var SpeechSynthesisVoice: {
     prototype: SpeechSynthesisVoice;
     new(): SpeechSynthesisVoice;
@@ -14334,7 +13990,6 @@ interface StereoPannerNode extends AudioNode {
     readonly pan: AudioParam;
 }
 
-// eslint-disable-next-line no-var
 declare var StereoPannerNode: {
     prototype: StereoPannerNode;
     new(): StereoPannerNode;
@@ -14351,7 +14006,6 @@ interface Storage {
     [index: number]: string;
 }
 
-// eslint-disable-next-line no-var
 declare var Storage: {
     prototype: Storage;
     new(): Storage;
@@ -14365,7 +14019,6 @@ interface StorageEvent extends Event {
     storageArea?: Storage;
 }
 
-// eslint-disable-next-line no-var
 declare var StorageEvent: {
     prototype: StorageEvent;
     new (type: string, eventInitDict?: StorageEventInit): StorageEvent;
@@ -14376,7 +14029,6 @@ interface StyleMedia {
     matchMedium(mediaquery: string): boolean;
 }
 
-// eslint-disable-next-line no-var
 declare var StyleMedia: {
     prototype: StyleMedia;
     new(): StyleMedia;
@@ -14392,7 +14044,6 @@ interface StyleSheet {
     readonly type: string;
 }
 
-// eslint-disable-next-line no-var
 declare var StyleSheet: {
     prototype: StyleSheet;
     new(): StyleSheet;
@@ -14404,7 +14055,6 @@ interface StyleSheetList {
     [index: number]: StyleSheet;
 }
 
-// eslint-disable-next-line no-var
 declare var StyleSheetList: {
     prototype: StyleSheetList;
     new(): StyleSheetList;
@@ -14416,7 +14066,6 @@ interface StyleSheetPageList {
     [index: number]: CSSPageRule;
 }
 
-// eslint-disable-next-line no-var
 declare var StyleSheetPageList: {
     prototype: StyleSheetPageList;
     new(): StyleSheetPageList;
@@ -14443,7 +14092,6 @@ interface SubtleCrypto {
     wrapKey(format: string, key: CryptoKey, wrappingKey: CryptoKey, wrapAlgorithm: AlgorithmIdentifier): PromiseLike<ArrayBuffer>;
 }
 
-// eslint-disable-next-line no-var
 declare var SubtleCrypto: {
     prototype: SubtleCrypto;
     new(): SubtleCrypto;
@@ -14457,7 +14105,6 @@ interface SVGAElement extends SVGGraphicsElement, SVGURIReference {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGAElement: {
     prototype: SVGAElement;
     new(): SVGAElement;
@@ -14477,7 +14124,6 @@ interface SVGAngle {
     readonly SVG_ANGLETYPE_UNSPECIFIED: number;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGAngle: {
     prototype: SVGAngle;
     new(): SVGAngle;
@@ -14493,7 +14139,6 @@ interface SVGAnimatedAngle {
     readonly baseVal: SVGAngle;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGAnimatedAngle: {
     prototype: SVGAnimatedAngle;
     new(): SVGAnimatedAngle;
@@ -14504,7 +14149,6 @@ interface SVGAnimatedBoolean {
     baseVal: boolean;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGAnimatedBoolean: {
     prototype: SVGAnimatedBoolean;
     new(): SVGAnimatedBoolean;
@@ -14515,7 +14159,6 @@ interface SVGAnimatedEnumeration {
     baseVal: number;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGAnimatedEnumeration: {
     prototype: SVGAnimatedEnumeration;
     new(): SVGAnimatedEnumeration;
@@ -14526,7 +14169,6 @@ interface SVGAnimatedInteger {
     baseVal: number;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGAnimatedInteger: {
     prototype: SVGAnimatedInteger;
     new(): SVGAnimatedInteger;
@@ -14537,7 +14179,6 @@ interface SVGAnimatedLength {
     readonly baseVal: SVGLength;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGAnimatedLength: {
     prototype: SVGAnimatedLength;
     new(): SVGAnimatedLength;
@@ -14548,7 +14189,6 @@ interface SVGAnimatedLengthList {
     readonly baseVal: SVGLengthList;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGAnimatedLengthList: {
     prototype: SVGAnimatedLengthList;
     new(): SVGAnimatedLengthList;
@@ -14559,7 +14199,6 @@ interface SVGAnimatedNumber {
     baseVal: number;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGAnimatedNumber: {
     prototype: SVGAnimatedNumber;
     new(): SVGAnimatedNumber;
@@ -14570,7 +14209,6 @@ interface SVGAnimatedNumberList {
     readonly baseVal: SVGNumberList;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGAnimatedNumberList: {
     prototype: SVGAnimatedNumberList;
     new(): SVGAnimatedNumberList;
@@ -14581,7 +14219,6 @@ interface SVGAnimatedPreserveAspectRatio {
     readonly baseVal: SVGPreserveAspectRatio;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGAnimatedPreserveAspectRatio: {
     prototype: SVGAnimatedPreserveAspectRatio;
     new(): SVGAnimatedPreserveAspectRatio;
@@ -14592,7 +14229,6 @@ interface SVGAnimatedRect {
     readonly baseVal: SVGRect;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGAnimatedRect: {
     prototype: SVGAnimatedRect;
     new(): SVGAnimatedRect;
@@ -14603,7 +14239,6 @@ interface SVGAnimatedString {
     baseVal: string;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGAnimatedString: {
     prototype: SVGAnimatedString;
     new(): SVGAnimatedString;
@@ -14614,7 +14249,6 @@ interface SVGAnimatedTransformList {
     readonly baseVal: SVGTransformList;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGAnimatedTransformList: {
     prototype: SVGAnimatedTransformList;
     new(): SVGAnimatedTransformList;
@@ -14630,7 +14264,6 @@ interface SVGCircleElement extends SVGGraphicsElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGCircleElement: {
     prototype: SVGCircleElement;
     new(): SVGCircleElement;
@@ -14644,7 +14277,6 @@ interface SVGClipPathElement extends SVGGraphicsElement, SVGUnitTypes {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGClipPathElement: {
     prototype: SVGClipPathElement;
     new(): SVGClipPathElement;
@@ -14670,7 +14302,6 @@ interface SVGComponentTransferFunctionElement extends SVGElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGComponentTransferFunctionElement: {
     prototype: SVGComponentTransferFunctionElement;
     new(): SVGComponentTransferFunctionElement;
@@ -14689,7 +14320,6 @@ interface SVGDefsElement extends SVGGraphicsElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGDefsElement: {
     prototype: SVGDefsElement;
     new(): SVGDefsElement;
@@ -14702,7 +14332,6 @@ interface SVGDescElement extends SVGElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGDescElement: {
     prototype: SVGDescElement;
     new(): SVGDescElement;
@@ -14743,7 +14372,6 @@ interface SVGElement extends Element {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGElement: {
     prototype: SVGElement;
     new(): SVGElement;
@@ -14760,7 +14388,6 @@ interface SVGElementInstance extends EventTarget {
     readonly previousSibling: SVGElementInstance;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGElementInstance: {
     prototype: SVGElementInstance;
     new(): SVGElementInstance;
@@ -14771,7 +14398,6 @@ interface SVGElementInstanceList {
     item(index: number): SVGElementInstance;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGElementInstanceList: {
     prototype: SVGElementInstanceList;
     new(): SVGElementInstanceList;
@@ -14788,7 +14414,6 @@ interface SVGEllipseElement extends SVGGraphicsElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGEllipseElement: {
     prototype: SVGEllipseElement;
     new(): SVGEllipseElement;
@@ -14821,7 +14446,6 @@ interface SVGFEBlendElement extends SVGElement, SVGFilterPrimitiveStandardAttrib
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGFEBlendElement: {
     prototype: SVGFEBlendElement;
     new(): SVGFEBlendElement;
@@ -14859,7 +14483,6 @@ interface SVGFEColorMatrixElement extends SVGElement, SVGFilterPrimitiveStandard
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGFEColorMatrixElement: {
     prototype: SVGFEColorMatrixElement;
     new(): SVGFEColorMatrixElement;
@@ -14878,7 +14501,6 @@ interface SVGFEComponentTransferElement extends SVGElement, SVGFilterPrimitiveSt
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGFEComponentTransferElement: {
     prototype: SVGFEComponentTransferElement;
     new(): SVGFEComponentTransferElement;
@@ -14905,7 +14527,6 @@ interface SVGFECompositeElement extends SVGElement, SVGFilterPrimitiveStandardAt
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGFECompositeElement: {
     prototype: SVGFECompositeElement;
     new(): SVGFECompositeElement;
@@ -14941,7 +14562,6 @@ interface SVGFEConvolveMatrixElement extends SVGElement, SVGFilterPrimitiveStand
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGFEConvolveMatrixElement: {
     prototype: SVGFEConvolveMatrixElement;
     new(): SVGFEConvolveMatrixElement;
@@ -14963,7 +14583,6 @@ interface SVGFEDiffuseLightingElement extends SVGElement, SVGFilterPrimitiveStan
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGFEDiffuseLightingElement: {
     prototype: SVGFEDiffuseLightingElement;
     new(): SVGFEDiffuseLightingElement;
@@ -14986,7 +14605,6 @@ interface SVGFEDisplacementMapElement extends SVGElement, SVGFilterPrimitiveStan
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGFEDisplacementMapElement: {
     prototype: SVGFEDisplacementMapElement;
     new(): SVGFEDisplacementMapElement;
@@ -15006,7 +14624,6 @@ interface SVGFEDistantLightElement extends SVGElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGFEDistantLightElement: {
     prototype: SVGFEDistantLightElement;
     new(): SVGFEDistantLightElement;
@@ -15019,7 +14636,6 @@ interface SVGFEFloodElement extends SVGElement, SVGFilterPrimitiveStandardAttrib
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGFEFloodElement: {
     prototype: SVGFEFloodElement;
     new(): SVGFEFloodElement;
@@ -15032,7 +14648,6 @@ interface SVGFEFuncAElement extends SVGComponentTransferFunctionElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGFEFuncAElement: {
     prototype: SVGFEFuncAElement;
     new(): SVGFEFuncAElement;
@@ -15045,7 +14660,6 @@ interface SVGFEFuncBElement extends SVGComponentTransferFunctionElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGFEFuncBElement: {
     prototype: SVGFEFuncBElement;
     new(): SVGFEFuncBElement;
@@ -15058,7 +14672,6 @@ interface SVGFEFuncGElement extends SVGComponentTransferFunctionElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGFEFuncGElement: {
     prototype: SVGFEFuncGElement;
     new(): SVGFEFuncGElement;
@@ -15071,7 +14684,6 @@ interface SVGFEFuncRElement extends SVGComponentTransferFunctionElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGFEFuncRElement: {
     prototype: SVGFEFuncRElement;
     new(): SVGFEFuncRElement;
@@ -15088,7 +14700,6 @@ interface SVGFEGaussianBlurElement extends SVGElement, SVGFilterPrimitiveStandar
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGFEGaussianBlurElement: {
     prototype: SVGFEGaussianBlurElement;
     new(): SVGFEGaussianBlurElement;
@@ -15102,7 +14713,6 @@ interface SVGFEImageElement extends SVGElement, SVGFilterPrimitiveStandardAttrib
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGFEImageElement: {
     prototype: SVGFEImageElement;
     new(): SVGFEImageElement;
@@ -15115,7 +14725,6 @@ interface SVGFEMergeElement extends SVGElement, SVGFilterPrimitiveStandardAttrib
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGFEMergeElement: {
     prototype: SVGFEMergeElement;
     new(): SVGFEMergeElement;
@@ -15129,7 +14738,6 @@ interface SVGFEMergeNodeElement extends SVGElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGFEMergeNodeElement: {
     prototype: SVGFEMergeNodeElement;
     new(): SVGFEMergeNodeElement;
@@ -15149,7 +14757,6 @@ interface SVGFEMorphologyElement extends SVGElement, SVGFilterPrimitiveStandardA
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGFEMorphologyElement: {
     prototype: SVGFEMorphologyElement;
     new(): SVGFEMorphologyElement;
@@ -15168,7 +14775,6 @@ interface SVGFEOffsetElement extends SVGElement, SVGFilterPrimitiveStandardAttri
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGFEOffsetElement: {
     prototype: SVGFEOffsetElement;
     new(): SVGFEOffsetElement;
@@ -15184,7 +14790,6 @@ interface SVGFEPointLightElement extends SVGElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGFEPointLightElement: {
     prototype: SVGFEPointLightElement;
     new(): SVGFEPointLightElement;
@@ -15203,7 +14808,6 @@ interface SVGFESpecularLightingElement extends SVGElement, SVGFilterPrimitiveSta
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGFESpecularLightingElement: {
     prototype: SVGFESpecularLightingElement;
     new(): SVGFESpecularLightingElement;
@@ -15224,7 +14828,6 @@ interface SVGFESpotLightElement extends SVGElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGFESpotLightElement: {
     prototype: SVGFESpotLightElement;
     new(): SVGFESpotLightElement;
@@ -15238,7 +14841,6 @@ interface SVGFETileElement extends SVGElement, SVGFilterPrimitiveStandardAttribu
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGFETileElement: {
     prototype: SVGFETileElement;
     new(): SVGFETileElement;
@@ -15263,7 +14865,6 @@ interface SVGFETurbulenceElement extends SVGElement, SVGFilterPrimitiveStandardA
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGFETurbulenceElement: {
     prototype: SVGFETurbulenceElement;
     new(): SVGFETurbulenceElement;
@@ -15291,7 +14892,6 @@ interface SVGFilterElement extends SVGElement, SVGUnitTypes, SVGURIReference {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGFilterElement: {
     prototype: SVGFilterElement;
     new(): SVGFilterElement;
@@ -15308,7 +14908,6 @@ interface SVGForeignObjectElement extends SVGGraphicsElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGForeignObjectElement: {
     prototype: SVGForeignObjectElement;
     new(): SVGForeignObjectElement;
@@ -15321,7 +14920,6 @@ interface SVGGElement extends SVGGraphicsElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGGElement: {
     prototype: SVGGElement;
     new(): SVGGElement;
@@ -15341,7 +14939,6 @@ interface SVGGradientElement extends SVGElement, SVGUnitTypes, SVGURIReference {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGGradientElement: {
     prototype: SVGGradientElement;
     new(): SVGGradientElement;
@@ -15365,7 +14962,6 @@ interface SVGGraphicsElement extends SVGElement, SVGTests {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGGraphicsElement: {
     prototype: SVGGraphicsElement;
     new(): SVGGraphicsElement;
@@ -15383,7 +14979,6 @@ interface SVGImageElement extends SVGGraphicsElement, SVGURIReference {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGImageElement: {
     prototype: SVGImageElement;
     new(): SVGImageElement;
@@ -15409,7 +15004,6 @@ interface SVGLength {
     readonly SVG_LENGTHTYPE_UNKNOWN: number;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGLength: {
     prototype: SVGLength;
     new(): SVGLength;
@@ -15437,7 +15031,6 @@ interface SVGLengthList {
     replaceItem(newItem: SVGLength, index: number): SVGLength;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGLengthList: {
     prototype: SVGLengthList;
     new(): SVGLengthList;
@@ -15454,7 +15047,6 @@ interface SVGLinearGradientElement extends SVGGradientElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGLinearGradientElement: {
     prototype: SVGLinearGradientElement;
     new(): SVGLinearGradientElement;
@@ -15471,7 +15063,6 @@ interface SVGLineElement extends SVGGraphicsElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGLineElement: {
     prototype: SVGLineElement;
     new(): SVGLineElement;
@@ -15499,7 +15090,6 @@ interface SVGMarkerElement extends SVGElement, SVGFitToViewBox {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGMarkerElement: {
     prototype: SVGMarkerElement;
     new(): SVGMarkerElement;
@@ -15524,7 +15114,6 @@ interface SVGMaskElement extends SVGElement, SVGTests, SVGUnitTypes {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGMaskElement: {
     prototype: SVGMaskElement;
     new(): SVGMaskElement;
@@ -15550,7 +15139,6 @@ interface SVGMatrix {
     translate(x: number, y: number): SVGMatrix;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGMatrix: {
     prototype: SVGMatrix;
     new(): SVGMatrix;
@@ -15563,7 +15151,6 @@ interface SVGMetadataElement extends SVGElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGMetadataElement: {
     prototype: SVGMetadataElement;
     new(): SVGMetadataElement;
@@ -15573,7 +15160,6 @@ interface SVGNumber {
     value: number;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGNumber: {
     prototype: SVGNumber;
     new(): SVGNumber;
@@ -15590,7 +15176,6 @@ interface SVGNumberList {
     replaceItem(newItem: SVGNumber, index: number): SVGNumber;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGNumberList: {
     prototype: SVGNumberList;
     new(): SVGNumberList;
@@ -15626,7 +15211,6 @@ interface SVGPathElement extends SVGGraphicsElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGPathElement: {
     prototype: SVGPathElement;
     new(): SVGPathElement;
@@ -15657,7 +15241,6 @@ interface SVGPathSeg {
     readonly PATHSEG_UNKNOWN: number;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGPathSeg: {
     prototype: SVGPathSeg;
     new(): SVGPathSeg;
@@ -15693,7 +15276,6 @@ interface SVGPathSegArcAbs extends SVGPathSeg {
     y: number;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGPathSegArcAbs: {
     prototype: SVGPathSegArcAbs;
     new(): SVGPathSegArcAbs;
@@ -15709,7 +15291,6 @@ interface SVGPathSegArcRel extends SVGPathSeg {
     y: number;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGPathSegArcRel: {
     prototype: SVGPathSegArcRel;
     new(): SVGPathSegArcRel;
@@ -15718,7 +15299,6 @@ declare var SVGPathSegArcRel: {
 interface SVGPathSegClosePath extends SVGPathSeg {
 }
 
-// eslint-disable-next-line no-var
 declare var SVGPathSegClosePath: {
     prototype: SVGPathSegClosePath;
     new(): SVGPathSegClosePath;
@@ -15733,7 +15313,6 @@ interface SVGPathSegCurvetoCubicAbs extends SVGPathSeg {
     y2: number;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGPathSegCurvetoCubicAbs: {
     prototype: SVGPathSegCurvetoCubicAbs;
     new(): SVGPathSegCurvetoCubicAbs;
@@ -15748,7 +15327,6 @@ interface SVGPathSegCurvetoCubicRel extends SVGPathSeg {
     y2: number;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGPathSegCurvetoCubicRel: {
     prototype: SVGPathSegCurvetoCubicRel;
     new(): SVGPathSegCurvetoCubicRel;
@@ -15761,7 +15339,6 @@ interface SVGPathSegCurvetoCubicSmoothAbs extends SVGPathSeg {
     y2: number;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGPathSegCurvetoCubicSmoothAbs: {
     prototype: SVGPathSegCurvetoCubicSmoothAbs;
     new(): SVGPathSegCurvetoCubicSmoothAbs;
@@ -15774,7 +15351,6 @@ interface SVGPathSegCurvetoCubicSmoothRel extends SVGPathSeg {
     y2: number;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGPathSegCurvetoCubicSmoothRel: {
     prototype: SVGPathSegCurvetoCubicSmoothRel;
     new(): SVGPathSegCurvetoCubicSmoothRel;
@@ -15787,7 +15363,6 @@ interface SVGPathSegCurvetoQuadraticAbs extends SVGPathSeg {
     y1: number;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGPathSegCurvetoQuadraticAbs: {
     prototype: SVGPathSegCurvetoQuadraticAbs;
     new(): SVGPathSegCurvetoQuadraticAbs;
@@ -15800,7 +15375,6 @@ interface SVGPathSegCurvetoQuadraticRel extends SVGPathSeg {
     y1: number;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGPathSegCurvetoQuadraticRel: {
     prototype: SVGPathSegCurvetoQuadraticRel;
     new(): SVGPathSegCurvetoQuadraticRel;
@@ -15811,7 +15385,6 @@ interface SVGPathSegCurvetoQuadraticSmoothAbs extends SVGPathSeg {
     y: number;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGPathSegCurvetoQuadraticSmoothAbs: {
     prototype: SVGPathSegCurvetoQuadraticSmoothAbs;
     new(): SVGPathSegCurvetoQuadraticSmoothAbs;
@@ -15822,7 +15395,6 @@ interface SVGPathSegCurvetoQuadraticSmoothRel extends SVGPathSeg {
     y: number;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGPathSegCurvetoQuadraticSmoothRel: {
     prototype: SVGPathSegCurvetoQuadraticSmoothRel;
     new(): SVGPathSegCurvetoQuadraticSmoothRel;
@@ -15833,7 +15405,6 @@ interface SVGPathSegLinetoAbs extends SVGPathSeg {
     y: number;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGPathSegLinetoAbs: {
     prototype: SVGPathSegLinetoAbs;
     new(): SVGPathSegLinetoAbs;
@@ -15843,7 +15414,6 @@ interface SVGPathSegLinetoHorizontalAbs extends SVGPathSeg {
     x: number;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGPathSegLinetoHorizontalAbs: {
     prototype: SVGPathSegLinetoHorizontalAbs;
     new(): SVGPathSegLinetoHorizontalAbs;
@@ -15853,7 +15423,6 @@ interface SVGPathSegLinetoHorizontalRel extends SVGPathSeg {
     x: number;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGPathSegLinetoHorizontalRel: {
     prototype: SVGPathSegLinetoHorizontalRel;
     new(): SVGPathSegLinetoHorizontalRel;
@@ -15864,7 +15433,6 @@ interface SVGPathSegLinetoRel extends SVGPathSeg {
     y: number;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGPathSegLinetoRel: {
     prototype: SVGPathSegLinetoRel;
     new(): SVGPathSegLinetoRel;
@@ -15874,7 +15442,6 @@ interface SVGPathSegLinetoVerticalAbs extends SVGPathSeg {
     y: number;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGPathSegLinetoVerticalAbs: {
     prototype: SVGPathSegLinetoVerticalAbs;
     new(): SVGPathSegLinetoVerticalAbs;
@@ -15884,7 +15451,6 @@ interface SVGPathSegLinetoVerticalRel extends SVGPathSeg {
     y: number;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGPathSegLinetoVerticalRel: {
     prototype: SVGPathSegLinetoVerticalRel;
     new(): SVGPathSegLinetoVerticalRel;
@@ -15901,7 +15467,6 @@ interface SVGPathSegList {
     replaceItem(newItem: SVGPathSeg, index: number): SVGPathSeg;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGPathSegList: {
     prototype: SVGPathSegList;
     new(): SVGPathSegList;
@@ -15912,7 +15477,6 @@ interface SVGPathSegMovetoAbs extends SVGPathSeg {
     y: number;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGPathSegMovetoAbs: {
     prototype: SVGPathSegMovetoAbs;
     new(): SVGPathSegMovetoAbs;
@@ -15923,7 +15487,6 @@ interface SVGPathSegMovetoRel extends SVGPathSeg {
     y: number;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGPathSegMovetoRel: {
     prototype: SVGPathSegMovetoRel;
     new(): SVGPathSegMovetoRel;
@@ -15943,7 +15506,6 @@ interface SVGPatternElement extends SVGElement, SVGTests, SVGUnitTypes, SVGFitTo
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGPatternElement: {
     prototype: SVGPatternElement;
     new(): SVGPatternElement;
@@ -15955,7 +15517,6 @@ interface SVGPoint {
     matrixTransform(matrix: SVGMatrix): SVGPoint;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGPoint: {
     prototype: SVGPoint;
     new(): SVGPoint;
@@ -15972,7 +15533,6 @@ interface SVGPointList {
     replaceItem(newItem: SVGPoint, index: number): SVGPoint;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGPointList: {
     prototype: SVGPointList;
     new(): SVGPointList;
@@ -15985,7 +15545,6 @@ interface SVGPolygonElement extends SVGGraphicsElement, SVGAnimatedPoints {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGPolygonElement: {
     prototype: SVGPolygonElement;
     new(): SVGPolygonElement;
@@ -15998,7 +15557,6 @@ interface SVGPolylineElement extends SVGGraphicsElement, SVGAnimatedPoints {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGPolylineElement: {
     prototype: SVGPolylineElement;
     new(): SVGPolylineElement;
@@ -16023,7 +15581,6 @@ interface SVGPreserveAspectRatio {
     readonly SVG_PRESERVEASPECTRATIO_XMINYMIN: number;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGPreserveAspectRatio: {
     prototype: SVGPreserveAspectRatio;
     new(): SVGPreserveAspectRatio;
@@ -16055,7 +15612,6 @@ interface SVGRadialGradientElement extends SVGGradientElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGRadialGradientElement: {
     prototype: SVGRadialGradientElement;
     new(): SVGRadialGradientElement;
@@ -16068,7 +15624,6 @@ interface SVGRect {
     y: number;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGRect: {
     prototype: SVGRect;
     new(): SVGRect;
@@ -16087,7 +15642,6 @@ interface SVGRectElement extends SVGGraphicsElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGRectElement: {
     prototype: SVGRectElement;
     new(): SVGRectElement;
@@ -16101,7 +15655,6 @@ interface SVGScriptElement extends SVGElement, SVGURIReference {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGScriptElement: {
     prototype: SVGScriptElement;
     new(): SVGScriptElement;
@@ -16115,7 +15668,6 @@ interface SVGStopElement extends SVGElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGStopElement: {
     prototype: SVGStopElement;
     new(): SVGStopElement;
@@ -16132,7 +15684,6 @@ interface SVGStringList {
     replaceItem(newItem: string, index: number): string;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGStringList: {
     prototype: SVGStringList;
     new(): SVGStringList;
@@ -16149,7 +15700,6 @@ interface SVGStyleElement extends SVGElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGStyleElement: {
     prototype: SVGStyleElement;
     new(): SVGStyleElement;
@@ -16213,7 +15763,6 @@ interface SVGSVGElement extends SVGGraphicsElement, DocumentEvent, SVGFitToViewB
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGSVGElement: {
     prototype: SVGSVGElement;
     new(): SVGSVGElement;
@@ -16226,7 +15775,6 @@ interface SVGSwitchElement extends SVGGraphicsElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGSwitchElement: {
     prototype: SVGSwitchElement;
     new(): SVGSwitchElement;
@@ -16239,7 +15787,6 @@ interface SVGSymbolElement extends SVGElement, SVGFitToViewBox {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGSymbolElement: {
     prototype: SVGSymbolElement;
     new(): SVGSymbolElement;
@@ -16266,7 +15813,6 @@ interface SVGTextContentElement extends SVGGraphicsElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGTextContentElement: {
     prototype: SVGTextContentElement;
     new(): SVGTextContentElement;
@@ -16282,7 +15828,6 @@ interface SVGTextElement extends SVGTextPositioningElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGTextElement: {
     prototype: SVGTextElement;
     new(): SVGTextElement;
@@ -16304,7 +15849,6 @@ interface SVGTextPathElement extends SVGTextContentElement, SVGURIReference {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGTextPathElement: {
     prototype: SVGTextPathElement;
     new(): SVGTextPathElement;
@@ -16328,7 +15872,6 @@ interface SVGTextPositioningElement extends SVGTextContentElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGTextPositioningElement: {
     prototype: SVGTextPositioningElement;
     new(): SVGTextPositioningElement;
@@ -16341,7 +15884,6 @@ interface SVGTitleElement extends SVGElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGTitleElement: {
     prototype: SVGTitleElement;
     new(): SVGTitleElement;
@@ -16366,7 +15908,6 @@ interface SVGTransform {
     readonly SVG_TRANSFORM_UNKNOWN: number;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGTransform: {
     prototype: SVGTransform;
     new(): SVGTransform;
@@ -16392,7 +15933,6 @@ interface SVGTransformList {
     replaceItem(newItem: SVGTransform, index: number): SVGTransform;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGTransformList: {
     prototype: SVGTransformList;
     new(): SVGTransformList;
@@ -16405,7 +15945,6 @@ interface SVGTSpanElement extends SVGTextPositioningElement {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGTSpanElement: {
     prototype: SVGTSpanElement;
     new(): SVGTSpanElement;
@@ -16416,7 +15955,6 @@ interface SVGUnitTypes {
     readonly SVG_UNIT_TYPE_UNKNOWN: number;
     readonly SVG_UNIT_TYPE_USERSPACEONUSE: number;
 }
-// eslint-disable-next-line no-var
 declare var SVGUnitTypes: SVGUnitTypes;
 
 interface SVGUseElement extends SVGGraphicsElement, SVGURIReference {
@@ -16432,7 +15970,6 @@ interface SVGUseElement extends SVGGraphicsElement, SVGURIReference {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGUseElement: {
     prototype: SVGUseElement;
     new(): SVGUseElement;
@@ -16446,7 +15983,6 @@ interface SVGViewElement extends SVGElement, SVGZoomAndPan, SVGFitToViewBox {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGViewElement: {
     prototype: SVGViewElement;
     new(): SVGViewElement;
@@ -16456,7 +15992,6 @@ interface SVGZoomAndPan {
     readonly zoomAndPan: number;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGZoomAndPan: {
     readonly SVG_ZOOMANDPAN_DISABLE: number;
     readonly SVG_ZOOMANDPAN_MAGNIFY: number;
@@ -16471,7 +16006,6 @@ interface SVGZoomEvent extends UIEvent {
     readonly zoomRectScreen: SVGRect;
 }
 
-// eslint-disable-next-line no-var
 declare var SVGZoomEvent: {
     prototype: SVGZoomEvent;
     new(): SVGZoomEvent;
@@ -16482,7 +16016,6 @@ interface SyncManager {
     register(tag: string): Promise<void>;
 }
 
-// eslint-disable-next-line no-var
 declare var SyncManager: {
     prototype: SyncManager;
     new(): SyncManager;
@@ -16494,7 +16027,6 @@ interface Text extends CharacterData {
     splitText(offset: number): Text;
 }
 
-// eslint-disable-next-line no-var
 declare var Text: {
     prototype: Text;
     new(data?: string): Text;
@@ -16517,7 +16049,6 @@ interface TextEvent extends UIEvent {
     readonly DOM_INPUT_METHOD_VOICE: number;
 }
 
-// eslint-disable-next-line no-var
 declare var TextEvent: {
     prototype: TextEvent;
     new(): TextEvent;
@@ -16537,7 +16068,6 @@ interface TextMetrics {
     readonly width: number;
 }
 
-// eslint-disable-next-line no-var
 declare var TextMetrics: {
     prototype: TextMetrics;
     new(): TextMetrics;
@@ -16576,7 +16106,6 @@ interface TextTrack extends EventTarget {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var TextTrack: {
     prototype: TextTrack;
     new(): TextTrack;
@@ -16610,7 +16139,6 @@ interface TextTrackCue extends EventTarget {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var TextTrackCue: {
     prototype: TextTrackCue;
     new(startTime: number, endTime: number, text: string): TextTrackCue;
@@ -16623,7 +16151,6 @@ interface TextTrackCueList {
     [index: number]: TextTrackCue;
 }
 
-// eslint-disable-next-line no-var
 declare var TextTrackCueList: {
     prototype: TextTrackCueList;
     new(): TextTrackCueList;
@@ -16644,7 +16171,6 @@ interface TextTrackList extends EventTarget {
     [index: number]: TextTrack;
 }
 
-// eslint-disable-next-line no-var
 declare var TextTrackList: {
     prototype: TextTrackList;
     new(): TextTrackList;
@@ -16656,7 +16182,6 @@ interface TimeRanges {
     start(index: number): number;
 }
 
-// eslint-disable-next-line no-var
 declare var TimeRanges: {
     prototype: TimeRanges;
     new(): TimeRanges;
@@ -16673,7 +16198,6 @@ interface Touch {
     readonly target: EventTarget;
 }
 
-// eslint-disable-next-line no-var
 declare var Touch: {
     prototype: Touch;
     new(): Touch;
@@ -16692,7 +16216,6 @@ interface TouchEvent extends UIEvent {
     readonly which: number;
 }
 
-// eslint-disable-next-line no-var
 declare var TouchEvent: {
     prototype: TouchEvent;
     new(type: string, touchEventInit?: TouchEventInit): TouchEvent;
@@ -16704,7 +16227,6 @@ interface TouchList {
     [index: number]: Touch;
 }
 
-// eslint-disable-next-line no-var
 declare var TouchList: {
     prototype: TouchList;
     new(): TouchList;
@@ -16714,7 +16236,6 @@ interface TrackEvent extends Event {
     readonly track: VideoTrack | AudioTrack | TextTrack | null;
 }
 
-// eslint-disable-next-line no-var
 declare var TrackEvent: {
     prototype: TrackEvent;
     new(typeArg: string, eventInitDict?: TrackEventInit): TrackEvent;
@@ -16726,7 +16247,6 @@ interface TransitionEvent extends Event {
     initTransitionEvent(typeArg: string, canBubbleArg: boolean, cancelableArg: boolean, propertyNameArg: string, elapsedTimeArg: number): void;
 }
 
-// eslint-disable-next-line no-var
 declare var TransitionEvent: {
     prototype: TransitionEvent;
     new(typeArg: string, eventInitDict?: TransitionEventInit): TransitionEvent;
@@ -16747,7 +16267,6 @@ interface TreeWalker {
     previousSibling(): Node;
 }
 
-// eslint-disable-next-line no-var
 declare var TreeWalker: {
     prototype: TreeWalker;
     new(): TreeWalker;
@@ -16759,7 +16278,6 @@ interface UIEvent extends Event {
     initUIEvent(typeArg: string, canBubbleArg: boolean, cancelableArg: boolean, viewArg: Window, detailArg: number): void;
 }
 
-// eslint-disable-next-line no-var
 declare var UIEvent: {
     prototype: UIEvent;
     new(typeArg: string, eventInitDict?: UIEventInit): UIEvent;
@@ -16769,7 +16287,6 @@ interface UnviewableContentIdentifiedEvent extends NavigationEventWithReferrer {
     readonly mediaType: string;
 }
 
-// eslint-disable-next-line no-var
 declare var UnviewableContentIdentifiedEvent: {
     prototype: UnviewableContentIdentifiedEvent;
     new(): UnviewableContentIdentifiedEvent;
@@ -16791,7 +16308,6 @@ interface URL {
     toString(): string;
 }
 
-// eslint-disable-next-line no-var
 declare var URL: {
     prototype: URL;
     new(url: string, base?: string): URL;
@@ -16813,7 +16329,6 @@ interface ValidityState {
     readonly tooShort: boolean;
 }
 
-// eslint-disable-next-line no-var
 declare var ValidityState: {
     prototype: ValidityState;
     new(): ValidityState;
@@ -16827,7 +16342,6 @@ interface VideoPlaybackQuality {
     readonly totalVideoFrames: number;
 }
 
-// eslint-disable-next-line no-var
 declare var VideoPlaybackQuality: {
     prototype: VideoPlaybackQuality;
     new(): VideoPlaybackQuality;
@@ -16842,7 +16356,6 @@ interface VideoTrack {
     readonly sourceBuffer: SourceBuffer;
 }
 
-// eslint-disable-next-line no-var
 declare var VideoTrack: {
     prototype: VideoTrack;
     new(): VideoTrack;
@@ -16869,7 +16382,6 @@ interface VideoTrackList extends EventTarget {
     [index: number]: VideoTrack;
 }
 
-// eslint-disable-next-line no-var
 declare var VideoTrackList: {
     prototype: VideoTrackList;
     new(): VideoTrackList;
@@ -16880,7 +16392,6 @@ interface WaveShaperNode extends AudioNode {
     oversample: OverSampleType;
 }
 
-// eslint-disable-next-line no-var
 declare var WaveShaperNode: {
     prototype: WaveShaperNode;
     new(): WaveShaperNode;
@@ -16891,7 +16402,6 @@ interface WebAuthentication {
     makeCredential(accountInformation: Account, cryptoParameters: ScopedCredentialParameters[], attestationChallenge: any, options?: ScopedCredentialOptions): Promise<ScopedCredentialInfo>;
 }
 
-// eslint-disable-next-line no-var
 declare var WebAuthentication: {
     prototype: WebAuthentication;
     new(): WebAuthentication;
@@ -16904,7 +16414,6 @@ interface WebAuthnAssertion {
     readonly signature: ArrayBuffer;
 }
 
-// eslint-disable-next-line no-var
 declare var WebAuthnAssertion: {
     prototype: WebAuthnAssertion;
     new(): WebAuthnAssertion;
@@ -16917,7 +16426,6 @@ interface WEBGL_compressed_texture_s3tc {
     readonly COMPRESSED_RGBA_S3TC_DXT5_EXT: number;
 }
 
-// eslint-disable-next-line no-var
 declare var WEBGL_compressed_texture_s3tc: {
     prototype: WEBGL_compressed_texture_s3tc;
     new(): WEBGL_compressed_texture_s3tc;
@@ -16932,7 +16440,6 @@ interface WEBGL_debug_renderer_info {
     readonly UNMASKED_VENDOR_WEBGL: number;
 }
 
-// eslint-disable-next-line no-var
 declare var WEBGL_debug_renderer_info: {
     prototype: WEBGL_debug_renderer_info;
     new(): WEBGL_debug_renderer_info;
@@ -16944,7 +16451,6 @@ interface WEBGL_depth_texture {
     readonly UNSIGNED_INT_24_8_WEBGL: number;
 }
 
-// eslint-disable-next-line no-var
 declare var WEBGL_depth_texture: {
     prototype: WEBGL_depth_texture;
     new(): WEBGL_depth_texture;
@@ -16957,7 +16463,6 @@ interface WebGLActiveInfo {
     readonly type: number;
 }
 
-// eslint-disable-next-line no-var
 declare var WebGLActiveInfo: {
     prototype: WebGLActiveInfo;
     new(): WebGLActiveInfo;
@@ -16966,7 +16471,6 @@ declare var WebGLActiveInfo: {
 interface WebGLBuffer extends WebGLObject {
 }
 
-// eslint-disable-next-line no-var
 declare var WebGLBuffer: {
     prototype: WebGLBuffer;
     new(): WebGLBuffer;
@@ -16976,7 +16480,6 @@ interface WebGLContextEvent extends Event {
     readonly statusMessage: string;
 }
 
-// eslint-disable-next-line no-var
 declare var WebGLContextEvent: {
     prototype: WebGLContextEvent;
     new(typeArg: string, eventInitDict?: WebGLContextEventInit): WebGLContextEvent;
@@ -16985,7 +16488,6 @@ declare var WebGLContextEvent: {
 interface WebGLFramebuffer extends WebGLObject {
 }
 
-// eslint-disable-next-line no-var
 declare var WebGLFramebuffer: {
     prototype: WebGLFramebuffer;
     new(): WebGLFramebuffer;
@@ -16994,7 +16496,6 @@ declare var WebGLFramebuffer: {
 interface WebGLObject {
 }
 
-// eslint-disable-next-line no-var
 declare var WebGLObject: {
     prototype: WebGLObject;
     new(): WebGLObject;
@@ -17003,7 +16504,6 @@ declare var WebGLObject: {
 interface WebGLProgram extends WebGLObject {
 }
 
-// eslint-disable-next-line no-var
 declare var WebGLProgram: {
     prototype: WebGLProgram;
     new(): WebGLProgram;
@@ -17012,7 +16512,6 @@ declare var WebGLProgram: {
 interface WebGLRenderbuffer extends WebGLObject {
 }
 
-// eslint-disable-next-line no-var
 declare var WebGLRenderbuffer: {
     prototype: WebGLRenderbuffer;
     new(): WebGLRenderbuffer;
@@ -17459,7 +16958,6 @@ interface WebGLRenderingContext {
     readonly ZERO: number;
 }
 
-// eslint-disable-next-line no-var
 declare var WebGLRenderingContext: {
     prototype: WebGLRenderingContext;
     new(): WebGLRenderingContext;
@@ -17765,7 +17263,6 @@ declare var WebGLRenderingContext: {
 interface WebGLShader extends WebGLObject {
 }
 
-// eslint-disable-next-line no-var
 declare var WebGLShader: {
     prototype: WebGLShader;
     new(): WebGLShader;
@@ -17777,7 +17274,6 @@ interface WebGLShaderPrecisionFormat {
     readonly rangeMin: number;
 }
 
-// eslint-disable-next-line no-var
 declare var WebGLShaderPrecisionFormat: {
     prototype: WebGLShaderPrecisionFormat;
     new(): WebGLShaderPrecisionFormat;
@@ -17786,7 +17282,6 @@ declare var WebGLShaderPrecisionFormat: {
 interface WebGLTexture extends WebGLObject {
 }
 
-// eslint-disable-next-line no-var
 declare var WebGLTexture: {
     prototype: WebGLTexture;
     new(): WebGLTexture;
@@ -17795,7 +17290,6 @@ declare var WebGLTexture: {
 interface WebGLUniformLocation {
 }
 
-// eslint-disable-next-line no-var
 declare var WebGLUniformLocation: {
     prototype: WebGLUniformLocation;
     new(): WebGLUniformLocation;
@@ -17836,7 +17330,6 @@ interface WebKitCSSMatrix {
     translate(x: number, y: number, z?: number): WebKitCSSMatrix;
 }
 
-// eslint-disable-next-line no-var
 declare var WebKitCSSMatrix: {
     prototype: WebKitCSSMatrix;
     new(text?: string): WebKitCSSMatrix;
@@ -17846,7 +17339,6 @@ interface WebKitDirectoryEntry extends WebKitEntry {
     createReader(): WebKitDirectoryReader;
 }
 
-// eslint-disable-next-line no-var
 declare var WebKitDirectoryEntry: {
     prototype: WebKitDirectoryEntry;
     new(): WebKitDirectoryEntry;
@@ -17856,7 +17348,6 @@ interface WebKitDirectoryReader {
     readEntries(successCallback: WebKitEntriesCallback, errorCallback?: WebKitErrorCallback): void;
 }
 
-// eslint-disable-next-line no-var
 declare var WebKitDirectoryReader: {
     prototype: WebKitDirectoryReader;
     new(): WebKitDirectoryReader;
@@ -17870,7 +17361,6 @@ interface WebKitEntry {
     readonly name: string;
 }
 
-// eslint-disable-next-line no-var
 declare var WebKitEntry: {
     prototype: WebKitEntry;
     new(): WebKitEntry;
@@ -17880,7 +17370,6 @@ interface WebKitFileEntry extends WebKitEntry {
     file(successCallback: WebKitFileCallback, errorCallback?: WebKitErrorCallback): void;
 }
 
-// eslint-disable-next-line no-var
 declare var WebKitFileEntry: {
     prototype: WebKitFileEntry;
     new(): WebKitFileEntry;
@@ -17891,7 +17380,6 @@ interface WebKitFileSystem {
     readonly root: WebKitDirectoryEntry;
 }
 
-// eslint-disable-next-line no-var
 declare var WebKitFileSystem: {
     prototype: WebKitFileSystem;
     new(): WebKitFileSystem;
@@ -17902,7 +17390,6 @@ interface WebKitPoint {
     y: number;
 }
 
-// eslint-disable-next-line no-var
 declare var WebKitPoint: {
     prototype: WebKitPoint;
     new(x?: number, y?: number): WebKitPoint;
@@ -17915,7 +17402,6 @@ interface webkitRTCPeerConnection extends RTCPeerConnection {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var webkitRTCPeerConnection: {
     prototype: webkitRTCPeerConnection;
     new(configuration: RTCConfiguration): webkitRTCPeerConnection;
@@ -17951,7 +17437,6 @@ interface WebSocket extends EventTarget {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var WebSocket: {
     prototype: WebSocket;
     new(url: string, protocols?: string | string[]): WebSocket;
@@ -17976,7 +17461,6 @@ interface WheelEvent extends MouseEvent {
     readonly DOM_DELTA_PIXEL: number;
 }
 
-// eslint-disable-next-line no-var
 declare var WheelEvent: {
     prototype: WheelEvent;
     new(typeArg: string, eventInitDict?: WheelEventInit): WheelEvent;
@@ -18268,7 +17752,6 @@ interface Window extends EventTarget, WindowTimers, WindowSessionStorage, Window
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var Window: {
     prototype: Window;
     new(): Window;
@@ -18288,7 +17771,6 @@ interface Worker extends EventTarget, AbstractWorker {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var Worker: {
     prototype: Worker;
     new(stringUrl: string): Worker;
@@ -18301,7 +17783,6 @@ interface XMLDocument extends Document {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var XMLDocument: {
     prototype: XMLDocument;
     new(): XMLDocument;
@@ -18346,7 +17827,6 @@ interface XMLHttpRequest extends EventTarget, XMLHttpRequestEventTarget {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var XMLHttpRequest: {
     prototype: XMLHttpRequest;
     new(): XMLHttpRequest;
@@ -18364,7 +17844,6 @@ interface XMLHttpRequestUpload extends EventTarget, XMLHttpRequestEventTarget {
     removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var XMLHttpRequestUpload: {
     prototype: XMLHttpRequestUpload;
     new(): XMLHttpRequestUpload;
@@ -18374,7 +17853,6 @@ interface XMLSerializer {
     serializeToString(target: Node): string;
 }
 
-// eslint-disable-next-line no-var
 declare var XMLSerializer: {
     prototype: XMLSerializer;
     new(): XMLSerializer;
@@ -18386,7 +17864,6 @@ interface XPathEvaluator {
     evaluate(expression: string, contextNode: Node, resolver: XPathNSResolver | null, type: number, result: XPathResult | null): XPathResult;
 }
 
-// eslint-disable-next-line no-var
 declare var XPathEvaluator: {
     prototype: XPathEvaluator;
     new(): XPathEvaluator;
@@ -18396,7 +17873,6 @@ interface XPathExpression {
     evaluate(contextNode: Node, type: number, result: XPathResult | null): XPathResult;
 }
 
-// eslint-disable-next-line no-var
 declare var XPathExpression: {
     prototype: XPathExpression;
     new(): XPathExpression;
@@ -18406,7 +17882,6 @@ interface XPathNSResolver {
     lookupNamespaceURI(prefix: string): string;
 }
 
-// eslint-disable-next-line no-var
 declare var XPathNSResolver: {
     prototype: XPathNSResolver;
     new(): XPathNSResolver;
@@ -18434,7 +17909,6 @@ interface XPathResult {
     readonly UNORDERED_NODE_SNAPSHOT_TYPE: number;
 }
 
-// eslint-disable-next-line no-var
 declare var XPathResult: {
     prototype: XPathResult;
     new(): XPathResult;
@@ -18461,7 +17935,6 @@ interface XSLTProcessor {
     transformToFragment(source: Node, document: Document): DocumentFragment;
 }
 
-// eslint-disable-next-line no-var
 declare var XSLTProcessor: {
     prototype: XSLTProcessor;
     new(): XSLTProcessor;
@@ -18841,7 +18314,6 @@ interface BroadcastChannel extends EventTarget {
     addEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
 }
 
-// eslint-disable-next-line no-var
 declare var BroadcastChannel: {
     prototype: BroadcastChannel;
     new(name: string): BroadcastChannel;
@@ -18917,7 +18389,6 @@ interface URLSearchParams {
     set(name: string, value: string): void;
 }
 
-// eslint-disable-next-line no-var
 declare var URLSearchParams: {
     prototype: URLSearchParams;
     /**
@@ -19227,7 +18698,6 @@ interface HTMLDialogElement extends HTMLElement {
     showModal(): void;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLDialogElement: {
     prototype: HTMLDialogElement;
     new(): HTMLDialogElement;
@@ -19236,7 +18706,6 @@ declare var HTMLDialogElement: {
 interface HTMLMainElement extends HTMLElement {
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLMainElement: {
     prototype: HTMLMainElement;
     new(): HTMLMainElement;
@@ -19246,7 +18715,6 @@ interface HTMLDetailsElement extends HTMLElement {
     open: boolean;
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLDetailsElement: {
     prototype: HTMLDetailsElement;
     new(): HTMLDetailsElement;
@@ -19255,7 +18723,6 @@ declare var HTMLDetailsElement: {
 interface HTMLSummaryElement extends HTMLElement {
 }
 
-// eslint-disable-next-line no-var
 declare var HTMLSummaryElement: {
     prototype: HTMLSummaryElement;
     new(): HTMLSummaryElement;
@@ -19515,296 +18982,151 @@ type ElementListTagNameMap = {
     [key in keyof ElementTagNameMap]: NodeListOf<ElementTagNameMap[key]>
 };
 
-// eslint-disable-next-line no-var
 declare var Audio: { new(src?: string): HTMLAudioElement; };
-// eslint-disable-next-line no-var
 declare var Image: { new(width?: number, height?: number): HTMLImageElement; };
-// eslint-disable-next-line no-var
 declare var Option: { new(text?: string, value?: string, defaultSelected?: boolean, selected?: boolean): HTMLOptionElement; };
-// eslint-disable-next-line no-var
 declare var applicationCache: ApplicationCache;
-// eslint-disable-next-line no-var
 declare var caches: CacheStorage;
-// eslint-disable-next-line no-var
 declare var clientInformation: Navigator;
-// eslint-disable-next-line no-var
 declare var closed: boolean;
-// eslint-disable-next-line no-var
 declare var crypto: Crypto;
-// eslint-disable-next-line no-var
 declare var defaultStatus: string;
-// eslint-disable-next-line no-var
 declare var devicePixelRatio: number;
-// eslint-disable-next-line no-var
 declare var document: Document;
-// eslint-disable-next-line no-var
 declare var doNotTrack: string;
-// eslint-disable-next-line no-var
 declare var event: Event | undefined;
-// eslint-disable-next-line no-var
 declare var external: External;
-// eslint-disable-next-line no-var
 declare var frameElement: Element;
-// eslint-disable-next-line no-var
 declare var frames: Window;
-// eslint-disable-next-line no-var
 declare var history: History;
-// eslint-disable-next-line no-var
 declare var innerHeight: number;
-// eslint-disable-next-line no-var
 declare var innerWidth: number;
-// eslint-disable-next-line no-var
 declare var isSecureContext: boolean;
-// eslint-disable-next-line no-var
 declare var length: number;
-// eslint-disable-next-line no-var
 declare var location: Location;
-// eslint-disable-next-line no-var
 declare var locationbar: BarProp;
-// eslint-disable-next-line no-var
 declare var menubar: BarProp;
-// eslint-disable-next-line no-var
 declare var msContentScript: ExtensionScriptApis;
-// eslint-disable-next-line no-var
 declare var msCredentials: MSCredentials;
 declare const name: never;
-// eslint-disable-next-line no-var
 declare var navigator: Navigator;
-// eslint-disable-next-line no-var
 declare var offscreenBuffering: string | boolean;
-// eslint-disable-next-line no-var
 declare var onabort: (this: Window, ev: UIEvent) => any;
-// eslint-disable-next-line no-var
 declare var onafterprint: (this: Window, ev: Event) => any;
-// eslint-disable-next-line no-var
 declare var onbeforeprint: (this: Window, ev: Event) => any;
-// eslint-disable-next-line no-var
 declare var onbeforeunload: (this: Window, ev: BeforeUnloadEvent) => any;
-// eslint-disable-next-line no-var
 declare var onblur: (this: Window, ev: FocusEvent) => any;
-// eslint-disable-next-line no-var
 declare var oncanplay: (this: Window, ev: Event) => any;
-// eslint-disable-next-line no-var
 declare var oncanplaythrough: (this: Window, ev: Event) => any;
-// eslint-disable-next-line no-var
 declare var onchange: (this: Window, ev: Event) => any;
-// eslint-disable-next-line no-var
 declare var onclick: (this: Window, ev: MouseEvent) => any;
-// eslint-disable-next-line no-var
 declare var oncompassneedscalibration: (this: Window, ev: Event) => any;
-// eslint-disable-next-line no-var
 declare var oncontextmenu: (this: Window, ev: PointerEvent) => any;
-// eslint-disable-next-line no-var
 declare var ondblclick: (this: Window, ev: MouseEvent) => any;
-// eslint-disable-next-line no-var
 declare var ondevicelight: (this: Window, ev: DeviceLightEvent) => any;
-// eslint-disable-next-line no-var
 declare var ondevicemotion: (this: Window, ev: DeviceMotionEvent) => any;
-// eslint-disable-next-line no-var
 declare var ondeviceorientation: (this: Window, ev: DeviceOrientationEvent) => any;
-// eslint-disable-next-line no-var
 declare var ondrag: (this: Window, ev: DragEvent) => any;
-// eslint-disable-next-line no-var
 declare var ondragend: (this: Window, ev: DragEvent) => any;
-// eslint-disable-next-line no-var
 declare var ondragenter: (this: Window, ev: DragEvent) => any;
-// eslint-disable-next-line no-var
 declare var ondragleave: (this: Window, ev: DragEvent) => any;
-// eslint-disable-next-line no-var
 declare var ondragover: (this: Window, ev: DragEvent) => any;
-// eslint-disable-next-line no-var
 declare var ondragstart: (this: Window, ev: DragEvent) => any;
-// eslint-disable-next-line no-var
 declare var ondrop: (this: Window, ev: DragEvent) => any;
-// eslint-disable-next-line no-var
 declare var ondurationchange: (this: Window, ev: Event) => any;
-// eslint-disable-next-line no-var
 declare var onemptied: (this: Window, ev: Event) => any;
-// eslint-disable-next-line no-var
 declare var onended: (this: Window, ev: MediaStreamErrorEvent) => any;
-// eslint-disable-next-line no-var
 declare var onerror: ErrorEventHandler;
-// eslint-disable-next-line no-var
 declare var onfocus: (this: Window, ev: FocusEvent) => any;
-// eslint-disable-next-line no-var
 declare var onhashchange: (this: Window, ev: HashChangeEvent) => any;
-// eslint-disable-next-line no-var
 declare var oninput: (this: Window, ev: Event) => any;
-// eslint-disable-next-line no-var
 declare var oninvalid: (this: Window, ev: Event) => any;
-// eslint-disable-next-line no-var
 declare var onkeydown: (this: Window, ev: KeyboardEvent) => any;
-// eslint-disable-next-line no-var
 declare var onkeypress: (this: Window, ev: KeyboardEvent) => any;
-// eslint-disable-next-line no-var
 declare var onkeyup: (this: Window, ev: KeyboardEvent) => any;
-// eslint-disable-next-line no-var
 declare var onload: (this: Window, ev: Event) => any;
-// eslint-disable-next-line no-var
 declare var onloadeddata: (this: Window, ev: Event) => any;
-// eslint-disable-next-line no-var
 declare var onloadedmetadata: (this: Window, ev: Event) => any;
-// eslint-disable-next-line no-var
 declare var onloadstart: (this: Window, ev: Event) => any;
-// eslint-disable-next-line no-var
 declare var onmessage: (this: Window, ev: MessageEvent) => any;
-// eslint-disable-next-line no-var
 declare var onmousedown: (this: Window, ev: MouseEvent) => any;
-// eslint-disable-next-line no-var
 declare var onmouseenter: (this: Window, ev: MouseEvent) => any;
-// eslint-disable-next-line no-var
 declare var onmouseleave: (this: Window, ev: MouseEvent) => any;
-// eslint-disable-next-line no-var
 declare var onmousemove: (this: Window, ev: MouseEvent) => any;
-// eslint-disable-next-line no-var
 declare var onmouseout: (this: Window, ev: MouseEvent) => any;
-// eslint-disable-next-line no-var
 declare var onmouseover: (this: Window, ev: MouseEvent) => any;
-// eslint-disable-next-line no-var
 declare var onmouseup: (this: Window, ev: MouseEvent) => any;
-// eslint-disable-next-line no-var
 declare var onmousewheel: (this: Window, ev: WheelEvent) => any;
-// eslint-disable-next-line no-var
 declare var onmsgesturechange: (this: Window, ev: MSGestureEvent) => any;
-// eslint-disable-next-line no-var
 declare var onmsgesturedoubletap: (this: Window, ev: MSGestureEvent) => any;
-// eslint-disable-next-line no-var
 declare var onmsgestureend: (this: Window, ev: MSGestureEvent) => any;
-// eslint-disable-next-line no-var
 declare var onmsgesturehold: (this: Window, ev: MSGestureEvent) => any;
-// eslint-disable-next-line no-var
 declare var onmsgesturestart: (this: Window, ev: MSGestureEvent) => any;
-// eslint-disable-next-line no-var
 declare var onmsgesturetap: (this: Window, ev: MSGestureEvent) => any;
-// eslint-disable-next-line no-var
 declare var onmsinertiastart: (this: Window, ev: MSGestureEvent) => any;
-// eslint-disable-next-line no-var
 declare var onmspointercancel: (this: Window, ev: MSPointerEvent) => any;
-// eslint-disable-next-line no-var
 declare var onmspointerdown: (this: Window, ev: MSPointerEvent) => any;
-// eslint-disable-next-line no-var
 declare var onmspointerenter: (this: Window, ev: MSPointerEvent) => any;
-// eslint-disable-next-line no-var
 declare var onmspointerleave: (this: Window, ev: MSPointerEvent) => any;
-// eslint-disable-next-line no-var
 declare var onmspointermove: (this: Window, ev: MSPointerEvent) => any;
-// eslint-disable-next-line no-var
 declare var onmspointerout: (this: Window, ev: MSPointerEvent) => any;
-// eslint-disable-next-line no-var
 declare var onmspointerover: (this: Window, ev: MSPointerEvent) => any;
-// eslint-disable-next-line no-var
 declare var onmspointerup: (this: Window, ev: MSPointerEvent) => any;
-// eslint-disable-next-line no-var
 declare var onoffline: (this: Window, ev: Event) => any;
-// eslint-disable-next-line no-var
 declare var ononline: (this: Window, ev: Event) => any;
-// eslint-disable-next-line no-var
 declare var onorientationchange: (this: Window, ev: Event) => any;
-// eslint-disable-next-line no-var
 declare var onpagehide: (this: Window, ev: PageTransitionEvent) => any;
-// eslint-disable-next-line no-var
 declare var onpageshow: (this: Window, ev: PageTransitionEvent) => any;
-// eslint-disable-next-line no-var
 declare var onpause: (this: Window, ev: Event) => any;
-// eslint-disable-next-line no-var
 declare var onplay: (this: Window, ev: Event) => any;
-// eslint-disable-next-line no-var
 declare var onplaying: (this: Window, ev: Event) => any;
-// eslint-disable-next-line no-var
 declare var onpopstate: (this: Window, ev: PopStateEvent) => any;
-// eslint-disable-next-line no-var
 declare var onprogress: (this: Window, ev: ProgressEvent) => any;
-// eslint-disable-next-line no-var
 declare var onratechange: (this: Window, ev: Event) => any;
-// eslint-disable-next-line no-var
 declare var onreadystatechange: (this: Window, ev: ProgressEvent) => any;
-// eslint-disable-next-line no-var
 declare var onreset: (this: Window, ev: Event) => any;
-// eslint-disable-next-line no-var
 declare var onresize: (this: Window, ev: UIEvent) => any;
-// eslint-disable-next-line no-var
 declare var onscroll: (this: Window, ev: UIEvent) => any;
-// eslint-disable-next-line no-var
 declare var onseeked: (this: Window, ev: Event) => any;
-// eslint-disable-next-line no-var
 declare var onseeking: (this: Window, ev: Event) => any;
-// eslint-disable-next-line no-var
 declare var onselect: (this: Window, ev: UIEvent) => any;
-// eslint-disable-next-line no-var
 declare var onstalled: (this: Window, ev: Event) => any;
-// eslint-disable-next-line no-var
 declare var onstorage: (this: Window, ev: StorageEvent) => any;
-// eslint-disable-next-line no-var
 declare var onsubmit: (this: Window, ev: Event) => any;
-// eslint-disable-next-line no-var
 declare var onsuspend: (this: Window, ev: Event) => any;
-// eslint-disable-next-line no-var
 declare var ontimeupdate: (this: Window, ev: Event) => any;
-// eslint-disable-next-line no-var
 declare var ontouchcancel: (ev: TouchEvent) => any;
-// eslint-disable-next-line no-var
 declare var ontouchend: (ev: TouchEvent) => any;
-// eslint-disable-next-line no-var
 declare var ontouchmove: (ev: TouchEvent) => any;
-// eslint-disable-next-line no-var
 declare var ontouchstart: (ev: TouchEvent) => any;
-// eslint-disable-next-line no-var
 declare var onunload: (this: Window, ev: Event) => any;
-// eslint-disable-next-line no-var
 declare var onvolumechange: (this: Window, ev: Event) => any;
-// eslint-disable-next-line no-var
 declare var onwaiting: (this: Window, ev: Event) => any;
-// eslint-disable-next-line no-var
 declare var opener: any;
-// eslint-disable-next-line no-var
 declare var orientation: string | number;
-// eslint-disable-next-line no-var
 declare var outerHeight: number;
-// eslint-disable-next-line no-var
 declare var outerWidth: number;
-// eslint-disable-next-line no-var
 declare var pageXOffset: number;
-// eslint-disable-next-line no-var
 declare var pageYOffset: number;
-// eslint-disable-next-line no-var
 declare var parent: Window;
-// eslint-disable-next-line no-var
 declare var performance: Performance;
-// eslint-disable-next-line no-var
 declare var personalbar: BarProp;
-// eslint-disable-next-line no-var
 declare var screen: Screen;
-// eslint-disable-next-line no-var
 declare var screenLeft: number;
-// eslint-disable-next-line no-var
 declare var screenTop: number;
-// eslint-disable-next-line no-var
 declare var screenX: number;
-// eslint-disable-next-line no-var
 declare var screenY: number;
-// eslint-disable-next-line no-var
 declare var scrollbars: BarProp;
-// eslint-disable-next-line no-var
 declare var scrollX: number;
-// eslint-disable-next-line no-var
 declare var scrollY: number;
-// eslint-disable-next-line no-var
 declare var self: Window;
-// eslint-disable-next-line no-var
 declare var speechSynthesis: SpeechSynthesis;
-// eslint-disable-next-line no-var
 declare var status: string;
-// eslint-disable-next-line no-var
 declare var statusbar: BarProp;
-// eslint-disable-next-line no-var
 declare var styleMedia: StyleMedia;
-// eslint-disable-next-line no-var
 declare var toolbar: BarProp;
-// eslint-disable-next-line no-var
 declare var top: Window;
-// eslint-disable-next-line no-var
 declare var window: Window;
-// eslint-disable-next-line no-var
 declare var customElements: CustomElementRegistry;
 declare function alert(message?: any): void;
 declare function blur(): void;
@@ -19853,31 +19175,18 @@ declare function setTimeout(handler: any, timeout?: any, ...args: any[]): number
 declare function clearImmediate(handle: number): void;
 declare function setImmediate(handler: (...args: any[]) => void): number;
 declare function setImmediate(handler: any, ...args: any[]): number;
-// eslint-disable-next-line no-var
 declare var sessionStorage: Storage;
-// eslint-disable-next-line no-var
 declare var localStorage: Storage;
-// eslint-disable-next-line no-var
 declare var console: Console;
-// eslint-disable-next-line no-var
 declare var onpointercancel: (this: Window, ev: PointerEvent) => any;
-// eslint-disable-next-line no-var
 declare var onpointerdown: (this: Window, ev: PointerEvent) => any;
-// eslint-disable-next-line no-var
 declare var onpointerenter: (this: Window, ev: PointerEvent) => any;
-// eslint-disable-next-line no-var
 declare var onpointerleave: (this: Window, ev: PointerEvent) => any;
-// eslint-disable-next-line no-var
 declare var onpointermove: (this: Window, ev: PointerEvent) => any;
-// eslint-disable-next-line no-var
 declare var onpointerout: (this: Window, ev: PointerEvent) => any;
-// eslint-disable-next-line no-var
 declare var onpointerover: (this: Window, ev: PointerEvent) => any;
-// eslint-disable-next-line no-var
 declare var onpointerup: (this: Window, ev: PointerEvent) => any;
-// eslint-disable-next-line no-var
 declare var onwheel: (this: Window, ev: WheelEvent) => any;
-// eslint-disable-next-line no-var
 declare var indexedDB: IDBFactory;
 declare function atob(encodedString: string): string;
 declare function btoa(rawString: string): string;
@@ -20020,7 +19329,6 @@ declare function importScripts(...urls: string[]): void;
 interface ActiveXObject {
     new (s: string): any;
 }
-// eslint-disable-next-line no-var
 declare var ActiveXObject: ActiveXObject;
 
 interface ITextWriter {
@@ -20110,7 +19418,6 @@ interface TextStreamReader extends TextStreamBase {
     AtEndOfStream: boolean;
 }
 
-// eslint-disable-next-line no-var
 declare var WScript: {
     /**
      * Outputs text to either a message box (under WScript.exe) or the command console window followed by
@@ -20257,7 +19564,6 @@ interface EnumeratorConstructor {
     new <T = any>(collection: any): Enumerator<T>;
 }
 
-// eslint-disable-next-line no-var
 declare var Enumerator: EnumeratorConstructor;
 
 /**
@@ -20298,7 +19604,6 @@ interface VBArrayConstructor {
     new <T = any>(safeArray: SafeArray<T>): VBArray<T>;
 }
 
-// eslint-disable-next-line no-var
 declare var VBArray: VBArrayConstructor;
 
 /**
