@@ -237,6 +237,7 @@ namespace pxt.vs {
 
                 comment: [],
 
+                // eslint-disable-next-line id-blacklist
                 string: [
                     [/[^\\"]+/, 'string'],
                     [/@escapes/, 'string.escape'],

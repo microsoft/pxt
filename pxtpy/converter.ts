@@ -1909,9 +1909,7 @@ namespace pxt.py {
                     else {
                         let ee = elts.shift()
                         let et = ee ? expr(ee) : B.mkText("???")
-                        /* tslint:disable:no-invalid-template-strings */
                         res.push(B.mkText("${"), et, B.mkText("}"))
-                        /* tslint:enable:no-invalid-template-strings */
                     }
                     return ""
                 })

@@ -2,6 +2,7 @@
 
 namespace pxt.py {
     export enum TokenType {
+        /* eslint-disable id-blacklist */
         Id,
         Op,
         Keyword,
@@ -13,6 +14,7 @@ namespace pxt.py {
         Dedent,
         EOF,
         Error
+        /* eslint-enable id-blacklist */
     }
     export interface Token {
         type: TokenType;

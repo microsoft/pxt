@@ -417,6 +417,7 @@ export class Provider extends cloudsync.ProviderBase implements cloudsync.Provid
                 ifr.style.border = "0";
                 hiddenFrame = (document.getElementsByTagName("body")[0].appendChild(ifr) as HTMLIFrameElement);
             } else if (document.body && document.body.insertAdjacentHTML) {
+                // eslint-disable-next-line @microsoft/sdl/no-inner-html
                 document.body.insertAdjacentHTML('beforeend', '<iframe name="' + iframeId + '" id="' + iframeId + '" style="display:none"></iframe>');
             }
 

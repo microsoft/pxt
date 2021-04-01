@@ -454,7 +454,7 @@ namespace ts.pxtc.Util {
     export async function delay<T>(duration: number, value: T | Promise<T>): Promise<T>;
     export async function delay(duration: number): Promise<void>
     export async function delay<T>(duration: number, value?: T | Promise<T>): Promise<T> {
-        // tslint:disable-next-line
+        // eslint-disable-next-line
         const output = await value;
         await new Promise<void>(resolve => setTimeout(() => resolve(), duration));
         return output;

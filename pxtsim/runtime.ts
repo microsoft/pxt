@@ -112,7 +112,7 @@ namespace pxsim {
         export async function delay<T>(duration: number, value: T): Promise<T>;
         export async function delay(duration: number): Promise<void>
         export async function delay<T>(duration: number, value?: T): Promise<T> {
-            // tslint:disable-next-line
+            // eslint-disable-next-line
             const output = await value;
             await new Promise<void>(resolve => setTimeout(() => resolve(), duration));
             return output;
@@ -1190,7 +1190,6 @@ namespace pxsim {
                     lastYield = now
                     s.pc = pc;
                     s.r0 = r0;
-                    /* tslint:disable:no-string-based-set-timeout */
                     setTimeout(loopForSchedule(s), 5)
                     return true
                 }
@@ -1528,7 +1527,7 @@ namespace pxsim {
                 return fn
             }
 
-            // tslint:disable-next-line
+            // eslint-disable-next-line
             const entryPoint = msg.code && eval(msg.code)(evalIface);
 
             this.run = (cb) => topCall(entryPoint, cb)

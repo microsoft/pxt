@@ -102,11 +102,13 @@ namespace ts.pxtc {
     }
 
     enum HasLiteralType {
+        /* eslint-disable id-blacklist */
         Enum,
         Number,
         String,
         Boolean,
         Unsupported
+        /* eslint-enable id-blacklist */
     }
 
     // in tagged mode,

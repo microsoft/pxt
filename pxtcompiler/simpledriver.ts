@@ -205,9 +205,12 @@ namespace pxt {
         }
     }
 
-    declare var global: any;
-    declare var Buffer: any;
-    declare var pxtTargetBundle: TargetBundle;
+    // eslint-disable-next-line no-var
+declare var global: any;
+    // eslint-disable-next-line no-var
+declare var Buffer: any;
+    // eslint-disable-next-line no-var
+declare var pxtTargetBundle: TargetBundle;
 
     export function setupSimpleCompile(cfg?: SimpleDriverCallbacks) {
         if (typeof global != "undefined" && !global.btoa) {

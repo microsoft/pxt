@@ -1,4 +1,4 @@
-/* tslint:disable:forin cli only run in node */
+/* eslint-disable @typescript-eslint/no-for-in-array */
 
 /// <reference path="../built/pxtlib.d.ts"/>
 /// <reference path="../built/pxtcompiler.d.ts"/>

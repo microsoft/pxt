@@ -1493,6 +1493,7 @@ namespace pxt {
         if (!name) return false;
 
         // Covers all punctuation/whitespace except for "-", "_", and " "
+        // eslint-disable-next-line no-control-regex
         const bannedRegex = /[\u0000-\u001f\u0021-\u002c\u002e\u002f\u003a-\u0040\u005b-\u005e\u0060\u007b-\u007f]/
         return !bannedRegex.test(name);
     }

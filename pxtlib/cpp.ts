@@ -1,7 +1,7 @@
 /// <reference path="../localtypings/pxtarget.d.ts"/>
 
 namespace pxt {
-    declare var require: any;
+    declare let require: any;
 
     let lzmaPromise: Promise<any>;
     function getLzmaAsync() {
@@ -1559,9 +1559,9 @@ namespace pxt.hexloader {
                 buf = ""
                 let cnt = parseInt(nxt, 16)
                 while (cnt-- > 0) {
-                    /* tslint:disable:no-octal-literal */
+                    /* eslint-disable no-octal */
                     buf += "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
-                    /* tslint:enable:no-octal-literal */
+                    /* eslint-enable no-octal */
                 }
             } else {
                 buf = ts.pxtc.decodeBase64(nxt)

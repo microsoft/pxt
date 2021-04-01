@@ -1,4 +1,4 @@
-/* tslint:disable:no-inner-html TODO(tslint): get rid of jquery html() calls */
+/* TODO(tslint): get rid of jquery html() calls */
 
 /// <reference path="../built/pxtlib.d.ts" />
 /// <reference path="../built/pxteditor.d.ts" />

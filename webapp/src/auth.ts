@@ -574,7 +574,6 @@ export type ApiResult<T> = {
 const DEV_BACKEND_DEFAULT = "";
 const DEV_BACKEND_PROD = "https://www.makecode.com";
 const DEV_BACKEND_STAGING = "https://staging.pxt.io";
-// tslint:disable-next-line:no-http-string
 const DEV_BACKEND_LOCALHOST = "http://localhost:5500";
 
 const DEV_BACKEND = DEV_BACKEND_STAGING;

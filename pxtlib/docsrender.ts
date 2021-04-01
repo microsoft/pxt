@@ -3,7 +3,8 @@
 /// <reference path="commonutil.ts"/>
 
 namespace pxt.docs {
-    declare var require: any;
+    // eslint-disable-next-line no-var
+declare var require: any;
     import U = pxtc.Util;
 
     let markedInstance: typeof marked;

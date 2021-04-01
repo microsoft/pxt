@@ -88,6 +88,7 @@
     "webusb": "^1.1.1"
   },
   "devDependencies": {
+    "@microsoft/eslint-plugin-sdl": "^0.1.5",
     "@microsoft/immersive-reader-sdk": "1.1.0",
     "@types/chai": "4.0.6",
     "@types/fuse": "2.5.2",
@@ -111,6 +112,8 @@
     "envify": "4.1.0",
     "eslint": "^7.23.0",
     "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-jsx-a11y": "^6.4.1",
+    "eslint-plugin-react": "^7.23.1",
     "fuse.js": "3.2.0",
     "gulp": "4.0.0",
     "gulp-concat": "2.6.1",

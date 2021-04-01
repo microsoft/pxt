@@ -439,11 +439,9 @@ namespace pxt.blocks {
         }
 
         let hash = JSON.stringify(fn);
-        /* tslint:disable:possible-timing-attack (not a security critical codepath) */
         if (cachedBlocks[id] && cachedBlocks[id].hash == hash) {
             return true;
         }
-        /* tslint:enable:possible-timing-attack */
 
         if (Blockly.Blocks[fn.attributes.blockId]) {
             console.error("duplicate block definition: " + id);
@@ -2623,9 +2621,11 @@ namespace pxt.blocks {
 
         // Configure function editor argument icons
         const iconsMap: pxt.Map<string> = {
+            /* eslint-disable id-blacklist */
             number: pxt.blocks.defaultIconForArgType("number"),
             boolean: pxt.blocks.defaultIconForArgType("boolean"),
             string: pxt.blocks.defaultIconForArgType("string")
+            /* eslint-enable id-blacklist */
         };
         const customNames: pxsim.Map<string> = {};
 

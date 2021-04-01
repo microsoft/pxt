@@ -2,9 +2,9 @@ import * as React from "react";
 
 import { SkillGraph } from "./SkillGraph";
 
-/* tslint:disable:no-import-side-effect */
+/* eslint-disable import/no-unassigned-import, import/no-internal-modules */
 import '../styles/skillgraph.css'
-/* tslint:enable:no-import-side-effect */
+/* eslint-enable import/no-unassigned-import, import/no-internal-modules */
 
 interface SkillGraphContainerProps {
     maps: SkillMap[];

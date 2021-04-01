@@ -65,7 +65,7 @@ export function makeAsync(): Promise<void> {
         size: "large",
         hasCloseIcon: true,
         jsx:
-            /* tslint:disable:react-iframe-missing-sandbox */
+            /* eslint-disable @microsoft/sdl/react-iframe-missing-sandbox */
             <div className="ui container">
                 <div id="makecontainer" style={{ 'position': 'relative', 'height': 0, 'paddingBottom': '40%', 'overflow': 'hidden' }}>
                     <iframe id="makeiframe" frameBorder="0"
@@ -74,7 +74,7 @@ export function makeAsync(): Promise<void> {
                         />
                 </div>
             </div>
-        /* tslint:enable:react-iframe-missing-sandbox */
+        /* eslint-enable @microsoft/sdl/react-iframe-missing-sandbox */
         , onLoaded: (_) => {
             renderAsync(_.querySelectorAll("#makeiframe")[0] as HTMLIFrameElement);
         }

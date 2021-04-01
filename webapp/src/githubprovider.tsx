@@ -82,7 +82,6 @@ export class GithubProvider extends cloudsync.ProviderBase {
             rememberMe = v;
             core.forceUpdate();
         }
-        // tslint:disable: react-this-binding-issue
         return core.confirmAsync({
             header: lf("Sign in with GitHub"),
             hasCloseIcon: true,
@@ -136,7 +135,6 @@ export class GithubProvider extends cloudsync.ProviderBase {
                 }
             }
         })
-        // tslint:enable: react-this-binding-issue
 
         function showToken() {
             useToken = true;
