@@ -212,6 +212,18 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         Blockly.WidgetDiv.hide();
     }
 
+    getTemporaryAssets(): pxt.Asset[] {
+        if (!this.editor) return[];
+
+        return pxtblockly.getTemporaryAssets(this.editor, pxt.AssetType.Image)
+            .concat(pxtblockly.getTemporaryAssets(this.editor, pxt.AssetType.Animation))
+    }
+
+    updateTemporaryAsset(asset: pxt.Asset) {
+        const block = this.editor.getBlockById(asset.meta.temporaryInfo.blockId);
+        (block.getField(asset.meta.temporaryInfo.fieldName) as pxtblockly.FieldAssetEditor<any, any>).updateAsset(asset);
+    }
+
     private saveBlockly(): string {
         // make sure we don't return an empty document before we get started
         // otherwise it may get saved and we're in trouble

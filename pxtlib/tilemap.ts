@@ -14,6 +14,12 @@ namespace pxt {
         displayName?: string;
         tags?: string[];
         blockIDs?: string[];
+        temporaryInfo?: TemporaryAssetInfo;
+    }
+
+    export interface TemporaryAssetInfo {
+        blockId: string;
+        fieldName: string;
     }
 
     export type Asset = ProjectImage | Tile | Animation | ProjectTilemap;
@@ -1404,7 +1410,7 @@ namespace pxt {
         return new pxt.sprite.TilemapData(tilemap, tileset, layers);
     }
 
-    function cloneAsset<U extends Asset>(asset: U): U {
+    export function cloneAsset<U extends Asset>(asset: U): U {
         asset.meta = Object.assign({}, asset.meta);
         switch (asset.type) {
             case AssetType.Tile:
