@@ -649,6 +649,26 @@ namespace pxt.sprite {
         return result;
     }
 
+    export function encodeAnimationString(frames: BitmapData[], interval: number) {
+        const encodedFrames = frames.map(frame => frame.data);
+
+        const data = new Uint8ClampedArray(8 + encodedFrames[0].length * encodedFrames.length);
+
+        // interval, frame width, frame height, frame count
+        set16Bit(data, 0, interval);
+        set16Bit(data, 2, frames[0].width);
+        set16Bit(data, 4, frames[0].height);
+        set16Bit(data, 6, frames.length);
+
+        let offset = 8;
+        encodedFrames.forEach(buf => {
+            data.set(buf, offset);
+            offset += buf.length;
+        })
+
+        return btoa(pxt.sprite.uint8ArrayToHex(data))
+    }
+
     export function addMissingTilemapTilesAndReferences(project: TilemapProject, asset: ProjectTilemap) {
         const allTiles = project.getProjectTiles(asset.data.tileset.tileWidth, true);
         asset.data.projectReferences = [];
@@ -797,6 +817,11 @@ namespace pxt.sprite {
             res += hex[data[i] & 0xf];
         }
         return res;
+    }
+
+    function set16Bit(buf: Uint8ClampedArray, offset: number, value: number) {
+        buf[offset] = value & 0xff;
+        buf[offset + 1] = (value >> 8) & 0xff;
     }
 
     function colorStringToRGB(color: string) {
