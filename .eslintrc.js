@@ -2,10 +2,11 @@
 Generated from:
 https://github.com/typescript-eslint/tslint-to-eslint-config
 
-Other references:
+References:
+https://code.visualstudio.com/api/advanced-topics/tslint-eslint-migration
 https://github.com/typescript-eslint/tslint-to-eslint-config/blob/master/docs/FAQs.md
 https://github.com/microsoft/eslint-plugin-sdl
-
+https://github.com/dustinspecker/awesome-eslint#plugins
 */
 module.exports = {
     "env": {
