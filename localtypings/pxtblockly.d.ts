@@ -1,4 +1,3 @@
-// eslint-disable
 /// <reference path="blockly.d.ts" />
 /// <reference path="pxtpackage.d.ts" />
 
