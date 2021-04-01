@@ -4,7 +4,7 @@
 
 namespace pxt.docs {
     // eslint-disable-next-line no-var
-declare var require: any;
+    declare var require: any;
     import U = pxtc.Util;
 
     let markedInstance: typeof marked;
