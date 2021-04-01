@@ -16,8 +16,6 @@ module.exports = {
     },
     "parser": "@typescript-eslint/parser",
     "parserOptions": {
-        // TODO(@darzu): this doesn't work because we don't have one tsconfig.json at the root of everything.
-        // "project": "tsconfig.json",
         "sourceType": "module"
     },
     "plugins": [

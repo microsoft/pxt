@@ -1,4 +1,5 @@
 **/ext-typescript/
+.eslintrc.js
 
 # For some reason these files cause eslint to crash inside the TS compiler :(
 #   Error: Debug Failure. Unhandled declaration kind! ModuleDeclaration for {...}
