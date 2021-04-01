@@ -2621,11 +2621,9 @@ namespace pxt.blocks {
 
         // Configure function editor argument icons
         const iconsMap: pxt.Map<string> = {
-            /* eslint-disable id-blacklist */
             number: pxt.blocks.defaultIconForArgType("number"),
             boolean: pxt.blocks.defaultIconForArgType("boolean"),
             string: pxt.blocks.defaultIconForArgType("string")
-            /* eslint-enable id-blacklist */
         };
         const customNames: pxsim.Map<string> = {};
 
