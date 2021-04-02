@@ -405,7 +405,7 @@ namespace ts.pxtc.service {
                     if (sigs && sigs.length) {
                         return createDefaultFunction(sigs[0], false);
                     }
-                    return emitEmptyFn(name);
+                    return emitEmptyFn();
                 }
             }
             if (type.flags & ts.TypeFlags.NumberLike) {
@@ -618,7 +618,7 @@ namespace ts.pxtc.service {
             }
         }
 
-        function emitEmptyFn(n: string): SnippetNode {
+        function emitEmptyFn(n?: string): SnippetNode {
             if (python) {
                 n = n || "fn"
                 n = snakify(n);

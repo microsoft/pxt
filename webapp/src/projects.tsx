@@ -609,7 +609,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                     this.props.parent.newProject({ name, languageRestriction });
                 })
         } else {
-            this.props.parent.newProject({ name });
+            this.props.parent.newProject({});
         }
     }
 
