@@ -86,13 +86,13 @@ export class WebCam extends data.Component<WebCamProps, WebCamState> {
             // first ask for permission from ther user so that
             // labels are populated in enumerateDevices
             navigator.mediaDevices.getUserMedia({ audio: false, video: true })
-            .then(() => navigator.mediaDevices.enumerateDevices())
-            .then(devices => {
-                this.setState({ devices: devices.filter(device => device.kind == "videoinput") });
-            }, e => {
-                pxt.debug(`greenscreen: enumerate devices failed`)
-                console.error(e);
-            });
+                .then(() => navigator.mediaDevices.enumerateDevices())
+                .then(devices => {
+                    this.setState({ devices: devices.filter(device => device.kind == "videoinput") });
+                }, e => {
+                    pxt.debug(`greenscreen: enumerate devices failed`)
+                    console.error(e);
+                });
         }
     }
 
