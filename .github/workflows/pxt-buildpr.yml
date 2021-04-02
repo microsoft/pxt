@@ -4,6 +4,7 @@ on: [pull_request]
 
 jobs:
   build:
+    name: buildpr
 
     runs-on: ubuntu-latest
 
