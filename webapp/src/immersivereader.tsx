@@ -171,17 +171,18 @@ function beautifyText(content: string): string {
 
 function getTokenAsync(): Promise<ImmersiveReaderToken> {
     if (Cloud.isOnline()) {
-        const storedTokenString = pxt.storage.getLocal('immReader');
+        const IMMERSIVE_READER_ID = "immReader";
+        const storedTokenString = pxt.storage.getLocal(IMMERSIVE_READER_ID);
         const cachedToken: ImmersiveReaderToken = pxt.Util.jsonTryParse(storedTokenString);
 
         if (!cachedToken || (Date.now() / 1000 > cachedToken.expiration)) {
             return Cloud.apiRequestWithCdnAsync({ url: "immreader", forceLiveEndpoint: true }).then(
                 res => {
-                    pxt.storage.setLocal('immReader', JSON.stringify(res.json));
+                    pxt.storage.setLocal(IMMERSIVE_READER_ID, JSON.stringify(res.json));
                     return res.json;
                 },
                 e => {
-                    pxt.storage.removeLocal("/api/immreader");
+                    pxt.storage.removeLocal(IMMERSIVE_READER_ID);
                     console.log("immersive reader fetch token error: " + JSON.stringify(e));
                     pxt.tickEvent("immersiveReader.error", { error: JSON.stringify(e) });
                     return Promise.reject(new Error("token"));
