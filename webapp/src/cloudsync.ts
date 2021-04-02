@@ -329,7 +329,6 @@ export function reconstructMeta(files: pxt.Map<string>) {
 }
 
 // these imports have to be after the ProviderBase class definition; otherwise we get crash on startup
-import * as onedrive from "./onedrive";
 import * as googledrive from "./googledrive";
 import * as githubprovider from "./githubprovider";
 
@@ -340,7 +339,7 @@ function identityProviders(): IdentityProvider[] {
         const cl = pxt.appTarget.cloud
 
         if (cl && cl.cloudProviders) {
-            [new onedrive.Provider(), new googledrive.Provider()]
+            [new googledrive.Provider()]
                 .filter(p => !!cl.cloudProviders[p.name])
                 .forEach(p => allProviders[p.name] = p);
         }
