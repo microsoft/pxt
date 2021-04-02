@@ -776,6 +776,7 @@ namespace ts.pxtc.Util {
         forceLiveEndpoint?: boolean;
         successCodes?: number[];
         withCredentials?: boolean;
+        hourlyCache?: boolean;
     }
 
     export interface HttpResponse {
