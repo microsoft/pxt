@@ -96,7 +96,7 @@ function fail(msg: string) {
 }
 
 function pyconverterTestAsync(pyFilename: string) {
-    return new Promise((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
         const basename = path.basename(pyFilename);
         let baselineFile = path.join(baselineDir, util.replaceFileExtension(basename, ".ts"))
         baselineFile = baselineFile.replace("ONLY_", "")
