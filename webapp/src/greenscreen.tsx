@@ -24,7 +24,7 @@ function isMediaDevicesSupported(): boolean {
 }
 
 export class WebCam extends data.Component<WebCamProps, WebCamState> {
-    private deviceId: string;
+    private deviceInfo: MediaDeviceInfo;
     private stream: MediaStream;
     private video: HTMLVideoElement;
 
@@ -38,14 +38,14 @@ export class WebCam extends data.Component<WebCamProps, WebCamState> {
         this.handleClose = this.handleClose.bind(this);
     }
 
-    handleDeviceClick(deviceId: any) {
+    handleDeviceClick(deviceInfo: MediaDeviceInfo) {
         this.setState({ hasPrompt: false });
-        pxt.debug(`greenscreen: device ${deviceId}`)
-        this.deviceId = deviceId;
+        pxt.debug(`greenscreen: start`)
+        this.deviceInfo = deviceInfo;
         // deviceId is "" if green screen selected
-        if (this.deviceId) {
+        if (this.deviceInfo?.deviceId) {
             navigator.mediaDevices.getUserMedia({
-                video: { deviceId: { exact: deviceId } },
+                video: { deviceId: { exact: deviceInfo.deviceId } },
                 audio: false
             }).then(stream => {
                 pxt.debug(`greenscreen: stream acquired`)
@@ -76,17 +76,26 @@ export class WebCam extends data.Component<WebCamProps, WebCamState> {
     }
 
     handleClose() {
-        if (!this.deviceId) {
+        if (!this.deviceInfo) {
             this.props.close();
         }
     }
 
     componentDidMount() {
-        if (isMediaDevicesSupported())
-            navigator.mediaDevices.enumerateDevices()
-                .then(devices => {
-                    this.setState({ devices: devices.filter(device => device.kind == "videoinput") });
-                })
+        if (isMediaDevicesSupported()) {
+            // first ask for permission from ther user so that
+            // labels are populated in enumerateDevices
+            navigator.mediaDevices.getUserMedia({
+                audio: false, video: true
+            }).then(() => navigator.mediaDevices.enumerateDevices()
+                    .then(devices => {
+                        this.setState({ devices: devices.filter(device => device.kind == "videoinput") });
+                    })
+            , e => {
+                pxt.debug(`greenscreen: get user media failed`)
+                console.error(e);
+            });
+        }
     }
 
     componentWillUnmount() {
@@ -94,7 +103,7 @@ export class WebCam extends data.Component<WebCamProps, WebCamState> {
     }
 
     private stop() {
-        this.deviceId = undefined;
+        this.deviceInfo = undefined;
         if (this.stream) {
             try {
                 const tracks = this.stream.getTracks();
@@ -117,7 +126,6 @@ export class WebCam extends data.Component<WebCamProps, WebCamState> {
     render() {
         // playsInline required for iOS
         const { hasPrompt, devices, userFacing } = this.state;
-        const handleClick = (deviceId: string) => () => this.handleDeviceClick(deviceId)
 
         return <div className="videoContainer">
             <video className={userFacing ? "flipx" : ""} autoPlay playsInline ref={this.handleVideoRef} />
@@ -128,15 +136,15 @@ export class WebCam extends data.Component<WebCamProps, WebCamState> {
                         <WebCamCard
                             key={`devicegreenscreen`}
                             icon='green tint'
-                            onClick={handleClick("")}
-                            deviceId={""} header={lf("Green background")} />
+                            onClick={this.handleDeviceClick}
+                            device={undefined} header={lf("Green background")} />
                         {devices && devices
                             .map((device, di) =>
                                 <WebCamCard
                                     key={`device${di}`}
                                     icon='video camera'
-                                    onClick={handleClick(device.deviceId)}
-                                    deviceId={device.deviceId} header={device.label || lf("camera {0}", di)} />
+                                    onClick={this.handleDeviceClick}
+                                    device={device} header={device.label || lf("camera {0}", di)} />
                             )}
                     </div>
                 </sui.Modal>
@@ -149,8 +157,8 @@ export class WebCam extends data.Component<WebCamProps, WebCamState> {
 interface WebCamCardProps {
     header: string;
     icon: string;
-    deviceId: any;
-    onClick: (deviceId: any) => void;
+    device: MediaDeviceInfo;
+    onClick: (device: MediaDeviceInfo) => void;
 }
 
 class WebCamCard extends data.Component<WebCamCardProps, {}> {
@@ -164,8 +172,8 @@ class WebCamCard extends data.Component<WebCamCardProps, {}> {
     }
 
     handleClick() {
-        const { deviceId, onClick } = this.props;
-        onClick(deviceId);
+        const { device, onClick } = this.props;
+        onClick(device);
     }
 
     renderCore() {
