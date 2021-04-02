@@ -48,13 +48,26 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
         return items;
     }
 
+    protected getHelpItems(): DropdownItem[] {
+        const items: DropdownItem[] = [];
+        if (this.props.activityOpen) {
+            items.push({
+                id: "feedback",
+                label: lf("Feedback"),
+                onClick: this.onBugClicked
+            });
+        }
+        return items;
+    }
+
     render() {
         const { activityOpen, currentActivityDisplayName } = this.props;
         const logoAlt = "MakeCode Logo";
         const organizationLogoAlt = "Microsoft Logo";
         const logoSrc = (isLocal() || !pxt.appTarget?.appTheme?.logoUrl ) ? resolvePath("assets/logo.svg") : pxt.appTarget?.appTheme?.logo;
 
-        const items = this.getSettingItems();
+        const settingItems = this.getSettingItems();
+        const helpItems = this.getHelpItems();
 
         return <div className="header">
             <div className="header-left">
@@ -73,8 +86,8 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
             }
             <div className="spacer" />
             <div className="header-right">
-                <HeaderBarButton icon="icon bug" title={lf("Report a bug or issue")} onClick={this.onBugClicked}/>
-                { items?.length > 0 && <Dropdown icon="setting" className="header-settings" items={items} /> }
+                { helpItems?.length > 0 && <Dropdown icon="help circle" className="header-dropdown" items={helpItems} /> }
+                { settingItems?.length > 0 && <Dropdown icon="setting" className="header-dropdown" items={settingItems} /> }
                 <div className="header-org-logo">
                     <img className="header-org-logo-large" src={resolvePath("assets/microsoft.png")} alt={organizationLogoAlt} />
                     <img className="header-org-logo-small" src={resolvePath("assets/microsoft-square.png")} alt={organizationLogoAlt} />

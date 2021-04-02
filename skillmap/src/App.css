@@ -115,12 +115,13 @@ code {
     cursor: pointer;
 }
 
-.header-settings i {
+.header-dropdown i {
     display: flex;
     justify-content: center;
     align-items: center;
     height: var(--header-height);
-    width: 3rem;
+    width: 3.5rem;
+    margin: 0;
 }
 
 .header-button {
@@ -145,7 +146,7 @@ code {
     white-space: nowrap;
 }
 
-.header-button:hover, .header-settings:hover {
+.header-button:hover, .header-dropdown:hover {
     background-color: var(--hover-color);
     color: var(--invert-hover-text-color);
 }
