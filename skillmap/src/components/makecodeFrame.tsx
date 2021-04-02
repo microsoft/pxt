@@ -35,9 +35,8 @@ interface MakeCodeFrameProps {
 
 interface MakeCodeFrameState {
     loaded: boolean;
-
-    // See handleFrameRef
-    unloading: boolean;
+    unloading: boolean; // See handleFrameRef
+    loadPercent?: number; // Progress bar load % from 0 - 100 (loaded)
 }
 
 export const editorUrl: string = isLocal() ? "http://localhost:3232/index.html" : getEditorUrl((window as any).pxtTargetBundle.appTheme.embedUrl)
@@ -55,7 +54,8 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
         super(props);
         this.state = {
             loaded: false,
-            unloading: false
+            unloading: false,
+            loadPercent: 0
         };
     }
 
@@ -92,7 +92,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
 
     render() {
         const { url, title, save, carryoverModalVisible } = this.props;
-        const { loaded, unloading } = this.state;
+        const { loaded, unloading, loadPercent } = this.state;
 
         const loadingText = save ? lf("Saving...") : lf("Loading...")
         const imageAlt = "MakeCode Logo";
@@ -101,6 +101,9 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
         return <div className="makecode-frame-outer">
             <div className={`makecode-frame-loader ${(loaded && !save && !carryoverModalVisible) ? "hidden" : ""}`}>
                 <img src={resolvePath("assets/logo.svg")} alt={imageAlt} />
+                {!loaded && <div className="makecode-frame-loader-bar">
+                    <div className="makecode-frame-loader-fill" style={{ width: loadPercent + "%" }} />
+                </div>}
                 <div className="makecode-frame-loader-text">{loadingText}</div>
             </div>
             <iframe className="makecode-frame" src={unloading ? "about:blank" : url} title={title} ref={this.handleFrameRef}></iframe>
@@ -137,6 +140,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
 
     protected onMessageReceived = (event: MessageEvent) => {
         const data = event.data as pxt.editor.EditorMessageRequest;
+        if (!this.state.loaded) this.setState({ loadPercent: Math.min((this.state.loadPercent || 0) + 4, 95) });
 
         if (data.type === "pxteditor" && data.id && this.pendingMessages[data.id]) {
             this.onResponseReceived(this.pendingMessages[data.id], event.data as pxt.editor.EditorMessageResponse);
