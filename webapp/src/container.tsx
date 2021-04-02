@@ -612,7 +612,6 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
                 </a> : undefined}
             </div>
         </div>;
-        /* eslint-enable jsx-a11y/anchor-is-valid */
     }
 }
 
@@ -778,6 +777,5 @@ export class SandboxFooter extends data.PureComponent<SandboxFooterProps, {}> {
             <a target="_blank" className="item" href={targetTheme.privacyUrl} rel="noopener noreferrer">{lf("Privacy")}</a>
             <span className="item"><a role="button" className="ui thin portrait only" title={compileTooltip} onClick={this.compile}><sui.Icon icon={`icon ${pxt.appTarget.appTheme.downloadIcon || 'download'}`} />{pxt.appTarget.appTheme.useUploadMessage ? lf("Upload") : lf("Download")}</a></span>
         </div>;
-        /* eslint-enable jsx-a11y/anchor-is-valid */
     }
 }

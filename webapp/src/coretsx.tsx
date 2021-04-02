@@ -132,8 +132,6 @@ export class CoreDialog extends React.Component<core.PromptOptions, CoreDialogSt
             }
         });
 
-        // TODO(tslint): This needs to be reviewed with a security expert to allow for exception
-        /* eslint-disable react/no-danger */
         return (
             <sui.Modal isOpen={true} ref="modal" className={classes}
                 onClose={this.hide} size={size}
@@ -178,7 +176,6 @@ export class CoreDialog extends React.Component<core.PromptOptions, CoreDialogSt
                     <sui.PlainCheckbox label={options.confirmationCheckbox} isChecked={this.state.confirmationGranted} onChange={this.handleConfirmationCheckboxChange} />
                 }
             </sui.Modal >)
-        /* eslint-enable react/no-danger */
     }
 }
 
