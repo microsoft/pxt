@@ -374,7 +374,7 @@ const browserifyAssetEditor = () => process.env.PXT_ENV == 'production' ?
     exec('node node_modules/browserify/bin/cmd built/webapp/src/assetEditor.js -o built/web/pxtasseteditor.js --debug')
 
 const buildSVGIcons = () => {
-    let webfontsGenerator = require('webfonts-generator')
+    let webfontsGenerator = require('@vusion/webfonts-generator')
     let name = "xicon"
 
     return new Promise((resolve, reject) => {

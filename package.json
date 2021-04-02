@@ -135,7 +135,7 @@
     "smoothie": "1.35.0",
     "typescript": "3.7.5",
     "uglifyify": "5.0.2",
-    "webfonts-generator": "^0.4.0"
+    "@vusion/webfonts-generator": "^0.7.1"
   },
   "scripts": {
     "build": "gulp",
