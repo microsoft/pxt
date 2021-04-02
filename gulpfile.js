@@ -563,7 +563,7 @@ const skillmap = gulp.series(cleanSkillmap, buildSkillmap, gulp.parallel(copySki
 const lintWithEslint = () => Promise.all(
     ["cli", "pxtblocks", "pxteditor", "pxtlib", "pxtcompiler",
         "pxtpy", "pxtrunner", "pxtsim", "pxtwinrt", "webapp",
-        "docfiles/pxtweb", "skillmap"].map(dirname =>
+        "docfiles/pxtweb", "skillmap", "docs/static/streamer"].map(dirname =>
             exec(`node node_modules/eslint/bin/eslint.js -c .eslintrc.js --ext .ts,.tsx ./${dirname}/`, true)))
     .then(() => console.log("linted"))
 const lint = lintWithEslint
