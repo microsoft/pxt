@@ -24,7 +24,7 @@ function isMediaDevicesSupported(): boolean {
 }
 
 export class WebCam extends data.Component<WebCamProps, WebCamState> {
-    private deviceInfo: MediaDeviceInfo;
+    private deviceId: string;
     private stream: MediaStream;
     private video: HTMLVideoElement;
 
@@ -38,14 +38,14 @@ export class WebCam extends data.Component<WebCamProps, WebCamState> {
         this.handleClose = this.handleClose.bind(this);
     }
 
-    handleDeviceClick(deviceInfo: MediaDeviceInfo) {
+    handleDeviceClick(deviceId: string) {
         this.setState({ hasPrompt: false });
         pxt.debug(`greenscreen: start`)
-        this.deviceInfo = deviceInfo;
+        this.deviceId = deviceId;
         // deviceId is "" if green screen selected
-        if (this.deviceInfo?.deviceId) {
+        if (this.deviceId) {
             navigator.mediaDevices.getUserMedia({
-                video: { deviceId: { exact: deviceInfo.deviceId } },
+                video: { deviceId: { exact: deviceId } },
                 audio: false
             }).then(stream => {
                 pxt.debug(`greenscreen: stream acquired`)
@@ -76,7 +76,7 @@ export class WebCam extends data.Component<WebCamProps, WebCamState> {
     }
 
     handleClose() {
-        if (!this.deviceInfo) {
+        if (!this.deviceId) {
             this.props.close();
         }
     }
@@ -103,7 +103,7 @@ export class WebCam extends data.Component<WebCamProps, WebCamState> {
     }
 
     private stop() {
-        this.deviceInfo = undefined;
+        this.deviceId = undefined;
         if (this.stream) {
             try {
                 const tracks = this.stream.getTracks();
@@ -137,14 +137,14 @@ export class WebCam extends data.Component<WebCamProps, WebCamState> {
                             key={`devicegreenscreen`}
                             icon='green tint'
                             onClick={this.handleDeviceClick}
-                            device={undefined} header={lf("Green background")} />
+                            deviceId={""} header={lf("Green background")} />
                         {devices && devices
                             .map((device, di) =>
                                 <WebCamCard
                                     key={`device${di}`}
                                     icon='video camera'
                                     onClick={this.handleDeviceClick}
-                                    device={device} header={device.label || lf("camera {0}", di)} />
+                                    deviceId={device.deviceId} header={device.label || lf("camera {0}", di)} />
                             )}
                     </div>
                 </sui.Modal>
@@ -157,8 +157,8 @@ export class WebCam extends data.Component<WebCamProps, WebCamState> {
 interface WebCamCardProps {
     header: string;
     icon: string;
-    device: MediaDeviceInfo;
-    onClick: (device: MediaDeviceInfo) => void;
+    deviceId: string;
+    onClick: (deviceId: string) => void;
 }
 
 class WebCamCard extends data.Component<WebCamCardProps, {}> {
@@ -172,8 +172,8 @@ class WebCamCard extends data.Component<WebCamCardProps, {}> {
     }
 
     handleClick() {
-        const { device, onClick } = this.props;
-        onClick(device);
+        const { deviceId, onClick } = this.props;
+        onClick(deviceId);
     }
 
     renderCore() {
