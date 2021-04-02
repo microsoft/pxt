@@ -175,14 +175,14 @@ function getTokenAsync(): Promise<ImmersiveReaderToken> {
         const cachedToken: ImmersiveReaderToken = pxt.Util.jsonTryParse(storedTokenString);
 
         if (!cachedToken || (Date.now() / 1000 > cachedToken.expiration)) {
-            return auth.apiAsync("/api/immreader").then(res => {
+            return Cloud.apiRequestWithCdnAsync({ url: "immreader", forceLiveEndpoint: true }).then(res => {
                 if (res.statusCode == 200 ) {
-                    pxt.storage.setLocal('immReader', JSON.stringify(res.resp));
-                    return res.resp;
+                    pxt.storage.setLocal('immReader', JSON.stringify(res.json));
+                    return res.json;
                 } else {
                     pxt.storage.removeLocal("/api/immreader");
-                    console.log("immersive reader fetch token error: " + JSON.stringify(res.err));
-                    pxt.tickEvent("immersiveReader.error", {error: JSON.stringify(res.err)})
+                    console.log("immersive reader fetch token error: " + JSON.stringify(res.json));
+                    pxt.tickEvent("immersiveReader.error", {error: JSON.stringify(res.json)})
                     return Promise.reject(new Error("token"));
                 }
             });
