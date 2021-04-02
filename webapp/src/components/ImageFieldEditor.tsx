@@ -51,7 +51,8 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
             currentView: "editor",
             headerVisible: true,
             filterOpen: false,
-            gallerySelectedTags: []
+            gallerySelectedTags: [],
+            galleryFilter: " "
         };
         setTelemetryFunction(tickImageEditorEvent);
     }
@@ -342,7 +343,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
             }
         }
 
-        if (this.state.galleryFilter && useTags) {
+        if (useTags) {
             assets.forEach(a => {
                 if (!a.meta.tags && this.options) {
                     a.meta.tags = this.blocksInfo.apis.byQName[a.id]?.attributes.tags?.split(" ") || [];

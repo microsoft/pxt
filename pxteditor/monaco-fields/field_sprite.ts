@@ -56,8 +56,7 @@ namespace pxt.editor {
             return {
                 initWidth: 16,
                 initHeight: 16,
-                blocksInfo: this.host.blocksInfo(),
-                filter: " "
+                blocksInfo: this.host.blocksInfo()
             };
         }
     }
