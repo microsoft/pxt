@@ -40,6 +40,7 @@ export class WebCam extends data.Component<WebCamProps, WebCamState> {
 
     handleDeviceClick(deviceId: any) {
         this.setState({ hasPrompt: false });
+        pxt.debug(`greenscreen: device ${deviceId}`)
         this.deviceId = deviceId;
         // deviceId is "" if green screen selected
         if (this.deviceId) {
@@ -47,6 +48,7 @@ export class WebCam extends data.Component<WebCamProps, WebCamState> {
                 video: { deviceId: { exact: deviceId } },
                 audio: false
             }).then(stream => {
+                pxt.debug(`greenscreen: stream acquired`)
                 try {
                     this.stream = stream;
                     this.video.srcObject = this.stream;
@@ -61,10 +63,13 @@ export class WebCam extends data.Component<WebCamProps, WebCamState> {
                     }
                 }
                 catch (e) {
-                    pxt.debug(`greenscreen: play failed, ${e}`)
+                    pxt.debug(`greenscreen: play failed`)
+                    console.error(e)
                     this.stop();
                 }
             }, err => {
+                pxt.debug(`greenscreen: get camera failed`)
+                console.error(err)
                 this.stop();
             })
         }
@@ -112,6 +117,8 @@ export class WebCam extends data.Component<WebCamProps, WebCamState> {
     render() {
         // playsInline required for iOS
         const { hasPrompt, devices, userFacing } = this.state;
+        const handleClick = (deviceId: string) => () => this.handleDeviceClick(deviceId)
+
         return <div className="videoContainer">
             <video className={userFacing ? "flipx" : ""} autoPlay playsInline ref={this.handleVideoRef} />
             {hasPrompt ?
@@ -121,14 +128,14 @@ export class WebCam extends data.Component<WebCamProps, WebCamState> {
                         <WebCamCard
                             key={`devicegreenscreen`}
                             icon='green tint'
-                            onClick={this.handleDeviceClick}
+                            onClick={handleClick("")}
                             deviceId={""} header={lf("Green background")} />
                         {devices && devices
                             .map((device, di) =>
                                 <WebCamCard
                                     key={`device${di}`}
                                     icon='video camera'
-                                    onClick={this.handleDeviceClick}
+                                    onClick={handleClick(device.deviceId)}
                                     deviceId={device.deviceId} header={device.label || lf("camera {0}", di)} />
                             )}
                     </div>
