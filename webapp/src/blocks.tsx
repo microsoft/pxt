@@ -1744,9 +1744,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     let type = shadow.getAttribute('type');
                     const builtin = snippets.allBuiltinBlocks()[type];
                     let b = this.getBlockXml(builtin ? builtin : { name: type, attributes: { blockId: type } }, ignoregap, true);
-                    /* tslint:disable:no-inner-html setting one element's contents to the other */
                     if (b && b.length > 0 && b[0]) shadow.innerHTML = b[0].innerHTML;
-                    /* tslint:enable:no-inner-html */
                 })
         }
         return [blockXml];

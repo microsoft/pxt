@@ -216,7 +216,7 @@ namespace ts.pxtc {
 
             // The extension JavaScript code comes from target.json. It is generated from compiler/*.ts in target by 'pxt buildtarget'
             if (opts.target.compilerExtension)
-                // tslint:disable-next-line
+                // eslint-disable-next-line
                 eval(opts.target.compilerExtension)
         }
 

@@ -1,0 +1,9 @@
+**/ext-typescript/
+.eslintrc.js
+
+# For some reason these files cause eslint to crash inside the TS compiler :(
+#   Error: Debug Failure. Unhandled declaration kind! ModuleDeclaration for {...}
+# Might be fixed if we update our TS version.
+# TODO: update to TS 4.2 and try again
+blocks.tsx
+snippetBuilder.tsx

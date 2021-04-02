@@ -3,9 +3,9 @@ import * as React from "react";
 import { SvgCoord } from '../lib/skillGraphUtils';
 import { ActivityStatus } from '../lib/skillMapUtils';
 
-/* tslint:disable:no-import-side-effect */
+/* eslint-disable import/no-unassigned-import, import/no-internal-modules */
 import '../styles/graphnode.css'
-/* tslint:enable:no-import-side-effect */
+/* eslint-enable import/no-unassigned-import, import/no-internal-modules */
 
 interface GraphNodeProps {
     activityId: string;

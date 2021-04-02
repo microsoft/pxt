@@ -534,10 +534,10 @@ namespace pxt {
             // no core package? add the first one
             if (corePackages.length == 0) {
                 const allCorePkgs = pxt.Package.corePackages();
-                /* tslint:disable:no-unused-expression TODO(tslint): */
+                /* eslint-disable @typescript-eslint/no-unused-expressions */
                 if (allCorePkgs.length)
                     this.config.dependencies[allCorePkgs[0].name];
-                /* tslint:enable:no-unused-expression */
+                /* eslint-enable @typescript-eslint/no-unused-expressions */
             } else if (corePackages.length > 1) {
                 // keep last package
                 corePackages.pop();

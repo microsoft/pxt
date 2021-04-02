@@ -5,4 +5,5 @@ interface JQuery {
     dimmer: any;
 }
 
+// eslint-disable-next-line no-var
 declare var require: any;

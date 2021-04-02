@@ -572,7 +572,6 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
             && (sandbox || !(tsOnly || pyOnly)); // show if sandbox or not single language
         const editor = this.props.parent.isPythonActive() ? "Python" : (this.props.parent.isJavaScriptActive() ? "JavaScript" : "Blocks");
 
-        /* tslint:disable:react-a11y-anchors */
         return <div id="mainmenu" className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu ${manyTutorialSteps ? "thin" : ""}`} role="menubar" aria-label={lf("Main menu")}>
             {!sandbox ? <div className="left menu">
                 {!targetTheme.hideMenubarLogo &&
@@ -587,10 +586,10 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
                 {showShare ? <sui.Item className="icon shareproject" role="menuitem" textClass="widedesktop only" ariaLabel={lf("Share Project")} text={lf("Share")} icon="share alternate large" onClick={this.showShareDialog} /> : null}
                 {inTutorial && <sui.Item className="tutorialname" tabIndex={-1} textClass="landscape only" text={tutorialOptions.tutorialName} />}
             </div> : <div className="left menu">
-                    <span id="logo" className="ui item logo">
-                        <img className="ui mini image" src={rightLogo} tabIndex={0} onClick={this.launchFullEditor} onKeyDown={sui.fireClickOnEnter} alt={`${targetTheme.boardName} Logo`} />
-                    </span>
-                </div>}
+                <span id="logo" className="ui item logo">
+                    <img className="ui mini image" src={rightLogo} tabIndex={0} onClick={this.launchFullEditor} onKeyDown={sui.fireClickOnEnter} alt={`${targetTheme.boardName} Logo`} />
+                </span>
+            </div>}
             {showToggle && <div className="ui item link editor-menuitem">
                 <container.EditorSelector parent={this.props.parent} sandbox={sandbox} python={targetTheme.python} languageRestriction={languageRestriction} headless={isHeadless} />
             </div>}
@@ -616,7 +615,6 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
                 </a> : undefined}
             </div>
         </div>;
-        /* tslint:enable:react-a11y-anchors */
     }
 }
 
@@ -732,7 +730,7 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
         if (!docsUrl) return null;
 
         const url = sideDocsCollapsed ? this.rootDocsUrl() : docsUrl;
-        /* tslint:disable:react-iframe-missing-sandbox */
+        /* eslint-disable @microsoft/sdl/react-iframe-missing-sandbox */
         return <div>
             <button id="sidedocstoggle" role="button" aria-label={sideDocsCollapsed ? lf("Expand the side documentation") : lf("Collapse the side documentation")} className="ui icon button large" onClick={this.toggleVisibility}>
                 <sui.Icon icon={`icon inverted chevron ${showLeftChevron ? 'left' : 'right'}`} />
@@ -749,7 +747,7 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
                 </div>}
             </div>
         </div>
-        /* tslint:enable:react-iframe-missing-sandbox */
+        /* eslint-enable @microsoft/sdl/react-iframe-missing-sandbox */
     }
 }
 
@@ -776,13 +774,11 @@ export class SandboxFooter extends data.PureComponent<SandboxFooterProps, {}> {
 
         const compileTooltip = lf("Download your code to the {0}", targetTheme.boardName);
 
-        /* tslint:disable:react-a11y-anchors */
         return <div className="ui horizontal small divided link list sandboxfooter">
             {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" target="_blank" rel="noopener noreferrer" href={targetTheme.organizationUrl}>{targetTheme.organization}</a> : undefined}
             <a target="_blank" className="item" href={targetTheme.termsOfUseUrl} rel="noopener noreferrer">{lf("Terms of Use")}</a>
             <a target="_blank" className="item" href={targetTheme.privacyUrl} rel="noopener noreferrer">{lf("Privacy")}</a>
             <span className="item"><a role="button" className="ui thin portrait only" title={compileTooltip} onClick={this.compile}><sui.Icon icon={`icon ${pxt.appTarget.appTheme.downloadIcon || 'download'}`} />{pxt.appTarget.appTheme.useUploadMessage ? lf("Upload") : lf("Download")}</a></span>
         </div>;
-        /* tslint:enable:react-a11y-anchors */
     }
 }

@@ -178,9 +178,7 @@ function nodeHttpRequestAsync(options: Util.HttpRequestOptions): Promise<Util.Ht
     let u = <http.RequestOptions><any>url.parse(options.url)
 
     if (u.protocol == "https:") isHttps = true
-    /* tslint:disable:no-http-string */
     else if (u.protocol == "http:") isHttps = false
-    /* tslint:enable:no-http-string */
     else return Promise.reject("bad protocol: " + u.protocol)
 
     u.headers = Util.clone(options.headers) || {}
@@ -586,7 +584,6 @@ export function lazyDependencies(): pxt.Map<string> {
 }
 
 export function lazyRequire(name: string, install = false): any {
-    /* tslint:disable:non-literal-require */
     let r: any;
     try {
         r = require(name);
@@ -598,7 +595,6 @@ export function lazyRequire(name: string, install = false): any {
     if (!r && install)
         pxt.log(`package "${name}" failed to load, run "pxt npminstallnative" to install native depencencies`)
     return r;
-    /* tslint:enable:non-literal-require */
 }
 
 export function stringify(content: any) {

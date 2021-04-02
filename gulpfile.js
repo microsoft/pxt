@@ -374,7 +374,7 @@ const browserifyAssetEditor = () => process.env.PXT_ENV == 'production' ?
     exec('node node_modules/browserify/bin/cmd built/webapp/src/assetEditor.js -o built/web/pxtasseteditor.js --debug')
 
 const buildSVGIcons = () => {
-    let webfontsGenerator = require('webfonts-generator')
+    let webfontsGenerator = require('@vusion/webfonts-generator')
     let name = "xicon"
 
     return new Promise((resolve, reject) => {
@@ -560,12 +560,13 @@ const skillmap = gulp.series(cleanSkillmap, buildSkillmap, gulp.parallel(copySki
                  Tests and Linting
 *********************************************************/
 
-const lint = () => Promise.all(
+const lintWithEslint = () => Promise.all(
     ["cli", "pxtblocks", "pxteditor", "pxtlib", "pxtcompiler",
         "pxtpy", "pxtrunner", "pxtsim", "pxtwinrt", "webapp",
-        "docfiles/pxtweb", "skillmap"].map(dirname =>
-            exec(`node node_modules/tslint/bin/tslint --project ./${dirname}/tsconfig.json`, true)))
+        "docfiles/pxtweb", "skillmap", "docs/static/streamer"].map(dirname =>
+            exec(`node node_modules/eslint/bin/eslint.js -c .eslintrc.js --ext .ts,.tsx ./${dirname}/`, true)))
     .then(() => console.log("linted"))
+const lint = lintWithEslint
 
 const testdecompiler = testTask("decompile-test", "decompilerunner.js");
 const testlang = testTask("compile-test", "compilerunner.js");

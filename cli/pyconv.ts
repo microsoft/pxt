@@ -453,7 +453,7 @@ namespace py {
 }
 
 
-/* tslint:disable:no-trailing-whitespace */
+/* eslint-disable no-trailing-spaces */
 const convPy = `
 import ast
 import sys
@@ -480,7 +480,7 @@ for fn in @files@:
     js[fn] = to_json(ast.parse(open(fn, "r").read()))
 print(json.dumps(js))
 `
-/* tslint:enable:no-trailing-whitespace */
+/* eslint-enable no-trailing-spaces */
 
 const nameMap: Map<string> = {
     "Expr": "ExprStmt",
@@ -1481,9 +1481,7 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
                     else {
                         let ee = elts.shift()
                         let et = ee ? expr(ee) : B.mkText("???")
-                        /* tslint:disable:no-invalid-template-strings */
                         res.push(B.mkText("${"), et, B.mkText("}"))
-                        /* tslint:enable:no-invalid-template-strings */
                     }
                     return ""
                 })

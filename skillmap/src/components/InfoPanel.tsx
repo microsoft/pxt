@@ -9,9 +9,9 @@ import { MapActions } from './MapActions';
 import { ActivityStatus, isActivityUnlocked, isMapUnlocked, lookupActivityProgress,
     isActivityCompleted, getActivityStatus, isRewardNode } from '../lib/skillMapUtils';
 
-/* tslint:disable:no-import-side-effect */
+/* eslint-disable import/no-unassigned-import, import/no-internal-modules */
 import '../styles/infopanel.css'
-/* tslint:enable:no-import-side-effect */
+/* eslint-enable import/no-unassigned-import, import/no-internal-modules */
 
 interface InfoPanelProps {
     mapId: string;
