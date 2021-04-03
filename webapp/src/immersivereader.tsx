@@ -176,7 +176,7 @@ function getTokenAsync(): Promise<ImmersiveReaderToken> {
         const cachedToken: ImmersiveReaderToken = pxt.Util.jsonTryParse(storedTokenString);
 
         if (!cachedToken || (Date.now() / 1000 > cachedToken.expiration)) {
-            return Cloud.apiRequestWithCdnAsync({ url: "immreader", forceLiveEndpoint: true }).then(
+            return pxt.Util.requestAsync({ url: "/api/immreader", method: "GET" }).then(
                 res => {
                     pxt.storage.setLocal(IMMERSIVE_READER_ID, JSON.stringify(res.json));
                     return res.json;
