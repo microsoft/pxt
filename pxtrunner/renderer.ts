@@ -1,5 +1,3 @@
-/* tslint:disable:no-jquery-raw-elements TODO(tslint): get rid of jquery html() calls */
-
 namespace pxt.runner {
     const JS_ICON = "icon xicon js";
     const PY_ICON = "icon xicon python";

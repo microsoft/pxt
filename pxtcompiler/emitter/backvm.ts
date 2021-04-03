@@ -120,7 +120,7 @@ ${info.id}_IfaceVT:
         return info.id + "_VT"
     }
 
-    /* tslint:disable:no-trailing-whitespace */
+    /* eslint-disable no-trailing-spaces */
     export function vmEmit(bin: Binary, opts: CompileOptions) {
         let vmsource = `; VM start
 ${hexfile.hexPrelude()}
@@ -267,7 +267,7 @@ _start_${name}:
             bin.writeFile(pxt.outputName(target), myhex)
         }
     }
-    /* tslint:enable */
+    /* eslint-enable */
 
     interface EmitCtx {
         dblText: string[]

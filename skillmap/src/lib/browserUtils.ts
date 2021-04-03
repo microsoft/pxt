@@ -1,7 +1,7 @@
 import { PageSourceStatus } from "../store/reducer";
 
 const apiRoot = "https://www.makecode.com/api";
-export type MarkdownSource = "docs" | "github";
+export type MarkdownSource = "docs" | "github" | "local";
 
 export interface MarkdownFetchResult {
     identifier: string;
@@ -55,6 +55,8 @@ export async function getMarkdownAsync(source: MarkdownSource, url: string): Pro
             break;
         case "github":
             return await fetchSkillMapFromGithub(url);
+        case "local":
+            return await fetchSkillMapFromLocal(url);
         default:
             toFetch = url;
             break;
@@ -118,6 +120,21 @@ async function fetchSkillMapFromGithub(path: string): Promise<MarkdownFetchResul
     }
 
     return undefined
+}
+
+async function fetchSkillMapFromLocal(path: string): Promise<MarkdownFetchResult | undefined> {
+    if (isLocal()) {
+        path = path.replace(/^\//, "").replace(/\.md$/, "");
+        let res = await fetch("docs/" + path + ".md");
+        let text = await res.text();
+        return {
+            text,
+            identifier: path,
+            status: "approved"
+        }
+    }
+
+    return undefined;
 }
 
 export function getDocsIdentifier(path: string) {

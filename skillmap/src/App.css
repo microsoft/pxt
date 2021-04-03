@@ -92,10 +92,6 @@ code {
     height: 100%;
 }
 
-.header-right > div {
-    margin-left: 1rem;
-}
-
 .header-logo {
     width: 3rem;
     height: 3rem;
@@ -103,6 +99,7 @@ code {
 
 .header-org-logo {
     height: 2rem;
+    margin-left: 1rem;
 }
 
 .header-org-logo img {
@@ -118,12 +115,13 @@ code {
     cursor: pointer;
 }
 
-.header-settings i {
+.header-dropdown i {
     display: flex;
     justify-content: center;
     align-items: center;
     height: var(--header-height);
-    width: 3rem;
+    width: 3.5rem;
+    margin: 0;
 }
 
 .header-button {
@@ -138,12 +136,17 @@ code {
     white-space: nowrap;
 }
 
+.header-button.icon-only {
+    font-size: unset;
+    padding: 1rem 0.5rem;
+}
+
 .header-button .header-button-label {
     line-height: 2rem;
     white-space: nowrap;
 }
 
-.header-button:hover, .header-settings:hover {
+.header-button:hover, .header-dropdown:hover {
     background-color: var(--hover-color);
     color: var(--invert-hover-text-color);
 }

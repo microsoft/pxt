@@ -338,7 +338,6 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
         const reportAbuse = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing;
         const showDivider = targetTheme.selectLanguage || targetTheme.highContrast || githubUser;
 
-        // tslint:disable react-a11y-anchors
         return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("More...")} className="item icon more-dropdown-menuitem">
             {targetTheme.selectLanguage && <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} />}
             {targetTheme.highContrast && <sui.Item role="menuitem" text={highContrast ? lf("High Contrast Off") : lf("High Contrast On")} onClick={this.toggleHighContrast} />}
@@ -610,7 +609,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                     this.props.parent.newProject({ name, languageRestriction });
                 })
         } else {
-            this.props.parent.newProject({ name });
+            this.props.parent.newProject({});
         }
     }
 
@@ -1173,7 +1172,6 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
             && !pxt.winrt.isWinRT() // not supported in windows 10
             && !pxt.BrowserUtils.isPxtElectron()
             && pxt.appTarget?.cloud?.cloudProviders?.github;
-        /* tslint:disable:react-a11y-anchors */
         return (
             <sui.Modal isOpen={visible} className={classes} size="small"
                 onClose={this.close} dimmer={true}
@@ -1556,7 +1554,6 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
         }
         cards = cards.filter(card => !!card.onClick);
 
-        /* tslint:disable:react-a11y-anchors */
         return (
             <sui.Modal isOpen={visible} className="hardwaredialog" size="large"
                 onClose={this.close} dimmer={true}

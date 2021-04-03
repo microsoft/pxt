@@ -1,6 +1,6 @@
 /// <reference path="../../pxtwinrt/winrtrefs.d.ts"/>
 
-declare var process: any;
+declare let process: any;
 
 namespace pxt {
     type Map<T> = { [index: string]: T };

@@ -120,7 +120,6 @@ export async function resolveExtensionUrl(pkg: pxt.Package) {
         && /localeditorextensions=1/i.test(window.location.href)
         && extension.localUrl;
     if (debug) {
-        /* tslint:disable:no-http-string */
         url = "http://localhost:3232/extension.html";
     } else if (localDebug) {
         url = extension.localUrl;

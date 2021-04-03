@@ -34,7 +34,7 @@ export function initElectron(projectView: ProjectView): void {
         }
     });
 
-    const criticalUpdateFailedPromise = new Promise((resolve) => {
+    const criticalUpdateFailedPromise = new Promise<void>((resolve) => {
         pxtElectron.onCriticalUpdateFailed(() => {
             pxt.tickEvent("electron.criticalupdate.failed");
             resolve();

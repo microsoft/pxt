@@ -1102,7 +1102,6 @@ namespace ts.pxtc {
                 pushLabels();
             }
 
-            /* tslint:disable:possible-timing-attack  (tslint thinks all variables named token are passwords...) */
             if (token == TokenKind.Parameter) {
                 const param: BlockParameter = { kind: "param", name: tokens[i].content, shadowBlockId: tokens[i].type, ref: false };
                 if (tokens[i].name) param.varName = tokens[i].name;
@@ -1126,7 +1125,6 @@ namespace ts.pxtc {
             else if (token == TokenKind.Pipe) {
                 parts.push({ kind: "break" });
             }
-            /* tslint:enable:possible-timing-attack */
         }
 
         pushLabels();

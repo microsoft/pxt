@@ -19,7 +19,7 @@ import U = pxt.Util;
 import Cloud = pxt.Cloud;
 
 // Avoid importing entire crypto-js
-/* tslint:disable:no-submodule-imports */
+/* eslint-disable import/no-internal-modules */
 const sha1 = require("crypto-js/sha1");
 
 type Header = pxt.workspace.Header;

@@ -1,6 +1,11 @@
 # Microsoft MakeCode Blog
 
 * [Blog](/blog)
+    * [Beginner Skillmap Sneak Peek](/blog/arcade/beginner-skillmap)
+    * [MakeCode Arcade Spring Update!](/blog/arcade/update-spring-2021)
+    * [MakeCode Arcade 1st Birthday Update!](/blog/arcade/update-jan-2021)
+    * [Fun MakeCode stuff for CS Education Week 2020](/blog/csed-week/csed-week-2020)
+    * [micro:bit V2 Release](/blog/microbit/microbit-V2)
     * [micro:bit shield for MakeCode Arcade](/blog/microbit/arcade-shield)
     * [Microsoft TileCode: Design, Code, and Play Games on MakeCode Arcade Devices](blog/arcade/tilecode)
     * [MakeCode Arcade Update](/blog/arcade/update-july-2020)

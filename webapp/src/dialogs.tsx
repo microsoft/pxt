@@ -1,4 +1,4 @@
-// tslint:disable: react-a11y-anchors
+/* eslint-disable  jsx-a11y/anchor-is-valid */
 
 import * as React from "react";
 import * as sui from "./sui";
@@ -545,7 +545,6 @@ export function showImportGithubDialogAsync() {
                 header: lf("Clone or create your own GitHub repo"),
                 hideAgree: true,
                 hasCloseIcon: true,
-                /* tslint:disable:react-a11y-anchors */
                 jsx: <div className="ui form">
                     <div className="ui relaxed divided list" role="menu">
                         <div key={"create new"} className="item">

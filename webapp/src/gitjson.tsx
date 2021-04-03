@@ -249,7 +249,6 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             header: lf("Switch to a different branch"),
             hasCloseIcon: true,
             hideAgree: true,
-            /* tslint:disable:react-a11y-anchors */
             jsx: <div className="ui form">
                 <div className="ui relaxed divided list" role="menu">
                     {branchList.map(r =>
@@ -303,13 +302,11 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             // test if the app can read the repo
             const isOrg = await pxt.github.isOrgAsync(parsed.owner);
             if (isOrg) {
-                // tslint:disable: react-this-binding-issue
                 org = <div className="ui small">
                     {lf("If you already have write permissions to this repository, you may have to authorize the MakeCode App in the {0} organization.", parsed.owner)}
                     <sui.PlainCheckbox label={lf("Remember me")} onChange={handleRememberMeChanged} />
                     <sui.Link className="ui link" text={lf("Authorize MakeCode")} onClick={handleAutorize} onKeyDown={sui.fireClickOnEnter} />
                 </div>
-                // tslint:enable: react-this-binding-issue
             }
         }
         const error = fromError && <div className="ui message warning">
@@ -875,7 +872,6 @@ class DiffView extends sui.StatelessUIElement<DiffViewProps> {
             } else {
                 jsxEls = this.createTextDiffJSX(f, !cache.whitespace);
             }
-            // tslint:disable: react-this-binding-issue
             return <div key={`difffile${cacheKey}${f.name}`} className="ui segments filediff">
                 <div className="ui segment diffheader">
                     {(!blocksMode || f.name != "main.blocks") && <span>{f.name}</span>}
@@ -1057,7 +1053,6 @@ ${content}
                 const keepRemoteHandler = () => this.handleMergeConflictResolution(f, lnMarker, false, true);
                 const keepBothHandler = () => this.handleMergeConflictResolution(f, lnMarker, true, true);
                 if (showConflicts) {
-                    // tslint:disable: react-this-binding-issue
                     linesTSX.push(<tr key={"merge" + lnA + lnB} className="conflict ui mergebtn">
                         <td colSpan={4} className="ui">
                             <sui.Button className="compact" text={lf("Keep local")} title={lf("Ignore the changes from GitHub.")} onClick={keepLocalHandler} />

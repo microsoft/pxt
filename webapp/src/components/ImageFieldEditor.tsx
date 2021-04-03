@@ -21,7 +21,7 @@ export interface ImageFieldEditorState {
     tileGalleryVisible?: boolean;
     headerVisible?: boolean;
     hideMyAssets?: boolean;
-    galleryFilter?: string;
+    galleryFilter: string;
     editingTile?: boolean;
 }
 
@@ -51,7 +51,8 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
             currentView: "editor",
             headerVisible: true,
             filterOpen: false,
-            gallerySelectedTags: []
+            gallerySelectedTags: [],
+            galleryFilter: ""
         };
         setTelemetryFunction(tickImageEditorEvent);
     }
@@ -181,6 +182,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
         }
 
         this.editID = value.id;
+        let didUpdate = false;
 
         if (options) {
             this.blocksInfo = options.blocksInfo;
@@ -189,16 +191,22 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
                 this.setState({
                     galleryFilter: options.filter
                 });
+                didUpdate = true;
             }
 
             if (options.headerVisible != undefined) {
                 this.setState({ headerVisible: options.headerVisible })
+                didUpdate = true;
             }
 
             if (options.hideMyAssets != undefined) {
                 this.setState({ hideMyAssets: options.hideMyAssets });
+                didUpdate = true;
             }
         }
+
+        // Always update, because we might need to remove the gallery toggle
+        if (!didUpdate) this.forceUpdate();
     }
 
     getValue() {
@@ -335,7 +343,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
             }
         }
 
-        if (this.state.galleryFilter && useTags) {
+        if (useTags) {
             assets.forEach(a => {
                 if (!a.meta.tags && this.options) {
                     a.meta.tags = this.blocksInfo.apis.byQName[a.id]?.attributes.tags?.split(" ") || [];
@@ -448,7 +456,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
     protected showMyAssets = () => {
         this.setImageEditorShortcutsEnabled(false);
         tickImageEditorEvent("gallery-my-assets");
-        this.userAssets = getAssets();
+        this.userAssets = getAssets(undefined, undefined, this.options.temporaryAssets);
         this.setState({
             currentView: "my-assets",
             tileGalleryVisible: false
@@ -483,7 +491,17 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
                     pxt.sprite.updateTilemapReferencesFromResult(project, this.asset);
                 }
 
-                project.updateAsset(this.asset);
+                if (this.asset.meta.displayName) {
+                    project.updateAsset(this.asset);
+                }
+                else if (!asset.meta.displayName) {
+                    // If both are temporary, copy by value
+                    asset = {
+                        ...pxt.cloneAsset(asset),
+                        id: this.asset.id,
+                        meta: this.asset.meta
+                    }
+                }
 
                 if (asset.type === pxt.AssetType.Tilemap) {
                     pxt.sprite.addMissingTilemapTilesAndReferences(project, asset);

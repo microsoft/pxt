@@ -89,6 +89,11 @@ export function getEditorAsync() {
     });
 }
 
+export function getBlocksEditor() {
+    if (!theEditor) return null;
+    return theEditor.blocksEditor;
+}
+
 function setEditor(editor: ProjectView) {
     theEditor = editor;
     if (pendingEditorRequests) {
@@ -2918,7 +2923,7 @@ export class ProjectView
             hasCloseIcon: true,
             size: "large",
             jsx:
-                /* tslint:disable:react-iframe-missing-sandbox */
+                /* eslint-disable @microsoft/sdl/react-iframe-missing-sandbox */
                 <div className="ui container">
                     <div id="printcontainer" style={{ 'position': 'relative', 'height': 0, 'paddingBottom': '40%', 'overflow': 'hidden' }}>
                         <iframe
@@ -2929,7 +2934,7 @@ export class ProjectView
                             src={url} />
                     </div>
                 </div>
-            /* tslint:enable:react-iframe-missing-sandbox */
+            /* eslint-enable @microsoft/sdl/react-iframe-missing-sandbox */
         }).then(r => {
         })
     }

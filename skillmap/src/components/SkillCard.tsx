@@ -9,9 +9,9 @@ import { dispatchOpenActivity, dispatchShowRestartActivityWarning } from '../act
 import { ActivityStatus, isActivityUnlocked, isMapUnlocked, lookupActivityProgress, } from '../lib/skillMapUtils';
 import { tickEvent } from '../lib/browserUtils';
 
-/* tslint:disable:no-import-side-effect */
+/* eslint-disable import/no-unassigned-import, import/no-internal-modules */
 import '../styles/skillcard.css'
-/* tslint:enable:no-import-side-effect */
+/* eslint-enable import/no-unassigned-import, import/no-internal-modules */
 
 interface SkillCardProps extends Item {
     mapId: string;

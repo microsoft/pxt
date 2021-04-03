@@ -1,6 +1,6 @@
 # MakeCode Arcade Spring Update
 
-**Posted on March 22nd, 2020 by [Jaqster](https://github.com/jaqster)**
+**Posted on March 22nd, 2021 by [Jaqster](https://github.com/jaqster)**
 
 I know we just released a major update to [Arcade](/blog/arcade/update-jan-2021) in January, but we couldn’t resist tacking on a few more things! So, we have a small Spring update for you. Here’s what it includes:
 

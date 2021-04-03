@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-var
 declare var require: any;
 
 const PouchDB = require("pouchdb")

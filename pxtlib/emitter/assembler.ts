@@ -1,4 +1,4 @@
-/* tslint:disable:no-conditional-assignment */
+/* eslint-disable no-cond-assign */
 // TODO: add a macro facility to make 8-bit assembly easier?
 
 namespace ts.pxtc.assembler {

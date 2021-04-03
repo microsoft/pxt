@@ -1082,11 +1082,9 @@ namespace pxt.BrowserUtils {
 
             return this.db.getAsync<TutorialInfoIndexedDbEntry>(TutorialInfoIndexedDb.TABLE, key)
                 .then((res) => {
-                    /* tslint:disable:possible-timing-attack (this is not a security-sensitive codepath) */
                     if (res && res.hash == hash) {
                         return res;
                     }
-                    /* tslint:enable:possible-timing-attack */
 
                     // delete stale db entry
                     this.db.deleteAsync(TutorialInfoIndexedDb.TABLE, key);
