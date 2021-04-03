@@ -1,6 +1,5 @@
 import * as React from "react";
 import * as data from "./data";
-import * as auth from "./auth";
 import * as core from "./core";
 import * as sui from "./sui";
 import * as ImmersiveReader from '@microsoft/immersive-reader-sdk';
