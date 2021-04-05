@@ -191,7 +191,7 @@ export class GithubProvider extends cloudsync.ProviderBase {
         core.showLoading(LOAD_ID, lf("validating GitHub token..."));
         return Promise.resolve()
             .then(() => {
-                if (hextoken.length != 40 || !/^[a-f0-9]+$/.test(hextoken)) {
+                if (hextoken.length != 40 || !/^[a-fA-F0-9]+$/.test(hextoken)) {
                     pxt.tickEvent("github.token.invalid");
                     core.errorNotification(lf("Invalid token format"))
                     return Promise.resolve();
