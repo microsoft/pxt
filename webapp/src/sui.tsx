@@ -1300,7 +1300,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
                 </div> : undefined}
                 {helpUrl ?
                     <div className="header-help">
-                        <a className={`ui icon help-button`} href={helpUrl} target="_docs" role="button" aria-label={lf("Help on {0} dialog", header)}>
+                        <a className={`ui icon help-button`} href={helpUrl} target="_docs" role="button" aria-label={lf("Help on {0} dialog", header)} title={lf("Help on {0} dialog", header)}>
                             <Icon icon="help" />
                         </a>
                     </div>
