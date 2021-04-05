@@ -1,6 +1,5 @@
 import * as React from "react";
 import * as data from "./data";
-import * as auth from "./auth";
 import * as core from "./core";
 import * as sui from "./sui";
 import * as ImmersiveReader from '@microsoft/immersive-reader-sdk';
@@ -171,21 +170,23 @@ function beautifyText(content: string): string {
 
 function getTokenAsync(): Promise<ImmersiveReaderToken> {
     if (Cloud.isOnline()) {
-        const storedTokenString = pxt.storage.getLocal('immReader');
+        const IMMERSIVE_READER_ID = "immReader";
+        const storedTokenString = pxt.storage.getLocal(IMMERSIVE_READER_ID);
         const cachedToken: ImmersiveReaderToken = pxt.Util.jsonTryParse(storedTokenString);
 
         if (!cachedToken || (Date.now() / 1000 > cachedToken.expiration)) {
-            return auth.apiAsync("/api/immreader").then(res => {
-                if (res.statusCode == 200 ) {
-                    pxt.storage.setLocal('immReader', JSON.stringify(res.resp));
-                    return res.resp;
-                } else {
-                    pxt.storage.removeLocal("/api/immreader");
-                    console.log("immersive reader fetch token error: " + JSON.stringify(res.err));
-                    pxt.tickEvent("immersiveReader.error", {error: JSON.stringify(res.err)})
+            return pxt.Util.requestAsync({ url: "/api/immreader", method: "GET" }).then(
+                res => {
+                    pxt.storage.setLocal(IMMERSIVE_READER_ID, JSON.stringify(res.json));
+                    return res.json;
+                },
+                e => {
+                    pxt.storage.removeLocal(IMMERSIVE_READER_ID);
+                    console.log("immersive reader fetch token error: " + JSON.stringify(e));
+                    pxt.tickEvent("immersiveReader.error", { error: JSON.stringify(e) });
                     return Promise.reject(new Error("token"));
                 }
-            });
+            );
         } else {
             pxt.tickEvent("immersiveReader.cachedToken");
             return Promise.resolve(cachedToken);
