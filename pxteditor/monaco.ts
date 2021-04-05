@@ -239,7 +239,6 @@ namespace pxt.vs {
 
     function initTypeScriptLanguageDefinition() {
         if (!monaco.languages.typescript) {
-            throw new Error("!monaco.languages.typescript") // TODO(@darzu): review
             return;
         }
 
