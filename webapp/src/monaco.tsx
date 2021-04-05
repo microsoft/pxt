@@ -169,15 +169,6 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
             return ("000" + i).slice(-4);
         }
     }
-    /**
-     * Given a completion item fill in more data, like [doc-comment](#CompletionItem.documentation)
-     * or [details](#CompletionItem.detail).
-     *
-     * The editor will only resolve a completion item once.
-     */
-    resolveCompletionItem(model: monaco.editor.ITextModel, position: monaco.Position, item: monaco.languages.CompletionItem, token: monaco.CancellationToken): monaco.languages.CompletionItem | monaco.Thenable<monaco.languages.CompletionItem> {
-        return item
-    }
 }
 
 class SignatureHelper implements monaco.languages.SignatureHelpProvider {
@@ -961,7 +952,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 }
                 // Update widgets
                 const toolbox = document.getElementById('monacoToolboxDiv');
-                if (toolbox) toolbox.style.height = `${this.editor.getLayoutInfo().contentHeight}px`;
+                if (toolbox) toolbox.style.height = `${this.editor.getLayoutInfo().height}px`;
             })
 
             const monacoEditorInner = document.getElementById('monacoEditorInner');
