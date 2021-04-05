@@ -38,8 +38,9 @@ export class WebCam extends data.Component<WebCamProps, WebCamState> {
         this.handleClose = this.handleClose.bind(this);
     }
 
-    handleDeviceClick(deviceId: any) {
+    handleDeviceClick(deviceId: string) {
         this.setState({ hasPrompt: false });
+        pxt.debug(`greenscreen: start`)
         this.deviceId = deviceId;
         // deviceId is "" if green screen selected
         if (this.deviceId) {
@@ -47,6 +48,7 @@ export class WebCam extends data.Component<WebCamProps, WebCamState> {
                 video: { deviceId: { exact: deviceId } },
                 audio: false
             }).then(stream => {
+                pxt.debug(`greenscreen: stream acquired`)
                 try {
                     this.stream = stream;
                     this.video.srcObject = this.stream;
@@ -61,10 +63,13 @@ export class WebCam extends data.Component<WebCamProps, WebCamState> {
                     }
                 }
                 catch (e) {
-                    pxt.debug(`greenscreen: play failed, ${e}`)
+                    pxt.debug(`greenscreen: play failed`)
+                    console.error(e)
                     this.stop();
                 }
             }, err => {
+                pxt.debug(`greenscreen: get camera failed`)
+                console.error(err)
                 this.stop();
             })
         }
@@ -77,11 +82,18 @@ export class WebCam extends data.Component<WebCamProps, WebCamState> {
     }
 
     componentDidMount() {
-        if (isMediaDevicesSupported())
-            navigator.mediaDevices.enumerateDevices()
+        if (isMediaDevicesSupported()) {
+            // first ask for permission from ther user so that
+            // labels are populated in enumerateDevices
+            navigator.mediaDevices.getUserMedia({ audio: false, video: true })
+                .then(() => navigator.mediaDevices.enumerateDevices())
                 .then(devices => {
                     this.setState({ devices: devices.filter(device => device.kind == "videoinput") });
-                })
+                }, e => {
+                    pxt.debug(`greenscreen: enumerate devices failed`)
+                    console.error(e);
+                });
+        }
     }
 
     componentWillUnmount() {
@@ -112,6 +124,7 @@ export class WebCam extends data.Component<WebCamProps, WebCamState> {
     render() {
         // playsInline required for iOS
         const { hasPrompt, devices, userFacing } = this.state;
+
         return <div className="videoContainer">
             <video className={userFacing ? "flipx" : ""} autoPlay playsInline ref={this.handleVideoRef} />
             {hasPrompt ?
@@ -142,8 +155,8 @@ export class WebCam extends data.Component<WebCamProps, WebCamState> {
 interface WebCamCardProps {
     header: string;
     icon: string;
-    deviceId: any;
-    onClick: (deviceId: any) => void;
+    deviceId: string;
+    onClick: (deviceId: string) => void;
 }
 
 class WebCamCard extends data.Component<WebCamCardProps, {}> {
