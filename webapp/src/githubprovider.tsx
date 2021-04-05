@@ -118,7 +118,7 @@ export class GithubProvider extends cloudsync.ProviderBase {
                 </ol>}
                 {useToken && <div className="ui field">
                     <label id="selectUrlToOpenLabel">{lf("Paste GitHub token here:")}</label>
-                    <input id="githubTokenInput" type="url" tabIndex={0} autoFocus aria-labelledby="selectUrlToOpenLabel" placeholder="0123abcd..." className="ui blue fluid"></input>
+                    <input id="githubTokenInput" type="url" tabIndex={0} autoFocus aria-labelledby="selectUrlToOpenLabel" placeholder="ghp_ABC..." className="ui blue fluid"></input>
                 </div>}
             </div>,
         }).then(res => {
@@ -191,36 +191,30 @@ export class GithubProvider extends cloudsync.ProviderBase {
         core.showLoading(LOAD_ID, lf("validating GitHub token..."));
         return Promise.resolve()
             .then(() => {
-                if (hextoken.length != 40 || !/^[a-f0-9]+$/.test(hextoken)) {
-                    pxt.tickEvent("github.token.invalid");
-                    core.errorNotification(lf("Invalid token format"))
-                    return Promise.resolve();
-                } else {
-                    pxt.github.token = hextoken
-                    // try to create a bogus repo - it will fail with
-                    // 401 - invalid token, 404 - when token doesn't have repo permission,
-                    // 422 - because the request is bogus, but token OK
-                    // Don't put any string in repo name - github seems to normalize these
-                    return pxt.github.createRepoAsync(undefined, "")
-                        .then(r => {
-                            // what?!
-                            pxt.reportError("github", "Succeeded creating undefined repo!")
-                            core.infoNotification(lf("Something went wrong with validation; token stored"))
+                pxt.github.token = hextoken
+                // try to create a bogus repo - it will fail with
+                // 401 - invalid token, 404 - when token doesn't have repo permission,
+                // 422 - because the request is bogus, but token OK
+                // Don't put any string in repo name - github seems to normalize these
+                return pxt.github.createRepoAsync(undefined, "")
+                    .then(r => {
+                        // what?!
+                        pxt.reportError("github", "Succeeded creating undefined repo!")
+                        core.infoNotification(lf("Something went wrong with validation; token stored"))
+                        this.setNewToken(hextoken, rememberMe);
+                        pxt.tickEvent("github.token.wrong");
+                    }, err => {
+                        pxt.github.token = ""
+                        if (!dialogs.showGithubTokenError(err)) {
+                            if (err.statusCode == 422)
+                                core.infoNotification(lf("Token validated and stored"))
+                            else
+                                core.infoNotification(lf("Token stored but not validated"))
                             this.setNewToken(hextoken, rememberMe);
-                            pxt.tickEvent("github.token.wrong");
-                        }, err => {
-                            pxt.github.token = ""
-                            if (!dialogs.showGithubTokenError(err)) {
-                                if (err.statusCode == 422)
-                                    core.infoNotification(lf("Token validated and stored"))
-                                else
-                                    core.infoNotification(lf("Token stored but not validated"))
-                                this.setNewToken(hextoken, rememberMe);
-                                pxt.tickEvent("github.token.ok");
-                            }
-                        })
-                        .then(() => cloudsync.syncAsync())
-                }
+                            pxt.tickEvent("github.token.ok");
+                        }
+                    })
+                    .then(() => cloudsync.syncAsync())
             }).finally(() => core.hideLoading(LOAD_ID))
     }
 
