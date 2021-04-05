@@ -973,6 +973,13 @@ export function serveAsync(options: ServeOptions) {
                 return
             }
 
+            if (elts[1] == "immreader") {
+                let trg = Cloud.apiRoot + elts[1];
+                res.setHeader("Location", trg)
+                error(302, "Redir: " + trg)
+                return
+            }
+
             if (/^\d\d\d[\d\-]*$/.test(elts[1]) && elts[2] == "js") {
                 return compileScriptAsync(elts[1])
                     .then(data => {
