@@ -3,7 +3,7 @@
 *******************************/
 
 @solidBorderColor: #e9eef2;
-@hoverBorderColor: #1dacf4;
+@hoverBorderColor: #169CDF;
 
 @borderWidth: 2px;
 @borderRadius: 0.5rem;
