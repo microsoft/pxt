@@ -386,6 +386,8 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
             return n;
         }
 
+        const searchPlaceholder = lf("Search or enter project URL...");
+
         return (
             <sui.Modal isOpen={visible} dimmer={true}
                 className={classes} size="fullscreen"
@@ -405,7 +407,8 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                         <SearchInput key="search"
                             defaultValue={defaultSearch}
                             ariaMessage={lf("{0} result matching '{1}'", bundles.length + ghdata.data.length + urldata.data.length, searchFor)}
-                            placeholder={lf("Search or enter project URL...")}
+                            placeholder={searchPlaceholder}
+                            aria-label={searchPlaceholder}
                             searchHandler={this.handleSearch} inputClassName="fluid" autoFocus={true}
                             disabled={isSearching} /> : undefined}
                     {isSearching ?
