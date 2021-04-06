@@ -847,153 +847,152 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return this.loadMonacoPromise;
     }
 
-    private createLoadMonacoPromise(): Promise<void> {
+    private async createLoadMonacoPromise(): Promise<void> {
         this.extraLibs = Object.create(null);
         let editorArea = document.getElementById("monacoEditorArea");
         let editorElement = document.getElementById("monacoEditorInner");
 
-        return pxt.vs.initMonacoAsync(editorElement).then((editor) => {
-            this.editor = editor;
+        const editor = await pxt.vs.initMonacoAsync(editorElement)
+        this.editor = editor;
 
-            // This is used to detect ios 13 on iPad, which is not properly detected by monaco
-            if (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1 && !this.mobileKeyboardWidget) {
-                this.mobileKeyboardWidget = new ShowKeyboardWidget(this.editor);
-            }
+        // This is used to detect ios 13 on iPad, which is not properly detected by monaco
+        if (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1 && !this.mobileKeyboardWidget) {
+            this.mobileKeyboardWidget = new ShowKeyboardWidget(this.editor);
+        }
 
-            this.editor.updateOptions({ fontSize: this.parent.settings.editorFontSize });
+        this.editor.updateOptions({ fontSize: this.parent.settings.editorFontSize });
 
+        this.editor.addAction({
+            id: "save",
+            label: lf("Save"),
+            keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S],
+            keybindingContext: "!editorReadonly",
+            precondition: "!editorReadonly",
+            contextMenuGroupId: "0_pxtnavigation",
+            contextMenuOrder: 0.2,
+            run: () => Promise.resolve(this.parent.typecheckNow())
+        });
+
+        this.editor.addAction({
+            id: "runSimulator",
+            label: lf("Run Simulator"),
+            keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
+            keybindingContext: "!editorReadonly",
+            precondition: "!editorReadonly",
+            contextMenuGroupId: "0_pxtnavigation",
+            contextMenuOrder: 0.21,
+            run: () => Promise.resolve(this.parent.runSimulator())
+        });
+
+        if (pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
             this.editor.addAction({
-                id: "save",
-                label: lf("Save"),
-                keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S],
+                id: "compileHex",
+                label: lf("Download"),
+                keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyCode.Enter],
                 keybindingContext: "!editorReadonly",
                 precondition: "!editorReadonly",
                 contextMenuGroupId: "0_pxtnavigation",
-                contextMenuOrder: 0.2,
-                run: () => Promise.resolve(this.parent.typecheckNow())
+                contextMenuOrder: 0.22,
+                run: () => Promise.resolve(this.parent.compile())
             });
+        }
 
+        this.editor.addAction({
+            id: "zoomIn",
+            label: lf("Zoom In"),
+            keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.NUMPAD_ADD, monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_EQUAL],
+            run: () => Promise.resolve(this.zoomIn())
+        });
+
+        this.editor.addAction({
+            id: "zoomOut",
+            label: lf("Zoom Out"),
+            keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.NUMPAD_SUBTRACT, monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_MINUS],
+            run: () => Promise.resolve(this.zoomOut())
+        });
+
+        if (pxt.appTarget.appTheme.hasReferenceDocs) {
+            let referenceContextKey = this.editor.createContextKey("editorHasReference", false)
             this.editor.addAction({
-                id: "runSimulator",
-                label: lf("Run Simulator"),
-                keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
-                keybindingContext: "!editorReadonly",
-                precondition: "!editorReadonly",
-                contextMenuGroupId: "0_pxtnavigation",
-                contextMenuOrder: 0.21,
-                run: () => Promise.resolve(this.parent.runSimulator())
+                id: "reference",
+                label: lf("Help"),
+                keybindingContext: "!editorReadonly && editorHasReference",
+                precondition: "!editorReadonly && editorHasReference",
+                contextMenuGroupId: "navigation",
+                contextMenuOrder: 0.1,
+                run: () => Promise.resolve(this.loadReference())
             });
 
-            if (pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
-                this.editor.addAction({
-                    id: "compileHex",
-                    label: lf("Download"),
-                    keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyCode.Enter],
-                    keybindingContext: "!editorReadonly",
-                    precondition: "!editorReadonly",
-                    contextMenuGroupId: "0_pxtnavigation",
-                    contextMenuOrder: 0.22,
-                    run: () => Promise.resolve(this.parent.compile())
-                });
-            }
-
-            this.editor.addAction({
-                id: "zoomIn",
-                label: lf("Zoom In"),
-                keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.NUMPAD_ADD, monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_EQUAL],
-                run: () => Promise.resolve(this.zoomIn())
-            });
-
-            this.editor.addAction({
-                id: "zoomOut",
-                label: lf("Zoom Out"),
-                keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.NUMPAD_SUBTRACT, monaco.KeyMod.CtrlCmd | monaco.KeyCode.US_MINUS],
-                run: () => Promise.resolve(this.zoomOut())
-            });
-
-            if (pxt.appTarget.appTheme.hasReferenceDocs) {
-                let referenceContextKey = this.editor.createContextKey("editorHasReference", false)
-                this.editor.addAction({
-                    id: "reference",
-                    label: lf("Help"),
-                    keybindingContext: "!editorReadonly && editorHasReference",
-                    precondition: "!editorReadonly && editorHasReference",
-                    contextMenuGroupId: "navigation",
-                    contextMenuOrder: 0.1,
-                    run: () => Promise.resolve(this.loadReference())
-                });
-
-                this.editor.onDidChangeCursorPosition((e: monaco.editor.ICursorPositionChangedEvent) => {
-                    let word = this.editor.getModel().getWordUntilPosition(e.position);
-                    if (word && word.word != "") {
-                        referenceContextKey.set(true);
-                    } else {
-                        referenceContextKey.reset()
-                    }
-                })
-            }
-
-            // Accessibility shortcut, add a way to quickly jump to the monaco toolbox
-            this.editor.addAction({
-                id: "jumptoolbox",
-                label: lf("Jump to Toolbox"),
-                keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyCode.KEY_T],
-                keybindingContext: "!editorReadonly",
-                precondition: "!editorReadonly",
-                run: () => Promise.resolve(this.moveFocusToToolbox())
-            });
-
-            this.editor.onDidLayoutChange((e: monaco.editor.EditorLayoutInfo) => {
-                // Update editor font size in settings after a ctrl+scroll zoom
-                let currentFont = this.getEditorFontSize();
-                if (this.parent.settings.editorFontSize != currentFont) {
-                    this.parent.settings.editorFontSize = currentFont;
-                    this.forceDiagnosticsUpdate();
+            this.editor.onDidChangeCursorPosition((e: monaco.editor.ICursorPositionChangedEvent) => {
+                let word = this.editor.getModel().getWordUntilPosition(e.position);
+                if (word && word.word != "") {
+                    referenceContextKey.set(true);
+                } else {
+                    referenceContextKey.reset()
                 }
-                // Update widgets
-                const toolbox = document.getElementById('monacoToolboxDiv');
-                if (toolbox) toolbox.style.height = `${this.editor.getLayoutInfo().height}px`;
             })
+        }
 
-            const monacoEditorInner = document.getElementById('monacoEditorInner');
-            if (pxt.BrowserUtils.hasPointerEvents()) {
-                monacoEditorInner.onpointermove = this.onPointerMove;
-                monacoEditorInner.onpointerup = this.onPointerUp;
-            } else {
-                monacoEditorInner.onmousemove = this.onPointerMove;
-                monacoEditorInner.onmouseup = this.onPointerUp;
-                if (pxt.BrowserUtils.isTouchEnabled()) {
-                    // For devices without PointerEvents (iOS < 13.0), use state to
-                    // hide the flyout rather than focusing the editor (onPointerMove)
-                    monacoEditorInner.ontouchend = this.onPointerUp;
-                }
+        // Accessibility shortcut, add a way to quickly jump to the monaco toolbox
+        this.editor.addAction({
+            id: "jumptoolbox",
+            label: lf("Jump to Toolbox"),
+            keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyCode.KEY_T],
+            keybindingContext: "!editorReadonly",
+            precondition: "!editorReadonly",
+            run: () => Promise.resolve(this.moveFocusToToolbox())
+        });
+
+        this.editor.onDidLayoutChange((e: monaco.editor.EditorLayoutInfo) => {
+            // Update editor font size in settings after a ctrl+scroll zoom
+            let currentFont = this.getEditorFontSize();
+            if (this.parent.settings.editorFontSize != currentFont) {
+                this.parent.settings.editorFontSize = currentFont;
+                this.forceDiagnosticsUpdate();
             }
+            // Update widgets
+            const toolbox = document.getElementById('monacoToolboxDiv');
+            if (toolbox) toolbox.style.height = `${this.editor.getLayoutInfo().height}px`;
+        })
 
-            this.editor.onDidFocusEditorText(() => {
-                this.hideFlyout();
-            })
+        const monacoEditorInner = document.getElementById('monacoEditorInner');
+        if (pxt.BrowserUtils.hasPointerEvents()) {
+            monacoEditorInner.onpointermove = this.onPointerMove;
+            monacoEditorInner.onpointerup = this.onPointerUp;
+        } else {
+            monacoEditorInner.onmousemove = this.onPointerMove;
+            monacoEditorInner.onmouseup = this.onPointerUp;
+            if (pxt.BrowserUtils.isTouchEnabled()) {
+                // For devices without PointerEvents (iOS < 13.0), use state to
+                // hide the flyout rather than focusing the editor (onPointerMove)
+                monacoEditorInner.ontouchend = this.onPointerUp;
+            }
+        }
 
-            monaco.languages.registerCompletionItemProvider("python", new CompletionProvider(this, true));
-            monaco.languages.registerSignatureHelpProvider("python", new SignatureHelper(this, true));
-            monaco.languages.registerHoverProvider("python", new HoverProvider(this, true));
-            monaco.languages.registerDocumentRangeFormattingEditProvider("python", new FormattingProvider(this, true));
-            monaco.languages.setLanguageConfiguration("python", pythonLanguageConfiguration)
+        this.editor.onDidFocusEditorText(() => {
+            this.hideFlyout();
+        })
 
-            this.editorViewZones = [];
+        monaco.languages.registerCompletionItemProvider("python", new CompletionProvider(this, true));
+        monaco.languages.registerSignatureHelpProvider("python", new SignatureHelper(this, true));
+        monaco.languages.registerHoverProvider("python", new HoverProvider(this, true));
+        monaco.languages.registerDocumentRangeFormattingEditProvider("python", new FormattingProvider(this, true));
+        monaco.languages.setLanguageConfiguration("python", pythonLanguageConfiguration)
 
-            this.setupFieldEditors();
-            this.editor.onMouseDown((e: monaco.editor.IEditorMouseEvent) => {
-                if (e.target.type !== monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) {
-                    return;
-                }
-                this.handleGutterClick(e);
-            });
+        this.editorViewZones = [];
 
-            editor.onDidChangeModelContent(e => {
-                // Clear ranges because the model changed
-                if (this.fieldEditors)
-                    this.fieldEditors.clearRanges(editor);
-            })
+        this.setupFieldEditors();
+        this.editor.onMouseDown((e: monaco.editor.IEditorMouseEvent) => {
+            if (e.target.type !== monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) {
+                return;
+            }
+            this.handleGutterClick(e);
+        });
+
+        editor.onDidChangeModelContent(e => {
+            // Clear ranges because the model changed
+            if (this.fieldEditors)
+                this.fieldEditors.clearRanges(editor);
         })
     }
 
@@ -1307,7 +1306,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             && (this.fileType == "typescript" || this.fileType == "python");
     }
 
-    loadFileAsync(file: pkg.File, hc?: boolean): Promise<void> {
+    async loadFileAsync(file: pkg.File, hc?: boolean): Promise<void> {
         let mode = pxt.editor.FileType.Text;
         this.currSource = file.content;
 
@@ -1319,120 +1318,128 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         this.pythonSourceMap = null;
 
-        return this.loadMonacoAsync()
-            .then(() => {
-                if (!this.editor) return Promise.resolve();
+        await this.loadMonacoAsync()
+        if (!this.editor) return Promise.resolve();
 
-                this.foldFieldEditorRanges = true;
-                this.updateFieldEditors();
+        this.foldFieldEditorRanges = true;
+        this.updateFieldEditors();
 
-                let ext = file.getExtension()
-                if (modeMap.hasOwnProperty(ext)) mode = modeMap[ext]
-                this.fileType = mode
+        let ext = file.getExtension()
+        if (modeMap.hasOwnProperty(ext)) mode = modeMap[ext]
+        this.fileType = mode
 
-                const readOnly = file.isReadonly() || pxt.shell.isReadOnly() || this.isDebugging();
-                this.editor.updateOptions({ readOnly: readOnly });
+        const readOnly = file.isReadonly() || pxt.shell.isReadOnly() || this.isDebugging();
+        this.editor.updateOptions({ readOnly: readOnly });
 
-                let proto = "pkg:" + file.getName();
-                let model = monaco.editor.getModels().filter((model) => model.uri.toString() == proto)[0];
-                if (!model) model = monaco.editor.createModel(pkg.mainPkg.readFile(file.getName()), mode, monaco.Uri.parse(proto));
-                if (model) this.editor.setModel(model);
+        let proto = "pkg:" + file.getName();
+        let model = monaco.editor.getModels().filter((model) => model.uri.toString() == proto)[0];
+        if (!model) model = monaco.editor.createModel(pkg.mainPkg.readFile(file.getName()), mode, monaco.Uri.parse(proto));
+        if (model) this.editor.setModel(model);
 
-                this.defineEditorTheme(hc);
-                // Set the current file
-                this.currFile = file;
-                // update toolbox
-                if (this.shouldShowToolbox()) {
-                    this.beginLoadToolbox(file, hc);
-                } else {
-                    if (this.toolbox)
-                        this.toolbox.hide();
-                }
+        this.defineEditorTheme(hc);
+        // Set the current file
+        this.currFile = file;
+        // update toolbox
+        if (this.shouldShowToolbox()) {
+            this.beginLoadToolbox(file, hc);
+        } else {
+            if (this.toolbox)
+                this.toolbox.hide();
+        }
 
-                this.setValue(file.content)
-                this.setDiagnostics(file, this.snapshotState())
+        this.setValue(file.content)
+        this.setDiagnostics(file, this.snapshotState())
 
-                if (this.breakpoints) {
-                    this.breakpoints.loadBreakpointsForFile(file, this.editor);
-                    const loc = this.breakpoints.getLocationOfBreakpoint(this.highlightedBreakpoint);
-                    if (loc && loc.fileName === file.getTextFileName()) {
-                        this.highilightStatementCore(loc, true);
-                    }
-                }
+        if (this.breakpoints) {
+            this.breakpoints.loadBreakpointsForFile(file, this.editor);
+            const loc = this.breakpoints.getLocationOfBreakpoint(this.highlightedBreakpoint);
+            if (loc && loc.fileName === file.getTextFileName()) {
+                this.highilightStatementCore(loc, true);
+            }
+        }
 
-                if (this.fileType == pxt.editor.FileType.Markdown)
-                    this.parent.setSideMarkdown(file.content);
+        if (this.fileType == pxt.editor.FileType.Markdown)
+            this.parent.setSideMarkdown(file.content);
 
-                this.currFile.setForceChangeCallback((from: string, to: string) => {
-                    if (from != to) {
-                        pxt.debug(`File changed (from ${from}, to ${to}). Reloading editor`)
-                        this.loadFileAsync(this.currFile);
-                    }
-                });
+        this.currFile.setForceChangeCallback((from: string, to: string) => {
+            if (from != to) {
+                pxt.debug(`File changed (from ${from}, to ${to}). Reloading editor`)
+                this.loadFileAsync(this.currFile);
+            }
+        });
 
-                if (!file.isReadonly()) {
-                    model.onDidChangeContent((e: monaco.editor.IModelContentChangedEvent) => {
-                        // Remove any Highlighted lines
-                        this.clearHighlightedStatements();
+        if (!file.isReadonly()) {
+            model.onDidChangeContent((e: monaco.editor.IModelContentChangedEvent) => {
+                // Remove any Highlighted lines
+                this.clearHighlightedStatements();
 
-                        // Remove any current error shown, as a change has been made.
-                        let viewZones = this.editorViewZones || [];
-                        (this.editor as any).changeViewZones(function (changeAccessor: any) {
-                            viewZones.forEach((id: any) => {
-                                changeAccessor.removeZone(id);
-                            });
-                        });
-                        this.editorViewZones = [];
-
-                        const bannedCharactersRegex = /[\u{201c}\u{201d}\u{2018}\u{2019}]/u;
-
-                        // Test for left and right quotes because ios safari will sometimes insert
-                        // them automatically for the user. Convert them to normal quotes
-                        if (e.changes.some(change => bannedCharactersRegex.test(change.text))) {
-                            const edits: monaco.editor.IIdentifiedSingleEditOperation[] = e.changes.filter(e => bannedCharactersRegex.test(e.text)).map(e => {
-                                const start = model.getPositionAt(e.rangeOffset);
-                                const end = model.getPositionAt(e.rangeOffset + e.text.length);
-                                return {
-                                    range: new monaco.Range(start.lineNumber, start.column, end.lineNumber, end.column),
-                                    text: e.text.replace(/\u{201c}|\u{201d}/gu, `"`).replace(/\u{2018}|\u{2019}/gu, `'`)
-                                }
-                            });
-
-                            this.editor.executeEdits("pxt", edits);
-                        }
-
-                        this.updateDiagnostics();
-                        this.changeCallback();
-                        this.updateFieldEditors();
+                // Remove any current error shown, as a change has been made.
+                let viewZones = this.editorViewZones || [];
+                (this.editor as any).changeViewZones(function (changeAccessor: any) {
+                    viewZones.forEach((id: any) => {
+                        changeAccessor.removeZone(id);
                     });
+                });
+                this.editorViewZones = [];
+
+                const bannedCharactersRegex = /[\u{201c}\u{201d}\u{2018}\u{2019}]/u;
+
+                // Test for left and right quotes because ios safari will sometimes insert
+                // them automatically for the user. Convert them to normal quotes
+                if (e.changes.some(change => bannedCharactersRegex.test(change.text))) {
+                    const edits: monaco.editor.IIdentifiedSingleEditOperation[] = e.changes.filter(e => bannedCharactersRegex.test(e.text)).map(e => {
+                        const start = model.getPositionAt(e.rangeOffset);
+                        const end = model.getPositionAt(e.rangeOffset + e.text.length);
+                        return {
+                            range: new monaco.Range(start.lineNumber, start.column, end.lineNumber, end.column),
+                            text: e.text.replace(/\u{201c}|\u{201d}/gu, `"`).replace(/\u{2018}|\u{2019}/gu, `'`)
+                        }
+                    });
+
+                    this.editor.executeEdits("pxt", edits);
                 }
 
-                this.resize();
-                this.hideFlyout();
-
-                // Get extension packages
-                this.extensions = pkg.allEditorPkgs()
-                    .map(ep => ep.getKsPkg())
-                    // Make sure the package has extensions enabled, and is a github package.
-                    // Extensions are limited to github packages and ghpages, as we infer their url from the installedVersion config
-                    .filter(p => !!p && p.config && !!p.config.extension && /^(file:|github:)/.test(p.installedVersion));
-
-                if (this.giveFocusOnLoading) {
-                    this.editor.focus();
-                }
-
-                // this monitors the text buffer for "edit amendments". See monacoEditAmendments for more.
-                // This is an extension we made to Monaco that allows us to replace full lines of text when
-                // using code completion.
-                if (this.fileType === pxt.editor.FileType.Python)
-                    this.editAmendmentsListener = listenForEditAmendments(this.editor);
-
-                return this.foldFieldEditorRangesAsync()
-            }).finally(() => {
-                editorRightArea.removeChild(loading);
-                // Do Not Remove: This is used by the skillmap
-                if (this.parent.isTutorial()) pxt.tickEvent("tutorial.editorLoaded")
+                this.updateDiagnostics();
+                this.changeCallback();
+                this.updateFieldEditors();
             });
+        }
+
+        this.resize();
+        this.hideFlyout();
+
+        // Get extension packages
+        this.extensions = pkg.allEditorPkgs()
+            .map(ep => ep.getKsPkg())
+            // Make sure the package has extensions enabled, and is a github package.
+            // Extensions are limited to github packages and ghpages, as we infer their url from the installedVersion config
+            .filter(p => !!p && p.config && !!p.config.extension && /^(file:|github:)/.test(p.installedVersion));
+
+        if (this.giveFocusOnLoading) {
+            this.editor.focus();
+        }
+
+        // this monitors the text buffer for "edit amendments". See monacoEditAmendments for more.
+        // This is an extension we made to Monaco that allows us to replace full lines of text when
+        // using code completion.
+        if (this.fileType === pxt.editor.FileType.Python)
+            this.editAmendmentsListener = listenForEditAmendments(this.editor);
+
+        await this.foldFieldEditorRangesAsync()
+
+        // TODO(@darzu): hook into TS language service?
+        const currentUri = this.editor.getModel().uri
+        const workerGetter = await monaco.languages.typescript.getTypeScriptWorker();
+        const tsWorker = await workerGetter(currentUri)
+        console.dir(tsWorker);
+        (window as any).tsWorker = tsWorker;
+        // tsWorker.findRenameLocations("main.ts", 5, false, false, false
+        console.log("file.name")
+        console.log(file.name)
+
+        editorRightArea.removeChild(loading);
+        // Do Not Remove: This is used by the skillmap
+        if (this.parent.isTutorial()) pxt.tickEvent("tutorial.editorLoaded")
     }
 
     unloadFileAsync(): Promise<void> {

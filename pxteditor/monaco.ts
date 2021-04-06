@@ -29,7 +29,7 @@ namespace pxt.vs {
     export function syncModels(mainPkg: MainPackage, libs: { [path: string]: monaco.IDisposable }, currFile: string, readOnly: boolean) {
         if (readOnly) return;
 
-        let extraLibs = (monaco.languages.typescript.typescriptDefaults as any).getExtraLibs();
+        let extraLibs = monaco.languages.typescript.typescriptDefaults.getExtraLibs();
         let modelMap: Map<string> = {}
 
         mainPkg.sortedDeps().forEach(pkg => {
@@ -37,9 +37,11 @@ namespace pxt.vs {
                 let fp = pkg.id + "/" + f;
                 let proto = "pkg:" + fp;
                 if (/\.(ts)$/.test(f) && fp != currFile) {
-                    if (!(monaco.languages.typescript.typescriptDefaults as any).getExtraLibs()[fp]) {
+                    if (!monaco.languages.typescript.typescriptDefaults.getExtraLibs()[fp]) {
                         // inserting a space creates syntax errors in Python
                         let content = pkg.readFile(f) || "\n";
+                        // TODO(@darzu): dbg
+                        console.log("adding lib: " + fp)
                         libs[fp] = monaco.languages.typescript.typescriptDefaults.addExtraLib(content, fp);
                     }
                     modelMap[fp] = "1";
@@ -55,7 +57,7 @@ namespace pxt.vs {
             });
     }
 
-    export function initMonacoAsync(element: HTMLElement): Promise<monaco.editor.IStandaloneCodeEditor> {
+    export async function initMonacoAsync(element: HTMLElement): Promise<monaco.editor.IStandaloneCodeEditor> {
         return new Promise<monaco.editor.IStandaloneCodeEditor>((resolve, reject) => {
             if (typeof ((window as any).monaco) === 'object') {
                 // monaco is already loaded
@@ -70,8 +72,9 @@ namespace pxt.vs {
 
                 // Load monaco
                 req(['vs/editor/editor.main'], () => {
-                    setupMonaco();
-                    resolve(createEditor(element));
+                    setupMonaco().then(() => {
+                        resolve(createEditor(element));
+                    })
                 });
             };
 
@@ -88,9 +91,9 @@ namespace pxt.vs {
         })
     }
 
-    function setupMonaco() {
+    async function setupMonaco() {
         initAsmMonarchLanguage();
-        initTypeScriptLanguageDefinition();
+        await initTypeScriptLanguageDefinition();
     }
 
     export function createEditor(element: HTMLElement): monaco.editor.IStandaloneCodeEditor {
@@ -237,7 +240,7 @@ namespace pxt.vs {
         });
     }
 
-    function initTypeScriptLanguageDefinition() {
+    async function initTypeScriptLanguageDefinition() {
         if (!monaco.languages.typescript) {
             return;
         }
@@ -260,5 +263,13 @@ namespace pxt.vs {
             noLib: true,
             mouseWheelZoom: false
          });
+
+        monaco.languages.typescript.typescriptDefaults.setWorkerOptions({
+            /** A full HTTP path to a JavaScript file which adds a function `customTSWorkerFactory` to the self inside a web-worker */
+            // customWorkerPath
+        })
+
+        // TODO(@darzu): 
+        pxt.log("Monaco using Typescript version: " + monaco.languages.typescript.typescriptVersion)
     }
 }
