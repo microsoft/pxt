@@ -170,6 +170,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         const { selectedCategory, selectedIndex } = this.state;
 
         const targetTheme = pxt.appTarget.appTheme;
+        const { scriptManager } = targetTheme;
         const targetConfig = this.getData("target-config:") as pxt.TargetConfig;
         const lang = pxt.Util.userLanguage();
         // collect localized and unlocalized galleries
@@ -185,7 +186,6 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         // lf("Examples")
         // lf("Tutorials")
 
-
         const tabClasses = sui.cx([
             'ui segment bottom attached tab active tabsegment'
         ]);
@@ -194,11 +194,12 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
             <HeroBanner parent={this.props.parent} />
             <div key={`mystuff_gallerysegment`} className="ui segment gallerysegment mystuff-segment" role="region" aria-label={lf("My Projects")}>
                 <div className="ui heading">
-                    <div className="column" style={{ zIndex: 1 }}>
-                        {targetTheme.scriptManager ? <h2 role="button" className="ui header myproject-header"
-                            onClick={this.showScriptManager} onKeyDown={sui.fireClickOnEnter}>
+                    <div className="column" style={{ zIndex: 1 }}
+                        role={scriptManager && "button"} onClick={scriptManager && this.showScriptManager} onKeyDown={scriptManager && sui.fireClickOnEnter}
+                    >
+                        {scriptManager ? <h2 className="ui header myproject-header">
                             {lf("My Projects")}
-                            <span className="view-all-button" tabIndex={0} title={lf("View all projects")}>
+                            <span className="view-all-button" tabIndex={0} title={lf("View all projects")} role="button">
                                 {lf("View All")}
                             </span>
                         </h2> : <h2 className="ui header">{lf("My Projects")}</h2>}
