@@ -414,7 +414,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                     {isSearching ?
                         <div className="ui medium active centered inline loader"></div>
                         :
-                        <div className="ui cards centered" role="listbox">
+                        <div className="ui cards centered" role="listbox" aria-label={lf("Extension search results")}>
                             {urldata.data.map(scr =>
                                 <ScriptSearchCodeCard
                                     key={'url' + scr.id}
