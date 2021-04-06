@@ -38,6 +38,7 @@
     * [Anchors](/writing-docs/anchors)
     * [Tutorials](/writing-docs/tutorials)
     * [User Tutorials](/writing-docs/user-tutorials)
+    * [Skillmaps](/writing-docs/skillmaps)
     * [Routing](/writing-docs/routing)
     * [Testing](/writing-docs/testing)
 * [Translations](/translate)
