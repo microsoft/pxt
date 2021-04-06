@@ -407,7 +407,8 @@ export class ExpandableMenu extends UIElement<ExpandableMenuProps, ExpandableMen
                 icon={`no-select chevron ${expanded ? "down" : "right"}`}
                 text={title}
                 ariaExpanded={expanded}
-                onClick={this.toggleExpanded} />
+                onClick={this.toggleExpanded}
+                role="button" />
             {expanded && <div className="expanded-items">
                 {children}
             </div> }
