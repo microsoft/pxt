@@ -192,7 +192,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
 
         return <div ref="homeContainer" className={tabClasses} role="main">
             <HeroBanner parent={this.props.parent} />
-            <h1 className="visually-hidden">{lf("MakeCode Home")}</h1>
+            <h1 className="accessible-hidden">{lf("MakeCode Home")}</h1>
             <div key={`mystuff_gallerysegment`} className="ui segment gallerysegment mystuff-segment" role="region" aria-label={lf("My Projects")}>
                 <div className="ui heading">
                     <div className="column" style={{ zIndex: 1 }}
