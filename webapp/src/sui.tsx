@@ -407,7 +407,8 @@ export class ExpandableMenu extends UIElement<ExpandableMenuProps, ExpandableMen
                 icon={`no-select chevron ${expanded ? "down" : "right"}`}
                 text={title}
                 ariaExpanded={expanded}
-                onClick={this.toggleExpanded} />
+                onClick={this.toggleExpanded}
+                role="button" />
             {expanded && <div className="expanded-items">
                 {children}
             </div> }
@@ -418,6 +419,7 @@ export class ExpandableMenu extends UIElement<ExpandableMenuProps, ExpandableMen
 export interface SelectProps {
     options: SelectItem[];
     onChange?: (value: string) => void;
+    "aria-label"?: string;
     label?: string;
 }
 
@@ -451,12 +453,12 @@ export class Select extends UIElement<SelectProps, SelectState> {
     }
 
     render() {
-        const { options, label } = this.props;
+        const { options, label, "aria-label": ariaLabel } = this.props;
         const { selected } = this.state;
 
         return (<div>
             { label && `${label} ` }
-            <select value={selected} className="ui dropdown" onChange={this.handleOnChange}>
+            <select value={selected} className="ui dropdown" onChange={this.handleOnChange} aria-label={ariaLabel} >
                 {options.map(opt =>
                     opt && <option
                         aria-selected={selected === opt.value}

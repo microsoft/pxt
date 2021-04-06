@@ -64,7 +64,7 @@ export function initElectron(projectView: ProjectView): void {
                     hideAgree: true,
                     disagreeLbl: lf("Ok"),
                     disagreeClass: "green",
-                    size: "medium"
+                    size: "large"
                 }).then(() => {
                     core.showLoading("pxt-electron-update", lf("Installing update..."));
                 });
@@ -79,7 +79,7 @@ export function initElectron(projectView: ProjectView): void {
                             hideAgree: true,
                             disagreeLbl: lf("Quit"),
                             disagreeClass: "red",
-                            size: "medium"
+                            size: "large"
                         }).then(b => {
                             pxtElectron.sendQuit();
                         });
@@ -96,7 +96,7 @@ export function initElectron(projectView: ProjectView): void {
                     hideAgree: true,
                     disagreeLbl: lf("Quit"),
                     disagreeClass: "red",
-                    size: "medium"
+                    size: "large"
                 }).then(b => {
                     pxtElectron.sendQuit();
                 });
