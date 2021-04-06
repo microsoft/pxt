@@ -420,7 +420,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                     url={"/" + scr.id}
                                     scr={scr}
                                     onCardClick={this.addUrl}
-                                    role="link"
+                                    role="button"
                                 />
                             )}
                             {local.map(scr =>
@@ -435,7 +435,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                     label={lf("Local")}
                                     title={lf("Local GitHub extension")}
                                     labelClass="blue right ribbon"
-                                    role="link"
+                                    role="button"
                                 />
                             )}
                             {bundles.map(scr =>
@@ -447,7 +447,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                     scr={scr}
                                     onCardClick={this.addBundle}
                                     label={pxt.isPkgBeta(scr) ? lf("Beta") : undefined}
-                                    role="link"
+                                    role="button"
                                 />
                             )}
                             {ghdata.data.filter(repo => repo.status == pxt.github.GitRepoStatus.Approved).map(scr =>
@@ -460,7 +460,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                     url={'github:' + scr.fullName}
                                     imageUrl={pxt.github.repoIconUrl(scr)}
                                     label={pxt.isPkgBeta(scr) ? lf("Beta") : undefined}
-                                    role="link"
+                                    role="button"
                                     learnMoreUrl={`/pkg/${scr.fullName}`}
                                 />
                             )}
@@ -475,7 +475,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                     imageUrl={pxt.github.repoIconUrl(scr)}
                                     label={pxt.isPkgBeta(scr) ? lf("Beta") : undefined}
                                     url={'github:' + scr.fullName}
-                                    role="link"
+                                    role="button"
                                     learnMoreUrl={`/pkg/${scr.fullName}`}
                                 />
                             )}
@@ -486,7 +486,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                     imageUrl={`/static/experiments/${experiment.id.toLowerCase()}.png`}
                                     description={experiment.description}
                                     key={'exp' + experiment.id}
-                                    role="link"
+                                    role="button"
                                     label={pxt.editor.experiments.isEnabled(experiment) ? lf("Enabled") : lf("Disabled")}
                                     labelClass={pxt.editor.experiments.isEnabled(experiment) ? "green right ribbon" : "grey right ribbon"}
                                     onCardClick={this.toggleExperiment}
