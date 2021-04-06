@@ -10,7 +10,8 @@ A skillmap is is one or more guided pathways with focused learning objectives al
 
 For an example, you can take a look at the [**skillmap sample**](https://github.com/microsoft/pxt-skillmap-sample). Use it as a template to start your own!
 
-First though, you should [try out](https://arcade.makecode.com/--skillmap#https://github.com/microsoft/pxt-skillmap-sample/skillmap) the sample to see how it works.
+First though, you should [try out](https://arcade.makecode.com/--skillmap#github:microsoft/pxt-skillmap-sample/skillmap.md) the sample to see how it works.
+
 ### ~
 
 ## Skillmap paths
