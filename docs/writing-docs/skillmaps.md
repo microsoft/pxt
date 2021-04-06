@@ -1,12 +1,21 @@
 # Skillmaps
 
-A skillmap is is one or more guided pathways with focused learning objectives along the way. The goal of a skillmap is to have students aquire a set of design and coding skills related to creating programs and games.
+A skillmap is is one or more guided pathways with focused learning objectives along the way. The goal of a skillmap is to have students progrerssively aquire a set of design and coding skills until they reach an achievement goal.
 
 ![Skillmap intro graphic](/static/skillmaps/skillmap-intro.jpg)
 
+### ~ hint
+
+#### Sample skillmap
+
+For an example, you can take a look at the [**skillmap sample**](https://github.com/microsoft/pxt-skillmap-sample). Use it as a template to start your own!
+
+First though, you should [try out](https://arcade.makecode.com/beta--skillmap#https://github.com/microsoft/pxt-skillmap-sample/skillmap) the sample to see how it works.
+### ~
+
 ## Skillmap paths
 
-A skillmap has a starting point and a sequence of nodes (objectives) to progress through.
+A skillmap path has a starting point and a sequence of nodes (activities) to progress through. The activities in nodes along the path are locked until the previous node's an activity is finished.
 
 ![Individual skillmap path](/static/skillmaps/skillmap-path-intro.jpg)
 
@@ -14,44 +23,83 @@ The first node is unlocked and ready to start.
 
 ![Skillmap start node](/static/skillmaps/skillmap-start-node.jpg)
 
-Each node contains a tutorial exercise to teach a certain skill or concept. Completing the tutorial will unlock the next node along the pathway. 
+Each node contains a tutorial exercise to teach a certain skill or concept. Completing the tutorial (activity) will unlock the next node along the pathway. 
 
 ![Skillmap completed node](/static/skillmaps/skillmap-complete-node.jpg)
 
-After the last tutorial node, the student reaches the end of the path on the map and arrives at the Achievement. The Achievement rewards the student with an affirming message and awards them with a downloadable Certificate of Completion.
+After the last tutorial node, the student reaches the end of the path on the map and arrives at the Reward. The Reward node greets the student with an affirming message and awards them a downloadable "Certificate of Completion".
 
 ![Skillmap start node](/static/skillmaps/skillmap-reward-node.jpg)
 
-
 ### Skillmap structure
 
-A skillmap is described in sections and attribute lists in a markdown document.
+A skillmap is described by a markdown document with sections for the map settings, its paths, and the activities (nodes) in the paths.
 
-![Full skillmap graphic](/static/skillmaps/skillmap.jpg)
+```
+# map-id
+
+* mapProperty1: ...
+* mapProperty2: ...
+
+## path-id1
+
+* pathProperty1: ...
+
+### path-id1-activity1
+
+* activityProperty1: ...
+* activityProperty2: ...
+
+### path-id1-activity2
+
+## path-id2
+
+### path-id2-activity1
+
+### path-id2-activity2
+
+### path-id2-activity3
+```
+
+The first-level (`#`) heading is the ID of the skillmap. Under this heading are the map's properties. A skillmap document has one or more _paths_ declared under the second-level (`##`) headings. The path sections contain a set of _activities_ that form the path. The activities for a path are under third-level (`###`) headings.
+
+Each activity section has list of properties. All activities have a `name`, a `description`, and a `type`, along with other properties which are related to the `type` of the section.
+
+```
+### space-cruiser-activity1
+
+* name: Space background
+* description: Create a stellar background image.
+* type: tutorial
+```
 
 ### Map properties
 
-The map properties are in the first section of the skillmap document. This starts with a top-level heading using the skillmap's name, or its the _map-id_:
+The map properties are in the first section of the skillmap document. This starts with a first-level (`#`) heading using the skillmap's name, or its the _map-id_.
+
+* **map-id**: the identification name of the skillmap
 
 ```
 # game-maker-guide
 ```
 
-Following the heading are a bulleted lis of the properties defined for the skillmap.
+Following the heading is a bulleted list of the properties defined for the skillmap.
 
-* **name**: Map Display Name
+* **name**: map display name
+* **description**: map description
+* **infoUrl**: ???
 * **backgroundurl**: URL to the background image
 * **bannerurl**: URL to the banner image (displayed in the sidebar when nothing is selected) 
-* **primarycolor**: Hex color for path (slightly translucent), locked nodes
-* **secondarycolor**: Hex color for unlocked nodes
-* **tertiarycolor**: Hex color for background
-* **highlightcolor**: Hex color for selected node border and unlocked reward nodes
-* **allowcodecarryover**: this is true by default, you can turn it off by setting it to "false"
+* **primarycolor**: hex color value for path and locked nodes (slightly translucent)
+* **secondarycolor**: hex color value for unlocked nodes
+* **tertiarycolor**: hex color value for background
+* **highlightcolor**: hex color value for the selected node border and unlocked reward nodes
+* **alternatesources**: ???
 
 A property list from a skillmap in MakeCode Arcade provides an example:
 
 ```markdown
-# Game Maker Guide
+# game-maker-guide
 
 * name: Game Maker Guide
 * description: Level up your game making skills by completing the tutorials in this guide.
@@ -65,31 +113,93 @@ A property list from a skillmap in MakeCode Arcade provides an example:
 * alternatesources: github:https://github.com/microsoft/pxt-skillmap-sample/skillmap.md
 ```
 
+The following skillmap has 3 different paths defined. The panel on the right shows the name of the map with a description and a banner image.
+
+![Full skillmap graphic](/static/skillmaps/skillmap.jpg)
+
+### Path properties
+
+The path properties are in the second-level (`##`) headings using the paths's name, or its _path-id_.
+
+* **path-id**: the identification name of the path
+
+```
+## space
+```
+
+After the heading is the path property list.
+
+* **name**: path display name
+* **description**: the path description
+* **completionUrl**: the URL path to a completion document (i.e. the "Certificate of Completion")
+
+Here's an example of a property list set for a path:
+
+```
+## space
+
+* name: Design a Space Explorer
+* description: Let's explore the depths of space! We'll design a vessel for space travel, add some enemies, and populate the universe with planets.
+* completionUrl: /static/skillmap/certificates/design-a-space-explorer.pdf
+```
+
+### ~ hint
+
+#### Selecting a path
+
+When selecting a path in a skillmap, the focus goes to the activity node. That node's properties are displayed along with the path description.
+
+### ~
+
+The selected path shows in the skillmap panel along with the property info from the activity node in focus.
+
 ![Individual skillmap path](/static/skillmaps/skillmap-path.jpg)
+
+### Activities (nodes)
+
+An activity node sets a current activity and connects it to the next one. Activities are created as [tutorials](/writing-docs/tutorials) and linked together in the node properties.
+
+The activity node properties are under a third-level (`###`) heading which has the nodes's name, or its _node-id_. The activity nodes are grouped sequentially under their associated path section.
+
+* **node-id**: the identification name of the node
+
+```
+### space-activity3
+```
+
+The node properties are specified under the `node-id` heading.
+
+* **name**: the display name of the activity node
+* **description**: description of the activity
+* **type**: the type of node, `tutorial` or `certificate`. Currently only the `tutorial` type is used
+* **tags**: a tag list to categorize the activity, like: `easy, enemies`
+* **next**: the `node-id` of the next activity
+* **url**: the URL for the tutorial document
+* **imageUrl**: a url for an image to display in the panel: jpg, png, or gif
+* **allowcodecarryover**: this is `true` by default, you can turn it off by setting it to `false`
+* **kind**: `layout` or `completion` (reserved, don't use)
+
+The node with it's properties will look like this:
+
+```
+### space-activity3
+
+* name: Enemies
+* description: Watch out for danger! Add enemies and lives to your game.
+* type: tutorial
+* tags: easy, enemies, kinds
+* next: space-activity4
+
+* url: /skillmap/space/activity3
+* imageUrl: /static/skillmap/space/enemies.gif
+```
+
+The node `name`, `description`, and `tags` are shown in the skillmap panel.
 
 ![skillmap node](/static/skillmaps/skillmap-node.jpg)
 
-EMPTY NODE (This one is meant for internal use only, documenting it here for completeness): 
-The name does not matter, and this node cannot have children
+### Rewards
 
-### node-id
-* name: Blank node
-* kind: layout
-
-REWARD NODES: 
-Right now the "kind" has to be "completion" (trophy node at the end of the graph) and the only supported type is "certificate". They can have images as well.
-
-### node-id
-* kind: completion
-* type: certificate
-* url: https://path-to-certificate.pdf
+The reward node is set automatically at end of the path if the path's `completionUrl` property is set.
 
 ![skillmap reward node](/static/skillmaps/skillmap-reward.jpg)
-
-ASSET EDITOR TUTORIALS: 
-This is slightly separate but it is in /beta for testing! Add this to the top of a tutorial to have it open in the asset editor.
-
-`### @preferredEditor asset`
-
-I think this is the most complete markdown file currently, it’s not meant as a sample but we’ve been using it for testing: https://github.com/shakao-test/demo/blob/master/sample.md
-Which can be loaded at: http://arcade.makecode.com/beta--skillmap#github:https://github.com/shakao-test/demo/sample
