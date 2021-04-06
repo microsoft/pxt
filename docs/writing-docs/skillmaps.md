@@ -8,7 +8,7 @@ A skillmap is is one or more guided pathways with focused learning objectives al
 
 #### Sample skillmap
 
-For an example, you can take a look at the [**skillmap sample**](https://github.com/microsoft/pxt-skillmap-sample). Use it as a template to start your own!
+For an example, you can take a look at the [**Skillmap Sample**](https://github.com/microsoft/pxt-skillmap-sample). Use it as a template to start your own!
 
 First though, you should [try out](https://arcade.makecode.com/--skillmap#github:microsoft/pxt-skillmap-sample/skillmap.md) the sample to see how it works.
 
@@ -204,3 +204,11 @@ The node `name`, `description`, and `tags` are shown in the skillmap panel.
 The reward node is set automatically at end of the path if the path's `completionUrl` property is set.
 
 ![skillmap reward node](/static/skillmaps/skillmap-reward.jpg)
+
+## Loading a skillmap
+
+Skillmaps are loaded into a MakeCode editor using a URL with the `skillmap` resource type. Using https://arcade.makecode.com/--skillmap will load the default skillmap for MakeCode Arcade. To load skillmaps from somewhere else, you append an external resource address path to this URL. If you want to use a skillmap from the [Skillmap Sample](https://github.com/microsoft/pxt-skillmap-sample) repository in GitHub, then you specify it with a direct path to the skillmap document file.
+
+Connect `https://arcade.makecode.com/--skillmap` with the GitHub resource specifier as a parameter using `#`. So, you have `https://arcade.makecode.com/--skillmap` + `#` + `github:microsoft/pxt-skillmap-sample/skillmap.md`. This forms the full skillmap load URL:
+
+https://arcade.makecode.com/--skillmap#github:microsoft/pxt-skillmap-sample/skillmap.md
