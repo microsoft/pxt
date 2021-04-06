@@ -114,6 +114,12 @@ namespace ts.pxtc.service {
         const PY_INDENT: string = (pxt as any).py.INDENT;
         const fileType = python ? "python" : "typescript";
 
+        let snippetPrefix = fn.namespace;
+        let isInstance = false;
+        let addNamespace = false;
+        let namespaceToUse = "";
+        let functionCount = 0;
+
         let preStmt: SnippetNode[] = [];
 
         if (isTaggedTemplate(fn)) {
@@ -157,12 +163,6 @@ namespace ts.pxtc.service {
                     default: p,
                     isLiteral: true
                 }) as SnippetNode)
-
-        let snippetPrefix = fn.namespace;
-        let isInstance = false;
-        let addNamespace = false;
-        let namespaceToUse = "";
-        let functionCount = 0;
 
         const element = fn as pxtc.SymbolInfo;
         if (element.attributes.block) {
