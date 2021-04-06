@@ -200,18 +200,18 @@ pre {
     z-index: @filelistZIndex;
 
     // the scroll bar is always visible, but we hide it when needed
-    overflow-y: scroll; 
+    overflow-y: scroll;
 }
 
-.invisibleScrollbar::-webkit-scrollbar { 
-    background: transparent !important; 
-}    
-.invisibleScrollbar::-webkit-scrollbar-thumb { 
+.invisibleScrollbar::-webkit-scrollbar {
+    background: transparent !important;
+}
+.invisibleScrollbar::-webkit-scrollbar-thumb {
     display: none !important;
-}    
-.invisibleScrollbar::-webkit-scrollbar-track { 
-    background: transparent !important; 
-}    
+}
+.invisibleScrollbar::-webkit-scrollbar-track {
+    background: transparent !important;
+}
 
 
 #filelist .simtoolbar {
@@ -1940,4 +1940,14 @@ select.ui.dropdown {
     .header {
         background-color: #F5BC5F;
     }
+}
+
+.visually-hidden {
+    clip: rect(1px,1px,1px,1px) !important;
+    clip-path: polygon(0px 0px, 0px 0px, 0px 0px) !important;
+    height: 1px !important;
+    overflow: hidden !important;
+    position: absolute !important;
+    white-space: nowrap !important;
+    width: 1px !important;
 }
