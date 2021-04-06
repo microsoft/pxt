@@ -1295,6 +1295,7 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
             }
         ];
         const classes = this.props.parent.createModalClasses("exitandsave");
+        const prompt = lf("Give your project a name.");
 
         return (
             <sui.Modal isOpen={visible} className={classes} size="tiny"
@@ -1303,10 +1304,10 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
             >
                 <div>
-                    <p>{lf("Give your project a name.")}</p>
+                    <p>{prompt}</p>
                     <div className="ui form">
                         <sui.Input ref="filenameinput" id={"projectNameInput"}
-                            ariaLabel={lf("Type a name for your project")} autoComplete={false}
+                            ariaLabel={prompt} autoComplete={false}
                             value={projectName || ''} onChange={this.handleChange} onEnter={this.save}
                             selectOnMount={!mobile} autoFocus={!mobile} />
                     </div>
@@ -1430,6 +1431,7 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
             }
         ];
         const classes = this.props.parent.createModalClasses("newproject");
+        const prompt = lf("Give your project a name.");
 
         return <sui.Modal isOpen={visible} className={classes} size="tiny"
             onClose={this.hide} dimmer={true} buttons={actions}
@@ -1437,10 +1439,10 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
             closeOnDimmerClick closeOnDocumentClick closeOnEscape
         >
             <div>
-                <p>{lf("Give your project a name.")}</p>
+                <p>{prompt}</p>
                 <div className="ui form">
                     <sui.Input ref="filenameinput" id={"projectNameInput"}
-                        ariaLabel={lf("Type a name for your project")} autoComplete={false}
+                        ariaLabel={prompt} autoComplete={false}
                         value={name || ''} onChange={this.handleTextChange} onEnter={this.save}
                         selectOnMount={!mobile} autoFocus={!mobile} />
                 </div>
