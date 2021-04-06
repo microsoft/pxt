@@ -551,6 +551,7 @@ export function showImportGithubDialogAsync() {
                             <i className="large plus circle middle aligned icon"></i>
                             <div className="content">
                                 <a onClick={createNew} role="menuitem" className="header"
+                                    tabIndex={0} onKeyDown={sui.fireClickOnEnter}
                                     title={lf("Create new GitHub repository")}>
                                     <b>{lf("Create new...")}</b>
                                 </a>
@@ -563,7 +564,9 @@ export function showImportGithubDialogAsync() {
                             <div key={r.name} className="item">
                                 <i className="large github middle aligned icon"></i>
                                 <div className="content">
-                                    <a onClick={r.onClick} role="menuitem" className="header">{r.name}</a>
+                                    <a onClick={r.onClick} role="menuitem" className="header"
+                                        tabIndex={0}  onKeyDown={sui.fireClickOnEnter}
+                                    >{r.name}</a>
                                     <div className="description">
                                         {pxt.Util.timeSince(r.updatedAt)}
                                         {". "}
