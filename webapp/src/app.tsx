@@ -162,7 +162,7 @@ export class ProjectView
         this.reload = false; //set to true in case of reset of the project where we are going to reload the page.
         this.settings = JSON.parse(pxt.storage.getLocal("editorSettings") || "{}")
         const shouldShowHomeScreen = this.shouldShowHomeScreen();
-        const isHighContrast = /hc=(\w+)/.test(window.location.href);
+        const isHighContrast = /hc=(\w+)/.test(window.location.href) || (window.matchMedia?.('(forced-colors: active)')?.matches);
         if (isHighContrast) core.setHighContrast(true);
 
         const simcfg = pxt.appTarget.simulator;
