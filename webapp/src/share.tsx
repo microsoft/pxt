@@ -516,7 +516,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                         {!qrCodeFull && <sui.Input id="projectUri" class="mini" readOnly={true} lines={1} value={url} copy={true} autoFocus={!pxt.BrowserUtils.isMobile()} selectOnClick={true} aria-describedby="projectUriLabel" autoComplete={false} />}
                         {!qrCodeFull && <label htmlFor="projectUri" id="projectUriLabel" className="accessible-hidden">{lf("This is the read-only internet address of your project.")}</label>}
                         {!!qrCodeUri && <img className={`ui ${qrCodeFull ? "huge" : "small"} image ${qrCodeExpanded ? "centered" : "floated right"} button pixelart`} alt={lf("QR Code of the saved program")}
-                            src={qrCodeUri} onClick={this.handleQrCodeClick} title={lf("Click to expand or collapse.")} tabIndex={0} aria-label={lf("QR Code of the saved program")}/>}
+                            src={qrCodeUri} onClick={this.handleQrCodeClick} title={lf("Click to expand or collapse.")} tabIndex={0} aria-label={lf("QR Code of the saved program")} onKeyDown={sui.fireClickOnEnter}/>}
                         {showSocialIcons ? <div className="social-icons">
                             <SocialButton url={url} ariaLabel="Facebook" type='facebook' heading={lf("Share on Facebook")} />
                             <SocialButton url={url} ariaLabel="Twitter" type='twitter' heading={lf("Share on Twitter")} />
