@@ -96,7 +96,7 @@ Following the heading is a bulleted list of the properties defined for the skill
 
 * **name**: map display name
 * **description**: map description
-* **infoUrl**: ???
+* **infoUrl**: URL to an external resource page, educator info, etc. (not presently used)
 * **backgroundurl**: URL to the background image
 * **bannerurl**: URL to the banner image (displayed in the sidebar when nothing is selected) 
 * **primarycolor**: hex color value for path and locked nodes (slightly translucent)
