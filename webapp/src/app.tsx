@@ -262,7 +262,7 @@ export class ProjectView
                 header: lf("Add extensions?"),
                 jsx: <>
                     <p>
-                        {lf("Add these user-provided extensions to your project?")}
+                        {lf("Add or update these user-provided extensions to your project?")}
                     </p>
                     <ul>
                         {ghidToBeApproved.map(scr => <li key={scr.fullName}>
