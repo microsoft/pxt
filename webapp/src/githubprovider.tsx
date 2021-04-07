@@ -96,7 +96,7 @@ export class GithubProvider extends cloudsync.ProviderBase {
                 <div><sui.PlainCheckbox label={lf("Remember me")} onChange={handleRememberMe} /></div>
                 {!useToken && <p className="ui small">
                     {lf("Looking to use a Developer token instead?")}
-                    <sui.Link className="link" text={lf("Use Developer token")} onClick={showToken} />
+                    <sui.Link className="link" text={lf("Use Developer token")} onClick={showToken} href="#" />
                 </p>}
                 {useToken && <ol>
                     <li>
