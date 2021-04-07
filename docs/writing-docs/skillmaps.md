@@ -24,7 +24,7 @@ First though, you should [try out](https://arcade.makecode.com/--skillmap#github
 
 ## Skillmap paths
 
-A skillmap path has a starting point and a sequence of nodes (activities) to progress through. The activities in nodes along the path are locked until the previous node's an activity is finished.
+A skillmap path has a starting point and a sequence of nodes (activities) to progress through. The activities in nodes along the path are locked until the previous node's activity is finished.
 
 ![Individual skillmap path](/static/skillmaps/skillmap-path-intro.jpg)
 
