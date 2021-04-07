@@ -100,7 +100,8 @@ export class CoreDialog extends React.Component<core.PromptOptions, CoreDialogSt
     render() {
         const options = this.props;
         const { inputValue, inputError } = this.state;
-        const size: any = options.size === undefined ? 'small' : options.size;
+        const size = options.size === undefined ? 'small' : options.size;
+        const isEscapable = options.hasCloseIcon || !options.hideCancel;
 
         const buttons = options.buttons ? options.buttons.filter(b => !!b) : [];
         buttons.forEach(btn => {
@@ -139,9 +140,9 @@ export class CoreDialog extends React.Component<core.PromptOptions, CoreDialogSt
                 dimmer={true} closeIcon={options.hasCloseIcon}
                 header={options.header}
                 headerIcon={options.headerIcon}
-                closeOnDimmerClick={!options.hideCancel}
-                closeOnDocumentClick={!options.hideCancel}
-                closeOnEscape={!options.hideCancel}
+                closeOnDimmerClick={isEscapable}
+                closeOnDocumentClick={isEscapable}
+                closeOnEscape={isEscapable}
                 modalDidOpen={this.modalDidOpen}
             >
                 {options.type == 'prompt' && <div className="ui">
