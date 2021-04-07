@@ -602,6 +602,7 @@ namespace pxsim {
                 source: MESSAGE_SOURCE,
                 boardDefinition: opts.boardDefinition,
                 parts: opts.parts,
+                builtinParts: opts.builtinParts,
                 fnArgs: opts.fnArgs,
                 code: js,
                 partDefinitions: opts.partDefinitions,
