@@ -114,7 +114,7 @@ export class Editor extends srceditor.Editor {
                     delete this.config.yotta;
             }
         }
-        // trigger update            
+        // trigger update
         this.save();
     }
 
@@ -133,14 +133,14 @@ export class Editor extends srceditor.Editor {
 
         return (
             <div className="ui content">
-                <h3 className="ui small header">
+                <div className="ui small header">
                     <div className="content">
                         <sui.Button title={lf("Go back")} tabIndex={0} onClick={this.goBack} onKeyDown={sui.fireClickOnEnter}>
                             <sui.Icon icon="arrow left" />
                             <span className="ui text landscape only">{lf("Go back")}</span>
                         </sui.Button>
                     </div>
-                </h3>
+                </div>
                 <div className="ui segment form text">
                     <sui.Input ref={this.handleNameInputRef} id={"fileNameInput"} label={lf("Name")} ariaLabel={lf("Type a name for your project")} value={c.name || ''} onChange={this.setFileName} autoComplete={false} />
                     {userConfigs.map(uc =>
