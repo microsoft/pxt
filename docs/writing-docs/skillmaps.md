@@ -18,7 +18,7 @@ Currently, skillmaps are supported only in [MakeCode Arcade](https://arcade.make
 
 For an example, you can take a look at the [**Skillmap Sample**](https://github.com/microsoft/pxt-skillmap-sample). Use it as a template to start your own!
 
-First though, you should [try out](https://arcade.makecode.com/--skillmap#github:microsoft/pxt-skillmap-sample/skillmap.md) the sample to see how it works.
+First though, you should [try out](https://arcade.makecode.com/--skillmap#github:microsoft/pxt-skillmap-sample/skillmap) the sample to see how it works.
 
 ### ~
 
