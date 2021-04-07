@@ -874,6 +874,14 @@
     }
 }
 
+@media (forced-colors: active) and (prefers-color-scheme: light) {
+    #homemenu .logo.organization img,
+    #homemenu .logo.brand img {
+        filter: invert(1);
+    }
+}
+
+
 /* > Small Monitor */
 @media only screen and (min-width: @computerBreakpoint) {
     /* Hide the editor toolbor in tutorial mode */

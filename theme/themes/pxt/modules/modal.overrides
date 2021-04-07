@@ -224,7 +224,7 @@
 }
 .ui.modal > .closeIcon:focus .close,
 .ui.modal > .closeIcon:hover  .close {
-    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.35);
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.50);
     outline: none;
     transform: scale(1.1);
 }

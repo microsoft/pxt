@@ -170,6 +170,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         const { selectedCategory, selectedIndex } = this.state;
 
         const targetTheme = pxt.appTarget.appTheme;
+        const { scriptManager } = targetTheme;
         const targetConfig = this.getData("target-config:") as pxt.TargetConfig;
         const lang = pxt.Util.userLanguage();
         // collect localized and unlocalized galleries
@@ -185,20 +186,21 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         // lf("Examples")
         // lf("Tutorials")
 
-
         const tabClasses = sui.cx([
             'ui segment bottom attached tab active tabsegment'
         ]);
 
         return <div ref="homeContainer" className={tabClasses} role="main">
             <HeroBanner parent={this.props.parent} />
+            <h1 className="accessible-hidden">{lf("MakeCode Home")}</h1>
             <div key={`mystuff_gallerysegment`} className="ui segment gallerysegment mystuff-segment" role="region" aria-label={lf("My Projects")}>
                 <div className="ui heading">
-                    <div className="column" style={{ zIndex: 1 }}>
-                        {targetTheme.scriptManager ? <h2 role="button" className="ui header myproject-header"
-                            onClick={this.showScriptManager} onKeyDown={sui.fireClickOnEnter}>
+                    <div className="column" style={{ zIndex: 1 }}
+                        role={scriptManager && "button"} onClick={scriptManager && this.showScriptManager} onKeyDown={scriptManager && sui.fireClickOnEnter}
+                    >
+                        {scriptManager ? <h2 className="ui header myproject-header">
                             {lf("My Projects")}
-                            <span className="view-all-button" tabIndex={0} title={lf("View all projects")}>
+                            <span className="view-all-button" tabIndex={0} title={lf("View all projects")} role="button">
                                 {lf("View All")}
                             </span>
                         </h2> : <h2 className="ui header">{lf("My Projects")}</h2>}
@@ -254,12 +256,12 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                     </div>
                 }
                 )}
-            {targetTheme.organizationUrl || targetTheme.organizationUrl || targetTheme.privacyUrl || targetTheme.copyrightText ? <div className="ui horizontal small divided link list homefooter">
+            {targetTheme.organizationUrl || targetTheme.organizationUrl || targetTheme.privacyUrl || targetTheme.copyrightText ? <div className="ui horizontal small divided link list homefooter" role="contentinfo">
                 {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" target="_blank" rel="noopener noreferrer" href={targetTheme.organizationUrl}>{targetTheme.organization}</a> : undefined}
-                {targetTheme.selectLanguage ? <sui.Link className="item" icon="xicon globe" text={lf("Language")} onClick={this.showLanguagePicker} onKeyDown={sui.fireClickOnEnter} /> : undefined}
+                {targetTheme.selectLanguage ? <sui.Link className="item" icon="xicon globe" text={lf("Language")} onClick={this.showLanguagePicker} onKeyDown={sui.fireClickOnEnter} role="button" /> : undefined}
                 {targetTheme.termsOfUseUrl ? <a target="_blank" className="item" href={targetTheme.termsOfUseUrl} rel="noopener noreferrer">{lf("Terms of Use")}</a> : undefined}
                 {targetTheme.privacyUrl ? <a target="_blank" className="item" href={targetTheme.privacyUrl} rel="noopener noreferrer">{lf("Privacy")}</a> : undefined}
-                {pxt.appTarget.versions ? <sui.Link className="item" text={`v${pxt.appTarget.versions.target}`} onClick={this.showAboutDialog} onKeyDown={sui.fireClickOnEnter} /> : undefined}
+                {pxt.appTarget.versions ? <sui.Link className="item" text={`v${pxt.appTarget.versions.target}`} onClick={this.showAboutDialog} onKeyDown={sui.fireClickOnEnter} role="button" /> : undefined}
                 {targetTheme.copyrightText ? <div className="ui item copyright">{targetTheme.copyrightText}</div> : undefined}
             </div> : undefined}
         </div>;
@@ -1295,6 +1297,7 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
             }
         ];
         const classes = this.props.parent.createModalClasses("exitandsave");
+        const prompt = lf("Give your project a name.");
 
         return (
             <sui.Modal isOpen={visible} className={classes} size="tiny"
@@ -1303,10 +1306,10 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
             >
                 <div>
-                    <p>{lf("Give your project a name.")}</p>
+                    <p>{prompt}</p>
                     <div className="ui form">
                         <sui.Input ref="filenameinput" id={"projectNameInput"}
-                            ariaLabel={lf("Type a name for your project")} autoComplete={false}
+                            ariaLabel={prompt} autoComplete={false}
                             value={projectName || ''} onChange={this.handleChange} onEnter={this.save}
                             selectOnMount={!mobile} autoFocus={!mobile} />
                     </div>
@@ -1430,6 +1433,7 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
             }
         ];
         const classes = this.props.parent.createModalClasses("newproject");
+        const prompt = lf("Give your project a name.");
 
         return <sui.Modal isOpen={visible} className={classes} size="tiny"
             onClose={this.hide} dimmer={true} buttons={actions}
@@ -1437,10 +1441,10 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
             closeOnDimmerClick closeOnDocumentClick closeOnEscape
         >
             <div>
-                <p>{lf("Give your project a name.")}</p>
+                <p>{prompt}</p>
                 <div className="ui form">
                     <sui.Input ref="filenameinput" id={"projectNameInput"}
-                        ariaLabel={lf("Type a name for your project")} autoComplete={false}
+                        ariaLabel={prompt} autoComplete={false}
                         value={name || ''} onChange={this.handleTextChange} onEnter={this.save}
                         selectOnMount={!mobile} autoFocus={!mobile} />
                 </div>

@@ -979,11 +979,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             monaco.languages.registerDocumentRangeFormattingEditProvider("python", new FormattingProvider(this, true));
             monaco.languages.setLanguageConfiguration("python", pythonLanguageConfiguration)
 
-            monaco.languages.registerCompletionItemProvider("typescript", new CompletionProvider(this, false));
-            monaco.languages.registerSignatureHelpProvider("typescript", new SignatureHelper(this, false));
-            monaco.languages.registerHoverProvider("typescript", new HoverProvider(this, false));
-            monaco.languages.registerDocumentRangeFormattingEditProvider("typescript", new FormattingProvider(this, false));
-
             this.editorViewZones = [];
 
             this.setupFieldEditors();
