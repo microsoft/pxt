@@ -219,4 +219,4 @@ Skillmaps are loaded into a MakeCode editor using a URL with the `skillmap` reso
 
 Connect `https://arcade.makecode.com/--skillmap` with the GitHub resource specifier as a parameter using `#`. So, you have `https://arcade.makecode.com/--skillmap` + `#` + `github:microsoft/pxt-skillmap-sample/skillmap`. This forms the full skillmap load URL:
 
-https://arcade.makecode.com/--skillmap#github:microsoft/pxt-skillmap-sample/skillmap.md
+https://arcade.makecode.com/--skillmap#github:microsoft/pxt-skillmap-sample/skillmap
