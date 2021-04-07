@@ -170,7 +170,7 @@ class LanguageCard extends sui.StatelessUIElement<LanguageCardProps> {
         return <codecard.CodeCardView className={`card-selected langoption`}
             name={name}
             ariaLabel={ariaLabel}
-            role="link"
+            role="button"
             description={description}
             onClick={this.handleClick}
         />
