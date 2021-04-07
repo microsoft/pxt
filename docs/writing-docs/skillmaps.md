@@ -103,7 +103,7 @@ Following the heading is a bulleted list of the properties defined for the skill
 * **secondarycolor**: hex color value for unlocked nodes
 * **tertiarycolor**: hex color value for background
 * **highlightcolor**: hex color value for the selected node border and unlocked reward nodes
-* **alternatesources**: ???
+* **alternatesources**: combine progress info from the skillmap URL linked here into the progress stats for this skillmap
 
 A property list from a skillmap in MakeCode Arcade provides an example:
 
