@@ -140,7 +140,6 @@ After the heading is the path property list.
 
 * **name**: path display name
 * **description**: the path description
-* **completionUrl**: the URL path to a completion document (i.e. the "Certificate of Completion")
 
 Here's an example of a property list set for a path:
 
@@ -164,7 +163,7 @@ The selected path shows in the skillmap panel along with the property info from 
 
 ![Individual skillmap path](/static/skillmaps/skillmap-path.jpg)
 
-### Activities (nodes)
+### Activities (tutorial nodes)
 
 An activity node sets a current activity and connects it to the next one. Activities are created as [tutorials](/writing-docs/tutorials) and linked together in the node properties.
 
@@ -180,13 +179,13 @@ The node properties are specified under the `node-id` heading.
 
 * **name**: the display name of the activity node
 * **description**: description of the activity
-* **type**: the type of node, `tutorial` or `certificate`. Currently only the `tutorial` type is used
+* **type**: the type of node, for activities use `tutorial`
 * **tags**: a tag list to categorize the activity, like: `easy, enemies`
 * **next**: the `node-id` of the next activity
 * **url**: the URL for the tutorial document
 * **imageUrl**: a url for an image to display in the panel: jpg, png, or gif
 * **allowcodecarryover**: this is `true` by default, you can turn it off by setting it to `false`
-* **kind**: `layout` or `completion` (reserved, don't use)
+* **kind**: `layout` (reservedor `completion` (reserved, don't use)
 
 The node with it's properties will look like this:
 
@@ -207,9 +206,23 @@ The node `name`, `description`, and `tags` are shown in the skillmap panel.
 
 ![skillmap node](/static/skillmaps/skillmap-node.jpg)
 
-### Rewards
+### Rewards (completion nodes)
 
-The reward node is set automatically at end of the path if the path's `completionUrl` property is set.
+Reward nodes are at the same level as activities. The node completes a path and displays the reward certificate. Set these properties for the reward node:
+
+* **type**: the type of node, for a reward node use `certificate`
+* **kind**: the kind for the this `type` of node, use `completion`
+* **url**: the URL path to a certificate document (i.e. the "Certificate of Completion")
+
+Here's a sample reward node:
+
+```
+### space-finish
+
+* kind: completion
+* type: certificate
+* url: https://microsoft.github.io/pxt-skillmap-sample/certificates/design-a-space-explorer.pdf
+```
 
 ![skillmap reward node](/static/skillmaps/skillmap-reward.jpg)
 
