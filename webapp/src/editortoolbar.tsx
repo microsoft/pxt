@@ -321,7 +321,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         }
         const cloudButton = <EditorToolbarButton icon={"xicon " + getCloudIcon()} className={`editortools-btn`} title={getCloudTooltip()} onButtonClick={this.cloudButtonClick} view='computer' />;
 
-        return <div id="editortools" className="ui" role="menubar" aria-label={lf("Editor toolbar")}>
+        return <div id="editortools" className="ui" role="region" aria-label={lf("Editor toolbar")}>
             <div id="downloadArea" role="menu" className="ui column items">{headless &&
                 <div className="ui item">
                     <div className="ui icon large buttons">

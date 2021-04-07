@@ -755,7 +755,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         const isOwner = user && user.id === githubId.owner;
         return (
             <div id="githubArea">
-                <div id="serialHeader" className="ui serialHeader">
+                <div className="ui serialHeader">
                     <div className="leftHeaderWrapper">
                         <div className="leftHeader">
                             <sui.Button title={lf("Go back")} icon="arrow left" text={lf("Go back")} textClass="landscape only" tabIndex={0} onClick={this.goBack} onKeyDown={sui.fireClickOnEnter} />
