@@ -217,6 +217,6 @@ The reward node is set automatically at end of the path if the path's `completio
 
 Skillmaps are loaded into a MakeCode editor using a URL with the `skillmap` resource type. Using https://arcade.makecode.com/--skillmap will load the default skillmap for MakeCode Arcade. To load skillmaps from somewhere else, you append an external resource address path to this URL. If you want to use a skillmap from the [Skillmap Sample](https://github.com/microsoft/pxt-skillmap-sample) repository in GitHub, then you specify it with a direct path to the skillmap document file.
 
-Connect `https://arcade.makecode.com/--skillmap` with the GitHub resource specifier as a parameter using `#`. So, you have `https://arcade.makecode.com/--skillmap` + `#` + `github:microsoft/pxt-skillmap-sample/skillmap.md`. This forms the full skillmap load URL:
+Connect `https://arcade.makecode.com/--skillmap` with the GitHub resource specifier as a parameter using `#`. So, you have `https://arcade.makecode.com/--skillmap` + `#` + `github:microsoft/pxt-skillmap-sample/skillmap`. This forms the full skillmap load URL:
 
 https://arcade.makecode.com/--skillmap#github:microsoft/pxt-skillmap-sample/skillmap.md
