@@ -103,7 +103,9 @@ namespace pxt.py {
                 'max', 'memoryview', 'min', 'next', 'object', 'oct', 'open', 'ord', 'pow',
                 'print', 'property', 'quit', 'range', 'repr', 'reversed', 'round', 'set',
                 'setattr', 'slice', 'sorted', 'staticmethod', 'str', 'sum', 'super', 'tuple',
-                'type', 'vars', 'zip']
+                'type', 'vars', 'zip',
+                ...Object.keys(pxt.py.keywords)
+            ]
             return reservedNames;
         }
         function tryGetSymbol(exp: ts.Node) {
@@ -156,7 +158,7 @@ namespace pxt.py {
             }
             let outName = name.text;
             let hasSrc = name.getSourceFile()
-            if (renameMap && hasSrc) {
+            if (hasSrc) {
                 const rename = renameMap.getRenameForPosition(name.getStart());
                 if (rename) {
                     outName = rename.name;
