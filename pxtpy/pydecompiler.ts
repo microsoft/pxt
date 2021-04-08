@@ -633,18 +633,41 @@ namespace pxt.py {
             return true
         }
         function emitClassMem(s: ts.ClassElement): string[] {
-            switch (s.kind) {
-                case ts.SyntaxKind.PropertyDeclaration:
-                    return emitPropDecl(s as ts.PropertyDeclaration)
-                case ts.SyntaxKind.MethodDeclaration:
-                    return emitFuncDecl(s as ts.MethodDeclaration)
-                case ts.SyntaxKind.Constructor:
-                    return emitFuncDecl(s as ts.ConstructorDeclaration)
-                default:
-                    return ["# unknown ClassElement " + s.kind]
+            if (ts.isPropertyDeclaration(s))
+                return emitPropDecl(s)
+            else if (ts.isMethodDeclaration(s))
+                return emitFuncDecl(s)
+            else if (ts.isConstructorDeclaration(s)) {
+                return emitConstructor(s)
             }
+            return ["# unknown ClassElement " + s.kind]
         }
-        function emitPropDecl(s: ts.PropertyDeclaration): string[] {
+        function emitConstructor(s: ts.ConstructorDeclaration): string[] {
+            let res: string[] = []
+            const memberProps: ts.ParameterDeclaration[] = s.parameters
+                // parameters with "public " prefix are class members
+                .filter(p => p.modifiers?.filter(m =>
+                    m.kind === ts.SyntaxKind.PublicKeyword
+                    || m.kind === ts.SyntaxKind.PrivateKeyword
+                    || m.kind === ts.SyntaxKind.ProtectedKeyword
+                ).length)
+            memberProps.forEach(p => {
+                // emit the param as a member decl
+                res = [...res, ...emitPropDecl(p)]
+            })
+            // emit the constructor body
+            res = [...res, ...emitFuncDecl(s, "__init__")]
+            if (memberProps.length && res.slice(-1)[0].endsWith("pass"))
+                res.pop() // slight hack b/c we're appending body statements
+            memberProps.forEach(p => {
+                // append param member assignment
+                const nm = getName(p.name)
+                res.push(indent1(`self.${nm} = ${nm}`))
+            })
+
+            return res
+        }
+        function emitPropDecl(s: ts.PropertyDeclaration | ts.ParameterDeclaration): string[] {
             let nm = getName(s.name)
             if (s.initializer) {
                 let [init, initSup] = emitExp(s.initializer)
@@ -652,7 +675,7 @@ namespace pxt.py {
             }
             else {
                 // can't do declerations without initilization in python
-                return []
+                return throwError(s, 3006, "Unsupported: class properties without initializers");
             }
         }
         function isUnaryPlusPlusOrMinusMinus(e: ts.Expression): e is ts.PrefixUnaryExpression | ts.PostfixUnaryExpression {
@@ -718,17 +741,12 @@ namespace pxt.py {
             let out = []
 
             let fnName: string
-            if (s.kind === ts.SyntaxKind.Constructor) {
-                fnName = "__init__"
-            }
-            else {
-                if (name)
-                    fnName = name
-                else if (s.name)
-                    fnName = getName(s.name)
-                else
-                    return throwError(s, 3012, "Unsupported: anonymous function decleration");
-            }
+            if (name)
+                fnName = name
+            else if (s.name)
+                fnName = getName(s.name)
+            else
+                return throwError(s, 3012, "Unsupported: anonymous function decleration");
 
             out.push(`def ${fnName}(${params}):`)
 
