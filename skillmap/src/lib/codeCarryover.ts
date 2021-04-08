@@ -22,7 +22,7 @@ export async function carryoverProjectCode(user: UserState, pageSource: string, 
 
 
 function mergeProjectCode(previousProject: pxt.Map<string>, newProject: pxt.Map<string>, carryoverCode: boolean) {
-    const configString = carryoverCode ? previousProject[pxt.CONFIG_NAME] : newProject[pxt.CONFIG_NAME];
+    const configString = newProject[pxt.CONFIG_NAME];
     const config = pxt.U.jsonTryParse(configString) as pxt.PackageConfig;
 
     const tilemapJres = carryoverCode ?
