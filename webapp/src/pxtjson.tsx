@@ -135,7 +135,7 @@ export class Editor extends srceditor.Editor {
             <div className="ui content">
                 <div className="ui small header">
                     <div className="content">
-                        <sui.Button title={lf("Go back")} tabIndex={0} onClick={this.goBack} onKeyDown={sui.fireClickOnEnter}>
+                        <sui.Button autoFocus title={lf("Go back")} tabIndex={0} onClick={this.goBack} onKeyDown={sui.fireClickOnEnter}>
                             <sui.Icon icon="arrow left" />
                             <span className="ui text landscape only">{lf("Go back")}</span>
                         </sui.Button>
