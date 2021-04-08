@@ -298,7 +298,7 @@
 @homeCardBorderSize: 5px;
 @homeCardBorderColor: #e9eef2;
 @homeCardHoverBorderColor: white;
-@homeCardFocusBorderColor: yellow;
+@homeCardFocusBorderColor: @primaryColor;
 @homeCardColor: @textColor;
 @homeCardMetaColor: @homeCardColor;
 @homeCardHeaderColor: @homeCardColor;
