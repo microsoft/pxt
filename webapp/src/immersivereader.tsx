@@ -216,8 +216,12 @@ export function launchImmersiveReader(content: string, tutorialOptions: pxt.tuto
                 core.warningNotification(lf("Immersive Reader cannot be used offline"));
                 break;
             }
+            case "token": {
+                break;
+            }
             default: {
                 core.warningNotification(lf("Immersive Reader could not be launched"));
+                pxt.tickEvent("immersiveReader.error", {error: JSON.stringify(e)});
             }
         }
         console.log("Immersive Reader Error: " + e);

@@ -89,7 +89,6 @@
   },
   "devDependencies": {
     "@microsoft/eslint-plugin-sdl": "^0.1.5",
-    "@microsoft/immersive-reader-sdk": "1.1.0",
     "@types/chai": "4.0.6",
     "@types/fuse": "2.5.2",
     "@types/highlight.js": "9.12.2",
