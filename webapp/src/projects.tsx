@@ -521,7 +521,7 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
                     {card.label || card.name || lf("Start")}
                 </sui.Link>
             </div>}
-            {cardIndex !== undefined && cards?.length > 1 && <div key="cards" className="dots">
+            {cardIndex !== undefined && cards?.length > 1 && <div key="cards" className="dots mobile hide">
                 {cards.map((card, i) => <button key={"dot" + i} className={`ui button empty circular label  clear ${i === cardIndex && "active"}`}
                     onClick={handleSetCard(i)} aria-label={lf("View {0} hero image", card.title || card.name)} title={lf("View {0} hero image", card.title || card.name)}>
                 </button>)}
