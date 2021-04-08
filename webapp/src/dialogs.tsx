@@ -97,6 +97,7 @@ function renderVersionLink(name: string, version: string, url: string) {
     return <p>{lf("{0} version:", name)} &nbsp;
             <a href={encodeURI(url)}
             title={`${lf("{0} version: {1}", name, version)}`}
+            aria-label={`${lf("{0} version{1}", name, version)}`}
             target="_blank" rel="noopener noreferrer">{version}</a>
     </p>;
 }
