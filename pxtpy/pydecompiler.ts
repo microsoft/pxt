@@ -644,15 +644,11 @@ namespace pxt.py {
         }
         function emitConstructor(s: ts.ConstructorDeclaration): string[] {
             let res: string[] = []
-            const memberProps: ts.ParameterDeclaration[] = s.parameters
-                // parameters with "public " prefix are class members
-                .filter(p => p.modifiers?.filter(m =>
-                    m.kind === ts.SyntaxKind.PublicKeyword
-                    || m.kind === ts.SyntaxKind.PrivateKeyword
-                    || m.kind === ts.SyntaxKind.ProtectedKeyword
-                ).length)
+            const memberProps = s.parameters
+                // parameters with "public" prefix are class members
+                .filter(ts.isParameterPropertyDeclaration)
             memberProps.forEach(p => {
-                // emit the param as a member decl
+                // emit each parameter property as a member decl
                 res = [...res, ...emitPropDecl(p)]
             })
             // emit the constructor body
@@ -660,23 +656,39 @@ namespace pxt.py {
             if (memberProps.length && res.slice(-1)[0].endsWith("pass"))
                 res.pop() // slight hack b/c we're appending body statements
             memberProps.forEach(p => {
-                // append param member assignment
+                // emit each parameter property's initial assignment
                 const nm = getName(p.name)
                 res.push(indent1(`self.${nm} = ${nm}`))
             })
 
             return res
         }
+        function emitDefaultValue(t: ts.Type): string | undefined {
+            // TODO: reconcile with snippet.ts:getDefaultValueOfType. Unfortunately, doing so is complicated.
+            if (hasTypeFlag(t, ts.TypeFlags.NumberLike))
+                return "0"
+            else if (hasTypeFlag(t, ts.TypeFlags.StringLike))
+                return `""`
+            else if (hasTypeFlag(t, ts.TypeFlags.BooleanLike))
+                return "False"
+            // TODO: support more types
+            return undefined
+        }
         function emitPropDecl(s: ts.PropertyDeclaration | ts.ParameterDeclaration): string[] {
             let nm = getName(s.name)
             if (s.initializer) {
                 let [init, initSup] = emitExp(s.initializer)
-                return initSup.concat([`${nm} = ${expToStr(init)}`])
+                return [...initSup, `${nm} = ${expToStr(init)}`]
+            } else if (ts.isParameterPropertyDeclaration(s) && s.type) {
+                const t = tc.getTypeFromTypeNode(s.type)
+                const defl = emitDefaultValue(t)
+                if (defl) {
+                    return [`${nm} = ${defl}`]
+                }
             }
-            else {
-                // can't do declerations without initilization in python
-                return throwError(s, 3006, "Unsupported: class properties without initializers");
-            }
+
+            // can't do declerations without initilization in python
+            return throwError(s, 3006, "Unsupported: class properties without initializers");
         }
         function isUnaryPlusPlusOrMinusMinus(e: ts.Expression): e is ts.PrefixUnaryExpression | ts.PostfixUnaryExpression {
             if (!ts.isPrefixUnaryExpression(e) &&

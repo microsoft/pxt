@@ -1,5 +1,5 @@
 class Foo {
-    constructor(public n: number = 0) {
+    constructor(public n: number) {
     }
 
     public change(m: number) {
