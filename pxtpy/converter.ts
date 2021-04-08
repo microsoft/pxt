@@ -48,6 +48,8 @@ namespace pxt.py {
     let infoNode: AST | undefined = undefined
     let infoScope: ScopeDef
 
+    const allTypes: Type[] = [] // TODO(@darzu): 
+
     // TODO: move to utils
     function isFalsy<T>(t: T | null | undefined): t is null | undefined {
         return t === null || t === undefined
@@ -137,12 +139,12 @@ namespace pxt.py {
         return r
     }
 
-    function mapTsType(tp: string): Type {
+    function mapPyToTsType(tp: string): Type {
         // TODO handle specifc generic types like: SparseArray<number[]>
 
         // wrapped in (...)
         if (tp[0] == "(" && U.endsWith(tp, ")")) {
-            return mapTsType(tp.slice(1, -1))
+            return mapPyToTsType(tp.slice(1, -1))
         }
 
         // lambda (...) => ...
@@ -150,17 +152,17 @@ namespace pxt.py {
         if (arrowIdx > 0) {
             const retTypeStr = tp.slice(arrowIdx + 4)
             if (retTypeStr.indexOf(")[]") == -1) {
-                const retType = mapTsType(retTypeStr)
+                const retType = mapPyToTsType(retTypeStr)
                 const argsStr = tp.slice(1, arrowIdx - 1)
                 const argsWords = argsStr ? argsStr.split(/, /) : []
-                const argTypes = argsWords.map(a => mapTsType(a.replace(/\w+\??: /, "")))
+                const argTypes = argsWords.map(a => mapPyToTsType(a.replace(/\w+\??: /, "")))
                 return mkFunType(retType, argTypes)
             }
         }
 
         // array ...[]
         if (U.endsWith(tp, "[]")) {
-            return mkArrayType(mapTsType(tp.slice(0, -2)))
+            return mkArrayType(mapPyToTsType(tp.slice(0, -2)))
         }
         if (tp === "_py.Array") {
             return mkArrayType(tpAny);
@@ -176,8 +178,11 @@ namespace pxt.py {
             return tpNumber
 
         // generic
-        if (tp == "T" || tp == "U") // TODO hack!
-            return mkType({ primType: "'" + tp })
+        if (tp == "T" || tp == "U") { // TODO hack!
+            const t = mkType({ primType: "'" + tp })
+            console.log("generics hack: t" + t.tid) // TODO(@darzu): dbg
+            return t
+        }
 
         // union
         if (tp.indexOf("|") >= 0) {
@@ -185,7 +190,7 @@ namespace pxt.py {
                 .map(p => p.trim())
             return mkType({
                 primType: "@union",
-                typeArgs: parts.map(mapTsType)
+                typeArgs: parts.map(mapPyToTsType)
             })
         }
 
@@ -227,7 +232,7 @@ namespace pxt.py {
                 }
                 for (let p of sym.parameters) {
                     if (!p.pyType)
-                        p.pyType = mapTsType(p.type)
+                        p.pyType = mapPyToTsType(p.type)
                 }
             }
 
@@ -237,7 +242,7 @@ namespace pxt.py {
                 sym.pyRetType = mkType({ moduleType: sym })
             } else {
                 if (sym.retType)
-                    sym.pyRetType = mapTsType(sym.retType)
+                    sym.pyRetType = mapPyToTsType(sym.retType)
                 else if (sym.pyRetType) {
                     // nothing to do
                 } else {
@@ -310,12 +315,14 @@ namespace pxt.py {
         //         getOrSetSymbolType(sym)
         // }
 
-        tpBuffer = mapTsType("Buffer")
+        tpBuffer = mapPyToTsType("Buffer")
     }
+
 
     function mkType(o: py.TypeOptions = {}) {
         let r: Type = U.flatClone(o) as any
         r.tid = ++typeId
+        allTypes.push(r)
         return r
     }
 
@@ -569,10 +576,16 @@ namespace pxt.py {
         t0 = canonicalize(t0)
         t1 = canonicalize(t1)
 
+        if (t0 === t1) // already unified
+            return
+
         // We don't handle generic types yet, so bail out. Worst case
         // scenario is that we infer some extra types as "any"
-        if (t0 === t1 || isGenericType(t0) || isGenericType(t1))
+        if (isGenericType(t0) || isGenericType(t1)) {
+            console.log(`generic uni: [${typeToStr(t0)}] ~ [${typeToStr(t1)}]`)
+            // TODO(@darzu): note: if you're calling a generic method,
             return
+        }
 
         if (t0.primType === "any") {
             t0.unifyWith = t1
@@ -644,6 +657,8 @@ namespace pxt.py {
     function narrow(e: Expr, constrainingType: Type): void {
         const t0 = canonicalize(typeOf(e))
         const t1 = canonicalize(constrainingType)
+
+        console.log(`constrain ${typeToStr(t0)} to ${typeToStr(t1)}`)
 
         if (isAssignable(t0, t1)) {
             return;
@@ -2099,6 +2114,8 @@ namespace pxt.py {
                 }
             }
 
+            console.log(`fun: ${fun?.name}`) // TODO(@darzu): 
+
             if (!fun) {
                 let over = U.lookup(py2TsFunMap, nm!)
                 if (over)
@@ -2120,6 +2137,7 @@ namespace pxt.py {
                         recv = orderedArgs.shift()!
                         recvTp = typeOf(recv)
                         methName = over.n.slice(1)
+                        console.log(`over & methName: ${methName}`)
                         fun = getTypeField(recv, methName)
                         if (fun && fun.kind == SK.Property)
                             return B.mkInfix(expr(recv), ".", B.mkText(methName))
@@ -2216,9 +2234,13 @@ namespace pxt.py {
                 }
             }
 
+            console.log(`fun2: ${fun?.name}`) // TODO(@darzu): 
+
             if (fun) {
                 if (!fun.pyRetType)
                     error(n, 9549, lf("function missing pyRetType"));
+                // TODO(@darzu): if the return type is generic, we need to create an instance type and make sure that unifies
+                console.log(`unify ${typeOf(n).tid} ~ ${fun.pyRetType?.tid}`) // TODO(@darzu): 
                 unifyTypeOf(n, fun.pyRetType!)
                 n.symbolInfo = fun
 
@@ -2293,9 +2315,12 @@ namespace pxt.py {
         Ellipsis: (n: py.Ellipsis) => exprTODO(n),
         Constant: (n: py.Constant) => exprTODO(n),
         Attribute: (n: py.Attribute) => {
+
+            console.log("Attribute  ") // TODO(@darzu): 
             // e.g. in "foo.bar", n.value is ["foo" expression] and n.attr is "bar"
             let lhs = expr(n.value) // run it first, in case it wants to capture infoNode
             let lhsType = typeOf(n.value)
+            console.dir({ lhs, lhsType }) // TODO(@darzu): 
             let fieldSymbol = getTypeField(n.value, n.attr)
             let fieldName = n.attr
             markInfoNode(n, "memberCompletion")
@@ -2679,6 +2704,8 @@ namespace pxt.py {
 
         const parseDiags = diagnostics
 
+        console.log("starting py2ts ") // TODO(@darzu): 
+
         for (let i = 0; i < 5; ++i) {
             resetPass(i)
             for (let m of modules) {
@@ -2735,6 +2762,28 @@ namespace pxt.py {
         }
 
         diagnostics = parseDiags.concat(diagnostics)
+
+        // TODO(@darzu): 
+        console.log("all types:")
+        // const buckets: Type[][] = []
+        // for (let t of allTypes) {
+        //     let wasAdded = false
+        //     for (let b of buckets) {
+        //         for (let t2 of b) {
+        //             if (t.unifyWith === t2 || t2.unifyWith === t) {
+        //                 b.push(t)
+        //                 wasAdded = true;
+        //                 break;
+        //             }
+        //         }
+        //     }
+        //     if (!wasAdded)
+        //         buckets.push([t])
+        // }
+        // buckets.forEach(b => console.log(`[${b.map(t => t.tid).join(',')}]`))
+        for (let t of allTypes)
+            console.log(typeToStr(t))
+
 
         const isGlobalSymbol = (si: SymbolInfo) => {
             switch (si.kind) {
@@ -2834,6 +2883,15 @@ namespace pxt.py {
             }
             return diagnostics
         }
+    }
+
+    function typeToStr(t: Type) {
+        let str = `${t.tid}`
+        if (t.primType)
+            str += t.primType
+        if (t.unifyWith)
+            str += ` -> ${typeToStr(t.unifyWith)}`
+        return str
     }
 
     /**
