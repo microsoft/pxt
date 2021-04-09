@@ -12,3 +12,8 @@
     border-radius: .21428571rem;
     background: #fff;
 }
+
+.ui.toggle.checkbox .box:before,
+.ui.toggle.checkbox label:before {
+    border: 1px solid #949494;
+}
