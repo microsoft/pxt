@@ -77,7 +77,7 @@ namespace ts.pxtc.service {
     }
 
     export function tsKeywordToPyKeyword(keyword: string): string | undefined {
-        const map: { [tsType: string]: string } = {
+        const map: pxt.Map<string> = {
             "true": "True",
             "false": "False",
             "null": "None"
