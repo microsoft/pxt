@@ -1488,6 +1488,10 @@ export class ProjectView
                     }
                 }
 
+                // keep header name in sync with any changes in pxt.json
+                // for example when cloud sync changes update pxt.json
+                const name = pkg.mainPkg.config.name
+                h.name = name || lf("Untitled");
 
                 // no history entry, and there is a virtual file for the current file in the language recorded in the header
                 if ((!e && h.editor && file.getVirtualFileName(h.editor)))
