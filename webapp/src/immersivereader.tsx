@@ -182,8 +182,7 @@ function getTokenAsync(): Promise<ImmersiveReaderToken> {
                 },
                 e => {
                     pxt.storage.removeLocal(IMMERSIVE_READER_ID);
-                    console.log("immersive reader fetch token error: " + JSON.stringify(e));
-                    pxt.tickEvent("immersiveReader.error", { error: JSON.stringify(e) });
+                    pxt.tickEvent("immersiveReader.error", e);
                     return Promise.reject(new Error("token"));
                 }
             );
@@ -221,10 +220,10 @@ export function launchImmersiveReader(content: string, tutorialOptions: pxt.tuto
             }
             default: {
                 core.warningNotification(lf("Immersive Reader could not be launched"));
-                pxt.tickEvent("immersiveReader.error", {error: JSON.stringify(e)});
+                pxt.tickEvent("immersiveReader.error", e);
             }
         }
-        console.log("Immersive Reader Error: " + e);
+        pxt.reportException(e);
         ImmersiveReader.close();
     });
 }
