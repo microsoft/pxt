@@ -1096,6 +1096,14 @@ namespace pxt.py {
                 return emitExp(s.arguments[0])
             }
 
+            // special case .toString
+            if (ts.isPropertyAccessExpression(s.expression)) {
+                if (s.expression.name.getText() === "toString") {
+                    const [inner, innerSup] = emitExp(s.expression.expression)
+                    return [expWrap(`str(`, inner, `)`), innerSup]
+                }
+            }
+
             // TODO inspect type info to rewrite things like console.log, Math.max, etc.
             let [fnExp, fnSup] = emitExp(s.expression)
             let fn = expToStr(fnExp);
@@ -1107,6 +1115,7 @@ namespace pxt.py {
                 .map(([_, aSup]) => aSup)
                 .reduce((p, c) => p.concat(c), fnSup)
 
+            // special handling for python<->ts helpers
             if (fn.indexOf("_py.py_") === 0) {
                 if (argExps.length <= 0)
                     return throwError(s, 3014, "Unsupported: call expression has no arguments for _py.py_ fn");
