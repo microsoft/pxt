@@ -961,8 +961,8 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                 break;
         }
         return this.isLink(type) && type != "forumExample" // TODO (shakao)  migrate forumurl to otherAction json in md
-            ? <sui.Link role="button" className="link button attached" icon={icon} href={this.getUrl()} target="_blank" tabIndex={-1} />
-            : <sui.Item role="button" className="button attached" icon={icon} onClick={onClick} tabIndex={-1} />
+            ? <sui.Link role="presentation" className="link button attached" icon={icon} href={this.getUrl()} target="_blank" tabIndex={-1} />
+            : <sui.Item role="presentation" className="button attached" icon={icon} onClick={onClick} tabIndex={-1} />
     }
 
     protected getActionTitle(editor: pxt.CodeCardEditorType): string {
@@ -981,17 +981,20 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
     protected getActionCard(text: string, type: pxt.CodeCardType, onClick: any, autoFocus?: boolean, action?: pxt.CodeCardAction, key?: string): JSX.Element {
         const editor = this.getActionEditor(type, action);
         const title = this.getActionTitle(editor);
+        const asLink = this.isLink() && type != "forumExample";
+        const label = asLink ? lf("Open link in new window") : lf("Open in {0}", title || lf("Editor"));
+
         return <div className={`card-action ui items ${editor || ""}`} key={key}>
             {this.getActionIcon(onClick, type, editor)}
             {title && <div className="card-action-title">{title}</div>}
-            {this.isLink() && type != "forumExample" ? // TODO (shakao)  migrate forumurl to otherAction json in md
+            {asLink ? // TODO (shakao)  migrate forumurl to otherAction json in md
                 <sui.Link
                     href={this.getUrl()}
                     refCallback={autoFocus ? this.linkRef : undefined}
                     target={'_blank'}
                     text={text}
                     className={`button attached approve large`}
-                    title={lf("Open link in new window")}
+                    title={label} ariaLabel={label}
                     autoFocus={autoFocus}
                 />
                 : <sui.Button
@@ -1000,7 +1003,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                     onClick={onClick}
                     onKeyDown={sui.fireClickOnEnter}
                     autoFocus={autoFocus}
-                    title={lf("Open in {0}", title || lf("Editor"))}
+                    title={label} ariaLabel={label}
                 />}
         </div>
     }
