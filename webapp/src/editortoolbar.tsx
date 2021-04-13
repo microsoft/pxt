@@ -236,7 +236,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
 
     renderCore() {
         const { tutorialOptions, projectName, compiling, isSaving, simState, debugging, editorState } = this.props.parent.state;
-        const header = this.getData(`header:${this.props.parent.state.header.id}`);
+        const header = this.getData(`header:${this.props.parent.state.header.id}`) ?? this.props.parent.state.header;
 
         const targetTheme = pxt.appTarget.appTheme;
         const isController = pxt.shell.isControllerMode();
