@@ -386,6 +386,8 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
             return n;
         }
 
+        const searchPlaceholder = lf("Search or enter project URL...");
+
         return (
             <sui.Modal isOpen={visible} dimmer={true}
                 className={classes} size="fullscreen"
@@ -405,13 +407,14 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                         <SearchInput key="search"
                             defaultValue={defaultSearch}
                             ariaMessage={lf("{0} result matching '{1}'", bundles.length + ghdata.data.length + urldata.data.length, searchFor)}
-                            placeholder={lf("Search or enter project URL...")}
+                            placeholder={searchPlaceholder}
+                            aria-label={searchPlaceholder}
                             searchHandler={this.handleSearch} inputClassName="fluid" autoFocus={true}
                             disabled={isSearching} /> : undefined}
                     {isSearching ?
                         <div className="ui medium active centered inline loader"></div>
                         :
-                        <div className="ui cards centered" role="listbox">
+                        <div className="ui cards centered" aria-label={lf("Extension search results")}>
                             {urldata.data.map(scr =>
                                 <ScriptSearchCodeCard
                                     key={'url' + scr.id}
@@ -420,7 +423,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                     url={"/" + scr.id}
                                     scr={scr}
                                     onCardClick={this.addUrl}
-                                    role="link"
+                                    role="button"
                                 />
                             )}
                             {local.map(scr =>
@@ -435,7 +438,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                     label={lf("Local")}
                                     title={lf("Local GitHub extension")}
                                     labelClass="blue right ribbon"
-                                    role="link"
+                                    role="button"
                                 />
                             )}
                             {bundles.map(scr =>
@@ -447,7 +450,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                     scr={scr}
                                     onCardClick={this.addBundle}
                                     label={pxt.isPkgBeta(scr) ? lf("Beta") : undefined}
-                                    role="link"
+                                    role="button"
                                 />
                             )}
                             {ghdata.data.filter(repo => repo.status == pxt.github.GitRepoStatus.Approved).map(scr =>
@@ -460,7 +463,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                     url={'github:' + scr.fullName}
                                     imageUrl={pxt.github.repoIconUrl(scr)}
                                     label={pxt.isPkgBeta(scr) ? lf("Beta") : undefined}
-                                    role="link"
+                                    role="button"
                                     learnMoreUrl={`/pkg/${scr.fullName}`}
                                 />
                             )}
@@ -475,7 +478,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                     imageUrl={pxt.github.repoIconUrl(scr)}
                                     label={pxt.isPkgBeta(scr) ? lf("Beta") : undefined}
                                     url={'github:' + scr.fullName}
-                                    role="link"
+                                    role="button"
                                     learnMoreUrl={`/pkg/${scr.fullName}`}
                                 />
                             )}
@@ -486,7 +489,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                     imageUrl={`/static/experiments/${experiment.id.toLowerCase()}.png`}
                                     description={experiment.description}
                                     key={'exp' + experiment.id}
-                                    role="link"
+                                    role="button"
                                     label={pxt.editor.experiments.isEnabled(experiment) ? lf("Enabled") : lf("Disabled")}
                                     labelClass={pxt.editor.experiments.isEnabled(experiment) ? "green right ribbon" : "grey right ribbon"}
                                     onCardClick={this.toggleExperiment}

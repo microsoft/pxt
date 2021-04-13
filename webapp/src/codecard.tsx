@@ -107,16 +107,19 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
                     </label> : undefined}
                 {card.typeScript ? <pre key="promots">{card.typeScript}</pre> : undefined}
                 {card.cardType != "file" && imageUrl ? <div className="ui imagewrapper" aria-hidden={true} role="presentation">
-                    <div className={`ui cardimage`} data-src={imageUrl} ref="lazyimage" />
+                    <div className={`ui cardimage`} data-src={imageUrl} ref="lazyimage" aria-hidden={true} role="presentation" />
                 </div> : undefined}
                 {card.cardType == "file" && !imageUrl ? <div className="ui fileimage" /> : undefined}
                 {card.cardType == "file" && imageUrl ? <div className="ui fileimage" data-src={imageUrl} ref="lazyimage" /> : undefined}
             </div> : undefined}
             {card.icon || card.iconContent ?
-                <div className="ui imagewrapper" aria-hidden={true} role="presentation"><div className={`ui button massive fluid ${card.iconColor} ${card.iconContent ? "iconcontent" : ""}`}>
-                    {card.icon ? <sui.Icon icon={`${'icon ' + card.icon}`} /> : undefined}
-                    {card.iconContent || undefined}
-                </div></div> : undefined}
+                <div className="ui imagewrapper" aria-hidden={true} role="presentation">
+                    <div className={`ui button massive fluid ${card.iconColor} ${card.iconContent ? "iconcontent" : ""}`}
+                        aria-hidden={true} role="presentation" >
+                        {card.icon ? <sui.Icon icon={`${'icon ' + card.icon}`} /> : undefined}
+                        {card.iconContent || undefined}
+                    </div>
+                </div> : undefined}
             {(card.shortName || name || descriptions) ?
                 <div className="content">
                     {card.shortName || name ? <div className="header">{card.shortName || name}</div> : null}

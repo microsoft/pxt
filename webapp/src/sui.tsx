@@ -407,7 +407,8 @@ export class ExpandableMenu extends UIElement<ExpandableMenuProps, ExpandableMen
                 icon={`no-select chevron ${expanded ? "down" : "right"}`}
                 text={title}
                 ariaExpanded={expanded}
-                onClick={this.toggleExpanded} />
+                onClick={this.toggleExpanded}
+                role="button" />
             {expanded && <div className="expanded-items">
                 {children}
             </div> }
@@ -418,6 +419,7 @@ export class ExpandableMenu extends UIElement<ExpandableMenuProps, ExpandableMen
 export interface SelectProps {
     options: SelectItem[];
     onChange?: (value: string) => void;
+    "aria-label"?: string;
     label?: string;
 }
 
@@ -451,12 +453,12 @@ export class Select extends UIElement<SelectProps, SelectState> {
     }
 
     render() {
-        const { options, label } = this.props;
+        const { options, label, "aria-label": ariaLabel } = this.props;
         const { selected } = this.state;
 
         return (<div>
             { label && `${label} ` }
-            <select value={selected} className="ui dropdown" onChange={this.handleOnChange}>
+            <select value={selected} className="ui dropdown" onChange={this.handleOnChange} aria-label={ariaLabel} >
                 {options.map(opt =>
                     opt && <option
                         aria-selected={selected === opt.value}
@@ -629,7 +631,7 @@ export class Link extends StatelessUIElement<LinkProps> {
 }
 
 export function helpIconLink(url: string, title: string) {
-    return <Link className="help-link" href={url} icon="help circle" target="_blank" role="button" title={title} />
+    return <Link className="help-link" href={url} icon="help circle" target="_blank" role="link" title={title} />
 }
 
 ///////////////////////////////////////////////////////////
@@ -1291,7 +1293,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
             aria={aria} {...rest}>
             {header || showBack || helpUrl ? <div id={this.id + 'title'} className={"header " + (headerClass || "")}>
                 {headerIcon && <Icon icon={headerIcon} />}
-                <span className="header-title" style={{ margin: `0 ${helpUrl ? '-20rem' : '0'} 0 ${showBack ? '-20rem' : '0'}` }}>{header}</span>
+                <h3 className="header-title" style={{ margin: `0 ${helpUrl ? '-20rem' : '0'} 0 ${showBack ? '-20rem' : '0'}` }}>{header}</h3>
                 {showBack ? <div className="header-close">
                     <Button className="back-button large" title={lf("Go back")} onClick={onClose} tabIndex={0} onKeyDown={fireClickOnEnter}>
                         <Icon icon="arrow left" />
@@ -1300,7 +1302,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
                 </div> : undefined}
                 {helpUrl ?
                     <div className="header-help">
-                        <a className={`ui icon help-button`} href={helpUrl} target="_docs" role="button" aria-label={lf("Help on {0} dialog", header)} title={lf("Help on {0} dialog", header)}>
+                        <a className={`ui icon help-button`} href={helpUrl} target="_docs" role="link" aria-label={lf("Help on {0} dialog", header)} title={lf("Help on {0} dialog", header)}>
                             <Icon icon="help" />
                         </a>
                     </div>
