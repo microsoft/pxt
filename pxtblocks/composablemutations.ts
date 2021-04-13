@@ -244,7 +244,7 @@ namespace pxt.blocks {
             const showPlus = visibleOptions !== totalOptions;
             const showMinus = visibleOptions !== 0;
             const hasMinus = !!b.getInput(buttonRemName);
-            let hasPlus = !!b.getInput(buttonAddName);
+            const hasPlus = !!b.getInput(buttonAddName);
 
             if (!showPlus) {
                 b.removeInput(buttonAddName, true);
@@ -255,15 +255,17 @@ namespace pxt.blocks {
             }
 
             if (showMinus && !hasMinus) {
-                if (hasPlus) {
-                    b.removeInput(buttonAddName, true);
-                    hasPlus = false;
-                }
                 addMinusButton();
             }
 
-            if (showPlus && !hasPlus) {
-                addPlusButton();
+            if (showPlus) {
+                // make sure plus button is last in line.
+                if (hasPlus && b.inputList.findIndex(el => el.name === buttonAddName) !== b.inputList.length - 1) {
+                    b.removeInput(buttonAddName, true);
+                    addPlusButton();
+                } else if (!hasPlus) {
+                    addPlusButton();
+                }
             }
         }
 
