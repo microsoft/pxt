@@ -64,7 +64,7 @@ namespace pxt.py {
         const file = prog.getSourceFile(filename)
         const commentMap = pxtc.decompiler.buildCommentMap(file);
         const reservedWords = pxt.U.toSet(getReservedNmes(), s => s)
-        const [renameMap, globalNames] = ts.pxtc.decompiler.buildRenameMap(prog, file, reservedWords)
+        const [renameMap, globalNames] = ts.pxtc.decompiler.buildRenameMap(prog, file, { takenNames: reservedWords, declarations: "all" })
         const allSymbols = pxtc.getApiInfo(prog)
         const symbols = pxt.U.mapMap(allSymbols.byQName,
             // filter out symbols from the .ts corresponding to this file
@@ -108,7 +108,9 @@ namespace pxt.py {
                 'max', 'memoryview', 'min', 'next', 'object', 'oct', 'open', 'ord', 'pow',
                 'print', 'property', 'quit', 'range', 'repr', 'reversed', 'round', 'set',
                 'setattr', 'slice', 'sorted', 'staticmethod', 'str', 'sum', 'super', 'tuple',
-                'type', 'vars', 'zip']
+                'type', 'vars', 'zip',
+                ...Object.keys(pxt.py.keywords)
+            ]
             return reservedNames;
         }
         function tryGetSymbol(exp: ts.Node) {
@@ -161,7 +163,7 @@ namespace pxt.py {
             }
             let outName = name.text;
             let hasSrc = name.getSourceFile()
-            if (renameMap && hasSrc) {
+            if (hasSrc) {
                 const rename = renameMap.getRenameForPosition(name.getStart());
                 if (rename) {
                     outName = rename.name;
