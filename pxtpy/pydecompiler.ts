@@ -638,27 +638,62 @@ namespace pxt.py {
             return true
         }
         function emitClassMem(s: ts.ClassElement): string[] {
-            switch (s.kind) {
-                case ts.SyntaxKind.PropertyDeclaration:
-                    return emitPropDecl(s as ts.PropertyDeclaration)
-                case ts.SyntaxKind.MethodDeclaration:
-                    return emitFuncDecl(s as ts.MethodDeclaration)
-                case ts.SyntaxKind.Constructor:
-                    return emitFuncDecl(s as ts.ConstructorDeclaration)
-                default:
-                    return ["# unknown ClassElement " + s.kind]
+            if (ts.isPropertyDeclaration(s))
+                return emitPropDecl(s)
+            else if (ts.isMethodDeclaration(s))
+                return emitFuncDecl(s)
+            else if (ts.isConstructorDeclaration(s)) {
+                return emitConstructor(s)
             }
+            return ["# unknown ClassElement " + s.kind]
         }
-        function emitPropDecl(s: ts.PropertyDeclaration): string[] {
+        function emitConstructor(s: ts.ConstructorDeclaration): string[] {
+            let res: string[] = []
+            const memberProps = s.parameters
+                // parameters with "public" prefix are class members
+                .filter(ts.isParameterPropertyDeclaration)
+            memberProps.forEach(p => {
+                // emit each parameter property as a member decl
+                res = [...res, ...emitPropDecl(p)]
+            })
+            // emit the constructor body
+            res = [...res, ...emitFuncDecl(s, "__init__")]
+            if (memberProps.length && res.slice(-1)[0].endsWith("pass"))
+                res.pop() // slight hack b/c we're appending body statements
+            memberProps.forEach(p => {
+                // emit each parameter property's initial assignment
+                const nm = getName(p.name)
+                res.push(indent1(`self.${nm} = ${nm}`))
+            })
+
+            return res
+        }
+        function emitDefaultValue(t: ts.Type): string | undefined {
+            // TODO: reconcile with snippet.ts:getDefaultValueOfType. Unfortunately, doing so is complicated.
+            if (hasTypeFlag(t, ts.TypeFlags.NumberLike))
+                return "0"
+            else if (hasTypeFlag(t, ts.TypeFlags.StringLike))
+                return `""`
+            else if (hasTypeFlag(t, ts.TypeFlags.BooleanLike))
+                return "False"
+            // TODO: support more types
+            return undefined
+        }
+        function emitPropDecl(s: ts.PropertyDeclaration | ts.ParameterDeclaration): string[] {
             let nm = getName(s.name)
             if (s.initializer) {
                 let [init, initSup] = emitExp(s.initializer)
-                return initSup.concat([`${nm} = ${expToStr(init)}`])
+                return [...initSup, `${nm} = ${expToStr(init)}`]
+            } else if (ts.isParameterPropertyDeclaration(s) && s.type) {
+                const t = tc.getTypeFromTypeNode(s.type)
+                const defl = emitDefaultValue(t)
+                if (defl) {
+                    return [`${nm} = ${defl}`]
+                }
             }
-            else {
-                // can't do declerations without initilization in python
-                return []
-            }
+
+            // can't do declerations without initilization in python
+            return throwError(s, 3006, "Unsupported: class properties without initializers");
         }
         function isUnaryPlusPlusOrMinusMinus(e: ts.Expression): e is ts.PrefixUnaryExpression | ts.PostfixUnaryExpression {
             if (!ts.isPrefixUnaryExpression(e) &&
@@ -723,17 +758,12 @@ namespace pxt.py {
             let out = []
 
             let fnName: string
-            if (s.kind === ts.SyntaxKind.Constructor) {
-                fnName = "__init__"
-            }
-            else {
-                if (name)
-                    fnName = name
-                else if (s.name)
-                    fnName = getName(s.name)
-                else
-                    return throwError(s, 3012, "Unsupported: anonymous function decleration");
-            }
+            if (name)
+                fnName = name
+            else if (s.name)
+                fnName = getName(s.name)
+            else
+                return throwError(s, 3012, "Unsupported: anonymous function decleration");
 
             out.push(`def ${fnName}(${params}):`)
 

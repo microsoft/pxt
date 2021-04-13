@@ -9,9 +9,8 @@ class Button {
     }
 }
 class Controller {
-    anyButton: Button
+    anyButton = new Button()
     constructor() {
-        this.anyButton = new Button()
     }
 }
 
