@@ -14,8 +14,8 @@ declare namespace _py {
         //% py2tsOverride="removeElement($0)"
         remove(value: any): void;
 
-        //% py2tsOverride="sort()"
-        sort(): void;
+        //% py2tsOverride="sort($0?)"
+        sort(sorter?: (a: any, b: any) => number): void;
 
         //% py2tsOverride="reverse()"
         reverse(): void;
