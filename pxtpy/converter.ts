@@ -57,12 +57,12 @@ namespace pxt.py {
     }
 
     function stmtTODO(v: py.Stmt) {
-        pxt.tickEvent("python.todo", { kind: v.kind })
+        pxt.tickEvent("python.todo.statement", { kind: v.kind })
         return B.mkStmt(B.mkText("TODO: " + v.kind))
     }
 
     function exprTODO(v: py.Expr) {
-        pxt.tickEvent("python.todo", { kind: v.kind })
+        pxt.tickEvent("python.todo.expression", { kind: v.kind })
         return B.mkText(" {TODO: " + v.kind + "} ")
     }
 

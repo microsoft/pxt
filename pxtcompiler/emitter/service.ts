@@ -112,7 +112,7 @@ namespace ts.pxtc {
             case ts.SyntaxKind.AnyKeyword:
                 return "any"
             default:
-                pxt.tickEvent("depython.todo", { kind: s.kind })
+                pxt.tickEvent("depython.todo.tstypenodetopytype", { kind: s.kind })
                 return ``
         }
         // // TODO translate type
@@ -134,7 +134,7 @@ namespace ts.pxtc {
             case ts.TypeFlags.Any:
                 return "any"
             default:
-                pxt.tickEvent("depython.todo", { kind: s.flags })
+                pxt.tickEvent("depython.todo.tstypetopytype", { kind: s.flags })
                 return ``
         }
     }
