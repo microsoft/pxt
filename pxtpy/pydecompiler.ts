@@ -59,7 +59,7 @@ namespace pxt.py {
         const file = prog.getSourceFile(filename)
         const commentMap = pxtc.decompiler.buildCommentMap(file);
         const reservedWords = pxt.U.toSet(getReservedNmes(), s => s)
-        const [renameMap, globalNames] = ts.pxtc.decompiler.buildRenameMap(prog, file, reservedWords)
+        const [renameMap, globalNames] = ts.pxtc.decompiler.buildRenameMap(prog, file, { takenNames: reservedWords, declarations: "all" })
         const allSymbols = pxtc.getApiInfo(prog)
         const symbols = pxt.U.mapMap(allSymbols.byQName,
             // filter out symbols from the .ts corresponding to this file
