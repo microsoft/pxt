@@ -174,7 +174,6 @@ namespace pxt.blocks {
         setTimeout(() => {
             if ((b as Blockly.BlockSvg).rendered && !(b.workspace as Blockly.WorkspaceSvg).isDragging()) {
                 updateShape(0, undefined, true);
-                updateButtons();
             }
         }, 1);
 
@@ -243,16 +242,27 @@ namespace pxt.blocks {
         function updateButtons() {
             const visibleOptions = state.getNumber(numVisibleAttr);
             const showPlus = visibleOptions !== totalOptions;
-            const showRemove = visibleOptions !== 0;
+            const showMinus = visibleOptions !== 0;
+            const hasMinus = !!b.getInput(buttonRemName);
+            let hasPlus = !!b.getInput(buttonAddName);
 
-            b.removeInput(buttonRemName, true);
-            b.removeInput(buttonAddName, true);
+            if (!showPlus) {
+                b.removeInput(buttonAddName, true);
+            }
 
-            if (showRemove) {
+            if (!showMinus) {
+                b.removeInput(buttonRemName, true);
+            }
+
+            if (showMinus && !hasMinus) {
+                if (hasPlus) {
+                    b.removeInput(buttonAddName, true);
+                    hasPlus = false;
+                }
                 addMinusButton();
             }
 
-            if (showPlus) {
+            if (showPlus && !hasPlus) {
                 addPlusButton();
             }
         }
