@@ -504,7 +504,7 @@ namespace pxt.py {
         }
     }
 
-    // next free error 9572; 9550-9599 reserved for parser
+    // next free error 9575
     function error(astNode: py.AST | null | undefined, code: number, msg: string) {
         diagnostics.push(mkDiag(astNode, pxtc.DiagnosticCategory.Error, code, msg))
         //const pos = position(astNode ? astNode.startPos || 0 : 0, mod.source)
@@ -2000,7 +2000,10 @@ namespace pxt.py {
             U.assert(!!op)
             return B.mkInfix(null!, op, expr(n.operand))
         },
-        Lambda: (n: py.Lambda) => exprTODO(n),
+        Lambda: (n: py.Lambda) => {
+            error(n, 9574, U.lf("lambda expressions are not supported yet"))
+            return exprTODO(n)
+        },
         IfExp: (n: py.IfExp) =>
             B.mkInfix(B.mkInfix(expr(n.test), "?", expr(n.body)), ":", expr(n.orelse)),
         Dict: (n: py.Dict) => {

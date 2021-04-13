@@ -70,7 +70,8 @@
 }
 
 .ui.inverted.menu .active.item {
-    background: rgba(255, 255, 255, 0.30);
+    background: rgba(255, 255, 255, 0.15);
+    outline: 1px solid rgba(255, 255, 255, 0.5);
 }
 
 .ui.vertical.menu .item > .label {

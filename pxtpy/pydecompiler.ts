@@ -41,6 +41,11 @@ namespace pxt.py {
     }
 
     ///
+    /// FLAGS
+    ///
+    const SUPPORT_LAMBDAS = false;
+
+    ///
     /// UTILS
     ///
     export const INDENT = "    "
@@ -59,7 +64,7 @@ namespace pxt.py {
         const file = prog.getSourceFile(filename)
         const commentMap = pxtc.decompiler.buildCommentMap(file);
         const reservedWords = pxt.U.toSet(getReservedNmes(), s => s)
-        const [renameMap, globalNames] = ts.pxtc.decompiler.buildRenameMap(prog, file, reservedWords)
+        const [renameMap, globalNames] = ts.pxtc.decompiler.buildRenameMap(prog, file, { takenNames: reservedWords, declarations: "all" })
         const allSymbols = pxtc.getApiInfo(prog)
         const symbols = pxt.U.mapMap(allSymbols.byQName,
             // filter out symbols from the .ts corresponding to this file
@@ -103,7 +108,9 @@ namespace pxt.py {
                 'max', 'memoryview', 'min', 'next', 'object', 'oct', 'open', 'ord', 'pow',
                 'print', 'property', 'quit', 'range', 'repr', 'reversed', 'round', 'set',
                 'setattr', 'slice', 'sorted', 'staticmethod', 'str', 'sum', 'super', 'tuple',
-                'type', 'vars', 'zip']
+                'type', 'vars', 'zip',
+                ...Object.keys(pxt.py.keywords)
+            ]
             return reservedNames;
         }
         function tryGetSymbol(exp: ts.Node) {
@@ -156,7 +163,7 @@ namespace pxt.py {
             }
             let outName = name.text;
             let hasSrc = name.getSourceFile()
-            if (renameMap && hasSrc) {
+            if (hasSrc) {
                 const rename = renameMap.getRenameForPosition(name.getStart());
                 if (rename) {
                     outName = rename.name;
@@ -633,27 +640,62 @@ namespace pxt.py {
             return true
         }
         function emitClassMem(s: ts.ClassElement): string[] {
-            switch (s.kind) {
-                case ts.SyntaxKind.PropertyDeclaration:
-                    return emitPropDecl(s as ts.PropertyDeclaration)
-                case ts.SyntaxKind.MethodDeclaration:
-                    return emitFuncDecl(s as ts.MethodDeclaration)
-                case ts.SyntaxKind.Constructor:
-                    return emitFuncDecl(s as ts.ConstructorDeclaration)
-                default:
-                    return ["# unknown ClassElement " + s.kind]
+            if (ts.isPropertyDeclaration(s))
+                return emitPropDecl(s)
+            else if (ts.isMethodDeclaration(s))
+                return emitFuncDecl(s)
+            else if (ts.isConstructorDeclaration(s)) {
+                return emitConstructor(s)
             }
+            return ["# unknown ClassElement " + s.kind]
         }
-        function emitPropDecl(s: ts.PropertyDeclaration): string[] {
+        function emitConstructor(s: ts.ConstructorDeclaration): string[] {
+            let res: string[] = []
+            const memberProps = s.parameters
+                // parameters with "public" prefix are class members
+                .filter(ts.isParameterPropertyDeclaration)
+            memberProps.forEach(p => {
+                // emit each parameter property as a member decl
+                res = [...res, ...emitPropDecl(p)]
+            })
+            // emit the constructor body
+            res = [...res, ...emitFuncDecl(s, "__init__")]
+            if (memberProps.length && res.slice(-1)[0].endsWith("pass"))
+                res.pop() // slight hack b/c we're appending body statements
+            memberProps.forEach(p => {
+                // emit each parameter property's initial assignment
+                const nm = getName(p.name)
+                res.push(indent1(`self.${nm} = ${nm}`))
+            })
+
+            return res
+        }
+        function emitDefaultValue(t: ts.Type): string | undefined {
+            // TODO: reconcile with snippet.ts:getDefaultValueOfType. Unfortunately, doing so is complicated.
+            if (hasTypeFlag(t, ts.TypeFlags.NumberLike))
+                return "0"
+            else if (hasTypeFlag(t, ts.TypeFlags.StringLike))
+                return `""`
+            else if (hasTypeFlag(t, ts.TypeFlags.BooleanLike))
+                return "False"
+            // TODO: support more types
+            return undefined
+        }
+        function emitPropDecl(s: ts.PropertyDeclaration | ts.ParameterDeclaration): string[] {
             let nm = getName(s.name)
             if (s.initializer) {
                 let [init, initSup] = emitExp(s.initializer)
-                return initSup.concat([`${nm} = ${expToStr(init)}`])
+                return [...initSup, `${nm} = ${expToStr(init)}`]
+            } else if (ts.isParameterPropertyDeclaration(s) && s.type) {
+                const t = tc.getTypeFromTypeNode(s.type)
+                const defl = emitDefaultValue(t)
+                if (defl) {
+                    return [`${nm} = ${defl}`]
+                }
             }
-            else {
-                // can't do declerations without initilization in python
-                return []
-            }
+
+            // can't do declerations without initilization in python
+            return throwError(s, 3006, "Unsupported: class properties without initializers");
         }
         function isUnaryPlusPlusOrMinusMinus(e: ts.Expression): e is ts.PrefixUnaryExpression | ts.PostfixUnaryExpression {
             if (!ts.isPrefixUnaryExpression(e) &&
@@ -718,17 +760,12 @@ namespace pxt.py {
             let out = []
 
             let fnName: string
-            if (s.kind === ts.SyntaxKind.Constructor) {
-                fnName = "__init__"
-            }
-            else {
-                if (name)
-                    fnName = name
-                else if (s.name)
-                    fnName = getName(s.name)
-                else
-                    return throwError(s, 3012, "Unsupported: anonymous function decleration");
-            }
+            if (name)
+                fnName = name
+            else if (s.name)
+                fnName = getName(s.name)
+            else
+                return throwError(s, 3012, "Unsupported: anonymous function decleration");
 
             out.push(`def ${fnName}(${params}):`)
 
@@ -1096,6 +1133,14 @@ namespace pxt.py {
                 return emitExp(s.arguments[0])
             }
 
+            // special case .toString
+            if (ts.isPropertyAccessExpression(s.expression)) {
+                if (s.expression.name.getText() === "toString") {
+                    const [inner, innerSup] = emitExp(s.expression.expression)
+                    return [expWrap(`str(`, inner, `)`), innerSup]
+                }
+            }
+
             // TODO inspect type info to rewrite things like console.log, Math.max, etc.
             let [fnExp, fnSup] = emitExp(s.expression)
             let fn = expToStr(fnExp);
@@ -1107,6 +1152,7 @@ namespace pxt.py {
                 .map(([_, aSup]) => aSup)
                 .reduce((p, c) => p.concat(c), fnSup)
 
+            // special handling for python<->ts helpers
             if (fn.indexOf("_py.py_") === 0) {
                 if (argExps.length <= 0)
                     return throwError(s, 3014, "Unsupported: call expression has no arguments for _py.py_ fn");
@@ -1145,7 +1191,7 @@ namespace pxt.py {
         }
         function emitFnExp(s: ts.FunctionExpression | ts.ArrowFunction, nameHint?: string, altParams?: ts.NodeArray<ts.ParameterDeclaration>, skipType?: boolean): ExpRes {
             // if the anonymous function is simple enough, use a lambda
-            if (!ts.isBlock(s.body)) {
+            if (SUPPORT_LAMBDAS && !ts.isBlock(s.body)) {
                 // TODO we're speculatively emitting this expression. This speculation is only safe if emitExp is pure, which it's not quite today (e.g. getNewGlobalName)
                 let [fnBody, fnSup] = emitExp(s.body as ts.Expression)
                 if (fnSup.length === 0) {

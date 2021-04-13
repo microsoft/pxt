@@ -66,6 +66,7 @@ namespace pxsim {
         storedState?: Map<any>;
         autoRun?: boolean;
         ipc?: boolean;
+        dependencies?: Map<string>;
         // single iframe, no message simulators
         single?: boolean;
     }
@@ -617,7 +618,8 @@ namespace pxsim {
                 breakOnStart: opts.breakOnStart,
                 storedState: opts.storedState,
                 ipc: opts.ipc,
-                single: opts.single
+                single: opts.single,
+                dependencies: opts.dependencies
             }
             this.start();
         }
