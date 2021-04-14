@@ -3035,6 +3035,7 @@ export class ProjectView
     }
 
     onHighContrastChanged() {
+        this.clearSerial();
         this.restartSimulator();
     }
 
