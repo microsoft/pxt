@@ -44,6 +44,7 @@ namespace pxt.py {
     /// FLAGS
     ///
     const SUPPORT_LAMBDAS = false;
+    const SUPPORT_CLASSES = false;
 
     ///
     /// UTILS
@@ -159,6 +160,7 @@ namespace pxt.py {
             if (pyName)
                 return pyName
             if (!ts.isIdentifier(name)) {
+                pxt.tickEvent("depython.todo.advancedname")
                 return throwError(name, 3001, "Unsupported advanced name format: " + name.getText());
             }
             let outName = name.text;
@@ -302,6 +304,7 @@ namespace pxt.py {
             } else if (ts.isContinueStatement(s)) {
                 return ['continue']
             } else {
+                pxt.tickEvent("depython.todo.statement", { statement: s.kind })
                 return throwError(s, 3002, `Not supported in MakeCode Python: ${ts.SyntaxKind[s.kind]} (${s.kind})`);
             }
         }
@@ -432,12 +435,14 @@ namespace pxt.py {
         }
         function emitForOfStmt(s: ts.ForOfStatement): string[] {
             if (!ts.isVariableDeclarationList(s.initializer)) {
+                pxt.tickEvent("depython.todo.forof.complexexp")
                 return throwError(s, 3003, "Unsupported expression in for..of initializer: " + s.initializer.getText());
             }
 
             let names = s.initializer.declarations
                 .map(d => getName(d.name))
             if (names.length !== 1) {
+                pxt.tickEvent("depython.todo.forof.multidecl")
                 return throwError(s, 3004, "Unsupported multiple declerations in for..of: " + s.initializer.getText()); // TODO
             }
             let name = names[0]
@@ -570,11 +575,17 @@ namespace pxt.py {
                 .reduce((p, c) => p.concat(c), [])
         }
         function emitClassStmt(s: ts.ClassDeclaration): string[] {
+            if (!SUPPORT_CLASSES) {
+                pxt.tickEvent("depython.todo.classes")
+                return throwError(s, 3016, "Unsupported: classes are not supported in Python right now.");
+            }
+
             let out: string[] = []
 
             // TODO handle inheritence
 
             if (!s.name) {
+                pxt.tickEvent("depython.todo.anonymousclass")
                 return throwError(s, 3011, "Unsupported: anonymous class");
             }
 
@@ -606,6 +617,7 @@ namespace pxt.py {
                 .every(m => !!m.initializer)
 
             if (!allInit && !noInit) {
+                pxt.tickEvent("depython.todo.enummix")
                 return throwError(s, 3005, "Unsupported enum decleration: has mixture of explicit and implicit initialization");
             }
 
@@ -613,6 +625,7 @@ namespace pxt.py {
                 // TODO
                 // let memAndSup = s.members
                 //     .map(m => [m, emitExp(m.initializer)] as [ts.EnumMember, ExpRes])
+                pxt.tickEvent("depython.todo.enuminit")
                 return throwError(s, 3006, "Unsupported: explicit enum initialization");
             }
 
@@ -695,6 +708,7 @@ namespace pxt.py {
             }
 
             // can't do declerations without initilization in python
+            pxt.tickEvent("depython.todo.classwithoutinit")
             return throwError(s, 3006, "Unsupported: class properties without initializers");
         }
         function isUnaryPlusPlusOrMinusMinus(e: ts.Expression): e is ts.PrefixUnaryExpression | ts.PostfixUnaryExpression {
@@ -764,13 +778,17 @@ namespace pxt.py {
                 fnName = name
             else if (s.name)
                 fnName = getName(s.name)
-            else
+            else {
+                pxt.tickEvent("depython.todo.anonymousfunc")
                 return throwError(s, 3012, "Unsupported: anonymous function decleration");
+            }
 
             out.push(`def ${fnName}(${params}):`)
 
-            if (!s.body)
+            if (!s.body) {
+                pxt.tickEvent("depython.todo.funcwithoutbody")
                 return throwError(s, 3013, "Unsupported: function decleration without body");
+            }
 
             let stmts: string[] = []
             if (ts.isBlock(s.body))
@@ -812,7 +830,8 @@ namespace pxt.py {
             if (s.initializer) {
                 let [initExp, initSup] = emitExp(s.initializer)
                 if (initSup.length) {
-                    return throwError(s, 3007, `TODO: complex expression in parameter default value not supported. Expression: ${s.initializer.getText()}`)
+                    pxt.tickEvent("depython.todo.complexinit")
+                    return throwError(s, 3007, `Unsupported: complex expression in parameter default value not supported. Expression: ${s.initializer.getText()}`)
                 }
                 initPart = ` = ${expToStr(initExp)}`
             }
@@ -904,6 +923,7 @@ namespace pxt.py {
                 case ts.SyntaxKind.MinusMinusToken:
                     // TODO handle "--" & "++" generally. Seperate prefix and postfix cases.
                     // This is tricky because it needs to return the value and the mutate after.
+                    pxt.tickEvent("depython.todo.unsupportedop", { op: s })
                     return throwError(node, 3008, "Unsupported ++ and -- in an expression (not a statement or for loop)");
                 case ts.SyntaxKind.AmpersandToken:
                     return "&"
@@ -914,6 +934,7 @@ namespace pxt.py {
                 case ts.SyntaxKind.GreaterThanGreaterThanToken:
                     return ">>"
                 case ts.SyntaxKind.GreaterThanGreaterThanGreaterThanToken:
+                    pxt.tickEvent("depython.todo.unsupportedop", { op: s })
                     return throwError(node, 3009, "Unsupported operator: >>>");
                 case ts.SyntaxKind.AsteriskAsteriskToken:
                     return "**"
@@ -926,7 +947,7 @@ namespace pxt.py {
                 case ts.SyntaxKind.SlashEqualsToken:
                     return "/="
                 default:
-                    pxt.tickEvent("depython.todo", { op: s })
+                    pxt.tickEvent("depython.todo.unsupportedop", { op: s })
                     return throwError(node, 3008, `Unsupported Python operator (code: ${s})`);
             }
         }
@@ -1121,7 +1142,7 @@ namespace pxt.py {
             if (ts.isFunctionTypeNode(calleeTypeNode)) {
                 calleeParameters = calleeTypeNode.parameters
                 if (s.arguments && calleeParameters.length < s.arguments.length) {
-                    pxt.tickEvent("depython.todo", { kind: s.kind })
+                    pxt.tickEvent("depython.todo.argparammismatch", { kind: s.kind })
                     return throwError(s, 3010, "TODO: Unsupported call site where caller the arguments outnumber the callee parameters: " + s.getText());
                 }
             }
@@ -1154,8 +1175,10 @@ namespace pxt.py {
 
             // special handling for python<->ts helpers
             if (fn.indexOf("_py.py_") === 0) {
-                if (argExps.length <= 0)
+                if (argExps.length <= 0) {
+                    pxt.tickEvent("depython.todo._pynoargs")
                     return throwError(s, 3014, "Unsupported: call expression has no arguments for _py.py_ fn");
+                }
                 // The format is _py.py_type_name, so remove the type
                 fn = fn.substr(7).split("_").filter((_, i) => i !== 0).join("_");
                 const recv = argExps.shift()![0];
@@ -1251,8 +1274,10 @@ namespace pxt.py {
             return [expWrap("[", inner, "]"), sup]
         }
         function emitElAccessExp(s: ts.ElementAccessExpression): ExpRes {
-            if (!s.argumentExpression)
+            if (!s.argumentExpression) {
+                pxt.tickEvent("depython.todo.accesswithoutexp")
                 return throwError(s, 3015, "Unsupported: element access expression without an argument expression");
+            }
             let [left, leftSup] = emitExp(s.expression)
             let [arg, argSup] = emitExp(s.argumentExpression)
             let sup = leftSup.concat(argSup)
@@ -1392,8 +1417,9 @@ namespace pxt.py {
                 return emitCondExp(s)
 
             // TODO handle more expressions
-            return asExpRes(s.getText(), ["# unknown expression:  " + s.kind]) // uncomment for easier locating
-            // throw Error("Unknown expression: " + s.kind)
+            pxt.tickEvent("depython.todo.expression", { kind: s.kind })
+            // return asExpRes(s.getText(), ["# unknown expression:  " + s.kind]) // uncomment for easier locating
+            return throwError(s, 3017, "Unsupported expression kind: " + s.kind);
         }
     }
 }
