@@ -149,8 +149,13 @@ namespace pxt {
             return;
         }
 
-        if (isSandboxMode() || (window as any).pxtSkipAnalyticsCookie) {
+        if ((window as any).pxtSkipAnalyticsCookie) {
             initializeAppInsightsInternal(false);
+            return;
+        }
+
+        if (isSandboxMode()) {
+            initializeAppInsightsInternal(true);
             return;
         }
 
