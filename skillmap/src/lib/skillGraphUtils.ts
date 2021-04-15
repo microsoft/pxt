@@ -206,7 +206,9 @@ function isAdjacent(a: GraphNode, b: GraphNode): boolean {
         if (b.parents!.indexOf(p) >= 0) sharedParent = p;
     })
 
-    return !!sharedParent && Math.abs(sharedParent.nextIds.indexOf(a.activityId) - sharedParent.nextIds.indexOf(b.activityId)) == 1;
+    return !!sharedParent
+        && Math.abs(sharedParent.nextIds.indexOf(a.activityId) - sharedParent.nextIds.indexOf(b.activityId)) == 1
+        && a.depth == b.depth;
 }
 
 function bfsArray(root: GraphNode): GraphNode[] {
