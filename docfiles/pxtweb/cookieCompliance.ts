@@ -139,11 +139,6 @@ namespace pxt {
     }
 
     export function initAnalyticsAsync() {
-        if (isNotHosted()) {
-            initializeAppInsightsInternal(false);
-            return;
-        }
-
         if (isNativeApp() || shouldHideCookieBanner()) {
             initializeAppInsightsInternal(true);
             return;
@@ -151,11 +146,6 @@ namespace pxt {
 
         if ((window as any).pxtSkipAnalyticsCookie) {
             initializeAppInsightsInternal(false);
-            return;
-        }
-
-        if (isSandboxMode()) {
-            initializeAppInsightsInternal(true);
             return;
         }
 
@@ -180,8 +170,7 @@ namespace pxt {
         // loadAppInsights is defined in docfiles/tracking.html
         const loadAI = (window as any).loadAppInsights;
         if (loadAI) {
-            isProduction = includeCookie;
-            loadAI(includeCookie, telemetryInitializer);
+            isProduction = loadAI(includeCookie, telemetryInitializer);
             analyticsLoaded = true;
             queues.forEach(a => a.flush());
         }
@@ -253,11 +242,6 @@ namespace pxt {
         } catch (e) {
             return false;
         }
-    }
-    function isNotHosted(): boolean {
-        // If local serve, config will not exist. If served statically, we check the flag in the config
-        const config = (window as any).pxtConfig;
-        return !config || config.isStatic
     }
     /**
      * checks for sandbox
