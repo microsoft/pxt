@@ -97,7 +97,8 @@
     height: calc(100% - 2.5rem);
 }
 
-#serialCharts .seriallabel {
+#serialCharts .seriallabel,
+#serialPlaceholder .seriallabel {
     padding: 5px 10px 5px 10px;
     border: 1px solid black;
     color: #000;
@@ -107,7 +108,8 @@
     font-family: monospace;
 }
 
-#serialCharts .ui.segment {
+#serialCharts .ui.segment,
+#serialPlaceholder {
     padding: 0.4rem;
     height: 12rem;
     background-color: @serialGraphBackground;
@@ -186,4 +188,3 @@ div.smoothie-chart-tooltip {
     font-size: 0.8rem;
     pointer-events: none;
 }
-     
