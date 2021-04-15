@@ -487,7 +487,7 @@ declare namespace pxt {
         ref: string;
     }
 
-    type ServiceWorkerClientMessage = RequestPacketIOLockMessage | ReleasePacketIOLockMessage | DisconnectPacketIOResponse | PacketIOLockSupportedMessage;
+    type ServiceWorkerClientMessage = RequestPacketIOLockMessage | ReleasePacketIOLockMessage | DisconnectPacketIOResponse | PacketIOLockSupportedMessage | PacketIOLockStatusResponse;
 
     interface RequestPacketIOLockMessage {
         type: "serviceworkerclient";
@@ -513,7 +513,14 @@ declare namespace pxt {
         action: "packet-io-supported";
     }
 
-    type ServiceWorkerMessage = DisconnectPacketIOMessage | GrantPacketIOLockMessage | PacketIOLockSupportedResponse;
+    interface PacketIOLockStatusResponse {
+        type: "serviceworkerclient";
+        action: "packet-io-status";
+        lock: string;
+        hasLock: boolean;
+    }
+
+    type ServiceWorkerMessage = DisconnectPacketIOMessage | GrantPacketIOLockMessage | PacketIOLockSupportedResponse | PacketIOLockStatusMessage;
 
     interface DisconnectPacketIOMessage {
         type: "serviceworker";
@@ -532,6 +539,11 @@ declare namespace pxt {
         type: "serviceworker";
         action: "packet-io-supported";
         supported: boolean;
+    }
+
+    interface PacketIOLockStatusMessage {
+        type: "serviceworker";
+        action: "packet-io-status";
     }
 }
 

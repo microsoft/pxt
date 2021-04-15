@@ -555,6 +555,14 @@ export async function handleServiceWorkerMessageAsync(message: pxt.ServiceWorker
         serviceWorkerSupported = true;
         serviceWorkerSupportedResolver = undefined;
     }
+    else if (message.action === "packet-io-status") {
+        sendServiceWorkerMessage({
+            type: "serviceworkerclient",
+            action: "packet-io-status",
+            hasLock: hasLock,
+            lock: lockRef
+        });
+    }
 }
 
 async function checkIfServiceWorkerSupportedAsync() {

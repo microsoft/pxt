@@ -239,11 +239,15 @@ function initWebUSB() {
     let waitingLock: string;
     let state: "waiting" | "granting" | "idle" = "idle";
     let pendingDisconnectResolver: (resp: DisconnectResponse) => void;
+    let statusResolver: (lock: string) => void;
 
     self.addEventListener("message", async (ev: MessageEvent) => {
         const message: pxt.ServiceWorkerClientMessage = ev.data;
         if (message?.type === "serviceworkerclient") {
             if (message.action === "request-packet-io-lock") {
+
+                if (!lockGranted) lockGranted = await checkForExistingLockAsync();
+
                 // Deny the lock if we are in the process of granting it to someone else
                 if (state === "granting") {
                     await sendToAllClientsAsync({
@@ -326,6 +330,9 @@ function initWebUSB() {
                     supported: true
                 });
             }
+            else if (message.action === "packet-io-status" && message.hasLock && statusResolver) {
+                statusResolver(message.lock);
+            }
         }
     });
 
@@ -362,6 +369,35 @@ function initWebUSB() {
                 return resp;
             });
     }
+
+    function checkForExistingLockAsync() {
+        if (lockGranted) return Promise.resolve(lockGranted);
+        let ref: any;
+
+        const promise = new Promise<string>(resolve => {
+            console.log("check for existing lock");
+            statusResolver = resolve;
+            sendToAllClientsAsync({
+                type: "serviceworker",
+                action: "packet-io-status"
+            });
+        })
+
+        const timeoutPromise = new Promise<string>(resolve => {
+            ref = setTimeout(() => {
+                console.log("Timed-out disconnect request " + lockGranted);
+                resolve(undefined);
+            }, 1000)
+        });
+
+        return Promise.race([ promise, timeoutPromise ])
+            .then(resp => {
+                clearTimeout(ref);
+                statusResolver = undefined
+                return resp;
+            });
+    }
+
 
     function delay(millis: number): Promise<void> {
         return new Promise(resolve => {
