@@ -124,7 +124,9 @@ class AppImpl extends React.Component<AppProps, AppState> {
         const targetId = pxt.appTarget.id;
         const pxtBranch = pxt.appTarget.versions.pxtCrowdinBranch;
         const targetBranch = pxt.appTarget.versions.targetCrowdinBranch;
-        pxt.Util.enableLiveLocalizationUpdates();
+        if (!pxt.BrowserUtils.isLocalHostDev()) {
+            pxt.Util.enableLiveLocalizationUpdates();
+        }
 
         await updateLocalizationAsync({
             targetId: targetId,
