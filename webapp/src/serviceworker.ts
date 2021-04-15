@@ -385,7 +385,7 @@ function initWebUSB() {
 
         const timeoutPromise = new Promise<string>(resolve => {
             ref = setTimeout(() => {
-                console.log("Timed-out disconnect request " + lockGranted);
+                console.log("Timed-out check for existing lock");
                 resolve(undefined);
             }, 1000)
         });
