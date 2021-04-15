@@ -486,6 +486,42 @@ declare namespace pxt {
         state: "activated";
         ref: string;
     }
+
+    type ServiceWorkerClientMessage = RequestPacketIOLockMessage | ReleasePacketIOLockMessage | DisconnectPacketIOResponse;
+
+    interface RequestPacketIOLockMessage {
+        type: "serviceworkerclient";
+        action: "request-packet-io-lock";
+        lock: string;
+    }
+
+    interface ReleasePacketIOLockMessage {
+        type: "serviceworkerclient";
+        action: "release-packet-io-lock";
+        lock: string;
+    }
+
+    interface DisconnectPacketIOResponse {
+        type: "serviceworkerclient";
+        action: "packet-io-lock-disconnect";
+        lock: string;
+        didDisconnect: boolean;
+    }
+
+    type ServiceWorkerMessage = DisconnectPacketIOMessage | GrantPacketIOLockMessage;
+
+    interface DisconnectPacketIOMessage {
+        type: "serviceworker";
+        action: "packet-io-lock-disconnect";
+        lock: string;
+    }
+
+    interface GrantPacketIOLockMessage {
+        type: "serviceworker";
+        action: "packet-io-lock-granted";
+        granted: boolean;
+        lock: string;
+    }
 }
 
 declare namespace pxt.editor {

@@ -18,7 +18,13 @@ interface ServiceWorkerClient {
     readonly type: "window" | "worker" | "sharedworker";
     readonly url: string;
 
-    postMessage(message: pxt.ServiceWorkerEvent): void;
+    postMessage(message: pxt.ServiceWorkerEvent | pxt.ServiceWorkerMessage): void;
+}
+
+enum DisconnectResponse {
+    Disconnected,
+    Waiting,
+    TimedOut
 }
 
 initWebappServiceWorker();
@@ -175,6 +181,102 @@ function initWebappServiceWorker() {
     });
 
 
+    let lockGranted: string;
+    let grantingLock: boolean;
+    let pendingDisconnectResolver: (resp: DisconnectResponse) => void;
+    self.addEventListener("message", async (ev: MessageEvent) => {
+        const message: pxt.ServiceWorkerClientMessage = ev.data;
+        if (message?.type === "serviceworkerclient") {
+            if (message.action === "request-packet-io-lock") {
+                if (grantingLock) {
+                    await sendToAllClientsAsync({
+                        type: "serviceworker",
+                        action: "packet-io-lock-granted",
+                        granted: false,
+                        lock: message.lock
+                    });
+                    return;
+                }
+                if (lockGranted === message.lock) {
+                    await sendToAllClientsAsync({
+                        type: "serviceworker",
+                        action: "packet-io-lock-granted",
+                        granted: true,
+                        lock: message.lock
+                    });
+                    return;
+                }
+                grantingLock = true;
+                console.log("Received lock request " + message.lock);
+                if (lockGranted) {
+                    let resp: DisconnectResponse;
+                    do {
+                        console.log("Sending disconnect request " + message.lock);
+                        resp = await waitForLockDisconnectAsync();
+                        if (resp === DisconnectResponse.Waiting) {
+                            console.log("Waiting on disconnect request " + message.lock);
+                            await delay(1000);
+                        }
+                    } while (resp === DisconnectResponse.Waiting)
+                }
+
+                console.log("Granted lock request " + message.lock);
+                lockGranted = message.lock;
+                await sendToAllClientsAsync({
+                    type: "serviceworker",
+                    action: "packet-io-lock-granted",
+                    granted: true,
+                    lock: message.lock
+                });
+                grantingLock = false;
+            }
+            else if (message.action === "release-packet-io-lock") {
+                console.log("Received disconnect for " + lockGranted);
+                lockGranted = undefined;
+                if (pendingDisconnectResolver) pendingDisconnectResolver(DisconnectResponse.Disconnected);
+            }
+            else if (message.action === "packet-io-lock-disconnect") {
+                console.log("Received disconnect response for " + lockGranted);
+
+                if (message.didDisconnect) lockGranted = undefined;
+                if (pendingDisconnectResolver) pendingDisconnectResolver(message.didDisconnect ? DisconnectResponse.Disconnected : DisconnectResponse.Waiting);
+            }
+        }
+    });
+
+    async function sendToAllClientsAsync(message: pxt.ServiceWorkerMessage) {
+        const clients = await (self as unknown as ServiceWorkerScope).clients.matchAll()
+        clients.forEach(c => c.postMessage(message))
+    }
+
+    function waitForLockDisconnectAsync() {
+        let ref: any;
+
+        const promise = new Promise<DisconnectResponse>((resolve) => {
+            console.log("Waiting for disconnect " + lockGranted);
+            pendingDisconnectResolver = resolve;
+            sendToAllClientsAsync({
+                type: "serviceworker",
+                action: "packet-io-lock-disconnect",
+                lock: lockGranted
+            });
+        })
+
+        const timeoutPromise = new Promise<DisconnectResponse>(resolve => {
+            ref = setTimeout(() => {
+                console.log("Timed-out disconnect request " + lockGranted);
+                resolve(DisconnectResponse.TimedOut);
+            }, 10000)
+        });
+
+        return Promise.race([ promise, timeoutPromise ])
+            .then(resp => {
+                clearTimeout(ref);
+                pendingDisconnectResolver = undefined
+                return resp;
+            })
+    }
+
     function dedupe(urls: string[]) {
         const res: string[] = [];
 
@@ -215,5 +317,11 @@ function initWebappServiceWorker() {
                 ref: ref
             }))
         });
+    }
+
+    function delay(millis: number): Promise<void> {
+        return new Promise(resolve => {
+            setTimeout(resolve, millis);
+        })
     }
 }

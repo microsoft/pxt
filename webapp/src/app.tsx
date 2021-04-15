@@ -324,14 +324,11 @@ export class ProjectView
         // don't try to reconnect immediately as the other is still closing
         // the webusb resources
         const maybeReconnect = () => {
-            Util.delay(3000).then(() => {
-                if (!this.state.home && document.visibilityState == 'visible')
-                    cmds.maybeReconnectAsync();
-            });
+            cmds.maybeReconnectAsync();
         }
 
         // disconnect devices to avoid locking between tabs
-        if (!active)
+        if (!active && !navigator?.serviceWorker?.controller)
             cmds.disconnectAsync(); // turn off any kind of logging
 
         if (!active && this.state.autoRun) {

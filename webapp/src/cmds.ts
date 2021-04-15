@@ -176,7 +176,13 @@ export function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.De
         return browserDownloadDeployCoreAsync(resp);
     }
     const LOADING_KEY = "hiddeploy";
-    return deployAsync();
+    deployingPacketIO = true
+    pxt.log("[CLIENT]: starting deploy")
+    return deployAsync()
+        .finally(() => {
+            deployingPacketIO = false
+            pxt.log("[CLIENT]: finished deploy")
+        })
 
     function deployAsync(): Promise<void> {
         // packetio should time out first
@@ -420,22 +426,33 @@ export async function initAsync() {
 }
 
 export function maybeReconnectAsync(pairIfDeviceNotFound = false) {
-    return pxt.packetio.initAsync()
+    pxt.log("[CLIENT]: starting reconnect")
+    if (reconnectPromise) return reconnectPromise;
+    reconnectPromise = requestPacketIOLockAsync()
+        .then(() => pxt.packetio.initAsync())
         .then(wrapper => {
             if (!wrapper) return Promise.resolve();
+            pxt.log("[CLIENT]: reconnect init successful")
             return wrapper.reconnectAsync()
                 .catch(e => {
+                    pxt.log("[CLIENT]: reconnect caught exception")
                     if (e.type == "devicenotfound")
                         return pairIfDeviceNotFound && pairAsync();
                     throw e;
                 })
-        });
+        })
+        .finally(() => {
+            reconnectPromise = undefined;
+        })
+    return reconnectPromise;
 }
 
 export function pairAsync(): Promise<void> {
     pxt.tickEvent("cmds.pair")
+    pxt.log("[CLIENT]: starting pair")
     return pxt.commands.webUsbPairDialogAsync(pxt.usb.pairAsync, core.confirmAsync)
         .then(res => {
+            if (res) pxt.log("[CLIENT]: pair successful")
             if (res) return maybeReconnectAsync();
             else return core.infoNotification("Oops, no device was paired.")
         });
@@ -450,7 +467,86 @@ export function showDisconnectAsync(): Promise<void> {
 }
 
 export function disconnectAsync(): Promise<void> {
-    return pxt.packetio.disconnectAsync();
+    pxt.log("[CLIENT]: starting disconnect")
+    return pxt.packetio.disconnectAsync()
+        .then(() => {
+            pxt.log("[CLIENT]: sending confirmed disconnect " + lockRef)
+            hasLock = false;
+            sendServiceWorkerMessage({
+                type: "serviceworkerclient",
+                action: "release-packet-io-lock",
+                lock: lockRef
+            });
+        })
+}
+
+const lockRef = pxtc.Util.guidGen();
+let pendingPacketIOLockResolver: () => void;
+let pendingPacketIOLockRejecter: () => void;
+let reconnectPromise: Promise<void>;
+let hasLock = false;
+let deployingPacketIO = false;
+
+function requestPacketIOLockAsync() {
+    if (pendingPacketIOLockResolver) return Promise.reject("Already waiting for packet lock");
+
+    if (hasLock) return Promise.resolve();
+    if (navigator?.serviceWorker?.controller) {
+        return new Promise<void>((resolve, reject) => {
+            pendingPacketIOLockResolver = resolve;
+            pendingPacketIOLockRejecter = reject;
+            pxt.log("[CLIENT]: requesting lock " + lockRef)
+            sendServiceWorkerMessage({
+                type: "serviceworkerclient",
+                action: "request-packet-io-lock",
+                lock: lockRef
+            });
+        })
+        .finally(() => {
+            pendingPacketIOLockResolver = undefined;
+            pendingPacketIOLockRejecter = undefined;
+        })
+    }
+    else {
+        return Promise.resolve();
+    }
+}
+
+function sendServiceWorkerMessage(message: pxt.ServiceWorkerClientMessage) {
+    if (navigator?.serviceWorker?.controller) {
+        navigator.serviceWorker.controller.postMessage(message);
+    }
+}
+
+export async function handleServiceWorkerMessageAsync(message: pxt.ServiceWorkerMessage) {
+    if (message.action === "packet-io-lock-disconnect" && !pendingPacketIOLockResolver && lockRef === message.lock) {
+        pxt.log("[CLIENT]: received disconnect request " + lockRef)
+
+        if (deployingPacketIO || pxt.packetio.isConnecting()) {
+            sendServiceWorkerMessage({
+                type: "serviceworkerclient",
+                action: "packet-io-lock-disconnect",
+                lock: lockRef,
+                didDisconnect: false
+            });
+        }
+        else {
+            await disconnectAsync();
+        }
+    }
+    else if (message.action === "packet-io-lock-granted" && message.lock === lockRef && pendingPacketIOLockResolver) {
+        if (message.granted) {
+            pxt.log("[CLIENT]: received granted lock " + lockRef)
+            pendingPacketIOLockResolver();
+            hasLock = true;
+        }
+        else {
+            pxt.log("[CLIENT]: received denied lock " + lockRef)
+            pendingPacketIOLockRejecter();
+        }
+        pendingPacketIOLockResolver = undefined;
+        pendingPacketIOLockRejecter = undefined;
+    }
 }
 
 function handlePacketIOApi(r: string) {
