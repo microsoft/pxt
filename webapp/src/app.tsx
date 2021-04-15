@@ -879,6 +879,9 @@ export class ProjectView
         if (!this.editor.isIncomplete()) {
             this.saveFileAsync(); // don't wait till save is done
             this.typecheck();
+
+            // If we are in a tutorial, call the validator for that editor (blocks, TS, etc)
+            if (this.isTutorial()) this.editor.validateTutorialCode(this.state.tutorialOptions);
         }
         this.markdownChangeHandler();
     }, 500, false);
@@ -1280,6 +1283,15 @@ export class ProjectView
                 this.textEditor.editor.focus();
             }
         }
+    }
+
+    setTutorialCodeStatus(step: number, status: pxt.tutorial.TutorialCodeStatus) {
+        let tutorialOptions = this.state.tutorialOptions;
+        const stepInfo = tutorialOptions.tutorialStepInfo[tutorialOptions.tutorialStep];
+        stepInfo.codeValidated = status == pxt.tutorial.TutorialCodeStatus.Valid;
+
+        // Update the state with the code status, so the tutorial card can re-render
+        this.setState({ tutorialOptions: tutorialOptions });
     }
 
     handleMessage(msg: pxsim.SimulatorMessage) {

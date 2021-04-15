@@ -705,6 +705,19 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
+    validateTutorialCode(tutorial: pxt.tutorial.TutorialOptions) {
+        // Current tutorial step
+        const { tutorialStepInfo, tutorialStep } = tutorial;
+        const step = tutorialStepInfo[tutorialStep];
+
+        // Get the current XML and call the validator function
+        const source = this.getCurrentSource();
+        // Get current TypeScript as well, for comarison
+        const file = pkg.mainEditorPkg().files["main.ts"].content;
+
+        this.parent.setTutorialCodeStatus(tutorialStep, pxt.tutorial.validate(step, source));
+    }
+
     getBlocksAreaDiv() {
         return document.getElementById('blocksArea');
     }

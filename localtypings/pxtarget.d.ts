@@ -981,6 +981,7 @@ declare namespace pxt.tutorial {
         hintContentMd?: string;
         activity?: number;
         resetDiff?: boolean; // reset diffify algo
+        codeValidated?: boolean; // Whether the user code has been marked valid for this step
     }
 
     interface TutorialActivityInfo {
