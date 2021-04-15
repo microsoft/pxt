@@ -177,11 +177,9 @@ export function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.De
     }
     const LOADING_KEY = "hiddeploy";
     deployingPacketIO = true
-    pxt.log("[CLIENT]: starting deploy")
     return deployAsync()
         .finally(() => {
             deployingPacketIO = false
-            pxt.log("[CLIENT]: finished deploy")
         })
 
     function deployAsync(): Promise<void> {
@@ -428,17 +426,15 @@ export async function initAsync() {
 export function maybeReconnectAsync(pairIfDeviceNotFound = false, skipIfConnected = false) {
     pxt.log("[CLIENT]: starting reconnect")
 
-    if (skipIfConnected && pxt.packetio.isConnected()) return Promise.resolve();
+    if (skipIfConnected && pxt.packetio.isConnected() && !disconnectingPacketIO) return Promise.resolve();
 
     if (reconnectPromise) return reconnectPromise;
     reconnectPromise = requestPacketIOLockAsync()
         .then(() => pxt.packetio.initAsync())
         .then(wrapper => {
             if (!wrapper) return Promise.resolve();
-            pxt.log("[CLIENT]: reconnect init successful")
             return wrapper.reconnectAsync()
                 .catch(e => {
-                    pxt.log("[CLIENT]: reconnect caught exception")
                     if (e.type == "devicenotfound")
                         return pairIfDeviceNotFound && pairAsync();
                     throw e;
@@ -452,10 +448,8 @@ export function maybeReconnectAsync(pairIfDeviceNotFound = false, skipIfConnecte
 
 export function pairAsync(): Promise<void> {
     pxt.tickEvent("cmds.pair")
-    pxt.log("[CLIENT]: starting pair")
     return pxt.commands.webUsbPairDialogAsync(pxt.usb.pairAsync, core.confirmAsync)
         .then(res => {
-            if (res) pxt.log("[CLIENT]: pair successful")
             if (res) return maybeReconnectAsync();
             else return core.infoNotification("Oops, no device was paired.")
         });
@@ -471,6 +465,7 @@ export function showDisconnectAsync(): Promise<void> {
 
 export function disconnectAsync(): Promise<void> {
     pxt.log("[CLIENT]: starting disconnect")
+    disconnectingPacketIO = true;
     return pxt.packetio.disconnectAsync()
         .then(() => {
             pxt.log("[CLIENT]: sending confirmed disconnect " + lockRef)
@@ -480,15 +475,19 @@ export function disconnectAsync(): Promise<void> {
                 action: "release-packet-io-lock",
                 lock: lockRef
             });
+            disconnectingPacketIO = false;
         })
 }
 
+
+// Generate a unique id for communicating with the service worker
 const lockRef = pxtc.Util.guidGen();
 let pendingPacketIOLockResolver: () => void;
 let pendingPacketIOLockRejecter: () => void;
 let reconnectPromise: Promise<void>;
 let hasLock = false;
 let deployingPacketIO = false;
+let disconnectingPacketIO = false;
 
 function requestPacketIOLockAsync() {
     if (pendingPacketIOLockResolver) return Promise.reject("Already waiting for packet lock");
