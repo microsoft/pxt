@@ -181,8 +181,10 @@ function initWebappServiceWorker() {
     });
 
 
+    const minimumLockWaitTime = 3000;
     let lockGranted: string;
     let grantingLock: boolean;
+    let lastLockTime = 0;
     let pendingDisconnectResolver: (resp: DisconnectResponse) => void;
     self.addEventListener("message", async (ev: MessageEvent) => {
         const message: pxt.ServiceWorkerClientMessage = ev.data;
@@ -208,6 +210,13 @@ function initWebappServiceWorker() {
                 }
                 grantingLock = true;
                 console.log("Received lock request " + message.lock);
+
+                const timeSinceLastLock = Date.now() - lastLockTime;
+                if (timeSinceLastLock < minimumLockWaitTime) {
+                    console.log("Waiting to grant lock request " + message.lock);
+                    await delay(minimumLockWaitTime - timeSinceLastLock);
+                }
+
                 if (lockGranted) {
                     let resp: DisconnectResponse;
                     do {
@@ -228,6 +237,7 @@ function initWebappServiceWorker() {
                     granted: true,
                     lock: message.lock
                 });
+                lastLockTime = Date.now();
                 grantingLock = false;
             }
             else if (message.action === "release-packet-io-lock") {

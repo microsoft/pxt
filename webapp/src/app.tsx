@@ -320,13 +320,6 @@ export class ProjectView
         data.invalidate('pkg-git-pr');
         data.invalidate('pkg-git-pages')
 
-        // there is a race with another tab that has a lock on the device
-        // don't try to reconnect immediately as the other is still closing
-        // the webusb resources
-        const maybeReconnect = () => {
-            cmds.maybeReconnectAsync();
-        }
-
         // disconnect devices to avoid locking between tabs
         if (!active && !navigator?.serviceWorker?.controller)
             cmds.disconnectAsync(); // turn off any kind of logging
@@ -352,9 +345,9 @@ export class ProjectView
                 this.setState({ resumeOnVisibility: false });
                 // We did a save when the page was hidden, no need to save again.
                 this.runSimulator();
-                maybeReconnect()
+                cmds.maybeReconnectAsync(false, true);
             } else if (!this.state.home) {
-                maybeReconnect();
+                cmds.maybeReconnectAsync(false, true);
             }
         }
     }
@@ -1569,7 +1562,7 @@ export class ProjectView
                 // Editor is loaded
                 pxt.BrowserUtils.changeHash("#editor", true);
                 document.getElementById("root").focus(); // Clear the focus.
-                cmds.maybeReconnectAsync();
+                cmds.maybeReconnectAsync(false, true);
                 this.editorLoaded();
             })
     }

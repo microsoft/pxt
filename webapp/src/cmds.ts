@@ -425,8 +425,11 @@ export async function initAsync() {
     }
 }
 
-export function maybeReconnectAsync(pairIfDeviceNotFound = false) {
+export function maybeReconnectAsync(pairIfDeviceNotFound = false, skipIfConnected = false) {
     pxt.log("[CLIENT]: starting reconnect")
+
+    if (skipIfConnected && pxt.packetio.isConnected()) return Promise.resolve();
+
     if (reconnectPromise) return reconnectPromise;
     reconnectPromise = requestPacketIOLockAsync()
         .then(() => pxt.packetio.initAsync())
