@@ -319,6 +319,13 @@ function initWebUSB() {
                 if (message.didDisconnect) lockGranted = undefined;
                 if (pendingDisconnectResolver) pendingDisconnectResolver(message.didDisconnect ? DisconnectResponse.Disconnected : DisconnectResponse.Waiting);
             }
+            else if (message.action === "packet-io-supported") {
+                await sendToAllClientsAsync({
+                    type: "serviceworker",
+                    action: "packet-io-supported",
+                    supported: true
+                });
+            }
         }
     });
 

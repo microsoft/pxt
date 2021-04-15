@@ -484,15 +484,19 @@ export function disconnectAsync(): Promise<void> {
 const lockRef = pxtc.Util.guidGen();
 let pendingPacketIOLockResolver: () => void;
 let pendingPacketIOLockRejecter: () => void;
+let serviceWorkerSupportedResolver: () => void;
 let reconnectPromise: Promise<void>;
 let hasLock = false;
 let deployingPacketIO = false;
 let disconnectingPacketIO = false;
+let serviceWorkerSupported: boolean | undefined = undefined;
 
-function requestPacketIOLockAsync() {
+async function requestPacketIOLockAsync() {
+    if (hasLock) return;
     if (pendingPacketIOLockResolver) return Promise.reject("Already waiting for packet lock");
+    const supported = await checkIfServiceWorkerSupportedAsync();
+    if (!supported) return;
 
-    if (hasLock) return Promise.resolve();
     if (navigator?.serviceWorker?.controller) {
         return new Promise<void>((resolve, reject) => {
             pendingPacketIOLockResolver = resolve;
@@ -508,9 +512,6 @@ function requestPacketIOLockAsync() {
             pendingPacketIOLockResolver = undefined;
             pendingPacketIOLockRejecter = undefined;
         })
-    }
-    else {
-        return Promise.resolve();
     }
 }
 
@@ -549,6 +550,34 @@ export async function handleServiceWorkerMessageAsync(message: pxt.ServiceWorker
         pendingPacketIOLockResolver = undefined;
         pendingPacketIOLockRejecter = undefined;
     }
+    else if (message.action === "packet-io-supported" && serviceWorkerSupportedResolver) {
+        serviceWorkerSupportedResolver();
+        serviceWorkerSupported = true;
+        serviceWorkerSupportedResolver = undefined;
+    }
+}
+
+async function checkIfServiceWorkerSupportedAsync() {
+    if (serviceWorkerSupported !== undefined) return serviceWorkerSupported;
+
+    const p =  new Promise<void>(resolve => {
+        serviceWorkerSupportedResolver = resolve;
+        sendServiceWorkerMessage({
+            type: "serviceworkerclient",
+            action: "packet-io-supported"
+        });
+    });
+
+    try {
+        await pxt.U.promiseTimeout(1000, p);
+        serviceWorkerSupported = true;
+    }
+    catch (e) {
+        pxt.log("[CLIENT]: old version of service worker, ignoring lock")
+        serviceWorkerSupported = false;
+    }
+
+    return serviceWorkerSupported;
 }
 
 function handlePacketIOApi(r: string) {
