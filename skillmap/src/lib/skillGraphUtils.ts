@@ -64,9 +64,12 @@ export function orthogonalGraph(root: MapNode): GraphNode[] {
             // 1. Increase child offset by one unit (so it's between the parents) and adjust the total if necessary
             // 2. Increase child depth if necessary (should be deeper than parent)
             next.filter(n => visited[n.activityId]).forEach(n => {
-                n.offset += 1;
-                totalOffset = Math.max(totalOffset, n.offset);
-                n.depth = Math.max(n.depth, current!.depth + 1);
+                // Skip the increment if the nodes are adjacent siblings
+                if (!isAdjacent(n, current!)) {
+                    n.offset += 1;
+                    totalOffset = Math.max(totalOffset, n.offset);
+                    n.depth = Math.max(n.depth, current!.depth + 1);
+                }
             })
             activities = next.concat(activities);
         }
@@ -193,6 +196,17 @@ function setWidths(node: GraphNode): number {
         node.width = node.next.map((el: any) => setWidths(el)).reduce((total: number, w: number) => total + w);
     }
     return node.width;
+}
+
+function isAdjacent(a: GraphNode, b: GraphNode): boolean {
+    if (!a.parents || !b.parents) return false;
+
+    let sharedParent: GraphNode | undefined;
+    a.parents.forEach((p: GraphNode) => {
+        if (b.parents!.indexOf(p) >= 0) sharedParent = p;
+    })
+
+    return !!sharedParent && Math.abs(sharedParent.nextIds.indexOf(a.activityId) - sharedParent.nextIds.indexOf(b.activityId)) == 1;
 }
 
 function bfsArray(root: GraphNode): GraphNode[] {
