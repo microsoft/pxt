@@ -114,6 +114,12 @@ namespace ts.pxtc.service {
         const PY_INDENT: string = (pxt as any).py.INDENT;
         const fileType = python ? "python" : "typescript";
 
+        let snippetPrefix = fn.namespace;
+        let isInstance = false;
+        let addNamespace = false;
+        let namespaceToUse = "";
+        let functionCount = 0;
+
         let preStmt: SnippetNode[] = [];
 
         if (isTaggedTemplate(fn)) {
@@ -157,12 +163,6 @@ namespace ts.pxtc.service {
                     default: p,
                     isLiteral: true
                 }) as SnippetNode)
-
-        let snippetPrefix = fn.namespace;
-        let isInstance = false;
-        let addNamespace = false;
-        let namespaceToUse = "";
-        let functionCount = 0;
 
         const element = fn as pxtc.SymbolInfo;
         if (element.attributes.block) {
@@ -289,10 +289,11 @@ namespace ts.pxtc.service {
             const name = param.name.kind === SK.Identifier ? (param.name as ts.Identifier).text : undefined;
 
             // check for explicit default in the attributes
-            if (attrs?.paramDefl?.[name]) {
+            const paramDefl = attrs?.paramDefl?.[name]
+            if (paramDefl) {
                 let deflKind: SyntaxKind;
                 if (typeNode.kind == SK.AnyKeyword) {
-                    const defaultName = attrs.paramDefl[name].toUpperCase();
+                    const defaultName = paramDefl.toUpperCase();
                     if (!Number.isNaN(+defaultName)) {
                         // try to parse as a number
                         deflKind = SK.NumberKeyword;
@@ -308,10 +309,16 @@ namespace ts.pxtc.service {
                     }
                 }
                 if (typeNode.kind === SK.StringKeyword || deflKind === SK.StringKeyword) {
-                    const defaultName = attrs.paramDefl[name];
-                    return defaultName.indexOf(`"`) != 0 ? `"${defaultName}"` : defaultName;
+                    return paramDefl.indexOf(`"`) != 0 ? `"${paramDefl}"` : paramDefl;
                 }
-                return attrs.paramDefl[name];
+
+                if (python) {
+                    let pyKeyword = tsKeywordToPyKeyword(paramDefl)
+                    if (pyKeyword)
+                        return pyKeyword
+                }
+
+                return paramDefl
             }
 
             let shadowDefFromFieldEditor = getDefaultValueFromFieldEditor(name)

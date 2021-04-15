@@ -200,18 +200,19 @@ pre {
     z-index: @filelistZIndex;
 
     // the scroll bar is always visible, but we hide it when needed
-    overflow-y: scroll; 
+    overflow-y: scroll;
 }
 
-.invisibleScrollbar::-webkit-scrollbar { 
-    background: transparent !important; 
-}    
-.invisibleScrollbar::-webkit-scrollbar-thumb { 
+.invisibleScrollbar::-webkit-scrollbar {
+    background: transparent !important;
+    width: @customScrollbarWidth; // TODO: remove this when the sim breakpoint is fixed
+}
+.invisibleScrollbar::-webkit-scrollbar-thumb {
     display: none !important;
-}    
-.invisibleScrollbar::-webkit-scrollbar-track { 
-    background: transparent !important; 
-}    
+}
+.invisibleScrollbar::-webkit-scrollbar-track {
+    background: transparent !important;
+}
 
 
 #filelist .simtoolbar {
@@ -347,7 +348,7 @@ div.simframe > iframe {
     background: none;
 }
 .menubar .ui.menu.fixed .ui.item.editor-menuitem .item:not(.active) {
-    opacity: 0.6;
+    opacity: 0.8;
 }
 .menubar .ui.menu.inverted.fixed .ui.item.editor-menuitem .active.item {
     background: none;
@@ -380,6 +381,10 @@ div.simframe > iframe {
 
 #editortoggle > .link {
     justify-content: center;
+}
+
+#editortoggle > .item {
+    outline: none;
 }
 
 #editortoggle {
@@ -805,7 +810,7 @@ Field editors
 }
 .social-icons a.twitter {
     color: white;
-    background-color: #00aced;
+    background-color: #1da1f2;
 }
 .social-icons a.discourse {
     color: white;
@@ -1878,6 +1883,10 @@ img.pixelart {
         justify-content: space-between;
         align-items: center;
         margin-top: 2em;
+
+        a {
+            text-decoration: underline;
+        }
     }
 }
 

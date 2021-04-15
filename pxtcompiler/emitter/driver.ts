@@ -298,9 +298,10 @@ namespace ts.pxtc {
             alwaysEmitOnStart: opts.alwaysDecompileOnStart,
             includeGreyBlockMessages,
             generateSourceMap: !!opts.ast,
-            allowedArgumentTypes: opts.allowedArgumentTypes || ["number", "boolean", "string"]
+            allowedArgumentTypes: opts.allowedArgumentTypes || ["number", "boolean", "string"],
+            errorOnGreyBlocks: !!opts.errorOnGreyBlocks,
         };
-        const [renameMap, _] = pxtc.decompiler.buildRenameMap(program, file)
+        const [renameMap, _] = pxtc.decompiler.buildRenameMap(program, file, { declarations: "variables", takenNames: {} })
         const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, decompileOpts, renameMap);
         return bresp;
     }

@@ -24,6 +24,7 @@ namespace pxsim {
         breakOnStart?: boolean;
         storedState?: Map<any>;
         ipc?: boolean;
+        dependencies?: Map<string>;
         single?: boolean;
     }
 

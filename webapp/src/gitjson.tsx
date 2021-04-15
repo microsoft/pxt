@@ -255,7 +255,8 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                         <div key={r.name} className="item link">
                             <i className="large github middle aligned icon"></i>
                             <div className="content">
-                                <a onClick={r.onClick} role="menuitem" className="header">{r.name}</a>
+                                <a onClick={r.onClick} role="menuitem" className="header"
+                                    tabIndex={0} onKeyDown={sui.fireClickOnEnter}>{r.name}</a>
                                 <div className="description">
                                     {r.description}
                                 </div>
@@ -755,7 +756,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         const isOwner = user && user.id === githubId.owner;
         return (
             <div id="githubArea">
-                <div id="serialHeader" className="ui serialHeader">
+                <div className="ui serialHeader">
                     <div className="leftHeaderWrapper">
                         <div className="leftHeader">
                             <sui.Button title={lf("Go back")} icon="arrow left" text={lf("Go back")} textClass="landscape only" tabIndex={0} onClick={this.goBack} onKeyDown={sui.fireClickOnEnter} />
@@ -781,7 +782,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                     <h3 className="header">
                         <i className="large github icon" />
                         <span className="repo-name">{githubId.fullName}</span>
-                        <span onClick={this.handleBranchClick} role="button" className="repo-branch">{"#" + githubId.tag}<i className="dropdown icon" /></span>
+                        <span onClick={this.handleBranchClick} onKeyDown={sui.fireClickOnEnter} tabIndex={0} role="button" className="repo-branch">{"#" + githubId.tag}<i className="dropdown icon" /></span>
                     </h3>
                     {needsCommit && <CommmitComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
                     {showPrResolved && !needsCommit && <PullRequestZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}

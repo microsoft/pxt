@@ -429,7 +429,7 @@ const buildSVGIcons = () => {
 
 const copyMonacoBase = () => gulp.src([
     "node_modules/monaco-editor/min/vs/base/**/*",
-    "!**/codicon.ttf" // We use a different version of this font that's checked into pxt
+    "!**/codicon.ttf" // We use a different version of this font that's checked into pxt (see inlineCodiconFont)
 ])
     .pipe(gulp.dest("webapp/public/vs/base"));
 
@@ -442,17 +442,17 @@ const copyMonacoEditor = () => gulp.src([
 const copyMonacoLoader = () => gulp.src("node_modules/monaco-editor/min/vs/loader.js")
     .pipe(gulp.dest("webapp/public/vs"));
 
-const languages = ["bat", "cpp", "json", "markdown", "python"]
+const basicLanguages = ["bat", "cpp", "markdown", "python", "typescript", "javascript"];
+const allLanguages = ["json", ...basicLanguages]
 const copyMonacoEditorMain = () => gulp.src("node_modules/monaco-editor/min/vs/editor/editor.main.js")
     .pipe(replace(/"\.\/([\w-]+)\/\1\.contribution"(?:,)?\s*/gi, (match, lang) => {
-        if (languages.indexOf(lang) === -1) {
+        if (allLanguages.indexOf(lang) === -1) {
             return ""
         }
         return match;
     }))
     .pipe(gulp.dest("built/web/vs/editor/"));
 
-const basicLanguages = ["bat", "cpp", "markdown", "python"];
 const copyMonacoBasicLanguages = gulp.parallel(basicLanguages.map(lang => {
     return () => gulp.src(`node_modules/monaco-editor/min/vs/basic-languages/${lang}/${lang}.js`)
         .pipe(gulp.dest(`webapp/public/vs/basic-languages/${lang}`))
@@ -461,14 +461,17 @@ const copyMonacoBasicLanguages = gulp.parallel(basicLanguages.map(lang => {
 const copyMonacoJSON = () => gulp.src("node_modules/monaco-editor/min/vs/language/json/**/*")
     .pipe(gulp.dest("webapp/public/vs/language/json"));
 
+const copyMonacoTypescript = () => gulp.src("node_modules/monaco-editor/min/vs/language/typescript/**/*")
+    .pipe(gulp.dest("webapp/public/vs/language/typescript"));
 
 const inlineCodiconFont = () => {
     // For whatever reason the codicon.ttf font that comes with the monaco-editor is invalid.
     // We need to inline the font anyways so fetch a good version of the font from the source
+    // This good version comes from: https://github.com/microsoft/vscode-codicons/blob/main/dist/codicon.ttf
     let font = fs.readFileSync("theme/external-font/codicon.ttf").toString("base64");
 
     return gulp.src("node_modules/monaco-editor/min/vs/editor/editor.main.css")
-        .pipe(replace(`../base/browser/ui/codiconLabel/codicon/codicon.ttf`, `data:application/x-font-ttf;charset=utf-8;base64,${font}`))
+        .pipe(replace(`../base/browser/ui/codicons/codicon/codicon.ttf`, `data:application/x-font-ttf;charset=utf-8;base64,${font}`))
         .pipe(gulp.dest("webapp/public/vs/editor/"))
 }
 
@@ -484,6 +487,7 @@ const copyMonaco = gulp.series(gulp.parallel(
     copyMonacoEditorMain,
     copyMonacoJSON,
     copyMonacoBasicLanguages,
+    copyMonacoTypescript,
     inlineCodiconFont
 ), stripMonacoSourceMaps);
 

@@ -273,13 +273,18 @@ namespace ts.pxtc.decompiler {
         }
     }
 
+    export type RenameMapOpts = {
+        declarations: "variables" | "all"
+        takenNames: NamesSet,
+    }
     export type NamesSet = pxt.Map<boolean | {}>
     /**
      * Uses the language service to ensure that there are no duplicate variable
      * names in the given file. All variables in Blockly are global, so this is
      * necessary to prevent local variables from colliding.
      */
-    export function buildRenameMap(p: Program, s: SourceFile, takenNames: NamesSet = {}): [RenameMap, NamesSet] {
+    export function buildRenameMap(p: Program, s: SourceFile,
+        { declarations, takenNames }: RenameMapOpts = { declarations: "variables", takenNames: {} }): [RenameMap, NamesSet] {
         let service = ts.createLanguageService(new LSHost(p))
         const allRenames: RenameLocation[] = [];
 
@@ -293,12 +298,13 @@ namespace ts.pxtc.decompiler {
 
             function checkChildren(n: Node): void {
                 ts.forEachChild(n, (child) => {
-                    if (child.kind === SK.VariableDeclaration && (child as ts.VariableDeclaration).name.kind === SK.Identifier) {
-                        const name = (child as ts.VariableDeclaration).name.getText();
+                    if (isDeclarationName(child)
+                        && (declarations === "all" || ts.isVariableDeclaration(child.parent))) {
+                        const name = child.getText();
 
                         if (takenNames[name]) {
                             const newName = getNewName(name, takenNames);
-                            const renames = service.findRenameLocations(s.fileName, (child as ts.VariableDeclaration).name.pos + 1, false, false);
+                            const renames = service.findRenameLocations(s.fileName, child.pos + 1, false, false);
                             if (renames) {
                                 renames.forEach(r => {
                                     allRenames.push({

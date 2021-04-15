@@ -445,6 +445,12 @@
         }
     }
 
+    #homescreen .ui.home .tutorial-progress.orange {
+        border-color: @HCtextColor !important;
+        background-color: @HCbackground !important;
+        color: @HCtextColor !important;
+    }
+
     .projectsdialog {
         .gallerysegment {
             .ui.header {
@@ -871,6 +877,22 @@
                 border: 2px dotted #090 !important;
             }
         }
+    }
+}
+
+/* OS-specific Fixes (eg Windows High Contrast) */
+
+@media (forced-colors: active) {
+    .ui.toggle.checkbox .box:after,
+    .ui.toggle.checkbox label:after {
+        forced-color-adjust: none;
+    }
+}
+
+@media (forced-colors: active) and (prefers-color-scheme: light) {
+    #homemenu .logo.organization img,
+    #homemenu .logo.brand img {
+        filter: invert(1);
     }
 }
 
