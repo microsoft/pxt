@@ -941,7 +941,12 @@ export class ProjectView
                     simulator.driver.setBreakpoints(breakpoints);
 
                     if (breakpoints.indexOf(brk.breakpointId) === -1) {
-                        this.dbgStepInto();
+                        if (this.state.tracing) {
+                            this.dbgPauseResume();
+                        }
+                        else {
+                            this.dbgStepInto();
+                        }
                         return true;
                     }
                 }
