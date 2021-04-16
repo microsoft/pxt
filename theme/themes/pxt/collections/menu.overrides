@@ -74,6 +74,28 @@
     outline: 1px solid rgba(255, 255, 255, 0.5);
 }
 
+#homemenu.ui.link.inverted.menu,
+#homemenu.ui.inverted.menu {
+    .item,
+    .dropdown.item,
+    .link.item,
+    a.item {
+        border: @homeHeaderBorderSize solid transparent;
+    }
+
+    .item:focus,
+    .dropdown.item:focus,
+    .link.item:focus,
+    a.item:focus {
+        background: @invertedHoverBackground;
+        color: @invertedHoverColor;
+        border: @homeHeaderBorderSize solid @homeHeaderSelectedBorderColor;
+        outline: 1px ridge black;
+    }
+}
+
+
+
 .ui.vertical.menu .item > .label {
     background-color: #8F8F8F;
 
