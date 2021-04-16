@@ -581,7 +581,7 @@ async function checkIfServiceWorkerSupportedAsync() {
         serviceWorkerSupported = true;
     }
     catch (e) {
-        pxt.log("[CLIENT]: old version of service worker, ignoring lock")
+        log("[CLIENT]: old version of service worker, ignoring lock")
         serviceWorkerSupported = false;
     }
 
