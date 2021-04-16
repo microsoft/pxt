@@ -941,11 +941,14 @@ export class ProjectView
                     simulator.driver.setBreakpoints(breakpoints);
 
                     if (breakpoints.indexOf(brk.breakpointId) === -1) {
-                        if (this.state.tracing) {
+                        if (!this.state.debugFirstRun) {
                             this.dbgPauseResume();
                         }
                         else {
                             this.dbgStepInto();
+                            this.setState({
+                                debugFirstRun: false
+                            });
                         }
                         return true;
                     }
@@ -3183,7 +3186,10 @@ export class ProjectView
 
     toggleDebugging() {
         const state = !this.state.debugging;
-        this.setState({ debugging: state }, () => {
+        this.setState({
+            debugging: state,
+            debugFirstRun: state
+         }, () => {
             this.onDebuggingStart();
         });
     }
