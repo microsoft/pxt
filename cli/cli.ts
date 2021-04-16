@@ -1027,7 +1027,7 @@ function uploadCoreAsync(opts: UploadOptions) {
             "gifworkerjs": opts.localDir + "gifjs/gif.worker.js",
             "serviceworkerjs": opts.localDir + "serviceworker.js",
             "pxtVersion": pxtVersion(),
-            "pxtRelId": "",
+            "pxtRelId": "localDirRelId",
             "pxtCdnUrl": opts.localDir,
             "commitCdnUrl": opts.localDir,
             "blobCdnUrl": opts.localDir,

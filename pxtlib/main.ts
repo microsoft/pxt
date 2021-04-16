@@ -409,7 +409,7 @@ namespace pxt {
             gifworkerjs: "/gifjs/gif.worker.js",
             serviceworkerjs: "/serviceworker.js",
             pxtVersion: "local",
-            pxtRelId: "",
+            pxtRelId: "localRelId",
             pxtCdnUrl: "/cdn/",
             commitCdnUrl: "/cdn/",
             blobCdnUrl: "/blb/",
