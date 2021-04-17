@@ -17,12 +17,15 @@
         window.appInsights=appInsights;
         appInsights.queue.push(function () {
             appInsights.context.addTelemetryInitializer(function (envelope) {
-                if (typeof pxtConfig === "undefined" || !pxtConfig) return;
+                telemetryItem.properties["cookie"] = isProduction;
+                if (typeof pxtConfig === "undefined" || !pxtConfig) {
+                    telemetryItem.properties["target"] = "@targetid@";
+                    return;
+                }
                 var telemetryItem = envelope.data.baseData;
                 telemetryItem.properties = telemetryItem.properties || {};
                 telemetryItem.properties["target"] = pxtConfig.targetId;
                 telemetryItem.properties["stage"] = (pxtConfig.relprefix || "/--").replace(/[^a-z]/ig, '')
-                telemetryItem.properties["cookie"] = includeCookie;
                 if (typeof Windows !== "undefined")
                     telemetryItem.properties["WindowsApp"] = 1;
                 var userAgent = navigator.userAgent.toLowerCase();
