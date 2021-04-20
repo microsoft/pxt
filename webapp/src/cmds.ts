@@ -565,10 +565,18 @@ export async function handleServiceWorkerMessageAsync(message: pxt.ServiceWorker
     }
 }
 
+/**
+ * This code checks to see if the service worker supports the webusb locking code.
+ * It's possible to get into a state where you have an old service worker if you are
+ * switching between app versions and the webapp hasn't refreshed yet for whatever
+ * reason.
+ */
 async function checkIfServiceWorkerSupportedAsync() {
     if (serviceWorkerSupported !== undefined) return serviceWorkerSupported;
 
     const p =  new Promise<void>(resolve => {
+        // This is resolved in handleServiceWorkerMessageAsync when the
+        // service worker sends back the appropriate response
         serviceWorkerSupportedResolver = resolve;
         sendServiceWorkerMessage({
             type: "serviceworkerclient",
@@ -577,6 +585,8 @@ async function checkIfServiceWorkerSupportedAsync() {
     });
 
     try {
+        // If we don't get a response within 1 second, this will throw
+        // and we can assume that we have an old service worker
         await pxt.U.promiseTimeout(1000, p);
         serviceWorkerSupported = true;
     }

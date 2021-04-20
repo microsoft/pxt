@@ -272,6 +272,7 @@ function initWebUSB() {
 
                 // We received a more recent request while we were waiting, so abandon this one
                 if (waitingLock !== message.lock) {
+                    console.log("Rejecting old lock request " + message.lock);
                     await sendToAllClientsAsync({
                         type: "serviceworker",
                         action: "packet-io-lock-granted",
