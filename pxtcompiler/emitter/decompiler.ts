@@ -1773,11 +1773,19 @@ ${output}</xml>`;
                 r.handlers = [];
             }
             else {
-                r = mkStmt("pxt_controls_for", n);
+                const fromValue = initializer.declarations[0].initializer;
+                const isExtendedFor = (fromValue as ts.LiteralExpression).text !== "0";
+
+                r = isExtendedFor ? mkStmt("pxt_controls_for_ext", n) : mkStmt("pxt_controls_for", n);
                 r.fields = [];
                 r.inputs = [];
                 r.handlers = [];
                 r.inputs = [getDraggableVariableBlock("VAR", renamed)];
+
+                if (isExtendedFor) {
+                    const fromNode = initializer.declarations[0].initializer;
+                    r.inputs.push(getValue("FROM", fromNode, wholeNumberType));
+                }
 
                 if (condition.operatorToken.kind === SK.LessThanToken) {
                     const unwrappedRightSide = unwrapNode(condition.right);
@@ -2523,9 +2531,9 @@ ${output}</xml>`;
             }
 
             const assignment = initializer.declarations[0] as VariableDeclaration;
-            if (assignment.initializer.kind !== SK.NumericLiteral || (assignment.initializer as ts.LiteralExpression).text !== "0") {
-                return Util.lf("for loop initializers must be initialized to 0");
-            }
+            // if (assignment.initializer.kind !== SK.NumericLiteral || (assignment.initializer as ts.LiteralExpression).text !== "0") {
+            //     return Util.lf("for loop initializers must be initialized to 0");
+            // }
 
             const indexVar = (assignment.name as ts.Identifier).text;
             if (!incrementorIsValid(indexVar)) {

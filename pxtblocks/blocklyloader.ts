@@ -102,6 +102,7 @@ namespace pxt.blocks {
         "controls_if": true,
         "controls_for": true,
         "pxt_controls_for": true,
+        "pxt_controls_for_ext": true,
         "controls_simple_for": true,
         "controls_repeat_ext": true,
         "pxt_controls_for_of": true,
@@ -1183,6 +1184,78 @@ namespace pxt.blocks {
                             thisBlock.getInputTargetBlock('VAR') ? thisBlock.getInputTargetBlock('VAR').getField('VAR').getText() : '');
                     },
                     pxtControlsForDef.url,
+                    String(pxt.toolbox.getNamespaceColor('loops'))
+                );
+            },
+            /**
+             * Return all variables referenced by this block.
+             * @return {!Array.<string>} List of variable names.
+             * @this Blockly.Block
+             */
+            getVars: function (): any[] {
+                return [this.getField('VAR').getText()];
+            },
+            /**
+             * Notification that a variable is renaming.
+             * If the name matches one of this block's variables, rename it.
+             * @param {string} oldName Previous name of variable.
+             * @param {string} newName Renamed variable.
+             * @this Blockly.Block
+             */
+            renameVar: function (oldName: string, newName: string) {
+                const varField = this.getField('VAR');
+                if (Blockly.Names.equals(oldName, varField.getText())) {
+                    varField.setValue(newName);
+                }
+            }
+        };
+
+        // pxt_controls_for_ext
+        const pxtControlsForExtId = "pxt_controls_for_ext";
+        const pxtControlsForExtDef = pxt.blocks.getBlockDefinition(pxtControlsForExtId);
+        Blockly.Blocks[pxtControlsForExtId] = {
+            /**
+             * Block for 'for' loop.
+             * @this Blockly.Block
+             */
+            init: function () {
+                this.jsonInit({
+                    "message0": pxtControlsForExtDef.block["message0"],
+                    "args0": [
+                        {
+                            "type": "input_value",
+                            "name": "VAR",
+                            "variable": pxtControlsForExtDef.block["variable"],
+                            "check": "Variable"
+                        },
+                        {
+                            "type": "input_value",
+                            "name": "FROM",
+                            "check": "Number"
+                        },
+                        {
+                            "type": "input_value",
+                            "name": "TO",
+                            "check": "Number"
+                        }
+                    ],
+                    "previousStatement": null,
+                    "nextStatement": null,
+                    "colour": pxt.toolbox.getNamespaceColor('loops'),
+                    "inputsInline": true
+                });
+                this.appendStatementInput('DO')
+                    .appendField(pxtControlsForExtDef.block["appendField"]);
+
+                let thisBlock = this;
+                setHelpResources(this,
+                    pxtControlsForExtId,
+                    pxtControlsForExtDef.name,
+                    function () {
+                        return U.rlf(<string>pxtControlsForExtDef.tooltip,
+                            thisBlock.getInputTargetBlock('VAR') ? thisBlock.getInputTargetBlock('VAR').getField('VAR').getText() : '');
+                    },
+                    pxtControlsForExtDef.url,
                     String(pxt.toolbox.getNamespaceColor('loops'))
                 );
             },

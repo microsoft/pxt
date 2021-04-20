@@ -356,7 +356,7 @@ namespace pxt.blocks {
     }
 
     function getLoopVariableField(b: Blockly.Block) {
-        return (b.type == "pxt_controls_for" || b.type == "pxt_controls_for_of") ?
+        return (b.type == "pxt_controls_for" || b.type == "pxt_controls_for_of" || b.type == "pxt_controls_for_ext") ?
             getInputTargetBlock(b, "VAR") : b;
     }
 
@@ -440,6 +440,10 @@ namespace pxt.blocks {
 
                     case "pxt_controls_for":
                     case "controls_simple_for":
+                        unionParam(e, b, "TO", ground(pNumber.type));
+                        break;
+                    case "pxt_controls_for_ext":
+                        unionParam(e, b, "FROM", ground(pNumber.type));
                         unionParam(e, b, "TO", ground(pNumber.type));
                         break;
                     case "pxt_controls_for_of":
@@ -1487,6 +1491,7 @@ namespace pxt.blocks {
                 r = compileControlsIf(e, <Blockly.IfBlock>b, comments);
                 break;
             case 'pxt_controls_for':
+            case 'pxt_controls_for_ext':
             case 'controls_for':
             case 'controls_simple_for':
                 r = compileControlsFor(e, b, comments);
@@ -2488,6 +2493,7 @@ namespace pxt.blocks {
     function getDeclaredVariables(block: Blockly.Block, e: Environment): [string, Point][] {
         switch (block.type) {
             case 'pxt_controls_for':
+            case 'pxt_controls_for_ext':
             case 'controls_simple_for':
                 return [[getLoopVariableField(block).getField("VAR").getText(), pNumber]];
             case 'pxt_controls_for_of':

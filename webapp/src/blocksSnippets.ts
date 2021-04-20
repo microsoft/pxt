@@ -57,6 +57,30 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                 </block>`
                 },
                 {
+                    name: "pxt_controls_for_ext",
+                    attributes: {
+                        blockId: "pxt_controls_for_ext",
+                        weight: 10
+                    },
+                    blockXml: `<block type="pxt_controls_for_ext">
+                    <value name="VAR">
+                        <shadow type="variables_get_reporter">
+                            <field name="VAR">${lf("{id:var}index")}</field>
+                        </shadow>
+                    </value>
+                    <value name="FROM">
+                        <shadow type="math_whole_number">
+                            <field name="NUM">0</field>
+                        </shadow>
+                    </value>
+                    <value name="TO">
+                        <shadow type="math_whole_number">
+                            <field name="NUM">4</field>
+                        </shadow>
+                    </value>
+                </block>`
+                },
+                {
                     name: "pxt_controls_for_of",
                     attributes: {
                         blockId: "pxt_controls_for_of",
