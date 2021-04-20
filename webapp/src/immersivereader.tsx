@@ -182,8 +182,8 @@ function getTokenAsync(): Promise<ImmersiveReaderToken> {
                 },
                 e => {
                     pxt.storage.removeLocal(IMMERSIVE_READER_ID);
-                    console.log("immersive reader fetch token error: " + JSON.stringify(e));
-                    pxt.tickEvent("immersiveReader.error", { error: JSON.stringify(e) });
+                    pxt.reportException(e)
+                    pxt.tickEvent("immersiveReader.error", {error: e.statusCode, message: e.message});
                     return Promise.reject(new Error("token"));
                 }
             );
@@ -210,17 +210,32 @@ export function launchImmersiveReader(content: string, tutorialOptions: pxt.tuto
         onExit: () => {pxt.tickEvent("immersiveReader.close", {tutorial: tutorialOptions.tutorial, tutorialStep: tutorialOptions.tutorialStep})}
     }
 
-    getTokenAsync().then(res => ImmersiveReader.launchAsync(res.token, res.subdomain, data, options)).catch(e => {
+    getTokenAsync().then(res => {
+        if (Cloud.isOnline()) {
+            return ImmersiveReader.launchAsync(res.token, res.subdomain, data, options)
+        } else {
+            return Promise.reject(new Error("offline"));
+        }
+    }).catch(e => {
         switch (e.message) {
             case "offline": {
                 core.warningNotification(lf("Immersive Reader cannot be used offline"));
                 break;
             }
+            case "token": {
+                break;
+            }
             default: {
                 core.warningNotification(lf("Immersive Reader could not be launched"));
+                if (typeof e == "string") {
+                    pxt.tickEvent("immersiveReader.error", {message: e});
+                } else {
+                    pxt.tickEvent("immersiveReader.error", {message: e.message, statusCode: e.statusCode})
+                }
+
             }
         }
-        console.log("Immersive Reader Error: " + e);
+        pxt.reportException(e);
         ImmersiveReader.close();
     });
 }
