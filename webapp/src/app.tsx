@@ -3823,7 +3823,7 @@ export class ProjectView
         let headerHeight = 0;
         if (flyoutOnly) {
             let headers = document.getElementById("headers");
-            headerHeight += headers.offsetHeight;
+            headerHeight += headers?.offsetHeight || 0;
         }
         if (tc) {
             // maxium offset of 18rem
