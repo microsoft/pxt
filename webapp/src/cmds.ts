@@ -424,7 +424,7 @@ export async function initAsync() {
 }
 
 export function maybeReconnectAsync(pairIfDeviceNotFound = false, skipIfConnected = false) {
-    pxt.log("[CLIENT]: starting reconnect")
+    log("[CLIENT]: starting reconnect")
 
     if (skipIfConnected && pxt.packetio.isConnected() && !disconnectingPacketIO) return Promise.resolve();
 
@@ -464,11 +464,11 @@ export function showDisconnectAsync(): Promise<void> {
 }
 
 export function disconnectAsync(): Promise<void> {
-    pxt.log("[CLIENT]: starting disconnect")
+    log("[CLIENT]: starting disconnect")
     disconnectingPacketIO = true;
     return pxt.packetio.disconnectAsync()
         .then(() => {
-            pxt.log("[CLIENT]: sending confirmed disconnect " + lockRef)
+            log("[CLIENT]: sending confirmed disconnect " + lockRef)
             hasLock = false;
             sendServiceWorkerMessage({
                 type: "serviceworkerclient",
@@ -501,7 +501,7 @@ async function requestPacketIOLockAsync() {
         return new Promise<void>((resolve, reject) => {
             pendingPacketIOLockResolver = resolve;
             pendingPacketIOLockRejecter = reject;
-            pxt.log("[CLIENT]: requesting lock " + lockRef)
+            log("[CLIENT]: requesting lock " + lockRef)
             sendServiceWorkerMessage({
                 type: "serviceworkerclient",
                 action: "request-packet-io-lock",
@@ -523,7 +523,7 @@ function sendServiceWorkerMessage(message: pxt.ServiceWorkerClientMessage) {
 
 export async function handleServiceWorkerMessageAsync(message: pxt.ServiceWorkerMessage) {
     if (message.action === "packet-io-lock-disconnect" && !pendingPacketIOLockResolver && lockRef === message.lock) {
-        pxt.log("[CLIENT]: received disconnect request " + lockRef)
+        log("[CLIENT]: received disconnect request " + lockRef)
 
         if (deployingPacketIO || pxt.packetio.isConnecting()) {
             sendServiceWorkerMessage({
@@ -539,12 +539,12 @@ export async function handleServiceWorkerMessageAsync(message: pxt.ServiceWorker
     }
     else if (message.action === "packet-io-lock-granted" && message.lock === lockRef && pendingPacketIOLockResolver) {
         if (message.granted) {
-            pxt.log("[CLIENT]: received granted lock " + lockRef)
+            log("[CLIENT]: received granted lock " + lockRef)
             pendingPacketIOLockResolver();
             hasLock = true;
         }
         else {
-            pxt.log("[CLIENT]: received denied lock " + lockRef)
+            log("[CLIENT]: received denied lock " + lockRef)
             pendingPacketIOLockRejecter();
         }
         pendingPacketIOLockResolver = undefined;
@@ -591,7 +591,7 @@ async function checkIfServiceWorkerSupportedAsync() {
         serviceWorkerSupported = true;
     }
     catch (e) {
-        pxt.log("[CLIENT]: old version of service worker, ignoring lock")
+        log("[CLIENT]: old version of service worker, ignoring lock")
         serviceWorkerSupported = false;
     }
 
