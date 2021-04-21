@@ -717,7 +717,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         // Get current TypeScript as well, for comarison
         const file = pkg.mainEditorPkg().files["main.ts"].content;
 
-        var blocks = this.editor.getAllBlocks();
+        let blocks = this.editor.getAllBlocks();
 
         this.parent.setTutorialCodeStatus(tutorialStep, validator.validate(step, source, blocks, this.blockInfo));
     }
