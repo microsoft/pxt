@@ -4480,9 +4480,9 @@ ${lbl}: .short 0xffff
                             jrname = getNodeFullName(checker, node)
                         }
                         let jr = U.lookup(opts.jres || {}, jrname)
-                        if (!jr)
+                        if (!jr) {
                             userError(9270, lf("resource '{0}' not found in any .jres file", jrname))
-                        else {
+                        } else {
                             currJres = jr
                         }
                     }

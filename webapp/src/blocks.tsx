@@ -189,6 +189,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     this.loadingXml = false;
                     this.loadingXmlPromise = null;
                     pxt.perf.measureEnd("domUpdate loadBlockly")
+                    // Do Not Remove: This is used by the skillmap
+                    if (this.parent.isTutorial()) pxt.tickEvent("tutorial.editorLoaded")
                 });
         }
     }
@@ -208,6 +210,18 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         Blockly.DropDownDiv.hide();
         Blockly.WidgetDiv.hide();
+    }
+
+    getTemporaryAssets(): pxt.Asset[] {
+        if (!this.editor) return[];
+
+        return pxtblockly.getTemporaryAssets(this.editor, pxt.AssetType.Image)
+            .concat(pxtblockly.getTemporaryAssets(this.editor, pxt.AssetType.Animation))
+    }
+
+    updateTemporaryAsset(asset: pxt.Asset) {
+        const block = this.editor.getBlockById(asset.meta.temporaryInfo.blockId);
+        (block.getField(asset.meta.temporaryInfo.fieldName) as pxtblockly.FieldAssetEditor<any, any>).updateAsset(asset);
     }
 
     private saveBlockly(): string {
@@ -817,7 +831,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 .then(() => {
                     // Initialize the "Make a function" button
                     Blockly.Functions.editFunctionExternalHandler = (mutation: Element, cb: Blockly.Functions.ConfirmEditCallback) => {
-                        Promise.delay(10)
+                        Util.delay(10)
                             .then(() => {
                                 if (!this.functionsDialog) {
                                     const wrapper = document.body.appendChild(document.createElement('div'));
@@ -1017,13 +1031,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     openTypeScript() {
         pxt.tickEvent("blocks.showjavascript");
         this.parent.closeFlyout();
-        this.parent.openTypeScriptAsync().done();
+        this.parent.openTypeScriptAsync();
     }
 
     openPython() {
         pxt.tickEvent("blocks.showpython");
         this.parent.closeFlyout();
-        this.parent.openPythonAsync().done();
+        this.parent.openPythonAsync();
     }
 
     private cleanUpShadowBlocks() {
@@ -1730,9 +1744,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     let type = shadow.getAttribute('type');
                     const builtin = snippets.allBuiltinBlocks()[type];
                     let b = this.getBlockXml(builtin ? builtin : { name: type, attributes: { blockId: type } }, ignoregap, true);
-                    /* tslint:disable:no-inner-html setting one element's contents to the other */
+                    // Note: we're setting one innerHTML to another
+                    // eslint-disable-next-line @microsoft/sdl/no-inner-html
                     if (b && b.length > 0 && b[0]) shadow.innerHTML = b[0].innerHTML;
-                    /* tslint:enable:no-inner-html */
                 })
         }
         return [blockXml];

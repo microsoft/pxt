@@ -169,15 +169,6 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
             return ("000" + i).slice(-4);
         }
     }
-    /**
-     * Given a completion item fill in more data, like [doc-comment](#CompletionItem.documentation)
-     * or [details](#CompletionItem.detail).
-     *
-     * The editor will only resolve a completion item once.
-     */
-    resolveCompletionItem(model: monaco.editor.ITextModel, position: monaco.Position, item: monaco.languages.CompletionItem, token: monaco.CancellationToken): monaco.languages.CompletionItem | monaco.Thenable<monaco.languages.CompletionItem> {
-        return item
-    }
 }
 
 class SignatureHelper implements monaco.languages.SignatureHelpProvider {
@@ -534,7 +525,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 });
         });
 
-        core.showLoadingAsync("switchtoblocks", lf("switching to blocks..."), promise).done();
+        core.showLoadingAsync("switchtoblocks", lf("switching to blocks..."), promise);
     }
 
     public showBlockConversionFailedDialog(blockFile: string, programTooLarge: boolean): Promise<void> {
@@ -961,7 +952,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 }
                 // Update widgets
                 const toolbox = document.getElementById('monacoToolboxDiv');
-                if (toolbox) toolbox.style.height = `${this.editor.getLayoutInfo().contentHeight}px`;
+                if (toolbox) toolbox.style.height = `${this.editor.getLayoutInfo().height}px`;
             })
 
             const monacoEditorInner = document.getElementById('monacoEditorInner');
@@ -987,11 +978,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             monaco.languages.registerHoverProvider("python", new HoverProvider(this, true));
             monaco.languages.registerDocumentRangeFormattingEditProvider("python", new FormattingProvider(this, true));
             monaco.languages.setLanguageConfiguration("python", pythonLanguageConfiguration)
-
-            monaco.languages.registerCompletionItemProvider("typescript", new CompletionProvider(this, false));
-            monaco.languages.registerSignatureHelpProvider("typescript", new SignatureHelper(this, false));
-            monaco.languages.registerHoverProvider("typescript", new HoverProvider(this, false));
-            monaco.languages.registerDocumentRangeFormattingEditProvider("typescript", new FormattingProvider(this, false));
 
             this.editorViewZones = [];
 
@@ -1150,7 +1136,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 snippetPromise = initPromise.then(() => compiler.snippetAsync(snippetQName, isPython));
             }
 
-            snippetPromise.done(snippet => {
+            snippetPromise.then(snippet => {
                 let mouseTarget = this.editor.getTargetAtClientPoint(pxt.BrowserUtils.getClientX(ev), pxt.BrowserUtils.getClientY(ev));
                 let position = mouseTarget.position;
                 pxt.tickEvent(`monaco.toolbox.insertsnippet`);
@@ -1444,6 +1430,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 return this.foldFieldEditorRangesAsync()
             }).finally(() => {
                 editorRightArea.removeChild(loading);
+                // Do Not Remove: This is used by the skillmap
+                if (this.parent.isTutorial()) pxt.tickEvent("tutorial.editorLoaded")
             });
     }
 

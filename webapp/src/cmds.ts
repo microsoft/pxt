@@ -176,16 +176,22 @@ export function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.De
         return browserDownloadDeployCoreAsync(resp);
     }
     const LOADING_KEY = "hiddeploy";
-    return deployAsync();
+    deployingPacketIO = true
+    return deployAsync()
+        .finally(() => {
+            deployingPacketIO = false
+        })
 
     function deployAsync(): Promise<void> {
-        return pxt.packetio.initAsync(false)
-            .then(dev => core.showLoadingAsync(LOADING_KEY, lf("Downloading..."),
-                dev.reflashAsync(resp), 5000))
-            .then(() => core.infoNotification("Download completed!"))
-            .finally(() => core.hideLoading(LOADING_KEY))
-            .timeout(120000, "timeout") // packetio should time out first
-            .catch((e) => {
+        // packetio should time out first
+        return pxt.Util.promiseTimeout(120000,
+                pxt.packetio.initAsync(false)
+                    .then(dev => core.showLoadingAsync(LOADING_KEY, lf("Downloading..."),
+                        dev.reflashAsync(resp)
+                            .then(() => dev.reconnectAsync()), 5000))
+                    .then(() => core.infoNotification("Download completed!"))
+                    .finally(() => core.hideLoading(LOADING_KEY))
+            ).catch((e) => {
                 if (e.type === "repairbootloader") {
                     return pairBootloaderAsync()
                         .then(() => hidDeployCoreAsync(resp))
@@ -222,8 +228,7 @@ function pairBootloaderAsync(): Promise<void> {
 
 function winrtDeployCoreAsync(r: pxtc.CompileResult, d: pxt.commands.DeployOptions): Promise<void> {
     log(`winrt deploy`)
-    return hidDeployCoreAsync(r, d)
-        .timeout(180000)
+    return pxt.Util.promiseTimeout(180000, hidDeployCoreAsync(r, d))
         .catch((e) => {
             return pxt.packetio.disconnectAsync()
                 .catch((e) => {
@@ -418,8 +423,14 @@ export async function initAsync() {
     }
 }
 
-export function maybeReconnectAsync(pairIfDeviceNotFound = false) {
-    return pxt.packetio.initAsync()
+export function maybeReconnectAsync(pairIfDeviceNotFound = false, skipIfConnected = false) {
+    log("[CLIENT]: starting reconnect")
+
+    if (skipIfConnected && pxt.packetio.isConnected() && !disconnectingPacketIO) return Promise.resolve();
+
+    if (reconnectPromise) return reconnectPromise;
+    reconnectPromise = requestPacketIOLockAsync()
+        .then(() => pxt.packetio.initAsync())
         .then(wrapper => {
             if (!wrapper) return Promise.resolve();
             return wrapper.reconnectAsync()
@@ -428,7 +439,11 @@ export function maybeReconnectAsync(pairIfDeviceNotFound = false) {
                         return pairIfDeviceNotFound && pairAsync();
                     throw e;
                 })
-        });
+        })
+        .finally(() => {
+            reconnectPromise = undefined;
+        })
+    return reconnectPromise;
 }
 
 export function pairAsync(): Promise<void> {
@@ -449,7 +464,138 @@ export function showDisconnectAsync(): Promise<void> {
 }
 
 export function disconnectAsync(): Promise<void> {
-    return pxt.packetio.disconnectAsync();
+    log("[CLIENT]: starting disconnect")
+    disconnectingPacketIO = true;
+    return pxt.packetio.disconnectAsync()
+        .then(() => {
+            log("[CLIENT]: sending confirmed disconnect " + lockRef)
+            hasLock = false;
+            sendServiceWorkerMessage({
+                type: "serviceworkerclient",
+                action: "release-packet-io-lock",
+                lock: lockRef
+            });
+            disconnectingPacketIO = false;
+        })
+}
+
+
+// Generate a unique id for communicating with the service worker
+const lockRef = pxtc.Util.guidGen();
+let pendingPacketIOLockResolver: () => void;
+let pendingPacketIOLockRejecter: () => void;
+let serviceWorkerSupportedResolver: () => void;
+let reconnectPromise: Promise<void>;
+let hasLock = false;
+let deployingPacketIO = false;
+let disconnectingPacketIO = false;
+let serviceWorkerSupported: boolean | undefined = undefined;
+
+async function requestPacketIOLockAsync() {
+    if (hasLock) return;
+    if (pendingPacketIOLockResolver) return Promise.reject("Already waiting for packet lock");
+    const supported = await checkIfServiceWorkerSupportedAsync();
+    if (!supported) return;
+
+    if (navigator?.serviceWorker?.controller) {
+        return new Promise<void>((resolve, reject) => {
+            pendingPacketIOLockResolver = resolve;
+            pendingPacketIOLockRejecter = reject;
+            log("[CLIENT]: requesting lock " + lockRef)
+            sendServiceWorkerMessage({
+                type: "serviceworkerclient",
+                action: "request-packet-io-lock",
+                lock: lockRef
+            });
+        })
+        .finally(() => {
+            pendingPacketIOLockResolver = undefined;
+            pendingPacketIOLockRejecter = undefined;
+        })
+    }
+}
+
+function sendServiceWorkerMessage(message: pxt.ServiceWorkerClientMessage) {
+    if (navigator?.serviceWorker?.controller) {
+        navigator.serviceWorker.controller.postMessage(message);
+    }
+}
+
+export async function handleServiceWorkerMessageAsync(message: pxt.ServiceWorkerMessage) {
+    if (message.action === "packet-io-lock-disconnect" && !pendingPacketIOLockResolver && lockRef === message.lock) {
+        log("[CLIENT]: received disconnect request " + lockRef)
+
+        if (deployingPacketIO || pxt.packetio.isConnecting()) {
+            sendServiceWorkerMessage({
+                type: "serviceworkerclient",
+                action: "packet-io-lock-disconnect",
+                lock: lockRef,
+                didDisconnect: false
+            });
+        }
+        else {
+            await disconnectAsync();
+        }
+    }
+    else if (message.action === "packet-io-lock-granted" && message.lock === lockRef && pendingPacketIOLockResolver) {
+        if (message.granted) {
+            log("[CLIENT]: received granted lock " + lockRef)
+            pendingPacketIOLockResolver();
+            hasLock = true;
+        }
+        else {
+            log("[CLIENT]: received denied lock " + lockRef)
+            pendingPacketIOLockRejecter();
+        }
+        pendingPacketIOLockResolver = undefined;
+        pendingPacketIOLockRejecter = undefined;
+    }
+    else if (message.action === "packet-io-supported" && serviceWorkerSupportedResolver) {
+        serviceWorkerSupportedResolver();
+        serviceWorkerSupported = true;
+        serviceWorkerSupportedResolver = undefined;
+    }
+    else if (message.action === "packet-io-status") {
+        sendServiceWorkerMessage({
+            type: "serviceworkerclient",
+            action: "packet-io-status",
+            hasLock: hasLock,
+            lock: lockRef
+        });
+    }
+}
+
+/**
+ * This code checks to see if the service worker supports the webusb locking code.
+ * It's possible to get into a state where you have an old service worker if you are
+ * switching between app versions and the webapp hasn't refreshed yet for whatever
+ * reason.
+ */
+async function checkIfServiceWorkerSupportedAsync() {
+    if (serviceWorkerSupported !== undefined) return serviceWorkerSupported;
+
+    const p =  new Promise<void>(resolve => {
+        // This is resolved in handleServiceWorkerMessageAsync when the
+        // service worker sends back the appropriate response
+        serviceWorkerSupportedResolver = resolve;
+        sendServiceWorkerMessage({
+            type: "serviceworkerclient",
+            action: "packet-io-supported"
+        });
+    });
+
+    try {
+        // If we don't get a response within 1 second, this will throw
+        // and we can assume that we have an old service worker
+        await pxt.U.promiseTimeout(1000, p);
+        serviceWorkerSupported = true;
+    }
+    catch (e) {
+        log("[CLIENT]: old version of service worker, ignoring lock")
+        serviceWorkerSupported = false;
+    }
+
+    return serviceWorkerSupported;
 }
 
 function handlePacketIOApi(r: string) {

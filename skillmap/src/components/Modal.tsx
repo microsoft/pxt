@@ -1,8 +1,8 @@
 import * as React from "react";
 
-/* tslint:disable:no-import-side-effect */
+/* eslint-disable import/no-unassigned-import, import/no-internal-modules */
 import '../styles/modal.css'
-/* tslint:enable:no-import-side-effect */
+/* eslint-enable import/no-unassigned-import, import/no-internal-modules */
 
 export interface ModalAction {
     label: string;
@@ -13,6 +13,7 @@ export interface ModalAction {
 interface ModalProps {
     title: string;
     actions?: ModalAction[];
+    className?: string;
     onClose?: () => void;
 }
 
@@ -28,9 +29,9 @@ export class Modal extends React.Component<ModalProps> {
     }
 
     render() {
-        const  { title, actions } = this.props;
+        const  { title, actions, className } = this.props;
         return <div className="modal-overlay" onClick={this.handleCloseClick} role="region">
-            <div className="modal" onClick={this.handleModalClick} role="dialog">
+            <div className={`modal ${className || ""}`} onClick={this.handleModalClick} role="dialog">
                 <div className="modal-header">
                     <div className="modal-title">{title}</div>
                     <div className="spacer" />
@@ -41,7 +42,7 @@ export class Modal extends React.Component<ModalProps> {
                 </div>
                 {actions && actions.length > 0 && <div className="modal-actions">
                     {actions.map((el, i) => {
-                        return <div key={i} className={`modal-button ${el.className}`} onClick={el.onClick} role="button">{el.label}</div>
+                        return <div key={i} className={`modal-button ${el.className || ""}`} onClick={el.onClick} role="button">{el.label}</div>
                     })}
                 </div>}
             </div>

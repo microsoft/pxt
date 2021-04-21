@@ -10,6 +10,7 @@ import * as auth from "./auth";
 import * as identity from "./identity";
 import * as cloudsync from "./cloudsync";
 import * as pkg from "./package";
+import * as ImmersiveReader from "./immersivereader";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -151,7 +152,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         if (pxt.hasHwVariants())
             this.props.parent.showChooseHwDialog();
         else
-            this.props.parent.showBoardDialogAsync(undefined, true).done();
+            this.props.parent.showBoardDialogAsync(undefined, true);
     }
 
     saveProject() {
@@ -323,7 +324,8 @@ class BaseMenuItemProps extends data.Component<IBaseMenuItemProps, {}> {
 
     renderCore() {
         const active = this.props.isActive();
-        return <sui.Item className={`base-menuitem ${this.props.className} ${active ? "selected" : ""}`} role="menuitem" textClass="landscape only" text={this.props.text} icon={this.props.icon} active={active} onClick={this.props.onClick} title={this.props.title} />
+        return <sui.Item className={`base-menuitem ${this.props.className} ${active ? "selected" : ""}`} role="option" textClass="landscape only"
+            text={this.props.text} icon={this.props.icon} active={active} onClick={this.props.onClick} title={this.props.title} />
     }
 }
 
@@ -451,7 +453,7 @@ export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
         const showAssets = pxt.appTarget.appTheme.assetEditor && !sandbox;
 
         return (
-            <div id="editortoggle" className={`ui grid padded ${(pyOnly || tsOnly) ? "one-language" : ""}`}>
+            <div id="editortoggle" className={`ui grid padded ${(pyOnly || tsOnly) ? "one-language" : ""}`} role="listbox" aria-orientation="horizontal">
                 {showSandbox && <SandboxMenuItem parent={parent} />}
                 {showBlocks && <BlocksMenuItem parent={parent} />}
                 {showPython ? <PythonMenuItem parent={parent} /> : <JavascriptMenuItem parent={parent} />}
@@ -538,6 +540,10 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         const homeEnabled = !lockedEditor && !isController;
         const sandbox = pxt.shell.isSandboxMode();
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
+
+        // Approximate each tutorial step to be 22 px
+        const manyTutorialSteps = inTutorial && (tutorialOptions.tutorialStepInfo.length * 22 > window.innerWidth / 3);
+
         const activityName = tutorialOptions && tutorialOptions.tutorialActivityInfo ?
             tutorialOptions.tutorialActivityInfo[tutorialOptions.tutorialStepInfo[tutorialOptions.tutorialStep].activity].name :
             null;
@@ -567,8 +573,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
             && (sandbox || !(tsOnly || pyOnly)); // show if sandbox or not single language
         const editor = this.props.parent.isPythonActive() ? "Python" : (this.props.parent.isJavaScriptActive() ? "JavaScript" : "Blocks");
 
-        /* tslint:disable:react-a11y-anchors */
-        return <div id="mainmenu" className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar" aria-label={lf("Main menu")}>
+        return <div id="mainmenu" className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu ${manyTutorialSteps ? "thin" : ""}`} role="menubar" aria-label={lf("Main menu")}>
             {!sandbox ? <div className="left menu">
                 {!targetTheme.hideMenubarLogo &&
                     <a href={(!lockedEditor && isController) ? targetTheme.logoUrl : undefined} aria-label={lf("{0} Logo", targetTheme.boardName)} role="menuitem" target="blank" rel="noopener" className="ui item logo brand" tabIndex={0} onClick={lockedEditor ? undefined : this.brandIconClick} onKeyDown={sui.fireClickOnEnter}>
@@ -582,10 +587,10 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
                 {showShare ? <sui.Item className="icon shareproject" role="menuitem" textClass="widedesktop only" ariaLabel={lf("Share Project")} text={lf("Share")} icon="share alternate large" onClick={this.showShareDialog} /> : null}
                 {inTutorial && <sui.Item className="tutorialname" tabIndex={-1} textClass="landscape only" text={tutorialOptions.tutorialName} />}
             </div> : <div className="left menu">
-                    <span id="logo" className="ui item logo">
-                        <img className="ui mini image" src={rightLogo} tabIndex={0} onClick={this.launchFullEditor} onKeyDown={sui.fireClickOnEnter} alt={`${targetTheme.boardName} Logo`} />
-                    </span>
-                </div>}
+                <span id="logo" className="ui item logo">
+                    <img className="ui mini image" src={rightLogo} tabIndex={0} onClick={this.launchFullEditor} onKeyDown={sui.fireClickOnEnter} alt={`${targetTheme.boardName} Logo`} />
+                </span>
+            </div>}
             {showToggle && <div className="ui item link editor-menuitem">
                 <container.EditorSelector parent={this.props.parent} sandbox={sandbox} python={targetTheme.python} languageRestriction={languageRestriction} headless={isHeadless} />
             </div>}
@@ -600,7 +605,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
                 {sandbox || inTutorial || debugging ? undefined : <container.SettingsMenu parent={this.props.parent} greenScreen={greenScreen} accessibleBlocks={accessibleBlocks} />}
                 {sandbox && !targetTheme.hideEmbedEdit ? <sui.Item role="menuitem" icon="external" textClass="mobile hide" text={lf("Edit")} onClick={this.launchFullEditor} /> : undefined}
                 {inTutorial && tutorialReportId ? <sui.ButtonMenuItem className="report-tutorial-btn" role="menuitem" icon="warning circle" text={lf("Report Abuse")} textClass="landscape only" onClick={this.showReportAbuse} /> : undefined}
-                {(inTutorial && !lockedEditor && !hideIteration) && <sui.ButtonMenuItem className="exit-tutorial-btn" role="menuitem" icon="external" text={lf("Exit tutorial")} textClass="landscape only" onClick={this.exitTutorial} />}
+                {(inTutorial && !lockedEditor && !hideIteration) && <sui.ButtonMenuItem className="exit-tutorial-btn" role="menuitem" icon="sign out" text={lf("Exit tutorial")} textClass="landscape only" onClick={this.exitTutorial} />}
 
                 {auth.hasIdentity() ? <identity.UserMenu parent={this.props.parent} continuationHash={"#editor"} /> : undefined}
                 {!sandbox ? <a href={lockedEditor ? undefined : targetTheme.organizationUrl} aria-label={lf("{0} Logo", targetTheme.organization)} role="menuitem" target="blank" rel="noopener" className="ui item logo organization" onClick={lockedEditor ? undefined : this.orgIconClick}>
@@ -611,7 +616,6 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
                 </a> : undefined}
             </div>
         </div>;
-        /* tslint:enable:react-a11y-anchors */
     }
 }
 
@@ -727,7 +731,7 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
         if (!docsUrl) return null;
 
         const url = sideDocsCollapsed ? this.rootDocsUrl() : docsUrl;
-        /* tslint:disable:react-iframe-missing-sandbox */
+        /* eslint-disable @microsoft/sdl/react-iframe-missing-sandbox */
         return <div>
             <button id="sidedocstoggle" role="button" aria-label={sideDocsCollapsed ? lf("Expand the side documentation") : lf("Collapse the side documentation")} className="ui icon button large" onClick={this.toggleVisibility}>
                 <sui.Icon icon={`icon inverted chevron ${showLeftChevron ? 'left' : 'right'}`} />
@@ -744,7 +748,7 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
                 </div>}
             </div>
         </div>
-        /* tslint:enable:react-iframe-missing-sandbox */
+        /* eslint-enable @microsoft/sdl/react-iframe-missing-sandbox */
     }
 }
 
@@ -771,13 +775,11 @@ export class SandboxFooter extends data.PureComponent<SandboxFooterProps, {}> {
 
         const compileTooltip = lf("Download your code to the {0}", targetTheme.boardName);
 
-        /* tslint:disable:react-a11y-anchors */
         return <div className="ui horizontal small divided link list sandboxfooter">
             {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" target="_blank" rel="noopener noreferrer" href={targetTheme.organizationUrl}>{targetTheme.organization}</a> : undefined}
             <a target="_blank" className="item" href={targetTheme.termsOfUseUrl} rel="noopener noreferrer">{lf("Terms of Use")}</a>
             <a target="_blank" className="item" href={targetTheme.privacyUrl} rel="noopener noreferrer">{lf("Privacy")}</a>
             <span className="item"><a role="button" className="ui thin portrait only" title={compileTooltip} onClick={this.compile}><sui.Icon icon={`icon ${pxt.appTarget.appTheme.downloadIcon || 'download'}`} />{pxt.appTarget.appTheme.useUploadMessage ? lf("Upload") : lf("Download")}</a></span>
         </div>;
-        /* tslint:enable:react-a11y-anchors */
     }
 }

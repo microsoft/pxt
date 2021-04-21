@@ -66,7 +66,9 @@ namespace pxtblockly {
         showEditor_() {
             if (this.isGreyBlock) return;
 
-            (this.params as any).blocksInfo = this.blocksInfo;
+            const params: any = {...this.params};
+
+            params.blocksInfo = this.blocksInfo;
 
             let editorKind: string;
 
@@ -74,29 +76,22 @@ namespace pxtblockly {
                 case pxt.AssetType.Tile:
                 case pxt.AssetType.Image:
                     editorKind = "image-editor";
+                    params.temporaryAssets = getTemporaryAssets(this.sourceBlock_.workspace, pxt.AssetType.Image);
                     break;
                 case pxt.AssetType.Animation:
                     editorKind = "animation-editor";
+                    params.temporaryAssets = getTemporaryAssets(this.sourceBlock_.workspace, pxt.AssetType.Image)
+                        .concat(getTemporaryAssets(this.sourceBlock_.workspace, pxt.AssetType.Animation));
                     break;
                 case pxt.AssetType.Tilemap:
                     editorKind = "tilemap-editor";
                     const project = pxt.react.getTilemapProject();
-                    const allTiles = project.getProjectTiles(this.asset.data.tileset.tileWidth, true);
-                    this.asset.data.projectReferences = [];
-
-                    for (const tile of allTiles.tiles) {
-                        if (!this.asset.data.tileset.tiles.some(t => t.id === tile.id)) {
-                            this.asset.data.tileset.tiles.push(tile);
-                        }
-                        if (project.isAssetUsed(tile, null, [this.asset.id])) {
-                            this.asset.data.projectReferences.push(tile.id);
-                        }
-                    }
+                    pxt.sprite.addMissingTilemapTilesAndReferences(project, this.asset);
                     break;
             }
 
 
-            const fv = pxt.react.getFieldEditorView(editorKind, this.asset, this.params);
+            const fv = pxt.react.getFieldEditorView(editorKind, this.asset, params);
 
             if (this.undoRedoState) {
                 fv.restorePersistentData(this.undoRedoState);
@@ -193,6 +188,19 @@ namespace pxtblockly {
             }
         }
 
+        isTemporaryAsset() {
+            return this.asset && !this.asset.meta.displayName;
+        }
+
+        getAsset() {
+            return this.asset;
+        }
+
+        updateAsset(asset: pxt.Asset) {
+            this.asset = asset;
+            this.setValue(this.getValue());
+        }
+
         protected onEditorClose(newValue: pxt.Asset) {
             // Subclass
         }
@@ -255,10 +263,7 @@ namespace pxtblockly {
                         if (this.sourceBlock_ && this.asset.meta.blockIDs) {
                             this.asset.meta.blockIDs = this.asset.meta.blockIDs.filter(id => id !== this.sourceBlock_.id);
 
-                            if (this.asset.meta.blockIDs.length === 0 && !this.asset.meta.displayName) {
-                                project.removeAsset(this.asset);
-                            }
-                            else {
+                            if (!this.isTemporaryAsset()) {
                                 project.updateAsset(this.asset);
                             }
                         }
@@ -318,7 +323,7 @@ namespace pxtblockly {
                     const blockIDs = this.asset.meta.blockIDs;
                     if (blockIDs.length && this.isTemporaryAsset() && blockIDs.some(id => this.sourceBlock_.workspace.getBlockById(id))) {
                         // This temporary asset is already used, so we should clone a copy for ourselves
-                        this.asset = pxt.react.getTilemapProject().duplicateAsset(this.asset);
+                        this.asset = pxt.cloneAsset(this.asset)
                         this.asset.meta.blockIDs = [];
                     }
                     this.asset.meta.blockIDs.push(this.sourceBlock_.id);
@@ -326,12 +331,20 @@ namespace pxtblockly {
                 this.setBlockData(this.asset.id);
             }
 
-            pxt.react.getTilemapProject().updateAsset(this.asset);
+            if (!this.isTemporaryAsset()) {
+                pxt.react.getTilemapProject().updateAsset(this.asset);
+            }
+            else {
+                this.asset.meta.temporaryInfo = {
+                    blockId: this.sourceBlock_.id,
+                    fieldName: this.name
+                };
+            }
         }
 
         protected updateAssetListener() {
             pxt.react.getTilemapProject().removeChangeListener(this.getAssetType(), this.assetChangeListener);
-            if (this.asset) {
+            if (this.asset && !this.isTemporaryAsset()) {
                 pxt.react.getTilemapProject().addChangeListener(this.asset, this.assetChangeListener);
             }
         }
@@ -343,10 +356,6 @@ namespace pxtblockly {
                 this.asset = pxt.react.getTilemapProject().lookupAsset(this.getAssetType(), id);
             }
             this.redrawPreview();
-        }
-
-        protected isTemporaryAsset() {
-            return this.asset && !this.asset.meta.displayName;
         }
     }
 

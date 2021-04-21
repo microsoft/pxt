@@ -366,9 +366,7 @@ function onYouTubeIframeAPIReady() {
 
     function loadToolbox() {
         const config = readConfig();
-        // tslint:disable-next-line: no-inner-html
         toolbox.innerHTML = "";
-        // tslint:disable-next-line: no-inner-html
         paintbox.innerHTML = "";
 
         // paint
@@ -753,7 +751,7 @@ function onYouTubeIframeAPIReady() {
         const evs = state.paint;
         if (!evs) return;
         let ev: PaintAction;
-        // tslint:disable-next-line: no-conditional-assignment
+        // eslint-disable-next-line  no-cond-assign
         while (ev = evs.pop()) {
             if (ev.type == "down" || ev.type == "whiteboard") {
                 clearPaint();
@@ -1908,7 +1906,6 @@ background-image: url(${config.backgroundImage});
         }
 
         const editorselect = document.getElementById("editorselect") as HTMLSelectElement;
-        // tslint:disable-next-line: no-inner-html
         editorselect.innerHTML = "" // remove all web cams
         Object.keys(editorConfigs).forEach(editorid => {
             const editor = editorConfigs[editorid];
@@ -1973,7 +1970,6 @@ background-image: url(${config.backgroundImage});
             render()
         }
         const facecamselect = document.getElementById("facecamselect") as HTMLSelectElement
-        // tslint:disable-next-line: no-inner-html
         facecamselect.innerHTML = "" // remove all web cams
         // no Off option
         cams.forEach(cam => {
@@ -2129,7 +2125,6 @@ background-image: url(${config.backgroundImage});
             facecamerror.classList.add("hidden")
 
         const hardwarecamselect = document.getElementById("hardwarecamselect") as HTMLSelectElement
-        // tslint:disable-next-line: no-inner-html
         hardwarecamselect.innerHTML = "" // remove all web cams
         {
             const option = document.createElement("option")
@@ -2476,7 +2471,6 @@ background-image: url(${config.backgroundImage});
         }
 
         const micselect = document.getElementById("micselect") as HTMLSelectElement
-        // tslint:disable-next-line: no-inner-html
         micselect.innerHTML = "" // remove all web cams
         {
             const option = document.createElement("option")

@@ -1,4 +1,4 @@
-// tslint:disable: react-a11y-anchors
+/* eslint-disable  jsx-a11y/anchor-is-valid */
 
 import * as React from "react";
 import * as sui from "./sui";
@@ -70,7 +70,7 @@ export function showAboutDialogAsync(projectView: pxt.editor.IProjectView) {
                     {targetTheme.copyrightText ? <p> {targetTheme.copyrightText} </p> : undefined}
                 </div>
             })
-        }).done();
+        });
 }
 
 
@@ -97,6 +97,7 @@ function renderVersionLink(name: string, version: string, url: string) {
     return <p>{lf("{0} version:", name)} &nbsp;
             <a href={encodeURI(url)}
             title={`${lf("{0} version: {1}", name, version)}`}
+            aria-label={`${lf("{0} version{1}", name, version)}`}
             target="_blank" rel="noopener noreferrer">{version}</a>
     </p>;
 }
@@ -475,13 +476,17 @@ export function showCreateGithubRepoDialogAsync(name?: string) {
                     {sui.helpIconLink("/github", lf("Learn more about GitHub"))}
                 </p>
                 <div className="ui field">
-                    <sui.Input type="url" autoFocus value={repoName} onChange={onNameChanged} label={lf("Repository name")} placeholder={`pxt-my-gadget...`} class="fluid" error={nameErr} />
+                    <sui.Input type="url" autoFocus value={repoName} onChange={onNameChanged}
+                    label={lf("Repository name")} id="githubRepoNameInput"
+                    placeholder={`pxt-my-gadget...`} class="fluid" error={nameErr} />
                 </div>
                 <div className="ui field">
-                    <sui.Input type="text" value={repoDescription} onChange={onDescriptionChanged} label={lf("Repository description")} placeholder={lf("MakeCode extension for my gadget")} class="fluid" />
+                    <sui.Input type="text" value={repoDescription} onChange={onDescriptionChanged}
+                    label={lf("Repository description")} id="githubRepoDescriptionInput"
+                    placeholder={lf("MakeCode extension for my gadget")} class="fluid" />
                 </div>
                 <div className="ui field">
-                    <select className={`ui dropdown`} onChange={onPublicChanged}>
+                    <select className={`ui dropdown`} onChange={onPublicChanged} aria-label={lf("Repository visibility setting")}>
                         <option aria-selected={repoPublic} value="true">{lf("Public repository, anyone can look at your code.")}</option>
                         <option aria-selected={!repoPublic} value="false">{lf("Private repository, your code is only visible to you.")}</option>
                     </select>
@@ -545,13 +550,13 @@ export function showImportGithubDialogAsync() {
                 header: lf("Clone or create your own GitHub repo"),
                 hideAgree: true,
                 hasCloseIcon: true,
-                /* tslint:disable:react-a11y-anchors */
                 jsx: <div className="ui form">
-                    <div className="ui relaxed divided list" role="menu">
+                    <div className="ui relaxed divided list">
                         <div key={"create new"} className="item">
                             <i className="large plus circle middle aligned icon"></i>
                             <div className="content">
-                                <a onClick={createNew} role="menuitem" className="header"
+                                <a onClick={createNew} role="button" className="header"
+                                    tabIndex={0} onKeyDown={sui.fireClickOnEnter}
                                     title={lf("Create new GitHub repository")}>
                                     <b>{lf("Create new...")}</b>
                                 </a>
@@ -564,7 +569,9 @@ export function showImportGithubDialogAsync() {
                             <div key={r.name} className="item">
                                 <i className="large github middle aligned icon"></i>
                                 <div className="content">
-                                    <a onClick={r.onClick} role="menuitem" className="header">{r.name}</a>
+                                    <a onClick={r.onClick} role="button" className="header"
+                                        tabIndex={0}  onKeyDown={sui.fireClickOnEnter}
+                                    >{r.name}</a>
                                     <div className="description">
                                         {pxt.Util.timeSince(r.updatedAt)}
                                         {". "}
@@ -655,7 +662,7 @@ export function showReportAbuseAsync(pubId?: string) {
                 <textarea aria-labelledby="abuseDescriptionLabel"></textarea>
             </div>
         </div>,
-    }).done(res => {
+    }).then(res => {
         if (res) {
             pxt.tickEvent("app.reportabuse.send");
             const id = pxt.Cloud.parseScriptId(urlInput.value as string);
@@ -705,5 +712,5 @@ export function promptTranslateBlock(blockid: string, blockTranslationIds: strin
             </div>
             {blockTranslationIds.map(trid => <div key={`ictr${trid}`} className="ui basic segment">{trid}</div>)}
         </div>
-    }).done();
+    });
 }

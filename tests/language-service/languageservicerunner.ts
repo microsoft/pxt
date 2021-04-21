@@ -295,7 +295,7 @@ function runSnippetTestCaseAsync(testCase: SnippetTestCase): Promise<void> {
                 return;
             }
 
-            chai.assert(typeof result === "string", `Lang service returned non-string result: ${result}`)
+            chai.assert(typeof result === "string", `Lang service returned non-string result: ${JSON.stringify(result)}`)
 
             const match = util.compareBaselines(result, expectedSnippet, {
                 whitespaceSensitive: false

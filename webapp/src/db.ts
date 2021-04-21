@@ -1,16 +1,8 @@
+// eslint-disable-next-line no-var
 declare var require: any;
-import * as Promise from "bluebird";
-(window as any).Promise = Promise;
 
 const PouchDB = require("pouchdb")
     .plugin(require('pouchdb-adapter-memory'));
-
-(Promise as any).config({
-    // Enables all warnings except forgotten return statements.
-    warnings: {
-        wForgottenReturn: false
-    }
-});
 
 let _db: Promise<any> = undefined;
 export function getDbAsync(): Promise<any> {

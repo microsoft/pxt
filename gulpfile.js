@@ -284,26 +284,30 @@ function buildStrings(out, rootPaths, recursive) {
     return Promise.resolve();
 }
 
-// TODO: Copied from Jakefile; should be async
 function runUglify() {
     if (process.env.PXT_ENV == 'production') {
         console.log("Minifying built/web...")
 
-        const uglify = require("uglify-js");
+        const terser = require("terser");
+        const files = ju.expand("built/web", ".js");
 
-        ju.expand("built/web", ".js").forEach(fn => {
-            console.log("Minifying " + fn)
+        return Promise.all(files.map(fn => {
+            console.log(`Minifying ${fn}`)
 
-            const content = fs.readFileSync(fn, "utf-8")
-            const res = uglify.minify(content);
-
-            if (!res.error) {
-                fs.writeFileSync(fn, res.code, { encoding: "utf8" })
-            }
-            else {
-                console.log("Could not minify " + fn);
-            }
-        });
+            return Promise.resolve()
+                .then(() => fs.readFileSync(fn, "utf-8"))
+                .then(content => terser.minify(content))
+                .then(
+                    res => {
+                        fs.writeFileSync(fn, res.code, { encoding: "utf8" })
+                        console.log(`Finished minifying ${fn}`);
+                    },
+                    err => {
+                        console.log(`Could not minify ${fn}: ${err}`);
+                        throw err;
+                    }
+                );
+        }))
     }
     else {
         console.log("Skipping minification for non-production build")
@@ -341,7 +345,6 @@ const copyJquery = () => gulp.src("node_modules/jquery/dist/jquery.min.js")
 
 const copyWebapp = () =>
     gulp.src([
-        "node_modules/bluebird/js/browser/bluebird.min.js",
         "node_modules/applicationinsights-js/dist/ai.0.js",
         "pxtcompiler/ext-typescript/lib/typescript.js",
         "built/pxtlib.js",
@@ -371,7 +374,7 @@ const browserifyAssetEditor = () => process.env.PXT_ENV == 'production' ?
     exec('node node_modules/browserify/bin/cmd built/webapp/src/assetEditor.js -o built/web/pxtasseteditor.js --debug')
 
 const buildSVGIcons = () => {
-    let webfontsGenerator = require('webfonts-generator')
+    let webfontsGenerator = require('@vusion/webfonts-generator')
     let name = "xicon"
 
     return new Promise((resolve, reject) => {
@@ -426,7 +429,7 @@ const buildSVGIcons = () => {
 
 const copyMonacoBase = () => gulp.src([
     "node_modules/monaco-editor/min/vs/base/**/*",
-    "!**/codicon.ttf" // We use a different version of this font that's checked into pxt
+    "!**/codicon.ttf" // We use a different version of this font that's checked into pxt (see inlineCodiconFont)
 ])
     .pipe(gulp.dest("webapp/public/vs/base"));
 
@@ -439,17 +442,17 @@ const copyMonacoEditor = () => gulp.src([
 const copyMonacoLoader = () => gulp.src("node_modules/monaco-editor/min/vs/loader.js")
     .pipe(gulp.dest("webapp/public/vs"));
 
-const languages = ["bat", "cpp", "json", "markdown", "python"]
+const basicLanguages = ["bat", "cpp", "markdown", "python", "typescript", "javascript"];
+const allLanguages = ["json", ...basicLanguages]
 const copyMonacoEditorMain = () => gulp.src("node_modules/monaco-editor/min/vs/editor/editor.main.js")
     .pipe(replace(/"\.\/([\w-]+)\/\1\.contribution"(?:,)?\s*/gi, (match, lang) => {
-        if (languages.indexOf(lang) === -1) {
+        if (allLanguages.indexOf(lang) === -1) {
             return ""
         }
         return match;
     }))
     .pipe(gulp.dest("built/web/vs/editor/"));
 
-const basicLanguages = ["bat", "cpp", "markdown", "python"];
 const copyMonacoBasicLanguages = gulp.parallel(basicLanguages.map(lang => {
     return () => gulp.src(`node_modules/monaco-editor/min/vs/basic-languages/${lang}/${lang}.js`)
         .pipe(gulp.dest(`webapp/public/vs/basic-languages/${lang}`))
@@ -458,14 +461,17 @@ const copyMonacoBasicLanguages = gulp.parallel(basicLanguages.map(lang => {
 const copyMonacoJSON = () => gulp.src("node_modules/monaco-editor/min/vs/language/json/**/*")
     .pipe(gulp.dest("webapp/public/vs/language/json"));
 
+const copyMonacoTypescript = () => gulp.src("node_modules/monaco-editor/min/vs/language/typescript/**/*")
+    .pipe(gulp.dest("webapp/public/vs/language/typescript"));
 
 const inlineCodiconFont = () => {
     // For whatever reason the codicon.ttf font that comes with the monaco-editor is invalid.
     // We need to inline the font anyways so fetch a good version of the font from the source
+    // This good version comes from: https://github.com/microsoft/vscode-codicons/blob/main/dist/codicon.ttf
     let font = fs.readFileSync("theme/external-font/codicon.ttf").toString("base64");
 
     return gulp.src("node_modules/monaco-editor/min/vs/editor/editor.main.css")
-        .pipe(replace(`../base/browser/ui/codiconLabel/codicon/codicon.ttf`, `data:application/x-font-ttf;charset=utf-8;base64,${font}`))
+        .pipe(replace(`../base/browser/ui/codicons/codicon/codicon.ttf`, `data:application/x-font-ttf;charset=utf-8;base64,${font}`))
         .pipe(gulp.dest("webapp/public/vs/editor/"))
 }
 
@@ -481,6 +487,7 @@ const copyMonaco = gulp.series(gulp.parallel(
     copyMonacoEditorMain,
     copyMonacoJSON,
     copyMonacoBasicLanguages,
+    copyMonacoTypescript,
     inlineCodiconFont
 ), stripMonacoSourceMaps);
 
@@ -557,12 +564,13 @@ const skillmap = gulp.series(cleanSkillmap, buildSkillmap, gulp.parallel(copySki
                  Tests and Linting
 *********************************************************/
 
-const lint = () => Promise.all(
+const lintWithEslint = () => Promise.all(
     ["cli", "pxtblocks", "pxteditor", "pxtlib", "pxtcompiler",
         "pxtpy", "pxtrunner", "pxtsim", "pxtwinrt", "webapp",
-        "docfiles/pxtweb", "skillmap"].map(dirname =>
-            exec(`node node_modules/tslint/bin/tslint --project ./${dirname}/tsconfig.json`, true)))
+        "docfiles/pxtweb", "skillmap", "docs/static/streamer"].map(dirname =>
+            exec(`node node_modules/eslint/bin/eslint.js -c .eslintrc.js --ext .ts,.tsx ./${dirname}/`, true)))
     .then(() => console.log("linted"))
+const lint = lintWithEslint
 
 const testdecompiler = testTask("decompile-test", "decompilerunner.js");
 const testlang = testTask("compile-test", "compilerunner.js");

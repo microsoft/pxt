@@ -19,7 +19,7 @@ import U = pxt.Util;
 import Cloud = pxt.Cloud;
 
 // Avoid importing entire crypto-js
-/* tslint:disable:no-submodule-imports */
+/* eslint-disable import/no-internal-modules */
 const sha1 = require("crypto-js/sha1");
 
 type Header = pxt.workspace.Header;
@@ -34,6 +34,10 @@ let headerQ = new U.PromiseQueue();
 
 let impl: WorkspaceProvider;
 let implType: string;
+
+export function getWorkspaceType(): string {
+    return implType
+}
 
 function lookup(id: string) {
     return allScripts.find(x => x.header.id == id || x.header.path == id);
@@ -118,13 +122,17 @@ async function switchToMemoryWorkspace(reason: string): Promise<void> {
 }
 
 export function getHeaders(withDeleted = false) {
-    maybeSyncHeadersAsync().done();
+    maybeSyncHeadersAsync();
     const cloudUserId = auth.user()?.id;
     let r = allScripts.map(e => e.header).filter(h =>
         (withDeleted || !h.isDeleted) &&
         !h.isBackup &&
         (!h.cloudUserId || h.cloudUserId === cloudUserId))
-    r.sort((a, b) => b.recentUse - a.recentUse)
+    r.sort((a, b) => {
+        const aTime = a.cloudUserId ? Math.min(a.cloudLastSyncTime, a.modificationTime) : a.modificationTime
+        const bTime = b.cloudUserId ? Math.min(b.cloudLastSyncTime, b.modificationTime) : b.modificationTime
+        return bTime - aTime
+    })
     return r
 }
 
@@ -180,7 +188,7 @@ function cleanupBackupsAsync() {
 }
 
 export function getHeader(id: string) {
-    maybeSyncHeadersAsync().done();
+    maybeSyncHeadersAsync();
     let e = lookup(id)
     if (e && !e.header.isDeleted)
         return e.header
@@ -434,7 +442,7 @@ export async function partialSaveAsync(id: string, filename: string, content: st
         pxt.tickEvent(`workspace.invalidSaveToUnknownProject`);
         return;
     }
-    const newTxt = {...prev.text}
+    const newTxt = {...await getTextAsync(id)}
     newTxt[filename] = content;
     return saveAsync(prev.header, newTxt);
 }
@@ -459,12 +467,6 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
             version: null
         }
         allScripts.push(e)
-    } else {
-        // persist header changes to our local cache, but keep the old
-        // reference around because (unfortunately) other layers (e.g. package.ts)
-        // assume the reference is stable per id.
-        Object.assign(e.header, h)
-        h = e.header;
     }
 
     const hasUserFileChanges = async () => {
@@ -512,6 +514,13 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
     if (!fromCloudSync)
         h.recentUse = U.nowSeconds()
 
+    if (!newSave) {
+        // persist header changes to our local cache, but keep the old
+        // reference around because (unfortunately) other layers (e.g. package.ts)
+        // assume the reference is stable per id.
+        Object.assign(e.header, h)
+        h = e.header;
+    }
     if (text)
         e.text = text
     if (text || h.isDeleted) {
@@ -1295,19 +1304,6 @@ export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
             await saveAsync(h, files)
         }
     }
-
-    // automatically update project name with github name
-    // if it start with pxt-
-    const ghid = pxt.github.parseRepoId(h.githubId);
-    if (ghid.project && /^pxt-/.test(ghid.project)) {
-        const ghname = ghid.project.replace(/^pxt-/, '').replace(/-+/g, ' ')
-        if (ghname != h.name) {
-            const cfg = pxt.Package.parseAndValidConfig(files[pxt.CONFIG_NAME]);
-            cfg.name = ghname;
-            h.name = ghname;
-            await saveAsync(h, files);
-        }
-    }
 }
 
 // replace all file|worspace references with github sha
@@ -1564,7 +1560,7 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
                 }
                 return ex;
             })
-            cloudsync.syncAsync().done() // sync in background
+            cloudsync.syncAsync(); // sync in background
         })
         .then(() => {
             refreshHeadersSession();

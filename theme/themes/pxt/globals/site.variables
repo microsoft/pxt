@@ -22,6 +22,7 @@
 @lightGrey: #d9d9d9;
 
 @greenTextColor: darken(@green, 5);
+@yellowTextColor: #8e6505;
 
 @lightTextColor              : darken(@secondaryColor, 15%);
 @invertedUnselectedTextColor : rgba(255, 255, 255, 0.8);
@@ -83,7 +84,7 @@
 --------------------*/
 
 @useCustomScrollbars: false;
-@customScrollbarWidth: 7px;
+@customScrollbarWidth: 10px;
 
 @thumbBackground: rgba(0, 0, 0, 0.25);
 @thumbInvertedBackground: rgba(255, 255, 255, 0.25);
@@ -130,6 +131,10 @@
 @pyIcon: data-uri(@pyIconUrl);
 @jsIconUrl: "../docs/static/icons/js.svg";
 @jsIcon: data-uri(@jsIconUrl);
+@immersiveReaderUrl: "../docs/static/icons/immersive-reader.svg";
+@immersiveReaderIcon: data-uri(@immersiveReaderUrl);
+@immersiveReaderLightUrl: "../docs/static/icons/immersive-reader-light.svg";
+@immersiveReaderLightIcon: data-uri(@immersiveReaderLightUrl);
 
 @logoFilter: invert(23%) sepia(91%) saturate(1957%) hue-rotate(290deg) brightness(83%) contrast(94%);
 
@@ -293,7 +298,7 @@
 @homeCardBorderSize: 5px;
 @homeCardBorderColor: #e9eef2;
 @homeCardHoverBorderColor: white;
-@homeCardFocusBorderColor: yellow;
+@homeCardFocusBorderColor: @primaryColor;
 @homeCardColor: @textColor;
 @homeCardMetaColor: @homeCardColor;
 @homeCardHeaderColor: @homeCardColor;
@@ -313,7 +318,8 @@
 @homeDetailCardActionBackground: @homeScreenBackground;
 @homeDetailCardActionText: white;
 @homeInvertedDetailCardActionBackground: lighten(@homeScreenBackground, 10%);
-
+@homeHeaderBorderSize: 3px;
+@homeHeaderSelectedBorderColor: white;
 /*-------------------
    Tutorial
 --------------------*/

@@ -1,4 +1,4 @@
-/* tslint:disable:forin cli only run in node */
+/* eslint-disable @typescript-eslint/no-for-in-array */
 
 /// <reference path="../built/pxtlib.d.ts"/>
 /// <reference path="../built/pxtcompiler.d.ts"/>
@@ -13,6 +13,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import * as child_process from 'child_process';
+import { promisify } from "util";
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
@@ -29,7 +30,7 @@ import * as gitfs from './gitfs';
 import * as crowdin from './crowdin';
 import * as youtube from './youtube';
 
-const rimraf: (f: string, opts: any, cb: (err: any, res: any) => void) => void = require('rimraf');
+const rimraf: (f: string, opts: any, cb: (err: Error, res: any) => void) => void = require('rimraf');
 
 pxt.docs.requireDOMSanitizer = () => require("sanitize-html");
 
@@ -807,7 +808,7 @@ function gitUploadAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
             let size = 0
             for (let r of missingReqs) size += r.size
             console.log("files missing: ", missingReqs.length, size, "bytes")
-            return Promise.map(missingReqs,
+            return U.promiseMapAll(missingReqs,
                 r => Cloud.privatePostAsync("upload/blob", r)
                     .then(() => {
                         console.log(r.filename + ": OK," + r.size + " " + r.hash)
@@ -1026,7 +1027,7 @@ function uploadCoreAsync(opts: UploadOptions) {
             "gifworkerjs": opts.localDir + "gifjs/gif.worker.js",
             "serviceworkerjs": opts.localDir + "serviceworker.js",
             "pxtVersion": pxtVersion(),
-            "pxtRelId": "",
+            "pxtRelId": "localDirRelId",
             "pxtCdnUrl": opts.localDir,
             "commitCdnUrl": opts.localDir,
             "blobCdnUrl": opts.localDir,
@@ -1254,12 +1255,12 @@ function uploadCoreAsync(opts: UploadOptions) {
     pxt.log('');
 
     if (opts.localDir)
-        return Promise.map(opts.fileList, uploadFileAsync, { concurrency: 15 })
+        return U.promisePoolAsync(15, opts.fileList, uploadFileAsync)
             .then(() => {
                 pxt.log("Release files written to " + path.join(opts.builtPackaged, opts.localDir))
             })
 
-    return Promise.map(opts.fileList, uploadFileAsync, { concurrency: 15 })
+    return U.promisePoolAsync(15, opts.fileList, uploadFileAsync)
         .then(() =>
             opts.githubOnly
                 ? uploadToGitRepoAsync(opts, uplReqs)
@@ -1291,7 +1292,7 @@ function forEachBundledPkgAsync(f: (pkg: pxt.MainPackage, dirname: string) => Pr
         folders = folders.concat(projects);
     }
 
-    return Promise.mapSeries(folders, (dirname) => {
+    return U.promiseMapAllSeries(folders, (dirname) => {
         const host = new Host();
         const pkgPath = path.join(nodeutil.targetDir, dirname);
         pxt.debug(`building bundled package at ${pkgPath}`)
@@ -1404,8 +1405,8 @@ export function ghpPushAsync(builtPackaged: string, minify = false) {
 
 function maxMTimeAsync(dirs: string[]) {
     let max = 0
-    return Promise.map(dirs, dn => readDirAsync(dn)
-        .then(files => Promise.map(files, fn => statAsync(path.join(dn, fn))
+    return U.promiseMapAll(dirs, dn => readDirAsync(dn)
+        .then(files => U.promiseMapAll(files, fn => statAsync(path.join(dn, fn))
             .then(st => {
                 max = Math.max(st.mtime.getTime(), max)
             }))))
@@ -1604,14 +1605,26 @@ interface CiBuildInfo {
     pullRequest?: boolean;
 }
 
-function ciBuildInfo(): CiBuildInfo {
-    const isTravis = (process.env.TRAVIS === "true");
-    const isGithubAction = (!!process.env.GITHUB_ACTIONS);
-    const isAzurePipelines = (process.env.TF_BUILD === "True");
+function isTravis() {
+    return process.env.TRAVIS === "true";
+}
 
-    if (isTravis) return travisInfo();
-    else if (isGithubAction) return githubActionInfo();
-    else if (isAzurePipelines) return travisInfo(); // azure pipelines uses same info
+function isGithubAction() {
+    return !!process.env.GITHUB_ACTIONS;
+}
+
+function isAzurePipelines() {
+    return process.env.TF_BUILD === "True";
+}
+
+function isLocalBuild() {
+    return !(isTravis() || isGithubAction() || isAzurePipelines());
+}
+
+function ciBuildInfo(): CiBuildInfo {
+    if (isTravis()) return travisInfo();
+    else if (isGithubAction()) return githubActionInfo();
+    else if (isAzurePipelines()) return travisInfo(); // azure pipelines uses same info
     else {
         // local build
         return {
@@ -1979,17 +1992,28 @@ function buildWebStringsAsync() {
 function buildSkillMapAsync(parsed: commandParser.ParsedCommand) {
     // local serve
     const skillmapRoot = "node_modules/pxt-core/skillmap";
+    const docsPath = parsed.flags["docs"];
     return rimrafAsync(`${skillmapRoot}/public/blb`, {})
         .then(() => rimrafAsync(`${skillmapRoot}/build/assets`, {}))
+        .then(() => rimrafAsync(`${skillmapRoot}/public/docs`, {}))
+        .then(() => rimrafAsync(`${skillmapRoot}/public/static`, {}))
         .then(() => {
             // read pxtarget.json, save into 'pxtTargetBundle' global variable
             let cfg = readLocalPxTarget();
             nodeutil.writeFileSync(`${skillmapRoot}/public/blb/target.js`, "// eslint-disable-next-line \n" + targetJsPrefix + JSON.stringify(cfg));
             nodeutil.cp("node_modules/pxt-core/built/pxtlib.js", `${skillmapRoot}/public/blb`);
             nodeutil.cp("built/web/semantic.css", `${skillmapRoot}/public/blb`);
+            nodeutil.cp("node_modules/pxt-core/built/web/icons.css", `${skillmapRoot}/public/blb`);
 
             // copy 'assets' over from docs/static
             nodeutil.cpR("docs/static/skillmap/assets", `${skillmapRoot}/public/assets`);
+
+            if (docsPath) {
+                // copy docs over from specified path
+                nodeutil.cpR(`docs/${docsPath}`, `${skillmapRoot}/public/docs/${docsPath}`);
+                nodeutil.cpR(`docs/static/${docsPath}`, `${skillmapRoot}/public/static/${docsPath}`);
+            }
+
             return nodeutil.spawnAsync({
                 cmd: os.platform() === "win32" ? "npm.cmd" : "npm",
                 args: ["run-script", "start"],
@@ -2372,7 +2396,7 @@ function buildAndWatchAsync(f: () => Promise<string[]>): Promise<void> {
             if (globalConfig.noAutoBuild) return
             pxt.debug('watching ' + dirs.join(', ') + '...');
             let loop = () => {
-                Promise.delay(1000)
+                U.delay(1000)
                     .then(() => maxMTimeAsync(dirs))
                     .then(num => {
                         if (num > currMtime) {
@@ -2577,11 +2601,11 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
 }
 
 
-const readFileAsync: any = Promise.promisify(fs.readFile)
-const writeFileAsync: any = Promise.promisify(fs.writeFile)
-const readDirAsync = Promise.promisify(fs.readdir)
-const statAsync = Promise.promisify(fs.stat)
-const rimrafAsync = Promise.promisify(rimraf);
+const readFileAsync: any = promisify(fs.readFile)
+const writeFileAsync: any = promisify(fs.writeFile)
+const readDirAsync = promisify(fs.readdir)
+const statAsync = promisify(fs.stat)
+const rimrafAsync = promisify(rimraf);
 
 let commonfiles: Map<string> = {}
 
@@ -3099,7 +3123,7 @@ export function initAsync(parsed: commandParser.ParsedCommand) {
     let configMap: Map<string> = JSON.parse(files[pxt.CONFIG_NAME])
     let initPromise = Promise.resolve();
     if (!parsed.flags["useDefaults"]) {
-        initPromise = Promise.mapSeries(["name", "description", "license"], f =>
+        initPromise = U.promiseMapAllSeries(["name", "description", "license"], f =>
             queryAsync(f, configMap[f])
                 .then(r => {
                     configMap[f] = r
@@ -3337,7 +3361,7 @@ export function downloadDiscourseTagAsync(parsed: commandParser.ParsedCommand): 
         lastCard = cards.pop();
     }
     return pxt.discourse.topicsByTag(discourseRoot, tag)
-        .then(topics => Promise.mapSeries(topics, topic => {
+        .then(topics => U.promiseMapAllSeries(topics, topic => {
             pxt.log(`  ${topic.title}`)
             return pxt.discourse.extractSharedIdFromPostUrl(topic.url)
                 .then(id => {
@@ -3838,7 +3862,7 @@ function testDirAsync(parsed: commandParser.ParsedCommand) {
     let currBase = ""
     let errors: string[] = []
 
-    return Promise.mapSeries(tests, (ti) => {
+    return U.promiseMapAllSeries(tests, (ti) => {
         let fn = path.basename(ti.filename)
         console.log(`--- ${fn}`)
         let hexPath = outdir + fn.replace(/\.ts$/, "") + ".hex"
@@ -3955,7 +3979,7 @@ function testPkgConflictsAsync() {
     let trg = nodeutil.getPxtTarget();
     pxt.setAppTarget(trg);
 
-    return Promise.mapSeries(testCases, (tc) => {
+    return U.promiseMapAllSeries(testCases, (tc) => {
         let testFailed = (reason: string) => {
             failures.push({ testCase: tc.id, reason });
         };
@@ -4001,7 +4025,7 @@ function testPkgConflictsAsync() {
 }
 
 function decompileAsync(parsed: commandParser.ParsedCommand) {
-    return Promise.mapSeries(parsed.args, f => {
+    return U.promiseMapAllSeries(parsed.args, f => {
         const outFile = replaceFileExtension(f, ".blocks")
         return decompileAsyncWorker(f, parsed.flags["dep"] as string)
             .then(result => {
@@ -4039,8 +4063,9 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
     });
 }
 
-function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictSyntaxCheck?: boolean): Promise<void> {
-    console.log(`### TESTING ${snippets.length} CodeSnippets`)
+async function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictSyntaxCheck?: boolean): Promise<void> {
+    console.log(`### TESTING ${snippets.length} CodeSnippets`);
+    const isLocal = isLocalBuild();
     pxt.github.forceProxy = true; // avoid throttling in CI machines
     let filenameMatch: RegExp;
     try {
@@ -4053,7 +4078,14 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictSyntaxC
     }
     snippets = snippets.filter(snippet => filenameMatch.test(snippet.name));
     let ignoreCount = 0
-    const cache: pxt.Map<string> = {};
+    const ghExtensionCache: pxt.Map<string> = {};
+    type CompileResources = {
+        host: SnippetHost;
+        pkg: pxt.MainPackage;
+        opts: pxtc.CompileOptions;
+    }
+
+    const compileOptsCache: pxt.Map<pxtc.CompileOptions> = {};
     const successes: string[] = []
     interface FailureInfo {
         filename: string
@@ -4070,7 +4102,18 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictSyntaxC
         })
         infos.forEach(info => pxt.log(`${f}:(${info.line},${info.column}): ${info.category} ${info.messageText}`));
     }
-    return Promise.map(snippets, (snippet: CodeSnippet) => {
+
+    // sort such that all snippets with the same packages are next to eachother, then snippet name so it's stable
+    // if we add a 'missing package' upgrade rule, it may cause things to become misordered.
+    const sortedSnippets = snippets.sort(
+        (a, b) => getCompileOptsKey(a.packages).localeCompare(getCompileOptsKey(b.packages)) || a.name.localeCompare(b.name)
+    );
+    let codeSnippetCount = 0;
+
+    // If completion time becomes an issue here again,
+    // we can likely use node worker threads as it is HEAVILY cpu bound.
+    // This would require bumping up the minimum node version to 11.7+ / maybe 12+ though.
+    await U.promiseMapAllSeries(sortedSnippets, async (snippet: CodeSnippet) => {
         const name = snippet.name;
         const fn = snippet.file || snippet.name;
         pxt.log(`  ${fn} (${snippet.type})`);
@@ -4082,212 +4125,263 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictSyntaxC
                     throw new Error("codecards must be an JSON array")
                 addSuccess(fn);
             } catch (e) {
-                addFailure(fn, [{
-                    code: 4242,
-                    category: ts.DiagnosticCategory.Error,
-                    messageText: "invalid JSON: " + e.message,
-                    fileName: fn,
-                    start: 1,
-                    line: 1,
-                    length: 1,
-                    column: 1
-                }]);
+                addFailure(
+                    snippet.src,
+                    [createKsDiagnostic(`invalid JSON: ${e.message}`, fn)]
+                );
             }
-            return Promise.resolve();
+            return;
         }
 
-        let isPy = snippet.ext === "py"
-        let inFiles;
-        let extra = snippet.extraFiles || {};
-        if (isPy)
-            inFiles = { "main.ts": "", "main.py": snippet.code, "main.blocks": "", ...extra }
-        else
-            inFiles = { "main.ts": snippet.code, "main.py": "", "main.blocks": "", ...extra }
+        if (++codeSnippetCount % 40 == 0) {
+            // clean up cache every once in a while to speed up / clear up mem
+            // TODO probably this should be handled in the service host as it does become a perf concern
+            cleanService();
+        }
 
-        const host = new SnippetHost("snippet" + name, inFiles, snippet.packages);
-        host.cache = cache;
-        const pkg = new pxt.MainPackage(host);
-        return pkg.installAllAsync()
-            .then(() => pkg.getCompileOptionsAsync().then(opts => {
-                opts.ast = true
-                let resp: { outfiles: Map<string>, success: boolean, diagnostics: pxtc.KsDiagnostic[], ast?: ts.Program };
-                if (isPy) {
-                    opts.target.preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME
-                    const stsCompRes = pxtc.compile(opts);
-                    const apisInfo = pxtc.getApiInfo(stsCompRes.ast, opts.jres)
-                    if (!apisInfo || !apisInfo.byQName)
-                        throw Error("Failed to get apisInfo")
-                    opts.apisInfo = apisInfo
+        const isPy = snippet.ext === "py";
+        const inFiles: pxt.Map<string> = {
+            [pxt.MAIN_TS]: isPy ? "" : snippet.code,
+            [pxt.MAIN_PY]: isPy ? snippet.code : "",
+            [pxt.MAIN_BLOCKS]: "",
+            ...(snippet.extraFiles || {}),
+        };
 
-                    opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
+        const { pkg, opts } = await getCompileResources(inFiles, snippet.packages);
 
-                    const { outfiles, diagnostics } = pxt.py.py2ts(opts)
-                    const success = diagnostics.length == 0
-                    resp = { outfiles, success, diagnostics, ast: stsCompRes.ast }
-                } else {
-                    resp = pxtc.compile(opts)
-                }
+        try {
+            let resp = tsServiceCompile(opts, true);
+            if (isPy) {
+                opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME;
+                const { ast } = resp;
 
-                if (resp.outfiles && snippet.file) {
-                    const dir = snippet.file
-                        .replace(/\.ts$/, '')
-                        .replace(/\.py$/, '');
-                    nodeutil.mkdirP(dir);
-                    nodeutil.mkdirP(path.join(dir, "built"));
-                    Object.keys(resp.outfiles).forEach(outfile => {
-                        const ofn = path.join(dir, "built", outfile);
-                        pxt.debug(`writing ${ofn}`);
-                        nodeutil.writeFileSync(ofn, resp.outfiles[outfile], 'utf8')
-                    })
-                    pkg.filesToBePublishedAsync()
-                        .then(files => {
-                            Object.keys(files).forEach(f => {
-                                const fn = path.join(dir, f);
-                                pxt.debug(`writing ${fn}`);
-                                nodeutil.writeFileSync(fn, files[f], 'utf8');
-                            })
+                const { outfiles, diagnostics, success } = pxtc.service.performOperation("py2ts", { options: opts }) as pxtc.transpile.TranspileResult;
+                resp = {
+                    outfiles,
+                    success,
+                    diagnostics,
+                    ast,
+                    times: {},
+                };
+            }
+
+            if (resp.outfiles && snippet.file && isLocal) {
+                const dir = snippet.file
+                    .replace(/\.ts$/, '')
+                    .replace(/\.py$/, '');
+                nodeutil.mkdirP(dir);
+                nodeutil.mkdirP(path.join(dir, "built"));
+                Object.keys(resp.outfiles).forEach(outfile => {
+                    const ofn = path.join(dir, "built", outfile);
+                    pxt.debug(`writing ${ofn}`);
+                    nodeutil.writeFileSync(ofn, resp.outfiles[outfile], 'utf8');
+                })
+                pkg.filesToBePublishedAsync()
+                    .then(files => {
+                        Object.keys(files).forEach(f => {
+                            const fn = path.join(dir, f);
+                            pxt.debug(`writing ${fn}`);
+                            nodeutil.writeFileSync(fn, files[f], 'utf8');
                         })
+                    })
+            }
+
+            if (!resp.success || resp.diagnostics?.length) {
+                return addFailure(snippet.src, resp.diagnostics);
+            }
+
+            if (!/^block/.test(snippet.type)) {
+                return addSuccess(fn);
+            }
+
+            // ensure decompile to blocks works
+            const bresp = pxtc.service.performOperation("decompile", {
+                fileName: pxt.MAIN_TS,
+                options: opts,
+            }) as pxtc.CompileResult;
+
+            if (!bresp.success) {
+                return addFailure(snippet.src, bresp.diagnostics);
+            }
+
+            // decompile to python
+            const decompiled = pxtc.service.performOperation("pydecompile", {
+                options: opts,
+                fileName: pxt.MAIN_TS,
+            }) as pxtc.transpile.TranspileResult;
+
+            const py = decompiled.outfiles[pxt.MAIN_PY];
+            const pySuccess = !!py && decompiled.success;
+            if (!pySuccess) {
+                console.log("ts2py error");
+                return addFailure(snippet.src, decompiled.diagnostics);
+            }
+            opts.fileSystem[pxt.MAIN_PY] = py;
+
+            // py to ts
+            const ts1 = opts.fileSystem[pxt.MAIN_TS];
+            opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME;
+            let ts2Res = pxtc.service.performOperation("py2ts", {
+                options: opts,
+            }) as pxtc.transpile.TranspileResult;
+
+            let ts2 = ts2Res.outfiles[pxt.MAIN_TS];
+
+            if (!ts2) {
+                console.log("py2ts error!");
+                console.dir(ts2Res);
+                let errs = ts2Res.diagnostics.map(pxtc.getDiagnosticString).join();
+                if (errs)
+                    console.log(errs);
+                return addFailure(snippet.src, ts2Res.diagnostics);
+            }
+
+            if (pyStrictSyntaxCheck) {
+                let cmp1 = pyComparisonString(ts1);
+                let cmp2 = pyComparisonString(ts2);
+                if (cmp1 != cmp2) {
+                    console.log(`Mismatch. Original:`);
+                    console.log(cmp1);
+                    console.log("decompiled->compiled:");
+                    console.log(cmp2);
+                    console.log("TS mismatch :/");
+                    // TODO: generate more helpful diags
+                    return addFailure(snippet.src, []);
+                } else {
+                    console.log("TS same :)");
                 }
-                if (resp.success) {
-                    if (/^block/.test(snippet.type)) {
-                        //Similar to pxtc.decompile but allows us to get blocksInfo for round trip
-                        const file = resp.ast.getSourceFile('main.ts');
-                        const apis = pxtc.getApiInfo(resp.ast, opts.jres);
-                        opts.apisInfo = apis
+            }
 
-                        // ensure decompile to blocks works
-                        const blocksInfo = pxtc.getBlocksInfo(apis);
-                        const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, {
-                            snippetMode: false,
-                            errorOnGreyBlocks: true
-                        });
+            // NOTE: neither of these decompile steps checks that the resulting code is correct or that
+            // when the code is compiled back to ts it'll behave the same. This could be validated in
+            // the future.
 
-                        let blockSuccess = !!bresp.outfiles['main.blocks'];
-                        if (!blockSuccess) {
-                            return addFailure(fn, bresp.diagnostics)
-                        }
-
-                        // decompile to python
-                        let ts1 = opts.fileSystem["main.ts"]
-                        let program = pxtc.getTSProgram(opts);
-                        const decompiled = pxt.py.decompileToPython(program, "main.ts");
-                        let pySuccess = !!decompiled.outfiles['main.py'] && decompiled.success
-                        if (!pySuccess) {
-                            console.log("ts2py error")
-                            return addFailure(fn, decompiled.diagnostics)
-                        }
-                        opts.fileSystem['main.py'] = decompiled.outfiles['main.py']
-                        let py = decompiled.outfiles['main.py']
-
-                        // py to ts
-                        opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
-                        let ts2Res = pxt.py.py2ts(opts)
-
-                        let ts2 = ts2Res.outfiles["main.ts"];
-
-                        if (!ts2) {
-                            console.log("py2ts error!")
-                            console.dir(ts2Res)
-                            let errs = ts2Res.diagnostics.map(pxtc.getDiagnosticString).join()
-                            if (errs)
-                                console.log(errs)
-                            return addFailure(fn, ts2Res.diagnostics)
-                        }
-
-                        let getComparisonString = (s: string): string =>
-                            s.split("\n")
-                                // ignore function names
-                                // e.g. function foobar() {}
-                                //   => function () {}
-                                .map(l => {
-                                    let m: RegExpExecArray;
-                                    do {
-                                        m = /function(.+)\(/.exec(l)
-                                        if (m && m.length > 1) {
-                                            l = l.replace(`function${m[1]}`, "function")
-                                        }
-                                    } while (m && m.length > 1)
-                                    return l
-                                })
-                                // ignore type annotations on assignment statements (these tend to get erased)
-                                // e.g. let foo: number = 7
-                                //   => let foo = 7
-                                .map(l => {
-                                    let m: RegExpExecArray;
-                                    do {
-                                        m = /.+:(.+)[=,)]/.exec(l)
-                                        if (m && m.length > 1) {
-                                            l = l.replace(`:${m[1]}`, "")
-                                        }
-                                    } while (m && m.length > 1)
-                                    return l
-                                })
-                                // ignore whitespace
-                                .map(l => l.replace(/\s/g, ""))
-                                // ignore linebreak differences
-                                .map(l => l.replace(/\n/g, ""))
-                                // ignore semi-colons
-                                .map(l => l.replace(/\;/g, ""))
-                                // ignore blank lines
-                                .filter(l => l)
-                                .join("")
-
-                        if (pyStrictSyntaxCheck) {
-                            let cmp1 = getComparisonString(ts1)
-                            let cmp2 = getComparisonString(ts2)
-                            let mismatch = cmp1 != cmp2
-                            if (mismatch) {
-                                console.log(`Mismatch. Original:`)
-                                console.log(cmp1)
-                                console.log("decompiled->compiled:")
-                                console.log(cmp2)
-                                console.log("TS mismatch :/")
-                                // TODO: generate more helpful diags
-                                return addFailure(fn, [])
-                            } else {
-                                console.log("TS same :)")
-                            }
-                        }
-
-                        // NOTE: neither of these decompile steps checks that the resulting code is correct or that
-                        // when the code is compiled back to ts it'll behave the same. This could be validated in
-                        // the future.
-
-                        return addSuccess(name)
-                    }
-                    else {
-                        return addSuccess(fn)
-                    }
-                }
-                else {
-                    return addFailure(name, resp.diagnostics)
-                }
-            }).catch((e: Error) => {
-                addFailure(name, [
-                    {
-                        code: 4242,
-                        category: ts.DiagnosticCategory.Error,
-                        messageText: e.message,
-                        fileName: fn,
-                        start: 1,
-                        line: 1,
-                        length: 1,
-                        column: 1
-                    }
-                ])
-            }))
-    }, { concurrency: 1 }).then((a: any) => {
-        pxt.log(`${successes.length}/${successes.length + failures.length} snippets compiled to blocks and python (and back), ${failures.length} failed`)
-        if (ignoreCount > 0) {
-            pxt.log(`Skipped ${ignoreCount} snippets`)
+            return addSuccess(name)
+        } catch (e) {
+            console.dir(e);
+            addFailure(
+                snippet.src,
+                [createKsDiagnostic(e.message, fn)]
+            );
         }
-    }).then(() => {
-        if (failures.length > 0) {
-            const msg = `${failures.length} snippets not compiling in the docs`;
-            if (pxt.appTarget.ignoreDocsErrors) pxt.log(msg);
-            else U.userError(msg);
+    });
+
+    pxt.log(`${successes.length}/${successes.length + failures.length} snippets compiled to blocks and python (and back), ${failures.length} failed`);
+    if (ignoreCount > 0) {
+        pxt.log(`Skipped ${ignoreCount} snippets`);
+    }
+    if (failures.length > 0) {
+        const msg = `${failures.length} snippets not compiling in the docs`
+        pxt.log(`${msg}:`);
+
+        failures.forEach(failure => {
+            pxt.log(`-- in ${failure.filename}:`)
+            failure.diagnostics.forEach(diag => {
+                pxt.log(`    ${pxtc.getDiagnosticString(diag)}`);
+            });
+        });
+
+        if (!pxt.appTarget.ignoreDocsErrors) U.userError(msg);
+    }
+
+    function tsServiceCompile(options: pxtc.CompileOptions, retryOnError?: boolean): pxtc.CompileResult {
+        let resp = tryCompile(options);
+        if (retryOnError && (!resp.success || resp.diagnostics.length)) {
+            pxt.log("Compile failed; resetting incremental compile.");
+            cleanService();
+            resp = tryCompile(options);
         }
-    })
+        return resp as pxtc.CompileResult;
+
+        function tryCompile(options: pxtc.CompileOptions): pxtc.CompileResult {
+            const resp = pxtc.service.performOperation("compile", { options }) as pxtc.CompileResult;
+            if ((resp as any).errorMessage) {
+                resp.success = false;
+                if (!resp.diagnostics) {
+                    resp.diagnostics = [];
+                }
+                resp.diagnostics.push(createKsDiagnostic((resp as any).errorMessage));
+            }
+            return resp;
+        }
+    }
+
+    async function getCompileResources(snippetFiles: pxt.Map<string>, pkgs: pxt.Map<string>): Promise<CompileResources> {
+        const host = new SnippetHost("codesnippet", snippetFiles, pkgs);
+        host.cache = ghExtensionCache;
+
+        const pkg = new pxt.MainPackage(host);
+        await pkg.installAllAsync();
+
+        const key = getCompileOptsKey(pkg.dependencies());
+        if (!compileOptsCache[key]) {
+            const targ = pkg.getTargetOptions();
+            targ.isNative = false;
+            const newOpts = await pkg.getCompileOptionsAsync(targ);
+            newOpts.ast = true;
+            // TODO: this being necessary implies a bug somewhere in the incremental compile
+            // that is resulting in erroneous compile errors.
+            newOpts.clearIncrBuildAndRetryOnError = true;
+            newOpts.errorOnGreyBlocks = true;
+            newOpts.snippetMode = false;
+            compileOptsCache[key] = newOpts;
+        }
+
+        const inFileNames = pkg.getFiles();
+        const opts = compileOptsCache[key];
+        opts.target.preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME;
+        opts.sourceFiles = inFileNames.concat(opts.sourceFiles.filter(f => pxtc.isPxtModulesFilename(f)));
+
+        for (const f of inFileNames) {
+            opts.fileSystem[f] = pkg.readFile(f);
+        }
+
+        opts.jres = pkg.getJRes();
+
+        return {
+            host,
+            pkg,
+            opts
+        };
+    }
+
+    function cleanService() {
+        pxtc.service.performOperation("reset", {});
+        codeSnippetCount = 0;
+    }
+
+    function createKsDiagnostic(message: string, fn = "?", code = 4242) {
+        return {
+            code,
+            category: ts.DiagnosticCategory.Error,
+            messageText: message,
+            fileName: fn,
+            start: 1,
+            line: 1,
+            length: 1,
+            column: 1
+        }
+    }
+
+    function getCompileOptsKey(pkgs: pxt.Map<string>) {
+        const keys = Object.keys(pkgs).sort();
+        return keys.reduce(
+            (prv, curr) => `${prv},${curr}:${pkgs[curr]}`,
+            ""
+        );
+    }
+
+    function pyComparisonString(s: string): string {
+        return s.split("\n")
+            // ignore function names e.g. function foobar() {} => function () {}
+            .map(l => l.replace(/function(.+)\(/g, "function ("))
+            // ignore type annotations on assignment statements (these tend to get erased) let foo: number = 7 => let foo = 7
+            .map(l => l.replace(/(.+):[^=,)]+([=,)])/g, (m, start, op) => start + op))
+            // ignore whitespace, semi-colons
+            .map(l => l.replace(/[\s;]/mg, ""))
+            .filter(l => l)
+            .join("");
+    }
 }
 
 function setBuildEngine() {
@@ -5399,6 +5493,8 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
     let urls: any = {};
     let checked = 0;
     let broken = 0;
+    // only check each snippet once.
+    const existingSnippets: pxt.Map<boolean> = {};
     let snippets: CodeSnippet[] = [];
 
     const maxFileSize = checkFileSize(nodeutil.allFiles("docs", 10, true, true, ".ignorelargefiles"));
@@ -5432,13 +5528,20 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
             }
         });
 
-    function addSnippet(snippet: CodeSnippet, entryPath: string, snipIndex: number) {
+    function addSnippet(snippet: CodeSnippet, entryPath: string, snipIndex: number, src: string) {
+        const key = `${src}${snipIndex}`;
+        if (existingSnippets[key])
+            return;
         snippets.push(snippet);
         const dir = path.join("temp/snippets", snippet.type);
-        const fn = `${dir}/${entryPath.replace(/^\//, '').replace(/\//g, '-').replace(/\.\w+$/, '')}-${snipIndex}.${snippet.ext}`;
-        nodeutil.mkdirP(dir);
-        nodeutil.writeFileSync(fn, snippet.code);
+        const fn = `${dir}/${entryPath.replace(/^\//, '').replace(/[\/\s]/g, '-').replace(/\.\w+$/, '')}-${snipIndex}.${snippet.ext}`;
+        if (isLocalBuild()) {
+            nodeutil.mkdirP(dir);
+            nodeutil.writeFileSync(fn, snippet.code);
+        }
         snippet.file = fn;
+        snippet.src = src;
+        existingSnippets[key] = true;
     }
 
     function pushUrl(url: string, toc: boolean) {
@@ -5561,7 +5664,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
         }
 
         // look for snippets
-        getCodeSnippets(entrypath, md).forEach((snippet, snipIndex) => addSnippet(snippet, entrypath, snipIndex));
+        getCodeSnippets(entrypath, md).forEach((snippet, snipIndex) => addSnippet(snippet, entrypath, snipIndex, entrypath));
     }
 
     nodeutil.mkdirP("temp");
@@ -5614,14 +5717,16 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                                     || (tutorial.language == "python")) {
                                     tutorial.steps
                                         .filter(step => !!step.contentMd)
-                                        .forEach((step, stepIndex) => getCodeSnippets(`${card.name}-${stepIndex}`, step.contentMd)
+                                        .forEach((step, stepIndex) => getCodeSnippets(`${card.name}-step${stepIndex}`, step.contentMd)
                                             .forEach((snippet, snippetIndex) => {
                                                 snippet.packages = pkgs;
                                                 snippet.extraFiles = extraFiles;
+                                                const indexInStep = snippetIndex ? `-${snippetIndex}` : "";
                                                 addSnippet(
                                                     snippet,
-                                                    `tutorial${card.name}-${stepIndex}-${snippetIndex}`,
-                                                    cardIndex
+                                                    `tutorial/${card.name}-${indexInStep}step`,
+                                                    stepIndex,
+                                                    url + (indexInStep)
                                                 )
                                             })
                                         );
@@ -5634,7 +5739,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                                         ext: "ts",
                                         packages: pkgs,
                                         extraFiles: extraFiles
-                                    }, "tutorial" + gal.name, cardIndex);
+                                    }, "tutorial" + gal.name, cardIndex, url);
                                 }
                             }
 
@@ -5669,7 +5774,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                                     ext: "ts",
                                     extraFiles,
                                     packages: pkgs
-                                }, "example" + gal.name, cardIndex);
+                                }, `example/${url}`, 0, url);
                             }
                             break;
                         }
@@ -5755,7 +5860,7 @@ function internalCacheUsedBlocksAsync(): Promise<Map<pxt.BuiltTutorialInfo>> {
     }
 
     const namespaceRegex = /^\s*namespace\s+[^\s]+\s*{([\S\s]*)}\s*$/im;
-    return Promise.map(Object.keys(tutorialInfo), (hash: string) => {
+    return U.promiseMapAll(Object.keys(tutorialInfo), (hash: string) => {
         const info = tutorialInfo[hash];
         const cache: Map<string> = {};
         let isPy = info.language === "python"
@@ -5853,6 +5958,7 @@ export interface CodeSnippet {
     ext: string;
     packages: pxt.Map<string>;
     file?: string;
+    src?: string;
 }
 
 export function getCodeSnippets(fileName: string, md: string): CodeSnippet[] {
@@ -6110,7 +6216,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
                     if (e.statusCode == 429 && retry++ < 6) {
                         delay *= 2;
                         pxt.log(`retrying in ${delay / 1000} secs...`)
-                        return Promise.delay(delay)
+                        return U.delay(delay)
                             .then(() => workAsync());
                     }
                     reportError({ repo: fullname, title: "build error", body: e.message })
@@ -6134,7 +6240,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
                 fullnames = fullnames.filter(fn => filterRx.test(fn))
             reportLog(`found ${fullnames.length} approved extensions`);
             reportLog(nodeutil.stringify(fullnames));
-            return Promise.mapSeries(fullnames, nextAsync);
+            return U.promiseMapAllSeries(fullnames, nextAsync);
         })
         .then(() => {
             if (errorCount > 0) {
@@ -6179,7 +6285,7 @@ function blockTestsAsync(parsed?: commandParser.ParsedCommand) {
 
     function getBlocksFilesAsync(libsDirectory: string): Promise<BlockTestCase[]> {
         return readDirAsync(libsDirectory)
-            .then(dirs => Promise.map(dirs, dir => {
+            .then(dirs => U.promiseMapAll(dirs, dir => {
                 const dirPath = path.resolve(libsDirectory, dir, "blocks-test");
                 const configPath = path.resolve(libsDirectory, dir, "pxt.json");
                 let packageName: string;
@@ -6190,7 +6296,7 @@ function blockTestsAsync(parsed?: commandParser.ParsedCommand) {
                         .then((configText: string) => {
                             packageName = (JSON.parse(configText) as pxt.PackageConfig).name;
                             return readDirAsync(dirPath)
-                                .then(files => Promise.map(files.filter(f => U.endsWith(f, ".blocks") && f != "main.blocks"), fn =>
+                                .then(files => U.promiseMapAll(files.filter(f => U.endsWith(f, ".blocks") && f != "main.blocks"), fn =>
                                     readFileAsync(path.join(dirPath, fn), "utf8")
                                         .then((contents: string) => testFiles.push({ testName: fn, contents }))))
                         })
@@ -6661,6 +6767,11 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
         flags: {
             serve: {
                 description: "Serve the skill map locally after building (npm start)"
+            },
+            docs: {
+                description: "Path to local docs folder to copy into skillmap",
+                type: "string",
+                argument: "docs"
             }
         }
     }, buildSkillMapAsync);
@@ -7071,5 +7182,5 @@ if (require.main === module) {
             process.exit(1)
         }
     }
-    mainCli(targetdir).done();
+    mainCli(targetdir);
 }

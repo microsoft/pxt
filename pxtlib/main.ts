@@ -395,7 +395,7 @@ namespace pxt {
             gifworkerjs: "/gifjs/gif.worker.js",
             serviceworkerjs: "/serviceworker.js",
             pxtVersion: "local",
-            pxtRelId: "",
+            pxtRelId: "localRelId",
             pxtCdnUrl: "/cdn/",
             commitCdnUrl: "/cdn/",
             blobCdnUrl: "/blb/",
@@ -488,6 +488,9 @@ namespace pxt {
     export const BLOCKS_PROJECT_NAME = "blocksprj";
     export const JAVASCRIPT_PROJECT_NAME = "tsprj";
     export const PYTHON_PROJECT_NAME = "pyprj";
+    export const MAIN_BLOCKS = "main.blocks";
+    export const MAIN_TS = "main.ts";
+    export const MAIN_PY = "main.py";
     export const DEFAULT_GROUP_NAME = "other"; // used in flyout, for snippet groups
     export const TILEMAP_CODE = "tilemap.g.ts";
     export const TILEMAP_JRES = "tilemap.g.jres";
@@ -496,6 +499,7 @@ namespace pxt {
     export const TUTORIAL_CODE_START = "_onCodeStart.ts";
     export const TUTORIAL_CODE_STOP = "_onCodeStop.ts";
     export const TUTORIAL_INFO_FILE = "tutorial-info-cache.json";
+    export const TUTORIAL_CUSTOM_TS = "tutorial.custom.ts";
 
     export function outputName(trg: pxtc.CompileTarget = null) {
         if (!trg) trg = appTarget.compile

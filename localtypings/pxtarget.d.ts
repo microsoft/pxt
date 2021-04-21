@@ -54,6 +54,7 @@ declare namespace pxt {
 
     interface SkillMapConfig {
         defaultPath?: string;
+        pathAliases?: pxt.Map<string>; // map in the format "alias": "path"
     }
 
     interface AppTarget {
@@ -226,6 +227,8 @@ declare namespace pxt {
             // url when localhost developer mode is enabled, add localhostmessagesims=1 to enable this mode
             localHostUrl?: string;
             aspectRatio?: number;
+            // don't recycle the iframe between runs
+            permanent?: boolean;
         }>;
     }
 
@@ -431,6 +434,7 @@ declare namespace pxt {
         disableMemoryWorkspaceWarning?: boolean; // do not warn the user when switching to in memory workspace
         embeddedTutorial?: boolean;
         disableBlobObjectDownload?: boolean; // use data uri downloads instead of object urls
+        immersiveReader?: boolean; // enables the immersive reader for tutorials
     }
 
     interface SocialOptions {
@@ -481,6 +485,65 @@ declare namespace pxt {
         type: "serviceworker";
         state: "activated";
         ref: string;
+    }
+
+    type ServiceWorkerClientMessage = RequestPacketIOLockMessage | ReleasePacketIOLockMessage | DisconnectPacketIOResponse | PacketIOLockSupportedMessage | PacketIOLockStatusResponse;
+
+    interface RequestPacketIOLockMessage {
+        type: "serviceworkerclient";
+        action: "request-packet-io-lock";
+        lock: string;
+    }
+
+    interface ReleasePacketIOLockMessage {
+        type: "serviceworkerclient";
+        action: "release-packet-io-lock";
+        lock: string;
+    }
+
+    interface DisconnectPacketIOResponse {
+        type: "serviceworkerclient";
+        action: "packet-io-lock-disconnect";
+        lock: string;
+        didDisconnect: boolean;
+    }
+
+    interface PacketIOLockSupportedMessage {
+        type: "serviceworkerclient";
+        action: "packet-io-supported";
+    }
+
+    interface PacketIOLockStatusResponse {
+        type: "serviceworkerclient";
+        action: "packet-io-status";
+        lock: string;
+        hasLock: boolean;
+    }
+
+    type ServiceWorkerMessage = DisconnectPacketIOMessage | GrantPacketIOLockMessage | PacketIOLockSupportedResponse | PacketIOLockStatusMessage;
+
+    interface DisconnectPacketIOMessage {
+        type: "serviceworker";
+        action: "packet-io-lock-disconnect";
+        lock: string;
+    }
+
+    interface GrantPacketIOLockMessage {
+        type: "serviceworker";
+        action: "packet-io-lock-granted";
+        granted: boolean;
+        lock: string;
+    }
+
+    interface PacketIOLockSupportedResponse {
+        type: "serviceworker";
+        action: "packet-io-supported";
+        supported: boolean;
+    }
+
+    interface PacketIOLockStatusMessage {
+        type: "serviceworker";
+        action: "packet-io-status";
     }
 }
 
@@ -858,6 +921,8 @@ declare namespace ts.pxtc {
         bannedCategories?: string[];
         skipPxtModulesTSC?: boolean; // skip re-checking of pxt_modules/*
         skipPxtModulesEmit?: boolean; // skip re-emit of pxt_modules/*
+        clearIncrBuildAndRetryOnError?: boolean; // on error when compiling in service, try again with a full recompile.
+        errorOnGreyBlocks?: boolean;
 
         otherMultiVariants?: ExtensionTarget[];
 
@@ -947,6 +1012,7 @@ declare namespace pxt.tutorial {
         metadata?: TutorialMetadata;
         assetFiles?: pxt.Map<string>;
         jres?: string; // JRES to be used when generating hints; necessary for tilemaps
+        customTs?: string; // custom typescript code loaded in a separate file for the tutorial
     }
 
     interface TutorialMetadata {
@@ -959,6 +1025,7 @@ declare namespace pxt.tutorial {
         codeStart?: string; // command to run when code starts (MINECRAFT HOC ONLY)
         codeStop?: string; // command to run when code stops (MINECRAFT HOC ONLY)
         autoexpandOff?: boolean // INTERNAL TESTING ONLY
+        preferredEditor?: string // preferred editor for opening the tutorial
     }
 
     interface TutorialStepInfo {
@@ -999,6 +1066,7 @@ declare namespace pxt.tutorial {
         language?: string; // native language of snippets ("python" for python, otherwise defaults to typescript)
         assetFiles?: pxt.Map<string>;
         jres?: string; // JRES to be used when generating hints; necessary for tilemaps
+        customTs?: string; // custom typescript code loaded in a separate file for the tutorial
     }
     interface TutorialCompletionInfo {
         // id of the tutorial

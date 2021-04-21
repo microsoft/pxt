@@ -80,8 +80,7 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
                 .then(() => pxt.winrt.releaseAllDevicesAsync())
                 .then(() => {
                     this.props.parent.reloadEditor();
-                })
-                .done();
+                });
         } else {
             pxt.tickEvent(`menu.lang.samelang`, { lang: langId });
             this.hide();
@@ -121,7 +120,7 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
                 closeOnEscape
             >
                 <div id="langmodal">
-                    <div id="availablelocales" className="ui cards centered" role="listbox">
+                    <div id="availablelocales" className="ui cards centered" role="list" aria-label={lf("List of available languages")}>
                         {languageList.map(langId => {
                             const lang = pxt.Util.allLanguages[langId];
                             return <LanguageCard
@@ -171,7 +170,7 @@ class LanguageCard extends sui.StatelessUIElement<LanguageCardProps> {
         return <codecard.CodeCardView className={`card-selected langoption`}
             name={name}
             ariaLabel={ariaLabel}
-            role="link"
+            role="listitem"
             description={description}
             onClick={this.handleClick}
         />

@@ -216,7 +216,7 @@ namespace ts.pxtc {
 
             // The extension JavaScript code comes from target.json. It is generated from compiler/*.ts in target by 'pxt buildtarget'
             if (opts.target.compilerExtension)
-                // tslint:disable-next-line
+                // eslint-disable-next-line
                 eval(opts.target.compilerExtension)
         }
 
@@ -298,9 +298,10 @@ namespace ts.pxtc {
             alwaysEmitOnStart: opts.alwaysDecompileOnStart,
             includeGreyBlockMessages,
             generateSourceMap: !!opts.ast,
-            allowedArgumentTypes: opts.allowedArgumentTypes || ["number", "boolean", "string"]
+            allowedArgumentTypes: opts.allowedArgumentTypes || ["number", "boolean", "string"],
+            errorOnGreyBlocks: !!opts.errorOnGreyBlocks,
         };
-        const [renameMap, _] = pxtc.decompiler.buildRenameMap(program, file)
+        const [renameMap, _] = pxtc.decompiler.buildRenameMap(program, file, { declarations: "variables", takenNames: {} })
         const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, decompileOpts, renameMap);
         return bresp;
     }

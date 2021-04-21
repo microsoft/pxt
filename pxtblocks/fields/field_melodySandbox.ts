@@ -17,7 +17,7 @@ namespace pxtblockly {
         private tempo: number = 120;
         private stringRep: string;
         private isPlaying: boolean = false;
-        private timeouts: number[] = []; // keep track of timeouts
+        private timeouts: any[] = []; // keep track of timeouts
         private invalidString: string;
         private prevString: string;
 

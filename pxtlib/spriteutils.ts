@@ -50,6 +50,8 @@ namespace pxt.sprite {
         }
 
         constructor(public width: number, public height: number, public x0 = 0, public y0 = 0, buf?: Uint8ClampedArray) {
+            if (!this.width) this.width = 16;
+            if (!this.height) this.height = 16;
             this.buf = buf || new Uint8ClampedArray(this.dataLength());
         }
 
@@ -647,6 +649,71 @@ namespace pxt.sprite {
         return result;
     }
 
+    export function encodeAnimationString(frames: BitmapData[], interval: number) {
+        const encodedFrames = frames.map(frame => frame.data);
+
+        const data = new Uint8ClampedArray(8 + encodedFrames[0].length * encodedFrames.length);
+
+        // interval, frame width, frame height, frame count
+        set16Bit(data, 0, interval);
+        set16Bit(data, 2, frames[0].width);
+        set16Bit(data, 4, frames[0].height);
+        set16Bit(data, 6, frames.length);
+
+        let offset = 8;
+        encodedFrames.forEach(buf => {
+            data.set(buf, offset);
+            offset += buf.length;
+        })
+
+        return btoa(pxt.sprite.uint8ArrayToHex(data))
+    }
+
+    export function addMissingTilemapTilesAndReferences(project: TilemapProject, asset: ProjectTilemap) {
+        const allTiles = project.getProjectTiles(asset.data.tileset.tileWidth, true);
+        asset.data.projectReferences = [];
+
+        for (const tile of allTiles.tiles) {
+            if (!asset.data.tileset.tiles.some(t => t.id === tile.id)) {
+                asset.data.tileset.tiles.push(tile);
+            }
+            if (project.isAssetUsed(tile, null, [asset.id])) {
+                asset.data.projectReferences.push(tile.id);
+            }
+        }
+    }
+
+    export function updateTilemapReferencesFromResult(project: TilemapProject, assetResult: ProjectTilemap) {
+        const result = assetResult.data;
+
+        if (result.deletedTiles) {
+            for (const deleted of result.deletedTiles) {
+                project.deleteTile(deleted);
+            }
+        }
+
+        if (result.editedTiles) {
+            for (const edit of result.editedTiles) {
+                const editedIndex = result.tileset.tiles.findIndex(t => t.id === edit);
+                const edited = result.tileset.tiles[editedIndex];
+
+                if (!edited) continue;
+
+                result.tileset.tiles[editedIndex] = project.updateTile(edited);
+            }
+        }
+
+        for (let i = 0; i < result.tileset.tiles.length; i++) {
+            const tile = result.tileset.tiles[i];
+
+            if (!tile.jresData) {
+                result.tileset.tiles[i] = project.resolveTile(tile.id);
+            }
+        }
+
+        pxt.sprite.trimTilemapTileset(result);
+    }
+
     function imageLiteralPrologue(fileType: "typescript" | "python"): string {
         let res = '';
         switch (fileType) {
@@ -750,6 +817,11 @@ namespace pxt.sprite {
             res += hex[data[i] & 0xf];
         }
         return res;
+    }
+
+    function set16Bit(buf: Uint8ClampedArray, offset: number, value: number) {
+        buf[offset] = value & 0xff;
+        buf[offset + 1] = (value >> 8) & 0xff;
     }
 
     function colorStringToRGB(color: string) {

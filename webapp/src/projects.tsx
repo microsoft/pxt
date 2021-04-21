@@ -170,6 +170,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         const { selectedCategory, selectedIndex } = this.state;
 
         const targetTheme = pxt.appTarget.appTheme;
+        const { scriptManager } = targetTheme;
         const targetConfig = this.getData("target-config:") as pxt.TargetConfig;
         const lang = pxt.Util.userLanguage();
         // collect localized and unlocalized galleries
@@ -185,20 +186,21 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         // lf("Examples")
         // lf("Tutorials")
 
-
         const tabClasses = sui.cx([
             'ui segment bottom attached tab active tabsegment'
         ]);
 
         return <div ref="homeContainer" className={tabClasses} role="main">
             <HeroBanner parent={this.props.parent} />
+            <h1 className="accessible-hidden">{lf("MakeCode Home")}</h1>
             <div key={`mystuff_gallerysegment`} className="ui segment gallerysegment mystuff-segment" role="region" aria-label={lf("My Projects")}>
                 <div className="ui heading">
-                    <div className="column" style={{ zIndex: 1 }}>
-                        {targetTheme.scriptManager ? <h2 role="button" className="ui header myproject-header"
-                            onClick={this.showScriptManager} onKeyDown={sui.fireClickOnEnter}>
+                    <div className="column" style={{ zIndex: 1 }}
+                        role={scriptManager && "button"} onClick={scriptManager && this.showScriptManager} onKeyDown={scriptManager && sui.fireClickOnEnter}
+                    >
+                        {scriptManager ? <h2 className="ui header myproject-header">
                             {lf("My Projects")}
-                            <span className="view-all-button" tabIndex={0} title={lf("View all projects")}>
+                            <span className="view-all-button" tabIndex={0} title={lf("View all projects")} role="button">
                                 {lf("View All")}
                             </span>
                         </h2> : <h2 className="ui header">{lf("My Projects")}</h2>}
@@ -254,12 +256,12 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                     </div>
                 }
                 )}
-            {targetTheme.organizationUrl || targetTheme.organizationUrl || targetTheme.privacyUrl || targetTheme.copyrightText ? <div className="ui horizontal small divided link list homefooter">
+            {targetTheme.organizationUrl || targetTheme.organizationUrl || targetTheme.privacyUrl || targetTheme.copyrightText ? <div className="ui horizontal small divided link list homefooter" role="contentinfo">
                 {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" target="_blank" rel="noopener noreferrer" href={targetTheme.organizationUrl}>{targetTheme.organization}</a> : undefined}
-                {targetTheme.selectLanguage ? <sui.Link className="item" icon="xicon globe" text={lf("Language")} onClick={this.showLanguagePicker} onKeyDown={sui.fireClickOnEnter} /> : undefined}
+                {targetTheme.selectLanguage ? <sui.Link className="item" icon="xicon globe" text={lf("Language")} onClick={this.showLanguagePicker} onKeyDown={sui.fireClickOnEnter} role="button" /> : undefined}
                 {targetTheme.termsOfUseUrl ? <a target="_blank" className="item" href={targetTheme.termsOfUseUrl} rel="noopener noreferrer">{lf("Terms of Use")}</a> : undefined}
                 {targetTheme.privacyUrl ? <a target="_blank" className="item" href={targetTheme.privacyUrl} rel="noopener noreferrer">{lf("Privacy")}</a> : undefined}
-                {pxt.appTarget.versions ? <sui.Link className="item" text={`v${pxt.appTarget.versions.target}`} onClick={this.showAboutDialog} onKeyDown={sui.fireClickOnEnter} /> : undefined}
+                {pxt.appTarget.versions ? <sui.Link className="item" text={`v${pxt.appTarget.versions.target}`} onClick={this.showAboutDialog} onKeyDown={sui.fireClickOnEnter} role="button" /> : undefined}
                 {targetTheme.copyrightText ? <div className="ui item copyright">{targetTheme.copyrightText}</div> : undefined}
             </div> : undefined}
         </div>;
@@ -338,7 +340,6 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
         const reportAbuse = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing;
         const showDivider = targetTheme.selectLanguage || targetTheme.highContrast || githubUser;
 
-        // tslint:disable react-a11y-anchors
         return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("More...")} className="item icon more-dropdown-menuitem">
             {targetTheme.selectLanguage && <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} />}
             {targetTheme.highContrast && <sui.Item role="menuitem" text={highContrast ? lf("High Contrast Off") : lf("High Contrast On")} onClick={this.toggleHighContrast} />}
@@ -453,7 +454,6 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
         if (!paused && !this.carouselInterval && this.prevGalleries && this.prevGalleries.length) {
             pxt.debug(`start refreshing hero carousel`)
             this.carouselInterval = setInterval(this.handleRefreshCard, HERO_BANNER_DELAY);
-            this.handleRefreshCard();
         }
     }
 
@@ -465,7 +465,7 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
         }
     }
 
-    componentWillMount() {
+    componentDidMount() {
         this.startRefresh();
     }
 
@@ -522,7 +522,8 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
                 </sui.Link>
             </div>}
             {cardIndex !== undefined && cards?.length > 1 && <div key="cards" className="dots">
-                {cards.map((_, i) => <button key={"dot" + i} className={`ui button empty circular label  clear ${i === cardIndex && "active"}`} onClick={handleSetCard(i)}>
+                {cards.map((card, i) => <button key={"dot" + i} className={`ui button empty circular label  clear ${i === cardIndex && "active"}`}
+                    onClick={handleSetCard(i)} aria-label={lf("View {0} hero image", card.title || card.name)} title={lf("View {0} hero image", card.title || card.name)}>
                 </button>)}
             </div>}
         </div>
@@ -611,7 +612,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                     this.props.parent.newProject({ name, languageRestriction });
                 })
         } else {
-            this.props.parent.newProject({ name });
+            this.props.parent.newProject({});
         }
     }
 
@@ -826,7 +827,7 @@ export class ProjectsCodeCard extends sui.StatelessUIElement<ProjectsCodeCardPro
             else
                 className = 'file ' + className;
         }
-        return <codecard.CodeCardView className={className} imageUrl={imageUrl} cardType={cardType} {...rest} onClick={this.handleClick}
+        return <codecard.CodeCardView role="button" className={className} imageUrl={imageUrl} cardType={cardType} {...rest} onClick={this.handleClick}
             onLabelClicked={onLabelClick ? this.handleLabelClick : undefined} />
     }
 }
@@ -960,8 +961,8 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                 break;
         }
         return this.isLink(type) && type != "forumExample" // TODO (shakao)  migrate forumurl to otherAction json in md
-            ? <sui.Link role="button" className="link button attached" icon={icon} href={this.getUrl()} target="_blank" tabIndex={-1} />
-            : <sui.Item role="button" className="button attached" icon={icon} onClick={onClick} tabIndex={-1} />
+            ? <sui.Link role="presentation" className="link button attached" icon={icon} href={this.getUrl()} target="_blank" tabIndex={-1} />
+            : <sui.Item role="presentation" className="button attached" icon={icon} onClick={onClick} tabIndex={-1} />
     }
 
     protected getActionTitle(editor: pxt.CodeCardEditorType): string {
@@ -980,17 +981,20 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
     protected getActionCard(text: string, type: pxt.CodeCardType, onClick: any, autoFocus?: boolean, action?: pxt.CodeCardAction, key?: string): JSX.Element {
         const editor = this.getActionEditor(type, action);
         const title = this.getActionTitle(editor);
+        const asLink = this.isLink() && type != "forumExample";
+        const label = asLink ? lf("Open link in new window") : lf("Open in {0}", title || lf("Editor"));
+
         return <div className={`card-action ui items ${editor || ""}`} key={key}>
             {this.getActionIcon(onClick, type, editor)}
             {title && <div className="card-action-title">{title}</div>}
-            {this.isLink() && type != "forumExample" ? // TODO (shakao)  migrate forumurl to otherAction json in md
+            {asLink ? // TODO (shakao)  migrate forumurl to otherAction json in md
                 <sui.Link
                     href={this.getUrl()}
                     refCallback={autoFocus ? this.linkRef : undefined}
                     target={'_blank'}
                     text={text}
                     className={`button attached approve large`}
-                    title={lf("Open link in new window")}
+                    title={label} ariaLabel={label}
                     autoFocus={autoFocus}
                 />
                 : <sui.Button
@@ -999,7 +1003,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                     onClick={onClick}
                     onKeyDown={sui.fireClickOnEnter}
                     autoFocus={autoFocus}
-                    title={lf("Open in {0}", title || lf("Editor"))}
+                    title={label} ariaLabel={label}
                 />}
         </div>
     }
@@ -1174,7 +1178,6 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
             && !pxt.winrt.isWinRT() // not supported in windows 10
             && !pxt.BrowserUtils.isPxtElectron()
             && pxt.appTarget?.cloud?.cloudProviders?.github;
-        /* tslint:disable:react-a11y-anchors */
         return (
             <sui.Modal isOpen={visible} className={classes} size="small"
                 onClose={this.close} dimmer={true}
@@ -1275,7 +1278,7 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
             pxt.tickEvent("exitandsave.projectrename", { length: newName && newName.length }, { interactiveConsent: true });
             p = p.then(() => this.props.parent.updateHeaderNameAsync(newName));
         }
-        p.done(() => {
+        p.then(() => {
             this.props.parent.openHome();
         })
     }
@@ -1297,6 +1300,7 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
             }
         ];
         const classes = this.props.parent.createModalClasses("exitandsave");
+        const prompt = lf("Give your project a name.");
 
         return (
             <sui.Modal isOpen={visible} className={classes} size="tiny"
@@ -1305,10 +1309,10 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
             >
                 <div>
-                    <p>{lf("Give your project a name.")}</p>
+                    <p>{prompt}</p>
                     <div className="ui form">
                         <sui.Input ref="filenameinput" id={"projectNameInput"}
-                            ariaLabel={lf("Type a name for your project")} autoComplete={false}
+                            ariaLabel={prompt} autoComplete={false}
                             value={projectName || ''} onChange={this.handleChange} onEnter={this.save}
                             selectOnMount={!mobile} autoFocus={!mobile} />
                     </div>
@@ -1432,6 +1436,7 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
             }
         ];
         const classes = this.props.parent.createModalClasses("newproject");
+        const prompt = lf("Give your project a name.");
 
         return <sui.Modal isOpen={visible} className={classes} size="tiny"
             onClose={this.hide} dimmer={true} buttons={actions}
@@ -1439,10 +1444,10 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
             closeOnDimmerClick closeOnDocumentClick closeOnEscape
         >
             <div>
-                <p>{lf("Give your project a name.")}</p>
+                <p>{prompt}</p>
                 <div className="ui form">
                     <sui.Input ref="filenameinput" id={"projectNameInput"}
-                        ariaLabel={lf("Type a name for your project")} autoComplete={false}
+                        ariaLabel={prompt} autoComplete={false}
                         value={name || ''} onChange={this.handleTextChange} onEnter={this.save}
                         selectOnMount={!mobile} autoFocus={!mobile} />
                 </div>
@@ -1529,8 +1534,7 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
         pxt.setHwVariant(cfg.name, card ? card.name : (cfg.description || cfg.name))
         let editor = this.props.parent
         editor.reloadHeaderAsync()
-            .then(() => !this.state.skipDownload && editor.compile())
-            .done()
+            .then(() => !this.state.skipDownload && editor.compile());
     }
 
     renderCore() {
@@ -1558,7 +1562,6 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
         }
         cards = cards.filter(card => !!card.onClick);
 
-        /* tslint:disable:react-a11y-anchors */
         return (
             <sui.Modal isOpen={visible} className="hardwaredialog" size="large"
                 onClose={this.close} dimmer={true}

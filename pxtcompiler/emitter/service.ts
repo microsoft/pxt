@@ -112,7 +112,7 @@ namespace ts.pxtc {
             case ts.SyntaxKind.AnyKeyword:
                 return "any"
             default:
-                pxt.tickEvent("depython.todo", { kind: s.kind })
+                pxt.tickEvent("depython.todo.tstypenodetopytype", { kind: s.kind })
                 return ``
         }
         // // TODO translate type
@@ -134,7 +134,7 @@ namespace ts.pxtc {
             case ts.TypeFlags.Any:
                 return "any"
             default:
-                pxt.tickEvent("depython.todo", { kind: s.flags })
+                pxt.tickEvent("depython.todo.tstypetopytype", { kind: s.flags })
                 return ``
         }
     }
@@ -535,7 +535,7 @@ namespace ts.pxtc {
                             // defined in different packages/extensions, so we want to keep track of that information.
                             // That way, we can make sure each cached extension has a copy of the namespace
                             if (existing.kind === SymbolKind.Module) {
-                                // Reference the existing array of packages where this namespace has been defined 
+                                // Reference the existing array of packages where this namespace has been defined
                                 si.pkgs = existing.pkgs || []
                                 if (existing.pkg !== si.pkg) {
                                     if (!si.pkgs.find(element => element === existing.pkg)) {
@@ -701,8 +701,14 @@ namespace ts.pxtc.service {
                 if (this.opts.fileSystem[fn] != v) {
                     this.fileVersions[fn] = (this.fileVersions[fn] || 0) + 1
                 }
-            })
-            this.opts = o
+            });
+            // shallow copy, but deep copy the file system
+            this.opts = {
+                ...o,
+                fileSystem: {
+                    ...o.fileSystem,
+                },
+            }
             this.projectVer++
         }
 
@@ -851,7 +857,7 @@ namespace ts.pxtc.service {
 
     const operations: ServiceOps = {
         reset: () => {
-            service.cleanupSemanticCache();
+            service = ts.createLanguageService(host)
             lastApiInfo = undefined
             lastGlobalNames = undefined
             host.reset()
@@ -1284,7 +1290,7 @@ namespace ts.pxtc.service {
         addApiInfo(host.opts)
         const prevFS = U.flatClone(host.opts.fileSystem);
         let res = runConversionsAndStoreResults(host.opts);
-        if (res && res.globalNames) {
+        if (res?.globalNames) {
             lastGlobalNames = res.globalNames
         }
         const newFS = host.opts.fileSystem
@@ -1306,13 +1312,19 @@ namespace ts.pxtc.service {
                     host.opts.skipPxtModulesEmit = true
             }
             let ts2asm = compile(host.opts, service)
-            res = { sourceMap: res.sourceMap, ...ts2asm }
-            if (res.needsFullRecompile) {
-                pxt.log("trigering full recompile")
+            res = {
+                sourceMap: res.sourceMap,
+                ...ts2asm,
+            }
+            if (res.needsFullRecompile || ((!res.success || res.diagnostics.length) && host.opts.clearIncrBuildAndRetryOnError)) {
+                pxt.debug("triggering full recompile")
                 pxt.tickEvent("compile.fullrecompile")
-                host.opts.skipPxtModulesEmit = false
+                host.opts.skipPxtModulesEmit = false;
                 ts2asm = compile(host.opts, service);
-                res = { sourceMap: res.sourceMap, ...ts2asm }
+                res = {
+                    sourceMap: res.sourceMap,
+                    ...ts2asm,
+                }
             }
             if (res.diagnostics.every(d => !isPxtModulesFilename(d.fileName)))
                 host.pxtModulesOK = currKey

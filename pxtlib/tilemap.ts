@@ -1,7 +1,7 @@
 namespace pxt {
-    const IMAGE_MIME_TYPE = "image/x-mkcd-f4"
-    const TILEMAP_MIME_TYPE = "application/mkcd-tilemap"
-    const ANIMATION_MIME_TYPE = "application/mkcd-animation"
+    export const IMAGE_MIME_TYPE = "image/x-mkcd-f4"
+    export const TILEMAP_MIME_TYPE = "application/mkcd-tilemap"
+    export const ANIMATION_MIME_TYPE = "application/mkcd-animation"
 
     export const enum AssetType {
         Image = "image",
@@ -14,6 +14,12 @@ namespace pxt {
         displayName?: string;
         tags?: string[];
         blockIDs?: string[];
+        temporaryInfo?: TemporaryAssetInfo;
+    }
+
+    export interface TemporaryAssetInfo {
+        blockId: string;
+        fieldName: string;
     }
 
     export type Asset = ProjectImage | Tile | Animation | ProjectTilemap;
@@ -1404,7 +1410,7 @@ namespace pxt {
         return new pxt.sprite.TilemapData(tilemap, tileset, layers);
     }
 
-    function cloneAsset<U extends Asset>(asset: U): U {
+    export function cloneAsset<U extends Asset>(asset: U): U {
         asset.meta = Object.assign({}, asset.meta);
         switch (asset.type) {
             case AssetType.Tile:
@@ -1487,6 +1493,7 @@ namespace pxt {
         if (!name) return false;
 
         // Covers all punctuation/whitespace except for "-", "_", and " "
+        // eslint-disable-next-line no-control-regex
         const bannedRegex = /[\u0000-\u001f\u0021-\u002c\u002e\u002f\u003a-\u0040\u005b-\u005e\u0060\u007b-\u007f]/
         return !bannedRegex.test(name);
     }
@@ -1625,27 +1632,11 @@ namespace pxt {
     }
 
     function serializeAnimation(asset: Animation): JRes {
-        const encodedFrames = asset.frames.map(frame => frame.data);
-
-        const data = new Uint8ClampedArray(8 + encodedFrames[0].length * encodedFrames.length);
-
-        // interval, frame width, frame height, frame count
-        set16Bit(data, 0, asset.interval);
-        set16Bit(data, 2, asset.frames[0].width);
-        set16Bit(data, 4, asset.frames[0].height);
-        set16Bit(data, 6, asset.frames.length);
-
-        let offset = 8;
-        encodedFrames.forEach(buf => {
-            data.set(buf, offset);
-            offset += buf.length;
-        })
-
         return {
             namespace: asset.id.substr(0, asset.id.lastIndexOf(".")),
             id: asset.id.substr(asset.id.lastIndexOf(".") + 1),
             mimeType: ANIMATION_MIME_TYPE,
-            data: btoa(pxt.sprite.uint8ArrayToHex(data)),
+            data: pxt.sprite.encodeAnimationString(asset.frames, asset.interval),
             displayName: asset.meta.displayName
         }
     }
@@ -1658,7 +1649,7 @@ namespace pxt {
         const frameWidth = read16Bit(bytes, 2);
         const frameHeight = read16Bit(bytes, 4);
         const frameCount = read16Bit(bytes, 6);
-        const frameLength = (frameWidth * frameHeight) >> 1;
+        const frameLength = Math.ceil((frameWidth * frameHeight) / 2);
 
         let offset = 8;
 

@@ -534,10 +534,10 @@ namespace pxt {
             // no core package? add the first one
             if (corePackages.length == 0) {
                 const allCorePkgs = pxt.Package.corePackages();
-                /* tslint:disable:no-unused-expression TODO(tslint): */
+                /* eslint-disable @typescript-eslint/no-unused-expressions */
                 if (allCorePkgs.length)
                     this.config.dependencies[allCorePkgs[0].name];
-                /* tslint:enable:no-unused-expression */
+                /* eslint-enable @typescript-eslint/no-unused-expressions */
             } else if (corePackages.length > 1) {
                 // keep last package
                 corePackages.pop();
@@ -844,7 +844,7 @@ namespace pxt {
                 return Promise.resolve(r);
 
             // live loc of bundled packages
-            if (pxt.Util.localizeLive && this.id != "this" && pxt.appTarget.bundledpkgs[this.id]) {
+            if (pxt.Util.liveLocalizationEnabled() && this.id != "this" && pxt.appTarget.bundledpkgs[this.id]) {
                 pxt.debug(`loading live translations for ${this.id}`)
                 return Promise.all(filenames.map(
                     fn => pxt.Util.downloadLiveTranslationsAsync(lang, `${targetId}/${fn}-strings.json`, theme.crowdinBranch)
@@ -1264,7 +1264,9 @@ namespace pxt {
                                 if (typeof part.visual.image === "string" && /\.svg$/i.test(part.visual.image)) {
                                     let f = d.readFile(part.visual.image);
                                     if (!f) pxt.reportError("parts", "invalid part definition", { "error": `missing visual ${part.visual.image}` })
-                                    part.visual.image = `data:image/svg+xml,` + encodeURIComponent(f);
+                                    if (!/^data:image\/svg\+xml/.test(f)) // encode svg if not encoded yet
+                                        f = `data:image/svg+xml,` + encodeURIComponent(f);
+                                    part.visual.image = f;
                                 }
                             }
                         });

@@ -24,6 +24,7 @@ namespace pxsim {
         breakOnStart?: boolean;
         storedState?: Map<any>;
         ipc?: boolean;
+        dependencies?: Map<string>;
         single?: boolean;
     }
 
@@ -163,9 +164,12 @@ namespace pxsim {
         modalContext?: string;
     }
 
-    export interface SimulatorExtensionsDialogMessage extends SimulatorMessage {
-        type: "extensionsdialog",
-        query: string
+    export interface SimulatorAddExtensionsMessage extends SimulatorMessage {
+        type: "addextensions",
+        /**
+         * List of repositories to add
+         */
+        extensions: string[]
     }
 
     export interface SimulatorAspectRatioMessage extends SimulatorMessage {
@@ -218,7 +222,8 @@ namespace pxsim {
 
     export interface RenderReadyResponseMessage extends SimulatorMessage {
         source: "makecode",
-        type: "renderready"
+        type: "renderready",
+        versions: pxt.TargetVersions
     }
 
     export interface RenderBlocksRequestMessage extends SimulatorMessage {
@@ -283,7 +288,7 @@ namespace pxsim {
                 case "stopsound": stopSound(); break;
                 case "print": print(); break;
                 case 'recorder': recorder(<SimulatorRecorderMessage>data); break;
-                case "screenshot": Runtime.postScreenshotAsync(<SimulatorScreenshotMessage>data).done(); break;
+                case "screenshot": Runtime.postScreenshotAsync(<SimulatorScreenshotMessage>data); break;
                 case "custom":
                     if (handleCustomMessage)
                         handleCustomMessage((<SimulatorCustomMessage>data));
@@ -331,7 +336,7 @@ namespace pxsim {
             const rt = new Runtime(msg);
             runtime = rt;
             rt.board.initAsync(msg)
-                .done(() => {
+                .then(() => {
                     if (rt === runtime) {
                         rt.run((v) => {
                             pxsim.dumpLivePointers();

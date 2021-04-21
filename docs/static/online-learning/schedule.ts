@@ -126,7 +126,6 @@ function makeNewsList() {
         return;
     }
     const newsContainer = document.createElement("div");
-    // tslint:disable-next-line: no-inner-html
     newsContainer.innerHTML = "<h3>" + newslist.title + "</h3>";
     for (const newsItem of newslist.items) {
         const streamlink = document.createElement("a")

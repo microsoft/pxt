@@ -1,3 +1,4 @@
 /*******************************
     User Variable Overrides
 *******************************/
+@messageTextOpacity: 0.9;

@@ -71,7 +71,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
             const animationClasses = `${animation} visible transition animating`;
             pxsim.U.addClass(el, animationClasses);
 
-            Promise.resolve().delay(500).then(() => {
+            pxt.Util.delay(500).then(() => {
                 pxsim.U.removeClass(el, animationClasses);
                 el.style.animationDuration = '';
 
@@ -103,7 +103,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
                 el.style.animationDuration = '500ms';
                 const animationClasses = `${animation} visible transition animating`;
                 pxsim.U.addClass(el, animationClasses);
-                Promise.resolve().delay(500).then(() => {
+                pxt.Util.delay(500).then(() => {
                     pxsim.U.removeClass(el, `animating`);
                     el.style.animationDuration = '';
 
@@ -223,8 +223,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
                                 if (hasTrustedLink && selection == 1) {
                                     window.open(msg.linkButtonHref, '_blank');
                                 }
-                            })
-                            .done();
+                            });
                     }
                     break;
             }
@@ -292,6 +291,7 @@ export function run(pkg: pxt.MainPackage, debug: boolean,
     lastCompileResult = res;
     const { mute, highContrast, light, clickTrigger, storedState, autoRun } = options;
     const isIpcRenderer = pxt.BrowserUtils.isIpcRenderer() || undefined;
+    const dependencies = pkg.dependencies()
 
     const opts: pxsim.SimulatorRunOptions = {
         boardDefinition: boardDefinition,
@@ -314,6 +314,7 @@ export function run(pkg: pxt.MainPackage, debug: boolean,
         storedState: storedState,
         autoRun,
         ipc: isIpcRenderer,
+        dependencies
     }
     //if (pxt.options.debug)
     //    pxt.debug(JSON.stringify(opts, null, 2))

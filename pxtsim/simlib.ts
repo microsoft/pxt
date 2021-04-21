@@ -114,7 +114,8 @@ namespace pxsim {
             let queues = this.getQueues(id, evid, true).concat(this.getQueues(id, evid, false))
             this.lastEventValue = evid;
             this.lastEventTimestampUs = U.perfNowUs();
-            Promise.each(queues, (q) => {
+
+            U.promiseMapAllSeries(queues, q => {
                 if (q) return q.push(value, notifyOne);
                 else return Promise.resolve()
             })
@@ -145,7 +146,7 @@ namespace pxsim {
         // false means last frame
         frame: () => boolean;
         whenDone?: (cancelled: boolean) => void;
-        setTimeoutHandle?: number;
+        setTimeoutHandle?: any;
     }
 
     export class AnimationQueue {
@@ -481,13 +482,13 @@ namespace pxsim {
 
         export function queuePlayInstructions(when: number, b: RefBuffer) {
             const prevStop = instrStopId
-            Promise.delay(when)
+            U.delay(when)
                 .then(() => {
                     if (prevStop != instrStopId)
                         return Promise.resolve()
                     return playInstructionsAsync(b)
-                })
-                .done()
+                });
+
         }
 
         export function playInstructionsAsync(b: RefBuffer) {
@@ -505,7 +506,7 @@ namespace pxsim {
             channels.push(ch)
 
             /** Square waves are perceved as much louder than other sounds, so scale it down a bit to make it less jarring **/
-            const scaleVol = (n: number, isSqWave?: boolean) => (n / 1024) / 2 * (isSqWave ? .7 : 1);
+            const scaleVol = (n: number, isSqWave?: boolean) => (n / 1024) / 4 * (isSqWave ? .5 : 1);
 
             const finish = () => {
                 ch.mute()
@@ -516,7 +517,7 @@ namespace pxsim {
 
             const loopAsync = (): Promise<void> => {
                 if (idx >= b.data.length || !b.data[idx])
-                    return Promise.delay(timeOff).then(finish)
+                    return U.delay(timeOff).then(finish)
 
                 const soundWaveIdx = b.data[idx]
                 const freq = BufferMethods.getNumber(b, BufferMethods.NumberFormat.UInt16LE, idx + 2)
@@ -531,11 +532,11 @@ namespace pxsim {
                 const scaledEnd = scaleVol(endVol, isSquareWave);
 
                 if (!ctx || prevStop != instrStopId)
-                    return Promise.delay(duration)
+                    return U.delay(duration)
 
                 if (currWave != soundWaveIdx || currFreq != freq || freq != endFreq) {
                     if (ch.generator) {
-                        return Promise.delay(timeOff)
+                        return U.delay(timeOff)
                             .then(() => {
                                 finish()
                                 return loopAsync()
@@ -545,7 +546,7 @@ namespace pxsim {
                     ch.generator = _mute ? null : getGenerator(soundWaveIdx, freq)
 
                     if (!ch.generator)
-                        return Promise.delay(duration)
+                        return U.delay(duration)
 
                     currWave = soundWaveIdx
                     currFreq = freq

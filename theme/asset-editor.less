@@ -9,6 +9,7 @@
     width: @blocklyRowWidthWide;
     height: 100%;
     border-right: 1px solid @assetSidebarBorder;
+    overflow-y: auto;
 }
 
 .asset-editor-sidebar-info {
@@ -238,4 +239,8 @@
         margin: 1rem;
     }
 
+}
+
+.image-editor-open #tutorialcard {
+    z-index: @blocklyDropdownDivZIndex + 1
 }

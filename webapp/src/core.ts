@@ -161,7 +161,7 @@ export interface DialogOptions {
     jsx?: JSX.Element;
     jsxd?: () => JSX.Element; // dynamic-er version of jsx
     copyable?: string;
-    size?: string; // defaults to "small"
+    size?: "" | "small" | "fullscreen" | "large" | "mini" | "tiny"; // defaults to "small"
     onLoaded?: (_: HTMLElement) => void;
     buttons?: sui.ModalButton[];
     timeout?: number;
@@ -249,9 +249,9 @@ export function confirmDelete(what: string, cb: () => Promise<void>, multiDelete
         agreeIcon: "trash",
     }).then(res => {
         if (res) {
-            cb().done()
+            cb()
         }
-    }).done()
+    })
 }
 
 export function promptAsync(options: PromptOptions): Promise<string> {

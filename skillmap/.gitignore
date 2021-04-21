@@ -14,6 +14,8 @@
 /public/pxtlib.js
 /public/assets
 /public/blb
+/public/docs
+/public/static
 
 # misc
 .DS_Store

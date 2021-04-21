@@ -57,7 +57,11 @@
     "microbitbeta": {
         "name": "micro:bit BETA",
         "url": "https://makecode.microbit.org/beta",
-        "unsupported": ["streamer"]
+        "styles": {
+            "primary": "#6633cc",
+            "menu": "#3454D1",
+            "background": "linear-gradient(45deg, rgba(99, 93, 198, 1) 0%, rgba(0, 212, 255, 1) 100%)"
+        }
     },
     "minecraftbeta": {
         "name": "Minecraft BETA",

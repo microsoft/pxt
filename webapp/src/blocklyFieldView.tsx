@@ -12,6 +12,8 @@ export interface EditorBounds {
     left: number;
     width: number;
     height: number;
+    horizontalPadding?: number;
+    verticalPadding?: number;
 }
 
 export interface FieldEditorComponent<U> extends React.Component {
@@ -38,6 +40,7 @@ export class FieldEditorView<U> implements pxt.react.FieldEditorView<U> {
     protected overlayDiv: HTMLDivElement;
     protected persistentData: any;
     protected hideCallback: () => void;
+    protected containerClass: string;
 
     constructor(protected contentDiv: HTMLDivElement) {
     }
@@ -118,6 +121,14 @@ export class FieldEditorView<U> implements pxt.react.FieldEditorView<U> {
         else this.persistentData = value;
     }
 
+    setContainerClass(className: string) {
+        if (this.contentDiv && this.contentDiv.classList.contains(this.containerClass)) {
+            this.contentDiv.classList.remove(this.containerClass);
+        }
+        this.containerClass = className;
+        this.updateContainerClass();
+    }
+
     protected clearContents() {
         ReactDOM.unmountComponentAtNode(this.contentDiv);
         while (this.contentDiv.firstChild) this.contentDiv.removeChild(this.contentDiv.firstChild);
@@ -130,7 +141,6 @@ export class FieldEditorView<U> implements pxt.react.FieldEditorView<U> {
         let horizontalPadding = 25;
         let verticalPadding = 25;
 
-
         if (bounds.width - (horizontalPadding * 2) < 500) {
             horizontalPadding = 0;
             verticalPadding = 0;
@@ -138,8 +148,13 @@ export class FieldEditorView<U> implements pxt.react.FieldEditorView<U> {
 
         if (bounds.height - (verticalPadding * 2) < 610) {
             verticalPadding = Math.min(bounds.height - 610, 0) / 2;
+            verticalPadding = verticalPadding < 0 ? 0 : verticalPadding;
             horizontalPadding = 0;
         }
+
+        // Override calculated padding if specific values passed in
+        horizontalPadding = (bounds.horizontalPadding != undefined) ? bounds.horizontalPadding : horizontalPadding;
+        verticalPadding = (bounds.horizontalPadding != undefined) ? bounds.verticalPadding : verticalPadding;
 
         this.contentBounds = {
             left: bounds.left + horizontalPadding,
@@ -171,6 +186,14 @@ export class FieldEditorView<U> implements pxt.react.FieldEditorView<U> {
             this.hide();
         }
     }
+
+    protected updateContainerClass() {
+        if (this.contentDiv && this.containerClass) {
+            if (!this.contentDiv.classList.contains(this.containerClass)) {
+                this.contentDiv.classList.add(this.containerClass);
+            }
+        }
+    }
 }
 
 export function setEditorBounds(editorBounds: EditorBounds) {
@@ -178,6 +201,12 @@ export function setEditorBounds(editorBounds: EditorBounds) {
         current.resize(editorBounds)
     }
     cachedBounds = editorBounds;
+}
+
+export function setContainerClass(className: string) {
+    if (current) {
+        current.setContainerClass(className);
+    }
 }
 
 export function init() {

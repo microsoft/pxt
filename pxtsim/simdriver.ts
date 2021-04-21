@@ -23,6 +23,7 @@ namespace pxsim {
             url: string;
             localHostUrl?: string;
             aspectRatio?: number;
+            permanent?: boolean;
         }>;
     }
 
@@ -65,6 +66,7 @@ namespace pxsim {
         storedState?: Map<any>;
         autoRun?: boolean;
         ipc?: boolean;
+        dependencies?: Map<string>;
         // single iframe, no message simulators
         single?: boolean;
     }
@@ -76,6 +78,7 @@ namespace pxsim {
     const FRAME_DATA_MESSAGE_CHANNEL = "messagechannel"
     const FRAME_ASPECT_RATIO = "aspectratio"
     const MESSAGE_SOURCE = "pxtdriver"
+    const PERMANENT = "permanent"
 
     export class SimulatorDriver {
         private themes = ["blue", "red", "green", "yellow"];
@@ -342,6 +345,8 @@ namespace pxsim {
                             messageFrame.dataset[FRAME_DATA_MESSAGE_CHANNEL] = messageChannel;
                             pxsim.U.addClass(wrapper, "simmsg")
                             pxsim.U.addClass(wrapper, "simmsg" + messageChannel)
+                            if (messageSimulator.permanent)
+                                messageFrame.dataset[PERMANENT] = "true";
                             this.startFrame(messageFrame);
                             frames = this.simFrames(); // refresh
                         }
@@ -501,17 +506,17 @@ namespace pxsim {
                 && this.loanedSimulator.querySelector("iframe");
         }
 
-        private frameCleanupTimeout = 0;
+        private frameCleanupTimeout: any = undefined;
         private cancelFrameCleanup() {
             if (this.frameCleanupTimeout) {
                 clearTimeout(this.frameCleanupTimeout);
-                this.frameCleanupTimeout = 0;
+                this.frameCleanupTimeout = undefined;
             }
         }
         private scheduleFrameCleanup() {
             this.cancelFrameCleanup();
             this.frameCleanupTimeout = setTimeout(() => {
-                this.frameCleanupTimeout = 0;
+                this.frameCleanupTimeout = undefined;
                 this.cleanupFrames();
             }, 5000);
         }
@@ -556,13 +561,14 @@ namespace pxsim {
             // drop unused extras frames after 5 seconds
             const frames = this.simFrames(true);
             frames.shift(); // drop first frame
-            frames.forEach(frame => {
-                if (this.state == SimulatorState.Stopped
-                    || frame.dataset['runid'] != this.runId) {
-                    if (this.options.removeElement) this.options.removeElement(frame.parentElement);
-                    else frame.parentElement.remove();
-                }
-            });
+            frames.filter(frame => !frame.dataset[PERMANENT])
+                .forEach(frame => {
+                    if (this.state == SimulatorState.Stopped
+                        || frame.dataset['runid'] != this.runId) {
+                        if (this.options.removeElement) this.options.removeElement(frame.parentElement);
+                        else frame.parentElement.remove();
+                    }
+                });
         }
 
         public hide(completeHandler?: () => void) {
@@ -597,6 +603,7 @@ namespace pxsim {
                 source: MESSAGE_SOURCE,
                 boardDefinition: opts.boardDefinition,
                 parts: opts.parts,
+                builtinParts: opts.builtinParts,
                 fnArgs: opts.fnArgs,
                 code: js,
                 partDefinitions: opts.partDefinitions,
@@ -611,7 +618,8 @@ namespace pxsim {
                 breakOnStart: opts.breakOnStart,
                 storedState: opts.storedState,
                 ipc: opts.ipc,
-                single: opts.single
+                single: opts.single,
+                dependencies: opts.dependencies
             }
             this.start();
         }
@@ -700,7 +708,7 @@ namespace pxsim {
                 case 'screenshot':
                 case 'custom':
                 case 'recorder':
-                case 'extensionsdialog':
+                case 'addextensions':
                     break; //handled elsewhere
                 case 'aspectratio': {
                     const asmsg = msg as SimulatorAspectRatioMessage;

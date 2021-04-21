@@ -108,11 +108,19 @@ function getSectionsFromText(text: string) {
 
 function buildMapFromSections(header: MarkdownSection, sections: MarkdownSection[]) {
     const result = inflateSkillMap(header);
-    const activities = sections.map(inflateActivity);
+    const nodes = sections.map(inflateMapNode);
+    const activities = nodes.filter(n => n.kind === "activity") as MapActivity[];
 
-    result.root = activities[0];
+    // Inherit unless explicitly disallowed
+    if (result.allowCodeCarryover) activities.forEach(a => {
+        if (a.allowCodeCarryover === undefined) {
+            a.allowCodeCarryover = true;
+        }
+    });
 
-    for (const activity of activities) {
+    result.root = nodes[0];
+
+    for (const activity of nodes) {
         if (result.activities![activity.activityId]) {
             error(`Duplicate activity id '${activity.activityId}' in map '${result.mapId}'`);
         }
@@ -120,7 +128,7 @@ function buildMapFromSections(header: MarkdownSection, sections: MarkdownSection
         result.activities![activity.activityId] = activity;
     }
 
-    for (const activity of activities) {
+    for (const activity of nodes) {
         for (const id of activity.nextIds) {
             if (!result.activities![id]) error(`Unknown activity id '${id}' in map '${result.mapId}'`);
             activity.next.push(result.activities![id]);
@@ -131,7 +139,7 @@ function buildMapFromSections(header: MarkdownSection, sections: MarkdownSection
 
     checkForLoopsRecursive(result.root);
 
-    for (const activity of activities) {
+    for (const activity of nodes) {
         if (!reachable[activity.activityId]) {
             console.warn(`Unreachable activity detected '${activity.activityId}' in map '${result.mapId}'`);
         }
@@ -139,14 +147,10 @@ function buildMapFromSections(header: MarkdownSection, sections: MarkdownSection
 
     return result as SkillMap;
 
-    function checkForLoopsRecursive(root: MapActivity, visited: {[index: string]: boolean} = {}) {
+    function checkForLoopsRecursive(root: MapNode, visited: {[index: string]: boolean} = {}) {
         if (visited[root.activityId]) error(`Loop in map '${result.mapId}' detected`);
         visited[root.activityId] = true;
         reachable[root.activityId] = true;
-
-        if (root.next.length > 1) {
-            error("Branching currently not supported")
-        }
 
         for (const next of root.next) {
             checkForLoopsRecursive(next, {...visited});
@@ -162,7 +166,9 @@ function inflateSkillMap(section: MarkdownSection): Partial<SkillMap> {
         description: section.attributes["description"],
         completionUrl: section.attributes["completionurl"],
         prerequisites: [],
-        activities: {}
+        activities: {},
+        // defaults to true
+        allowCodeCarryover: section.attributes["allowcodecarryover"] ? !isFalse(section.attributes["allowcodecarryover"]) : true
     };
 
     if (section.attributes["required"]) {
@@ -189,16 +195,62 @@ function inflateSkillMap(section: MarkdownSection): Partial<SkillMap> {
     return result;
 }
 
-function inflateActivity(section: MarkdownSection): MapActivity {
-    const result: Partial<MapActivity> = {
+function inflateMapNode(section: MarkdownSection): MapNode {
+    const base: Partial<MapNode> = {
         activityId: section.header.toLowerCase(),
+        imageUrl: section.attributes["imageurl"],
+        next: [],
         displayName: section.attributes["name"] || section.header,
+        nextIds: parseList(section.attributes["next"])
+    }
+
+    if (section.attributes.kind === "reward" || section.attributes.kind === "completion") {
+        return inflateMapReward(section, base as Partial<MapReward>);
+    } else if (section.attributes.kind === "layout") {
+        return inflateMapLayout(section, base as Partial<MapLayoutNode>);
+    } else {
+        return inflateActivity(section, base as Partial<MapActivity>);
+    }
+}
+
+function inflateMapLayout(section: MarkdownSection, base: Partial<MapLayoutNode>): MapLayoutNode {
+    const result: Partial<MapLayoutNode> = {
+        ...base,
+        kind: "layout",
+        next: []
+    };
+
+    return result as MapLayoutNode;
+}
+
+function inflateMapReward(section: MarkdownSection, base: Partial<MapReward>): MapReward {
+    const result: Partial<MapReward> = {
+        ...base,
+        kind: (section.attributes.kind || "reward") as any,
+        url: section.attributes.url
+    };
+
+    if (section.attributes["type"]) {
+        const type = section.attributes["type"].toLowerCase();
+        switch (type) {
+            case "certificate":
+                result.type = type;
+                break;
+        }
+    }
+
+    return result as MapReward;
+}
+
+function inflateActivity(section: MarkdownSection, base: Partial<MapActivity>): MapActivity {
+    const result: Partial<MapActivity> = {
+        ...base,
+        kind: "activity",
         description: section.attributes["description"],
         url: section.attributes["url"],
-        imageUrl: section.attributes["imageurl"],
         tags: parseList(section.attributes["tags"]),
-        next: [],
-        nextIds: parseList(section.attributes["next"])
+        // defaults to true
+        allowCodeCarryover: section.attributes["allowcodecarryover"] ? !isFalse(section.attributes["allowcodecarryover"]) : true
     };
 
     if (section.attributes["type"]) {
@@ -229,11 +281,76 @@ function inflateActivity(section: MarkdownSection): MapActivity {
     return result as MapActivity;
 }
 
+function isTrue(value: string | undefined) {
+    if (!value) return false;
+
+    switch (value.toLowerCase().trim()) {
+        case "1":
+        case "yes":
+        case "y":
+        case "on":
+        case "true":
+            return true;
+        default:
+            return false;
+    }
+}
+
+function isFalse(value: string | undefined) {
+    if (!value) return false;
+
+    switch (value.toLowerCase().trim()) {
+        case "0":
+        case "no":
+        case "n":
+        case "off":
+        case "false":
+            return true;
+        default:
+            return false;
+    }
+}
+
 function inflateMetadata(section: MarkdownSection): PageMetadata {
+    const primary = section.attributes["primarycolor"];
+    const secondary = section.attributes["secondarycolor"];
+    const tertiary = section.attributes["tertiarycolor"];
+    const highlight = section.attributes["highlightcolor"];
+
     return {
         title: section.attributes["name"] || section.header,
         description: section.attributes["description"],
-        infoUrl: section.attributes["infourl"]
+        infoUrl: section.attributes["infourl"],
+        backgroundImageUrl: section.attributes["backgroundurl"],
+        bannerImageUrl: section.attributes["bannerurl"],
+        alternateSources: parseList(section.attributes["alternatesources"]),
+        theme: {
+            backgroundColor: tertiary || "var(--body-background-color)",
+            pathColor: primary || "#BFBFBF",
+            strokeColor: "#000000",
+            rewardNodeColor: highlight || "var(--primary-color)",
+            rewardNodeForeground: highlight ? getContrastingColor(highlight) : "#000000",
+            unlockedNodeColor: secondary || "var(--secondary-color)",
+            unlockedNodeForeground: secondary ? getContrastingColor(secondary) : "#000000",
+            lockedNodeColor: primary || "#BFBFBF",
+            lockedNodeForeground: primary ? getContrastingColor(primary) : "#000000",
+            selectedStrokeColor: highlight || "var(--primary-color)",
+            pathOpacity: 0.5,
+        }
+    }
+}
+
+function getContrastingColor(color: string) {
+    color = color.replace("#", "");
+    const r = Number.parseInt(color.slice(0, 2), 16);
+    const g = Number.parseInt(color.slice(2, 4), 16);
+    const b = Number.parseInt(color.slice(4), 16);
+
+    if (r + g + b > 0xff * 3 / 2) {
+        return "#000000"
+    }
+    else {
+        return "#ffffff"
     }
 }
 

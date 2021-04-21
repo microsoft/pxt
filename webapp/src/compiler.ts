@@ -664,7 +664,6 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
 
     const result: pxtc.ApisInfo = {
         byQName: {},
-        jres: {}
     };
 
     for (const used of usedPackageInfo) {
@@ -677,11 +676,9 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
         }
 
         pxt.Util.jsonCopyFrom(result.byQName, info.apis.byQName);
-        if (info.apis.jres)
-            pxt.Util.jsonCopyFrom(result.jres, info.apis.jres);
     }
 
-    const jres = pkg.mainPkg.getJRes();
+    result.jres = pkg.mainPkg.getJRes() || {};
 
     for (const qName of Object.keys(result.byQName)) {
         let si = result.byQName[qName]
@@ -689,7 +686,7 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
         let jrname = si.attributes.jres
         if (jrname) {
             if (jrname == "true") jrname = qName
-            let jr = U.lookup(jres || {}, jrname)
+            let jr = U.lookup(result.jres, jrname)
             if (jr && jr.icon && !si.attributes.iconURL) {
                 si.attributes.iconURL = jr.icon
             }
@@ -965,7 +962,7 @@ export function updatePackagesAsync(packages: pkg.EditorPackage[], token?: pxt.U
 
             return workspace.saveAsync(epkg.header);
         })
-        .then(() => Promise.each(packages, p => {
+        .then(() => U.promiseMapAllSeries(packages, p => {
             if (token) token.throwIfCancelled();
             return epkg.updateDepAsync(p.getPkgId())
                 .then(() => {
@@ -1099,11 +1096,9 @@ class ApiInfoIndexedDb {
 
         return this.db.getAsync(ApiInfoIndexedDb.TABLE, key)
             .then((value: ApiInfoIndexedDbEntry) => {
-                /* tslint:disable:possible-timing-attack (this is not a security-sensitive codepath) */
                 if (value && value.hash === hash) {
                     return value.apis
                 }
-                /* tslint:enable:possible-timing-attack */
                 return undefined;
             });
     }
@@ -1137,6 +1132,6 @@ class ApiInfoIndexedDb {
 export function clearApiInfoDbAsync() {
     return ApiInfoIndexedDb.createAsync()
         .then(db => db.clearAsync())
-        .catch(e => pxt.BrowserUtils.IDBWrapper.deleteDatabaseAsync(ApiInfoIndexedDb.dbName()).done());
+        .catch(e => pxt.BrowserUtils.IDBWrapper.deleteDatabaseAsync(ApiInfoIndexedDb.dbName()).then());
 
 }

@@ -825,7 +825,9 @@ export interface TreeGroupProps {
 export class TreeGroup extends data.Component<TreeGroupProps, {}> {
     renderCore() {
         const { visible } = this.props;
-        return <div role="group" style={{ backgroundPosition: '0px 0px', 'display': visible ? '' : 'none' }}>
+        if (!this.props.children) return <div />;
+
+        return <div role="tree" style={{ backgroundPosition: '0px 0px', 'display': visible ? '' : 'none' }}>
             {this.props.children}
         </div>
     }
@@ -895,7 +897,7 @@ export class ToolboxSearch extends data.Component<ToolboxSearchProps, ToolboxSea
 
         // Execute search
         parent.searchAsync(searchTerm)
-            .done((blocks) => {
+            .then((blocks) => {
                 if (blocks.length == 0) {
                     searchAccessibilityLabel = lf("No search results...");
                 } else {
