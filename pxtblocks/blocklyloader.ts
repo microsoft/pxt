@@ -1237,11 +1237,6 @@ namespace pxt.blocks {
                             "type": "input_value",
                             "name": "PREDICATE",
                             "check": "Boolean"
-                        },
-                        {
-                            "type": "input_value",
-                            "name": "STEP",
-                            "check": "Number"
                         }
                     ],
                     "previousStatement": null,
@@ -1251,6 +1246,12 @@ namespace pxt.blocks {
                 });
                 this.appendStatementInput('DO')
                     .appendField(pxtControlsForExtDef.block["appendField"]);
+
+                // TODO pull this from def as "appendField" above
+                this.appendDummyInput('STEPTITLE')
+                    .appendField("change by");
+
+                this.appendValueInput("STEP").setCheck("Number");
 
                 let thisBlock = this;
                 setHelpResources(this,
