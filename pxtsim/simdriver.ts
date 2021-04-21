@@ -672,7 +672,12 @@ namespace pxsim {
             msg.id = `${msg.options.theme}-${this.nextId()}`;
             frame.dataset['runid'] = this.runId;
             frame.dataset['runtimeid'] = msg.id;
+            if (frame.id !== this.debuggingFrame) {
+                msg.traceDisabled = true;
+                msg.breakOnStart = false;
+            }
             frame.contentWindow.postMessage(msg, frame.dataset['origin']);
+            if (this.traceInterval) this.setTraceInterval(this.traceInterval);
             this.applyAspectRatioToFrame(frame);
             this.setFrameState(frame);
             return true;
@@ -759,24 +764,20 @@ namespace pxsim {
 
         public resume(c: SimulatorDebuggerCommand) {
             let msg: string;
-            let frameID: string;
             switch (c) {
                 case SimulatorDebuggerCommand.Resume:
                     msg = 'resume';
                     this.setState(SimulatorState.Running);
                     break;
                 case SimulatorDebuggerCommand.StepInto:
-                    frameID = this.debuggingFrame;
                     msg = 'stepinto';
                     this.setState(SimulatorState.Running);
                     break;
                 case SimulatorDebuggerCommand.StepOut:
-                    frameID = this.debuggingFrame;
                     msg = 'stepout';
                     this.setState(SimulatorState.Running);
                     break;
                 case SimulatorDebuggerCommand.StepOver:
-                    frameID = this.debuggingFrame;
                     msg = 'stepover';
                     this.setState(SimulatorState.Running);
                     break;
@@ -788,7 +789,7 @@ namespace pxsim {
                     return;
             }
 
-            this.postMessage({ type: 'debugger', subtype: msg, source: MESSAGE_SOURCE } as pxsim.DebuggerMessage, undefined, frameID);
+            this.postMessage({ type: 'debugger', subtype: msg, source: MESSAGE_SOURCE } as pxsim.DebuggerMessage);
         }
 
         public setBreakpoints(breakPoints: number[]) {
@@ -798,7 +799,9 @@ namespace pxsim {
 
         public setTraceInterval(intervalMs: number) {
             this.traceInterval = intervalMs;
-            this.postDebuggerMessage("traceConfig", { interval: intervalMs }, undefined, this.debuggingFrame);
+            // Send to all frames so that they all run at the same speed, even though only the debugging sim
+            // will actually send events
+            this.postDebuggerMessage("traceConfig", { interval: intervalMs });
         }
 
         public variablesAsync(id: number, fields?: string[]): Promise<VariablesMessage> {

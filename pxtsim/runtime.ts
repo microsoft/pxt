@@ -732,6 +732,7 @@ namespace pxsim {
         timeoutsScheduled: TimeoutScheduled[] = []
         timeoutsPausedOnBreakpoint: PausedTimeout[] = [];
         pausedOnBreakpoint: boolean = false;
+        traceDisabled = false;
 
         perfCounters: PerfCounter[]
         perfOffset = 0
@@ -955,6 +956,7 @@ namespace pxsim {
         static messagePosted: (data: SimulatorMessage) => void;
         static postMessage(data: SimulatorMessage) {
             if (!data) return;
+            if (runtime) (data as any).traceDisabled = !!runtime.traceDisabled;
             // TODO: origins
             if (typeof window !== 'undefined' && window.parent && window.parent.postMessage) {
                 window.parent.postMessage(data, "*");
@@ -1112,6 +1114,7 @@ namespace pxsim {
             let lastYield = Date.now()
             let userGlobals: string[];
             let __this = this // ex
+            this.traceDisabled = !!msg.traceDisabled;
 
             // this is passed to generated code
             const evalIface = {
@@ -1268,9 +1271,11 @@ namespace pxsim {
             function trace(brkId: number, s: StackFrame, retPc: number, info: any) {
                 setupResume(s, retPc);
                 if (info.functionName === "<main>" || info.fileName === "main.ts") {
-                    const { msg } = getBreakpointMsg(s, brkId, userGlobals);
-                    msg.subtype = "trace";
-                    Runtime.postMessage(msg)
+                    if (!runtime.traceDisabled) {
+                        const { msg } = getBreakpointMsg(s, brkId, userGlobals);
+                        msg.subtype = "trace";
+                        Runtime.postMessage(msg)
+                    }
                     thread.pause(tracePauseMs || 1)
                 }
                 else {
