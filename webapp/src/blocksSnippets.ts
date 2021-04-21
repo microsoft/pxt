@@ -73,9 +73,24 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                             <field name="NUM">0</field>
                         </shadow>
                     </value>
-                    <value name="TO">
+                    <value name="PREDICATE">
+                        <shadow type="logic_compare">
+                            <field name="OP">LT</field>
+                            <value name="A">
+                            <shadow type="variables_get_reporter">
+                                <field name="VAR">${lf("{id:var}index")}</field>
+                            </shadow>
+                            </value>
+                            <value name="B">
+                            <shadow type="math_number">
+                                <field name="NUM">4</field>
+                            </shadow>
+                            </value>
+                        </shadow>
+                    </value>
+                    <value name="STEP">
                         <shadow type="math_whole_number">
-                            <field name="NUM">4</field>
+                            <field name="NUM">1</field>
                         </shadow>
                     </value>
                 </block>`

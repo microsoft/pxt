@@ -1235,7 +1235,12 @@ namespace pxt.blocks {
                         },
                         {
                             "type": "input_value",
-                            "name": "TO",
+                            "name": "PREDICATE",
+                            "check": "Boolean"
+                        },
+                        {
+                            "type": "input_value",
+                            "name": "STEP",
                             "check": "Number"
                         }
                     ],

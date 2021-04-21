@@ -337,7 +337,7 @@ namespace pxt.blocks {
                 url: 'blocks/loops/for',
                 category: 'loops',
                 block: {
-                    message0: Util.lf("for %1 from %2 to %3"),
+                    message0: Util.lf("for %1 from %2 test %3 step %4"),
                     variable: Util.lf("{id:var}index"),
                     appendField: Util.lf("{id:for}do")
                 }
