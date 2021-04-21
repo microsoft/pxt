@@ -18,10 +18,17 @@ interface ServiceWorkerClient {
     readonly type: "window" | "worker" | "sharedworker";
     readonly url: string;
 
-    postMessage(message: pxt.ServiceWorkerEvent): void;
+    postMessage(message: pxt.ServiceWorkerEvent | pxt.ServiceWorkerMessage): void;
+}
+
+enum DisconnectResponse {
+    Disconnected,
+    Waiting,
+    TimedOut
 }
 
 initWebappServiceWorker();
+initWebUSB();
 
 function initWebappServiceWorker() {
     // Empty string for released, otherwise contains the ref or version path
@@ -214,6 +221,188 @@ function initWebappServiceWorker() {
                 state: "activated",
                 ref: ref
             }))
+        });
+    }
+}
+
+
+// The ServiceWorker manages the webUSB sharing between tabs/windows in the browser. Only
+// one client can connect to webUSB at a time
+function initWebUSB() {
+    // Webusb doesn't love it when we connect/reconnect too quickly
+    const minimumLockWaitTime = 4000;
+
+    // The ID of the client who currently has the lock on webUSB
+    let lockGranted: string;
+
+    let lastLockTime = 0;
+    let waitingLock: string;
+    let state: "waiting" | "granting" | "idle" = "idle";
+    let pendingDisconnectResolver: (resp: DisconnectResponse) => void;
+    let statusResolver: (lock: string) => void;
+
+    self.addEventListener("message", async (ev: MessageEvent) => {
+        const message: pxt.ServiceWorkerClientMessage = ev.data;
+        if (message?.type === "serviceworkerclient") {
+            if (message.action === "request-packet-io-lock") {
+
+                if (!lockGranted) lockGranted = await checkForExistingLockAsync();
+
+                // Deny the lock if we are in the process of granting it to someone else
+                if (state === "granting") {
+                    await sendToAllClientsAsync({
+                        type: "serviceworker",
+                        action: "packet-io-lock-granted",
+                        granted: false,
+                        lock: message.lock
+                    });
+                    return;
+                }
+
+                console.log("Received lock request " + message.lock);
+
+                // Throttle reconnect requests
+                const timeSinceLastLock = Date.now() - lastLockTime;
+                waitingLock = message.lock;
+                if (timeSinceLastLock < minimumLockWaitTime) {
+                    state = "waiting";
+                    console.log("Waiting to grant lock request " + message.lock);
+                    await delay(minimumLockWaitTime - timeSinceLastLock);
+                }
+
+                // We received a more recent request while we were waiting, so abandon this one
+                if (waitingLock !== message.lock) {
+                    console.log("Rejecting old lock request " + message.lock);
+                    await sendToAllClientsAsync({
+                        type: "serviceworker",
+                        action: "packet-io-lock-granted",
+                        granted: false,
+                        lock: message.lock
+                    });
+                    return;
+                }
+
+                state = "granting";
+
+                // First we need to tell whoever currently has the lock to disconnect
+                // and poll until they have finished
+                if (lockGranted) {
+                    let resp: DisconnectResponse;
+                    do {
+                        console.log("Sending disconnect request " + message.lock);
+                        resp = await waitForLockDisconnectAsync();
+                        if (resp === DisconnectResponse.Waiting) {
+                            console.log("Waiting on disconnect request " + message.lock);
+                            await delay(1000);
+                        }
+                    } while (resp === DisconnectResponse.Waiting)
+                }
+
+                // Now we can notify that the request has been granted
+                console.log("Granted lock request " + message.lock);
+                lockGranted = message.lock;
+                await sendToAllClientsAsync({
+                    type: "serviceworker",
+                    action: "packet-io-lock-granted",
+                    granted: true,
+                    lock: message.lock
+                });
+
+                lastLockTime = Date.now();
+                state = "idle";
+            }
+            else if (message.action === "release-packet-io-lock") {
+                // The client released the webusb lock for some reason (e.g. went to home screen)
+                console.log("Received disconnect for " + lockGranted);
+                lockGranted = undefined;
+                if (pendingDisconnectResolver) pendingDisconnectResolver(DisconnectResponse.Disconnected);
+            }
+            else if (message.action === "packet-io-lock-disconnect") {
+                // Response to a disconnect request we sent
+                console.log("Received disconnect response for " + lockGranted);
+
+                if (message.didDisconnect) lockGranted = undefined;
+                if (pendingDisconnectResolver) pendingDisconnectResolver(message.didDisconnect ? DisconnectResponse.Disconnected : DisconnectResponse.Waiting);
+            }
+            else if (message.action === "packet-io-supported") {
+                await sendToAllClientsAsync({
+                    type: "serviceworker",
+                    action: "packet-io-supported",
+                    supported: true
+                });
+            }
+            else if (message.action === "packet-io-status" && message.hasLock && statusResolver) {
+                statusResolver(message.lock);
+            }
+        }
+    });
+
+    async function sendToAllClientsAsync(message: pxt.ServiceWorkerMessage) {
+        const clients = await (self as unknown as ServiceWorkerScope).clients.matchAll()
+        clients.forEach(c => c.postMessage(message))
+    }
+
+    // Waits for the disconnect and times-out after 5 seconds if there is no response
+    function waitForLockDisconnectAsync() {
+        let ref: any;
+
+        const promise = new Promise<DisconnectResponse>((resolve) => {
+            console.log("Waiting for disconnect " + lockGranted);
+            pendingDisconnectResolver = resolve;
+            sendToAllClientsAsync({
+                type: "serviceworker",
+                action: "packet-io-lock-disconnect",
+                lock: lockGranted
+            });
+        })
+
+        const timeoutPromise = new Promise<DisconnectResponse>(resolve => {
+            ref = setTimeout(() => {
+                console.log("Timed-out disconnect request " + lockGranted);
+                resolve(DisconnectResponse.TimedOut);
+            }, 5000)
+        });
+
+        return Promise.race([ promise, timeoutPromise ])
+            .then(resp => {
+                clearTimeout(ref);
+                pendingDisconnectResolver = undefined
+                return resp;
+            });
+    }
+
+    function checkForExistingLockAsync() {
+        if (lockGranted) return Promise.resolve(lockGranted);
+        let ref: any;
+
+        const promise = new Promise<string>(resolve => {
+            console.log("check for existing lock");
+            statusResolver = resolve;
+            sendToAllClientsAsync({
+                type: "serviceworker",
+                action: "packet-io-status"
+            });
+        })
+
+        const timeoutPromise = new Promise<string>(resolve => {
+            ref = setTimeout(() => {
+                console.log("Timed-out check for existing lock");
+                resolve(undefined);
+            }, 1000)
+        });
+
+        return Promise.race([ promise, timeoutPromise ])
+            .then(resp => {
+                clearTimeout(ref);
+                statusResolver = undefined
+                return resp;
+            });
+    }
+
+
+    function delay(millis: number): Promise<void> {
+        return new Promise(resolve => {
+            setTimeout(resolve, millis);
         });
     }
 }

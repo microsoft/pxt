@@ -486,6 +486,65 @@ declare namespace pxt {
         state: "activated";
         ref: string;
     }
+
+    type ServiceWorkerClientMessage = RequestPacketIOLockMessage | ReleasePacketIOLockMessage | DisconnectPacketIOResponse | PacketIOLockSupportedMessage | PacketIOLockStatusResponse;
+
+    interface RequestPacketIOLockMessage {
+        type: "serviceworkerclient";
+        action: "request-packet-io-lock";
+        lock: string;
+    }
+
+    interface ReleasePacketIOLockMessage {
+        type: "serviceworkerclient";
+        action: "release-packet-io-lock";
+        lock: string;
+    }
+
+    interface DisconnectPacketIOResponse {
+        type: "serviceworkerclient";
+        action: "packet-io-lock-disconnect";
+        lock: string;
+        didDisconnect: boolean;
+    }
+
+    interface PacketIOLockSupportedMessage {
+        type: "serviceworkerclient";
+        action: "packet-io-supported";
+    }
+
+    interface PacketIOLockStatusResponse {
+        type: "serviceworkerclient";
+        action: "packet-io-status";
+        lock: string;
+        hasLock: boolean;
+    }
+
+    type ServiceWorkerMessage = DisconnectPacketIOMessage | GrantPacketIOLockMessage | PacketIOLockSupportedResponse | PacketIOLockStatusMessage;
+
+    interface DisconnectPacketIOMessage {
+        type: "serviceworker";
+        action: "packet-io-lock-disconnect";
+        lock: string;
+    }
+
+    interface GrantPacketIOLockMessage {
+        type: "serviceworker";
+        action: "packet-io-lock-granted";
+        granted: boolean;
+        lock: string;
+    }
+
+    interface PacketIOLockSupportedResponse {
+        type: "serviceworker";
+        action: "packet-io-supported";
+        supported: boolean;
+    }
+
+    interface PacketIOLockStatusMessage {
+        type: "serviceworker";
+        action: "packet-io-status";
+    }
 }
 
 declare namespace pxt.editor {
