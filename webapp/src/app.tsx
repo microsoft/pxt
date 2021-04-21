@@ -3190,6 +3190,7 @@ export class ProjectView
             debugging: state,
             debugFirstRun: state
          }, () => {
+            this.setSimulatorFullScreen(false); // exit fullscreen if necessary
             this.onDebuggingStart();
         });
     }
