@@ -32,7 +32,7 @@ export function validate(step: pxt.tutorial.TutorialStepInfo, source: string, bl
 // Returns a map of block type and frequency
 function blockCount(arrayCount: string[]): pxt.Map<number> {
     let count: pxt.Map<number> = {};
-    for(let i:number; i < arrayCount.length; i++) {
+    for(let i: number = 0; i < arrayCount.length; i++) {
         if (!count[i]) {
             count[i] = 0;
         }
