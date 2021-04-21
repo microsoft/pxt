@@ -12,8 +12,10 @@ import * as workspace from "./workspace";
 import * as simulator from "./simulator";
 import * as dialogs from "./dialogs";
 import * as blocklyFieldView from "./blocklyFieldView";
+import * as validator from "./tutorialValidator";
 import { CreateFunctionDialog } from "./createFunction";
 import { initializeSnippetExtensions } from './snippetBuilder';
+
 
 import Util = pxt.Util;
 import { DebuggerToolbox } from "./debuggerToolbox";
@@ -715,7 +717,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         // Get current TypeScript as well, for comarison
         const file = pkg.mainEditorPkg().files["main.ts"].content;
 
-        this.parent.setTutorialCodeStatus(tutorialStep, pxt.tutorial.validate(step, source));
+        var blocks = this.editor.getAllBlocks();
+
+        this.parent.setTutorialCodeStatus(tutorialStep, validator.validate(step, source, blocks, this.blockInfo));
     }
 
     getBlocksAreaDiv() {

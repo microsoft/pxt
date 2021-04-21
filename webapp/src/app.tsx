@@ -46,6 +46,7 @@ import * as keymap from "./keymap";
 import * as auth from "./auth";
 import * as cloud from "./cloud";
 import * as user from "./user";
+import * as validator from "./tutorialValidator";
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -1285,10 +1286,10 @@ export class ProjectView
         }
     }
 
-    setTutorialCodeStatus(step: number, status: pxt.tutorial.TutorialCodeStatus) {
+    setTutorialCodeStatus(step: number, status: string) {
         let tutorialOptions = this.state.tutorialOptions;
         const stepInfo = tutorialOptions.tutorialStepInfo[tutorialOptions.tutorialStep];
-        stepInfo.codeValidated = status == pxt.tutorial.TutorialCodeStatus.Valid;
+        stepInfo.codeValidated = status == validator.TutorialCodeStatus.Valid;
 
         // Update the state with the code status, so the tutorial card can re-render
         this.setState({ tutorialOptions: tutorialOptions });
