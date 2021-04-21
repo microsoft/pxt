@@ -835,10 +835,18 @@ namespace pxsim {
                 case "breakpoint": {
                     const brk = msg as pxsim.DebuggerBreakpointMessage
                     if (this.state == SimulatorState.Running) {
-                        if (brk.exceptionMessage)
+                        if (brk.exceptionMessage) {
                             this.suspend();
-                        else
+                        }
+                        else {
                             this.setState(SimulatorState.Paused);
+                            const frames = this.simFrames(true);
+                            if (frames.length > 1) {
+                                // Make sure all frames pause
+                                this.resume(SimulatorDebuggerCommand.Pause);
+                            }
+                        }
+
                         if (this.options.onDebuggerBreakpoint)
                             this.options.onDebuggerBreakpoint(brk);
                         let stackTrace = brk.exceptionMessage + "\n"
