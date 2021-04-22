@@ -356,7 +356,7 @@ namespace pxt.blocks {
     }
 
     function getLoopVariableField(b: Blockly.Block) {
-        return (b.type == "pxt_controls_for" || b.type == "pxt_controls_for_of" || b.type == "pxt_controls_for_ext") ?
+        return (b.type == "pxt_controls_for" || b.type == "pxt_controls_for_of" || b.type == "pxt_controls_for_ext" || b.type == "pxt_controls_for_ext_pred" || b.type == "pxt_controls_for_ext_pred2") ?
             getInputTargetBlock(b, "VAR") : b;
     }
 
@@ -445,6 +445,13 @@ namespace pxt.blocks {
                     case "pxt_controls_for_ext":
                         unionParam(e, b, "FROM", ground(pNumber.type));
                         unionParam(e, b, "TO", ground(pNumber.type));
+                        unionParam(e, b, "BY", ground(pNumber.type));
+                        break;
+                    case "pxt_controls_for_ext_pred":
+                    case "pxt_controls_for_ext_pred2":
+                        unionParam(e, b, "FROM", ground(pNumber.type));
+                        unionParam(e, b, "PREDICATE", ground(pBoolean.type));
+                        // unionParam(e, b, "BY", ground(pNumber.type));
                         break;
                     case "pxt_controls_for_of":
                     case "controls_for_of":
@@ -1069,7 +1076,15 @@ namespace pxt.blocks {
         let bDo = getInputTargetBlock(b, "DO");
         let bBy = getInputTargetBlock(b, "BY");
         let bFrom = getInputTargetBlock(b, "FROM");
-        let incOne = !bBy || (bBy.type.match(/^math_number/) && extractNumber(bBy) == 1)
+        let bPred = getInputTargetBlock(b, "PREDICATE");
+
+        let byVal = undefined;
+        try {
+            byVal = extractNumber(bBy);
+        } catch {}
+
+        let incOne = !bBy || (bBy.type.match(/^math_number/) && byVal == 1);
+        let inc = byVal >= 0;
 
         let binding = lookup(e, b, getLoopVariableField(b).getField("VAR").getText());
 
@@ -1077,8 +1092,9 @@ namespace pxt.blocks {
             mkText("for (let " + binding.escapedName + " = "),
             bFrom ? compileExpression(e, bFrom, comments) : mkText("0"),
             mkText("; "),
-            mkInfix(mkText(binding.escapedName), "<=", compileExpression(e, bTo, comments)),
+            bPred ? compileExpression(e, bPred, comments) : mkInfix(mkText(binding.escapedName), (inc ? "<=" : ">="), compileExpression(e, bTo, comments)),
             mkText("; "),
+            // TODO do "-1" and take the sign of bBy (instead of += -1)
             incOne ? mkText(binding.escapedName + "++") : mkInfix(mkText(binding.escapedName), "+=", compileExpression(e, bBy, comments)),
             mkText(")"),
             compileStatements(e, bDo)
@@ -1492,6 +1508,8 @@ namespace pxt.blocks {
                 break;
             case 'pxt_controls_for':
             case 'pxt_controls_for_ext':
+            case 'pxt_controls_for_ext_pred':
+            case 'pxt_controls_for_ext_pred2':
             case 'controls_for':
             case 'controls_simple_for':
                 r = compileControlsFor(e, b, comments);
@@ -2494,6 +2512,8 @@ namespace pxt.blocks {
         switch (block.type) {
             case 'pxt_controls_for':
             case 'pxt_controls_for_ext':
+            case 'pxt_controls_for_ext_pred':
+            case 'pxt_controls_for_ext_pred2':
             case 'controls_simple_for':
                 return [[getLoopVariableField(block).getField("VAR").getText(), pNumber]];
             case 'pxt_controls_for_of':

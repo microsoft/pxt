@@ -1235,8 +1235,8 @@ namespace pxt.blocks {
                         },
                         {
                             "type": "input_value",
-                            "name": "PREDICATE",
-                            "check": "Boolean"
+                            "name": "TO",
+                            "check": "Number"
                         }
                     ],
                     "previousStatement": null,
@@ -1251,7 +1251,7 @@ namespace pxt.blocks {
                 this.appendDummyInput('STEPTITLE')
                     .appendField("change by");
 
-                this.appendValueInput("STEP").setCheck("Number");
+                this.appendValueInput("BY").setCheck("Number");
 
                 let thisBlock = this;
                 setHelpResources(this,
@@ -1287,6 +1287,167 @@ namespace pxt.blocks {
                 }
             }
         };
+
+
+
+        // pxt_controls_for_ext_pred
+        const pxtControlsForExtPredId = "pxt_controls_for_ext_pred";
+        const pxtControlsForExtPredDef = pxt.blocks.getBlockDefinition(pxtControlsForExtPredId);
+        Blockly.Blocks[pxtControlsForExtPredId] = {
+            /**
+             * Block for 'for' loop.
+             * @this Blockly.Block
+             */
+            init: function () {
+                this.jsonInit({
+                    "message0": pxtControlsForExtPredDef.block["message0"],
+                    "args0": [
+                        {
+                            "type": "input_value",
+                            "name": "VAR",
+                            "variable": pxtControlsForExtPredDef.block["variable"],
+                            "check": "Variable"
+                        },
+                        {
+                            "type": "input_value",
+                            "name": "FROM",
+                            "check": "Number"
+                        },
+                        {
+                            "type": "input_value",
+                            "name": "PREDICATE",
+                            "check": "Boolean"
+                        }
+                    ],
+                    "previousStatement": null,
+                    "nextStatement": null,
+                    "colour": pxt.toolbox.getNamespaceColor('loops'),
+                    "inputsInline": true
+                });
+                this.appendStatementInput('DO')
+                    .appendField(pxtControlsForExtPredDef.block["appendField"]);
+
+                // TODO pull this from def as "appendField" above
+                this.appendDummyInput('STEPTITLE')
+                    .appendField("change by");
+
+                this.appendValueInput("BY").setCheck("Number");
+
+                let thisBlock = this;
+                setHelpResources(this,
+                    pxtControlsForExtPredId,
+                    pxtControlsForExtPredDef.name,
+                    function () {
+                        return U.rlf(<string>pxtControlsForExtPredDef.tooltip,
+                            thisBlock.getInputTargetBlock('VAR') ? thisBlock.getInputTargetBlock('VAR').getField('VAR').getText() : '');
+                    },
+                    pxtControlsForExtPredDef.url,
+                    String(pxt.toolbox.getNamespaceColor('loops'))
+                );
+            },
+            /**
+             * Return all variables referenced by this block.
+             * @return {!Array.<string>} List of variable names.
+             * @this Blockly.Block
+             */
+            getVars: function (): any[] {
+                return [this.getField('VAR').getText()];
+            },
+            /**
+             * Notification that a variable is renaming.
+             * If the name matches one of this block's variables, rename it.
+             * @param {string} oldName Previous name of variable.
+             * @param {string} newName Renamed variable.
+             * @this Blockly.Block
+             */
+            renameVar: function (oldName: string, newName: string) {
+                const varField = this.getField('VAR');
+                // console.log("testing", newName)
+                if (Blockly.Names.equals(oldName, varField.getText())) {
+                    varField.setValue(newName);
+                }
+            }
+        };
+
+
+        // pxt_controls_for_ext_pred2
+        const pxtControlsForExtPred2Id = "pxt_controls_for_ext_pred2";
+        const pxtControlsForExtPred2Def = pxt.blocks.getBlockDefinition(pxtControlsForExtPred2Id);
+        Blockly.Blocks[pxtControlsForExtPred2Id] = {
+            /**
+             * Block for 'for' loop.
+             * @this Blockly.Block
+             */
+            init: function () {
+                this.jsonInit({
+                    "message0": pxtControlsForExtPred2Def.block["message0"],
+                    "args0": [
+                        {
+                            "type": "input_value",
+                            "name": "VAR",
+                            "variable": pxtControlsForExtPred2Def.block["variable"],
+                            "check": "Variable"
+                        },
+                        {
+                            "type": "input_value",
+                            "name": "FROM",
+                            "check": "Number"
+                        },
+                        {
+                            "type": "input_value",
+                            "name": "PREDICATE",
+                            "check": "Boolean"
+                        },
+                        {
+                            "type": "input_value",
+                            "name": "BY",
+                            "check": "Number"
+                        }
+                    ],
+                    "previousStatement": null,
+                    "nextStatement": null,
+                    "colour": pxt.toolbox.getNamespaceColor('loops'),
+                    "inputsInline": true
+                });
+                this.appendStatementInput('DO')
+                    .appendField(pxtControlsForExtPred2Def.block["appendField"]);
+
+                let thisBlock = this;
+                setHelpResources(this,
+                    pxtControlsForExtPred2Id,
+                    pxtControlsForExtPred2Def.name,
+                    function () {
+                        return U.rlf(<string>pxtControlsForExtPred2Def.tooltip,
+                            thisBlock.getInputTargetBlock('VAR') ? thisBlock.getInputTargetBlock('VAR').getField('VAR').getText() : '');
+                    },
+                    pxtControlsForExtPred2Def.url,
+                    String(pxt.toolbox.getNamespaceColor('loops'))
+                );
+            },
+            /**
+             * Return all variables referenced by this block.
+             * @return {!Array.<string>} List of variable names.
+             * @this Blockly.Block
+             */
+            getVars: function (): any[] {
+                return [this.getField('VAR').getText()];
+            },
+            /**
+             * Notification that a variable is renaming.
+             * If the name matches one of this block's variables, rename it.
+             * @param {string} oldName Previous name of variable.
+             * @param {string} newName Renamed variable.
+             * @this Blockly.Block
+             */
+            renameVar: function (oldName: string, newName: string) {
+                const varField = this.getField('VAR');
+                if (Blockly.Names.equals(oldName, varField.getText())) {
+                    varField.setValue(newName);
+                }
+            }
+        };
+
+
 
         // controls_simple_for
         const controlsSimpleForId = "controls_simple_for";

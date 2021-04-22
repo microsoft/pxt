@@ -9,12 +9,14 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
         _cachedBuiltinCategories[CategoryNameID.Loops] = {
             name: lf("{id:category}Loops"),
             nameid: CategoryNameID.Loops,
+            groups: [" ", lf("Advanced")],
             blocks: [
                 {
                     name: "controls_repeat_ext",
                     attributes: {
                         blockId: "controls_repeat_ext",
-                        weight: 49
+                        weight: 49,
+                        group: " "
                     },
                     blockXml: `<block type="controls_repeat_ext">
                     <value name="TIMES">
@@ -27,7 +29,8 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                     name: "device_while",
                     attributes: {
                         blockId: "device_while",
-                        weight: 48
+                        weight: 48,
+                        group: " "
                     },
                     blockXml: `<block type="device_while">
                     <value name="COND">
@@ -41,7 +44,8 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                     name: "pxt_controls_for",
                     attributes: {
                         blockId: "pxt_controls_for",
-                        weight: 47
+                        weight: 47,
+                        group: " "
                     },
                     blockXml: `<block type="pxt_controls_for">
                     <value name="VAR">
@@ -57,12 +61,63 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                 </block>`
                 },
                 {
+                    name: "pxt_controls_for_of",
+                    attributes: {
+                        blockId: "pxt_controls_for_of",
+                        weight: 46,
+                        group: " "
+                    },
+                    blockXml: `<block type="pxt_controls_for_of">
+                    <value name="VAR">
+                        <shadow type="variables_get_reporter">
+                            <field name="VAR">${lf("{id:var}value")}</field>
+                        </shadow>
+                    </value>
+                    <value name="LIST">
+                        <shadow type="variables_get">
+                            <field name="VAR">list</field>
+                        </shadow>
+                    </value>
+                </block>`
+                },
+                {
                     name: "pxt_controls_for_ext",
                     attributes: {
                         blockId: "pxt_controls_for_ext",
-                        weight: 10
+                        weight: 10,
+                        group: lf("Advanced")
                     },
                     blockXml: `<block type="pxt_controls_for_ext">
+                    <value name="VAR">
+                        <shadow type="variables_get_reporter">
+                            <field name="VAR">${lf("{id:var}index")}</field>
+                        </shadow>
+                    </value>
+                    <value name="FROM">
+                        <shadow type="math_whole_number">
+                            <field name="NUM">4</field>
+                        </shadow>
+                    </value>
+                    <value name="TO">
+                        <shadow type="math_whole_number">
+                            <field name="NUM">0</field>
+                        </shadow>
+                    </value>
+                    <value name="BY">
+                        <shadow type="loopstep">
+                            <field name="step">-1</field>
+                        </shadow>
+                    </value>
+                </block>`
+                },
+                {
+                    name: "pxt_controls_for_ext_pred",
+                    attributes: {
+                        blockId: "pxt_controls_for_ext_pred",
+                        weight: 8,
+                        group: lf("Advanced")
+                    },
+                    blockXml: `<block type="pxt_controls_for_ext_pred">
                     <value name="VAR">
                         <shadow type="variables_get_reporter">
                             <field name="VAR">${lf("{id:var}index")}</field>
@@ -77,7 +132,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                         <shadow type="logic_compare">
                             <field name="OP">LT</field>
                             <value name="A">
-                            <shadow type="variables_get_reporter">
+                            <shadow type="variables_get">
                                 <field name="VAR">${lf("{id:var}index")}</field>
                             </shadow>
                             </value>
@@ -88,28 +143,49 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                             </value>
                         </shadow>
                     </value>
-                    <value name="STEP">
-                        <shadow type="math_whole_number">
-                            <field name="NUM">1</field>
+                    <value name="BY">
+                        <shadow type="loopstep">
+                            <field name="step">1</field>
                         </shadow>
                     </value>
                 </block>`
                 },
                 {
-                    name: "pxt_controls_for_of",
+                    name: "pxt_controls_for_ext_pred2",
                     attributes: {
-                        blockId: "pxt_controls_for_of",
-                        weight: 46
+                        blockId: "pxt_controls_for_ext_pred2",
+                        weight: 6,
+                        group: lf("Advanced")
                     },
-                    blockXml: `<block type="pxt_controls_for_of">
+                    blockXml: `<block type="pxt_controls_for_ext_pred2">
                     <value name="VAR">
                         <shadow type="variables_get_reporter">
-                            <field name="VAR">${lf("{id:var}value")}</field>
+                            <field name="VAR">${lf("{id:var}index")}</field>
                         </shadow>
                     </value>
-                    <value name="LIST">
-                        <shadow type="variables_get">
-                            <field name="VAR">list</field>
+                    <value name="FROM">
+                        <shadow type="math_whole_number">
+                            <field name="NUM">0</field>
+                        </shadow>
+                    </value>
+                    <value name="PREDICATE">
+                        <shadow type="logic_compare">
+                            <field name="OP">LT</field>
+                            <value name="A">
+                            <shadow type="variables_get">
+                                <field name="VAR">${lf("{id:var}index")}</field>
+                            </shadow>
+                            </value>
+                            <value name="B">
+                            <shadow type="math_number">
+                                <field name="NUM">4</field>
+                            </shadow>
+                            </value>
+                        </shadow>
+                    </value>
+                    <value name="BY">
+                        <shadow type="loopstep">
+                            <field name="step">1</field>
                         </shadow>
                     </value>
                 </block>`
@@ -127,7 +203,8 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                 name: "pxt_break",
                 attributes: {
                     blockId: "break_keyword",
-                    weight: 30
+                    weight: 30,
+                    group: " "
                 },
                 blockXml: `<block type="break_keyword"></block>`
             });
@@ -137,7 +214,8 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                 name: "pxt_continue",
                 attributes: {
                     blockId: "continue_keyword",
-                    weight: 29
+                    weight: 29,
+                    group: " "
                 },
                 blockXml: `<block type="continue_keyword"></block>`
             });

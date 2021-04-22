@@ -735,4 +735,14 @@ namespace __internal {
     export function __timePicker(ms: number): number {
         return ms;
     }
+
+    //% blockId=loopstep block="%step"
+    //% blockHidden=true shim=TD_ID
+    //% blockNamespace="loops"
+    //% colorSecondary="#FFFFFF"
+    //% step.fieldEditor="numberdropdown" step.fieldOptions.decompileLiterals=true
+    //% step.fieldOptions.data='[["-1", -1], ["1", 1], ["2", 2], ["5", 5], ["10", 10]]'
+    export function __loopStep(step: number): number {
+        return step;
+    }
 }
