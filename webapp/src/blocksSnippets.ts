@@ -64,7 +64,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                     name: "pxt_controls_for_of",
                     attributes: {
                         blockId: "pxt_controls_for_of",
-                        weight: 46,
+                        weight: 45,
                         group: " "
                     },
                     blockXml: `<block type="pxt_controls_for_of">
@@ -76,6 +76,31 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                     <value name="LIST">
                         <shadow type="variables_get">
                             <field name="VAR">list</field>
+                        </shadow>
+                    </value>
+                </block>`
+                },
+                {
+                    name: "pxt_controls_for_sm",
+                    attributes: {
+                        blockId: "pxt_controls_for_sm",
+                        weight: 46,
+                        group: " "
+                    },
+                    blockXml: `<block type="pxt_controls_for_sm">
+                    <value name="VAR">
+                        <shadow type="variables_get_reporter">
+                            <field name="VAR">${lf("{id:var}index")}</field>
+                        </shadow>
+                    </value>
+                    <value name="FROM">
+                        <shadow type="math_whole_number">
+                            <field name="NUM">1</field>
+                        </shadow>
+                    </value>
+                    <value name="TO">
+                        <shadow type="math_whole_number">
+                            <field name="NUM">4</field>
                         </shadow>
                     </value>
                 </block>`

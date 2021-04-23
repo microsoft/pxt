@@ -356,7 +356,7 @@ namespace pxt.blocks {
     }
 
     function getLoopVariableField(b: Blockly.Block) {
-        return (b.type == "pxt_controls_for" || b.type == "pxt_controls_for_of" || b.type == "pxt_controls_for_ext" || b.type == "pxt_controls_for_ext_pred" || b.type == "pxt_controls_for_ext_pred2") ?
+        return (b.type == "pxt_controls_for" || b.type == "pxt_controls_for_of" || b.type == "pxt_controls_for_ext" || b.type == "pxt_controls_for_ext_pred" || b.type == "pxt_controls_for_ext_pred2" || b.type == "pxt_controls_for_sm") ?
             getInputTargetBlock(b, "VAR") : b;
     }
 
@@ -440,6 +440,10 @@ namespace pxt.blocks {
 
                     case "pxt_controls_for":
                     case "controls_simple_for":
+                        unionParam(e, b, "TO", ground(pNumber.type));
+                        break;
+                    case "pxt_controls_for_sm":
+                        unionParam(e, b, "FROM", ground(pNumber.type));
                         unionParam(e, b, "TO", ground(pNumber.type));
                         break;
                     case "pxt_controls_for_ext":
@@ -1078,10 +1082,14 @@ namespace pxt.blocks {
         let bFrom = getInputTargetBlock(b, "FROM");
         let bPred = getInputTargetBlock(b, "PREDICATE");
 
-        let byVal = undefined;
+        let byVal = 1;
         try {
             byVal = extractNumber(bBy);
-        } catch {}
+        } catch {
+            byVal = 1;
+        }
+
+        if (b.type == "pxt_controls_for_ext") byVal = undefined;
 
         let incOne = !bBy || (bBy.type.match(/^math_number/) && byVal == 1);
         let inc = byVal >= 0;
@@ -1508,6 +1516,7 @@ namespace pxt.blocks {
                 break;
             case 'pxt_controls_for':
             case 'pxt_controls_for_ext':
+            case 'pxt_controls_for_sm':
             case 'pxt_controls_for_ext_pred':
             case 'pxt_controls_for_ext_pred2':
             case 'controls_for':
@@ -2512,6 +2521,7 @@ namespace pxt.blocks {
         switch (block.type) {
             case 'pxt_controls_for':
             case 'pxt_controls_for_ext':
+            case 'pxt_controls_for_sm':
             case 'pxt_controls_for_ext_pred':
             case 'pxt_controls_for_ext_pred2':
             case 'controls_simple_for':
