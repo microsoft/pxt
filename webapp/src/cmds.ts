@@ -105,23 +105,24 @@ function showUploadInstructionsAsync(fn: string, url: string, confirmAsync: (opt
         helpUrl,
         className: 'downloaddialog',
         buttons: [
+            downloadAgain && {
+                label: userDownload ? lf("Download") : lf("Download again"),
+                icon: "download",
+                className: userDownload ? "primary" : "ligthgrey",
+                url,
+                fileName: fn
+            },
             connect && {
                 label: lf("Pair device"),
                 icon: "usb",
-                className: "ligthgrey",
+                className: "primary",
                 onclick: () => {
                     pxt.tickEvent('downloaddialog.pair')
                     core.hideDialog();
                     maybeReconnectAsync(true)
                 }
             },
-            downloadAgain && {
-                label: userDownload ? lf("Download") : lf("Download again"),
-                icon: "download",
-                className: "primary",
-                url,
-                fileName: fn
-            }],
+        ],
         timeout
     }).then(() => { });
 }
@@ -185,39 +186,39 @@ export function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.De
     function deployAsync(): Promise<void> {
         // packetio should time out first
         return pxt.Util.promiseTimeout(120000,
-                pxt.packetio.initAsync(false)
-                    .then(dev => core.showLoadingAsync(LOADING_KEY, lf("Downloading..."),
-                        dev.reflashAsync(resp)
-                            .then(() => dev.reconnectAsync()), 5000))
-                    .then(() => core.infoNotification("Download completed!"))
-                    .finally(() => core.hideLoading(LOADING_KEY))
-            ).catch((e) => {
-                if (e.type === "repairbootloader") {
-                    return pairBootloaderAsync()
-                        .then(() => hidDeployCoreAsync(resp))
-                } else if (e.message === "timeout") {
-                    pxt.tickEvent("hid.flash.timeout");
-                    log(`flash timeout`);
-                } else if (e.type === "devicenotfound") {
-                    pxt.tickEvent("hid.flash.devicenotfound");
-                    // no device, just save
-                    log(`device not found`);
-                    return pxt.commands.saveOnlyAsync(resp);
-                } else if (e.code == 19 || e.type === "devicelocked") {
-                    // device is locked or used by another tab
-                    pxt.tickEvent("hid.flash.devicelocked");
-                    log(`error: device locked`);
-                    return pxt.commands.saveOnlyAsync(resp);
-                } else {
-                    pxt.tickEvent("hid.flash.error");
-                    log(`hid error ${e.message}`)
-                    pxt.reportException(e)
-                    if (d) d.reportError(e.message);
-                }
-
-                // default, save file
+            pxt.packetio.initAsync(false)
+                .then(dev => core.showLoadingAsync(LOADING_KEY, lf("Downloading..."),
+                    dev.reflashAsync(resp)
+                        .then(() => dev.reconnectAsync()), 5000))
+                .then(() => core.infoNotification("Download completed!"))
+                .finally(() => core.hideLoading(LOADING_KEY))
+        ).catch((e) => {
+            if (e.type === "repairbootloader") {
+                return pairBootloaderAsync()
+                    .then(() => hidDeployCoreAsync(resp))
+            } else if (e.message === "timeout") {
+                pxt.tickEvent("hid.flash.timeout");
+                log(`flash timeout`);
+            } else if (e.type === "devicenotfound") {
+                pxt.tickEvent("hid.flash.devicenotfound");
+                // no device, just save
+                log(`device not found`);
                 return pxt.commands.saveOnlyAsync(resp);
-            })
+            } else if (e.code == 19 || e.type === "devicelocked") {
+                // device is locked or used by another tab
+                pxt.tickEvent("hid.flash.devicelocked");
+                log(`error: device locked`);
+                return pxt.commands.saveOnlyAsync(resp);
+            } else {
+                pxt.tickEvent("hid.flash.error");
+                log(`hid error ${e.message}`)
+                pxt.reportException(e)
+                if (d) d.reportError(e.message);
+            }
+
+            // default, save file
+            return pxt.commands.saveOnlyAsync(resp);
+        })
     }
 }
 
@@ -508,10 +509,10 @@ async function requestPacketIOLockAsync() {
                 lock: lockRef
             });
         })
-        .finally(() => {
-            pendingPacketIOLockResolver = undefined;
-            pendingPacketIOLockRejecter = undefined;
-        })
+            .finally(() => {
+                pendingPacketIOLockResolver = undefined;
+                pendingPacketIOLockRejecter = undefined;
+            })
     }
 }
 
@@ -574,7 +575,7 @@ export async function handleServiceWorkerMessageAsync(message: pxt.ServiceWorker
 async function checkIfServiceWorkerSupportedAsync() {
     if (serviceWorkerSupported !== undefined) return serviceWorkerSupported;
 
-    const p =  new Promise<void>(resolve => {
+    const p = new Promise<void>(resolve => {
         // This is resolved in handleServiceWorkerMessageAsync when the
         // service worker sends back the appropriate response
         serviceWorkerSupportedResolver = resolve;
