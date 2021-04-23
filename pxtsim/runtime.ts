@@ -956,7 +956,6 @@ namespace pxsim {
         static messagePosted: (data: SimulatorMessage) => void;
         static postMessage(data: SimulatorMessage) {
             if (!data) return;
-            if (runtime) (data as any).traceDisabled = !!runtime.traceDisabled;
             // TODO: origins
             if (typeof window !== 'undefined' && window.parent && window.parent.postMessage) {
                 window.parent.postMessage(data, "*");
