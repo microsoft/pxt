@@ -16,9 +16,11 @@ export type ImmersiveReaderToken = {
 function beautifyText(content: string): string {
     // The order of these functions matter
     const cleaningFuncs = [
+        replaceBoardName,
         cleanImages,
         cleanAltText,
         cleanBlockAnnotation,
+        cleanInlineButtons,
         cleanMetadata,
         cleanBold,
         cleanItalics,
@@ -36,11 +38,24 @@ function beautifyText(content: string): string {
 
     return contentWIP;
 
+    function replaceBoardName(content: string): string {
+        return content.replace(
+            /@boardname@/g, pxt.appTarget.appTheme.boardName || "device"
+        )
+    }
+
     // Change ``|| around blocks to ""
     function cleanBlockAnnotation(content: string): string {
         return content.replace(
             /`?`\|\|[\w|\s]+:(.+?)\|\|``?/gu,
             (matched, word, offset, s) => lf("\"{0}\"", word)
+        );
+    }
+
+    function cleanInlineButtons(content: string): string {
+        return content.replace(
+            /``\|([^|]+)\|``/gu,
+            (matched, word, offset, s) => lf("{0}", word)
         );
     }
 
@@ -113,12 +128,12 @@ function beautifyText(content: string): string {
     // Replace unicode emojis with text that can be read aloud
     function cleanUnicodeEmojis(content: string): string {
         const replacedA = content.replace(
-            /[Ⓐ|🅐]/gu,
+            /[Ⓐ🅐]/gu,
             lf("{0}", "A")
         );
 
         return replacedA.replace(
-            /[Ⓑ|🅑]/gu,
+            /[Ⓑ🅑]/gu,
             lf("{0}", "B")
         );
     }
