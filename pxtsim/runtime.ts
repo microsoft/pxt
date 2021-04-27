@@ -732,6 +732,7 @@ namespace pxsim {
         timeoutsScheduled: TimeoutScheduled[] = []
         timeoutsPausedOnBreakpoint: PausedTimeout[] = [];
         pausedOnBreakpoint: boolean = false;
+        traceDisabled = false;
 
         perfCounters: PerfCounter[]
         perfOffset = 0
@@ -1112,6 +1113,7 @@ namespace pxsim {
             let lastYield = Date.now()
             let userGlobals: string[];
             let __this = this // ex
+            this.traceDisabled = !!msg.traceDisabled;
 
             // this is passed to generated code
             const evalIface = {
@@ -1268,9 +1270,11 @@ namespace pxsim {
             function trace(brkId: number, s: StackFrame, retPc: number, info: any) {
                 setupResume(s, retPc);
                 if (info.functionName === "<main>" || info.fileName === "main.ts") {
-                    const { msg } = getBreakpointMsg(s, brkId, userGlobals);
-                    msg.subtype = "trace";
-                    Runtime.postMessage(msg)
+                    if (!runtime.traceDisabled) {
+                        const { msg } = getBreakpointMsg(s, brkId, userGlobals);
+                        msg.subtype = "trace";
+                        Runtime.postMessage(msg)
+                    }
                     thread.pause(tracePauseMs || 1)
                 }
                 else {
