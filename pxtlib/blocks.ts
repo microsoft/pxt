@@ -259,6 +259,8 @@ namespace pxt.blocks {
                 return "text width";
             case "boolean":
                 return "random";
+            case "Array":
+                return "star"; // VVN TODO better icon
             default:
                 return "align justify"
         }
