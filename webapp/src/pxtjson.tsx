@@ -42,7 +42,7 @@ export class Editor extends srceditor.Editor {
         return false
     }
 
-    save() {
+    save(stayInEditor?: boolean) {
         const c = this.config
         this.isSaving = true;
         if (!c.name) {
@@ -60,7 +60,7 @@ export class Editor extends srceditor.Editor {
             this.isSaving = false;
             this.changeMade = true;
             // switch to previous coding experience
-            this.parent.openPreviousEditor();
+            if (!stayInEditor) this.parent.openPreviousEditor();
             core.resetFocus();
         })
     }
@@ -115,11 +115,15 @@ export class Editor extends srceditor.Editor {
             }
         }
         // trigger update
-        this.save();
+        this.save(true);
     }
 
     private handleNameInputRef = (c: sui.Input) => {
         this.nameInput = c;
+    }
+
+    private saveOnClick = (e: React.MouseEvent) => {
+        this.save();
     }
 
     display(): JSX.Element {
@@ -151,7 +155,7 @@ export class Editor extends srceditor.Editor {
                             applyUserConfig={this.applyUserConfig} />
                     )}
                     <sui.Field>
-                        <sui.Button text={lf("Save")} className={`green ${this.isSaving ? 'disabled' : ''}`} onClick={this.save} />
+                        <sui.Button text={lf("Save")} className={`green ${this.isSaving ? 'disabled' : ''}`} onClick={this.saveOnClick} />
                         <sui.Button text={lf("Edit Settings As text")} onClick={this.editSettingsText} />
                     </sui.Field>
                 </div>
@@ -198,7 +202,7 @@ export class Editor extends srceditor.Editor {
     }
 
     unloadFileAsync(): Promise<void> {
-        if (this.changeMade) {
+        if (this.changeMade && !this.parent.state?.home) {
             return this.parent.reloadHeaderAsync();
         }
         return Promise.resolve();
