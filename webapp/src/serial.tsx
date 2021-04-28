@@ -475,7 +475,7 @@ export class Editor extends srceditor.Editor {
                     </div>
                 </div>
                 {this.charts?.length == 0 && <div id="serialPlaceholder" className="ui segment">
-                    <div className="ui bottom left attached no-select label seriallabel">{lf("Values will be logged when the device or simulator receives data")}</div>
+                    <div className="ui bottom left attached no-select label seriallabel">{lf("Values will be logged when the {0} sends data", this.isSim ? lf("simulator") : lf("device"))}</div>
                 </div>}
                 <div id="serialCharts" ref={this.handleChartRootRef}></div>
                 <div id="serialConsole" ref={this.handleConsoleRootRef}></div>
