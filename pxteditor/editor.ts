@@ -42,6 +42,12 @@ namespace pxt.editor {
         Expanded = "errorListExpanded"
     }
 
+    export enum TutorialCodeStatus {
+        Unknown = "Unknown",
+        Invalid = "Invalid",
+        Valid = "Valid"
+    }
+
     export interface IAppProps { }
     export interface IAppState {
         active?: boolean; // is this tab visible at all
@@ -244,7 +250,7 @@ namespace pxt.editor {
         completeTutorialAsync(): Promise<void>;
         showTutorialHint(): void;
         isTutorial(): boolean;
-        setTutorialCodeStatus(step: number, status: string): void;
+        setTutorialCodeStatus(step: number, status: TutorialCodeStatus): void;
         pokeUserActivity(): void;
         stopPokeUserActivity(): void;
         clearUserPoke(): void;

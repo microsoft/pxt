@@ -621,9 +621,6 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
             hintOnClick = null;
         }
 
-        // Modify the UI when code is validated
-        console.log("User code status, VALID: ", stepInfo.codeValidated);
-
         const isRtl = pxt.Util.isUserLanguageRtl();
         return <div id="tutorialcard" className={`ui ${tutorialStepExpanded ? 'tutorialExpanded' : ''} ${tutorialReady ? 'tutorialReady' : ''} ${this.state.showSeeMore ? 'seemore' : ''}  ${!this.state.showHint ? 'showTooltip' : ''} ${hasHint ? 'hasHint' : ''}`} style={tutorialStepExpanded ? this.getExpandedCardStyle('height') : null} >
             {hasHint && this.state.showHint && !showDialog && <div className="mask" role="region" onClick={this.closeHint}></div>}

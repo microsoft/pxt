@@ -712,14 +712,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const { tutorialStepInfo, tutorialStep } = tutorial;
         const step = tutorialStepInfo[tutorialStep];
 
-        // Get the current XML and call the validator function
-        const source = this.getCurrentSource();
-        // Get current TypeScript as well, for comarison
-        const file = pkg.mainEditorPkg().files["main.ts"].content;
+        const blocks = this.editor.getAllBlocks();
 
-        let blocks = this.editor.getAllBlocks();
-
-        this.parent.setTutorialCodeStatus(tutorialStep, await validator.validate(step, source, blocks, this.blockInfo));
+        this.parent.setTutorialCodeStatus(tutorialStep, await validator.validate(step, blocks, this.blockInfo));
     }
 
     getBlocksAreaDiv() {
