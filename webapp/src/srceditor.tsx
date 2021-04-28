@@ -147,6 +147,6 @@ export class Editor implements pxt.editor.IEditor {
         core.warningNotification(lf("Program Error: {0}", exception?.exceptionMessage));
     }
 
-    // Validates uesr code at this tutorial step
+    // Validates user code at this tutorial step
     validateTutorialCode(tutorial: pxt.tutorial.TutorialOptions) { }
 }

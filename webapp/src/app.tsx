@@ -1287,7 +1287,7 @@ export class ProjectView
     }
 
     setTutorialCodeStatus(step: number, status: string) {
-        let tutorialOptions = this.state.tutorialOptions;
+        const tutorialOptions = this.state.tutorialOptions;
         const stepInfo = tutorialOptions.tutorialStepInfo[tutorialOptions.tutorialStep];
         stepInfo.codeValidated = status == pxt.editor.TutorialCodeStatus.Valid;
 
