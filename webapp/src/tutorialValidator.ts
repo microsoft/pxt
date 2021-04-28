@@ -8,44 +8,54 @@ export enum TutorialCodeStatus {
     Valid = "Valid"
 }
 
-
-// Takes in the tutorial steps and user's source code in XML
-// Returns TutorialCode Status
-export async function validate(step: pxt.tutorial.TutorialStepInfo, source: string, blocks: Blockly.Block[], blockinfo: pxtc.BlocksInfo): Promise<TutorialCodeStatus> {
-
-    // Checks to make sure there are blocks in the workspace
-    if (blocks.length > 0) {
-        let blockTypes: string[] = blocks.map(b => b.type);
-        let tutorialType: string[] = await tutorialBlockList(step, blockinfo);
-
-        let usersBlockUsed: pxt.Map<number> = blockCount(blockTypes);
-        let tutorialBlockUsed: pxt.Map<number> = blockCount(tutorialType);
+/**
+* Check the user's code to the tutorial and returns a Tutorial status of the user's code
+* @param step the current tutorial step
+* @param source XML of workspace
+* @param workspaceBlocks Blockly blocks used of workspace
+* @param blockinfo Typescripts of the workspace
+* @return A TutorialCodeStatus
+*/
+export async function validate(step: pxt.tutorial.TutorialStepInfo, source: string, workspaceBlocks: Blockly.Block[], blockinfo: pxtc.BlocksInfo): Promise<TutorialCodeStatus> {
+    // Check to make sure blocks are in the workspace
+    if (workspaceBlocks.length > 0) {
+        let userBlockTypes: string[] = workspaceBlocks.map(b => b.type);
+        let tutorialBlockTypes: string[] = await tutorialBlockList(step, blockinfo);
+        let usersBlockUsed: pxt.Map<number> = blockCount(userBlockTypes);
+        let tutorialBlockUsed: pxt.Map<number> = blockCount(tutorialBlockTypes);
         if (!validateNumberOfBlocks(usersBlockUsed, tutorialBlockUsed)) {
             return TutorialCodeStatus.Invalid;
         }
         return TutorialCodeStatus.Valid;
     }
-
     return TutorialCodeStatus.Unknown;
 }
 
-// Returns a map of block type and frequency
-function blockCount(arrayCount: string[]): pxt.Map<number> {
-    let count: pxt.Map<number> = {};
-    for (let i: number = 0; i < arrayCount.length; i++) {
-        let blockIndex = hasBlock(arrayCount, i, arrayCount[i]);
+/**
+* Loops through an array of blocks and returns a map of blocks and the count for that block
+* @param arr a string array of blocks
+* @return a map <Block type, frequency>
+*/
+function blockCount(arr: string[]): pxt.Map<number> {
+    let frequencyMap: pxt.Map<number> = {};
+    for (let i: number = 0; i < arr.length; i++) {
+        let blockIndex = hasBlock(arr, i, arr[i]);
         if (blockIndex == i) {
-
-            count[arrayCount[i]] = 0;
+            frequencyMap[arr[i]] = 0;
         }
-        count[arrayCount[i]] = count[arrayCount[i]] + 1;
+        frequencyMap[arr[i]] = frequencyMap[arr[i]] + 1;
     }
-    return count;
+    return frequencyMap;
 }
 
-// Returns index if has block, next availble index otherwise
+/**
+* Checks to see if the array has the target value and returns the target value's index
+* @param arr an array of strings
+* @param index the next available index
+* @param val the target value
+* @return the index 
+*/
 function hasBlock(arr: string[], index: number, val: string): number {
-
     for (let i: number = 0; i < index; i++) {
         if (arr[i] === val) {
             return i;
@@ -54,13 +64,16 @@ function hasBlock(arr: string[], index: number, val: string): number {
     return index;
 }
 
-// Takes in the tutorial steps and returns an array of key words 
+/**
+* Checks to see if the array has the target value and returns the target value's index
+* @param step the current tutorial step
+* @param blockinfo Typescripts of the workspace
+* @return the tutorial blocks
+*/
 function tutorialBlockList(step: pxt.tutorial.TutorialStepInfo, blocksInfo: pxtc.BlocksInfo): Promise<string[]> {
     let hintContent = step.hintContentMd;
-    // Want some regex
     hintContent = hintContent.replace("\`\`\`blocks", "");
     hintContent = hintContent.replace("\`\`\`", "");
-    console.log(hintContent);
     let tutorialBlocks: string[] = [];
     return compiler.decompileBlocksSnippetAsync(hintContent, blocksInfo)
         .then((resp) => {
@@ -72,23 +85,24 @@ function tutorialBlockList(step: pxt.tutorial.TutorialStepInfo, blocksInfo: pxtc
         });
 }
 
-// Takes in a map of the user's code and map of tutorial's code
-// returns false if the user used less blocks than tutorials, true otherwise
+/**
+* Checks if the all required number of blocks for a tutorial step is used, returns a boolean
+* @param usersBlockUsed an array of strings
+* @param tutorialBlockUsed the next available index
+* @return true if all the required tutorial blocks were used, false otherwise
+*/
 function validateNumberOfBlocks(usersBlockUsed: pxt.Map<number>, tutorialBlockUsed: pxt.Map<number>): boolean {
-
-    // Object.keys(usersBlockUsed) <- array of strings
     let userBlockKeys = Object.keys(usersBlockUsed);
     let tutorialBlockKeys = Object.keys(tutorialBlockUsed);
-    // Checks if there is atleast the required number of blocks
-    if (userBlockKeys.length < tutorialBlockKeys.length) {
+    if (userBlockKeys.length < tutorialBlockKeys.length) { // user doesn't have enough blocks
         return false;
     }
     for (let i: number = 0; i < tutorialBlockKeys.length; i++) {
         let tutorialBlockKey = tutorialBlockKeys[i];
-        if(!usersBlockUsed[tutorialBlockKey]) { // has not used blocks
+        if(!usersBlockUsed[tutorialBlockKey]) { // user did not use a specific block
             return false;
         }
-        if (usersBlockUsed[tutorialBlockKey] < tutorialBlockUsed[tutorialBlockKey]) { // not enough blocks of one type
+        if (usersBlockUsed[tutorialBlockKey] < tutorialBlockUsed[tutorialBlockKey]) { // user did not use enough of a certain block
             return false;
         }
     }
