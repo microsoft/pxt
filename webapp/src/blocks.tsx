@@ -707,7 +707,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
-    validateTutorialCode(tutorial: pxt.tutorial.TutorialOptions) {
+    async validateTutorialCode(tutorial: pxt.tutorial.TutorialOptions) {
         // Current tutorial step
         const { tutorialStepInfo, tutorialStep } = tutorial;
         const step = tutorialStepInfo[tutorialStep];
@@ -719,7 +719,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         let blocks = this.editor.getAllBlocks();
 
-        this.parent.setTutorialCodeStatus(tutorialStep, validator.validate(step, source, blocks, this.blockInfo));
+        this.parent.setTutorialCodeStatus(tutorialStep, await validator.validate(step, source, blocks, this.blockInfo));
     }
 
     getBlocksAreaDiv() {
