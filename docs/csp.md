@@ -16,7 +16,7 @@ There are three free professional development opportunities available this summe
 
 ### ~
 
-The **AP CS Principles with Microsoft MakeCode** curriculum is free and uses web-based technology and tools that can be accessed across platforms and devices. The curriculum is also endorsed and approved by the College Board as aligning with the [CS Principles curriculum framework](https://apcentral.collegeboard.org/courses/ap-computer-science-principles/course?course=ap-computer-science-principles) and [AP CS Principles exam](https://apcentral.collegeboard.org/courses/ap-computer-science-principles/exam).
+The **[AP CS Principles with Microsoft MakeCode](https://ganicke.github.io/makecode-apcsp/)** curriculum is free and uses web-based technology and tools that can be accessed across platforms and devices. The curriculum is also endorsed and approved by the College Board as aligning with the [CS Principles curriculum framework](https://apcentral.collegeboard.org/courses/ap-computer-science-principles/course?course=ap-computer-science-principles) and [AP CS Principles exam](https://apcentral.collegeboard.org/courses/ap-computer-science-principles/exam).
 
 Some additional features of the Microsoft MakeCode curriculum include: 
 
