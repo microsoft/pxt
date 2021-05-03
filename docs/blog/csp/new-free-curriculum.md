@@ -10,7 +10,7 @@ Are you do planning to teach the [AP Computer Science Principles](https://apcent
 
 It’s a really fun course that was written and tested in the classroom by [Kelli Etheredge](https://twitter.com/ketheredge), an AP Computer Science Principles teacher herself.  It was written so Teachers new to Computer Science could pick it up and teach – concepts are explained in plain language, daily materials and talking points are provided, and all solutions are included.
 
-There are 9 units in the course that map to the AP CS Principles curriculum framework and prepare students for the AP CSP exam. Microsoft is recognized by the College Board as an endorsed provider of curriculum and professional development for [AP® Computer Science Principles (AP CSP)](https://apcentral.collegeboard.org/courses/ap-computer-science-principles).
+There are 9 units in the course that map to the AP CS Principles curriculum framework and prepare students for the AP CSP exam. Microsoft is recognized by the College Board as an endorsed provider of curriculum and professional development for AP® Computer Science Principles (AP CSP).
 
 The curriculum was written to be culturally relevant to a wide variety of students with diverse backgrounds and experience levels. All computing terms are explained using language and analogies that students understand. Most projects encourage student choice in the topic to ensure that the learning aligns to their interests, and no prior knowledge or computing experience is assumed in the course design and pacing. With MakeCode, students can program in either Blocks, JavaScript or Python.
 
