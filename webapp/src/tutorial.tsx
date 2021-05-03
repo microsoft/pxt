@@ -331,6 +331,88 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
     }
 }
 
+// export class TutorialMoveOn extends data.Component<ISettingsProps, TutorialHintState> {
+//     public elementRef: HTMLDivElement;
+//     protected setRef: (el: HTMLDivElement) => void = (el) => { this.elementRef = el };
+
+//     constructor(props: ISettingsProps) {
+//         super(props);
+
+//         this.next = this.next.bind(this);
+//         this.showMoveOnMessage = this.showMoveOnMessage.bind(this);
+//         this.closeMoveOnMessage = this.closeMoveOnMessage.bind(this);
+//     }
+
+//     next() {
+//         const options = this.props.parent.state.tutorialOptions;
+//         const { tutorialStep, tutorial } = options;
+//         this.setState({ visible: false });
+//         const nextStep = tutorialStep + 1;
+
+//         pxt.tickEvent(`tutorial.hint.next`, { tutorial: tutorial, step: nextStep });
+//         this.props.parent.setTutorialStep(nextStep);
+//     }
+
+//     showMoveOnMessage(visible: boolean, showFullText?: boolean) {
+//         if (visible) Blockly.hideChaff();
+//         this.setState({ visible, showFullText });
+//     }
+
+//     protected closeMoveOnMessage() {
+//         this.showMoveOnMessage(false, this.state.showFullText);
+//     }
+
+//     renderCore() {
+//         const { visible } = this.state;
+//         const options = this.props.parent.state.tutorialOptions;
+//         const { tutorialReady, tutorialStepInfo, tutorialStep, tutorialName } = options;
+//         if (!tutorialReady) return <div />;
+
+//         const step = tutorialStepInfo[tutorialStep];
+//         const tutorialHint = step.hintContentMd;
+//         const fullText = step.contentMd;
+
+//         const hideIteration = options.metadata.hideIteration;
+//         const flyoutOnly = options.metadata.flyoutOnly;
+
+//         const immersiveReaderEnabled = pxt.appTarget.appTheme.immersiveReader;
+
+//         if (!step.showDialog) {
+//             if (!tutorialHint) return <div />;
+
+//             return <div className={`tutorialhint no-select ${!visible ? 'hidden' : ''}`} ref={this.setRef}>
+//                 <md.MarkedContent markdown={this.state.showFullText ? fullText : tutorialHint} unboxSnippets={true} parent={this.props.parent} />
+//             </div>
+//         } else {
+//             let onClick = tutorialStep < tutorialStepInfo.length - 1 ? this.next : this.closeMoveOnMessage;
+//             let actions: sui.ModalButton[] = [];
+//             if (immersiveReaderEnabled) {
+//                 actions.push({
+//                     className: "immersive-reader-button",
+//                     onclick: () => {ImmersiveReader.launchImmersiveReader(fullText, options)},
+//                     ariaLabel: lf("Launch Immersive Reader"),
+//                     title: lf("Launch Immersive Reader")
+//                 })
+//             }
+//             actions.push({
+//                 label: hideIteration && flyoutOnly ? lf("Start") : lf("Ok"),
+//                 onclick: onClick,
+//                 icon: 'check',
+//                 className: 'green'
+//             });
+
+//             const classes = this.props.parent.createModalClasses("hintdialog");
+
+//             return <sui.Modal isOpen={visible} className={classes}
+//                 closeIcon={false} header={tutorialName} buttons={actions}
+//                 onClose={onClick} dimmer={true} longer={true}
+//                 closeOnDimmerClick closeOnDocumentClick closeOnEscape>
+//                 <md.MarkedContent markdown={fullText} parent={this.props.parent} />
+//             </sui.Modal>
+//         }
+//     }
+// }
+
 interface TutorialCardState {
     showHint?: boolean;
     showSeeMore?: boolean;
@@ -369,6 +451,9 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         this.toggleExpanded = this.toggleExpanded.bind(this);
         this.onMarkdownDidRender = this.onMarkdownDidRender.bind(this);
         this.handleResize = this.handleResize.bind(this);
+        this.toggleMoveOnMessage = this.toggleMoveOnMessage.bind(this);
+        this.closeMoveOnMessage = this.closeMoveOnMessage.bind(this);
+        this.moveOnMessageOnClick = this.moveOnMessageOnClick.bind(this);
 
     }
 
@@ -487,12 +572,18 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         this.props.parent.stopPokeUserActivity();
 
         this.removeHintOnClick();
+        this.removeShowMoveOnMessageOnClick();
         window.removeEventListener('resize', this.resizeDebouncer);
     }
 
     private removeHintOnClick() {
         // cleanup hintOnClick
         document.removeEventListener('click', this.closeHint);
+    }
+
+    private removeShowMoveOnMessageOnClick() {
+        // cleanup hintOnClick
+        document.removeEventListener('click', this.closeMoveOnMessage);
     }
 
     toggleExpanded(ev: React.MouseEvent<HTMLDivElement>) {
@@ -530,7 +621,29 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         }
     }
 
+    private moveOnMessageOnClick(evt?: any) {
+        const options = this.props.parent.state.tutorialOptions;
+        if (!options) {
+            pxt.reportError("tutorial", "leaking hintonclick");
+            return;
+        }
+        if (evt) evt.stopPropagation();
+        const { tutorialStepInfo, tutorialStep } = options;
+        const step = tutorialStepInfo[tutorialStep];
+        const showDialog = tutorialStep < tutorialStepInfo.length - 1 && step && !!step.showDialog;
+
+        this.props.parent.clearUserPoke();
+
+        if (!showDialog) {
+            this.toggleMoveOnMessage();
+        }
+    }
+
     private expandedHintOnClick(evt?: any) {
+        evt.stopPropagation();
+    }
+
+    private expandedMoveOnMessageOnClick(evt?: any) {
         evt.stopPropagation();
     }
 
@@ -560,11 +673,46 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         this.showHint(!this.state.showHint, showFullText);
     }
 
+    toggleMoveOnMessage(showFullText?: boolean) {
+        this.showMoveOnMessage(!this.state.showHint, showFullText);
+    }
+
     closeHint(evt?: any) {
         this.showHint(false);
     }
 
+    closeMoveOnMessage(evt?: any) {
+        this.showMoveOnMessage(false);
+    }
+
     showHint(visible: boolean, showFullText?: boolean) {
+        this.removeHintOnClick();
+        this.closeLightbox();
+        if (!this.hasHint()) return;
+
+        const th = this.refs["tutorialhint"] as TutorialHint;
+        if (!th) return;
+        const currentStep = this.props.parent.state.tutorialOptions.tutorialStep;
+
+        if (!visible) {
+            if (th.elementRef) th.elementRef.removeEventListener('click', this.expandedHintOnClick);
+            this.setState({ showHint: false });
+            this.props.parent.pokeUserActivity();
+        } else {
+            if (th.elementRef) th.elementRef.addEventListener('click', this.expandedHintOnClick);
+            this.setState({ showHint: true });
+            this.props.parent.stopPokeUserActivity();
+
+            const options = this.props.parent.state.tutorialOptions;
+            if (!options.tutorialStepInfo[options.tutorialStep].showDialog)
+                document.addEventListener('click', this.closeHint); // add close listener if not modal
+            pxt.tickEvent(`tutorial.showhint`, { tutorial: options.tutorial, step: options.tutorialStep });
+            this.props.parent.setHintSeen(currentStep);
+        }
+        th.showHint(visible, showFullText);
+    }
+
+    showMoveOnMessage(visible: boolean, showFullText?: boolean) {
         this.removeHintOnClick();
         this.closeLightbox();
         if (!this.hasHint()) return;
@@ -616,6 +764,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         }
 
         let hintOnClick = this.hintOnClick;
+        let moveOnMessageOnClick = this.moveOnMessageOnClick;
         // double-click issue on edge when closing hint from tutorial card click
         if ((pxt.BrowserUtils.isEdge() || pxt.BrowserUtils.isIE()) && this.state.showHint && !showDialog) {
             hintOnClick = null;
@@ -624,6 +773,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         const isRtl = pxt.Util.isUserLanguageRtl();
         return <div id="tutorialcard" className={`ui ${tutorialStepExpanded ? 'tutorialExpanded' : ''} ${tutorialReady ? 'tutorialReady' : ''} ${this.state.showSeeMore ? 'seemore' : ''}  ${!this.state.showHint ? 'showTooltip' : ''} ${hasHint ? 'hasHint' : ''}`} style={tutorialStepExpanded ? this.getExpandedCardStyle('height') : null} >
             {hasHint && this.state.showHint && !showDialog && <div className="mask" role="region" onClick={this.closeHint}></div>}
+           
             <div className='ui buttons'>
                 {hasPrevious ? <sui.Button icon={`${isRtl ? 'right' : 'left'} chevron large`} className={`prevbutton left attached ${!hasPrevious ? 'disabled' : ''}`} text={lf("Back")} textClass="widedesktop only" ariaLabel={lf("Go to the previous step of the tutorial.")} onClick={this.previousTutorialStep} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                 <div className="ui segment attached tutorialsegment">
@@ -642,7 +792,8 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
                     {this.state.showSeeMore && tutorialStepExpanded && <sui.Button className="fluid compact lightgrey" icon="chevron up" tabIndex={0} text={lf("Less...")} onClick={this.toggleExpanded} onKeyDown={sui.fireClickOnEnter} />}
                     <sui.Button ref="tutorialok" id="tutorialOkButton" className="large green okbutton showlightbox" text={lf("Ok")} onClick={this.closeLightbox} onKeyDown={sui.fireClickOnEnter} />
                 </div>
-                {hasNext ? <sui.Button icon={`${isRtl ? 'left' : 'right'} chevron large`} className={`nextbutton right attached ${!hasNext ? 'disabled' : ''}  ${stepInfo.codeValidated ? 'isValidated' : ''}`}  text={lf("Next")} textClass="widedesktop only" ariaLabel={lf("Go to the next step of the tutorial.")} onClick={this.nextTutorialStep} onKeyDown={sui.fireClickOnEnter} /> : undefined}
+                {hasNext ? <sui.Button icon={`${isRtl ? 'left' : 'right'} chevron large`} className={`nextbutton right attached ${!hasNext ? 'disabled' : ''}  ${stepInfo.codeValidated ? 'isValidated' : ''}`}  text={lf("Next")} textClass="widedesktop only" ariaLabel={lf("Go to the next step of the tutorial.")} 
+                onClick={stepInfo.codeValidated ?  this.nextTutorialStep : moveOnMessageOnClick} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                 {hasFinish ? <sui.Button icon="left checkmark" className={`orange right attached ${!tutorialReady ? 'disabled' : ''}`} text={lf("Finish")} ariaLabel={lf("Finish the tutorial.")} onClick={this.finishTutorial} onKeyDown={sui.fireClickOnEnter} /> : undefined}
             </div>
         </div>;
