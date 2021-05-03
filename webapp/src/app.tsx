@@ -882,7 +882,7 @@ export class ProjectView
             this.typecheck();
 
             // If we are in a tutorial, call the validator for that editor (blocks, TS, etc)
-            if (this.isTutorial()) this.editor.validateTutorialCode(this.state.tutorialOptions);
+            if (this.isTutorial() && pxt.appTarget.appTheme.tutorialCodeValidation) this.editor.validateTutorialCode(this.state.tutorialOptions);
         }
         this.markdownChangeHandler();
     }, 500, false);

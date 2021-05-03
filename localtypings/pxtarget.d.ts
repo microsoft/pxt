@@ -435,6 +435,7 @@ declare namespace pxt {
         embeddedTutorial?: boolean;
         disableBlobObjectDownload?: boolean; // use data uri downloads instead of object urls
         immersiveReader?: boolean; // enables the immersive reader for tutorials
+        tutorialCodeValidation?: boolean; // Enable code validation for tutuorials
     }
 
     interface SocialOptions {
