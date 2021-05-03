@@ -6,7 +6,7 @@
 
 It’s May – the sun’s out, the flowers are blooming, and pollen is in the air here in Seattle! For most educators, many are looking forward to the end of a really crazy academic year. Summer is a great time to relax, recharge, do some professional development and plan for next year.
 
-Are you do planning to teach the [AP Computer Science Principles](https://apcentral.collegeboard.org/courses/ap-computer-science-principles) course next year? If so, you may want to take a look at some new curriculum we’ve published that uses [MakeCode Arcade](https://arcade.makecode.com) as the programming tool.
+Are you planning to teach the [AP Computer Science Principles](https://apcentral.collegeboard.org/courses/ap-computer-science-principles) course next year? If so, you may want to take a look at some new curriculum we’ve published that uses [MakeCode Arcade](https://arcade.makecode.com) as the programming tool.
 
 It’s a really fun course that was written and tested in the classroom by [Kelli Etheredge](https://twitter.com/ketheredge), an AP Computer Science Principles teacher herself.  It was written so Teachers new to Computer Science could pick it up and teach – concepts are explained in plain language, daily materials and talking points are provided, and all solutions are included.
 
