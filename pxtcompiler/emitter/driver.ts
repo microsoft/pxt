@@ -321,16 +321,20 @@ namespace ts.pxtc {
             errorOnGreyBlocks: !!opts.errorOnGreyBlocks
         };
 
+        let programCache: Program; // Initialize to undefined, using the input program will incorrectly mark it as stale
         const xml: string[] = [];
-        opts.sourceTexts?.forEach((text: string) => {
-            opts.fileSystem[pxt.MAIN_TS] = text;
-            opts.fileSystem[pxt.MAIN_BLOCKS] = "";
+        if (opts.sourceTexts) {
+            for (let i = 0; i < opts.sourceTexts.length; i++) {
+                opts.fileSystem[pxt.MAIN_TS] = opts.sourceTexts[i];
+                opts.fileSystem[pxt.MAIN_BLOCKS] = "";
 
-            program = getTSProgram(opts);
-            const file = program.getSourceFile(pxt.MAIN_TS);
-            const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, decompileOpts, renameMap);
-            xml.push(bresp.outfiles[pxt.MAIN_BLOCKS]);
-        })
+                let newProgram = getTSProgram(opts, programCache);
+                const file = newProgram.getSourceFile(pxt.MAIN_TS);
+                const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, decompileOpts, renameMap);
+                xml.push(bresp.outfiles[pxt.MAIN_BLOCKS]);
+                programCache = newProgram;
+            }
+        }
 
         return xml;
     }
