@@ -1589,13 +1589,14 @@ export class ProjectView
         const t = header.tutorial;
         return this.loadBlocklyAsync()
             .then(() => tutorial.getUsedBlocksAsync(t.tutorialCode, t.tutorial, t.language))
-            .then((usedBlocks) => {
+            .then((tutorialBlocks) => {
                 let editorState: pxt.editor.EditorState = {
                     searchBar: false
                 }
-                if (usedBlocks && Object.keys(usedBlocks).length > 0) {
+
+                if (tutorialBlocks && tutorialBlocks.usedBlocks && Object.keys(tutorialBlocks.usedBlocks).length > 0) {
                     editorState.filters = {
-                        blocks: usedBlocks,
+                        blocks: tutorialBlocks.usedBlocks,
                         defaultState: pxt.editor.FilterState.Hidden
                     }
                     editorState.hasCategories = !(header.tutorial.metadata && header.tutorial.metadata.flyoutOnly);

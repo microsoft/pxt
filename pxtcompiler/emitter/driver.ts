@@ -299,11 +299,40 @@ namespace ts.pxtc {
             includeGreyBlockMessages,
             generateSourceMap: !!opts.ast,
             allowedArgumentTypes: opts.allowedArgumentTypes || ["number", "boolean", "string"],
-            errorOnGreyBlocks: !!opts.errorOnGreyBlocks,
+            errorOnGreyBlocks: !!opts.errorOnGreyBlocks
         };
         const [renameMap, _] = pxtc.decompiler.buildRenameMap(program, file, { declarations: "variables", takenNames: {} })
         const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, decompileOpts, renameMap);
         return bresp;
+    }
+
+    // Decompile an array of code snippets (sourceTexts) to XML strings (blocks)
+    export function decompileSnippets(program: Program, opts: CompileOptions, includeGreyBlockMessages = false) {
+        const apis = getApiInfo(program, opts.jres);
+        const blocksInfo = pxtc.getBlocksInfo(apis, opts.bannedCategories);
+        const renameMap = new pxtc.decompiler.RenameMap([]); // Don't rename for snippets
+
+        const decompileOpts: decompiler.DecompileBlocksOptions = {
+            snippetMode: opts.snippetMode || false,
+            alwaysEmitOnStart: opts.alwaysDecompileOnStart,
+            includeGreyBlockMessages,
+            generateSourceMap: !!opts.ast,
+            allowedArgumentTypes: opts.allowedArgumentTypes || ["number", "boolean", "string"],
+            errorOnGreyBlocks: !!opts.errorOnGreyBlocks
+        };
+
+        const xml: string[] = [];
+        opts.sourceTexts?.forEach((text: string) => {
+            opts.fileSystem[pxt.MAIN_TS] = text;
+            opts.fileSystem[pxt.MAIN_BLOCKS] = "";
+
+            program = getTSProgram(opts);
+            const file = program.getSourceFile(pxt.MAIN_TS);
+            const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, decompileOpts, renameMap);
+            xml.push(bresp.outfiles[pxt.MAIN_BLOCKS]);
+        })
+
+        return xml;
     }
 
     export function getTSProgram(opts: CompileOptions, old?: ts.Program) {

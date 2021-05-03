@@ -387,11 +387,11 @@ ${code}
             .then(db =>  {
                 if (id && cachedInfo[id]) {
                     const info = cachedInfo[id];
-                    if (info.usedBlocks && info.hash) db.setWithHashAsync(id, info.usedBlocks, info.hash);
+                    if (info.usedBlocks && info.hash) db.setWithHashAsync(id, info.snippetBlocks, info.hash);
                 } else {
                     for (let key of Object.keys(cachedInfo)) {
                         const info = cachedInfo[key];
-                        if (info.usedBlocks && info.hash) db.setWithHashAsync(key, info.usedBlocks, info.hash);
+                        if (info.usedBlocks && info.hash) db.setWithHashAsync(key, info.snippetBlocks, info.hash);
                     }
                 }
             }).catch((err) => {})
