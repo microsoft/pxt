@@ -1022,7 +1022,7 @@ namespace pxt.BrowserUtils {
             .catch(e => deleteDbAsync().then());
     }
 
-    export function getTutorialInfoHash(code: string[]) {
+    export function getTutorialCodeHash(code: string[]) {
         // the code strings are parsed from markdown, so when the
         // markdown changes the blocks will also be invalidated
         const input = JSON.stringify(code) + pxt.appTarget.versions.pxt + "_" + pxt.appTarget.versions.target;
@@ -1037,11 +1037,12 @@ namespace pxt.BrowserUtils {
         id: string;
         hash: string;
         blocks: Map<number>;
+        snippets: Map<Map<number>>;
     }
 
     export interface ITutorialInfoDb {
         getAsync(filename: string, code: string[], branch?: string): Promise<TutorialInfoIndexedDbEntry>;
-        setAsync(filename: string, blocks: Map<number>, code: string[], branch?: string): Promise<void>;
+        setAsync(filename: string, snippets: Map<Map<number>>, code: string[], branch?: string): Promise<void>;
         clearAsync(): Promise<void>;
     }
 
@@ -1078,7 +1079,7 @@ namespace pxt.BrowserUtils {
 
         getAsync(filename: string, code: string[], branch?: string): Promise<TutorialInfoIndexedDbEntry> {
             const key = getTutorialInfoKey(filename, branch);
-            const hash = getTutorialInfoHash(code);
+            const hash = getTutorialCodeHash(code);
 
             return this.db.getAsync<TutorialInfoIndexedDbEntry>(TutorialInfoIndexedDb.TABLE, key)
                 .then((res) => {
@@ -1092,20 +1093,27 @@ namespace pxt.BrowserUtils {
                 });
         }
 
-        setAsync(filename: string, blocks: Map<number>, code: string[], branch?: string): Promise<void> {
+        setAsync(filename: string, snippets: Map<Map<number>>, code: string[], branch?: string): Promise<void> {
             pxt.perf.measureStart("tutorial info db setAsync")
             const key = getTutorialInfoKey(filename, branch);
-            const hash = getTutorialInfoHash(code);
-            return this.setWithHashAsync(filename, blocks, hash);
+            const hash = getTutorialCodeHash(code);
+            return this.setWithHashAsync(filename, snippets, hash);
         }
 
-        setWithHashAsync(filename: string, blocks: Map<number>, hash: string, branch?: string): Promise<void> {
+        setWithHashAsync(filename: string, snippets: Map<Map<number>>, hash: string, branch?: string): Promise<void> {
             pxt.perf.measureStart("tutorial info db setAsync")
             const key = getTutorialInfoKey(filename, branch);
+            const blocks: Map<number> = {};
+            Object.keys(snippets).forEach(hash => {
+                Object.keys(snippets[hash]).forEach(blockId => {
+                    blocks[blockId] = snippets[hash][blockId]
+                })
+            })
 
             const entry: TutorialInfoIndexedDbEntry = {
                 id: key,
                 hash,
+                snippets,
                 blocks
             };
 
