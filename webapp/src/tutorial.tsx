@@ -26,8 +26,8 @@ interface ITutorialBlocks {
  * We'll run this step when we first start the tutorial to figure out what blocks are used so we can
  * filter the toolbox.
  */
-export function getUsedBlocksAsync(code: string[], id: string, language?: string, skipCache = false): Promise<ITutorialBlocks | void> {
-    if (!code) return Promise.resolve();
+export function getUsedBlocksAsync(code: string[], id: string, language?: string, skipCache = false): Promise<ITutorialBlocks> {
+    if (!code) return Promise.resolve(undefined);
 
     // check to see if usedblocks has been prebuilt. this is hashed on the tutorial code + pxt version + target version
     if (pxt.appTarget?.tutorialInfo && !skipCache) {

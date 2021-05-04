@@ -1594,7 +1594,7 @@ export class ProjectView
                     searchBar: false
                 }
 
-                if (tutorialBlocks && tutorialBlocks.usedBlocks && Object.keys(tutorialBlocks.usedBlocks).length > 0) {
+                if (tutorialBlocks?.usedBlocks && Object.keys(tutorialBlocks.usedBlocks).length > 0) {
                     editorState.filters = {
                         blocks: tutorialBlocks.usedBlocks,
                         defaultState: pxt.editor.FilterState.Hidden
