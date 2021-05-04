@@ -435,6 +435,7 @@ declare namespace pxt {
         embeddedTutorial?: boolean;
         disableBlobObjectDownload?: boolean; // use data uri downloads instead of object urls
         immersiveReader?: boolean; // enables the immersive reader for tutorials
+        tutorialCodeValidation?: boolean; // Enable code validation for tutuorials
     }
 
     interface SocialOptions {
@@ -1042,6 +1043,7 @@ declare namespace pxt.tutorial {
         hintContentMd?: string;
         activity?: number;
         resetDiff?: boolean; // reset diffify algo
+        codeValidated?: boolean; // Whether the user code has been marked valid for this step
     }
 
     interface TutorialActivityInfo {

@@ -12,8 +12,10 @@ import * as workspace from "./workspace";
 import * as simulator from "./simulator";
 import * as dialogs from "./dialogs";
 import * as blocklyFieldView from "./blocklyFieldView";
+import * as validator from "./tutorialValidator";
 import { CreateFunctionDialog } from "./createFunction";
 import { initializeSnippetExtensions } from './snippetBuilder';
+
 
 import Util = pxt.Util;
 import { DebuggerToolbox } from "./debuggerToolbox";
@@ -703,6 +705,16 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         for (let listener of pxt.U.values(this.errorChangesListeners)) {
             listener(errors)
         }
+    }
+
+    async validateTutorialCode(tutorial: pxt.tutorial.TutorialOptions) {
+        // Current tutorial step
+        const { tutorialStepInfo, tutorialStep } = tutorial;
+        const step = tutorialStepInfo[tutorialStep];
+
+        const blocks = this.editor.getAllBlocks();
+
+        this.parent.setTutorialCodeStatus(tutorialStep, await validator.validate(step, blocks, this.blockInfo));
     }
 
     getBlocksAreaDiv() {
