@@ -14,6 +14,7 @@ import { PlayButton } from "./simtoolbar";
 import { ProjectView } from "./app";
 import * as editortoolbar from "./editortoolbar";
 import * as ImmersiveReader from "./immersivereader";
+import * as TutorialCodeValidation from "./tutorialCodeValidation";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -41,7 +42,8 @@ export function getUsedBlocksAsync(code: string[], id: string, language?: string
                     return Promise.resolve(entry.blocks);
                 } else {
                     return getUsedBlocksInternalAsync(code, id, language, db, skipCache);
-                }})
+                }
+            })
             .catch((err) => {
                 // fall back to full blocks decompile on error
                 return getUsedBlocksInternalAsync(code, id, language, db, skipCache);
@@ -106,18 +108,18 @@ export class TutorialMenu extends data.Component<ISettingsProps, {}> {
         if (this.hasActivities) {
             return <div className="menu tutorial-menu">
                 <TutorialStepCircle parent={this.props.parent} />
-                {immersiveReaderEnabled && <ImmersiveReader.ImmersiveReaderButton content={tutorialCardContent} tutorialOptions={tutorialOptions}/>}
+                {immersiveReaderEnabled && <ImmersiveReader.ImmersiveReaderButton content={tutorialCardContent} tutorialOptions={tutorialOptions} />}
             </div>;
         } else if (tutorialOptions.tutorialStepInfo.length < 8) {
             return <div className="menu tutorial-menu">
                 <TutorialMenuItem parent={this.props.parent} />
-                {immersiveReaderEnabled && <ImmersiveReader.ImmersiveReaderButton content={tutorialCardContent} tutorialOptions={tutorialOptions}/>}
+                {immersiveReaderEnabled && <ImmersiveReader.ImmersiveReaderButton content={tutorialCardContent} tutorialOptions={tutorialOptions} />}
             </div>;
         } else {
             return <div className="menu tutorial-menu">
                 <TutorialMenuItem parent={this.props.parent} className="mobile hide" />
                 <TutorialStepCircle parent={this.props.parent} className="mobile only" />
-                {immersiveReaderEnabled && <ImmersiveReader.ImmersiveReaderButton content={tutorialCardContent} tutorialOptions={tutorialOptions}/>}
+                {immersiveReaderEnabled && <ImmersiveReader.ImmersiveReaderButton content={tutorialCardContent} tutorialOptions={tutorialOptions} />}
             </div>
         }
     }
@@ -307,7 +309,7 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
             if (immersiveReaderEnabled) {
                 actions.push({
                     className: "immersive-reader-button",
-                    onclick: () => {ImmersiveReader.launchImmersiveReader(fullText, options)},
+                    onclick: () => { ImmersiveReader.launchImmersiveReader(fullText, options) },
                     ariaLabel: lf("Launch Immersive Reader"),
                     title: lf("Launch Immersive Reader")
                 })
@@ -330,88 +332,6 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
         }
     }
 }
-
-// export class TutorialMoveOn extends data.Component<ISettingsProps, TutorialHintState> {
-//     public elementRef: HTMLDivElement;
-//     protected setRef: (el: HTMLDivElement) => void = (el) => { this.elementRef = el };
-
-//     constructor(props: ISettingsProps) {
-//         super(props);
-
-//         this.next = this.next.bind(this);
-//         this.showMoveOnMessage = this.showMoveOnMessage.bind(this);
-//         this.closeMoveOnMessage = this.closeMoveOnMessage.bind(this);
-//     }
-
-//     next() {
-//         const options = this.props.parent.state.tutorialOptions;
-//         const { tutorialStep, tutorial } = options;
-//         this.setState({ visible: false });
-//         const nextStep = tutorialStep + 1;
-
-//         pxt.tickEvent(`tutorial.hint.next`, { tutorial: tutorial, step: nextStep });
-//         this.props.parent.setTutorialStep(nextStep);
-//     }
-
-//     showMoveOnMessage(visible: boolean, showFullText?: boolean) {
-//         if (visible) Blockly.hideChaff();
-//         this.setState({ visible, showFullText });
-//     }
-
-//     protected closeMoveOnMessage() {
-//         this.showMoveOnMessage(false, this.state.showFullText);
-//     }
-
-//     renderCore() {
-//         const { visible } = this.state;
-//         const options = this.props.parent.state.tutorialOptions;
-//         const { tutorialReady, tutorialStepInfo, tutorialStep, tutorialName } = options;
-//         if (!tutorialReady) return <div />;
-
-//         const step = tutorialStepInfo[tutorialStep];
-//         const tutorialHint = step.hintContentMd;
-//         const fullText = step.contentMd;
-
-//         const hideIteration = options.metadata.hideIteration;
-//         const flyoutOnly = options.metadata.flyoutOnly;
-
-//         const immersiveReaderEnabled = pxt.appTarget.appTheme.immersiveReader;
-
-//         if (!step.showDialog) {
-//             if (!tutorialHint) return <div />;
-
-//             return <div className={`tutorialhint no-select ${!visible ? 'hidden' : ''}`} ref={this.setRef}>
-//                 <md.MarkedContent markdown={this.state.showFullText ? fullText : tutorialHint} unboxSnippets={true} parent={this.props.parent} />
-//             </div>
-//         } else {
-//             let onClick = tutorialStep < tutorialStepInfo.length - 1 ? this.next : this.closeMoveOnMessage;
-//             let actions: sui.ModalButton[] = [];
-//             if (immersiveReaderEnabled) {
-//                 actions.push({
-//                     className: "immersive-reader-button",
-//                     onclick: () => {ImmersiveReader.launchImmersiveReader(fullText, options)},
-//                     ariaLabel: lf("Launch Immersive Reader"),
-//                     title: lf("Launch Immersive Reader")
-//                 })
-//             }
-//             actions.push({
-//                 label: hideIteration && flyoutOnly ? lf("Start") : lf("Ok"),
-//                 onclick: onClick,
-//                 icon: 'check',
-//                 className: 'green'
-//             });
-
-//             const classes = this.props.parent.createModalClasses("hintdialog");
-
-//             return <sui.Modal isOpen={visible} className={classes}
-//                 closeIcon={false} header={tutorialName} buttons={actions}
-//                 onClose={onClick} dimmer={true} longer={true}
-//                 closeOnDimmerClick closeOnDocumentClick closeOnEscape>
-//                 <md.MarkedContent markdown={fullText} parent={this.props.parent} />
-//             </sui.Modal>
-//         }
-//     }
-// }
 
 interface TutorialCardState {
     showHint?: boolean;
@@ -451,9 +371,9 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         this.toggleExpanded = this.toggleExpanded.bind(this);
         this.onMarkdownDidRender = this.onMarkdownDidRender.bind(this);
         this.handleResize = this.handleResize.bind(this);
-        this.toggleMoveOnMessage = this.toggleMoveOnMessage.bind(this);
-        this.closeMoveOnMessage = this.closeMoveOnMessage.bind(this);
-        this.moveOnMessageOnClick = this.moveOnMessageOnClick.bind(this);
+        this.toggleShowMissingBlocksMessage = this.toggleShowMissingBlocksMessage.bind(this);
+        this.closeShowMissingBlocksMessage = this.closeShowMissingBlocksMessage.bind(this);
+        this.showMissingBlocksMessageOnClick = this.showMissingBlocksMessageOnClick.bind(this);
 
     }
 
@@ -572,7 +492,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         this.props.parent.stopPokeUserActivity();
 
         this.removeHintOnClick();
-        this.removeShowMoveOnMessageOnClick();
+        this.removeShowMissingBlockOnClick();
         window.removeEventListener('resize', this.resizeDebouncer);
     }
 
@@ -581,9 +501,9 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         document.removeEventListener('click', this.closeHint);
     }
 
-    private removeShowMoveOnMessageOnClick() {
-        // cleanup hintOnClick
-        document.removeEventListener('click', this.closeMoveOnMessage);
+    private removeShowMissingBlockOnClick() {
+        // cleanup ShowMissingBlockOnClick
+        document.removeEventListener('click', this.closeShowMissingBlocksMessage);
     }
 
     toggleExpanded(ev: React.MouseEvent<HTMLDivElement>) {
@@ -621,7 +541,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         }
     }
 
-    private moveOnMessageOnClick(evt?: any) {
+    private showMissingBlocksMessageOnClick(evt?: any) {
         const options = this.props.parent.state.tutorialOptions;
         if (!options) {
             pxt.reportError("tutorial", "leaking hintonclick");
@@ -635,7 +555,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         this.props.parent.clearUserPoke();
 
         if (!showDialog) {
-            this.toggleMoveOnMessage();
+            this.toggleShowMissingBlocksMessage();
         }
     }
 
@@ -643,7 +563,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         evt.stopPropagation();
     }
 
-    private expandedMoveOnMessageOnClick(evt?: any) {
+    private expandedMissingBlocksMessageOnClick(evt?: any) {
         evt.stopPropagation();
     }
 
@@ -673,16 +593,16 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         this.showHint(!this.state.showHint, showFullText);
     }
 
-    toggleMoveOnMessage(showFullText?: boolean) {
-        this.showMoveOnMessage(!this.state.showHint, showFullText);
+    toggleShowMissingBlocksMessage(showFullText?: boolean) {
+        this.showMissingBlocksMessage(!this.state.showHint, showFullText);
     }
 
     closeHint(evt?: any) {
         this.showHint(false);
     }
 
-    closeMoveOnMessage(evt?: any) {
-        this.showMoveOnMessage(false);
+    closeShowMissingBlocksMessage(evt?: any) {
+        this.showMissingBlocksMessageOnClick(false);
     }
 
     showHint(visible: boolean, showFullText?: boolean) {
@@ -712,21 +632,20 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         th.showHint(visible, showFullText);
     }
 
-    showMoveOnMessage(visible: boolean, showFullText?: boolean) {
-        this.removeHintOnClick();
+    showMissingBlocksMessage(visible: boolean, showFullText?: boolean) {
+        this.removeShowMissingBlockOnClick();
         this.closeLightbox();
-        if (!this.hasHint()) return;
 
         const th = this.refs["tutorialhint"] as TutorialHint;
         if (!th) return;
         const currentStep = this.props.parent.state.tutorialOptions.tutorialStep;
 
         if (!visible) {
-            if (th.elementRef) th.elementRef.removeEventListener('click', this.expandedHintOnClick);
+            if (th.elementRef) th.elementRef.removeEventListener('click', this.expandedMissingBlocksMessageOnClick);
             this.setState({ showHint: false });
             this.props.parent.pokeUserActivity();
         } else {
-            if (th.elementRef) th.elementRef.addEventListener('click', this.expandedHintOnClick);
+            if (th.elementRef) th.elementRef.addEventListener('click', this.expandedMissingBlocksMessageOnClick);
             this.setState({ showHint: true });
             this.props.parent.stopPokeUserActivity();
 
@@ -764,7 +683,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         }
 
         let hintOnClick = this.hintOnClick;
-        let moveOnMessageOnClick = this.moveOnMessageOnClick;
+        let showMissingBlocksMessageOnClick = this.showMissingBlocksMessageOnClick;
         // double-click issue on edge when closing hint from tutorial card click
         if ((pxt.BrowserUtils.isEdge() || pxt.BrowserUtils.isIE()) && this.state.showHint && !showDialog) {
             hintOnClick = null;
@@ -773,7 +692,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         const isRtl = pxt.Util.isUserLanguageRtl();
         return <div id="tutorialcard" className={`ui ${tutorialStepExpanded ? 'tutorialExpanded' : ''} ${tutorialReady ? 'tutorialReady' : ''} ${this.state.showSeeMore ? 'seemore' : ''}  ${!this.state.showHint ? 'showTooltip' : ''} ${hasHint ? 'hasHint' : ''}`} style={tutorialStepExpanded ? this.getExpandedCardStyle('height') : null} >
             {hasHint && this.state.showHint && !showDialog && <div className="mask" role="region" onClick={this.closeHint}></div>}
-           
+
             <div className='ui buttons'>
                 {hasPrevious ? <sui.Button icon={`${isRtl ? 'right' : 'left'} chevron large`} className={`prevbutton left attached ${!hasPrevious ? 'disabled' : ''}`} text={lf("Back")} textClass="widedesktop only" ariaLabel={lf("Go to the previous step of the tutorial.")} onClick={this.previousTutorialStep} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                 <div className="ui segment attached tutorialsegment">
@@ -792,8 +711,9 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
                     {this.state.showSeeMore && tutorialStepExpanded && <sui.Button className="fluid compact lightgrey" icon="chevron up" tabIndex={0} text={lf("Less...")} onClick={this.toggleExpanded} onKeyDown={sui.fireClickOnEnter} />}
                     <sui.Button ref="tutorialok" id="tutorialOkButton" className="large green okbutton showlightbox" text={lf("Ok")} onClick={this.closeLightbox} onKeyDown={sui.fireClickOnEnter} />
                 </div>
-                {hasNext ? <sui.Button icon={`${isRtl ? 'left' : 'right'} chevron large`} className={`nextbutton right attached ${!hasNext ? 'disabled' : ''}  ${stepInfo.codeValidated ? 'isValidated' : ''}`}  text={lf("Next")} textClass="widedesktop only" ariaLabel={lf("Go to the next step of the tutorial.")} 
-                onClick={stepInfo.codeValidated ?  this.nextTutorialStep : moveOnMessageOnClick} onKeyDown={sui.fireClickOnEnter} /> : undefined}
+                {hasNext ? <sui.Button icon={`${isRtl ? 'left' : 'right'} chevron large`} className={`nextbutton right attached ${!hasNext ? 'disabled' : ''}  ${stepInfo.codeValidated ? 'isValidated' : ''}`} text={lf("Next")} textClass="widedesktop only" ariaLabel={lf("Go to the next step of the tutorial.")}
+                    onClick={stepInfo.codeValidated ? this.nextTutorialStep : showMissingBlocksMessageOnClick} onKeyDown={sui.fireClickOnEnter} /> : undefined}
+                <TutorialCodeValidation.moveOn onYesButtonClick={this.nextTutorialStep} onNoButtonClick={true} ref="TutorialCodeValidation" parent={this.props.parent} />
                 {hasFinish ? <sui.Button icon="left checkmark" className={`orange right attached ${!tutorialReady ? 'disabled' : ''}`} text={lf("Finish")} ariaLabel={lf("Finish the tutorial.")} onClick={this.finishTutorial} onKeyDown={sui.fireClickOnEnter} /> : undefined}
             </div>
         </div>;
@@ -812,11 +732,11 @@ export class WorkspaceHeader extends data.Component<any, WorkspaceHeaderState> {
         super(props);
 
         this.handleResize = this.handleResize.bind(this);
-        this.state = {windowSize: window.innerWidth};
+        this.state = { windowSize: window.innerWidth };
     }
 
     handleResize() {
-        this.setState({windowSize: window.innerWidth});
+        this.setState({ windowSize: window.innerWidth });
     }
 
     componentDidMount() {
@@ -861,7 +781,7 @@ export class WorkspaceHeader extends data.Component<any, WorkspaceHeaderState> {
                 <div id="flyoutHeaderTitle" className="no-select">{this.flyoutTitle}</div>
             </div>
             <div id="workspaceHeader" style={this.workspaceStyle()}>
-                <editortoolbar.SmallEditorToolbar parent={this.props.parent}/>
+                <editortoolbar.SmallEditorToolbar parent={this.props.parent} />
             </div>
         </div>;
     }
