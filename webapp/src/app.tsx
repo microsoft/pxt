@@ -3048,7 +3048,10 @@ export class ProjectView
 
     onHighContrastChanged() {
         this.clearSerial();
-        this.restartSimulator();
+        // Not this.restartSimulator; need full restart to consistently update visuals,
+        // and don't want to steal focus.
+        this.stopSimulator();
+        this.startSimulator();
     }
 
     runSimulator(opts: compiler.CompileOptions = {}): Promise<void> {
