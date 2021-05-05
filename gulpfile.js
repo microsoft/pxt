@@ -539,7 +539,7 @@ const replaceWebpackBase = () => gulp.src([`${skillmapRoot}/node_modules/react-s
     .pipe(concat("webpack.config.js"))
     .pipe(gulp.dest(`${skillmapRoot}/node_modules/react-scripts/config`));
 
-const buildSkillmap =  () => !fs.existsSync(`${skillmapRoot}/node_modules`) ? exec("npm ci --prefer-offline", false, { cwd: skillmapRoot }) : Promise.resolve()
+const buildSkillmap =  () => exec(!fs.existsSync(`${skillmapRoot}/node_modules`) ? "npm ci --prefer-offline" : "echo \"Skip install\"", false, { cwd: skillmapRoot })
     .then(gulp.series([copyWebpackBase, copyWebpackOverride]))
     .then(() => exec("npm run build", false, { cwd: skillmapRoot }))
     .then(replaceWebpackBase)
