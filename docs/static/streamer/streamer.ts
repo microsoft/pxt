@@ -916,7 +916,7 @@ function onYouTubeIframeAPIReady() {
             return;
         }
 
-        let url = `${editorConfig.url}?editorLayout=ide&nosandbox=1&parentOrigin=${encodeURIComponent(window.location.origin)}`;
+        let url = `${editorConfig.url}?editorLayout=ide&nosandbox=1}`;
         if (config.multiEditor)
             url += `&nestededitorsim=1`;
         if (hash)
