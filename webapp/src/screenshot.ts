@@ -266,9 +266,7 @@ export class GifEncoder {
                     if (this.options.maxLength && imageUri.length > this.options.maxLength) {
                         const nframes = Math.floor(this.gif.frames.length * this.options.maxLength / imageUri.length) - 1;
                         pxt.log(`gif: size too large (${(imageUri.length / 1000) | 0}kb) reducing frames to ${nframes}`);
-                        console.log("VVN: gif size too big");
                         if (nframes <= 0) {
-                            console.log("WAAAAAY too big...");
                             pxt.log(`gif: simulator image too large, cannot have a single frame`);
                             return undefined;
                         }
