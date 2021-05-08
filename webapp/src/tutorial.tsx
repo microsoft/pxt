@@ -336,7 +336,7 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
 interface TutorialCardState {
     showHint?: boolean;
     showSeeMore?: boolean;
-    showMoveOnMessage?: boolean;
+    showUnusedBlockMessage?: boolean;
 }
 
 interface TutorialCardProps extends ISettingsProps {
@@ -358,7 +358,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         this.state = {
             showSeeMore: false,
             showHint: options.tutorialStepInfo[this.prevStep].showHint,
-            showMoveOnMessage: false
+            showUnusedBlockMessage: false
         }
 
         this.toggleHint = this.toggleHint.bind(this);
@@ -399,7 +399,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
 
         pxt.tickEvent(`tutorial.next`, { tutorial: options.tutorial, step: nextStep }, { interactiveConsent: true });
         this.props.parent.setTutorialStep(nextStep);
-        this.setState({showMoveOnMessage: false});
+        this.setState({showUnusedBlockMessage: false});
     }
 
     finishTutorial() {
@@ -537,11 +537,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
     }
 
     private showUnusedBlocksMessageOnClick(evt?: any) {
-        this.setState({showMoveOnMessage: true});
-    }
-
-    showUnusedBlocksMessage () {
-        this.setState({showMoveOnMessage: false});
+        this.setState({showUnusedBlockMessage: true});
     }
 
     private expandedHintOnClick(evt?: any) {
@@ -609,7 +605,9 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         th.showHint(visible, showFullText);
     }
 
-
+    showUnusedBlocksMessage () {
+        this.setState({showUnusedBlockMessage: false});
+    }
 
     renderCore() {
         const options = this.props.parent.state.tutorialOptions;
@@ -627,7 +625,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         const hasHint = this.hasHint();
         const tutorialCardContent = stepInfo.headerContentMd;
         const showDialog = stepInfo.showDialog;
-        const showMessage = this.state.showMoveOnMessage;
+        const showMissingBlockPopupMessage = this.state.showUnusedBlockMessage;
         let tutorialAriaLabel = '',
             tutorialHintTooltip = '';
         if (hasHint) {
@@ -666,7 +664,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
                 </div>
                 {hasNext ? <sui.Button icon={`${isRtl ? 'left' : 'right'} chevron large`} className={`nextbutton right attached ${!hasNext ? 'disabled' : ''}  ${stepInfo.codeValidated ? 'isValidated' : ''}`} text={lf("Next")} textClass="widedesktop only" ariaLabel={lf("Go to the next step of the tutorial.")}
                     onClick={stepInfo.codeValidated ? this.nextTutorialStep : showUnusedBlocksMessageOnClick} onKeyDown={sui.fireClickOnEnter} /> : undefined}
-                {showMessage && <TutorialCodeValidation.moveOn onYesButtonClick={this.nextTutorialStep} onNoButtonClick={this.showUnusedBlocksMessage.bind(this)} initialVisible={this.state.showMoveOnMessage} ref="TutorialCodeValidation" parent={this.props.parent} />}
+                {showMissingBlockPopupMessage && <TutorialCodeValidation.moveOn onYesButtonClick={this.nextTutorialStep} onNoButtonClick={this.showUnusedBlocksMessage.bind(this)} initialVisible={this.state.showUnusedBlockMessage} ref="TutorialCodeValidation" parent={this.props.parent} />}
                 {hasFinish ? <sui.Button icon="left checkmark" className={`orange right attached ${!tutorialReady ? 'disabled' : ''}`} text={lf("Finish")} ariaLabel={lf("Finish the tutorial.")} onClick={this.finishTutorial} onKeyDown={sui.fireClickOnEnter} /> : undefined}
             </div>
         </div>;
