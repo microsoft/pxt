@@ -7,28 +7,8 @@
 
 
 /*******************************
-        Tutorial Hint
+    Tutorial Code Validation
 *******************************/
-
-.ui.modal.hintdialog .content p {
-    font-size: 16px;
-    line-height: 25px;
-}
-
-.ui.modal.hintdialog {
-    .ui.segment {
-        display: flex;
-        min-height: 100px;
-    }
-}
-
-.ui.modal.hintdialog,
-.tutorialsegment .tutorialmessage {
-    img {
-        margin-left: auto;
-        margin-right: auto;
-    }
-}
 
 .tutorialCodeValidation {
     position: absolute;
@@ -37,10 +17,10 @@
     top: ~'calc(50% + 3rem)';
     right: 2rem;
     padding: 10px 26px;
-    border-radius: 1.2rem;
+    border-radius: 0.2rem;
     background: @white;
     z-index: @tutorialLightboxCardZIndex;
-    border: 8px solid @blue;
+    border: 8px solid @black;
     box-shadow: 0px 0px 8px 1px rgba(0, 0, 0, .3);
 }
 
@@ -53,7 +33,7 @@
     top: -24px;
     bottom: auto;
     border: 16px solid;
-    border-color: transparent @blue transparent transparent;
+    border-color: transparent @black transparent transparent;
     transform: rotateZ(-135deg);
 }
 
@@ -74,10 +54,6 @@
     min-height: 3em;
 }
 
-.shake .icon {
-    animation: shake 1.5s ease-in-out;
-}
-
 .tutorialCodeValidation .mask {
     position: fixed;
     left: 0;
@@ -86,40 +62,16 @@
     right: 0;
 }
 
-/*******************************
-     Tutorial Tooltip
-*******************************/
-.avatar-container {
-    left: .7rem;
-    height: 100%;
+.ui.button.no {
+    left: 2rem;
 }
 
-.avatar-container .tooltip {
+.ui.button.yes {
     position: absolute;
-
-    top: ~'calc(50% + 1.8rem)';
-    left: auto;
-    width: 10rem;
-    max-width: 175px;
+    right: 2rem;
 }
 
-.avatar-container .tooltip ,
-.avatar-container .tooltip:before {
-    background-color: @blue;
-    color: @white;
-}
-
-.avatar-container .tooltip:before {
-    right: 3rem;
-    left: auto;
-}
-
-.hideIteration .avatar-container .tooltip:before {
-    right: 2.8rem;
-}
-
-#tutorialCodeValidationID:not(.showTooltip) .tooltip,
-#tutorialCodeValidationID:not(.showTooltip) .tooltip:before {
-    display: none;
+.text {
+    font-size: small;
 }
 

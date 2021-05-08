@@ -336,6 +336,7 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
 interface TutorialCardState {
     showHint?: boolean;
     showSeeMore?: boolean;
+    showMoveOnMessage?: boolean;
 }
 
 interface TutorialCardProps extends ISettingsProps {
@@ -356,7 +357,8 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
 
         this.state = {
             showSeeMore: false,
-            showHint: options.tutorialStepInfo[this.prevStep].showHint
+            showHint: options.tutorialStepInfo[this.prevStep].showHint,
+            showMoveOnMessage: false
         }
 
         this.toggleHint = this.toggleHint.bind(this);
@@ -371,9 +373,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         this.toggleExpanded = this.toggleExpanded.bind(this);
         this.onMarkdownDidRender = this.onMarkdownDidRender.bind(this);
         this.handleResize = this.handleResize.bind(this);
-        this.toggleShowMissingBlocksMessage = this.toggleShowMissingBlocksMessage.bind(this);
-        this.closeShowMissingBlocksMessage = this.closeShowMissingBlocksMessage.bind(this);
-        this.showMissingBlocksMessageOnClick = this.showMissingBlocksMessageOnClick.bind(this);
+        this.showUnusedBlocksMessageOnClick = this.showUnusedBlocksMessageOnClick.bind(this);
 
     }
 
@@ -399,6 +399,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
 
         pxt.tickEvent(`tutorial.next`, { tutorial: options.tutorial, step: nextStep }, { interactiveConsent: true });
         this.props.parent.setTutorialStep(nextStep);
+        this.setState({showMoveOnMessage: false});
     }
 
     finishTutorial() {
@@ -492,18 +493,12 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         this.props.parent.stopPokeUserActivity();
 
         this.removeHintOnClick();
-        this.removeShowMissingBlockOnClick();
         window.removeEventListener('resize', this.resizeDebouncer);
     }
 
     private removeHintOnClick() {
         // cleanup hintOnClick
         document.removeEventListener('click', this.closeHint);
-    }
-
-    private removeShowMissingBlockOnClick() {
-        // cleanup ShowMissingBlockOnClick
-        document.removeEventListener('click', this.closeShowMissingBlocksMessage);
     }
 
     toggleExpanded(ev: React.MouseEvent<HTMLDivElement>) {
@@ -541,22 +536,12 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         }
     }
 
-    private showMissingBlocksMessageOnClick(evt?: any) {
-        const options = this.props.parent.state.tutorialOptions;
-        if (!options) {
-            pxt.reportError("tutorial", "leaking hintonclick");
-            return;
-        }
-        if (evt) evt.stopPropagation();
-        const { tutorialStepInfo, tutorialStep } = options;
-        const step = tutorialStepInfo[tutorialStep];
-        const showDialog = tutorialStep < tutorialStepInfo.length - 1 && step && !!step.showDialog;
+    private showUnusedBlocksMessageOnClick(evt?: any) {
+        this.setState({showMoveOnMessage: true});
+    }
 
-        this.props.parent.clearUserPoke();
-
-        if (!showDialog) {
-            this.toggleShowMissingBlocksMessage();
-        }
+    showUnusedBlocksMessage () {
+        this.setState({showMoveOnMessage: false});
     }
 
     private expandedHintOnClick(evt?: any) {
@@ -593,16 +578,8 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         this.showHint(!this.state.showHint, showFullText);
     }
 
-    toggleShowMissingBlocksMessage(showFullText?: boolean) {
-        this.showMissingBlocksMessage(!this.state.showHint, showFullText);
-    }
-
     closeHint(evt?: any) {
         this.showHint(false);
-    }
-
-    closeShowMissingBlocksMessage(evt?: any) {
-        this.showMissingBlocksMessageOnClick(false);
     }
 
     showHint(visible: boolean, showFullText?: boolean) {
@@ -632,31 +609,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         th.showHint(visible, showFullText);
     }
 
-    showMissingBlocksMessage(visible: boolean, showFullText?: boolean) {
-        this.removeShowMissingBlockOnClick();
-        this.closeLightbox();
 
-        const th = this.refs["tutorialhint"] as TutorialHint;
-        if (!th) return;
-        const currentStep = this.props.parent.state.tutorialOptions.tutorialStep;
-
-        if (!visible) {
-            if (th.elementRef) th.elementRef.removeEventListener('click', this.expandedMissingBlocksMessageOnClick);
-            this.setState({ showHint: false });
-            this.props.parent.pokeUserActivity();
-        } else {
-            if (th.elementRef) th.elementRef.addEventListener('click', this.expandedMissingBlocksMessageOnClick);
-            this.setState({ showHint: true });
-            this.props.parent.stopPokeUserActivity();
-
-            const options = this.props.parent.state.tutorialOptions;
-            if (!options.tutorialStepInfo[options.tutorialStep].showDialog)
-                document.addEventListener('click', this.closeHint); // add close listener if not modal
-            pxt.tickEvent(`tutorial.showhint`, { tutorial: options.tutorial, step: options.tutorialStep });
-            this.props.parent.setHintSeen(currentStep);
-        }
-        th.showHint(visible, showFullText);
-    }
 
     renderCore() {
         const options = this.props.parent.state.tutorialOptions;
@@ -674,7 +627,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         const hasHint = this.hasHint();
         const tutorialCardContent = stepInfo.headerContentMd;
         const showDialog = stepInfo.showDialog;
-
+        const showMessage = this.state.showMoveOnMessage;
         let tutorialAriaLabel = '',
             tutorialHintTooltip = '';
         if (hasHint) {
@@ -683,7 +636,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         }
 
         let hintOnClick = this.hintOnClick;
-        let showMissingBlocksMessageOnClick = this.showMissingBlocksMessageOnClick;
+        let showUnusedBlocksMessageOnClick = this.showUnusedBlocksMessageOnClick;
         // double-click issue on edge when closing hint from tutorial card click
         if ((pxt.BrowserUtils.isEdge() || pxt.BrowserUtils.isIE()) && this.state.showHint && !showDialog) {
             hintOnClick = null;
@@ -712,8 +665,8 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
                     <sui.Button ref="tutorialok" id="tutorialOkButton" className="large green okbutton showlightbox" text={lf("Ok")} onClick={this.closeLightbox} onKeyDown={sui.fireClickOnEnter} />
                 </div>
                 {hasNext ? <sui.Button icon={`${isRtl ? 'left' : 'right'} chevron large`} className={`nextbutton right attached ${!hasNext ? 'disabled' : ''}  ${stepInfo.codeValidated ? 'isValidated' : ''}`} text={lf("Next")} textClass="widedesktop only" ariaLabel={lf("Go to the next step of the tutorial.")}
-                    onClick={stepInfo.codeValidated ? this.nextTutorialStep : showMissingBlocksMessageOnClick} onKeyDown={sui.fireClickOnEnter} /> : undefined}
-                <TutorialCodeValidation.moveOn onYesButtonClick={this.nextTutorialStep} onNoButtonClick={true} ref="TutorialCodeValidation" parent={this.props.parent} />
+                    onClick={stepInfo.codeValidated ? this.nextTutorialStep : showUnusedBlocksMessageOnClick} onKeyDown={sui.fireClickOnEnter} /> : undefined}
+                {showMessage && <TutorialCodeValidation.moveOn onYesButtonClick={this.nextTutorialStep} onNoButtonClick={this.showUnusedBlocksMessage.bind(this)} initialVisible={this.state.showMoveOnMessage} ref="TutorialCodeValidation" parent={this.props.parent} />}
                 {hasFinish ? <sui.Button icon="left checkmark" className={`orange right attached ${!tutorialReady ? 'disabled' : ''}`} text={lf("Finish")} ariaLabel={lf("Finish the tutorial.")} onClick={this.finishTutorial} onKeyDown={sui.fireClickOnEnter} /> : undefined}
             </div>
         </div>;

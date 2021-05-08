@@ -3,10 +3,14 @@
 import * as React from "react";
 import * as data from "./data";
 import * as sui from "./sui";
+import { TutorialCard } from "./tutorial";
 
-interface TutorialCodeValidationProps extends pxt.editor.ISettingsProps {
+type ISettingsProps = pxt.editor.ISettingsProps;
+
+interface TutorialCodeValidationProps extends ISettingsProps {
     onYesButtonClick: () => void;
-    onNoButtonClick: boolean;
+    onNoButtonClick: () => void;
+    initialVisible: boolean;
     // unused Blocks : () => void;
 }
 
@@ -25,20 +29,17 @@ export class moveOn extends data.Component<TutorialCodeValidationProps, tutorial
     constructor(props: TutorialCodeValidationProps) {
         super(props);
 
-        this.state = { visible: this.props.onNoButtonClick };
+        this.state = { visible: this.props.initialVisible };
         this.next = this.next.bind(this);
         this.showUnusedBlocksMessage = this.showUnusedBlocksMessage.bind(this);
         this.closedUnusedBlocksMessage = this.closedUnusedBlocksMessage.bind(this);
     }
 
-    showUnusedBlocksMessage(visible: boolean) {
-        console.log("visible is " + visible);
-        this.setState({ visible });
+    showUnusedBlocksMessage(vis: boolean) {
+        this.setState({ visible: vis });
     }
 
     protected closedUnusedBlocksMessage() {
-        console.log("clicked and in closedUnusedBlockMessage");
-
         this.showUnusedBlocksMessage(false);
     }
 
@@ -47,21 +48,28 @@ export class moveOn extends data.Component<TutorialCodeValidationProps, tutorial
         this.showUnusedBlocksMessage(false);
     }
 
-
+    noFunction() {
+        this.props.onNoButtonClick();
+    }
 
     renderCore() {
 
-        const { visible } = this.state;
+        const vis = this.state.visible;
 
         return <div id="tutorialCodeValidationID">
-            <div className={`tutorialCodeValidation no-select ${!visible ? 'hidden' : ''}`}>
-                <p>These are the blocks you seem to be missing.
-                /* Will add a list a blocks here in future PR */
-                Do you still want to continue?
-                </p>
+
+            <div className={`tutorialCodeValidation no-select ${!vis ? 'hidden' : ''}`}>
+                <div className="text">These are the blocks you seem to be missing.
+                </div>
+                <div className="text">
+                    /* Will add a list a blocks here in future PR */
+                </div>
+                <div className="text">
+                    Do you still want to continue?
+                </div>
                 <div className="moveOnButtons">
-                    <sui.Button className={`no ${this.closedUnusedBlocksMessage}`} ariaLabel={lf("no button for tutorial code validation")} onClick={this.closedUnusedBlocksMessage} onKeyDown={sui.fireClickOnEnter} > No </sui.Button>
-                    <sui.Button className={`yes ${this.closedUnusedBlocksMessage}`} ariaLabel={lf("yes button for tutorial code validation")} onClick={this.next} onKeyDown={sui.fireClickOnEnter} > Yes </sui.Button>
+                    <sui.Button className="no" ariaLabel={lf("no button for tutorial code validation")} onClick={this.noFunction.bind(this)} onKeyDown={sui.fireClickOnEnter} > No </sui.Button>
+                    <sui.Button className="yes" ariaLabel={lf("yes button for tutorial code validation")} onClick={this.next.bind(this)} onKeyDown={sui.fireClickOnEnter} > Yes </sui.Button>
                 </div>
 
             </div>
