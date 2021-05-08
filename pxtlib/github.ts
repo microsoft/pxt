@@ -168,10 +168,10 @@ namespace pxt.github {
 
         private proxyWithCdnLoadPackageAsync(repopath: string, tag: string): Promise<CachedPackage> {
             // cache lookup
-            const key = `${repopath}/${tag}`;
+            const key = `${repopath}/${tag || "default"}`;
             let res = this.packages[key];
             if (res) {
-                pxt.debug(`github cache ${repopath}/${tag}/text`);
+                pxt.debug(`github cache ${repopath}/${tag || "default"}/text`);
                 return Promise.resolve(res);
             }
 
@@ -188,7 +188,8 @@ namespace pxt.github {
         }
 
         async loadConfigAsync(repopath: string, tag: string): Promise<pxt.PackageConfig> {
-            if (!tag) tag = "master";
+            // TODO: cloud support
+            if (!tag) tag = "default";
 
             // cache lookup
             const key = `${repopath}/${tag}`;
@@ -384,7 +385,7 @@ namespace pxt.github {
         return (resp.statusCode == 200)
     }
 
-    export async function putFileAsync(repopath: string, path: string, content: string) {
+    export async function putFileAsync(repopath: string, branch: string, path: string, content: string) {
         const parsed = parseRepoId(repopath);
         await ghRequestAsync({
             url: `https://api.github.com/repos/${pxt.github.join(parsed.slug, "contents", parsed.fileName, path)}`,
@@ -393,7 +394,7 @@ namespace pxt.github {
             data: {
                 message: lf("Initialize empty repo"),
                 content: btoa(U.toUTF8(content)),
-                branch: "master"
+                branch
             },
             successCodes: [201]
         })
@@ -775,7 +776,7 @@ namespace pxt.github {
         }).then(v => mkRepo(v))
     }
 
-    export async function enablePagesAsync(repo: string) {
+    export async function enablePagesAsync(repo: string, branch: string) {
         // https://developer.github.com/v3/repos/pages/#enable-a-pages-site
         // try read status
         const parsed = parseRepoId(repo);
@@ -792,7 +793,7 @@ namespace pxt.github {
             try {
                 const r = await ghPostAsync(`https://api.github.com/repos/${parsed.slug}/pages`, {
                     source: {
-                        branch: "master",
+                        branch,
                         path: "/"
                     }
                 }, {

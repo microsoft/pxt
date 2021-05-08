@@ -66,7 +66,7 @@ export class GithubButton extends sui.UIElement<GithubButtonProps, GithubButtonS
         const repoName = ghid.project && ghid.tag ? `${ghid.project}${ghid.tag == "master" ? "" : `#${ghid.tag}`}` : ghid.fullName;
         // shrink name...
         const maxLength = 20;
-        let displayName = ghid.tag && ghid.tag != "master" ? `#${ghid.tag}` : "";
+        let displayName = ghid.tag && !pxt.github.isDefaultBranch(ghid.tag) ? `#${ghid.tag}` : "";
         if (displayName.length > maxLength)
             displayName = displayName.slice(0, maxLength - 2) + '..';
 

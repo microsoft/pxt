@@ -1030,6 +1030,7 @@ namespace pxt.BrowserUtils {
     }
 
     function getTutorialInfoKey(filename: string, branch?: string) {
+        // TODO: 'main' support
         return `${filename}|${branch || "master"}`;
     }
 
