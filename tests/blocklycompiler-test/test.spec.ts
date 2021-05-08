@@ -163,7 +163,8 @@ class BlocklyCompilerTestHost implements pxt.Host {
     }
 }
 
-function fail(msg: string) {
+// @ts-ignore
+function fail(msg: string): never {
     chai.assert(false, msg);
 }
 
@@ -379,6 +380,10 @@ describe("blockly compiler", function () {
 
         it("should change reserved names", (done: () => void) => {
             blockTestAsync("variables_reserved_names").then(done, done);
+        });
+
+        it("should change variable names when escaped name matches", (done: () => void) => {
+            blockTestAsync("escaped_name_equal").then(done, done);
         });
 
         it("should handle collisions with variables declared by the destructuring mutator", (done: () => void) => {

@@ -10,6 +10,7 @@ namespace pxsim {
         refCountingDebug?: boolean;
         options?: any;
         parts?: string[];
+        builtinParts?: string[];
         partDefinitions?: Map<PartDefinition>
         fnArgs?: any;
         code: string;
@@ -22,6 +23,10 @@ namespace pxsim {
         clickTrigger?: boolean;
         breakOnStart?: boolean;
         storedState?: Map<any>;
+        ipc?: boolean;
+        dependencies?: Map<string>;
+        single?: boolean;
+        traceDisabled?: boolean;
     }
 
     export interface SimulatorInstructionsMessage extends SimulatorMessage {
@@ -76,6 +81,13 @@ namespace pxsim {
     export interface SimulatorBroadcastMessage extends SimulatorMessage {
         broadcast: boolean;
     }
+
+    export interface SimulatorControlMessage extends SimulatorBroadcastMessage {
+        type: "messagepacket";
+        channel: string;
+        data: Uint8Array;
+    }
+
     export interface SimulatorEventBusMessage extends SimulatorBroadcastMessage {
         type: "eventbus";
         broadcast: true;
@@ -153,6 +165,20 @@ namespace pxsim {
         modalContext?: string;
     }
 
+    export interface SimulatorAddExtensionsMessage extends SimulatorMessage {
+        type: "addextensions",
+        /**
+         * List of repositories to add
+         */
+        extensions: string[]
+    }
+
+    export interface SimulatorAspectRatioMessage extends SimulatorMessage {
+        type: "aspectratio",
+        value: number,
+        frameid: string
+    }
+
     export interface SimulatorRecorderMessage extends SimulatorMessage {
         type: "recorder";
         action: "start" | "stop";
@@ -197,7 +223,8 @@ namespace pxsim {
 
     export interface RenderReadyResponseMessage extends SimulatorMessage {
         source: "makecode",
-        type: "renderready"
+        type: "renderready",
+        versions: pxt.TargetVersions
     }
 
     export interface RenderBlocksRequestMessage extends SimulatorMessage {
@@ -262,7 +289,7 @@ namespace pxsim {
                 case "stopsound": stopSound(); break;
                 case "print": print(); break;
                 case 'recorder': recorder(<SimulatorRecorderMessage>data); break;
-                case "screenshot": Runtime.postScreenshotAsync(<SimulatorScreenshotMessage>data).done(); break;
+                case "screenshot": Runtime.postScreenshotAsync(<SimulatorScreenshotMessage>data); break;
                 case "custom":
                     if (handleCustomMessage)
                         handleCustomMessage((<SimulatorCustomMessage>data));
@@ -307,13 +334,18 @@ namespace pxsim {
             if (msg.localizedStrings)
                 pxsim.localization.setLocalizedStrings(msg.localizedStrings);
 
-            runtime = new Runtime(msg);
-            runtime.board.initAsync(msg)
-                .done(() => {
-                    runtime.run((v) => {
-                        pxsim.dumpLivePointers();
-                        Runtime.postMessage({ type: "toplevelcodefinished" })
-                    });
+            const rt = new Runtime(msg);
+            runtime = rt;
+            rt.board.initAsync(msg)
+                .then(() => {
+                    if (rt === runtime) {
+                        rt.run((v) => {
+                            pxsim.dumpLivePointers();
+                            Runtime.postMessage({ type: "toplevelcodefinished" });
+                        });
+                    }
+                    // else: a new runtime was started while this one was still initializing.
+                    // This runtime has already been stopped by the beginning of this function.
                 });
         }
 

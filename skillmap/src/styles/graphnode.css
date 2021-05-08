@@ -1,0 +1,30 @@
+.selected .highlight {
+    stroke-width: 4px;
+    fill: transparent;
+}
+
+.graph-icon {
+    font-family: Icons;
+    font-size: 1.75rem;
+    opacity: 0.8;
+}
+
+.graph-icon-x {
+    font-family: xicon;
+    font-size: 1.75rem;
+    opacity: 0.8;
+}
+
+.graph-activity.hover .graph-icon, .graph-activity.hover .graph-icon-x {
+    opacity: 1;
+}
+
+.graph-status-icon {
+    font-family: Icons;
+    font-size: 1rem;
+}
+
+.graph-activity {
+    cursor: pointer;
+    user-select: none;
+}

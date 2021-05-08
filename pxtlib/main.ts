@@ -296,6 +296,7 @@ namespace pxt {
             hwVariant = null;
             hwName = null;
         }
+        pxt.debug(`hwVariant: ${hwVariant} (${hwName})`)
     }
 
     export function hasHwVariants(): boolean {
@@ -357,20 +358,6 @@ namespace pxt {
         }
     }
 
-    let activityEvents: Map<number> = {};
-    const tickActivityDebounced = Util.debounce(() => {
-        tickEvent("activity", activityEvents);
-        activityEvents = {};
-    }, 10000, false);
-    /**
-     * Ticks activity events. This event gets aggregated and eventually gets sent.
-     */
-    export function tickActivity(...ids: string[]) {
-        ids.filter(id => !!id).map(id => id.slice(0, 64))
-            .forEach(id => activityEvents[id] = (activityEvents[id] || 0) + 1);
-        tickActivityDebounced();
-    }
-
     export interface WebConfig {
         relprefix: string; // "/beta---",
         workerjs: string;  // "/beta---worker",
@@ -394,6 +381,8 @@ namespace pxt {
         runUrl?: string; // "/beta---run"
         docsUrl?: string; // "/beta---docs"
         multiUrl?: string; // "/beta---multi"
+        asseteditorUrl?: string; // "/beta---asseteditor"
+        skillmapUrl?: string; // "/beta---skillmap"
         isStatic?: boolean;
         verprefix?: string; // "v1"
     }
@@ -406,7 +395,7 @@ namespace pxt {
             gifworkerjs: "/gifjs/gif.worker.js",
             serviceworkerjs: "/serviceworker.js",
             pxtVersion: "local",
-            pxtRelId: "",
+            pxtRelId: "localRelId",
             pxtCdnUrl: "/cdn/",
             commitCdnUrl: "/cdn/",
             blobCdnUrl: "/blb/",
@@ -494,11 +483,23 @@ namespace pxt {
     export const SERIAL_EDITOR_FILE = "serial.txt"
     export const README_FILE = "README.md"
     export const GITIGNORE_FILE = ".gitignore"
+    export const ASSETS_FILE = "assets.json"
     export const CLOUD_ID = "pxt/"
     export const BLOCKS_PROJECT_NAME = "blocksprj";
     export const JAVASCRIPT_PROJECT_NAME = "tsprj";
     export const PYTHON_PROJECT_NAME = "pyprj";
+    export const MAIN_BLOCKS = "main.blocks";
+    export const MAIN_TS = "main.ts";
+    export const MAIN_PY = "main.py";
     export const DEFAULT_GROUP_NAME = "other"; // used in flyout, for snippet groups
+    export const TILEMAP_CODE = "tilemap.g.ts";
+    export const TILEMAP_JRES = "tilemap.g.jres";
+    export const IMAGES_CODE = "images.g.ts";
+    export const IMAGES_JRES = "images.g.jres";
+    export const TUTORIAL_CODE_START = "_onCodeStart.ts";
+    export const TUTORIAL_CODE_STOP = "_onCodeStop.ts";
+    export const TUTORIAL_INFO_FILE = "tutorial-info-cache.json";
+    export const TUTORIAL_CUSTOM_TS = "tutorial.custom.ts";
 
     export function outputName(trg: pxtc.CompileTarget = null) {
         if (!trg) trg = appTarget.compile

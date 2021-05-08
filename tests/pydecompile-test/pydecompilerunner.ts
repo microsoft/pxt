@@ -70,7 +70,7 @@ function pydecompileTestAsync(caseFile: string) {
 }
 
 function pydecompileTestCoreAsync(tsFilename: string, baselineFile: string) {
-    return new Promise((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
         const basename = path.basename(baselineFile);
 
         let baselineExists: boolean;

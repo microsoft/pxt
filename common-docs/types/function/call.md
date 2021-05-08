@@ -25,8 +25,9 @@ side = 21;
 cubeit();
 ```
 
-In the example, the **cubeit** function is called twice to calculate the volume of some cubes with different sizes. The code in the function stays in one place. It doesn't have to get copied to the program everyplace you want to calculate a cube volume. This is really convenient! Your code is reusable.
+In the example, the **cubeit** function is called twice to calculate the volume of some cubes with different sizes. The code in the function stays in one place. It doesn't have to get copied to the program at everyplace you want to calculate a cube volume. This is really convenient! Your code is reusable.
 
 ## See also #seealso
  
-[define](/types/function/define)
+[define](/types/function/define),
+[return](/types/function/return)

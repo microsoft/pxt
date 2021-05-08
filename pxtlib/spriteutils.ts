@@ -5,8 +5,10 @@ namespace pxt.sprite {
     export const BLOCKLY_TILESET_TYPE = "BLOCKLY_TILESET_TYPE";
     export const TILE_PREFIX = "tile";
     export const TILE_NAMESPACE = "myTiles";
-
-    const tileReferenceRegex = new RegExp(`^\\s*${TILE_NAMESPACE}\\s*\\.\\s*${TILE_PREFIX}(\\d+)\\s*$`);
+    export const IMAGES_NAMESPACE = "myImages";
+    export const IMAGE_PREFIX = "image";
+    export const ANIMATION_NAMESPACE = "myAnimations";
+    export const ANIMATION_PREFIX = "anim";
 
     export interface Coord {
         x: number,
@@ -48,6 +50,8 @@ namespace pxt.sprite {
         }
 
         constructor(public width: number, public height: number, public x0 = 0, public y0 = 0, buf?: Uint8ClampedArray) {
+            if (!this.width) this.width = 16;
+            if (!this.height) this.height = 16;
             this.buf = buf || new Uint8ClampedArray(this.dataLength());
         }
 
@@ -178,24 +182,46 @@ namespace pxt.sprite {
         }
     }
 
-    export interface TileSet {
-        tileWidth: number;
-        tiles: TileInfo[];
-    }
-
-    export interface TileInfo {
-        data: BitmapData;
-        qualifiedName?: string;
-        projectId?: number;
-    }
-
     export class TilemapData {
         nextId = 0;
 
         // Used to make sure the user doesn't delete a tile used elsewhere in their project
-        projectReferences: number[];
+        projectReferences: string[];
+        tileOrder: string[];
+
+        editedTiles: string[];
+        deletedTiles: string[];
 
         constructor(public tilemap: Tilemap, public tileset: TileSet, public layers: BitmapData) {}
+
+        cloneData() {
+            const tm = this.tilemap.copy();
+            const tileset: TileSet = {
+                tileWidth: this.tileset.tileWidth,
+                tiles: this.tileset.tiles.map(t => ({
+                    ...t,
+                    bitmap: Bitmap.fromData(t.bitmap).copy().data()
+                }))
+            }
+            const layers = Bitmap.fromData(this.layers).copy().data();
+
+            return new TilemapData(tm, tileset, layers);
+        }
+
+        equals(other: TilemapData) {
+            if (!(this.tilemap.equals(other.tilemap)
+                && this.tileset.tileWidth == other.tileset.tileWidth
+                && this.tileset.tiles.length == other.tileset.tiles.length
+                && bitmapEquals(this.layers, other.layers))) {
+                    return false;
+            }
+
+            for (let i = 0; i < this.tileset.tiles.length; i++) {
+                if (!assetEquals(this.tileset.tiles[i], other.tileset.tiles[i])) return false;
+            }
+
+            return true;
+        }
     }
 
     export class Bitmask {
@@ -223,23 +249,18 @@ namespace pxt.sprite {
     export function encodeTilemap(t: TilemapData, fileType: "typescript" | "python"): string {
         if (!t) return `null`;
 
-        return `tiles.createTilemap(
-            ${tilemapToTilemapLiteral(t.tilemap)},
-            ${bitmapToImageLiteral(Bitmap.fromData(t.layers), fileType)},
-            [${t.tileset.tiles.map(tile => encodeTile(tile, fileType))}],
-            ${tileWidthToTileScale(t.tileset.tileWidth)}
-        )`
+        return `tiles.createTilemap(${tilemapToTilemapLiteral(t.tilemap)}, ${bitmapToImageLiteral(Bitmap.fromData(t.layers), fileType)}, [${t.tileset.tiles.map(tile => encodeTile(tile, fileType))}], ${tileWidthToTileScale(t.tileset.tileWidth)})`
     }
 
-    export function decodeTilemap(literal: string, fileType: "typescript" | "python"): TilemapData {
+    export function decodeTilemap(literal: string, fileType: "typescript" | "python", proj: TilemapProject): TilemapData {
         literal = Util.htmlUnescape(literal).trim();
 
         if (!literal.trim()) {
-            return new TilemapData(new Tilemap(16, 16), {tileWidth: 16, tiles: []}, new Bitmap(16, 16).data());
+            return null;
         }
 
         literal = literal.substr(literal.indexOf("(") + 1);
-        literal = literal.substr(0, literal.lastIndexOf(")") - 1);
+        literal = literal.substr(0, literal.lastIndexOf(")"));
 
         const tm = literal.substr(0, literal.indexOf(","));
         literal = literal.substr(tm.length + 1);
@@ -253,29 +274,78 @@ namespace pxt.sprite {
         const tilescale = literal;
 
         const result = new TilemapData(tilemapLiteralToTilemap(tm), {
-            tiles: decodeTileset(tileset),
+            tiles: decodeTileset(tileset, proj),
             tileWidth: tileScaleToTileWidth(tilescale)
         }, imageLiteralToBitmap(layer).data());
 
         return result;
     }
 
-    export function computeAverageColor(bitmap: Bitmap, colors: string[]) {
-        const parsedColors = colors.map(colorStringToRGB);
-        let color: number[];
-        const averageColor = [0, 0, 0];
+    export function trimTilemapTileset(t: TilemapData) {
+        const oldTileset = t.tileset.tiles.slice();
+        const tilemap = t.tilemap;
 
-        for (let x = 0; x < bitmap.width; x++) {
-            for (let y = 0; y < bitmap.height; y++) {
-                color = parsedColors[bitmap.get(x, y)];
-                averageColor[0] += color[0];
-                averageColor[1] += color[1];
-                averageColor[2] += color[2];
+        const used: pxt.Map<boolean> = {};
+
+        // Always keep transparency
+        used[oldTileset[0].id] = true;
+
+        for (let x = 0; x < tilemap.width; x++) {
+            for (let y = 0; y < tilemap.height; y++) {
+                used[oldTileset[tilemap.get(x, y)].id] = true;
             }
         }
 
-        const numPixels = bitmap.width * bitmap.height;
-        return "#" + toHex(averageColor.map(c => Math.floor(c / numPixels)));
+        const edited = t.editedTiles || [];
+
+        // Tiles with names that start with * are new and haven't been recorded in the tilemap
+        const newTileset = oldTileset.filter(tile =>
+            used[tile.id] ||
+            tile.id.charAt(0) === "*" ||
+            edited.indexOf(tile.id) !== -1
+        );
+
+        if (newTileset.length === oldTileset.length) {
+            return;
+        }
+
+        const mapping: number[] = [];
+
+        for (let i = 0; i < oldTileset.length; i++) {
+            mapping.push(newTileset.indexOf(oldTileset[i]))
+        }
+
+
+        for (let x = 0; x < tilemap.width; x++) {
+            for (let y = 0; y < tilemap.height; y++) {
+                tilemap.set(x, y, mapping[tilemap.get(x, y)]);
+            }
+        }
+
+        t.tileset.tiles = newTileset;
+
+        return;
+    }
+
+    export function computeAverageColor(bitmap: Bitmap, colors: string[]): string {
+        const parsedColors = colors.map(colorStringToRGB);
+        const averageColor = [0, 0, 0];
+        let numPixels = 0;
+
+        for (let x = 0; x < bitmap.width; x++) {
+            for (let y = 0; y < bitmap.height; y++) {
+                const color = bitmap.get(x, y);
+                if (color) {
+                    ++numPixels;
+                    const parsedColor = parsedColors[color];
+                    averageColor[0] += parsedColor[0];
+                    averageColor[1] += parsedColor[1];
+                    averageColor[2] += parsedColor[2];
+                }
+            }
+        }
+
+        return !!numPixels ? "#" + toHex(averageColor.map(c => Math.floor(c / numPixels))) : "#00000000";
     }
 
     export interface GalleryItem {
@@ -289,8 +359,14 @@ namespace pxt.sprite {
         const sym = blocksInfo.apis.byQName[qName];
         if (!sym) return null;
 
-        const jresURL = sym.attributes.jresURL;
-        let data = atob(jresURL.slice(jresURL.indexOf(",") + 1))
+        return getBitmapFromJResURL(sym.attributes.jresURL)
+    }
+
+    export function getBitmapFromJResURL(jresURL: string) {
+        return hexToBitmap(atob(jresURL.slice(jresURL.indexOf(",") + 1)))
+    }
+
+    export function hexToBitmap(data: string) {
         let magic = data.charCodeAt(0);
         let w = data.charCodeAt(1);
         let h = data.charCodeAt(2);
@@ -338,6 +414,7 @@ namespace pxt.sprite {
     }
 
     export function filterItems(target: GalleryItem[], tags: string[]) {
+        // Keep this unified with ImageFieldEditor:filterAssets
         tags = tags
             .filter(el => !!el)
             .map(el => el.toLowerCase());
@@ -366,7 +443,9 @@ namespace pxt.sprite {
     }
 
     export function getGalleryItems(blocksInfo: pxtc.BlocksInfo, qName: string): GalleryItem[] {
-        const syms = getFixedInstanceDropdownValues(blocksInfo.apis, qName);
+        let syms = getFixedInstanceDropdownValues(blocksInfo.apis, qName);
+        syms = syms.filter(s => s.namespace != TILE_NAMESPACE);
+
         generateIcons(syms);
 
         return syms.map(sym => {
@@ -382,6 +461,12 @@ namespace pxt.sprite {
                 tags: splitTags
             };
         });
+    }
+
+    export function base64EncodeBitmap(data: BitmapData) {
+        const bitmap = Bitmap.fromData(data);
+        const hex = pxtc.f4EncodeImg(data.width, data.height, 4, (x, y) => bitmap.get(x, y));
+        return btoa(U.uint8ArrayToString(hexToUint8Array(hex)))
     }
 
     function getFixedInstanceDropdownValues(apis: pxtc.ApisInfo, qName: string) {
@@ -407,7 +492,7 @@ namespace pxt.sprite {
         });
     }
 
-    function tilemapLiteralToTilemap(text: string, defaultPattern?: string): Tilemap {
+    export function tilemapLiteralToTilemap(text: string, defaultPattern?: string): Tilemap {
         // Strip the tagged template string business and the whitespace. We don't have to exhaustively
         // replace encoded characters because the compiler will catch any disallowed characters and throw
         // an error before the decompilation happens. 96 is backtick and 9 is tab
@@ -433,51 +518,43 @@ namespace pxt.sprite {
 
     function tilemapToTilemapLiteral(t: Tilemap): string {
         if (!t) return `hex\`\``;
-        return `hex\`${formatByte(t.width, 2)}${formatByte(t.height, 2)}${uint8ArrayToHex(t.data().data)}\``;
+        return `hex\`${hexEncodeTilemap(t)}\``;
     }
 
-    function decodeTileset(tileset: string) {
+    export function hexEncodeTilemap(t: Tilemap) {
+        return `${formatByte(t.width, 2)}${formatByte(t.height, 2)}${uint8ArrayToHex(t.data().data)}`;
+    }
+
+    function decodeTileset(tileset: string, proj: TilemapProject) {
         tileset = tileset.replace(/[\[\]]/g, "");
-        return tileset ? tileset.split(",").filter(t => !!t.trim()).map(t => decodeTile(t)) : [];
+        return tileset ? tileset.split(",").filter(t => !!t.trim()).map(t => decodeTile(t, proj)) : [];
     }
 
-    function encodeTile(tile: TileInfo, fileType: "typescript" | "python") {
-        if (tile.qualifiedName) {
-            return `${tile.qualifiedName}`;
-        }
-        else if (tile.projectId != undefined) {
-            return `${TILE_NAMESPACE}.${TILE_PREFIX}${tile.projectId}`;
-        }
-        else {
-            return bitmapToImageLiteral(Bitmap.fromData(tile.data), fileType);
-        }
+    function encodeTile(tile: Tile, fileType: "typescript" | "python") {
+        return tile.id;
     }
 
-    function decodeTile(literal: string): TileInfo {
+    function decodeTile(literal: string, proj: TilemapProject): Tile {
         literal = literal.trim();
         if (literal.indexOf("img") === 0) {
             const bitmap = imageLiteralToBitmap(literal);
-            return {
-                data: bitmap.data()
-            }
+            return proj.createNewTile(bitmap.data());
         }
 
-        const match = tileReferenceRegex.exec(literal);
-
-        if (match) {
-            return {
-                data: null,
-                projectId: Number(match[1])
-            };
-        }
-
-        return {
-            data: null,
-            qualifiedName: literal
+        switch (literal) {
+            case "myTiles.tile0":
+            case "myTiles.transparency16":
+                return proj.getTransparency(16);
+            case "myTiles.transparency8":
+                return proj.getTransparency(8);
+            case "myTiles.transparency32":
+                return proj.getTransparency(32);
+            default:
+                return proj.resolveTile(literal);
         }
     }
 
-    function formatByte(value: number, bytes: number) {
+    export function formatByte(value: number, bytes: number) {
         let result = value.toString(16);
 
         const digits = bytes << 1;
@@ -505,16 +582,13 @@ namespace pxt.sprite {
         return result;
     }
 
-    export function imageLiteralToBitmap(text: string, defaultPattern?: string): Bitmap {
+    export function imageLiteralToBitmap(text: string): Bitmap {
         // Strip the tagged template string business and the whitespace. We don't have to exhaustively
         // replace encoded characters because the compiler will catch any disallowed characters and throw
         // an error before the decompilation happens. 96 is backtick and 9 is tab
         text = text.replace(/[ `]|(?:&#96;)|(?:&#9;)|(?:img)/g, "").trim();
         text = text.replace(/^["`\(\)]*/, '').replace(/["`\(\)]*$/, '');
         text = text.replace(/&#10;/g, "\n");
-
-        if (!text && defaultPattern)
-            text = defaultPattern;
 
         const rows = text.split("\n");
 
@@ -545,6 +619,8 @@ namespace pxt.sprite {
                     case "d": case "D": case "O": rowValues.push(13); break;
                     case "e": case "E": case "Y": rowValues.push(14); break;
                     case "f": case "F": case "W": rowValues.push(15); break;
+                    default:
+                        if (!/\s/.test(row[c])) return undefined;
                 }
             }
 
@@ -573,7 +649,72 @@ namespace pxt.sprite {
         return result;
     }
 
-    export function bitmapToImageLiteral(bitmap: Bitmap, fileType: "typescript" | "python"): string {
+    export function encodeAnimationString(frames: BitmapData[], interval: number) {
+        const encodedFrames = frames.map(frame => frame.data);
+
+        const data = new Uint8ClampedArray(8 + encodedFrames[0].length * encodedFrames.length);
+
+        // interval, frame width, frame height, frame count
+        set16Bit(data, 0, interval);
+        set16Bit(data, 2, frames[0].width);
+        set16Bit(data, 4, frames[0].height);
+        set16Bit(data, 6, frames.length);
+
+        let offset = 8;
+        encodedFrames.forEach(buf => {
+            data.set(buf, offset);
+            offset += buf.length;
+        })
+
+        return btoa(pxt.sprite.uint8ArrayToHex(data))
+    }
+
+    export function addMissingTilemapTilesAndReferences(project: TilemapProject, asset: ProjectTilemap) {
+        const allTiles = project.getProjectTiles(asset.data.tileset.tileWidth, true);
+        asset.data.projectReferences = [];
+
+        for (const tile of allTiles.tiles) {
+            if (!asset.data.tileset.tiles.some(t => t.id === tile.id)) {
+                asset.data.tileset.tiles.push(tile);
+            }
+            if (project.isAssetUsed(tile, null, [asset.id])) {
+                asset.data.projectReferences.push(tile.id);
+            }
+        }
+    }
+
+    export function updateTilemapReferencesFromResult(project: TilemapProject, assetResult: ProjectTilemap) {
+        const result = assetResult.data;
+
+        if (result.deletedTiles) {
+            for (const deleted of result.deletedTiles) {
+                project.deleteTile(deleted);
+            }
+        }
+
+        if (result.editedTiles) {
+            for (const edit of result.editedTiles) {
+                const editedIndex = result.tileset.tiles.findIndex(t => t.id === edit);
+                const edited = result.tileset.tiles[editedIndex];
+
+                if (!edited) continue;
+
+                result.tileset.tiles[editedIndex] = project.updateTile(edited);
+            }
+        }
+
+        for (let i = 0; i < result.tileset.tiles.length; i++) {
+            const tile = result.tileset.tiles[i];
+
+            if (!tile.jresData) {
+                result.tileset.tiles[i] = project.resolveTile(tile.id);
+            }
+        }
+
+        pxt.sprite.trimTilemapTileset(result);
+    }
+
+    function imageLiteralPrologue(fileType: "typescript" | "python"): string {
         let res = '';
         switch (fileType) {
             case "python":
@@ -583,18 +724,11 @@ namespace pxt.sprite {
                 res = "img`";
                 break;
         }
+        return res;
+    }
 
-        if (bitmap) {
-            for (let r = 0; r < bitmap.height; r++) {
-                res += "\n"
-                for (let c = 0; c < bitmap.width; c++) {
-                    res += hexChars[bitmap.get(c, r)] + " ";
-                }
-            }
-        }
-
-        res += "\n";
-
+    function imageLiteralEpilogue(fileType: "typescript" | "python"): string {
+        let res = '';
         switch (fileType) {
             case "python":
                 res += "\"\"\")";
@@ -603,11 +737,53 @@ namespace pxt.sprite {
                 res += "`";
                 break;
         }
+        return res;
+    }
+
+    export function imageLiteralFromDimensions(width: number, height: number, color: number, fileType: "typescript" | "python"): string {
+        let res = imageLiteralPrologue(fileType);
+        const paddingBetweenPixels = (width * height > 300) ? "" : " ";
+
+        for (let r = 0; r < height; r++) {
+            res += "\n"
+            for (let c = 0; c < width; c++) {
+                res += hexChars[color] + paddingBetweenPixels;
+            }
+        }
+
+        res += "\n";
+        res += imageLiteralEpilogue(fileType);
 
         return res;
     }
 
-    function tileWidthToTileScale(tileWidth: number) {
+    export function bitmapToImageLiteral(bitmap: Bitmap, fileType: "typescript" | "python"): string {
+        if (!bitmap || bitmap.height === 0 || bitmap.width === 0) return "";
+
+        let res = imageLiteralPrologue(fileType);
+
+        if (bitmap) {
+            const paddingBetweenPixels = (bitmap.width * bitmap.height > 300) ? "" : " ";
+
+            for (let r = 0; r < bitmap.height; r++) {
+                res += "\n"
+                for (let c = 0; c < bitmap.width; c++) {
+                    res += hexChars[bitmap.get(c, r)] + paddingBetweenPixels;
+                }
+            }
+        }
+
+        res += "\n";
+        res += imageLiteralEpilogue(fileType);
+
+        return res;
+    }
+
+    export function bitmapEquals(a: pxt.sprite.BitmapData, b: pxt.sprite.BitmapData) {
+        return pxt.sprite.Bitmap.fromData(a).equals(pxt.sprite.Bitmap.fromData(b));
+    }
+
+    export function tileWidthToTileScale(tileWidth: number) {
         switch (tileWidth) {
             case 8: return `TileScale.Eight`;
             case 16: return `TileScale.Sixteen`;
@@ -616,7 +792,7 @@ namespace pxt.sprite {
         }
     }
 
-    function tileScaleToTileWidth(tileScale: string) {
+    export function tileScaleToTileWidth(tileScale: string) {
         tileScale = tileScale.replace(/\s/g, "");
         switch (tileScale) {
             case `TileScale.Eight`: return 8;
@@ -626,14 +802,14 @@ namespace pxt.sprite {
         }
     }
 
-    function hexToUint8Array(hex: string) {
+    export function hexToUint8Array(hex: string) {
         let r = new Uint8ClampedArray(hex.length >> 1);
         for (let i = 0; i < hex.length; i += 2)
             r[i >> 1] = parseInt(hex.slice(i, i + 2), 16)
         return r
     }
 
-    function uint8ArrayToHex(data: Uint8ClampedArray) {
+    export function uint8ArrayToHex(data: Uint8ClampedArray | Uint8Array) {
         const hex = "0123456789abcdef";
         let res = "";
         for (let i = 0; i < data.length; ++i) {
@@ -641,6 +817,11 @@ namespace pxt.sprite {
             res += hex[data[i] & 0xf];
         }
         return res;
+    }
+
+    function set16Bit(buf: Uint8ClampedArray, offset: number, value: number) {
+        buf[offset] = value & 0xff;
+        buf[offset + 1] = (value >> 8) & 0xff;
     }
 
     function colorStringToRGB(color: string) {
@@ -669,29 +850,5 @@ namespace pxt.sprite {
         for (let i = 0; i < bytes.length; ++i)
             r += ("0" + bytes[i].toString(16)).slice(-2)
         return r
-    }
-
-
-    export function tileToBlocklyVariable(info: pxt.sprite.TileInfo): string {
-        return `${info.projectId};${info.data.width};${info.data.height};${pxtc.Util.toHex(info.data.data)}`
-    }
-
-    export function blocklyVariableToTile(name: string): pxt.sprite.TileInfo {
-        const parts = name.split(";");
-
-        if (parts.length !== 4) {
-            return null;
-        }
-
-        return {
-            projectId: parseInt(parts[0]),
-            data: {
-                width: parseInt(parts[1]),
-                height: parseInt(parts[2]),
-                data: new Uint8ClampedArray(pxtc.Util.fromHex(parts[3])),
-                x0: 0,
-                y0: 0
-            }
-        }
     }
 }

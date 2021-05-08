@@ -123,7 +123,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
             .forEach((langBlock: HTMLElement) => {
                 promises.push(this.cachedRenderLangSnippetAsync(langBlock, code => {
                     const { fileA, fileB } = pxt.diff.split(code);
-                    return Promise.mapSeries([fileA, fileB],
+                    return pxt.Util.promiseMapAllSeries([fileA, fileB],
                         src => parent.renderPythonAsync({
                             type: "pxteditor",
                             action: "renderpython", ts: src
@@ -191,7 +191,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                 promises.push(this.cachedRenderLangSnippetAsync(langBlock, code =>
                     pxt.BrowserUtils.loadBlocklyAsync()
                         .then(() => compiler.getBlocksAsync())
-                        .then(blocksInfo => Promise.mapSeries([oldSrc, newSrc], src =>
+                        .then(blocksInfo => pxt.Util.promiseMapAllSeries([oldSrc, newSrc], src =>
                             compiler.decompileBlocksSnippetAsync(src, blocksInfo))
                         )
                         .then((resps) => pxt.blocks.decompiledDiffAsync(oldSrc, resps[0], newSrc, resps[1], blocksDiffOptions || {
@@ -342,9 +342,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         markdown = markdown.replace(/<\s*script[^>]*>.*<\/\s*script\s*>/g, '');
 
         // Render the markdown and add it to the content div
-        /* tslint:disable:no-inner-html (marked content is already sanitized) */
         content.innerHTML = marked(markdown);
-        /* tslint:enable:no-inner-html */
 
         //
 
@@ -359,7 +357,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         this.renderMarkdown(markdown);
     }
 
-    componentWillReceiveProps(newProps: MarkedContentProps) {
+    UNSAFE_componentWillReceiveProps(newProps: MarkedContentProps) {
         const { markdown } = newProps;
         if (this.props.markdown != newProps.markdown) {
             this.renderMarkdown(markdown);

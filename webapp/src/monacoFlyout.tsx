@@ -3,6 +3,8 @@ import * as compiler from "./compiler"
 import * as core from "./core";
 import * as toolbox from "./toolbox";
 import * as workspace from "./workspace";
+import * as data from "./data";
+import * as auth from "./auth";
 
 const DRAG_THRESHOLD = 5;
 const SELECTED_BORDER_WIDTH = 4;
@@ -34,7 +36,7 @@ export interface MonacoFlyoutState {
     hide?: boolean;
 }
 
-export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyoutState> {
+export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyoutState> {
     protected dragging: boolean = false;
     protected dragInfo: BlockDragInfo;
     protected lastSelected: string;
@@ -187,7 +189,7 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
                 this.props.moveFocusToParent();
             } else if (charCode == 13 && block) { // ENTER
                 let p = snippet ? Promise.resolve(snippet) : compiler.snippetAsync(block.qName, isPython);
-                p.done(snip => {
+                p.then(snip => {
                     this.props.insertSnippet(null, snip, block.retType != "void");
                     // Fire a create event
                     workspace.fireEvent({ type: 'create', editor: 'ts', blockId: block.attributes.blockId } as pxt.editor.events.CreateEvent);
@@ -226,9 +228,10 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
     }
 
     protected getBlockStyle = (color: string) => {
+        const highContrast = this.getData<boolean>(auth.HIGHCONTRAST)
         return {
             backgroundColor: color,
-            border: this.props.parent.state.highContrast ? `2px solid ${color}` : "none",
+            border: highContrast ? `2px solid ${color}` : "none",
             fontSize: `${this.props.parent.settings.editorFontSize}px`,
             lineHeight: `${this.props.parent.settings.editorFontSize + 16}px`
         };
@@ -391,7 +394,7 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
         </div>
     }
 
-    render() {
+    renderCore() {
         const { name, ns, color, icon, groups } = this.state;
         const rgb = pxt.toolbox.convertColor(color || (ns && pxt.toolbox.getNamespaceColor(ns)) || "255");
         const iconClass = `blocklyTreeIcon${icon ? (ns || icon).toLowerCase() : "Default"}`.replace(/\s/g, "");
@@ -401,7 +404,7 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
                     <span className={`monacoFlyoutHeadingIcon blocklyTreeIcon ${iconClass}`} role="presentation" style={this.getIconStyle(rgb)}>
                         {(icon && icon.length === 1) ? icon : ""}
                     </span>
-                    <div className="monacoFlyoutLabelText">{name}</div>
+                    <div className="monacoFlyoutLabelText">{pxtc.U.rlf(`{id:category}${name}`)}</div>
                 </div>
                 {groups && groups.map((g, i) => {
                     let group: JSX.Element[] = [];
@@ -410,7 +413,7 @@ export class MonacoFlyout extends React.Component<MonacoFlyoutProps, MonacoFlyou
                         group.push(
                             <div className="monacoFlyoutLabel blocklyFlyoutGroup" key={`label_${i}`} tabIndex={0} onKeyDown={this.getKeyDownHandler()} role="separator">
                                 {g.icon && <span className={`monacoFlyoutHeadingIcon blocklyTreeIcon ${iconClass}`} role="presentation">{g.icon}</span>}
-                                <div className="monacoFlyoutLabelText">{g.name}</div>
+                                <div className="monacoFlyoutLabelText">{pxtc.U.rlf(`{id:group}${g.name}`)}</div>
                                 {g.hasHelp && pxt.editor.HELP_IMAGE_URI && <span>
                                     <img src={pxt.editor.HELP_IMAGE_URI} onClick={this.getHelpButtonClickHandler(g.name)} alt={lf("Click for help")}>
                                     </img></span>}

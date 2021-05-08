@@ -1,4 +1,5 @@
 import * as pkg from "./package";
+import * as core from "./core";
 import * as React from "react";
 
 export type ViewState = any;
@@ -17,6 +18,7 @@ export class Editor implements pxt.editor.IEditor {
     setVisible(v: boolean) {
         this.isVisible = v;
     }
+    simStateChanged() { }
 
     /*******************************
      Methods called before loadFile
@@ -110,7 +112,7 @@ export class Editor implements pxt.editor.IEditor {
      * Serializes code to typescript.
      * @returns undefined if there is nothing to save
      */
-    saveToTypeScriptAsync(): Promise<string> {
+    saveToTypeScriptAsync(willOpenTypeScript = false): Promise<string> {
         return Promise.resolve(undefined);
     }
 
@@ -142,5 +144,9 @@ export class Editor implements pxt.editor.IEditor {
 
     // allows all editors to send exceptions to error list
     onExceptionDetected(exception: pxsim.DebuggerBreakpointMessage) {
+        core.warningNotification(lf("Program Error: {0}", exception?.exceptionMessage));
     }
+
+    // Validates user code at this tutorial step
+    validateTutorialCode(tutorial: pxt.tutorial.TutorialOptions) { }
 }

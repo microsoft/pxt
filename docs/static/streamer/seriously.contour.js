@@ -54,7 +54,7 @@
                 
 				// skip if no transparent pixesl
 				'   const int error = 2;',				
-                '   if (transparents < error * error || transparents == n * n) {',
+                '   if (transparents < error * error || transparents > n * n - error) {',
                 '       gl_FragColor = texture2D(source, vTexCoord).rgba;',
                 '   } else {',
                 '       gl_FragColor = color;',

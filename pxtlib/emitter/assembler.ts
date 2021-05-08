@@ -1,4 +1,4 @@
-/* tslint:disable:no-conditional-assignment */
+/* eslint-disable no-cond-assign */
 // TODO: add a macro facility to make 8-bit assembly easier?
 
 namespace ts.pxtc.assembler {
@@ -1097,6 +1097,8 @@ namespace ts.pxtc.assembler {
                 this.peepPass(i == maxPasses);
                 if (this.peepOps == 0) break;
             }
+
+            pxt.debug("emit done")
         }
     }
 

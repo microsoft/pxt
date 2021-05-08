@@ -56,7 +56,15 @@ namespace ts.pxtc.Util {
     let _translationsCache: pxt.Map<pxt.Map<string>> = {};
     //let _didSetlocalizations = false;
     //let _didReportLocalizationsNotSet = false;
-    export let localizeLive = false;
+    let localizeLive = false;
+
+    export function enableLiveLocalizationUpdates() {
+        localizeLive = true;
+    }
+
+    export function liveLocalizationEnabled() {
+        return localizeLive;
+    }
 
     /**
      * Returns the current user language, prepended by "live-" if in live mode
@@ -223,27 +231,6 @@ namespace ts.pxtc.Util {
         let e = new Error(msg);
         (<any>e).isUserError = true;
         throw e
-    }
-
-    export function isPyLangPref(): boolean {
-        return localStorage.getItem("editorlangpref") == "py";
-    }
-
-    export function getEditorLanguagePref(): string {
-        return localStorage.getItem("editorlangpref");
-    }
-
-    export function setEditorLanguagePref(lang: string): void {
-        if (lang.match(/prj$/)) lang = lang.replace(/prj$/, "")
-        localStorage.setItem("editorlangpref", lang);
-    }
-
-    export function getToolboxAnimation(): string {
-        return localStorage.getItem("toolboxanimation");
-    }
-
-    export function setToolboxAnimation(): void {
-        localStorage.setItem("toolboxanimation", "1");
     }
 
     // small deep equals for primitives, objects, arrays. returns error message

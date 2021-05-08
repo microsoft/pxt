@@ -3,6 +3,8 @@ import * as codecard from "./codecard"
 import * as sui from "./sui"
 import * as data from "./data"
 import * as core from "./core"
+import * as auth from "./auth"
+import { compose } from "redux";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -72,15 +74,13 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
             return;
         }
 
-        pxt.BrowserUtils.setCookieLang(langId);
-
         if (langId !== initialLang) {
             pxt.tickEvent(`menu.lang.changelang`, { lang: langId });
-            pxt.winrt.releaseAllDevicesAsync()
+            core.setLanguage(langId)
+                .then(() => pxt.winrt.releaseAllDevicesAsync())
                 .then(() => {
                     this.props.parent.reloadEditor();
-                })
-                .done();
+                });
         } else {
             pxt.tickEvent(`menu.lang.samelang`, { lang: langId });
             this.hide();
@@ -105,9 +105,11 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
             && !pxt.shell.isReadOnly()
             && !pxt.BrowserUtils.isPxtElectron()
             && pxt.appTarget.appTheme.crowdinProject;
+        const classes = this.props.parent.createModalClasses();
 
         return (
             <sui.Modal isOpen={this.state.visible}
+                className={classes}
                 size={modalSize}
                 onClose={this.hide}
                 dimmer={true} header={lf("Select Language")}
@@ -118,7 +120,7 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
                 closeOnEscape
             >
                 <div id="langmodal">
-                    <div id="availablelocales" className="ui cards centered" role="listbox">
+                    <div id="availablelocales" className="ui cards centered" role="list" aria-label={lf("List of available languages")}>
                         {languageList.map(langId => {
                             const lang = pxt.Util.allLanguages[langId];
                             return <LanguageCard
@@ -168,7 +170,7 @@ class LanguageCard extends sui.StatelessUIElement<LanguageCardProps> {
         return <codecard.CodeCardView className={`card-selected langoption`}
             name={name}
             ariaLabel={ariaLabel}
-            role="link"
+            role="listitem"
             description={description}
             onClick={this.handleClick}
         />

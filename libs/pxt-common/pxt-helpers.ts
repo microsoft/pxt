@@ -297,6 +297,10 @@ namespace helpers {
         return out;
     }
 
+    export function arrayPickRandom<T>(arr: T[]): T {
+        return arr[Math.randomRange(0, arr.length - 1)];
+    }
+
     export function arraySlice<T>(arr: T[], start?: number, end?: number): T[] {
         // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/slice
         const res: T[] = [];
@@ -370,6 +374,13 @@ namespace helpers {
         }
     }
 
+    //% shim=String_::substr
+    declare function stringSubstrHelper(s: string, start: number, length?: number): string;
+
+    export function stringSubstr(s: string, start: number, length?: number): string {
+        length = length === undefined ? s.length : length || 0;
+        return stringSubstrHelper(s, start, length);
+    }
 
     export function stringSlice(s: string, start: number, end?: number): string {
         const len = s.length;
@@ -378,15 +389,17 @@ namespace helpers {
             start = Math.max(len + start, 0);
         }
 
-        if (end == null) {
+        if (end === undefined) {
             end = len;
+        } else if (end === null) {
+            end = 0;
         }
 
         if (end < 0) {
             end = len + end;
         }
 
-        return s.substr(start, end - start);
+        return stringSubstrHelper(s, start, end - start);
     }
 
     // TODO move to PXT

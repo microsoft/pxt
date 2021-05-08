@@ -40,7 +40,7 @@ You can read more about CODAL (and MakeCode, discussed below) in the paper
 
 ### Physical Networking with JACDAC
 
-JACDAC's [physical layer](https://jacdac.org/#physical-layer-specifications) uses the built-in UART module common to most microcontrollers as its communication mechanism, but instead of separate wires for transmission and reception, JACDAC uses just one wire for both.
+JACDAC's [physical layer](https://microsoft.github.io/jacdac-ts/spec/specification#physical-layer) uses the built-in UART module common to most microcontrollers as its communication mechanism, but instead of separate wires for transmission and reception, JACDAC uses just one wire for both.
 This allows JACDAC to work over stereo audio cables, which also
 can provide power and ground (in addition to data). JACDAC is [open source](https://github.com/jacdac).
 Stereo audio cables, Y- and multi- splitters are plentiful, 
@@ -50,7 +50,7 @@ making it easy to create arbitrary single-bus networks, as shown in this picture
 
 ### Logical Networking with JACDAC
 
-JACDAC's [control layer](https://jacdac.org/#control-layer) is defined by Control Packets sent over the JACDAC bus.  We have implemented this protocol in [TypeScript](https://www.typescriptlang.org) (see [jacdac-ts](https://github.com/jacdac/jacdac-ts)), so it can run in the browser and on microcontrollers (implementations in other languages are forthcoming). JACDAC abstracts devices by a set of interfaces rather than hardware registers so that service code can be shared across different implementations. It uses dynamic addressing so that multiples of the same device can be connected simultaneously and it offers various communication abstractions to cater for an ever-diverse set of use scenarios for devices. 
+JACDAC's [control layer](https://microsoft.github.io/jacdac-ts/spec/specification#control-layer) is defined by Control Packets sent over the JACDAC bus.  We have implemented this protocol in [TypeScript](https://www.typescriptlang.org) (see [jacdac-ts](https://github.com/microsoft/jacdac-ts)), so it can run in the browser and on microcontrollers (implementations in other languages are forthcoming). JACDAC abstracts devices by a set of interfaces rather than hardware registers so that service code can be shared across different implementations. It uses dynamic addressing so that multiples of the same device can be connected simultaneously and it offers various communication abstractions to cater for an ever-diverse set of use scenarios for devices. 
 
 ### JACDAC: Device Drivers
 

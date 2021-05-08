@@ -4,8 +4,10 @@ import * as core from "./core";
 import * as pkg from "./package";
 import * as ws from "./workspace";
 import * as data from "./data";
+import * as cloud from "./cloud";
 
 type Header = pxt.workspace.Header;
+type File = pxt.workspace.File;
 
 import U = pxt.Util;
 const lf = U.lf
@@ -26,6 +28,7 @@ export interface FileInfo {
 
 export interface ProviderLoginResponse {
     accessToken: string;
+    rememberMe: boolean;
     expiresIn?: number; // seconds
 }
 
@@ -36,7 +39,7 @@ export interface IdentityProvider {
     loginCheck(): void;
     loginAsync(redirect?: boolean, silent?: boolean): Promise<ProviderLoginResponse>;
     logout(): void;
-    loginCallback(queryString: pxt.Map<string>): void;
+    loginCallback(rememberMe: boolean, queryString: pxt.Map<string>): void;
     getUserInfoAsync(): Promise<pxt.editor.UserInfo>;
     hasSync(): boolean;
     user(): pxt.editor.UserInfo;
@@ -75,13 +78,22 @@ export const OAUTH_TYPE = "oauthType";
 export const OAUTH_STATE = "oauthState"; // state used in OAuth flow
 export const OAUTH_REDIRECT = "oauthRedirect"; // hash to be reloaded up loging
 export const OAUTH_HASH = "oauthHash"; // hash used in implicit oauth signing
+export const OAUTH_REMEMBER_STATE = "oauthRememberState"; // if state matches this key, store in local storage
+const TOKEN = "token"
+const TOKEN_EXP = "tokenExp"
+const AUTO_LOGIN = "AutoLogin"
+const CLOUD_USER = "cloudUser"
 
-export function setOauth(type: string, redirect?: string, hash?: string) {
+export function setOauth(type: string, rememberMe: boolean, redirect?: string, hash?: string) {
     const state = ts.pxtc.Util.guidGen();
     pxt.storage.setLocal(OAUTH_TYPE, type);
     pxt.storage.setLocal(OAUTH_STATE, state);
     pxt.storage.setLocal(OAUTH_REDIRECT, redirect || window.location.hash)
     pxt.storage.setLocal(OAUTH_HASH, hash)
+    if (rememberMe)
+        pxt.storage.setLocal(OAUTH_REMEMBER_STATE, state);
+    else
+        pxt.storage.removeLocal(OAUTH_REMEMBER_STATE)
     return state;
 }
 
@@ -90,10 +102,15 @@ function clearOauth() {
     pxt.storage.removeLocal(OAUTH_STATE)
     pxt.storage.removeLocal(OAUTH_REDIRECT)
     pxt.storage.removeLocal(OAUTH_HASH)
+    pxt.storage.removeLocal(OAUTH_REMEMBER_STATE)
 }
 
 export class ProviderBase {
+    // in-memory token, for sessions where token is not stored
+    private _token: string;
+
     constructor(public name: string, public friendlyName: string, public icon: string, public urlRoot: string) {
+        this._token = pxt.storage.getLocal(this.name + TOKEN)
     }
 
     hasSync(): boolean {
@@ -105,15 +122,15 @@ export class ProviderBase {
     }
 
     user(): pxt.editor.UserInfo {
-        const user = pxt.Util.jsonTryParse(pxt.storage.getLocal(this.name + "cloudUser")) as pxt.editor.UserInfo;
+        const user = pxt.Util.jsonTryParse(pxt.storage.getLocal(this.name + CLOUD_USER)) as pxt.editor.UserInfo;
         return user;
     }
 
     setUser(user: pxt.editor.UserInfo) {
         if (user)
-            pxt.storage.setLocal(this.name + "cloudUser", JSON.stringify(user))
+            pxt.storage.setLocal(this.name + CLOUD_USER, JSON.stringify(user))
         else
-            pxt.storage.removeLocal(this.name + "cloudUser");
+            pxt.storage.removeLocal(this.name + CLOUD_USER);
         data.invalidate("sync:user")
         data.invalidate("github:user")
     }
@@ -122,8 +139,7 @@ export class ProviderBase {
         if (this.hasTokenExpired())
             return undefined;
 
-        const tok = pxt.storage.getLocal(this.name + "token")
-        return tok;
+        return this._token
     }
 
     protected reqAsync(opts: U.HttpRequestOptions): Promise<U.HttpResponse> {
@@ -187,15 +203,14 @@ export class ProviderBase {
 
         if (this.hasTokenExpired()) {
             // if we already attempted autologin (and failed), don't do it again
-            if (pxt.storage.getLocal(this.name + "AutoLogin")) {
+            if (pxt.storage.getLocal(this.name + AUTO_LOGIN)) {
                 this.pleaseLogin()
                 return
             }
 
-            pxt.storage.setLocal(this.name + "AutoLogin", "yes")
+            pxt.storage.setLocal(this.name + AUTO_LOGIN, "yes")
             this.loginAsync(undefined, true)
-                .then((resp) => resp && this.setNewToken(resp.accessToken, resp.expiresIn))
-                .done();
+                .then((resp) => resp && this.setNewToken(resp.accessToken, resp.rememberMe, resp.expiresIn));
         } else {
             setProvider(this as any)
         }
@@ -209,7 +224,8 @@ export class ProviderBase {
     protected loginInner() {
         const ns = this.name
         core.showLoading(ns + "login", lf("Signing you in to {0}...", this.friendlyName))
-        const state = setOauth(ns);
+        // TODO: rememberme review this when implementing goog/onedrive
+        const state = setOauth(ns, false);
 
         const providerDef = pxt.appTarget.cloud && pxt.appTarget.cloud.cloudProviders && pxt.appTarget.cloud.cloudProviders[this.name];
         const redir = window.location.protocol + "//" + window.location.host + "/oauth-redirect"
@@ -230,19 +246,32 @@ export class ProviderBase {
         core.hideLoading(ns + "login");
     }
 
-    loginCallback(qs: pxt.Map<string>) {
+    loginCallback(rememberMe: boolean, qs: pxt.Map<string>) {
         const ns = this.name
-        pxt.storage.removeLocal(ns + "AutoLogin")
-        this.setNewToken(qs["access_token"], parseInt(qs["expires_in"]));
+        pxt.storage.removeLocal(ns + AUTO_LOGIN)
+        this.setNewToken(qs["access_token"], rememberMe, parseInt(qs["expires_in"]));
 
         // re-compute
         this.setUser(undefined);
     }
 
-    setNewToken(accessToken: string, expiresIn?: number) {
+    setNewToken(accessToken: string, rememberMe: boolean, expiresIn?: number) {
         const ns = this.name;
-        const tokenKey = ns + "token";
-        const tokenKeyExp = ns + "tokenExp";
+        const tokenKey = ns + TOKEN;
+        const tokenKeyExp = ns + TOKEN_EXP;
+
+        // in-memory token does not expire
+        this._token = accessToken;
+
+        // the user did not check the "remember me" checkbox,
+        // do not store credentials in local storage
+        if (!rememberMe) {
+            pxt.debug(`token storage non-opted in`)
+            pxt.storage.removeLocal(tokenKey);
+            pxt.storage.removeLocal(tokenKeyExp);
+            return;
+        }
+
         if (!accessToken) {
             pxt.storage.removeLocal(tokenKey);
             pxt.storage.removeLocal(tokenKeyExp);
@@ -258,7 +287,7 @@ export class ProviderBase {
     }
 
     hasTokenExpired() {
-        const exp = parseInt(pxt.storage.getLocal(this.name + "tokenExp") || "0")
+        const exp = parseInt(pxt.storage.getLocal(this.name + TOKEN_EXP) || "0")
         if (!exp || exp < U.nowSeconds()) {
             return false;
         }
@@ -266,9 +295,10 @@ export class ProviderBase {
     }
 
     logout() {
-        pxt.storage.removeLocal(this.name + "token")
-        pxt.storage.removeLocal(this.name + "tokenExp")
-        pxt.storage.removeLocal(this.name + "AutoLogin")
+        pxt.storage.removeLocal(this.name + TOKEN)
+        pxt.storage.removeLocal(this.name + TOKEN_EXP)
+        pxt.storage.removeLocal(this.name + AUTO_LOGIN)
+        this._token = undefined;
         this.setUser(undefined)
         invalidateData();
     }
@@ -299,7 +329,6 @@ export function reconstructMeta(files: pxt.Map<string>) {
 }
 
 // these imports have to be after the ProviderBase class definition; otherwise we get crash on startup
-import * as onedrive from "./onedrive";
 import * as googledrive from "./googledrive";
 import * as githubprovider from "./githubprovider";
 
@@ -310,7 +339,7 @@ function identityProviders(): IdentityProvider[] {
         const cl = pxt.appTarget.cloud
 
         if (cl && cl.cloudProviders) {
-            [new onedrive.Provider(), new googledrive.Provider()]
+            [new googledrive.Provider()]
                 .filter(p => !!cl.cloudProviders[p.name])
                 .forEach(p => allProviders[p.name] = p);
         }
@@ -347,7 +376,7 @@ export async function ensureGitHubTokenAsync() {
 }
 
 // this is generally called by the provier's loginCheck() function
-export function setProvider(impl: IdentityProvider) {
+function setProvider(impl: IdentityProvider) {
     if (impl !== currentProvider) {
         currentProvider = impl
         invalidateData();
@@ -362,12 +391,12 @@ async function syncOneUpAsync(provider: Provider, h: Header) {
     text = U.flatClone(text)
     text[HEADER_JSON] = JSON.stringify(h, null, 4)
 
-    let firstTime = h.blobId == null
+    let firstTime = h.blobId_ == null
 
     let info: FileInfo
 
     try {
-        info = await provider.uploadAsync(h.blobId, h.blobVersion, text)
+        info = await provider.uploadAsync(h.blobId_, h.blobVersion_, text)
     } catch (e) {
         if (e.statusCode == 409) {
             core.warningNotification(lf("Conflict saving {0}; please do a full cloud sync", h.name))
@@ -379,20 +408,20 @@ async function syncOneUpAsync(provider: Provider, h: Header) {
     pxt.debug(`synced up ${info.id}`)
 
     if (firstTime) {
-        h.blobId = info.id
+        h.blobId_ = info.id
     } else {
-        U.assert(h.blobId == info.id)
+        U.assert(h.blobId_ == info.id)
     }
-    h.blobVersion = info.version
+    h.blobVersion_ = info.version
     if (h.saveId === saveId)
-        h.blobCurrent = true
+        h.blobCurrent_ = true
     await ws.saveAsync(h, null, true)
 }
 
 export async function renameAsync(h: Header, newName: string) {
     const provider = currentProvider && currentProvider.hasSync() && currentProvider as Provider;
     try {
-        await provider.updateAsync(h.blobId, newName)
+        await provider.updateAsync(h.blobId_, newName)
     } catch (e) {
 
     }
@@ -468,11 +497,11 @@ function updateNameAsync(provider: IdentityProvider) {
 
 export function refreshToken() {
     if (currentProvider)
-        currentProvider.loginAsync(undefined, true).done();
+        currentProvider.loginAsync(undefined, true);
 }
 
 export function syncAsync(): Promise<void> {
-    return Promise.all([githubSyncAsync(), cloudSyncAsync()])
+    return Promise.all([githubSyncAsync(), cloud.syncAsync()])
         .then(() => { });
 }
 
@@ -493,21 +522,20 @@ function cloudSyncAsync(): Promise<void> {
     let updated: pxt.Map<number> = {}
 
     function uninstallAsync(h: Header) {
-        pxt.debug(`uninstall local ${h.blobId}`)
+        pxt.debug(`uninstall local ${h.blobId_}`)
         h.isDeleted = true
-        h.blobVersion = "DELETED"
-        h.blobCurrent = false
+        h.blobVersion_ = "DELETED"
+        h.blobCurrent_ = false
         return ws.saveAsync(h, null, true)
     }
 
     async function resolveConflictAsync(header: Header, cloudHeader: FileInfo) {
         // rename current script
-        let text = await ws.getTextAsync(header.id)
-        let newHd = await ws.duplicateAsync(header, text)
-        header.blobId = null
-        header.blobVersion = null
-        header.blobCurrent = false
-        await ws.saveAsync(header, text)
+        let newHd = await ws.duplicateAsync(header)
+        header.blobId_ = null
+        header.blobVersion_ = null
+        header.blobCurrent_ = false
+        await ws.saveAsync(header)
         // get the cloud version
         await syncDownAsync(newHd, cloudHeader)
         // TODO move the user out of editor, or otherwise force reload
@@ -522,20 +550,19 @@ function cloudSyncAsync(): Promise<void> {
         }
 
         numDown++
-        U.assert(header.blobId == cloudHeader.id)
+        U.assert(header.blobId_ == cloudHeader.id)
         let blobId = cloudHeader.version
-        pxt.debug(`sync down ${header.blobId} - ${blobId}`)
+        pxt.debug(`sync down ${header.blobId_} - ${blobId}`)
         return provider.downloadAsync(cloudHeader.id)
             .catch(core.handleNetworkError)
             .then((resp: FileInfo) => {
-                U.assert(resp.id == header.blobId)
+                U.assert(resp.id == header.blobId_)
                 let files = resp.content
                 let hd = JSON.parse(files[HEADER_JSON] || "{}") as Header
                 delete files[HEADER_JSON]
 
-                header.cloudSync = true
-                header.blobCurrent = true
-                header.blobVersion = resp.version
+                header.blobCurrent_ = true
+                header.blobVersion_ = resp.version
                 // TODO copy anything else from the cloud?
                 header.name = hd.name || header.name || "???"
                 header.id = header.id || hd.id || U.guidGen()
@@ -550,7 +577,7 @@ function cloudSyncAsync(): Promise<void> {
                     header.modificationTime = resp.updatedAt || U.nowSeconds()
                 if (!header.recentUse)
                     header.recentUse = header.modificationTime
-                updated[header.blobId] = 1;
+                updated[header.blobId_] = 1;
 
                 if (!header0)
                     return ws.importAsync(header, files, true)
@@ -584,7 +611,7 @@ function cloudSyncAsync(): Promise<void> {
     }
 
     function syncDeleteAsync(h: Header) {
-        return provider.deleteAsync(h.blobId)
+        return provider.deleteAsync(h.blobId_)
             .then(() => uninstallAsync(h))
     }
 
@@ -596,15 +623,15 @@ function cloudSyncAsync(): Promise<void> {
             // Get all local headers including those that had been deleted
             const allScripts = ws.getHeaders(true)
             const cloudHeaders = U.toDictionary(entries, e => e.id)
-            const existingHeaders = U.toDictionary(allScripts.filter(h => h.blobId), h => h.blobId)
+            const existingHeaders = U.toDictionary(allScripts.filter(h => h.blobId_), h => h.blobId_)
             //console.log('all', allScripts);
             //console.log('cloud', cloudHeaders);
             //console.log('existing', existingHeaders);
             //console.log('syncthese', allScripts.filter(hd => hd.cloudSync));
             // Only syncronize those that have been marked with cloudSync
-            let waitFor = allScripts.filter(hd => hd.cloudSync).map(hd => {
-                if (cloudHeaders.hasOwnProperty(hd.blobId)) {
-                    let chd = cloudHeaders[hd.blobId]
+            let waitFor = allScripts.filter(hd => hd.cloudUserId).map(hd => {
+                if (cloudHeaders.hasOwnProperty(hd.blobId_)) {
+                    let chd = cloudHeaders[hd.blobId_]
 
                     // The script was deleted locally, delete on cloud
                     if (hd.isDeleted) {
@@ -612,8 +639,8 @@ function cloudSyncAsync(): Promise<void> {
                         return syncDeleteAsync(hd)
                     }
 
-                    if (chd.version == hd.blobVersion) {
-                        if (hd.blobCurrent) {
+                    if (chd.version == hd.blobVersion_) {
+                        if (hd.blobCurrent_) {
                             // nothing to do
                             return Promise.resolve()
                         } else {
@@ -621,7 +648,7 @@ function cloudSyncAsync(): Promise<void> {
                             return syncUpAsync(hd)
                         }
                     } else {
-                        if (hd.blobCurrent) {
+                        if (hd.blobCurrent_) {
                             console.log('might have synced down: ', hd.name);
                             return syncDownAsync(hd, chd)
                         } else {
@@ -630,7 +657,7 @@ function cloudSyncAsync(): Promise<void> {
                         }
                     }
                 } else {
-                    if (hd.blobVersion)
+                    if (hd.blobVersion_)
                         // this has been pushed once to the cloud - uninstall wins
                         return uninstallAsync(hd)
                     else {
@@ -674,7 +701,8 @@ export function loginCheck() {
             const impl = provs.filter(p => p.name == tp)[0];
             if (impl) {
                 pxt.storage.removeLocal(OAUTH_HASH);
-                impl.loginCallback(qs)
+                const rememberMe = qs["state"] === pxt.storage.getLocal(OAUTH_REMEMBER_STATE)
+                impl.loginCallback(rememberMe, qs)
             }
             // cleanup
             clearOauth();
@@ -692,9 +720,10 @@ export function loginCheck() {
             if (ex && ex == qs["state"]) {
                 pxt.storage.removeLocal(OAUTH_STATE)
                 pxt.storage.removeLocal(OAUTH_TYPE);
+                const rememberMe = qs["state"] === pxt.storage.getLocal(OAUTH_REMEMBER_STATE)
                 const impl = provs.filter(p => p.name == tp)[0];
                 if (impl) {
-                    impl.loginCallback(qs);
+                    impl.loginCallback(rememberMe, qs);
                     const hash = pxt.storage.getLocal(OAUTH_REDIRECT) || "";
                     location.hash = hash;
                 }
@@ -727,7 +756,7 @@ function setStatus(s: string) {
     }
 }
 
-function userInitials(username: string): string {
+export function userInitials(username: string): string {
     if (!username) return "?";
     // Parse the user name for user initials
     const initials = username.match(/\b\w/g) || [];

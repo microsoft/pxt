@@ -66,6 +66,17 @@
         background-color: @HCbackground !important;
     }
 
+    /* semantic */
+    .ui.toggle.checkbox .box, .ui.toggle.checkbox label,
+    .ui.toggle.checkbox input:focus:checked~.box, .ui.toggle.checkbox input:focus:checked~label,
+    .ui.checkbox+label, .ui.checkbox label,
+    .ui.items>.item .meta {
+        color: @HCtextColor !important;
+    }
+    p > a.ui.link {
+        text-decoration: underline;
+    }
+
     #tutorialcard .prevbutton,
     #tutorialcard .nextbutton {
         &:hover, &:focus {
@@ -115,6 +126,12 @@
         }
     }
 
+    .pxtToolbox {
+        .blocklyTreeRow:not(.blocklyTreeSelected) {
+            background-color: @HCblocklyToolboxColor !important;
+        }
+    }
+
     #monacoEditor .monacoDraggableBlock {
         background: none !important;
 
@@ -156,6 +173,11 @@
         stroke-width: 4px;
         stroke: @HCblocklyTreeLabelColor;
     }
+
+    .blocklyFlyoutButton .blocklyText {
+        fill: @HCtextColor !important;
+    }
+
     .monacoFlyout {
         background: @HCblocklySvgColor !important;
         border-right: 4px solid @HCtextColor !important;
@@ -170,6 +192,7 @@
 
     .blocklyFlyoutButtonBackground {
         stroke: @HCtextColor !important;
+        fill: transparent !important;
     }
 
     /* Main editor areas */
@@ -185,7 +208,7 @@
         }
     }
     svg.blocklySvg {
-        background-color: @HCblocklySvgColor !important;
+        background: @HCblocklySvgColor !important;
     }
 
     .blocklyMainBackground {
@@ -223,9 +246,9 @@
         }
     }
     #mainmenu.inverted, #homemenu.inverted {
-        background-color: @HCmainMenuTextColor !important;
         color: @HCmainMenuBackground !important;
         border-bottom: 4px solid @HCtextColor;
+        background: @HCmainMenuTextColor !important;
 
         .ui.item {
             color: @HCmainMenuBackground;
@@ -336,6 +359,7 @@
         &:focus, &:hover {
             color: @HCtextColor !important;
             border-color: @selected !important;
+            background: @HCbackground !important;
 
             i, span {
                 color: @HCtextColor !important;
@@ -421,6 +445,12 @@
         }
     }
 
+    #homescreen .ui.home .tutorial-progress.orange {
+        border-color: @HCtextColor !important;
+        background-color: @HCbackground !important;
+        color: @HCtextColor !important;
+    }
+
     .projectsdialog {
         .gallerysegment {
             .ui.header {
@@ -458,6 +488,14 @@
                 }
             }
         }
+    }
+    .ui.card.link.newprojectcard{
+        background: darken(@primaryColor, 20%) !important;
+        color: white;
+    }
+
+    .ui.image~.content {
+        background: rgba(0,0,0,.75) !important;
     }
 
     .ui.form .content .description {
@@ -546,7 +584,8 @@
         color: @HCtextColor;
     }
 
-    #serialCharts .ui.segment {
+    #serialCharts .ui.segment,
+    #serialPlaceholder.ui.segment {
         background-color: @HCtextColor;
     }
 
@@ -573,6 +612,58 @@
 
     .ui.button.labeled.icon.editorBack {
         background: @HCtextColor !important;
+    }
+
+    /* Asset Editor */
+    #assetEditor {
+        .asset-editor-sidebar,
+        .asset-editor-sidebar-preview,
+        .asset-editor-preview {
+            color: @HCtextColor;
+            background-color: @HCbackground;
+            border-color: @HCtextColor;
+        }
+
+        .asset-editor-gallery-tab {
+            color: @HCtextColor;
+            background-color: @HCbackground;
+            border-right: 1px solid @HCtextColor;
+        }
+
+        .asset-editor-topbar {
+            border-bottom: 1px solid @HCtextColor;
+        }
+
+        .asset-editor-button,
+        .asset-editor-card,
+        .create-new {
+            color: @HCtextColor;
+            background: @HCbackground;
+            border: 1px solid @HCtextColor;
+            box-shadow: none;
+        }
+
+        .asset-editor-card-label {
+            color: @HCbackground;
+        }
+
+        .delete-asset {
+            border: 1px solid @red;
+        }
+
+        .asset-editor-gallery-tab.selected,
+        .asset-editor-button:hover,
+        .create-new:hover {
+            border: 2px solid @selected;
+        }
+    }
+
+    .asset-editor-create-button {
+        background-color: @HCbackground;
+        border: 1px solid @HCtextColor;
+        &:hover {
+            border: 2px solid @selected;
+        }
     }
 
     /* Hyperlinks */
@@ -699,6 +790,12 @@
         }
     }
 
+    .ui.modal.inverted-theme {
+        border: 2px solid @HCtextColor !important;
+        border-radius: initial !important;
+        box-shadow: initial !important;
+    }
+
     .ui.modal, .ui.modal > .header, .ui.modal > .content, .ui.modal > .actions, .ui.modal > .segment {
         background: @HCbackground !important;
         color: @HCtextColor !important;
@@ -724,6 +821,79 @@
 
     [data-tooltip]:before {
         box-shadow: 1px 1px 0 0 @HCtextColor!important;
+    }
+
+    /* immersive reader */
+    .modals .ui.button.immersive-reader-button,
+    #mainmenu .immersive-reader-button.ui.item {
+        border: 1px solid #fff!important;
+        background-image: @immersiveReaderLightIcon !important;
+        background-repeat: no-repeat !important;
+        background-size: 80% !important;
+        background-position: center!important;
+    }
+
+    .modals .ui.button.immersive-reader-button:focus,
+    .modals .ui.button.immersive-reader-button:hover,
+    #mainmenu .immersive-reader-button.ui.item:focus,
+    #mainmenu .immersive-reader-button.ui.item:hover {
+        background-color: white !important;
+        background-image: @immersiveReaderIcon !important;
+        background-repeat: no-repeat !important;
+        background-size: 80% !important;
+        background-position: center!important;
+        filter: none!important;
+    }
+
+    // skillmap embedded tutorials
+    .tutorial.tutorial-embed {
+        .immersive-reader-button.ui.item,
+        .immersive-reader-button.ui.item:focus,
+        .immersive-reader-button.ui.item:hover {
+            background-size: 80%!important;
+            background-color: transparent!important;
+            filter: none!important;
+        }
+    }
+
+    /* github */
+    #githubEditor {
+        background-color: @HCbackground !important;
+        color: @HCtextColor !important;
+
+        table.diffview {
+            background: @HCbackground !important;
+            color: @HCtextColor !important;
+            .diff-marker, .diff-removed, .diff-added, code.ch-removed, code.ch-added {
+                background: @HCbackground !important;
+                color: @HCtextColor !important;
+            }
+            .diff-marker {
+                border-bottom: 1px solid @HCtextColor !important;
+            }
+            .diff-removed, code.ch-removed {
+                border: 2px dashed #900 !important;
+            }
+            .diff-added, code.ch-added {
+                border: 2px dotted #090 !important;
+            }
+        }
+    }
+}
+
+/* OS-specific Fixes (eg Windows High Contrast) */
+
+@media (forced-colors: active) {
+    .ui.toggle.checkbox .box:after,
+    .ui.toggle.checkbox label:after {
+        forced-color-adjust: none;
+    }
+}
+
+@media (forced-colors: active) and (prefers-color-scheme: light) {
+    #homemenu .logo.organization img,
+    #homemenu .logo.brand img {
+        filter: invert(1);
     }
 }
 

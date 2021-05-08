@@ -85,7 +85,7 @@ namespace ts.pxtc.decompiler {
         functionParamIds: pxt.Map<pxt.Map<string>>; // Maps a function name to a map of paramName => paramId
         declaredEnums: pxt.Map<boolean>;
         declaredKinds?: pxt.Map<KindDeclarationInfo>;
-        tileset: pxt.sprite.TileInfo[];
+        tileset: pxt.sprite.legacy.LegacyTileInfo[];
         attrs: (c: pxtc.CallInfo) => pxtc.CommentAttrs;
         compInfo: (c: pxtc.CallInfo) => pxt.blocks.BlockCompileInfo;
         localReporters: PropertyDesc[][]; // A stack of groups of locally scoped argument declarations, to determine whether an argument should decompile as a reporter or a variable
@@ -273,13 +273,18 @@ namespace ts.pxtc.decompiler {
         }
     }
 
+    export type RenameMapOpts = {
+        declarations: "variables" | "all"
+        takenNames: NamesSet,
+    }
     export type NamesSet = pxt.Map<boolean | {}>
     /**
      * Uses the language service to ensure that there are no duplicate variable
      * names in the given file. All variables in Blockly are global, so this is
      * necessary to prevent local variables from colliding.
      */
-    export function buildRenameMap(p: Program, s: SourceFile, takenNames: NamesSet = {}): [RenameMap, NamesSet] {
+    export function buildRenameMap(p: Program, s: SourceFile,
+        { declarations, takenNames }: RenameMapOpts = { declarations: "variables", takenNames: {} }): [RenameMap, NamesSet] {
         let service = ts.createLanguageService(new LSHost(p))
         const allRenames: RenameLocation[] = [];
 
@@ -293,12 +298,13 @@ namespace ts.pxtc.decompiler {
 
             function checkChildren(n: Node): void {
                 ts.forEachChild(n, (child) => {
-                    if (child.kind === SK.VariableDeclaration && (child as ts.VariableDeclaration).name.kind === SK.Identifier) {
-                        const name = (child as ts.VariableDeclaration).name.getText();
+                    if (isDeclarationName(child)
+                        && (declarations === "all" || ts.isVariableDeclaration(child.parent))) {
+                        const name = child.getText();
 
                         if (takenNames[name]) {
                             const newName = getNewName(name, takenNames);
-                            const renames = service.findRenameLocations(s.fileName, (child as ts.VariableDeclaration).name.pos + 1, false, false);
+                            const renames = service.findRenameLocations(s.fileName, child.pos + 1, false, false);
                             if (renames) {
                                 renames.forEach(r => {
                                     allRenames.push({
@@ -485,7 +491,7 @@ namespace ts.pxtc.decompiler {
                 write(`<variable type="${U.htmlEscape(e.type)}">${U.htmlEscape(e.name)}</variable>`)
             });
             env.tileset.forEach(e => {
-                write(`<variable type="${pxt.sprite.BLOCKLY_TILESET_TYPE}">${pxt.sprite.tileToBlocklyVariable(e)}</variable>`)
+                write(`<variable type="${pxt.sprite.BLOCKLY_TILESET_TYPE}">${pxt.sprite.legacy.tileToBlocklyVariable(e)}</variable>`)
             });
             write("</variables>")
         }
@@ -1250,10 +1256,18 @@ ${output}</xml>`;
 
             const r = mkExpr(api.attributes.blockId, t);
 
-            const text = (t.template as ts.NoSubstitutionTemplateLiteral).text;
+            let text: string;
+            const param = comp.parameters[0];
+
+            if (param.fieldOptions && param.fieldOptions[DecompileParamKeys.DecompileArgumentAsString]) {
+                text = t.getText();
+            }
+            else {
+                text = (t.template as ts.NoSubstitutionTemplateLiteral).text;
+            }
 
             // This will always be a field and not a value because we only allow no-substitution templates
-            r.fields = [getField(comp.parameters[0].actualName, text)];
+            r.fields = [getField(param.actualName, text)];
 
             return r;
         }

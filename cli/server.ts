@@ -8,6 +8,8 @@ import * as hid from './hid';
 import * as net from 'net';
 import * as crowdin from './crowdin';
 
+import { promisify } from "util";
+
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
 
@@ -35,12 +37,14 @@ function setupRootDir() {
     console.log(`With pxt core at ${nodeutil.pxtCoreDir}`)
     dirs = [
         "built/web",
+        path.join(nodeutil.targetDir, "docs"),
         path.join(nodeutil.targetDir, "built"),
         path.join(nodeutil.targetDir, "sim/public"),
         path.join(nodeutil.targetDir, "node_modules", `pxt-${pxt.appTarget.id}-sim`, "public"),
         path.join(nodeutil.pxtCoreDir, "built/web"),
         path.join(nodeutil.pxtCoreDir, "webapp/public"),
-        path.join(nodeutil.pxtCoreDir, "common-docs")
+        path.join(nodeutil.pxtCoreDir, "common-docs"),
+        path.join(nodeutil.pxtCoreDir, "docs"),
     ]
     docsDir = path.join(root, "docs")
     packagedDir = path.join(root, "built/packaged")
@@ -57,11 +61,11 @@ function setupProjectsDir() {
     nodeutil.mkdirP(userProjectsDir);
 }
 
-const statAsync = Promise.promisify(fs.stat)
-const readdirAsync = Promise.promisify(fs.readdir)
-const readFileAsync = Promise.promisify(fs.readFile)
-const writeFileAsync: any = Promise.promisify(fs.writeFile)
-const unlinkAsync: any = Promise.promisify(fs.unlink)
+const statAsync = promisify(fs.stat)
+const readdirAsync = promisify(fs.readdir)
+const readFileAsync = promisify(fs.readFile)
+const writeFileAsync: any = promisify(fs.writeFile)
+const unlinkAsync: any = promisify(fs.unlink)
 
 function existsAsync(fn: string): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
@@ -85,12 +89,10 @@ type FsPkg = pxt.FsPkg;
 
 function readAssetsAsync(logicalDirname: string): Promise<any> {
     let dirname = path.join(userProjectsDir, logicalDirname, "assets")
-    /* tslint:disable:no-http-string */
     let pref = "http://" + serveOptions.hostname + ":" + serveOptions.port + "/assets/" + logicalDirname + "/"
-    /* tslint:enable:no-http-string */
     return readdirAsync(dirname)
         .catch(err => [])
-        .then(res => Promise.map(res, fn => statAsync(path.join(dirname, fn)).then(res => ({
+        .then(res => U.promiseMapAll(res, fn => statAsync(path.join(dirname, fn)).then(res => ({
             name: fn,
             size: res.size,
             url: pref + fn
@@ -190,7 +192,7 @@ function writePkgAsync(logicalDirname: string, data: FsPkg) {
 
     nodeutil.mkdirP(dirname)
 
-    return Promise.map(data.files, f =>
+    return U.promiseMapAll(data.files, f =>
         readFileAsync(path.join(dirname, f.name))
             .then(buf => {
                 if (f.name == pxt.CONFIG_NAME) {
@@ -213,7 +215,7 @@ function writePkgAsync(logicalDirname: string, data: FsPkg) {
                 }
             }, err => { }))
         // no conflict, proceed with writing
-        .then(() => Promise.map(data.files, f => {
+        .then(() => U.promiseMapAll(data.files, f => {
             let d = f.name.replace(/\/[^\/]*$/, "")
             if (d != f.name)
                 nodeutil.mkdirP(path.join(dirname, d))
@@ -229,21 +231,26 @@ function writePkgAsync(logicalDirname: string, data: FsPkg) {
 
 function returnDirAsync(logicalDirname: string, depth: number): Promise<FsPkg[]> {
     logicalDirname = logicalDirname.replace(/^\//, "")
-    let dirname = path.join(userProjectsDir, logicalDirname)
+    const dirname = path.join(userProjectsDir, logicalDirname)
+    // load packages under /projects, 3 level deep
     return existsAsync(path.join(dirname, pxt.CONFIG_NAME))
-        .then(ispkg =>
-            ispkg ? readPkgAsync(logicalDirname).then(r => [r], err => []) :
-                depth <= 1 ? [] :
-                    readdirAsync(dirname)
-                        .then(files =>
-                            Promise.map(files, fn =>
-                                statAsync(path.join(dirname, fn))
-                                    .then<FsPkg[]>(st => {
-                                        if (fn[0] != "." && st.isDirectory())
-                                            return returnDirAsync(logicalDirname + "/" + fn, depth - 1)
-                                        else return []
-                                    })))
-                        .then(U.concat))
+        // read package if pxt.json exists
+        .then(ispkg => Promise.all<FsPkg[]>([
+            // current folder
+            ispkg ? readPkgAsync(logicalDirname).then<FsPkg[]>(r => [r], err => undefined) : Promise.resolve<FsPkg[]>(undefined),
+            // nested packets
+            depth <= 1 ? Promise.resolve<FsPkg[]>(undefined)
+                : readdirAsync(dirname).then(files => U.promiseMapAll(files, fn =>
+                    statAsync(path.join(dirname, fn)).then<FsPkg[]>(st => {
+                        if (fn[0] != "." && st.isDirectory())
+                            return returnDirAsync(logicalDirname + "/" + fn, depth - 1)
+                        else return undefined
+                    })).then(U.concat)
+                )
+        ]))
+        // drop empty arrays
+        .then(rs => rs.filter(r => !!r))
+        .then(U.concat);
 }
 
 function isAuthorizedLocalRequest(req: http.IncomingMessage): boolean {
@@ -511,7 +518,7 @@ function initSocketServer(wsPort: number, hostname: string) {
                                 return hio.io.sendPacketAsync(U.fromHex(msg.arg.data))
                                     .then(() => ({}))
                             case "talk":
-                                return Promise.mapSeries(msg.arg.cmds, (obj: any) => {
+                                return U.promiseMapAllSeries(msg.arg.cmds, (obj: any) => {
                                     pxt.debug(`hid talk ${obj.cmd}`)
                                     return hio.talkAsync(obj.cmd, U.fromHex(obj.data))
                                         .then(res => ({ data: U.toHex(res) }))
@@ -526,7 +533,7 @@ function initSocketServer(wsPort: number, hostname: string) {
                                 return null;
                         }
                     })
-                    .done(resp => {
+                    .then(resp => {
                         if (!ws) return;
                         pxt.debug(`hid: resp ${objToString(resp)}`)
                         ws.send(JSON.stringify({
@@ -613,7 +620,7 @@ function initSocketServer(wsPort: number, hostname: string) {
                                 return null;
                         }
                     })
-                    .done(resp => {
+                    .then(resp => {
                         if (!ws) return;
                         pxt.debug(`hid: resp ${objToString(resp)}`)
                         ws.send(JSON.stringify({
@@ -914,7 +921,10 @@ export function serveAsync(options: ServeOptions) {
 
         const sendHtml = (s: string, code = 200) => {
             res.writeHead(code, { 'Content-Type': 'text/html; charset=utf8' })
-            res.end(s)
+            res.end(s.replace(
+                /(<img [^>]* src=")(?:\/docs|\.)\/static\/([^">]+)"/g,
+                function (f, pref, addr) { return pref + '/static/' + addr + '"'; }
+            ))
         }
 
         const sendFile = (filename: string) => {
@@ -958,6 +968,13 @@ export function serveAsync(options: ServeOptions) {
         if (elts[0] == "api") {
             if (elts[1] == "streams") {
                 let trg = Cloud.apiRoot + req.url.slice(5)
+                res.setHeader("Location", trg)
+                error(302, "Redir: " + trg)
+                return
+            }
+
+            if (elts[1] == "immreader") {
+                let trg = Cloud.apiRoot + elts[1];
                 res.setHeader("Location", trg)
                 error(302, "Redir: " + trg)
                 return
@@ -1043,6 +1060,16 @@ export function serveAsync(options: ServeOptions) {
             return
         }
 
+        if (pathname == "/--asseteditor") {
+            sendFile(path.join(publicDir, 'asseteditor.html'));
+            return
+        }
+
+        if (pathname == "/--skillmap") {
+            sendFile(path.join(publicDir, 'skillmap.html'));
+            return
+        }
+
         if (/\/-[-]*docs.*$/.test(pathname)) {
             sendFile(path.join(publicDir, 'docs.html'));
             return
@@ -1063,6 +1090,7 @@ export function serveAsync(options: ServeOptions) {
         if (/^\/(pkg|package)\/.*$/.test(pathname)) {
             pkgPageTestAsync(pathname.replace(/^\/[^\/]+\//, ""))
                 .then(sendHtml)
+                .catch(() => error(404, "Packaged file not found"));
             return
         }
 
@@ -1079,6 +1107,7 @@ export function serveAsync(options: ServeOptions) {
 
         if (/\.js\.map$/.test(pathname)) {
             error(404, "map files disabled")
+            return;
         }
 
         let dd = dirs
@@ -1167,9 +1196,7 @@ export function serveAsync(options: ServeOptions) {
     const serverjs = path.resolve(path.join(root, 'built', 'server.js'))
     if (nodeutil.fileExistsSync(serverjs)) {
         console.log('loading ' + serverjs)
-        /* tslint:disable:non-literal-require */
         require(serverjs);
-        /* tslint:disable:non-literal-require */
     }
 
     const serverPromise = new Promise<void>((resolve, reject) => {
@@ -1179,9 +1206,7 @@ export function serveAsync(options: ServeOptions) {
 
     return Promise.all([wsServerPromise, serverPromise])
         .then(() => {
-            /* tslint:disable:no-http-string */
             const start = `http://${serveOptions.hostname}:${serveOptions.port}/#local_token=${options.localToken}&wsport=${serveOptions.wsPort}`;
-            /* tslint:enable:no-http-string */
             console.log(`---------------------------------------------`);
             console.log(``);
             console.log(`To launch the editor, open this URL:`);

@@ -45,11 +45,6 @@ pre {
     position: absolute;
 }
 
-#msccBanner {
-    /* Don't change! This legal text should always be above everything else */
-    z-index: @aboveEverythingZIndex;
-}
-
 #editorcontent {
     flex: 1 1 auto;
     position: relative;
@@ -121,6 +116,28 @@ pre {
     }
 }
 
+.zoomSliderBar {
+    -webkit-appearance: none;  /* Override default CSS styles */
+    appearance: none;
+    width: 100%;
+    height: .5rem;
+    background: @black;
+    outline: none;
+    opacity: 0.7;
+    -webkit-transition: .2s;
+    transition: opacity .2s;
+    top: 50%;
+    position: relative;
+    border-bottom: .2rem solid @grey;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+#zoomSlider {
+    display: inline-block;
+    position: relative;
+}
+
 #root {
     --extra-mobile-sim-padding: 0px;
     &.errorListHeader {
@@ -136,7 +153,7 @@ pre {
     z-index: (@blocklyFlyoutZIndex)-1;
 }
 
-#blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #filelist {
+#blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #assetEditor, #filelist {
     bottom: @editorToolsCollapsedHeight;
 }
 
@@ -145,6 +162,7 @@ pre {
 .hideEditorToolbar #pxtJsonEditor,
 .hideEditorToolbar #serialEditor,
 .hideEditorToolbar #githubEditor,
+.hideEditorToolbar #assetEditor,
 .hideEditorToolbar #filelist {
     bottom: 0rem !important;
 }
@@ -170,15 +188,32 @@ pre {
 }
 
 #filelist {
-    padding: 1em 2em 1em 2em;
+    padding-top: 1em;
+    padding-right: ~"calc(2em - @{customScrollbarWidth})";
+    padding-bottom: 1em;
+    padding-left: 2em;
     overflow-x: hidden;
-    overflow-y: auto;
     margin-top: 0;
     margin-bottom: 0;
     width: 100%;
-    background-color: @simulatorBackground;
-    z-index: @simulatorZIndex;
+    background-color: @filelistBackgroundColor;
+    z-index: @filelistZIndex;
+
+    // the scroll bar is always visible, but we hide it when needed
+    overflow-y: scroll;
 }
+
+.invisibleScrollbar::-webkit-scrollbar {
+    background: transparent !important;
+    width: @customScrollbarWidth; // TODO: remove this when the sim breakpoint is fixed
+}
+.invisibleScrollbar::-webkit-scrollbar-thumb {
+    display: none !important;
+}
+.invisibleScrollbar::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+
 
 #filelist .simtoolbar {
     -webkit-transition: opacity 0.2s; /* Safari */
@@ -223,11 +258,19 @@ pre {
 
 #filelist .nested.item {
     padding: .92857143em 1.14285714em;
-    padding-left: 2rem;
+    padding-left: 1rem;
 }
 
-#filelist .header {
-    background: rgba(0,0,0,0.05);
+#filelist .header.item {
+    background: @filelistHeaderBackground;
+}
+
+#filelist .folder.item {
+    font-weight: bold;
+}
+
+#filelist .folderitem.item {
+    padding-left: 2rem;
 }
 
 #simulators {
@@ -305,12 +348,14 @@ div.simframe > iframe {
     background: none;
 }
 .menubar .ui.menu.fixed .ui.item.editor-menuitem .item:not(.active) {
-    opacity: 0.6;
+    opacity: 0.8;
 }
 .menubar .ui.menu.inverted.fixed .ui.item.editor-menuitem .active.item {
     background: none;
     color: @mainMenuInvertedBackground !important;
 }
+
+/* toggle style */
 .ui.item.editor-menuitem .item.toggle {
     z-index: 1 !important;
     margin: 1px;
@@ -328,25 +373,34 @@ div.simframe > iframe {
     transition-timing-function: ease-in;
 }
 
-.active.item.blocks-menuitem ~ .toggle {
-    margin-left: 0 !important;
-    box-shadow: 2px 0px 0px rgba(0,0,0,0.1) !important;
-    background: @editorToggleColor !important;
-}
-.active.item.javascript-menuitem ~ .toggle,
-.active.item.python-menuitem ~ .toggle {
-    margin-left: 140px !important;
-    box-shadow: -2px 0px 0px rgba(0,0,0,0.1) !important;
-    background: @editorToggleColor !important;
+/* active toggle */
+.ui.item.editor-menuitem .active ~ .item.toggle {
+    box-shadow: 2px 0 0 rgba(0,0,0,.1)!important;
+    background: #fff!important;
 }
 
-#editortoggle .active.item.javascript-menuitem ~ .toggle.hasdropdown,
-#editortoggle .active.item.python-menuitem ~ .toggle.hasdropdown  {
-    border-top-right-radius: 0px!important;
-    border-bottom-right-radius: 0px!important;
-}
 #editortoggle > .link {
     justify-content: center;
+}
+
+#editortoggle > .item {
+    outline: none;
+}
+
+#editortoggle {
+    /* toggle positioning, no dropdown */
+    .base-menuitem:nth-of-type(1).active ~ .toggle { margin-left: 0!important; }
+    .base-menuitem:nth-of-type(2).active ~ .toggle { margin-left: 140px!important; }
+    .base-menuitem:nth-of-type(3).active ~ .toggle { margin-left: 280px!important; }
+
+    /* toggle positioning after dropdown */
+    & > #editordropdown:nth-of-type(2) ~ .active ~ .toggle { margin-left: 185px!important; }
+    & > #editordropdown:nth-of-type(3) ~ .active ~ .toggle { margin-left: 326px!important; }
+
+    .toggle.dropdown-attached {
+        border-top-right-radius: 0!important;
+        border-bottom-right-radius: 0!important;
+    }
 }
 
 #editordropdown {
@@ -756,7 +810,7 @@ Field editors
 }
 .social-icons a.twitter {
     color: white;
-    background-color: #00aced;
+    background-color: #1da1f2;
 }
 .social-icons a.discourse {
     color: white;
@@ -836,25 +890,6 @@ p.ui.font.small {
 
 /* Mobile + Tablet */
 @media only screen and (max-width: @largestTabletScreen) {
-    #root.sandbox:not(.headless) {
-        .active.item.sim-menuitem ~ .toggle {
-            margin-left: 0 !important;
-            box-shadow: 2px 0px 0px rgba(0,0,0,0.1) !important;
-            background: @editorToggleColor !important;
-        }
-        .active.item.blocks-menuitem ~ .toggle {
-            margin-left: 40px !important;
-            box-shadow: 2px 0px 0px rgba(0,0,0,0.1), -2px 0px 0px rgba(0,0,0,0.1) !important;
-            background: @editorToggleColor !important;
-        }
-        .active.item.javascript-menuitem ~ .toggle,
-        .active.item.python-menuitem ~ .toggle {
-            margin-left: 80px !important;
-            box-shadow: -2px 0px 0px rgba(0,0,0,0.1) !important;
-            background: @editorToggleColor !important;
-        }
-    }
-
     .simView #boardview {
         padding-top: @sandboxMobileMenuHeight;
     }
@@ -1040,6 +1075,7 @@ p.ui.font.small {
         left: auto;
         height: 5.7rem;
         margin-right: 1rem;
+        bottom: var(--extra-mobile-sim-padding);
     }
 
     #editortools #downloadArea,
@@ -1056,6 +1092,10 @@ p.ui.font.small {
 
 #projectNameArea input {
     font-size: 0.95rem;
+}
+
+#projectNameArea .cloudState {
+    color: rgba(0, 0, 0, 0.5);
 }
 
 /*******************************
@@ -1253,7 +1293,7 @@ p.ui.font.small {
         height: 9rem;
     }
 
-    #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #filelist {
+    #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #assetEditor, #filelist {
         bottom: @editorToolsCollapsedMobileHeight;
     }
 
@@ -1385,10 +1425,18 @@ p.ui.font.small {
         width: 40px;
         height: 38px;
     }
-    .active.item.javascript-menuitem ~ .toggle,
-    .active.item.python-menuitem ~ .toggle {
-        margin-left: 40px !important;
+
+    #editortoggle {
+        /* toggle positioning, no dropdown */
+        .base-menuitem:nth-of-type(1).active ~ .toggle { margin-left: 0!important; }
+        .base-menuitem:nth-of-type(2).active ~ .toggle { margin-left: 40px!important; }
+        .base-menuitem:nth-of-type(3).active ~ .toggle { margin-left: 80px!important; }
+
+        /* toggle positioning after dropdown */
+        & > #editordropdown:nth-of-type(2) ~ .active ~ .toggle { margin-left: 80px!important; }
+        & > #editordropdown:nth-of-type(3) ~ .active ~ .toggle { margin-left: 120px!important; }
     }
+
     /* Top Menu */
     #maineditor {
         top: @mobileMenuHeight;
@@ -1413,8 +1461,7 @@ p.ui.font.small {
 
     /* Python/JS dropdown */
     #editordropdown .menu > .item.selected:after {
-        position: absolute;
-        left: 1em;
+        display: none;
     }
     #root #editordropdown .menu .item {
         width: auto;
@@ -1518,7 +1565,7 @@ p.ui.font.small {
         top: @thinMenuHeight;
         padding: 0.5rem 1.5rem;
     }
-    #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #filelist {
+    #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #assetEditor, #filelist {
         bottom: @editorToolsThinHeight;
     }
 
@@ -1662,38 +1709,8 @@ div.simframe.ui.embed {
         display: inherit;
     }
 
-    #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #editortools, #msg {
+    #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #assetEditor, #editortools, #msg {
         bottom: 1.5rem !important;
-    }
-
-    &:not(.headless) .active.item.sim-menuitem ~ .toggle {
-        margin-left: 0 !important;
-        box-shadow: 2px 0px 0px rgba(0,0,0,0.1) !important;
-        background: @editorToggleColor !important;
-    }
-    &:not(.headless) .active.item.blocks-menuitem ~ .toggle {
-        margin-left: 140px !important;
-        box-shadow: 2px 0px 0px rgba(0,0,0,0.1) !important;
-        background: @editorToggleColor !important;
-    }
-    &:not(.headless) .active.item.javascript-menuitem ~ .toggle,
-    &:not(.headless) .active.item.python-menuitem ~ .toggle {
-        margin-left: 280px !important;
-        box-shadow: -2px 0px 0px rgba(0,0,0,0.1) !important;
-        background: @editorToggleColor !important;
-    }
-
-    .one-language {
-        .active.item.javascript-menuitem ~ .toggle,
-        .active.item.python-menuitem ~ .toggle {
-            margin-left: 0px !important;
-        }
-    }
-    &:not(.headless) .one-language {
-        .active.item.javascript-menuitem ~ .toggle,
-        .active.item.python-menuitem ~ .toggle {
-            margin-left: 140px !important;
-        }
     }
 }
 
@@ -1706,6 +1723,130 @@ div.simframe.ui.embed {
 	image-rendering: optimize-contrast;
 	image-rendering: pixelated;
     -ms-interpolation-mode: nearest-neighbor;
+}
+
+/* Sign in dialog */
+.ui.modal.signindialog {
+    .content {
+        padding: 24px 20px;
+    }
+
+    div.description {
+        margin-bottom: 20px;
+    }
+
+    div.warning {
+        background-color: #F5BC5F;
+        padding: 6px;
+        margin-bottom: 20px;
+    }
+
+    div.container {
+        display: grid;
+        row-gap: 10px;
+        grid-template-rows: 36px auto;
+        grid-template-columns: auto;
+        justify-content: center;
+
+        button {
+            margin: 0;
+        }
+
+        div.prompt {
+            justify-self: center;
+        }
+
+        div.providers {
+            display: grid;
+            row-gap: 20px;
+            grid-template-rows: auto;
+            justify-content: center;
+        }
+    }
+}
+
+/* Profile dialog */
+.profiledialog {
+    .ui.card {
+        margin: 0;
+        margin-right: 14px;
+        margin-bottom: 14px;
+        border-radius: @homeCardBorderRadius;
+        color: @homeCardColor;
+        border: @homeCardBorderSize solid @homeCardBorderColor !important;
+        background-color: @homeCardBackgroundColor;
+
+        button {
+            margin: 0;
+        }
+
+        label.title {
+            font-weight: bold;
+        }
+
+        p.value {
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        p.description {
+            text-overflow: ellipsis;
+            overflow: hidden;
+        }
+
+        p.warning {
+            background-color: #F5BC5F;
+            padding: 6px;
+        }
+
+        div.header-text {
+            font-size: 20px;
+            white-space: nowrap;
+            grid-row-start: 1;
+            grid-row-end: 1;
+            grid-column-start: 1;
+            grid-column-end: 2;
+            justify-self: start;
+        }
+
+        div.profile-pic {
+            grid-row-start: 1;
+            grid-row-end: 1;
+            grid-column-start: 2;
+            grid-column-end: 2;
+            justify-self: end;
+        }
+
+        &.panel {
+            width: fit-content;
+            min-width: 350px;
+            max-width: 500px;
+            padding: 14px;
+            display: inline-grid;
+            row-gap: 20px;
+            grid-template-rows: auto;
+            grid-template-columns: auto;
+
+            div.row {
+                grid-row-start: auto;
+                grid-row-end: auto;
+                grid-column-start: 1;
+                grid-column-end: 2;
+                justify-self: start;
+                max-width: 100%;
+            }
+
+            div.row-span-two {
+                grid-row-start: auto;
+                grid-row-end: auto;
+                grid-column-start: 1;
+                grid-column-end: 3;
+                justify-self: start;
+                max-width: 100%;
+            }
+        }
+    }
 }
 
 .sandbox.simView {
@@ -1742,6 +1883,10 @@ img.pixelart {
         justify-content: space-between;
         align-items: center;
         margin-top: 2em;
+
+        a {
+            text-decoration: underline;
+        }
     }
 }
 
@@ -1797,5 +1942,11 @@ select.ui.dropdown {
 .newproject {
     .expandable-menu {
         font-size: 12px !important;
+    }
+}
+
+.ui.modal.auto-save-disabled-warning {
+    .header {
+        background-color: #F5BC5F;
     }
 }

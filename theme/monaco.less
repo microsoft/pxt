@@ -95,6 +95,36 @@
     z-index: @menuBarZIndex+1 !important;
 }
 
+/*
+ * Monaco drops this in the bottom right by default,
+ * but we end up using that position for simulator / toolbar depending on view.
+ */
+.monaco-editor .iPadShowKeyboard {
+    top: 0 !important;
+}
+
+@keyframes bobbing {
+    0% {
+        transform: translateY(0px);
+    }
+
+    25% {
+        transform: translateY(3px);
+    }
+
+    75% {
+        transform: translateY(-3px);
+    }
+
+    100% {
+        transform: translateY(0px);
+    }
+}
+
+.pxt-monaco-glyph-highlight {
+    animation: bobbing 1s linear infinite;
+}
+
 
 /*******************************
      Monaco Flyout

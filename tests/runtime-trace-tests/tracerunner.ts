@@ -5,7 +5,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { exec } from 'child_process';
 
-// tslint:disable:no-import-side-effect mocha-no-side-effect-code
+/* eslint-disable import/no-unassigned-import mocha-no-side-effect-code */
 import "mocha";
 import * as chai from "chai";
 
@@ -19,7 +19,6 @@ import { promisify } from 'util';
 
 // setup
 function initGlobals() {
-    Promise = require("bluebird");
     let g = global as any
     g.pxt = pxt;
     g.ts = ts;
@@ -126,9 +125,9 @@ async function testTsOrPy(tsOrPyFile: string): Promise<void> {
         let fnName = isPy ? "py2ts" : "ts2py"
         let errFile = inFile + `.${fnName}_error`;
         return convert(inFile)
-            .error(r => {
-                writeFileStringSync(errFile, JSON.stringify(r))
-                return `${fnName} failed to convert '${inFile}'. Error saved at:\n${errFile}\nError is:\n${r}\n`
+            .catch(e => {
+                writeFileStringSync(errFile, JSON.stringify(e))
+                return `${fnName} failed to convert '${inFile}'. Error saved at:\n${errFile}\nError is:\n${e}\n`
             })
             .then(async outFile => {
                 let outTrace = await runConverted(outFile)
@@ -160,7 +159,7 @@ async function testTsOrPy(tsOrPyFile: string): Promise<void> {
                         `Baseline:\n${baseline}\nIncorrect trace:\n${outTrace}\n` +
                         `Diff traces with:\ncode --diff ${baselineFile} ${errFile}\n`))
                 }
-                return outTrace
+                return Promise.resolve();
             })
     }
 }

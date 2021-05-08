@@ -119,11 +119,6 @@ namespace _py {
         return str;
     }
 
-    export function py_string_replace(str: string, oldString: string, newString: string, count?: number): string {
-        nullCheck(str);
-        return str;
-    }
-
     export function py_string_rfind(str: string, sub: string, start?: number, end?: number): number {
         nullCheck(str);
         return 0;

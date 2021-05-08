@@ -1,0 +1,283 @@
+
+:root {
+    --black: #000;
+    --white: #fff;
+
+    --primary-color: #AA278F;
+    --secondary-color: #EAC6EB;
+    --tertiary-color: #850A6B;
+
+    --hover-color: var(--secondary-color);
+    --active-color: var(--tertiary-color);
+    --inactive-color: var(--secondary-color);
+
+    --invert-active-color: #fff;
+    --invert-hover-text-color: #850A6B;
+
+    --body-background-color: #F9F9F9;
+    --default-card-color: #CCC;
+    --card-hover-color: #BFBFBF;
+    --dropdown-hover-color: #CCC;
+    --modal-overlay-color: rgba(0, 0, 0, 0.5);
+    --inverted-text-color: var(--white);
+    --subtitle-text-color: #6e6e6e;
+
+    --header-height: 4rem;
+
+    --body-font-family: "Share Tech Mono", Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
+
+    --frame-loader-zindex: 30;
+    --above-frame-zindex: 50;
+    --modal-dimmer-zindex: 100;
+
+    --graph-backround-zindex: 10;
+    --above-graph-zindex: 20;
+}
+
+body {
+    position: relative;
+    margin: 0;
+    font-family: var(--body-font-family);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: var(--body-background-color);
+    overflow: hidden;
+}
+
+code {
+    font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+#root {
+    width: 100%;
+    height: 100%;
+}
+
+#root.editor {
+    height: 100%;
+}
+
+#root > div {
+    width: 100%;
+    height: 100%;
+}
+
+.app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+}
+
+/* HEADER BAR */
+.header {
+    background-color: var(--tertiary-color);
+
+    height: var(--header-height);
+    max-height: var(--header-height);
+    display: flex;
+    align-items: center;
+    font-size: 2rem;
+    color: var(--inverted-text-color);
+    flex-grow: 0;
+    flex-shrink: 0;
+
+    z-index: var(--above-frame-zindex);
+}
+
+.header-left, .header-right {
+    display: flex;
+    align-items: center;
+    margin: 0 1rem;
+    height: 100%;
+}
+
+.header-logo {
+    width: 3rem;
+    height: 3rem;
+}
+
+.header-org-logo {
+    height: 2rem;
+    margin-left: 1rem;
+}
+
+.header-org-logo img {
+    height: 100%;
+}
+
+.header-org-logo .header-org-logo-small {
+    display: none;
+}
+
+.header i.icon {
+    line-height: 2rem;
+    cursor: pointer;
+}
+
+.header-dropdown i {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: var(--header-height);
+    width: 3.5rem;
+    margin: 0;
+}
+
+.header-button {
+    color: var(--invert-active-color);
+    height: 100%;
+    padding: 1rem;
+    font-size: 1.2rem;
+    text-align: center;
+    cursor: pointer;
+    flex: 1;
+    user-select: none;
+    white-space: nowrap;
+}
+
+.header-button.icon-only {
+    font-size: unset;
+    padding: 1rem 0.5rem;
+}
+
+.header-button .header-button-label {
+    line-height: 2rem;
+    white-space: nowrap;
+}
+
+.header-button:hover, .header-dropdown:hover {
+    background-color: var(--hover-color);
+    color: var(--invert-hover-text-color);
+}
+
+.header-activity-display-name {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    flex-shrink: 10;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+/* TOP BANNER */
+.banner {
+    background-color:  var(--secondary-color);
+
+    display: flex;
+    align-items: center;
+    height: 12rem;
+    margin-bottom: 0.5rem;
+}
+
+.banner-card {
+    background-color: var(--primary-color);
+
+    min-width: 24rem;
+    width: 60%;
+    display: flex;
+    color: var(--inverted-text-color);
+}
+
+.banner-card > i {
+    font-size: 5rem;
+    line-height: 5rem;
+    margin: 2rem 1rem;
+    flex-shrink: 0;
+}
+
+.banner-text {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-right: 1rem;
+}
+
+.banner-title {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.banner-info i, .banner-info i:hover {
+    margin-left: 0.5rem;
+    color: var(--inverted-text-color);
+    font-size: 1.2rem;
+    vertical-align: top;
+    text-decoration: none;
+}
+
+/* SKILL CAROUSEL CONTAINERS */
+.skill-map-container {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
+
+.skill-map-error {
+    text-align: center;
+    margin-top: 2rem;
+    color: red;
+}
+
+/* SPECIFIC MODAL STYLES */
+.report-abuse-text {
+    width: 100%;
+    height: 7rem;
+    margin: 0.5rem 0;
+    padding: 0.5rem;
+}
+
+.report-abuse-text::placeholder {
+    font-style: italic;
+}
+
+/* USABILLA */
+.usabilla_live_button_container {
+    top: unset !important;
+    bottom: 5rem !important;
+}
+
+/** mscc cookie banner. Can be removed once the banner is out of the checked in pxtweb in doccdn */
+#msccBanner {
+    display: none;
+}
+
+
+/*******************************/
+/*****     TABLET VIEW     *****/
+/*******************************/
+
+@media only screen and (max-width: 991px) {
+    .skill-map-container {
+        flex-direction: column;
+    }
+
+    .tablet-spacer {
+        flex-grow: 1;
+    }
+
+    .usabilla_live_button_container {
+        top: 10rem !important;
+        bottom: unset !important;
+    }
+}
+
+
+/*******************************/
+/*****     MOBILE VIEW     *****/
+/*******************************/
+
+@media only screen and (max-width: 767px) {
+    .header-button .header-button-label {
+        display: none;
+    }
+
+    .header-org-logo .header-org-logo-large {
+        display: none;
+    }
+
+    .header-org-logo .header-org-logo-small {
+        display: block;
+    }
+}

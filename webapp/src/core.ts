@@ -6,6 +6,7 @@ import * as data from "./data";
 import * as sui from "./sui";
 
 import * as coretsx from "./coretsx";
+import * as auth from "./auth";
 
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
@@ -108,7 +109,7 @@ export function cancelAsyncLoading(id: string) {
 ///////////////////////////////////////////////////////////
 
 function showNotificationMsg(kind: string, msg: string) {
-    coretsx.pushNotificationMessage({ kind: kind, text: msg, hc: highContrast });
+    coretsx.pushNotificationMessage({ kind: kind, text: msg, hc: getHighContrastOnce() });
 }
 
 export function errorNotification(msg: string) {
@@ -155,17 +156,21 @@ export interface DialogOptions {
     logos?: string[];
     className?: string;
     header: string;
+    headerIcon?: string;
     body?: string;
     jsx?: JSX.Element;
     jsxd?: () => JSX.Element; // dynamic-er version of jsx
     copyable?: string;
-    size?: string; // defaults to "small"
+    size?: "" | "small" | "fullscreen" | "large" | "mini" | "tiny"; // defaults to "small"
     onLoaded?: (_: HTMLElement) => void;
     buttons?: sui.ModalButton[];
     timeout?: number;
     modalContext?: string;
     hasCloseIcon?: boolean;
     helpUrl?: string;
+    confirmationText?: string;      // Display a text input the user must type to confirm.
+    confirmationCheckbox?: string;  // Display a checkbox the user must check to confirm.
+    confirmationGranted?: boolean;
 }
 
 export function dialogAsync(options: DialogOptions): Promise<void> {
@@ -244,9 +249,9 @@ export function confirmDelete(what: string, cb: () => Promise<void>, multiDelete
         agreeIcon: "trash",
     }).then(res => {
         if (res) {
-            cb().done()
+            cb()
         }
-    }).done()
+    })
 }
 
 export function promptAsync(options: PromptOptions): Promise<string> {
@@ -276,14 +281,24 @@ export function promptAsync(options: PromptOptions): Promise<string> {
 ////////////         Accessibility            /////////////
 ///////////////////////////////////////////////////////////
 
-export let highContrast: boolean;
 export const TAB_KEY = 9;
 export const ESC_KEY = 27;
 export const ENTER_KEY = 13;
 export const SPACE_KEY = 32;
 
-export function setHighContrast(on: boolean) {
-    highContrast = on;
+export function getHighContrastOnce(): boolean {
+    return data.getData<boolean>(auth.HIGHCONTRAST) || false
+}
+export function toggleHighContrast() {
+    setHighContrast(!getHighContrastOnce())
+}
+export async function setHighContrast(on: boolean) {
+    await auth.updateUserPreferencesAsync({ highContrast: on });
+}
+
+export async function setLanguage(lang: string) {
+    pxt.BrowserUtils.setCookieLang(lang);
+    await auth.updateUserPreferencesAsync({ language: lang });
 }
 
 export function resetFocus() {

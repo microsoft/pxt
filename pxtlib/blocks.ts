@@ -82,15 +82,15 @@ namespace pxt.blocks {
         if (!b) return b;
         // normalize and validate common errors
         // made while translating
-        let nb = b.replace(/[^\\]%\s+/g, '%');
+        let nb = b.replace(/(?:^|[^\\])([%$])\s+/g, '$1');
         if (nb != b) {
             err(`block has extra spaces: ${b}`);
-            return b;
+            b = nb;
         }
 
         // remove spaces around %foo = ==> %foo=
         b = nb;
-        nb = b.replace(/(%\w+)\s*=\s*(\w+)/, '$1=$2');
+        nb = b.replace(/([%$]\w+)\s*=\s*(\w+)/, '$1=$2');
         if (nb != b) {
             err(`block has space between %name and = : ${b}`)
             b = nb;
@@ -709,7 +709,8 @@ namespace pxt.blocks {
                 url: 'types/function/call',
                 category: 'functions',
                 block: {
-                    FUNCTIONS_CALL_TITLE: Util.lf("call")
+                    FUNCTIONS_CALL_TITLE: Util.lf("call"),
+                    FUNCTIONS_GO_TO_DEFINITION_OPTION: Util.lf("Go to Definition")
                 }
             },
             'function_call_output': {
@@ -764,7 +765,7 @@ namespace pxt.blocks {
                 const keys = Object.keys(b.block);
                 b.translationIds = Util.values(b.block);
                 keys.forEach(k => pxt.crowdin.inContextLoadAsync(b.block[k])
-                    .done(r => {
+                    .then(r => {
                         b.block[k] = r;
                         // override builtin blockly namespace strings
                         if (/^[A-Z_]+$/.test(k))

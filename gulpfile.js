@@ -131,7 +131,8 @@ function initWatch() {
         targetjs,
         webapp,
         browserifyWebapp,
-        gulp.parallel(semanticjs, copyJquery, copyWebapp, copyPlayground, copySemanticFonts, copyMonaco)
+        browserifyAssetEditor,
+        gulp.parallel(semanticjs, copyJquery, copyWebapp, copySemanticFonts, copyMonaco)
     ];
 
     gulp.watch("./pxtlib/**/*", gulp.series(...tasks));
@@ -149,7 +150,7 @@ function initWatch() {
     gulp.watch("./pxtwinrt/**/*", gulp.series(pxtwinrt, ...tasks.slice(5)));
     gulp.watch("./cli/**/*", gulp.series(cli, ...tasks.slice(5)));
 
-    gulp.watch("./webapp/src/**/*", gulp.series(updatestrings, webapp, browserifyWebapp));
+    gulp.watch("./webapp/src/**/*", gulp.series(updatestrings, webapp, browserifyWebapp, browserifyAssetEditor));
 
     gulp.watch(["./theme/**/*.less", "./theme/**/*.overrides", "./theme/**/*.variables", "./svgicons/**/*.svg"], gulp.parallel(buildcss, buildSVGIcons))
 
@@ -213,6 +214,15 @@ function pxtcommon() {
 
 // TODO: Copied from Jakefile; should be async
 function updatestrings() {
+    return buildStrings("built/strings.json", ["pxtlib", "pxtblocks", "pxtblocks/fields", "webapp/src"]);
+}
+
+function updateSkillMapStrings() {
+    return buildStrings("built/skillmap-strings.json", ["skillmap/src"], true);
+}
+
+// TODO: Copied from Jakefile; should be async
+function buildStrings(out, rootPaths, recursive) {
     let errCnt = 0;
     const translationStrings = {}
     const translationHelpStrings = {}
@@ -251,7 +261,7 @@ function updatestrings() {
     }
 
     let fileCnt = 0;
-    const paths = ju.expand1(["pxtlib", "pxtblocks", "pxtblocks/fields", "webapp/src"]);
+    const paths = recursive ? ju.expand(rootPaths) : ju.expand1(rootPaths);
     paths.forEach(pth => {
         fileCnt++;
         processLf(pth);
@@ -265,35 +275,39 @@ function updatestrings() {
     fs.writeFileSync("built/localization.json", JSON.stringify({ strings: tr }, null, 1))
     let strings = {};
     tr.forEach((k) => { strings[k] = k; });
-    fs.writeFileSync("built/strings.json", JSON.stringify(strings, null, 2));
+    fs.writeFileSync(out, JSON.stringify(strings, null, 2));
 
-    console.log("Localization extraction: " + fileCnt + " files; " + tr.length + " strings");
+    console.log("Localization extraction: " + fileCnt + " files; " + tr.length + " strings; " + out);
     if (errCnt > 0)
         console.log("%d errors", errCnt);
 
     return Promise.resolve();
 }
 
-// TODO: Copied from Jakefile; should be async
 function runUglify() {
     if (process.env.PXT_ENV == 'production') {
         console.log("Minifying built/web...")
 
-        const uglify = require("uglify-js");
+        const terser = require("terser");
+        const files = ju.expand("built/web", ".js");
 
-        ju.expand("built/web", ".js").forEach(fn => {
-            console.log("Minifying " + fn)
+        return Promise.all(files.map(fn => {
+            console.log(`Minifying ${fn}`)
 
-            const content = fs.readFileSync(fn, "utf-8")
-            const res = uglify.minify(content);
-
-            if (!res.error) {
-                fs.writeFileSync(fn, res.code, { encoding: "utf8" })
-            }
-            else {
-                console.log("Could not minify " + fn);
-            }
-        });
+            return Promise.resolve()
+                .then(() => fs.readFileSync(fn, "utf-8"))
+                .then(content => terser.minify(content))
+                .then(
+                    res => {
+                        fs.writeFileSync(fn, res.code, { encoding: "utf8" })
+                        console.log(`Finished minifying ${fn}`);
+                    },
+                    err => {
+                        console.log(`Could not minify ${fn}: ${err}`);
+                        throw err;
+                    }
+                );
+        }))
     }
     else {
         console.log("Skipping minification for non-production build")
@@ -331,7 +345,6 @@ const copyJquery = () => gulp.src("node_modules/jquery/dist/jquery.min.js")
 
 const copyWebapp = () =>
     gulp.src([
-        "node_modules/bluebird/js/browser/bluebird.min.js",
         "node_modules/applicationinsights-js/dist/ai.0.js",
         "pxtcompiler/ext-typescript/lib/typescript.js",
         "built/pxtlib.js",
@@ -352,22 +365,16 @@ const copyWebapp = () =>
 const copySemanticFonts = () => gulp.src("node_modules/semantic-ui-less/themes/default/assets/fonts/*")
     .pipe(gulp.dest("built/web/fonts"))
 
-const copyPlaygroundHelpers = () => gulp.src("libs/pxt-common/pxt-helpers.ts")
-    .pipe(concat("pxt-helpers.js"))
-    .pipe(gulp.dest("docs/static/playground/pxt-common/"));
-
-const copyPlaygroundCore = () => gulp.src("libs/pxt-common/pxt-core.d.ts")
-    .pipe(concat("pxt-core.d.js"))
-    .pipe(gulp.dest("docs/static/playground/pxt-common/"));
-
-const copyPlayground = gulp.parallel(copyPlaygroundCore, copyPlaygroundHelpers)
-
 const browserifyWebapp = () => process.env.PXT_ENV == 'production' ?
     exec('node node_modules/browserify/bin/cmd ./built/webapp/src/app.js -g [ envify --NODE_ENV production ] -g uglifyify -o ./built/web/main.js') :
     exec('node node_modules/browserify/bin/cmd built/webapp/src/app.js -o built/web/main.js --debug')
 
+const browserifyAssetEditor = () => process.env.PXT_ENV == 'production' ?
+    exec('node node_modules/browserify/bin/cmd ./built/webapp/src/assetEditor.js -g [ envify --NODE_ENV production ] -g uglifyify -o ./built/web/pxtasseteditor.js') :
+    exec('node node_modules/browserify/bin/cmd built/webapp/src/assetEditor.js -o built/web/pxtasseteditor.js --debug')
+
 const buildSVGIcons = () => {
-    let webfontsGenerator = require('webfonts-generator')
+    let webfontsGenerator = require('@vusion/webfonts-generator')
     let name = "xicon"
 
     return new Promise((resolve, reject) => {
@@ -422,7 +429,7 @@ const buildSVGIcons = () => {
 
 const copyMonacoBase = () => gulp.src([
     "node_modules/monaco-editor/min/vs/base/**/*",
-    "!**/codicon.ttf" // We use a different version of this font that's checked into pxt
+    "!**/codicon.ttf" // We use a different version of this font that's checked into pxt (see inlineCodiconFont)
 ])
     .pipe(gulp.dest("webapp/public/vs/base"));
 
@@ -435,17 +442,17 @@ const copyMonacoEditor = () => gulp.src([
 const copyMonacoLoader = () => gulp.src("node_modules/monaco-editor/min/vs/loader.js")
     .pipe(gulp.dest("webapp/public/vs"));
 
-const languages = ["bat", "cpp", "json", "markdown", "python"]
+const basicLanguages = ["bat", "cpp", "markdown", "python", "typescript", "javascript"];
+const allLanguages = ["json", ...basicLanguages]
 const copyMonacoEditorMain = () => gulp.src("node_modules/monaco-editor/min/vs/editor/editor.main.js")
     .pipe(replace(/"\.\/([\w-]+)\/\1\.contribution"(?:,)?\s*/gi, (match, lang) => {
-        if (languages.indexOf(lang) === -1) {
+        if (allLanguages.indexOf(lang) === -1) {
             return ""
         }
         return match;
     }))
     .pipe(gulp.dest("built/web/vs/editor/"));
 
-const basicLanguages = ["bat", "cpp", "markdown", "python"];
 const copyMonacoBasicLanguages = gulp.parallel(basicLanguages.map(lang => {
     return () => gulp.src(`node_modules/monaco-editor/min/vs/basic-languages/${lang}/${lang}.js`)
         .pipe(gulp.dest(`webapp/public/vs/basic-languages/${lang}`))
@@ -454,14 +461,17 @@ const copyMonacoBasicLanguages = gulp.parallel(basicLanguages.map(lang => {
 const copyMonacoJSON = () => gulp.src("node_modules/monaco-editor/min/vs/language/json/**/*")
     .pipe(gulp.dest("webapp/public/vs/language/json"));
 
+const copyMonacoTypescript = () => gulp.src("node_modules/monaco-editor/min/vs/language/typescript/**/*")
+    .pipe(gulp.dest("webapp/public/vs/language/typescript"));
 
 const inlineCodiconFont = () => {
     // For whatever reason the codicon.ttf font that comes with the monaco-editor is invalid.
     // We need to inline the font anyways so fetch a good version of the font from the source
+    // This good version comes from: https://github.com/microsoft/vscode-codicons/blob/main/dist/codicon.ttf
     let font = fs.readFileSync("theme/external-font/codicon.ttf").toString("base64");
 
     return gulp.src("node_modules/monaco-editor/min/vs/editor/editor.main.css")
-        .pipe(replace(`../base/browser/ui/codiconLabel/codicon/codicon.ttf`, `data:application/x-font-ttf;charset=utf-8;base64,${font}`))
+        .pipe(replace(`../base/browser/ui/codicons/codicon/codicon.ttf`, `data:application/x-font-ttf;charset=utf-8;base64,${font}`))
         .pipe(gulp.dest("webapp/public/vs/editor/"))
 }
 
@@ -477,6 +487,7 @@ const copyMonaco = gulp.series(gulp.parallel(
     copyMonacoEditorMain,
     copyMonacoJSON,
     copyMonacoBasicLanguages,
+    copyMonacoTypescript,
     inlineCodiconFont
 ), stripMonacoSourceMaps);
 
@@ -507,17 +518,59 @@ const copyBlocklyTypings = () => gulp.src("node_modules/pxt-blockly/typings/bloc
 const copyBlockly = gulp.parallel(copyBlocklyCompressed, copyBlocklyEnJs, copyBlocklyEnJson, copyBlocklyMedia, copyBlocklyTypings);
 
 
+/********************************************************
+                      Skillmap
+*********************************************************/
+
+const skillmapRoot = "skillmap";
+const skillmapOut = "built/web/skillmap";
+
+const cleanSkillmap = () => rimraf(skillmapOut);
+
+const copyWebpackBase = () => gulp.src([`${skillmapRoot}/node_modules/react-scripts/config/webpack.config.js`])
+    .pipe(concat("webpack.config.base.js"))
+    .pipe(gulp.dest(`${skillmapRoot}/node_modules/react-scripts/config`))
+
+const copyWebpackOverride = () => gulp.src([`${skillmapRoot}/webpack.config.override.js`])
+    .pipe(concat("webpack.config.js"))
+    .pipe(gulp.dest(`${skillmapRoot}/node_modules/react-scripts/config`));
+
+const replaceWebpackBase = () => gulp.src([`${skillmapRoot}/node_modules/react-scripts/config/webpack.config.base.js`])
+    .pipe(concat("webpack.config.js"))
+    .pipe(gulp.dest(`${skillmapRoot}/node_modules/react-scripts/config`));
+
+const buildSkillmap =  () => exec(!fs.existsSync(`${skillmapRoot}/node_modules`) ? "npm ci --prefer-offline" : "echo \"Skip install\"", false, { cwd: skillmapRoot })
+    .then(gulp.series([copyWebpackBase, copyWebpackOverride]))
+    .then(() => exec("npm run build", false, { cwd: skillmapRoot }))
+    .then(replaceWebpackBase)
+    .catch(replaceWebpackBase);
+
+const copySkillmapCss = () => gulp.src(`${skillmapRoot}/build/static/css/*`)
+    .pipe(gulp.dest(`${skillmapOut}/css`));
+
+const copySkillmapJs = () => gulp.src(`${skillmapRoot}/build/static/js/*`)
+    .pipe(gulp.dest(`${skillmapOut}/js`));
+
+const copySkillmapHtml = () => rimraf("webapp/public/skillmap.html")
+    .then(() => gulp.src(`${skillmapRoot}/build/index.html`)
+                    .pipe(replace(/="\/static\//g, `="/blb/skillmap/`))
+                    .pipe(concat("skillmap.html"))
+                    .pipe(gulp.dest("webapp/public")));
+
+const skillmap = gulp.series(cleanSkillmap, buildSkillmap, gulp.parallel(copySkillmapCss, copySkillmapJs, copySkillmapHtml));
+
 
 /********************************************************
                  Tests and Linting
 *********************************************************/
 
-const lint = () => Promise.all(
+const lintWithEslint = () => Promise.all(
     ["cli", "pxtblocks", "pxteditor", "pxtlib", "pxtcompiler",
         "pxtpy", "pxtrunner", "pxtsim", "pxtwinrt", "webapp",
-        "docfiles/pxtweb"].map(dirname =>
-            exec(`node node_modules/tslint/bin/tslint --project ./${dirname}/tsconfig.json`, true)))
+        "docfiles/pxtweb", "skillmap", "docs/static/streamer"].map(dirname =>
+            exec(`node node_modules/eslint/bin/eslint.js -c .eslintrc.js --ext .ts,.tsx ./${dirname}/`, true)))
     .then(() => console.log("linted"))
+const lint = lintWithEslint
 
 const testdecompiler = testTask("decompile-test", "decompilerunner.js");
 const testlang = testTask("compile-test", "compilerunner.js");
@@ -591,6 +644,7 @@ function testTask(testFolder, testFile) {
 
 const buildAll = gulp.series(
     updatestrings,
+    updateSkillMapStrings,
     copyTypescriptServices,
     copyBlocklyTypings,
     gulp.parallel(pxtlib, pxtweb),
@@ -601,9 +655,11 @@ const buildAll = gulp.series(
     gulp.parallel(pxtjs, pxtdts, pxtapp, pxtworker, pxtembed),
     targetjs,
     gulp.parallel(buildcss, buildSVGIcons),
+    skillmap,
     webapp,
     browserifyWebapp,
-    gulp.parallel(semanticjs, copyJquery, copyWebapp, copyPlayground, copySemanticFonts, copyMonaco),
+    browserifyAssetEditor,
+    gulp.parallel(semanticjs, copyJquery, copyWebapp, copySemanticFonts, copyMonaco),
     buildBlocksTestRunner,
     runUglify
 );
@@ -634,6 +690,7 @@ exports.watch = initWatch;
 exports.watchCli = initWatchCli;
 exports.testlanguageservice = testlanguageservice;
 exports.onlinelearning = onlinelearning;
+exports.skillmap = skillmap;
 
 console.log(`pxt build how to:`)
 console.log(`run "gulp watch" in pxt folder`)

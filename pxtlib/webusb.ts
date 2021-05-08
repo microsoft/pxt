@@ -251,7 +251,7 @@ namespace pxt.usb {
                 })
                 .then(() => {
                     this.clearDev()
-                    return Promise.delay(500)
+                    return U.delay(500)
                 })
         }
 
@@ -302,7 +302,7 @@ namespace pxt.usb {
                     } else {
                         // give another frame a chance to grab the device
                         this.log(`delay for last known device`)
-                        await Promise.delay(2000);
+                        await U.delay(2000);
                     }
                 }
 
@@ -345,23 +345,12 @@ namespace pxt.usb {
                 }, pkt).then(res => {
                     if (res.status != "ok")
                         this.error("USB CTRL OUT transfer failed")
-                    else if (!isHF2)
-                        this.recvOne()
                 })
             }
             return this.dev.transferOut(this.epOut.endpointNumber, pkt)
                 .then(res => {
                     if (res.status != "ok")
                         this.error("USB OUT transfer failed")
-                })
-        }
-
-        private recvOne() {
-            this.recvPacketAsync()
-                .then(buf => {
-                    this.onData(buf)
-                }, err => {
-                    this.onError(err)
                 })
         }
 
@@ -372,7 +361,7 @@ namespace pxt.usb {
             this.log("start read loop")
             let loop = (): void => {
                 if (!this.ready)
-                    Promise.delay(300).then(loop)
+                    U.delay(300).then(loop)
                 else
                     this.recvPacketAsync()
                         .then(buf => {
@@ -382,18 +371,18 @@ namespace pxt.usb {
                                 loop()
                             } else {
                                 // throttle down if no data coming
-                                Promise.delay(500).then(loop)
+                                U.delay(500).then(loop)
                             }
                         }, err => {
                             if (this.dev)
                                 this.onError(err)
-                            Promise.delay(300).then(loop)
+                            U.delay(300).then(loop)
                         })
             }
             loop()
         }
 
-        private recvPacketAsync(): Promise<Uint8Array> {
+        recvPacketAsync(): Promise<Uint8Array> {
             let final = (res: USBInTransferResult) => {
                 if (res.status != "ok")
                     this.error("USB IN transfer failed")
@@ -450,16 +439,21 @@ namespace pxt.usb {
                         return false
                     }
                     this.log("got " + dev.configurations[0].interfaces.length + " interfaces")
-                    let iface = dev.configurations[0].interfaces.filter(matchesFilters)[0]
+                    const matching = dev.configurations[0].interfaces.filter(matchesFilters)
+                    let iface = matching[matching.length - 1]
+                    this.log(`${matching.length} matching interfaces; picking ${iface ? "#" + iface.interfaceNumber : "n/a"}`)
                     if (!iface)
                         this.error("cannot find supported USB interface")
                     this.altIface = iface.alternates[0]
                     this.iface = iface
                     if (this.altIface.endpoints.length) {
+                        this.log("using dedicated endpoints")
                         this.epIn = this.altIface.endpoints.filter(e => e.direction == "in")[0]
                         this.epOut = this.altIface.endpoints.filter(e => e.direction == "out")[0]
                         Util.assert(this.epIn.packetSize == 64);
                         Util.assert(this.epOut.packetSize == 64);
+                    } else {
+                        this.log("using ctrl pipe")
                     }
                     this.log("claim interface")
                     return dev.claimInterface(iface.interfaceNumber)
@@ -468,7 +462,7 @@ namespace pxt.usb {
                     this.log("device ready")
                     this.lastKnownDeviceSerialNumber = this.dev.serialNumber;
                     this.ready = true;
-                    if (this.epIn || isHF2)
+                    if (isHF2)
                         this.readLoop();
                     if (this.onConnectionChanged)
                         this.onConnectionChanged();
@@ -489,13 +483,16 @@ namespace pxt.usb {
             })
     }
 
-    function tryGetDevicesAsync(): Promise<USBDevice[]> {
+    async function tryGetDevicesAsync(): Promise<USBDevice[]> {
         log(`webusb: get devices`)
-        return ((navigator as any).usb.getDevices() as Promise<USBDevice[]>)
-            .then<USBDevice[]>((devs: USBDevice[]) => {
-                devs = devs || [];
-                return devs;
-            });
+        try {
+            const devs = await ((navigator as any).usb.getDevices() as Promise<USBDevice[]>);
+            return devs || []
+        }
+        catch (e) {
+            reportException(e)
+            return [];
+        }
     }
 
     let _hid: WebUSBHID;
@@ -514,20 +511,65 @@ namespace pxt.usb {
         isEnabled = v
     }
 
-    export function isAvailable() {
-        if (pxt.BrowserUtils.isElectron() || pxt.BrowserUtils.isWinRT())
-            return false;
+    let _available: boolean = undefined;
+    export async function checkAvailableAsync() {
+        if (_available !== undefined) return;
 
-        if (!!(navigator as any).usb) {
-            // Windows versions:
-            // 5.1 - XP, 6.0 - Vista, 6.1 - Win7, 6.2 - Win8, 6.3 - Win8.1, 10.0 - Win10
-            // If on Windows, and Windows is older 8.1, don't enable WebUSB,
-            // as it requires signed INF files.
-            let m = /Windows NT (\d+\.\d+)/.exec(navigator.userAgent)
-            if (m && parseFloat(m[1]) < 6.3)
-                return false
-            return true
+        pxt.debug(`webusb: checking availability`)
+        // not supported by editor, cut short
+        if (!pxt.appTarget?.compile?.webUSB) {
+            _available = false;
+            return;
         }
-        return false
+
+        if (pxt.BrowserUtils.isElectron() || pxt.BrowserUtils.isWinRT()) {
+            pxt.debug(`webusb: off, electron or winrt`)
+            pxt.tickEvent('webusb.off', { 'reason': 'electronwinrt' })
+            _available = false;
+            return;
+        }
+
+        const _usb = (navigator as any).usb;
+        if (!_usb) {
+            pxt.debug(`webusb: off, not impl`)
+            pxt.tickEvent('webusb.off', { 'reason': 'notimpl' })
+            _available = false
+            return
+        }
+
+        // Windows versions:
+        // 5.1 - XP, 6.0 - Vista, 6.1 - Win7, 6.2 - Win8, 6.3 - Win8.1, 10.0 - Win10
+        // If on Windows, and Windows is older 8.1, don't enable WebUSB,
+        // as it requires signed INF files.
+        let m = /Windows NT (\d+\.\d+)/.exec(navigator.userAgent)
+        if (m && parseFloat(m[1]) < 6.3) {
+            pxt.debug(`webusb: off, older windows version`)
+            pxt.tickEvent('webusb.off', { 'reason': 'oldwindows' })
+            _available = false;
+            return;
+        }
+
+        // check security
+        try {
+            // iframes must specify allow="usb" in order to support WebUSB
+            await _usb.getDevices()
+        } catch (e) {
+            pxt.debug(`webusb: off, security exception`)
+            pxt.tickEvent('webusb.off', { 'reason': 'security' })
+            _available = false;
+            return;
+        }
+
+        // yay!
+        _available = true;
+        return
+    }
+
+    export function isAvailable() {
+        if (_available === undefined) {
+            console.error(`checkAvailableAsync not called`)
+            checkAvailableAsync()
+        }
+        return !!_available;
     }
 }

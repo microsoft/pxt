@@ -1,11 +1,11 @@
-
 const STORAGE_KEY = "SAVED_TUTORIAL";
 const ENDPOINT_KEY = "SAVED_ENDPOINT";
 const existing = localStorage.getItem(STORAGE_KEY)
 
+// @ts-ignore
 const editor = monaco.editor.create(document.getElementById("container"), {
     value: existing ||
-`# My Tutorial
+        `# My Tutorial
 
 ## Step 1
 
@@ -18,9 +18,18 @@ Congratulations, you did it!
     language: "markdown"
 });
 
+interface ShareResponse {
+    statusCode: number;
+    headers: any;
+    buffer: any;
+    text: string;
+    json?: any;
+}
+
 interface TargetInfo {
     name: string;
     id: string;
+    shareUrl: string;
     endpoints: TargetEndpoint[];
 }
 
@@ -31,12 +40,23 @@ interface TargetEndpoint {
 
 const targets: TargetInfo[] = [
     {
+        name: "micro:bit",
+        id: "microbit",
+        shareUrl: "https://makecode.microbit.org/",
+        endpoints: [
+            {
+                name: "",
+                url: "https://makecode.microbit.org/?controller=1"
+            }
+        ]
+    }, {
         name: "Minecraft",
         id: "minecraft",
+        shareUrl: "https://minecraft.makecode.com/",
         endpoints: [
             {
                 name: "nether",
-                url: "https://minecraft.makecode.com/beta?ipc=1&inGame=1&nether=1&controller=1",
+                url: "https://minecraft.makecode.com/beta?ipc=1&inGame=1&nether=1&controller=1"
             },
             {
                 name: "beta",
@@ -46,47 +66,54 @@ const targets: TargetInfo[] = [
                 name: "released",
                 url: "https://minecraft.makecode.com?ipc=1&inGame=1&controller=1"
             }
-        ],
+        ]
     }, {
         name: "Arcade",
         id: "arcade",
+        shareUrl: "https://arcade.makecode.com/",
         endpoints: [
+            {
+                name: "",
+                url: "https://arcade.makecode.com/?controller=1"
+            },
             {
                 name: "beta",
                 url: "https://arcade.makecode.com/beta?controller=1"
-            },
-            {
-                name: "released",
-                url: "https://arcade.makecode.com?controller=1"
             }
-        ],
+        ]
     }, {
-        name: "Adafruit",
+        name: "Adafruit Circuit Playground Express",
         id: "adafruit",
+        shareUrl: "https://makecode.adafruit.com/",
         endpoints: [
             {
                 name: "beta",
                 url: "https://makecode.adafruit.com/beta?controller=1"
-            },
-            {
-                name: "released",
-                url: "https://makecode.adafruit.com?controller=1"
             }
-        ],
+        ]
     }, {
-        name: "Micro:bit",
-        id: "microbit",
+        name: "Calliope MINI",
+        id: "calliopemini",
+        shareUrl: "https://makecode.calliope.cc/",
         endpoints: [
             {
-                name: "beta",
-                url: "https://makecode.microbit.org/beta?controller=1"
-            },
-            {
-                name: "released",
-                url: "https://makecode.microbit.org?controller=1"
+                name: "",
+                url: "https://makecode.calliope.cc/?controller=1"
             }
-        ],
+        ]
     }, {
+        name: "Maker",
+        id: "maker",
+        shareUrl: "https://maker.makecode.com/",
+        endpoints: [
+            {
+                name: "",
+                url: "https://maker.makecode.com/?controller=1"
+            }
+        ]
+    }
+    /* not supported
+    , {
         name: "LEGO EV3",
         id: "ev3",
         endpoints: [
@@ -98,12 +125,81 @@ const targets: TargetInfo[] = [
                 name: "released",
                 url: "https://makecode.mindstorms.com?controller=1"
             }
-        ],
-    }
+        ]
+    } */
 ];
+
+function shareScript(md, done) {
+    function request(url, data) {
+        let client = new XMLHttpRequest();
+        let resolved = false;
+        client.onreadystatechange = () => {
+            if (resolved) return // Safari/iOS likes to call this thing more than once
+            if (client.readyState == 4) {
+                resolved = true;
+                let resp: ShareResponse = {
+                    statusCode: client.status,
+                    headers: {},
+                    buffer: (client as any).responseBody || client.response,
+                    text: client.responseText
+                }
+                const allHeaders = client.getAllResponseHeaders();
+                allHeaders.split(/\r?\n/).forEach(l => {
+                    let m = /^\s*([^:]+): (.*)/.exec(l)
+                    if (m) resp.headers[m[1].toLowerCase()] = m[2]
+                })
+
+                // resolve
+                if ((resp.statusCode != 200 && resp.statusCode != 304)) {
+                    let msg = `Bad HTTP status code: ${resp.statusCode} at ${url}; message: ${(resp.text || "").slice(0, 500)}`;
+                    let err = new Error(msg)
+                    done(undefined, err);
+                } else {
+                    if (resp.text && /application\/json/.test(resp.headers["content-type"]))
+                        resp.json = JSON.parse(resp.text)
+                    // show dialog
+                    done(resp);
+                }
+            }
+        }
+        let buf = JSON.stringify(data)
+        client.open("POST", url);
+        client.setRequestHeader("content-type", "application/json; charset=utf8")
+        client.send(buf);
+    }
+
+    const title = /^#\s([\s\w]*)$/m.exec(md);
+    const name = title ? title[1] : "Tutorial";
+    request("https://makecode.com/api/scripts", {
+        name: name,
+        target: selectedTarget.id,
+        description: "Made with ❤️ in Microsoft MakeCode Arcade.",
+        editor: "blocksprj",
+        text: {
+            "README.md": md,
+            "main.blocks": "",
+            "main.ts": "",
+            "pxt.json": JSON.stringify({
+                name: name,
+                dependencies: {
+                    "core": "*"
+                },
+                description: "",
+                files: [
+                    "main.blocks",
+                    "main.ts",
+                    "README.md"
+                ]
+            })
+        },
+        meta: {}
+    });
+}
+
 
 let selectedEndpoint: string;
 let selectedId: string;
+let selectedTarget: TargetInfo;
 
 editor.onDidChangeModelContent(debounce(() => {
     localStorage.setItem(STORAGE_KEY, editor.getValue());
@@ -121,9 +217,27 @@ document.getElementById("run-button").addEventListener("click", () => {
     sendMessage("importtutorial", md);
 })
 
+document.getElementById("share-button").addEventListener("click", function () {
+    var btn = document.getElementById("share-button");
+    var out = document.getElementById("share-output") as HTMLInputElement;
+    btn.className += " loading";
+    var md = editor.getValue();
+    shareScript(md, function (resp, err) {
+        btn.className = btn.className.replace("loading", "");
+        if (resp && resp.json) {
+            out.value = selectedTarget.shareUrl + "#tutorial:" + resp.json.id;
+            out.focus();
+            out.select();
+        } else if (err)
+            out.value = err.message;
+        else
+            out.value = "Oops, something went wrong.";
+    });
+});
+
 window.addEventListener("message", receiveMessage, false);
 
-const pendingMsgs: {[index: string]: any} = {};
+const pendingMsgs: { [index: string]: any } = {};
 
 function sendMessage(action: string, md?: string) {
     console.log('send ' + action)
@@ -133,7 +247,7 @@ function sendMessage(action: string, md?: string) {
         id: Math.random().toString(),
         action: action
     };
-    if(action == 'importtutorial') {
+    if (action == 'importtutorial') {
         msg.markdown = md;
         msg.response = true;
     } else if (action == 'renderblocks') {
@@ -155,7 +269,7 @@ function receiveMessage(ev: any) {
     console.log('received...')
     console.log(msg)
 
-    if(msg.resp)
+    if (msg.resp)
         console.log(JSON.stringify(msg.resp, null, 2))
 
     if (msg.type == "pxthost") {
@@ -221,6 +335,7 @@ function loadIframe(selected: string) {
                 iframe.setAttribute("src", endpoint.url);
                 selectedEndpoint = `${target.name}-${endpoint.name}`;
                 selectedId = target.id;
+                selectedTarget = target;
                 return;
             }
         }

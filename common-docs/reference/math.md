@@ -69,6 +69,28 @@ let side = 5;
 let volume1 = side * side * side;
 let volume2 = side ** 3;
 ```
+
+## Integer multiply and divide
+
+Integer multiply and divide treats the two numbers it operates on as integers. If there is a fractional part for a number, it is truncated before it is used with the other number. The resulting value is always an integer too.
+
+### imul
+
+Interger multiplication of two numbers `3.9` and `4.2` results in a value of `12` since just the values of `3` and `4` are used from the numbers multiplied.
+
+```block
+let myInt = Math.imul(3.9, 4.2)
+let myNumber = 3.9 * 4.2
+```
+### idiv
+
+Interger division of two numbers `7.8` and `2.6` results in a value of `3` since just the values of `7` and `2` are used from the numbers multiplied.
+
+```block
+let myInt = Math.idiv(7.8, 2.6)
+let myNumber = 7.8 / 2.6
+```
+
 ## Square root
 
 The square root of a number is another number that when multiplied by itself it becomes the original number. You know that `2 * 2` equals `4` so the square root of `4` is `2`. It's called a _square root_ because the area of a _square_ is the length of two equal sides multiplied together. The _root_ is the length of a side.

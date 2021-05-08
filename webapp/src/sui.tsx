@@ -5,6 +5,7 @@ import * as ReactTooltip from 'react-tooltip';
 
 import * as data from "./data";
 import * as core from "./core";
+import * as auth from "./auth";
 
 export const appElement = document.getElementById('content');
 
@@ -37,7 +38,7 @@ function genericClassName(cls: string, props: UiProps, ignoreIcon: boolean = fal
     return `${cls} ${ignoreIcon ? '' : props.icon && props.text ? 'icon icon-and-text' : props.icon ? 'icon' : ""} ${props.inverted ? 'inverted' : ''} ${props.className || ""}`;
 }
 
-function genericContent(props: UiProps) {
+export function genericContent(props: UiProps) {
     let retVal = [
         props.icon ? (<Icon key='iconkey' icon={props.icon + (props.text ? " icon-and-text " : "") + (props.iconClass ? " " + props.iconClass : '')} />) : null,
         props.text ? (<span key='textkey' className={'ui text' + (props.textClass ? ' ' + props.textClass : '')}>{props.text}</span>) : null,
@@ -71,9 +72,9 @@ export interface DropdownProps extends UiProps {
     title?: string;
     id?: string;
     onChange?: (v: string) => void;
+    onClick?: () => boolean;    // Return 'true' to toggle open/close
 
-    avatarImage?: string;
-    avatarInitials?: string;
+    titleContent?: React.ReactNode;
     displayAbove?: boolean;
     displayRight?: boolean;
     dataTooltip?: string;
@@ -259,7 +260,8 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
     }
 
     private handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-        this.toggle();
+        if (!this.props.onClick || this.props.onClick())
+            this.toggle();
         e.stopPropagation()
     }
 
@@ -311,7 +313,7 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
     }
 
     renderCore() {
-        const { disabled, title, role, icon, className, avatarImage, avatarInitials, children, displayAbove, displayRight, dataTooltip } = this.props;
+        const { disabled, title, role, icon, className, titleContent, children, displayAbove, displayRight, dataTooltip } = this.props;
         const { open } = this.state;
 
         const aria = {
@@ -339,12 +341,6 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
             open ? 'visible transition' : ''
         ])
 
-        const avatar = avatarImage || avatarInitials ?
-            <div className="avatar">
-                {avatarImage ? <img className="ui circular image" src={avatarImage} alt={title} /> :
-                    <div className="initials">{avatarInitials}</div>}
-            </div>
-            : undefined;
         return (
             <div role="listbox" ref="dropdown" title={title} {...aria}
                 id={this.props.id}
@@ -357,7 +353,7 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
                 onBlur={this.handleBlur}
                 tabIndex={0}
             >
-                {avatar ? avatar : genericContent(this.props)}
+                {titleContent ? titleContent : genericContent(this.props)}
                 <div ref="menu" {...menuAria} className={menuClasses}
                     role="menu">
                     {children}
@@ -411,7 +407,8 @@ export class ExpandableMenu extends UIElement<ExpandableMenuProps, ExpandableMen
                 icon={`no-select chevron ${expanded ? "down" : "right"}`}
                 text={title}
                 ariaExpanded={expanded}
-                onClick={this.toggleExpanded} />
+                onClick={this.toggleExpanded}
+                role="button" />
             {expanded && <div className="expanded-items">
                 {children}
             </div> }
@@ -422,6 +419,7 @@ export class ExpandableMenu extends UIElement<ExpandableMenuProps, ExpandableMen
 export interface SelectProps {
     options: SelectItem[];
     onChange?: (value: string) => void;
+    "aria-label"?: string;
     label?: string;
 }
 
@@ -455,12 +453,12 @@ export class Select extends UIElement<SelectProps, SelectState> {
     }
 
     render() {
-        const { options, label } = this.props;
+        const { options, label, "aria-label": ariaLabel } = this.props;
         const { selected } = this.state;
 
         return (<div>
             { label && `${label} ` }
-            <select value={selected} className="ui dropdown" onChange={this.handleOnChange}>
+            <select value={selected} className="ui dropdown" onChange={this.handleOnChange} aria-label={ariaLabel} >
                 {options.map(opt =>
                     opt && <option
                         aria-selected={selected === opt.value}
@@ -496,6 +494,7 @@ export class Item extends data.Component<ItemProps, {}> {
             <div className={genericClassName("ui item link", this.props, true) + ` ${this.props.active ? 'active' : ''}`}
                 role={this.props.role}
                 aria-label={ariaLabel || title || text}
+                aria-selected={this.props.active}
                 title={title || text}
                 tabIndex={this.props.tabIndex || 0}
                 key={this.props.value}
@@ -633,7 +632,7 @@ export class Link extends StatelessUIElement<LinkProps> {
 }
 
 export function helpIconLink(url: string, title: string) {
-    return <Link className="help-link" href={url} icon="help circle" target="_blank" role="button" title={title} />
+    return <Link className="help-link" href={url} icon="help circle" target="_blank" role="link" title={title} />
 }
 
 ///////////////////////////////////////////////////////////
@@ -709,7 +708,7 @@ export class Input extends data.Component<InputProps, InputState> {
         }
     }
 
-    componentWillReceiveProps(newProps: InputProps) {
+    UNSAFE_componentWillReceiveProps(newProps: InputProps) {
         this.setState({ value: newProps.value });
     }
 
@@ -918,6 +917,7 @@ export interface MenuItemProps {
     ariaControls?: string;
     id?: string;
     tabIndex?: number;
+    dataTooltip?: string;
 }
 
 export class MenuItem extends data.Component<MenuItemProps, {}> {
@@ -946,7 +946,8 @@ export class MenuItem extends data.Component<MenuItemProps, {}> {
             position,
             ariaControls,
             id,
-            tabIndex
+            tabIndex,
+            dataTooltip
         } = this.props;
 
         const classes = cx([
@@ -968,6 +969,7 @@ export class MenuItem extends data.Component<MenuItemProps, {}> {
         return (
             <div
                 id={id}
+                key={id}
                 tabIndex={tabIndex != null ? tabIndex : -1}
                 className={classes}
                 onClick={this.handleClick}
@@ -976,6 +978,7 @@ export class MenuItem extends data.Component<MenuItemProps, {}> {
                 aria-controls={ariaControls}
                 aria-selected={active}
                 aria-label={`${content || name}`}
+                data-tooltip={dataTooltip}
             >
                 {icon ? <Icon icon={icon} /> : undefined}
                 {content || name}
@@ -1117,6 +1120,7 @@ export interface ModalButton {
     disabled?: boolean;
     approveButton?: boolean;
     labelPosition?: "left" | "right";
+    ariaLabel?: string;
 }
 
 export interface ModalProps extends ReactModal.Props {
@@ -1135,6 +1139,7 @@ export interface ModalProps extends ReactModal.Props {
     longer?: boolean;
 
     header?: string;
+    headerIcon?: string;
     headerClass?: string;
     description?: string;
 
@@ -1156,7 +1161,7 @@ interface ModalState {
     mountClasses?: string;
 }
 
-export class Modal extends React.Component<ModalProps, ModalState> {
+export class Modal extends data.Component<ModalProps, ModalState> {
 
     private id: string;
     private animationRequestId: any;
@@ -1241,10 +1246,10 @@ export class Modal extends React.Component<ModalProps, ModalState> {
         onClose();
     }
 
-    render() {
+    renderCore() {
         const { isOpen, size, longer, basic, className,
             onClose, closeIcon, children, onKeyDown,
-            header, headerClass, headerActions, helpUrl, description,
+            header, headerIcon, headerClass, headerActions, helpUrl, description,
             closeOnDimmerClick, closeOnDocumentClick, closeOnEscape,
             shouldCloseOnEsc, shouldCloseOnOverlayClick, shouldFocusAfterRender, overlayClassName, ...rest } = this.props;
         const { marginTop, scrolling, mountClasses } = this.state;
@@ -1261,8 +1266,9 @@ export class Modal extends React.Component<ModalProps, ModalState> {
             'modal transition visible active',
             className
         ]);
+        const hc = this.getData<boolean>(auth.HIGHCONTRAST);
         const portalClassName = cx([
-            core.highContrast ? 'hc' : '',
+            hc ? 'hc' : '',
             mountClasses
         ])
         const aria = {
@@ -1287,7 +1293,8 @@ export class Modal extends React.Component<ModalProps, ModalState> {
             role="dialog"
             aria={aria} {...rest}>
             {header || showBack || helpUrl ? <div id={this.id + 'title'} className={"header " + (headerClass || "")}>
-                <span className="header-title" style={{ margin: `0 ${helpUrl ? '-20rem' : '0'} 0 ${showBack ? '-20rem' : '0'}` }}>{header}</span>
+                {headerIcon && <Icon icon={headerIcon} />}
+                <h3 className="header-title" style={{ margin: `0 ${helpUrl ? '-20rem' : '0'} 0 ${showBack ? '-20rem' : '0'}` }}>{header}</h3>
                 {showBack ? <div className="header-close">
                     <Button className="back-button large" title={lf("Go back")} onClick={onClose} tabIndex={0} onKeyDown={fireClickOnEnter}>
                         <Icon icon="arrow left" />
@@ -1296,7 +1303,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
                 </div> : undefined}
                 {helpUrl ?
                     <div className="header-help">
-                        <a className={`ui icon help-button`} href={helpUrl} target="_docs" role="button" aria-label={lf("Help on {0} dialog", header)}>
+                        <a className={`ui icon help-button`} href={helpUrl} target="_docs" role="link" aria-label={lf("Help on {0} dialog", header)} title={lf("Help on {0} dialog", header)}>
                             <Icon icon="help" />
                         </a>
                     </div>
@@ -1353,7 +1360,9 @@ class ModalButtonElement extends data.PureComponent<ModalButton, {}> {
             labelPosition={action.labelPosition}
             className={`approve ${action.icon ? `icon ${action.labelPosition ? action.labelPosition : 'right'} labeled` : ''} ${action.className || ''} ${action.loading ? "loading disabled" : ""} ${action.disabled ? "disabled" : ""}`}
             onClick={this.handleClick}
-            onKeyDown={fireClickOnEnter} />
+            onKeyDown={fireClickOnEnter}
+            ariaLabel={this.props.ariaLabel ? this.props.ariaLabel : this.props.label}
+            title={this.props.title}/>
     }
 }
 
@@ -1520,6 +1529,7 @@ export class ProgressCircle extends React.Component<ProgressCircleProps, {}> {
 
 export interface PlainCheckboxProps {
     label: string;
+    isChecked?: boolean;
     onChange: (v: boolean) => void;
 }
 
@@ -1531,7 +1541,7 @@ export class PlainCheckbox extends data.Component<PlainCheckboxProps, PlainCheck
     constructor(props: PlainCheckboxProps) {
         super(props);
         this.state = {
-            isChecked: false
+            isChecked: this.props.isChecked
         }
         this.setCheckedBit = this.setCheckedBit.bind(this);
     }

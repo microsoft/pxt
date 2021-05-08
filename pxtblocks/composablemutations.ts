@@ -36,7 +36,6 @@ namespace pxt.blocks {
         let actuallyVisible = 0;
 
         let i = b.appendDummyInput();
-
         let updateShape = () => {
             if (currentlyVisible === actuallyVisible) {
                 return;
@@ -46,7 +45,9 @@ namespace pxt.blocks {
                 const diff = currentlyVisible - actuallyVisible;
                 for (let j = 0; j < diff; j++) {
                     const arg = handlerArgs[actuallyVisible + j];
-                    i.insertFieldAt(i.fieldRow.length - 1, new Blockly.FieldVariable(arg.name), "HANDLER_" + arg.name);
+                    i.insertFieldAt(i.fieldRow.length - 1, new pxtblockly.FieldArgumentVariable(arg.name), "HANDLER_" + arg.name);
+                    const blockSvg = b as Blockly.BlockSvg;
+                    if (blockSvg?.initSvg) blockSvg.initSvg(); // call initSvg on block to initialize new fields
                 }
             }
             else {
@@ -125,9 +126,6 @@ namespace pxt.blocks {
         state.setValue(inputInitAttr, false);
         state.setEventsEnabled(true);
 
-        let addShown = false;
-        let remShown = false;
-
         Blockly.Extensions.apply('inline-svgs', b, false);
 
         addPlusButton();
@@ -176,7 +174,6 @@ namespace pxt.blocks {
         setTimeout(() => {
             if ((b as Blockly.BlockSvg).rendered && !(b.workspace as Blockly.WorkspaceSvg).isDragging()) {
                 updateShape(0, undefined, true);
-                updateButtons();
             }
         }, 1);
 
@@ -220,10 +217,12 @@ namespace pxt.blocks {
 
                         Blockly.Events.disable();
 
-                        const nb = Blockly.Xml.domToBlock(shadow, b.workspace);
-                        if (nb) {
-                            input.connection.connect(nb.outputConnection);
-                        }
+                        try {
+                            const nb = Blockly.Xml.domToBlock(shadow, b.workspace);
+                            if (nb) {
+                                input.connection.connect(nb.outputConnection);
+                            }
+                        } catch (e) { }
 
                         Blockly.Events.enable();
                     }
@@ -242,41 +241,39 @@ namespace pxt.blocks {
 
         function updateButtons() {
             const visibleOptions = state.getNumber(numVisibleAttr);
-            const showAdd = visibleOptions !== totalOptions;
-            const showRemove = visibleOptions !== 0;
+            const showPlus = visibleOptions !== totalOptions;
+            const showMinus = visibleOptions !== 0;
+            const hasMinus = !!b.getInput(buttonRemName);
+            const hasPlus = !!b.getInput(buttonAddName);
 
-            if (!showAdd) {
-                addShown = false;
+            if (!showPlus) {
                 b.removeInput(buttonAddName, true);
             }
-            if (!showRemove) {
-                remShown = false;
+
+            if (!showMinus) {
                 b.removeInput(buttonRemName, true);
             }
 
-            if (showRemove && !remShown) {
-                if (addShown) {
-                    b.removeInput(buttonAddName, true);
-                    addMinusButton();
-                    addPlusButton();
-                }
-                else {
-                    addMinusButton();
-                }
+            if (showMinus && !hasMinus) {
+                addMinusButton();
             }
 
-            if (showAdd && !addShown) {
-                addPlusButton();
+            if (showPlus) {
+                // make sure plus button is last in line.
+                if (hasPlus && b.inputList.findIndex(el => el.name === buttonAddName) !== b.inputList.length - 1) {
+                    b.removeInput(buttonAddName, true);
+                    addPlusButton();
+                } else if (!hasPlus) {
+                    addPlusButton();
+                }
             }
         }
 
         function addPlusButton() {
-            addShown = true;
             addButton(buttonAddName, (b as any).ADD_IMAGE_DATAURI, lf("Reveal optional arguments"), buttonDelta);
         }
 
         function addMinusButton() {
-            remShown = true;
             addButton(buttonRemName, (b as any).REMOVE_IMAGE_DATAURI, lf("Hide optional arguments"), -1 * buttonDelta);
         }
 
@@ -310,11 +307,12 @@ namespace pxt.blocks {
         Blockly.Extensions.apply('inline-svgs', b, false);
 
         let returnValueVisible = true;
-        updateShape();
 
         // When the value input is removed, we disconnect the block that was connected to it. This
         // is the id of whatever block was last connected
         let lastConnectedId: string;
+
+        updateShape();
 
         b.domToMutation = saved => {
             if (saved.hasAttribute("last_connected_id")) {

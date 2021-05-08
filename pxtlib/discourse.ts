@@ -53,7 +53,7 @@ namespace pxt.discourse {
 
     export function topicsByTag(apiUrl: string, tag: string): Promise<pxt.CodeCard[]> {
         apiUrl = apiUrl.replace(/\/$/, '');
-        const q = `${apiUrl}/tags/${tag}.json`;
+        const q = `${apiUrl}/tag/${tag}.json`;
         return pxt.Util.httpGetJsonAsync(q)
             .then((json: TagsResponse) => {
                 const users = pxt.Util.toDictionary(json.users, u => u.id.toString());
@@ -63,7 +63,7 @@ namespace pxt.discourse {
                         title: t.title,
                         url: `${apiUrl}/t/${t.slug}/${t.id}`,
                         imageUrl: t.image_url,
-                        author: users[t.posters[0].user_id].name,
+                        author: users[t.posters[0].user_id].username,
                         cardType: "forumUrl"
                     }
                 });

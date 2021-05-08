@@ -16,14 +16,17 @@ namespace pxt.blocks {
      */
     export function domToWorkspaceNoEvents(dom: Element, workspace: Blockly.Workspace): string[] {
         pxt.tickEvent(`blocks.domtow`)
+        let newBlockIds: string[] = [];
         try {
             Blockly.Events.disable();
-            const newBlockIds = Blockly.Xml.domToWorkspace(dom, workspace);
+            newBlockIds = Blockly.Xml.domToWorkspace(dom, workspace);
             applyMetaComments(workspace);
-            return newBlockIds;
+        } catch (e) {
+            pxt.reportException(e);
         } finally {
             Blockly.Events.enable();
         }
+        return newBlockIds;
     }
 
     function applyMetaComments(workspace: Blockly.Workspace) {
@@ -284,7 +287,7 @@ namespace pxt.blocks {
         if (!symbol || !b) return;
 
         let comp = compileInfo(symbol);
-        symbol.parameters.forEach((p, i) => {
+        symbol.parameters?.forEach((p, i) => {
             let ptype = info.apis.byQName[p.type];
             if (ptype && ptype.kind == pxtc.SymbolKind.Enum) {
                 let field = getFirstChildWithAttr(block, "field", "name", comp.actualNameToParam[p.name].definitionName);

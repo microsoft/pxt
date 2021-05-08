@@ -114,3 +114,14 @@ function testMemoryFree(): void {
 testRefLocals();
 testByRefParams();
 testMemoryFree();
+
+function initUndef() {
+    let x: string
+    const f = () => {
+        if (1 > 1)
+            x = "foo"
+    }
+    f()
+    assert(x === undefined, "init undef")
+}
+initUndef()

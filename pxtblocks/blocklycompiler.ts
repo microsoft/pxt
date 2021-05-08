@@ -755,7 +755,7 @@ namespace pxt.blocks {
         let args = b.inputList.map(input => input.connection && input.connection.targetBlock() ? compileExpression(e, input.connection.targetBlock(), comments) : undefined)
             .filter(e => !!e);
 
-        return H.mkArrayLiteral(args);
+        return H.mkArrayLiteral(args, !b.getInputsInline());
     }
 
     function compileListGet(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
@@ -979,6 +979,7 @@ namespace pxt.blocks {
 
     export interface Environment {
         workspace: Blockly.Workspace;
+        options: BlockCompileOptions;
         stdCallTable: pxt.Map<StdFunc>;
         userFunctionReturnValues: pxt.Map<Point>;
         diagnostics: BlockDiagnostic[];
@@ -1003,9 +1004,10 @@ namespace pxt.blocks {
         return getVarInfo(name, e.idToScope[b.id]);
     }
 
-    function emptyEnv(w: Blockly.Workspace): Environment {
+    function emptyEnv(w: Blockly.Workspace, options: BlockCompileOptions): Environment {
         return {
             workspace: w,
+            options,
             stdCallTable: {},
             userFunctionReturnValues: {},
             diagnostics: [],
@@ -1245,8 +1247,32 @@ namespace pxt.blocks {
     function compileArgument(e: Environment, b: Blockly.Block, p: BlockParameter, comments: string[], beginningOfStatement = false): JsNode {
         let f = b.getFieldValue(p.definitionName);
         if (f != null) {
-            if (b.getField(p.definitionName) instanceof pxtblockly.FieldTextInput) {
+            const field = b.getField(p.definitionName);
+
+            if (field instanceof pxtblockly.FieldTextInput) {
                 return H.mkStringLiteral(f);
+            }
+            else if (field instanceof pxtblockly.FieldTilemap && !field.isGreyBlock) {
+                const project = pxt.react.getTilemapProject();
+                const tmString = field.getValue();
+
+                if (tmString.startsWith("tilemap`")) {
+                    return mkText(tmString);
+                }
+
+                if (e.options.emitTilemapLiterals) {
+                    try {
+                        const data = pxt.sprite.decodeTilemap(tmString, "typescript", project);
+                        if (data) {
+                            const [ name ] = project.createNewTilemapFromData(data);
+                            return mkText(`tilemap\`${name}\``);
+                        }
+                    }
+                    catch (e) {
+                        // This is a legacy tilemap or a grey block, ignore the exception
+                        // and compile as a normal field
+                    }
+                }
             }
 
             // For some enums in pxt-minecraft, we emit the members as constants that are defined in
@@ -1261,7 +1287,9 @@ namespace pxt.blocks {
                 }
             }
 
-            return mkText(f);
+            let text = mkText(f)
+            text.canIndentInside = typeof f == "string" && f.indexOf('\n') >= 0;
+            return text;
         }
         else {
             attachPlaceholderIf(e, b, p.definitionName);
@@ -1603,9 +1631,9 @@ namespace pxt.blocks {
     // - All variables have been assigned an initial [Point] in the union-find.
     // - Variables have been marked to indicate if they are compatible with the
     //   TouchDevelop for-loop model.
-    export function mkEnv(w: Blockly.Workspace, blockInfo?: pxtc.BlocksInfo): Environment {
+    export function mkEnv(w: Blockly.Workspace, blockInfo?: pxtc.BlocksInfo, options: BlockCompileOptions = {}): Environment {
         // The to-be-returned environment.
-        let e = emptyEnv(w);
+        let e = emptyEnv(w, options);
         e.blocksInfo = blockInfo;
 
         // append functions in stdcalltable
@@ -1697,6 +1725,11 @@ namespace pxt.blocks {
         try {
             // all compiled top level blocks are events
             let allBlocks = w.getAllBlocks();
+
+            if (pxt.react.getTilemapProject) {
+                pxt.react.getTilemapProject().removeInactiveBlockAssets(allBlocks.map(b => b.id));
+            }
+
             // the top blocks are storted by blockly
             let topblocks = w.getTopBlocks(true);
             // reorder remaining events by names (top blocks still contains disabled blocks)
@@ -1799,23 +1832,6 @@ namespace pxt.blocks {
                     }
                 }
             });
-
-            const tiles = pxtblockly.getAllTilesetTiles(w);
-            if (tiles.length) {
-                const tilesetFieldEditorIdentity = pxt.appTarget.runtime && pxt.appTarget.runtime.tilesetFieldEditorIdentity;
-
-                stmtsEnums.push(mkGroup([
-                    mkText(`namespace ${pxt.sprite.TILE_NAMESPACE}`),
-                    mkBlock(tiles.map(
-                        t => mkGroup(
-                            [
-                                mkStmt(mkText(tilesetFieldEditorIdentity ? `//% blockIdentity=${tilesetFieldEditorIdentity}` : "")),
-                                mkStmt(mkText(`export const ${pxt.sprite.TILE_PREFIX}${t.projectId} = ${pxt.sprite.bitmapToImageLiteral(pxt.sprite.Bitmap.fromData(t.data), "typescript")}`))
-                            ]
-                        )
-                    ))
-                ]));
-            }
 
             const leftoverVars = e.allVariables.filter(v => !v.alreadyDeclared).map(v => mkVariableDeclaration(v, blockInfo));
 
@@ -1944,6 +1960,10 @@ namespace pxt.blocks {
         diagnostics: BlockDiagnostic[];
     }
 
+    export interface BlockCompileOptions {
+        emitTilemapLiterals?: boolean;
+    }
+
     export function findBlockIdByPosition(sourceMap: BlockSourceInterval[], loc: { start: number; length: number; }): string {
         if (!loc) return undefined;
         let bestChunk: BlockSourceInterval;
@@ -1984,8 +2004,8 @@ namespace pxt.blocks {
         return undefined;
     }
 
-    export function compileAsync(b: Blockly.Workspace, blockInfo: pxtc.BlocksInfo): Promise<BlockCompilationResult> {
-        const e = mkEnv(b, blockInfo);
+    export function compileAsync(b: Blockly.Workspace, blockInfo: pxtc.BlocksInfo, opts: BlockCompileOptions = {}): Promise<BlockCompilationResult> {
+        const e = mkEnv(b, blockInfo, opts);
         const [nodes, diags] = compileWorkspace(e, b, blockInfo);
         const result = tdASTtoTS(e, nodes, diags);
         return result;
@@ -2231,15 +2251,15 @@ namespace pxt.blocks {
         current.children.forEach(c => escapeVariables(c, e));
 
 
-        function escapeVarName(name: string): string {
-            if (!name) return '_';
+        function escapeVarName(originalName: string): string {
+            if (!originalName) return '_';
 
-            let n = ts.pxtc.escapeIdentifier(name);
+            let n = ts.pxtc.escapeIdentifier(originalName);
 
-            if (e.renames.takenNames[n] || nameIsTaken(n, current)) {
+            if (e.renames.takenNames[n] || nameIsTaken(n, current, originalName)) {
                 let i = 2;
 
-                while (e.renames.takenNames[n + i] || nameIsTaken(n + i, current)) {
+                while (e.renames.takenNames[n + i] || nameIsTaken(n + i, current, originalName)) {
                     i++;
                 }
 
@@ -2249,13 +2269,14 @@ namespace pxt.blocks {
             return n;
         }
 
-        function nameIsTaken(name: string, scope: Scope): boolean {
+        function nameIsTaken(name: string, scope: Scope, originalName: string): boolean {
             if (scope) {
                 for (const varName of Object.keys(scope.declaredVars)) {
                     const info = scope.declaredVars[varName];
-                    if (info.name !== info.escapedName && info.escapedName === name) return true;
+                    if ((originalName !== info.name || info.name !== info.escapedName) && info.escapedName === name)
+                        return true;
                 }
-                return nameIsTaken(name, scope.parent);
+                return nameIsTaken(name, scope.parent, originalName);
             }
 
             return false;

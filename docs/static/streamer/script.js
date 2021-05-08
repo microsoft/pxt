@@ -1,140 +1,219 @@
+let youTubeReady = false;
+let stingerPlayer;
+const stingerEvents = {
+    start: () => { },
+    end: () => { }
+};
+function onYouTubeIframeAPIReady() {
+    youTubeReady = true;
+    console.log(`youtube ready`);
+    stingerPlayer = new YT.Player('stingeryoutube', {
+        playerVars: {
+            mute: 1,
+            autoplay: 1,
+            controls: 0,
+            disablekb: 1,
+            fs: 0,
+            modestbranding: 1,
+            rel: 0
+        },
+        events: {
+            onReady: () => {
+                console.log(`stinger youtube ready`);
+                const stingeryoutube = document.getElementById('stingeryoutube');
+            },
+            onError: () => {
+                const stingeryoutube = document.getElementById('stingeryoutube');
+                stingeryoutube.classList.add("hidden");
+                stingerEvents.end();
+            },
+            onStateChange: (ev) => {
+                const playerState = ev.data;
+                console.log(`stinger youtube state`, playerState);
+                const stingeryoutube = document.getElementById('stingeryoutube');
+                switch (playerState) {
+                    case YT.PlayerState.PLAYING: // playing
+                        stingeryoutube.classList.remove("hidden");
+                        stingerEvents.start();
+                        break;
+                    case YT.PlayerState.ENDED: // ended
+                    case YT.PlayerState.PAUSEd: // pause
+                        stingeryoutube.classList.add("hidden");
+                        stingerEvents.end();
+                        break;
+                }
+            }
+        }
+    });
+}
 (async function () {
     const body = document.body;
     const container = document.getElementById("container");
-    const editor = document.getElementById("editor");
-    const editor2 = document.getElementById("editor2");
     const selectapp = document.getElementById("selectapp");
     const facecamcontainer = document.getElementById("facecam");
     const facecam = document.getElementById("facecamvideo");
+    const facecamoverlay = document.getElementById("facecamoverlay");
     const facecamlabel = document.getElementById("facecamlabel");
+    const hardwarecamcontainer = document.getElementById("hardwarecam");
     const hardwarecam = document.getElementById("hardwarecamvideo");
+    const hardwarecamoverlay = document.getElementById("hardwarecamoverlay");
     const hardwarecamlabel = document.getElementById("hardwarecamlabel");
     const chat = document.getElementById("chat");
     const settings = document.getElementById("settings");
     const editorStyle = document.getElementById("editorstyle");
-    const toolbox = document.getElementById("toolbox")
+    const toolbox = document.getElementById("toolbox");
+    const paintbox = document.getElementById("paintbox");
     const paint = document.getElementById('paint');
     const paintCtx = paint.getContext('2d');
     const painttool = document.getElementById('painttool');
     const painttoolCtx = painttool.getContext('2d');
-    const recorder = document.getElementById('recorder')
-    const screensize = document.getElementById('screensize')
-    const countdown = document.getElementById('countdown')
-    const titleEl = document.getElementById('title')
-    const subtitles = document.getElementById('subtitles')
-    const startvideo = document.getElementById('startvideo');
-    const endvideo = document.getElementById('endvideo');
-    const backgroundvideo = document.getElementById('backgroundvideo')
-
-    const frames = [editor, editor2];
+    const recorder = document.getElementById('recorder');
+    const countdown = document.getElementById('countdown');
+    const titleEl = document.getElementById('title');
+    const subtitles = document.getElementById('subtitles');
+    const stingervideo = document.getElementById('stingervideo');
+    const stingervideoserious = document.getElementById('stingervideoserious');
+    const backgroundvideo = document.getElementById('backgroundvideo');
+    const backgroundyoutube = document.getElementById('backgroundyoutube');
+    const intro = document.getElementById('intro');
+    const addsiteinput = document.getElementById('addsiteinput');
+    const hasGetDisplayMedia = !!navigator?.mediaDevices?.getDisplayMedia;
+    const cachedFrames = {};
+    const cachedFrames2 = {};
     const paintColors = ["#ffe135", "#00d9ff", "#cf1fdb", "#ee0000"];
-
     const scenes = ["leftscene", "rightscene", "chatscene", "countdownscene"];
-    const LEFT_SCENE_INDEX = scenes.indexOf("leftscene")
-    const RIGHT_SCENE_INDEX = scenes.indexOf("rightscene")
-    const CHAT_SCENE_INDEX = scenes.indexOf("chatscene")
-    const COUNTDOWN_SCENE_INDEX = scenes.indexOf("countdownscene")
-    const DISPLAY_DEVICE_ID = "display"
+    const LEFT_SCENE_INDEX = scenes.indexOf("leftscene");
+    const RIGHT_SCENE_INDEX = scenes.indexOf("rightscene");
+    const CHAT_SCENE_INDEX = scenes.indexOf("chatscene");
+    const COUNTDOWN_SCENE_INDEX = scenes.indexOf("countdownscene");
+    const DISPLAY_DEVICE_ID = "display";
+    const STREAMER_ID = "streamer";
     const state = {
         sceneIndex: -1,
-        left: false,
-        chat: false,
-        hardware: false,
-        painttool: "arrow",
-        recording: undefined,
-        timerEnd: undefined,
-        thumbnail: false,
-        paintColor: paintColors[0]
-    }
+        paintColor: paintColors[0],
+    };
     let editorConfigs;
-
+    const db = await openDbAsync();
     try {
-        tickEvent("streamer.load.start")
+        tickEvent("streamer.load.start");
         body.classList.add("loading");
-        console.log(`loading...`)
+        console.log(`loading...`);
         editorConfigs = await fetchJSON("editors.json");
-        console.log(`found ${Object.keys(editorConfigs).length} editors`)
-
+        console.log(`found ${Object.keys(editorConfigs).length} editors`);
         initMessages();
         initResize();
+        initFocus();
         initVideos();
         initSubtitles();
         initAccessibility();
+        initAddSite();
         loadPaint();
-        loadEditor()
-        loadToolbox()
-        loadChat()
-        loadSocial()
-        await firstLoadFaceCam()
-        await loadHardwareCam()
-        await loadSettings()
-        loadVideos()
-        setScene("right")
-        render()
+        loadEditor();
+        loadToolbox();
+        loadChat();
+        loadSocial();
+        await firstLoadFaceCam();
+        await loadHardwareCam();
+        await loadCamOverlays();
+        await loadSettings();
+        setScene("right");
+        render();
         handleHashChange();
-        tickEvent("streamer.load.ok")
-    } catch (e) {
-        tickEvent("streamer.load.error")
-        trackException(e);
-        console.error(e)
+        tickEvent("streamer.load.ok");
+        cleanVideos();
     }
-
+    catch (e) {
+        tickEvent("streamer.load.error");
+        trackException(e, "load");
+        console.error(e);
+    }
+    function editor() {
+        return document.getElementById("editor");
+    }
+    function editor2() {
+        return document.getElementById("editor2");
+    }
     function saveConfig(config) {
-        if (!config) throw "missing config"
-        localStorage["streamer.config"] = JSON.stringify(config)
+        if (!config)
+            throw new Error("missing config");
+        localStorage["streamer.config"] = JSON.stringify(config);
     }
-
+    function cleanVideos() {
+        const config = readConfig();
+        const blobs = Object.keys(config)
+            .filter(k => /Video$/.test(k))
+            .map(k => config[k])
+            .filter(v => !!v)
+            .map(v => v.split('\n')
+            .filter(l => /^blob:/.test(l))
+            .map(l => l.replace(/^blob:/, ''))).reduce((all, curr) => all.concat(curr), []);
+        db.gc(blobs);
+    }
     async function showSettings() {
-        await loadSettings()
-        settings.classList.remove("hidden")
+        await loadSettings();
+        state.addSite = false;
+        settings.classList.remove("hidden");
+        render();
     }
-
     async function hideSettings() {
-        settings.classList.add("hidden")
+        settings.classList.add("hidden");
     }
-
+    function settingsVisible() {
+        return !/hidden/.test(settings.className);
+    }
     function toggleSettings() {
-        if (/hidden/.test(settings.className))
+        if (!settingsVisible())
             showSettings();
         else
             hideSettings();
     }
-
+    function defaultConfig() {
+        const cfg = {
+            editor: "microbit",
+            multiEditor: false,
+            faceCamLabel: "",
+            hardwareCamLabel: "",
+            emojis: "😄🤔😭👀",
+            micDelay: 300,
+            title: ""
+        };
+        return cfg;
+    }
     function readConfig() {
         try {
             const cfg = JSON.parse(localStorage["streamer.config"]);
             if (cfg) {
                 return cfg;
             }
-        } catch (e) {
-            console.log(e)
         }
-
-        const cfg = {
-            editor: "microbit",
-            multiEditor: false,
-            faceCamLabel: "",
-            hardwareCamLabel: "",
-            mixer: "",
-            emojis: "😄🤔😭👀",
-            micDelay: 300,
-            title: "STARTING SOON"
+        catch (e) {
+            console.log(e);
         }
-        saveConfig(cfg)
+        const cfg = defaultConfig();
+        saveConfig(cfg);
         return cfg;
     }
-
     async function fetchJSON(url) {
-        const resp = await fetch(url)
+        const resp = await fetch(url);
         const json = await resp.json();
         return json;
     }
-
+    function parseYouTubeVideoId(url) {
+        if (!url)
+            return undefined;
+        const m = /^https:\/\/(?:youtu\.be\/|(?:www.)?youtube.com\/watch\?v=)([a-z0-9_\-]+)$/i.exec(url);
+        return m && m[1];
+    }
+    function createYouTubeEmbedUrl(ytVideoId, interactive) {
+        let url = `https://www.youtube.com/embed/${ytVideoId}?autoplay=1&controls=${interactive ? "1" : "0"}&disablekb=1&fs=0&loop=1&playlist=${ytVideoId}&modestbranding=1&rel=0`;
+        if (!interactive)
+            url += "&mute=1";
+        return url;
+    }
     function render() {
         loadToolbox();
-
         const config = readConfig();
-
+        const ytVideoId = parseYouTubeVideoId(config.backgroundVideo);
         body.className = [
             scenes[state.sceneIndex],
             state.hardware && "hardware",
@@ -144,200 +223,235 @@
             state.micError && "micerror",
             state.recording && "recording",
             state.screenshoting && "screenshoting",
-            state.thumbnail && "thumbnail",
+            state.stingering && "stingering",
+            state.addSite && "addsite",
+            (config.faceCamGreenScreen || config.hardwareCamGreenScreen) && state.thumbnail && "thumbnail",
             config.micDelay === undefined && "micdelayerror",
-            !navigator.mediaDevices.getDisplayMedia && "displaymediaerror",
+            !hasGetDisplayMedia && "displaymediaerror",
             config.faceCamLabel && !config.faceCamCircular && "facecamlabel",
             config.hardwareCamLabel && !config.hardwareCamCircular && "hardwarecamlabel",
             config.faceCamCircular && "facecamcircular",
             config.hardwareCamCircular && "hardwarecamcircular",
             config.faceCamId === DISPLAY_DEVICE_ID && "facecamdisplay",
+            config.hardwareCamId && "hashardwarecam",
             config.hardwareCamId === DISPLAY_DEVICE_ID && "hardwarecamdisplay",
             config.greenScreen && "greenscreen",
-            config.backgroundVideo ? "backgroundvideo" : config.backgroundImage && "parallax",
+            !!ytVideoId ? "backgroundyoutube" : config.backgroundVideo ? "backgroundvideo" : config.backgroundImage && "parallax",
             config.countdownEditor && "countdowneditor",
             config.countdownEditorBlur && "countdowneditorblur",
-            config.fullScreenEditor && !config.multiEditor && "slim"
+            config.fullScreenEditor && !config.multiEditor && "slim",
+            (config.twitch || config.restream) && "haschat",
+            config.faceCamGreenScreen && "hasthumbnail",
+            config.stingerVideo && "hasstinger",
+            config.camoverlayVideo && "hascamoverlay",
         ].filter(cls => !!cls).join(' ');
         if (!config.faceCamId || state.faceCamError)
             showSettings();
-        facecamlabel.innerText = config.faceCamLabel || ""
-        hardwarecamlabel.innerText = config.hardwareCamLabel || ""
+        facecamlabel.innerText = config.faceCamLabel || "";
+        hardwarecamlabel.innerText = config.hardwareCamLabel || "";
     }
-
     function loadToolbox() {
         const config = readConfig();
-        toolbox.innerHTML = ""
-
+        toolbox.innerHTML = "";
+        paintbox.innerHTML = "";
+        // paint
+        const emojis = [];
+        if (config.emojis)
+            for (let i = 0; i < config.emojis.length; i += 2)
+                emojis[i >> 1] = config.emojis.substr(i, 2);
+        addPaintButton("ArrowTallUpLeft", "Draw arrow (Alt+Shift+A)", "arrow");
+        addPaintButton("RectangleShape", "Draw rectangle (Alt+Shift+R)", "rect");
+        addPaintButton("PenWorkspace", "Draw freeform", "pen");
+        addPaintButton("Highlight", "Highligh", "highlight");
+        addSep(paintbox);
+        paintColors.forEach(addColorButton);
+        addSep(paintbox);
+        emojis.forEach(addEmojiButton);
+        addSep(paintbox);
+        addWhiteboardButton(paintbox);
+        addButton(paintbox, "EraseTool", "Undo last drawing", popPaintEvent);
+        addSep(paintbox);
+        addButton(paintbox, "ChromeClose", "Exit paint mode", stopPaint);
+        // tools
         const currentScene = scenes[state.sceneIndex];
-
         if (currentScene == "countdownscene") {
-            addButton("Add", "Add 1 minute to countdown", () => updateCountdown(60))
-            addButton("Remove", "Remove 1 minute from countdown", () => updateCountdown(-60))
-            addSep()
+            addButton(toolbox, "Add", "Add 1 minute to countdown", () => updateCountdown(60));
+            addButton(toolbox, "Remove", "Remove 1 minute from countdown", () => updateCountdown(-60));
+            addSep(toolbox);
         }
-
-        if (state.paint) {
-            const emojis = [];
-            if (config.emojis)
-                for (let i = 0; i < config.emojis.length; i += 2)
-                    emojis[i >> 1] = config.emojis.substr(i, 2);
-            addPaintButton("ArrowTallUpLeft", "Draw arrow (Alt+Shift+A)", "arrow")
-            addPaintButton("RectangleShape", "Draw rectangle (Alt+Shift+R)", "rect")
-            addPaintButton("PenWorkspace", "Draw freeform", "pen")
-            addPaintButton("Highlight", "Highligh", "highlight")
-            addSep()
-            paintColors.forEach(addColorButton);
-            addSep()
-            emojis.forEach(addEmojiButton);
-            addSep()
-            addButton("WhiteBoardApp32", "Paint screen in white", whiteboard)
-            addButton("EraseTool", "Clear all drawings", clearPaint)
-            addSep()
-            addButton("ChromeClose", "Exit paint mode", togglePaint)
-        } else {
-            addButton("EditCreate", "Paint mode  (Alt+Shift+1)", togglePaint)
-            addSep()
-            if (config.extraSites && config.extraSites.length) {
-                config.extraSites.forEach(addSiteButton)
-                addButton("Code", "Reload MakeCode editor", loadEditor)
-                addSep();
-            }
-            addSceneButton("OpenPane", "Move webcam left (Alt+Shift+2)", "left")
-            addSceneButton("OpenPaneMirrored", "Move webcam right (Alt+Shift+3)", "right")
-            addSceneButton("Contact", "Webcam large (Alt+Shift+4)", "chat")
-            addSceneButton("Timer", "Show countdown (Alt+Shift+5)", "countdown")
-            if (config.hardwareCamId || config.mixer || config.twitch || config.faceCamGreenScreen || config.hardwareCamGreenScreen) {
-                addSep()
-                if (config.faceCamGreenScreen || config.hardwareCamGreenScreen)
-                    addButton("PictureCenter", "Toggle thumbnail mode (Alt+Shift+6)", toggleThumbnail, state.thumbnail)
-                if (config.hardwareCamId)
-                    addButton("Robot", "Hardware webcam (Alt+Shift+7)", toggleHardware, state.hardware)
-                if (config.mixer || config.twitch)
-                    addButton("OfficeChat", "Chat  (Alt+Shift+8)", toggleChat, state.chat)
-            }
+        //addSceneButton("OpenPane", "Move webcam left (Alt+Shift+2)", "left")
+        //addSceneButton("OpenPaneMirrored", "Move webcam right (Alt+Shift+3)", "right")
+        //addSceneButton("Contact", "Webcam large (Alt+Shift+4)", "chat")
+        addSceneButton("Timer", "Show countdown (Alt+Shift+5)", "countdown");
+        //if (config.faceCamGreenScreen || config.hardwareCamGreenScreen) {
+        //    addSep(toolbox)
+        //    if (config.faceCamGreenScreen || config.hardwareCamGreenScreen)
+        //        addButton(toolbox, "PictureCenter", "Toggle thumbnail mode (Alt+Shift+6)", toggleThumbnail, state.thumbnail)
+        //if (config.hardwareCamId)
+        //    addButton(toolbox, "Robot", "Hardware webcam (Alt+Shift+7)", toggleHardware, state.hardware)
+        //if (config.twitch)
+        //    addButton(toolbox, "OfficeChat", "Chat  (Alt+Shift+8)", toggleChat, state.chat)
+        //}
+        if (document.fullscreenEnabled) {
+            addSep(toolbox);
+            addButton(toolbox, "FullView", "Toggle full screen", toggleFullscreen);
         }
-
-        addSep()
+        addSep(toolbox);
+        addButton(toolbox, "Add", "Add web site", addAddSiteButton);
+        if (config.extraSites)
+            config.extraSites.forEach(addSiteButton);
+        addButton(toolbox, "Code", "Reload MakeCode editor", () => startStinger(config.stingerVideo, loadEditor, config.stingerVideoGreenScreen, config.stingerVideoDelay));
+        addSep(toolbox);
         if (state.speech)
-            addButton("ClosedCaption", "Captions", toggleSpeech, state.speechRunning)
-        if (!!navigator.mediaDevices.getDisplayMedia) {
-            addButton("BrowserScreenShot", "Take screenshot", takeScreenshot);
+            addButton(toolbox, "ClosedCaption", "Captions", toggleSpeech, state.speechRunning);
+        if (hasGetDisplayMedia) {
+            addButton(toolbox, "BrowserScreenShot", "Take screenshot", takeScreenshot);
             if (state.recording)
-                addButton("Stop", "Stop recording", stopRecording)
+                addButton(toolbox, "Stop", "Stop recording", stopRecording);
             else
-                addButton("Record2", "Start recording", startRecording)
+                addButton(toolbox, "Record2", "Start recording", startRecording);
         }
-        addButton("Settings", "Show settings", toggleSettings);
-
-        function addSep() {
-            const sep = document.createElement("div")
-            sep.className = "sep"
-            toolbox.append(sep)
+        addSep(toolbox);
+        addButton(toolbox, "Settings", "Show settings", toggleSettings);
+        function addSep(container) {
+            const sep = document.createElement("div");
+            sep.className = "sep";
+            container.append(sep);
         }
-
-        function addButton(icon, title, handler, active) {
-            const btn = document.createElement("button")
+        function addButton(container, icon, title, handler, active) {
+            const btn = document.createElement("button");
             accessify(btn);
-            btn.title = title
+            btn.title = title;
             btn.addEventListener("click", function (e) {
-                tickEvent("streamer.button", { button: icon }, { interactiveConsent: true })
-                toolbox.classList.remove("opaque")
-                handler(e)
-            }, false)
-            const i = document.createElement("i")
-            btn.append(i)
+                tickEvent("streamer.button", { button: icon }, { interactiveConsent: true });
+                container.classList.remove("opaque");
+                handler(e);
+            }, false);
+            const i = document.createElement("i");
+            btn.append(i);
             if (active)
-                btn.classList.add("active")
-            i.className = `ms-Icon ms-Icon--${icon}`
-            toolbox.append(btn)
+                btn.classList.add("active");
+            i.className = `ms-Icon ms-Icon--${icon}`;
+            container.append(btn);
             return btn;
         }
-
         function addColorButton(color) {
-            const btn = addButton("CircleShapeSolid", color, function () {
-                tickEvent("streamer.color", { color }, { interactiveConsent: true })
+            const btn = addButton(paintbox, "CircleShapeSolid", color, function () {
+                tickEvent("streamer.color", { color }, { interactiveConsent: true });
                 state.paintColor = color;
                 loadToolbox();
             }, state.paintColor === color);
             btn.style.color = color;
         }
-
         function addEmojiButton(emoji) {
-            const btn = document.createElement("button")
+            const btn = document.createElement("button");
             accessify(btn);
-            btn.className = "emoji"
-            if (emoji === state.emoji)
-                btn.classList.add("active")
+            btn.className = "emoji";
+            if (emoji === state.emoji && state.paint)
+                btn.classList.add("active");
             btn.innerText = emoji;
             btn.addEventListener("click", function (e) {
-                tickEvent("streamer.emoji", { emoji }, { interactiveConsent: true })
+                tickEvent("streamer.emoji", { emoji }, { interactiveConsent: true });
                 state.emoji = emoji;
-                setPaintTool("emoji")
-            }, false)
-            toolbox.append(btn)
+                setPaintTool("emoji");
+            }, false);
+            paintbox.append(btn);
         }
-
+        function addAddSiteButton() {
+            state.addSite = true;
+            render();
+            addsiteinput.focus();
+        }
         function addSiteButton(url) {
-            addButton("SingleBookmark", url, () => setSite(url), false)
+            addButton(toolbox, "SingleBookmark", url, () => setSite(url), false);
         }
-
         function addPaintButton(icon, title, tool) {
-            addButton(icon, title, () => setPaintTool(tool), state.painttool == tool);
+            addButton(paintbox, icon, title, () => setPaintTool(tool), state.paint && state.painttool == tool);
         }
-
         function addSceneButton(icon, title, scene) {
-            const sceneIndex = scenes.indexOf(`${scene}scene`)
-            addButton(icon, title, () => setScene(scene), state.sceneIndex == sceneIndex)
+            const sceneIndex = scenes.indexOf(`${scene}scene`);
+            addButton(toolbox, icon, title, () => setScene(scene), state.sceneIndex == sceneIndex);
+        }
+        function addWhiteboardButton(paintbox) {
+            addButton(paintbox, "WhiteBoardApp32", "Paint screen in white", () => {
+                if (!state.paint)
+                    setPaintTool("pen");
+                pushPaintEvent("whiteboard");
+            });
         }
     }
-
+    async function toggleFullscreen() {
+        if (document.fullscreen) {
+            await document.exitFullscreen();
+        }
+        else {
+            await document.firstElementChild.requestFullscreen();
+        }
+    }
     function setSite(url) {
         const config = readConfig();
-        if (config.multiEditor && state.sceneIndex == LEFT_SCENE_INDEX)
-            editor2.src = url;
-        else
-            editor.src = url;
+        const ytid = parseYouTubeVideoId(url);
+        if (ytid)
+            url = createYouTubeEmbedUrl(ytid, true);
+        startStinger(config.stingerVideo, () => {
+            if (state.sceneIndex === CHAT_SCENE_INDEX || state.sceneIndex == COUNTDOWN_SCENE_INDEX)
+                setScene("right");
+            if (config.multiEditor && state.sceneIndex == LEFT_SCENE_INDEX)
+                setFrameUrl(editor2(), url, true);
+            else
+                setFrameUrl(editor(), url);
+        }, config.stingerVideoGreenScreen, config.stingerVideoDelay);
     }
-
     function setScene(scene) {
         tickEvent("streamer.scene", { scene: scene });
         const config = readConfig();
-        const lastScene = state.sceneIndex;
-        const sceneIndex = scenes.indexOf(`${scene}scene`);
-        if (state.sceneIndex !== sceneIndex) {
-            state.sceneIndex = scenes.indexOf(`${scene}scene`);
-            resetTransition(facecamlabel, "fadeout")
-            resetTransition(hardwarecamlabel, "fadeout")
+        const lastSceneIndex = state.sceneIndex;
+        let sceneIndex = scenes.indexOf(`${scene}scene`);
+        // click on countdown from countdown exits to chat
+        if (sceneIndex === COUNTDOWN_SCENE_INDEX && lastSceneIndex === sceneIndex) {
+            sceneIndex = CHAT_SCENE_INDEX;
+            scene = "chat";
         }
-        if (scene === "countdown") {
-            startCountdown();
-            if (config.endVideo) {
-                endvideo.classList.remove("hidden");
-                endvideo.onended = () => {
-                    endvideo.classList.add("hidden");
-                }
-                endvideo.play();
+        // handle countdown
+        if (sceneIndex === COUNTDOWN_SCENE_INDEX) {
+            startCountdown(300000);
+            const v = config.endVideo || config.stingerVideo;
+            if (v) {
+                startStingerScene(v, sceneIndex);
+                return;
             }
-        } else {
+        }
+        else {
             stopCountdown();
-            if (lastScene == COUNTDOWN_SCENE_INDEX && config.startVideo) {
-                startvideo.classList.remove("hidden");
-                startvideo.onended = () => {
-                    startvideo.classList.add("hidden");
-                }
-                startvideo.play();
+            const v = config.endVideo || config.stingerVideo;
+            if (lastSceneIndex == COUNTDOWN_SCENE_INDEX && v) {
+                startStingerScene(v, sceneIndex);
+                return;
             }
         }
+        // stinger animation
+        if (config.stingerVideo &&
+            (sceneIndex == CHAT_SCENE_INDEX && isLeftOrRightScene(lastSceneIndex))
+            || (isLeftOrRightScene(sceneIndex) && lastSceneIndex == CHAT_SCENE_INDEX)) {
+            startStingerScene(config.stingerVideo, sceneIndex);
+            return;
+        }
+        updateScene(sceneIndex);
         render();
+        function isLeftOrRightScene(i) {
+            return i == LEFT_SCENE_INDEX || i == RIGHT_SCENE_INDEX;
+        }
     }
-
+    function updateScene(sceneIndex) {
+        state.sceneIndex = sceneIndex;
+        resetTransition(facecamlabel, "fadeout");
+        resetTransition(hardwarecamlabel, "fadeout");
+    }
     function resetTransition(el, name) {
-        el.classList.remove(name)
+        el.classList.remove(name);
         const x = el.offsetWidth; // reflow
-        el.classList.add(name)
+        el.classList.add(name);
     }
-
     function updateCountdown(seconds) {
         // comput timer end
         const timerEnd = state.timerEnd || (Date.now() + 300000);
@@ -349,18 +463,16 @@
         renderCountdown();
         startCountdown();
     }
-
     function startCountdown(duration, callback) {
+        if (duration !== undefined)
+            state.timerEnd = Date.now() + duration;
         if (!state.timerInterval) {
             if (state.timerEnd === undefined)
                 state.timerEnd = Date.now() + 300000;
             state.timerInterval = setInterval(renderCountdown, 100);
         }
-        if (duration !== undefined)
-            state.timerEnd = Date.now() + duration;
         state.timerCallback = callback;
     }
-
     function stopCountdown() {
         if (state.timerInterval) {
             clearInterval(state.timerInterval);
@@ -370,62 +482,76 @@
             state.timerCallback = undefined;
         }
     }
-
     function renderCountdown() {
         if (state.timerEnd !== undefined) {
-            let remaining = Math.floor((state.timerEnd - Date.now()) / 1000) // seconds;
+            let remaining = Math.floor((state.timerEnd - Date.now()) / 1000); // seconds;
             if (remaining < 0) {
                 remaining = 0;
                 stopCountdown();
+                // go to chat view
+                if (state.sceneIndex === COUNTDOWN_SCENE_INDEX)
+                    setScene("chat");
             }
             if (remaining) {
                 const minutes = Math.floor(remaining / 60);
                 const seconds = remaining % 60;
-                countdown.innerText = (minutes || seconds > 10) ? `${minutes}:${pad(seconds)}` : seconds;
-            } else {
+                countdown.innerText = (minutes || seconds > 10) ? `${minutes}:${pad(seconds)}` : `${seconds}`;
+            }
+            else {
                 countdown.innerText = "";
             }
-        } else {
-            countdown.innerText = ""
         }
-
+        else {
+            countdown.innerText = "";
+        }
         function pad(num) {
-            var s = "00" + num;
+            const s = "00" + num;
             return s.substr(s.length - 2);
         }
     }
-
-    function togglePaint() {
-        state.paint = !state.paint;
+    function startPaint() {
+        if (state.paint)
+            return;
+        state.paint = [];
         clearPaint();
         updatePaintSize();
         render();
     }
-
-    function toggleThumbnail() {
-        state.thumbnail = !state.thumbnail;
+    function stopPaint() {
+        state.paint = undefined;
+        clearPaint();
+        loadToolbox();
         render();
     }
-
+    function togglePaint() {
+        if (state.paint)
+            stopPaint();
+        else
+            startPaint();
+    }
+    function toggleThumbnail(ev) {
+        stopEvent(ev);
+        const config = readConfig();
+        startStinger(config.stingerVideo, () => {
+            state.thumbnail = !state.thumbnail;
+            if (state.thumbnail)
+                state.chat = false;
+            render();
+        }, config.stingerVideoGreenScreen, config.stingerVideoDelay);
+    }
     function setPaintTool(tool) {
+        startPaint();
         state.painttool = tool;
         loadToolbox();
     }
-
-    function whiteboard() {
-        paintCtx.save()
-        paintCtx.beginPath();
-        paintCtx.fillStyle = "rgba(255, 255, 255, 0.9)"
-        paintCtx.rect(0, 0, paint.width, paint.height)
-        paintCtx.fill()
-        paintCtx.restore()
+    function commitPaint() {
+        paintCtx.drawImage(painttool, 0, 0);
+        painttoolCtx.clearRect(0, 0, painttool.width, painttool.height);
     }
-
     function clearPaint() {
+        painttoolCtx.clearRect(0, 0, painttool.width, painttool.height);
         paintCtx.clearRect(0, 0, paint.width, paint.height);
-        painttoolCtx.clearRect(0, 0, paint.width, paint.height);
     }
-
     function updatePaintSize() {
         const size = container.getBoundingClientRect();
         paint.width = size.width;
@@ -433,59 +559,123 @@
         painttool.width = size.width;
         painttool.height = size.height;
     }
-
     function loadPaint() {
         const mouse = { x: 0, y: 0 };
-        let head = { x: 0, y: 0 }
-
-        painttool.addEventListener('pointermove', function (e) {
-            mouse.x = e.pageX - this.offsetLeft;
-            mouse.y = e.pageY - this.offsetTop;
-        }, false);
-
+        let head = { x: 0, y: 0 };
         painttool.addEventListener('pointerdown', function (e) {
             head.x = e.pageX - this.offsetLeft;
             head.y = e.pageY - this.offsetTop;
+            mouse.x = head.x;
+            mouse.y = head.y;
+            pushPaintEvent("down", mouse, head);
+            painttool.addEventListener('pointermove', onMove, false);
+        }, false);
+        painttool.addEventListener('pointerup', function () {
+            pushPaintEvent("up", mouse, head);
+            painttool.removeEventListener('pointermove', onMove, false);
+        }, false);
+        function onMove(e) {
+            mouse.x = e.pageX - this.offsetLeft;
+            mouse.y = e.pageY - this.offsetTop;
+            pushPaintEvent("move", mouse, head);
+        }
+        clearPaint();
+    }
+    function pushPaintEvent(ev, mouse, head) {
+        const r = {
+            type: ev,
+            tool: state.painttool,
+            emoji: state.emoji,
+            color: state.paintColor,
+            mouse: undefined,
+            head: undefined
+        };
+        if (mouse)
+            r.mouse = { x: mouse.x, y: mouse.y };
+        if (head)
+            r.head = { x: head.x, y: head.y };
+        state.paint.push(r);
+        applyPaintEvents([r]);
+    }
+    function popPaintEvent() {
+        const evs = state.paint;
+        if (!evs)
+            return;
+        let ev;
+        // eslint-disable-next-line  no-cond-assign
+        while (ev = evs.pop()) {
+            if (ev.type == "down" || ev.type == "whiteboard") {
+                clearPaint();
+                applyPaintEvents(evs);
+                break;
+            }
+        }
+    }
+    function applyPaintEvents(events) {
+        events.forEach(ev => {
+            switch (ev.type) {
+                case "move":
+                    move(ev);
+                    break; // skip
+                case "down":
+                    down(ev);
+                    break;
+                case "up":
+                    commitPaint();
+                    break;
+                case "whiteboard":
+                    whiteboard();
+                    break;
+            }
+        });
+        function whiteboard() {
+            paintCtx.save();
+            paintCtx.beginPath();
+            paintCtx.fillStyle = "rgba(255, 255, 255, 0.95)";
+            paintCtx.rect(0, 0, paint.width, paint.height);
+            paintCtx.fill();
+            paintCtx.restore();
+        }
+        function down(ev) {
+            const mouse = ev.mouse;
+            const tool = ev.tool;
+            const color = ev.color;
             painttoolCtx.lineWidth = Math.max(10, (paint.width / 100) | 0);
             painttoolCtx.lineJoin = 'round';
             painttoolCtx.lineCap = 'round';
-            painttoolCtx.strokeStyle = state.paintColor;
+            painttoolCtx.strokeStyle = color;
             painttoolCtx.globalAlpha = 1;
-            if (state.painttool == 'pen' || state.painttool == 'highlight') {
-                if (state.painttool == 'highlight') {
+            if (tool == 'pen' || tool == 'highlight') {
+                if (tool == 'highlight') {
                     painttoolCtx.globalAlpha = 0.5;
                     painttoolCtx.lineWidth = Math.max(20, (paint.width / 50) | 0);
                 }
                 painttoolCtx.beginPath();
                 painttoolCtx.moveTo(mouse.x, mouse.y);
-            } else if (state.painttool == 'arrow') {
-                painttoolCtx.lineWidth = 42;
             }
-            painttool.addEventListener('pointermove', onPaint, false);
-        }, false);
-
-        painttool.addEventListener('pointerup', function () {
-            paintCtx.drawImage(painttool, 0, 0)
-            painttoolCtx.clearRect(0, 0, painttool.width, painttool.height)
-            painttool.removeEventListener('pointermove', onPaint, false);
-        }, false);
-
-        function onPaint() {
-            const ctx = painttoolCtx
-            ctx.clearRect(0, 0, painttool.width, painttool.height)
+            else if (tool == 'arrow') {
+                painttoolCtx.lineWidth = Math.max(16, (paint.width / 60) | 0);
+            }
+        }
+        function move(ev) {
+            const mouse = ev.mouse;
+            const head = ev.head;
+            const tool = ev.tool;
+            const outline = 0.7;
+            const ctx = painttoolCtx;
+            ctx.clearRect(0, 0, painttool.width, painttool.height);
             ctx.save();
-            if (state.painttool == 'arrow') {
+            if (tool == 'arrow') {
                 const p1 = mouse, p2 = head;
-                const size = painttoolCtx.lineWidth * 3;
+                const size = ctx.lineWidth * 3;
                 // Rotate the context to point along the path
-                const dx = p2.x - p1.x
-                const dy = p2.y - p1.y
+                const dx = p2.x - p1.x;
+                const dy = p2.y - p1.y;
                 const len = Math.sqrt(dx * dx + dy * dy);
                 ctx.translate(p2.x, p2.y);
                 ctx.rotate(Math.atan2(dy, dx));
-
-                const strokeStyle = painttoolCtx.strokeStyle;
-                painttoolCtx.strokeStyle = '#ffffff'
+                const strokeStyle = ctx.strokeStyle;
+                ctx.strokeStyle = '#ffffff';
                 for (let l = 0; l < 2; ++l) {
                     // line
                     ctx.beginPath();
@@ -493,7 +683,6 @@
                     ctx.lineTo(-len, 0);
                     ctx.closePath();
                     ctx.stroke();
-
                     // arrowhead
                     ctx.beginPath();
                     ctx.moveTo(-len, 0);
@@ -501,36 +690,74 @@
                     ctx.moveTo(-len, 0);
                     ctx.lineTo(size - len, -size / 1.61);
                     ctx.stroke();
-                    painttoolCtx.lineWidth *= 0.7;
-                    painttoolCtx.strokeStyle = strokeStyle;
+                    ctx.lineWidth *= outline;
+                    ctx.strokeStyle = strokeStyle;
                 }
-            } else if (state.painttool == 'rect') {
+            }
+            else if (tool == 'rect') {
+                // out white contour
                 ctx.beginPath();
-                ctx.rect(head.x, head.y, mouse.x - head.x, mouse.y - head.y)
-                ctx.stroke()
-            } else if (state.painttool == 'pen' || state.painttool == 'highlight') {
+                const lineWidth = ctx.lineWidth;
+                const strokeStyle = ctx.strokeStyle;
+                ctx.lineWidth *= 1 / outline;
+                ctx.strokeStyle = '#ffffff';
+                ctx.rect(head.x, head.y, mouse.x - head.x, mouse.y - head.y);
+                ctx.stroke();
+                ctx.lineWidth = lineWidth;
+                ctx.strokeStyle = strokeStyle;
+                // inside
+                ctx.beginPath();
+                ctx.rect(head.x, head.y, mouse.x - head.x, mouse.y - head.y);
+                ctx.stroke();
+            }
+            else if (tool == 'pen' || tool == 'highlight') {
+                const lineWidth = ctx.lineWidth;
+                const strokeStyle = ctx.strokeStyle;
+                ctx.lineWidth *= 1 / outline;
+                ctx.strokeStyle = '#ffffff';
                 ctx.lineTo(mouse.x, mouse.y);
                 ctx.stroke();
-            } else if (state.painttool == 'emoji') {
+                ctx.lineWidth = lineWidth;
+                ctx.strokeStyle = strokeStyle;
+                ctx.lineTo(mouse.x, mouse.y);
+                ctx.stroke();
+            }
+            else if (tool == 'emoji') {
+                const emoji = ev.emoji;
                 const p1 = head, p2 = mouse;
-                const dx = p2.x - p1.x
-                const dy = p2.y - p1.y
-                const len = Math.max(64, (Math.sqrt(dx * dx + dy * dy)) | 0);
-                ctx.translate(p2.x, p2.y);
+                const dx = p2.x - p1.x;
+                const dy = p2.y - p1.y;
+                const len = Math.max(32, (Math.sqrt(dx * dx + dy * dy) * 1.8) | 0);
+                ctx.translate(p1.x, p1.y);
                 ctx.rotate(Math.atan2(dy, dx) - Math.PI / 2);
-                ctx.translate(0, -len / 2)
-
+                ctx.translate(0, len / 6);
                 ctx.font = `${len}px serif`;
-                ctx.textAlign = 'center'
-                ctx.fillText(state.emoji, 0, 0);
+                ctx.textBaseline = 'middle';
+                ctx.textAlign = 'center';
+                ctx.fillText(emoji, 0, 0);
             }
             ctx.restore();
         }
-
-        clearPaint();
     }
-
-    function loadEditor() {
+    function setFrameUrl(frame, url, secondary) {
+        const caches = secondary ? cachedFrames2 : cachedFrames;
+        let cached = caches[url];
+        if (!cached) {
+            cached = caches[url] = document.createElement("iframe");
+            cached.className = "box animated site hidden";
+            cached.setAttribute("allow", "usb;camera");
+            cached.setAttribute("sandbox", "allow-scripts allow-same-origin allow-top-navigation allow-downloads allow-popups allow-popups-to-escape-sandbox allow-forms");
+            cached.src = url;
+            frame.parentElement.insertBefore(cached, frame);
+        }
+        // insert and remove
+        frame.classList.add('hidden');
+        const id = frame.getAttribute("id");
+        frame.setAttribute("id", "");
+        cached.setAttribute("id", id);
+        cached.classList.remove('hidden');
+    }
+    function loadEditor(hash) {
         const config = readConfig();
         // update first editor
         const editorConfig = editorConfigs[config.editor];
@@ -539,40 +766,34 @@
             loadStyle();
             return;
         }
-
-        let url = `${editorConfig.url}?editorLayout=ide&nosandbox=1`;
+        let url = `${editorConfig.url}?editorLayout=ide&nosandbox=1}`;
         if (config.multiEditor)
             url += `&nestededitorsim=1`;
-        editor.src = url;
+        if (hash)
+            url += `#${hash}`;
+        setFrameUrl(editor(), url);
         if (config.multiEditor) {
-            if (!editor2.parentElement)
-                container.insertBefore(editor2, editor);
-            editor2.src = url;
-        } else {
-            // remove from DOM
-            editor2.remove();
+            if (!editor2().parentElement)
+                container.insertBefore(editor2(), editor());
+            setFrameUrl(editor2(), url, true);
         }
-
+        else {
+            // remove from DOM
+            const e2 = editor2();
+            if (e2)
+                e2.remove();
+        }
         loadStyle();
     }
-
-    function loadVideos() {
-        const config = readConfig();
-        startvideo.src = config.startVideo;
-        endvideo.src = config.endVideo;
-    }
-
     function loadStyle() {
         const config = readConfig();
         const editorConfig = editorConfigs[config.editor];
         // update page style
         let css = "";
         const styles = editorConfig && editorConfig.styles || {};
-
-        let primary = config.stylePrimary || styles.primary || "#615fc7"
-        let menu = config.styleBorder || styles.menu || "#615fc7"
+        let primary = config.stylePrimary || styles.primary || "#615fc7";
+        let menu = config.styleBorder || styles.menu || "#615fc7";
         let background = config.styleBackground || styles.background || "rgb(99, 93, 198)";
-
         css =
             `body {
 background: ${background};
@@ -587,35 +808,71 @@ border-right-color: ${menu};
 border-left-color: ${menu};
 color: white;
 }
-#toolbox, #title {
+#title {
 background: ${primary};
 }
-`
-        const faceCamFilter = camFilter(config.faceCamFilter)
+#countdown {
+    color: ${primary};
+    text-shadow: -3px 3px 1px #fff,
+    3px 3px 1px #fff,
+    3px -3px 1px #fff,
+    -3px -3px 1px #fff;
+}
+`;
+        const faceCamFilter = camFilter(config.faceCamFilter);
         if (faceCamFilter)
             css += `#facecam { filter: ${faceCamFilter}; }
-`
-        const hardwareCamFilter = camFilter(config.hardwareCamFilter)
+`;
+        const hardwareCamFilter = camFilter(config.hardwareCamFilter);
         if (hardwareCamFilter)
             css += `#hardwarecam { filter: ${hardwareCamFilter}; }
-        `
-
-        if (config.backgroundVideo) {
-            backgroundvideo.src = config.backgroundVideo;
-        } else {
+        `;
+        const ytVideoId = parseYouTubeVideoId(config.backgroundVideo);
+        if (ytVideoId) {
             backgroundvideo.src = undefined;
+            const url = createYouTubeEmbedUrl(ytVideoId, false);
+            if (backgroundyoutube.src !== url)
+                backgroundyoutube.src = url;
+            // rescale youtube iframe to cover the entire background
+            const el = document.firstElementChild;
+            const w = el.clientWidth;
+            const h = el.clientHeight;
+            const ratio = w / h;
+            const hd = 16 / 9;
+            if (ratio > hd) {
+                // the video is going to be 16:9, compensate
+                console.log(`ratio`, ratio);
+                const vh = 100 * ratio / hd;
+                backgroundyoutube.style.height = `${vh}vh`;
+                backgroundyoutube.style.width = `100vw`;
+                backgroundyoutube.style.transform = `translate(0, ${-(vh - 100) / 2}vh)`;
+            }
+            else {
+                const vw = 100 / ratio * hd;
+                backgroundyoutube.style.height = `100vh`;
+                backgroundyoutube.style.width = `${vw}vw`;
+                backgroundyoutube.style.transform = `translate(${-(vw - 100) / 2}vh, 0)`;
+            }
+        }
+        else if (config.backgroundVideo) {
+            resolveBlob(config.backgroundVideo).then(vurl => {
+                backgroundvideo.src = vurl;
+                backgroundyoutube.src = undefined;
+            });
+        }
+        else {
+            backgroundvideo.src = undefined;
+            backgroundyoutube.src = undefined;
             if (config.backgroundImage) {
                 css += `body.parallax {
 background-image: url(${config.backgroundImage});
 }
-`
+`;
             }
         }
-
-        editorStyle.innerText = ""
+        editorStyle.innerText = "";
         editorStyle.append(document.createTextNode(css));
     }
-
     function camFilter(filter) {
         filter = filter || {};
         return ["contrast", "brightness", "saturate"]
@@ -623,117 +880,60 @@ background-image: url(${config.backgroundImage});
             .map(k => `${k}(${filter[k] * 2}%)`)
             .join(" ");
     }
-
     function stopEvent(e) {
         e.preventDefault();
         e.stopPropagation();
     }
-
     function toggleChat(e) {
         tickEvent("streamer.togglechat", undefined, { interactiveConsent: true });
         if (e)
-            stopEvent(e)
+            stopEvent(e);
         const config = readConfig();
-        state.chat = !state.chat && (config.mixer || config.twitch);
+        state.chat = !state.chat && !!(config.twitch || config.restream);
         render();
     }
-
     function toggleHardware(e) {
         tickEvent("streamer.togglehardware", undefined, { interactiveConsent: true });
         if (e)
-            stopEvent(e)
+            stopEvent(e);
         const config = readConfig();
-        state.hardware = !state.hardware && config.hardwareCamId;
+        state.hardware = !state.hardware && !!config.hardwareCamId;
         render();
     }
-
     function loadSocial() {
         const config = readConfig();
-
-        if (!config.mixer && !config.twitch)
+        if (!(config.twitch || config.restream))
             state.chat = false;
-
-        const editorConfig = editorConfigs[config.editor]
-        titleEl.innerText = config.title || (editorConfig && `MakeCode for ${editorConfig.name}`) || "";
+        titleEl.innerText = config.title || "";
     }
-
     function loadChat() {
         const config = readConfig();
-        if (config.mixer) {
-            chat.src = `https://mixer.com/embed/chat/${config.mixer}?composer=false`;
-            if (!chat.parentElement)
-                container.insertBefore(chat, facecamcontainer);
-            startMixer(config.mixer);
-        }
-        else if (config.twitch) {
-            stopMixer()
+        if (config.twitch) {
             chat.src = `https://www.twitch.tv/embed/${config.twitch}/chat?parent=makecode.com`;
             if (!chat.parentElement)
-                container.insertBefore(chat, facecamcontainer)
+                container.insertBefore(chat, facecamcontainer);
+        }
+        else if (config.restream) {
+            chat.src = config.restream;
+            if (!chat.parentElement)
+                container.insertBefore(chat, facecamcontainer);
         }
         else { // remove from dom
             chat.remove();
-            stopMixer()
         }
     }
-
-    async function startMixer(channel) {
-        const ch = await fetchJSON(`https://mixer.com/api/v1/channels/${channel}?fields=id,numFollowers,name`)
-        console.log("mixer", ch);
-        const config = readConfig();
-        if (ch.name != config.title) {
-            config.title = ch.name;
-            saveConfig(config);
-            loadSocial();
-        }
-        startMixerChatWs(ch.id);
-    }
-
-    function stopMixer() {
-        const ws = state.mixerChatWs;
-        state.mixerChatWs = undefined;
-        try {
-            if (ws) ws.close();
-        } catch (e) { }
-    }
-
-    function startMixerChatWs(id) {
-        const chat = state.mixerChatWs = new WebSocket("wss://chat.mixer.com/?version=1.0");
-        chat.onopen = function (evt) {
-            console.log(`mixer chat open`)
-            chat.send(JSON.stringify({ "type": "method", "method": "optOutEvents", "arguments": ["UserJoin", "UserLeave", "DeleteMessage"], "id": 0 }))
-            chat.send(JSON.stringify({ "type": "method", "method": "auth", "arguments": [id, null, null, null], "id": 1 }))
-        }
-        chat.onmessage = function (evt) {
-            const data = JSON.parse(evt.data);
-            console.log(data);
-            if (!state.chat && data
-                && data.type === "event") {
-                if (data.event === "ChatMessage")
-                    toggleChat();
-            }
-        }
-        chat.onclose = function (evt) {
-            console.log('mixer chat close')
-            state.mixerChatWs = undefined;
-            chat = undefined;
-        }
-    }
-
     async function listCameras() {
-        let cams = await navigator.mediaDevices.enumerateDevices()
-        cams = cams.filter(d => d.kind == "videoinput")
+        let cams = await navigator.mediaDevices.enumerateDevices();
+        cams = cams.filter(d => d.kind == "videoinput");
         return cams;
     }
-
     async function listMicrophones() {
-        let cams = await navigator.mediaDevices.enumerateDevices()
-        cams = cams.filter(d => d.kind == "audioinput")
+        let cams = await navigator.mediaDevices.enumerateDevices();
+        cams = cams.filter(d => d.kind == "audioinput");
         return cams;
     }
-
     async function firstLoadFaceCam() {
-        await loadFaceCam()
+        await loadFaceCam();
         const config = readConfig();
         if (!config.faceCamId) {
             const cams = await listCameras();
@@ -744,60 +944,77 @@ background-image: url(${config.backgroundImage});
             }
         }
     }
-
     async function loadFaceCam() {
         // load previous webcam
         const config = readConfig();
         try {
             state.faceCamError = false;
             body.classList.add("loading");
-            facecam.classList.remove("error");
-            await startStream(facecam, config.faceCamId, config.faceCamRotate, config.faceCamGreenScreen, config.faceCamContour);
-            console.log(`face cam started`)
+            facecamcontainer.classList.remove("error");
+            await startStream(facecam, config.faceCamId, config.faceCamRotate, config.faceCamGreenScreen, config.faceCamClipBlack, config.faceCamContour);
+            console.log(`face cam started`);
             if (!config.faceCamId)
                 stopStream(facecam.srcObject); // request permission only
             return; // success!
         }
         catch (e) {
-            tickEvent("streamer.facecam.error")
+            tickEvent("streamer.facecam.error");
             stopStream(facecam.srcObject);
-            facecam.classList.add("error");
+            facecamcontainer.classList.add("error");
             state.faceCamError = true;
-            saveConfig(config)
-            console.log(`could not start face cam`, e)
-            render()
+            saveConfig(config);
+            console.log(`could not start face cam`, e);
+            render();
         }
         finally {
             body.classList.remove("loading");
         }
     }
-
+    async function loadCamOverlays() {
+        const config = readConfig();
+        // update overlay
+        if (config.camoverlayVideo) {
+            const url = await resolveBlob(config.camoverlayVideo);
+            facecamoverlay.src = url;
+            hardwarecamoverlay.src = url;
+        }
+        else {
+            const url = facecamoverlay.src;
+            URL.revokeObjectURL(url);
+            facecamoverlay.src = "";
+            hardwarecamoverlay.src = "";
+        }
+    }
     async function loadHardwareCam() {
         // load previous webcam
         const config = readConfig();
         if (config.hardwareCamId) {
             try {
                 state.hardwareCamError = false;
-                await startStream(hardwarecam, config.hardwareCamId, config.hardwareCamRotate, config.hardwareCamGreenScreen, config.hardwareCamContour);
-                console.log(`hardware cam started`)
+                hardwarecamcontainer.classList.remove("hidden");
+                hardwarecamcontainer.classList.remove("error");
+                await startStream(hardwarecam, config.hardwareCamId, config.hardwareCamRotate, config.hardwareCamGreenScreen, config.hardwareCamClipBlack, config.hardwareCamContour);
+                console.log(`hardware cam started`);
                 return; // success!
             }
             catch (e) {
-                tickEvent("streamer.hardwarecam.error")
-                stopStream(hardwarecam.srcObject)
+                tickEvent("streamer.hardwarecam.error");
+                stopStream(hardwarecam.srcObject);
                 state.hardwareCamError = true;
-                saveConfig(config)
-                console.log(`could not start web cam`, e)
-                render()
+                hardwarecamcontainer.classList.add("error");
+                saveConfig(config);
+                console.log(`could not start web cam`, e);
+                render();
             }
-        } else {
-            state.hardwareCamError = false
-            stopStream(hardwarecam.srcObject)
+        }
+        else {
+            state.hardwareCamError = false;
+            hardwarecamcontainer.classList.add("hidden");
+            stopStream(hardwarecam.srcObject);
         }
     }
-
     async function startMicrophone() {
-        console.log("opening audio stream")
+        console.log("opening audio stream");
         const config = readConfig();
         try {
             state.micError = false;
@@ -807,23 +1024,22 @@ background-image: url(${config.backgroundImage});
                     noiseSuppression: true,
                     autoGainControl: true
                 }
-            }
+            };
             if (config.micId)
                 constraints.audio.deviceId = config.micId;
             const stream = await navigator.mediaDevices.getUserMedia(constraints);
-            console.log("audio stream ready")
+            console.log("audio stream ready");
             return stream;
         }
         catch (e) {
-            tickEvent("streamer.mic.error")
+            tickEvent("streamer.mic.error");
             state.micError = true;
-            saveConfig(config)
-            console.log(`could not start microphonem`, e)
-            render()
-            return undefined
+            saveConfig(config);
+            console.log(`could not start microphonem`, e);
+            render();
+            return undefined;
         }
     }
-
     function stopStream(stream) {
         try {
             if (stream && stream.active) {
@@ -834,45 +1050,118 @@ background-image: url(${config.backgroundImage});
                     .filter(track => track.stop)
                     .forEach(track => track.stop());
             }
-        } catch (e) {
-            console.log(e)
+        }
+        catch (e) {
+            console.log(e);
         }
     }
-
+    function initAddSite() {
+        accessify(addsiteinput);
+        addsiteinput.addEventListener("click", ev => {
+            const value = addsiteinput.value;
+            if (!value)
+                return; // ignore click
+            state.addSite = false;
+            const config = readConfig();
+            // emoji?
+            const em = /(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])+/.exec(value);
+            if (em) {
+                addsiteinput.value = "";
+                config.emojis = em[0];
+                saveConfig(config);
+                state.emoji = config.emojis.substr(0, 2);
+                setPaintTool("emoji");
+            }
+            else {
+                const url = normalizeUrl(value);
+                if (url) {
+                    addsiteinput.value = "";
+                    if (!config.extraSites)
+                        config.extraSites = [];
+                    if (config.extraSites.indexOf(url) < 0) {
+                        config.extraSites.push(url);
+                        saveConfig(config);
+                    }
+                    setSite(url);
+                }
+            }
+            render();
+        });
+    }
     function initVideos() {
+        accessify(facecam.parentElement);
+        accessify(hardwarecam.parentElement);
         facecam.parentElement.onclick = () => onClick(facecam.parentElement);
         hardwarecam.parentElement.onclick = () => onClick(hardwarecam.parentElement);
-
-        function swapLeftRight(e) {
-            tickEvent("streamer.swap.leftright", undefined, { interactiveConsent: true })
+        const facecamchatscenebtn = document.getElementById("facecamchatscenebtn");
+        facecamchatscenebtn.onclick = showChat;
+        const hardwarecamchatscenebtn = document.getElementById("hardwarecamchatscenebtn");
+        hardwarecamchatscenebtn.onclick = showChat;
+        const facecamchatbtn = document.getElementById("facecamchatbtn");
+        facecamchatbtn.onclick = toggleChat;
+        const hardwarecamchatbtn = document.getElementById("hardwarecamchatbtn");
+        hardwarecamchatbtn.onclick = toggleChat;
+        const facecamleftbtn = document.getElementById("facecamleftbtn");
+        facecamleftbtn.onclick = showLeft;
+        const hardwarecamleftbtn = document.getElementById("hardwarecamleftbtn");
+        hardwarecamleftbtn.onclick = showLeft;
+        const facecamrightbtn = document.getElementById("facecamrightbtn");
+        facecamrightbtn.onclick = showRight;
+        const hardwarecamrightbtn = document.getElementById("hardwarecamrightbtn");
+        hardwarecamrightbtn.onclick = showRight;
+        const facecamhardwarebtn = document.getElementById("facecamhardwarebtn");
+        facecamhardwarebtn.onclick = toggleHardware;
+        const hardwarecamhardwarebtn = document.getElementById("hardwarecamhardwarebtn");
+        hardwarecamhardwarebtn.onclick = toggleHardware;
+        const facecamthumbnailbtn = document.getElementById("facecamthumbnailbtn");
+        facecamthumbnailbtn.onclick = toggleThumbnail;
+        const hardwarecamthumbnailbtn = document.getElementById("hardwarecamthumbnailbtn");
+        hardwarecamthumbnailbtn.onclick = toggleThumbnail;
+        function swapLeftRight() {
+            tickEvent("streamer.swap.leftright", undefined, { interactiveConsent: true });
             if (state.sceneIndex == LEFT_SCENE_INDEX)
-                setScene("right")
+                setScene("right");
             else if (state.sceneIndex == RIGHT_SCENE_INDEX)
-                setScene("left")
+                setScene("left");
             else if (state.sceneIndex == CHAT_SCENE_INDEX) {
                 swapVideos();
-                updateSwap();
+                //updateSwap();
             }
         }
-
         function swapVideos() {
-            if (!state.hardware) return;
-            tickEvent("streamer.swap.videos", undefined, { interactiveConsent: true })
+            if (!state.hardware)
+                return;
+            tickEvent("streamer.swap.videos", undefined, { interactiveConsent: true });
             const fp = facecam.parentElement;
             const hp = hardwarecam.parentElement;
             if (fp.classList.contains("facecam")) {
-                fp.classList.remove("facecam")
-                fp.classList.add("hardwarecam")
-                hp.classList.remove("hardwarecam")
-                hp.classList.add("facecam")
-            } else {
-                fp.classList.remove("hardwarecam")
-                fp.classList.add("facecam")
-                hp.classList.remove("facecam")
-                hp.classList.add("hardwarecam")
+                fp.classList.remove("facecam");
+                fp.classList.add("hardwarecam");
+                hp.classList.remove("hardwarecam");
+                hp.classList.add("facecam");
+            }
+            else {
+                fp.classList.remove("hardwarecam");
+                fp.classList.add("facecam");
+                hp.classList.remove("facecam");
+                hp.classList.add("hardwarecam");
             }
         }
-
+        function showChat(e) {
+            tickEvent("streamer.videochatbtn", undefined, { interactiveConsent: true });
+            stopEvent(e);
+            setScene("chat");
+        }
+        function showLeft(e) {
+            tickEvent("streamer.videoleftbtn", undefined, { interactiveConsent: true });
+            stopEvent(e);
+            setScene("left");
+        }
+        function showRight(e) {
+            tickEvent("streamer.videorightbtn", undefined, { interactiveConsent: true });
+            stopEvent(e);
+            setScene("right");
+        }
         function onClick(el) {
             const isfacecam = el.classList.contains("facecam");
             if (!isfacecam && state.hardware)
@@ -880,240 +1169,347 @@ background-image: url(${config.backgroundImage});
             else
                 swapLeftRight();
         }
-
+        const playpip = document.getElementById("playpip");
         const introvideo = document.getElementById("introvideo");
-        introvideo.onclick = function (e) {
-            tickEvent("streamer.introvideo", undefined, { interactiveConsent: true })
-            stopEvent(e)
-            loadSettings()
-            hideSettings()
+        playpip.onclick = function (e) {
+            tickEvent("streamer.intro.video", undefined, { interactiveConsent: true });
+            intro.classList.add('hidden');
+            stopEvent(e);
+            loadSettings();
+            hideSettings();
             introvideo.requestPictureInPicture()
-                .then(() => introvideo.play())
-        }
+                .then(() => introvideo.play());
+        };
+        const skippip = document.getElementById("skippip");
+        skippip.onclick = function (e) {
+            tickEvent("streamer.intro.skip", undefined, { interactiveConsent: true });
+            intro.remove();
+            loadSettings();
+            hideSettings();
+        };
     }
-
+    async function repairCams() {
+        if (state.faceCamError)
+            await loadFaceCam();
+        if (state.hardwareCamError && state.hardware)
+            await loadHardwareCam();
+    }
+    function initFocus() {
+        document.addEventListener("visibilitychange", function () {
+            if (document.visibilityState === 'visible') {
+                console.log(`visible`);
+                repairCams();
+            }
+        }, false);
+    }
     function initResize() {
-        window.onresize = function (e) {
-            screensize.innerText = `(${window.innerWidth}x${window.innerHeight})`
+        const resolutions = [{
+                w: 1920,
+                h: 1080,
+                name: "HD 1080p"
+            }, {
+                w: 1280,
+                h: 720,
+                name: "SD 720p"
+            }
+        ];
+        function update() {
+            // clear canvas if any
+            clearPaint();
+            const el = document.firstElementChild;
+            const w = el.clientWidth;
+            const h = el.clientHeight;
+            const resolution = resolutions.filter(r => r.w == w && r.h == h)[0];
+            const text = `${w}x${h} ${resolution?.name || `- resize to 1920x1080 or 1080x720`}`;
+            const els = document.getElementsByClassName("screensize");
+            for (let i = 0; i < els.length; ++i) {
+                const el = els[i];
+                el.innerText = text;
+                if (resolution)
+                    el.classList.add("perfect");
+                else
+                    el.classList.remove("perfect");
+            }
+            // update ui
+            loadStyle();
         }
+        window.onresize = update;
+        update();
     }
-
     function initMessages() {
         window.onmessage = function (msg) {
             const data = msg.data;
             const source = msg.source;
             if (!!data.broadcast) {
                 data.outer = true;
-                frames
-                    .filter(ifrm => ifrm.contentWindow !== source)
-                    .forEach((ifrm) => ifrm.contentWindow.postMessage(data, "*"));
+                const frames = document.querySelectorAll("iframe.site");
+                for (let i = 0; i < frames.length; ++i) {
+                    const ifrm = frames.item(i);
+                    if (ifrm.contentWindow !== source)
+                        ifrm.contentWindow.postMessage(data, "*");
+                }
             }
         };
-
         window.onhashchange = handleHashChange;
-        window.addEventListener("error", function (message, source, lineno, colno, error) {
-            trackException(error, "error");
+        window.addEventListener("error", (ev) => {
+            trackException(ev.error, "error");
+            return false;
         });
         window.addEventListener("unhandledrejection", function (ev) {
             trackException(ev.reason, "promise");
         });
     }
-
     function handleHashChange() {
         const hash = window.location.hash;
         const parts = (hash || "").replace(/^#/, '').split('|');
         parts.forEach(part => {
-            const m = /^([^:]+):(.+)$/.exec(part);
-            if (m) {
-                const action = m[1];
-                const arg = m[2];
+            const frags = part.split(':');
+            if (frags.length >= 2) {
+                const action = frags.shift();
+                const arg = frags.shift();
+                const slug = frags.join(':');
                 switch (action) {
-                    case "editor": setEditor(arg); break;
+                    case "editor": {
+                        intro.remove(); // always hide
+                        setEditor(arg, slug);
+                        break;
+                    }
                     case "doc": {
                         // only same domain as editor
                         const config = readConfig();
-                        const editorConfig = editorConfigs[config.editor]
+                        const editorConfig = editorConfigs[config.editor];
                         config.multiEditor = true;
-                        const doc = editorConfig.url.trim(/\/\w+$/) + "/" + arg.trim(/^\//);
-                        editor2.src = doc;
+                        const doc = editorConfig.url.trim(/\/\w+$/) + "/" + arg.replace(/^\//, "");
+                        setFrameUrl(editor2(), doc, true);
                         render();
                         break;
                     }
                 }
             }
-        })
-        window.history.replaceState('', '', '#')
+        });
+        window.history.replaceState('', '', '#');
     }
-
-    async function startStream(el, deviceId, rotate, greenscreen, contourColor) {
-        stopStream(el.srcObject)
-        console.log(`trying device ${deviceId}`)
+    async function startStream(el, deviceId, rotate, greenscreen, clipBlack, contourColor) {
+        stopStream(el.srcObject);
+        console.log(`trying device ${deviceId}`);
         if (deviceId === DISPLAY_DEVICE_ID) {
-            const stream = await navigator.mediaDevices.getDisplayMedia({
+            const stream = await navigator.mediaDevices?.getDisplayMedia({
                 video: {
                     displaySurface: "application",
                     cursor: "never"
                 }
             });
             el.srcObject = stream;
-        } else {
+        }
+        else {
             const constraints = {
                 audio: false,
                 video: {
-                    aspectRatio: 4 / 3
+                    aspectRatio: 16 / 9,
+                    width: { ideal: 1920 },
+                    height: { ideal: 1080 }
                 }
-            }
+            };
             if (deviceId)
                 constraints.video.deviceId = deviceId;
             const stream = await navigator.mediaDevices.getUserMedia(constraints);
             el.srcObject = stream;
         }
-
         el.muted = true;
         el.volume = 0; // don't use sound!
         el.onloadedmetadata = (e) => {
             el.play();
-            toggleGreenScreen();
-        }
+            toggleGreenScreen(greenscreen, el, rotate, clipBlack, contourColor);
+        };
         if (rotate)
-            el.classList.add("rotate")
+            el.classList.add("rotate");
         else
             el.classList.remove("rotate");
-
-        function toggleGreenScreen() {
-            // time to get serious
-            if (greenscreen) {
-                el.style.opacity = 0;
-                el.parentElement.classList.add("greenscreen")
-                // https://github.com/brianchirls/Seriously.js/
-                const canvas = document.getElementById(el.id + "serious");
-                if (rotate)
-                    canvas.classList.add("rotate")
-                else
-                    canvas.classList.remove("rotate");
-                canvas.width = el.videoWidth;
-                canvas.height = el.videoHeight;
-                const seriously = new Seriously();
-                const source = seriously.source(el);
-                const target = seriously.target(canvas);
-                const chroma = seriously.effect("chroma");
-                const contour = seriously.effect("contour");
-                chroma.clipBlack = 0.6;
-                chroma.source = source;
-                contour.source = chroma;
-                let c = parseColor(contourColor);
-                if (c) {
-                    c = c.map(v => v / 0xff);
-                    c.push(1);
-                    contour.color = c
-                }
-                target.source = contour;
-                seriously.go();
-
-                el.seriously = seriously;
-            } else {
-                el.style.opacity = 1;
-                el.parentElement.classList.remove("greenscreen")
-
-                if (el.seriously) {
-                    el.seriously.stop();
-                    el.seriously = undefined;
-                }
-            }
+    }
+    function toggleGreenScreen(greenscreen, el, rotate, clipBlack, contourColor) {
+        // time to get serious
+        if (greenscreen) {
+            startGreenScreen(greenscreen, el, rotate, clipBlack, contourColor);
         }
-
-        function parseColor(c) {
-            if (!c) return;
-            let m = /^#([a-f0-9]{3})$/i.exec(c);
-            if (m) {
-                return [
-                    parseInt(m[1].charAt(0), 16) * 0x11,
-                    parseInt(m[1].charAt(1), 16) * 0x11,
-                    parseInt(m[1].charAt(2), 16) * 0x11
-                ];
-            }
-            m = /^#([a-f0-9]{6})$/i.exec(c);
-            if (m) {
-                return [
-                    parseInt(m[1].substr(0, 2), 16),
-                    parseInt(m[1].substr(2, 2), 16),
-                    parseInt(m[1].substr(4, 2), 16)
-                ];
-            }
-            return undefined;
+        else
+            stopGreenScreen(el);
+    }
+    function startGreenScreen(greenscreen, el, rotate, clipBlack, contourColor) {
+        el.style.opacity = "0";
+        el.parentElement.classList.add("greenscreen");
+        // https://github.com/brianchirls/Seriously.js/
+        const canvas = document.getElementById(el.id + "serious");
+        if (rotate)
+            canvas.classList.add("rotate");
+        else
+            canvas.classList.remove("rotate");
+        canvas.width = el.videoWidth;
+        canvas.height = el.videoHeight;
+        cleanSeriously(el);
+        const seriously = new Seriously();
+        let source = seriously.source(el);
+        // source -> chroma key
+        const chroma = seriously.effect("chroma");
+        chroma.clipBlack = clipBlack || 0.6;
+        const screenColor = toSeriousColor(greenscreen);
+        if (screenColor)
+            chroma.screen = screenColor;
+        chroma.source = source;
+        seriously.chroma = chroma;
+        source = chroma;
+        // optional chroma -> contour
+        if (contourColor) {
+            const contour = seriously.effect("contour");
+            contour.source = source;
+            seriously.contour = contour;
+            seriously.contour.color = toSeriousColor(contourColor);
+            source = contour;
+        }
+        // pipe to canvas
+        const target = seriously.target(canvas);
+        target.source = source;
+        seriously.go();
+        el.seriously = seriously;
+    }
+    function stopGreenScreen(el) {
+        el.style.opacity = "1";
+        el.parentElement.classList.remove("greenscreen");
+        cleanSeriously(el);
+    }
+    function cleanSeriously(el) {
+        if (el.seriously) {
+            el.seriously.stop();
+            el.seriously.destroy();
+            el.seriously = undefined;
         }
     }
-
+    function toSeriousColor(color) {
+        const c = parseColor(color);
+        if (!c)
+            return undefined;
+        const cf = c.map(v => v / 0xff);
+        cf.push(1);
+        return cf;
+    }
+    function parseColor(c) {
+        if (!c)
+            return undefined;
+        let m = /^#([a-f0-9]{3})$/i.exec(c);
+        if (m) {
+            return [
+                parseInt(m[1].charAt(0), 16) * 0x11,
+                parseInt(m[1].charAt(1), 16) * 0x11,
+                parseInt(m[1].charAt(2), 16) * 0x11
+            ];
+        }
+        m = /^#([a-f0-9]{6})$/i.exec(c);
+        if (m) {
+            return [
+                parseInt(m[1].substr(0, 2), 16),
+                parseInt(m[1].substr(2, 2), 16),
+                parseInt(m[1].substr(4, 2), 16)
+            ];
+        }
+        return undefined;
+    }
     function stopRecording() {
         const stop = state.recording;
         state.recording = undefined;
-        if (stop) stop();
+        if (stop)
+            stop();
         render();
     }
-
     function initSubtitles() {
         // not supported in Edge
-        if (typeof webkitSpeechRecognition === "undefined" || /Edg\//.test(navigator.userAgent)) return;
-
+        if (typeof webkitSpeechRecognition === "undefined" || /Edg\//.test(navigator.userAgent))
+            return;
         let hideInterval;
         const speech = state.speech = new webkitSpeechRecognition();
         speech.continuous = true;
+        speech.confidence = 0.7;
         speech.maxAlternatives = 1;
-        speech.interimResults = false;
+        speech.interimResults = true;
+        let nextInterimResult = 0;
         speech.onstart = () => {
-            console.log("speech: started")
+            console.log("speech: started");
             state.speechRunning = true;
             loadToolbox();
-        }
+        };
         speech.onend = () => {
-            console.log("speech: stopped")
+            console.log("speech: stopped");
             state.speechRunning = false;
             hide();
-        }
+        };
         speech.onerror = (ev) => {
-            console.log("speech: error")
-            console.log(ev)
+            console.log("speech: error");
+            console.log(ev);
             hide();
-        }
+        };
         speech.onnomatch = (ev) => {
-            console.log("speech: no match")
-            console.log(ev)
+            console.log("speech: no match");
+            console.log(ev);
             hide();
-        }
+        };
         speech.onresult = (ev) => {
             const results = ev.results;
-            console.log(results)
-            subtitles.innerText = results[ev.resultIndex][0].transcript;
+            const lastResult = results[ev.resultIndex];
+            //console.log(`lastResult`, lastResult)
+            if (lastResult.isFinal) {
+                //console.log(`final`)
+                subtitles.innerText = lastResult[0].transcript;
+                nextInterimResult = ev.resultIndex + 1;
+            }
+            else {
+                //console.log(`not final`, results)
+                // collect the intermediate results with good quality
+                let text = "";
+                for (let i = nextInterimResult; i < results.length; ++i) {
+                    if (!results[i].isFinal) {
+                        const alt = results[i][0];
+                        if (alt.confidence < 0.8) {
+                            //console.log(alt)
+                            // poor quality detection, stop
+                            break;
+                        }
+                        else {
+                            text += alt.transcript;
+                        }
+                    }
+                }
+                if (text)
+                    subtitles.innerText = text;
+            }
             show();
-            if (hideInterval) clearTimeout(hideInterval)
+            if (hideInterval)
+                clearTimeout(hideInterval);
             hideInterval = setTimeout(hide, 10000);
-        }
+        };
         function show() {
-            subtitles.classList.remove("hidden")
+            subtitles.classList.remove("hidden");
         }
         function hide() {
             hideInterval = undefined;
-            subtitles.classList.add("hidden")
+            subtitles.classList.add("hidden");
             loadToolbox();
         }
     }
-
     function toggleSpeech() {
         const speech = state.speech;
-        if (!speech) return;
+        if (!speech)
+            return;
         if (state.speechRunning) {
-            tickEvent("streamer.speech.stop", undefined, { interactiveConsent: true })
+            tickEvent("streamer.speech.stop", undefined, { interactiveConsent: true });
             speech.stop();
-        } else {
-            tickEvent("streamer.speech.start", undefined, { interactiveConsent: true })
+        }
+        else {
+            tickEvent("streamer.speech.start", undefined, { interactiveConsent: true });
             speech.start();
         }
     }
-
     async function getDisplayStream(cursor) {
         try {
             selectapp.classList.remove("hidden");
-            const stream = await navigator.mediaDevices.getDisplayMedia({
+            const stream = await navigator.mediaDevices?.getDisplayMedia({
                 video: {
                     displaySurface: "browser",
                     cursor: cursor ? "always" : "never"
@@ -1125,10 +1521,9 @@ background-image: url(${config.backgroundImage});
             selectapp.classList.add("hidden");
         }
     }
-
     async function takeScreenshot() {
-        if (state.screenshoting || state.recording) return;
-
+        if (state.screenshoting || state.recording)
+            return;
         let stream = state.screenshotStream;
         if (!stream) {
             stream = state.screenshotStream = await getDisplayStream(false);
@@ -1138,16 +1533,14 @@ background-image: url(${config.backgroundImage});
             const video = state.screenshotVideo = document.createElement("video");
             video.oncanplay = () => {
                 video.play();
-            }
+            };
             video.onabort = clean;
             video.onerror = clean;
             video.srcObject = stream;
         }
-
         state.screenshoting = true;
         startCountdown(6000, screenshotVideo);
         render();
-
         function clean() {
             state.screenshoting = false;
             state.screenshotVideo = undefined;
@@ -1158,15 +1551,15 @@ background-image: url(${config.backgroundImage});
             render();
         }
     }
-
     function screenshotVideo() {
-        if (!state.screenshoting) return;
+        if (!state.screenshoting)
+            return;
         const video = state.screenshotVideo;
-        if (!video) return;
-
+        if (!video)
+            return;
         state.screenshoting = false;
-        countdown.style.display = "none"
-        toolbox.style.display = "none"
+        countdown.style.display = "none";
+        toolbox.style.display = "none";
         render();
         setTimeout(function () {
             const cvs = document.createElement("canvas");
@@ -1174,65 +1567,71 @@ background-image: url(${config.backgroundImage});
             cvs.height = video.videoHeight;
             const ctx = cvs.getContext("2d");
             ctx.drawImage(video, 0, 0);
-            cvs.toBlob(img => downloadBlob(img, "screenshot.png", "image/png"));
-            countdown.style.display = "block"
-            toolbox.style.display = "block"
-        }, 200) // let browser hide countdown
+            cvs.toBlob(img => downloadBlob(img, "screenshot.png"));
+            countdown.style.display = "block";
+            toolbox.style.display = "block";
+        }, 200); // let browser hide countdown
     }
-
     async function startRecording() {
+        tickEvent('recorder.prepare');
         const config = readConfig();
         state.recording = undefined;
+        let audioCtx;
         const stream = await getDisplayStream(true);
         try {
             state.micError = false;
             const audioStream = await startMicrophone();
-            const audioCtx = new AudioContext();
+            audioCtx = new AudioContext();
             const audioSource = audioCtx.createMediaStreamSource(audioStream);
             const delay = audioCtx.createDelay(2);
             delay.delayTime.value = (config.micDelay || 0) / 1000;
             audioSource.connect(delay);
             const audioDestination = audioCtx.createMediaStreamDestination();
             delay.connect(audioDestination);
-            stream.addTrack(audioDestination.stream.getAudioTracks()[0])
-        } catch (e) {
-            console.log(e)
+            stream.addTrack(audioDestination.stream.getAudioTracks()[0]);
+        }
+        catch (e) {
+            console.log(e);
             state.micError = true;
         }
         const chunks = [];
         const options = {
             mimeType: 'video/webm;codecs=H264'
         };
-        const mediaRecorder = new MediaRecorder(stream, options)
-        mediaRecorder.ondataavailable = (e) => event.data.size && chunks.push(e.data);
+        const mediaRecorder = new MediaRecorder(stream, options);
+        mediaRecorder.ondataavailable = (e) => e.data.size && chunks.push(e.data);
         mediaRecorder.onstop = (e) => download();
         mediaRecorder.onerror = (e) => download();
-
-        recorder.classList.remove('hidden')
+        recorder.classList.remove('hidden');
         recorder.onclick = () => {
-            recorder.classList.add('hidden')
+            tickEvent('recorder.start');
+            recorder.classList.add('hidden');
             mediaRecorder.start();
-        }
+        };
         state.recording = () => {
             try {
                 stopStream(mediaRecorder.stream);
-            } catch (e) {
-                console.log(e)
             }
-        }
+            catch (e) {
+                console.log(e);
+            }
+        };
         render();
-
         function download() {
+            tickEvent('recorder.download');
+            console.log(`downloading recorded video`);
             // makesure to close all streams
-            recorder.classList.add('hidden')
+            recorder.classList.add('hidden');
             try {
-                audioCtx.close();
-                stream.getVideoTracks().forEach(track => track.stop())
-                stream.getAudioTracks().forEach(track => track.stop())
-            } catch (e) { }
-
+                if (audioCtx)
+                    audioCtx.close();
+                stream.getVideoTracks().forEach(track => track.stop());
+                stream.getAudioTracks().forEach(track => track.stop());
+            }
+            catch (e) {
+                console.log(e);
+            }
             state.recording = undefined;
-
             const blob = new Blob(chunks, {
                 type: "video/webm"
             });
@@ -1240,143 +1639,263 @@ background-image: url(${config.backgroundImage});
             render();
         }
     }
-
     function downloadBlob(blob, name) {
         const url = URL.createObjectURL(blob);
+        downloadUrl(url, name);
+        window.URL.revokeObjectURL(url);
+    }
+    function downloadUrl(url, name) {
         const a = document.createElement("a");
         document.body.appendChild(a);
-        a.style = "display: none";
+        a.style.display = "none";
         a.href = url;
         a.download = name;
         a.click();
-        window.URL.revokeObjectURL(url);
     }
-
+    function normalizeUrl(url) {
+        if (!url)
+            return undefined;
+        url = url.trim();
+        const m = /<iframe.*?src="([^"]+)".*?>/i.exec(url);
+        if (m)
+            url = decodeURI(m[1]).replace(/&amp;/g, "&");
+        if (!/^http?s:\/\//i.test(url))
+            url = "https://" + url;
+        return url;
+    }
     async function loadSettings() {
         const config = readConfig();
-        const cams = await listCameras()
-        const mics = await listMicrophones()
-
-        const settingsclose = document.getElementById("settingsclose")
-        settingsclose.onclick = function (e) {
-            tickEvent("streamer.settingsclose", undefined, { interactiveConsent: true })
-            stopEvent(e)
-            hideSettings()
+        const cams = await listCameras();
+        const mics = await listMicrophones();
+        const sections = document.querySelectorAll("div.section>h3");
+        for (let i = 0; i < sections.length; ++i) {
+            const section = sections[i];
+            section.onclick = (evt) => evt.target.parentElement.classList.toggle("expanded");
         }
+        const settingsclose = document.getElementById("settingsclose");
+        settingsclose.onclick = function (e) {
+            tickEvent("streamer.settingsclose", undefined, { interactiveConsent: true });
+            stopEvent(e);
+            hideSettings();
+        };
+        const settingsreset = document.getElementById("settingsreset");
+        settingsreset.onclick = function (e) {
+            tickEvent("streamer.settingsclear", undefined, { interactiveConsent: true });
+            stopEvent(e);
+            if (confirm("This command will erase all your settings, are you sure?")) {
+                saveConfig(defaultConfig());
+                window.location.reload();
+            }
+        };
+        const importsettingsinput = document.getElementById("importsettingsinput");
+        const importsettings = document.getElementById("importsettings");
+        importFileButton("streamer.importsettings", importsettingsinput, importsettings, (file) => readFileAsText(file)
+            .then(text => {
+            const config = JSON.parse(text);
+            saveConfig(config);
+            window.location.reload();
+        }));
+        const exportsettings = document.getElementById("exportsettings");
+        exportsettings.onclick = function (e) {
+            tickEvent("streamer.exportsettings", undefined, { interactiveConsent: true });
+            stopEvent(e);
+            const config = readConfig();
+            const url = `data:text/plain;charset=utf-8,` + encodeURIComponent(JSON.stringify(config, null, 2));
+            downloadUrl(url, "streamer.json");
+        };
         const editorselect = document.getElementById("editorselect");
-        editorselect.innerHTML = "" // remove all web cams
+        editorselect.innerHTML = ""; // remove all web cams
         Object.keys(editorConfigs).forEach(editorid => {
-            const option = document.createElement("option")
-            option.value = editorid
-            option.text = editorConfigs[editorid].name;
-            editorselect.add(option)
-            if (config.editor == editorid)
-                option.selected = true;
-        })
+            const editor = editorConfigs[editorid];
+            if (!editor.unsupported || editor.unsupported.indexOf(STREAMER_ID) < 0) {
+                const option = document.createElement("option");
+                option.value = editorid;
+                option.text = editor.name;
+                editorselect.add(option);
+                if (config.editor == editorid)
+                    option.selected = true;
+            }
+        });
         editorselect.onchange = function () {
             const selected = editorselect.options[editorselect.selectedIndex];
             setEditor(selected.value);
-        }
-
-        const fullscreeneditorcheckbox = document.getElementById("fullscreeneditorcheckbox")
-        fullscreeneditorcheckbox.checked = !!config.fullScreenEditor
+        };
+        const fullscreeneditorcheckbox = document.getElementById("fullscreeneditorcheckbox");
+        fullscreeneditorcheckbox.checked = !!config.fullScreenEditor;
         fullscreeneditorcheckbox.onchange = function () {
-            config.fullScreenEditor = !!fullscreeneditorcheckbox.checked
-            saveConfig(config)
-            render()
-        }
-
-        const multicheckbox = document.getElementById("multicheckbox")
-        multicheckbox.checked = !!config.multiEditor
+            config.fullScreenEditor = !!fullscreeneditorcheckbox.checked;
+            saveConfig(config);
+            render();
+        };
+        const multicheckbox = document.getElementById("multicheckbox");
+        multicheckbox.checked = !!config.multiEditor;
         multicheckbox.onchange = function () {
-            config.multiEditor = !!multicheckbox.checked
-            saveConfig(config)
-            render()
-            loadEditor()
-        }
-
-        const extrasitesarea = document.getElementById("extrasitesarea")
+            config.multiEditor = !!multicheckbox.checked;
+            saveConfig(config);
+            render();
+            loadEditor();
+        };
+        const powerpointarea = document.getElementById("powerpointarea");
+        powerpointarea.value = "";
+        powerpointarea.oninput = function (e) {
+            const value = powerpointarea.value || "";
+            const m = /<iframe.*?src="([^"]+)".*?>/i.exec(value);
+            if (m) {
+                const url = decodeURI(m[1]).replace(/&amp;/g, "&");
+                let extraSites = config.extraSites;
+                if (!extraSites)
+                    extraSites = config.extraSites = [];
+                if (extraSites.indexOf(url) < 0) {
+                    extraSites.push(url);
+                    saveConfig(config);
+                    loadSettings();
+                    loadToolbox();
+                    render();
+                }
+            }
+        };
+        const extrasitesarea = document.getElementById("extrasitesarea");
         extrasitesarea.value = (config.extraSites || []).join('\n');
         extrasitesarea.onchange = function (e) {
             config.extraSites = (extrasitesarea.value || "").split('\n')
-                .filter(line => /^https:\/\//.test(line))
+                .filter(line => /^https?:\/\//.test(line))
                 .map(line => line.trim());
             saveConfig(config);
             loadToolbox();
-            render()
-        }
+            render();
+        };
         const facecamselect = document.getElementById("facecamselect");
-        facecamselect.innerHTML = "" // remove all web cams
-        {
-            const option = document.createElement("option")
-            option.value = ""
-            option.text = "Off"
-            facecamselect.add(option)
-        }
+        facecamselect.innerHTML = ""; // remove all web cams
+        // no Off option
         cams.forEach(cam => {
-            const option = document.createElement("option")
-            option.value = cam.deviceId
-            option.text = cam.label || `camera ${cam.deviceId}`
-            facecamselect.add(option)
+            const option = document.createElement("option");
+            option.value = cam.deviceId;
+            option.text = cam.label || `camera ${cam.deviceId}`;
+            facecamselect.add(option);
             if (config.faceCamId == cam.deviceId && cam.deviceId)
                 option.selected = true;
-        })
-        if (!!navigator.mediaDevices.getDisplayMedia) {
-            const option = document.createElement("option")
-            option.value = DISPLAY_DEVICE_ID
-            option.text = "Application"
+        });
+        if (hasGetDisplayMedia) {
+            const option = document.createElement("option");
+            option.value = DISPLAY_DEVICE_ID;
+            option.text = "Application";
             if (config.faceCamId === option.value)
-                option.selected = true
-            facecamselect.add(option)
+                option.selected = true;
+            facecamselect.add(option);
         }
         facecamselect.onchange = function () {
             const selected = facecamselect.options[facecamselect.selectedIndex];
             config.faceCamId = selected.value;
             if (config.hardwareCamId == config.faceCamId)
                 config.hardwareCamId = undefined; // priority to face cam
-            saveConfig(config)
-            loadFaceCam().then(() => loadSettings())
-        }
-        const facerotatecheckbox = document.getElementById("facerotatecameracheckbox")
-        facerotatecheckbox.checked = !!config.faceCamRotate
+            saveConfig(config);
+            loadFaceCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings());
+        };
+        const facerotatecheckbox = document.getElementById("facerotatecameracheckbox");
+        facerotatecheckbox.checked = !!config.faceCamRotate;
         facerotatecheckbox.onchange = function () {
-            config.faceCamRotate = !!facerotatecheckbox.checked
-            saveConfig(config)
-            render()
-            loadFaceCam().then(() => loadSettings())
-        }
-        const facecamcircularcheckbox = document.getElementById("facecamcircularcheckbox")
-        facecamcircularcheckbox.checked = !!config.faceCamCircular
+            config.faceCamRotate = !!facerotatecheckbox.checked;
+            saveConfig(config);
+            render();
+            loadFaceCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings());
+        };
+        const facecamcircularcheckbox = document.getElementById("facecamcircularcheckbox");
+        facecamcircularcheckbox.checked = !!config.faceCamCircular;
         facecamcircularcheckbox.onchange = function () {
-            config.faceCamCircular = !!facecamcircularcheckbox.checked
-            saveConfig(config)
-            render()
-            loadFaceCam().then(() => loadSettings())
-        }
-        const facecamgreenscreencheckbox = document.getElementById("facecamgreenscreencheckbox")
-        facecamgreenscreencheckbox.checked = !!config.faceCamGreenScreen
-        facecamgreenscreencheckbox.onchange = function () {
-            config.faceCamGreenScreen = !!facecamgreenscreencheckbox.checked
-            saveConfig(config)
-            render()
-            loadFaceCam().then(() => loadSettings())
-        }
-        const facecamcontourinput = document.getElementById("facecamcontourinput")
-        facecamcontourinput.value = config.faceCamContour || ""
+            config.faceCamCircular = !!facecamcircularcheckbox.checked;
+            saveConfig(config);
+            render();
+            loadFaceCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings());
+        };
+        const facecamscreeninput = document.getElementById("facecamscreeninput");
+        facecamscreeninput.value = config.faceCamGreenScreen || "";
+        facecamscreeninput.onchange = function (e) {
+            config.faceCamGreenScreen = undefined;
+            if (/^#[a-fA-F0-9]{6}$/.test(facecamscreeninput.value))
+                config.faceCamGreenScreen = facecamscreeninput.value;
+            saveConfig(config);
+            // already running?
+            if (config.faceCamGreenScreen && facecam.seriously?.chroma)
+                facecam.seriously.chroma.screen = toSeriousColor(config.faceCamGreenScreen);
+            else
+                loadFaceCam()
+                    .then(() => loadCamOverlays())
+                    .then(() => loadSettings());
+        };
+        const facecamscreenclear = document.getElementById("facecamscreenclear");
+        facecamscreenclear.onclick = function (e) {
+            config.faceCamGreenScreen = undefined;
+            saveConfig(config);
+            loadFaceCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings());
+        };
+        const facecamscreencanvas = document.getElementById("facecamscreencanvas");
+        facecamscreencanvas.width = 320;
+        facecamscreencanvas.height = facecamscreencanvas.width / facecam.videoWidth * facecam.videoHeight;
+        const facecamscreenctx = facecamscreencanvas.getContext('2d');
+        facecamscreenctx.drawImage(facecam, 0, 0, facecam.videoWidth, facecam.videoHeight, 0, 0, facecamscreencanvas.width, facecamscreencanvas.height);
+        facecamscreencanvas.onclick = (e) => {
+            const x = e.offsetX;
+            const y = e.offsetY;
+            const rgb = facecamscreenctx.getImageData(x, y, 1, 1).data;
+            config.faceCamGreenScreen = "#" +
+                ("0" + rgb[0].toString(16)).slice(-2) +
+                ("0" + rgb[1].toString(16)).slice(-2) +
+                ("0" + rgb[2].toString(16)).slice(-2);
+            saveConfig(config);
+            // already running?
+            if (config.faceCamGreenScreen && facecam.seriously?.chroma) {
+                facecam.seriously.chroma.screen = toSeriousColor(config.faceCamGreenScreen);
+                loadSettings();
+            }
+            else
+                loadFaceCam()
+                    .then(() => loadCamOverlays())
+                    .then(() => loadSettings());
+        };
+        const facecamgreenclipblack = document.getElementById("facecamgreenclipblack");
+        facecamgreenclipblack.value = (config.faceCamClipBlack || 0.6) + "";
+        facecamgreenclipblack.onchange = function (e) {
+            config.faceCamClipBlack = parseFloat(facecamgreenclipblack.value);
+            saveConfig(config);
+            // already running?
+            if (facecam.seriously?.chroma)
+                facecam.seriously.chroma.clipBlack = config.faceCamClipBlack;
+            else
+                loadFaceCam()
+                    .then(() => loadCamOverlays())
+                    .then(() => loadSettings());
+        };
+        const facecamcontourinput = document.getElementById("facecamcontourinput");
+        facecamcontourinput.value = config.faceCamContour || "";
         facecamcontourinput.onchange = function (e) {
             config.faceCamContour = undefined;
             if (/^#[a-fA-F0-9]{6}$/.test(facecamcontourinput.value))
-                config.faceCamContour = facecamcontourinput.value
+                config.faceCamContour = facecamcontourinput.value;
             saveConfig(config);
-            loadFaceCam().then(() => loadSettings())
-        }
+            // already running?
+            if (config.faceCamContour && facecam.seriously?.contour)
+                facecam.seriously.contour.color = toSeriousColor(config.faceCamContour);
+            else
+                loadFaceCam()
+                    .then(() => loadCamOverlays())
+                    .then(() => loadSettings());
+        };
         const facecamcontourclear = document.getElementById("facecamcontourclear");
         facecamcontourclear.onclick = function (e) {
             config.faceCamContour = undefined;
             saveConfig(config);
-            loadFaceCam().then(() => loadSettings())
-        }
-
+            loadFaceCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings());
+        };
         config.faceCamFilter = config.faceCamFilter || {};
         ["contrast", "brightness", "saturate"].forEach(function (k) {
             const elid = "facecam" + k;
@@ -1386,87 +1905,153 @@ background-image: url(${config.backgroundImage});
                 config.faceCamFilter[k] = el.valueAsNumber;
                 saveConfig(config);
                 loadStyle();
-            }
-        })
-        const facecamerror = document.getElementById("facecamerror")
+            };
+        });
+        const facecamerror = document.getElementById("facecamerror");
+        facecamerror.onclick = () => {
+            repairCams();
+            loadSettings();
+        };
         if (state.faceCamError)
-            facecamerror.classList.remove("hidden")
+            facecamerror.classList.remove("hidden");
         else
-            facecamerror.classList.add("hidden")
-
+            facecamerror.classList.add("hidden");
         const hardwarecamselect = document.getElementById("hardwarecamselect");
-        hardwarecamselect.innerHTML = "" // remove all web cams
+        hardwarecamselect.innerHTML = ""; // remove all web cams
         {
-            const option = document.createElement("option")
-            option.value = ""
-            option.text = "Off"
+            const option = document.createElement("option");
+            option.value = "";
+            option.text = "Off";
             if (!config.hardwareCamId)
                 option.selected = true;
-            hardwarecamselect.add(option)
+            hardwarecamselect.add(option);
         }
         cams.forEach(cam => {
-            const option = document.createElement("option")
-            option.value = cam.deviceId
-            option.text = cam.label || `camera ${cam.deviceId}`
-            hardwarecamselect.add(option)
+            const option = document.createElement("option");
+            option.value = cam.deviceId;
+            option.text = cam.label || `camera ${cam.deviceId}`;
+            hardwarecamselect.add(option);
             if (config.hardwareCamId == cam.deviceId && cam.deviceId)
                 option.selected = true;
-        })
-        if (!!navigator.mediaDevices.getDisplayMedia) {
-            const option = document.createElement("option")
-            option.value = DISPLAY_DEVICE_ID
-            option.text = "Application"
+        });
+        if (hasGetDisplayMedia) {
+            const option = document.createElement("option");
+            option.value = DISPLAY_DEVICE_ID;
+            option.text = "Application";
             if (config.hardwareCamId === option.value)
-                option.selected = true
-            hardwarecamselect.add(option)
+                option.selected = true;
+            hardwarecamselect.add(option);
         }
         hardwarecamselect.onchange = function () {
             const selected = hardwarecamselect.options[hardwarecamselect.selectedIndex];
             config.hardwareCamId = selected.value;
-            saveConfig(config)
-            state.hardware = !!config.hardwareCamId
-            render()
-            loadHardwareCam().then(() => loadSettings())
-        }
-        const hardwarerotatecheckbox = document.getElementById("hardwarerotatecameracheckbox")
-        hardwarerotatecheckbox.checked = !!config.hardwareCamRotate
+            saveConfig(config);
+            state.hardware = !!config.hardwareCamId;
+            render();
+            loadHardwareCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings());
+        };
+        const hardwarerotatecheckbox = document.getElementById("hardwarerotatecameracheckbox");
+        hardwarerotatecheckbox.checked = !!config.hardwareCamRotate;
         hardwarerotatecheckbox.onchange = function () {
-            config.hardwareCamRotate = !!hardwarerotatecheckbox.checked
-            saveConfig(config)
-            loadHardwareCam().then(() => loadSettings())
-        }
-        const hardwarecamcircularcheckbox = document.getElementById("hardwarecamcircularcheckbox")
-        hardwarecamcircularcheckbox.checked = !!config.hardwareCamCircular
+            config.hardwareCamRotate = !!hardwarerotatecheckbox.checked;
+            saveConfig(config);
+            loadHardwareCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings());
+        };
+        const hardwarecamcircularcheckbox = document.getElementById("hardwarecamcircularcheckbox");
+        hardwarecamcircularcheckbox.checked = !!config.hardwareCamCircular;
         hardwarecamcircularcheckbox.onchange = function () {
-            config.hardwareCamCircular = !!hardwarecamcircularcheckbox.checked
-            saveConfig(config)
-            render()
-            loadFaceCam().then(() => loadSettings())
-        }
-        const hardwarecamgreenscreencheckbox = document.getElementById("hardwarecamgreenscreencheckbox")
-        hardwarecamgreenscreencheckbox.checked = !!config.hardwareCamGreenScreen
-        hardwarecamgreenscreencheckbox.onchange = function () {
-            config.hardwareCamGreenScreen = !!hardwarecamgreenscreencheckbox.checked
-            saveConfig(config)
-            render()
-            loadHardwareCam().then(() => loadSettings())
-        }
-        const hardwarecamcontourinput = document.getElementById("hardwarecamcontourinput")
-        hardwarecamcontourinput.value = config.hardwareCamContour || ""
+            config.hardwareCamCircular = !!hardwarecamcircularcheckbox.checked;
+            saveConfig(config);
+            render();
+            loadFaceCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings());
+        };
+        const hardwarecamscreeninput = document.getElementById("hardwarecamscreeninput");
+        hardwarecamscreeninput.value = config.hardwareCamGreenScreen || "";
+        hardwarecamscreeninput.onchange = function (e) {
+            config.hardwareCamGreenScreen = undefined;
+            if (/^#[a-fA-F0-9]{6}$/.test(hardwarecamscreeninput.value))
+                config.hardwareCamGreenScreen = hardwarecamscreeninput.value;
+            saveConfig(config);
+            // already running?
+            if (config.hardwareCamGreenScreen && hardwarecam.seriously?.chroma)
+                hardwarecam.seriously.chroma.screen = toSeriousColor(config.hardwareCamGreenScreen);
+            else
+                loadHardwareCam()
+                    .then(() => loadCamOverlays())
+                    .then(() => loadSettings());
+        };
+        const hardwarecamscreencanvas = document.getElementById("hardwarecamscreencanvas");
+        hardwarecamscreencanvas.width = 320;
+        hardwarecamscreencanvas.height = hardwarecamscreencanvas.width / hardwarecam.videoWidth * hardwarecam.videoHeight;
+        const hardwarecamscreenctx = hardwarecamscreencanvas.getContext('2d');
+        hardwarecamscreenctx.drawImage(hardwarecam, 0, 0, hardwarecam.videoWidth, hardwarecam.videoHeight, 0, 0, hardwarecamscreencanvas.width, hardwarecamscreencanvas.height);
+        hardwarecamscreencanvas.onclick = (e) => {
+            const x = e.offsetX;
+            const y = e.offsetY;
+            const rgb = hardwarecamscreenctx.getImageData(x, y, 1, 1).data;
+            config.hardwareCamGreenScreen = "#" +
+                ("0" + rgb[0].toString(16)).slice(-2) +
+                ("0" + rgb[1].toString(16)).slice(-2) +
+                ("0" + rgb[2].toString(16)).slice(-2);
+            saveConfig(config);
+            // already running?
+            if (config.hardwareCamGreenScreen && hardwarecam.seriously?.chroma) {
+                hardwarecam.seriously.chroma.screen = toSeriousColor(config.hardwareCamGreenScreen);
+                loadSettings();
+            }
+            else
+                loadHardwareCam().then(() => loadSettings());
+        };
+        const hardwarecamscreenclear = document.getElementById("hardwarecamscreenclear");
+        hardwarecamscreenclear.onclick = function (e) {
+            config.hardwareCamGreenScreen = undefined;
+            saveConfig(config);
+            loadHardwareCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings());
+        };
+        const hardwarecamgreenclipblack = document.getElementById("hardwarecamgreenclipblack");
+        hardwarecamgreenclipblack.value = (config.hardwareCamClipBlack || 0.6) + "";
+        hardwarecamgreenclipblack.onchange = function (e) {
+            config.hardwareCamClipBlack = parseFloat(hardwarecamgreenclipblack.value);
+            saveConfig(config);
+            // already running?
+            if (hardwarecam.seriously?.chroma)
+                hardwarecam.seriously.chroma.clipBlack = config.hardwareCamClipBlack;
+            else
+                loadHardwareCam()
+                    .then(() => loadCamOverlays())
+                    .then(() => loadSettings());
+        };
+        const hardwarecamcontourinput = document.getElementById("hardwarecamcontourinput");
+        hardwarecamcontourinput.value = config.hardwareCamContour || "";
         hardwarecamcontourinput.onchange = function (e) {
             config.hardwareCamContour = undefined;
             if (/^#[a-fA-F0-9]{6}$/.test(hardwarecamcontourinput.value))
-                config.hardwareCamContour = hardwarecamcontourinput.value
+                config.hardwareCamContour = hardwarecamcontourinput.value;
             saveConfig(config);
-            loadHardwareCam().then(() => loadSettings())
-        }
+            // already running?
+            if (config.hardwareCamContour && hardwarecam.seriously?.contour)
+                hardwarecam.seriously.contour.color = toSeriousColor(config.hardwareCamContour);
+            else
+                loadHardwareCam()
+                    .then(() => loadCamOverlays())
+                    .then(() => loadSettings());
+        };
         const hardwarecamcontourclear = document.getElementById("hardwarecamcontourclear");
         hardwarecamcontourclear.onclick = function (e) {
             config.hardwareCamContour = undefined;
             saveConfig(config);
-            loadHardwareCam().then(() => loadSettings())
-        }
-
+            loadHardwareCam()
+                .then(() => loadCamOverlays())
+                .then(() => loadSettings());
+        };
         config.hardwareCamFilter = config.hardwareCamFilter || {};
         ["contrast", "brightness", "saturate"].forEach(function (k) {
             const elid = "hardwarecam" + k;
@@ -1476,253 +2061,287 @@ background-image: url(${config.backgroundImage});
                 config.hardwareCamFilter[k] = el.valueAsNumber;
                 saveConfig(config);
                 loadStyle();
-            }
-        })
-        const hardwarecamerror = document.getElementById("hardwarecamerror")
+            };
+        });
+        const hardwarecamerror = document.getElementById("hardwarecamerror");
+        hardwarecamerror.onclick = () => {
+            repairCams();
+            loadSettings();
+        };
         if (config.hardwareCamId && state.hardwareCamError)
-            hardwarecamerror.classList.remove("hidden")
+            hardwarecamerror.classList.remove("hidden");
         else
-            hardwarecamerror.classList.add("hidden")
-
-        const facecamlabelinput = document.getElementById("facecamlabelinput")
-        facecamlabelinput.value = config.faceCamLabel || ""
+            hardwarecamerror.classList.add("hidden");
+        const facecamlabelinput = document.getElementById("facecamlabelinput");
+        facecamlabelinput.value = config.faceCamLabel || "";
         facecamlabelinput.onchange = function (e) {
-            config.faceCamLabel = (facecamlabelinput.value || "").trim()
-            facecamlabelinput.value = config.faceCamLabel
-            saveConfig(config);
-            loadSocial()
-            render()
-        }
-
-        const hardwarecamlabelinput = document.getElementById("hardwarecamlabelinput")
-        hardwarecamlabelinput.value = config.hardwareCamLabel || ""
-        hardwarecamlabelinput.onchange = function (e) {
-            config.hardwareCamLabel = (hardwarecamlabelinput.value || "").trim()
-            hardwarecamlabelinput.value = config.hardwareCamLabel
-            saveConfig(config);
-            loadSocial()
-            render()
-        }
-
-        const titleinput = document.getElementById("titleinput")
-        titleinput.value = config.title || ""
-        titleinput.onchange = function (e) {
-            config.title = (titleinput.value || "");
-            titleinput.value = config.title
+            config.faceCamLabel = (facecamlabelinput.value || "").trim();
+            facecamlabelinput.value = config.faceCamLabel;
             saveConfig(config);
             loadSocial();
-            render()
-        }
-
-        const backgroundimageinput = document.getElementById("backgroundimageinput")
-        backgroundimageinput.value = config.backgroundImage || ""
+            render();
+        };
+        const hardwarecamlabelinput = document.getElementById("hardwarecamlabelinput");
+        hardwarecamlabelinput.value = config.hardwareCamLabel || "";
+        hardwarecamlabelinput.onchange = function (e) {
+            config.hardwareCamLabel = (hardwarecamlabelinput.value || "").trim();
+            hardwarecamlabelinput.value = config.hardwareCamLabel;
+            saveConfig(config);
+            loadSocial();
+            render();
+        };
+        const titleinput = document.getElementById("titleinput");
+        titleinput.value = config.title || "";
+        titleinput.onchange = function (e) {
+            config.title = (titleinput.value || "");
+            titleinput.value = config.title;
+            saveConfig(config);
+            loadSocial();
+            render();
+        };
+        const backgroundimageinput = document.getElementById("backgroundimageinput");
+        backgroundimageinput.value = config.backgroundImage || "";
         backgroundimageinput.onchange = function (e) {
             config.backgroundImage = undefined;
             if (/^https:\/\//.test(backgroundimageinput.value))
-                config.backgroundImage = backgroundimageinput.value
+                config.backgroundImage = backgroundimageinput.value;
             saveConfig(config);
             loadStyle();
-            render()
-        }
-
-        const backgroundvideoinput = document.getElementById("backgroundvideoinput")
-        backgroundvideoinput.value = config.backgroundVideo || ""
-        backgroundvideoinput.onchange = function (e) {
-            config.backgroundVideo = undefined;
-            if (/^https:\/\//.test(backgroundvideoinput.value))
-                config.backgroundVideo = backgroundvideoinput.value
+            render();
+        };
+        importVideoButton("background", true);
+        importVideoButton("start", true);
+        importVideoButton("end", true);
+        importVideoButton("stinger", false);
+        importVideoButton("camoverlay", true);
+        const stingervideodelayinput = document.getElementById("stringervideodelayinput");
+        stingervideodelayinput.value = (config.stingerVideoDelay || "") + "";
+        stingervideodelayinput.onchange = function (e) {
+            const i = parseInt(stingervideodelayinput.value || "0");
+            config.stingerVideoDelay = isNaN(i) ? 0 : i;
+            stingervideodelayinput.value = (config.stingerVideoDelay || "") + "";
             saveConfig(config);
-            loadStyle();
-            render()
-        }
-
-        const startvideoinput = document.getElementById("startvideoinput")
-        startvideoinput.value = config.startVideo || ""
-        startvideoinput.onchange = function (e) {
-            config.startVideo = undefined;
-            if (/^https:\/\//.test(startvideoinput.value))
-                config.startVideo = startvideoinput.value
+        };
+        const stingervideoscreenclear = document.getElementById("stingervideoscreenclear");
+        stingervideoscreenclear.onclick = function (e) {
+            config.stingerVideoGreenScreen = undefined;
             saveConfig(config);
-            loadVideos();
-            render()
-        }
-
-        const endvideoinput = document.getElementById("endvideoinput")
-        endvideoinput.value = config.endVideo || ""
-        endvideoinput.onchange = function (e) {
-            config.endVideo = undefined;
-            if (/^https:\/\//.test(endvideoinput.value))
-                config.endVideo = endvideoinput.value
+            loadSettings();
+            startStinger(config.stingerVideo, () => { });
+        };
+        const stingervideoscreeninput = document.getElementById("stingervideoscreeninput");
+        stingervideoscreeninput.value = config.stingerVideoGreenScreen || "";
+        stingervideoscreeninput.onchange = function (e) {
+            config.stingerVideoGreenScreen = undefined;
+            if (/^#[a-fA-F0-9]{6}$/.test(stingervideoscreeninput.value))
+                config.stingerVideoGreenScreen = stingervideoscreeninput.value;
             saveConfig(config);
-            loadVideos();
-            render()
-        }
-
-        const backgroundcolorinput = document.getElementById("backgroundcolorinput")
-        backgroundcolorinput.value = config.styleBackground || ""
+            loadSettings();
+            startStinger(config.stingerVideo, () => { }, config.stingerVideoGreenScreen);
+        };
+        const backgroundcolorinput = document.getElementById("backgroundcolorinput");
+        backgroundcolorinput.value = config.styleBackground || "";
         backgroundcolorinput.onchange = function (e) {
             config.styleBackground = undefined;
             if (/^#[a-fA-F0-9]{6}$/.test(backgroundcolorinput.value))
-                config.styleBackground = backgroundcolorinput.value
+                config.styleBackground = backgroundcolorinput.value;
             saveConfig(config);
             loadStyle();
-        }
+        };
         const backgroundcolorclear = document.getElementById("backgroundcolorclear");
         backgroundcolorclear.onclick = function (e) {
             config.styleBackground = undefined;
             saveConfig(config);
             loadStyle();
             loadSettings();
-        }
-
-        const bordercolorinput = document.getElementById("bordercolorinput")
-        bordercolorinput.value = config.styleBorder || ""
+        };
+        const bordercolorinput = document.getElementById("bordercolorinput");
+        bordercolorinput.value = config.styleBorder || "";
         bordercolorinput.onchange = function (e) {
             config.styleBorder = undefined;
             if (/^#[a-fA-F0-9]{6}$/.test(bordercolorinput.value))
-                config.styleBorder = bordercolorinput.value
+                config.styleBorder = bordercolorinput.value;
             saveConfig(config);
             loadStyle();
-        }
+        };
         const bordercolorclear = document.getElementById("bordercolorclear");
         bordercolorclear.onclick = function (e) {
             config.styleBorder = undefined;
             saveConfig(config);
             loadStyle();
             loadSettings();
-        }
-
-        const borderbackgroundinput = document.getElementById("borderbackgroundinput")
-        borderbackgroundinput.value = config.stylePrimary || ""
+        };
+        const borderbackgroundinput = document.getElementById("borderbackgroundinput");
+        borderbackgroundinput.value = config.stylePrimary || "";
         borderbackgroundinput.onchange = function (e) {
             config.stylePrimary = undefined;
             if (/^#[a-fA-F0-9]{6}$/.test(borderbackgroundinput.value))
-                config.stylePrimary = borderbackgroundinput.value
+                config.stylePrimary = borderbackgroundinput.value;
             saveConfig(config);
             loadStyle();
-        }
+        };
         const borderbackgroundclear = document.getElementById("borderbackgroundclear");
         borderbackgroundclear.onclick = function (e) {
             config.stylePrimary = undefined;
             saveConfig(config);
             loadStyle();
             loadSettings();
-        }
-
-        const countdowneditorcheckbox = document.getElementById("countdowneditorcheckbox")
-        countdowneditorcheckbox.checked = !!config.countdownEditor
+        };
+        const countdowneditorcheckbox = document.getElementById("countdowneditorcheckbox");
+        countdowneditorcheckbox.checked = !!config.countdownEditor;
         countdowneditorcheckbox.onchange = function () {
-            config.countdownEditor = !!countdowneditorcheckbox.checked
-            saveConfig(config)
-            render()
-        }
-
-        const countdownblureditorcheckbox = document.getElementById("countdownblureditorcheckbox")
-        countdownblureditorcheckbox.checked = !!config.countdownEditorBlur
+            config.countdownEditor = !!countdowneditorcheckbox.checked;
+            saveConfig(config);
+            render();
+        };
+        const countdownblureditorcheckbox = document.getElementById("countdownblureditorcheckbox");
+        countdownblureditorcheckbox.checked = !!config.countdownEditorBlur;
         countdownblureditorcheckbox.onchange = function () {
-            config.countdownEditorBlur = !!countdownblureditorcheckbox.checked
-            saveConfig(config)
-            render()
-        }
-
-        const twitchinput = document.getElementById("twitchinput")
-        twitchinput.value = config.twitch || ""
+            config.countdownEditorBlur = !!countdownblureditorcheckbox.checked;
+            saveConfig(config);
+            render();
+        };
+        const twitchinput = document.getElementById("twitchinput");
+        twitchinput.value = config.twitch || "";
         twitchinput.onchange = function (e) {
-            config.twitch = (twitchinput.value || "").replace(/^https:\/\/twitch.tv\//, '').replace(/^\//, '').trim()
-            twitchinput.value = config.twitch
+            config.twitch = (twitchinput.value || "").replace(/^https:\/\/twitch.tv\//, '').replace(/^\//, '').trim();
+            twitchinput.value = config.twitch;
             saveConfig(config);
             state.chat = !!config.twitch;
             loadSocial();
             loadChat();
-            render()
-        }
-
-        const mixerinput = document.getElementById("mixerinput")
-        mixerinput.value = config.mixer || ""
-        mixerinput.onchange = function (e) {
-            config.mixer = (mixerinput.value || "").replace(/^https:\/\/mixer.com\//, '').replace(/^\//, '').trim()
-            mixerinput.value = config.mixer
+            render();
+        };
+        const restreaminput = document.getElementById("restreaminput");
+        restreaminput.value = config.restream || "";
+        restreaminput.onchange = function (e) {
+            config.restream = (restreaminput.value || "");
+            if (config.restream.indexOf("https://chat.restream.io/embed?token=") != 0)
+                config.restream = "";
+            restreaminput.value = config.restream;
             saveConfig(config);
-            state.chat = !!config.mixer;
+            state.chat = !!(config.twitch || config.restream);
             loadSocial();
             loadChat();
-            render()
-        }
-        const greenscreencheckbox = document.getElementById("greenscreencheckbox")
-        greenscreencheckbox.checked = !!config.greenScreen
+            render();
+        };
+        const greenscreencheckbox = document.getElementById("greenscreencheckbox");
+        greenscreencheckbox.checked = !!config.greenScreen;
         greenscreencheckbox.onchange = function () {
-            config.greenScreen = !!greenscreencheckbox.checked
-            saveConfig(config)
-            render()
-        }
-
-        const emojisinput = document.getElementById("emojisinput")
-        emojisinput.value = config.emojis || ""
+            config.greenScreen = !!greenscreencheckbox.checked;
+            saveConfig(config);
+            render();
+        };
+        const emojisinput = document.getElementById("emojisinput");
+        emojisinput.value = config.emojis || "";
         emojisinput.onchange = function (e) {
             config.emojis = emojisinput.value.replace(/\s*/g, '');
-            emojisinput.value = config.emojis
+            emojisinput.value = config.emojis;
             saveConfig(config);
-            loadSocial()
-            render()
-        }
-
+            loadSocial();
+            render();
+        };
         const micselect = document.getElementById("micselect");
-        micselect.innerHTML = "" // remove all web cams
+        micselect.innerHTML = ""; // remove all web cams
         {
-            const option = document.createElement("option")
-            option.value = ""
-            option.text = "Off"
+            const option = document.createElement("option");
+            option.value = "";
+            option.text = "Off";
             if (!config.hardwareCamId)
                 option.selected = true;
-            micselect.add(option)
+            micselect.add(option);
         }
         mics.forEach(cam => {
-            const option = document.createElement("option")
-            option.value = cam.deviceId
-            option.text = cam.label || `audio ${cam.deviceId}`
-            micselect.add(option)
+            const option = document.createElement("option");
+            option.value = cam.deviceId;
+            option.text = cam.label || `audio ${cam.deviceId}`;
+            micselect.add(option);
             if (config.micId == cam.deviceId && cam.deviceId)
                 option.selected = true;
-        })
+        });
         micselect.onchange = function () {
             const selected = micselect.options[micselect.selectedIndex];
             config.micId = selected.value;
-            saveConfig(config)
-            render()
-        }
-        const micdelayinput = document.getElementById("micdelayinput")
-        micdelayinput.value = config.micDelay || ""
+            saveConfig(config);
+            render();
+        };
+        const micdelayinput = document.getElementById("micdelayinput");
+        micdelayinput.value = (config.micDelay || "") + "";
         micdelayinput.onchange = function (e) {
             const i = parseInt(micdelayinput.value || "0");
             config.micDelay = isNaN(i) ? 0 : i;
-            micdelayinput.value = config.micDelay
+            micdelayinput.value = (config.micDelay || "") + "";
             saveConfig(config);
+        };
+        function importVideoButton(name, replace) {
+            importFileButton(`streamer.importvideo.${name}`, document.getElementById(`${name}videoimportinput`), document.getElementById(`${name}videoimportbtn`), async (file) => {
+                const fn = `${replace ? name : file.name}`.replace(/\.\w+$/, "") + "video";
+                db.put(fn, file);
+                const url = `blob:${fn}`;
+                const current = config[name + "Video"];
+                config[name + "Video"] = replace || !current ? url : `${current}\n${url}`;
+                saveConfig(config);
+                loadSettings();
+                loadStyle();
+                render();
+            });
+            const videoinput = document.getElementById(`${name}videoinput`);
+            const field = `${name}Video`;
+            videoinput.value = config[field] || "";
+            videoinput.oninput = videoinput.onchange = function (e) {
+                config[field] = videoinput.value;
+                saveConfig(config);
+                loadStyle();
+                loadSettings();
+                render();
+            };
         }
-
     }
-
-    function setEditor(editor) {
+    function importFileButton(tick, input, button, done) {
+        input.onchange = function () {
+            const file = input.files[0];
+            if (file)
+                done(file);
+        };
+        button.onclick = function (e) {
+            tickEvent(tick, undefined, { interactiveConsent: true });
+            stopEvent(e);
+            input.click();
+        };
+    }
+    function readFileAsText(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.addEventListener("load", function () {
+                try {
+                    resolve(reader.result);
+                }
+                catch (e) {
+                    reject(e);
+                }
+            }, false);
+            reader.readAsText(file, 'utf-8');
+        });
+    }
+    function setEditor(editor, hash) {
         const editorConfig = editorConfigs[editor];
-        if (!editorConfig) return;
-
+        if (!editorConfig)
+            return;
         const config = readConfig();
         config.editor = editor;
-        if (editorConfig)
-            config.title = editorConfig.title || `MakeCode ${editorConfig.name}`
         saveConfig(config);
-        loadEditor();
+        loadEditor(hash);
         loadSettings();
         loadSocial();
-        render()
+        render();
     }
-
     document.onkeyup = function (ev) {
         // always active
         if (ev.shiftKey && ev.altKey) {
             switch (ev.keyCode) {
                 // scenes
                 case 49: // 1
-                    togglePaint(ev);
+                    togglePaint();
                     break;
                 case 50: // 2
                     ev.preventDefault();
@@ -1742,7 +2361,7 @@ background-image: url(${config.backgroundImage});
                     break;
                 case 54: // 6
                     ev.preventDefault();
-                    toggleThumbnail();
+                    toggleThumbnail(ev);
                     break;
                 case 55: // 7
                     toggleHardware(ev);
@@ -1750,66 +2369,81 @@ background-image: url(${config.backgroundImage});
                 case 56: // 8
                     toggleChat(ev);
                     break;
-
                 // paint tools
                 case 65: // a
-                    setPaintTool(ev, "arrow"); break;
+                    setPaintTool(ev, "arrow");
+                    break;
                 case 82: // r
-                    setPaintTool(ev, "rect"); break;
+                    setPaintTool(ev, "rect");
+                    break;
             }
         }
         // special keys
         if (state.sceneIndex == COUNTDOWN_SCENE_INDEX) {
             switch (ev.keyCode) {
                 case 38: // arrow up
-                    updateCountdown(60); break;
+                    updateCountdown(60);
+                    break;
                 case 40: // arrow down
-                    updateCountdown(-60); break;
+                    updateCountdown(-60);
+                    break;
             }
         }
-
+        // esc
+        if (ev.keyCode === 27) {
+            if (state.addSite)
+                state.addSite = false;
+            if (state.paint)
+                togglePaint();
+            if (settingsVisible())
+                toggleSettings();
+            if (intro.parentNode)
+                intro.remove();
+            render();
+        }
         function setPaintTool(ev, name) {
-            state.painttool = name
+            state.painttool = name;
             if (!state.paint)
-                togglePaint(ev);
-            render()
+                togglePaint();
+            render();
         }
     };
-
     function accessify(el) {
         el.tabIndex = 0;
+        el.role = "button";
         el.onkeypress = e => {
             const charCode = (typeof e.which == "number") ? e.which : e.keyCode;
             if (charCode === 13 /* enter */ || charCode === 32 /* space */) {
                 e.preventDefault();
                 e.currentTarget.click();
             }
-        }
+        };
     }
-
     function initAccessibility() {
         const clickeable = document.getElementsByClassName("clickeable");
         for (let i = 0; i < clickeable.length; ++i) {
             const c = clickeable[i];
             accessify(c);
         }
-
     }
-
     function tickEvent(id, data, opts) {
-        if (typeof pxt === "undefined" || !pxt.aiTrackException || !pxt.aiTrackEvent) return;
-        if (opts && opts.interactiveConsent && typeof mscc !== "undefined" && !mscc.hasConsent()) {
-            mscc.setConsent();
+        if (typeof pxt === "undefined")
+            return;
+        if (opts?.interactiveConsent && pxt.setInteractiveConsent)
+            pxt.setInteractiveConsent(true);
+        if (pxt.aiTrackEvent) {
+            const args = tickProps(data);
+            pxt.aiTrackEvent(id, args[0], args[1]);
         }
-        const args = tickProps(data);
-        pxt.aiTrackEvent(id, args[0], args[1]);
     }
-
     function trackException(err, id, data) {
-        const args = tickProps(data);
-        pxt.aiTrackException(err, id, args[0]);
+        if (typeof pxt === "undefined")
+            return;
+        if (pxt.aiTrackException) {
+            const args = tickProps(data);
+            pxt.aiTrackException(err, id, args[0]);
+        }
     }
-
     function tickProps(data) {
         const config = readConfig();
         const props = {
@@ -1819,15 +2453,197 @@ background-image: url(${config.backgroundImage});
         const measures = {
             hardwareCam: config.hardwareCamId ? 1 : 0,
             multiEditor: config.multiEditor ? 1 : 0,
-            mixer: config.mixer ? 1 : 0,
-            twitch: config.twitch ? 1 : 0
+            twitch: config.twitch ? 1 : 0,
+            restream: config.restream ? 1 : 0
         };
         if (data)
             Object.keys(data).forEach(k => {
-                if (typeof data[k] == "string") props[k] = data[k];
-                else if (typeof data[k] == "number") measures[k] = data[k];
-                else props[k] = JSON.stringify(data[k] || '');
+                if (typeof data[k] == "string")
+                    props[k] = data[k];
+                else if (typeof data[k] == "number")
+                    measures[k] = data[k];
+                else
+                    props[k] = JSON.stringify(data[k] || '');
             });
         return [props, measures];
     }
-})()
+    async function startStingerScene(url, endSceneIndex) {
+        const config = readConfig();
+        startStinger(url, () => {
+            updateScene(endSceneIndex);
+            render();
+        }, config.stingerVideoGreenScreen, config.stingerVideoDelay);
+    }
+    async function startStinger(url, end, greenScreen = "", transitionDelay = 700) {
+        stingerEvents.start = () => {
+            setTimeout(() => {
+                end();
+            }, transitionDelay || 1000);
+        };
+        stingerEvents.end = () => {
+            state.stingering = false;
+            render();
+        };
+        const stingeryoutube = document.getElementById('stingeryoutube');
+        const ytVideoId = parseYouTubeVideoId(url);
+        if (ytVideoId && stingerPlayer) {
+            state.stingering = true;
+            render();
+            stopGreenScreen(stingervideo);
+            stingervideo.src = undefined;
+            stingervideo.classList.add("hidden");
+            stingerPlayer.loadVideoById(ytVideoId, 0);
+            // rescale youtube iframe to cover the entire background
+            const el = document.firstElementChild;
+            const w = el.clientWidth;
+            const h = el.clientHeight;
+            const ratio = w / h;
+            const hd = 16 / 9;
+            if (ratio > hd) {
+                // the video is going to be 16:9, compensate
+                console.log(`ratio`, ratio);
+                const vh = 100 * ratio / hd;
+                stingeryoutube.style.height = `${vh}vh`;
+                stingeryoutube.style.width = `100vw`;
+                stingeryoutube.style.transform = `translate(0, ${-(vh - 100) / 2}vh)`;
+            }
+            else {
+                const vw = 100 / ratio * hd;
+                stingeryoutube.style.height = `100vh`;
+                stingeryoutube.style.width = `${vw}vw`;
+                stingeryoutube.style.transform = `translate(${-(vw - 100) / 2}vh, 0)`;
+            }
+        }
+        else if (url) {
+            state.stingering = true;
+            render();
+            url = await resolveBlob(url);
+            if (stingerPlayer)
+                stingerPlayer.stopVideo();
+            stingeryoutube.classList.add("hidden");
+            stingervideo.src = url;
+            stingervideo.onplay = () => {
+                if (greenScreen) {
+                    stingervideoserious.classList.remove("hidden");
+                    startGreenScreen(greenScreen, stingervideo);
+                }
+                else {
+                    stingervideo.classList.remove("hidden");
+                }
+                stingerEvents.start();
+            };
+            stingervideo.onpause = stingervideo.onerror = stingervideo.onended = () => {
+                stingerEvents.end();
+                stingervideo.classList.add("hidden");
+                stingervideoserious.classList.add("hidden");
+                // doesn't hurt
+                URL.revokeObjectURL(url);
+            };
+        }
+        else {
+            stingervideo.src = undefined;
+            if (stingerPlayer)
+                stingerPlayer.stopVideo();
+            stingervideo.classList.add("hidden");
+            stingeryoutube.classList.add("hidden");
+            state.stingering = false;
+            stopGreenScreen(stingervideo);
+            render();
+            end();
+        }
+    }
+    async function resolveBlob(url) {
+        if (/\n/.test(url)) {
+            // multiple urls, pick a random one
+            const urls = url.split(/\n/g);
+            url = urls[Math.floor(Math.random() * urls.length)];
+        }
+        const blob = /^blob:/.test(url) && url.substr("blob:".length);
+        if (blob) {
+            const file = await db.get(blob);
+            if (file)
+                url = URL.createObjectURL(file);
+        }
+        return url;
+    }
+    // this database stores video blobs
+    function openDbAsync() {
+        const DB_VERSION = 1;
+        const DB_NAME = "ASSETS";
+        const STORE_BLOBS = "BLOBS";
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        let db;
+        const api = {
+            put: (id, file) => {
+                try {
+                    const transaction = db.transaction([STORE_BLOBS], "readwrite");
+                    const blobs = transaction.objectStore(STORE_BLOBS);
+                    blobs.put(file, id);
+                }
+                catch (e) {
+                    console.error(`idb: put ${id} failed`);
+                }
+            },
+            get: (id) => {
+                return new Promise((resolve, reject) => {
+                    try {
+                        const transaction = db.transaction([STORE_BLOBS], "readonly");
+                        const blobs = transaction.objectStore(STORE_BLOBS);
+                        const request = blobs.get(id);
+                        request.onsuccess = (event) => resolve(event.target.result);
+                        request.onerror = (event) => resolve(event.target.result);
+                    }
+                    catch (e) {
+                        console.error(`idb: get ${id} failed`);
+                        reject(e);
+                    }
+                });
+            },
+            del: (id) => {
+                return new Promise((resolve, reject) => {
+                    try {
+                        const transaction = db.transaction([STORE_BLOBS], "readwrite");
+                        const blobs = transaction.objectStore(STORE_BLOBS);
+                        const request = blobs.delete(id);
+                        request.onsuccess = (event) => resolve(event.target.result);
+                        request.onerror = (event) => resolve(event.target.result);
+                    }
+                    catch (e) {
+                        console.error(`idb: del ${id}`);
+                        reject(e);
+                    }
+                });
+            },
+            gc: (urls) => {
+                const transaction = db.transaction([STORE_BLOBS], "readwrite");
+                const blobs = transaction.objectStore(STORE_BLOBS);
+                const request = blobs.getAllKeys();
+                request.onsuccess = (event) => {
+                    const keys = event.target.result;
+                    const dead = keys.filter(k => urls.indexOf(k) < 0);
+                    if (dead.length)
+                        console.log(`dead videos`, dead);
+                    dead.forEach(api.del);
+                };
+            }
+        };
+        return new Promise((resolve, reject) => {
+            // create or upgrade database
+            request.onsuccess = function (event) {
+                db = request.result;
+                db.onerror = function (event) {
+                    console.log("idb error", event);
+                };
+                resolve(api);
+            };
+            request.onupgradeneeded = function (event) {
+                db = request.result;
+                db.createObjectStore(STORE_BLOBS);
+                db.onerror = function (event) {
+                    console.log("idb error", event);
+                };
+                resolve(api);
+            };
+        });
+    }
+})();

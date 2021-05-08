@@ -112,7 +112,7 @@ namespace pxt.py {
         // console.log(`TOK: ${tokenToString(peekToken())}`)
     }
 
-    // next error 9574 (limit 9599)
+    // next error: see "next free error" in "converter.ts"
     function error(code?: number, msg?: string) {
         if (!msg) msg = U.lf("invalid syntax")
         if (!code) code = 9550

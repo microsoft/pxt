@@ -16,6 +16,12 @@ namespace pxt.blocks {
         declaredVariables: string;
     }
 
+    // Parsed format of data stored in the .data attribute of blocks
+    export interface PXTBlockData {
+        commentRefs: string[];
+        fieldData: pxt.Map<string>;
+    }
+
     const typeDefaults: Map<{ field: string, block: string, defaultValue: string }> = {
         "string": {
             field: "TEXT",
@@ -409,12 +415,15 @@ namespace pxt.blocks {
         // inject Blockly with all block definitions
         return blockInfo.blocks
             .map(fn => {
+                const comp = compileInfo(fn);
+                const block = createToolboxBlock(blockInfo, fn, comp);
+
                 if (fn.attributes.blockBuiltin) {
                     Util.assert(!!builtinBlocks()[fn.attributes.blockId]);
-                    builtinBlocks()[fn.attributes.blockId].symbol = fn;
+                    const builtin = builtinBlocks()[fn.attributes.blockId];
+                    builtin.symbol = fn;
+                    builtin.block.codeCard = mkCard(fn, block);
                 } else {
-                    let comp = compileInfo(fn);
-                    let block = createToolboxBlock(blockInfo, fn, comp);
                     injectBlockDefinition(blockInfo, fn, comp, block);
                 }
                 return fn;
@@ -430,11 +439,9 @@ namespace pxt.blocks {
         }
 
         let hash = JSON.stringify(fn);
-        /* tslint:disable:possible-timing-attack (not a security critical codepath) */
         if (cachedBlocks[id] && cachedBlocks[id].hash == hash) {
             return true;
         }
-        /* tslint:enable:possible-timing-attack */
 
         if (Blockly.Blocks[fn.attributes.blockId]) {
             console.error("duplicate block definition: " + id);
@@ -531,9 +538,14 @@ namespace pxt.blocks {
             || pxt.toolbox.getNamespaceColor(ns)
             || 255;
 
-        if (fn.attributes.help)
-            block.setHelpUrl("/reference/" + fn.attributes.help.replace(/^\//, ''));
-        else if (fn.pkg && !pxt.appTarget.bundledpkgs[fn.pkg]) {// added package
+        if (fn.attributes.help) {
+            const helpUrl = fn.attributes.help.replace(/^\//, '');
+            if (/^github:/.test(helpUrl)) {
+                block.setHelpUrl(helpUrl);
+            } else if (helpUrl !== "none") {
+                block.setHelpUrl("/reference/" + helpUrl);
+            }
+        } else if (fn.pkg && !pxt.appTarget.bundledpkgs[fn.pkg]) {// added package
             let anchor = fn.qName.toLowerCase().split('.');
             if (anchor[0] == fn.pkg) anchor.shift();
             block.setHelpUrl(`/pkg/${fn.pkg}#${encodeURIComponent(anchor.join('-'))}`)
@@ -1194,23 +1206,6 @@ namespace pxt.blocks {
                 if (Blockly.Names.equals(oldName, varField.getText())) {
                     varField.setValue(newName);
                 }
-            },
-            /**
-             * Add menu option to create getter block for loop variable.
-             * @param {!Array} options List of menu options to add to.
-             * @this Blockly.Block
-             */
-            customContextMenu: function (options: any[]) {
-                if (!this.isCollapsed()) {
-                    let option: any = { enabled: true };
-                    option.text = lf("Create 'get {0}'", name);
-                    let xmlField = goog.dom.createDom('field', null, name);
-                    xmlField.setAttribute('name', 'VAR');
-                    let xmlBlock = goog.dom.createDom('block', null, xmlField) as HTMLElement;
-                    xmlBlock.setAttribute('type', 'variables_get');
-                    option.callback = Blockly.ContextMenu.callbackFactory(this, xmlBlock);
-                    options.push(option);
-                }
             }
         };
 
@@ -1287,7 +1282,7 @@ namespace pxt.blocks {
              * @this Blockly.Block
              */
             customContextMenu: function (options: any[]) {
-                if (!this.isCollapsed()) {
+                if (!this.isCollapsed() && !this.inDebugWorkspace()) {
                     let option: any = { enabled: true };
                     let name = this.getField('VAR').getText();
                     option.text = lf("Create 'get {0}'", name);
@@ -1451,6 +1446,7 @@ namespace pxt.blocks {
         // Translate the context menu for blocks.
         const msg = Blockly.Msg;
         msg.DUPLICATE_BLOCK = lf("{id:block}Duplicate");
+        msg.DUPLICATE_COMMENT = lf("Duplicate Comment");
         msg.REMOVE_COMMENT = lf("Remove Comment");
         msg.ADD_COMMENT = lf("Add Comment");
         msg.EXTERNAL_INPUTS = lf("External Inputs");
@@ -1482,10 +1478,13 @@ namespace pxt.blocks {
             let eventGroup = Blockly.utils.genUid();
             let topComments = this.getTopComments();
             let ws = this;
+            const editable = !(this.options.debugMode || this.options.readOnly);
 
             // Option to add a workspace comment.
             if (this.options.comments && !BrowserUtils.isIE()) {
-                options.push(Blockly.ContextMenu.workspaceCommentOption(ws, e));
+                const commentOption = Blockly.ContextMenu.workspaceCommentOption(ws, e) as any;
+                commentOption.enabled = commentOption.enabled && editable;
+                options.push(commentOption);
             }
 
 
@@ -1517,7 +1516,7 @@ namespace pxt.blocks {
 
             const deleteOption = {
                 text: deleteCount == 1 ? msg.DELETE_BLOCK : msg.DELETE_ALL_BLOCKS,
-                enabled: deleteCount > 0,
+                enabled: deleteCount > 0 && editable,
                 callback: () => {
                     pxt.tickEvent("blocks.context.delete", undefined, { interactiveConsent: true });
                     if (deleteCount < 2) {
@@ -1535,7 +1534,7 @@ namespace pxt.blocks {
 
             const formatCodeOption = {
                 text: lf("Format Code"),
-                enabled: true,
+                enabled: editable,
                 callback: () => {
                     pxt.tickEvent("blocks.context.format", undefined, { interactiveConsent: true });
                     pxt.blocks.layout.flow(this, { useViewWidth: true });
@@ -1547,7 +1546,7 @@ namespace pxt.blocks {
                 // Option to collapse all top-level (enabled) blocks
                 const collapseAllOption = {
                     text: lf("Collapse Blocks"),
-                    enabled: topBlocks.length && topBlocks.find((b: Blockly.Block) => b.isEnabled() && !b.isCollapsed()),
+                    enabled: topBlocks.length && topBlocks.find((b: Blockly.Block) => b.isEnabled() && !b.isCollapsed()) && editable,
                     callback: () => {
                         pxt.tickEvent("blocks.context.collapse", undefined, { interactiveConsent: true });
                         pxt.blocks.layout.setCollapsedAll(this, true);
@@ -1558,7 +1557,7 @@ namespace pxt.blocks {
                 // Option to expand all collapsed blocks
                 const expandAllOption = {
                     text: lf("Expand Blocks"),
-                    enabled: topBlocks.length && topBlocks.find((b: Blockly.Block) => b.isEnabled() && b.isCollapsed()),
+                    enabled: topBlocks.length && topBlocks.find((b: Blockly.Block) => b.isEnabled() && b.isCollapsed()) && editable,
                     callback: () => {
                         pxt.tickEvent("blocks.context.expand", undefined, { interactiveConsent: true });
                         pxt.blocks.layout.setCollapsedAll(this, false);
@@ -1573,8 +1572,8 @@ namespace pxt.blocks {
                     enabled: topBlocks.length > 0 || topComments.length > 0,
                     callback: () => {
                         pxt.tickEvent("blocks.context.screenshot", undefined, { interactiveConsent: true });
-                        pxt.blocks.layout.screenshotAsync(this, null, true)
-                            .done((uri) => {
+                        pxt.blocks.layout.screenshotAsync(this, null, pxt.appTarget.appTheme?.embedBlocksInSnapshot)
+                            .then((uri) => {
                                 if (pxt.BrowserUtils.isSafari())
                                     uri = uri.replace(/^data:image\/[^;]/, 'data:application/octet-stream');
                                 BrowserUtils.browserDownloadDataUri(
@@ -2203,6 +2202,28 @@ namespace pxt.blocks {
                 });
 
                 setBuiltinHelpInfo(this, variablesChangeId);
+            },
+            /**
+             * Add menu option to create getter block for this variable
+             * @param {!Array} options List of menu options to add to.
+             * @this Blockly.Block
+             */
+            customContextMenu: function (options: any[]) {
+                if (!(this.inDebugWorkspace())) {
+                    let option: any = {
+                        enabled: this.workspace.remainingCapacity() > 0
+                    };
+
+                    let name = this.getField("VAR").getText();
+                    option.text = lf("Create 'get {0}'", name)
+
+                    let xmlField = goog.dom.createDom('field', null, name);
+                    xmlField.setAttribute('name', 'VAR');
+                    let xmlBlock = goog.dom.createDom('block', null, xmlField);
+                    xmlBlock.setAttribute('type', "variables_get");
+                    option.callback = Blockly.ContextMenu.callbackFactory(this, xmlBlock);
+                    options.push(option);
+                }
             }
         };
 
@@ -2396,6 +2417,7 @@ namespace pxt.blocks {
         const functionCall = pxt.blocks.getBlockDefinition(functionCallId);
 
         msg.FUNCTIONS_CALL_TITLE = functionCall.block["FUNCTIONS_CALL_TITLE"];
+        msg.FUNCTIONS_GO_TO_DEFINITION_OPTION = functionCall.block["FUNCTIONS_GO_TO_DEFINITION_OPTION"];
         installBuiltinHelpInfo(functionCallId);
         installBuiltinHelpInfo("function_call_output");
 
@@ -2628,6 +2650,27 @@ namespace pxt.blocks {
 
                 setOutputCheck(this, typeName, cachedBlockInfo);
             };
+        }
+
+        /**
+         * Make a context menu option for creating a function call block.
+         * This appears in the context menu for function definitions.
+         * @param {!Blockly.BlockSvg} block The block where the right-click originated.
+         * @return {!Object} A menu option, containing text, enabled, and a callback.
+         * @package
+         */
+        const makeCreateCallOptionOriginal = (Blockly as any).Functions.makeCreateCallOption;
+
+        // needs to exist or makeCreateCallOptionOriginal will throw an exception
+        Blockly.Msg.FUNCTIONS_CREATE_CALL_OPTION = "";
+
+        (Blockly as any).Functions.makeCreateCallOption = function (block: Blockly.Block) {
+           let option = makeCreateCallOptionOriginal(block);
+
+           let functionName = block.getField("function_name").getText();
+           option.text = Util.lf("Create 'call {0}'", functionName);
+
+           return option;
         }
     }
 
@@ -3017,5 +3060,36 @@ namespace pxt.blocks {
             model.name = newName;
             varField.setValue(model.getId());
         }
+    }
+
+
+    export function getBlockData(block: Blockly.Block): PXTBlockData {
+        if (!block.data) {
+            return {
+                commentRefs: [],
+                fieldData: {}
+            };
+        }
+        if (/^(?:\d+;?)+$/.test(block.data)) {
+            return {
+                commentRefs: block.data.split(";"),
+                fieldData: {}
+            }
+        }
+        return JSON.parse(block.data);
+    }
+
+    export function setBlockData(block: Blockly.Block, data: PXTBlockData) {
+        block.data = JSON.stringify(data);
+    }
+
+    export function setBlockDataForField(block: Blockly.Block, field: string, data: string) {
+        const blockData = getBlockData(block);
+        blockData.fieldData[field] = data;
+        setBlockData(block, blockData);
+    }
+
+    export function getBlockDataForField(block: Blockly.Block, field: string) {
+        return getBlockData(block).fieldData[field];
     }
 }

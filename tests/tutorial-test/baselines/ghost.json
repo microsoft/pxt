@@ -5,7 +5,7 @@
         {
             "contentMd": "Ghost blocks do not show up in the tutorial, but display in the workspace.",
             "headerContentMd": "Ghost blocks do not show up in the tutorial, but display in the workspace.",
-            "fullscreen": true
+            "showHint": true
         },
         {
             "contentMd": "Multiple ghost sections can be included in one tutorial\n\n```blocks\nbasic.showString(\"Hello\")\n```",
@@ -14,7 +14,12 @@
         }
     ],
     "activities": null,
-    "code": "\n{\nbasic.forever(() => {\n    basic.showIcon(IconNames.Yes);\n});\n}\n\n{\nbasic.showString(\"Hello\")\n}\n\n{\nbasic.forever(function() {\n    basic.showLeds(`\n        . # . # .\n        # # # # #\n        # # # # #\n        . # # # .\n        . . # . .`);\n})\n}\n\n{\ninput.onButtonPressed(Button.A, () => {\n    radio.sendNumber(0)\n})\n}\n",
+    "code": [
+        "{\nbasic.forever(() => {\n    basic.showIcon(IconNames.Yes);\n});\n}",
+        "{\nbasic.showString(\"Hello\")\n}",
+        "{\nbasic.forever(function() {\n    basic.showLeds(`\n        . # . # .\n        # # # # #\n        # # # # #\n        . # # # .\n        . . # . .`);\n})\n}",
+        "{\ninput.onButtonPressed(Button.A, () => {\n    radio.sendNumber(0)\n})\n}"
+    ],
     "metadata": {
         "diffs": false
     }

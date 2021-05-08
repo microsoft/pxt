@@ -5,6 +5,8 @@ import * as data from "./data";
 import * as sui from "./sui";
 import * as githubbutton from "./githubbutton";
 import * as cmds from "./cmds"
+import * as cloud from "./cloud";
+import * as auth from "./auth";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -28,6 +30,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         this.startStopSimulator = this.startStopSimulator.bind(this);
         this.toggleDebugging = this.toggleDebugging.bind(this);
         this.toggleCollapsed = this.toggleCollapsed.bind(this);
+        this.cloudButtonClick = this.cloudButtonClick.bind(this);
     }
 
     saveProjectName(name: string, view?: string) {
@@ -82,8 +85,9 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         this.props.parent.toggleSimulatorCollapse();
     }
 
-    private getViewString(view: View): string {
-        return view.toString().toLowerCase();
+    cloudButtonClick(view?: string) {
+        pxt.tickEvent("editortools.cloud", { view: view, collapsed: this.getCollapsedState() }, { interactiveConsent: true });
+        // TODO: do anything?
     }
 
     private getCollapsedState(): string {
@@ -92,20 +96,6 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
 
     private getHeadlessState(): string {
         return pxt.appTarget.simulator.headless ? "true" : "false";
-    }
-
-    private getUndoRedo(view: View): JSX.Element[] {
-        const hasUndo = this.props.parent.editor.hasUndo();
-        const hasRedo = this.props.parent.editor.hasRedo();
-        return [
-            <EditorToolbarButton icon='xicon undo' className={`editortools-btn undo-editortools-btn ${!hasUndo ? 'disabled' : ''}`} title={lf("Undo")} ariaLabel={lf("{0}, {1}", lf("Undo"), !hasUndo ? lf("Disabled") : "")} onButtonClick={this.undo} view={this.getViewString(view)} key="undo" />,
-            <EditorToolbarButton icon='xicon redo' className={`editortools-btn redo-editortools-btn ${!hasRedo ? 'disabled' : ''}`} title={lf("Redo")} ariaLabel={lf("{0}, {1}", lf("Redo"), !hasRedo ? lf("Disabled") : "")} onButtonClick={this.redo} view={this.getViewString(view)} key="redo" />
-        ];
-    }
-
-    private getZoomControl(view: View): JSX.Element[] {
-        return [<EditorToolbarButton icon='minus circle' className="editortools-btn zoomout-editortools-btn" title={lf("Zoom Out")} onButtonClick={this.zoomOut} view={this.getViewString(view)} key="minus" />,
-        <EditorToolbarButton icon='plus circle' className="editortools-btn zoomin-editortools-btn" title={lf("Zoom In")} onButtonClick={this.zoomIn} view={this.getViewString(view)} key="plus" />]
     }
 
     private getSaveInput(showSave: boolean, id?: string, projectName?: string, projectNameReadOnly?: boolean): JSX.Element[] {
@@ -134,11 +124,29 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         return saveInput;
     }
 
+    private getZoomControl(view: View): JSX.Element[] {
+        return [<EditorToolbarButton icon='minus circle' className="editortools-btn zoomout-editortools-btn" title={lf("Zoom Out")} onButtonClick={this.zoomOut} view={this.getViewString(view)} key="minus" />,
+        <EditorToolbarButton icon='plus circle' className="editortools-btn zoomin-editortools-btn" title={lf("Zoom In")} onButtonClick={this.zoomIn} view={this.getViewString(view)} key="plus" />]
+    }
+
+    protected getUndoRedo(view: View): JSX.Element[] {
+        const hasUndo = this.props.parent.editor.hasUndo();
+        const hasRedo = this.props.parent.editor.hasRedo();
+        return [
+            <EditorToolbarButton icon='xicon undo' className={`editortools-btn undo-editortools-btn ${!hasUndo ? 'disabled' : ''}`} title={lf("Undo")} ariaLabel={lf("{0}, {1}", lf("Undo"), !hasUndo ? lf("Disabled") : "")} onButtonClick={this.undo} view={this.getViewString(view)} key="undo" />,
+            <EditorToolbarButton icon='xicon redo' className={`editortools-btn redo-editortools-btn ${!hasRedo ? 'disabled' : ''}`} title={lf("Redo")} ariaLabel={lf("{0}, {1}", lf("Redo"), !hasRedo ? lf("Disabled") : "")} onButtonClick={this.redo} view={this.getViewString(view)} key="redo" />
+        ];
+    }
+
+    protected getViewString(view: View): string {
+        return view.toString().toLowerCase();
+    }
+
     protected onHwItemClick = () => {
         if (pxt.hasHwVariants())
             this.props.parent.showChooseHwDialog(true);
         else
-            this.props.parent.showBoardDialogAsync(undefined, true).done();
+            this.props.parent.showBoardDialogAsync(undefined, true);
 
     }
 
@@ -152,7 +160,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
     }
 
     protected onDisconnectClick = () => {
-        cmds.showDisconnectAsync().done();
+        cmds.showDisconnectAsync();
     }
 
     protected getCompileButton(view: View): JSX.Element[] {
@@ -227,7 +235,8 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
     }
 
     renderCore() {
-        const { tutorialOptions, projectName, compiling, isSaving, simState, debugging, header } = this.props.parent.state;
+        const { tutorialOptions, projectName, compiling, isSaving, simState, debugging, editorState } = this.props.parent.state;
+        const header = this.getData(`header:${this.props.parent.state.header.id}`) ?? this.props.parent.state.header;
 
         const targetTheme = pxt.appTarget.appTheme;
         const isController = pxt.shell.isControllerMode();
@@ -235,16 +244,18 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const tutorial = tutorialOptions ? tutorialOptions.tutorial : false;
         const simOpts = pxt.appTarget.simulator;
         const headless = simOpts.headless;
+        const flyoutOnly = editorState && editorState.hasCategories === false;
 
         const disableFileAccessinMaciOs = targetTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isIOS() || pxt.BrowserUtils.isMac());
+        const disableFileAccessinAndroid = pxt.appTarget.appTheme.disableFileAccessinAndroid && pxt.BrowserUtils.isAndroid();
         const ghid = header && pxt.github.parseRepoId(header.githubId);
         const hasRepository = !!ghid;
         const showSave = !readOnly && !isController && !targetTheme.saveInMenu
-            && !tutorial && !debugging && !disableFileAccessinMaciOs
+            && !tutorial && !debugging && !disableFileAccessinMaciOs && !disableFileAccessinAndroid
             && !hasRepository;
         const showProjectRename = !tutorial && !readOnly && !isController
             && !targetTheme.hideProjectRename && !debugging;
-        const showProjectRenameReadonly = hasRepository && /^pxt-/.test(ghid.project); // allow renaming of name with github
+        const showProjectRenameReadonly = false; // always allow renaming, even for github projects
         const compile = pxt.appTarget.compile;
         const compileBtn = compile.hasHex || compile.saveAsPNG || compile.useUF2;
         const compileTooltip = lf("Download your code to the {0}", targetTheme.boardName);
@@ -252,8 +263,8 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const running = simState == pxt.editor.SimState.Running;
         const starting = simState == pxt.editor.SimState.Starting;
 
-        const showUndoRedo = !readOnly && !debugging;
-        const showZoomControls = true;
+        const showUndoRedo = !readOnly && !debugging && !flyoutOnly;
+        const showZoomControls = !flyoutOnly;
         const showGithub = !!pxt.appTarget.cloud
             && !!pxt.appTarget.cloud.githubPackages
             && targetTheme.githubEditor
@@ -288,7 +299,29 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
             saveButtonClasses = "disabled";
         }
 
-        return <div id="editortools" className="ui" role="menubar" aria-label={lf("Editor toolbar")}>
+        // cloud status
+        const cloudMd = this.getData<cloud.CloudTempMetadata>(`${cloud.HEADER_CLOUDSTATE}:${header.id}`);
+        const cloudState = cloud.getCloudSummary(header, cloudMd);
+        const showCloudButton = !!cloudState && auth.hasIdentity()
+        const getCloudIcon = () => {
+            if (cloudState === "syncing" || cloudState === "localEdits")
+                return "cloud-saving-b"
+            if (cloudState === "conflict" || cloudState === "offline")
+                return "cloud-error-b"
+            return "cloud-saved-b"
+        }
+        const getCloudTooltip = () => {
+            if (cloudState === "syncing" || cloudState === "localEdits")
+                return lf("Saving project to the cloud...")
+            if (cloudState === "conflict")
+                return lf("Project was edited in two places and the changes conflict.")
+            if (cloudState === "offline")
+                return lf("Unable to connect to the cloud.")
+            return lf("Project saved to the cloud.")
+        }
+        const cloudButton = <EditorToolbarButton icon={"xicon " + getCloudIcon()} className={`editortools-btn`} title={getCloudTooltip()} onButtonClick={this.cloudButtonClick} view='computer' />;
+
+        return <div id="editortools" className="ui" role="region" aria-label={lf("Editor toolbar")}>
             <div id="downloadArea" role="menu" className="ui column items">{headless &&
                 <div className="ui item">
                     <div className="ui icon large buttons">
@@ -308,7 +341,8 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                     <div className={`ui right ${showSave ? "labeled" : ""} input projectname-input projectname-computer`}>
                         {showProjectRename && this.getSaveInput(showSave, "fileNameInput2", projectName, showProjectRenameReadonly)}
                         {showGithub && <githubbutton.GithubButton parent={this.props.parent} key={`githubbtn${computer}`} />}
-                    </div>
+                        {showCloudButton && cloudButton}
+                </div>
                 </div>}
             <div id="editorToolbarArea" role="menu" className="ui column items">
                 {showUndoRedo && <div className="ui icon buttons">{this.getUndoRedo(computer)}</div>}
@@ -327,6 +361,116 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         </div>;
     }
 }
+
+interface ZoomSliderProps extends ISettingsProps {
+    view: string;
+    zoomMin?: number;
+    zoomMax?: number;
+}
+
+interface ZoomSliderState {
+    zoomValue: number;
+}
+
+export class ZoomSlider extends data.Component<ZoomSliderProps, ZoomSliderState> {
+    private zoomMin = this.props.zoomMin ? this.props.zoomMin : 0;
+    private zoomMax = this.props.zoomMax ? this.props.zoomMax : 5;
+
+    constructor(props: ZoomSliderProps) {
+        super(props);
+        this.state = {zoomValue: Math.floor((this.zoomMax + 1 - this.zoomMin) / 2) + this.zoomMin};
+
+        this.handleWheelZoom = this.handleWheelZoom.bind(this);
+        this.zoomUpdate = this.zoomUpdate.bind(this);
+        this.zoomOut = this.zoomOut.bind(this);
+        this.zoomIn = this.zoomIn.bind(this);
+    }
+
+    componentDidMount() {
+        window.addEventListener('wheel', this.handleWheelZoom);
+    }
+
+    componentWillUnmount() {
+        window.removeEventListener('wheel', this.handleWheelZoom);
+    }
+
+    handleWheelZoom(e: WheelEvent) {
+        if (e.ctrlKey) {
+            if (e.deltaY < 0) {
+                this.increaseZoomState();
+            } else {
+                this.decreaseZoomState();
+            }
+        }
+    }
+
+    private decreaseZoomState() {
+        if (this.state.zoomValue > this.zoomMin) {
+            this.setState({zoomValue: this.state.zoomValue - 1});
+        }
+    }
+    private increaseZoomState() {
+        if (this.state.zoomValue < this.zoomMax) {
+            this.setState({zoomValue: this.state.zoomValue + 1})
+        }
+    }
+
+    zoomOut() {
+        if (this.state.zoomValue > this.zoomMin) {
+            this.decreaseZoomState();
+            this.props.parent.editor.zoomOut();
+            this.props.parent.forceUpdate();
+        }
+    }
+
+    zoomIn() {
+        if (this.state.zoomValue < this.zoomMax) {
+            this.increaseZoomState();
+            this.props.parent.editor.zoomIn();
+            this.props.parent.forceUpdate();
+        }
+    }
+
+    zoomUpdate(e: React.ChangeEvent<HTMLInputElement>) {
+        const newZoomValue = parseInt((e.target as any).value);
+        if (this.state.zoomValue < newZoomValue) {
+            for (let i = 0; i < (newZoomValue - this.state.zoomValue); i++) {
+                this.props.parent.editor.zoomIn();
+            }
+        } else if (newZoomValue < this.state.zoomValue) {
+            for (let i = 0; i < (this.state.zoomValue - newZoomValue); i++) {
+                this.props.parent.editor.zoomOut();
+            }
+        }
+        this.setState({zoomValue: newZoomValue});
+        this.props.parent.forceUpdate();
+    }
+
+    renderCore() {
+        return <div className="zoom">
+            <EditorToolbarButton icon="minus circle" className="editortools-btn zoomout-editortools-btn borderless" title={lf("Zoom Out")} onButtonClick={this.zoomOut} view={this.props.view} key="minus"/>
+            <div id="zoomSlider">
+                <input className="zoomSliderBar" type="range" min={this.zoomMin} max={this.zoomMax} step="1" value={this.state.zoomValue.toString()} onChange={this.zoomUpdate}
+                aria-valuemax={this.zoomMax} aria-valuemin={this.zoomMin} aria-valuenow={this.state.zoomValue}></input>
+            </div>
+            <EditorToolbarButton icon='plus circle' className="editortools-btn zoomin-editortools-btn borderless" title={lf("Zoom In")} onButtonClick={this.zoomIn} view={this.props.view} key="plus" />
+        </div>
+    }
+}
+
+
+export class SmallEditorToolbar extends EditorToolbar {
+    constructor(props: ISettingsProps) {
+        super(props);
+    }
+    renderCore() {
+        return <div id="headerToolbar" className="smallEditorToolbar">
+            <ZoomSlider parent={this.props.parent} view={super.getViewString(View.Computer)} zoomMin={0} zoomMax={5}></ZoomSlider>
+            <div className="ui icon undo-redo-buttons">{super.getUndoRedo(View.Computer)}</div>
+        </div>
+    }
+}
+
 
 interface EditorToolbarButtonProps extends sui.ButtonProps {
     view: string;

@@ -1,7 +1,7 @@
 /// <reference path="../localtypings/pxtarget.d.ts"/>
 
 namespace pxt {
-    declare var require: any;
+    declare let require: any;
 
     let lzmaPromise: Promise<any>;
     function getLzmaAsync() {
@@ -163,14 +163,22 @@ namespace pxt.cpp {
         let sourcePath = "/source/"
         let disabledDeps = ""
         let mainDeps: Package[] = []
-        for (let pkg of mainPkg.sortedDeps(true)) {
+
+        // order shouldn't matter for c++ compilation,
+        // so use a stable order to prevent order changes from fetching a new hex file
+        const mainPkgDeps = mainPkg.sortedDeps(true)
+            .sort((a, b) => {
+                if (a.id == "this") return 1;
+                else if (b.id == "this") return -1;
+                else return U.strcmp(a.id, b.id);
+            });
+
+        for (let pkg of mainPkgDeps) {
             if (pkg.disablesVariant(pxt.appTargetVariant) ||
                 pkg.resolvedDependencies().some(d => d.disablesVariant(pxt.appTargetVariant))) {
-                if (pkg.id != "this") {
-                    if (disabledDeps)
-                        disabledDeps += ", "
-                    disabledDeps += pkg.id
-                }
+                if (disabledDeps)
+                    disabledDeps += ", "
+                disabledDeps += pkg.id
                 pxt.debug(`disable variant ${pxt.appTargetVariant} due to ${pkg.id}`)
                 continue
             }
@@ -820,9 +828,10 @@ namespace pxt.cpp {
         const currSettings: Map<any> = U.clone(compileService.yottaConfig || {})
         const optSettings: Map<any> = {}
         const settingSrc: Map<Package> = {}
+        const codalLibraries: pxt.Map<github.ParsedRepo> = {}
 
         function parseJson(pkg: Package) {
-            let j0 = pkg.config.platformio
+            const j0 = pkg.config.platformio
             if (j0 && j0.dependencies) {
                 U.jsonCopyFrom(res.platformio.dependencies, j0.dependencies)
             }
@@ -830,7 +839,24 @@ namespace pxt.cpp {
             if (res.npmDependencies && pkg.config.npmDependencies)
                 U.jsonCopyFrom(res.npmDependencies, pkg.config.npmDependencies)
 
-            let json = pkg.config.yotta
+            const codal = pkg.config.codal
+            if (isCodal && codal) {
+                for (const lib of codal.libraries || []) {
+                    const repo = github.parseRepoId(lib)
+                    if (!repo)
+                        U.userError(lf("codal library {0} doesn't look like github repo", lib))
+                    const canonical = github.stringifyRepo(repo)
+                    const existing = U.lookup(codalLibraries, repo.project)
+                    if (existing) {
+                        if (github.stringifyRepo(existing) != canonical)
+                            U.userError(lf("conflict between codal libraries: {0} and {1}", github.stringifyRepo(existing), canonical))
+                    } else {
+                        codalLibraries[repo.project] = repo
+                    }
+                }
+            }
+
+            const json = pkg.config.yotta
             if (!json) return;
 
             // TODO check for conflicts
@@ -895,8 +921,8 @@ namespace pxt.cpp {
                     U.assert(!seenMain)
                 }
                 // Generally, headers need to be processed before sources, as they contain definitions
-                // (in particular of enums, which are needed to decide if we're doing conversions for 
-                // function arguments). This can still fail if one header uses another and they are 
+                // (in particular of enums, which are needed to decide if we're doing conversions for
+                // function arguments). This can still fail if one header uses another and they are
                 // listed in invalid order...
                 const isHeaderFn = (fn: string) => U.endsWith(fn, ".h")
                 const ext = ".cpp"
@@ -916,7 +942,7 @@ namespace pxt.cpp {
                         fileName = fullName
 
                         parseCpp(src, isHeader)
-                        src = src.replace(/^[ \t]*/mg, "") // shrink the files
+                        // src = src.replace(/^[ \t]*/mg, "") // HACK: shrink the files
                         res.extensionFiles[sourcePath + fullName] = src
 
                         if (pkg.level == 0)
@@ -932,6 +958,12 @@ namespace pxt.cpp {
                 if (thisErrors) {
                     allErrors += lf("Extension {0}:\n", pkg.id) + thisErrors
                 }
+            }
+
+            if (!seenMain) {
+                // this can happen if the main package is disabled in current variant
+                shimsDTS.clear()
+                enumsDTS.clear()
             }
         }
 
@@ -957,6 +989,8 @@ namespace pxt.cpp {
                 .forEach(k => optSettings["YOTTA_CFG_" + k] = optSettings[k]);
         }
 
+        optSettings["PXT_TARGET"] = JSON.stringify(appTarget.id)
+
         const configJson = U.jsonUnFlatten(optSettings)
         if (isDockerMake) {
             let packageJson = {
@@ -979,7 +1013,15 @@ namespace pxt.cpp {
                 // include these, because we use hash of this file to see if anything changed
                 "pxt_gitrepo": cs.githubCorePackage,
                 "pxt_gittag": cs.gittag,
+                "libraries": U.values(codalLibraries).map(r => ({
+                    "name": r.project,
+                    "url": "https://github.com/" + r.fullName,
+                    "branch": r.tag || "master",
+                    "type": "git"
+                }))
             }
+            if (codalJson.libraries.length == 0)
+                delete codalJson.libraries
             U.iterMap(U.jsonFlatten(configJson), (k, v) => {
                 k = k.replace(/^codal\./, "device.").toUpperCase().replace(/\./g, "_")
                 cfg[k] = v
@@ -1292,13 +1334,14 @@ namespace pxt.hexloader {
         let hexurl = ""
 
         showLoading(pxt.U.lf("Compiling (this may take a minute)..."));
+        pxt.tickEvent("cppcompile.start")
         return downloadHexInfoLocalAsync(extInfo)
             .then((hex) => {
                 if (hex) {
                     // Found the hex image in the local server cache, use that
+                    pxt.tickEvent("cppcompile.cachehit")
                     return hex;
                 }
-
                 return getCdnUrlAsync()
                     .then(url => {
                         hexurl = url + "/compile/" + extInfo.sha
@@ -1307,12 +1350,29 @@ namespace pxt.hexloader {
                     .then(r => r, e =>
                         Cloud.privatePostAsync("compile/extension", { data: extInfo.compileData })
                             .then(ret => new Promise<string>((resolve, reject) => {
-                                let tryGet = () => {
+                                let retry = 0;
+                                const delay = 8000; // ms
+                                const maxWait = 120000; // ms
+                                const startTry = U.now();
+                                const tryGet = () => {
+                                    retry++;
+                                    if (U.now() - startTry > maxWait) {
+                                        pxt.log(`abandoning C++ build`)
+                                        pxt.tickEvent("cppcompile.cancel", { retry })
+                                        resolve(null);
+                                        return null;
+                                    }
                                     let url = ret.hex.replace(/\.hex/, ".json")
-                                    pxt.log(`polling C++ build ${url}`)
+                                    pxt.log(`polling C++ build ${url} (attempt #${retry})`)
+                                    pxt.tickEvent("cppcompile.poll", { retry })
                                     return Util.httpGetJsonAsync(url)
                                         .then(json => {
                                             pxt.log(`build log ${url.replace(/\.json$/, ".log")}`);
+                                            pxt.tickEvent("cppcompile.done", {
+                                                success: json?.success ? 1 : 0,
+                                                retry,
+                                                duration: U.now() - startTry
+                                            })
                                             if (!json.success) {
                                                 pxt.log(`build failed`);
                                                 if (json.mbedresponse && json.mbedresponse.result && json.mbedresponse.result.exception)
@@ -1325,8 +1385,9 @@ namespace pxt.hexloader {
                                             }
                                         },
                                             e => {
-                                                setTimeout(tryGet, 1000)
-                                                return null
+                                                pxt.log(`waiting ${(delay / 1000) | 0}s for C++ build...`)
+                                                setTimeout(tryGet, delay)
+                                                return null;
                                             })
                                 }
                                 tryGet();
@@ -1404,7 +1465,7 @@ namespace pxt.hexloader {
                 keys.unshift(newkey)
                 let todel = keys.slice(maxLen)
                 keys = keys.slice(0, maxLen)
-                return Promise.map(todel, e => host.cacheStoreAsync(e, null))
+                return U.promiseMapAll(todel, e => host.cacheStoreAsync(e, "[]"))
                     .then(() => host.cacheStoreAsync(idxkey, JSON.stringify(keys)))
             })
     }
@@ -1498,9 +1559,9 @@ namespace pxt.hexloader {
                 buf = ""
                 let cnt = parseInt(nxt, 16)
                 while (cnt-- > 0) {
-                    /* tslint:disable:no-octal-literal */
+                    /* eslint-disable no-octal */
                     buf += "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
-                    /* tslint:enable:no-octal-literal */
+                    /* eslint-enable no-octal */
                 }
             } else {
                 buf = ts.pxtc.decodeBase64(nxt)

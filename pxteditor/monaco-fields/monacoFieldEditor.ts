@@ -10,6 +10,10 @@ namespace pxt.editor {
         contentDiv(): HTMLDivElement;
         getText(range: monaco.Range): string;
         blocksInfo(): pxtc.BlocksInfo;
+
+        package(): pxt.MainPackage;
+        writeFileAsync(filename: string, content: string): Promise<void>;
+        readFile(filename: string): string;
     }
 
     export interface MonacoFieldEditor {
@@ -23,7 +27,9 @@ namespace pxt.editor {
         id: string;
         matcher: MonacoFindArguments;
         foldMatches?: boolean;
+        alwaysBuildOnClose?: boolean;
         glyphCssClass?: string;
+        weight?: number; // higher weight will override lower weight when on same line
         proto: { new(): MonacoFieldEditor };
         heightInPixels?: number;
     }

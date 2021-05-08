@@ -54,7 +54,7 @@ Browsers to test:
 * Change the language and make sure things are translated
 Toolbox
 * Test keyboard navigation of categories
-* Make sure categories don'T take too long to open
+* Make sure categories don't take too long to open
 * Test search
     1. Make sure built-in blocks (if, for, math operators, true/false, etc) can show up in search
     2. Test search while localized; make sure you can search localized terms and find appropriate results

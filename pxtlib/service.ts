@@ -336,7 +336,7 @@ namespace ts.pxtc {
         endingToken?: string;
     }
 
-    export function computeUsedParts(resp: CompileResult, ignoreBuiltin = false): string[] {
+    export function computeUsedParts(resp: CompileResult, filter?: "onlybuiltin" | "ignorebuiltin"): string[] {
         if (!resp.usedSymbols || !pxt.appTarget.simulator || !pxt.appTarget.simulator.parts)
             return [];
 
@@ -356,10 +356,15 @@ namespace ts.pxtc {
             }
         });
 
-        if (ignoreBuiltin) {
+        if (filter) {
             const builtinParts = pxt.appTarget.simulator.boardDefinition.onboardComponents;
-            if (builtinParts)
-                parts = parts.filter(p => builtinParts.indexOf(p) < 0);
+            if (builtinParts) {
+                if (filter === "ignorebuiltin") {
+                    parts = parts.filter(p => builtinParts.indexOf(p) === -1);
+                } else if (filter === "onlybuiltin") {
+                    parts = parts.filter(p => builtinParts.indexOf(p) >= 0);
+                }
+            }
         }
 
         //sort parts (so breadboarding layout is stable w.r.t. code ordering)
@@ -369,6 +374,16 @@ namespace ts.pxtc {
         // before "buttonpair"
 
         return parts;
+    }
+
+    export function buildSimJsInfo(compileResult: pxtc.CompileResult): pxtc.BuiltSimJsInfo {
+        return {
+            js: compileResult.outfiles[pxtc.BINARY_JS],
+            targetVersion: pxt.appTarget.versions.target,
+            fnArgs: compileResult.usedArguments,
+            parts: pxtc.computeUsedParts(compileResult, "ignorebuiltin"),
+            usedBuiltinParts: pxtc.computeUsedParts(compileResult, "onlybuiltin"),
+        };
     }
 
     /**
@@ -461,6 +476,20 @@ namespace ts.pxtc {
                         isSet ? U.lf("set %{0} %property to %{1}", paramName, paramValue) :
                             U.lf("change %{0} %property by %{1}", paramName, paramValue)
                 updateBlockDef(ex.attributes)
+                if (pxt.Util.isTranslationMode()) {
+                    ex.attributes.translationId = ex.attributes.block;
+                    // This kicks off async work but doesn't wait; give untranslated values to start with
+                    // to avoid a race causing a crash.
+                    ex.attributes.block = isGet ? `%${paramName} %property` :
+                        isSet ? `set %${paramName} %property to %${paramValue}` :
+                            `change %${paramName} %property by %${paramValue}`;
+                    updateBlockDef(ex.attributes);
+                    pxt.crowdin.inContextLoadAsync(ex.attributes.translationId)
+                        .then(r => {
+                            ex.attributes.block = r;
+                            updateBlockDef(ex.attributes);
+                        });
+                }
                 blocks.push(ex)
             }
 
@@ -606,79 +635,101 @@ namespace ts.pxtc {
 
     export let apiLocalizationStrings: pxt.Map<string> = {};
 
-    export function localizeApisAsync(apis: pxtc.ApisInfo, mainPkg: pxt.MainPackage): Promise<pxtc.ApisInfo> {
+    export async function localizeApisAsync(apis: pxtc.ApisInfo, mainPkg: pxt.MainPackage): Promise<pxtc.ApisInfo> {
         const lang = pxtc.Util.userLanguage();
-        if (pxtc.Util.userLanguage() == "en") return Promise.resolve(cleanLocalizations(apis));
 
-        const errors: pxt.Map<number> = {};
+        if (lang == "en")
+            return Promise.resolve(cleanLocalizations(apis));
+
         const langLower = lang.toLowerCase();
         const attrJsLocsKey = langLower + "|jsdoc";
         const attrBlockLocsKey = langLower + "|block";
-        return mainPkg.localizationStringsAsync(lang)
-            .then(loc => Promise.all(Util.values(apis.byQName).map(fn => {
-                if (apiLocalizationStrings)
-                    Util.jsonMergeFrom(loc, apiLocalizationStrings);
-                const attrLocs = fn.attributes.locs || {};
-                const locJsDoc = loc[fn.qName] || attrLocs[attrJsLocsKey];
-                if (locJsDoc) {
-                    fn.attributes.jsDoc = locJsDoc;
-                    if (fn.parameters)
-                        fn.parameters.forEach(pi => pi.description = loc[`${fn.qName}|param|${pi.name}`] || attrLocs[`${langLower}|param|${pi.name}`] || pi.description);
+
+        const loc = await mainPkg.localizationStringsAsync(lang);
+        if (apiLocalizationStrings)
+            Util.jsonMergeFrom(loc, apiLocalizationStrings);
+
+        await Util.promiseMapAll(Util.values(apis.byQName), async fn => {
+            const altLocSrc = fn.attributes.useLoc || fn.attributes.blockAliasFor;
+            const altLocSrcFn = altLocSrc && apis.byQName[altLocSrc];
+
+            const lookupLoc = (locSuff: string, attrKey: string) => {
+                return loc[fn.qName + locSuff] || fn.attributes.locs?.[attrKey]
+                    || (altLocSrcFn && (loc[altLocSrcFn.qName + locSuff] || altLocSrcFn.attributes.locs?.[attrKey]));
+            }
+
+            const locJsDoc = lookupLoc("", attrJsLocsKey);
+            if (locJsDoc) {
+                fn.attributes._untranslatedJsDoc = fn.attributes.jsDoc;
+                fn.attributes.jsDoc = locJsDoc;
+            }
+
+            fn.parameters?.forEach(pi => {
+                const paramSuff = `|param|${pi.name}`;
+                const paramLocs = lookupLoc(paramSuff, langLower + paramSuff);
+
+                if (paramLocs) {
+                    pi.description = paramLocs;
                 }
-                const nsDoc = loc['{id:category}' + Util.capitalize(fn.qName)];
-                let locBlock = loc[`${fn.qName}|block`] || attrLocs[attrBlockLocsKey];
+            });
 
-                if (!locBlock && fn.attributes.useLoc) {
-                    const otherFn = apis.byQName[fn.attributes.useLoc];
+            const nsDoc = loc['{id:category}' + Util.capitalize(fn.qName)];
+            let locBlock = loc[`${fn.qName}|block`] || fn.attributes.locs?.[attrBlockLocsKey];
 
-                    if (otherFn) {
-                        const otherTranslation = loc[`${otherFn.qName}|block`];
-                        const isSameBlockDef = fn.attributes.block === (otherFn.attributes._untranslatedBlock || otherFn.attributes.block);
+            if (!locBlock && altLocSrcFn) {
+                const otherTranslation = loc[`${altLocSrcFn.qName}|block`] || altLocSrcFn.attributes.locs?.[attrBlockLocsKey];
+                const isSameBlockDef = fn.attributes.block === (altLocSrcFn.attributes._untranslatedBlock || altLocSrcFn.attributes.block);
 
-                        if (isSameBlockDef && !!otherTranslation) {
-                            locBlock = otherTranslation;
-                        }
-                    }
+                if (isSameBlockDef && !!otherTranslation) {
+                    locBlock = otherTranslation;
                 }
+            }
 
-                let p = Promise.resolve();
-                if (locBlock && pxt.Util.isTranslationMode()) {
-                    // in translation mode, crowdin sends translation identifiers which break the block parsing
-                    // push identifier in DOM so that crowdin sends back the actual translation
-                    fn.attributes.translationId = locBlock;
-                    p = p.then(() => pxt.crowdin.inContextLoadAsync(locBlock))
-                        .then(r => { locBlock = r; });
+            if (locBlock && pxt.Util.isTranslationMode()) {
+                // in translation mode, crowdin sends translation identifiers which break the block parsing
+                // push identifier in DOM so that crowdin sends back the actual translation
+                fn.attributes.translationId = locBlock;
+                locBlock = await pxt.crowdin.inContextLoadAsync(locBlock);
+            }
+
+            if (nsDoc) {
+                // Check for "friendly namespace"
+                if (fn.attributes.block) {
+                    fn.attributes.block = locBlock || fn.attributes.block;
+                } else {
+                    fn.attributes.block = nsDoc;
                 }
-                return p.then(() => {
-                    if (nsDoc) {
-                        // Check for "friendly namespace"
-                        if (fn.attributes.block) {
-                            fn.attributes.block = locBlock || fn.attributes.block;
-                        } else {
-                            fn.attributes.block = nsDoc;
-                        }
-                    }
-                    else if (fn.attributes.block && locBlock) {
-                        const ps = pxt.blocks.compileInfo(fn);
-                        const oldBlock = fn.attributes.block;
-                        fn.attributes.block = pxt.blocks.normalizeBlock(locBlock, err => errors[`${fn.attributes.blockId}.${lang}`] = 1);
-                        fn.attributes._untranslatedBlock = oldBlock;
-                        if (oldBlock != fn.attributes.block) {
-                            const locps = pxt.blocks.compileInfo(fn);
-                            if (JSON.stringify(ps) != JSON.stringify(locps)) {
-                                pxt.log(`block has non matching arguments: ${oldBlock} vs ${fn.attributes.block}`)
-                                fn.attributes.block = oldBlock;
-                            }
-                        }
-                    }
+                updateBlockDef(fn.attributes);
+            } else if (fn.attributes.block && locBlock) {
+                const ps = pxt.blocks.compileInfo(fn);
+                const oldBlock = fn.attributes.block;
+                fn.attributes.block = pxt.blocks.normalizeBlock(locBlock, err => {
+                    pxt.tickEvent("loc.normalized", {
+                        block: fn.attributes.block,
+                        lang: lang,
+                        error: err,
+                    });
+                });
+                fn.attributes._untranslatedBlock = oldBlock;
+                if (oldBlock != fn.attributes.block) {
                     updateBlockDef(fn.attributes);
-                })
-            })))
-            .then(() => cleanLocalizations(apis))
-            .finally(() => {
-                if (Object.keys(errors).length)
-                    pxt.reportError(`loc.errors`, `invalid translation`, errors);
-            })
+                    const locps = pxt.blocks.compileInfo(fn);
+                    if (!hasEquivalentParameters(ps, locps)) {
+                        pxt.log(`block has non matching arguments: ${oldBlock} vs ${fn.attributes.block}`);
+                        pxt.reportError(`loc.errors`, `invalid translations`, {
+                            block: fn.attributes.blockId,
+                            lang: lang,
+                        });
+                        fn.attributes.block = oldBlock;
+                        updateBlockDef(fn.attributes);
+                    }
+                }
+            } else {
+                updateBlockDef(fn.attributes);
+            }
+        });
+
+        return cleanLocalizations(apis);
     }
 
     function cleanLocalizations(apis: ApisInfo) {
@@ -686,6 +737,24 @@ namespace ts.pxtc {
             .filter(fb => fb.attributes.block && /^{[^:]+:[^}]+}/.test(fb.attributes.block))
             .forEach(fn => { fn.attributes.block = fn.attributes.block.replace(/^{[^:]+:[^}]+}/, ''); });
         return apis;
+    }
+
+    function hasEquivalentParameters(a: pxt.blocks.BlockCompileInfo, b: pxt.blocks.BlockCompileInfo) {
+        if (a.parameters.length != b.parameters.length) {
+            pxt.debug(`Localized block has extra or missing parameters`);
+            return false;
+        }
+
+        for (const aParam of a.parameters) {
+            const bParam = b.actualNameToParam[aParam.actualName];
+            if (!bParam
+                || aParam.type != bParam.type
+                || aParam.shadowBlockId != bParam.shadowBlockId) {
+                pxt.debug(`Parameter ${aParam.actualName} type or shadow block does not match after localization`);
+                return false;
+            }
+        }
+        return true;
     }
 
     export function emptyExtInfo(): ExtensionInfo {
@@ -1033,7 +1102,6 @@ namespace ts.pxtc {
                 pushLabels();
             }
 
-            /* tslint:disable:possible-timing-attack  (tslint thinks all variables named token are passwords...) */
             if (token == TokenKind.Parameter) {
                 const param: BlockParameter = { kind: "param", name: tokens[i].content, shadowBlockId: tokens[i].type, ref: false };
                 if (tokens[i].name) param.varName = tokens[i].name;
@@ -1057,7 +1125,6 @@ namespace ts.pxtc {
             else if (token == TokenKind.Pipe) {
                 parts.push({ kind: "break" });
             }
-            /* tslint:enable:possible-timing-attack */
         }
 
         pushLabels();
@@ -1531,6 +1598,7 @@ namespace ts.pxtc.service {
         projectSearch?: ProjectSearchOptions;
         snippet?: SnippetOptions;
         runtime?: pxt.RuntimeOptions;
+        light?: boolean; // in light mode?
     }
 
     export interface SnippetOptions {

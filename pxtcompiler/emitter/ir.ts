@@ -49,6 +49,7 @@ namespace ts.pxtc.ir {
 
     export class Expr extends Node {
         public jsInfo: {};
+        public prevTotalUses: number;
         public totalUses: number; // how many references this expression has; only for the only child of Shared
         public currUses: number;
         public irCurrUses: number;
@@ -76,6 +77,12 @@ namespace ts.pxtc.ir {
             copy.mask = e.mask
             copy.isStringLiteral = e.isStringLiteral
             return copy
+        }
+
+        reset() {
+            this.currUses = 0
+            if (this.prevTotalUses)
+                this.totalUses = this.prevTotalUses
         }
 
         ptrlabel() {
@@ -226,7 +233,7 @@ namespace ts.pxtc.ir {
                         return `SHARED_REF(#${a0.getId()})`
 
                     case EK.SharedDef:
-                        return `SHARED_DEF(#${a0.getId()}: ${str(a0)})`
+                        return `SHARED_DEF(#${a0.getId()} u(${a0.totalUses}): ${str(a0)})`
 
                     case EK.FieldAccess:
                         return `${str(a0)}.${(e.data as FieldAccessInfo).name}`
@@ -631,7 +638,7 @@ namespace ts.pxtc.ir {
         }
 
         inlineSelf(args: ir.Expr[]) {
-            const { precomp, flattened } = flattenArgs(args)
+            const { precomp, flattened } = flattenArgs(args, false, true)
             U.assert(flattened.length == this.args.length)
             this.args.map((a, i) => {
                 a.repl = flattened[i]
@@ -640,6 +647,8 @@ namespace ts.pxtc.ir {
             const r = inlineSubst(this.inlineBody)
             this.args.forEach((a, i) => {
                 if (a.repl.exprKind == EK.SharedRef) {
+                    if (!a.repl.args[0].prevTotalUses)
+                        a.repl.args[0].prevTotalUses = a.repl.args[0].totalUses
                     a.repl.args[0].totalUses += a.replUses - 1
                 }
                 a.repl = null
@@ -925,7 +934,7 @@ namespace ts.pxtc.ir {
         return r
     }
 
-    export function flattenArgs(args: ir.Expr[], reorder = false) {
+    export function flattenArgs(args: ir.Expr[], reorder = false, keepcomplex = false) {
         let didStateUpdate = reorder ? args.some(a => a.canUpdateCells()) : false
         let complexArgs: ir.Expr[] = []
         for (let a of U.reversed(args)) {
@@ -936,7 +945,7 @@ namespace ts.pxtc.ir {
         }
         complexArgs.reverse()
 
-        if (isStackMachine())
+        if (isStackMachine() && !keepcomplex)
             complexArgs = []
 
         let precomp: ir.Expr[] = []

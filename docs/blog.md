@@ -1,5 +1,74 @@
 # Microsoft MakeCode Blog
 
+## [New Free Curriculum! AP Computer Science Principles with MakeCode](/blog/csp/new-free-curriculum)
+
+May 4th, 2021 by [Jaqster](https://github.com/jaqster)
+
+Are you do planning to teach the [AP Computer Science Principles](https://apcentral.collegeboard.org/courses/ap-computer-science-principles) course next year? If so, you may want to take a look at some new curriculum we’ve published...
+
+**[Continue reading this blog post](/blog/csp/new-free-curriculum)**
+
+## [Beginner Skillmap Sneak Peek](/blog/arcade/beginner-skillmap)
+
+March 30th, 2021 by [kiki-lee](https://github.com/kiki-lee)
+
+Next month, Microsoft MakeCode will release a sneak peek of our newest adventure, the Arcade Beginner Skillmap!
+
+**[Continue reading this blog post](/blog/arcade/beginner-skillmap)**
+
+## [MakeCode Arcade Spring Update!](/blog/arcade/update-spring-2021)
+
+March 22nd, 2021 by [Jaqster](https://github.com/jaqster)
+
+I know we just released a major update to [Arcade](/blog/arcade/update-jan-2021) in January, but we couldn’t resist tacking on a few more things! So, we have a small Spring update for you. Here’s what it includes...
+
+**[Continue reading this blog post](/blog/arcade/update-spring-2021)**
+
+## [MakeCode Arcade 1st Birthday Update!](/blog/arcade/update-jan-2021)
+
+January 22nd, 2021 by [Jaqster](https://github.com/jaqster)
+
+New Year, New Release! At this time last year we released the first official version of MakeCode Arcade, so we thought we’d celebrate our first birthday by doing another release update!
+
+**[Continue reading this blog post](/blog/arcade/update-jan-2021)**
+
+## [Fun MakeCode stuff for CS Education Week 2020](/blog/csed-week/csed-week-2020)
+
+December 4th, 2020 by [Jaqster](https://github.com/jaqster)
+
+Hooray!!! It’s the end of 2020! And Computer Science Education Week is here!
+We’ve got a bunch of fun MakeCode activities for students to do during the week, whether they’re at school or at home.
+
+**[Continue reading this blog post](/blog/csed-week/csed-week-2020)**
+
+## [MakeCode for the micro:bit V2 Release](/blog/microbit/microbit-V2)
+
+November 23rd, 2020 by [Jaqster](https://github.com/jaqster)
+
+We’ve been working closely with the Micro:bit Educational Foundation on supporting the new micro:bit V2 with MakeCode. Here’s a rundown of the new micro:bit features in MakeCode...
+
+**[Continue reading this blog post](/blog/microbit/microbit-V2)**
+
+## [micro:bit shield for MakeCode Arcade](/blog/microbit/arcade-shield)
+
+October 16th, 2020 by [James Devine](https://github.com/jamesadevine)
+
+We are excited to announce that MakeCode Arcade is coming to micro:bit V2 via a brand new accessory shield.
+
+**[Continue reading this blog post](/blog/microbit/arcade-shield)**
+
+## [Microsoft TileCode: Design, Code, and Play Games on MakeCode Arcade Devices](/blog/arcade/tilecode)
+
+August 20th, 2020 by [Thomas Ball](https://www.microsoft.com/en-us/research/people/tball) and [Stefania Druga](http://cognimates.me/team/)
+
+## [MakeCode Arcade Update](/blog/arcade/update-july-2020)
+
+July 17th, 2020 by [Jaqster](https://github.com/jaqster)
+
+Hard to believe it was only January when we released MakeCode Arcade for General Availability. So much has happened since then...
+
+**[Continue reading this blog post](/blog/arcade/update-july-2020)**
+
 ## [MakeCode for the micro:bit – 2020 Release](/blog/microbit/2020-release)
 
 June 12th, 2020 by [Jaqster](https://github.com/jaqster)
@@ -28,7 +97,7 @@ Submissions from the second MakeCode Arcade game jam are in. We've been delighte
 
 March 10th, 2020
 
-Many schools have closed or might soon close to help prevent the spread of illness. Both educators and students may need to find ways to promote and continue learning without a classroom. 
+Many schools have closed or might soon close to help prevent the spread of illness. Both educators and students may need to find ways to promote and continue learning without a classroom.
 To help families, **the MakeCode team will be live streaming coding lessons**.
 We thought that it might be helpful to again highlight the learning resources we have with MakeCode that support online learning.
 **[Continue reading this blog post](/blog/online-learning)**
@@ -99,7 +168,7 @@ A number of bug fixes and a few new blocks for the LEGO editor.
 **[Continue reading this blog post](/blog/lego/09-06-2019)**
 
 ## [MakeCode Assignments in Teams](/blog/teams/teams-assignments)
- 
+
 July 2nd, 2019 by [Jaqster](https://github.com/jaqster)
 
 We’re excited to announce a new Teams feature for Educators who are teaching with MakeCode.
@@ -108,7 +177,7 @@ Students can then open the MakeCode editor and complete the assignment without e
 **[Continue reading this blog post](/blog/teams/teams-assignments)**
 
 ## [MakeCode for the micro:bit – 2019 Release](/blog/microbit/2019-release)
- 
+
 June 15th, 2019 by [Jaqster](https://github.com/jaqster)
 
 It’s out! The 2019 MakeCode micro:bit update has been released!
@@ -124,14 +193,14 @@ microcontrollers. Since early 2016, we've been bringing web technology to the wo
 **[Continue reading this blog post](/blog/alava/alava)**
 
 ## [MakeCode for the micro:bit – 2019 Beta Release](/blog/microbit/2019-beta)
- 
+
 April 5th, 2019 by [Jaqster](https://github.com/jaqster)
 
 Believe it or not, we are getting ready to ship the **Summer 2019 release** of **MakeCode for the micro:bit**! Thank you to everyone who helped us identify bugs and suggest new features.
 **[Continue reading this blog post](/blog/microbit/2019-beta)**
 
 ## [Intro to CS with the micro:bit – free Educator Materials](/blog/microbit/csintro-educator)
- 
+
 March 12th, 2019 by [Jaqster](https://github.com/jaqster)
 
 We've decided to supplement the curriculum by providing some additional Educator materials that would help new teachers learn and teach the course. We didn’t change the course at all, just added some extra materials, like...
@@ -141,38 +210,38 @@ We've decided to supplement the curriculum by providing some additional Educator
 
 January 18th, 2019 by Microsoft MakeCode Team
 
-The MakeCode team is excited to announce a completely new retro gaming experience, 
+The MakeCode team is excited to announce a completely new retro gaming experience,
 spanning the worlds of the web browser and the microcontroller!
 **[Continue reading this blog post](/blog/arcade/01-18-2019)**
 
 ## [Cartoon Network Projects for the Adafruit Circuit Playground Express!](/blog/adafruit-circuit-playground-express/cn-projects)
- 
+
 January 7th, 2019 by [Jaqster](https://github.com/jaqster)
 
 Happy New Year! And what better way to start 2019 than with a series of brand-new projects for Circuit Playground Express inspired by Cartoon Network!
 **[Continue reading this blog post](/blog/adafruit-circuit-playground-express/cn-projects)**
 
 ## [New Maker Course for the Adafruit Circuit Playground Express!](/blog/adafruit-circuit-playground-express/maker-course)
- 
+
 December 6th, 2018 by [Jaqster](https://github.com/jaqster)
 
 We are so excited to partner with Rob Morrill on this new curriculum for the Adafruit Circuit Playground Express...
 **[Continue reading this blog post](/blog/adafruit-circuit-playground-express/maker-course)**
 
 ## [MakeCode for Minecraft update](/blog/minecraft/11-07-2018)
- 
+
 November 7th, 2018 by [Jaqster](https://github.com/jaqster)
 
 Another month, another release! The MakeCode team is very excited to release this update to the coding experience for Minecraft.
 **[Continue reading this blog post](/blog/minecraft/11-07-2018)**
 
 ## [MakeCode tutorials for CS Ed week 2018 and beyond](/blog/csed-week/csed-week-2018)
- 
+
 October 23th, 2018 by [Jaqster](https://github.com/jaqster)
- 
+
 With Computer Science Education week just around the corner, we’ve compiled a list of some of our favorite tutorials, guides, and projects...
 **[Continue reading this blog post](/blog/csed-week/csed-week-2018)**
- 
+
 ## [MakeCode for the micro:bit update releases on October 26th!](/blog/microbit/v1-release-date)
 
 October 12th, 2018 by [Jaqster](https://github.com/jaqster)

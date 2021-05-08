@@ -67,7 +67,7 @@ function compareBlocksBaselines(a: string, b: string): boolean {
 }
 
 function decompileTestAsync(filename: string) {
-    return new Promise((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
         const basename = path.basename(filename);
         const baselineFile = path.join(baselineDir, util.replaceFileExtension(basename, ".blocks"))
 

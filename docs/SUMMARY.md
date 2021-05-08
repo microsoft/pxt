@@ -43,6 +43,7 @@
 * [Translations](/translate)
 * [Blocks Embedding](/blocks-embed)
 * [Command Line Interface](/cli)
+    * [install](/cli/install)
     * [build](/cli/build)
     * [bump](/cli/bump)
     * [deploy](/cli/deploy)

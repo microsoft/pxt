@@ -12,8 +12,9 @@
         }
     ],
     "activities": null,
-    "code": "",
+    "code": [],
     "metadata": {
+        "diffs": false,
         "description": "Tutorial descriptions are not displayed"
     }
 }

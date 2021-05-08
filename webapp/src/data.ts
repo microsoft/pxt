@@ -2,7 +2,10 @@ import * as React from "react";
 import * as core from "./core";
 
 export type Action = () => void;
-export type AnyComponent = Component<any, any>;
+export type DataSubscriber = {
+    subscriptions: CacheEntry[];
+    onDataChanged: (path: string) => void;
+};
 
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
@@ -13,7 +16,7 @@ interface CacheEntry {
     lastRefresh: number;
     queued: boolean;
     callbackOnce: Action[];
-    components: AnyComponent[];
+    components: DataSubscriber[];
     api: VirtualApi;
 }
 
@@ -108,7 +111,7 @@ mountVirtualApi("target-config", {
 
 let cachedData: pxt.Map<CacheEntry> = {};
 
-function subscribe(component: AnyComponent, path: string) {
+export function subscribe(component: DataSubscriber, path: string) {
     let e = lookup(path)
     let lst = e.components
     if (lst.indexOf(component) < 0) {
@@ -117,7 +120,7 @@ function subscribe(component: AnyComponent, path: string) {
     }
 }
 
-function unsubscribe(component: AnyComponent) {
+export function unsubscribe(component: DataSubscriber) {
     let lst = component.subscriptions
     if (lst.length == 0) return
     component.subscriptions = []
@@ -164,7 +167,7 @@ function matches(ce: CacheEntry, prefix: string) {
     return ce.path.slice(0, prefix.length) == prefix;
 }
 
-function notify(ce: CacheEntry) {
+function notify(ce: CacheEntry, path: string) {
     if (shouldCache(ce)) saveCache();
 
     let lst = ce.callbackOnce
@@ -174,7 +177,7 @@ function notify(ce: CacheEntry) {
     }
 
     if (ce.components.length > 0)
-        ce.components.forEach(c => Util.nextTick(() => c.forceUpdate()))
+        ce.components.forEach(c => Util.nextTick(() => c.onDataChanged(path)))
 }
 
 function getVirtualApi(path: string) {
@@ -184,7 +187,7 @@ function getVirtualApi(path: string) {
     return virtualApis[m[1]]
 }
 
-function queue(ce: CacheEntry) {
+function queueNotify(ce: CacheEntry, path: string) {
     if (ce.queued) return
 
     if (ce.api.isOffline && ce.api.isOffline())
@@ -196,14 +199,14 @@ function queue(ce: CacheEntry) {
         ce.data = res
         ce.lastRefresh = pxt.Util.now()
         ce.queued = false
-        notify(ce)
+        notify(ce, path)
     }
 
     if (ce.api.isSync)
         final(ce.api.getSync(ce.path))
     else {
         const p = ce.api.getAsync(ce.path);
-        p.done(final)
+        p.then(final)
     }
 }
 
@@ -221,32 +224,9 @@ function lookup(path: string) {
     return cachedData[path]
 }
 
-function getCached(component: AnyComponent, path: string): DataFetchResult<any> {
+function getCached(component: DataSubscriber, path: string): DataFetchResult<any> {
     subscribe(component, path)
-    let r = lookup(path)
-    if (r.api.isSync)
-        return {
-            data: r.api.getSync(r.path),
-            status: FetchStatus.Complete
-        }
-
-    // cache async values
-    let fetchRes: DataFetchResult<any> = {
-        data: r.data,
-        status: FetchStatus.Complete
-    };
-
-    if (expired(r) || r.data instanceof Error) {
-        fetchRes.status = r.data instanceof Error ? FetchStatus.Error : FetchStatus.Pending;
-        if (r.api.isOffline && r.api.isOffline()) {
-            // The request will not be requeued so we don't want to show it as pending
-            fetchRes.status = FetchStatus.Offline;
-        } else {
-            queue(r)
-        }
-    }
-
-    return fetchRes;
+    return getDataWithStatus(path);
 }
 
 //
@@ -259,7 +239,7 @@ export interface VirtualApi {
     isSync?: boolean;
     expirationTime?(path: string): number; // in milliseconds
     isOffline?: () => boolean;
-    onInvalidated?: () => void;
+    onInvalidated?: (path: string) => void;
 }
 
 export function mountVirtualApi(protocol: string, handler: VirtualApi) {
@@ -277,15 +257,16 @@ export function stripProtocol(path: string) {
     return path
 }
 
-export function invalidate(prefix: string) {
-    prefix = prefix.replace(/:\*$/, ':'); // remove trailing "*";
+export function invalidate(path: string) {
+    const prefix = path.replace(/:\*$/, ':'); // remove trailing "*";
     Util.values(cachedData).forEach(ce => {
         if (matches(ce, prefix)) {
             ce.lastRefresh = 0;
             if (ce.components.length > 0)
-                queue(lookup(ce.path))
-            if (ce.api.onInvalidated)
-                ce.api.onInvalidated();
+                queueNotify(lookup(ce.path), path)
+            if (ce.api.onInvalidated) {
+                ce.api.onInvalidated(path);
+            }
         }
     })
 }
@@ -295,7 +276,7 @@ export function invalidateHeader(prefix: string, hd: pxt.workspace.Header) {
         invalidate(prefix + ':' + hd.id);
 }
 
-export function getAsync(path: string) {
+export function getAsync<T = any>(path: string) {
     let ce = lookup(path)
 
     if (ce.api.isSync)
@@ -304,15 +285,46 @@ export function getAsync(path: string) {
     if (!Cloud.isOnline() || !expired(ce))
         return Promise.resolve(ce.data)
 
-    return new Promise((resolve, reject) => {
+    return new Promise<T>((resolve, reject) => {
         ce.callbackOnce.push(() => {
             resolve(ce.data)
         })
-        queue(ce)
+        queueNotify(ce, path)
     })
 }
 
-export class Component<TProps, TState> extends React.Component<TProps, TState> {
+export function getData<T>(path: string): T {
+    return getDataWithStatus<T>(path).data;
+}
+
+export function getDataWithStatus<T>(path: string): DataFetchResult<T> {
+    let r = lookup(path)
+    if (r.api.isSync)
+        return {
+            data: r.api.getSync(r.path),
+            status: FetchStatus.Complete
+        }
+
+    // cache async values
+    let fetchRes: DataFetchResult<T> = {
+        data: r.data,
+        status: FetchStatus.Complete
+    };
+
+    if (expired(r) || r.data instanceof Error) {
+        fetchRes.status = r.data instanceof Error ? FetchStatus.Error : FetchStatus.Pending;
+        if (r.api.isOffline && r.api.isOffline()) {
+            // The request will not be requeued so we don't want to show it as pending
+            fetchRes.status = FetchStatus.Offline;
+        } else {
+            queueNotify(r, path)
+        }
+    }
+
+    return fetchRes;
+}
+
+export class Component<TProps, TState> extends React.Component<TProps, TState> implements DataSubscriber {
     subscriptions: CacheEntry[] = [];
     renderCoreOk = false;
 
@@ -321,15 +333,15 @@ export class Component<TProps, TState> extends React.Component<TProps, TState> {
         this.state = <any>{}
     }
 
-    getData(path: string) {
-        const fetchResult = this.getDataWithStatus(path);
-        return fetchResult.data;
+    getData<T = any>(path: string) {
+        const fetchResult = this.getDataWithStatus<T>(path);
+        return fetchResult.data as T;
     }
 
     /**
      * Like getData, but the data is wrapped in a result object that indicates the status of the fetch operation
      */
-    getDataWithStatus(path: string): DataFetchResult<any> {
+    getDataWithStatus<T = any>(path: string): DataFetchResult<T> {
         if (!this.renderCoreOk)
             Util.oops("Override renderCore() not render()")
         return getCached(this, path)
@@ -343,8 +355,8 @@ export class Component<TProps, TState> extends React.Component<TProps, TState> {
         return !!this.getData("sync:hassync")
     }
 
-    getUser(): pxt.editor.UserInfo {
-        return this.getData("sync:user");
+    onDataChanged(): void {
+        this.forceUpdate();
     }
 
     componentWillUnmount(): void {

@@ -23,6 +23,7 @@ export enum ScriptSearchMode {
 
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 interface ScriptSearchState {
+    defaultSearch?: string;
     searchFor?: string;
     visible?: boolean;
     mode?: ScriptSearchMode;
@@ -68,10 +69,11 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         }
     }
 
-    showExtensions() {
+    showExtensions(query?: string) {
         this.setState({
             visible: true,
-            searchFor: '',
+            defaultSearch: query || '',
+            searchFor: query || '',
             mode: ScriptSearchMode.Extensions,
             closeIcon: true,
             features: undefined,
@@ -83,6 +85,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         return new Promise((resolve, reject) => {
             this.setState({
                 visible: true,
+                defaultSearch: undefined,
                 searchFor: '',
                 mode: ScriptSearchMode.Boards,
                 closeIcon: !!closeIcon,
@@ -94,7 +97,9 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
 
     showExperiments() {
         this.setState({
-            visible: true, searchFor: '',
+            visible: true,
+            defaultSearch: undefined,
+            searchFor: '',
             mode: ScriptSearchMode.Experiments,
             closeIcon: true,
             experimentsState: pxt.editor.experiments.state(),
@@ -163,7 +168,8 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         const { header } = this.props.parent.state;
 
         let r = workspace.getHeaders()
-            .filter(h => !!h.githubId);
+        if (!/localdependencies=1/i.test(window.location.href))
+            r = r.filter(h => !!h.githubId);
         if (header)
             r = r.filter(h => h.id != header.id) // don't self-reference
         if (query) {
@@ -228,8 +234,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                 pxt.winrt.releaseAllDevicesAsync()
                     .then(() => {
                         window.location.href = homeUrl + urlPath;
-                    })
-                    .done();
+                    });
             }
         }
         else {
@@ -240,7 +245,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
     addUrl(scr: pxt.Cloud.JsonScript) {
         this.hide();
         let p = pkg.mainEditorPkg();
-        return p.addDepAsync(scr.name, "pub:" + scr.id)
+        return p.setDependencyAsync(scr.name, "pub:" + scr.id)
             .then(() => this.props.parent.reloadHeaderAsync())
             .finally(() => this.afterHide());
     }
@@ -263,81 +268,35 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
             .finally(() => this.afterHide());
     }
 
-    installGh(scr: pxt.github.GitRepo) {
+    async installGh(scr: pxt.github.GitRepo) {
         pxt.tickEvent("packages.github", { name: scr.fullName });
         this.hide();
-        core.showLoading("downloadingpackage", lf("downloading extension..."));
-        pxt.packagesConfigAsync()
-            .then(config => pxt.github.latestVersionAsync(scr.fullName, config))
-            .then(tag => pxt.github.pkgConfigAsync(scr.fullName, tag)
-                .then(cfg => {
-                    core.hideLoading("downloadingpackage");
-                    return cfg;
-                })
-                .then(cfg => this.addDepIfNoConflict(cfg, "github:" + scr.fullName + "#" + tag)))
-            .catch(core.handleNetworkError)
-            .finally(() => {
-                this.afterHide();
-                core.hideLoading("downloadingpackage")
-            });
+        let r: { version: string, config: pxt.PackageConfig };
+        try {
+            core.showLoading("downloadingpackage", lf("downloading extension..."));
+            r = await pxt.github.downloadLatestPackageAsync(scr);
+        }
+        catch (e) {
+            core.handleNetworkError(e);
+        } finally {
+            core.hideLoading("downloadingpackage");
+        }
+        return await this.addDepIfNoConflict(r.config, r.version)
     }
 
-    addDepIfNoConflict(config: pxt.PackageConfig, version: string) {
-        return pkg.mainPkg.findConflictsAsync(config, version)
-            .then((conflicts) => {
-                let inUse = config.core ? [] // skip conflict checking for a new core package
-                    : conflicts.filter((c) => pkg.mainPkg.isPackageInUse(c.pkg0.id));
-                let addDependencyPromise = Promise.resolve(true);
-
-                if (inUse.length) {
-                    addDependencyPromise = addDependencyPromise
-                        .then(() => core.confirmAsync({
-                            header: lf("Cannot add {0} extension", config.name),
-                            hideCancel: true,
-                            agreeLbl: lf("Ok"),
-                            body: lf("Remove all the blocks from the {0} extension and try again.", inUse[0].pkg0.id)
-                        }))
-                        .then(() => {
-                            return false;
-                        });
-                } else if (conflicts.length) {
-                    const body = conflicts.length === 1 ?
-                        // Single conflict: "Extension A is..."
-                        lf("Extension {0} is incompatible with {1}. Remove {0} and add {1}?", conflicts[0].pkg0.id, config.name) :
-                        // 2 conflicts: "Extensions A and B are..."; 3+ conflicts: "Extensions A, B, C and D are..."
-                        lf("Extensions {0} and {1} are incompatible with {2}. Remove them and add {2}?", conflicts.slice(0, -1).map((c) => c.pkg0.id).join(", "), conflicts.slice(-1)[0].pkg0.id, config.name);
-
-                    addDependencyPromise = addDependencyPromise
-                        .then(() => this.state.mode == ScriptSearchMode.Boards
-                            ? Promise.resolve(1)
-                            : core.confirmAsync({
-                                header: lf("Some extensions will be removed"),
-                                agreeLbl: lf("Remove extension(s) and add {0}", config.name),
-                                agreeClass: "pink",
-                                body
-                            }))
-                        .then((buttonPressed) => {
-                            if (buttonPressed !== 0) {
-                                let p = pkg.mainEditorPkg();
-                                return Promise.all(conflicts.map((c) => {
-                                    return p.removeDepAsync(c.pkg0.id);
-                                }))
-                                    .then(() => true);
-                            }
-                            return Promise.resolve(false);
-                        });
-                }
-
-                return addDependencyPromise
-                    .then((shouldAdd) => {
-                        if (shouldAdd) {
-                            let p = pkg.mainEditorPkg();
-                            return p.addDepAsync(config.name, version)
-                                .then(() => this.props.parent.reloadHeaderAsync());
-                        }
-                        return Promise.resolve();
-                    });
-            });
+    async addDepIfNoConflict(config: pxt.PackageConfig, version: string) {
+        try {
+            this.hide();
+            core.showLoading("installingextension", lf("installing extension..."))
+            const added = await pkg.mainEditorPkg()
+                .addDependencyAsync(config, version, this.state.mode == ScriptSearchMode.Boards)
+            if (added)  //async
+                this.props.parent.reloadHeaderAsync();
+        }
+        finally {
+            core.hideLoading("installingextension")
+            this.afterHide();
+        }
     }
 
     toggleExperiment(experiment: pxt.editor.experiments.Experiment) {
@@ -353,7 +312,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
     }
 
     renderCore() {
-        const { mode, closeIcon, visible, searchFor, experimentsState } = this.state;
+        const { mode, closeIcon, visible, searchFor, experimentsState, defaultSearch } = this.state;
 
         if (!visible) return <div></div>;
         const bundles = this.fetchBundled();
@@ -363,9 +322,11 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         const experiments = this.fetchExperiments();
         const isSearching = searchFor && (ghdata.status === data.FetchStatus.Pending || urldata.status === data.FetchStatus.Pending);
         const disableFileAccessinMaciOs = pxt.appTarget.appTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isIOS() || pxt.BrowserUtils.isMac());
+        const disableFileAccessinAndroid = pxt.appTarget.appTheme.disableFileAccessinAndroid && pxt.BrowserUtils.isAndroid();
         const showImportFile = mode == ScriptSearchMode.Extensions
             && pxt.appTarget.appTheme.importExtensionFiles
             && !disableFileAccessinMaciOs
+            && !disableFileAccessinAndroid
             && !searchFor;
         // inject beta at end of / or /#
         // also excludes http://localhost:port/index.html
@@ -415,9 +376,21 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         const experimentsChanged = mode == ScriptSearchMode.Experiments
             && experimentsState != pxt.editor.experiments.state();
 
+        const classes = this.props.parent.createModalClasses("searchdialog");
+
+        const ghName = (scr: pxt.github.GitRepo) => {
+            let n = scr.name.replace(/^pxt-/, "");
+            // always pickup name from the pxt.json file
+            // if (scr.fileName)
+            //     n = lf("{0} / {1}", n, scr.fileName)
+            return n;
+        }
+
+        const searchPlaceholder = lf("Search or enter project URL...");
+
         return (
             <sui.Modal isOpen={visible} dimmer={true}
-                className="searchdialog" size="fullscreen"
+                className={classes} size="fullscreen"
                 onClose={this.hide}
                 closeIcon={closeIcon}
                 header={headerText}
@@ -432,14 +405,16 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                         </div> : undefined}
                     {mode == ScriptSearchMode.Extensions ?
                         <SearchInput key="search"
+                            defaultValue={defaultSearch}
                             ariaMessage={lf("{0} result matching '{1}'", bundles.length + ghdata.data.length + urldata.data.length, searchFor)}
-                            placeholder={lf("Search or enter project URL...")}
+                            placeholder={searchPlaceholder}
+                            aria-label={searchPlaceholder}
                             searchHandler={this.handleSearch} inputClassName="fluid" autoFocus={true}
                             disabled={isSearching} /> : undefined}
                     {isSearching ?
                         <div className="ui medium active centered inline loader"></div>
                         :
-                        <div className="ui cards centered" role="listbox">
+                        <div className="ui cards centered" aria-label={lf("Extension search results")}>
                             {urldata.data.map(scr =>
                                 <ScriptSearchCodeCard
                                     key={'url' + scr.id}
@@ -448,7 +423,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                     url={"/" + scr.id}
                                     scr={scr}
                                     onCardClick={this.addUrl}
-                                    role="link"
+                                    role="button"
                                 />
                             )}
                             {local.map(scr =>
@@ -463,7 +438,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                     label={lf("Local")}
                                     title={lf("Local GitHub extension")}
                                     labelClass="blue right ribbon"
-                                    role="link"
+                                    role="button"
                                 />
                             )}
                             {bundles.map(scr =>
@@ -475,12 +450,12 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                     scr={scr}
                                     onCardClick={this.addBundle}
                                     label={pxt.isPkgBeta(scr) ? lf("Beta") : undefined}
-                                    role="link"
+                                    role="button"
                                 />
                             )}
                             {ghdata.data.filter(repo => repo.status == pxt.github.GitRepoStatus.Approved).map(scr =>
                                 <ScriptSearchCodeCard
-                                    name={scr.name.replace(/^pxt-/, "")}
+                                    name={ghName(scr)}
                                     description={scr.description}
                                     key={'gha' + scr.fullName}
                                     scr={scr}
@@ -488,13 +463,13 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                     url={'github:' + scr.fullName}
                                     imageUrl={pxt.github.repoIconUrl(scr)}
                                     label={pxt.isPkgBeta(scr) ? lf("Beta") : undefined}
-                                    role="link"
+                                    role="button"
                                     learnMoreUrl={`/pkg/${scr.fullName}`}
                                 />
                             )}
                             {ghdata.data.filter(repo => repo.status != pxt.github.GitRepoStatus.Approved).map(scr =>
                                 <ScriptSearchCodeCard
-                                    name={scr.name.replace(/^pxt-/, "")}
+                                    name={ghName(scr)}
                                     description={(scr.description || "")}
                                     extracontent={lf("User-provided extension, not endorsed by Microsoft.")}
                                     key={'ghd' + scr.fullName}
@@ -503,7 +478,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                     imageUrl={pxt.github.repoIconUrl(scr)}
                                     label={pxt.isPkgBeta(scr) ? lf("Beta") : undefined}
                                     url={'github:' + scr.fullName}
-                                    role="link"
+                                    role="button"
                                     learnMoreUrl={`/pkg/${scr.fullName}`}
                                 />
                             )}
@@ -514,7 +489,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                     imageUrl={`/static/experiments/${experiment.id.toLowerCase()}.png`}
                                     description={experiment.description}
                                     key={'exp' + experiment.id}
-                                    role="link"
+                                    role="button"
                                     label={pxt.editor.experiments.isEnabled(experiment) ? lf("Enabled") : lf("Disabled")}
                                     labelClass={pxt.editor.experiments.isEnabled(experiment) ? "green right ribbon" : "grey right ribbon"}
                                     onCardClick={this.toggleExperiment}

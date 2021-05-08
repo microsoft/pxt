@@ -38,12 +38,15 @@ CACHE:
 /blb/vs/basic-languages/bat/bat.js
 /blb/vs/basic-languages/cpp/cpp.js
 /blb/vs/basic-languages/python/python.js
+/blb/vs/basic-languages/typescript/typescript.js
 /blb/vs/basic-languages/markdown/markdown.js
 /blb/vs/editor/editor.main.css
 /blb/vs/editor/editor.main.js
 /blb/vs/editor/editor.main.nls.js
 /blb/vs/language/json/jsonMode.js
 /blb/vs/language/json/jsonWorker.js
+/blb/vs/language/typescript/tsMode.js
+/blb/vs/language/typescript/tsWorker.js
 
 # charts
 /blb/smoothie/smoothie_compressed.js

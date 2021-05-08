@@ -48,7 +48,7 @@ function testNested() {
     bar2()
     assert(glb1 == 12)
     glb1 = 0
-    const arr = [1,20,300]
+    const arr = [1, 20, 300]
     for (let k of arr) {
         qux()
         function qux() {
@@ -81,3 +81,16 @@ function testNested() {
 testLambdas();
 testLambdaDecrCapture();
 testNested()
+
+namespace inlinetest {
+    function ignore(v: any) { }
+    function incr() {
+        glb1++
+    }
+    function run() {
+        glb1 = 0
+        ignore(incr())
+        assert(glb1 == 1)
+    }
+    run()
+}

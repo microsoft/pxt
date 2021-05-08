@@ -18,6 +18,18 @@ svg.blocklySvg {
     background: @blocklySvgColor;
 }
 
+.blocksAndErrorList {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+.blocksEditorOuter {
+    position: relative;
+    display: inline-block;
+    overflow: hidden;
+    height: 100%;
+}
+
 #blocksEditor {
     position: absolute;
     width: 100%;
@@ -169,6 +181,7 @@ div.blocklyWidgetDiv.functioneditor {
 
 div.blocklyDropDownDiv {
     z-index: @blocklyDropdownDivZIndex;
+    overflow: hidden;
 }
 
 div.blocklyTooltipDiv {
@@ -203,6 +216,9 @@ text.blocklyCheckbox {
 }
 
 /* (arcade only) Sets the correct background color for the sprite image field */
+.pxt-renderer .blocklyNonEditableText > rect.blocklySpriteField,
+.pxt-renderer .blocklyNonEditableText > rect.blocklyAnimationField,
+.pxt-renderer .blocklyNonEditableText > rect.blocklyTilemapField,
 .pxt-renderer .blocklyEditableText > rect.blocklySpriteField,
 .pxt-renderer .blocklyEditableText > rect.blocklyAnimationField,
 .pxt-renderer .blocklyEditableText > rect.blocklyTilemapField {

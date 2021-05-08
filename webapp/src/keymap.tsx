@@ -69,8 +69,8 @@ export class Keymap extends data.Component<ISettingsProps, KeymapState> {
                         map: {
                             [lf("up")]: ["↑", "W"],
                             [lf("down")]: ["↓", "S"],
-                            [lf("left")]: ["→", "A"],
-                            [lf("right")]: ["←", "D"],
+                            [lf("left")]: ["←", "A"],
+                            [lf("right")]: ["→", "D"],
                             "a": ["Z", lf("{id:keyboard symbol}space")],
                             "b": ["X", lf("{id:keyboard symbol}enter")]
                         }

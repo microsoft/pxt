@@ -41,7 +41,9 @@
         .ui.divider {
             margin-bottom: 5px;
         }
-
+        .ui.section {
+            margin-top: 1rem;
+        }
         .ui.segment.diff {
             padding: 0;
         }
@@ -66,7 +68,7 @@
         }
 
         .ui.segments.filediff {
-            background: @diffSegmentBackgroundColor;        
+            background: @diffSegmentBackgroundColor;
         }
 
         .legend > span:not(:first-child) {
@@ -97,7 +99,7 @@
         }
 
         .repo-branch {
-            opacity: 0.4;
+            opacity: 0.5;
             cursor: pointer;
         }
 
@@ -137,15 +139,15 @@
 
             .diff-added {
                 background: @diffInvertedAddedBackground !important;
-        
+
                 .ch-added {
                     background: @diffInvertedAddedTokenBackground !important;
                 }
             }
-        
+
             .diff-removed {
                 background: @diffInvertedRemovedBackground !important;
-        
+
                 .ch-removed {
                     background: @diffInvertedRemovedTokenBackground !important;
                 }
@@ -154,11 +156,11 @@
             .diff-unchanged {
                 background: @diffInvertedUnchangedBackground !important;
             }
-        
+
             .line-a,
             .line-b {
                 color: @diffInvertedLineNumberColor !important;
-            } 
+            }
 
             .diff-marker {
                 background: @diffInvertedMarkerBackground !important;

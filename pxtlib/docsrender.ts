@@ -3,6 +3,7 @@
 /// <reference path="commonutil.ts"/>
 
 namespace pxt.docs {
+    // eslint-disable-next-line no-var
     declare var require: any;
     import U = pxtc.Util;
 
@@ -25,7 +26,10 @@ namespace pxt.docs {
         "flyoutOnly": "<!-- flyout -->",
         "hideIteration": "<!-- iter -->",
         "codeStart": "<!-- start -->",
-        "codeStop": "<!-- stop -->"
+        "codeStop": "<!-- stop -->",
+        "autoOpen": "<!-- autoOpen -->",
+        "autoexpandOff": "<!-- autoexpandOff -->",
+        "preferredEditor": "<!-- preferredEditor -->"
     }
 
     function replaceAll(replIn: string, x: string, y: string) {
@@ -425,7 +429,7 @@ namespace pxt.docs {
             }
             // remove tutorial macros
             if (text)
-                text = text.replace(/@(fullscreen|unplugged)/g, '');
+                text = text.replace(/@(fullscreen|unplugged|showdialog|showhint)/gi, '');
             return `<h${level} id="${(this as any).options.headerPrefix}${id}">${text}</h${level}>`
         }
     }
