@@ -693,7 +693,9 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
 
             `
             */
-            const id = await pxt.github.createPRFromBranchAsync(gh.slug, "master", gh.tag, title, msg);
+            const packagesConfig = await pxt.packagesConfigAsync()
+            const repo = await pxt.github.repoAsync(gh.slug, packagesConfig)
+            const id = await pxt.github.createPRFromBranchAsync(gh.slug, repo.defaultBranch, gh.tag, title, msg);
             data.invalidateHeader("pkg-git-pr", this.props.parent.state.header);
             core.infoNotification(lf("Pull request created successfully!", id));
         } catch (e) {
@@ -753,7 +755,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         const user = this.getData("github:user") as pxt.editor.UserInfo;
 
         // don't use gs.prUrl, as it gets cleared often
-        const url = `https://github.com/${githubId.slug}/${master && !githubId.fileName ? "" : pxt.github.join("tree", githubId.tag || "master", githubId.fileName)}`;
+        const url = `https://github.com/${githubId.slug}}`;
         const needsToken = !pxt.github.token;
         // this will show existing PR if any
         const pr: pxt.github.PullRequest = this.getData("pkg-git-pr:" + header.id)
@@ -1142,8 +1144,8 @@ ${content}
             </div>
             {displayDiffFiles.map(df => this.showDiff(df))}
         </div> : <div className={`ui ${invertedTheme ? "inverted " : ""}segment`}>
-                {lf("No local changes found.")}
-            </div>;
+            {lf("No local changes found.")}
+        </div>;
     }
 }
 
@@ -1156,7 +1158,7 @@ class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
     private handleSwitchMasterBranch(e: React.MouseEvent<HTMLElement>) {
         pxt.tickEvent("github.branch.switch");
         e.stopPropagation();
-        this.props.parent.switchBranchAsync("master");
+        this.props.parent.switchBranchAsync("default");
     }
 
     renderCore() {

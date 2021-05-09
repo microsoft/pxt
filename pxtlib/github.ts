@@ -188,9 +188,7 @@ namespace pxt.github {
         }
 
         async loadConfigAsync(repopath: string, tag: string): Promise<pxt.PackageConfig> {
-            // TODO: cloud support
-            if (!tag) tag = "default";
-
+            U.assert(!!tag)
             // cache lookup
             const key = `${repopath}/${tag}`;
             let res = this.configs[key];
@@ -215,7 +213,7 @@ namespace pxt.github {
         }
 
         async loadPackageAsync(repopath: string, tag: string): Promise<CachedPackage> {
-            if (!tag) tag = "master";
+            U.assert(!!tag)
 
             // try using github proxy first
             if (hasProxy()) {
@@ -452,7 +450,7 @@ namespace pxt.github {
     }
 
     export function getRefAsync(repopath: string, branch: string) {
-        branch = branch || "master";
+        U.assert(!!branch)
         return ghGetJsonAsync("https://api.github.com/repos/" + repopath + "/git/refs/heads/" + branch)
             .then(resolveRefAsync)
             .catch(err => {
@@ -564,7 +562,8 @@ namespace pxt.github {
                     .then(resolveRefAsync))
     }
 
-    export function pkgConfigAsync(repopath: string, tag = "master") {
+    export function pkgConfigAsync(repopath: string, tag: string) {
+        U.assert(!!tag)
         return db.loadConfigAsync(repopath, tag)
     }
 
@@ -922,7 +921,12 @@ namespace pxt.github {
         }
         // try github apis
         const r = await ghGetJsonAsync("https://api.github.com/repos/" + rid.slug)
-        return mkRepo(r, { config, fullName: rid.fullName, fileName: rid.fileName, tag: rid.tag });
+        return mkRepo(r, {
+            config,
+            fullName: rid.fullName,
+            fileName: rid.fileName,
+            tag: rid.tag,
+        });
     }
 
     function proxyRepoAsync(rid: ParsedRepo, status: GitRepoStatus): Promise<GitRepo> {
@@ -938,7 +942,7 @@ namespace pxt.github {
                     slug: rid.slug,
                     name: rid.fileName ? `${meta.name}-${rid.fileName}` : meta.name,
                     description: meta.description,
-                    defaultBranch: meta.defaultBranch || "master",
+                    defaultBranch: meta.defaultBranch || "default", // TODO: cloud support
                     tag: rid.tag,
                     status
                 };
@@ -1023,13 +1027,13 @@ namespace pxt.github {
     }
 
     export function stringifyRepo(p: ParsedRepo) {
-        return p ? "github:" + p.fullName.toLowerCase() + "#" + (p.tag || "master") : undefined;
+        return p ? "github:" + p.fullName.toLowerCase() + "#" + (p.tag || "default") : undefined;
     }
 
     export function normalizeRepoId(id: string) {
         const gid = parseRepoId(id);
         if (!gid) return undefined;
-        gid.tag = gid.tag || "master";
+        gid.tag = gid.tag || "default";
         return stringifyRepo(gid);
     }
 

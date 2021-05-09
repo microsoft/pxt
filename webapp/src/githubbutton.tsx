@@ -63,7 +63,7 @@ export class GithubButton extends sui.UIElement<GithubButtonProps, GithubButtonS
         const hasissue = pullStatus == workspace.PullStatus.BranchNotFound;
         const haspull = pullStatus == workspace.PullStatus.GotChanges;
         const modified = meta && !!meta.modified;
-        const repoName = ghid.project && ghid.tag ? `${ghid.project}${ghid.tag == "master" ? "" : `#${ghid.tag}`}` : ghid.fullName;
+        const repoName = ghid.project && ghid.tag ? `${ghid.project}${pxt.github.isDefaultBranch(ghid.tag) ? "" : `#${ghid.tag}`}` : ghid.fullName;
         // shrink name...
         const maxLength = 20;
         let displayName = ghid.tag && !pxt.github.isDefaultBranch(ghid.tag) ? `#${ghid.tag}` : "";
@@ -84,11 +84,10 @@ export class GithubButton extends sui.UIElement<GithubButtonProps, GithubButtonS
         >
             <i className="github icon" />
             <span className="ui mobile hide">{displayName}</span>
-            <i className={`ui long ${
-                hasissue ? "exclamation circle"
-                    : haspull ? "arrow alternate down"
-                        : modified ? "arrow alternate up"
-                            : "check"} icon mobile hide`} />
+            <i className={`ui long ${hasissue ? "exclamation circle"
+                : haspull ? "arrow alternate down"
+                    : modified ? "arrow alternate up"
+                        : "check"} icon mobile hide`} />
         </div>;
     }
 }

@@ -96,6 +96,7 @@ class GithubDb implements pxt.github.IGithubDb {
     private table = new Table("github");
 
     loadConfigAsync(repopath: string, tag: string): Promise<pxt.PackageConfig> {
+        pxt.U.assert(!!tag)
         // don't cache master
         if (pxt.github.isDefaultBranch(tag))
             return this.mem.loadConfigAsync(repopath, tag);
@@ -119,7 +120,7 @@ class GithubDb implements pxt.github.IGithubDb {
         );
     }
     loadPackageAsync(repopath: string, tag: string): Promise<pxt.github.CachedPackage> {
-        tag = tag || "master";
+        pxt.U.assert(!!tag)
         // don't cache master
         if (pxt.github.isDefaultBranch(tag))
             return this.mem.loadPackageAsync(repopath, tag);
