@@ -645,7 +645,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
                 <div className="ui segment attached tutorialsegment">
                     <div ref="tutorialmessage" className={`tutorialmessage`} role="alert">
                         <div className="content">
-                            {!showDialog && <md.MarkedContent className="no-select" markdown={tutorialCardContent} parent={this.props.parent} onDidRender={this.onMarkdownDidRender} />}
+                            {!showDialog && <md.MarkedContent className="no-select" tabIndex={0} markdown={tutorialCardContent} parent={this.props.parent} onDidRender={this.onMarkdownDidRender} />}
                         </div>
                     </div>
                     <div className="avatar-container">
