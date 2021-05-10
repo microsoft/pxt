@@ -55,6 +55,7 @@ namespace pxtblockly {
         }
 
         onLoadedIntoWorkspace() {
+            if (this.loaded) return;
             this.loaded = true;
             this.valueText = this.onValueChanged(this.valueText);
         }

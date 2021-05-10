@@ -318,7 +318,8 @@
 @homeDetailCardActionBackground: @homeScreenBackground;
 @homeDetailCardActionText: white;
 @homeInvertedDetailCardActionBackground: lighten(@homeScreenBackground, 10%);
-
+@homeHeaderBorderSize: 3px;
+@homeHeaderSelectedBorderColor: white;
 /*-------------------
    Tutorial
 --------------------*/

@@ -85,6 +85,7 @@ namespace pxt.editor {
         }; // ensure that this line is visible when loading the editor
         tracing?: boolean;
         debugging?: boolean;
+        debugFirstRun?: boolean;
         bannerVisible?: boolean;
         pokeUserComponent?: string;
         flashHint?: boolean;

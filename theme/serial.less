@@ -97,9 +97,9 @@
     height: calc(100% - 2.5rem);
 }
 
-#serialCharts .seriallabel {
+#serialCharts .seriallabel,
+#serialPlaceholder .seriallabel {
     padding: 5px 10px 5px 10px;
-    border: 1px solid black;
     color: #000;
     width: auto;
     border-radius: 20px;
@@ -107,7 +107,16 @@
     font-family: monospace;
 }
 
-#serialCharts .ui.segment {
+#serialCharts .seriallabel {
+    border: 1px solid black;
+}
+
+#serialPlaceholder .seriallabel {
+    background-color: transparent;
+}
+
+#serialCharts .ui.segment,
+#serialPlaceholder {
     padding: 0.4rem;
     height: 12rem;
     background-color: @serialGraphBackground;
@@ -186,4 +195,3 @@ div.smoothie-chart-tooltip {
     font-size: 0.8rem;
     pointer-events: none;
 }
-     

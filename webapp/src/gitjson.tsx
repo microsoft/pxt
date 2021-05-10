@@ -484,10 +484,17 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         const tutorialInfo: pxt.Map<pxt.BuiltTutorialInfo> = {};
         for (let path of mdPaths) {
             const parsed = pxt.tutorial.parseTutorial(files[path]);
-            const hash = pxt.BrowserUtils.getTutorialInfoHash(parsed.code);
-            const usedBlocks = await tutorial.getUsedBlocksAsync(parsed.code, path, parsed.language, true);
-            const formatPath = path.replace(mdRegex, "");
-            tutorialInfo[`https://github.com/${githubId.fullName}${formatPath == "README" ? "" : "/" + formatPath}`] = { usedBlocks, hash };
+            const hash = pxt.BrowserUtils.getTutorialCodeHash(parsed.code);
+            const tutorialBlocks = await tutorial.getUsedBlocksAsync(parsed.code, path, parsed.language, true);
+            if (tutorialBlocks) {
+                const formatPath = path.replace(mdRegex, "");
+                tutorialInfo[`https://github.com/${githubId.fullName}${formatPath == "README" ? "" : "/" + formatPath}`] = {
+                    snippetBlocks: tutorialBlocks.snippetBlocks,
+                    usedBlocks: tutorialBlocks.usedBlocks,
+                    hash
+                };
+
+            }
         }
         files[pxt.TUTORIAL_INFO_FILE] = JSON.stringify(tutorialInfo);
 

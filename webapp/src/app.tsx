@@ -321,18 +321,8 @@ export class ProjectView
         data.invalidate('pkg-git-pr');
         data.invalidate('pkg-git-pages')
 
-        // there is a race with another tab that has a lock on the device
-        // don't try to reconnect immediately as the other is still closing
-        // the webusb resources
-        const maybeReconnect = () => {
-            Util.delay(3000).then(() => {
-                if (!this.state.home && document.visibilityState == 'visible')
-                    cmds.maybeReconnectAsync();
-            });
-        }
-
         // disconnect devices to avoid locking between tabs
-        if (!active)
+        if (!active && !navigator?.serviceWorker?.controller)
             cmds.disconnectAsync(); // turn off any kind of logging
 
         if (!active && this.state.autoRun) {
@@ -356,9 +346,9 @@ export class ProjectView
                 this.setState({ resumeOnVisibility: false });
                 // We did a save when the page was hidden, no need to save again.
                 this.runSimulator();
-                maybeReconnect()
+                cmds.maybeReconnectAsync(false, true);
             } else if (!this.state.home) {
-                maybeReconnect();
+                cmds.maybeReconnectAsync(false, true);
             }
         }
     }
@@ -882,7 +872,7 @@ export class ProjectView
             this.typecheck();
 
             // If we are in a tutorial, call the validator for that editor (blocks, TS, etc)
-            if (this.isTutorial()) this.editor.validateTutorialCode(this.state.tutorialOptions);
+            if (this.isTutorial() && pxt.appTarget.appTheme.tutorialCodeValidation) this.editor.validateTutorialCode(this.state.tutorialOptions);
         }
         this.markdownChangeHandler();
     }, 500, false);
@@ -897,7 +887,7 @@ export class ProjectView
         let changeHandler = () => {
             if (this.editorFile) {
                 if (this.editorFile.inSyncWithEditor)
-                    pxt.tickActivity("edit", "edit." + this.editor.getId().replace(/Editor$/, ''))
+                    pxt.tickEvent("activity.edit", { editor: this.editor.getId().replace(/Editor$/, '')}, { interactiveConsent: true } );
                 this.editorFile.markDirty();
             }
             this.lastChangeTime = Util.now();
@@ -932,7 +922,7 @@ export class ProjectView
             highlightStatement: (stmt, brk) => {
                 if (this.state.debugging && !simulator.driver.areBreakpointsSet() && brk && !brk.exceptionMessage) {
                     // The simulator has paused on the first statement, so we need to send the breakpoints
-                    // and continue
+                    // and then step to get to the actual first breakpoint
                     let breakpoints: number[];
                     if (this.isAnyEditeableJavaScriptOrPackageActive() || this.isPythonActive()) {
                         breakpoints = this.textEditor.getBreakpoints();
@@ -945,7 +935,15 @@ export class ProjectView
                     simulator.driver.setBreakpoints(breakpoints);
 
                     if (breakpoints.indexOf(brk.breakpointId) === -1) {
-                        this.dbgPauseResume();
+                        if (!this.state.debugFirstRun) {
+                            this.dbgPauseResume();
+                        }
+                        else {
+                            this.dbgStepInto();
+                            this.setState({
+                                debugFirstRun: false
+                            });
+                        }
                         return true;
                     }
                 }
@@ -1589,7 +1587,7 @@ export class ProjectView
                 // Editor is loaded
                 pxt.BrowserUtils.changeHash("#editor", true);
                 document.getElementById("root").focus(); // Clear the focus.
-                cmds.maybeReconnectAsync();
+                cmds.maybeReconnectAsync(false, true);
                 this.editorLoaded();
             })
     }
@@ -1604,13 +1602,14 @@ export class ProjectView
         const t = header.tutorial;
         return this.loadBlocklyAsync()
             .then(() => tutorial.getUsedBlocksAsync(t.tutorialCode, t.tutorial, t.language))
-            .then((usedBlocks) => {
+            .then((tutorialBlocks) => {
                 let editorState: pxt.editor.EditorState = {
                     searchBar: false
                 }
-                if (usedBlocks && Object.keys(usedBlocks).length > 0) {
+
+                if (tutorialBlocks?.usedBlocks && Object.keys(tutorialBlocks.usedBlocks).length > 0) {
                     editorState.filters = {
-                        blocks: usedBlocks,
+                        blocks: tutorialBlocks.usedBlocks,
                         defaultState: pxt.editor.FilterState.Hidden
                     }
                     editorState.hasCategories = !(header.tutorial.metadata && header.tutorial.metadata.flyoutOnly);
@@ -3048,7 +3047,11 @@ export class ProjectView
     }
 
     onHighContrastChanged() {
-        this.restartSimulator();
+        this.clearSerial();
+        // Not this.restartSimulator; need full restart to consistently update visuals,
+        // and don't want to steal focus.
+        this.stopSimulator();
+        this.startSimulator();
     }
 
     runSimulator(opts: compiler.CompileOptions = {}): Promise<void> {
@@ -3068,7 +3071,7 @@ export class ProjectView
         return (() => {
             const editorId = this.editor ? this.editor.getId().replace(/Editor$/, '') : "unknown";
             if (opts.background) {
-                pxt.tickActivity("autorun", "autorun." + editorId);
+                pxt.tickEvent("activity.autorun", { editor: editorId });
                 if (pxt.storage.getLocal("noAutoRun"))
                     return Promise.resolve()
             } else pxt.tickEvent(opts.debug ? "debug" : "run", { editor: editorId });
@@ -3190,7 +3193,11 @@ export class ProjectView
 
     toggleDebugging() {
         const state = !this.state.debugging;
-        this.setState({ debugging: state }, () => {
+        this.setState({
+            debugging: state,
+            debugFirstRun: state
+         }, () => {
+            this.setSimulatorFullScreen(false); // exit fullscreen if necessary
             this.onDebuggingStart();
         });
     }
@@ -4807,7 +4814,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 useLang = hashLang || cloudLang || cookieLang || theme.defaultLocale || (navigator as any).userLanguage || navigator.language;
 
                 const locstatic = /staticlang=1/i.test(window.location.href);
-                const stringUpdateDisabled = locstatic || pxt.BrowserUtils.isPxtElectron() || theme.disableLiveTranslations;
+                const serveLocal = pxt.BrowserUtils.isPxtElectron() || pxt.BrowserUtils.isLocalHostDev();
+                const stringUpdateDisabled = locstatic || serveLocal || theme.disableLiveTranslations;
+
                 if (!stringUpdateDisabled || requestLive) {
                     pxt.Util.enableLiveLocalizationUpdates();
                 }

@@ -18,19 +18,24 @@ import * as TutorialCodeValidation from "./tutorialCodeValidation";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
+interface ITutorialBlocks {
+    snippetBlocks: pxt.Map<pxt.Map<number>>;
+    usedBlocks: pxt.Map<number>;
+}
+
 /**
  * We'll run this step when we first start the tutorial to figure out what blocks are used so we can
  * filter the toolbox.
  */
-export function getUsedBlocksAsync(code: string[], id: string, language?: string, skipCache = false): Promise<pxt.Map<number>> {
-    if (!code) return Promise.resolve({});
+export function getUsedBlocksAsync(code: string[], id: string, language?: string, skipCache = false): Promise<ITutorialBlocks> {
+    if (!code) return Promise.resolve(undefined);
 
     // check to see if usedblocks has been prebuilt. this is hashed on the tutorial code + pxt version + target version
     if (pxt.appTarget?.tutorialInfo && !skipCache) {
-        const hash = pxt.BrowserUtils.getTutorialInfoHash(code);
+        const hash = pxt.BrowserUtils.getTutorialCodeHash(code);
         if (pxt.appTarget.tutorialInfo[hash]) {
             pxt.tickEvent(`tutorial.usedblocks.cached`, { tutorial: id });
-            return Promise.resolve(pxt.appTarget.tutorialInfo[hash].usedBlocks);
+            return Promise.resolve(pxt.appTarget.tutorialInfo[hash]);
         }
     }
 
@@ -39,7 +44,9 @@ export function getUsedBlocksAsync(code: string[], id: string, language?: string
             .then(entry => {
                 if (entry?.blocks && Object.keys(entry.blocks).length > 0 && !skipCache) {
                     pxt.tickEvent(`tutorial.usedblocks.indexeddb`, { tutorial: id });
-                    return Promise.resolve(entry.blocks);
+                    // populate snippets if usedBlocks are present, but snippets are not
+                    if (!entry?.snippets) getUsedBlocksInternalAsync(code, id, language, db, skipCache);
+                    return Promise.resolve({ snippetBlocks: entry.snippets, usedBlocks: entry.blocks });
                 } else {
                     return getUsedBlocksInternalAsync(code, id, language, db, skipCache);
                 }
@@ -54,35 +61,48 @@ export function getUsedBlocksAsync(code: string[], id: string, language?: string
         })
 }
 
-function getUsedBlocksInternalAsync(code: string[], id: string, language?: string, db?: pxt.BrowserUtils.ITutorialInfoDb, skipCache = false): Promise<pxt.Map<number>> {
+function getUsedBlocksInternalAsync(code: string[], id: string, language?: string, db?: pxt.BrowserUtils.ITutorialInfoDb, skipCache = false): Promise<ITutorialBlocks> {
+    const snippetBlocks: pxt.Map<pxt.Map<number>> = {};
     const usedBlocks: pxt.Map<number> = {};
     return compiler.getBlocksAsync()
         .then(blocksInfo => {
             pxt.blocks.initializeAndInject(blocksInfo);
-            if (language == "python")
-                return compiler.pySnippetArrayToBlocksAsync(code, blocksInfo);
-            return compiler.decompileBlocksSnippetAsync(code.join("\n"), blocksInfo);
-        }).then(resp => {
-            const blocksXml = resp.outfiles["main.blocks"];
-            if (blocksXml) {
-                const headless = pxt.blocks.loadWorkspaceXml(blocksXml);
-                if (!headless) {
-                    pxt.debug(`used blocks xml failed to load\n${blocksXml}`);
-                    throw new Error("blocksXml failed to load");
+            if (language == "python") {
+                return compiler.decompilePySnippetstoXmlAsync(code);
+            }
+            return compiler.decompileSnippetstoXmlAsync(code);
+        }).then(xml => {
+            if (xml?.length > 0) {
+                let headless: Blockly.Workspace;
+                for (let i = 0; i < xml.length; i++) {
+                    const blocksXml = xml[i];
+                    const snippetHash = pxt.BrowserUtils.getTutorialCodeHash([code[i]]);
+
+                    headless = pxt.blocks.loadWorkspaceXml(blocksXml);
+                    if (!headless) {
+                        pxt.debug(`used blocks xml failed to load\n${blocksXml}`);
+                        throw new Error("blocksXml failed to load");
+                    }
+                    const allblocks = headless.getAllBlocks();
+                    for (let bi = 0; bi < allblocks.length; ++bi) {
+                        if (!snippetBlocks[snippetHash]) snippetBlocks[snippetHash] = {}
+                        const blk = allblocks[bi];
+                        if (!blk.isShadow()) {
+                            snippetBlocks[snippetHash][blk.type] = 1;
+                            usedBlocks[blk.type] = 1;
+                        }
+                    }
                 }
-                const allblocks = headless.getAllBlocks();
-                for (let bi = 0; bi < allblocks.length; ++bi) {
-                    const blk = allblocks[bi];
-                    if (!blk.isShadow()) usedBlocks[blk.type] = 1;
-                }
-                headless.dispose();
+
+                headless?.dispose();
 
                 if (pxt.options.debug)
-                    pxt.debug(JSON.stringify(usedBlocks, null, 2));
+                    pxt.debug(JSON.stringify(snippetBlocks, null, 2));
 
-                if (db && !skipCache) db.setAsync(id, usedBlocks, code);
+                if (db && !skipCache) db.setAsync(id, snippetBlocks, code);
                 pxt.tickEvent(`tutorial.usedblocks.computed`, { tutorial: id });
-                return usedBlocks;
+
+                return { snippetBlocks, usedBlocks };
             } else {
                 throw new Error("Failed to decompile");
             }
@@ -621,7 +641,8 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         const hasHint = this.hasHint();
         const tutorialCardContent = stepInfo.headerContentMd;
         const showDialog = stepInfo.showDialog;
-        const showMissingBlockPopupMessage = this.state.showUnusedBlockMessage;
+        const validationEnabled = stepInfo.codeValidated != undefined;
+        const showMissingBlockPopupMessage = this.state.showUnusedBlockMessage && validationEnabled;
         let tutorialAriaLabel = '',
             tutorialHintTooltip = '';
         if (hasHint) {
@@ -659,7 +680,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
                     <sui.Button ref="tutorialok" id="tutorialOkButton" className="large green okbutton showlightbox" text={lf("Ok")} onClick={this.closeLightbox} onKeyDown={sui.fireClickOnEnter} />
                 </div>
                 {hasNext ? <sui.Button icon={`${isRtl ? 'left' : 'right'} chevron large`} className={`nextbutton right attached ${!hasNext ? 'disabled' : ''}  ${stepInfo.codeValidated ? 'isValidated' : ''}`} text={lf("Next")} textClass="widedesktop only" ariaLabel={lf("Go to the next step of the tutorial.")}
-                    onClick={stepInfo.codeValidated ? this.nextTutorialStep : showUnusedBlocksMessageOnClick} onKeyDown={sui.fireClickOnEnter} /> : undefined}
+                    onClick={stepInfo.codeValidated ||  !validationEnabled ? this.nextTutorialStep : showUnusedBlocksMessageOnClick} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                 {showMissingBlockPopupMessage && <TutorialCodeValidation.moveOn onYesButtonClick={this.nextTutorialStep} onNoButtonClick={this.showUnusedBlocksMessage.bind(this)} initialVisible={this.state.showUnusedBlockMessage} ref="TutorialCodeValidation" parent={this.props.parent} />}
                 {hasFinish ? <sui.Button icon="left checkmark" className={`orange right attached ${!tutorialReady ? 'disabled' : ''}`} text={lf("Finish")} ariaLabel={lf("Finish the tutorial.")} onClick={this.finishTutorial} onKeyDown={sui.fireClickOnEnter} /> : undefined}
             </div>

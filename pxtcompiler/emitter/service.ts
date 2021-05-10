@@ -820,6 +820,7 @@ namespace ts.pxtc.service {
         compile: (v: OpArg) => CompileResult;
         decompile: (v: OpArg) => CompileResult;
         pydecompile: (v: OpArg) => transpile.TranspileResult;
+        decompileSnippets: (v: OpArg) => string[];
         assemble: (v: OpArg) => {
             words: number[];
         };
@@ -999,6 +1000,10 @@ namespace ts.pxtc.service {
             host.setOpts(v.options)
             return transpile.tsToPy(service.getProgram(), v.fileName);
 
+        },
+        decompileSnippets: v => {
+            host.setOpts(v.options)
+            return decompileSnippets(service.getProgram(), v.options, false);
         },
         assemble: v => {
             return {

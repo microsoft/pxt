@@ -14,6 +14,47 @@ interface FileListState {
 }
 
 const customFile = "custom.ts";
+const customFileText = `
+enum MyEnum {
+    //% block="one"
+    One,
+    //% block="two"
+    Two
+}
+
+/**
+ * ${lf("Custom blocks")}
+ */
+//% weight=100 color=#0fbc11 icon="\uf0c3"
+namespace custom {
+    /**
+     * TODO: ${lf("describe your function here")}
+     * @param n ${lf("describe parameter here")}, eg: 5
+     * @param s ${lf("describe parameter here")}, eg: "Hello"
+     * @param e ${lf("describe parameter here")}
+     */
+    //% block
+    export function foo(n: number, s: string, e: MyEnum): void {
+        // Add code here
+    }
+
+    /**
+     * TODO: ${lf("describe your function here")}
+     * @param value ${lf("describe value here")}, eg: 5
+     */
+    //% block
+    export function fib(value: number): number {
+        return value <= 1 ? value : fib(value -1) + fib(value - 2);
+    }
+}
+`;
+const customFileHeader = (homeUrl: string) => `
+/**
+* ${lf("Use this file to define custom functions and blocks.")}
+* ${lf("Read more at {0}", homeUrl + 'blocks/custom')}
+*/
+`
+
 export class FileList extends data.Component<ISettingsProps, FileListState> {
 
     constructor(props: ISettingsProps) {
@@ -232,6 +273,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
     }
 
     private addProjectFile() {
+        const mainPkg = pkg.mainEditorPkg();
         const validRx = /^[\w][\/\w\-\.]*$/;
         core.promptAsync({
             header: lf("Add new file?"),
@@ -244,7 +286,8 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                     return lf("Don't use spaces or special characters.");
                 return undefined;
             },
-            body: lf("Please provide a name for your new file.")
+            body: lf("Please provide a name for your new file."),
+            initialValue: !mainPkg.files[customFile] ? customFile : undefined
         }).then(str => {
             if (!str)
                 return Promise.resolve()
@@ -308,12 +351,15 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                 core.warningNotification(lf("File already exists"))
                 return Promise.resolve()
             }
-            return this.props.parent.updateFileAsync(
-                fileName,
-                comment ? `${comment} ${commentText}
-` : "",
-                true
-            );
+            let fileText = "";
+            if (fileName == customFile) {
+                fileText = customFileHeader(pxt.appTarget.appTheme.homeUrl) + customFileText;
+            } else if (comment) {
+                fileText = `${comment} ${commentText}
+`;
+            }
+
+            return this.props.parent.updateFileAsync(fileName, fileText, true);
         });
     }
 
@@ -327,45 +373,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             body: lf("A new JavaScript file, custom.ts, will be added to your project. You can define custom functions and blocks in that file.")
         }).then(v => {
             if (!v) return undefined;
-            return this.props.parent.updateFileAsync(customFile, `
-/**
- * ${lf("Use this file to define custom functions and blocks.")}
- * ${lf("Read more at {0}", pxt.appTarget.appTheme.homeUrl + 'blocks/custom')}
- */
-
-enum MyEnum {
-    //% block="one"
-    One,
-    //% block="two"
-    Two
-}
-
-/**
- * ${lf("Custom blocks")}
- */
-//% weight=100 color=#0fbc11 icon="\uf0c3"
-namespace custom {
-    /**
-     * TODO: ${lf("describe your function here")}
-     * @param n ${lf("describe parameter here")}, eg: 5
-     * @param s ${lf("describe parameter here")}, eg: "Hello"
-     * @param e ${lf("describe parameter here")}
-     */
-    //% block
-    export function foo(n: number, s: string, e: MyEnum): void {
-        // Add code here
-    }
-
-    /**
-     * TODO: ${lf("describe your function here")}
-     * @param value ${lf("describe value here")}, eg: 5
-     */
-    //% block
-    export function fib(value: number): number {
-        return value <= 1 ? value : fib(value -1) + fib(value - 2);
-    }
-}
-`, true);
+            return this.props.parent.updateFileAsync(customFile, customFileHeader(pxt.appTarget.appTheme.homeUrl) + customFileText, true);
         });
     }
 

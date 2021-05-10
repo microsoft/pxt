@@ -26,6 +26,7 @@ namespace pxsim {
         ipc?: boolean;
         dependencies?: Map<string>;
         single?: boolean;
+        traceDisabled?: boolean;
     }
 
     export interface SimulatorInstructionsMessage extends SimulatorMessage {

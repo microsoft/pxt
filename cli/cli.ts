@@ -1027,7 +1027,7 @@ function uploadCoreAsync(opts: UploadOptions) {
             "gifworkerjs": opts.localDir + "gifjs/gif.worker.js",
             "serviceworkerjs": opts.localDir + "serviceworker.js",
             "pxtVersion": pxtVersion(),
-            "pxtRelId": "",
+            "pxtRelId": "localDirRelId",
             "pxtCdnUrl": opts.localDir,
             "commitCdnUrl": opts.localDir,
             "blobCdnUrl": opts.localDir,
@@ -5855,7 +5855,7 @@ function internalCacheUsedBlocksAsync(): Promise<Map<pxt.BuiltTutorialInfo>> {
         tutorial.pkgs = pkgs;
         tutorial.path = path;
 
-        const hash = pxt.BrowserUtils.getTutorialInfoHash(tutorial.code);
+        const hash = pxt.BrowserUtils.getTutorialCodeHash(tutorial.code);
         tutorialInfo[hash] = tutorial;
     }
 
@@ -5870,7 +5870,7 @@ function internalCacheUsedBlocksAsync(): Promise<Map<pxt.BuiltTutorialInfo>> {
             info.code.forEach((snippet, i) => extra["snippet_" + i + ".py"] = snippet);
             inFiles = { "main.ts": "", "main.py": "", "main.blocks": "", ...extra }
         } else {
-            inFiles = { "main.ts": info.code.join("\n"), "main.py": "", "main.blocks": "" }
+            inFiles = { "main.ts": "", "main.py": "", "main.blocks": "" }
         }
 
         const host = new SnippetHost("usedblocks", inFiles, info.pkgs);
@@ -5880,6 +5880,7 @@ function internalCacheUsedBlocksAsync(): Promise<Map<pxt.BuiltTutorialInfo>> {
             .then(() => pkg.getCompileOptionsAsync().then(opts => {
                 opts.ast = true;
                 // convert python to ts
+                let sourceTexts = []
                 if (isPy) {
                     opts.target.preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME
                     const stsCompRes = pxtc.compile(opts);
@@ -5891,28 +5892,34 @@ function internalCacheUsedBlocksAsync(): Promise<Map<pxt.BuiltTutorialInfo>> {
                     opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
                     const { outfiles } = pxt.py.py2ts(opts)
 
-                    let ts = "";
                     for (let f of Object.keys(outfiles)) {
                         if (f.match(/^snippet/)) {
                             let match = outfiles[f].match(namespaceRegex);
-                            if (match && match[1]) ts += `{\n${match[1]}\n}\n`
+                            if (match && match[1]) sourceTexts.push(match[1]);
                         }
                     }
-                    opts.fileSystem["main.ts"] = ts;
+                } else {
+                    sourceTexts = info.code;
                 }
 
                 // convert ts to blocks
                 try {
-                    const decompiled = pxtc.decompile(pxtc.getTSProgram(opts), opts, "main.ts");
-                    if (decompiled.success) {
-                        const blocksXml = decompiled.outfiles["main.blocks"];
+                    opts.sourceTexts = sourceTexts;
+                    const decompiled = pxtc.decompileSnippets(pxtc.getTSProgram(opts), opts, false);
+                    if (decompiled?.length > 0) {
                         // scrape block IDs matching <block type="block_id">
+                        let builtInfo: pxt.BuiltTutorialInfo = builtTututorialInfo[hash] || { usedBlocks: {}, snippetBlocks: {} };
                         const blockIdRegex = /<\s*block(?:[^>]*)? type="([^ ]*)"/ig;
-                        let builtInfo: pxt.BuiltTutorialInfo = builtTututorialInfo[hash] || { usedBlocks: {} };
-                        blocksXml.replace(blockIdRegex, (m0, m1) => {
-                            builtInfo.usedBlocks[m1] = 1;
-                            return m0;
-                        })
+                        for (let i = 0; i < decompiled.length; i++) {
+                            const blocksXml = decompiled[i];
+                            const snippetHash = pxt.BrowserUtils.getTutorialCodeHash([opts.sourceTexts[i]])
+                            blocksXml.replace(blockIdRegex, (m0, m1) => {
+                                if (!builtInfo.snippetBlocks[snippetHash]) builtInfo.snippetBlocks[snippetHash] = {};
+                                builtInfo.snippetBlocks[snippetHash][m1] = 1;
+                                builtInfo.usedBlocks[m1] = 1;
+                                return m0;
+                            })
+                        }
                         builtTututorialInfo[hash] = builtInfo;
                     }
                 } catch {

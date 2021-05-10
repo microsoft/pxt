@@ -125,7 +125,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             return pxt.blocks.compileAsync(this.editor, this.blockInfo, { emitTilemapLiterals: willOpenTypeScript })
                 .then((compilationResult) => {
                     this.compilationResult = compilationResult;
-                    pxt.tickActivity("blocks.compile");
+                    pxt.tickEvent("activity.blocks.compile");
 
                     let next = Promise.resolve();
                     if (willOpenTypeScript && this.parent) {
@@ -536,7 +536,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 if (blockId === pxtc.TS_STATEMENT_TYPE || blockId === pxtc.TS_OUTPUT_TYPE) {
                     this.updateGrayBlocks();
                 }
-                pxt.tickEvent("blocks.create", { "block": blockId });
+                pxt.tickEvent("blocks.create", { "block": blockId }, { interactiveConsent: true });
                 if (ev.xml.tagName == 'SHADOW')
                     this.cleanUpShadowBlocks();
                 if (!this.parent.state.tutorialOptions || !this.parent.state.tutorialOptions.metadata || !this.parent.state.tutorialOptions.metadata.flyoutOnly)
@@ -711,9 +711,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         // Current tutorial step
         const { tutorialStepInfo, tutorialStep } = tutorial;
         const step = tutorialStepInfo[tutorialStep];
+
         const blocks = this.editor.getAllBlocks();
-        const tutorialCodeValidationStatus = await validator.validate(step, blocks, this.blockInfo);
-        this.parent.setTutorialCodeStatus(tutorialStep, tutorialCodeValidationStatus);
+        const tutorialCodeStatus = await validator.validate(step, blocks, this.blockInfo);
+        this.parent.setTutorialCodeStatus(tutorialStep, tutorialCodeStatus);
     }
 
     getBlocksAreaDiv() {
