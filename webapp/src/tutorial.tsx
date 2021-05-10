@@ -407,6 +407,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
 
         pxt.tickEvent(`tutorial.previous`, { tutorial: options.tutorial, step: previousStep }, { interactiveConsent: true });
         this.props.parent.setTutorialStep(previousStep);
+        this.setState({showUnusedBlockMessage: false});
     }
 
     nextTutorialStep() {
@@ -680,7 +681,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
                     <sui.Button ref="tutorialok" id="tutorialOkButton" className="large green okbutton showlightbox" text={lf("Ok")} onClick={this.closeLightbox} onKeyDown={sui.fireClickOnEnter} />
                 </div>
                 {hasNext ? <sui.Button icon={`${isRtl ? 'left' : 'right'} chevron large`} className={`nextbutton right attached ${!hasNext ? 'disabled' : ''}  ${stepInfo.codeValidated ? 'isValidated' : ''}`} text={lf("Next")} textClass="widedesktop only" ariaLabel={lf("Go to the next step of the tutorial.")}
-                    onClick={stepInfo.codeValidated ||  !validationEnabled ? this.nextTutorialStep : showUnusedBlocksMessageOnClick} onKeyDown={sui.fireClickOnEnter} /> : undefined}
+                    onClick={stepInfo.codeValidated || !validationEnabled ? this.nextTutorialStep : showUnusedBlocksMessageOnClick} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                 {showMissingBlockPopupMessage && <TutorialCodeValidation.moveOn onYesButtonClick={this.nextTutorialStep} onNoButtonClick={this.showUnusedBlocksMessage.bind(this)} initialVisible={this.state.showUnusedBlockMessage} ref="TutorialCodeValidation" parent={this.props.parent} />}
                 {hasFinish ? <sui.Button icon="left checkmark" className={`orange right attached ${!tutorialReady ? 'disabled' : ''}`} text={lf("Finish")} ariaLabel={lf("Finish the tutorial.")} onClick={this.finishTutorial} onKeyDown={sui.fireClickOnEnter} /> : undefined}
             </div>
