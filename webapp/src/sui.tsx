@@ -19,6 +19,7 @@ export interface UiProps {
     role?: string;
     title?: string;
     ariaLabel?: string;
+    ariaHidden?: boolean;
     tabIndex?: number;
     rightIcon?: boolean;
     inverted?: boolean;
@@ -487,7 +488,8 @@ export class Item extends data.Component<ItemProps, {}> {
         const {
             text,
             title,
-            ariaLabel
+            ariaLabel,
+            ariaHidden
         } = this.props;
 
         return (
@@ -495,6 +497,7 @@ export class Item extends data.Component<ItemProps, {}> {
                 role={this.props.role}
                 aria-label={ariaLabel || title || text}
                 aria-selected={this.props.active}
+                aria-hidden={ariaHidden}
                 title={title || text}
                 tabIndex={this.props.tabIndex || 0}
                 key={this.props.value}
