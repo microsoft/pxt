@@ -650,7 +650,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
                     </div>
                     <div className="avatar-container">
                         {(!showDialog && hasHint) && <sui.Button
-                            className={`ui circular label blue hintbutton hidelightbox ${hasHint && this.props.pokeUser ? 'shake flash' : ''}`}
+                            className={`ui circular label blue hintbutton hidelightbox ${this.props.pokeUser ? 'shake flash' : ''}`}
                             icon="lightbulb outline"
                             aria-label={tutorialAriaLabel} title={tutorialHintTooltip}
                             onClick={hintOnClick} onKeyDown={sui.fireClickOnEnter}
