@@ -544,10 +544,6 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         evt.stopPropagation();
     }
 
-    private expandedMissingBlocksMessageOnClick(evt?: any) {
-        evt.stopPropagation();
-    }
-
     private setShowSeeMore(autoexpand?: boolean) {
         // compare scrollHeight of inner text with height of card to determine showSeeMore
         const tutorialCard = this.refs['tutorialmessage'] as HTMLElement;
