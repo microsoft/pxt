@@ -388,3 +388,7 @@
 @assetUnselected: #e3ddd0;
 @assetTypeButton: @teal;
 
+/*---------------------------
+   Tutorial Code Validation
+----------------------------*/
+@tutorialCodeValidationMoveOn: #B0F45A;

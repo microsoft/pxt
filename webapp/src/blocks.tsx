@@ -711,10 +711,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         // Current tutorial step
         const { tutorialStepInfo, tutorialStep } = tutorial;
         const step = tutorialStepInfo[tutorialStep];
-
         const blocks = this.editor.getAllBlocks();
-
-        this.parent.setTutorialCodeStatus(tutorialStep, await validator.validate(step, blocks, this.blockInfo));
+        const tutorialCodeValidationStatus = await validator.validate(step, blocks, this.blockInfo);
+        this.parent.setTutorialCodeStatus(tutorialStep, tutorialCodeValidationStatus);
     }
 
     getBlocksAreaDiv() {
