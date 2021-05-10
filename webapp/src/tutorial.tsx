@@ -628,12 +628,8 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         const tutorialCardContent = stepInfo.headerContentMd;
         const showDialog = stepInfo.showDialog;
 
-        let tutorialAriaLabel = '',
-            tutorialHintTooltip = '';
-        if (hasHint) {
-            tutorialAriaLabel += lf("Press Space or Enter to show a hint.");
-            tutorialHintTooltip += lf("Click to show a hint!");
-        }
+        const tutorialAriaLabel = lf("Press Space or Enter to show a hint.");
+        const tutorialHintTooltip = lf("Click to show a hint!");
 
         let hintOnClick = this.hintOnClick;
         // double-click issue on edge when closing hint from tutorial card click
@@ -647,14 +643,18 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
             <div className='ui buttons'>
                 {hasPrevious ? <sui.Button icon={`${isRtl ? 'right' : 'left'} chevron large`} className={`prevbutton left attached ${!hasPrevious ? 'disabled' : ''}`} text={lf("Back")} textClass="widedesktop only" ariaLabel={lf("Go to the previous step of the tutorial.")} onClick={this.previousTutorialStep} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                 <div className="ui segment attached tutorialsegment">
-                    <div ref="tutorialmessage" className={`tutorialmessage`} role="alert" aria-label={tutorialAriaLabel} tabIndex={hasHint ? 0 : -1}
-                        onClick={hasHint ? hintOnClick : undefined} onKeyDown={hasHint ? sui.fireClickOnEnter : undefined}>
+                    <div ref="tutorialmessage" className={`tutorialmessage`} role="alert" tabIndex={hasHint ? 0 : -1}>
                         <div className="content">
                             {!showDialog && <md.MarkedContent className="no-select" markdown={tutorialCardContent} parent={this.props.parent} onDidRender={this.onMarkdownDidRender} />}
                         </div>
                     </div>
                     <div className="avatar-container">
-                        {(!showDialog && hasHint) && <sui.Button className={`ui circular label blue hintbutton hidelightbox ${hasHint && this.props.pokeUser ? 'shake flash' : ''}`} icon="lightbulb outline" tabIndex={-1} onClick={hintOnClick} onKeyDown={sui.fireClickOnEnter} />}
+                        {(!showDialog && hasHint) && <sui.Button
+                            className={`ui circular label blue hintbutton hidelightbox ${hasHint && this.props.pokeUser ? 'shake flash' : ''}`}
+                            icon="lightbulb outline"
+                            aria-label={tutorialAriaLabel} title={tutorialHintTooltip}
+                            onClick={hintOnClick} onKeyDown={sui.fireClickOnEnter}
+                        />}
                         {(!showDialog && hasHint) && <HintTooltip ref="hinttooltip" pokeUser={this.props.pokeUser} text={tutorialHintTooltip} onClick={hintOnClick} />}
                         <TutorialHint ref="tutorialhint" parent={this.props.parent} />
                     </div>
