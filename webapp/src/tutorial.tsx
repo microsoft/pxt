@@ -643,7 +643,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
             <div className='ui buttons'>
                 {hasPrevious ? <sui.Button icon={`${isRtl ? 'right' : 'left'} chevron large`} className={`prevbutton left attached ${!hasPrevious ? 'disabled' : ''}`} text={lf("Back")} textClass="widedesktop only" ariaLabel={lf("Go to the previous step of the tutorial.")} onClick={this.previousTutorialStep} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                 <div className="ui segment attached tutorialsegment">
-                    <div ref="tutorialmessage" className={`tutorialmessage`} role="alert" tabIndex={hasHint ? 0 : -1}>
+                    <div ref="tutorialmessage" className={`tutorialmessage`} role="alert">
                         <div className="content">
                             {!showDialog && <md.MarkedContent className="no-select" markdown={tutorialCardContent} parent={this.props.parent} onDidRender={this.onMarkdownDidRender} />}
                         </div>
