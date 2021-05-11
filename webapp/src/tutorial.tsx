@@ -650,7 +650,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         const tutorialHintTooltip = lf("Click to show a hint!");
 
         let hintOnClick = this.hintOnClick;
-        let showUnusedBlocksMessageOnClick = this.showUnusedBlocksMessageOnClick;
+
         // double-click issue on edge when closing hint from tutorial card click
         if ((pxt.BrowserUtils.isEdge() || pxt.BrowserUtils.isIE()) && this.state.showHint && !showDialog) {
             hintOnClick = null;
