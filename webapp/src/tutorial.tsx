@@ -14,6 +14,7 @@ import { PlayButton } from "./simtoolbar";
 import { ProjectView } from "./app";
 import * as editortoolbar from "./editortoolbar";
 import * as ImmersiveReader from "./immersivereader";
+import * as TutorialCodeValidation from "./tutorialCodeValidation";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -48,7 +49,8 @@ export function getUsedBlocksAsync(code: string[], id: string, language?: string
                     return Promise.resolve({ snippetBlocks: entry.snippets, usedBlocks: entry.blocks });
                 } else {
                     return getUsedBlocksInternalAsync(code, id, language, db, skipCache);
-                }})
+                }
+            })
             .catch((err) => {
                 // fall back to full blocks decompile on error
                 return getUsedBlocksInternalAsync(code, id, language, db, skipCache);
@@ -126,18 +128,18 @@ export class TutorialMenu extends data.Component<ISettingsProps, {}> {
         if (this.hasActivities) {
             return <div className="menu tutorial-menu">
                 <TutorialStepCircle parent={this.props.parent} />
-                {immersiveReaderEnabled && <ImmersiveReader.ImmersiveReaderButton content={tutorialCardContent} tutorialOptions={tutorialOptions}/>}
+                {immersiveReaderEnabled && <ImmersiveReader.ImmersiveReaderButton content={tutorialCardContent} tutorialOptions={tutorialOptions} />}
             </div>;
         } else if (tutorialOptions.tutorialStepInfo.length < 8) {
             return <div className="menu tutorial-menu">
                 <TutorialMenuItem parent={this.props.parent} />
-                {immersiveReaderEnabled && <ImmersiveReader.ImmersiveReaderButton content={tutorialCardContent} tutorialOptions={tutorialOptions}/>}
+                {immersiveReaderEnabled && <ImmersiveReader.ImmersiveReaderButton content={tutorialCardContent} tutorialOptions={tutorialOptions} />}
             </div>;
         } else {
             return <div className="menu tutorial-menu">
                 <TutorialMenuItem parent={this.props.parent} className="mobile hide" />
                 <TutorialStepCircle parent={this.props.parent} className="mobile only" />
-                {immersiveReaderEnabled && <ImmersiveReader.ImmersiveReaderButton content={tutorialCardContent} tutorialOptions={tutorialOptions}/>}
+                {immersiveReaderEnabled && <ImmersiveReader.ImmersiveReaderButton content={tutorialCardContent} tutorialOptions={tutorialOptions} />}
             </div>
         }
     }
@@ -327,7 +329,7 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
             if (immersiveReaderEnabled) {
                 actions.push({
                     className: "immersive-reader-button",
-                    onclick: () => {ImmersiveReader.launchImmersiveReader(fullText, options)},
+                    onclick: () => { ImmersiveReader.launchImmersiveReader(fullText, options) },
                     ariaLabel: lf("Launch Immersive Reader"),
                     title: lf("Launch Immersive Reader")
                 })
@@ -354,6 +356,7 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
 interface TutorialCardState {
     showHint?: boolean;
     showSeeMore?: boolean;
+    showUnusedBlockMessage?: boolean;
 }
 
 interface TutorialCardProps extends ISettingsProps {
@@ -374,7 +377,8 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
 
         this.state = {
             showSeeMore: false,
-            showHint: options.tutorialStepInfo[this.prevStep].showHint
+            showHint: options.tutorialStepInfo[this.prevStep].showHint,
+            showUnusedBlockMessage: false
         }
 
         this.toggleHint = this.toggleHint.bind(this);
@@ -389,7 +393,8 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         this.toggleExpanded = this.toggleExpanded.bind(this);
         this.onMarkdownDidRender = this.onMarkdownDidRender.bind(this);
         this.handleResize = this.handleResize.bind(this);
-
+        this.showUnusedBlocksMessageOnClick = this.showUnusedBlocksMessageOnClick.bind(this);
+        this.showUnusedBlocksMessage = this.showUnusedBlocksMessage.bind(this);
     }
 
     previousTutorialStep() {
@@ -402,6 +407,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
 
         pxt.tickEvent(`tutorial.previous`, { tutorial: options.tutorial, step: previousStep }, { interactiveConsent: true });
         this.props.parent.setTutorialStep(previousStep);
+        this.setState({ showUnusedBlockMessage: false });
     }
 
     nextTutorialStep() {
@@ -414,6 +420,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
 
         pxt.tickEvent(`tutorial.next`, { tutorial: options.tutorial, step: nextStep }, { interactiveConsent: true });
         this.props.parent.setTutorialStep(nextStep);
+        this.setState({ showUnusedBlockMessage: false });
     }
 
     finishTutorial() {
@@ -550,6 +557,10 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         }
     }
 
+    private showUnusedBlocksMessageOnClick(evt?: any) {
+        this.setState({ showUnusedBlockMessage: true });
+    }
+
     private expandedHintOnClick(evt?: any) {
         evt.stopPropagation();
     }
@@ -611,6 +622,10 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         th.showHint(visible, showFullText);
     }
 
+    showUnusedBlocksMessage() {
+        this.setState({ showUnusedBlockMessage: false });
+    }
+
     renderCore() {
         const options = this.props.parent.state.tutorialOptions;
         const { tutorialReady, tutorialStepInfo, tutorialStep, tutorialStepExpanded, metadata } = options;
@@ -627,11 +642,15 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         const hasHint = this.hasHint();
         const tutorialCardContent = stepInfo.headerContentMd;
         const showDialog = stepInfo.showDialog;
+        const validationEnabled = stepInfo.codeValidated != undefined;
+        const showMissingBlockPopupMessage = this.state.showUnusedBlockMessage && validationEnabled;
+        const nextOnClick = (stepInfo.codeValidated || !validationEnabled) ? this.nextTutorialStep : this.showUnusedBlocksMessageOnClick;
 
         const tutorialAriaLabel = lf("Press Space or Enter to show a hint.");
         const tutorialHintTooltip = lf("Click to show a hint!");
 
         let hintOnClick = this.hintOnClick;
+        let showUnusedBlocksMessageOnClick = this.showUnusedBlocksMessageOnClick;
         // double-click issue on edge when closing hint from tutorial card click
         if ((pxt.BrowserUtils.isEdge() || pxt.BrowserUtils.isIE()) && this.state.showHint && !showDialog) {
             hintOnClick = null;
@@ -640,6 +659,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         const isRtl = pxt.Util.isUserLanguageRtl();
         return <div id="tutorialcard" className={`ui ${tutorialStepExpanded ? 'tutorialExpanded' : ''} ${tutorialReady ? 'tutorialReady' : ''} ${this.state.showSeeMore ? 'seemore' : ''}  ${!this.state.showHint ? 'showTooltip' : ''} ${hasHint ? 'hasHint' : ''}`} style={tutorialStepExpanded ? this.getExpandedCardStyle('height') : null} >
             {hasHint && this.state.showHint && !showDialog && <div className="mask" role="region" onClick={this.closeHint}></div>}
+
             <div className='ui buttons'>
                 {hasPrevious ? <sui.Button icon={`${isRtl ? 'right' : 'left'} chevron large`} className={`prevbutton left attached ${!hasPrevious ? 'disabled' : ''}`} text={lf("Back")} textClass="widedesktop only" ariaLabel={lf("Go to the previous step of the tutorial.")} onClick={this.previousTutorialStep} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                 <div className="ui segment attached tutorialsegment">
@@ -662,7 +682,9 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
                     {this.state.showSeeMore && tutorialStepExpanded && <sui.Button className="fluid compact lightgrey" icon="chevron up" tabIndex={0} text={lf("Less...")} onClick={this.toggleExpanded} onKeyDown={sui.fireClickOnEnter} />}
                     <sui.Button ref="tutorialok" id="tutorialOkButton" className="large green okbutton showlightbox" text={lf("Ok")} onClick={this.closeLightbox} onKeyDown={sui.fireClickOnEnter} />
                 </div>
-                {hasNext ? <sui.Button icon={`${isRtl ? 'left' : 'right'} chevron large`} className={`nextbutton right attached ${!hasNext ? 'disabled' : ''}  ${stepInfo.codeValidated ? 'isValidated' : ''}`}  text={lf("Next")} textClass="widedesktop only" ariaLabel={lf("Go to the next step of the tutorial.")} onClick={this.nextTutorialStep} onKeyDown={sui.fireClickOnEnter} /> : undefined}
+                {hasNext ? <sui.Button icon={`${isRtl ? 'left' : 'right'} chevron large`} className={`nextbutton right attached ${!hasNext ? 'disabled' : ''}  ${stepInfo.codeValidated ? 'isValidated' : ''}`} text={lf("Next")} textClass="widedesktop only" ariaLabel={lf("Go to the next step of the tutorial.")}
+                    onClick={nextOnClick} onKeyDown={sui.fireClickOnEnter} /> : undefined}
+                {showMissingBlockPopupMessage && <TutorialCodeValidation.MoveOn onYesButtonClick={this.nextTutorialStep} onNoButtonClick={this.showUnusedBlocksMessage} initialVisible={this.state.showUnusedBlockMessage} parent={this.props.parent} />}
                 {hasFinish ? <sui.Button icon="left checkmark" className={`orange right attached ${!tutorialReady ? 'disabled' : ''}`} text={lf("Finish")} ariaLabel={lf("Finish the tutorial.")} onClick={this.finishTutorial} onKeyDown={sui.fireClickOnEnter} /> : undefined}
             </div>
         </div>;
@@ -681,11 +703,11 @@ export class WorkspaceHeader extends data.Component<any, WorkspaceHeaderState> {
         super(props);
 
         this.handleResize = this.handleResize.bind(this);
-        this.state = {windowSize: window.innerWidth};
+        this.state = { windowSize: window.innerWidth };
     }
 
     handleResize() {
-        this.setState({windowSize: window.innerWidth});
+        this.setState({ windowSize: window.innerWidth });
     }
 
     componentDidMount() {
@@ -730,7 +752,7 @@ export class WorkspaceHeader extends data.Component<any, WorkspaceHeaderState> {
                 <div id="flyoutHeaderTitle" className="no-select">{this.flyoutTitle}</div>
             </div>
             <div id="workspaceHeader" style={this.workspaceStyle()}>
-                <editortoolbar.SmallEditorToolbar parent={this.props.parent}/>
+                <editortoolbar.SmallEditorToolbar parent={this.props.parent} />
             </div>
         </div>;
     }
