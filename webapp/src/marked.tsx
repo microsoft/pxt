@@ -10,6 +10,7 @@ type ISettingsProps = pxt.editor.ISettingsProps;
 interface MarkedContentProps extends ISettingsProps {
     markdown: string;
     className?: string;
+    tabIndex?: number;
     // do not emit segment around snippets
     unboxSnippets?: boolean;
     blocksDiffOptions?: pxt.blocks.DiffOptions;
@@ -365,7 +366,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
     }
 
     renderCore() {
-        const { className } = this.props;
-        return <div ref="marked-content" className={className || ""} />;
+        const { className, tabIndex } = this.props;
+        return <div ref="marked-content" className={className || ""} tabIndex={tabIndex} />;
     }
 }
