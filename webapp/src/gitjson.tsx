@@ -165,10 +165,17 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         await f.setContentAsync(JSON.stringify(gs, null, 4))
     }
 
-    private async switchProjectToBranchAsync(newBranch: string) {
+    private async switchProjectToBranchAsync(newBranch?: string) {
         const { header } = this.props.parent.state;
         const gs = this.getGitJson();
         const parsed = this.parsedRepoId()
+
+        if (!newBranch) {
+            const packagesConfig = await pxt.packagesConfigAsync()
+            const repo = await pxt.github.repoAsync(parsed.slug, packagesConfig)
+            newBranch = repo.defaultBranch
+        }
+
         header.githubId = parsed.fullName + "#" + newBranch
         gs.repo = header.githubId
         await this.saveGitJsonAsync(gs)
@@ -208,7 +215,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         }
     }
 
-    public async switchBranchAsync(branch: string) {
+    public async switchBranchAsync(branch?: string) {
         await this.setStateAsync({ needsCommitMessage: false });
         const prevBranch = this.parsedRepoId().tag
         try {
@@ -1158,7 +1165,7 @@ class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
     private async handleSwitchMasterBranch(e: React.MouseEvent<HTMLElement>) {
         pxt.tickEvent("github.branch.switch");
         e.stopPropagation();
-        this.props.parent.switchBranchAsync("default");
+        this.props.parent.switchBranchAsync();
     }
 
     renderCore() {

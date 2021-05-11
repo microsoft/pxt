@@ -948,7 +948,7 @@ namespace pxt.github {
                     slug: rid.slug,
                     name: rid.fileName ? `${meta.name}-${rid.fileName}` : meta.name,
                     description: meta.description,
-                    defaultBranch: meta.defaultBranch || "default", // TODO: cloud support
+                    defaultBranch: meta.defaultBranch,
                     tag: rid.tag,
                     status
                 };
@@ -1039,7 +1039,8 @@ namespace pxt.github {
     export function normalizeRepoId(id: string) {
         const gid = parseRepoId(id);
         if (!gid) return undefined;
-        gid.tag = gid.tag || "default";
+        // this does not work anymore
+        gid.tag = gid.tag;
         return stringifyRepo(gid);
     }
 

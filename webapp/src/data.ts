@@ -64,12 +64,14 @@ mountVirtualApi("gh-search", {
     isOffline: () => !Cloud.isOnline(),
 })
 
+/* does not seem to be used
 mountVirtualApi("gh-pkgcfg", {
     getAsync: query =>
-        pxt.github.pkgConfigAsync(stripProtocol(query), "default").catch(core.handleNetworkError),
+        pxt.github.pkgConfigAsync(stripProtocol(query), ).catch(core.handleNetworkError),
     expirationTime: p => 60 * 1000,
     isOffline: () => !Cloud.isOnline(),
 })
+*/
 
 // gh-commits:repo#sha
 mountVirtualApi("gh-commits", {
@@ -95,7 +97,8 @@ mountVirtualApi("target-config", {
                         pxt.storage.setLocal("targetconfig", JSON.stringify(js))
                         invalidate("target-config");
                         invalidate("gh-search");
-                        invalidate("gh-pkgcfg");
+                        // does not seem to be used
+                        // invalidate("gh-pkgcfg");
                     }
                     return js;
                 })
