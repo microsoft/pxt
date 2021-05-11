@@ -45,10 +45,10 @@ export class MoveOn extends data.Component<TutorialCodeValidationProps, tutorial
                     {lf("These are the blocks you seem to be missing.")}
                 </div>
                 <div className="text">
-                    /* Will add a list a blocks here in future PR */
+                    { /* Will add a list a blocks here in future PR */}
                 </div>
                 <div className="text">
-                {lf("Do you still want to continue?")}
+                    {lf("Do you still want to continue?")}
                 </div>
                 <div className="moveOnButtons">
                     <sui.Button className="no" ariaLabel={lf("no button for tutorial code validation")} onClick={this.stayOnThisTutorialStep.bind(this)} onKeyDown={sui.fireClickOnEnter} > {lf("No")} </sui.Button>

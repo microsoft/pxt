@@ -407,7 +407,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
 
         pxt.tickEvent(`tutorial.previous`, { tutorial: options.tutorial, step: previousStep }, { interactiveConsent: true });
         this.props.parent.setTutorialStep(previousStep);
-        this.setState({showUnusedBlockMessage: false});
+        this.setState({ showUnusedBlockMessage: false });
     }
 
     nextTutorialStep() {
@@ -420,7 +420,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
 
         pxt.tickEvent(`tutorial.next`, { tutorial: options.tutorial, step: nextStep }, { interactiveConsent: true });
         this.props.parent.setTutorialStep(nextStep);
-        this.setState({showUnusedBlockMessage: false});
+        this.setState({ showUnusedBlockMessage: false });
     }
 
     finishTutorial() {
@@ -558,7 +558,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
     }
 
     private showUnusedBlocksMessageOnClick(evt?: any) {
-        this.setState({showUnusedBlockMessage: true});
+        this.setState({ showUnusedBlockMessage: true });
     }
 
     private expandedHintOnClick(evt?: any) {
@@ -622,8 +622,8 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         th.showHint(visible, showFullText);
     }
 
-    showUnusedBlocksMessage () {
-        this.setState({showUnusedBlockMessage: false});
+    showUnusedBlocksMessage() {
+        this.setState({ showUnusedBlockMessage: false });
     }
 
     renderCore() {
