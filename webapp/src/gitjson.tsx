@@ -1155,7 +1155,7 @@ class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
         this.handleSwitchMasterBranch = this.handleSwitchMasterBranch.bind(this);
     }
 
-    private handleSwitchMasterBranch(e: React.MouseEvent<HTMLElement>) {
+    private async handleSwitchMasterBranch(e: React.MouseEvent<HTMLElement>) {
         pxt.tickEvent("github.branch.switch");
         e.stopPropagation();
         this.props.parent.switchBranchAsync("default");

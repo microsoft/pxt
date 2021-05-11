@@ -166,7 +166,7 @@ namespace pxt.github {
         private configs: pxt.Map<pxt.PackageConfig> = {};
         private packages: pxt.Map<CachedPackage> = {};
 
-        private proxyWithCdnLoadPackageAsync(repopath: string, tag: string): Promise<CachedPackage> {
+        private async proxyWithCdnLoadPackageAsync(repopath: string, tag: string): Promise<CachedPackage> {
             // cache lookup
             const key = `${repopath}/${tag || "default"}`;
             let res = this.packages[key];
@@ -177,8 +177,14 @@ namespace pxt.github {
 
             // load and cache
             const parsed = parseRepoId(repopath)
-            return ghProxyWithCdnJsonAsync(join(parsed.slug, tag, parsed.fileName, "text"))
-                .then(v => this.packages[key] = { files: v });
+            if (!tag || tag === "default") {
+                // resolve master vs main
+                const repo: { defaultBranch: string } = await ghProxyWithCdnJsonAsync(parsed.slug)
+                tag = repo.defaultBranch
+            }
+            const v = await ghProxyWithCdnJsonAsync(join(parsed.slug, tag, parsed.fileName, "text"))
+            const r = this.packages[key] = { files: v }
+            return r;
         }
 
         private cacheConfig(key: string, v: string) {

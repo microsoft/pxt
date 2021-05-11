@@ -66,7 +66,7 @@ mountVirtualApi("gh-search", {
 
 mountVirtualApi("gh-pkgcfg", {
     getAsync: query =>
-        pxt.github.pkgConfigAsync(stripProtocol(query)).catch(core.handleNetworkError),
+        pxt.github.pkgConfigAsync(stripProtocol(query), "default").catch(core.handleNetworkError),
     expirationTime: p => 60 * 1000,
     isOffline: () => !Cloud.isOnline(),
 })
