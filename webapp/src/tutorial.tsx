@@ -394,7 +394,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         this.onMarkdownDidRender = this.onMarkdownDidRender.bind(this);
         this.handleResize = this.handleResize.bind(this);
         this.showUnusedBlocksMessageOnClick = this.showUnusedBlocksMessageOnClick.bind(this);
-
+        this.showUnusedBlocksMessage = this.showUnusedBlocksMessage.bind(this);
     }
 
     previousTutorialStep() {
@@ -682,7 +682,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
                 </div>
                 {hasNext ? <sui.Button icon={`${isRtl ? 'left' : 'right'} chevron large`} className={`nextbutton right attached ${!hasNext ? 'disabled' : ''}  ${stepInfo.codeValidated ? 'isValidated' : ''}`} text={lf("Next")} textClass="widedesktop only" ariaLabel={lf("Go to the next step of the tutorial.")}
                     onClick={stepInfo.codeValidated || !validationEnabled ? this.nextTutorialStep : showUnusedBlocksMessageOnClick} onKeyDown={sui.fireClickOnEnter} /> : undefined}
-                {showMissingBlockPopupMessage && <TutorialCodeValidation.moveOn onYesButtonClick={this.nextTutorialStep} onNoButtonClick={this.showUnusedBlocksMessage.bind(this)} initialVisible={this.state.showUnusedBlockMessage} ref="TutorialCodeValidation" parent={this.props.parent} />}
+                {showMissingBlockPopupMessage && <TutorialCodeValidation.MoveOn onYesButtonClick={this.nextTutorialStep} onNoButtonClick={this.showUnusedBlocksMessage} initialVisible={this.state.showUnusedBlockMessage} parent={this.props.parent} />}
                 {hasFinish ? <sui.Button icon="left checkmark" className={`orange right attached ${!tutorialReady ? 'disabled' : ''}`} text={lf("Finish")} ariaLabel={lf("Finish the tutorial.")} onClick={this.finishTutorial} onKeyDown={sui.fireClickOnEnter} /> : undefined}
             </div>
         </div>;
