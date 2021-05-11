@@ -279,7 +279,7 @@ function pkginfoAsync(repopath: string) {
                         pxt.debug(`size: ${JSON.stringify(pkg.files).length}`)
                     })
 
-            return pxt.github.pkgConfigAsync(parsed.fullName)
+            return pxt.github.pkgConfigAsync(parsed.fullName, "default")
                 .then(cfg => {
                     pkgInfo(cfg)
                     return pxt.github.listRefsAsync(repopath)
