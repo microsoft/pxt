@@ -645,6 +645,74 @@ namespace pxsim {
             })
         }
 
+        const MAX_SCHEDULED_BUFFER_NODES = 3;
+
+        export function playPCMBufferStreamAsync(pull: () => Float32Array, sampleRate: number, volume = 0.3) {
+            return new Promise<void>(resolve => {
+                let nodes: AudioBufferSourceNode[] = [];
+                let nextTime = context().currentTime;
+                let allScheduled = false;
+
+                // Every time we pull a buffer, schedule a node in the future to play it.
+                // Scheduling the nodes ahead of time sounds much smoother than trying to
+                // do it when the previous node completes (which sounds SUPER choppy in
+                // FireFox).
+                function playNext() {
+                    const isCancelled = !channel.gain;
+                    while (!allScheduled && nodes.length < MAX_SCHEDULED_BUFFER_NODES && !isCancelled) {
+                        const data = pull();
+                        if (!data || !data.length) {
+                            allScheduled = true;
+                            break;
+                        }
+                        play(data);
+                    }
+
+                    if ((allScheduled && nodes.length === 0) || isCancelled) {
+                        channel.remove();
+                        if (resolve) resolve();
+                        resolve = undefined;
+                    }
+                }
+
+                function play(data: Float32Array) {
+                    const buff = context().createBuffer(1, data.length, sampleRate);
+                    if (buff.copyToChannel) {
+                        buff.copyToChannel(data, 0);
+                    }
+                    else {
+                        const channelBuffer = buff.getChannelData(0);
+                        for (let i = 0; i < data.length; i++) {
+                            channelBuffer[i] = data[i];
+                        }
+                    }
+
+                    // Audio buffer source nodes are supposedly very cheap, so no need to reuse them
+                    const newNode = context().createBufferSource();
+                    nodes.push(newNode);
+                    newNode.connect(channel.gain);
+                    newNode.buffer = buff;
+                    newNode.addEventListener("ended", () => {
+                        nodes.shift().disconnect();
+                        playNext();
+                    });
+                    newNode.start(nextTime);
+                    nextTime += buff.duration;
+                }
+
+                const channel = new Channel();
+                channel.gain = context().createGain();
+                channel.gain.gain.setValueAtTime(volume, context().currentTime);
+                channel.gain.connect(context().destination);
+
+                if (channels.length > 5)
+                    channels[0].remove()
+                channels.push(channel);
+
+                playNext();
+            });
+        }
+
         function frequencyFromMidiNoteNumber(note: number) {
             return 440 * Math.pow(2, (note - 69) / 12);
         }
