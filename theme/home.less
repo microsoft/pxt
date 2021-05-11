@@ -278,9 +278,14 @@
 
                 .button.attached i {
                     display: block;
-                    margin: auto!important;
-                    opacity: 0.05;
+                    margin: auto !important;
+                    opacity: 0.65;
                     color: @homeCardHeaderColor;
+
+                    // These three have text in front of the icons, so leave them faint.
+                    &.blocks, &.js, &.py {
+                        opacity: 0.05;
+                    }
                 }
                 .button.attached .icon:not(.xicon) {
                     margin: 0 auto!important;
