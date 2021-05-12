@@ -708,11 +708,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     async validateTutorialCode(tutorial: pxt.tutorial.TutorialOptions) {
         // Current tutorial step
-        const { tutorialStepInfo, tutorialStep } = tutorial;
-        const step = tutorialStepInfo[tutorialStep];
-
+        const { tutorialStep } = tutorial;
         const blocks = this.editor.getAllBlocks();
-        const tutorialCodeStatus = await pxt.tutorial.validate(tutorial, step, blocks, this.blockInfo);
+        const tutorialCodeStatus = await pxt.tutorial.validate(tutorial, blocks, this.blockInfo);
         this.parent.setTutorialCodeStatus(tutorialStep, tutorialCodeStatus);
     }
 

@@ -13,13 +13,15 @@ namespace pxt.tutorial {
     * @param blockinfo Typescripts of the workspace
     * @return A TutorialCodeStatus
     */
-    export async function validate(tutorial: TutorialOptions, step: TutorialStepInfo, workspaceBlocks: Blockly.Block[], blockinfo: pxtc.BlocksInfo): Promise<TutorialCodeStatus> {
+    export async function validate(tutorial: TutorialOptions, workspaceBlocks: Blockly.Block[], blockinfo: pxtc.BlocksInfo): Promise<TutorialCodeStatus> {
         // Check to make sure blocks are in the workspace
         if (workspaceBlocks.length > 0) {
             // User blocks
             const userBlockTypes = workspaceBlocks.map(b => b.type);
             const usersBlockUsed = blockCount(userBlockTypes);
             // Tutorial blocks
+            const { tutorialStepInfo, tutorialStep } = tutorial;
+            const step = tutorialStepInfo[tutorialStep];
             const indexdb = await tutorialBlockList(tutorial, step);
             const tutorialBlockUsed = extractBlockSnippet(tutorial, indexdb);
             // Checks for user's blocks against tutorial blocks
