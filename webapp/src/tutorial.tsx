@@ -18,7 +18,7 @@ import * as TutorialCodeValidation from "./tutorialCodeValidation";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
- interface ITutorialBlocks {
+interface ITutorialBlocks {
     snippetBlocks: pxt.Map<pxt.Map<number>>;
     usedBlocks: pxt.Map<number>;
 }
@@ -645,8 +645,6 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         const validationEnabled = stepInfo.codeValidated != undefined;
         const showMissingBlockPopupMessage = this.state.showUnusedBlockMessage && validationEnabled;
         const nextOnClick = (stepInfo.codeValidated || !validationEnabled) ? this.nextTutorialStep : this.showUnusedBlocksMessageOnClick;
-        console.log("stepinfo code validated: " + stepInfo.codeValidated);
-        console.log("unused block state: " + this.state.showUnusedBlockMessage);
 
         const tutorialAriaLabel = lf("Press Space or Enter to show a hint.");
         const tutorialHintTooltip = lf("Click to show a hint!");

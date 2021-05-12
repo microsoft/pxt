@@ -22,10 +22,6 @@ namespace pxt.tutorial {
             // Tutorial blocks
             const indexdb = await tutorialBlockList(tutorial, step);
             const tutorialBlockUsed = extractBlockSnippet(tutorial, indexdb);
-            console.log("user block types: " , userBlockTypes);
-            console.log("user block used: " , usersBlockUsed);
-            console.log("Tutorial indexdb: " , indexdb);
-            console.log("Tutorail block used: " , tutorialBlockUsed);
             // Checks for user's blocks against tutorial blocks
             if (!validateNumberOfBlocks(usersBlockUsed, tutorialBlockUsed)) {
                 return TutorialCodeStatus.Invalid;
