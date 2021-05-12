@@ -363,10 +363,7 @@ export function identityProvider(id: pxt.IdentityProviderId): pxt.AppCloudProvid
 }
 
 export function hasIdentity(): boolean {
-    // Must read storage for this rather than app theme because this method
-    // gets called before experiments are synced to the theme.
-    const experimentEnabled = pxt.editor.experiments.isEnabled("identity");
-    return !authDisabled && !pxt.BrowserUtils.isPxtElectron() && experimentEnabled && identityProviders().length > 0;
+    return !authDisabled && !pxt.BrowserUtils.isPxtElectron() && identityProviders().length > 0;
 }
 
 export async function loggedIn(): Promise<boolean> {
