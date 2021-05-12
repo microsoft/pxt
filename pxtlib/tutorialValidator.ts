@@ -55,7 +55,7 @@ namespace pxt.tutorial {
     * @param step the current tutorial step
     * @return indexdb's tutorial code snippets
     */
-    function tutorialBlockList(tutorial: TutorialOptions, step: TutorialStepInfo, skipCache = false): Promise<pxt.Map<pxt.Map<number>> | undefined> {
+    function tutorialBlockList(tutorial: TutorialOptions, step: TutorialStepInfo): Promise<pxt.Map<pxt.Map<number>> | undefined> {
         return pxt.BrowserUtils.tutorialInfoDbAsync()
             .then(db => db.getAsync(tutorial.tutorial, tutorial.tutorialCode)
                 .then(entry => {
