@@ -393,7 +393,7 @@ namespace pxsim {
         private postMessageCore(frame: HTMLIFrameElement, msg: SimulatorMessage) {
             frame.contentWindow.postMessage(msg, frame.dataset['origin']);
 
-            if (U.isLocalHost() && (pxt as any)?.appTarget?.id) {
+            if (U.isLocalHostDev() && (pxt as any)?.appTarget?.id) {
                 // If using the production simulator on local serve, the domain might have been
                 // redirected by the CLI server. Also send to the production domain just in case
                 try {

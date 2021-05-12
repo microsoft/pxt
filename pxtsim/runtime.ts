@@ -239,12 +239,28 @@ namespace pxsim {
             return res;
         }
 
+        export function isPxtElectron(): boolean {
+            return typeof window != "undefined" && !!(window as any).pxtElectron;
+        }
+
+        export function isIpcRenderer(): boolean {
+            return typeof window != "undefined" && !!(window as any).ipcRenderer;
+        }
+
+        export function isElectron() {
+            return isPxtElectron() || isIpcRenderer();
+        }
+
         export function isLocalHost(): boolean {
             try {
                 return typeof window !== "undefined"
                     && /^http:\/\/(localhost|127\.0\.0\.1):\d+\//.test(window.location.href)
                     && !/nolocalhost=1/.test(window.location.href);
             } catch (e) { return false; }
+        }
+
+        export function isLocalHostDev(): boolean {
+            return isLocalHost() && !isElectron();
         }
 
         export function unique<T>(arr: T[], f: (t: T) => string): T[] {
