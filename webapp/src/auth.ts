@@ -575,7 +575,7 @@ export type ApiResult<T> = {
 const DEV_BACKEND_DEFAULT = "";
 const DEV_BACKEND_PROD = "https://www.makecode.com";
 const DEV_BACKEND_STAGING = "https://staging.pxt.io";
-const DEV_BACKEND_LOCALHOST = "http://localhost:8080";
+const DEV_BACKEND_LOCALHOST = "http://localhost:5500";
 
 const DEV_BACKEND = DEV_BACKEND_STAGING;
 
