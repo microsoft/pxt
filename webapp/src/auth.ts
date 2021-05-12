@@ -363,10 +363,11 @@ export function identityProvider(id: pxt.IdentityProviderId): pxt.AppCloudProvid
 }
 
 export function hasIdentity(): boolean {
-    // Must read storage for this rather than app theme because this method
-    // gets called before experiments are synced to the theme.
+    // If identity experiment was previously enabled, respect this setting. Otherwise early-adopers could lose access to cloud-saved projects.
     const experimentEnabled = pxt.editor.experiments.isEnabled("identity");
-    return !authDisabled && !pxt.BrowserUtils.isPxtElectron() && experimentEnabled && identityProviders().length > 0;
+    // Temporary: Allow identity by default on localhost, staging, or beta.
+    const identityEnabledUri = experimentEnabled || window.location.href.includes("localhost") || window.location.href.includes("staging.pxt.io") || window.location.href.includes("/beta");
+    return identityEnabledUri && !authDisabled && !pxt.BrowserUtils.isPxtElectron() && identityProviders().length > 0;
 }
 
 export async function loggedIn(): Promise<boolean> {
@@ -574,7 +575,7 @@ export type ApiResult<T> = {
 const DEV_BACKEND_DEFAULT = "";
 const DEV_BACKEND_PROD = "https://www.makecode.com";
 const DEV_BACKEND_STAGING = "https://staging.pxt.io";
-const DEV_BACKEND_LOCALHOST = "http://localhost:5500";
+const DEV_BACKEND_LOCALHOST = "http://localhost:8080";
 
 const DEV_BACKEND = DEV_BACKEND_STAGING;
 

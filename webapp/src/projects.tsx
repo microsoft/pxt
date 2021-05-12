@@ -344,11 +344,11 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
             {targetTheme.selectLanguage && <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} />}
             {targetTheme.highContrast && <sui.Item role="menuitem" text={highContrast ? lf("High Contrast Off") : lf("High Contrast On")} onClick={this.toggleHighContrast} />}
             {githubUser && <div className="ui divider"></div>}
-            {githubUser && <div className="ui item" title={lf("Sign out {0} from GitHub", githubUser.name)} role="menuitem" onClick={this.signOutGithub}>
+            {githubUser && <div className="ui item" title={lf("Unlink {0} from GitHub", githubUser.name)} role="menuitem" onClick={this.signOutGithub}>
                 <div className="avatar" role="presentation">
                     <img className="ui circular image" src={githubUser.photo} alt={lf("User picture")} />
                 </div>
-                {lf("Sign out")}
+                {lf("Unlink GitHub")}
             </div>}
             {showDivider && <div className="ui divider"></div>}
             {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...")} onClick={this.showReportAbuse} /> : undefined}
