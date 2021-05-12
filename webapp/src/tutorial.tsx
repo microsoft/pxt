@@ -18,7 +18,7 @@ import * as TutorialCodeValidation from "./tutorialCodeValidation";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
-export interface ITutorialBlocks {
+ interface ITutorialBlocks {
     snippetBlocks: pxt.Map<pxt.Map<number>>;
     usedBlocks: pxt.Map<number>;
 }
@@ -61,7 +61,7 @@ export function getUsedBlocksAsync(code: string[], id: string, language?: string
         })
 }
 
-export function getUsedBlocksInternalAsync(code: string[], id: string, language?: string, db?: pxt.BrowserUtils.ITutorialInfoDb, skipCache = false): Promise<ITutorialBlocks> {
+function getUsedBlocksInternalAsync(code: string[], id: string, language?: string, db?: pxt.BrowserUtils.ITutorialInfoDb, skipCache = false): Promise<ITutorialBlocks> {
     const snippetBlocks: pxt.Map<pxt.Map<number>> = {};
     const usedBlocks: pxt.Map<number> = {};
     return compiler.getBlocksAsync()
@@ -645,6 +645,8 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         const validationEnabled = stepInfo.codeValidated != undefined;
         const showMissingBlockPopupMessage = this.state.showUnusedBlockMessage && validationEnabled;
         const nextOnClick = (stepInfo.codeValidated || !validationEnabled) ? this.nextTutorialStep : this.showUnusedBlocksMessageOnClick;
+        console.log("stepinfo code validated: " + stepInfo.codeValidated);
+        console.log("unused block state: " + this.state.showUnusedBlockMessage);
 
         const tutorialAriaLabel = lf("Press Space or Enter to show a hint.");
         const tutorialHintTooltip = lf("Click to show a hint!");

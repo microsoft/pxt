@@ -12,7 +12,6 @@ import * as workspace from "./workspace";
 import * as simulator from "./simulator";
 import * as dialogs from "./dialogs";
 import * as blocklyFieldView from "./blocklyFieldView";
-import * as validator from "./tutorialValidator";
 import { CreateFunctionDialog } from "./createFunction";
 import { initializeSnippetExtensions } from './snippetBuilder';
 
@@ -713,7 +712,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const step = tutorialStepInfo[tutorialStep];
 
         const blocks = this.editor.getAllBlocks();
-        const tutorialCodeStatus = await validator.validate(tutorial, step, blocks, this.blockInfo);
+        const tutorialCodeStatus = await pxt.tutorial.validate(tutorial, step, blocks, this.blockInfo);
         this.parent.setTutorialCodeStatus(tutorialStep, tutorialCodeStatus);
     }
 
