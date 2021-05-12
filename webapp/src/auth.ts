@@ -363,11 +363,7 @@ export function identityProvider(id: pxt.IdentityProviderId): pxt.AppCloudProvid
 }
 
 export function hasIdentity(): boolean {
-    // If identity experiment was previously enabled, respect this setting. Otherwise early-adopers could lose access to cloud-saved projects.
-    const experimentEnabled = pxt.editor.experiments.isEnabled("identity");
-    // Temporary: Allow identity by default on localhost, staging, or beta.
-    const identityEnabledUri = experimentEnabled || window.location.href.includes("localhost") || window.location.href.includes("staging.pxt.io") || window.location.href.includes("/beta");
-    return identityEnabledUri && !authDisabled && !pxt.BrowserUtils.isPxtElectron() && identityProviders().length > 0;
+    return !authDisabled && !pxt.BrowserUtils.isPxtElectron() && identityProviders().length > 0;
 }
 
 export async function loggedIn(): Promise<boolean> {
