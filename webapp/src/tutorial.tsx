@@ -18,7 +18,7 @@ import * as TutorialCodeValidation from "./tutorialCodeValidation";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
-interface ITutorialBlocks {
+export interface ITutorialBlocks {
     snippetBlocks: pxt.Map<pxt.Map<number>>;
     usedBlocks: pxt.Map<number>;
 }
@@ -61,7 +61,7 @@ export function getUsedBlocksAsync(code: string[], id: string, language?: string
         })
 }
 
-function getUsedBlocksInternalAsync(code: string[], id: string, language?: string, db?: pxt.BrowserUtils.ITutorialInfoDb, skipCache = false): Promise<ITutorialBlocks> {
+export function getUsedBlocksInternalAsync(code: string[], id: string, language?: string, db?: pxt.BrowserUtils.ITutorialInfoDb, skipCache = false): Promise<ITutorialBlocks> {
     const snippetBlocks: pxt.Map<pxt.Map<number>> = {};
     const usedBlocks: pxt.Map<number> = {};
     return compiler.getBlocksAsync()

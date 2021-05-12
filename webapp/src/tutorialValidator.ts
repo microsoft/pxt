@@ -1,6 +1,7 @@
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as compiler from "./compiler";
+import * as tutorialfile from "./tutorial";
 
 /**
 * Check the user's code to the tutorial and returns a Tutorial status of the user's code
@@ -9,13 +10,16 @@ import * as compiler from "./compiler";
 * @param blockinfo Typescripts of the workspace
 * @return A TutorialCodeStatus
 */
-export async function validate(step: pxt.tutorial.TutorialStepInfo, workspaceBlocks: Blockly.Block[], blockinfo: pxtc.BlocksInfo): Promise<pxt.editor.TutorialCodeStatus> {
+export async function validate(tutorial: pxt.tutorial.TutorialOptions, step: pxt.tutorial.TutorialStepInfo, workspaceBlocks: Blockly.Block[], blockinfo: pxtc.BlocksInfo): Promise<pxt.editor.TutorialCodeStatus> {
     // Check to make sure blocks are in the workspace
     if (workspaceBlocks.length > 0) {
-        const userBlockTypes: string[] = workspaceBlocks.map(b => b.type);
-        const tutorialBlockTypes: string[] = await tutorialBlockList(step, blockinfo);
-        const usersBlockUsed: pxt.Map<number> = blockCount(userBlockTypes);
-        const tutorialBlockUsed: pxt.Map<number> = blockCount(tutorialBlockTypes);
+        // User blocks
+        const userBlockTypes = workspaceBlocks.map(b => b.type);
+        const usersBlockUsed = blockCount(userBlockTypes);
+        // Tutorial blocks
+        const indexdb = await tutorialBlockList(tutorial, step);
+        const tutorialBlockUsed = extractBlockSnippet(tutorial, indexdb);
+        // Checks for user's blocks against tutorial blocks
         if (!validateNumberOfBlocks(usersBlockUsed, tutorialBlockUsed)) {
             return pxt.editor.TutorialCodeStatus.Invalid;
         }
@@ -41,26 +45,47 @@ function blockCount(arr: string[]): pxt.Map<number> {
 }
 
 /**
-* Checks to see if the array has the target value and returns the target value's index
+* Returns information from index database
+* @param tutorial Typescripts of the workspace
 * @param step the current tutorial step
-* @param blockinfo Typescripts of the workspace
-* @return the tutorial blocks
+* @return indexdb's tutorial code snippets
 */
-function tutorialBlockList(step: pxt.tutorial.TutorialStepInfo, blocksInfo: pxtc.BlocksInfo): Promise<string[]> {
-    let hintContent = step.hintContentMd;
-    if (hintContent.includes("\`\`\`blocks")) {
-        hintContent = hintContent.replace("\`\`\`blocks", "");
-        hintContent = hintContent.replace("\`\`\`", "");
-    }
-    let tutorialBlocks: string[] = [];
-    return compiler.decompileBlocksSnippetAsync(hintContent, blocksInfo)
-        .then((resp) => {
-            const blocksXml = resp.outfiles["main.blocks"];
-            const headless = pxt.blocks.loadWorkspaceXml(blocksXml);
-            const allBlocks = headless.getAllBlocks();
-            tutorialBlocks = allBlocks.map(b => b.type);
-            return tutorialBlocks;
-        });
+function tutorialBlockList(tutorial: pxt.tutorial.TutorialOptions, step: pxt.tutorial.TutorialStepInfo, skipCache = false) {
+    return pxt.BrowserUtils.tutorialInfoDbAsync()
+        .then(db => db.getAsync(tutorial.tutorial, tutorial.tutorialCode)
+        .then(entry => {
+        if ((entry === null || entry === void 0 ? void 0 : entry.blocks) && Object.keys(entry.blocks).length > 0 && !skipCache) {
+            pxt.tickEvent(`tutorial.usedblocks.indexeddb`, { tutorial: tutorial.tutorial });
+            // populate snippets if usedBlocks are present, but snippets are not
+            if (!(entry === null || entry === void 0 ? void 0 : entry.snippets))
+                tutorialfile.getUsedBlocksInternalAsync(tutorial.tutorialCode, tutorial.tutorial, tutorial.language, db, skipCache);
+            return Promise.resolve({ snippetBlocks: entry.snippets, usedBlocks: entry.blocks });
+        }
+        else {
+            return tutorialfile.getUsedBlocksInternalAsync(tutorial.tutorialCode, tutorial.tutorial, tutorial.language, db, skipCache);
+        }
+    })
+        .catch((err) => {
+        // fall back to full blocks decompile on error
+        return tutorialfile.getUsedBlocksInternalAsync(tutorial.tutorialCode, tutorial.tutorial, tutorial.language, db, skipCache);
+    })).catch((err) => {
+        // fall back to full blocks decompile on error
+        return tutorialfile.getUsedBlocksInternalAsync(tutorial.tutorialCode, tutorial.tutorial, tutorial.language, null, skipCache);
+    });
+}
+/**
+* Extract the tutorial blocks used from code snippet
+* @param tutorial tutorial info
+* @param indexdb database from index
+* @return the tutorial blocks used for the current step
+*/
+function extractBlockSnippet(tutorial: pxt.tutorial.TutorialOptions, indexdb:tutorialfile.ITutorialBlocks) {
+    const { tutorialStepInfo, tutorialStep } = tutorial;
+    const { snippetBlocks, usedBlocks } = indexdb;
+    const snippetKeys = Object.keys(snippetBlocks);
+    const snippetStepKey = snippetKeys[tutorialStep];
+    const blockMap = snippetBlocks[snippetStepKey];
+    return blockMap;
 }
 
 /**
