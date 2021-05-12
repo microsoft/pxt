@@ -53,25 +53,25 @@ function blockCount(arr: string[]): pxt.Map<number> {
 function tutorialBlockList(tutorial: pxt.tutorial.TutorialOptions, step: pxt.tutorial.TutorialStepInfo, skipCache = false) {
     return pxt.BrowserUtils.tutorialInfoDbAsync()
         .then(db => db.getAsync(tutorial.tutorial, tutorial.tutorialCode)
-        .then(entry => {
-        if ((entry === null || entry === void 0 ? void 0 : entry.blocks) && Object.keys(entry.blocks).length > 0 && !skipCache) {
-            pxt.tickEvent(`tutorial.usedblocks.indexeddb`, { tutorial: tutorial.tutorial });
-            // populate snippets if usedBlocks are present, but snippets are not
-            if (!(entry === null || entry === void 0 ? void 0 : entry.snippets))
-                tutorialfile.getUsedBlocksInternalAsync(tutorial.tutorialCode, tutorial.tutorial, tutorial.language, db, skipCache);
-            return Promise.resolve({ snippetBlocks: entry.snippets, usedBlocks: entry.blocks });
-        }
-        else {
-            return tutorialfile.getUsedBlocksInternalAsync(tutorial.tutorialCode, tutorial.tutorial, tutorial.language, db, skipCache);
-        }
-    })
-        .catch((err) => {
-        // fall back to full blocks decompile on error
-        return tutorialfile.getUsedBlocksInternalAsync(tutorial.tutorialCode, tutorial.tutorial, tutorial.language, db, skipCache);
-    })).catch((err) => {
-        // fall back to full blocks decompile on error
-        return tutorialfile.getUsedBlocksInternalAsync(tutorial.tutorialCode, tutorial.tutorial, tutorial.language, null, skipCache);
-    });
+            .then(entry => {
+                if ((entry === null || entry === void 0 ? void 0 : entry.blocks) && Object.keys(entry.blocks).length > 0 && !skipCache) {
+                    pxt.tickEvent(`tutorial.usedblocks.indexeddb`, { tutorial: tutorial.tutorial });
+                    // populate snippets if usedBlocks are present, but snippets are not
+                    if (!(entry === null || entry === void 0 ? void 0 : entry.snippets))
+                        tutorialfile.getUsedBlocksInternalAsync(tutorial.tutorialCode, tutorial.tutorial, tutorial.language, db, skipCache);
+                    return Promise.resolve({ snippetBlocks: entry.snippets, usedBlocks: entry.blocks });
+                }
+                else {
+                    return tutorialfile.getUsedBlocksInternalAsync(tutorial.tutorialCode, tutorial.tutorial, tutorial.language, db, skipCache);
+                }
+            })
+            .catch((err) => {
+                // fall back to full blocks decompile on error
+                return tutorialfile.getUsedBlocksInternalAsync(tutorial.tutorialCode, tutorial.tutorial, tutorial.language, db, skipCache);
+            })).catch((err) => {
+                // fall back to full blocks decompile on error
+                return tutorialfile.getUsedBlocksInternalAsync(tutorial.tutorialCode, tutorial.tutorial, tutorial.language, null, skipCache);
+            });
 }
 /**
 * Extract the tutorial blocks used from code snippet
@@ -79,7 +79,7 @@ function tutorialBlockList(tutorial: pxt.tutorial.TutorialOptions, step: pxt.tut
 * @param indexdb database from index
 * @return the tutorial blocks used for the current step
 */
-function extractBlockSnippet(tutorial: pxt.tutorial.TutorialOptions, indexdb:tutorialfile.ITutorialBlocks) {
+function extractBlockSnippet(tutorial: pxt.tutorial.TutorialOptions, indexdb: tutorialfile.ITutorialBlocks) {
     const { tutorialStepInfo, tutorialStep } = tutorial;
     const { snippetBlocks, usedBlocks } = indexdb;
     const snippetKeys = Object.keys(snippetBlocks);
