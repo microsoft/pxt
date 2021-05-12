@@ -383,6 +383,10 @@ namespace pxsim {
                 // finally, send the message
                 frame.contentWindow.postMessage(msg, frame.dataset['origin']);
 
+                if (U.isLocalHost() && (pxt as any)?.appTarget?.id) {
+                    frame.contentWindow.postMessage(msg, `https://trg-${(pxt as any)?.appTarget?.id}.userpxt.io/---simulator`);
+                }
+
                 // don't start more than 1 recorder
                 if (msg.type == 'recorder'
                     && (<pxsim.SimulatorRecorderMessage>msg).action == "start")
@@ -677,6 +681,9 @@ namespace pxsim {
                 msg.breakOnStart = false;
             }
             frame.contentWindow.postMessage(msg, frame.dataset['origin']);
+            if (U.isLocalHost() && (pxt as any)?.appTarget?.id) {
+                frame.contentWindow.postMessage(msg, `https://trg-${(pxt as any)?.appTarget?.id}.userpxt.io/---simulator`);
+            }
             if (this.traceInterval) this.setTraceInterval(this.traceInterval);
             this.applyAspectRatioToFrame(frame);
             this.setFrameState(frame);
