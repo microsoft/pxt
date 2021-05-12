@@ -381,16 +381,27 @@ namespace pxsim {
                 if (!frame.contentWindow) continue;
 
                 // finally, send the message
-                frame.contentWindow.postMessage(msg, frame.dataset['origin']);
-
-                if (U.isLocalHost() && (pxt as any)?.appTarget?.id) {
-                    frame.contentWindow.postMessage(msg, `https://trg-${(pxt as any)?.appTarget?.id}.userpxt.io/---simulator`);
-                }
+                this.postMessageCore(frame, msg);
 
                 // don't start more than 1 recorder
                 if (msg.type == 'recorder'
                     && (<pxsim.SimulatorRecorderMessage>msg).action == "start")
                     break;
+            }
+        }
+
+        private postMessageCore(frame: HTMLIFrameElement, msg: SimulatorMessage) {
+            frame.contentWindow.postMessage(msg, frame.dataset['origin']);
+
+            if (U.isLocalHost() && (pxt as any)?.appTarget?.id) {
+                // If using the production simulator on local serve, the domain might have been
+                // redirected by the CLI server. Also send to the production domain just in case
+                try {
+                    frame.contentWindow.postMessage(msg, `https://trg-${(pxt as any)?.appTarget?.id}.userpxt.io/---simulator`);
+                }
+                catch (e) {
+                    // Ignore exceptions if the target origin doesn't match
+                }
             }
         }
 
@@ -680,10 +691,7 @@ namespace pxsim {
                 msg.traceDisabled = true;
                 msg.breakOnStart = false;
             }
-            frame.contentWindow.postMessage(msg, frame.dataset['origin']);
-            if (U.isLocalHost() && (pxt as any)?.appTarget?.id) {
-                frame.contentWindow.postMessage(msg, `https://trg-${(pxt as any)?.appTarget?.id}.userpxt.io/---simulator`);
-            }
+            this.postMessageCore(frame, msg);
             if (this.traceInterval) this.setTraceInterval(this.traceInterval);
             this.applyAspectRatioToFrame(frame);
             this.setFrameState(frame);
