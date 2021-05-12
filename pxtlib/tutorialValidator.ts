@@ -74,16 +74,14 @@ namespace pxt.tutorial {
     */
     function extractBlockSnippet(tutorial: TutorialOptions, indexdb: pxt.Map<pxt.Map<number>>) {
         const { tutorialStepInfo, tutorialStep } = tutorial;
-        
         const body = tutorial.tutorialStepInfo[tutorialStep].hintContentMd;
         let hintCode = "";
-        
-        body.replace(/((?!.)\s)+/g, "\n").replace(/``` *(block|blocks)\s*\n([\s\S]*?)\n```/gmi, function (m0, m1, m2) { 
+
+        body.replace(/((?!.)\s)+/g, "\n").replace(/``` *(block|blocks)\s*\n([\s\S]*?)\n```/gmi, function (m0, m1, m2) {
             hintCode = `{\n${m2}\n}`;
             return "";
         });
 
-        
         const snippetStepKey = pxt.BrowserUtils.getTutorialCodeHash([hintCode]);
         const blockMap = indexdb[snippetStepKey];
 
