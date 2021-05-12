@@ -8,7 +8,7 @@ namespace pxt.tutorial {
 
     /**
     * Check the user's code to the tutorial and returns a Tutorial status of the user's code
-    * @param step the current tutorial step
+    * @param tutorial the tutorial 
     * @param workspaceBlocks Blockly blocks used of workspace
     * @param blockinfo Typescripts of the workspace
     * @return A TutorialCodeStatus
@@ -24,7 +24,7 @@ namespace pxt.tutorial {
             const step = tutorialStepInfo[tutorialStep];
             const indexdb = await tutorialBlockList(tutorial, step);
             const tutorialBlockUsed = extractBlockSnippet(tutorial, indexdb);
-            // Checks for user's blocks against tutorial blocks
+            // Checks user's blocks against tutorial blocks
             if (!validateNumberOfBlocks(usersBlockUsed, tutorialBlockUsed)) {
                 return TutorialCodeStatus.Invalid;
             }
