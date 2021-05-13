@@ -3490,10 +3490,12 @@ export class ProjectView
 
     showExitAndSaveDialog() {
         this.setState({ debugging: false })
-        if (this.state.projectName !== lf("Untitled")) {
+        if (this.isTutorial()) {
+            pxt.tickEvent("tutorial.exit.home", { tutorial: this.state.header?.tutorial?.tutorial });
+            this.exitTutorialAsync().finally(() => this.openHome());
+        } else if (this.state.projectName !== lf("Untitled")) {
             this.openHome();
-        }
-        else {
+        } else {
             this.exitAndSaveDialog.show();
         }
     }
