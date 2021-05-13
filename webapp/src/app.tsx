@@ -46,7 +46,6 @@ import * as keymap from "./keymap";
 import * as auth from "./auth";
 import * as cloud from "./cloud";
 import * as user from "./user";
-import * as validator from "./tutorialValidator";
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -1281,6 +1280,7 @@ export class ProjectView
             if (this.textEditor.giveFocusOnLoading && this.isTextEditor()) {
                 this.textEditor.editor.focus();
             }
+            if (pxt.appTarget.appTheme.tutorialCodeValidation) this.editor.validateTutorialCode(this.state.tutorialOptions);
         }
     }
 
