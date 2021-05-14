@@ -233,7 +233,7 @@ namespace pxt.blocks {
                         }
                     }
                 }
-            } else if (b.type =="argumet_reporter_array") {
+            } else if (b.type == "argument_reporter_array") {
                 if (!tp) {
                     tp = ground("any[]")
                 }
