@@ -3880,17 +3880,32 @@ ${lbl}: .short 0xffff
 
         function emitBrk(node: Node) {
             bin.numStmts++
-            if (!opts.breakpoints)
+            let needsBreak = !!opts.breakpoints
+            if (!assembler.debug && !needsBreak)
                 return
-            let src = getSourceFileOfNode(node)
+            const src = getSourceFileOfNode(node)
             if (opts.justMyCode && isInPxtModules(src))
-                return;
+                needsBreak = false
+            if (!assembler.debug && !needsBreak)
+                return
             let pos = node.pos
             while (/^\s$/.exec(src.text[pos]))
                 pos++;
-            let p = ts.getLineAndCharacterOfPosition(src, pos)
-            let e = ts.getLineAndCharacterOfPosition(src, node.end);
-            let brk: Breakpoint = {
+            const p = ts.getLineAndCharacterOfPosition(src, pos)
+
+            if (assembler.debug) {
+                let endpos = node.end
+                if (endpos - pos > 80)
+                    endpos = pos + 80
+                const srctext = src.text.slice(pos,endpos).trim().replace(/\n[^]*/, "...")
+                proc.emit(ir.comment(`${src.fileName.replace(/pxt_modules\//, "")}(${p.line},${p.character}): ${srctext}`))
+            }
+
+            if (!needsBreak)
+                return
+
+            const e = ts.getLineAndCharacterOfPosition(src, node.end);
+            const brk: Breakpoint = {
                 id: res.breakpoints.length,
                 isDebuggerStmt: node.kind == SK.DebuggerStatement,
                 fileName: src.fileName,
@@ -3902,7 +3917,7 @@ ${lbl}: .short 0xffff
                 endColumn: e.character,
             }
             res.breakpoints.push(brk)
-            let st = ir.stmt(ir.SK.Breakpoint, null)
+            const st = ir.stmt(ir.SK.Breakpoint, null)
             st.breakpointInfo = brk
             proc.emit(st)
         }

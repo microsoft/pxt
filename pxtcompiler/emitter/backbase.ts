@@ -320,6 +320,9 @@ ${baseLabel}_nochk:
                         this.write(s.lblName + ":")
                         this.validateJmpStack(s)
                         break;
+                    case ir.SK.Comment:
+                        this.write(`; ${s.expr.data}`)
+                        break
                     case ir.SK.Breakpoint:
                         if (this.bin.options.breakpoints) {
                             let lbl = `__brkp_${s.breakpointInfo.id}`
