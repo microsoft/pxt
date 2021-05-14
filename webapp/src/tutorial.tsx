@@ -644,7 +644,8 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         const showDialog = stepInfo.showDialog;
         const validationEnabled = stepInfo.codeValidated != undefined;
         const showMissingBlockPopupMessage = this.state.showUnusedBlockMessage && validationEnabled;
-        const nextOnClick = (stepInfo.codeValidated || !validationEnabled) ? this.nextTutorialStep : this.showUnusedBlocksMessageOnClick;
+        const nextOnClick = (stepInfo.codeValidated || !validationEnabled ||
+            this.state.showUnusedBlockMessage) ? this.nextTutorialStep : this.showUnusedBlocksMessageOnClick;
 
         const tutorialAriaLabel = lf("Press Space or Enter to show a hint.");
         const tutorialHintTooltip = lf("Click to show a hint!");
