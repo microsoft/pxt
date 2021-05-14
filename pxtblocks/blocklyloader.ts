@@ -2623,7 +2623,8 @@ namespace pxt.blocks {
         const iconsMap: pxt.Map<string> = {
             number: pxt.blocks.defaultIconForArgType("number"),
             boolean: pxt.blocks.defaultIconForArgType("boolean"),
-            string: pxt.blocks.defaultIconForArgType("string")
+            string: pxt.blocks.defaultIconForArgType("string"),
+            Array: pxt.blocks.defaultIconForArgType("Array")
         };
         const customNames: pxsim.Map<string> = {};
 

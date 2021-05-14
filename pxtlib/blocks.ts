@@ -260,7 +260,7 @@ namespace pxt.blocks {
             case "boolean":
                 return "random";
             case "Array":
-                return "star"; // VVN TODO better icon
+                return "list";
             default:
                 return "align justify"
         }

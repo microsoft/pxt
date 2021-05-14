@@ -206,7 +206,7 @@ export class CreateFunctionDialog extends data.Component<ISettingsProps, CreateF
                 {
                     label: lf("Array"),
                     typeName: "Array",
-                    icon: pxt.blocks.defaultIconForArgType("array")
+                    icon: pxt.blocks.defaultIconForArgType("Array")
                 }
             ];
 
