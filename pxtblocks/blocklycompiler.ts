@@ -213,9 +213,9 @@ namespace pxt.blocks {
                 return ground(b.outputConnection.check_[1])
             }
             // lists_create_with and argument_reporter_array both hit this.
-            // for lists_create_with, we can safely infer the type from the
-            // first input that has a return type
-            // for argument_reporter_array.....VVN TODO
+            // For lists_create_with, we can safely infer the type from the
+            // first input that has a return type.
+            // For argument_reporter_array just return any[] for now
             let tp: Point;
             if (b.type == "lists_create_with") {
                 if (b.inputList && b.inputList.length) {
@@ -233,8 +233,10 @@ namespace pxt.blocks {
                         }
                     }
                 }
-            } else {
-
+            } else if (b.type =="argumet_reporter_array") {
+                if (!tp) {
+                    tp = ground("any[]")
+                }
             }
 
             if (tp) tp.isArrayType = true;
@@ -315,39 +317,6 @@ namespace pxt.blocks {
     function getReturnTypeOfFunctionCall(e: Environment, call: Blockly.Block) {
         const name = call.getField("function_name").getText();
         return getReturnTypeOfFunction(e, name);
-    }
-
-    function getTypeOfArgInFunction(e: Environment, param: Blockly.Block): Point {
-
-        const lookupType = lookup(e, param, param.getField("VALUE").getText());
-        if (lookupType) {
-            return find(lookupType.type);
-        } else {
-            return mkPoint(null);
-        }
-
-        // if (param.parentBlock_.type == "function_definition") {
-        //     if (param.parentBlock_.getInputTargetBlock("STACK")) {
-        //         // There are blocks within the function
-        //         return mkPoint("any");
-        //     } else {
-        //         return ground(pNumber.type); // Default array is number[];
-        //     }
-        // } else {
-        //     // Union the type it's being used as
-
-        //     // Evaluate...the type....of the statement it's being used in???
-
-        //     // THen do a union??
-
-        //     const lookupType = lookup(e, param, param.getField("VALUE").getText())
-
-        //     if (lookupType) {
-        //         return find(lookupType.type)
-        //     } else {
-        //         return mkPoint("any");
-        //     }
-        // }
     }
 
     // Basic type unification routine; easy, because there's no structural types.
@@ -520,12 +489,6 @@ namespace pxt.blocks {
                         attachPlaceholderIf(e, b, "VALUE");
                         handleGenericType(b, "LIST");
                         unionParam(e, b, "INDEX", ground(pNumber.type));
-                        break;
-                    case "argument_reporter_array":
-                        console.log("VVN: Argument reporter_array")
-                        const type = returnType(e, b);
-                        const retType = getTypeOfArgInFunction(e, b);
-                        genericLink(type, retType);
                         break;
                     case 'function_definition':
                         getReturnTypeOfFunction(e, b.getField("function_name",).getText());
@@ -839,14 +802,7 @@ namespace pxt.blocks {
         const stmts = getInputTargetBlock(b, "STACK");
         const argsDeclaration = (b as Blockly.FunctionDefinitionBlock).getArguments().map(a => {
             if (a.type == "Array") {
-                return `${escapeVarName(a.name, e)}: T[]`;
-                // const paramBlock = b.getInputTargetBlock(a.id)
-                // if (paramBlock) {
-                //     const type = getTypeOfArgInFunction(e, paramBlock)
-                //     return `${escapeVarName(a.name, e)}: ${type.type}[]`;
-                // } else {
-                //     return `${escapeVarName(a.name, e)}: any[]`;
-                // }
+                return `${escapeVarName(a.name, e)}: any[]`;
             }
             return `${escapeVarName(a.name, e)}: ${a.type}`;
         });
