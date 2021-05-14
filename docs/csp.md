@@ -115,6 +115,16 @@ The course materials include:
 * Textbook Blown to Bits: Your Life, Liberty, and Pursuit of Happiness After the Digital Explosion.
 * Student projects, labs and activities (with solutions where appropriate).
 
+### ~ reminder
+
+#### Download Educator Materials
+
+All of the materials for the **AP Computer Science Principles with Microsoft MakeCode** course are available to download here:
+
+* **[Course Materials Dowmloads](https://aka.ms/MSMakeCodeAPCSP)**
+
+### ~
+
 ## Stay Connected 
 
 If you decide to use the AP Computer Science Principles with Microsoft MakeCode curriculum or materials, please keep in touch. Join the [Microsoft MakeCode AP CSP Forum](https://forum.makecode.com/c/ap-cs-principles/23) to connect with other Educators teaching the course, ask questions, or give feedback on course materials. Please also follow [@MSMakeCode](https://twitter.com/MSMakeCode) on Twitter for the latest news and announcements.
