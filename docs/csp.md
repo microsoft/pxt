@@ -121,7 +121,7 @@ The course materials include:
 
 All of the materials for the **AP Computer Science Principles with Microsoft MakeCode** course are available to download here:
 
-* **[Course Materials Dowmloads](https://aka.ms/MSMakeCodeAPCSP)**
+* **[Course Materials Downloads](https://aka.ms/MSMakeCodeAPCSP)**
 
 ### ~
 
