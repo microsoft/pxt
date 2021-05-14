@@ -2798,7 +2798,8 @@ class Host
         }
 
         const resolved = this.resolve(module, filename)
-        const dir = path.dirname(resolved)
+        // check dir of pxt.json, since other files can be in sub-folders
+        const dir = path.dirname(this.resolve(module, pxt.CONFIG_NAME))
         if (filename == pxt.CONFIG_NAME)
             try {
                 return nodeutil.stringify(nodeutil.readPkgConfig(dir))
@@ -2813,7 +2814,7 @@ class Host
             if (!skipAdditionalFiles && module.config) {
                 for (let addPath of module.config.additionalFilePaths || []) {
                     try {
-                        // pxt.debug(`try read: ${path.join(dir, addPath, filename)}`)
+                        // pxt.debug(`try read: '${dir}' '${addPath}' '${filename}' ${path.join(dir, addPath, filename)}`)
                         return fs.readFileSync(path.join(dir, addPath, filename), "utf8")
                     } catch (e) {
                     }
