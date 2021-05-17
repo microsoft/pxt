@@ -93,10 +93,12 @@ export class GraphNode extends React.Component<GraphNodeProps, GraphNodeState> {
         if (status === "locked") {
             background = hover ? theme.lockedNodeForeground : theme.lockedNodeColor;
             foreground = hover ? theme.lockedNodeColor : theme.lockedNodeForeground;
-        }
-        else if (kind !== "activity") {
+        } else if (kind !== "activity") {
             background = hover ? theme.rewardNodeForeground : theme.rewardNodeColor;
             foreground = hover ? theme.rewardNodeColor : theme.rewardNodeForeground;
+        } else if (status ==="completed") {
+            background = hover ? theme.completedNodeForeground : theme.completedNodeColor;
+            foreground = hover ? theme.completedNodeColor : theme.completedNodeForeground;
         }
 
         const selectedUnit = width / 8;

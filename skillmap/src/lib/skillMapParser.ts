@@ -317,6 +317,10 @@ function inflateMetadata(section: MarkdownSection): PageMetadata {
     const tertiary = section.attributes["tertiarycolor"];
     const highlight = section.attributes["highlightcolor"];
 
+    const unlockedNodeColor = section.attributes["unlockednodecolor"];
+    const lockedNodeColor = section.attributes["lockednodecolor"];
+    const completedNodeColor = section.attributes["completednodecolor"];
+
     return {
         title: section.attributes["name"] || section.header,
         description: section.attributes["description"],
@@ -330,10 +334,12 @@ function inflateMetadata(section: MarkdownSection): PageMetadata {
             strokeColor: "#000000",
             rewardNodeColor: highlight || "var(--primary-color)",
             rewardNodeForeground: highlight ? getContrastingColor(highlight) : "#000000",
-            unlockedNodeColor: secondary || "var(--secondary-color)",
-            unlockedNodeForeground: secondary ? getContrastingColor(secondary) : "#000000",
-            lockedNodeColor: primary || "#BFBFBF",
-            lockedNodeForeground: primary ? getContrastingColor(primary) : "#000000",
+            unlockedNodeColor: unlockedNodeColor || secondary || "var(--secondary-color)",
+            unlockedNodeForeground: (unlockedNodeColor || secondary) ? getContrastingColor(unlockedNodeColor || secondary) : "#000000",
+            lockedNodeColor: lockedNodeColor || primary || "#BFBFBF",
+            lockedNodeForeground: (lockedNodeColor || primary) ? getContrastingColor(lockedNodeColor || primary) : "#000000",
+            completedNodeColor: completedNodeColor || secondary || "var(--secondary-color)",
+            completedNodeForeground: (completedNodeColor || secondary) ? getContrastingColor(completedNodeColor || secondary) : "#000000",
             selectedStrokeColor: highlight || "var(--primary-color)",
             pathOpacity: 0.5,
         }
