@@ -3891,14 +3891,21 @@ ${lbl}: .short 0xffff
             let pos = node.pos
             while (/^\s$/.exec(src.text[pos]))
                 pos++;
+
+            // a leading comment gets attached to statement
+            while (src.text[pos] == '/' && src.text[pos + 1] == '/') {
+                while (src.text[pos] && src.text[pos] != '\n') pos++
+                pos++
+            }
+
             const p = ts.getLineAndCharacterOfPosition(src, pos)
 
             if (assembler.debug) {
                 let endpos = node.end
                 if (endpos - pos > 80)
                     endpos = pos + 80
-                const srctext = src.text.slice(pos,endpos).trim().replace(/\n[^]*/, "...")
-                proc.emit(ir.comment(`${src.fileName.replace(/pxt_modules\//, "")}(${p.line},${p.character}): ${srctext}`))
+                const srctext = src.text.slice(pos, endpos).trim().replace(/\n[^]*/, "...")
+                proc.emit(ir.comment(`${src.fileName.replace(/pxt_modules\//, "")}(${p.line + 1},${p.character + 1}): ${srctext}`))
             }
 
             if (!needsBreak)
