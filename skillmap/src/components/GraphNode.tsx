@@ -16,6 +16,7 @@ interface GraphNodeProps {
     theme: SkillGraphTheme;
     selected?: boolean;
     onItemSelect?: (id: string, kind: MapNodeKind) => void;
+    onItemDoubleClick?: (id: string, kind: MapNodeKind) => void;
 }
 
 interface GraphNodeState {
@@ -27,8 +28,13 @@ export class GraphNode extends React.Component<GraphNodeProps, GraphNodeState> {
         super(props);
         this.state = { hover: false }
     }
+
     protected handleClick = () => {
         if (this.props.onItemSelect) this.props.onItemSelect(this.props.activityId, this.props.kind);
+    }
+
+    protected handleDoubleClick = () => {
+        if (this.props.onItemDoubleClick) this.props.onItemDoubleClick(this.props.activityId, this.props.kind);
     }
 
     protected getIcon(status: ActivityStatus, kind: MapNodeKind): string {
@@ -103,7 +109,8 @@ export class GraphNode extends React.Component<GraphNodeProps, GraphNodeState> {
 
         const selectedUnit = width / 8;
 
-        return  <g className={`graph-activity ${selected ? "selected" : ""} ${hover ? "hover" : ""}`} transform={`translate(${position.x} ${position.y})`} onClick={this.handleClick} ref={this.handleRef}>
+        return  <g className={`graph-activity ${selected ? "selected" : ""} ${hover ? "hover" : ""}`} transform={`translate(${position.x} ${position.y})`}
+            onClick={this.handleClick} onDoubleClick={this.handleDoubleClick} ref={this.handleRef}>
             { selected &&
                 (kind !== "activity" ?
                     <circle className="highlight" cx={0} cy={0} r={width / 2 + selectedUnit} stroke={theme.selectedStrokeColor} /> :
