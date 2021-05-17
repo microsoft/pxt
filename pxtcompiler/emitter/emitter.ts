@@ -880,7 +880,7 @@ namespace ts.pxtc {
             if (node.kind == SK.Constructor) {
                 text = "constructor"
             } else {
-                for (let parent = node; parent; parent = parent.parent as Declaration) {
+                for (let parent = node.parent as Declaration; parent; parent = parent.parent as Declaration) {
                     if (isNamedDeclaration(parent))
                         return getDeclName(parent) + ".inline"
                 }
