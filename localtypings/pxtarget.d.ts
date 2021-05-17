@@ -596,6 +596,7 @@ declare namespace ts.pxtc {
         noIncr?: boolean;
         rawELF?: boolean;
         multiVariant?: boolean;
+        size?: boolean;
     }
 
     interface CompileTarget {

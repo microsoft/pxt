@@ -592,8 +592,7 @@ namespace ts.pxtc.ir {
         }
 
         getName() {
-            let text = this.action && this.action.name ? (<Identifier>this.action.name).text : null
-            return text || "inline"
+            return getDeclName(this.action)
         }
 
         mkLocal(def: Declaration, info: VariableAddInfo) {

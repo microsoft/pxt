@@ -874,10 +874,19 @@ namespace ts.pxtc {
         }
     }
 
-    export function getDeclName(node: Declaration) {
+    export function getDeclName(node: Declaration): string {
         let text = isNamedDeclaration(node) ? (<Identifier>node.name).text : null
-        if (!text)
-            text = node.kind == SK.Constructor ? "constructor" : "inline"
+        if (!text) {
+            if (node.kind == SK.Constructor) {
+                text = "constructor"
+            } else {
+                for (let parent = node; parent; parent = parent.parent as Declaration) {
+                    if (isNamedDeclaration(parent))
+                        return getDeclName(parent) + ".inline"
+                }
+                return "inline"
+            }
+        }
         return parentPrefix(node.parent) + text;
     }
 
@@ -3880,13 +3889,14 @@ ${lbl}: .short 0xffff
 
         function emitBrk(node: Node) {
             bin.numStmts++
+            const needsComment = assembler.debug || target.switches.size
             let needsBreak = !!opts.breakpoints
-            if (!assembler.debug && !needsBreak)
+            if (!needsComment && !needsBreak)
                 return
             const src = getSourceFileOfNode(node)
             if (opts.justMyCode && isInPxtModules(src))
                 needsBreak = false
-            if (!assembler.debug && !needsBreak)
+            if (!needsComment && !needsBreak)
                 return
             let pos = node.pos
             while (/^\s$/.exec(src.text[pos]))
@@ -3900,7 +3910,7 @@ ${lbl}: .short 0xffff
 
             const p = ts.getLineAndCharacterOfPosition(src, pos)
 
-            if (assembler.debug) {
+            if (needsComment) {
                 let endpos = node.end
                 if (endpos - pos > 80)
                     endpos = pos + 80
