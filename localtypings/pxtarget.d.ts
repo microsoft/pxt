@@ -1027,8 +1027,9 @@ declare namespace pxt.tutorial {
         noDiffs?: boolean; // don't automatically generated diffs
         codeStart?: string; // command to run when code starts (MINECRAFT HOC ONLY)
         codeStop?: string; // command to run when code stops (MINECRAFT HOC ONLY)
-        autoexpandOff?: boolean // INTERNAL TESTING ONLY
-        preferredEditor?: string // preferred editor for opening the tutorial
+        autoexpandOff?: boolean; // INTERNAL TESTING ONLY
+        preferredEditor?: string; // preferred editor for opening the tutorial
+        tutorialCodeValidation?: boolean; // enable tutorial validation for this tutorial
     }
 
     interface TutorialStepInfo {
