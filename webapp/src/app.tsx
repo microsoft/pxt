@@ -1287,7 +1287,8 @@ export class ProjectView
     setTutorialCodeStatus(step: number, status: string) {
         const tutorialOptions = this.state.tutorialOptions;
         const stepInfo = tutorialOptions.tutorialStepInfo[tutorialOptions.tutorialStep];
-        stepInfo.codeValidated = status == pxt.editor.TutorialCodeStatus.Valid;
+        const tutorialCodeValidationIsOn = tutorialOptions.metadata.tutorialCodeValidation;
+        if (tutorialCodeValidationIsOn) stepInfo.codeValidated = status == pxt.editor.TutorialCodeStatus.Valid;
 
         // Update the state with the code status, so the tutorial card can re-render
         this.setState({ tutorialOptions: tutorialOptions });
