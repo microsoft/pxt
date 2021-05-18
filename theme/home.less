@@ -67,13 +67,13 @@
             position: absolute;
             bottom: 8rem;
             width: 20rem;
-            font-size: 1.75rem;
-            color: @yellow;
+            font-size: 1.5rem;
+            color: @white;
 
             // both of these add outlines in a slightly different way -- text-stroke is inset and text-shadow is outset.
             // text shadow only looks valid when set as 1px, and text-stroke takes up too much color when > 1px.
-            text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
-            -webkit-text-stroke: 1px black;
+            // text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
+            // -webkit-text-stroke: 1px black;
         }
         .action {
             position: absolute;
@@ -86,15 +86,24 @@
             transition: padding 0.4s linear;
 
             button {
-                border: 2px solid black;
+                border: 2px solid #6D6D6D;
                 margin-right: 1.25rem;
 
                 &.active {
-                    background: @blue;
-                    border-color: white;
-                    padding: 0.75em !important;
+                    background: none;
                 }
             }
+        }
+
+        // &:after {
+        .gradient-overlay {
+            position: absolute;
+            // content:"";
+            height: 100%;
+            width: 40rem;
+            top: 0;
+            left: 0;
+            background: linear-gradient(to right, rgba(0, 0, 0, 1) 0%, rgba(255, 255, 255, 0) 100%);
         }
     }
 
@@ -591,12 +600,20 @@
     /* Carousel */
     .projectsdialog {
         .getting-started-segment {
+            height: 10rem;
+            margin-bottom: 0.5rem !important;
+            .getting-started-header {
+                font-size: 30px;
+            }
             .getting-started {
                 padding: @carouselArrowSizeMobile;
             }
 
             &.hero .hero-banner-contents {
                 margin-left: @carouselArrowSizeMobile;
+                .description {
+                    display: none;
+                }
             }
         }
         .ui.segment.tabsegment {
@@ -666,13 +683,6 @@
             .meta {
                 font-size: 0.7rem;
                 padding: 0.5rem;
-            }
-        }
-        .getting-started-segment {
-            height: 10rem;
-            margin-bottom: 0.5rem !important;
-            .getting-started-header {
-                font-size: 30px;
             }
         }
         .carouselcontainer {

@@ -529,8 +529,9 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
 
         return <div className="ui segment getting-started-segment hero"
             style={{ backgroundImage: `url(${encodeURI(card.largeImageUrl || card.imageUrl)})` }}>
+            <div className="gradient-overlay" />
             <div className="hero-banner-contents">
-                {!!card.description && <div className="description mobile hidden">
+                {!!card.description && <div className="description">
                     <p>{card.description}</p>
                 </div>}
                 {!!card.name && !!url && <div className="action">
