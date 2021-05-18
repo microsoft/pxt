@@ -102,7 +102,7 @@ export class GraphNode extends React.Component<GraphNodeProps, GraphNodeState> {
         } else if (kind !== "activity") {
             background = hover ? theme.rewardNodeForeground : theme.rewardNodeColor;
             foreground = hover ? theme.rewardNodeColor : theme.rewardNodeForeground;
-        } else if (status ==="completed") {
+        } else if (status === "completed") {
             background = hover ? theme.completedNodeForeground : theme.completedNodeColor;
             foreground = hover ? theme.completedNodeColor : theme.completedNodeForeground;
         }
