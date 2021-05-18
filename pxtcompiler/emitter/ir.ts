@@ -583,7 +583,7 @@ namespace ts.pxtc.ir {
         }
 
         getFullName() {
-            let name = this.getName()
+            let name = getDeclName(this.action)
             if (this.action) {
                 let info = ts.pxtc.nodeLocationInfo(this.action)
                 name += " " + info.fileName.replace("pxt_modules/", "") + ":" + (info.line + 1)
@@ -592,7 +592,8 @@ namespace ts.pxtc.ir {
         }
 
         getName() {
-            return getDeclName(this.action)
+            let text = this.action && this.action.name ? (<Identifier>this.action.name).text : null
+            return text || "inline"
         }
 
         mkLocal(def: Declaration, info: VariableAddInfo) {
