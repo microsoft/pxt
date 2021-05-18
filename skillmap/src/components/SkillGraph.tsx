@@ -4,11 +4,11 @@ import { connect } from 'react-redux';
 import { SkillMapState } from '../store/reducer';
 import { dispatchChangeSelectedItem, dispatchShowCompletionModal,
     dispatchSetSkillMapCompleted, dispatchOpenActivity } from '../actions/dispatch';
-import { SvgGraphItem, SvgGraphPath } from './SkillGraphContainer';
 import { GraphNode } from './GraphNode';
 import { GraphPath } from "./GraphPath";
 
 import { getActivityStatus, isActivityUnlocked } from '../lib/skillMapUtils';
+import { SvgGraphItem, SvgGraphPath } from '../lib/skillGraphUtils';
 import { tickEvent } from "../lib/browserUtils";
 
 export interface SkillGraphProps {
