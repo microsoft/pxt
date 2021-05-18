@@ -58,27 +58,28 @@
         transition: background-image 0.1s ease-in;
 
         .hero-banner-contents {
+            position: absolute;
             height: 100%;
             width: 20rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
             margin-left: @carouselArrowSize;
+            padding-bottom: 1rem;
         }
 
         .description {
-            position: absolute;
-            bottom: 8rem;
             width: 20rem;
             font-size: 1.5rem;
             font-weight: 700;
             color: @white;
         }
+
         .action {
-            position: absolute;
-            bottom: 3rem;
             margin: 0.5rem 0;
         }
+
         .dots {
-            position: absolute;
-            bottom: 1rem;
             transition: padding 0.4s linear;
 
             button {
@@ -605,7 +606,7 @@
 
             &.hero .hero-banner-contents {
                 margin-left: @carouselArrowSizeMobile;
-                .description {
+                .dots {
                     display: none;
                 }
             }
