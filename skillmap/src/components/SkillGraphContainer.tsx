@@ -38,8 +38,8 @@ export class SkillGraphContainerImpl extends React.Component<SkillGraphContainer
     protected onImageLoad = (evt: any) => {
         this.setState({
             backgroundSize: {
-                width: evt.target.offsetWidth,
-                height: evt.target.offsetHeight
+                width: evt.target.naturalWidth,
+                height: evt.target.naturalHeight
             }
         })
     }
