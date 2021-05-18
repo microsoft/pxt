@@ -6354,6 +6354,17 @@ function blockTestsAsync(parsed?: commandParser.ParsedCommand) {
     }
 }
 
+async function buildShimsAsync() {
+    pxt.log(`building shims.d.ts, enum.d.ts files`)
+
+    await mainPkg.loadAsync()
+    setBuildEngine();
+    const target = mainPkg.getTargetOptions()
+    target.isNative = true
+    target.keepCppFiles = true
+    await mainPkg.getCompileOptionsAsync(target)
+}
+
 function initCommands() {
     // Top level commands
     simpleCmd("help", "display this message or info about a command", pc => {
@@ -6998,6 +7009,8 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
         name: "checkpkgcfg",
         help: "Validate and attempt to fix common pxt.json issues",
     }, validateAndFixPkgConfig);
+
+    advancedCommand("buildshims", "Regenerate shims.d.ts, enums.d.ts", buildShimsAsync)
 
     function simpleCmd(name: string, help: string, callback: (c?: commandParser.ParsedCommand) => Promise<void>, argString?: string, onlineHelp?: boolean): void {
         p.defineCommand({ name, help, onlineHelp, argString }, callback);
