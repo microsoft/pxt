@@ -1064,7 +1064,7 @@ namespace pxt {
 
                 try {
                     let einfo = cpp.getExtensionInfo(this)
-                    if (!shimsGenerated) {
+                    if (!shimsGenerated && (einfo.shimsDTS || einfo.enumsDTS)) {
                         shimsGenerated = true
                         if (einfo.shimsDTS) generateFile("shims.d.ts", einfo.shimsDTS)
                         if (einfo.enumsDTS) generateFile("enums.d.ts", einfo.enumsDTS)
