@@ -335,6 +335,9 @@ _start_${name}:
                     case ir.SK.Label:
                         writeRaw(`${s.lblName}:`)
                         break;
+                    case ir.SK.Comment:
+                        writeRaw(`; ${s.expr.data}`)
+                        break
                     case ir.SK.Breakpoint:
                         break;
                     default: oops();

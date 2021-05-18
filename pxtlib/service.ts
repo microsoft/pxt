@@ -287,6 +287,7 @@ namespace ts.pxtc {
         args: CellInfo[];
         localsMark: number;
         calls: ProcCallInfo[];
+        size: number;
     }
 
     export const enum BitSize {

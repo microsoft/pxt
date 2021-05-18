@@ -874,10 +874,19 @@ namespace ts.pxtc {
         }
     }
 
-    export function getDeclName(node: Declaration) {
+    export function getDeclName(node: Declaration): string {
         let text = isNamedDeclaration(node) ? (<Identifier>node.name).text : null
-        if (!text)
-            text = node.kind == SK.Constructor ? "constructor" : "inline"
+        if (!text) {
+            if (node.kind == SK.Constructor) {
+                text = "constructor"
+            } else {
+                for (let parent = node.parent as Declaration; parent; parent = parent.parent as Declaration) {
+                    if (isNamedDeclaration(parent))
+                        return getDeclName(parent) + ".inline"
+                }
+                return "inline"
+            }
+        }
         return parentPrefix(node.parent) + text;
     }
 
@@ -3880,17 +3889,40 @@ ${lbl}: .short 0xffff
 
         function emitBrk(node: Node) {
             bin.numStmts++
-            if (!opts.breakpoints)
+            const needsComment = assembler.debug || target.switches.size
+            let needsBreak = !!opts.breakpoints
+            if (!needsComment && !needsBreak)
                 return
-            let src = getSourceFileOfNode(node)
+            const src = getSourceFileOfNode(node)
             if (opts.justMyCode && isInPxtModules(src))
-                return;
+                needsBreak = false
+            if (!needsComment && !needsBreak)
+                return
             let pos = node.pos
             while (/^\s$/.exec(src.text[pos]))
                 pos++;
-            let p = ts.getLineAndCharacterOfPosition(src, pos)
-            let e = ts.getLineAndCharacterOfPosition(src, node.end);
-            let brk: Breakpoint = {
+
+            // a leading comment gets attached to statement
+            while (src.text[pos] == '/' && src.text[pos + 1] == '/') {
+                while (src.text[pos] && src.text[pos] != '\n') pos++
+                pos++
+            }
+
+            const p = ts.getLineAndCharacterOfPosition(src, pos)
+
+            if (needsComment) {
+                let endpos = node.end
+                if (endpos - pos > 80)
+                    endpos = pos + 80
+                const srctext = src.text.slice(pos, endpos).trim().replace(/\n[^]*/, "...")
+                proc.emit(ir.comment(`${src.fileName.replace(/pxt_modules\//, "")}(${p.line + 1},${p.character + 1}): ${srctext}`))
+            }
+
+            if (!needsBreak)
+                return
+
+            const e = ts.getLineAndCharacterOfPosition(src, node.end);
+            const brk: Breakpoint = {
                 id: res.breakpoints.length,
                 isDebuggerStmt: node.kind == SK.DebuggerStatement,
                 fileName: src.fileName,
@@ -3902,7 +3934,7 @@ ${lbl}: .short 0xffff
                 endColumn: e.character,
             }
             res.breakpoints.push(brk)
-            let st = ir.stmt(ir.SK.Breakpoint, null)
+            const st = ir.stmt(ir.SK.Breakpoint, null)
             st.breakpointInfo = brk
             proc.emit(st)
         }
