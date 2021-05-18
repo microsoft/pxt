@@ -118,6 +118,8 @@ interface SkillGraphTheme {
     unlockedNodeForeground: string;
     lockedNodeColor: string;
     lockedNodeForeground: string;
+    completedNodeColor: string;
+    completedNodeForeground: string;
     rewardNodeColor: string;
     rewardNodeForeground: string;
     pathOpacity: number;

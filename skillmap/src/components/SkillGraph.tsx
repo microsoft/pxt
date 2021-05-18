@@ -2,7 +2,8 @@ import * as React from "react";
 import { connect } from 'react-redux';
 
 import { SkillMapState } from '../store/reducer';
-import { dispatchChangeSelectedItem, dispatchShowCompletionModal, dispatchSetSkillMapCompleted } from '../actions/dispatch';
+import { dispatchChangeSelectedItem, dispatchShowCompletionModal,
+    dispatchSetSkillMapCompleted, dispatchOpenActivity } from '../actions/dispatch';
 import { GraphNode } from './GraphNode';
 import { GraphPath } from "./GraphPath";
 
@@ -29,6 +30,7 @@ interface SkillGraphProps {
     dispatchChangeSelectedItem: (mapId?: string, activityId?: string) => void;
     dispatchShowCompletionModal: (mapId: string, activityId?: string) => void;
     dispatchSetSkillMapCompleted: (mapId: string) => void;
+    dispatchOpenActivity: (mapId: string, activityId: string) => void;
 }
 
 const UNIT = 10;
@@ -96,6 +98,13 @@ class SkillGraphImpl extends React.Component<SkillGraphProps> {
         }
     }
 
+    protected onItemDoubleClick = (activityId: string, kind: MapNodeKind) => {
+        const { user, pageSourceUrl, map, dispatchOpenActivity } = this.props;
+        if (kind === "activity" && isActivityUnlocked(user, pageSourceUrl, map, activityId)) {
+            dispatchOpenActivity(map.mapId, activityId);
+        }
+    }
+
     // This function converts graph position (no units) to x/y (SVG units)
     protected getPosition(depth: number, offset: number): SvgCoord {
         return { x: this.getX(depth), y: this.getY(offset) }
@@ -141,6 +150,7 @@ class SkillGraphImpl extends React.Component<SkillGraphProps> {
                     width={5 * UNIT}
                     selected={el.activity.activityId === selectedActivityId}
                     onItemSelect={this.onItemSelect}
+                    onItemDoubleClick={this.onItemDoubleClick}
                     status={getActivityStatus(user, pageSourceUrl, map, el.activity.activityId).status} />
             })}
         </svg>
@@ -163,7 +173,8 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
 const mapDispatchToProps = {
     dispatchChangeSelectedItem,
     dispatchShowCompletionModal,
-    dispatchSetSkillMapCompleted
+    dispatchSetSkillMapCompleted,
+    dispatchOpenActivity
 };
 
 export const SkillGraph = connect(mapStateToProps, mapDispatchToProps)(SkillGraphImpl);
