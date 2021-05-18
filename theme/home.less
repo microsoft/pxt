@@ -54,26 +54,50 @@
         }
     }
     .getting-started-segment.hero {
+        -webkit-transition: background-image 0.4s ease-in;
+        transition: background-image 0.4s ease-in;
+
+        .hero-banner-contents {
+            height: 100%;
+            width: 20rem;
+            margin-left: @carouselArrowSize;
+        }
+
+        .description {
+            position: absolute;
+            bottom: 8rem;
+            width: 20rem;
+            font-size: 1.75rem;
+            color: @yellow;
+
+            // both of these add outlines in a slightly different way -- text-stroke is inset and text-shadow is outset.
+            // text shadow only looks valid when set as 1px, and text-stroke takes up too much color when > 1px.
+            text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
+            -webkit-text-stroke: 1px black;
+        }
         .action {
             position: absolute;
-            left: 1rem;
-            bottom: 1rem;
-            margin: 0.5rem;
+            bottom: 3rem;
+            margin: 0.5rem 0;
         }
         .dots {
             position: absolute;
-            bottom: 2rem;
-            right: 2rem;
+            bottom: 1rem;
+            transition: padding 0.4s linear;
 
             button {
-                margin-right: 1.5rem;
-            }
+                border: 2px solid black;
+                margin-right: 1.25rem;
 
-            button.active {
-                background: @primaryColor;
+                &.active {
+                    background: @blue;
+                    border-color: white;
+                    padding: 0.75em !important;
+                }
             }
         }
     }
+
     .content {
         height: 100%;
     }
@@ -495,6 +519,10 @@
             .getting-started-header {
                 font-size: 40px;
             }
+
+            &.hero .hero-banner-contents {
+                margin-left: @carouselArrowSizeTablet;
+            }
         }
         .ui.segment.tabsegment {
             padding-top: calc(@mobileMenuHeight + 2rem) !important;
@@ -565,6 +593,10 @@
         .getting-started-segment {
             .getting-started {
                 padding: @carouselArrowSizeMobile;
+            }
+
+            &.hero .hero-banner-contents {
+                margin-left: @carouselArrowSizeMobile;
             }
         }
         .ui.segment.tabsegment {

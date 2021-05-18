@@ -410,13 +410,14 @@ export class ProjectsMenu extends data.Component<ISettingsProps, {}> {
 }
 
 interface HeroBannerState {
-    cardIndex?: number;
+    cardIndex: number;
     paused?: boolean;
 }
 
-const HERO_BANNER_DELAY = 10000; // 10 seconds per card
+// todo make it not so speedy before putting up pr
+const HERO_BANNER_DELAY = 3000; // 7.5 seconds per card
 class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
-    private prevGalleries: pxt.CodeCard[] = [];
+    private prevGalleries: pxt.CodeCard[];
     private carouselInterval: any = undefined;
 
     constructor(props: ProjectsCarouselProps) {
@@ -424,14 +425,15 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
         this.handleRefreshCard = this.handleRefreshCard.bind(this);
         this.handleCardClick = this.handleCardClick.bind(this);
         this.state = {
-        }
+            cardIndex: 0,
+        };
     }
 
     private handleRefreshCard() {
         pxt.debug(`next hero carousel`)
-        const cardIndex = this.state.cardIndex !== undefined ? this.state.cardIndex : -1;
+        const cardIndex = this.state.cardIndex;
         this.setState({ cardIndex: (cardIndex + 1) % this.prevGalleries.length })
-    }
+    };
 
     private handleSetCardIndex(index: number) {
         this.stopRefresh();
@@ -476,8 +478,18 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
     fetchGallery(): pxt.CodeCard[] {
         const targetTheme = pxt.appTarget.appTheme;
         const path = targetTheme.homeScreenHeroGallery;
+
+        const heroBanner = targetTheme.homeScreenHero && {
+            imageUrl: targetTheme.homeScreenHero
+        };
+        if (!this.prevGalleries) {
+            this.prevGalleries = [];
+            if (heroBanner) {
+                this.prevGalleries.push(heroBanner);
+            }
+        }
         if (!path) {
-            return this.prevGalleries = [];
+            return this.prevGalleries;
         }
 
         // fetch gallery
@@ -489,22 +501,26 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
                 this.prevGalleries = pxt.Util.concat(res.map(g => g.cards))
                     .filter(card => card.url)
                     .slice(0, 5); // max 5 cards
+                if (heroBanner) {
+                    this.prevGalleries.unshift(heroBanner);
+                }
                 this.startRefresh();
             }
         }
-        return this.prevGalleries || [];
+        return this.prevGalleries;
     }
 
     renderCore() {
         const targetTheme = pxt.appTarget.appTheme;
         const { cardIndex } = this.state;
         const showHeroBanner = !!targetTheme.homeScreenHero;
-        if (!showHeroBanner)
+        const heroGallery = !!targetTheme.homeScreenHeroGallery;
+
+        if (!showHeroBanner && !heroGallery)
             return null; // nothing to see here
         const cards = this.fetchGallery();
-        const card = (cardIndex !== undefined && cards[cardIndex]) || {
-            imageUrl: targetTheme.homeScreenHero
-        }
+        const card = cards[cardIndex];
+
         const handleSetCard = (i: number) => () => this.handleSetCardIndex(i)
         let url = card.url;
         // open tutorials in browser
@@ -513,19 +529,24 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
 
         return <div className="ui segment getting-started-segment hero"
             style={{ backgroundImage: `url(${encodeURI(card.largeImageUrl || card.imageUrl)})` }}>
-            {!!card.name && !!url && <div className="action">
-                <sui.Link
-                    className="large primary button transition in fly right"
-                    href={url} onClick={this.handleCardClick}
-                    role="button" title={card.title || card.name} ariaLabel={card.title || card.name}>
-                    {card.label || card.name || lf("Start")}
-                </sui.Link>
-            </div>}
-            {cardIndex !== undefined && cards?.length > 1 && <div key="cards" className="dots">
-                {cards.map((card, i) => <button key={"dot" + i} className={`ui button empty circular label  clear ${i === cardIndex && "active"}`}
-                    onClick={handleSetCard(i)} aria-label={lf("View {0} hero image", card.title || card.name)} title={lf("View {0} hero image", card.title || card.name)}>
-                </button>)}
-            </div>}
+            <div className="hero-banner-contents">
+                {!!card.description && <div className="description mobile hidden">
+                    <p>{card.description}</p>
+                </div>}
+                {!!card.name && !!url && <div className="action">
+                    <sui.Link
+                        className="large blue button transition in fly right"
+                        href={url} onClick={this.handleCardClick}
+                        role="button" title={card.title || card.name} ariaLabel={card.title || card.name}>
+                        {card.label || card.name}
+                    </sui.Link>
+                </div>}
+                {heroGallery && <div key="cards" className="dots">
+                    {cards.map((card, i) => <button key={"dot" + i} className={`ui button empty circular label  clear ${i === cardIndex && "active"}`}
+                        onClick={handleSetCard(i)} aria-label={lf("View {0} hero image", card.title || card.name)} title={lf("View {0} hero image", card.title || card.name)}>
+                    </button>)}
+                </div>}
+            </div>
         </div>
     }
 }
