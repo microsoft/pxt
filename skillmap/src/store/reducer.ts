@@ -61,6 +61,8 @@ const initialState: SkillMapState = {
         unlockedNodeForeground: "#000000",
         lockedNodeColor: "#BFBFBF",
         lockedNodeForeground: "#000000",
+        completedNodeColor: "var(--secondary-color)",
+        completedNodeForeground: "#000000",
         selectedStrokeColor: "var(--hover-color)",
         pathOpacity: 0.5,
     },
