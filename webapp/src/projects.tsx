@@ -524,15 +524,19 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
         const handleSetCard = (i: number) => () => this.handleSetCardIndex(i)
         let url = card.url;
         // open tutorials in browser
-        if (card.cardType === "tutorial" && /^\//.test(url))
-            url = `#tutorial:${url}`
+        if (card.cardType === "tutorial" && /^\//.test(url)) {
+            url = `#tutorial:${url}`;
+        }
+
+        const description = card.description || card.name;
+        const encodedBkgd = `url(${encodeURI(card.largeImageUrl || card.imageUrl)})`;
 
         return <div className="ui segment getting-started-segment hero"
-            style={{ backgroundImage: `url(${encodeURI(card.largeImageUrl || card.imageUrl)})` }}>
+            style={{ backgroundImage: encodedBkgd }}>
             <div className="gradient-overlay" />
             <div className="hero-banner-contents">
-                {!!card.description && <div className="description">
-                    <p>{card.description}</p>
+                {!!description && <div className="description">
+                    <p>{description}</p>
                 </div>}
                 {!!card.name && !!url && <div className="action">
                     <sui.Link

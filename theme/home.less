@@ -54,8 +54,8 @@
         }
     }
     .getting-started-segment.hero {
-        -webkit-transition: background-image 0.4s ease-in;
-        transition: background-image 0.4s ease-in;
+        -webkit-transition: background-image 0.1s ease-in;
+        transition: background-image 0.1s ease-in;
 
         .hero-banner-contents {
             height: 100%;
@@ -68,12 +68,8 @@
             bottom: 8rem;
             width: 20rem;
             font-size: 1.5rem;
+            font-weight: 700;
             color: @white;
-
-            // both of these add outlines in a slightly different way -- text-stroke is inset and text-shadow is outset.
-            // text shadow only looks valid when set as 1px, and text-stroke takes up too much color when > 1px.
-            // text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
-            // -webkit-text-stroke: 1px black;
         }
         .action {
             position: absolute;
@@ -95,15 +91,13 @@
             }
         }
 
-        // &:after {
         .gradient-overlay {
             position: absolute;
-            // content:"";
             height: 100%;
             width: 40rem;
             top: 0;
             left: 0;
-            background: linear-gradient(to right, rgba(0, 0, 0, 1) 0%, rgba(255, 255, 255, 0) 100%);
+            background: linear-gradient(to right, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 100%);
         }
     }
 
