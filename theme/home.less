@@ -56,9 +56,12 @@
     .getting-started-segment.hero {
         -webkit-transition: background-image 0.2s ease-in;
         transition: background-image 0.2s ease-in;
+        overflow: hidden;
 
         .hero-banner-contents {
             position: absolute;
+            top: 0;
+            left: 0;
             height: 100%;
             width: 20rem;
             display: flex;
@@ -93,7 +96,7 @@
         }
 
         .gradient-overlay {
-            position: absolute;
+            position: relative;
             height: 100%;
             width: 40rem;
             top: 0;
