@@ -2,6 +2,7 @@ import * as React from "react";
 import * as data from "./data";
 import * as core from "./core";
 import * as sui from "./sui";
+import * as auth from "./auth";
 import * as ImmersiveReader from '@microsoft/immersive-reader-sdk';
 
 import Cloud = pxt.Cloud;
@@ -214,7 +215,9 @@ function getTokenAsync(): Promise<ImmersiveReaderToken> {
 export function launchImmersiveReader(content: string, tutorialOptions: pxt.tutorial.TutorialOptions) {
     pxt.tickEvent("immersiveReader.launch", {tutorial: tutorialOptions.tutorial, tutorialStep: tutorialOptions.tutorialStep});
 
-    const data = {
+    const userReaderPref = data.getData<string>(auth.READER) || ""
+    const langPref = data.getData<string>(auth.LANGUAGE) || "";
+    const tutorialData = {
         chunks: [{
             content: beautifyText(content),
             mimeType: "text/html"
@@ -222,12 +225,19 @@ export function launchImmersiveReader(content: string, tutorialOptions: pxt.tuto
     }
 
     const options = {
-        onExit: () => {pxt.tickEvent("immersiveReader.close", {tutorial: tutorialOptions.tutorial, tutorialStep: tutorialOptions.tutorialStep})}
+        uiLang: langPref,
+        onExit: () => {
+            pxt.tickEvent("immersiveReader.close", {tutorial: tutorialOptions.tutorial, tutorialStep: tutorialOptions.tutorialStep})
+        },
+        onPreferencesChanged: (pref: string) => {
+            auth.updateUserPreferencesAsync({reader: pref})
+        },
+        preferences: userReaderPref
     }
 
     getTokenAsync().then(res => {
         if (Cloud.isOnline()) {
-            return ImmersiveReader.launchAsync(res.token, res.subdomain, data, options)
+            return ImmersiveReader.launchAsync(res.token, res.subdomain, tutorialData, options)
         } else {
             return Promise.reject(new Error("offline"));
         }

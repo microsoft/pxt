@@ -46,7 +46,6 @@ import * as keymap from "./keymap";
 import * as auth from "./auth";
 import * as cloud from "./cloud";
 import * as user from "./user";
-import * as validator from "./tutorialValidator";
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -1281,13 +1280,15 @@ export class ProjectView
             if (this.textEditor.giveFocusOnLoading && this.isTextEditor()) {
                 this.textEditor.editor.focus();
             }
+            if (pxt.appTarget.appTheme.tutorialCodeValidation) this.editor.validateTutorialCode(this.state.tutorialOptions);
         }
     }
 
     setTutorialCodeStatus(step: number, status: string) {
         const tutorialOptions = this.state.tutorialOptions;
         const stepInfo = tutorialOptions.tutorialStepInfo[tutorialOptions.tutorialStep];
-        stepInfo.codeValidated = status == pxt.editor.TutorialCodeStatus.Valid;
+        const tutorialCodeValidationIsOn = tutorialOptions.metadata.tutorialCodeValidation;
+        if (tutorialCodeValidationIsOn) stepInfo.codeValidated = status == pxt.editor.TutorialCodeStatus.Valid;
 
         // Update the state with the code status, so the tutorial card can re-render
         this.setState({ tutorialOptions: tutorialOptions });
@@ -3490,10 +3491,12 @@ export class ProjectView
 
     showExitAndSaveDialog() {
         this.setState({ debugging: false })
-        if (this.state.projectName !== lf("Untitled")) {
+        if (this.isTutorial()) {
+            pxt.tickEvent("tutorial.exit.home", { tutorial: this.state.header?.tutorial?.tutorial });
+            this.exitTutorialAsync().finally(() => this.openHome());
+        } else if (this.state.projectName !== lf("Untitled")) {
             this.openHome();
-        }
-        else {
+        } else {
             this.exitAndSaveDialog.show();
         }
     }

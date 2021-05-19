@@ -16,8 +16,10 @@ export const LOGGED_IN = `${MODULE}:${FIELD_LOGGED_IN}`;
 const USER_PREF_MODULE = "user-pref";
 const FIELD_HIGHCONTRAST = "high-contrast";
 const FIELD_LANGUAGE = "language";
+const FIELD_READER = "reader";
 export const HIGHCONTRAST = `${USER_PREF_MODULE}:${FIELD_HIGHCONTRAST}`
 export const LANGUAGE = `${USER_PREF_MODULE}:${FIELD_LANGUAGE}`
+export const READER = `${USER_PREF_MODULE}:${FIELD_READER}`
 
 const CSRF_TOKEN = "csrf-token";
 const AUTH_LOGIN_STATE = "auth:login-state";
@@ -48,11 +50,13 @@ export type UserProfile = {
 export type UserPreferences = {
     language?: string;
     highContrast?: boolean;
+    reader?: string;
 }
 
 const DEFAULT_USER_PREFERENCES: () => UserPreferences = () => ({
     highContrast: false,
     language: pxt.appTarget.appTheme.defaultLocale,
+    reader: ""
 })
 
 /**
@@ -363,10 +367,7 @@ export function identityProvider(id: pxt.IdentityProviderId): pxt.AppCloudProvid
 }
 
 export function hasIdentity(): boolean {
-    // Must read storage for this rather than app theme because this method
-    // gets called before experiments are synced to the theme.
-    const experimentEnabled = pxt.editor.experiments.isEnabled("identity");
-    return !authDisabled && !pxt.BrowserUtils.isPxtElectron() && experimentEnabled && identityProviders().length > 0;
+    return !authDisabled && !pxt.BrowserUtils.isPxtElectron() && identityProviders().length > 0;
 }
 
 export async function loggedIn(): Promise<boolean> {
@@ -465,6 +466,9 @@ function internalPrefUpdateAndInvalidate(newPref: Partial<UserPreferences>) {
     }
     if (oldPref?.language !== getState().preferences?.language) {
         data.invalidate(LANGUAGE)
+    }
+    if (oldPref?.reader !== getState().preferences?.reader) {
+        data.invalidate(READER)
     }
 }
 
@@ -631,6 +635,7 @@ function internalUserPreferencesHandler(path: string): UserPreferences | boolean
     switch (field) {
         case FIELD_HIGHCONTRAST: return state.preferences.highContrast;
         case FIELD_LANGUAGE: return state.preferences.language;
+        case FIELD_READER: return state.preferences.reader;
     }
     return state.preferences
 }

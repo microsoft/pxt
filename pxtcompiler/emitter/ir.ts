@@ -174,6 +174,7 @@ namespace ts.pxtc.ir {
         Jmp,
         StackEmpty,
         Breakpoint,
+        Comment,
     }
 
     export enum JmpMode {
@@ -283,6 +284,8 @@ namespace ts.pxtc.ir {
                         return "    ;\n"
                     case ir.SK.Breakpoint:
                         return "    // brk " + (stmt.breakpointInfo.id) + "\n"
+                    case ir.SK.Comment:
+                        return "    // " + stmt.expr.data + "\n"
                     case ir.SK.Label:
                         return stmt.lblName + ":\n"
                     default: throw oops();
@@ -580,7 +583,7 @@ namespace ts.pxtc.ir {
         }
 
         getFullName() {
-            let name = this.getName()
+            let name = getDeclName(this.action)
             if (this.action) {
                 let info = ts.pxtc.nodeLocationInfo(this.action)
                 name += " " + info.fileName.replace("pxt_modules/", "") + ":" + (info.line + 1)
@@ -803,6 +806,7 @@ namespace ts.pxtc.ir {
                     case ir.SK.StackEmpty:
                     case ir.SK.Label:
                     case ir.SK.Breakpoint:
+                    case ir.SK.Comment:
                         break;
                     default: oops();
                 }
@@ -885,6 +889,10 @@ namespace ts.pxtc.ir {
 
     export function stmt(kind: SK, expr: Expr): Stmt {
         return new Stmt(kind, expr)
+    }
+
+    export function comment(msg: string): Stmt {
+        return stmt(SK.Comment, ptrlit(msg, msg))
     }
 
     export function op(kind: EK, args: Expr[], data?: any): Expr {

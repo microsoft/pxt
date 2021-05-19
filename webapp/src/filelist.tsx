@@ -332,6 +332,10 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                         ext = "json"
                         comment = undefined;
                         break;
+                    case "jres":
+                        ext = "jres"
+                        comment = undefined;
+                        break;
                     default:
                         // not a valid extension; leave it as it was and append def extension
                         name = str;

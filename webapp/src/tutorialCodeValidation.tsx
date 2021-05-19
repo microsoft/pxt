@@ -11,6 +11,7 @@ interface TutorialCodeValidationProps extends ISettingsProps {
     onYesButtonClick: () => void;
     onNoButtonClick: () => void;
     initialVisible: boolean;
+    isTutorialCodeInvalid: boolean;
 }
 
 interface tutorialCodeValidationState {
@@ -38,21 +39,21 @@ export class MoveOn extends data.Component<TutorialCodeValidationProps, tutorial
     }
 
     renderCore() {
-        const vis = this.state.visible;
+        const vis = this.props.isTutorialCodeInvalid;
         return <div>
             <div className={`tutorialCodeValidation no-select ${!vis ? 'hidden' : ''}`}>
-                <div className="text">
+                <div className="codeValidationPopUpText">
                     {lf("These are the blocks you seem to be missing.")}
                 </div>
-                <div className="text">
+                <div className="codeValidationPopUpText">
                     { /* Will add a list a blocks here in future PR */}
                 </div>
-                <div className="text">
+                <div className="codeValidationPopUpText">
                     {lf("Do you still want to continue?")}
                 </div>
                 <div className="moveOnButtons">
-                    <sui.Button className="no" ariaLabel={lf("no button for tutorial code validation")} onClick={this.stayOnThisTutorialStep.bind(this)} onKeyDown={sui.fireClickOnEnter} > {lf("No")} </sui.Button>
-                    <sui.Button className="yes" ariaLabel={lf("yes button for tutorial code validation")} onClick={this.moveOnToNextTutorialStep.bind(this)} onKeyDown={sui.fireClickOnEnter} > {lf("Yes")} </sui.Button>
+                    <sui.Button className="yes" ariaLabel={lf("yes button for tutorial code validation")} onClick={this.moveOnToNextTutorialStep.bind(this)} onKeyDown={sui.fireClickOnEnter} > {lf("Continue Anyway")} </sui.Button>
+                    <sui.Button className="no" ariaLabel={lf("no button for tutorial code validation")} onClick={this.stayOnThisTutorialStep.bind(this)} onKeyDown={sui.fireClickOnEnter} > {lf("Keep Editing")} </sui.Button>
                 </div>
             </div>
         </div>;

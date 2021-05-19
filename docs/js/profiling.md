@@ -110,3 +110,10 @@ contiguous block was 25092 bytes (this is the largest allocation that
 would still succeed right after that last collection).
 Since reset, the minimum free memory was 32328
 (which means that if the device had 32k less memory it would crash).
+
+## Profiling executable size
+
+This can be enabled with `?compiler=size`.
+When compiling for native, this will generate `size.csv` file alongside
+`binary.asm` and `binary.uf2`.
+You can load it into Excel and draw a treemap from the first three columns. 
