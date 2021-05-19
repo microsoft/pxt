@@ -617,6 +617,24 @@ export function blockIdMap() {
     return _blockIdMap;
 }
 
+export function tsSnippetToPySnippet(param: string): string | undefined {
+    // Keep this unified with pxtcompiler/languageservice.ts
+    const keywords: pxt.Map<string> = {
+        "true": "True",
+        "false": "False",
+        "null": "None"
+    }
+    const key = keywords[param];
+    if (key) {
+        return key
+    }
+    if (param.includes(".")) {
+        const match = /(.+)\.(.+)/.exec(param);
+        return `${match[1]}.${match[2].toUpperCase()}`
+    }
+    return undefined;
+}
+
 export function getBuiltinCategory(ns: string) {
     return cachedBuiltinCategories()[ns];
 }

@@ -5,6 +5,7 @@ import * as toolbox from "./toolbox";
 import * as workspace from "./workspace";
 import * as data from "./data";
 import * as auth from "./auth";
+import * as snippets from "./monacoSnippets";
 
 const DRAG_THRESHOLD = 5;
 const SELECTED_BORDER_WIDTH = 4;
@@ -251,6 +252,8 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
         let compileInfo = pxt.blocks.compileInfo(block as pxtc.SymbolInfo)
         let parts = block.attributes._def && block.attributes._def.parts;
         let name = block.qName || block.name;
+        const isPython = this.props.fileType == pxt.editor.FileType.Python;
+
         if (parts) {
             if (params &&
                 parts.filter((p: any) => p.kind == "param").length > params.length) {
@@ -271,6 +274,9 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
                             || part.varName
                             || actualParam?.actualName
                             || part.name
+                        if (isPython && actualParam?.defaultValue) {
+                            val = snippets.tsSnippetToPySnippet(val) || val;
+                        }
                         description.push(<span className="argName" key={name + i}>{val}</span>);
                         break;
                 }

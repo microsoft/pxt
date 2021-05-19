@@ -76,13 +76,22 @@ namespace ts.pxtc.service {
         return [...retApis, ...completionSymbols(enumVals, COMPLETION_DEFAULT_WEIGHT)]
     }
 
-    export function tsKeywordToPyKeyword(keyword: string): string | undefined {
-        const map: pxt.Map<string> = {
+    export function tsSnippetToPySnippet(param: string): string | undefined {
+        // Keep this unified with webapp/monacoSnippets.ts
+        const keywords: pxt.Map<string> = {
             "true": "True",
             "false": "False",
             "null": "None"
         }
-        return map[keyword]
+        const key = keywords[param];
+        if (key) {
+            return key
+        }
+        if (param.includes(".")) {
+            const match = /(.+)\.(.+)/.exec(param);
+            return `${match[1]}.${match[2].toUpperCase()}`
+        }
+        return undefined;
     }
 
     export function getBasicKindDefault(kind: SyntaxKind, isPython: boolean): string | undefined {

@@ -313,7 +313,7 @@ namespace ts.pxtc.service {
                 }
 
                 if (python) {
-                    let pyKeyword = tsKeywordToPyKeyword(paramDefl)
+                    let pyKeyword = tsSnippetToPySnippet(paramDefl)
                     if (pyKeyword)
                         return pyKeyword
                 }
