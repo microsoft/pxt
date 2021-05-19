@@ -518,7 +518,12 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
         // persist header changes to our local cache, but keep the old
         // reference around because (unfortunately) other layers (e.g. package.ts)
         // assume the reference is stable per id.
-        Object.assign(e.header, h)
+        Object.assign(e.header, h);
+        // Delete keys from `e.header` that don't exist in `h`. This will clear cloud state
+        // from the header in the case where the project is being exported to local from cloud.
+        Object.keys(e.header)
+            .filter(key => h[key as keyof Header] === undefined)
+            .forEach(key  => delete e.header[key as keyof Header]);
         h = e.header;
     }
     if (text)
