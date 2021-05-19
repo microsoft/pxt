@@ -433,7 +433,7 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
         pxt.debug(`next hero carousel`)
         const cardIndex = this.state.cardIndex;
         this.setState({ cardIndex: (cardIndex + 1) % this.prevGalleries.length })
-    };
+    }
 
     private handleSetCardIndex(index: number) {
         this.stopRefresh();
@@ -491,15 +491,17 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
         const heroBanner: pxt.CodeCard = heroBannerImg && {
             imageUrl: heroBannerImg,
             url: heroCard?.url,
-            description: heroCard?.description && pxt.U.rlf(heroCard?.description),
+            description: heroCard?.description && pxt.U.rlf(heroCard.description),
             cardType: heroCard?.cardType,
         };
+
         if (!this.prevGalleries) {
             this.prevGalleries = [];
             if (heroBanner) {
                 this.prevGalleries.push(heroBanner);
             }
         }
+
         if (!path) {
             return this.prevGalleries;
         }
@@ -545,7 +547,7 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
 
         return <div className="ui segment getting-started-segment hero"
             style={{ backgroundImage: encodedBkgd }}>
-            <div className="gradient-overlay" />
+            {(!!description || !!url || isGallery) && <div className="gradient-overlay" />}
             <div className="hero-banner-contents">
                 {!!description && <div className="description">
                     <p>{description}</p>
