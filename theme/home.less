@@ -66,9 +66,8 @@
             width: 20rem;
             display: flex;
             flex-direction: column;
-            justify-content: flex-end;
+            justify-content: center;
             margin-left: @carouselArrowSize;
-            padding-bottom: 1rem;
         }
 
         .description {
@@ -79,7 +78,7 @@
         }
 
         .action {
-            margin: 0.5rem 0;
+            margin: 1rem 0;
         }
 
         .dots button {
@@ -87,6 +86,7 @@
             margin-right: 1.25rem;
 
             &.active {
+                border-color: #aaaaaa;
                 background: none;
             }
         }
@@ -605,7 +605,6 @@
 
             &.hero .hero-banner-contents {
                 margin-left: @carouselArrowSizeMobile;
-                padding-bottom: 0;
                 .description {
                     width: 12rem;
                     font-size: 1rem;
