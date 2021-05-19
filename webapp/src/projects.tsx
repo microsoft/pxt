@@ -479,8 +479,20 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
         const targetTheme = pxt.appTarget.appTheme;
         const path = targetTheme.homeScreenHeroGallery;
 
-        const heroBanner = targetTheme.homeScreenHero && {
-            imageUrl: targetTheme.homeScreenHero
+        let heroCard: pxt.CodeCard;
+        let heroBannerImg: string;
+        if (typeof targetTheme.homeScreenHero == "string") {
+            heroBannerImg = targetTheme.homeScreenHero;
+        } else if (targetTheme.homeScreenHero){
+            heroCard = targetTheme.homeScreenHero;
+            heroBannerImg = heroCard.imageUrl;
+        }
+
+        const heroBanner: pxt.CodeCard = heroBannerImg && {
+            imageUrl: heroBannerImg,
+            url: heroCard?.url,
+            description: heroCard?.description && pxt.U.rlf(heroCard?.description),
+            cardType: heroCard?.cardType,
         };
         if (!this.prevGalleries) {
             this.prevGalleries = [];
@@ -513,13 +525,12 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
     renderCore() {
         const targetTheme = pxt.appTarget.appTheme;
         const { cardIndex } = this.state;
-        const showHeroBanner = !!targetTheme.homeScreenHero;
-        const heroGallery = !!targetTheme.homeScreenHeroGallery;
+        const isGallery = !!targetTheme.homeScreenHeroGallery;
 
-        if (!showHeroBanner && !heroGallery)
-            return null; // nothing to see here
         const cards = this.fetchGallery();
         const card = cards[cardIndex];
+        if (!card)
+            return null; // nothing to see here
 
         const handleSetCard = (i: number) => () => this.handleSetCardIndex(i)
         let url = card.url;
@@ -530,6 +541,7 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
 
         const description = card.description || card.name;
         const encodedBkgd = `url(${encodeURI(card.largeImageUrl || card.imageUrl)})`;
+        const label = codeCardButtonLabel(card.cardType);
 
         return <div className="ui segment getting-started-segment hero"
             style={{ backgroundImage: encodedBkgd }}>
@@ -538,15 +550,15 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
                 {!!description && <div className="description">
                     <p>{description}</p>
                 </div>}
-                {!!card.name && !!url && <div className="action">
+                {!!url && <div className="action">
                     <sui.Link
                         className="large blue button transition in fly right"
                         href={url} onClick={this.handleCardClick}
-                        role="button" title={card.title || card.name} ariaLabel={card.title || card.name}>
-                        {card.label || card.name}
+                        role="button" title={card.title || card.name} ariaLabel={label}>
+                        {label}
                     </sui.Link>
                 </div>}
-                {heroGallery && <div key="cards" className="dots">
+                {isGallery && <div key="cards" className="dots">
                     {cards.map((card, i) => <button key={"dot" + i} className={`ui button empty circular label  clear ${i === cardIndex && "active"}`}
                         onClick={handleSetCard(i)} aria-label={lf("View {0} hero image", card.title || card.name)} title={lf("View {0} hero image", card.title || card.name)}>
                     </button>)}
@@ -925,22 +937,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
 
     protected getClickLabel(cardType: string) {
         const { youTubeId, youTubePlaylistId } = this.props;
-        let clickLabel = lf("Show Instructions");
-        if (cardType == "tutorial")
-            clickLabel = lf("Start Tutorial");
-        else if (cardType == "codeExample" || cardType == "example")
-            clickLabel = lf("Open Example");
-        else if (cardType == "forumUrl")
-            clickLabel = lf("Open in Forum");
-        else if (cardType == "sharedExample")
-            clickLabel = lf("Open in Editor");
-        else if (cardType == "template")
-            clickLabel = lf("New Project");
-        else if (youTubeId)
-            clickLabel = lf("Watch Video");
-        else if (youTubePlaylistId)
-            clickLabel = lf("Watch Playlist");
-        return clickLabel;
+        return codeCardButtonLabel(cardType, youTubeId, youTubePlaylistId);
     }
 
     protected getActionEditor(type: string, action?: pxt.CodeCardAction): pxt.CodeCardEditorType {
@@ -1144,6 +1141,24 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
             </div>
         </div>;
     }
+}
+
+function codeCardButtonLabel(cardType: string, youTubeId?: string, youTubePlaylistId?: string) {
+    if (cardType == "tutorial")
+        return lf("Start Tutorial");
+    else if (cardType == "codeExample" || cardType == "example")
+        return lf("Open Example");
+    else if (cardType == "forumUrl")
+        return lf("Open in Forum");
+    else if (cardType == "sharedExample")
+        return lf("Open in Editor");
+    else if (cardType == "template")
+        return lf("New Project");
+    else if (youTubeId)
+        return lf("Watch Video");
+    else if (youTubePlaylistId)
+        return lf("Watch Playlist");
+    return lf("Show Instructions");
 }
 
 export interface ImportDialogState {
