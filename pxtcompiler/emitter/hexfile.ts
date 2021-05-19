@@ -1231,6 +1231,25 @@ __flash_checksums:
             }
 
             cres.procDebugInfo = bin.procs.map(p => p.debugInfo)
+
+            if (bin.target.switches.size) {
+                const csv: string[] = []
+                // "filename,line,name,type,size\n"
+                for (const proc of bin.procs) {
+                    const info = ts.pxtc.nodeLocationInfo(proc.action)
+                    const line = [
+                        info.fileName.replace("pxt_modules/", ""),
+                        getDeclName(proc.action),
+                        proc.debugInfo.size,
+                        "function",
+                        info.line + 1
+                    ]
+                    csv.push(toCSV(line))
+                }
+                csv.sort()
+                csv.unshift("filename,name,size,type,line")
+                bin.writeFile(prefix + "size.csv", csv.join("\n"))
+            }
         }
 
         function writeOutput() {
@@ -1243,6 +1262,10 @@ __flash_checksums:
                 bin.writeFile(prefix + pxt.outputName(target), myhex);
             }
         }
+    }
+
+    function toCSV(elts: (string | number)[]) {
+        return elts.map(s => `"${s}"`).join(",")
     }
 
     export function processorEmit(bin: Binary, opts: CompileOptions, cres: CompileResult) {

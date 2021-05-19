@@ -11,6 +11,7 @@ interface TutorialCodeValidationProps extends ISettingsProps {
     onYesButtonClick: () => void;
     onNoButtonClick: () => void;
     initialVisible: boolean;
+    isTutorialCodeInvalid: boolean;
 }
 
 interface tutorialCodeValidationState {
@@ -38,7 +39,7 @@ export class MoveOn extends data.Component<TutorialCodeValidationProps, tutorial
     }
 
     renderCore() {
-        const vis = this.state.visible;
+        const vis = this.props.isTutorialCodeInvalid;
         return <div>
             <div className={`tutorialCodeValidation no-select ${!vis ? 'hidden' : ''}`}>
                 <div className="codeValidationPopUpText">

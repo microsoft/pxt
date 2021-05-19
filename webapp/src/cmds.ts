@@ -190,7 +190,7 @@ export function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.De
                 .then(dev => core.showLoadingAsync(LOADING_KEY, lf("Downloading..."),
                     dev.reflashAsync(resp)
                         .then(() => dev.reconnectAsync()), 5000))
-                .then(() => core.infoNotification("Download completed!"))
+                .then(() => core.infoNotification(lf("Download completed!")))
                 .finally(() => core.hideLoading(LOADING_KEY))
         ).catch((e) => {
             if (e.type === "repairbootloader") {
