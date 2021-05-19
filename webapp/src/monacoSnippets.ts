@@ -630,8 +630,11 @@ export function tsSnippetToPySnippet(param: string): string | undefined {
     }
     if (param.includes(".")) {
         // Python enums are all caps
-        const match = /(.+)\.(.+)/.exec(param);
-        return `${match[1]}.${match[2].toUpperCase()}`
+        const dotIdx = param.lastIndexOf(".");
+        const left = param.substr(0, dotIdx)
+        let right = param.substr(dotIdx + 1)
+        right = pxtc.snakify(right).toUpperCase();
+        return `${left}.${right}`
     }
     return undefined;
 }
