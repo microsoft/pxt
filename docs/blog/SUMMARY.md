@@ -1,8 +1,8 @@
 # Microsoft MakeCode Blog
 
-* [Blog](/blog)
-    * [New Free Curriculum! AP CSP with MakeCode](/blog/csp/new-free-curriculum)
+* [Blog](/blog)    
     * [Beginner Skillmap Sneak Peek](/blog/arcade/beginner-skillmap)
+    * [New Free Curriculum! AP CSP with MakeCode](/blog/csp/new-free-curriculum)
     * [MakeCode Arcade Spring Update!](/blog/arcade/update-spring-2021)
     * [MakeCode Arcade 1st Birthday Update!](/blog/arcade/update-jan-2021)
     * [Fun MakeCode stuff for CS Education Week 2020](/blog/csed-week/csed-week-2020)
