@@ -92,7 +92,7 @@ namespace ts.pxtc.service {
             const dotIdx = param.lastIndexOf(".");
             const left = param.substr(0, dotIdx)
             let right = param.substr(dotIdx + 1)
-            right = snakify(right).toUpperCase();
+            right = U.snakify(right).toUpperCase();
             return `${left}.${right}`
         }
         return undefined;
@@ -285,8 +285,6 @@ namespace ts.pxtc.service {
         }
         return null
     }
-
-
 
     export function getDefaultEnumValue(t: Type, python: boolean): string {
         // Note: AFAIK this is NOT guranteed to get the same default as you get in

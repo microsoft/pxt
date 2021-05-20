@@ -633,7 +633,7 @@ export function tsSnippetToPySnippet(param: string): string | undefined {
         const dotIdx = param.lastIndexOf(".");
         const left = param.substr(0, dotIdx)
         let right = param.substr(dotIdx + 1)
-        right = pxtc.snakify(right).toUpperCase();
+        right = pxt.Util.snakify(right).toUpperCase();
         return `${left}.${right}`
     }
     return undefined;
