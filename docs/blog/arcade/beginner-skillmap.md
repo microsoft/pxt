@@ -1,10 +1,11 @@
 # Beginner Skillmap Sneak Peek
 
-**Posted on March 30th, 2021 by [kiki-lee](https://github.com/kiki-lee)**
+**Updated on May 19th, 2021 by [kiki-lee](https://github.com/kiki-lee)**
 
-Next month, Microsoft MakeCode will release a sneak peek of our newest adventure, the Arcade Beginner Skillmap!
+Update:  It's here!  The beginner skillmap is launching Friday, May 21st but you can see a preview now by visiting https://aka.ms/skillmap-preview.
 
-![Beginner Skillmap page](/static/blog/arcade/beginner-skillmap/skillmap.png)
+![image](https://user-images.githubusercontent.com/1633958/119034668-702f9700-b963-11eb-8abc-839fe87c5608.png)
+
 
 ### The Motivation Behind Skillmap
 
@@ -14,10 +15,11 @@ Designed using research-based pedagogical strategies, the Skillmap is an easy-to
 
 The Skillmap combines elements of gamification with traditional learning path progressions to engage and guide students who are new to coding. At each stage of the Skillmap, there are animated GIFs that provide previews of the activities ahead.
 
-![Completion achievement notice](/static/blog/arcade/beginner-skillmap/achievement.png)
+![image](https://user-images.githubusercontent.com/1633958/119034871-be449a80-b963-11eb-865d-52cec9bec271.png)
+
 
 It also features celebrations at each path’s end, including certificates and confetti, as a reward for a job well done.  Future versions will incorporate additional gamification elements to incentivize persistence and pushing beyond comfortable limits. All Skillmaps will center around the creation of fun, engaging arcade gaming experiences that students love coding (or creating), playing, and sharing with their friends and family.
  
 ### Try It Today
 
-To preview Beginner Skillmap, visit [aka.ms/skillmap](http://aka.ms/skillmap).
+To preview Beginner Skillmap, visit [aka.ms/skillmap-preview](http://aka.ms/skillmap-preview).
