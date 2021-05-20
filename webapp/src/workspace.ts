@@ -523,7 +523,7 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
         // from the header in the case where the project is being exported to local from cloud.
         Object.keys(e.header)
             .filter(key => h[key as keyof Header] === undefined)
-            .forEach(key  => delete e.header[key as keyof Header]);
+            .forEach(key => delete e.header[key as keyof Header]);
         h = e.header;
     }
     if (text)
