@@ -69,7 +69,7 @@ function showConnectDeviceDialogAsync(confirmAsync: ConfirmAsync) {
                 <div className="ui">
                     <div className="content">
                         <div className="description">
-                            <strong>{lf("First, make sure your {0} is connected to your computer with a USB cable.", boardName)}</strong>
+                            {lf("First, make sure your {0} is connected to your computer with a USB cable.", boardName)}
                         </div>
                     </div>
                 </div>
@@ -99,16 +99,44 @@ function showPickWebUSBDeviceDialogAsync(confirmAsync: ConfirmAsync) {
     let deviceNames = theme().webUSBDeviceNames;
     if (!deviceNames || !deviceNames.length) deviceNames = [boardName];
 
+    // Here we intentionally pass dummy in the arguments for {1}, {2}, and {3} so that
+    // we can apply styling below
     let connectDeviceText: string;
     if (deviceNames.length === 1 || deviceNames.length > 3) {
-        connectDeviceText = lf("Pair your {0} to the computer by selecting '{1}'; from the popup that appears after you press the 'Next' button below.", boardName, deviceNames.join(", "));
+        connectDeviceText = lf("Pair your {0} to the computer by selecting {1} from the popup that appears after you press the 'Next' button below.", boardName, "{1}");
     }
     else if (deviceNames.length === 2) {
-        connectDeviceText = lf("Pair your {0} to the computer by selecting '{1}' or '{2}' from the popup that appears after you press the 'Next' button below.", boardName, deviceNames[0], deviceNames[1]);
+        connectDeviceText = lf("Pair your {0} to the computer by selecting {1} or {2} from the popup that appears after you press the 'Next' button below.", boardName, "{1}", "{2}");
     }
     else if (deviceNames.length === 3) {
-        connectDeviceText = lf("Pair your {0} to the computer by selecting '{1}', '{2}', or '{3}' from the popup that appears after you press the 'Next' button below.", boardName, deviceNames[0], deviceNames[1], deviceNames[2]);
+        connectDeviceText = lf("Pair your {0} to the computer by selecting {1}, {2}, or {3} from the popup that appears after you press the 'Next' button below.", boardName, "{1}", "{2}", "{3}");
     }
+
+    const parts = connectDeviceText.split(/\{\d\}/);
+    const textElements: (JSX.Element | string)[] = [];
+
+    let renderedNames = deviceNames.map(dName => <span className="download-device-name">'{dName}'</span>)
+
+    while (renderedNames.length) {
+        textElements.push(parts.shift());
+
+        // If we have more device names then we do remaining slots (e.g. a bad translation
+        // or the very unlikely scenario where there are more than 3), then just put the
+        // rest in a comma separated list
+        if (renderedNames.length > 1 && parts.length === 1)  {
+            for (let i = 0; i < renderedNames.length; i++) {
+                textElements.push(renderedNames[i]);
+                if (i < renderedNames.length - 1) {
+                    textElements.push(", ");
+                }
+            }
+            renderedNames = [];
+        }
+        else {
+            textElements.push(renderedNames.shift());
+        }
+    }
+    textElements.push(...parts);
 
     const jsxd = () => (
         <div className="ui two column grid padded">
@@ -116,7 +144,7 @@ function showPickWebUSBDeviceDialogAsync(confirmAsync: ConfirmAsync) {
                 <div className="ui">
                     <div className="content">
                         <div className="description">
-                            <strong>{connectDeviceText}</strong>
+                            {textElements}
                         </div>
                     </div>
                 </div>
@@ -149,9 +177,9 @@ function showConnectionSuccessAsync(confirmAsync: ConfirmAsync) {
                 <div className="ui">
                     <div className="content">
                         <div className="description">
-                            <strong>{lf("Your {0} is connected! Pressing 'Download' will now automatically copy your code to your {0}.", boardName)}</strong>
+                            {lf("Your {0} is connected! Pressing 'Download' will now automatically copy your code to your {0}.", boardName)}
                             <br/>
-                            <strong>{lf("If you need to unpair this {0}, you can do so through the '…' menu next to the 'Download' button", boardName)}</strong>
+                            {lf("If you need to unpair this {0}, you can do so through the '…' menu next to the 'Download' button", boardName)}
                         </div>
                     </div>
                 </div>
@@ -203,7 +231,7 @@ function showConnectionFailureAsync(confirmAsync: ConfirmAsync) {
                         </div>
                         <div className="row">
                             <div className="description">
-                                <strong>{lf("Check the USB cable connecting your {0} to your computer.", boardName)}</strong>
+                                {lf("Check the USB cable connecting your {0} to your computer.", boardName)}
                             </div>
                         </div>
                     </div>
@@ -217,7 +245,7 @@ function showConnectionFailureAsync(confirmAsync: ConfirmAsync) {
                         </div>
                         <div className="row">
                             <div className="description">
-                                <strong>{firmwareText}</strong>
+                                {firmwareText}
                                 <br/>
                                 <a href={theme().firmwareHelpURL}>{lf("Learn more about firmware.", boardName)}</a>
                             </div>
@@ -293,7 +321,7 @@ export function webUsbPairLegacyDialogAsync(pairAsync: () => Promise<boolean>, c
                     <div className="content">
                         <div className="description">
                             <span className="ui yellow circular label">1</span>
-                            <strong>{lf("Connect {0} to your computer with a USB cable", boardName)}</strong>
+                            {lf("Connect {0} to your computer with a USB cable", boardName)}
                             <br />
                         </div>
                     </div>

@@ -7,6 +7,7 @@ import * as webusb from "./webusb";
 import * as data from "./data";
 import * as dialogs from "./dialogs";
 import Cloud = pxt.Cloud;
+import { isDontShowDownloadDialogCookieSet } from "./dialogs";
 
 function log(msg: string) {
     pxt.debug(`cmds: ${msg}`);
@@ -71,7 +72,12 @@ export function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promis
     if (!userContext && (resp.saveOnly || pxt.BrowserUtils.isBrowserDownloadInSameWindow())) {
         return Promise.resolve()
             .then(() => window.URL?.revokeObjectURL(url));
-    } else {
+    }
+    else if (isDontShowDownloadDialogCookieSet()) {
+        window.URL?.revokeObjectURL(url)
+        return Promise.resolve();
+    }
+    else {
         // save does the same as download as far iOS is concerned
         return pxt.commands.showUploadInstructionsAsync(fn, url, core.confirmAsync)
             .then(() => window.URL?.revokeObjectURL(url));
