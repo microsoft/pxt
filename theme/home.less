@@ -15,6 +15,10 @@
 @homeDetailViewSelectedCardZIndex: @homeDetailViewZIndex+1; /* Show the card arrow above the detail view */
 @homeFooterZIndex: @homeCarouselArrowZIndex+1;
 
+@heroBannerGradientColor: rgba(0,0,0,1);
+@heroBannerDotOutlineColor: rgba(0, 0, 0, .4);
+@heroBannerDotOutlineAtiveColor: rgba(255, 255, 255, .75);
+
 #homescreen {
     background: lighten(@homeScreenBackground, 10%);
     z-index: @homeScreenZIndex;
@@ -82,11 +86,11 @@
         }
 
         .dots button {
-            border: 2px solid #6D6D6D;
+            border: 2px solid @heroBannerDotOutlineColor;
             margin-right: 1.25rem;
 
             &.active {
-                border-color: #aaaaaa;
+                border-color: @heroBannerDotOutlineAtiveColor;
                 background: none;
             }
         }
@@ -97,7 +101,7 @@
             width: 40rem;
             top: 0;
             left: 0;
-            background: linear-gradient(to right, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 100%);
+            background: linear-gradient(to right, @heroBannerGradientColor 0%, rgba(0, 0, 0, 0) 100%);
         }
     }
 
