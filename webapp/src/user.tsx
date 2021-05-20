@@ -48,6 +48,9 @@ export class ProfileDialog extends auth.Component<ProfileDialogProps, ProfileDia
 
         const user = this.getUser();
 
+        const github = cloudsync.githubProvider();
+        const ghUser = github.user();
+
         return (
             <sui.Modal isOpen={this.state.visible} className="ui profiledialog" size="fullscreen"
                 onClose={this.hide} dimmer={true}
@@ -57,7 +60,7 @@ export class ProfileDialog extends auth.Component<ProfileDialogProps, ProfileDia
                 closeOnEscape={false}
             >
                 <AccountPanel parent={this} />
-                <GitHubPanel parent={this} />
+                { ghUser ? <GitHubPanel parent={this} /> : undefined }
                 <FeedbackPanel parent={this} />
             </sui.Modal>
         );
@@ -225,10 +228,10 @@ class FeedbackPanel extends sui.UIElement<FeedbackPanelProps, {}> {
                     <label>{lf("Feedback")}</label>
                 </div>
                 <div className="row-span-two">
-                    {lf("What do you think about this feature? Is there something you'd like to change? Did you encounter issues? Please let us know on GitHub.")}
+                    {lf("What do you think about the Sign In & Cloud Save feature? Is there something you'd like to change? Did you encounter issues? Please let us know!")}
                 </div>
                 <div className="row-span-two">
-                    <sui.Link className="ui" text={lf("Feedback")} icon="external alternate" ariaLabel={lf("Provide feedback at GitHub")} href="https://github.com/microsoft/pxt-arcade/issues/new/choose" target="_blank" onKeyDown={sui.fireClickOnEnter} />
+                    <sui.Link className="ui" text={lf("Take the Survey")} icon="external alternate" ariaLabel={lf("Provide feedback at GitHub")} href="https://aka.ms/AAcnpaj" target="_blank" onKeyDown={sui.fireClickOnEnter} />
                 </div>
             </div>
         );
