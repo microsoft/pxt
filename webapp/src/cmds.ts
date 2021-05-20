@@ -5,6 +5,7 @@ import * as pkg from "./package";
 import * as hidbridge from "./hidbridge";
 import * as webusb from "./webusb";
 import * as data from "./data";
+import * as dialogs from "./dialogs";
 import Cloud = pxt.Cloud;
 
 function log(msg: string) {
@@ -12,6 +13,9 @@ function log(msg: string) {
 }
 
 let extensionResult: pxt.editor.ExtensionResult;
+// This can be overidden by the extension result
+pxt.commands.renderBrowserDownloadInstructions = dialogs.renderBrowserDownloadInstructions;
+
 
 function browserDownloadAsync(text: string, name: string, contentType: string): Promise<void> {
     pxt.BrowserUtils.browserDownloadBinText(
@@ -103,23 +107,22 @@ function showUploadInstructionsAsync(fn: string, url: string, confirmAsync: (opt
         hasCloseIcon: true,
         hideAgree: true,
         helpUrl,
+        bigHelpButton: true,
         className: 'downloaddialog',
         buttons: [
             downloadAgain && {
                 label: userDownload ? lf("Download") : lf("Download again"),
-                icon: "download",
-                className: userDownload ? "primary" : "ligthgrey",
+                className: userDownload ? "primary" : "lightgrey",
+                urlButton: true,
                 url,
                 fileName: fn
             },
-            connect && {
-                label: lf("Pair device"),
-                icon: "usb",
+            {
+                label: lf("Done"),
                 className: "primary",
                 onclick: () => {
-                    pxt.tickEvent('downloaddialog.pair')
+                    pxt.tickEvent('downloaddialog.done')
                     core.hideDialog();
-                    maybeReconnectAsync(true)
                 }
             },
         ],

@@ -436,6 +436,23 @@ declare namespace pxt {
         disableBlobObjectDownload?: boolean; // use data uri downloads instead of object urls
         immersiveReader?: boolean; // enables the immersive reader for tutorials
         tutorialCodeValidation?: boolean; // Enable code validation for tutorials
+        downloadDialogTheme?: DownloadDialogTheme;
+    }
+
+    interface DownloadDialogTheme {
+        webUSBDeviceNames?: string[];
+        minimumFirmwareVersion?: string;
+
+        downloadHelpUrl?: string;
+        firmwareHelpURL?: string;
+        troubleshootWebUSBHelpURL?: string;
+
+        dragFileImage?: string;
+        connectDeviceImage?: string;
+        selectDeviceImage?: string;
+        connectionSuccessImage?: string;
+        checkFirmwareVersionImage?: string;
+        checkUSBCableImage?: string;
     }
 
     interface SocialOptions {

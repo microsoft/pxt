@@ -714,3 +714,74 @@ export function promptTranslateBlock(blockid: string, blockTranslationIds: strin
         </div>
     });
 }
+
+export function renderBrowserDownloadInstructions() {
+    const boardName = pxt.appTarget.appTheme.boardName || lf("device");
+    const boardDriveName = pxt.appTarget.appTheme.driveDisplayName || pxt.appTarget.compile.driveName || "???";
+    const fileExtension = pxt.appTarget.compile?.useUF2 ? ".uf2" : ".hex";
+
+    let dontShowThisAgain = false;
+
+    const onPairClicked = () => {
+        core.hideDialog();
+        pxt.commands.webUsbPairDialogAsync(pxt.usb.pairAsync, core.confirmAsync);
+
+        if (dontShowThisAgain) {
+            pxt.tickEvent("downloaddialog.donotshowagain");
+        }
+    }
+
+    const onCheckboxClicked = (value: boolean) => {
+        dontShowThisAgain = value;
+    }
+
+    return <div className="ui grid stackable upload">
+        <div className="column sixteen wide instructions">
+            <div className="ui grid">
+                <div className="row">
+                    <div className="column">
+                        <div className="ui two column grid padded">
+                            <div className="column">
+                                <div className="ui">
+                                    <div className="content">
+                                        <div className="description">
+                                            <strong>{lf("Your code is being downloaded as a {1} file. You can drag this file to your {0} using your computer's file explorer.", boardName, fileExtension)}</strong>
+                                        </div>
+                                        <div className="download-callout">
+                                            <label className="ui purple ribbon large label">{lf("New!")}</label>
+                                            <div className="ui two column grid">
+                                                <div className="icon-align three wide column">
+                                                    <div />
+                                                    <i className="icon big usb"/>
+                                                    <div />
+                                                </div>
+                                                <div className="thirteen wide column">
+                                                    {lf("Download your code faster by pairing with web usb!")}
+                                                    <br/>
+                                                    <a onClick={onPairClicked}>{lf("Pair now")}</a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="column">
+                                <div className="ui">
+                                    <div className="image">
+                                        <img alt={lf("Comic moving {1} file to {0}", boardDriveName, fileExtension)} className="ui medium rounded image" src="./static/download/transfer.png" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <sui.Checkbox
+                    label={lf("Don't show this again")}
+                    onChange={onCheckboxClicked}
+                />
+            </div>
+        </div>
+    </div>;
+}
