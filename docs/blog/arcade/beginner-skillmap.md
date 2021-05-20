@@ -1,8 +1,8 @@
 # Beginner Skillmap Sneak Peek
 
-**Posted on March 30th, 2021 by [kiki-lee](https://github.com/kiki-lee)**
+**Updated on May 19th, 2021 by [kiki-lee](https://github.com/kiki-lee)**
 
-Next month, Microsoft MakeCode will release a sneak peek of our newest adventure, the Arcade Beginner Skillmap!
+Update:  It's here!  The beginner skillmap is launching Friday, May 21st but you can see a preview now by visiting https://aka.ms/skillmap-preview.
 
 ![Beginner Skillmap page](/static/blog/arcade/beginner-skillmap/skillmap.png)
 
@@ -20,4 +20,4 @@ It also features celebrations at each path’s end, including certificates and c
  
 ### Try It Today
 
-To preview Beginner Skillmap, visit [aka.ms/skillmap](http://aka.ms/skillmap).
+To preview Beginner Skillmap, visit [aka.ms/skillmap-preview](http://aka.ms/skillmap-preview).
