@@ -367,6 +367,7 @@ const HERO_BANNER_DELAY = 6000; // 6 seconds per card
 class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
     protected prevGalleries: pxt.CodeCard[];
     protected carouselTimeout: ReturnType<typeof setTimeout> = undefined;
+    protected dragStartX: number;
 
     constructor(props: ProjectsCarouselProps) {
         super(props)
@@ -390,6 +391,37 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
     protected handleSetCardIndex = (index: number) => {
         this.clearRefresh();
         this.setState({ cardIndex: index, paused: true });
+    }
+
+    protected onPointerDown = (e: React.PointerEvent) => {
+        this.dragStartX = e.clientX;
+    }
+
+    protected onTouchstart = (e: React.TouchEvent) => {
+        if (e.touches?.length) {
+            this.dragStartX = e.touches[0].clientX;
+        }
+    }
+
+    protected onPointerUp = (e: React.PointerEvent) => {
+        this.handleRelease(e.clientX, e);
+    }
+
+    protected onTouchEnd = (e: React.TouchEvent) => {
+        this.handleRelease(e.changedTouches?.[0]?.clientX, e)
+    }
+
+    protected handleRelease(xPos: number, e: React.TouchEvent | React.PointerEvent) {
+        if (this.dragStartX !== undefined && xPos !== undefined) {
+            const diff = this.dragStartX - xPos;
+            this.dragStartX = undefined;
+
+            if (Math.abs(diff) > 30) {
+                e.stopPropagation();
+                e.preventDefault();
+                this.handleRefreshCard(diff < 0);
+            }
+        }
     }
 
     protected onKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
@@ -516,6 +548,8 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
         return <div className="ui segment getting-started-segment hero"
                 style={{ backgroundImage: encodedBkgd }}
                 onKeyDown={this.onKeyDown}
+                onPointerDown={this.onPointerDown} onTouchStart={this.onTouchstart}
+                onPointerUp={this.onPointerUp} onTouchEnd={this.onTouchEnd}
             >
             {(!!description || hasAction || isGallery) && <div className="gradient-overlay" />}
             <div className="hero-banner-contents">
@@ -530,7 +564,7 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
                             youTubePlaylistId: card.youTubePlaylistId,
                             scr: card,
                         },
-                        "large blue button transition in fly right",
+                        "large blue button",
                         label,
                         card.cardType,
                         this.handleCardClick
