@@ -214,7 +214,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     getTemporaryAssets(): pxt.Asset[] {
-        if (!this.editor) return[];
+        if (!this.editor) return [];
 
         return pxtblockly.getTemporaryAssets(this.editor, pxt.AssetType.Image)
             .concat(pxtblockly.getTemporaryAssets(this.editor, pxt.AssetType.Animation))
@@ -710,8 +710,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         // Current tutorial step
         const { tutorialStep } = tutorial;
         const blocks = this.editor.getAllBlocks();
-        const tutorialCodeStatus = await pxt.tutorial.validate(tutorial, blocks, this.blockInfo);
-        this.parent.setTutorialCodeStatus(tutorialStep, tutorialCodeStatus);
+        const tutorialRulesValidated: pxt.tutorial.TutorialRuleStatus[] = await pxt.tutorial.validate(tutorial, blocks, this.blockInfo);
+        this.parent.setTutorialCodeStatus(tutorialStep, tutorialRulesValidated);
     }
 
     getBlocksAreaDiv() {
@@ -1026,7 +1026,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         if (this.debuggerToolbox) {
             const visibleVars = Blockly.Variables.allUsedVarModels(this.editor)
-                    .map((variable: Blockly.VariableModel) => pxtc.escapeIdentifier(variable.name));
+                .map((variable: Blockly.VariableModel) => pxtc.escapeIdentifier(variable.name));
 
             this.debuggerToolbox.setBreakpoint(brk, visibleVars);
         }

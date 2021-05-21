@@ -626,6 +626,17 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         this.setState({ showUnusedBlockMessage: false });
     }
 
+    isCodeValidated(rules: pxt.tutorial.TutorialRuleStatus[]) {
+        if (rules != undefined) {
+            for (let i = 0; i < rules.length; i++) {
+                if (rules[i].RuleTurnOn && !rules[i].RuleStatus) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
     renderCore() {
         const options = this.props.parent.state.tutorialOptions;
         const { tutorialReady, tutorialStepInfo, tutorialStep, tutorialStepExpanded, metadata } = options;
@@ -642,7 +653,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         const hasHint = this.hasHint();
         const tutorialCardContent = stepInfo.headerContentMd;
         const showDialog = stepInfo.showDialog;
-        const tutorialCodeValidated = stepInfo.codeValidated;
+        const tutorialCodeValidated = this.isCodeValidated(stepInfo.codeValidated);
         const validationEnabled = tutorialCodeValidated != undefined;
         const showMissingBlockPopupMessage = this.state.showUnusedBlockMessage && validationEnabled;
         const nextOnClick = (tutorialCodeValidated || !validationEnabled ||

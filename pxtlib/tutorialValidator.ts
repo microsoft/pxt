@@ -1,21 +1,26 @@
 namespace pxt.tutorial {
 
-    export enum TutorialCodeStatus {
-        Unknown = "Unknown",
-        Valid = "Valid",
-        Invalid = "Invalid"
+    export interface TutorialRuleStatus {
+        RuleName: string;
+        RuleTurnOn: boolean;
+        RuleStatus: boolean;
+        RuleMessage: string;
     }
 
     /**
-    * Check the user's code to the tutorial and returns a Tutorial status of the user's code
+    * Check the user's code to the map of tutorial validation rules from TutorialOptions and returns an array of TutorialRuleStatus
     * @param tutorial the tutorial 
     * @param workspaceBlocks Blockly blocks used of workspace
     * @param blockinfo Typescripts of the workspace
-    * @return A TutorialCodeStatus
+    * @return A TutorialRuleStatus
     */
-    export async function validate(tutorial: TutorialOptions, workspaceBlocks: Blockly.Block[], blockinfo: pxtc.BlocksInfo): Promise<TutorialCodeStatus> {
-        // Check to make sure blocks are in the workspace
-        if (workspaceBlocks.length > 0) {
+    export async function validate(tutorial: TutorialOptions, workspaceBlocks: Blockly.Block[], blockinfo: pxtc.BlocksInfo): Promise<TutorialRuleStatus[]> {
+
+        const listOfRules = tutorial.tutorialValidationRules;
+        let TutorialRuleStatuses: TutorialRuleStatus[] = classifyRules(listOfRules);
+
+        // Check to if there are rules to valdiate and to see if there are blocks are in the workspace to compare to
+        if (TutorialRuleStatuses.length > 0 && workspaceBlocks.length > 0) {
             // User blocks
             const userBlockTypes = workspaceBlocks.map(b => b.type);
             const usersBlockUsed = blockCount(userBlockTypes);
@@ -24,13 +29,37 @@ namespace pxt.tutorial {
             const step = tutorialStepInfo[tutorialStep];
             const indexdb = await tutorialBlockList(tutorial, step);
             const tutorialBlockUsed = extractBlockSnippet(tutorial, indexdb);
-            // Checks user's blocks against tutorial blocks
-            if (!validateNumberOfBlocks(usersBlockUsed, tutorialBlockUsed)) {
-                return TutorialCodeStatus.Invalid;
+            for (let i = 0; i < TutorialRuleStatuses.length; i++) {
+                let currRuleToValidate = TutorialRuleStatuses[i];
+                const ruleName = TutorialRuleStatuses[i].RuleName;
+                switch (ruleName) {
+                    case "validateNumberOfBlocks":
+                        const ruleStatus = validateNumberOfBlocks(usersBlockUsed, tutorialBlockUsed);
+                        currRuleToValidate.RuleStatus = ruleStatus;
+                        break;
+                    case "placeholder":
+                        break;
+                }
             }
-            return TutorialCodeStatus.Valid;
         }
-        return TutorialCodeStatus.Unknown;
+        return TutorialRuleStatuses;
+    }
+
+    /**
+    * Gives each rule from the markdown file a TutorialRuleStatus
+    * @param listOfRules a map of rules from makrdown file 
+    * @return An array of TutorialRuleStatus
+    */
+    function classifyRules(listOfRules: pxt.Map<boolean>): TutorialRuleStatus[] {
+        let listOfRuleStatuses: TutorialRuleStatus[] = [];
+        const ruleNames: string[] = Object.keys(listOfRules);
+        for (let i = 0; i < ruleNames.length; i++) {
+            const currRule: string = ruleNames[i];
+            const ruleVal: boolean = listOfRules[currRule];
+            const currRuleStatus: TutorialRuleStatus = { RuleName: currRule, RuleTurnOn: ruleVal, RuleStatus: false, RuleMessage: ""};
+            listOfRuleStatuses.push(currRuleStatus);
+        }
+        return listOfRuleStatuses;
     }
 
     /**
