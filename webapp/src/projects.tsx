@@ -365,30 +365,48 @@ interface HeroBannerState {
 
 const HERO_BANNER_DELAY = 6000; // 6 seconds per card
 class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
-    private prevGalleries: pxt.CodeCard[];
-    private carouselInterval: any = undefined;
+    protected prevGalleries: pxt.CodeCard[];
+    protected carouselTimeout: ReturnType<typeof setTimeout> = undefined;
 
     constructor(props: ProjectsCarouselProps) {
         super(props)
-        this.handleRefreshCard = this.handleRefreshCard.bind(this);
-        this.handleCardClick = this.handleCardClick.bind(this);
         this.state = {
             cardIndex: 0,
         };
     }
 
-    private handleRefreshCard() {
-        pxt.debug(`next hero carousel`)
-        const cardIndex = this.state.cardIndex;
-        this.setState({ cardIndex: (cardIndex + 1) % this.prevGalleries.length })
+    protected handleRefreshCard = (backwards?: boolean) => {
+        pxt.debug(`next hero carousel`);
+        if (this.prevGalleries?.length) {
+            const cardIndex = this.state.cardIndex;
+            const nextOffset = backwards ? this.prevGalleries.length - 1 : 1;
+            this.setState({
+                cardIndex: (cardIndex + nextOffset) % this.prevGalleries.length
+            });
+        }
+        this.scheduleRefresh();
     }
 
-    private handleSetCardIndex(index: number) {
-        this.stopRefresh();
+    protected handleSetCardIndex = (index: number) => {
+        this.clearRefresh();
         this.setState({ cardIndex: index, paused: true });
     }
 
-    private handleCardClick = () => {
+    protected onKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
+        const key = core.keyCodeFromEvent(e);
+        switch (key) {
+            case 37: /** left **/
+                this.handleRefreshCard(true /** backwards **/)
+                e.stopPropagation();
+                break;
+            case 39: /** right */
+                this.handleRefreshCard();
+                e.stopPropagation();
+                break;
+        }
+    }
+
+    protected handleCardClick = () => {
         const card = this.state.cardIndex !== undefined
             && this.prevGalleries[this.state.cardIndex]
         if (card) {
@@ -402,28 +420,27 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
         }
     }
 
-    private startRefresh() {
+    protected scheduleRefresh = () => {
         const { paused } = this.state;
-        if (!paused && !this.carouselInterval && this.prevGalleries && this.prevGalleries.length) {
-            pxt.debug(`start refreshing hero carousel`)
-            this.carouselInterval = setInterval(this.handleRefreshCard, HERO_BANNER_DELAY);
+        if (!paused) {
+            this.clearRefresh();
+            this.carouselTimeout = setTimeout(this.handleRefreshCard, HERO_BANNER_DELAY);
         }
     }
 
-    private stopRefresh() {
-        if (this.carouselInterval) {
-            pxt.debug(`stopping hero carousel`)
-            clearInterval(this.carouselInterval)
-            this.carouselInterval = undefined;
+    protected clearRefresh() {
+        if (this.carouselTimeout) {
+            clearTimeout(this.carouselTimeout)
+            this.carouselTimeout = undefined;
         }
     }
 
     componentDidMount() {
-        this.startRefresh();
+        this.scheduleRefresh();
     }
 
     componentWillUnmount() {
-        this.stopRefresh();
+        this.clearRefresh();
     }
 
     fetchGallery(): pxt.CodeCard[] {
@@ -468,7 +485,7 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
                 if (heroBanner) {
                     this.prevGalleries.unshift(heroBanner);
                 }
-                this.startRefresh();
+                this.scheduleRefresh();
             }
         }
         return this.prevGalleries;
@@ -497,7 +514,9 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
         // lf("New? Start here!");
 
         return <div className="ui segment getting-started-segment hero"
-            style={{ backgroundImage: encodedBkgd }}>
+                style={{ backgroundImage: encodedBkgd }}
+                onKeyDown={this.onKeyDown}
+            >
             {(!!description || hasAction || isGallery) && <div className="gradient-overlay" />}
             <div className="hero-banner-contents">
                 {!!description && <div className="description">
