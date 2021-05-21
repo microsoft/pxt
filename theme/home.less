@@ -15,6 +15,10 @@
 @homeDetailViewSelectedCardZIndex: @homeDetailViewZIndex+1; /* Show the card arrow above the detail view */
 @homeFooterZIndex: @homeCarouselArrowZIndex+1;
 
+@heroBannerGradientColor: rgba(0,0,0,1);
+@heroBannerDotOutlineColor: rgba(0, 0, 0, .4);
+@heroBannerDotOutlineAtiveColor: rgba(255, 255, 255, .75);
+
 #homescreen {
     background: lighten(@homeScreenBackground, 10%);
     z-index: @homeScreenZIndex;
@@ -54,26 +58,53 @@
         }
     }
     .getting-started-segment.hero {
-        .action {
+        -webkit-transition: background-image 0.2s ease-in;
+        transition: background-image 0.2s ease-in;
+        overflow: hidden;
+
+        .hero-banner-contents {
             position: absolute;
-            left: 1rem;
-            bottom: 1rem;
-            margin: 0.5rem;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 20rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            margin-left: @carouselArrowSize;
         }
-        .dots {
-            position: absolute;
-            bottom: 2rem;
-            right: 2rem;
 
-            button {
-                margin-right: 1.5rem;
-            }
+        .description {
+            width: 20rem;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: @white;
+        }
 
-            button.active {
-                background: @primaryColor;
+        .action {
+            margin: 1rem 0;
+        }
+
+        .dots button {
+            border: 2px solid @heroBannerDotOutlineColor;
+            margin-right: 1.25rem;
+
+            &.active {
+                border-color: @heroBannerDotOutlineAtiveColor;
+                background: none;
             }
+        }
+
+        .gradient-overlay {
+            position: relative;
+            height: 100%;
+            width: 40rem;
+            top: 0;
+            left: 0;
+            background: linear-gradient(to right, @heroBannerGradientColor 0%, rgba(0, 0, 0, 0) 100%);
         }
     }
+
     .content {
         height: 100%;
     }
@@ -500,6 +531,10 @@
             .getting-started-header {
                 font-size: 40px;
             }
+
+            &.hero .hero-banner-contents {
+                margin-left: @carouselArrowSizeTablet;
+            }
         }
         .ui.segment.tabsegment {
             padding-top: calc(@mobileMenuHeight + 2rem) !important;
@@ -568,8 +603,24 @@
     /* Carousel */
     .projectsdialog {
         .getting-started-segment {
+            height: 10rem;
+            margin-bottom: 0.5rem !important;
+            .getting-started-header {
+                font-size: 30px;
+            }
             .getting-started {
                 padding: @carouselArrowSizeMobile;
+            }
+
+            &.hero .hero-banner-contents {
+                margin-left: @carouselArrowSizeMobile;
+                .description {
+                    width: 12rem;
+                    font-size: 1rem;
+                }
+                .dots {
+                    display: none;
+                }
             }
         }
         .ui.segment.tabsegment {
@@ -639,13 +690,6 @@
             .meta {
                 font-size: 0.7rem;
                 padding: 0.5rem;
-            }
-        }
-        .getting-started-segment {
-            height: 10rem;
-            margin-bottom: 0.5rem !important;
-            .getting-started-header {
-                font-size: 30px;
             }
         }
         .carouselcontainer {
@@ -767,6 +811,16 @@
             margin-top: -3.1rem!important;
             margin-bottom: 0rem!important;
             height: 168px;
+
+            &.hero .hero-banner-contents {
+                .description {
+                    width: 12rem;
+                    font-size: 1rem;
+                }
+                .dots {
+                    display: none;
+                }
+            }
         }
     }
 }

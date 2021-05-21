@@ -289,7 +289,7 @@ declare namespace pxt {
         docMenu?: DocMenuEntry[];
         TOC?: TOCMenuEntry[];
         hideSideDocs?: boolean;
-        homeScreenHero?: string; // home screen hero image
+        homeScreenHero?: string | CodeCard; // home screen hero image or codecard
         homeScreenHeroGallery?: string; // path to markdown file containing the gallery to display on homescreen
         sideDoc?: string; // deprecated
         hasReferenceDocs?: boolean; // if true: the monaco editor will add an option in the context menu to load the reference docs
@@ -1037,6 +1037,7 @@ declare namespace pxt.tutorial {
         assetFiles?: pxt.Map<string>;
         jres?: string; // JRES to be used when generating hints; necessary for tilemaps
         customTs?: string; // custom typescript code loaded in a separate file for the tutorial
+        tutorialValidationRules?: pxt.Map<boolean>; //a map of rules used in a tutorial and if the rules are activated 
     }
 
     interface TutorialMetadata {
@@ -1053,6 +1054,14 @@ declare namespace pxt.tutorial {
         tutorialCodeValidation?: boolean; // enable tutorial validation for this tutorial
     }
 
+    interface TutorialRuleStatus {
+        RuleName: string;
+        RuleTurnOn: boolean;
+        RuleStatus: boolean;
+        RuleMessage: string;
+        test?: boolean;
+    }
+    
     interface TutorialStepInfo {
         // fullscreen?: boolean; // DEPRECATED, replaced by "showHint"
         // unplugged?: boolean: // DEPRECATED, replaced by "showDialog"
@@ -1065,7 +1074,7 @@ declare namespace pxt.tutorial {
         hintContentMd?: string;
         activity?: number;
         resetDiff?: boolean; // reset diffify algo
-        codeValidated?: boolean; // Whether the user code has been marked valid for this step
+        codeValidated?: pxt.tutorial.TutorialRuleStatus[]; // Whether the user code has been marked valid for these set of rules
     }
 
     interface TutorialActivityInfo {
@@ -1093,6 +1102,7 @@ declare namespace pxt.tutorial {
         assetFiles?: pxt.Map<string>;
         jres?: string; // JRES to be used when generating hints; necessary for tilemaps
         customTs?: string; // custom typescript code loaded in a separate file for the tutorial
+        tutorialValidationRules?: pxt.Map<boolean>; //a map of rules used in a tutorial and if the rules are activated 
     }
     interface TutorialCompletionInfo {
         // id of the tutorial
