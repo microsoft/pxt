@@ -767,7 +767,7 @@ export function renderBrowserDownloadInstructions() {
                             <div className="column">
                                 <div className="ui">
                                     <div className="image">
-                                        <img alt={lf("Comic moving {1} file to {0}", boardDriveName, fileExtension)} className="ui medium rounded image" src="./static/download/transfer.png" />
+                                        <img alt={lf("Comic moving {1} file to {0}", boardDriveName, fileExtension)} className="ui medium rounded image" src={pxt.appTarget.appTheme.downloadDialogTheme?.dragFileImage} />
                                     </div>
                                 </div>
                             </div>
