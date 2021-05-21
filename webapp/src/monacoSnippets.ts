@@ -617,28 +617,6 @@ export function blockIdMap() {
     return _blockIdMap;
 }
 
-export function tsSnippetToPySnippet(param: string): string | undefined {
-    // Keep this unified with pxtcompiler/languageservice.ts
-    const keywords: pxt.Map<string> = {
-        "true": "True",
-        "false": "False",
-        "null": "None"
-    }
-    const key = keywords[param];
-    if (key) {
-        return key
-    }
-    if (param.includes(".")) {
-        // Python enums are all caps
-        const dotIdx = param.lastIndexOf(".");
-        const left = param.substr(0, dotIdx)
-        let right = param.substr(dotIdx + 1)
-        right = pxt.Util.snakify(right).toUpperCase();
-        return `${left}.${right}`
-    }
-    return undefined;
-}
-
 export function getBuiltinCategory(ns: string) {
     return cachedBuiltinCategories()[ns];
 }

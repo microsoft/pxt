@@ -312,14 +312,12 @@ namespace ts.pxtc.service {
                     return paramDefl.indexOf(`"`) != 0 ? `"${paramDefl}"` : paramDefl;
                 }
                 let type = checker && checker.getTypeAtLocation(param);
-                const typeSymbol = getPxtSymbolFromTsSymbol(type.symbol, apis, checker);
-                if (typeSymbol && typeSymbol.attributes.fixedInstances) {
+                const typeSymbol = getPxtSymbolFromTsSymbol(type?.symbol, apis, checker);
+                if (typeSymbol?.attributes.fixedInstances) {
                     return paramDefl;
                 }
                 if (python) {
-                    let pyKeyword = tsSnippetToPySnippet(paramDefl)
-                    if (pyKeyword)
-                        return pyKeyword
+                    return pxtc.tsSnippetToPySnippet(paramDefl)
                 }
 
                 return paramDefl

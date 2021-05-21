@@ -5,7 +5,6 @@ import * as toolbox from "./toolbox";
 import * as workspace from "./workspace";
 import * as data from "./data";
 import * as auth from "./auth";
-import * as snippets from "./monacoSnippets";
 
 const DRAG_THRESHOLD = 5;
 const SELECTED_BORDER_WIDTH = 4;
@@ -275,7 +274,7 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
                             || actualParam?.actualName
                             || part.name
                         if (isPython && actualParam?.defaultValue) {
-                            val = snippets.tsSnippetToPySnippet(val) || val;
+                            val = pxtc.tsSnippetToPySnippet(val) || val;
                         }
                         description.push(<span className="argName" key={name + i}>{val}</span>);
                         break;

@@ -76,28 +76,6 @@ namespace ts.pxtc.service {
         return [...retApis, ...completionSymbols(enumVals, COMPLETION_DEFAULT_WEIGHT)]
     }
 
-    export function tsSnippetToPySnippet(param: string): string | undefined {
-        // Keep this unified with webapp/monacoSnippets.ts
-        const keywords: pxt.Map<string> = {
-            "true": "True",
-            "false": "False",
-            "null": "None"
-        }
-        const key = keywords[param];
-        if (key) {
-            return key
-        }
-        if (param.includes(".")) {
-            // Python enums are all caps
-            const dotIdx = param.lastIndexOf(".");
-            const left = param.substr(0, dotIdx)
-            let right = param.substr(dotIdx + 1)
-            right = U.snakify(right).toUpperCase();
-            return `${left}.${right}`
-        }
-        return undefined;
-    }
-
     export function getBasicKindDefault(kind: SyntaxKind, isPython: boolean): string | undefined {
         switch (kind) {
             case SK.StringKeyword: return "\"\"";
