@@ -76,7 +76,7 @@ function showConnectDeviceDialogAsync(confirmAsync: ConfirmAsync) {
             </div>
             <div className="column">
                 <div className="ui">
-                    <div className="image">
+                    <div className="image download-dialog-image">
                         <img alt={lf("Image connecting {0} to a computer", boardName)} className="ui medium rounded image" src={theme().connectDeviceImage} />
                     </div>
                 </div>
@@ -151,7 +151,7 @@ function showPickWebUSBDeviceDialogAsync(confirmAsync: ConfirmAsync) {
             </div>
             <div className="column">
                 <div className="ui">
-                    <div className="image">
+                    <div className="image download-dialog-image">
                         <img alt={lf("Image selecting {0} from a list of web usb devices", boardName)} className="ui medium rounded image" src={theme().selectDeviceImage} />
                     </div>
                 </div>
@@ -179,6 +179,7 @@ function showConnectionSuccessAsync(confirmAsync: ConfirmAsync) {
                         <div className="description">
                             {lf("Your {0} is connected! Pressing 'Download' will now automatically copy your code to your {0}.", boardName)}
                             <br/>
+                            <br/>
                             {lf("If you need to unpair this {0}, you can do so through the '…' menu next to the 'Download' button", boardName)}
                         </div>
                     </div>
@@ -186,7 +187,7 @@ function showConnectionSuccessAsync(confirmAsync: ConfirmAsync) {
             </div>
             <div className="column">
                 <div className="ui">
-                    <div className="image">
+                    <div className="image download-dialog-image">
                         <img alt={lf("Image of {0}", boardName)} className="ui medium rounded image" src={theme().connectionSuccessImage} />
                     </div>
                 </div>
@@ -199,7 +200,9 @@ function showConnectionSuccessAsync(confirmAsync: ConfirmAsync) {
         jsxd,
         lf("Done"),
         lf("Connected to {0}", boardName),
-        'downloaddialog.button.webusbsuccess'
+        'downloaddialog.button.webusbsuccess',
+        undefined,
+        "large circle check purple"
     );
 }
 
@@ -225,7 +228,7 @@ function showConnectionFailureAsync(confirmAsync: ConfirmAsync) {
                 <div className="column">
                     <div className="ui two row grid padded">
                         <div className="row">
-                            <div className="image">
+                            <div className="image download-dialog-image">
                                 <img alt={lf("Image connecting {0} to a computer", boardName)} className="ui medium rounded image" src={theme().checkUSBCableImage || theme().connectDeviceImage} />
                             </div>
                         </div>
@@ -239,7 +242,7 @@ function showConnectionFailureAsync(confirmAsync: ConfirmAsync) {
                 <div className="column">
                     <div className="ui two row grid padded">
                         <div className="row">
-                            <div className="image">
+                            <div className="image download-dialog-image">
                                 <img alt={lf("Image depicting the firmware of {0}", boardName)} className="ui medium rounded image" src={theme().checkFirmwareVersionImage} />
                             </div>
                         </div>
@@ -263,13 +266,14 @@ function showConnectionFailureAsync(confirmAsync: ConfirmAsync) {
         lf("Try Again"),
         lf("Connect failed"),
         'downloaddialog.button.webusbfailed',
-        theme().troubleshootWebUSBHelpURL
+        theme().troubleshootWebUSBHelpURL,
+        "exclamation triangle purple"
     );
 }
 
 
 
-function showPairStepAsync(confirmAsync: ConfirmAsync, jsxd: () => JSX.Element, buttonLabel: string, header: string, tick: string, help?: string) {
+function showPairStepAsync(confirmAsync: ConfirmAsync, jsxd: () => JSX.Element, buttonLabel: string, header: string, tick: string, help?: string, headerIcon?: string) {
     let tryAgain = false;
 
     return confirmAsync({
@@ -280,6 +284,7 @@ function showPairStepAsync(confirmAsync: ConfirmAsync, jsxd: () => JSX.Element, 
         className: 'downloaddialog',
         helpUrl: help,
         bigHelpButton: !!help,
+        headerIcon: headerIcon ? headerIcon + " header-inline-icon" : undefined,
         buttons: [
             {
                 label: buttonLabel,
@@ -363,7 +368,7 @@ export function webUsbPairLegacyDialogAsync(pairAsync: () => Promise<boolean>, c
                 className: 'downloaddialog',
                 buttons: [
                     {
-                        label: lf("Pair device"),
+                        label: lf("Connect device"),
                         icon: "usb",
                         className: "primary",
                         onclick: () => {

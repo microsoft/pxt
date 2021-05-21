@@ -443,7 +443,10 @@ declare namespace pxt {
         webUSBDeviceNames?: string[];
         minimumFirmwareVersion?: string;
 
-        downloadHelpUrl?: string;
+        deviceIcon?: string;
+        deviceSuccessIcon?: string;
+        downloadMenuHelpURL?: string;
+        downloadHelpURL?: string;
         firmwareHelpURL?: string;
         troubleshootWebUSBHelpURL?: string;
 

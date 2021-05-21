@@ -265,6 +265,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         const showPrint = targetTheme.print && !pxt.BrowserUtils.isIE();
         const showProjectSettings = targetTheme.showProjectSettings;
         const docItems = targetTheme.docMenu && targetTheme.docMenu.filter(d => !d.tutorial);
+        const usbIcon = pxt.appTarget.appTheme.downloadDialogTheme?.deviceIcon || "usb";
 
         // Electron does not currently support webusb
         const githubUser = !readOnly && !isController && this.getData("github:user") as pxt.editor.UserInfo;
@@ -275,7 +276,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("More...")} className="item icon more-dropdown-menuitem">
             {showProjectSettings ? <sui.Item role="menuitem" icon="options" text={lf("Project Settings")} onClick={this.openSettings} /> : undefined}
             {packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Extensions")} onClick={this.showPackageDialog} /> : undefined}
-            {showPairDevice ? <sui.Item role="menuitem" icon='usb' text={lf("Pair device")} onClick={this.pair} /> : undefined}
+            {showPairDevice ? <sui.Item role="menuitem" icon={usbIcon} text={lf("Connect device")} onClick={this.pair} /> : undefined}
             {pxt.webBluetooth.isAvailable() ? <sui.Item role="menuitem" icon='bluetooth' text={lf("Pair Bluetooth")} onClick={this.pairBluetooth} /> : undefined}
             {showPrint ? <sui.Item role="menuitem" icon="print" text={lf("Print...")} onClick={this.print} /> : undefined}
             {showSave ? <sui.Item role="menuitem" icon="save" text={lf("Save Project")} onClick={this.saveProject} /> : undefined}
