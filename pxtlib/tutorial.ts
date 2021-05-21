@@ -290,20 +290,17 @@ ${code}
         return { header, hint };
     }
 
+    /* Parse Tutorial Validation Rules */
     function parseTutorialValidationRules(body: string, tutorialCodeValidation?: boolean): pxt.Map<boolean> {
-
         let listOfRules: pxt.Map<boolean> = {};
-
         if (tutorialCodeValidation) {
             body = body.replace("{", '').replace("}", '').trim();
             const rules: string[] = body.split(",");
             for (let i = 0; i < rules.length; i++) {
-                let currRule = rules[i];
-                currRule = currRule.replace("\"/g", '').trim();
+                let currRule = rules[i].trim();
                 const ruleValuePair: string[] = currRule.split(":");
                 const ruleKey = ruleValuePair[0].replace("\"", '').replace("\"", '').trim();
                 const ruleValue = (ruleValuePair[1] === 'true');
-                console.log(ruleKey);
                 listOfRules[ruleKey] = ruleValue;
             }
         }

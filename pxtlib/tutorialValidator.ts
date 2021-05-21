@@ -45,6 +45,11 @@ namespace pxt.tutorial {
         return TutorialRuleStatuses;
     }
 
+    /**
+    * Gives each rule from the mmarkdown file a TutorialRuleStatus
+    * @param listOfRules a map of rules from makrdown file 
+    * @return An array of TutorialRuleStatus
+    */
     function classifyRules(listOfRules: pxt.Map<boolean>): TutorialRuleStatus[] {
         let listOfRuleStatuses: TutorialRuleStatus[] = [];
         const ruleNames: string[] = Object.keys(listOfRules);
