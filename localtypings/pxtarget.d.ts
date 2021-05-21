@@ -1034,6 +1034,14 @@ declare namespace pxt.tutorial {
         tutorialCodeValidation?: boolean; // enable tutorial validation for this tutorial
     }
 
+    interface TutorialRuleStatus {
+        RuleName: string;
+        RuleTurnOn: boolean;
+        RuleStatus: boolean;
+        RuleMessage: string;
+        test?: boolean;
+    }
+    
     interface TutorialStepInfo {
         // fullscreen?: boolean; // DEPRECATED, replaced by "showHint"
         // unplugged?: boolean: // DEPRECATED, replaced by "showDialog"

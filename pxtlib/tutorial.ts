@@ -301,7 +301,7 @@ ${code}
                 let currRule = rules[i];
                 currRule = currRule.replace("\"/g", '').trim();
                 const ruleValuePair: string[] = currRule.split(":");
-                const ruleKey = ruleValuePair[0].replace("\"", '').trim();
+                const ruleKey = ruleValuePair[0].replace("\"", '').replace("\"", '').trim();
                 const ruleValue = (ruleValuePair[1] === 'true');
                 console.log(ruleKey);
                 listOfRules[ruleKey] = ruleValue;

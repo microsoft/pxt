@@ -1,11 +1,5 @@
 namespace pxt.tutorial {
 
-    export enum TutorialCodeStatus {
-        Unknown = "Unknown",
-        Valid = "Valid",
-        Invalid = "Invalid"
-    }
-
     export interface TutorialRuleStatus {
         RuleName: string;
         RuleTurnOn: boolean;
