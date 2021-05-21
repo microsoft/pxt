@@ -86,12 +86,13 @@
         }
 
         .dots button {
+            transition: background-color 0.2s;
             border: 2px solid @heroBannerDotOutlineColor;
             margin-right: 1.25rem;
 
             &.active {
                 border-color: @heroBannerDotOutlineAtiveColor;
-                background: none;
+                background-color: transparent;
             }
         }
 
