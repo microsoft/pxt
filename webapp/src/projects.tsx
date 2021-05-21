@@ -490,6 +490,8 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
         const encodedBkgd = `url(${encodeURI(card.largeImageUrl || card.imageUrl)})`;
         const label = codeCardButtonLabel(card.cardType, card.youTubeId, card.youTubePlaylistId);
         const hasAction = !!url || !!card.youTubeId || !!card.youTubePlaylistId;
+        /** Do not remove; common default that may be specified in pxtarget **/
+        // lf("New? Start here!");
 
         return <div className="ui segment getting-started-segment hero"
             style={{ backgroundImage: encodedBkgd }}>
