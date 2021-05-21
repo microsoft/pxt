@@ -7,6 +7,7 @@ import * as githubbutton from "./githubbutton";
 import * as cmds from "./cmds"
 import * as cloud from "./cloud";
 import * as auth from "./auth";
+import { ProjectView } from "./app";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -45,6 +46,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
     }
 
     compile(view?: string) {
+        this.setState({ compileState: "compiling" });
         pxt.tickEvent("editortools.download", { view: view, collapsed: this.getCollapsedState() }, { interactiveConsent: true });
         this.props.parent.compile();
     }
@@ -176,8 +178,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
     }
 
     protected onHwDownloadClick = () => {
-        this.setState({ compileState: "compiling" });
-        this.compile();
+        (this.props.parent as ProjectView).compile(true);
     }
 
     protected onPairClick = () => {
@@ -264,7 +265,8 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
             || (boards ? lf("Click to select hardware") : lf("Click for one-click downloads."));
 
         const hardwareMenuText = view == View.Mobile ? lf("Hardware") : lf("Choose hardware");
-        const downloadMenuText = view == View.Mobile ? (pxt.hwName || lf("Download")) : lf("Download to {0}", deviceName);
+        const ext = pxt.appTarget.compile.useUF2 ? ".uf2" : ".hex";
+        const downloadMenuText = view == View.Mobile ? (pxt.hwName || lf("Download")) : lf("Download {0} file", ext);
         const downloadHelp = pxt.appTarget.appTheme.downloadDialogTheme?.downloadMenuHelpURL;
 
         if (hasMenu) {
@@ -274,7 +276,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
                     {webUSBSupported && !packetioConnected && <sui.Item role="menuitem" icon={usbIcon} text={lf("Connect device")} tabIndex={-1} onClick={this.onPairClick} />}
                     {webUSBSupported && (packetioConnecting || packetioConnected) && <sui.Item role="menuitem" icon={usbIcon} text={lf("Disconnect")} tabIndex={-1} onClick={this.onDisconnectClick} />}
                     {boards && <sui.Item role="menuitem" icon="microchip" text={hardwareMenuText} tabIndex={-1} onClick={this.onHwItemClick} />}
-                    <sui.Item role="menuitem" icon="download" text={downloadMenuText} tabIndex={-1} onClick={this.onHwDownloadClick} />
+                    <sui.Item role="menuitem" icon="xicon file-download" text={downloadMenuText} tabIndex={-1} onClick={this.onHwDownloadClick} />
                     {downloadHelp && <sui.Item role="menuitem" icon="help circle" text={lf("Help")} tabIndex={-1} onClick={this.onHelpClick} />}
                 </sui.DropdownMenu>
             )
