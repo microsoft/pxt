@@ -463,7 +463,6 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
                 // ignore;
             } else {
                 this.prevGalleries = pxt.Util.concat(res.map(g => g.cards))
-                    .filter(card => card.url)
                     .slice(0, 5); // max 5 cards
                 if (heroBanner) {
                     this.prevGalleries.unshift(heroBanner);
