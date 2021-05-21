@@ -408,7 +408,7 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
     }
 
     protected onTouchEnd = (e: React.TouchEvent) => {
-        this.handleRelease(e.changedTouches?.[0]?.clientX, e)
+        this.handleRelease(e.changedTouches?.[0]?.clientX, e);
     }
 
     protected handleRelease(xPos: number, e: React.TouchEvent | React.PointerEvent) {
@@ -428,7 +428,7 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
         const key = core.keyCodeFromEvent(e);
         switch (key) {
             case 37: /** left **/
-                this.handleRefreshCard(true /** backwards **/)
+                this.handleRefreshCard(true /** backwards **/);
                 e.stopPropagation();
                 break;
             case 39: /** right */
@@ -440,7 +440,7 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
 
     protected handleCardClick = () => {
         const card = this.state.cardIndex !== undefined
-            && this.prevGalleries[this.state.cardIndex]
+            && this.prevGalleries[this.state.cardIndex];
         if (card) {
             pxt.tickEvent("hero.card.click", {
                 gallery: pxt.appTarget.appTheme.homeScreenHeroGallery,
@@ -462,7 +462,7 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
 
     protected clearRefresh() {
         if (this.carouselTimeout) {
-            clearTimeout(this.carouselTimeout)
+            clearTimeout(this.carouselTimeout);
             this.carouselTimeout = undefined;
         }
     }
