@@ -8,7 +8,7 @@ namespace pxt.tutorial {
     }
 
     /**
-    * Check the user's code to the tutorial and returns a Tutorial status of the user's code
+    * Check the user's code to the map of tutorial validation rules from TutorialOptions and returns an array of TutorialRuleStatus
     * @param tutorial the tutorial 
     * @param workspaceBlocks Blockly blocks used of workspace
     * @param blockinfo Typescripts of the workspace
@@ -46,7 +46,7 @@ namespace pxt.tutorial {
     }
 
     /**
-    * Gives each rule from the mmarkdown file a TutorialRuleStatus
+    * Gives each rule from the markdown file a TutorialRuleStatus
     * @param listOfRules a map of rules from makrdown file 
     * @return An array of TutorialRuleStatus
     */
