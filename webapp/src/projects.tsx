@@ -363,7 +363,7 @@ interface HeroBannerState {
     paused?: boolean;
 }
 
-const HERO_BANNER_DELAY = 7500; // 7.5 seconds per card
+const HERO_BANNER_DELAY = 6000; // 6 seconds per card
 class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
     private prevGalleries: pxt.CodeCard[];
     private carouselInterval: any = undefined;
