@@ -424,7 +424,7 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
                             // Delete local copy.
                             pxt.debug(`Propagating ${projShorthand} delete from cloud.`)
                             const newHdr = await fromCloud(local, remoteFile);
-                            if (!newHdr) throw new Error (`Failed to propagate cloud deletion of ${projShorthand}`);
+                            if (!newHdr) throw new Error(`Failed to propagate cloud deletion of ${projShorthand}`);
                             didProjectCountChange = true;
                             pxt.tickEvent(`identity.sync.cloudDeleteUpdatedLocal`)
                         }
