@@ -343,7 +343,7 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
                 }
                 return remoteFiles[h.id]
             } catch {
-                // Failed to remote project. This can happen when:
+                // Failed to fetch remote project. This can happen when:
                 // - Client is opening a project that hasn't been saved to the cloud yet.
                 // - Client is importing a project from GitHub or elsewhere.
                 // - We're offline.
