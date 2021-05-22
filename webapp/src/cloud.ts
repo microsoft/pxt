@@ -382,9 +382,12 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
         const localHeaderChanges: pxt.Map<Header> = {}
         const toCloud = transferToCloud;
         const fromCloud = async (loc: Header, rem: File) => {
-            const newLoc = await transferFromCloud(loc, rem)
-            localHeaderChanges[newLoc.id] = newLoc
-            return newLoc
+            const newLoc = await transferFromCloud(loc, rem);
+            if (newLoc) {
+                localHeaderChanges[newLoc.id] = newLoc;
+                return newLoc;
+            }
+            return undefined;
         }
         let didProjectCountChange = false;
         let errors: Error[] = [];
@@ -421,6 +424,7 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
                             // Delete local copy.
                             pxt.debug(`Propagating ${projShorthand} delete from cloud.`)
                             const newHdr = await fromCloud(local, remoteFile);
+                            if (!newHdr) throw new Error(`Failed to propagate cloud deletion of ${projShorthand}`);
                             didProjectCountChange = true;
                             pxt.tickEvent(`identity.sync.cloudDeleteUpdatedLocal`)
                         }
@@ -428,6 +432,7 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
                         if (local.cloudCurrent) {
                             // No local changes, download latest.
                             const newHdr = await fromCloud(local, remoteFile);
+                            if (!newHdr) throw new Error(`Failed to download latest version of ${local.id}`);
                             pxt.tickEvent(`identity.sync.noConflict.localProjectUpdatedFromCloud`)
                         } else if (local.cloudVersion === remoteFile.version) {
                             // Local has unpushed changes, push them now
@@ -491,6 +496,7 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
                     }
                     pxt.debug(`importing new cloud project '${remoteFile.header.name}' (${remoteFile.header.id})`)
                     const res = await fromCloud(null, remoteFile)
+                    if (!res) throw new Error(`Failed to import new cloud project ${remoteFile.header.name} ${remoteFile.header.id}`);
                     pxt.tickEvent(`identity.sync.importCloudProject`)
                     didProjectCountChange = true;
                 } catch (e) {
