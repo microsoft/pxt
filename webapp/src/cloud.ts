@@ -432,7 +432,7 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
                         if (local.cloudCurrent) {
                             // No local changes, download latest.
                             const newHdr = await fromCloud(local, remoteFile);
-                            if (!newHdr) throw new Error(`Failed to download latest verion of ${local.id}`);
+                            if (!newHdr) throw new Error(`Failed to download latest version of ${local.id}`);
                             pxt.tickEvent(`identity.sync.noConflict.localProjectUpdatedFromCloud`)
                         } else if (local.cloudVersion === remoteFile.version) {
                             // Local has unpushed changes, push them now
