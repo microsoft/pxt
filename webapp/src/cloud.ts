@@ -496,6 +496,7 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
                     }
                     pxt.debug(`importing new cloud project '${remoteFile.header.name}' (${remoteFile.header.id})`)
                     const res = await fromCloud(null, remoteFile)
+                    if (!res) throw new Error(`Failed to import new cloud project ${remoteFile.header.name} ${remoteFile.header.id}`);
                     pxt.tickEvent(`identity.sync.importCloudProject`)
                     didProjectCountChange = true;
                 } catch (e) {
