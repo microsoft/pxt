@@ -522,6 +522,8 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
         pxt.log(`Cloud sync finished after ${elapsed} seconds with ${localHeaderChangesList.length} local changes.`);
         pxt.tickEvent(`identity.sync.finished`, { elapsed })
 
+        data.invalidate("headers:");
+
         return localHeaderChangesList
     }
     catch (e) {
