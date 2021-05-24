@@ -633,8 +633,9 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
                     return false;
                 }
             }
-        }
-        return true;
+            return true;
+        } 
+        return false;
     }
 
     renderCore() {
