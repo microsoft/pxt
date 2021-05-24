@@ -313,8 +313,8 @@ namespace ts.pxtc.service {
                 }
                 const type = checker?.getTypeAtLocation(param);
                 const typeSymbol = getPxtSymbolFromTsSymbol(type?.symbol, apis, checker);
-                if (typeSymbol?.attributes.fixedInstances) {
-                    return paramDefl;
+                if (typeSymbol?.attributes.fixedInstances && python) {
+                    return pxt.Util.snakify(paramDefl);
                 }
                 if (python) {
                     return pxtc.tsSnippetToPySnippet(paramDefl)
