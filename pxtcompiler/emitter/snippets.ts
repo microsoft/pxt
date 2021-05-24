@@ -311,7 +311,7 @@ namespace ts.pxtc.service {
                 if (typeNode.kind === SK.StringKeyword || deflKind === SK.StringKeyword) {
                     return paramDefl.indexOf(`"`) != 0 ? `"${paramDefl}"` : paramDefl;
                 }
-                let type = checker && checker.getTypeAtLocation(param);
+                const type = checker?.getTypeAtLocation(param);
                 const typeSymbol = getPxtSymbolFromTsSymbol(type?.symbol, apis, checker);
                 if (typeSymbol?.attributes.fixedInstances) {
                     return paramDefl;
