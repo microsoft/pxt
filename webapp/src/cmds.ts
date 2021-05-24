@@ -5,13 +5,18 @@ import * as pkg from "./package";
 import * as hidbridge from "./hidbridge";
 import * as webusb from "./webusb";
 import * as data from "./data";
+import * as dialogs from "./dialogs";
 import Cloud = pxt.Cloud;
+import { isDontShowDownloadDialogCookieSet } from "./dialogs";
 
 function log(msg: string) {
     pxt.debug(`cmds: ${msg}`);
 }
 
 let extensionResult: pxt.editor.ExtensionResult;
+// This can be overidden by the extension result
+pxt.commands.renderBrowserDownloadInstructions = dialogs.renderBrowserDownloadInstructions;
+
 
 function browserDownloadAsync(text: string, name: string, contentType: string): Promise<void> {
     pxt.BrowserUtils.browserDownloadBinText(
@@ -67,7 +72,12 @@ export function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promis
     if (!userContext && (resp.saveOnly || pxt.BrowserUtils.isBrowserDownloadInSameWindow())) {
         return Promise.resolve()
             .then(() => window.URL?.revokeObjectURL(url));
-    } else {
+    }
+    else if (isDontShowDownloadDialogCookieSet()) {
+        window.URL?.revokeObjectURL(url)
+        return Promise.resolve();
+    }
+    else {
         // save does the same as download as far iOS is concerned
         return pxt.commands.showUploadInstructionsAsync(fn, url, core.confirmAsync)
             .then(() => window.URL?.revokeObjectURL(url));
@@ -103,23 +113,22 @@ function showUploadInstructionsAsync(fn: string, url: string, confirmAsync: (opt
         hasCloseIcon: true,
         hideAgree: true,
         helpUrl,
+        bigHelpButton: true,
         className: 'downloaddialog',
         buttons: [
             downloadAgain && {
                 label: userDownload ? lf("Download") : lf("Download again"),
-                icon: "download",
-                className: userDownload ? "primary" : "ligthgrey",
+                className: userDownload ? "primary" : "lightgrey",
+                urlButton: true,
                 url,
                 fileName: fn
             },
-            connect && {
-                label: lf("Pair device"),
-                icon: "usb",
+            {
+                label: lf("Done"),
                 className: "primary",
                 onclick: () => {
-                    pxt.tickEvent('downloaddialog.pair')
+                    pxt.tickEvent('downloaddialog.done')
                     core.hideDialog();
-                    maybeReconnectAsync(true)
                 }
             },
         ],
@@ -190,7 +199,6 @@ export function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.De
                 .then(dev => core.showLoadingAsync(LOADING_KEY, lf("Downloading..."),
                     dev.reflashAsync(resp)
                         .then(() => dev.reconnectAsync()), 5000))
-                .then(() => core.infoNotification(lf("Download completed!")))
                 .finally(() => core.hideLoading(LOADING_KEY))
         ).catch((e) => {
             if (e.type === "repairbootloader") {

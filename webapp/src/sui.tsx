@@ -1118,6 +1118,7 @@ export interface ModalButton {
     onclick?: () => (Promise<void> | void);
     resolveVal?: number;
     url?: string;
+    urlButton?: boolean;
     fileName?: string;
     loading?: boolean;
     disabled?: boolean;
@@ -1326,7 +1327,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
                                 icon={action.icon}
                                 text={action.label}
                                 title={action.title || action.label}
-                                className={`ui button approve ${action.icon ? 'icon right' : ''} ${action.label ? 'labeled' : ''} ${action.className || ''} ${action.loading ? "loading disabled" : ""} ${action.disabled ? "disabled" : ""}`}
+                                className={`ui button approve ${action.icon ? 'icon right' : ''} ${(action.label && !action.urlButton) ? 'labeled' : ''} ${action.className || ''} ${action.loading ? "loading disabled" : ""} ${action.disabled ? "disabled" : ""}`}
                                 href={action.url}
                                 target={!action.fileName ? '_blank' : undefined}
                                 download={action.fileName ? pxt.Util.htmlEscape(action.fileName) : undefined}

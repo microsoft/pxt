@@ -168,6 +168,7 @@ export interface DialogOptions {
     modalContext?: string;
     hasCloseIcon?: boolean;
     helpUrl?: string;
+    bigHelpButton?: boolean;
     confirmationText?: string;      // Display a text input the user must type to confirm.
     confirmationCheckbox?: string;  // Display a checkbox the user must check to confirm.
     confirmationGranted?: boolean;
@@ -187,12 +188,23 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
         })
     }
     if (options.helpUrl) {
-        options.buttons.unshift({
-            className: "circular help",
-            title: lf("Help"),
-            icon: "help",
-            url: options.helpUrl
-        })
+        if (options.bigHelpButton) {
+            options.buttons.unshift({
+                className: "dialog-help-large help",
+                urlButton: true,
+                label: lf("Help"),
+                title: lf("Help"),
+                url: options.helpUrl
+            });
+        }
+        else {
+            options.buttons.unshift({
+                className: "circular help",
+                title: lf("Help"),
+                icon: "help",
+                url: options.helpUrl
+            });
+        }
     }
     return coretsx.renderConfirmDialogAsync(options as PromptOptions);
 }
