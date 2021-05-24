@@ -125,7 +125,8 @@ namespace pxt.tutorial {
     * Checks if the all required number of blocks for a tutorial step is used, returns a boolean
     * @param usersBlockUsed an array of strings
     * @param tutorialBlockUsed the next available index
-    * @return true if all the required tutorial blocks were used, false otherwise
+    * @param currRule the current rule with its TutorialRuleStatus
+    * @return a tutorial rule status for currRule
     */
     function validateNumberOfBlocks(usersBlockUsed: pxt.Map<number>, tutorialBlockUsed: pxt.Map<number>, currRule: TutorialRuleStatus): TutorialRuleStatus {
         const userBlockKeys = Object.keys(usersBlockUsed);
