@@ -75,10 +75,18 @@
         }
 
         .description {
+            display: flex;
+            align-items: flex-end;
             width: 20rem;
+            height: 6.5rem;
+            overflow-y: auto;
             font-size: 1.5rem;
             font-weight: 600;
             color: @white;
+            p {
+                flex-grow: 0;
+                max-height: 100%;
+            }
         }
 
         .action {
@@ -617,6 +625,7 @@
                 margin-left: @carouselArrowSizeMobile;
                 .description {
                     width: 12rem;
+                    height: 4rem;
                     font-size: 1rem;
                 }
                 .dots {
@@ -816,6 +825,7 @@
             &.hero .hero-banner-contents {
                 .description {
                     width: 12rem;
+                    height: 4rem;
                     font-size: 1rem;
                 }
                 .dots {
