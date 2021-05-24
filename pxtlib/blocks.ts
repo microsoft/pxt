@@ -259,6 +259,8 @@ namespace pxt.blocks {
                 return "text width";
             case "boolean":
                 return "random";
+            case "Array":
+                return "list";
             default:
                 return "align justify"
         }
