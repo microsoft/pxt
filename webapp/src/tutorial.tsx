@@ -633,8 +633,9 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
                     return false;
                 }
             }
+            return true;
         }
-        return true;
+        return false;
     }
 
     renderCore() {
@@ -653,8 +654,8 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         const hasHint = this.hasHint();
         const tutorialCardContent = stepInfo.headerContentMd;
         const showDialog = stepInfo.showDialog;
+        const validationEnabled = (stepInfo.codeValidated != undefined);
         const tutorialCodeValidated = this.isCodeValidated(stepInfo.codeValidated);
-        const validationEnabled = tutorialCodeValidated != undefined;
         const showMissingBlockPopupMessage = this.state.showUnusedBlockMessage && validationEnabled;
         const nextOnClick = (tutorialCodeValidated || !validationEnabled ||
             this.state.showUnusedBlockMessage) ? this.nextTutorialStep : this.showUnusedBlocksMessageOnClick;
