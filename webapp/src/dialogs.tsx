@@ -10,7 +10,7 @@ import * as cloudsync from "./cloudsync";
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
 
-const DONT_SHOW_COOKIE_ID = "downloaddialog_dontshowagain";
+const DONT_SHOW_KEY = "downloaddialog_dontshowagain";
 const DONT_SHOW_EXPIRATION = 7 * 24 * 60 * 60 * 1000;
 
 export function showAboutDialogAsync(projectView: pxt.editor.IProjectView) {
@@ -731,7 +731,8 @@ export function renderBrowserDownloadInstructions() {
     const onCheckboxClicked = (value: boolean) => {
         const valueString = "" + value;
         pxt.tickEvent("downloaddialog.dontshowagain", { checked: valueString });
-        pxt.BrowserUtils.setCookie(DONT_SHOW_COOKIE_ID, valueString, Date.now() + DONT_SHOW_EXPIRATION);
+
+        window.localStorage[DONT_SHOW_KEY] = valueString + ";" + Date.now() + DONT_SHOW_EXPIRATION;
     }
 
     return <div className="ui grid stackable upload">
@@ -785,6 +786,19 @@ export function renderBrowserDownloadInstructions() {
     </div>;
 }
 
-export function isDontShowDownloadDialogCookieSet() {
-    return pxt.BrowserUtils.getCookie(DONT_SHOW_COOKIE_ID) === "true";
+export function isDontShowDownloadDialogFlagSet() {
+    const value = window.localStorage[DONT_SHOW_KEY];
+
+    if (value) {
+        const [boolString, expiration] = value.split(";");
+
+        if (parseInt(expiration) < Date.now()) {
+            window.localStorage[DONT_SHOW_KEY] = "";
+            return false;
+        }
+
+        return boolString === "true";
+    }
+
+    return false;
 }

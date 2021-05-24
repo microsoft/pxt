@@ -7,7 +7,7 @@ import * as webusb from "./webusb";
 import * as data from "./data";
 import * as dialogs from "./dialogs";
 import Cloud = pxt.Cloud;
-import { isDontShowDownloadDialogCookieSet } from "./dialogs";
+import { isDontShowDownloadDialogFlagSet } from "./dialogs";
 
 function log(msg: string) {
     pxt.debug(`cmds: ${msg}`);
@@ -73,7 +73,7 @@ export function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promis
         return Promise.resolve()
             .then(() => window.URL?.revokeObjectURL(url));
     }
-    else if (isDontShowDownloadDialogCookieSet()) {
+    else if (isDontShowDownloadDialogFlagSet()) {
         window.URL?.revokeObjectURL(url)
         return Promise.resolve();
     }
