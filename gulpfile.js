@@ -586,7 +586,7 @@ const buildKarmaRunner = () => compileTsProject("tests/blocklycompiler-test", "b
 const runKarma = () => {
     let command;
     if (isWin32) {
-        command = "node_modules/.bin/karma.cmd start karma.conf.js ";
+        command = path.resolve("node_modules/.bin/karma.cmd") + " start karma.conf.js" ;
     }
     else {
         command = "./node_modules/.bin/karma start karma.conf.js ";

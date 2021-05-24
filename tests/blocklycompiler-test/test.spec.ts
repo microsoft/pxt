@@ -451,6 +451,34 @@ describe("blockly compiler", function () {
         it("should bail out of type checking when a recursive function calls itself", (done: () => void) => {
             blockTestAsync("function_bad_recursion").then(done, done);
         });
+
+        it("should handle an array of arrays as array argument", (done: () => void) => {
+            blockTestAsync("array_parameter_arrays").then(done, done);
+        })
+
+        it("should handle an array of strings as array argument", (done: () => void) => {
+            blockTestAsync("array_parameter_strings").then(done, done);
+        })
+
+        it("should handle a variable as array argument", (done: () => void) => {
+            blockTestAsync("array_parameter_variable").then(done, done);
+        })
+
+        it("should handle an array of variables as array argument", (done: () => void) => {
+            blockTestAsync("array_parameter_variables").then(done, done);
+        })
+
+        it("should handle an empty array as array argument", (done: () => void) => {
+            blockTestAsync("array_parameter_empty").then(done, done);
+        })
+
+        it("should handle an array of booleans as array argument", (done: () => void) => {
+            blockTestAsync("array_parameter_booleans").then(done, done);
+        })
+
+        it("should handle an array of empty arrays as array argument", (done: () => void) => {
+            blockTestAsync("array_parameter_empty_arrays").then(done, done);
+        })
     });
 
     describe("compiling special blocks", () => {

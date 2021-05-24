@@ -5,7 +5,7 @@ declare namespace Blockly {
 
     /**
      * Block Definitions
-     */ 
+     */
 
     interface BlockDefinition {
         codeCard?: any;
@@ -33,7 +33,7 @@ declare namespace Blockly {
 
     /**
      * Custom Fields
-     */ 
+     */
 
     interface FieldCustomOptions {
         blocksInfo: any;
@@ -58,7 +58,7 @@ declare namespace Blockly {
 
     /**
      * Functions
-     */ 
+     */
 
     namespace PXTBlockly {
         namespace FunctionUtils {
@@ -86,6 +86,7 @@ declare namespace Blockly {
         addBooleanExternal(): void;
         addStringExternal(): void;
         addNumberExternal(): void;
+        addArrayExternal(): void;
         addCustomExternal(typeName: string): void;
     }
 
