@@ -34,8 +34,7 @@ namespace pxt.tutorial {
                 const ruleName = TutorialRuleStatuses[i].RuleName;
                 switch (ruleName) {
                     case "validateNumberOfBlocks":
-                        const ruleStatus = validateNumberOfBlocks(usersBlockUsed, tutorialBlockUsed);
-                        currRuleToValidate.RuleStatus = ruleStatus;
+                        currRuleToValidate = validateNumberOfBlocks(usersBlockUsed, tutorialBlockUsed, currRuleToValidate);
                         break;
                     case "placeholder":
                         break;
@@ -56,7 +55,7 @@ namespace pxt.tutorial {
         for (let i = 0; i < ruleNames.length; i++) {
             const currRule: string = ruleNames[i];
             const ruleVal: boolean = listOfRules[currRule];
-            const currRuleStatus: TutorialRuleStatus = { RuleName: currRule, RuleTurnOn: ruleVal, RuleStatus: false, RuleMessage: ""};
+            const currRuleStatus: TutorialRuleStatus = { RuleName: currRule, RuleTurnOn: ruleVal, RuleStatus: false, RuleMessage: "" };
             listOfRuleStatuses.push(currRuleStatus);
         }
         return listOfRuleStatuses;
@@ -114,7 +113,10 @@ namespace pxt.tutorial {
         });
 
         const snippetStepKey = pxt.BrowserUtils.getTutorialCodeHash([hintCode]);
-        const blockMap = indexdb[snippetStepKey];
+        let blockMap = {};
+        if (indexdb != undefined) {
+            blockMap = indexdb[snippetStepKey];
+        }
 
         return blockMap;
     }
@@ -125,21 +127,34 @@ namespace pxt.tutorial {
     * @param tutorialBlockUsed the next available index
     * @return true if all the required tutorial blocks were used, false otherwise
     */
-    function validateNumberOfBlocks(usersBlockUsed: pxt.Map<number>, tutorialBlockUsed: pxt.Map<number>): boolean {
+    function validateNumberOfBlocks(usersBlockUsed: pxt.Map<number>, tutorialBlockUsed: pxt.Map<number>, currRule: TutorialRuleStatus): TutorialRuleStatus {
         const userBlockKeys = Object.keys(usersBlockUsed);
-        const tutorialBlockKeys = Object.keys(tutorialBlockUsed);
+        let tutorialBlockKeys: string[] = []
+        if (tutorialBlockUsed != undefined) {
+            tutorialBlockKeys = Object.keys(tutorialBlockUsed);
+        }
+        let isValid: boolean = true;
+        let sArr: string[] = [];
+        sArr[0] = "These are the blocks you seem to be missing:";
+        let arrayIndex: number = 1;
         if (userBlockKeys.length < tutorialBlockKeys.length) { // user doesn't have enough blocks
-            return false;
+            isValid = false;
         }
         for (let i: number = 0; i < tutorialBlockKeys.length; i++) {
             let tutorialBlockKey = tutorialBlockKeys[i];
             if (!usersBlockUsed[tutorialBlockKey]) { // user did not use a specific block
-                return false;
-            }
-            if (usersBlockUsed[tutorialBlockKey] < tutorialBlockUsed[tutorialBlockKey]) { // user did not use enough of a certain block
-                return false;
+                sArr[arrayIndex] = "- " + tutorialBlockKey;
+                arrayIndex++;
+                isValid = false;
+            } else if (usersBlockUsed[tutorialBlockKey] < tutorialBlockUsed[tutorialBlockKey]) { // user did not use enough of a certain block
+                sArr[arrayIndex] = "- " + tutorialBlockKey;
+                arrayIndex++;
+                isValid = false;
             }
         }
-        return true;
+        const message: string = sArr.join('\n');
+        currRule.RuleMessage = message;
+        currRule.RuleStatus = isValid;
+        return currRule;
     }
 }
