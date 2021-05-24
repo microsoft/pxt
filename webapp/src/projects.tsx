@@ -355,34 +355,84 @@ interface HeroBannerState {
     paused?: boolean;
 }
 
-const HERO_BANNER_DELAY = 7500; // 7.5 seconds per card
+const HERO_BANNER_DELAY = 6000; // 6 seconds per card
 class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
-    private prevGalleries: pxt.CodeCard[];
-    private carouselInterval: any = undefined;
+    protected prevGalleries: pxt.CodeCard[];
+    protected carouselTimeout: ReturnType<typeof setTimeout> = undefined;
+    protected dragStartX: number;
 
     constructor(props: ProjectsCarouselProps) {
         super(props)
-        this.handleRefreshCard = this.handleRefreshCard.bind(this);
-        this.handleCardClick = this.handleCardClick.bind(this);
         this.state = {
             cardIndex: 0,
         };
     }
 
-    private handleRefreshCard() {
-        pxt.debug(`next hero carousel`)
-        const cardIndex = this.state.cardIndex;
-        this.setState({ cardIndex: (cardIndex + 1) % this.prevGalleries.length })
+    protected handleRefreshCard = (backwards?: boolean) => {
+        pxt.debug(`next hero carousel`);
+        if (this.prevGalleries?.length) {
+            const cardIndex = this.state.cardIndex;
+            const nextOffset = backwards ? this.prevGalleries.length - 1 : 1;
+            this.setState({
+                cardIndex: (cardIndex + nextOffset) % this.prevGalleries.length
+            });
+        }
+        this.scheduleRefresh();
     }
 
-    private handleSetCardIndex(index: number) {
-        this.stopRefresh();
+    protected handleSetCardIndex = (index: number) => {
+        this.clearRefresh();
         this.setState({ cardIndex: index, paused: true });
     }
 
-    private handleCardClick = () => {
+    protected onPointerDown = (e: React.PointerEvent) => {
+        this.dragStartX = e.clientX;
+    }
+
+    protected onTouchstart = (e: React.TouchEvent) => {
+        if (e.touches?.length) {
+            this.dragStartX = e.touches[0].clientX;
+        }
+    }
+
+    protected onPointerUp = (e: React.PointerEvent) => {
+        this.handleRelease(e.clientX, e);
+    }
+
+    protected onTouchEnd = (e: React.TouchEvent) => {
+        this.handleRelease(e.changedTouches?.[0]?.clientX, e);
+    }
+
+    protected handleRelease(xPos: number, e: React.TouchEvent | React.PointerEvent) {
+        if (this.dragStartX !== undefined && xPos !== undefined) {
+            const diff = this.dragStartX - xPos;
+            this.dragStartX = undefined;
+
+            if (Math.abs(diff) > 30) {
+                e.stopPropagation();
+                e.preventDefault();
+                this.handleRefreshCard(diff < 0);
+            }
+        }
+    }
+
+    protected onKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
+        const key = core.keyCodeFromEvent(e);
+        switch (key) {
+            case 37: /** left **/
+                this.handleRefreshCard(true /** backwards **/);
+                e.stopPropagation();
+                break;
+            case 39: /** right */
+                this.handleRefreshCard();
+                e.stopPropagation();
+                break;
+        }
+    }
+
+    protected handleCardClick = () => {
         const card = this.state.cardIndex !== undefined
-            && this.prevGalleries[this.state.cardIndex]
+            && this.prevGalleries[this.state.cardIndex];
         if (card) {
             pxt.tickEvent("hero.card.click", {
                 gallery: pxt.appTarget.appTheme.homeScreenHeroGallery,
@@ -394,28 +444,27 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
         }
     }
 
-    private startRefresh() {
+    protected scheduleRefresh = () => {
         const { paused } = this.state;
-        if (!paused && !this.carouselInterval && this.prevGalleries && this.prevGalleries.length) {
-            pxt.debug(`start refreshing hero carousel`)
-            this.carouselInterval = setInterval(this.handleRefreshCard, HERO_BANNER_DELAY);
+        if (!paused) {
+            this.clearRefresh();
+            this.carouselTimeout = setTimeout(this.handleRefreshCard, HERO_BANNER_DELAY);
         }
     }
 
-    private stopRefresh() {
-        if (this.carouselInterval) {
-            pxt.debug(`stopping hero carousel`)
-            clearInterval(this.carouselInterval)
-            this.carouselInterval = undefined;
+    protected clearRefresh() {
+        if (this.carouselTimeout) {
+            clearTimeout(this.carouselTimeout);
+            this.carouselTimeout = undefined;
         }
     }
 
     componentDidMount() {
-        this.startRefresh();
+        this.scheduleRefresh();
     }
 
     componentWillUnmount() {
-        this.stopRefresh();
+        this.clearRefresh();
     }
 
     fetchGallery(): pxt.CodeCard[] {
@@ -435,6 +484,7 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
             imageUrl: heroBannerImg || heroCard?.imageUrl,
             description: heroCard?.description && pxt.U.rlf(heroCard.description),
             name: heroCard?.name && pxt.U.rlf(heroCard.name),
+            buttonLabel: heroCard?.buttonLabel && pxt.U.rlf(heroCard.buttonLabel),
         };
 
         if (!this.prevGalleries) {
@@ -455,12 +505,11 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
                 // ignore;
             } else {
                 this.prevGalleries = pxt.Util.concat(res.map(g => g.cards))
-                    .filter(card => card.url)
                     .slice(0, 5); // max 5 cards
                 if (heroBanner) {
                     this.prevGalleries.unshift(heroBanner);
                 }
-                this.startRefresh();
+                this.scheduleRefresh();
             }
         }
         return this.prevGalleries;
@@ -481,11 +530,19 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
 
         const description = card.description || card.name;
         const encodedBkgd = `url(${encodeURI(card.largeImageUrl || card.imageUrl)})`;
-        const label = codeCardButtonLabel(card.cardType, card.youTubeId, card.youTubePlaylistId);
+
+        const label = card.buttonLabel || codeCardButtonLabel(card.cardType, card.youTubeId, card.youTubePlaylistId);
         const hasAction = !!url || !!card.youTubeId || !!card.youTubePlaylistId;
 
+        /** Do not remove; common default that may be specified in pxtarget **/
+        // lf("New? Start here!");
+
         return <div className="ui segment getting-started-segment hero"
-            style={{ backgroundImage: encodedBkgd }}>
+                style={{ backgroundImage: encodedBkgd }}
+                onKeyDown={this.onKeyDown}
+                onPointerDown={this.onPointerDown} onTouchStart={this.onTouchstart}
+                onPointerUp={this.onPointerUp} onTouchEnd={this.onTouchEnd}
+            >
             {(!!description || hasAction || isGallery) && <div className="gradient-overlay" />}
             <div className="hero-banner-contents">
                 {!!description && <div className="description">
@@ -499,7 +556,7 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
                             youTubePlaylistId: card.youTubePlaylistId,
                             scr: card,
                         },
-                        "large blue button transition in fly right",
+                        "large blue button",
                         label,
                         card.cardType,
                         this.handleCardClick

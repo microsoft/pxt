@@ -10,6 +10,9 @@ import * as cloudsync from "./cloudsync";
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
 
+const DONT_SHOW_COOKIE_ID = "downloaddialog_dontshowagain";
+const DONT_SHOW_EXPIRATION = 7 * 24 * 60 * 60 * 1000;
+
 export function showAboutDialogAsync(projectView: pxt.editor.IProjectView) {
     const compileService = pxt.appTarget.compileService;
     const githubUrl = pxt.appTarget.appTheme.githubUrl;
@@ -713,4 +716,75 @@ export function promptTranslateBlock(blockid: string, blockTranslationIds: strin
             {blockTranslationIds.map(trid => <div key={`ictr${trid}`} className="ui basic segment">{trid}</div>)}
         </div>
     });
+}
+
+export function renderBrowserDownloadInstructions() {
+    const boardName = pxt.appTarget.appTheme.boardName || lf("device");
+    const boardDriveName = pxt.appTarget.appTheme.driveDisplayName || pxt.appTarget.compile.driveName || "???";
+    const fileExtension = pxt.appTarget.compile?.useUF2 ? ".uf2" : ".hex";
+
+    const onPairClicked = () => {
+        core.hideDialog();
+        pxt.commands.webUsbPairDialogAsync(pxt.usb.pairAsync, core.confirmAsync);
+    }
+
+    const onCheckboxClicked = (value: boolean) => {
+        const valueString = "" + value;
+        pxt.tickEvent("downloaddialog.dontshowagain", { checked: valueString });
+        pxt.BrowserUtils.setCookie(DONT_SHOW_COOKIE_ID, valueString, Date.now() + DONT_SHOW_EXPIRATION);
+    }
+
+    return <div className="ui grid stackable upload">
+        <div className="column sixteen wide instructions">
+            <div className="ui grid">
+                <div className="row">
+                    <div className="column">
+                        <div className="ui two column grid padded">
+                            <div className="column">
+                                <div className="ui">
+                                    <div className="content">
+                                        <div className="description">
+                                            {lf("Your code is being downloaded as a {1} file. You can drag this file to your {0} using your computer's file explorer.", boardName, fileExtension)}
+                                        </div>
+                                        <div className="download-callout">
+                                            <label className="ui purple ribbon large label">{lf("New!")}</label>
+                                            <div className="ui two column grid">
+                                                <div className="icon-align three wide column">
+                                                    <div />
+                                                    <i className="icon big usb"/>
+                                                    <div />
+                                                </div>
+                                                <div className="thirteen wide column">
+                                                    {lf("Download your code faster by pairing with web usb!")}
+                                                    <br/>
+                                                    <strong><a onClick={onPairClicked}>{lf("Pair now")}</a></strong>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="column">
+                                <div className="ui">
+                                    <div className="image">
+                                        <img alt={lf("Comic moving {1} file to {0}", boardDriveName, fileExtension)} className="ui medium rounded image" src={pxt.appTarget.appTheme.downloadDialogTheme?.dragFileImage} />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <sui.Checkbox
+                    inputLabel={lf("Don't show this again")}
+                    onChange={onCheckboxClicked}
+                />
+            </div>
+        </div>
+    </div>;
+}
+
+export function isDontShowDownloadDialogCookieSet() {
+    return pxt.BrowserUtils.getCookie(DONT_SHOW_COOKIE_ID) === "true";
 }
