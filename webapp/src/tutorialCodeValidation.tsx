@@ -46,7 +46,7 @@ export class MoveOn extends data.Component<TutorialCodeValidationProps, tutorial
         return <div>
             <div className={`tutorialCodeValidation no-select ${!vis ? 'hidden' : ''}`}>
                 <div className="codeValidationPopUpText">
-                    {rulesDefined ? rules.map(rule => <p>{(rule.RuleTurnOn && !rule.RuleStatus) ? rule.RuleMessage : ''}</p>) : ''}
+                    {rulesDefined ? rules.map((rule, index) => <p key={index + rule.RuleName}>{(rule.RuleTurnOn && !rule.RuleStatus) ? rule.RuleMessage : ''}</p>) : ''}
                 </div>
                 <div className="codeValidationPopUpText">
                     {lf("Do you still want to continue?")}
