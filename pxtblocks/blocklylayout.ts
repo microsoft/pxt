@@ -202,7 +202,7 @@ namespace pxt.blocks.layout {
     }
 
     const XLINK_NAMESPACE = "http://www.w3.org/1999/xlink";
-    const MAX_AREA = 250000000; // https://github.com/jhildenbiddle/canvas-size
+    const MAX_AREA = 120000000; // https://github.com/jhildenbiddle/canvas-size
 
     export function toSvgAsync(ws: Blockly.WorkspaceSvg, pixelDensity: number): Promise<{
         width: number; height: number; xml: string;
