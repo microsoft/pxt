@@ -387,7 +387,7 @@ declare namespace pxt {
         scriptManager?: boolean; // Whether or not to enable the script manager. default: false
         monacoFieldEditors?: string[]; // A list of field editors to show in monaco. Currently only "image-editor" is supported
         disableAPICache?: boolean; // Disables the api cache in target.js
-        sidebarTutorial? : boolean; // Move the tutorial pane to be on the left side of the screen
+        sidebarTutorial?: boolean; // Move the tutorial pane to be on the left side of the screen
         /**
          * Internal and temporary flags:
          * These flags may be removed without notice, please don't take a dependency on them
@@ -1061,7 +1061,7 @@ declare namespace pxt.tutorial {
         RuleMessage: string;
         test?: boolean;
     }
-    
+
     interface TutorialStepInfo {
         // fullscreen?: boolean; // DEPRECATED, replaced by "showHint"
         // unplugged?: boolean: // DEPRECATED, replaced by "showDialog"
@@ -1074,7 +1074,7 @@ declare namespace pxt.tutorial {
         hintContentMd?: string;
         activity?: number;
         resetDiff?: boolean; // reset diffify algo
-        codeValidated?: pxt.tutorial.TutorialRuleStatus[]; // Whether the user code has been marked valid for these set of rules
+        listOfValidationRules?: pxt.tutorial.TutorialRuleStatus[]; // Whether the user code has been marked valid for these set of rules
     }
 
     interface TutorialActivityInfo {

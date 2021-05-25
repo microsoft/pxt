@@ -39,25 +39,14 @@ export class MoveOn extends data.Component<TutorialCodeValidationProps, tutorial
         this.props.onNoButtonClick();
     }
 
-    compileMessage(rules: pxt.tutorial.TutorialRuleStatus[]): string {
-        let s: string = "";
-        if (rules != undefined) {
-            for (let i = 0; i < rules.length; i++) {
-                if (rules[i].RuleTurnOn && !rules[i].RuleStatus) {
-                    s = s.concat(s, rules[i].RuleMessage);
-                }
-            }
-        }
-        return s;
-    }
-
     renderCore() {
         const vis = this.props.isTutorialCodeInvalid;
-        const message = this.compileMessage(this.props.ruleComponents);
+        const rules = this.props.ruleComponents;
+        const rulesDefined = (rules != undefined);
         return <div>
             <div className={`tutorialCodeValidation no-select ${!vis ? 'hidden' : ''}`}>
                 <div className="codeValidationPopUpText">
-                    {lf(message)}
+                    {rulesDefined ? rules.map(rule => <p>{(rule.RuleTurnOn && !rule.RuleStatus) ? rule.RuleMessage : ''}</p>) : ''}
                 </div>
                 <div className="codeValidationPopUpText">
                     {lf("Do you still want to continue?")}

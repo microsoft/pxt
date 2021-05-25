@@ -33,10 +33,12 @@ namespace pxt.tutorial {
                 let currRuleToValidate = TutorialRuleStatuses[i];
                 const ruleName = TutorialRuleStatuses[i].RuleName;
                 switch (ruleName) {
-                    case "validateNumberOfBlocks":
-                        currRuleToValidate = validateNumberOfBlocks(usersBlockUsed, tutorialBlockUsed, currRuleToValidate);
+                    case "validateExactNumberOfBlocks":
+                        currRuleToValidate = validateExactNumberOfBlocks(usersBlockUsed, tutorialBlockUsed, currRuleToValidate);
                         break;
-                    case "placeholder":
+                    case "validateAtleastOneBlocks":
+                        break;
+                    case "validateMeetRequiredBlocks":
                         break;
                 }
             }
@@ -106,11 +108,12 @@ namespace pxt.tutorial {
         const { tutorialStepInfo, tutorialStep } = tutorial;
         const body = tutorial.tutorialStepInfo[tutorialStep].hintContentMd;
         let hintCode = "";
-
-        body.replace(/((?!.)\s)+/g, "\n").replace(/``` *(block|blocks)\s*\n([\s\S]*?)\n```/gmi, function (m0, m1, m2) {
-            hintCode = `{\n${m2}\n}`;
-            return "";
-        });
+        if (body != undefined) {
+            body.replace(/((?!.)\s)+/g, "\n").replace(/``` *(block|blocks)\s*\n([\s\S]*?)\n```/gmi, function (m0, m1, m2) {
+                hintCode = `{\n${m2}\n}`;
+                return "";
+            });
+        }
 
         const snippetStepKey = pxt.BrowserUtils.getTutorialCodeHash([hintCode]);
         let blockMap = {};
@@ -128,7 +131,7 @@ namespace pxt.tutorial {
     * @param currRule the current rule with its TutorialRuleStatus
     * @return a tutorial rule status for currRule
     */
-    function validateNumberOfBlocks(usersBlockUsed: pxt.Map<number>, tutorialBlockUsed: pxt.Map<number>, currRule: TutorialRuleStatus): TutorialRuleStatus {
+    function validateExactNumberOfBlocks(usersBlockUsed: pxt.Map<number>, tutorialBlockUsed: pxt.Map<number>, currRule: TutorialRuleStatus): TutorialRuleStatus {
         const userBlockKeys = Object.keys(usersBlockUsed);
         let tutorialBlockKeys: string[] = []
         if (tutorialBlockUsed != undefined) {
@@ -136,20 +139,15 @@ namespace pxt.tutorial {
         }
         let isValid: boolean = true;
         let sArr: string[] = [];
-        sArr[0] = "These are the blocks you seem to be missing:";
-        let arrayIndex: number = 1;
+        sArr[0] = lf("These are the blocks you seem to be missing:");
         if (userBlockKeys.length < tutorialBlockKeys.length) { // user doesn't have enough blocks
             isValid = false;
         }
         for (let i: number = 0; i < tutorialBlockKeys.length; i++) {
             let tutorialBlockKey = tutorialBlockKeys[i];
-            if (!usersBlockUsed[tutorialBlockKey]) { // user did not use a specific block
-                sArr[arrayIndex] = "- " + tutorialBlockKey;
-                arrayIndex++;
-                isValid = false;
-            } else if (usersBlockUsed[tutorialBlockKey] < tutorialBlockUsed[tutorialBlockKey]) { // user did not use enough of a certain block
-                sArr[arrayIndex] = "- " + tutorialBlockKey;
-                arrayIndex++;
+            if (!usersBlockUsed[tutorialBlockKey]                                            // user did not use a specific block or
+                || usersBlockUsed[tutorialBlockKey] < tutorialBlockUsed[tutorialBlockKey]) { // user did not use enough of a certain block
+                sArr.push("- " + tutorialBlockKey);
                 isValid = false;
             }
         }
