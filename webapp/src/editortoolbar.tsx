@@ -275,8 +275,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
             || (boards ? lf("Click to select hardware") : lf("Click for one-click downloads."));
 
         const hardwareMenuText = view == View.Mobile ? lf("Hardware") : lf("Choose hardware");
-        const ext = pxt.appTarget.compile.useUF2 ? ".uf2" : ".hex";
-        const downloadMenuText = view == View.Mobile ? (pxt.hwName || lf("Download")) : lf("Download {0} file", ext);
+        const downloadMenuText = view == View.Mobile ? (pxt.hwName || lf("Download")) : lf("Download as file");
         const downloadHelp = pxt.appTarget.appTheme.downloadDialogTheme?.downloadMenuHelpURL;
 
         if (hasMenu) {
