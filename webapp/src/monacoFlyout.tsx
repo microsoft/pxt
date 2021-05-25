@@ -274,7 +274,7 @@ export class MonacoFlyout extends data.Component<MonacoFlyoutProps, MonacoFlyout
                             || actualParam?.actualName
                             || part.name
                         if (isPython && actualParam?.defaultValue) {
-                            val = pxtc.tsSnippetToPySnippet(val) || val;
+                            val = pxtc.tsSnippetToPySnippet(val);
                         }
                         description.push(<span className="argName" key={name + i}>{val}</span>);
                         break;

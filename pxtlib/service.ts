@@ -635,7 +635,7 @@ namespace ts.pxtc {
     }
 
 
-    export function tsSnippetToPySnippet(param: string): string {
+    export function tsSnippetToPySnippet(param: string, symbol?: SymbolInfo): string {
         const keywords: pxt.Map<string> = {
             "true": "True",
             "false": "False",
@@ -645,7 +645,7 @@ namespace ts.pxtc {
         if (key) {
             return key
         }
-        if (param.includes(".")) {
+        if ((symbol && symbol.kind == SymbolKind.Enum) || (!symbol && param.includes("."))) {
             // Python enums are all caps
             const dotIdx = param.lastIndexOf(".");
             const left = param.substr(0, dotIdx)

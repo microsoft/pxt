@@ -317,7 +317,7 @@ namespace ts.pxtc.service {
                     return pxt.Util.snakify(paramDefl);
                 }
                 if (python) {
-                    return pxtc.tsSnippetToPySnippet(paramDefl)
+                    return pxtc.tsSnippetToPySnippet(paramDefl, typeSymbol)
                 }
 
                 return paramDefl
