@@ -10,8 +10,7 @@ import * as cloudsync from "./cloudsync";
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
 
-const DONT_SHOW_KEY = "downloaddialog_dontshowagain";
-const DONT_SHOW_EXPIRATION = 7 * 24 * 60 * 60 * 1000;
+let dontShowDownloadFlag = false;
 
 export function showAboutDialogAsync(projectView: pxt.editor.IProjectView) {
     const compileService = pxt.appTarget.compileService;
@@ -733,7 +732,7 @@ export function renderBrowserDownloadInstructions() {
         const valueString = "" + value;
         pxt.tickEvent("downloaddialog.dontshowagain", { checked: valueString });
 
-        window.localStorage[DONT_SHOW_KEY] = valueString + ";" + Date.now() + DONT_SHOW_EXPIRATION;
+        dontShowDownloadFlag = value;
     }
 
     return <div className="ui grid stackable upload">
@@ -790,22 +789,9 @@ export function renderBrowserDownloadInstructions() {
 }
 
 export function clearDontShowDownloadDialogFlag() {
-    window.localStorage[DONT_SHOW_KEY] = "";
+    dontShowDownloadFlag = false;
 }
 
 export function isDontShowDownloadDialogFlagSet() {
-    const value = window.localStorage[DONT_SHOW_KEY];
-
-    if (value) {
-        const [boolString, expiration] = value.split(";");
-
-        if (parseInt(expiration) < Date.now()) {
-            clearDontShowDownloadDialogFlag();
-            return false;
-        }
-
-        return boolString === "true";
-    }
-
-    return false;
+    return dontShowDownloadFlag;
 }
