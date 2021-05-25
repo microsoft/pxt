@@ -8,6 +8,7 @@ import * as cmds from "./cmds"
 import * as cloud from "./cloud";
 import * as auth from "./auth";
 import { ProjectView } from "./app";
+import { clearDontShowDownloadDialogFlag } from "./dialogs";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -177,7 +178,16 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
 
     }
 
+    protected onDownloadButtonClick = () => {
+        pxt.tickEvent("editortools.downloadbutton", { collapsed: this.getCollapsedState() }, { interactiveConsent: true });
+        this.compile();
+    }
+
     protected onHwDownloadClick = () => {
+        // Matching the tick in the call to compile() above for historical reasons
+        pxt.tickEvent("editortools.download", { collapsed: this.getCollapsedState() }, { interactiveConsent: true });
+        pxt.tickEvent("editortools.downloadasfile", { collapsed: this.getCollapsedState() }, { interactiveConsent: true });
+        clearDontShowDownloadDialogFlag();
         (this.props.parent as ProjectView).compile(true);
     }
 
@@ -256,7 +266,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         }
 
         let el = [];
-        el.push(<EditorToolbarButton key="downloadbutton" icon={downloadIcon} className={`primary download-button ${downloadButtonClasses}`} text={view != View.Mobile ? downloadText : undefined} title={compileTooltip} onButtonClick={this.compile} view='computer' />)
+        el.push(<EditorToolbarButton key="downloadbutton" icon={downloadIcon} className={`primary download-button ${downloadButtonClasses}`} text={view != View.Mobile ? downloadText : undefined} title={compileTooltip} onButtonClick={this.onDownloadButtonClick} view='computer' />)
 
         const deviceName = pxt.hwName || pxt.appTarget.appTheme.boardNickname || lf("device");
         const tooltip = pxt.hwName

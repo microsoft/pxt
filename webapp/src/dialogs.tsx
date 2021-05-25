@@ -789,6 +789,10 @@ export function renderBrowserDownloadInstructions() {
     </div>;
 }
 
+export function clearDontShowDownloadDialogFlag() {
+    window.localStorage[DONT_SHOW_KEY] = "";
+}
+
 export function isDontShowDownloadDialogFlagSet() {
     const value = window.localStorage[DONT_SHOW_KEY];
 
@@ -796,7 +800,7 @@ export function isDontShowDownloadDialogFlagSet() {
         const [boolString, expiration] = value.split(";");
 
         if (parseInt(expiration) < Date.now()) {
-            window.localStorage[DONT_SHOW_KEY] = "";
+            clearDontShowDownloadDialogFlag();
             return false;
         }
 

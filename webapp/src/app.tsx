@@ -3484,6 +3484,7 @@ export class ProjectView
                     return pxt.winrt.releaseAllDevicesAsync();
                 })
                 .then(() => {
+                    dialogs.clearDontShowDownloadDialogFlag();
                     return this.resetWorkspace();
                 });
         });
