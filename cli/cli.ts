@@ -1791,6 +1791,12 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
     if (theme.title) targetStrings[theme.title] = theme.title;
     if (theme.name) targetStrings[theme.name] = theme.name;
     if (theme.description) targetStrings[theme.description] = theme.description;
+    if (theme.homeScreenHero && typeof theme.homeScreenHero != "string" ) {
+        const heroBannerCard = theme.homeScreenHero;
+        if (heroBannerCard.title) targetStrings[heroBannerCard.title] = heroBannerCard.title;
+        if (heroBannerCard.description) targetStrings[heroBannerCard.description] = heroBannerCard.description;
+        if (heroBannerCard.buttonLabel) targetStrings[heroBannerCard.buttonLabel] = heroBannerCard.buttonLabel;
+    }
 
     // add the labels for the target contributed types that appear in the block function create dialog
     if (cfg.runtime?.functionsOptions?.extraFunctionEditorTypes?.length) {
