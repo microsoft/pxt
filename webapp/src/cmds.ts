@@ -69,13 +69,9 @@ export function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promis
         return Promise.resolve();
     }
 
-    if (!userContext && (resp.saveOnly || pxt.BrowserUtils.isBrowserDownloadInSameWindow())) {
+    if (!userContext && pxt.BrowserUtils.isBrowserDownloadInSameWindow() || isDontShowDownloadDialogFlagSet()) {
         return Promise.resolve()
             .then(() => window.URL?.revokeObjectURL(url));
-    }
-    else if (isDontShowDownloadDialogFlagSet()) {
-        window.URL?.revokeObjectURL(url)
-        return Promise.resolve();
     }
     else {
         // save does the same as download as far iOS is concerned
