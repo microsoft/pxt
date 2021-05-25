@@ -886,7 +886,7 @@ export class ProjectView
         let changeHandler = () => {
             if (this.editorFile) {
                 if (this.editorFile.inSyncWithEditor)
-                    pxt.tickEvent("activity.edit", { editor: this.editor.getId().replace(/Editor$/, '')}, { interactiveConsent: true } );
+                    pxt.tickEvent("activity.edit", { editor: this.editor.getId().replace(/Editor$/, '') }, { interactiveConsent: true });
                 this.editorFile.markDirty();
             }
             this.lastChangeTime = Util.now();
@@ -1288,7 +1288,7 @@ export class ProjectView
         const tutorialOptions = this.state.tutorialOptions;
         const stepInfo = tutorialOptions.tutorialStepInfo[tutorialOptions.tutorialStep];
         const tutorialCodeValidationIsOn = tutorialOptions.metadata.tutorialCodeValidation;
-        if (tutorialCodeValidationIsOn) stepInfo.codeValidated = status;
+        if (tutorialCodeValidationIsOn) stepInfo.listOfValidationRules = status;
 
         // Update the state with the code status, so the tutorial card can re-render
         this.setState({ tutorialOptions: tutorialOptions });
@@ -3197,7 +3197,7 @@ export class ProjectView
         this.setState({
             debugging: state,
             debugFirstRun: state
-         }, () => {
+        }, () => {
             this.setSimulatorFullScreen(false); // exit fullscreen if necessary
             this.onDebuggingStart();
         });
@@ -4830,27 +4830,27 @@ document.addEventListener("DOMContentLoaded", () => {
             const pxtBranch = pxt.appTarget.versions.pxtCrowdinBranch;
             const targetBranch = pxt.appTarget.versions.targetCrowdinBranch;
             return Util.updateLocalizationAsync({
-                    targetId: targetId,
-                    baseUrl: baseUrl,
-                    code: useLang,
-                    pxtBranch: pxtBranch,
-                    targetBranch: targetBranch,
-                    force: force,
-                }).then(() => {
-                    if (pxt.Util.isLocaleEnabled(useLang)) {
-                        pxt.BrowserUtils.setCookieLang(useLang);
-                        lang.setInitialLang(useLang);
-                    } else {
-                        pxt.tickEvent("unavailablelocale", { lang: useLang, force: (force ? "true" : "false") });
-                    }
-                    pxt.tickEvent("locale", { lang: pxt.Util.userLanguage(), live: (pxt.Util.liveLocalizationEnabled() ? "true" : "false") });
-                    // Download sim translations and save them in the sim
-                    // don't wait!
-                    Util.downloadTranslationsAsync(
-                        targetId, baseUrl, useLang,
-                        pxtBranch, targetBranch, pxt.Util.liveLocalizationEnabled(), Util.TranslationsKind.Sim)
-                        .then(simStrings => simStrings && simulator.setTranslations(simStrings))
-                });
+                targetId: targetId,
+                baseUrl: baseUrl,
+                code: useLang,
+                pxtBranch: pxtBranch,
+                targetBranch: targetBranch,
+                force: force,
+            }).then(() => {
+                if (pxt.Util.isLocaleEnabled(useLang)) {
+                    pxt.BrowserUtils.setCookieLang(useLang);
+                    lang.setInitialLang(useLang);
+                } else {
+                    pxt.tickEvent("unavailablelocale", { lang: useLang, force: (force ? "true" : "false") });
+                }
+                pxt.tickEvent("locale", { lang: pxt.Util.userLanguage(), live: (pxt.Util.liveLocalizationEnabled() ? "true" : "false") });
+                // Download sim translations and save them in the sim
+                // don't wait!
+                Util.downloadTranslationsAsync(
+                    targetId, baseUrl, useLang,
+                    pxtBranch, targetBranch, pxt.Util.liveLocalizationEnabled(), Util.TranslationsKind.Sim)
+                    .then(simStrings => simStrings && simulator.setTranslations(simStrings))
+            });
         })
         .then(() => {
             pxt.BrowserUtils.initTheme();

@@ -88,7 +88,10 @@ function getUsedBlocksInternalAsync(code: string[], id: string, language?: strin
                         if (!snippetBlocks[snippetHash]) snippetBlocks[snippetHash] = {}
                         const blk = allblocks[bi];
                         if (!blk.isShadow()) {
-                            snippetBlocks[snippetHash][blk.type] = 1;
+                            if (!snippetBlocks[snippetHash][blk.type]) {
+                                snippetBlocks[snippetHash][blk.type] = 0;
+                            }
+                            snippetBlocks[snippetHash][blk.type] = snippetBlocks[snippetHash][blk.type] + 1;
                             usedBlocks[blk.type] = 1;
                         }
                     }
@@ -620,6 +623,9 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
             this.props.parent.setHintSeen(currentStep);
         }
         th.showHint(visible, showFullText);
+        if (visible) {
+            this.setState({ showUnusedBlockMessage: false });
+        }
     }
 
     showUnusedBlocksMessage() {
@@ -654,8 +660,8 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         const hasHint = this.hasHint();
         const tutorialCardContent = stepInfo.headerContentMd;
         const showDialog = stepInfo.showDialog;
-        const validationEnabled = (stepInfo.codeValidated != undefined);
-        const tutorialCodeValidated = this.isCodeValidated(stepInfo.codeValidated);
+        const validationEnabled = (stepInfo.listOfValidationRules != undefined);
+        const tutorialCodeValidated = this.isCodeValidated(stepInfo.listOfValidationRules);
         const showMissingBlockPopupMessage = this.state.showUnusedBlockMessage && validationEnabled;
         const nextOnClick = (tutorialCodeValidated || !validationEnabled ||
             this.state.showUnusedBlockMessage) ? this.nextTutorialStep : this.showUnusedBlocksMessageOnClick;
@@ -698,7 +704,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
                 </div>
                 {hasNext ? <sui.Button icon={`${isRtl ? 'left' : 'right'} chevron large`} className={`nextbutton right attached ${!hasNext ? 'disabled' : ''}  ${tutorialCodeValidated ? 'isValidated' : ''}`} text={lf("Next")} textClass="widedesktop only" ariaLabel={lf("Go to the next step of the tutorial.")}
                     onClick={nextOnClick} onKeyDown={sui.fireClickOnEnter} /> : undefined}
-                {showMissingBlockPopupMessage && <TutorialCodeValidation.MoveOn onYesButtonClick={this.nextTutorialStep} onNoButtonClick={this.showUnusedBlocksMessage} initialVisible={this.state.showUnusedBlockMessage} isTutorialCodeInvalid={!tutorialCodeValidated} parent={this.props.parent} />}
+                {showMissingBlockPopupMessage && <TutorialCodeValidation.MoveOn onYesButtonClick={this.nextTutorialStep} onNoButtonClick={this.showUnusedBlocksMessage} initialVisible={this.state.showUnusedBlockMessage} isTutorialCodeInvalid={!tutorialCodeValidated} ruleComponents={stepInfo.listOfValidationRules} parent={this.props.parent} />}
                 {hasFinish ? <sui.Button icon="left checkmark" className={`orange right attached ${!tutorialReady ? 'disabled' : ''}`} text={lf("Finish")} ariaLabel={lf("Finish the tutorial.")} onClick={this.finishTutorial} onKeyDown={sui.fireClickOnEnter} /> : undefined}
             </div>
         </div>;

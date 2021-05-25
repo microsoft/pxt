@@ -33,11 +33,12 @@ namespace pxt.tutorial {
                 let currRuleToValidate = TutorialRuleStatuses[i];
                 const ruleName = TutorialRuleStatuses[i].RuleName;
                 switch (ruleName) {
-                    case "validateNumberOfBlocks":
-                        const ruleStatus = validateNumberOfBlocks(usersBlockUsed, tutorialBlockUsed);
-                        currRuleToValidate.RuleStatus = ruleStatus;
+                    case "validateExactNumberOfBlocks":
+                        currRuleToValidate = validateExactNumberOfBlocks(usersBlockUsed, tutorialBlockUsed, currRuleToValidate);
                         break;
-                    case "placeholder":
+                    case "validateAtleastOneBlocks":
+                        break;
+                    case "validateMeetRequiredBlocks":
                         break;
                 }
             }
@@ -56,7 +57,7 @@ namespace pxt.tutorial {
         for (let i = 0; i < ruleNames.length; i++) {
             const currRule: string = ruleNames[i];
             const ruleVal: boolean = listOfRules[currRule];
-            const currRuleStatus: TutorialRuleStatus = { RuleName: currRule, RuleTurnOn: ruleVal, RuleStatus: false, RuleMessage: ""};
+            const currRuleStatus: TutorialRuleStatus = { RuleName: currRule, RuleTurnOn: ruleVal, RuleStatus: false, RuleMessage: "" };
             listOfRuleStatuses.push(currRuleStatus);
         }
         return listOfRuleStatuses;
@@ -107,14 +108,18 @@ namespace pxt.tutorial {
         const { tutorialStepInfo, tutorialStep } = tutorial;
         const body = tutorial.tutorialStepInfo[tutorialStep].hintContentMd;
         let hintCode = "";
-
-        body.replace(/((?!.)\s)+/g, "\n").replace(/``` *(block|blocks)\s*\n([\s\S]*?)\n```/gmi, function (m0, m1, m2) {
-            hintCode = `{\n${m2}\n}`;
-            return "";
-        });
+        if (body != undefined) {
+            body.replace(/((?!.)\s)+/g, "\n").replace(/``` *(block|blocks)\s*\n([\s\S]*?)\n```/gmi, function (m0, m1, m2) {
+                hintCode = `{\n${m2}\n}`;
+                return "";
+            });
+        }
 
         const snippetStepKey = pxt.BrowserUtils.getTutorialCodeHash([hintCode]);
-        const blockMap = indexdb[snippetStepKey];
+        let blockMap = {};
+        if (indexdb != undefined) {
+            blockMap = indexdb[snippetStepKey];
+        }
 
         return blockMap;
     }
@@ -123,23 +128,32 @@ namespace pxt.tutorial {
     * Checks if the all required number of blocks for a tutorial step is used, returns a boolean
     * @param usersBlockUsed an array of strings
     * @param tutorialBlockUsed the next available index
-    * @return true if all the required tutorial blocks were used, false otherwise
+    * @param currRule the current rule with its TutorialRuleStatus
+    * @return a tutorial rule status for currRule
     */
-    function validateNumberOfBlocks(usersBlockUsed: pxt.Map<number>, tutorialBlockUsed: pxt.Map<number>): boolean {
+    function validateExactNumberOfBlocks(usersBlockUsed: pxt.Map<number>, tutorialBlockUsed: pxt.Map<number>, currRule: TutorialRuleStatus): TutorialRuleStatus {
         const userBlockKeys = Object.keys(usersBlockUsed);
-        const tutorialBlockKeys = Object.keys(tutorialBlockUsed);
+        let tutorialBlockKeys: string[] = []
+        if (tutorialBlockUsed != undefined) {
+            tutorialBlockKeys = Object.keys(tutorialBlockUsed);
+        }
+        let isValid: boolean = true;
+        let sArr: string[] = [];
+        sArr[0] = lf("These are the blocks you seem to be missing:");
         if (userBlockKeys.length < tutorialBlockKeys.length) { // user doesn't have enough blocks
-            return false;
+            isValid = false;
         }
         for (let i: number = 0; i < tutorialBlockKeys.length; i++) {
             let tutorialBlockKey = tutorialBlockKeys[i];
-            if (!usersBlockUsed[tutorialBlockKey]) { // user did not use a specific block
-                return false;
-            }
-            if (usersBlockUsed[tutorialBlockKey] < tutorialBlockUsed[tutorialBlockKey]) { // user did not use enough of a certain block
-                return false;
+            if (!usersBlockUsed[tutorialBlockKey]                                            // user did not use a specific block or
+                || usersBlockUsed[tutorialBlockKey] < tutorialBlockUsed[tutorialBlockKey]) { // user did not use enough of a certain block
+                sArr.push("- " + tutorialBlockKey);
+                isValid = false;
             }
         }
-        return true;
+        const message: string = sArr.join('\n');
+        currRule.RuleMessage = message;
+        currRule.RuleStatus = isValid;
+        return currRule;
     }
 }
