@@ -1302,7 +1302,9 @@ namespace pxt.BrowserUtils {
     }
 
     export function getCookieLang() {
-        return getCookie(pxt.Util.pxtLangCookieId);
+        const cookiePropRegex = new RegExp(`${pxt.Util.escapeForRegex(pxt.Util.pxtLangCookieId)}=(.*?)(?:;|$)`)
+        const cookieValue = cookiePropRegex.exec(document.cookie);
+        return cookieValue && cookieValue[1] || null;
     }
 
     export function setCookieLang(langId: string, docs = false) {
@@ -1313,20 +1315,9 @@ namespace pxt.BrowserUtils {
         if (langId !== getCookieLang()) {
             pxt.tickEvent(`menu.lang.setcookielang`, { lang: langId, docs: `${docs}` });
             const expiration = new Date();
-            setCookie(pxt.Util.pxtLangCookieId, langId, expiration.getTime() + (pxt.Util.langCookieExpirationDays * 24 * 60 * 60 * 1000));
+            expiration.setTime(expiration.getTime() + (pxt.Util.langCookieExpirationDays * 24 * 60 * 60 * 1000));
+            document.cookie = `${pxt.Util.pxtLangCookieId}=${langId}; expires=${expiration.toUTCString()}; path=/`;
         }
-    }
-
-    export function getCookie(id: string) {
-        const cookiePropRegex = new RegExp(`${pxt.Util.escapeForRegex(id)}=(.*?)(?:;|$)`)
-        const cookieValue = cookiePropRegex.exec(document.cookie);
-        return cookieValue && cookieValue[1] || null;
-    }
-
-    export function setCookie(id: string, value: string, expirationDate: number) {
-        const expireDate = new Date();
-        expireDate.setTime(expirationDate);
-        document.cookie = `${id}=${value}; expires=${expireDate.toUTCString()}; path=/`;
     }
 
     export function cacheBustingUrl(url: string): string {

@@ -10,8 +10,7 @@ import * as cloudsync from "./cloudsync";
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
 
-const DONT_SHOW_COOKIE_ID = "downloaddialog_dontshowagain";
-const DONT_SHOW_EXPIRATION = 7 * 24 * 60 * 60 * 1000;
+let dontShowDownloadFlag = false;
 
 export function showAboutDialogAsync(projectView: pxt.editor.IProjectView) {
     const compileService = pxt.appTarget.compileService;
@@ -722,6 +721,7 @@ export function renderBrowserDownloadInstructions() {
     const boardName = pxt.appTarget.appTheme.boardName || lf("device");
     const boardDriveName = pxt.appTarget.appTheme.driveDisplayName || pxt.appTarget.compile.driveName || "???";
     const fileExtension = pxt.appTarget.compile?.useUF2 ? ".uf2" : ".hex";
+    const webUSBSupported = pxt.usb.isEnabled && pxt.appTarget?.compile?.webUSB;
 
     const onPairClicked = () => {
         core.hideDialog();
@@ -731,7 +731,8 @@ export function renderBrowserDownloadInstructions() {
     const onCheckboxClicked = (value: boolean) => {
         const valueString = "" + value;
         pxt.tickEvent("downloaddialog.dontshowagain", { checked: valueString });
-        pxt.BrowserUtils.setCookie(DONT_SHOW_COOKIE_ID, valueString, Date.now() + DONT_SHOW_EXPIRATION);
+
+        dontShowDownloadFlag = value;
     }
 
     return <div className="ui grid stackable upload">
@@ -746,21 +747,23 @@ export function renderBrowserDownloadInstructions() {
                                         <div className="description">
                                             {lf("Your code is being downloaded as a {1} file. You can drag this file to your {0} using your computer's file explorer.", boardName, fileExtension)}
                                         </div>
-                                        <div className="download-callout">
-                                            <label className="ui purple ribbon large label">{lf("New!")}</label>
-                                            <div className="ui two column grid">
-                                                <div className="icon-align three wide column">
-                                                    <div />
-                                                    <i className="icon big usb"/>
-                                                    <div />
-                                                </div>
-                                                <div className="thirteen wide column">
-                                                    {lf("Download your code faster by pairing with web usb!")}
-                                                    <br/>
-                                                    <strong><a onClick={onPairClicked}>{lf("Pair now")}</a></strong>
+                                        {webUSBSupported &&
+                                            <div className="download-callout">
+                                                <label className="ui purple ribbon large label">{lf("New!")}</label>
+                                                <div className="ui two column grid">
+                                                    <div className="icon-align three wide column">
+                                                        <div />
+                                                        <i className="icon big usb"/>
+                                                        <div />
+                                                    </div>
+                                                    <div className="thirteen wide column">
+                                                        {lf("Download your code faster by pairing with web usb!")}
+                                                        <br/>
+                                                        <strong><a onClick={onPairClicked}>{lf("Pair now")}</a></strong>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
+                                        }
                                     </div>
                                 </div>
                             </div>
@@ -785,6 +788,10 @@ export function renderBrowserDownloadInstructions() {
     </div>;
 }
 
-export function isDontShowDownloadDialogCookieSet() {
-    return pxt.BrowserUtils.getCookie(DONT_SHOW_COOKIE_ID) === "true";
+export function clearDontShowDownloadDialogFlag() {
+    dontShowDownloadFlag = false;
+}
+
+export function isDontShowDownloadDialogFlagSet() {
+    return dontShowDownloadFlag;
 }

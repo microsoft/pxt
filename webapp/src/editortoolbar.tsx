@@ -8,6 +8,7 @@ import * as cmds from "./cmds"
 import * as cloud from "./cloud";
 import * as auth from "./auth";
 import { ProjectView } from "./app";
+import { clearDontShowDownloadDialogFlag } from "./dialogs";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -177,7 +178,16 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
 
     }
 
+    protected onDownloadButtonClick = () => {
+        pxt.tickEvent("editortools.downloadbutton", { collapsed: this.getCollapsedState() }, { interactiveConsent: true });
+        this.compile();
+    }
+
     protected onHwDownloadClick = () => {
+        // Matching the tick in the call to compile() above for historical reasons
+        pxt.tickEvent("editortools.download", { collapsed: this.getCollapsedState() }, { interactiveConsent: true });
+        pxt.tickEvent("editortools.downloadasfile", { collapsed: this.getCollapsedState() }, { interactiveConsent: true });
+        clearDontShowDownloadDialogFlag();
         (this.props.parent as ProjectView).compile(true);
     }
 
@@ -224,9 +234,8 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
             || (!!packetioConnected && packetioIcon)
             || targetTheme.downloadIcon
             || "xicon file-download";
-        const hasMenu = boards || webUSBSupported;
 
-        let downloadButtonClasses = hasMenu ? "left attached " : "";
+        let downloadButtonClasses = "left attached ";
         const downloadButtonIcon = "ellipsis";
         let hwIconClasses = "";
         let displayRight = false;
@@ -256,31 +265,30 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         }
 
         let el = [];
-        el.push(<EditorToolbarButton key="downloadbutton" icon={downloadIcon} className={`primary download-button ${downloadButtonClasses}`} text={view != View.Mobile ? downloadText : undefined} title={compileTooltip} onButtonClick={this.compile} view='computer' />)
+        el.push(<EditorToolbarButton key="downloadbutton" icon={downloadIcon} className={`primary download-button ${downloadButtonClasses}`} text={view != View.Mobile ? downloadText : undefined} title={compileTooltip} onButtonClick={this.onDownloadButtonClick} view='computer' />)
 
         const deviceName = pxt.hwName || pxt.appTarget.appTheme.boardNickname || lf("device");
         const tooltip = pxt.hwName
             || (packetioConnected && lf("Connected to {0}", deviceName))
             || (packetioConnecting && lf("Connecting..."))
-            || (boards ? lf("Click to select hardware") : lf("Click for one-click downloads."));
+            || (boards ? lf("Click to select hardware") : (webUSBSupported ? lf("Click for one-click downloads.") : undefined));
 
         const hardwareMenuText = view == View.Mobile ? lf("Hardware") : lf("Choose hardware");
-        const ext = pxt.appTarget.compile.useUF2 ? ".uf2" : ".hex";
-        const downloadMenuText = view == View.Mobile ? (pxt.hwName || lf("Download")) : lf("Download {0} file", ext);
+        const downloadMenuText = view == View.Mobile ? (pxt.hwName || lf("Download")) : lf("Download as file");
         const downloadHelp = pxt.appTarget.appTheme.downloadDialogTheme?.downloadMenuHelpURL;
 
-        if (hasMenu) {
-            const usbIcon = pxt.appTarget.appTheme.downloadDialogTheme?.deviceIcon || "usb";
-            el.push(
-                <sui.DropdownMenu key="downloadmenu" role="menuitem" icon={`${downloadButtonIcon} horizontal ${hwIconClasses}`} title={lf("Download options")} className={`${hwIconClasses} right attached editortools-btn hw-button button`} dataTooltip={tooltip} displayAbove={true} displayRight={displayRight}>
-                    {webUSBSupported && !packetioConnected && <sui.Item role="menuitem" icon={usbIcon} text={lf("Connect device")} tabIndex={-1} onClick={this.onPairClick} />}
-                    {webUSBSupported && (packetioConnecting || packetioConnected) && <sui.Item role="menuitem" icon={usbIcon} text={lf("Disconnect")} tabIndex={-1} onClick={this.onDisconnectClick} />}
-                    {boards && <sui.Item role="menuitem" icon="microchip" text={hardwareMenuText} tabIndex={-1} onClick={this.onHwItemClick} />}
-                    <sui.Item role="menuitem" icon="xicon file-download" text={downloadMenuText} tabIndex={-1} onClick={this.onHwDownloadClick} />
-                    {downloadHelp && <sui.Item role="menuitem" icon="help circle" text={lf("Help")} tabIndex={-1} onClick={this.onHelpClick} />}
-                </sui.DropdownMenu>
-            )
-        }
+        // Add the ... menu
+        const usbIcon = pxt.appTarget.appTheme.downloadDialogTheme?.deviceIcon || "usb";
+        el.push(
+            <sui.DropdownMenu key="downloadmenu" role="menuitem" icon={`${downloadButtonIcon} horizontal ${hwIconClasses}`} title={lf("Download options")} className={`${hwIconClasses} right attached editortools-btn hw-button button`} dataTooltip={tooltip} displayAbove={true} displayRight={displayRight}>
+                {webUSBSupported && !packetioConnected && <sui.Item role="menuitem" icon={usbIcon} text={lf("Connect device")} tabIndex={-1} onClick={this.onPairClick} />}
+                {webUSBSupported && (packetioConnecting || packetioConnected) && <sui.Item role="menuitem" icon={usbIcon} text={lf("Disconnect")} tabIndex={-1} onClick={this.onDisconnectClick} />}
+                {boards && <sui.Item role="menuitem" icon="microchip" text={hardwareMenuText} tabIndex={-1} onClick={this.onHwItemClick} />}
+                <sui.Item role="menuitem" icon="xicon file-download" text={downloadMenuText} tabIndex={-1} onClick={this.onHwDownloadClick} />
+                {downloadHelp && <sui.Item role="menuitem" icon="help circle" text={lf("Help")} tabIndex={-1} onClick={this.onHelpClick} />}
+            </sui.DropdownMenu>
+        )
+
         return el;
     }
 
