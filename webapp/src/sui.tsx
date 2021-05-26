@@ -141,11 +141,8 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
     }
 
     isChildFocused() {
-        const children = this.getChildren();
-        for (let i = 0; i < children.length; i++) {
-            if (document.activeElement === children[i]) return true;
-        }
-        return false;
+        const menu = this.refs["menu"] as HTMLElement;
+        return menu.contains(document.activeElement);
     }
 
     private navigateToNextElement = (e: KeyboardEvent, prev: HTMLElement, next: HTMLElement) => {
