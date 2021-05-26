@@ -76,15 +76,6 @@ namespace ts.pxtc.service {
         return [...retApis, ...completionSymbols(enumVals, COMPLETION_DEFAULT_WEIGHT)]
     }
 
-    export function tsKeywordToPyKeyword(keyword: string): string | undefined {
-        const map: pxt.Map<string> = {
-            "true": "True",
-            "false": "False",
-            "null": "None"
-        }
-        return map[keyword]
-    }
-
     export function getBasicKindDefault(kind: SyntaxKind, isPython: boolean): string | undefined {
         switch (kind) {
             case SK.StringKeyword: return "\"\"";
@@ -272,8 +263,6 @@ namespace ts.pxtc.service {
         }
         return null
     }
-
-
 
     export function getDefaultEnumValue(t: Type, python: boolean): string {
         // Note: AFAIK this is NOT guranteed to get the same default as you get in

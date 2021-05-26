@@ -139,7 +139,7 @@ namespace ts.pxtc.service {
         }
 
         if (python)
-            fnName = snakify(fnName);
+            fnName = U.snakify(fnName);
 
         const attrs = fn.attributes;
 
@@ -169,7 +169,7 @@ namespace ts.pxtc.service {
             if (element.attributes.defaultInstance) {
                 snippetPrefix = element.attributes.defaultInstance;
                 if (python && snippetPrefix)
-                    snippetPrefix = snakify(snippetPrefix);
+                    snippetPrefix = U.snakify(snippetPrefix);
             }
             else if (element.namespace) { // some blocks don't have a namespace such as parseInt
                 const nsInfo = apis.byQName[element.namespace];
@@ -231,7 +231,7 @@ namespace ts.pxtc.service {
                         }
                         snippetPrefix = params.thisParameter.defaultValue || varName;
                         if (python && snippetPrefix)
-                            snippetPrefix = snakify(snippetPrefix);
+                            snippetPrefix = U.snakify(snippetPrefix);
                     }
                     isInstance = true;
                 }
@@ -257,7 +257,7 @@ namespace ts.pxtc.service {
 
         if (attrs && attrs.blockSetVariable) {
             if (python) {
-                const varName = getUniqueName(snakify(attrs.blockSetVariable));
+                const varName = getUniqueName(U.snakify(attrs.blockSetVariable));
                 const varNode = {
                     default: varName,
                     isDefinition: true
@@ -311,11 +311,13 @@ namespace ts.pxtc.service {
                 if (typeNode.kind === SK.StringKeyword || deflKind === SK.StringKeyword) {
                     return paramDefl.indexOf(`"`) != 0 ? `"${paramDefl}"` : paramDefl;
                 }
-
+                const type = checker?.getTypeAtLocation(param);
+                const typeSymbol = getPxtSymbolFromTsSymbol(type?.symbol, apis, checker);
+                if (typeSymbol?.attributes.fixedInstances && python) {
+                    return pxt.Util.snakify(paramDefl);
+                }
                 if (python) {
-                    let pyKeyword = tsKeywordToPyKeyword(paramDefl)
-                    if (pyKeyword)
-                        return pyKeyword
+                    return pxtc.tsSnippetToPySnippet(paramDefl, typeSymbol)
                 }
 
                 return paramDefl
@@ -602,7 +604,7 @@ namespace ts.pxtc.service {
 
                 if (enumParams) n += "_" + enumParams;
 
-                n = snakify(n);
+                n = U.snakify(n);
                 n = getUniqueName(n)
                 preStmt = [
                     ...preStmt, preStmt.length ? "\n" : "",
@@ -628,7 +630,7 @@ namespace ts.pxtc.service {
         function emitEmptyFn(n?: string): SnippetNode {
             if (python) {
                 n = n || "fn"
-                n = snakify(n);
+                n = U.snakify(n);
                 n = getUniqueName(n)
                 preStmt = [
                     ...preStmt, preStmt.length ? "\n" : "",

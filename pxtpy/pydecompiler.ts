@@ -1008,7 +1008,7 @@ namespace pxt.py {
             let calleePart: string = ""
             if (calleeExp)
                 calleePart = getSimpleExpNameParts(calleeExp)
-                    .map(pxtc.snakify)
+                    .map(U.snakify)
                     .join("_")
 
             // get words from the previous parameter(s)/arg(s)
@@ -1020,7 +1020,7 @@ namespace pxt.py {
                     let argType = tc.getTypeAtLocation(arg)
                     if (hasTypeFlag(argType, ts.TypeFlags.EnumLike)) {
                         let argParts = getSimpleExpNameParts(arg)
-                            .map(pxtc.snakify)
+                            .map(U.snakify)
                         enumParamParts = enumParamParts.concat(argParts)
                     }
                 }
@@ -1035,7 +1035,7 @@ namespace pxt.py {
             // the full hint
             let hint = [calleePart, otherParamsPart, paramPart]
                 .filter(s => s)
-                .map(pxtc.snakify)
+                .map(U.snakify)
                 .map(s => s.toLowerCase())
                 .join("_") || "my_callback"
 
