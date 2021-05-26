@@ -300,6 +300,11 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
         }, 1);
     }
 
+    protected captureMouseEvent = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
     private focusFirst: boolean;
     private handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
         const charCode = core.keyCodeFromEvent(e);
@@ -356,7 +361,10 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
             >
                 {titleContent ? titleContent : genericContent(this.props)}
                 <div ref="menu" {...menuAria} className={menuClasses}
-                    role="menu">
+                    role="menu"
+                    onMouseDown={this.captureMouseEvent}
+                    onClick={this.captureMouseEvent}
+                >
                     {children}
                 </div>
             </div>);
