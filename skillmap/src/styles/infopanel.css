@@ -48,7 +48,8 @@
 }
 
 .info-panel-content > .info-panel-title,
-.info-panel-content > .info-panel-label {
+.info-panel-content > .info-panel-label,
+.info-panel-content > .info-panel-link {
     margin-bottom: 1rem;
 }
 
@@ -72,6 +73,12 @@
     text-align: center;
     text-transform: uppercase;
     background-color: var(--inactive-color);
+}
+
+.info-panel-link {
+    display: block;
+    width: 100%;
+    text-align: center;
 }
 
 .info-panel-detail {
@@ -171,6 +178,10 @@
         top: 0;
         width: 12rem;
         padding: 0.5rem 1rem;
+    }
+
+    .info-panel-link {
+        text-align: left;
     }
 
     .info-panel .actions {
