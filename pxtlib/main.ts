@@ -364,6 +364,7 @@ namespace pxt {
         monacoworkerjs: string; // "/beta---monacoworker",
         gifworkerjs: string; // /beta---gifworker",
         serviceworkerjs: string; // /beta---serviceworker
+        typeScriptWorkerJs: string; // /beta---tsworker
         pxtVersion: string; // "?",
         pxtRelId: string; // "9e298e8784f1a1d6787428ec491baf1f7a53e8fa",
         pxtCdnUrl: string; // "https://pxt.azureedge.net/commit/9e2...e8fa/",
@@ -394,6 +395,7 @@ namespace pxt {
             monacoworkerjs: "/monacoworker.js",
             gifworkerjs: "/gifjs/gif.worker.js",
             serviceworkerjs: "/serviceworker.js",
+            typeScriptWorkerJs: "/typeScriptWorker.js",
             pxtVersion: "local",
             pxtRelId: "localRelId",
             pxtCdnUrl: "/cdn/",
