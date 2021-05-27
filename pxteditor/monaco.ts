@@ -250,7 +250,7 @@ namespace pxt.vs {
 
         // Register our worker
         monaco.languages.typescript.typescriptDefaults.setWorkerOptions({
-        customWorkerPath: pxt.webConfig.typeScriptWorkerJs
+            customWorkerPath: pxt.webConfig.typeScriptWorkerJs
         });
 
         // compiler options
