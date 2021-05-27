@@ -1,5 +1,19 @@
 /// <reference path="./monaco.d.ts" />
+
+/**
+ * A few types used by webapp/src/typeScriptWorker.ts
+ *
+ * These types should be exported by monaco-typescript, but they aren't
+ */
 declare namespace monaco.languages.typescript {
+    export interface CustomTSWebWorkerFactory {
+        (
+            TSWorkerClass: typeof TSWorker,
+            tsc: any,
+            libs: Record<string, string>
+        ): typeof TSWorker;
+    }
+
     export class TSWorker implements TypeScriptWorker {
         /**
          * Get diagnostic messages for any syntax issues in the given file.
