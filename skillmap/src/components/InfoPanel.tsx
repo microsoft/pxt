@@ -18,6 +18,7 @@ interface InfoPanelProps {
     title: string;
     subtitle?: string;
     description: string;
+    infoUrl?: string;
     imageUrl?: string;
     details?: string[];
     node?: MapNode;
@@ -49,8 +50,9 @@ export class InfoPanelImpl extends React.Component<InfoPanelProps> {
     }
 
     render() {
-        const  { mapId, title, subtitle, description, imageUrl, details, node, status, completedHeaderId  } = this.props;
+        const  { mapId, title, subtitle, description, infoUrl, imageUrl, details, node, status, completedHeaderId  } = this.props;
         const statusLabel = this.getStatusLabel(status);
+        const isMap = !node;
         const isActivity = node && !isRewardNode(node);
         const tags = isActivity && (node as MapActivity).tags || undefined;
         return <div className="info-panel">
@@ -67,6 +69,7 @@ export class InfoPanelImpl extends React.Component<InfoPanelProps> {
                     <span>{statusLabel}</span>
                 </div>}
                 <div className="info-panel-description">{description}</div>
+                {isMap && infoUrl && <a className="info-panel-link" href={infoUrl} target="_blank" rel="noopener noreferrer">{lf("Learning Outcomes")}</a>}
                 {tags && tags.length > 0 && <div className="info-panel-tags">
                     {tags.map((el, i) => <div key={i}>{el}</div>)}
                 </div>}
@@ -74,7 +77,7 @@ export class InfoPanelImpl extends React.Component<InfoPanelProps> {
                     {details?.map((el, i) => <div key={`detail_${i}`}>{el}</div>)}
                 </div>
                 <div className="tablet-spacer" />
-                {node && (isActivity
+                {!isMap && (isActivity
                     ? <ActivityActions mapId={mapId} activityId={node.activityId} status={status} completedHeaderId={completedHeaderId} />
                     : <RewardActions mapId={mapId} activityId={node.activityId} status={status} type={(node as MapReward).type} />)
                 }
@@ -84,7 +87,7 @@ export class InfoPanelImpl extends React.Component<InfoPanelProps> {
 }
 
 function mapStateToProps(state: SkillMapState, ownProps: any) {
-    const { user, pageSourceUrl, maps, selectedItem } = state;
+    const { user, pageSourceUrl, maps, selectedItem, infoUrl } = state;
     const node = selectedItem && state.maps[selectedItem.mapId]?.activities[selectedItem.activityId];
     const isActivity = node?.kind === "activity";
 
@@ -130,6 +133,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         title: node?.displayName || state.title,
         subtitle,
         description: isActivity ? (node as MapActivity).description : state.description,
+        infoUrl,
         imageUrl: node ? node?.imageUrl : state.bannerImageUrl,
         node,
         status,
