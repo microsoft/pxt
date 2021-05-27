@@ -324,7 +324,7 @@ function inflateMetadata(section: MarkdownSection): PageMetadata {
     return {
         title: section.attributes["name"] || section.header,
         description: section.attributes["description"],
-        infoUrl: section.attributes["infourl"],
+        infoUrl: cleanInfoUrl(section.attributes["infourl"]),
         backgroundImageUrl: section.attributes["backgroundurl"],
         bannerImageUrl: section.attributes["bannerurl"],
         alternateSources: parseList(section.attributes["alternatesources"]),
@@ -358,6 +358,19 @@ function getContrastingColor(color: string) {
     else {
         return "#ffffff"
     }
+}
+
+function cleanInfoUrl(url?: string) {
+    // No info URL provided
+    if (!url) return undefined;
+
+    // Valid URL to Github (eg a README)
+    if (url.match(/^(https?:\/\/)?(www\.)?github\.com/gi)) return url.replace(/\?[\s\S]+$/gi, "");
+
+    // Valid URL to MakeCode docs
+    if (url.indexOf(".") < 0) return `${url.startsWith("/") ? "" : "/"}${url}`;
+
+    error("Educator info URL must be to Github or MakeCode documentation")
 }
 
 function parseList(list: string, includeDuplicates = false) {
