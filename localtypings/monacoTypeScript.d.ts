@@ -5,7 +5,7 @@
  *
  * These types should be exported by monaco-typescript, but they aren't
  */
-declare namespace monaco.languages.typescript {
+ declare namespace monaco.languages.typescript {
     export interface CustomTSWebWorkerFactory {
         (
             TSWorkerClass: typeof TSWorker,
