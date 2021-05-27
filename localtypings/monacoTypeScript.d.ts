@@ -1,7 +1,7 @@
 /// <reference path="./monaco.d.ts" />
 
 /**
- * A few types used by webapp/src/typeScriptWorker.ts
+ * A few types used by webapp/src/tsworker.ts
  *
  * These types should be exported by monaco-typescript, but they aren't
  */

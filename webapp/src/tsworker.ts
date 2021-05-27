@@ -1,5 +1,9 @@
 /// <reference path="../../localtypings/monacoTypeScript.d.ts"/>
 
+/**
+ * This file is passed to the monaco-typescript worker in pxteditor/monaco.ts
+ * It isn't used directly in the webapp.
+ */
 const worker: monaco.languages.typescript.CustomTSWebWorkerFactory = (TSWorkerClass, tsc, libs) => {
     return class PxtWorker extends TSWorkerClass {
         async getCompletionsAtPosition(

@@ -395,7 +395,7 @@ namespace pxt {
             monacoworkerjs: "/monacoworker.js",
             gifworkerjs: "/gifjs/gif.worker.js",
             serviceworkerjs: "/serviceworker.js",
-            typeScriptWorkerJs: "/typeScriptWorker.js",
+            typeScriptWorkerJs: "/tsworker.js",
             pxtVersion: "local",
             pxtRelId: "localRelId",
             pxtCdnUrl: "/cdn/",

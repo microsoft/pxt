@@ -359,7 +359,7 @@ const copyWebapp = () =>
         "built/webapp/src/worker.js",
         "built/webapp/src/serviceworker.js",
         "built/webapp/src/simulatorserviceworker.js",
-        "built/webapp/src/typeScriptWorker.js",
+        "built/webapp/src/tsworker.js",
     ])
         .pipe(gulp.dest("built/web"));
 
