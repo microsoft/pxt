@@ -365,7 +365,7 @@ function cleanInfoUrl(url?: string) {
     if (!url) return undefined;
 
     // Valid URL to Github (eg a README)
-    if (url.match(/^(https?:\/\/)?(www\.)?github\.com/gi)) return url.replace(/\?[\s\S]+$/gi, "");
+    if (url.match(/^(https?:\/\/)?(www\.)?github\.com\//gi)) return url.replace(/\?[\s\S]+$/gi, "");
 
     // Valid URL to MakeCode docs
     if (url.indexOf(".") < 0) return `${url.startsWith("/") ? "" : "/"}${url}`;
