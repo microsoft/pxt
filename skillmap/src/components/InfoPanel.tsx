@@ -68,8 +68,8 @@ export class InfoPanelImpl extends React.Component<InfoPanelProps> {
                     <i className={`ui icon ${this.getStatusIcon(status)}`} />
                     <span>{statusLabel}</span>
                 </div>}
-                {isMap && infoUrl && <a className="info-panel-link" href={infoUrl} target="_blank" rel="noopener noreferrer">{lf("Learning Outcomes")}</a>}
                 <div className="info-panel-description">{description}</div>
+                {isMap && infoUrl && <a className="info-panel-link" href={infoUrl} target="_blank" rel="noopener noreferrer">{lf("Learning Outcomes")}</a>}
                 {tags && tags.length > 0 && <div className="info-panel-tags">
                     {tags.map((el, i) => <div key={i}>{el}</div>)}
                 </div>}
