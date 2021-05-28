@@ -394,5 +394,3 @@
 ----------------------------*/
 @tutorialCodeValidationCorrectBackground: @green;
 @tutorialCodeValidationCorrectTextColor: @white;
-@tutorialCodeValidationCorrectBackgroundMicrobit: #cd0365;
-@tutorialCodeValidationCorrectTextColorMicrobit: @white;
