@@ -1,11 +1,11 @@
 namespace pxt.tutorial {
 
     export interface TutorialRuleStatus {
-        RuleName: string;
-        RuleTurnOn: boolean;
-        RuleStatus: boolean;
-        RuleMessage: string;
-        isStrict: boolean;
+        ruleName: string;
+        ruleTurnOn: boolean;
+        ruleStatus?: boolean;
+        ruleMessage?: string;
+        isStrict?: boolean;
     }
 
     /**
@@ -32,7 +32,7 @@ namespace pxt.tutorial {
             const tutorialBlockUsed = extractBlockSnippet(tutorial, indexdb);
             for (let i = 0; i < TutorialRuleStatuses.length; i++) {
                 let currRuleToValidate = TutorialRuleStatuses[i];
-                const ruleName = TutorialRuleStatuses[i].RuleName;
+                const ruleName = TutorialRuleStatuses[i].ruleName;
                 switch (ruleName) {
                     case "validateExactNumberOfBlocks":
                         currRuleToValidate = validateExactNumberOfBlocks(usersBlockUsed, tutorialBlockUsed, currRuleToValidate);
@@ -61,7 +61,7 @@ namespace pxt.tutorial {
         for (let i = 0; i < ruleNames.length; i++) {
             const currRule: string = ruleNames[i];
             const ruleVal: boolean = listOfRules[currRule];
-            const currRuleStatus: TutorialRuleStatus = { RuleName: currRule, RuleTurnOn: ruleVal, RuleStatus: false, RuleMessage: "", isStrict: false };
+            const currRuleStatus: TutorialRuleStatus = { ruleName: currRule, ruleTurnOn: ruleVal, ruleStatus: false };
             listOfRuleStatuses.push(currRuleStatus);
         }
         return listOfRuleStatuses;
@@ -143,12 +143,9 @@ namespace pxt.tutorial {
         if (tutorialBlockUsed != undefined) {
             tutorialBlockKeys = Object.keys(tutorialBlockUsed);
         }
-        let isValid: boolean = true;
+        let isValid = userBlockKeys.length >= tutorialBlockKeys.length; // user has enough blocks
         let sArr: string[] = [];
         sArr[0] = lf("These are the blocks you seem to be missing:");
-        if (userBlockKeys.length < tutorialBlockKeys.length) { // user doesn't have enough blocks
-            isValid = false;
-        }
         for (let i: number = 0; i < tutorialBlockKeys.length; i++) {
             let tutorialBlockKey = tutorialBlockKeys[i];
             if (!usersBlockUsed[tutorialBlockKey]                                            // user did not use a specific block or
@@ -158,8 +155,8 @@ namespace pxt.tutorial {
             }
         }
         const message: string = sArr.join('\n');
-        currRule.RuleMessage = message;
-        currRule.RuleStatus = isValid;
+        currRule.ruleMessage = message;
+        currRule.ruleStatus = isValid;
         return currRule;
     }
 
@@ -172,14 +169,8 @@ namespace pxt.tutorial {
     */
     function validateAtleastOneBlocks(usersBlockUsed: pxt.Map<number>, tutorialBlockUsed: pxt.Map<number>, currRule: TutorialRuleStatus): TutorialRuleStatus {
         const userBlockKeys = Object.keys(usersBlockUsed);
-        let tutorialBlockKeys: string[] = []
-        if (tutorialBlockUsed != undefined) {
-            tutorialBlockKeys = Object.keys(tutorialBlockUsed);
-        }
-        let isValid: boolean = true;
-        if (userBlockKeys.length < tutorialBlockKeys.length) { // user doesn't have enough blocks
-            isValid = false;
-        }
+        const tutorialBlockKeys = Object.keys(tutorialBlockUsed ?? {});
+        let isValid = userBlockKeys.length >= tutorialBlockKeys.length; // user has enough blocks
         for (let i: number = 0; i < tutorialBlockKeys.length; i++) {
             let tutorialBlockKey = tutorialBlockKeys[i];
             if (!usersBlockUsed[tutorialBlockKey]) { // user did not use a specific block
@@ -187,7 +178,7 @@ namespace pxt.tutorial {
                 break;
             }
         }
-        currRule.RuleStatus = isValid;
+        currRule.ruleStatus = isValid;
         return currRule;
     }
 
@@ -216,8 +207,8 @@ namespace pxt.tutorial {
             }
         }
         const message: string = sArr.join('\n');
-        currRule.RuleMessage = message;
-        currRule.RuleStatus = isValid;
+        currRule.ruleMessage = message;
+        currRule.ruleStatus = isValid;
         return currRule;
     }
 }

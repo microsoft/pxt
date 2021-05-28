@@ -635,7 +635,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
     isCodeValidated(rules: pxt.tutorial.TutorialRuleStatus[]) {
         if (rules != undefined) {
             for (let i = 0; i < rules.length; i++) {
-                if (rules[i].RuleTurnOn && !rules[i].RuleStatus) {
+                if (rules[i].ruleTurnOn && !rules[i].ruleStatus) {
                     return false;
                 }
             }
@@ -645,14 +645,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
     }
 
     areStrictRulesPresent(rules: pxt.tutorial.TutorialRuleStatus[]) {
-        if (rules != undefined) {
-            for (let i = 0; i < rules.length; i++) {
-                if (rules[i].RuleTurnOn && rules[i].isStrict) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return rules?.some(rule => rule.ruleTurnOn && rule.isStrict) ?? false;
     }
 
     renderCore() {
