@@ -644,6 +644,17 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         return false;
     }
 
+    areStrictRulesPresent(rules: pxt.tutorial.TutorialRuleStatus[]) {
+        if (rules != undefined) {
+            for (let i = 0; i < rules.length; i++) {
+                if (rules[i].RuleTurnOn && rules[i].isStrict) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     renderCore() {
         const options = this.props.parent.state.tutorialOptions;
         const { tutorialReady, tutorialStepInfo, tutorialStep, tutorialStepExpanded, metadata } = options;
@@ -663,8 +674,9 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         const validationEnabled = (stepInfo.listOfValidationRules != undefined);
         const tutorialCodeValidated = this.isCodeValidated(stepInfo.listOfValidationRules);
         const showMissingBlockPopupMessage = this.state.showUnusedBlockMessage && validationEnabled;
+        const strictRulePresent = this.areStrictRulesPresent(stepInfo.listOfValidationRules);
         const nextOnClick = (tutorialCodeValidated || !validationEnabled ||
-            this.state.showUnusedBlockMessage) ? this.nextTutorialStep : this.showUnusedBlocksMessageOnClick;
+            this.state.showUnusedBlockMessage || (!tutorialCodeValidated && !strictRulePresent)) ? this.nextTutorialStep : this.showUnusedBlocksMessageOnClick;
 
         const tutorialAriaLabel = lf("Press Space or Enter to show a hint.");
         const tutorialHintTooltip = lf("Click to show a hint!");
@@ -704,7 +716,8 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
                 </div>
                 {hasNext ? <sui.Button icon={`${isRtl ? 'left' : 'right'} chevron large`} className={`nextbutton right attached ${!hasNext ? 'disabled' : ''}  ${tutorialCodeValidated ? 'isValidated' : ''}`} text={lf("Next")} textClass="widedesktop only" ariaLabel={lf("Go to the next step of the tutorial.")}
                     onClick={nextOnClick} onKeyDown={sui.fireClickOnEnter} /> : undefined}
-                {showMissingBlockPopupMessage && <TutorialCodeValidation.MoveOn onYesButtonClick={this.nextTutorialStep} onNoButtonClick={this.showUnusedBlocksMessage} initialVisible={this.state.showUnusedBlockMessage} isTutorialCodeInvalid={!tutorialCodeValidated} ruleComponents={stepInfo.listOfValidationRules} parent={this.props.parent} />}
+                {showMissingBlockPopupMessage &&
+                    <TutorialCodeValidation.MoveOn onYesButtonClick={this.nextTutorialStep} onNoButtonClick={this.showUnusedBlocksMessage} initialVisible={this.state.showUnusedBlockMessage} isTutorialCodeInvalid={!tutorialCodeValidated} ruleComponents={stepInfo.listOfValidationRules} areStrictRulesPresent={strictRulePresent} parent={this.props.parent} />}
                 {hasFinish ? <sui.Button icon="left checkmark" className={`orange right attached ${!tutorialReady ? 'disabled' : ''}`} text={lf("Finish")} ariaLabel={lf("Finish the tutorial.")} onClick={this.finishTutorial} onKeyDown={sui.fireClickOnEnter} /> : undefined}
             </div>
         </div>;

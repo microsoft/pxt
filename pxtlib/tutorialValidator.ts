@@ -5,6 +5,7 @@ namespace pxt.tutorial {
         RuleTurnOn: boolean;
         RuleStatus: boolean;
         RuleMessage: string;
+        isStrict: boolean;
     }
 
     /**
@@ -37,8 +38,11 @@ namespace pxt.tutorial {
                         currRuleToValidate = validateExactNumberOfBlocks(usersBlockUsed, tutorialBlockUsed, currRuleToValidate);
                         break;
                     case "validateAtleastOneBlocks":
+                        currRuleToValidate = validateAtleastOneBlocks(usersBlockUsed, tutorialBlockUsed, currRuleToValidate);
                         break;
                     case "validateMeetRequiredBlocks":
+                        // Not properly implemented - will be fixed in the next PR
+                        //currRuleToValidate = validateMeetRequiredBlocks(usersBlockUsed, tutorialBlockUsed, currRuleToValidate);
                         break;
                 }
             }
@@ -57,7 +61,7 @@ namespace pxt.tutorial {
         for (let i = 0; i < ruleNames.length; i++) {
             const currRule: string = ruleNames[i];
             const ruleVal: boolean = listOfRules[currRule];
-            const currRuleStatus: TutorialRuleStatus = { RuleName: currRule, RuleTurnOn: ruleVal, RuleStatus: false, RuleMessage: "" };
+            const currRuleStatus: TutorialRuleStatus = { RuleName: currRule, RuleTurnOn: ruleVal, RuleStatus: false, RuleMessage: "", isStrict: false };
             listOfRuleStatuses.push(currRuleStatus);
         }
         return listOfRuleStatuses;
@@ -107,7 +111,9 @@ namespace pxt.tutorial {
     function extractBlockSnippet(tutorial: TutorialOptions, indexdb: pxt.Map<pxt.Map<number>>) {
         const { tutorialStepInfo, tutorialStep } = tutorial;
         const body = tutorial.tutorialStepInfo[tutorialStep].hintContentMd;
+
         let hintCode = "";
+        let requiredBlocks = "";
         if (body != undefined) {
             body.replace(/((?!.)\s)+/g, "\n").replace(/``` *(block|blocks)\s*\n([\s\S]*?)\n```/gmi, function (m0, m1, m2) {
                 hintCode = `{\n${m2}\n}`;
@@ -120,18 +126,18 @@ namespace pxt.tutorial {
         if (indexdb != undefined) {
             blockMap = indexdb[snippetStepKey];
         }
-
         return blockMap;
     }
 
     /**
-    * Checks if the all required number of blocks for a tutorial step is used, returns a boolean
+    * Strict Rule: Checks if the all required number of blocks for a tutorial step is used, returns a TutorialRuleStatus
     * @param usersBlockUsed an array of strings
     * @param tutorialBlockUsed the next available index
     * @param currRule the current rule with its TutorialRuleStatus
     * @return a tutorial rule status for currRule
     */
     function validateExactNumberOfBlocks(usersBlockUsed: pxt.Map<number>, tutorialBlockUsed: pxt.Map<number>, currRule: TutorialRuleStatus): TutorialRuleStatus {
+        currRule.isStrict = true;
         const userBlockKeys = Object.keys(usersBlockUsed);
         let tutorialBlockKeys: string[] = []
         if (tutorialBlockUsed != undefined) {
@@ -148,6 +154,64 @@ namespace pxt.tutorial {
             if (!usersBlockUsed[tutorialBlockKey]                                            // user did not use a specific block or
                 || usersBlockUsed[tutorialBlockKey] < tutorialBlockUsed[tutorialBlockKey]) { // user did not use enough of a certain block
                 sArr.push("- " + tutorialBlockKey);
+                isValid = false;
+            }
+        }
+        const message: string = sArr.join('\n');
+        currRule.RuleMessage = message;
+        currRule.RuleStatus = isValid;
+        return currRule;
+    }
+
+    /**
+    * Loose Rule: Checks if the users has at least one block type for each rule
+    * @param usersBlockUsed an array of strings
+    * @param tutorialBlockUsed the next available index
+    * @param currRule the current rule with its TutorialRuleStatus
+    * @return a tutorial rule status for currRule
+    */
+    function validateAtleastOneBlocks(usersBlockUsed: pxt.Map<number>, tutorialBlockUsed: pxt.Map<number>, currRule: TutorialRuleStatus): TutorialRuleStatus {
+        const userBlockKeys = Object.keys(usersBlockUsed);
+        let tutorialBlockKeys: string[] = []
+        if (tutorialBlockUsed != undefined) {
+            tutorialBlockKeys = Object.keys(tutorialBlockUsed);
+        }
+        let isValid: boolean = true;
+        if (userBlockKeys.length < tutorialBlockKeys.length) { // user doesn't have enough blocks
+            isValid = false;
+        }
+        for (let i: number = 0; i < tutorialBlockKeys.length; i++) {
+            let tutorialBlockKey = tutorialBlockKeys[i];
+            if (!usersBlockUsed[tutorialBlockKey]) { // user did not use a specific block
+                isValid = false;
+                break;
+            }
+        }
+        currRule.RuleStatus = isValid;
+        return currRule;
+    }
+
+    /**
+     * Strict Rule: Checks if the all required number of blocks for a tutorial step is used, returns a TutorialRuleStatus
+     * @param usersBlockUsed an array of strings
+     * @param tutorialBlockUsed the next available index
+     * @param currRule the current rule with its TutorialRuleStatus
+     * @return a tutorial rule status for currRule
+     */
+    function validateMeetRequiredBlocks(usersBlockUsed: pxt.Map<number>, requiredBlocks: pxt.Map<number>, currRule: TutorialRuleStatus): TutorialRuleStatus {
+        currRule.isStrict = true;
+        const userBlockKeys = Object.keys(usersBlockUsed);
+        let requiredBlockKeys: string[] = []
+        if (requiredBlocks != undefined) {
+            requiredBlockKeys = Object.keys(requiredBlocks);
+        }
+        let isValid: boolean = true;
+        let sArr: string[] = [];
+        sArr[0] = lf("You are required to have the following block:");
+        for (let i: number = 0; i < requiredBlockKeys.length; i++) {
+            let requiredBlockKey = requiredBlockKeys[i];
+            if (!usersBlockUsed[requiredBlockKey]) {
+                sArr.push("- " + requiredBlockKey);
                 isValid = false;
             }
         }
