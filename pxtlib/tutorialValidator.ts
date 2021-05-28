@@ -61,7 +61,7 @@ namespace pxt.tutorial {
         for (let i = 0; i < ruleNames.length; i++) {
             const currRule: string = ruleNames[i];
             const ruleVal: boolean = listOfRules[currRule];
-            const currRuleStatus: TutorialRuleStatus = { ruleName: currRule, ruleTurnOn: ruleVal, ruleStatus: false };
+            const currRuleStatus: TutorialRuleStatus = { ruleName: currRule, ruleTurnOn: ruleVal};
             listOfRuleStatuses.push(currRuleStatus);
         }
         return listOfRuleStatuses;
