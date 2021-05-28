@@ -1059,7 +1059,7 @@ declare namespace pxt.tutorial {
         RuleTurnOn: boolean;
         RuleStatus: boolean;
         RuleMessage: string;
-        test?: boolean;
+        isStrict: boolean;
     }
 
     interface TutorialStepInfo {

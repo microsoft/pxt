@@ -13,6 +13,7 @@ interface TutorialCodeValidationProps extends ISettingsProps {
     initialVisible: boolean;
     isTutorialCodeInvalid: boolean;
     ruleComponents: pxt.tutorial.TutorialRuleStatus[];
+    areStrictRulesPresent: boolean;
 }
 
 interface tutorialCodeValidationState {
@@ -39,12 +40,14 @@ export class MoveOn extends data.Component<TutorialCodeValidationProps, tutorial
         this.props.onNoButtonClick();
     }
 
+
     renderCore() {
-        const vis = this.props.isTutorialCodeInvalid;
+        const codeInvalid = this.props.isTutorialCodeInvalid;
         const rules = this.props.ruleComponents;
         const rulesDefined = (rules != undefined);
+        const strictRulePresent = this.props.areStrictRulesPresent;
         return <div>
-            <div className={`tutorialCodeValidation no-select ${!vis ? 'hidden' : ''}`}>
+            <div className={`tutorialCodeValidation no-select ${(!codeInvalid || (codeInvalid && !strictRulePresent)) ? 'hidden' : ''}`}>
                 <div className="codeValidationPopUpText">
                     {rulesDefined ? rules.map((rule, index) => <p key={index + rule.RuleName}>{(rule.RuleTurnOn && !rule.RuleStatus) ? rule.RuleMessage : ''}</p>) : ''}
                 </div>
