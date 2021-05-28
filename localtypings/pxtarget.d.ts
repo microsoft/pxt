@@ -1055,11 +1055,11 @@ declare namespace pxt.tutorial {
     }
 
     interface TutorialRuleStatus {
-        RuleName: string;
-        RuleTurnOn: boolean;
-        RuleStatus: boolean;
-        RuleMessage: string;
-        test?: boolean;
+        ruleName: string;
+        ruleTurnOn: boolean;
+        ruleStatus?: boolean;
+        ruleMessage?: string;
+        isStrict?: boolean;
     }
 
     interface TutorialStepInfo {

@@ -294,15 +294,7 @@ ${code}
     function parseTutorialValidationRules(body: string, tutorialCodeValidation?: boolean): pxt.Map<boolean> {
         let listOfRules: pxt.Map<boolean> = {};
         if (tutorialCodeValidation) {
-            body = body.replace("{", '').replace("}", '').trim();
-            const rules: string[] = body.split(",");
-            for (let i = 0; i < rules.length; i++) {
-                let currRule = rules[i].trim();
-                const ruleValuePair: string[] = currRule.split(":");
-                const ruleKey = ruleValuePair[0].replace("\"", '').replace("\"", '').trim();
-                const ruleValue = (ruleValuePair[1] === 'true');
-                listOfRules[ruleKey] = ruleValue;
-            }
+            listOfRules = pxt.Util.jsonTryParse(body);
         }
         return listOfRules;
     }
@@ -410,7 +402,7 @@ ${code}
         if (!cachedInfo) return Promise.resolve();
 
         return pxt.BrowserUtils.tutorialInfoDbAsync()
-            .then(db =>  {
+            .then(db => {
                 if (id && cachedInfo[id]) {
                     const info = cachedInfo[id];
                     if (info.usedBlocks && info.hash) db.setWithHashAsync(id, info.snippetBlocks, info.hash);
@@ -420,7 +412,7 @@ ${code}
                         if (info.usedBlocks && info.hash) db.setWithHashAsync(key, info.snippetBlocks, info.hash);
                     }
                 }
-            }).catch((err) => {})
+            }).catch((err) => { })
     }
 
     export function resolveLocalizedMarkdown(ghid: pxt.github.ParsedRepo, files: pxt.Map<string>, fileName?: string): string {
