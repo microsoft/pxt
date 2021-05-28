@@ -392,4 +392,5 @@
 /*---------------------------
    Tutorial Code Validation
 ----------------------------*/
-@tutorialCodeValidationMoveOn: @green;
+@tutorialCodeValidationCorrectBackground: @green;
+@tutorialCodeValidationCorrectTextColor: @white;
