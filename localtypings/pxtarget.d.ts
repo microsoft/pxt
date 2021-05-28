@@ -276,6 +276,7 @@ declare namespace pxt {
         highContrastLogo?: string;
         highContrastPortraitLogo?: string;
         rightLogo?: string;
+        textLogo?: string;
         docsLogo?: string;
         docsHeader?: string;
         organization?: string;
@@ -309,6 +310,7 @@ declare namespace pxt {
         htmlTemplates?: Map<string>;
         githubUrl?: string;
         usbDocs?: string;
+        useTextLogo?: string; // if true: use 'textLogo' string in menu bar instead of image
         invertedMenu?: boolean; // if true: apply the inverted class to the menu
         coloredToolbox?: boolean; // if true: color the blockly toolbox categories
         invertedToolbox?: boolean; // if true: use the blockly inverted toolbox
@@ -1037,7 +1039,7 @@ declare namespace pxt.tutorial {
         assetFiles?: pxt.Map<string>;
         jres?: string; // JRES to be used when generating hints; necessary for tilemaps
         customTs?: string; // custom typescript code loaded in a separate file for the tutorial
-        tutorialValidationRules?: pxt.Map<boolean>; //a map of rules used in a tutorial and if the rules are activated 
+        tutorialValidationRules?: pxt.Map<boolean>; //a map of rules used in a tutorial and if the rules are activated
     }
 
     interface TutorialMetadata {
@@ -1103,7 +1105,7 @@ declare namespace pxt.tutorial {
         assetFiles?: pxt.Map<string>;
         jres?: string; // JRES to be used when generating hints; necessary for tilemaps
         customTs?: string; // custom typescript code loaded in a separate file for the tutorial
-        tutorialValidationRules?: pxt.Map<boolean>; //a map of rules used in a tutorial and if the rules are activated 
+        tutorialValidationRules?: pxt.Map<boolean>; //a map of rules used in a tutorial and if the rules are activated
     }
     interface TutorialCompletionInfo {
         // id of the tutorial

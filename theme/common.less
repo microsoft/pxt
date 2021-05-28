@@ -355,6 +355,38 @@ div.simframe > iframe {
     color: @mainMenuInvertedBackground !important;
 }
 
+.menubar {
+    .left.menu, .right.menu, .center.menu {
+        display: flex;
+        flex: 1;
+    }
+    .right.menu {
+        justify-content: flex-end;
+    }
+    .center.menu {
+        justify-content: center;
+    }
+
+    .ui.item {
+        margin: 0;
+    }
+
+    .ui.menu .brand {
+        &::before {
+            position: relative;
+            height: 1.5rem;
+            border-left: 2px solid @white;
+        }
+
+        /*move to mbit*/
+        .ui.logo {
+            height: 1.05rem;
+        }
+    }
+}
+
+
+
 /* toggle style */
 .ui.item.editor-menuitem .item.toggle {
     z-index: 1 !important;
@@ -454,9 +486,8 @@ div.simframe > iframe {
 }
 
 .ui.item.logo img {
-    margin-left: 1rem;
-    margin-right: 1rem;
-    height: 1.6rem;
+    margin: 0 1rem;
+    height: 1.4rem;
 }
 
 /* Powered by Microsoft logo*/
@@ -1284,9 +1315,9 @@ p.ui.font.small {
         left:@simulatorWidthSmall;
     }
     /* Logo */
-    .ui.logo.brand .name {
-        display: none !important;
-    }
+    // .ui.logo.brand .name {
+    //     display: none !important;
+    // }
     /* Help card */
     #helpcard {
         top: auto;
@@ -1507,7 +1538,6 @@ p.ui.font.small {
 
     /* Logo */
     .ui.item.logo img {
-        height: 2.2rem;
         width: auto;
         margin-left: 0.4rem;
         margin-right: 0.4rem;
@@ -1578,12 +1608,6 @@ p.ui.font.small {
         padding-bottom: 0.5rem;
     }
 
-    #mainmenu {
-        .ui.logo.brand,
-        .ui.logo.organization {
-            display: none !important;
-        }
-    }
     .fullscreensim .simtoolbar .ui.button {
         font-size: 1rem;
     }

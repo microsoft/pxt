@@ -46,6 +46,7 @@ import * as keymap from "./keymap";
 import * as auth from "./auth";
 import * as cloud from "./cloud";
 import * as user from "./user";
+import * as headerbar from "./headerbar";
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -4147,7 +4148,7 @@ export class ProjectView
                     <header className="menubar" role="banner">
                         {inEditor ? <accessibility.EditorAccessibilityMenu parent={this} highContrast={hc} /> : undefined}
                         <notification.NotificationBanner parent={this} />
-                        <container.MainMenu parent={this} />
+                        <headerbar.HeaderBar parent={this} />
                     </header>}
                 {isSidebarTutorial && flyoutOnly && inTutorial && <sidebarTutorial.SidebarTutorialCard ref={ProjectView.tutorialCardId} parent={this} pokeUser={this.state.pokeUserComponent == ProjectView.tutorialCardId} />}
                 {inTutorial && <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
@@ -4186,7 +4187,7 @@ export class ProjectView
                     <div className="ui home projectsdialog">
                         <header className="menubar" role="banner">
                             <accessibility.HomeAccessibilityMenu parent={this} highContrast={hc} />
-                            <projects.ProjectsMenu parent={this} />
+                            <headerbar.HeaderBar parent={this} />
                         </header>
                         <projects.Projects parent={this} ref={this.handleHomeRef} />
                     </div>
