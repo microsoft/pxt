@@ -449,7 +449,7 @@ declare namespace pxt {
         downloadHelpURL?: string;
         firmwareHelpURL?: string;
         troubleshootWebUSBHelpURL?: string;
-        incompatibleHardwareHelpUrl?: string;
+        incompatibleHardwareHelpURL?: string;
 
         dragFileImage?: string;
         connectDeviceImage?: string;

@@ -643,7 +643,7 @@ export function showUnsupportedHardwareMessageAsync(resp: pxtc.CompileResult) {
         pxt.tickEvent('unsupportedhardwaredialog.shown')
 
         const body = jsx ? undefined : lf("Oops! Looks like your project has code that won't run on the hardware you have connected. Would you like to download anyway?");
-        const helpUrl = pxt.appTarget.appTheme.downloadDialogTheme?.incompatibleHardwareHelpUrl;
+        const helpUrl = pxt.appTarget.appTheme.downloadDialogTheme?.incompatibleHardwareHelpURL;
         let cancelled = true;
         return core.confirmAsync({
             header: lf("Incompatible Code"),
