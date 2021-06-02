@@ -405,6 +405,7 @@ namespace pxt.editor {
         saveProjectAsync?: (project: pxt.cpp.HexFile) => Promise<void>;
         renderBrowserDownloadInstructions?: () => any /* JSX.Element */;
         renderUsbPairDialog?: (firmwareUrl?: string, failedOnce?: boolean) => any /* JSX.Element */;
+        renderIncompatibleHardwareDialog?: (unsupportedParts: string[]) => any /* JSX.Element */;
         showUploadInstructionsAsync?: (fn: string, url: string, confirmAsync: (options: any) => Promise<number>) => Promise<void>;
         toolboxOptions?: IToolboxOptions;
         blocklyPatch?: (pkgTargetVersion: string, dom: Element) => void;
