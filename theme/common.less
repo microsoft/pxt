@@ -475,11 +475,23 @@ div.simframe > iframe {
     margin: 0;
     padding: 0rem !important;
 }
-.ui.item.logo .name {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, inherit;
-    color: #666666;
-    padding: 0 0.3rem;
+.ui.menu .ui.item.logo:hover {
+    background: none;
 }
+
+.ui.item.logo.brand:hover {
+    cursor: pointer;
+}
+
+.ui.item.logo .name {
+    font-family: Segoe UI, Tahoma, Geneva, Verdana;
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+    margin-left: 1rem;
+    margin-bottom: 1px;
+}
+
 .ui.item.logo svg {
     width: 1.2rem;
     height: 1.2rem;
@@ -1314,10 +1326,7 @@ p.ui.font.small {
     #maineditor {
         left:@simulatorWidthSmall;
     }
-    /* Logo */
-    // .ui.logo.brand .name {
-    //     display: none !important;
-    // }
+
     /* Help card */
     #helpcard {
         top: auto;
@@ -1503,7 +1512,7 @@ p.ui.font.small {
         display:none;
     }
     /* Menu spacing */
-    #root:not(.sandbox) .menubar .ui.menu .item {
+    #root:not(.sandbox) .menubar .ui.menu .dropdown .item {
         padding: 0.3em !important;
     }
     #root .menubar .ui.menu .item.editor-menuitem .item {
@@ -1536,12 +1545,6 @@ p.ui.font.small {
         top: @sandboxMobileMenuHeight;
     }
 
-    /* Logo */
-    .ui.item.logo img {
-        width: auto;
-        margin-left: 0.4rem;
-        margin-right: 0.4rem;
-    }
     .ui.mini.image {
         display: block !important;
     }

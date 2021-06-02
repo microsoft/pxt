@@ -24,7 +24,7 @@ export class HeaderBar extends data.Component<ISettingsProps, HeaderBarState> {
 
     goHome = () => {
         pxt.tickEvent("menu.home", undefined, { interactiveConsent: true });
-        this.props.parent.showExitAndSaveDialog();
+        if (this.getView() !== "home") this.props.parent.showExitAndSaveDialog();
     }
 
     showShareDialog = () => {
@@ -56,10 +56,7 @@ export class HeaderBar extends data.Component<ISettingsProps, HeaderBarState> {
 
     brandIconClick = () => {
         pxt.tickEvent("projects.brand", undefined, { interactiveConsent: true });
-    }
-
-    orgIconClick = () => {
-        pxt.tickEvent("projects.org", undefined, { interactiveConsent: true });
+        this.goHome();
     }
 
     protected getView = (): HeaderBarView => {
@@ -78,21 +75,22 @@ export class HeaderBar extends data.Component<ISettingsProps, HeaderBarState> {
     }
 
     getOrganizationLogo(targetTheme: pxt.AppTheme, highContrast?: boolean) {
-        return <a href={targetTheme.organizationUrl} target="blank" rel="noopener" className="ui item logo organization" onClick={this.orgIconClick}>
+        return <div className="ui item logo organization">
             {targetTheme.organizationWideLogo || targetTheme.organizationLogo
-                ? <img className="ui logo" src={targetTheme.organizationWideLogo || targetTheme.organizationLogo} alt={lf("{0} Logo", targetTheme.organization)} />
+                ? <img className="ui logo mobile hide" src={targetTheme.organizationWideLogo || targetTheme.organizationLogo} alt={lf("{0} Logo", targetTheme.organization)} />
                 : <span className="name">{targetTheme.organization}</span>}
-        </a>
+            {targetTheme.organizationLogo && (<img className={`ui image mobile only`} src={targetTheme.organizationLogo} alt={lf("{0} Logo", targetTheme.organization)} />)}
+        </div>
     }
 
     getTargetLogo(targetTheme: pxt.AppTheme, highContrast?: boolean) {
-        return <a href={targetTheme.logoUrl} aria-label={lf("{0} Logo", targetTheme.boardName)} role="menuitem" target="blank" rel="noopener" className="ui item logo brand portrait hide" onClick={this.brandIconClick}>
+        return <div aria-label={lf("{0} Logo", targetTheme.boardName)} role="menuitem" className="ui item logo brand mobile hide" onClick={this.brandIconClick}>
             {targetTheme.useTextLogo
             ? <span className="name">{targetTheme.textLogo}</span>
             : (targetTheme.logo || targetTheme.portraitLogo
                 ? <img className={`ui ${targetTheme.logoWide ? "small" : ""} logo`} src={targetTheme.logo || targetTheme.portraitLogo} alt={lf("{0} Logo", targetTheme.boardName)} />
                 : <span className="name">{targetTheme.boardName}</span>)}
-        </a>
+        </div>
     }
 
     getCenterLabel(targetTheme: pxt.AppTheme, view: HeaderBarView, tutorialOptions?: pxt.tutorial.TutorialOptions) {
@@ -113,7 +111,7 @@ export class HeaderBar extends data.Component<ISettingsProps, HeaderBarState> {
                 if (!hideIteration) return <tutorial.TutorialMenu parent={this.props.parent} />
                 break;
             case "debugging":
-                return  <sui.MenuItem className="debugger-menu-item centered" icon="large bug" name="Debug Mode" />
+                return  <sui.MenuItem className="centered" icon="large bug" name="Debug Mode" />
             case "sandbox":
             case "editor":
                 if (hideToggle) {
@@ -158,13 +156,13 @@ export class HeaderBar extends data.Component<ISettingsProps, HeaderBarState> {
     }
 
     // TODO: eventually unify these components into one menu
-    getSettingsMenu(view: HeaderBarView) {
-        const { greenScreen, accessibleBlocks } = this.props.parent.state;
+    getSettingsMenu = (view: HeaderBarView) => {
+        const { greenScreen, accessibleBlocks, header } = this.props.parent.state;
         switch (view){
             case "home":
                 return <projects.ProjectSettingsMenu parent={this.props.parent} />
             case "editor":
-                return  <container.SettingsMenu parent={this.props.parent} greenScreen={greenScreen} accessibleBlocks={accessibleBlocks} />
+                return  <container.SettingsMenu parent={this.props.parent} greenScreen={greenScreen} accessibleBlocks={accessibleBlocks} showShare={!!header} />
             default:
                 return <div />
         }
@@ -180,8 +178,8 @@ export class HeaderBar extends data.Component<ISettingsProps, HeaderBarState> {
         const activeEditor = this.props.parent.isPythonActive() ? "Python"
             : (this.props.parent.isJavaScriptActive() ? "JavaScript" : "Blocks");
 
-        const showHomeButton = view !== "home" && view !== "tutorial" && !targetTheme.lockedEditor && !isController;
-        const showShareButton = view !== "tutorial" && view !== "debugging" && header && pxt.appTarget.cloud?.sharing && !isController;
+        const showHomeButton = view === "editor" && !targetTheme.lockedEditor && !isController;
+        const showShareButton = view === "editor" && header && pxt.appTarget.cloud?.sharing && !isController;
         const showHelpButton = view === "editor" && targetTheme.docMenu?.length;
 
         // Approximate each tutorial step to be 22 px
@@ -201,8 +199,8 @@ export class HeaderBar extends data.Component<ISettingsProps, HeaderBarState> {
             </div>}
             <div className="right menu">
                 {this.getExitButtons(targetTheme, view, tutorialOptions)}
-                {showHomeButton && <sui.Item className="icon openproject" role="menuitem" textClass="landscape only" icon="home large" ariaLabel={lf("Home screen")} onClick={this.goHome} />}
-                {showShareButton && <sui.Item className="icon shareproject" role="menuitem" textClass="widedesktop only" ariaLabel={lf("Share Project")} icon="share alternate large" onClick={this.showShareDialog} />}
+                {showHomeButton && <sui.Item className="icon openproject mobile hide" role="menuitem" icon="home large" ariaLabel={lf("Home screen")} onClick={this.goHome} />}
+                {showShareButton && <sui.Item className="icon shareproject mobile hide" role="menuitem" ariaLabel={lf("Share Project")} icon="share alternate large" onClick={this.showShareDialog} />}
                 {showHelpButton && <container.DocsMenu parent={this.props.parent} editor={activeEditor} />}
                 {this.getSettingsMenu(view)}
                 {auth.hasIdentity() && (view === "home" || view === "editor") && <identity.UserMenu parent={this.props.parent} />}

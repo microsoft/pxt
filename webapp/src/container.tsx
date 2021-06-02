@@ -97,12 +97,14 @@ class DocsMenuItem extends sui.StatelessUIElement<DocsMenuItemProps> {
 export interface SettingsMenuProps extends ISettingsProps {
     greenScreen: boolean;
     accessibleBlocks: boolean;
+    showShare?: boolean;
 }
 
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 export interface SettingsMenuState {
     greenScreen?: boolean;
     accessibleBlocks?: boolean;
+    showShare?: boolean;
 }
 
 export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenuState> {
@@ -125,10 +127,16 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.toggleAccessibleBlocks = this.toggleAccessibleBlocks.bind(this);
         this.showResetDialog = this.showResetDialog.bind(this);
         this.showShareDialog = this.showShareDialog.bind(this);
+        this.showExitAndSaveDialog = this.showExitAndSaveDialog.bind(this);
         this.pair = this.pair.bind(this);
         this.pairBluetooth = this.pairBluetooth.bind(this);
         this.showAboutDialog = this.showAboutDialog.bind(this);
         this.print = this.print.bind(this);
+    }
+
+    showExitAndSaveDialog = () => {
+        pxt.tickEvent("menu.home", undefined, { interactiveConsent: true });
+        this.props.parent.showExitAndSaveDialog();
     }
 
     showShareDialog() {
@@ -230,12 +238,16 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         if (nextProps.accessibleBlocks !== undefined) {
             newState.accessibleBlocks = nextProps.accessibleBlocks;
         }
+        if (nextProps.showShare !== undefined) {
+            newState.showShare = nextProps.showShare;
+        }
         if (Object.keys(newState).length > 0) this.setState(newState)
     }
 
     shouldComponentUpdate(nextProps: SettingsMenuProps, nextState: SettingsMenuState, nextContext: any): boolean {
         return this.state.greenScreen != nextState.greenScreen
-            || this.state.accessibleBlocks != nextState.accessibleBlocks;
+            || this.state.accessibleBlocks != nextState.accessibleBlocks
+            || this.state.showShare != nextState.showShare;
     }
 
     renderCore() {
@@ -248,6 +260,9 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         const isController = pxt.shell.isControllerMode();
         const disableFileAccessinMaciOs = targetTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isIOS() || pxt.BrowserUtils.isMac())
         const disableFileAccessinAndroid = pxt.appTarget.appTheme.disableFileAccessinAndroid && pxt.BrowserUtils.isAndroid();
+
+        const showHome = !targetTheme.lockedEditor && !isController;
+        const showShare = this.props.showShare && pxt.appTarget.cloud?.sharing && !isController;
         const showSave = !readOnly && !isController && !!targetTheme.saveInMenu && !disableFileAccessinMaciOs && !disableFileAccessinAndroid;
         const showSimCollapse = !readOnly && !isController && !!targetTheme.simCollapseInMenu;
         const showGreenScreen = targetTheme.greenScreen || /greenscreen=1/i.test(window.location.href);
@@ -263,6 +278,9 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         const showCenterDivider = targetTheme.selectLanguage || targetTheme.highContrast || showGreenScreen || githubUser;
 
         return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("More...")} className="item icon more-dropdown-menuitem">
+            {showHome &&  <sui.Item className="mobile only inherit" role="menuitem" icon="home" text={lf("Home")} ariaLabel={lf("Home screen")} onClick={this.showExitAndSaveDialog} />}
+            {showShare && <sui.Item className="mobile only inherit" role="menuitem" icon="share alternate" text={lf("Share")} ariaLabel={lf("Share Project")} onClick={this.showShareDialog} />}
+            {(showHome || showShare) && <div className="ui divider item mobile only inherit" />}
             {showProjectSettings ? <sui.Item role="menuitem" icon="options" text={lf("Project Settings")} onClick={this.openSettings} /> : undefined}
             {packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Extensions")} onClick={this.showPackageDialog} /> : undefined}
             {showPairDevice ? <sui.Item role="menuitem" icon={usbIcon} text={lf("Connect device")} onClick={this.pair} /> : undefined}
