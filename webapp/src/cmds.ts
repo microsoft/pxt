@@ -640,7 +640,9 @@ export function showUnsupportedHardwareMessageAsync(resp: pxtc.CompileResult) {
             jsx = pxt.commands.renderIncompatibleHardwareDialog(unsupported);
         }
 
-        const body = jsx && lf("Oops! Looks like your project has code that won't run on the hardware you have connected. Would you like to download anyway?");
+        pxt.tickEvent('unsupportedhardwaredialog.shown')
+
+        const body = jsx ? undefined : lf("Oops! Looks like your project has code that won't run on the hardware you have connected. Would you like to download anyway?");
         const helpUrl = pxt.appTarget.appTheme.downloadDialogTheme?.incompatibleHardwareHelpUrl;
         let cancelled = true;
         return core.confirmAsync({
@@ -663,7 +665,13 @@ export function showUnsupportedHardwareMessageAsync(resp: pxtc.CompileResult) {
                     }
                 },
             ]
-        }).then(() => !cancelled);
+        }).then(() => {
+            if (cancelled) {
+                pxt.tickEvent('unsupportedhardwaredialog.cancelled')
+            }
+
+            return !cancelled;
+        });
     }
     return Promise.resolve(true);
 }
