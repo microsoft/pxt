@@ -449,6 +449,7 @@ declare namespace pxt {
         downloadHelpURL?: string;
         firmwareHelpURL?: string;
         troubleshootWebUSBHelpURL?: string;
+        incompatibleHardwareHelpUrl?: string;
 
         dragFileImage?: string;
         connectDeviceImage?: string;
@@ -1037,7 +1038,7 @@ declare namespace pxt.tutorial {
         assetFiles?: pxt.Map<string>;
         jres?: string; // JRES to be used when generating hints; necessary for tilemaps
         customTs?: string; // custom typescript code loaded in a separate file for the tutorial
-        tutorialValidationRules?: pxt.Map<boolean>; //a map of rules used in a tutorial and if the rules are activated 
+        tutorialValidationRules?: pxt.Map<boolean>; //a map of rules used in a tutorial and if the rules are activated
     }
 
     interface TutorialMetadata {
@@ -1102,7 +1103,7 @@ declare namespace pxt.tutorial {
         assetFiles?: pxt.Map<string>;
         jres?: string; // JRES to be used when generating hints; necessary for tilemaps
         customTs?: string; // custom typescript code loaded in a separate file for the tutorial
-        tutorialValidationRules?: pxt.Map<boolean>; //a map of rules used in a tutorial and if the rules are activated 
+        tutorialValidationRules?: pxt.Map<boolean>; //a map of rules used in a tutorial and if the rules are activated
     }
     interface TutorialCompletionInfo {
         // id of the tutorial
