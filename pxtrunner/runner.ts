@@ -1,4 +1,4 @@
-/* tslint:disable:no-inner-html TODO(tslint): get rid of jquery html() calls */
+/* TODO(tslint): get rid of jquery html() calls */
 
 /// <reference path="../built/pxtlib.d.ts" />
 /// <reference path="../built/pxteditor.d.ts" />
@@ -218,7 +218,8 @@ namespace pxt.runner {
             const mlang = /(live)?(force)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(href);
             lang = mlang ? mlang[3] : (cookieValue && cookieValue[1] || pxt.appTarget.appTheme.defaultLocale || (navigator as any).userLanguage || navigator.language);
 
-            if (!pxt.appTarget.appTheme.disableLiveTranslations || !!mlang?.[1]) {
+            const liveTranslationsDisabled = pxt.BrowserUtils.isPxtElectron() || pxt.BrowserUtils.isLocalHostDev() || pxt.appTarget.appTheme.disableLiveTranslations;
+            if (!liveTranslationsDisabled || !!mlang?.[1]) {
                 pxt.Util.enableLiveLocalizationUpdates();
             }
             force = !!mlang && !!mlang[2];

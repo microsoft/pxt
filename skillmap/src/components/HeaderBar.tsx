@@ -48,13 +48,26 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
         return items;
     }
 
+    protected getHelpItems(): DropdownItem[] {
+        const items: DropdownItem[] = [];
+        if (this.props.activityOpen) {
+            items.push({
+                id: "feedback",
+                label: lf("Feedback"),
+                onClick: this.onBugClicked
+            });
+        }
+        return items;
+    }
+
     render() {
         const { activityOpen, currentActivityDisplayName } = this.props;
         const logoAlt = "MakeCode Logo";
         const organizationLogoAlt = "Microsoft Logo";
         const logoSrc = (isLocal() || !pxt.appTarget?.appTheme?.logoUrl ) ? resolvePath("assets/logo.svg") : pxt.appTarget?.appTheme?.logo;
 
-        const items = this.getSettingItems();
+        const settingItems = this.getSettingItems();
+        const helpItems = this.getHelpItems();
 
         return <div className="header">
             <div className="header-left">
@@ -73,7 +86,8 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
             }
             <div className="spacer" />
             <div className="header-right">
-                { items?.length > 0 && <Dropdown icon="setting" className="header-settings" items={items} /> }
+                { helpItems?.length > 0 && <Dropdown icon="help circle" className="header-dropdown" items={helpItems} /> }
+                { settingItems?.length > 0 && <Dropdown icon="setting" className="header-dropdown" items={settingItems} /> }
                 <div className="header-org-logo">
                     <img className="header-org-logo-large" src={resolvePath("assets/microsoft.png")} alt={organizationLogoAlt} />
                     <img className="header-org-logo-small" src={resolvePath("assets/microsoft-square.png")} alt={organizationLogoAlt} />
@@ -92,11 +106,16 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
         tickEvent("skillmap.home");
         window.open(pxt.appTarget.appTheme.homeUrl);
     }
+
+    onBugClicked = () => {
+        tickEvent("skillmap.bugreport");
+        (window as any).usabilla_live?.("click");
+    }
 }
 
 interface HeaderBarButtonProps {
     icon: string;
-    label: string;
+    label?: string;
     title: string;
     onClick: () => void;
 }
@@ -104,9 +123,9 @@ interface HeaderBarButtonProps {
 const HeaderBarButton = (props: HeaderBarButtonProps) => {
     const { icon, label, title, onClick } = props;
 
-    return <div className="header-button" title={title} role="button" onClick={onClick}>
+    return <div className={`header-button ${!label ? "icon-only" : ""}`} title={title} role="button" onClick={onClick}>
         <i className={icon} />
-        <span className="header-button-label">{label}</span>
+        {label && <span className="header-button-label">{label}</span>}
     </div>
 }
 

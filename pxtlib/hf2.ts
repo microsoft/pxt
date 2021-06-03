@@ -260,7 +260,7 @@ namespace pxt.HF2 {
         bootloaderMode = false;
         reconnectTries = 0;
         autoReconnect = false;
-        icon = "usb";
+        icon = pxt.appTarget.appTheme.downloadDialogTheme?.deviceIcon || "usb";
         msgs = new U.PromiseBuffer<Uint8Array>()
         eventHandlers: pxt.Map<(buf: Uint8Array) => void> = {}
         jacdacAvailable = false

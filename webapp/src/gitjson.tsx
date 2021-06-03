@@ -249,14 +249,14 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             header: lf("Switch to a different branch"),
             hasCloseIcon: true,
             hideAgree: true,
-            /* tslint:disable:react-a11y-anchors */
             jsx: <div className="ui form">
                 <div className="ui relaxed divided list" role="menu">
                     {branchList.map(r =>
                         <div key={r.name} className="item link">
                             <i className="large github middle aligned icon"></i>
                             <div className="content">
-                                <a onClick={r.onClick} role="menuitem" className="header">{r.name}</a>
+                                <a onClick={r.onClick} role="menuitem" className="header"
+                                    tabIndex={0} onKeyDown={sui.fireClickOnEnter}>{r.name}</a>
                                 <div className="description">
                                     {r.description}
                                 </div>
@@ -303,13 +303,11 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             // test if the app can read the repo
             const isOrg = await pxt.github.isOrgAsync(parsed.owner);
             if (isOrg) {
-                // tslint:disable: react-this-binding-issue
                 org = <div className="ui small">
                     {lf("If you already have write permissions to this repository, you may have to authorize the MakeCode App in the {0} organization.", parsed.owner)}
                     <sui.PlainCheckbox label={lf("Remember me")} onChange={handleRememberMeChanged} />
                     <sui.Link className="ui link" text={lf("Authorize MakeCode")} onClick={handleAutorize} onKeyDown={sui.fireClickOnEnter} />
                 </div>
-                // tslint:enable: react-this-binding-issue
             }
         }
         const error = fromError && <div className="ui message warning">
@@ -486,10 +484,17 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         const tutorialInfo: pxt.Map<pxt.BuiltTutorialInfo> = {};
         for (let path of mdPaths) {
             const parsed = pxt.tutorial.parseTutorial(files[path]);
-            const hash = pxt.BrowserUtils.getTutorialInfoHash(parsed.code);
-            const usedBlocks = await tutorial.getUsedBlocksAsync(parsed.code, path, parsed.language, true);
-            const formatPath = path.replace(mdRegex, "");
-            tutorialInfo[`https://github.com/${githubId.fullName}${formatPath == "README" ? "" : "/" + formatPath}`] = { usedBlocks, hash };
+            const hash = pxt.BrowserUtils.getTutorialCodeHash(parsed.code);
+            const tutorialBlocks = await tutorial.getUsedBlocksAsync(parsed.code, path, parsed.language, true);
+            if (tutorialBlocks) {
+                const formatPath = path.replace(mdRegex, "");
+                tutorialInfo[`https://github.com/${githubId.fullName}${formatPath == "README" ? "" : "/" + formatPath}`] = {
+                    snippetBlocks: tutorialBlocks.snippetBlocks,
+                    usedBlocks: tutorialBlocks.usedBlocks,
+                    hash
+                };
+
+            }
         }
         files[pxt.TUTORIAL_INFO_FILE] = JSON.stringify(tutorialInfo);
 
@@ -758,7 +763,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         const isOwner = user && user.id === githubId.owner;
         return (
             <div id="githubArea">
-                <div id="serialHeader" className="ui serialHeader">
+                <div className="ui serialHeader">
                     <div className="leftHeaderWrapper">
                         <div className="leftHeader">
                             <sui.Button title={lf("Go back")} icon="arrow left" text={lf("Go back")} textClass="landscape only" tabIndex={0} onClick={this.goBack} onKeyDown={sui.fireClickOnEnter} />
@@ -784,7 +789,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                     <h3 className="header">
                         <i className="large github icon" />
                         <span className="repo-name">{githubId.fullName}</span>
-                        <span onClick={this.handleBranchClick} role="button" className="repo-branch">{"#" + githubId.tag}<i className="dropdown icon" /></span>
+                        <span onClick={this.handleBranchClick} onKeyDown={sui.fireClickOnEnter} tabIndex={0} role="button" className="repo-branch">{"#" + githubId.tag}<i className="dropdown icon" /></span>
                     </h3>
                     {needsCommit && <CommmitComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
                     {showPrResolved && !needsCommit && <PullRequestZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
@@ -875,7 +880,6 @@ class DiffView extends sui.StatelessUIElement<DiffViewProps> {
             } else {
                 jsxEls = this.createTextDiffJSX(f, !cache.whitespace);
             }
-            // tslint:disable: react-this-binding-issue
             return <div key={`difffile${cacheKey}${f.name}`} className="ui segments filediff">
                 <div className="ui segment diffheader">
                     {(!blocksMode || f.name != "main.blocks") && <span>{f.name}</span>}
@@ -1057,7 +1061,6 @@ ${content}
                 const keepRemoteHandler = () => this.handleMergeConflictResolution(f, lnMarker, false, true);
                 const keepBothHandler = () => this.handleMergeConflictResolution(f, lnMarker, true, true);
                 if (showConflicts) {
-                    // tslint:disable: react-this-binding-issue
                     linesTSX.push(<tr key={"merge" + lnA + lnB} className="conflict ui mergebtn">
                         <td colSpan={4} className="ui">
                             <sui.Button className="compact" text={lf("Keep local")} title={lf("Ignore the changes from GitHub.")} onClick={keepLocalHandler} />

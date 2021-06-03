@@ -19,7 +19,7 @@ import U = pxt.Util;
 import Cloud = pxt.Cloud;
 
 // Avoid importing entire crypto-js
-/* tslint:disable:no-submodule-imports */
+/* eslint-disable import/no-internal-modules */
 const sha1 = require("crypto-js/sha1");
 
 type Header = pxt.workspace.Header;
@@ -518,7 +518,12 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
         // persist header changes to our local cache, but keep the old
         // reference around because (unfortunately) other layers (e.g. package.ts)
         // assume the reference is stable per id.
-        Object.assign(e.header, h)
+        Object.assign(e.header, h);
+        // Delete keys from `e.header` that don't exist in `h`. This will clear cloud state
+        // from the header in the case where the project is being exported to local from cloud.
+        Object.keys(e.header)
+            .filter(key => h[key as keyof Header] === undefined)
+            .forEach(key => delete e.header[key as keyof Header]);
         h = e.header;
     }
     if (text)
@@ -1302,19 +1307,6 @@ export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
             gitjson.isFork = !!r.fork
             files[GIT_JSON] = JSON.stringify(gitjson, null, 4)
             await saveAsync(h, files)
-        }
-    }
-
-    // automatically update project name with github name
-    // if it start with pxt-
-    const ghid = pxt.github.parseRepoId(h.githubId);
-    if (ghid.project && /^pxt-/.test(ghid.project)) {
-        const ghname = ghid.project.replace(/^pxt-/, '').replace(/-+/g, ' ')
-        if (ghname != h.name) {
-            const cfg = pxt.Package.parseAndValidConfig(files[pxt.CONFIG_NAME]);
-            cfg.name = ghname;
-            h.name = ghname;
-            await saveAsync(h, files);
         }
     }
 }

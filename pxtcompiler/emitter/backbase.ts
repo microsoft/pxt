@@ -225,12 +225,16 @@ ${hexLiteralAsm(data)}
 ;
 `)
 
-            this.emitLambdaWrapper(this.proc.isRoot)
-
             let baseLabel = this.proc.label()
+            let preLabel = baseLabel + "_pre"
             let bkptLabel = baseLabel + "_bkpt"
             let locLabel = baseLabel + "_locals"
             let endLabel = baseLabel + "_end"
+
+            this.write(`${preLabel}:`)
+
+            this.emitLambdaWrapper(this.proc.isRoot)
+
             this.write(`.section code`)
             this.write(`${baseLabel}:`)
 
@@ -261,7 +265,8 @@ ${baseLabel}_nochk:
                     bkptLoc: U.lookup(labels, bkptLabel),
                     localsMark: U.lookup(th.stackAtLabel, locLabel),
                     idx: this.proc.seqNo,
-                    calls: this.calls
+                    calls: this.calls,
+                    size: U.lookup(labels, endLabel) + 2 - U.lookup(labels, preLabel)
                 }
 
                 for (let ci of this.calls) {
@@ -326,6 +331,9 @@ ${baseLabel}_nochk:
                         this.write(s.lblName + ":")
                         this.validateJmpStack(s)
                         break;
+                    case ir.SK.Comment:
+                        this.write(`; ${s.expr.data}`)
+                        break
                     case ir.SK.Breakpoint:
                         if (this.bin.options.breakpoints) {
                             let lbl = `__brkp_${s.breakpointInfo.id}`

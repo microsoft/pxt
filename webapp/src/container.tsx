@@ -129,7 +129,6 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.pairBluetooth = this.pairBluetooth.bind(this);
         this.showAboutDialog = this.showAboutDialog.bind(this);
         this.print = this.print.bind(this);
-        this.signOutGithub = this.signOutGithub.bind(this);
     }
 
     showShareDialog() {
@@ -223,16 +222,6 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.props.parent.printCode();
     }
 
-    signOutGithub() {
-        pxt.tickEvent("menu.github.signout");
-        const githubProvider = cloudsync.githubProvider();
-        if (githubProvider) {
-            githubProvider.logout();
-            this.props.parent.forceUpdate();
-            core.infoNotification(lf("Signed out from GitHub..."))
-        }
-    }
-
     UNSAFE_componentWillReceiveProps(nextProps: SettingsMenuProps) {
         const newState: SettingsMenuState = {};
         if (nextProps.greenScreen !== undefined) {
@@ -265,6 +254,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         const showPrint = targetTheme.print && !pxt.BrowserUtils.isIE();
         const showProjectSettings = targetTheme.showProjectSettings;
         const docItems = targetTheme.docMenu && targetTheme.docMenu.filter(d => !d.tutorial);
+        const usbIcon = pxt.appTarget.appTheme.downloadDialogTheme?.deviceIcon || "usb";
 
         // Electron does not currently support webusb
         const githubUser = !readOnly && !isController && this.getData("github:user") as pxt.editor.UserInfo;
@@ -275,7 +265,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("More...")} className="item icon more-dropdown-menuitem">
             {showProjectSettings ? <sui.Item role="menuitem" icon="options" text={lf("Project Settings")} onClick={this.openSettings} /> : undefined}
             {packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Extensions")} onClick={this.showPackageDialog} /> : undefined}
-            {showPairDevice ? <sui.Item role="menuitem" icon='usb' text={lf("Pair device")} onClick={this.pair} /> : undefined}
+            {showPairDevice ? <sui.Item role="menuitem" icon={usbIcon} text={lf("Connect device")} onClick={this.pair} /> : undefined}
             {pxt.webBluetooth.isAvailable() ? <sui.Item role="menuitem" icon='bluetooth' text={lf("Pair Bluetooth")} onClick={this.pairBluetooth} /> : undefined}
             {showPrint ? <sui.Item role="menuitem" icon="print" text={lf("Print...")} onClick={this.print} /> : undefined}
             {showSave ? <sui.Item role="menuitem" icon="save" text={lf("Save Project")} onClick={this.saveProject} /> : undefined}
@@ -287,13 +277,6 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             {targetTheme.accessibleBlocks ? <sui.Item role="menuitem" text={accessibleBlocks ? lf("Accessible Blocks Off") : lf("Accessible Blocks On")} onClick={this.toggleAccessibleBlocks} /> : undefined}
             {showGreenScreen ? <sui.Item role="menuitem" text={greenScreen ? lf("Green Screen Off") : lf("Green Screen On")} onClick={this.toggleGreenScreen} /> : undefined}
             {docItems && renderDocItems(this.props.parent, docItems, "ui mobile only inherit")}
-            {githubUser ? <div className="ui divider"></div> : undefined}
-            {githubUser ? <div className="ui item" title={lf("Sign out {0} from GitHub", githubUser.name)} role="menuitem" onClick={this.signOutGithub}>
-                <div className="avatar" role="presentation">
-                    <img className="ui circular image" src={githubUser.photo} alt={lf("User picture")} />
-                </div>
-                {lf("Sign out")}
-            </div> : undefined}
             {showCenterDivider && <div className="ui divider"></div>}
             {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...")} onClick={this.showReportAbuse} /> : undefined}
             {!isController ? <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={this.showResetDialog} /> : undefined}
@@ -324,7 +307,8 @@ class BaseMenuItemProps extends data.Component<IBaseMenuItemProps, {}> {
 
     renderCore() {
         const active = this.props.isActive();
-        return <sui.Item className={`base-menuitem ${this.props.className} ${active ? "selected" : ""}`} role="menuitem" textClass="landscape only" text={this.props.text} icon={this.props.icon} active={active} onClick={this.props.onClick} title={this.props.title} />
+        return <sui.Item className={`base-menuitem ${this.props.className} ${active ? "selected" : ""}`} role="option" textClass="landscape only"
+            text={this.props.text} icon={this.props.icon} active={active} onClick={this.props.onClick} title={this.props.title} />
     }
 }
 
@@ -452,7 +436,7 @@ export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
         const showAssets = pxt.appTarget.appTheme.assetEditor && !sandbox;
 
         return (
-            <div id="editortoggle" className={`ui grid padded ${(pyOnly || tsOnly) ? "one-language" : ""}`}>
+            <div id="editortoggle" className={`ui grid padded ${(pyOnly || tsOnly) ? "one-language" : ""}`} role="listbox" aria-orientation="horizontal">
                 {showSandbox && <SandboxMenuItem parent={parent} />}
                 {showBlocks && <BlocksMenuItem parent={parent} />}
                 {showPython ? <PythonMenuItem parent={parent} /> : <JavascriptMenuItem parent={parent} />}
@@ -540,6 +524,9 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         const sandbox = pxt.shell.isSandboxMode();
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
 
+        // Approximate each tutorial step to be 22 px
+        const manyTutorialSteps = inTutorial && (tutorialOptions.tutorialStepInfo.length * 22 > window.innerWidth / 3);
+
         const activityName = tutorialOptions && tutorialOptions.tutorialActivityInfo ?
             tutorialOptions.tutorialActivityInfo[tutorialOptions.tutorialStepInfo[tutorialOptions.tutorialStep].activity].name :
             null;
@@ -569,8 +556,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
             && (sandbox || !(tsOnly || pyOnly)); // show if sandbox or not single language
         const editor = this.props.parent.isPythonActive() ? "Python" : (this.props.parent.isJavaScriptActive() ? "JavaScript" : "Blocks");
 
-        /* tslint:disable:react-a11y-anchors */
-        return <div id="mainmenu" className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar" aria-label={lf("Main menu")}>
+        return <div id="mainmenu" className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu ${manyTutorialSteps ? "thin" : ""}`} role="menubar" aria-label={lf("Main menu")}>
             {!sandbox ? <div className="left menu">
                 {!targetTheme.hideMenubarLogo &&
                     <a href={(!lockedEditor && isController) ? targetTheme.logoUrl : undefined} aria-label={lf("{0} Logo", targetTheme.boardName)} role="menuitem" target="blank" rel="noopener" className="ui item logo brand" tabIndex={0} onClick={lockedEditor ? undefined : this.brandIconClick} onKeyDown={sui.fireClickOnEnter}>
@@ -582,12 +568,12 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
                 }
                 {!inTutorial && homeEnabled ? <sui.Item className="icon openproject" role="menuitem" textClass="landscape only" icon="home large" ariaLabel={lf("Home screen")} text={lf("Home")} onClick={this.goHome} /> : null}
                 {showShare ? <sui.Item className="icon shareproject" role="menuitem" textClass="widedesktop only" ariaLabel={lf("Share Project")} text={lf("Share")} icon="share alternate large" onClick={this.showShareDialog} /> : null}
-                {inTutorial && <sui.Item className="tutorialname" tabIndex={-1} textClass="landscape only" text={tutorialOptions.tutorialName} />}
+                {inTutorial && <sui.Item className="tutorialname" tabIndex={-1} textClass="landscape only" text={tutorialOptions.tutorialName}/>}
             </div> : <div className="left menu">
-                    <span id="logo" className="ui item logo">
-                        <img className="ui mini image" src={rightLogo} tabIndex={0} onClick={this.launchFullEditor} onKeyDown={sui.fireClickOnEnter} alt={`${targetTheme.boardName} Logo`} />
-                    </span>
-                </div>}
+                <span id="logo" className="ui item logo">
+                    <img className="ui mini image" src={rightLogo} tabIndex={0} onClick={this.launchFullEditor} onKeyDown={sui.fireClickOnEnter} alt={`${targetTheme.boardName} Logo`} />
+                </span>
+            </div>}
             {showToggle && <div className="ui item link editor-menuitem">
                 <container.EditorSelector parent={this.props.parent} sandbox={sandbox} python={targetTheme.python} languageRestriction={languageRestriction} headless={isHeadless} />
             </div>}
@@ -602,7 +588,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
                 {sandbox || inTutorial || debugging ? undefined : <container.SettingsMenu parent={this.props.parent} greenScreen={greenScreen} accessibleBlocks={accessibleBlocks} />}
                 {sandbox && !targetTheme.hideEmbedEdit ? <sui.Item role="menuitem" icon="external" textClass="mobile hide" text={lf("Edit")} onClick={this.launchFullEditor} /> : undefined}
                 {inTutorial && tutorialReportId ? <sui.ButtonMenuItem className="report-tutorial-btn" role="menuitem" icon="warning circle" text={lf("Report Abuse")} textClass="landscape only" onClick={this.showReportAbuse} /> : undefined}
-                {(inTutorial && !lockedEditor && !hideIteration) && <sui.ButtonMenuItem className="exit-tutorial-btn" role="menuitem" icon="external" text={lf("Exit tutorial")} textClass="landscape only" onClick={this.exitTutorial} />}
+                {(inTutorial && !lockedEditor && !hideIteration) && <sui.ButtonMenuItem className="exit-tutorial-btn" role="menuitem" icon="sign out" text={lf("Exit tutorial")} textClass="landscape only" onClick={this.exitTutorial} />}
 
                 {auth.hasIdentity() ? <identity.UserMenu parent={this.props.parent} continuationHash={"#editor"} /> : undefined}
                 {!sandbox ? <a href={lockedEditor ? undefined : targetTheme.organizationUrl} aria-label={lf("{0} Logo", targetTheme.organization)} role="menuitem" target="blank" rel="noopener" className="ui item logo organization" onClick={lockedEditor ? undefined : this.orgIconClick}>
@@ -613,7 +599,6 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
                 </a> : undefined}
             </div>
         </div>;
-        /* tslint:enable:react-a11y-anchors */
     }
 }
 
@@ -729,7 +714,7 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
         if (!docsUrl) return null;
 
         const url = sideDocsCollapsed ? this.rootDocsUrl() : docsUrl;
-        /* tslint:disable:react-iframe-missing-sandbox */
+        /* eslint-disable @microsoft/sdl/react-iframe-missing-sandbox */
         return <div>
             <button id="sidedocstoggle" role="button" aria-label={sideDocsCollapsed ? lf("Expand the side documentation") : lf("Collapse the side documentation")} className="ui icon button large" onClick={this.toggleVisibility}>
                 <sui.Icon icon={`icon inverted chevron ${showLeftChevron ? 'left' : 'right'}`} />
@@ -746,7 +731,7 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
                 </div>}
             </div>
         </div>
-        /* tslint:enable:react-iframe-missing-sandbox */
+        /* eslint-enable @microsoft/sdl/react-iframe-missing-sandbox */
     }
 }
 
@@ -773,13 +758,11 @@ export class SandboxFooter extends data.PureComponent<SandboxFooterProps, {}> {
 
         const compileTooltip = lf("Download your code to the {0}", targetTheme.boardName);
 
-        /* tslint:disable:react-a11y-anchors */
         return <div className="ui horizontal small divided link list sandboxfooter">
             {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" target="_blank" rel="noopener noreferrer" href={targetTheme.organizationUrl}>{targetTheme.organization}</a> : undefined}
             <a target="_blank" className="item" href={targetTheme.termsOfUseUrl} rel="noopener noreferrer">{lf("Terms of Use")}</a>
             <a target="_blank" className="item" href={targetTheme.privacyUrl} rel="noopener noreferrer">{lf("Privacy")}</a>
             <span className="item"><a role="button" className="ui thin portrait only" title={compileTooltip} onClick={this.compile}><sui.Icon icon={`icon ${pxt.appTarget.appTheme.downloadIcon || 'download'}`} />{pxt.appTarget.appTheme.useUploadMessage ? lf("Upload") : lf("Download")}</a></span>
         </div>;
-        /* tslint:enable:react-a11y-anchors */
     }
 }

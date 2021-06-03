@@ -288,6 +288,7 @@ namespace ts.pxtc {
         args: CellInfo[];
         localsMark: number;
         calls: ProcCallInfo[];
+        size: number;
     }
 
     export const enum BitSize {
@@ -590,9 +591,12 @@ namespace ts.pxtc {
                     if (s.kind == SymbolKind.Method || s.kind == SymbolKind.Property) {
                         b += " %" + s.namespace.toLowerCase()
                     }
-                    for (let p of s.parameters || []) {
+
+                    const params = s.parameters?.filter(pr => !parameterTypeIsArrowFunction(pr)) ?? [];
+                    for (let p of params) {
                         b += " %" + p.name
                     }
+
                     s.attributes.block = b
                     updateBlockDef(s.attributes)
                 }
@@ -633,6 +637,29 @@ namespace ts.pxtc {
             }
         }
     }
+
+
+    export function tsSnippetToPySnippet(param: string, symbol?: SymbolInfo): string {
+        const keywords: pxt.Map<string> = {
+            "true": "True",
+            "false": "False",
+            "null": "None"
+        }
+        const key = keywords[param];
+        if (key) {
+            return key
+        }
+        if ((symbol && symbol.kind == SymbolKind.Enum) || (!symbol && param.includes("."))) {
+            // Python enums are all caps
+            const dotIdx = param.lastIndexOf(".");
+            const left = param.substr(0, dotIdx)
+            let right = param.substr(dotIdx + 1)
+            right = U.snakify(right).toUpperCase();
+            return `${left}.${right}`
+        }
+        return param;
+    }
+
 
     export let apiLocalizationStrings: pxt.Map<string> = {};
 
@@ -806,7 +833,7 @@ namespace ts.pxtc {
         let didSomething = true
         while (didSomething) {
             didSomething = false
-            cmt = cmt.replace(/\/\/%[ \t]*([\w\.]+)(=(("[^"\n]*")|'([^'\n]*)'|([^\s]*)))?/,
+            cmt = cmt.replace(/\/\/%[ \t]*([\w\.-]+)(=(("[^"\n]*")|'([^'\n]*)'|([^\s]*)))?/,
                 (f: string, n: string, d0: string, d1: string,
                     v0: string, v1: string, v2: string) => {
                     let v = v0 ? JSON.parse(v0) : (d0 ? (v0 || v1 || v2) : "true");
@@ -959,6 +986,10 @@ namespace ts.pxtc {
         return res
     }
 
+    export function parameterTypeIsArrowFunction(pr: pxtc.ParameterDesc) {
+        return pr.type === "Action" || /^\([^\)]*\)\s*=>/.test(pr.type);
+    }
+
     export function updateBlockDef(attrs: CommentAttrs) {
         if (attrs.block) {
             const parts = attrs.block.split("||");
@@ -1103,7 +1134,6 @@ namespace ts.pxtc {
                 pushLabels();
             }
 
-            /* tslint:disable:possible-timing-attack  (tslint thinks all variables named token are passwords...) */
             if (token == TokenKind.Parameter) {
                 const param: BlockParameter = { kind: "param", name: tokens[i].content, shadowBlockId: tokens[i].type, ref: false };
                 if (tokens[i].name) param.varName = tokens[i].name;
@@ -1127,7 +1157,6 @@ namespace ts.pxtc {
             else if (token == TokenKind.Pipe) {
                 parts.push({ kind: "break" });
             }
-            /* tslint:enable:possible-timing-attack */
         }
 
         pushLabels();

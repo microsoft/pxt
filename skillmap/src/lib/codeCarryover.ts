@@ -1,3 +1,4 @@
+import { guidGen } from "./browserUtils";
 import { lookupPreviousCompletedActivityState } from "./skillMapUtils";
 import { getProjectAsync, saveProjectAsync } from "./workspaceProvider";
 
@@ -21,17 +22,27 @@ export async function carryoverProjectCode(user: UserState, pageSource: string, 
 
 
 function mergeProjectCode(previousProject: pxt.Map<string>, newProject: pxt.Map<string>, carryoverCode: boolean) {
+    const configString = newProject[pxt.CONFIG_NAME];
+    const config = pxt.U.jsonTryParse(configString) as pxt.PackageConfig;
+
+    const tilemapJres = carryoverCode ?
+        mergeJRES(newProject[pxt.TILEMAP_JRES], previousProject[pxt.TILEMAP_JRES]) :
+        mergeJRES(previousProject[pxt.TILEMAP_JRES], newProject[pxt.TILEMAP_JRES]);
+    const imageJres = carryoverCode ?
+        mergeJRES(newProject[pxt.IMAGES_JRES], previousProject[pxt.IMAGES_JRES]) :
+        mergeJRES(appendTemporaryAssets(previousProject["main.blocks"], previousProject[pxt.IMAGES_JRES]), newProject[pxt.IMAGES_JRES]);
+
+    if (tilemapJres && config?.files?.indexOf(pxt.TILEMAP_JRES) < 0) config.files.push(pxt.TILEMAP_JRES)
+    if (imageJres && config?.files?.indexOf(pxt.IMAGES_JRES) < 0) config.files.push(pxt.IMAGES_JRES)
+
     return {
         ...newProject,
         ["main.ts"]: carryoverCode ? previousProject["main.ts"] : newProject["main.ts"],
         ["main.py"]: carryoverCode ? previousProject["main.py"] : newProject["main.py"],
         ["main.blocks"]: carryoverCode ? previousProject["main.blocks"] : newProject["main.blocks"],
-        [pxt.TILEMAP_JRES]: carryoverCode ?
-            mergeJRES(newProject[pxt.TILEMAP_JRES], previousProject[pxt.TILEMAP_JRES]) :
-            mergeJRES(previousProject[pxt.TILEMAP_JRES], newProject[pxt.TILEMAP_JRES]),
-        [pxt.IMAGES_JRES]: carryoverCode ?
-            mergeJRES(newProject[pxt.IMAGES_JRES], previousProject[pxt.IMAGES_JRES]) :
-            mergeJRES(previousProject[pxt.IMAGES_JRES], newProject[pxt.IMAGES_JRES])
+        [pxt.TILEMAP_JRES]: tilemapJres,
+        [pxt.IMAGES_JRES]: imageJres,
+        [pxt.CONFIG_NAME]: JSON.stringify(config)
     };
 }
 
@@ -181,4 +192,96 @@ function mergeJRES(previous: string, next: string) {
     }
 
     return JSON.stringify(nextParsed);
+}
+
+function appendTemporaryAssets(blocks: string, assets: string) {
+    if (!blocks) return assets;
+
+    let jres = pxt.U.jsonTryParse(assets) as pxt.Map<Partial<pxt.JRes> | string> || {};
+    if (!jres["*"]) {
+        (jres as any)["*"] = {
+            "mimeType": "image/x-mkcd-f4",
+            "dataEncoding": "base64",
+            "namespace": pxt.sprite.IMAGES_NAMESPACE
+        };
+    }
+
+    // Regex image literals from blocks, append to existing JRes
+    let index = 0;
+    getImages(blocks)
+        .forEach(data => {
+            const id = guidGen();
+            while (jres[`${pxt.sprite.IMAGES_NAMESPACE}.${pxt.sprite.IMAGE_PREFIX}${index}`]) {
+                index++;
+            }
+            jres[id] = {
+                data: pxt.sprite.base64EncodeBitmap(data),
+                mimeType: pxt.IMAGE_MIME_TYPE,
+                displayName: `${pxt.sprite.IMAGES_NAMESPACE}.${pxt.sprite.IMAGE_PREFIX}${index}`
+            }
+            index++;
+        });
+
+    // Regex animations (array of image literals) from blocks, append to existing JRes
+    index = 0;
+    getAnimations(blocks)
+        .forEach(anim => {
+            const id = guidGen();
+            while (jres[`${pxt.sprite.ANIMATION_NAMESPACE}.${pxt.sprite.ANIMATION_NAMESPACE}${index}`]) {
+                index++;
+            }
+            jres[id] = {
+                data: pxt.sprite.encodeAnimationString(anim.frames, anim.interval),
+                mimeType: pxt.ANIMATION_MIME_TYPE,
+                displayName: `${pxt.sprite.ANIMATION_NAMESPACE}.${pxt.sprite.ANIMATION_PREFIX}${index}`
+            }
+            index++;
+        });
+
+    return JSON.stringify(jres)
+}
+
+/**
+ *  <field name="FIELDNAME">img`
+ *      . .
+ *      . .
+ *  `</field>
+ */
+function getImages(text: string): pxt.sprite.BitmapData[] {
+    const imgRegex = /<field name=\"[\da-zA-Z]+\">\s*(img`[\s\da-f.#tngrpoyw]+`)\s*<\/field>/gim;
+    const images: pxt.sprite.BitmapData[] = [];
+
+    text.replace(imgRegex, (m, literal) => {
+        const data = pxt.sprite.imageLiteralToBitmap(literal)?.data();
+        if (data) images.push(data);
+        return m;
+    })
+
+    return images;
+}
+
+/**
+ *  <field name="FIELDNAME">[img`
+ *      . .
+ *      . .
+ *  `,img`
+ *      . .
+ *      . .
+ *  `]</field>
+ */
+function getAnimations(text: string): { frames: pxt.sprite.BitmapData[], interval: number}[] {
+    const animRegex = /<field name=\"[\da-zA-Z]+\">\s*\[((?:img`[\s\da-f.#tngrpoyw]+`,?)+)\]\s*<\/field>(?:.*<shadow type=\"timePicker\"><field name=\"ms\">(\d+)<\/field><\/shadow>)?/gim;
+    const literals: { frames: pxt.sprite.BitmapData[], interval: number}[] = [];
+
+    text.replace(animRegex, (m, f, i) => {
+        const frames: pxt.sprite.BitmapData[] = f.split(",")
+            .map((el: string) => pxt.sprite.imageLiteralToBitmap(el)?.data());
+        literals.push({
+            frames: frames.filter(frame => !!frame),
+            interval: i || 500
+        });
+        return m;
+    })
+
+    return literals;
 }

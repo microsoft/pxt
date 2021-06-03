@@ -72,7 +72,7 @@ namespace pxt.packetio {
     }
 
     export function icon() {
-        return !!wrapper && (wrapper.icon || "usb");
+        return !!wrapper && (wrapper.icon || pxt.appTarget.appTheme.downloadDialogTheme?.deviceIcon || "usb");
     }
 
     let disconnectPromise: Promise<void>

@@ -112,7 +112,7 @@ namespace pxsim {
         export async function delay<T>(duration: number, value: T): Promise<T>;
         export async function delay(duration: number): Promise<void>
         export async function delay<T>(duration: number, value?: T): Promise<T> {
-            // tslint:disable-next-line
+            // eslint-disable-next-line
             const output = await value;
             await new Promise<void>(resolve => setTimeout(() => resolve(), duration));
             return output;
@@ -156,7 +156,7 @@ namespace pxsim {
 
         export async function promiseTimeout<T>(ms: number, promise: T | Promise<T>, msg?: string): Promise<T> {
             let timeoutId: any;
-            let res: () => void;
+            let res: (v?: T | PromiseLike<T>) => void;
 
             const timeoutPromise: Promise<T> = new Promise((resolve, reject) => {
                 res = resolve;
@@ -732,6 +732,7 @@ namespace pxsim {
         timeoutsScheduled: TimeoutScheduled[] = []
         timeoutsPausedOnBreakpoint: PausedTimeout[] = [];
         pausedOnBreakpoint: boolean = false;
+        traceDisabled = false;
 
         perfCounters: PerfCounter[]
         perfOffset = 0
@@ -1112,6 +1113,7 @@ namespace pxsim {
             let lastYield = Date.now()
             let userGlobals: string[];
             let __this = this // ex
+            this.traceDisabled = !!msg.traceDisabled;
 
             // this is passed to generated code
             const evalIface = {
@@ -1190,7 +1192,6 @@ namespace pxsim {
                     lastYield = now
                     s.pc = pc;
                     s.r0 = r0;
-                    /* tslint:disable:no-string-based-set-timeout */
                     setTimeout(loopForSchedule(s), 5)
                     return true
                 }
@@ -1269,9 +1270,11 @@ namespace pxsim {
             function trace(brkId: number, s: StackFrame, retPc: number, info: any) {
                 setupResume(s, retPc);
                 if (info.functionName === "<main>" || info.fileName === "main.ts") {
-                    const { msg } = getBreakpointMsg(s, brkId, userGlobals);
-                    msg.subtype = "trace";
-                    Runtime.postMessage(msg)
+                    if (!runtime.traceDisabled) {
+                        const { msg } = getBreakpointMsg(s, brkId, userGlobals);
+                        msg.subtype = "trace";
+                        Runtime.postMessage(msg)
+                    }
                     thread.pause(tracePauseMs || 1)
                 }
                 else {
@@ -1528,7 +1531,7 @@ namespace pxsim {
                 return fn
             }
 
-            // tslint:disable-next-line
+            // eslint-disable-next-line
             const entryPoint = msg.code && eval(msg.code)(evalIface);
 
             this.run = (cb) => topCall(entryPoint, cb)

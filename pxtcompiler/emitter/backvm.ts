@@ -144,7 +144,7 @@ ${info.id}_IfaceVT:
             return `0xffffffff, 0xffffffff ; -> ${vt}`
     }
 
-    /* tslint:disable:no-trailing-whitespace */
+    /* eslint-disable no-trailing-spaces */
     export function vmEmit(bin: Binary, opts: CompileOptions) {
         let vmsource = `; VM start
 _img_start:
@@ -316,7 +316,7 @@ _start_${name}:
 
         }
     }
-    /* tslint:enable */
+    /* eslint-enable */
 
     interface EmitCtx {
         dblText: string[]
@@ -387,6 +387,9 @@ _start_${name}:
                     case ir.SK.Label:
                         writeRaw(`${s.lblName}:`)
                         break;
+                    case ir.SK.Comment:
+                        writeRaw(`; ${s.expr.data}`)
+                        break
                     case ir.SK.Breakpoint:
                         break;
                     default: oops();

@@ -317,10 +317,14 @@ function inflateMetadata(section: MarkdownSection): PageMetadata {
     const tertiary = section.attributes["tertiarycolor"];
     const highlight = section.attributes["highlightcolor"];
 
+    const unlockedNodeColor = section.attributes["unlockednodecolor"];
+    const lockedNodeColor = section.attributes["lockednodecolor"];
+    const completedNodeColor = section.attributes["completednodecolor"];
+
     return {
         title: section.attributes["name"] || section.header,
         description: section.attributes["description"],
-        infoUrl: section.attributes["infourl"],
+        infoUrl: cleanInfoUrl(section.attributes["infourl"]),
         backgroundImageUrl: section.attributes["backgroundurl"],
         bannerImageUrl: section.attributes["bannerurl"],
         alternateSources: parseList(section.attributes["alternatesources"]),
@@ -330,10 +334,12 @@ function inflateMetadata(section: MarkdownSection): PageMetadata {
             strokeColor: "#000000",
             rewardNodeColor: highlight || "var(--primary-color)",
             rewardNodeForeground: highlight ? getContrastingColor(highlight) : "#000000",
-            unlockedNodeColor: secondary || "var(--secondary-color)",
-            unlockedNodeForeground: secondary ? getContrastingColor(secondary) : "#000000",
-            lockedNodeColor: primary || "#BFBFBF",
-            lockedNodeForeground: primary ? getContrastingColor(primary) : "#000000",
+            unlockedNodeColor: unlockedNodeColor || secondary || "var(--secondary-color)",
+            unlockedNodeForeground: (unlockedNodeColor || secondary) ? getContrastingColor(unlockedNodeColor || secondary) : "#000000",
+            lockedNodeColor: lockedNodeColor || primary || "#BFBFBF",
+            lockedNodeForeground: (lockedNodeColor || primary) ? getContrastingColor(lockedNodeColor || primary) : "#000000",
+            completedNodeColor: completedNodeColor || secondary || "var(--secondary-color)",
+            completedNodeForeground: (completedNodeColor || secondary) ? getContrastingColor(completedNodeColor || secondary) : "#000000",
             selectedStrokeColor: highlight || "var(--primary-color)",
             pathOpacity: 0.5,
         }
@@ -352,6 +358,19 @@ function getContrastingColor(color: string) {
     else {
         return "#ffffff"
     }
+}
+
+function cleanInfoUrl(url?: string) {
+    // No info URL provided
+    if (!url) return undefined;
+
+    // Valid URL to Github (eg a README)
+    if (url.match(/^(https?:\/\/)?(www\.)?github\.com\//gi)) return url.replace(/\?[\s\S]+$/gi, "");
+
+    // Valid URL to MakeCode docs
+    if (url.indexOf(".") < 0) return `${url.startsWith("/") ? "" : "/"}${url}`;
+
+    error("Educator info URL must be to Github or MakeCode documentation")
 }
 
 function parseList(list: string, includeDuplicates = false) {

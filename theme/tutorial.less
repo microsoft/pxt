@@ -65,6 +65,13 @@
     justify-content: center;
 }
 
+#mainmenu .ui.item.tutorialname {
+    cursor: unset;
+    &:hover, &:focus {
+        background: none;
+    }
+}
+
 .tutorial #tutorialcard {
     position: relative;
     z-index: @tutorialCardZIndex;
@@ -151,11 +158,9 @@ body#docs.tutorial {
     width: 100%;
     font-size: 12pt;
     padding-left: 1rem;
-    height: calc(@tutorialCardHeight - 1rem);
+    height: 100%;
     margin-bottom: 0.4rem;
-    overflow-y: hidden;
     overflow-x: auto;
-    cursor:pointer;
 }
 
 .tutorial.tutorialExpanded #tutorialcard .tutorialmessage .content {
@@ -271,6 +276,16 @@ code.lang-filterblocks {
         > i, > span, > i.orange {
             color: @black !important;
         }
+    }
+}
+
+#tutorialcard .isValidated {
+    background: @tutorialCodeValidationCorrectBackground;
+    > i, > span, > i.nextbutton {
+        color: @tutorialCodeValidationCorrectTextColor !important;
+    }
+    i.large.icon, i.large.icons{
+        font-size: 1.7em;
     }
 }
 
@@ -494,7 +509,7 @@ code.lang-filterblocks {
 
 #mainmenu .immersive-reader-button:focus,
 #mainmenu .immersive-reader-button:hover {
-    background-color: #096975!important;
+    background-color: #00000059!important;
     filter: brightness(0.8);
 }
 
@@ -696,6 +711,20 @@ code.lang-filterblocks {
 
 /* > Small Monitor */
 @media only screen and (min-width: @computerBreakpoint) {
+    .thin {
+        .landscape.only {
+            display: none;
+        }
+
+        .portrait.hide {
+            display: none;
+        }
+
+        .portrait.only {
+            display: block!important;
+            height: auto!important;
+        }
+    }
 }
 
 /* Large Monitor */

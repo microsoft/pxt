@@ -200,18 +200,19 @@ pre {
     z-index: @filelistZIndex;
 
     // the scroll bar is always visible, but we hide it when needed
-    overflow-y: scroll; 
+    overflow-y: scroll;
 }
 
-.invisibleScrollbar::-webkit-scrollbar { 
-    background: transparent !important; 
-}    
-.invisibleScrollbar::-webkit-scrollbar-thumb { 
+.invisibleScrollbar::-webkit-scrollbar {
+    background: transparent !important;
+    width: @customScrollbarWidth; // TODO: remove this when the sim breakpoint is fixed
+}
+.invisibleScrollbar::-webkit-scrollbar-thumb {
     display: none !important;
-}    
-.invisibleScrollbar::-webkit-scrollbar-track { 
-    background: transparent !important; 
-}    
+}
+.invisibleScrollbar::-webkit-scrollbar-track {
+    background: transparent !important;
+}
 
 
 #filelist .simtoolbar {
@@ -347,7 +348,7 @@ div.simframe > iframe {
     background: none;
 }
 .menubar .ui.menu.fixed .ui.item.editor-menuitem .item:not(.active) {
-    opacity: 0.6;
+    opacity: 0.8;
 }
 .menubar .ui.menu.inverted.fixed .ui.item.editor-menuitem .active.item {
     background: none;
@@ -380,6 +381,10 @@ div.simframe > iframe {
 
 #editortoggle > .link {
     justify-content: center;
+}
+
+#editortoggle > .item {
+    outline: none;
 }
 
 #editortoggle {
@@ -805,7 +810,7 @@ Field editors
 }
 .social-icons a.twitter {
     color: white;
-    background-color: #00aced;
+    background-color: #1da1f2;
 }
 .social-icons a.discourse {
     color: white;
@@ -1092,6 +1097,63 @@ p.ui.font.small {
 #projectNameArea .cloudState {
     color: rgba(0, 0, 0, 0.5);
 }
+
+
+/*******************************
+        Download dialogs
+*******************************/
+
+.ui.modal .actions .dialog-help-large {
+    float: left;
+    margin-left: 4px;
+}
+
+.download-callout {
+    background-color: #EAE7FF;
+    color: #4C309D;
+    border-radius: 1em;
+    padding: 1em;
+    position: relative;
+    margin-top: 1.5rem;
+
+    .ui.purple.ribbon.large.label {
+        position: absolute;
+        left: -1.2rem;
+        top: -1rem;
+    }
+
+    a {
+        color: #4C309D;
+        cursor: pointer;
+    }
+}
+
+.ui.grid>.icon-align.wide.column {
+    display: flex;
+    flex-direction: column;
+
+    div {
+        flex-grow: 1;
+    }
+}
+
+.download-device-name {
+    color: #4C309D;
+}
+
+.header>.header-inline-icon ~ .header-title {
+    display: inline;
+}
+
+.download-dialog-image img {
+    max-height: 200px;
+    object-fit: contain;
+}
+
+#downloadArea button .icon.xicon {
+    font-family: "xicon";
+}
+
 
 /*******************************
         Media Adjustments
@@ -1878,6 +1940,10 @@ img.pixelart {
         justify-content: space-between;
         align-items: center;
         margin-top: 2em;
+
+        a {
+            text-decoration: underline;
+        }
     }
 }
 

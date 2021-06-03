@@ -16,7 +16,7 @@ There are three free professional development opportunities available this summe
 
 ### ~
 
-The **AP CS Principles with Microsoft MakeCode** curriculum is free and uses web-based technology and tools that can be accessed across platforms and devices. The curriculum is also endorsed and approved by the College Board as aligning with the [CS Principles curriculum framework](https://apcentral.collegeboard.org/courses/ap-computer-science-principles/course?course=ap-computer-science-principles) and [AP CS Principles exam](https://apcentral.collegeboard.org/courses/ap-computer-science-principles/exam).
+The **[AP CS Principles with Microsoft MakeCode](https://microsoft.github.io/makecode-csp)** curriculum is free and uses web-based technology and tools that can be accessed across platforms and devices. The curriculum is also endorsed and approved by the College Board as aligning with the [CS Principles curriculum framework](https://apcentral.collegeboard.org/courses/ap-computer-science-principles/course?course=ap-computer-science-principles) and [AP CS Principles exam](https://apcentral.collegeboard.org/courses/ap-computer-science-principles/exam).
 
 Some additional features of the Microsoft MakeCode curriculum include: 
 
@@ -27,6 +27,8 @@ Some additional features of the Microsoft MakeCode curriculum include:
 * Focus on Design Thinking Process for student projects.
 * Optional Service Learning module, and physical computing lesson options with the micro:bit.
 * Educator Professional Development available.
+
+Microsoft is recognized by the College Board as an endorsed provider of curriculum and professional development for AP® Computer Science Principles (AP CSP). Using an Endorsed Provider affords schools access to resources including an AP CSP syllabus pre-approved by the College Board’s AP Course Audit, and officially recognized professional development that prepares teachers to teach AP CSP. This endorsement affirms only that components of Microsoft's offerings are aligned to all the AP Curriculum Framework standards and the AP CSP assessment.
 
 ## Course Overview 
 
@@ -112,6 +114,16 @@ The course materials include:
 * PowerPoint decks for classroom lectures with talking points in the Notes section.
 * Textbook Blown to Bits: Your Life, Liberty, and Pursuit of Happiness After the Digital Explosion.
 * Student projects, labs and activities (with solutions where appropriate).
+
+### ~ reminder
+
+#### Download Educator Materials
+
+All of the materials for the **AP Computer Science Principles with Microsoft MakeCode** course are available to download here:
+
+* **[Course Materials Downloads](https://aka.ms/MSMakeCodeAPCSP)**
+
+### ~
 
 ## Stay Connected 
 

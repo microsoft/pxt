@@ -216,7 +216,7 @@ namespace ts.pxtc {
 
             // The extension JavaScript code comes from target.json. It is generated from compiler/*.ts in target by 'pxt buildtarget'
             if (opts.target.compilerExtension)
-                // tslint:disable-next-line
+                // eslint-disable-next-line
                 eval(opts.target.compilerExtension)
         }
 
@@ -298,11 +298,45 @@ namespace ts.pxtc {
             alwaysEmitOnStart: opts.alwaysDecompileOnStart,
             includeGreyBlockMessages,
             generateSourceMap: !!opts.ast,
-            allowedArgumentTypes: opts.allowedArgumentTypes || ["number", "boolean", "string"]
+            allowedArgumentTypes: opts.allowedArgumentTypes || ["number", "boolean", "string"],
+            errorOnGreyBlocks: !!opts.errorOnGreyBlocks
         };
-        const [renameMap, _] = pxtc.decompiler.buildRenameMap(program, file)
+        const [renameMap, _] = pxtc.decompiler.buildRenameMap(program, file, { declarations: "variables", takenNames: {} })
         const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, decompileOpts, renameMap);
         return bresp;
+    }
+
+    // Decompile an array of code snippets (sourceTexts) to XML strings (blocks)
+    export function decompileSnippets(program: Program, opts: CompileOptions, includeGreyBlockMessages = false) {
+        const apis = getApiInfo(program, opts.jres);
+        const blocksInfo = pxtc.getBlocksInfo(apis, opts.bannedCategories);
+        const renameMap = new pxtc.decompiler.RenameMap([]); // Don't rename for snippets
+
+        const decompileOpts: decompiler.DecompileBlocksOptions = {
+            snippetMode: opts.snippetMode || false,
+            alwaysEmitOnStart: opts.alwaysDecompileOnStart,
+            includeGreyBlockMessages,
+            generateSourceMap: !!opts.ast,
+            allowedArgumentTypes: opts.allowedArgumentTypes || ["number", "boolean", "string"],
+            errorOnGreyBlocks: !!opts.errorOnGreyBlocks
+        };
+
+        let programCache: Program; // Initialize to undefined, using the input program will incorrectly mark it as stale
+        const xml: string[] = [];
+        if (opts.sourceTexts) {
+            for (let i = 0; i < opts.sourceTexts.length; i++) {
+                opts.fileSystem[pxt.MAIN_TS] = opts.sourceTexts[i];
+                opts.fileSystem[pxt.MAIN_BLOCKS] = "";
+
+                let newProgram = getTSProgram(opts, programCache);
+                const file = newProgram.getSourceFile(pxt.MAIN_TS);
+                const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, decompileOpts, renameMap);
+                xml.push(bresp.outfiles[pxt.MAIN_BLOCKS]);
+                programCache = newProgram;
+            }
+        }
+
+        return xml;
     }
 
     export function getTSProgram(opts: CompileOptions, old?: ts.Program) {

@@ -26,7 +26,7 @@ paper.fls
 paper.fdb_latexmk
 paper.aux
 tests/**/*.local.*
-package-lock.json
+/package-lock.json
 tests/ui-test/node_modules
 tests/ui-test/.vs
 tests/ui-test/package-lock.json

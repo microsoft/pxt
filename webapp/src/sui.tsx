@@ -19,6 +19,7 @@ export interface UiProps {
     role?: string;
     title?: string;
     ariaLabel?: string;
+    ariaHidden?: boolean;
     tabIndex?: number;
     rightIcon?: boolean;
     inverted?: boolean;
@@ -77,6 +78,7 @@ export interface DropdownProps extends UiProps {
     titleContent?: React.ReactNode;
     displayAbove?: boolean;
     displayRight?: boolean;
+    displayLeft?: boolean;
     dataTooltip?: string;
 }
 
@@ -139,11 +141,8 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
     }
 
     isChildFocused() {
-        const children = this.getChildren();
-        for (let i = 0; i < children.length; i++) {
-            if (document.activeElement === children[i]) return true;
-        }
-        return false;
+        const menu = this.refs["menu"] as HTMLElement;
+        return menu.contains(document.activeElement);
     }
 
     private navigateToNextElement = (e: KeyboardEvent, prev: HTMLElement, next: HTMLElement) => {
@@ -299,6 +298,11 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
         }, 1);
     }
 
+    protected captureMouseEvent = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
     private focusFirst: boolean;
     private handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
         const charCode = core.keyCodeFromEvent(e);
@@ -313,7 +317,8 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
     }
 
     renderCore() {
-        const { disabled, title, role, icon, className, titleContent, children, displayAbove, displayRight, dataTooltip } = this.props;
+        const { disabled, title, role, icon, className, titleContent, children,
+            displayAbove, displayLeft, displayRight, dataTooltip } = this.props;
         const { open } = this.state;
 
         const aria = {
@@ -334,7 +339,8 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
             icon ? 'icon' : '',
             className || '',
             displayAbove ? 'menuAbove' : '',
-            displayRight ? 'menuRight' : ''
+            displayRight ? 'menuRight' : '',
+            displayLeft ? "menuLeft" : '',
         ]);
         const menuClasses = cx([
             'menu',
@@ -355,7 +361,10 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
             >
                 {titleContent ? titleContent : genericContent(this.props)}
                 <div ref="menu" {...menuAria} className={menuClasses}
-                    role="menu">
+                    role="menu"
+                    onMouseDown={this.captureMouseEvent}
+                    onClick={this.captureMouseEvent}
+                >
                     {children}
                 </div>
             </div>);
@@ -407,7 +416,8 @@ export class ExpandableMenu extends UIElement<ExpandableMenuProps, ExpandableMen
                 icon={`no-select chevron ${expanded ? "down" : "right"}`}
                 text={title}
                 ariaExpanded={expanded}
-                onClick={this.toggleExpanded} />
+                onClick={this.toggleExpanded}
+                role="button" />
             {expanded && <div className="expanded-items">
                 {children}
             </div> }
@@ -418,6 +428,7 @@ export class ExpandableMenu extends UIElement<ExpandableMenuProps, ExpandableMen
 export interface SelectProps {
     options: SelectItem[];
     onChange?: (value: string) => void;
+    "aria-label"?: string;
     label?: string;
 }
 
@@ -451,12 +462,12 @@ export class Select extends UIElement<SelectProps, SelectState> {
     }
 
     render() {
-        const { options, label } = this.props;
+        const { options, label, "aria-label": ariaLabel } = this.props;
         const { selected } = this.state;
 
         return (<div>
             { label && `${label} ` }
-            <select value={selected} className="ui dropdown" onChange={this.handleOnChange}>
+            <select value={selected} className="ui dropdown" onChange={this.handleOnChange} aria-label={ariaLabel} >
                 {options.map(opt =>
                     opt && <option
                         aria-selected={selected === opt.value}
@@ -485,13 +496,16 @@ export class Item extends data.Component<ItemProps, {}> {
         const {
             text,
             title,
-            ariaLabel
+            ariaLabel,
+            ariaHidden
         } = this.props;
 
         return (
             <div className={genericClassName("ui item link", this.props, true) + ` ${this.props.active ? 'active' : ''}`}
                 role={this.props.role}
                 aria-label={ariaLabel || title || text}
+                aria-selected={this.props.active}
+                aria-hidden={ariaHidden}
                 title={title || text}
                 tabIndex={this.props.tabIndex || 0}
                 key={this.props.value}
@@ -629,7 +643,7 @@ export class Link extends StatelessUIElement<LinkProps> {
 }
 
 export function helpIconLink(url: string, title: string) {
-    return <Link className="help-link" href={url} icon="help circle" target="_blank" role="button" title={title} />
+    return <Link className="help-link" href={url} icon="help circle" target="_blank" role="link" title={title} />
 }
 
 ///////////////////////////////////////////////////////////
@@ -1112,6 +1126,7 @@ export interface ModalButton {
     onclick?: () => (Promise<void> | void);
     resolveVal?: number;
     url?: string;
+    urlButton?: boolean;
     fileName?: string;
     loading?: boolean;
     disabled?: boolean;
@@ -1291,7 +1306,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
             aria={aria} {...rest}>
             {header || showBack || helpUrl ? <div id={this.id + 'title'} className={"header " + (headerClass || "")}>
                 {headerIcon && <Icon icon={headerIcon} />}
-                <span className="header-title" style={{ margin: `0 ${helpUrl ? '-20rem' : '0'} 0 ${showBack ? '-20rem' : '0'}` }}>{header}</span>
+                <h3 className="header-title" style={{ margin: `0 ${helpUrl ? '-20rem' : '0'} 0 ${showBack ? '-20rem' : '0'}` }}>{header}</h3>
                 {showBack ? <div className="header-close">
                     <Button className="back-button large" title={lf("Go back")} onClick={onClose} tabIndex={0} onKeyDown={fireClickOnEnter}>
                         <Icon icon="arrow left" />
@@ -1300,7 +1315,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
                 </div> : undefined}
                 {helpUrl ?
                     <div className="header-help">
-                        <a className={`ui icon help-button`} href={helpUrl} target="_docs" role="button" aria-label={lf("Help on {0} dialog", header)}>
+                        <a className={`ui icon help-button`} href={helpUrl} target="_docs" role="link" aria-label={lf("Help on {0} dialog", header)} title={lf("Help on {0} dialog", header)}>
                             <Icon icon="help" />
                         </a>
                     </div>
@@ -1320,7 +1335,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
                                 icon={action.icon}
                                 text={action.label}
                                 title={action.title || action.label}
-                                className={`ui button approve ${action.icon ? 'icon right' : ''} ${action.label ? 'labeled' : ''} ${action.className || ''} ${action.loading ? "loading disabled" : ""} ${action.disabled ? "disabled" : ""}`}
+                                className={`ui button approve ${action.icon ? 'icon right' : ''} ${(action.label && !action.urlButton) ? 'labeled' : ''} ${action.className || ''} ${action.loading ? "loading disabled" : ""} ${action.disabled ? "disabled" : ""}`}
                                 href={action.url}
                                 target={!action.fileName ? '_blank' : undefined}
                                 download={action.fileName ? pxt.Util.htmlEscape(action.fileName) : undefined}

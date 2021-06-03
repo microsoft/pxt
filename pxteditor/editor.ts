@@ -79,6 +79,7 @@ namespace pxt.editor {
         }; // ensure that this line is visible when loading the editor
         tracing?: boolean;
         debugging?: boolean;
+        debugFirstRun?: boolean;
         bannerVisible?: boolean;
         pokeUserComponent?: string;
         flashHint?: boolean;
@@ -244,6 +245,7 @@ namespace pxt.editor {
         completeTutorialAsync(): Promise<void>;
         showTutorialHint(): void;
         isTutorial(): boolean;
+        setTutorialCodeStatus(step: number, status: pxt.tutorial.TutorialRuleStatus[]): void;
         pokeUserActivity(): void;
         stopPokeUserActivity(): void;
         clearUserPoke(): void;
@@ -292,6 +294,7 @@ namespace pxt.editor {
         loadBlocklyAsync(): Promise<void>;
         isBlocksEditor(): boolean;
         isTextEditor(): boolean;
+        isPxtJsonEditor(): boolean;
         blocksScreenshotAsync(pixelDensity?: number, encodeBlocks?: boolean): Promise<string>;
         renderBlocksAsync(req: EditorMessageRenderBlocksRequest): Promise<EditorMessageRenderBlocksResponse>;
         renderPythonAsync(req: EditorMessageRenderPythonRequest): Promise<EditorMessageRenderPythonResponse>;

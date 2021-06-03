@@ -80,6 +80,7 @@ declare namespace pxt {
         };
         features?: string[];
         hidden?: boolean; // hide package from package selection dialog
+        searchOnly?: boolean; // do not show by default, only as search result
         skipLocalization?: boolean;
         snippetBuilders?: SnippetConfig[];
         experimentalHw?: boolean;

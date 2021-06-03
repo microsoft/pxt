@@ -1,8 +1,8 @@
 import * as React from "react";
 import * as data from "./data";
-import * as auth from "./auth";
 import * as core from "./core";
 import * as sui from "./sui";
+import * as auth from "./auth";
 import * as ImmersiveReader from '@microsoft/immersive-reader-sdk';
 
 import Cloud = pxt.Cloud;
@@ -17,9 +17,11 @@ export type ImmersiveReaderToken = {
 function beautifyText(content: string): string {
     // The order of these functions matter
     const cleaningFuncs = [
+        replaceBoardName,
         cleanImages,
         cleanAltText,
         cleanBlockAnnotation,
+        cleanInlineButtons,
         cleanMetadata,
         cleanBold,
         cleanItalics,
@@ -37,11 +39,24 @@ function beautifyText(content: string): string {
 
     return contentWIP;
 
+    function replaceBoardName(content: string): string {
+        return content.replace(
+            /@boardname@/g, pxt.appTarget.appTheme.boardName || "device"
+        )
+    }
+
     // Change ``|| around blocks to ""
     function cleanBlockAnnotation(content: string): string {
         return content.replace(
             /`?`\|\|[\w|\s]+:(.+?)\|\|``?/gu,
             (matched, word, offset, s) => lf("\"{0}\"", word)
+        );
+    }
+
+    function cleanInlineButtons(content: string): string {
+        return content.replace(
+            /``\|([^|]+)\|``/gu,
+            (matched, word, offset, s) => lf("{0}", word)
         );
     }
 
@@ -114,12 +129,12 @@ function beautifyText(content: string): string {
     // Replace unicode emojis with text that can be read aloud
     function cleanUnicodeEmojis(content: string): string {
         const replacedA = content.replace(
-            /[Ⓐ|🅐]/gu,
+            /[Ⓐ🅐]/gu,
             lf("{0}", "A")
         );
 
         return replacedA.replace(
-            /[Ⓑ|🅑]/gu,
+            /[Ⓑ🅑]/gu,
             lf("{0}", "B")
         );
     }
@@ -171,21 +186,23 @@ function beautifyText(content: string): string {
 
 function getTokenAsync(): Promise<ImmersiveReaderToken> {
     if (Cloud.isOnline()) {
-        const storedTokenString = pxt.storage.getLocal('immReader');
+        const IMMERSIVE_READER_ID = "immReader";
+        const storedTokenString = pxt.storage.getLocal(IMMERSIVE_READER_ID);
         const cachedToken: ImmersiveReaderToken = pxt.Util.jsonTryParse(storedTokenString);
 
         if (!cachedToken || (Date.now() / 1000 > cachedToken.expiration)) {
-            return auth.apiAsync("/api/immreader").then(res => {
-                if (res.statusCode == 200 ) {
-                    pxt.storage.setLocal('immReader', JSON.stringify(res.resp));
-                    return res.resp;
-                } else {
-                    pxt.storage.removeLocal("/api/immreader");
-                    console.log("immersive reader fetch token error: " + JSON.stringify(res.err));
-                    pxt.tickEvent("immersiveReader.error", {error: JSON.stringify(res.err)})
+            return pxt.Util.requestAsync({ url: "/api/immreader", method: "GET" }).then(
+                res => {
+                    pxt.storage.setLocal(IMMERSIVE_READER_ID, JSON.stringify(res.json));
+                    return res.json;
+                },
+                e => {
+                    pxt.storage.removeLocal(IMMERSIVE_READER_ID);
+                    pxt.reportException(e)
+                    pxt.tickEvent("immersiveReader.error", {error: e.statusCode, message: e.message});
                     return Promise.reject(new Error("token"));
                 }
-            });
+            );
         } else {
             pxt.tickEvent("immersiveReader.cachedToken");
             return Promise.resolve(cachedToken);
@@ -198,7 +215,9 @@ function getTokenAsync(): Promise<ImmersiveReaderToken> {
 export function launchImmersiveReader(content: string, tutorialOptions: pxt.tutorial.TutorialOptions) {
     pxt.tickEvent("immersiveReader.launch", {tutorial: tutorialOptions.tutorial, tutorialStep: tutorialOptions.tutorialStep});
 
-    const data = {
+    const userReaderPref = data.getData<string>(auth.READER) || ""
+    const langPref = data.getData<string>(auth.LANGUAGE) || "";
+    const tutorialData = {
         chunks: [{
             content: beautifyText(content),
             mimeType: "text/html"
@@ -206,20 +225,42 @@ export function launchImmersiveReader(content: string, tutorialOptions: pxt.tuto
     }
 
     const options = {
-        onExit: () => {pxt.tickEvent("immersiveReader.close", {tutorial: tutorialOptions.tutorial, tutorialStep: tutorialOptions.tutorialStep})}
+        uiLang: langPref,
+        onExit: () => {
+            pxt.tickEvent("immersiveReader.close", {tutorial: tutorialOptions.tutorial, tutorialStep: tutorialOptions.tutorialStep})
+        },
+        onPreferencesChanged: (pref: string) => {
+            auth.updateUserPreferencesAsync({reader: pref})
+        },
+        preferences: userReaderPref
     }
 
-    getTokenAsync().then(res => ImmersiveReader.launchAsync(res.token, res.subdomain, data, options)).catch(e => {
+    getTokenAsync().then(res => {
+        if (Cloud.isOnline()) {
+            return ImmersiveReader.launchAsync(res.token, res.subdomain, tutorialData, options)
+        } else {
+            return Promise.reject(new Error("offline"));
+        }
+    }).catch(e => {
         switch (e.message) {
             case "offline": {
                 core.warningNotification(lf("Immersive Reader cannot be used offline"));
                 break;
             }
+            case "token": {
+                break;
+            }
             default: {
                 core.warningNotification(lf("Immersive Reader could not be launched"));
+                if (typeof e == "string") {
+                    pxt.tickEvent("immersiveReader.error", {message: e});
+                } else {
+                    pxt.tickEvent("immersiveReader.error", {message: e.message, statusCode: e.statusCode})
+                }
+
             }
         }
-        console.log("Immersive Reader Error: " + e);
+        pxt.reportException(e);
         ImmersiveReader.close();
     });
 }

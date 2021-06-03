@@ -534,10 +534,10 @@ namespace pxt {
             // no core package? add the first one
             if (corePackages.length == 0) {
                 const allCorePkgs = pxt.Package.corePackages();
-                /* tslint:disable:no-unused-expression TODO(tslint): */
+                /* eslint-disable @typescript-eslint/no-unused-expressions */
                 if (allCorePkgs.length)
                     this.config.dependencies[allCorePkgs[0].name];
-                /* tslint:enable:no-unused-expression */
+                /* eslint-enable @typescript-eslint/no-unused-expressions */
             } else if (corePackages.length > 1) {
                 // keep last package
                 corePackages.pop();
@@ -1064,7 +1064,7 @@ namespace pxt {
 
                 try {
                     let einfo = cpp.getExtensionInfo(this)
-                    if (!shimsGenerated) {
+                    if (!shimsGenerated && (einfo.shimsDTS || einfo.enumsDTS)) {
                         shimsGenerated = true
                         if (einfo.shimsDTS) generateFile("shims.d.ts", einfo.shimsDTS)
                         if (einfo.enumsDTS) generateFile("enums.d.ts", einfo.enumsDTS)
@@ -1264,7 +1264,9 @@ namespace pxt {
                                 if (typeof part.visual.image === "string" && /\.svg$/i.test(part.visual.image)) {
                                     let f = d.readFile(part.visual.image);
                                     if (!f) pxt.reportError("parts", "invalid part definition", { "error": `missing visual ${part.visual.image}` })
-                                    part.visual.image = `data:image/svg+xml,` + encodeURIComponent(f);
+                                    if (!/^data:image\/svg\+xml/.test(f)) // encode svg if not encoded yet
+                                        f = `data:image/svg+xml,` + encodeURIComponent(f);
+                                    part.visual.image = f;
                                 }
                             }
                         });

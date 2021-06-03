@@ -338,56 +338,6 @@ export function pySnippetToBlocksAsync(code: string, blockInfo?: ts.pxtc.BlocksI
         });
 }
 
-// Py[] -> blocks
-export function pySnippetArrayToBlocksAsync(code: string[], blockInfo?: ts.pxtc.BlocksInfo): Promise<pxtc.CompileResult> {
-    const namespaceRegex = /^\s*namespace\s+[^\s]+\s*{([\S\s]*)}\s*$/im;
-    const exportLetRegex = /^\s*export\s(let\s*[\S\s]*)\s*$/im;
-    const exportFunctionRegex = /^\s*export\s(function\s*[\S\s]*)\s*$/im;
-    const snippetBlocks = "main.blocks";
-    let trg = pkg.mainPkg.getTargetOptions()
-    let files: string[] = [];
-    return waitForFirstTypecheckAsync()
-        .then(() => pkg.mainPkg.getCompileOptionsAsync(trg))
-        .then(opts => {
-            // split each code snippet into a separate file to preserve scoping
-            for (let i = 0; i < code.length; i++) {
-                const snippetName = `snippet_${i}`;
-                opts.fileSystem[snippetName + ".py"] = code[i];
-                opts.sourceFiles.push(snippetName + ".py");
-                files.push(snippetName)
-            }
-            opts.fileSystem[snippetBlocks] = "";
-            if (opts.sourceFiles.indexOf(snippetBlocks) === -1) {
-                opts.sourceFiles.push(snippetBlocks);
-            }
-            return workerOpAsync("py2ts", { options: opts });
-        })
-        .then(res => {
-            // strip the namespace declaration out of the converted snippets and concat to convert to blocks
-            let ts = "";
-            for (let file of files) {
-                let match = res.outfiles[file + ".ts"].match(namespaceRegex);
-                if (match && match[1]) {
-                    const noNamespace = match[1];
-                    // strip out 'export let' and 'export function'. This won't hit custom kinds since those are always const
-                    let lines = noNamespace.split("\n");
-                    let cleanLines = lines.map((element: string) => {
-                        const matchExportLet = element.match(exportLetRegex);
-                        const strippedExportLet = matchExportLet ? matchExportLet[1] : element;
-                        const strippedExportFunc = strippedExportLet.match(exportFunctionRegex);
-                        if (strippedExportFunc) {
-                            return strippedExportFunc[1];
-                        } else {
-                            return strippedExportLet;
-                        }
-                    })
-                    ts += `{\n${cleanLines.join("\n")}\n}\n`;
-                }
-            }
-            return decompileBlocksSnippetAsync(ts, blockInfo)
-        });
-}
-
 function decompileCoreAsync(opts: pxtc.CompileOptions, fileName: string): Promise<pxtc.CompileResult> {
     return workerOpAsync("decompile", { options: opts, fileName: fileName })
 }
@@ -435,6 +385,79 @@ export function decompilePythonSnippetAsync(code: string): Promise<string> {
 
 function pyDecompileCoreAsync(opts: pxtc.CompileOptions, fileName: string): Promise<pxtc.transpile.TranspileResult> {
     return workerOpAsync("pydecompile", { options: opts, fileName: fileName })
+}
+
+// TS[] -> XML[] (blocks)
+export function decompileSnippetstoXmlAsync(code: string[]): Promise<string[]> {
+    const trg = pkg.mainPkg.getTargetOptions()
+    return pkg.mainPkg.getCompileOptionsAsync(trg)
+        .then(opts => {
+            opts.sourceTexts = code;
+            opts.snippetMode = false;
+
+            if (opts.sourceFiles.indexOf(pxt.MAIN_TS) === -1) {
+                opts.sourceFiles.push(pxt.MAIN_TS);
+            }
+            if (opts.sourceFiles.indexOf(pxt.MAIN_BLOCKS) === -1) {
+                opts.sourceFiles.push(pxt.MAIN_BLOCKS);
+            }
+            opts.ast = true;
+            return decompileSnippetsCoreAsync(opts);
+        });
+}
+
+// Py[] -> XML[] (blocks)
+export function decompilePySnippetstoXmlAsync(code: string[]): Promise<string[]> {
+    const namespaceRegex = /^\s*namespace\s+[^\s]+\s*{([\S\s]*)}\s*$/im;
+    const exportLetRegex = /^\s*export\s(let\s*[\S\s]*)\s*$/im;
+    const exportFunctionRegex = /^\s*export\s(function\s*[\S\s]*)\s*$/im;
+    const trg = pkg.mainPkg.getTargetOptions()
+    let files: string[] = [];
+    return waitForFirstTypecheckAsync()
+        .then(() => pkg.mainPkg.getCompileOptionsAsync(trg))
+        .then(opts => {
+            // split each code snippet into a separate file to preserve scoping
+            for (let i = 0; i < code.length; i++) {
+                const snippetName = `snippet_${i}`;
+                opts.fileSystem[snippetName + ".py"] = code[i];
+                opts.sourceFiles.push(snippetName + ".py");
+                files.push(snippetName)
+            }
+            opts.fileSystem[pxt.MAIN_BLOCKS] = "";
+            if (opts.sourceFiles.indexOf(pxt.MAIN_BLOCKS) === -1) {
+                opts.sourceFiles.push(pxt.MAIN_BLOCKS);
+            }
+            return workerOpAsync("py2ts", { options: opts });
+        })
+        .then(res => {
+            // strip the namespace declaration out of the converted snippets and concat to convert to blocks
+            const tsCode = [];
+            for (let file of files) {
+                let match = res.outfiles[file + ".ts"].match(namespaceRegex);
+                if (match && match[1]) {
+                    const noNamespace = match[1];
+                    // strip out 'export let' and 'export function'. This won't hit custom kinds since those are always const
+                    let lines = noNamespace.split("\n");
+                    let cleanLines = lines.map((element: string) => {
+                        const matchExportLet = element.match(exportLetRegex);
+                        const strippedExportLet = matchExportLet ? matchExportLet[1] : element;
+                        const strippedExportFunc = strippedExportLet.match(exportFunctionRegex);
+                        if (strippedExportFunc) {
+                            return strippedExportFunc[1];
+                        } else {
+                            return strippedExportLet;
+                        }
+                    })
+                    tsCode.push(cleanLines.join("\n"));
+                }
+            }
+            return decompileSnippetstoXmlAsync(tsCode);
+        });
+}
+
+
+function decompileSnippetsCoreAsync(opts: pxtc.CompileOptions): Promise<string[]> {
+    return workerOpAsync("decompileSnippets", { options: opts })
 }
 
 export function workerOpAsync<T extends keyof pxtc.service.ServiceOps>(op: T, arg: pxtc.service.OpArg): Promise<any> {
@@ -1096,11 +1119,9 @@ class ApiInfoIndexedDb {
 
         return this.db.getAsync(ApiInfoIndexedDb.TABLE, key)
             .then((value: ApiInfoIndexedDbEntry) => {
-                /* tslint:disable:possible-timing-attack (this is not a security-sensitive codepath) */
                 if (value && value.hash === hash) {
                     return value.apis
                 }
-                /* tslint:enable:possible-timing-attack */
                 return undefined;
             });
     }

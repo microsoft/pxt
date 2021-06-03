@@ -7,6 +7,8 @@ import * as githubbutton from "./githubbutton";
 import * as cmds from "./cmds"
 import * as cloud from "./cloud";
 import * as auth from "./auth";
+import { ProjectView } from "./app";
+import { clearDontShowDownloadDialogFlag } from "./dialogs";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -16,7 +18,13 @@ const enum View {
     Mobile,
 }
 
-export class EditorToolbar extends data.Component<ISettingsProps, {}> {
+interface EditorToolbarState {
+    compileState: "compiling" | "success" | null;
+}
+
+export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarState> {
+    protected compileTimeout: number;
+
     constructor(props: ISettingsProps) {
         super(props);
 
@@ -39,6 +47,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
     }
 
     compile(view?: string) {
+        this.setState({ compileState: "compiling" });
         pxt.tickEvent("editortools.download", { view: view, collapsed: this.getCollapsedState() }, { interactiveConsent: true });
         this.props.parent.compile();
     }
@@ -88,6 +97,25 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
     cloudButtonClick(view?: string) {
         pxt.tickEvent("editortools.cloud", { view: view, collapsed: this.getCollapsedState() }, { interactiveConsent: true });
         // TODO: do anything?
+    }
+
+    componentDidUpdate() {
+        if (this.props.parent.state.compiling) {
+            if (!this.state?.compileState) {
+                this.setState({ compileState: "compiling" });
+            }
+        }
+        else if (this.state?.compileState === "compiling") {
+            this.setState({ compileState: "success" });
+            if (this.compileTimeout) clearTimeout(this.compileTimeout);
+            this.compileTimeout = setTimeout(() => {
+                if (this.state?.compileState === "success") this.setState({ compileState: null });
+            }, 2000)
+        }
+    }
+
+    componentWillUnmount() {
+        if (this.compileTimeout) clearTimeout(this.compileTimeout)
     }
 
     private getCollapsedState(): string {
@@ -150,8 +178,17 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
 
     }
 
-    protected onHwDownloadClick = () => {
+    protected onDownloadButtonClick = () => {
+        pxt.tickEvent("editortools.downloadbutton", { collapsed: this.getCollapsedState() }, { interactiveConsent: true });
         this.compile();
+    }
+
+    protected onHwDownloadClick = () => {
+        // Matching the tick in the call to compile() above for historical reasons
+        pxt.tickEvent("editortools.download", { collapsed: this.getCollapsedState() }, { interactiveConsent: true });
+        pxt.tickEvent("editortools.downloadasfile", { collapsed: this.getCollapsedState() }, { interactiveConsent: true });
+        clearDontShowDownloadDialogFlag();
+        (this.props.parent as ProjectView).compile(true);
     }
 
     protected onPairClick = () => {
@@ -163,24 +200,42 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         cmds.showDisconnectAsync();
     }
 
+    protected onHelpClick = () => {
+        pxt.tickEvent("editortools.downloadhelp");
+        window.open(pxt.appTarget.appTheme.downloadDialogTheme?.downloadMenuHelpURL);
+    }
+
     protected getCompileButton(view: View): JSX.Element[] {
         const collapsed = true; // TODO: Cleanup this
         const targetTheme = pxt.appTarget.appTheme;
         const { compiling, isSaving } = this.props.parent.state;
+        const { compileState } = this.state;
         const compileTooltip = lf("Download your code to the {0}", targetTheme.boardName);
-        const downloadText = targetTheme.useUploadMessage ? lf("Upload") : lf("Download");
+
+        let downloadText: string;
+        if (compileState === "success") {
+            downloadText = targetTheme.useUploadMessage ? lf("Uploaded!") : lf("Downloaded!")
+        }
+        else {
+            downloadText = targetTheme.useUploadMessage ? lf("Upload") : lf("Download")
+        }
+
+
         const boards = pxt.appTarget.simulator && !!pxt.appTarget.simulator.dynamicBoardDefinition;
         const webUSBSupported = pxt.usb.isEnabled && pxt.appTarget?.compile?.webUSB;
         const packetioConnected = !!this.getData("packetio:connected");
         const packetioConnecting = !!this.getData("packetio:connecting");
         const packetioIcon = this.getData("packetio:icon") as string;
+
+        const successIcon = (packetioConnected && pxt.appTarget.appTheme.downloadDialogTheme?.deviceSuccessIcon)
+            || "xicon file-download-check";
         const downloadIcon = (!!packetioConnecting && "ping " + packetioIcon)
+            || (compileState === "success" && successIcon)
             || (!!packetioConnected && packetioIcon)
             || targetTheme.downloadIcon
-            || "download";
-        const hasMenu = boards || webUSBSupported;
+            || "xicon file-download";
 
-        let downloadButtonClasses = hasMenu ? "left attached " : "";
+        let downloadButtonClasses = "left attached ";
         const downloadButtonIcon = "ellipsis";
         let hwIconClasses = "";
         let displayRight = false;
@@ -210,33 +265,36 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         }
 
         let el = [];
-        el.push(<EditorToolbarButton key="downloadbutton" icon={downloadIcon} className={`primary download-button ${downloadButtonClasses}`} text={view != View.Mobile ? downloadText : undefined} title={compileTooltip} onButtonClick={this.compile} view='computer' />)
+        el.push(<EditorToolbarButton key="downloadbutton" icon={downloadIcon} className={`primary download-button ${downloadButtonClasses}`} text={view != View.Mobile ? downloadText : undefined} title={compileTooltip} onButtonClick={this.onDownloadButtonClick} view='computer' />)
 
         const deviceName = pxt.hwName || pxt.appTarget.appTheme.boardNickname || lf("device");
         const tooltip = pxt.hwName
             || (packetioConnected && lf("Connected to {0}", deviceName))
             || (packetioConnecting && lf("Connecting..."))
-            || (boards ? lf("Click to select hardware") : lf("Click for one-click downloads."));
+            || (boards ? lf("Click to select hardware") : (webUSBSupported ? lf("Click for one-click downloads.") : undefined));
 
         const hardwareMenuText = view == View.Mobile ? lf("Hardware") : lf("Choose hardware");
-        const downloadMenuText = view == View.Mobile ? (pxt.hwName || lf("Download")) : lf("Download to {0}", deviceName);
+        const downloadMenuText = view == View.Mobile ? (pxt.hwName || lf("Download")) : lf("Download as file");
+        const downloadHelp = pxt.appTarget.appTheme.downloadDialogTheme?.downloadMenuHelpURL;
 
-        if (hasMenu) {
-            el.push(
-                <sui.DropdownMenu key="downloadmenu" role="menuitem" icon={`${downloadButtonIcon} horizontal ${hwIconClasses}`} title={lf("Download options")} className={`${hwIconClasses} right attached editortools-btn hw-button button`} dataTooltip={tooltip} displayAbove={true} displayRight={displayRight}>
-                    {webUSBSupported && !packetioConnected && <sui.Item role="menuitem" icon="usb" text={lf("Pair device")} tabIndex={-1} onClick={this.onPairClick} />}
-                    {webUSBSupported && (packetioConnecting || packetioConnected) && <sui.Item role="menuitem" icon="usb" text={lf("Disconnect")} tabIndex={-1} onClick={this.onDisconnectClick} />}
-                    {boards && <sui.Item role="menuitem" icon="microchip" text={hardwareMenuText} tabIndex={-1} onClick={this.onHwItemClick} />}
-                    <sui.Item role="menuitem" icon="download" text={downloadMenuText} tabIndex={-1} onClick={this.onHwDownloadClick} />
-                </sui.DropdownMenu>
-            )
-        }
+        // Add the ... menu
+        const usbIcon = pxt.appTarget.appTheme.downloadDialogTheme?.deviceIcon || "usb";
+        el.push(
+            <sui.DropdownMenu key="downloadmenu" role="menuitem" icon={`${downloadButtonIcon} horizontal ${hwIconClasses}`} title={lf("Download options")} className={`${hwIconClasses} right attached editortools-btn hw-button button`} dataTooltip={tooltip} displayAbove={true} displayRight={displayRight}>
+                {webUSBSupported && !packetioConnected && <sui.Item role="menuitem" icon={usbIcon} text={lf("Connect device")} tabIndex={-1} onClick={this.onPairClick} />}
+                {webUSBSupported && (packetioConnecting || packetioConnected) && <sui.Item role="menuitem" icon={usbIcon} text={lf("Disconnect")} tabIndex={-1} onClick={this.onDisconnectClick} />}
+                {boards && <sui.Item role="menuitem" icon="microchip" text={hardwareMenuText} tabIndex={-1} onClick={this.onHwItemClick} />}
+                <sui.Item role="menuitem" icon="xicon file-download" text={downloadMenuText} tabIndex={-1} onClick={this.onHwDownloadClick} />
+                {downloadHelp && <sui.Item role="menuitem" icon="help circle" text={lf("Help")} tabIndex={-1} onClick={this.onHelpClick} />}
+            </sui.DropdownMenu>
+        )
+
         return el;
     }
 
     renderCore() {
         const { tutorialOptions, projectName, compiling, isSaving, simState, debugging, editorState } = this.props.parent.state;
-        const header = this.getData(`header:${this.props.parent.state.header.id}`);
+        const header = this.getData(`header:${this.props.parent.state.header.id}`) ?? this.props.parent.state.header;
 
         const targetTheme = pxt.appTarget.appTheme;
         const isController = pxt.shell.isControllerMode();
@@ -255,7 +313,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
             && !hasRepository;
         const showProjectRename = !tutorial && !readOnly && !isController
             && !targetTheme.hideProjectRename && !debugging;
-        const showProjectRenameReadonly = hasRepository && /^pxt-/.test(ghid.project); // allow renaming of name with github
+        const showProjectRenameReadonly = false; // always allow renaming, even for github projects
         const compile = pxt.appTarget.compile;
         const compileBtn = compile.hasHex || compile.saveAsPNG || compile.useUF2;
         const compileTooltip = lf("Download your code to the {0}", targetTheme.boardName);
@@ -321,7 +379,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         }
         const cloudButton = <EditorToolbarButton icon={"xicon " + getCloudIcon()} className={`editortools-btn`} title={getCloudTooltip()} onButtonClick={this.cloudButtonClick} view='computer' />;
 
-        return <div id="editortools" className="ui" role="menubar" aria-label={lf("Editor toolbar")}>
+        return <div id="editortools" className="ui" role="region" aria-label={lf("Editor toolbar")}>
             <div id="downloadArea" role="menu" className="ui column items">{headless &&
                 <div className="ui item">
                     <div className="ui icon large buttons">

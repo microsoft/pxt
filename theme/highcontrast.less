@@ -163,6 +163,10 @@
             .debuggerSuggestion {
                 color: @HCtextColor !important;
             }
+
+            .label {
+                color: @HCtextColor !important;
+            }
         }
     }
 
@@ -443,6 +447,17 @@
         .homefooter i {
             color: @HCtextColor !important
         }
+
+        .getting-started-segment.hero .dots  button.active {
+            background: @selected !important;
+            border-color: @HCbackground !important;
+        }
+    }
+
+    #homescreen .ui.home .tutorial-progress.orange {
+        border-color: @HCtextColor !important;
+        background-color: @HCbackground !important;
+        color: @HCtextColor !important;
     }
 
     .projectsdialog {
@@ -578,7 +593,8 @@
         color: @HCtextColor;
     }
 
-    #serialCharts .ui.segment {
+    #serialCharts .ui.segment,
+    #serialPlaceholder.ui.segment {
         background-color: @HCtextColor;
     }
 
@@ -871,6 +887,22 @@
                 border: 2px dotted #090 !important;
             }
         }
+    }
+}
+
+/* OS-specific Fixes (eg Windows High Contrast) */
+
+@media (forced-colors: active) {
+    .ui.toggle.checkbox .box:after,
+    .ui.toggle.checkbox label:after {
+        forced-color-adjust: none;
+    }
+}
+
+@media (forced-colors: active) and (prefers-color-scheme: light) {
+    #homemenu .logo.organization img,
+    #homemenu .logo.brand img {
+        filter: invert(1);
     }
 }
 

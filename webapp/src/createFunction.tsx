@@ -132,6 +132,9 @@ export class CreateFunctionDialog extends data.Component<ISettingsProps, CreateF
             case "number":
                 functionBeingEdited.addNumberExternal();
                 break;
+            case "Array":
+                functionBeingEdited.addArrayExternal();
+                break;
             default:
                 functionBeingEdited.addCustomExternal(typeName);
                 break;
@@ -199,6 +202,11 @@ export class CreateFunctionDialog extends data.Component<ISettingsProps, CreateF
                     label: lf("Number"),
                     typeName: "number",
                     icon: pxt.blocks.defaultIconForArgType("number")
+                },
+                {
+                    label: lf("Array"),
+                    typeName: "Array",
+                    icon: pxt.blocks.defaultIconForArgType("Array")
                 }
             ];
 

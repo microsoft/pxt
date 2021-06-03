@@ -43,8 +43,13 @@
     margin-bottom: 0.5rem;
 }
 
+.info-panel-content > .tablet-spacer {
+    margin: 0;
+}
+
 .info-panel-content > .info-panel-title,
-.info-panel-content > .info-panel-label {
+.info-panel-content > .info-panel-label,
+.info-panel-content > .info-panel-link {
     margin-bottom: 1rem;
 }
 
@@ -68,6 +73,12 @@
     text-align: center;
     text-transform: uppercase;
     background-color: var(--inactive-color);
+}
+
+.info-panel-link {
+    display: block;
+    width: 100%;
+    text-align: center;
 }
 
 .info-panel-detail {
@@ -124,7 +135,7 @@
     .info-panel {
         flex-direction: row;
         width: unset;
-        height: 16rem;
+        height: 18rem;
     }
 
     .info-panel > .info-panel-image {
@@ -143,6 +154,10 @@
         display: flex;
         flex-direction: column;
         flex: 1;
+    }
+
+    .info-panel-content > .info-panel-title {
+        margin-bottom: 0.5rem;
     }
 
     .info-panel-content > .info-panel-subtitle {
@@ -165,11 +180,21 @@
         padding: 0.5rem 1rem;
     }
 
+    .info-panel-link {
+        text-align: left;
+    }
+
     .info-panel .actions {
         display: flex;
         flex-direction: row;
         justify-content: space-evenly;
         margin-bottom: 0;
+    }
+
+    .info-panel .actions.grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        row-gap: 0.5rem;
     }
 
     .info-panel .action-button {
@@ -178,7 +203,8 @@
         margin-bottom: 0;
     }
 
-    .info-panel .action-button:last-child {
+    .info-panel .action-button:last-child,
+    .info-panel .grid .action-button:nth-child(2) {
         margin-right: 0;
     }
 }

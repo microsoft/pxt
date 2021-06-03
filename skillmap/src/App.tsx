@@ -33,12 +33,12 @@ import { MakeCodeFrame } from './components/makecodeFrame';
 import { getUserStateAsync, saveUserStateAsync } from './lib/workspaceProvider';
 import { Unsubscribe } from 'redux';
 
-/* tslint:disable:no-import-side-effect */
+/* eslint-disable import/no-unassigned-import */
 import './App.css';
 
 // TODO: this file needs to read colors from the target
 import './arcade.css';
-/* tslint:enable:no-import-side-effect */
+/* eslint-enable import/no-unassigned-import */
 interface AppProps {
     skillMaps: { [key: string]: SkillMap };
     activityOpen: boolean;
@@ -124,7 +124,9 @@ class AppImpl extends React.Component<AppProps, AppState> {
         const targetId = pxt.appTarget.id;
         const pxtBranch = pxt.appTarget.versions.pxtCrowdinBranch;
         const targetBranch = pxt.appTarget.versions.targetCrowdinBranch;
-        pxt.Util.enableLiveLocalizationUpdates();
+        if (!pxt.BrowserUtils.isLocalHostDev() && !pxt.BrowserUtils.isPxtElectron()) {
+            pxt.Util.enableLiveLocalizationUpdates();
+        }
 
         await updateLocalizationAsync({
             targetId: targetId,

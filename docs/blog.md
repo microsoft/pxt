@@ -2,11 +2,19 @@
 
 ## [Beginner Skillmap Sneak Peek](/blog/arcade/beginner-skillmap)
 
-March 30th, 2021 by [kiki-lee](https://github.com/kiki-lee)
+Updated on May 19th by [kiki-lee](https://github.com/kiki-lee)
 
 Next month, Microsoft MakeCode will release a sneak peek of our newest adventure, the Arcade Beginner Skillmap!
 
 **[Continue reading this blog post](/blog/arcade/beginner-skillmap)**
+
+## [New Free Curriculum! AP Computer Science Principles with MakeCode](/blog/csp/new-free-curriculum)
+
+May 4th, 2021 by [Jaqster](https://github.com/jaqster)
+
+Are you do planning to teach the [AP Computer Science Principles](https://apcentral.collegeboard.org/courses/ap-computer-science-principles) course next year? If so, you may want to take a look at some new curriculum we’ve published...
+
+**[Continue reading this blog post](/blog/csp/new-free-curriculum)**
 
 ## [MakeCode Arcade Spring Update!](/blog/arcade/update-spring-2021)
 

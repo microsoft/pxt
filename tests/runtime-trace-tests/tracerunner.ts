@@ -5,7 +5,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { exec } from 'child_process';
 
-// tslint:disable:no-import-side-effect mocha-no-side-effect-code
+/* eslint-disable import/no-unassigned-import mocha-no-side-effect-code */
 import "mocha";
 import * as chai from "chai";
 

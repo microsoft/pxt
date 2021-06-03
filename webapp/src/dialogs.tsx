@@ -1,4 +1,4 @@
-// tslint:disable: react-a11y-anchors
+/* eslint-disable  jsx-a11y/anchor-is-valid */
 
 import * as React from "react";
 import * as sui from "./sui";
@@ -9,6 +9,8 @@ import * as cloudsync from "./cloudsync";
 
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
+
+let dontShowDownloadFlag = false;
 
 export function showAboutDialogAsync(projectView: pxt.editor.IProjectView) {
     const compileService = pxt.appTarget.compileService;
@@ -97,6 +99,7 @@ function renderVersionLink(name: string, version: string, url: string) {
     return <p>{lf("{0} version:", name)} &nbsp;
             <a href={encodeURI(url)}
             title={`${lf("{0} version: {1}", name, version)}`}
+            aria-label={`${lf("{0} version{1}", name, version)}`}
             target="_blank" rel="noopener noreferrer">{version}</a>
     </p>;
 }
@@ -475,13 +478,17 @@ export function showCreateGithubRepoDialogAsync(name?: string) {
                     {sui.helpIconLink("/github", lf("Learn more about GitHub"))}
                 </p>
                 <div className="ui field">
-                    <sui.Input type="url" autoFocus value={repoName} onChange={onNameChanged} label={lf("Repository name")} placeholder={`pxt-my-gadget...`} class="fluid" error={nameErr} />
+                    <sui.Input type="url" autoFocus value={repoName} onChange={onNameChanged}
+                    label={lf("Repository name")} id="githubRepoNameInput"
+                    placeholder={`pxt-my-gadget...`} class="fluid" error={nameErr} />
                 </div>
                 <div className="ui field">
-                    <sui.Input type="text" value={repoDescription} onChange={onDescriptionChanged} label={lf("Repository description")} placeholder={lf("MakeCode extension for my gadget")} class="fluid" />
+                    <sui.Input type="text" value={repoDescription} onChange={onDescriptionChanged}
+                    label={lf("Repository description")} id="githubRepoDescriptionInput"
+                    placeholder={lf("MakeCode extension for my gadget")} class="fluid" />
                 </div>
                 <div className="ui field">
-                    <select className={`ui dropdown`} onChange={onPublicChanged}>
+                    <select className={`ui dropdown`} onChange={onPublicChanged} aria-label={lf("Repository visibility setting")}>
                         <option aria-selected={repoPublic} value="true">{lf("Public repository, anyone can look at your code.")}</option>
                         <option aria-selected={!repoPublic} value="false">{lf("Private repository, your code is only visible to you.")}</option>
                     </select>
@@ -545,13 +552,13 @@ export function showImportGithubDialogAsync() {
                 header: lf("Clone or create your own GitHub repo"),
                 hideAgree: true,
                 hasCloseIcon: true,
-                /* tslint:disable:react-a11y-anchors */
                 jsx: <div className="ui form">
-                    <div className="ui relaxed divided list" role="menu">
+                    <div className="ui relaxed divided list">
                         <div key={"create new"} className="item">
                             <i className="large plus circle middle aligned icon"></i>
                             <div className="content">
-                                <a onClick={createNew} role="menuitem" className="header"
+                                <a onClick={createNew} role="button" className="header"
+                                    tabIndex={0} onKeyDown={sui.fireClickOnEnter}
                                     title={lf("Create new GitHub repository")}>
                                     <b>{lf("Create new...")}</b>
                                 </a>
@@ -564,7 +571,9 @@ export function showImportGithubDialogAsync() {
                             <div key={r.name} className="item">
                                 <i className="large github middle aligned icon"></i>
                                 <div className="content">
-                                    <a onClick={r.onClick} role="menuitem" className="header">{r.name}</a>
+                                    <a onClick={r.onClick} role="button" className="header"
+                                        tabIndex={0}  onKeyDown={sui.fireClickOnEnter}
+                                    >{r.name}</a>
                                     <div className="description">
                                         {pxt.Util.timeSince(r.updatedAt)}
                                         {". "}
@@ -706,4 +715,83 @@ export function promptTranslateBlock(blockid: string, blockTranslationIds: strin
             {blockTranslationIds.map(trid => <div key={`ictr${trid}`} className="ui basic segment">{trid}</div>)}
         </div>
     });
+}
+
+export function renderBrowserDownloadInstructions() {
+    const boardName = pxt.appTarget.appTheme.boardName || lf("device");
+    const boardDriveName = pxt.appTarget.appTheme.driveDisplayName || pxt.appTarget.compile.driveName || "???";
+    const fileExtension = pxt.appTarget.compile?.useUF2 ? ".uf2" : ".hex";
+    const webUSBSupported = pxt.usb.isEnabled && pxt.appTarget?.compile?.webUSB;
+
+    const onPairClicked = () => {
+        core.hideDialog();
+        pxt.commands.webUsbPairDialogAsync(pxt.usb.pairAsync, core.confirmAsync);
+    }
+
+    const onCheckboxClicked = (value: boolean) => {
+        const valueString = "" + value;
+        pxt.tickEvent("downloaddialog.dontshowagain", { checked: valueString });
+
+        dontShowDownloadFlag = value;
+    }
+
+    return <div className="ui grid stackable upload">
+        <div className="column sixteen wide instructions">
+            <div className="ui grid">
+                <div className="row">
+                    <div className="column">
+                        <div className="ui two column grid padded">
+                            <div className="column">
+                                <div className="ui">
+                                    <div className="content">
+                                        <div className="description">
+                                            {lf("Your code is being downloaded as a {1} file. You can drag this file to your {0} using your computer's file explorer.", boardName, fileExtension)}
+                                        </div>
+                                        {webUSBSupported &&
+                                            <div className="download-callout">
+                                                <label className="ui purple ribbon large label">{lf("New!")}</label>
+                                                <div className="ui two column grid">
+                                                    <div className="icon-align three wide column">
+                                                        <div />
+                                                        <i className="icon big usb"/>
+                                                        <div />
+                                                    </div>
+                                                    <div className="thirteen wide column">
+                                                        {lf("Download your code faster by pairing with web usb!")}
+                                                        <br/>
+                                                        <strong><a onClick={onPairClicked}>{lf("Pair now")}</a></strong>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="column">
+                                <div className="ui">
+                                    <div className="image">
+                                        <img alt={lf("Comic moving {1} file to {0}", boardDriveName, fileExtension)} className="ui medium rounded image" src={pxt.appTarget.appTheme.downloadDialogTheme?.dragFileImage} />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <sui.Checkbox
+                    inputLabel={lf("Don't show this again")}
+                    onChange={onCheckboxClicked}
+                />
+            </div>
+        </div>
+    </div>;
+}
+
+export function clearDontShowDownloadDialogFlag() {
+    dontShowDownloadFlag = false;
+}
+
+export function isDontShowDownloadDialogFlagSet() {
+    return dontShowDownloadFlag;
 }

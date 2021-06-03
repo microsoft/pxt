@@ -439,11 +439,9 @@ namespace pxt.blocks {
         }
 
         let hash = JSON.stringify(fn);
-        /* tslint:disable:possible-timing-attack (not a security critical codepath) */
         if (cachedBlocks[id] && cachedBlocks[id].hash == hash) {
             return true;
         }
-        /* tslint:enable:possible-timing-attack */
 
         if (Blockly.Blocks[fn.attributes.blockId]) {
             console.error("duplicate block definition: " + id);
@@ -648,7 +646,7 @@ namespace pxt.blocks {
             block.setInputsInline(!fn.parameters || (fn.parameters.length < 4 && !fn.attributes.imageLiteral));
         }
 
-        const body = fn.parameters ? fn.parameters.filter(pr => pr.type == "() => void" || pr.type == "Action")[0] : undefined;
+        const body = fn.parameters?.find(pr => pxtc.parameterTypeIsArrowFunction(pr));
         if (body || hasHandler) {
             block.appendStatementInput("HANDLER")
                 .setCheck(null);
@@ -878,10 +876,7 @@ namespace pxt.blocks {
     }
 
     export function hasArrowFunction(fn: pxtc.SymbolInfo): boolean {
-        const r = fn.parameters
-            ? fn.parameters.filter(pr => pr.type === "Action" || /^\([^\)]*\)\s*=>/.test(pr.type))[0]
-            : undefined;
-        return !!r;
+        return !!fn.parameters?.some(pr => pxtc.parameterTypeIsArrowFunction(pr));
     }
 
     export function cleanBlocks() {
@@ -2625,7 +2620,8 @@ namespace pxt.blocks {
         const iconsMap: pxt.Map<string> = {
             number: pxt.blocks.defaultIconForArgType("number"),
             boolean: pxt.blocks.defaultIconForArgType("boolean"),
-            string: pxt.blocks.defaultIconForArgType("string")
+            string: pxt.blocks.defaultIconForArgType("string"),
+            Array: pxt.blocks.defaultIconForArgType("Array")
         };
         const customNames: pxsim.Map<string> = {};
 

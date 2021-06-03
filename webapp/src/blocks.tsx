@@ -15,6 +15,7 @@ import * as blocklyFieldView from "./blocklyFieldView";
 import { CreateFunctionDialog } from "./createFunction";
 import { initializeSnippetExtensions } from './snippetBuilder';
 
+
 import Util = pxt.Util;
 import { DebuggerToolbox } from "./debuggerToolbox";
 import { ErrorList } from "./errorList";
@@ -123,7 +124,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             return pxt.blocks.compileAsync(this.editor, this.blockInfo, { emitTilemapLiterals: willOpenTypeScript })
                 .then((compilationResult) => {
                     this.compilationResult = compilationResult;
-                    pxt.tickActivity("blocks.compile");
+                    pxt.tickEvent("activity.blocks.compile");
 
                     let next = Promise.resolve();
                     if (willOpenTypeScript && this.parent) {
@@ -213,7 +214,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     getTemporaryAssets(): pxt.Asset[] {
-        if (!this.editor) return[];
+        if (!this.editor) return [];
 
         return pxtblockly.getTemporaryAssets(this.editor, pxt.AssetType.Image)
             .concat(pxtblockly.getTemporaryAssets(this.editor, pxt.AssetType.Animation))
@@ -534,7 +535,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 if (blockId === pxtc.TS_STATEMENT_TYPE || blockId === pxtc.TS_OUTPUT_TYPE) {
                     this.updateGrayBlocks();
                 }
-                pxt.tickEvent("blocks.create", { "block": blockId });
+                pxt.tickEvent("blocks.create", { "block": blockId }, { interactiveConsent: true });
                 if (ev.xml.tagName == 'SHADOW')
                     this.cleanUpShadowBlocks();
                 if (!this.parent.state.tutorialOptions || !this.parent.state.tutorialOptions.metadata || !this.parent.state.tutorialOptions.metadata.flyoutOnly)
@@ -703,6 +704,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         for (let listener of pxt.U.values(this.errorChangesListeners)) {
             listener(errors)
         }
+    }
+
+    async validateTutorialCode(tutorial: pxt.tutorial.TutorialOptions) {
+        // Current tutorial step
+        const { tutorialStep } = tutorial;
+        const blocks = this.editor.getAllBlocks();
+        const tutorialRulesValidated: pxt.tutorial.TutorialRuleStatus[] = await pxt.tutorial.validate(tutorial, blocks, this.blockInfo);
+        this.parent.setTutorialCodeStatus(tutorialStep, tutorialRulesValidated);
     }
 
     getBlocksAreaDiv() {
@@ -1017,7 +1026,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         if (this.debuggerToolbox) {
             const visibleVars = Blockly.Variables.allUsedVarModels(this.editor)
-                    .map((variable: Blockly.VariableModel) => pxtc.escapeIdentifier(variable.name));
+                .map((variable: Blockly.VariableModel) => pxtc.escapeIdentifier(variable.name));
 
             this.debuggerToolbox.setBreakpoint(brk, visibleVars);
         }
@@ -1744,9 +1753,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     let type = shadow.getAttribute('type');
                     const builtin = snippets.allBuiltinBlocks()[type];
                     let b = this.getBlockXml(builtin ? builtin : { name: type, attributes: { blockId: type } }, ignoregap, true);
-                    /* tslint:disable:no-inner-html setting one element's contents to the other */
+                    // Note: we're setting one innerHTML to another
+                    // eslint-disable-next-line @microsoft/sdl/no-inner-html
                     if (b && b.length > 0 && b[0]) shadow.innerHTML = b[0].innerHTML;
-                    /* tslint:enable:no-inner-html */
                 })
         }
         return [blockXml];

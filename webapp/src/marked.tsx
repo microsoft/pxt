@@ -10,6 +10,7 @@ type ISettingsProps = pxt.editor.ISettingsProps;
 interface MarkedContentProps extends ISettingsProps {
     markdown: string;
     className?: string;
+    tabIndex?: number;
     // do not emit segment around snippets
     unboxSnippets?: boolean;
     blocksDiffOptions?: pxt.blocks.DiffOptions;
@@ -342,9 +343,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         markdown = markdown.replace(/<\s*script[^>]*>.*<\/\s*script\s*>/g, '');
 
         // Render the markdown and add it to the content div
-        /* tslint:disable:no-inner-html (marked content is already sanitized) */
         content.innerHTML = marked(markdown);
-        /* tslint:enable:no-inner-html */
 
         //
 
@@ -367,7 +366,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
     }
 
     renderCore() {
-        const { className } = this.props;
-        return <div ref="marked-content" className={className || ""} />;
+        const { className, tabIndex } = this.props;
+        return <div ref="marked-content" className={className || ""} tabIndex={tabIndex} />;
     }
 }

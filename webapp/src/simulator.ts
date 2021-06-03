@@ -291,6 +291,7 @@ export function run(pkg: pxt.MainPackage, debug: boolean,
     lastCompileResult = res;
     const { mute, highContrast, light, clickTrigger, storedState, autoRun } = options;
     const isIpcRenderer = pxt.BrowserUtils.isIpcRenderer() || undefined;
+    const dependencies = pkg.dependencies()
 
     const opts: pxsim.SimulatorRunOptions = {
         boardDefinition: boardDefinition,
@@ -313,6 +314,7 @@ export function run(pkg: pxt.MainPackage, debug: boolean,
         storedState: storedState,
         autoRun,
         ipc: isIpcRenderer,
+        dependencies
     }
     //if (pxt.options.debug)
     //    pxt.debug(JSON.stringify(opts, null, 2))

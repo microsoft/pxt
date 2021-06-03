@@ -1493,6 +1493,7 @@ namespace pxt {
         if (!name) return false;
 
         // Covers all punctuation/whitespace except for "-", "_", and " "
+        // eslint-disable-next-line no-control-regex
         const bannedRegex = /[\u0000-\u001f\u0021-\u002c\u002e\u002f\u003a-\u0040\u005b-\u005e\u0060\u007b-\u007f]/
         return !bannedRegex.test(name);
     }
@@ -1631,27 +1632,11 @@ namespace pxt {
     }
 
     function serializeAnimation(asset: Animation): JRes {
-        const encodedFrames = asset.frames.map(frame => frame.data);
-
-        const data = new Uint8ClampedArray(8 + encodedFrames[0].length * encodedFrames.length);
-
-        // interval, frame width, frame height, frame count
-        set16Bit(data, 0, asset.interval);
-        set16Bit(data, 2, asset.frames[0].width);
-        set16Bit(data, 4, asset.frames[0].height);
-        set16Bit(data, 6, asset.frames.length);
-
-        let offset = 8;
-        encodedFrames.forEach(buf => {
-            data.set(buf, offset);
-            offset += buf.length;
-        })
-
         return {
             namespace: asset.id.substr(0, asset.id.lastIndexOf(".")),
             id: asset.id.substr(asset.id.lastIndexOf(".") + 1),
             mimeType: ANIMATION_MIME_TYPE,
-            data: btoa(pxt.sprite.uint8ArrayToHex(data)),
+            data: pxt.sprite.encodeAnimationString(asset.frames, asset.interval),
             displayName: asset.meta.displayName
         }
     }

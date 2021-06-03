@@ -53,9 +53,6 @@ export class LoginDialog extends auth.Component<LoginDialogProps, LoginDialogSta
                 <div className="description">
                     <p>{lf("Connect an existing account in order to sign in or signup for the first time.")} <sui.Link className="ui" text={lf("Learn more")} icon="external alternate" ariaLabel={lf("Learn more")} href="https://aka.ms/cloudsave" target="_blank" onKeyDown={sui.fireClickOnEnter} /></p>
                 </div>
-                <div className="warning">
-                    <p>{lf("WARNING: Experimental feature ahead! Before you sign in, please backup any projects you don't want to lose.")}</p>
-                </div>
                 <div className="container">
                     <div className="prompt">
                         <p>Choose an account to connect:</p>
@@ -126,6 +123,16 @@ export class UserMenu extends auth.Component<UserMenuProps, UserMenuState> {
         this.props.parent.showProfileDialog();
     }
 
+    handleUnlinkGitHubClicked = () => {
+        pxt.tickEvent("menu.github.signout");
+        const githubProvider = cloudsync.githubProvider();
+        if (githubProvider) {
+            githubProvider.logout();
+            this.props.parent.forceUpdate();
+            core.infoNotification(lf("Signed out from GitHub..."))
+        }
+    }
+
     renderCore() {
         const loggedIn = this.isLoggedIn();
         const user = this.getUser();
@@ -156,15 +163,27 @@ export class UserMenu extends auth.Component<UserMenuProps, UserMenuState> {
             );
         }
 
+        const githubUser = this.getData("github:user") as pxt.editor.UserInfo;
+        const showGhUnlink = !loggedIn && githubUser;
+
         return (
             <sui.DropdownMenu role="menuitem"
                 title={title}
                 className="item icon user-dropdown-menuitem"
                 titleContent={loggedIn ? signedInElem : signedOutElem}
             >
-                {!loggedIn ? <sui.Item role="menuitem" text={lf("Sign in")} onClick={this.handleLoginClicked} /> : undefined}
                 {loggedIn ? <sui.Item role="menuitem" text={lf("My Profile")} onClick={this.handleProfileClicked} /> : undefined}
                 {loggedIn ? <div className="ui divider"></div> : undefined}
+                {showGhUnlink ?
+                    <sui.Item role="menuitem" title={lf("Unlink {0} from GitHub", githubUser.name)} onClick={this.handleUnlinkGitHubClicked}>
+                        <div className="icon avatar" role="presentation">
+                            <img className="circular image" src={githubUser.photo} alt={lf("User picture")} />
+                        </div>
+                        <span>{lf("Unlink GitHub")}</span>
+                    </sui.Item>
+                : undefined}
+                {showGhUnlink ? <div className="ui divider"></div> : undefined}
+                {!loggedIn ? <sui.Item role="menuitem" text={lf("Sign in")} onClick={this.handleLoginClicked} /> : undefined}
                 {loggedIn ? <sui.Item role="menuitem" text={lf("Sign out")} onClick={this.handleLogoutClicked} /> : undefined}
             </sui.DropdownMenu>
         );

@@ -358,20 +358,6 @@ namespace pxt {
         }
     }
 
-    let activityEvents: Map<number> = {};
-    const tickActivityDebounced = Util.debounce(() => {
-        tickEvent("activity", activityEvents);
-        activityEvents = {};
-    }, 10000, false);
-    /**
-     * Ticks activity events. This event gets aggregated and eventually gets sent.
-     */
-    export function tickActivity(...ids: string[]) {
-        ids.filter(id => !!id).map(id => id.slice(0, 64))
-            .forEach(id => activityEvents[id] = (activityEvents[id] || 0) + 1);
-        tickActivityDebounced();
-    }
-
     export interface WebConfig {
         relprefix: string; // "/beta---",
         workerjs: string;  // "/beta---worker",
@@ -409,7 +395,7 @@ namespace pxt {
             gifworkerjs: "/gifjs/gif.worker.js",
             serviceworkerjs: "/serviceworker.js",
             pxtVersion: "local",
-            pxtRelId: "",
+            pxtRelId: "localRelId",
             pxtCdnUrl: "/cdn/",
             commitCdnUrl: "/cdn/",
             blobCdnUrl: "/blb/",
@@ -502,6 +488,9 @@ namespace pxt {
     export const BLOCKS_PROJECT_NAME = "blocksprj";
     export const JAVASCRIPT_PROJECT_NAME = "tsprj";
     export const PYTHON_PROJECT_NAME = "pyprj";
+    export const MAIN_BLOCKS = "main.blocks";
+    export const MAIN_TS = "main.ts";
+    export const MAIN_PY = "main.py";
     export const DEFAULT_GROUP_NAME = "other"; // used in flyout, for snippet groups
     export const TILEMAP_CODE = "tilemap.g.ts";
     export const TILEMAP_JRES = "tilemap.g.jres";

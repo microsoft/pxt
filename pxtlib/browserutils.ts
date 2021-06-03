@@ -194,9 +194,11 @@ namespace pxt.BrowserUtils {
             // pinned web sites and WKWebview for embedded browsers have a different user agent
             // Mozilla/5.0 (iPhone; CPU iPhone OS 10_2_1 like Mac OS X) AppleWebKit/602.4.6 (KHTML, like Gecko) Mobile/14D27
             // Mozilla/5.0 (iPad; CPU OS 10_3_3 like Mac OS X) AppleWebKit/603.3.8 (KHTML, like Gecko) Mobile/14G60
+            // Mozilla/5.0 (iPod; CPU OS 10_3_3 like Mac OS X) AppleWebKit/603.3.8 (KHTML, like Gecko) Mobile/14G60
+            // Mozilla/5.0 (iPod touch; CPU iPhone OS 14_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148;
             // Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_5) AppleWebKit/605.1.15 (KHTML, like Gecko)
             if (!matches)
-                matches = /(Macintosh|iPod|iPhone|iPad); (CPU|Intel).*?OS (X )?(\d+)/i.exec(navigator.userAgent);
+                matches = /(Macintosh|iPod( touch)?|iPhone|iPad); (CPU|Intel).*?OS (X )?(\d+)/i.exec(navigator.userAgent);
         }
         else if (isChrome()) {
             matches = /(Chrome|Chromium)\/([0-9\.]+)/i.exec(navigator.userAgent);
@@ -1022,7 +1024,7 @@ namespace pxt.BrowserUtils {
             .catch(e => deleteDbAsync().then());
     }
 
-    export function getTutorialInfoHash(code: string[]) {
+    export function getTutorialCodeHash(code: string[]) {
         // the code strings are parsed from markdown, so when the
         // markdown changes the blocks will also be invalidated
         const input = JSON.stringify(code) + pxt.appTarget.versions.pxt + "_" + pxt.appTarget.versions.target;
@@ -1037,11 +1039,12 @@ namespace pxt.BrowserUtils {
         id: string;
         hash: string;
         blocks: Map<number>;
+        snippets: Map<Map<number>>;
     }
 
     export interface ITutorialInfoDb {
         getAsync(filename: string, code: string[], branch?: string): Promise<TutorialInfoIndexedDbEntry>;
-        setAsync(filename: string, blocks: Map<number>, code: string[], branch?: string): Promise<void>;
+        setAsync(filename: string, snippets: Map<Map<number>>, code: string[], branch?: string): Promise<void>;
         clearAsync(): Promise<void>;
     }
 
@@ -1078,15 +1081,13 @@ namespace pxt.BrowserUtils {
 
         getAsync(filename: string, code: string[], branch?: string): Promise<TutorialInfoIndexedDbEntry> {
             const key = getTutorialInfoKey(filename, branch);
-            const hash = getTutorialInfoHash(code);
+            const hash = getTutorialCodeHash(code);
 
             return this.db.getAsync<TutorialInfoIndexedDbEntry>(TutorialInfoIndexedDb.TABLE, key)
                 .then((res) => {
-                    /* tslint:disable:possible-timing-attack (this is not a security-sensitive codepath) */
                     if (res && res.hash == hash) {
                         return res;
                     }
-                    /* tslint:enable:possible-timing-attack */
 
                     // delete stale db entry
                     this.db.deleteAsync(TutorialInfoIndexedDb.TABLE, key);
@@ -1094,20 +1095,27 @@ namespace pxt.BrowserUtils {
                 });
         }
 
-        setAsync(filename: string, blocks: Map<number>, code: string[], branch?: string): Promise<void> {
+        setAsync(filename: string, snippets: Map<Map<number>>, code: string[], branch?: string): Promise<void> {
             pxt.perf.measureStart("tutorial info db setAsync")
             const key = getTutorialInfoKey(filename, branch);
-            const hash = getTutorialInfoHash(code);
-            return this.setWithHashAsync(filename, blocks, hash);
+            const hash = getTutorialCodeHash(code);
+            return this.setWithHashAsync(filename, snippets, hash);
         }
 
-        setWithHashAsync(filename: string, blocks: Map<number>, hash: string, branch?: string): Promise<void> {
+        setWithHashAsync(filename: string, snippets: Map<Map<number>>, hash: string, branch?: string): Promise<void> {
             pxt.perf.measureStart("tutorial info db setAsync")
             const key = getTutorialInfoKey(filename, branch);
+            const blocks: Map<number> = {};
+            Object.keys(snippets).forEach(hash => {
+                Object.keys(snippets[hash]).forEach(blockId => {
+                    blocks[blockId] = snippets[hash][blockId]
+                })
+            })
 
             const entry: TutorialInfoIndexedDbEntry = {
                 id: key,
                 hash,
+                snippets,
                 blocks
             };
 

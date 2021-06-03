@@ -306,21 +306,22 @@
     line-height: 2.25rem;
 }
 
-// this impacts all scrollbars in pxt
-::-webkit-scrollbar {
-    width: @customScrollbarWidth;
-}
+.image-editor-wrapper {
+    ::-webkit-scrollbar {
+        width: @customScrollbarWidth;
+    }
 
-::-webkit-scrollbar-track {
-    background: #3c3c3c;
-}
+    ::-webkit-scrollbar-track {
+        background: #3c3c3c;
+    }
 
-::-webkit-scrollbar-thumb {
-    background: #adadad;
-}
+    ::-webkit-scrollbar-thumb {
+        background: #adadad;
+    }
 
-::-webkit-scrollbar-thumb:hover {
-    background: #979797;
+    ::-webkit-scrollbar-thumb:hover {
+        background: #979797;
+    }
 }
 
 .gallery-filter-button {
@@ -425,7 +426,7 @@
         margin: 0.2rem 0 0 0.2rem;
     }
 
-    .asset-editor-card-icon {
+    .asset-editor-card-icon.warning {
         display: none;
     }
 }

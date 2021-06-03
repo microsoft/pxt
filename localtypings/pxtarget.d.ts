@@ -289,7 +289,7 @@ declare namespace pxt {
         docMenu?: DocMenuEntry[];
         TOC?: TOCMenuEntry[];
         hideSideDocs?: boolean;
-        homeScreenHero?: string; // home screen hero image
+        homeScreenHero?: string | CodeCard; // home screen hero image or codecard
         homeScreenHeroGallery?: string; // path to markdown file containing the gallery to display on homescreen
         sideDoc?: string; // deprecated
         hasReferenceDocs?: boolean; // if true: the monaco editor will add an option in the context menu to load the reference docs
@@ -387,7 +387,7 @@ declare namespace pxt {
         scriptManager?: boolean; // Whether or not to enable the script manager. default: false
         monacoFieldEditors?: string[]; // A list of field editors to show in monaco. Currently only "image-editor" is supported
         disableAPICache?: boolean; // Disables the api cache in target.js
-        sidebarTutorial? : boolean; // Move the tutorial pane to be on the left side of the screen
+        sidebarTutorial?: boolean; // Move the tutorial pane to be on the left side of the screen
         /**
          * Internal and temporary flags:
          * These flags may be removed without notice, please don't take a dependency on them
@@ -435,6 +435,27 @@ declare namespace pxt {
         embeddedTutorial?: boolean;
         disableBlobObjectDownload?: boolean; // use data uri downloads instead of object urls
         immersiveReader?: boolean; // enables the immersive reader for tutorials
+        tutorialCodeValidation?: boolean; // Enable code validation for tutorials
+        downloadDialogTheme?: DownloadDialogTheme;
+    }
+
+    interface DownloadDialogTheme {
+        webUSBDeviceNames?: string[];
+        minimumFirmwareVersion?: string;
+
+        deviceIcon?: string;
+        deviceSuccessIcon?: string;
+        downloadMenuHelpURL?: string;
+        downloadHelpURL?: string;
+        firmwareHelpURL?: string;
+        troubleshootWebUSBHelpURL?: string;
+
+        dragFileImage?: string;
+        connectDeviceImage?: string;
+        selectDeviceImage?: string;
+        connectionSuccessImage?: string;
+        checkFirmwareVersionImage?: string;
+        checkUSBCableImage?: string;
     }
 
     interface SocialOptions {
@@ -474,6 +495,7 @@ declare namespace pxt {
     interface BuiltTutorialInfo {
         hash?: string;
         usedBlocks: Map<number>;
+        snippetBlocks: Map<Map<number>>;
     }
 
     interface PackageApiInfo {
@@ -485,6 +507,65 @@ declare namespace pxt {
         type: "serviceworker";
         state: "activated";
         ref: string;
+    }
+
+    type ServiceWorkerClientMessage = RequestPacketIOLockMessage | ReleasePacketIOLockMessage | DisconnectPacketIOResponse | PacketIOLockSupportedMessage | PacketIOLockStatusResponse;
+
+    interface RequestPacketIOLockMessage {
+        type: "serviceworkerclient";
+        action: "request-packet-io-lock";
+        lock: string;
+    }
+
+    interface ReleasePacketIOLockMessage {
+        type: "serviceworkerclient";
+        action: "release-packet-io-lock";
+        lock: string;
+    }
+
+    interface DisconnectPacketIOResponse {
+        type: "serviceworkerclient";
+        action: "packet-io-lock-disconnect";
+        lock: string;
+        didDisconnect: boolean;
+    }
+
+    interface PacketIOLockSupportedMessage {
+        type: "serviceworkerclient";
+        action: "packet-io-supported";
+    }
+
+    interface PacketIOLockStatusResponse {
+        type: "serviceworkerclient";
+        action: "packet-io-status";
+        lock: string;
+        hasLock: boolean;
+    }
+
+    type ServiceWorkerMessage = DisconnectPacketIOMessage | GrantPacketIOLockMessage | PacketIOLockSupportedResponse | PacketIOLockStatusMessage;
+
+    interface DisconnectPacketIOMessage {
+        type: "serviceworker";
+        action: "packet-io-lock-disconnect";
+        lock: string;
+    }
+
+    interface GrantPacketIOLockMessage {
+        type: "serviceworker";
+        action: "packet-io-lock-granted";
+        granted: boolean;
+        lock: string;
+    }
+
+    interface PacketIOLockSupportedResponse {
+        type: "serviceworker";
+        action: "packet-io-supported";
+        supported: boolean;
+    }
+
+    interface PacketIOLockStatusMessage {
+        type: "serviceworker";
+        action: "packet-io-status";
     }
 }
 
@@ -535,6 +616,7 @@ declare namespace ts.pxtc {
         noIncr?: boolean;
         rawELF?: boolean;
         multiVariant?: boolean;
+        size?: boolean;
     }
 
     interface CompileTarget {
@@ -847,7 +929,8 @@ declare namespace ts.pxtc {
         fileSystem: pxt.Map<string>;
         target: CompileTarget;
         testMode?: boolean;
-        sourceFiles?: string[];
+        sourceFiles?: string[]; // list of file names
+        sourceTexts?: string[]; // list of file text content (TS string)
         generatedFiles?: string[];
         jres?: pxt.Map<pxt.JRes>;
         extinfo?: ExtensionInfo;
@@ -863,6 +946,8 @@ declare namespace ts.pxtc {
         bannedCategories?: string[];
         skipPxtModulesTSC?: boolean; // skip re-checking of pxt_modules/*
         skipPxtModulesEmit?: boolean; // skip re-emit of pxt_modules/*
+        clearIncrBuildAndRetryOnError?: boolean; // on error when compiling in service, try again with a full recompile.
+        errorOnGreyBlocks?: boolean;
 
         otherMultiVariants?: ExtensionTarget[];
 
@@ -954,6 +1039,7 @@ declare namespace pxt.tutorial {
         assetFiles?: pxt.Map<string>;
         jres?: string; // JRES to be used when generating hints; necessary for tilemaps
         customTs?: string; // custom typescript code loaded in a separate file for the tutorial
+        tutorialValidationRules?: pxt.Map<boolean>; //a map of rules used in a tutorial and if the rules are activated 
     }
 
     interface TutorialMetadata {
@@ -965,8 +1051,17 @@ declare namespace pxt.tutorial {
         noDiffs?: boolean; // don't automatically generated diffs
         codeStart?: string; // command to run when code starts (MINECRAFT HOC ONLY)
         codeStop?: string; // command to run when code stops (MINECRAFT HOC ONLY)
-        autoexpandOff?: boolean // INTERNAL TESTING ONLY
-        preferredEditor?: string // preferred editor for opening the tutorial
+        autoexpandOff?: boolean; // INTERNAL TESTING ONLY
+        preferredEditor?: string; // preferred editor for opening the tutorial
+        tutorialCodeValidation?: boolean; // enable tutorial validation for this tutorial
+    }
+
+    interface TutorialRuleStatus {
+        ruleName: string;
+        ruleTurnOn: boolean;
+        ruleStatus?: boolean;
+        ruleMessage?: string;
+        isStrict?: boolean;
     }
 
     interface TutorialStepInfo {
@@ -981,6 +1076,7 @@ declare namespace pxt.tutorial {
         hintContentMd?: string;
         activity?: number;
         resetDiff?: boolean; // reset diffify algo
+        listOfValidationRules?: pxt.tutorial.TutorialRuleStatus[]; // Whether the user code has been marked valid for these set of rules
     }
 
     interface TutorialActivityInfo {
@@ -1008,6 +1104,7 @@ declare namespace pxt.tutorial {
         assetFiles?: pxt.Map<string>;
         jres?: string; // JRES to be used when generating hints; necessary for tilemaps
         customTs?: string; // custom typescript code loaded in a separate file for the tutorial
+        tutorialValidationRules?: pxt.Map<boolean>; //a map of rules used in a tutorial and if the rules are activated 
     }
     interface TutorialCompletionInfo {
         // id of the tutorial

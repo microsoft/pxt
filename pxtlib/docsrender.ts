@@ -3,6 +3,7 @@
 /// <reference path="commonutil.ts"/>
 
 namespace pxt.docs {
+    // eslint-disable-next-line no-var
     declare var require: any;
     import U = pxtc.Util;
 
@@ -28,7 +29,8 @@ namespace pxt.docs {
         "codeStop": "<!-- stop -->",
         "autoOpen": "<!-- autoOpen -->",
         "autoexpandOff": "<!-- autoexpandOff -->",
-        "preferredEditor": "<!-- preferredEditor -->"
+        "preferredEditor": "<!-- preferredEditor -->",
+        "tutorialCodeValidation": "<!-- tutorialCodeValidation -->"
     }
 
     function replaceAll(replIn: string, x: string, y: string) {
