@@ -301,6 +301,10 @@ namespace pxt.docs {
         params["targetname"] = theme.name || "Microsoft MakeCode";
         params["docsheader"] = theme.docsHeader || "Documentation";
         params["targetlogo"] = theme.docsLogo ? `<img aria-hidden="true" role="presentation" class="ui ${theme.logoWide ? "small" : "mini"} image" src="${theme.docsLogo}" />` : ""
+        params["orglogo"] = (theme.organizationLogo || theme.organizationWideLogo) ? `<img aria-hidden="true" role="presentation" class="ui image" src="${theme.organizationLogo || theme.organizationWideLogo}" />` : ""
+        params["orglogomobile"] = (theme.organizationLogo) ? `<img aria-hidden="true" role="presentation" class="ui image" src="${theme.organizationLogo}" />` : ""
+        params["orgtitle"] = "MakeCode";
+
         let ghURLs = d.ghEditURLs || []
         if (ghURLs.length) {
             let ghText = `<p style="margin-top:1em">\n`
