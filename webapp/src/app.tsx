@@ -1385,7 +1385,7 @@ export class ProjectView
         return undefined;
     }
 
-    async loadHeaderAsync(h: pxt.workspace.Header, editorState?: pxt.editor.EditorState): Promise<void> {
+    async loadHeaderAsync(h: pxt.workspace.Header, editorState?: pxt.editor.EditorState, tryCloudSync = true): Promise<void> {
         if (!h)
             return Promise.resolve()
 
@@ -1400,33 +1400,37 @@ export class ProjectView
             await workspace.syncAsync();
         }
 
-        // Try a quick cloud fetch. If it doesn't complete within X second(s),
-        // continue on.
-        const TIMEOUT_MS = 15000;
-        const timeoutStart = Util.nowSeconds();
-        let timedOut = false;
-        await Promise.race([
-            pxt.U.delay(TIMEOUT_MS)
-                .then(() => { timedOut = true }),
-            cloud.syncAsync([h])
-                .then(changes => {
-                    if (changes.length) {
-                        const elapsed = Util.nowSeconds() - timeoutStart;
-                        if (timedOut) {
-                            // We are too late; the editor has already been loaded.
-                            // Call the onChanges handler to update the editor.
-                            pxt.tickEvent(`identity.syncOnProjectOpen.timedout`, { 'elapsedSec': elapsed })
-                            if (changes.some(header => header.id === h.id))
-                                cloud.forceReloadForCloudSync()
-                        } else {
-                            // We're not too late, update the local var so that the
-                            // first load has the new info.
-                            pxt.tickEvent(`identity.syncOnProjectOpen.syncSuccess`, { 'elapsedSec': elapsed })
-                            h = workspace.getHeader(h.id)
+        if (tryCloudSync) {
+            // Try a quick cloud fetch. If it doesn't complete within X second(s),
+            // continue on.
+            const TIMEOUT_MS = 15000;
+            const timeoutStart = Util.nowSeconds();
+            let timedOut = false;
+            await Promise.race([
+                pxt.U.delay(TIMEOUT_MS)
+                    .then(() => {
+                        timedOut = true
+                    }),
+                cloud.syncAsync([h])
+                    .then(changes => {
+                        if (changes.length) {
+                            const elapsed = Util.nowSeconds() - timeoutStart;
+                            if (timedOut) {
+                                // We are too late; the editor has already been loaded.
+                                // Call the onChanges handler to update the editor.
+                                pxt.tickEvent(`identity.syncOnProjectOpen.timedout`, { 'elapsedSec': elapsed })
+                                if (changes.some(header => header.id === h.id))
+                                    cloud.forceReloadForCloudSync()
+                            } else {
+                                // We're not too late, update the local var so that the
+                                // first load has the new info.
+                                pxt.tickEvent(`identity.syncOnProjectOpen.syncSuccess`, { 'elapsedSec': elapsed })
+                                h = workspace.getHeader(h.id)
+                            }
                         }
-                    }
-                })
-        ]);
+                    })
+            ]);
+        }
 
         if (h) {
             workspace.acquireHeaderSession(h);
