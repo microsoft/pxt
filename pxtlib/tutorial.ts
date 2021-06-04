@@ -16,6 +16,7 @@ namespace pxt.tutorial {
         let tutorialValidationRules: pxt.Map<boolean>;
         if (metadata.tutorialCodeValidation) {
             tutorialValidationRules = pxt.Util.jsonTryParse(tutorialValidationRulesStr);
+            categorizingValidationRules(tutorialValidationRules);
         }
 
         // noDiffs legacy
@@ -303,6 +304,27 @@ ${code}
             }
         }
         return { header, hint, requiredBlocks };
+    }
+
+    function categorizingValidationRules(listOfRules: pxt.Map<boolean>) {
+        const ruleNames: string[] = Object.keys(listOfRules);
+        let enabledRulesMessageArr: string[] = [];
+        let turnedOffRulesMessageArr: string[] = [];
+        for (let i = 0; i < ruleNames.length; i++) {
+            const currRule: string = ruleNames[i];
+            const ruleVal: boolean = listOfRules[currRule];
+            if (ruleVal) {
+                enabledRulesMessageArr.push(currRule);
+            } else {
+                turnedOffRulesMessageArr.push(currRule);
+            }
+        }
+        const enabledRulesMessage = enabledRulesMessageArr.join(', ');
+        const turnedOffRulesMessage = turnedOffRulesMessageArr.join(', ');
+        let enabledRulesMap: pxt.Map<string> = {};
+        enabledRulesMap['enableRules'] = enabledRulesMessage;
+        enabledRulesMap['turnedOffRules'] = turnedOffRulesMessage;
+        pxt.tickEvent('tutorial.validation.listOfRules ', enabledRulesMap);
     }
 
     /* Remove hidden snippets from text */

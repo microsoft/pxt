@@ -412,11 +412,10 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         this.props.parent.setTutorialStep(previousStep);
 
         const tutorialCodeValidationIsOn = options.metadata.tutorialCodeValidation;
-        if (tutorialCodeValidationIsOn && this.state.showUnusedBlockMessage) {
+        if (tutorialCodeValidationIsOn && this.state.showUnusedBlockMessage) { // disables tutorial validation pop-up if previous buttion is clicked
             const stepInfo = options.tutorialStepInfo[currentStep];
             const sortedValidAndInvalidRules = this.classifyingValidAndInvalidRules(stepInfo.listOfValidationRules);
-            pxt.tickEvent('tutorial.validation.clickedPrevious ', sortedValidAndInvalidRules);
-            console.log('tutorial.validation.clickedPrevious ', sortedValidAndInvalidRules);
+            pxt.tickEvent('tutorial.validation.clickedPreviousBttn ', sortedValidAndInvalidRules);
             this.setState({ showUnusedBlockMessage: false });
         }
     }
@@ -433,11 +432,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         this.props.parent.setTutorialStep(nextStep);
 
         const tutorialCodeValidationIsOn = options.metadata.tutorialCodeValidation;
-        if (tutorialCodeValidationIsOn && this.state.showUnusedBlockMessage) {
-            const stepInfo = options.tutorialStepInfo[currentStep];
-            const sortedValidAndInvalidRules = this.classifyingValidAndInvalidRules(stepInfo.listOfValidationRules);
-            pxt.tickEvent('tutorial.validation.clickedNext ', sortedValidAndInvalidRules);
-            console.log('tutorial.validation.clickedNext ', sortedValidAndInvalidRules);
+        if (tutorialCodeValidationIsOn && this.state.showUnusedBlockMessage) { // disables tutorial validation pop-up if next buttion is clicked
             this.setState({ showUnusedBlockMessage: false });
         }
     }
@@ -639,14 +634,13 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
             this.props.parent.setHintSeen(currentStep);
         }
         th.showHint(visible, showFullText);
-        if (visible) {
+        if (visible) { // disables tutorial validation pop-up if hint is clicked
             const options = this.props.parent.state.tutorialOptions;
             const tutorialCodeValidationIsOn = options.metadata.tutorialCodeValidation;
             if (tutorialCodeValidationIsOn && this.state.showUnusedBlockMessage) {
                 const stepInfo = options.tutorialStepInfo[currentStep];
                 const sortedValidAndInvalidRules = this.classifyingValidAndInvalidRules(stepInfo.listOfValidationRules);
                 pxt.tickEvent('tutorial.validation.clickedHint ', sortedValidAndInvalidRules);
-                console.log('tutorial.validation.clickedHint ', sortedValidAndInvalidRules);
                 this.setState({ showUnusedBlockMessage: false });
             }
         }
@@ -685,8 +679,8 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
                 }
             }
         }
-        const codeValidListStr = this.props.parent.state.tutorialOptions.tutorialStep + ": " + codeValidList.join(', ');
-        const codeInValidListStr = this.props.parent.state.tutorialOptions.tutorialStep + ": " + codeInValidList.join(', ');
+        const codeValidListStr = "step " + this.props.parent.state.tutorialOptions.tutorialStep + ": " + codeValidList.join(', ');
+        const codeInValidListStr = "step " + this.props.parent.state.tutorialOptions.tutorialStep + ": " + codeInValidList.join(', ');
         turnedOnRulesList["codeValid"] = codeValidListStr;
         turnedOnRulesList["codeInvalid"] = codeInValidListStr;
         return turnedOnRulesList;

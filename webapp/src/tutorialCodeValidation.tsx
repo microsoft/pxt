@@ -36,16 +36,14 @@ export class MoveOn extends data.Component<TutorialCodeValidationProps, tutorial
 
     moveOnToNextTutorialStep() {
         const sortedValidAndInvalidRules = this.props.codeValidAndInvalidRuleMap;
-        pxt.tickEvent('tutorial.validation.next ', sortedValidAndInvalidRules);
-        console.log('tutorial.validation.next ', sortedValidAndInvalidRules)
+        pxt.tickEvent('tutorial.validation.continueAnyway ', sortedValidAndInvalidRules);
         this.props.onYesButtonClick();
         this.showUnusedBlocksMessage(false);
     }
 
     stayOnThisTutorialStep() {
         const sortedValidAndInvalidRules = this.props.codeValidAndInvalidRuleMap;
-        pxt.tickEvent('tutorial.validation.stay ', sortedValidAndInvalidRules);
-        console.log('tutorial.validation.stay ', sortedValidAndInvalidRules);
+        pxt.tickEvent('tutorial.validation.keepEditing ', sortedValidAndInvalidRules);
         this.props.onNoButtonClick();
     }
 
