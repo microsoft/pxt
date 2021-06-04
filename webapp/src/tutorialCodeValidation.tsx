@@ -14,6 +14,7 @@ interface TutorialCodeValidationProps extends ISettingsProps {
     isTutorialCodeInvalid: boolean;
     ruleComponents: pxt.tutorial.TutorialRuleStatus[];
     areStrictRulesPresent: boolean;
+    codeValidAndInvalidRuleMap: pxt.Map<string>;
 }
 
 interface tutorialCodeValidationState {
@@ -31,28 +32,20 @@ export class MoveOn extends data.Component<TutorialCodeValidationProps, tutorial
         this.setState({ visible: vis });
     }
 
-    collectingTurnedOnRulesList(rules: pxt.tutorial.TutorialRuleStatus[]) {
-        let turnedOnRulesList: pxt.Map<string> = {};
-        if (rules != undefined) {
-            for (let i = 0; i < rules.length; i++) {
-                if (rules[i].ruleTurnOn) {
-                    turnedOnRulesList[rules[i].ruleName] = rules[i].ruleStatus + '';
-                }
-            }
-        }
-        return turnedOnRulesList;
-    }
+
 
     moveOnToNextTutorialStep() {
-        const listOfTurnedOnRules = this.collectingTurnedOnRulesList(this.props.ruleComponents);
-        pxt.tickEvent('tutorial.validation.next ', listOfTurnedOnRules);
+        const sortedValidAndInvalidRules = this.props.codeValidAndInvalidRuleMap;
+        pxt.tickEvent('tutorial.validation.next ', sortedValidAndInvalidRules);
+        console.log('tutorial.validation.next ', sortedValidAndInvalidRules)
         this.props.onYesButtonClick();
         this.showUnusedBlocksMessage(false);
     }
 
     stayOnThisTutorialStep() {
-        const listOfTurnedOnRules = this.collectingTurnedOnRulesList(this.props.ruleComponents);
-        pxt.tickEvent('tutorial.validation.stay ', listOfTurnedOnRules);
+        const sortedValidAndInvalidRules = this.props.codeValidAndInvalidRuleMap;
+        pxt.tickEvent('tutorial.validation.stay ', sortedValidAndInvalidRules);
+        console.log('tutorial.validation.stay ', sortedValidAndInvalidRules);
         this.props.onNoButtonClick();
     }
 

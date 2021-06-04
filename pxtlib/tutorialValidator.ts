@@ -61,13 +61,26 @@ namespace pxt.tutorial {
     function classifyRules(listOfRules: pxt.Map<boolean>): TutorialRuleStatus[] {
         let listOfRuleStatuses: TutorialRuleStatus[] = [];
         if (listOfRules != undefined) {
+            let enabledRulesMessageArr: string[] = [];
+            let turnedOffRulesMessageArr: string[] = [];
             const ruleNames: string[] = Object.keys(listOfRules);
             for (let i = 0; i < ruleNames.length; i++) {
                 const currRule: string = ruleNames[i];
                 const ruleVal: boolean = listOfRules[currRule];
                 const currRuleStatus: TutorialRuleStatus = { ruleName: currRule, ruleTurnOn: ruleVal };
                 listOfRuleStatuses.push(currRuleStatus);
+                if (ruleVal) {
+                    enabledRulesMessageArr.push(currRule);
+                } else {
+                    turnedOffRulesMessageArr.push(currRule);
+                }
             }
+            const enabledRulesMessage = enabledRulesMessageArr.join(', ');
+            const turnedOffRulesMessage = turnedOffRulesMessageArr.join(', ');
+            let enabledRulesMap: pxt.Map<string> = {};
+            enabledRulesMap['enableRules'] = enabledRulesMessage;
+            enabledRulesMap['turnedOffRules'] = turnedOffRulesMessage;
+            pxt.tickEvent('tutorial.validation.listOfRules ', enabledRulesMap);
         }
         return listOfRuleStatuses;
     }

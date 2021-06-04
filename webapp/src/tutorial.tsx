@@ -410,7 +410,15 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
 
         pxt.tickEvent(`tutorial.previous`, { tutorial: options.tutorial, step: previousStep }, { interactiveConsent: true });
         this.props.parent.setTutorialStep(previousStep);
-        this.setState({ showUnusedBlockMessage: false });
+
+        const tutorialCodeValidationIsOn = options.metadata.tutorialCodeValidation;
+        if (tutorialCodeValidationIsOn && this.state.showUnusedBlockMessage) {
+            const stepInfo = options.tutorialStepInfo[currentStep];
+            const sortedValidAndInvalidRules = this.classifyingValidAndInvalidRules(stepInfo.listOfValidationRules);
+            pxt.tickEvent('tutorial.validation.clickedPrevious ', sortedValidAndInvalidRules);
+            console.log('tutorial.validation.clickedPrevious ', sortedValidAndInvalidRules);
+            this.setState({ showUnusedBlockMessage: false });
+        }
     }
 
     nextTutorialStep() {
@@ -423,7 +431,15 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
 
         pxt.tickEvent(`tutorial.next`, { tutorial: options.tutorial, step: nextStep }, { interactiveConsent: true });
         this.props.parent.setTutorialStep(nextStep);
-        this.setState({ showUnusedBlockMessage: false });
+
+        const tutorialCodeValidationIsOn = options.metadata.tutorialCodeValidation;
+        if (tutorialCodeValidationIsOn && this.state.showUnusedBlockMessage) {
+            const stepInfo = options.tutorialStepInfo[currentStep];
+            const sortedValidAndInvalidRules = this.classifyingValidAndInvalidRules(stepInfo.listOfValidationRules);
+            pxt.tickEvent('tutorial.validation.clickedNext ', sortedValidAndInvalidRules);
+            console.log('tutorial.validation.clickedNext ', sortedValidAndInvalidRules);
+            this.setState({ showUnusedBlockMessage: false });
+        }
     }
 
     finishTutorial() {
@@ -624,7 +640,15 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         }
         th.showHint(visible, showFullText);
         if (visible) {
-            this.setState({ showUnusedBlockMessage: false });
+            const options = this.props.parent.state.tutorialOptions;
+            const tutorialCodeValidationIsOn = options.metadata.tutorialCodeValidation;
+            if (tutorialCodeValidationIsOn && this.state.showUnusedBlockMessage) {
+                const stepInfo = options.tutorialStepInfo[currentStep];
+                const sortedValidAndInvalidRules = this.classifyingValidAndInvalidRules(stepInfo.listOfValidationRules);
+                pxt.tickEvent('tutorial.validation.clickedHint ', sortedValidAndInvalidRules);
+                console.log('tutorial.validation.clickedHint ', sortedValidAndInvalidRules);
+                this.setState({ showUnusedBlockMessage: false });
+            }
         }
     }
 
@@ -648,6 +672,26 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         return rules?.some(rule => rule.ruleTurnOn && rule.isStrict) ?? false;
     }
 
+    classifyingValidAndInvalidRules(rules: pxt.tutorial.TutorialRuleStatus[]) {
+        let turnedOnRulesList: pxt.Map<string> = {};
+        let codeValidList = [];
+        let codeInValidList = [];
+        if (rules != undefined) {
+            for (let i = 0; i < rules.length; i++) {
+                if (rules[i].ruleTurnOn && rules[i].ruleStatus) {
+                    codeValidList.push(rules[i].ruleName);
+                } else if (rules[i].ruleTurnOn && !rules[i].ruleStatus) {
+                    codeInValidList.push(rules[i].ruleName);
+                }
+            }
+        }
+        const codeValidListStr = this.props.parent.state.tutorialOptions.tutorialStep + ": " + codeValidList.join(', ');
+        const codeInValidListStr = this.props.parent.state.tutorialOptions.tutorialStep + ": " + codeInValidList.join(', ');
+        turnedOnRulesList["codeValid"] = codeValidListStr;
+        turnedOnRulesList["codeInvalid"] = codeInValidListStr;
+        return turnedOnRulesList;
+    }
+
     renderCore() {
         const options = this.props.parent.state.tutorialOptions;
         const { tutorialReady, tutorialStepInfo, tutorialStep, tutorialStepExpanded, metadata } = options;
@@ -668,6 +712,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         const tutorialCodeValidated = this.isCodeValidated(stepInfo.listOfValidationRules);
         const showMissingBlockPopupMessage = this.state.showUnusedBlockMessage && validationEnabled;
         const strictRulePresent = this.areStrictRulesPresent(stepInfo.listOfValidationRules);
+        const mapOfValidAndInvalidRules = this.classifyingValidAndInvalidRules(stepInfo.listOfValidationRules);
         const nextOnClick = (tutorialCodeValidated || !validationEnabled ||
             this.state.showUnusedBlockMessage || (!tutorialCodeValidated && !strictRulePresent)) ? this.nextTutorialStep : this.showUnusedBlocksMessageOnClick;
 
@@ -710,7 +755,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
                 {hasNext ? <sui.Button icon={`${isRtl ? 'left' : 'right'} chevron large`} className={`nextbutton right attached ${!hasNext ? 'disabled' : ''}  ${tutorialCodeValidated ? 'isValidated' : ''}`} text={lf("Next")} textClass="widedesktop only" ariaLabel={lf("Go to the next step of the tutorial.")}
                     onClick={nextOnClick} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                 {showMissingBlockPopupMessage &&
-                    <TutorialCodeValidation.MoveOn onYesButtonClick={this.nextTutorialStep} onNoButtonClick={this.showUnusedBlocksMessage} initialVisible={this.state.showUnusedBlockMessage} isTutorialCodeInvalid={!tutorialCodeValidated} ruleComponents={stepInfo.listOfValidationRules} areStrictRulesPresent={strictRulePresent} parent={this.props.parent} />}
+                    <TutorialCodeValidation.MoveOn onYesButtonClick={this.nextTutorialStep} onNoButtonClick={this.showUnusedBlocksMessage} initialVisible={this.state.showUnusedBlockMessage} isTutorialCodeInvalid={!tutorialCodeValidated} ruleComponents={stepInfo.listOfValidationRules} areStrictRulesPresent={strictRulePresent} codeValidAndInvalidRuleMap={mapOfValidAndInvalidRules} parent={this.props.parent} />}
                 {hasFinish ? <sui.Button icon="left checkmark" className={`orange right attached ${!tutorialReady ? 'disabled' : ''}`} text={lf("Finish")} ariaLabel={lf("Finish the tutorial.")} onClick={this.finishTutorial} onKeyDown={sui.fireClickOnEnter} /> : undefined}
             </div>
         </div>;
