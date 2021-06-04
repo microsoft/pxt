@@ -297,13 +297,19 @@ namespace pxt.docs {
             params["drivename"] = html2Quote(theme.driveDisplayName);
         if (theme.homeUrl)
             params["homeurl"] = html2Quote(theme.homeUrl);
+
+
         params["targetid"] = theme.id || "???";
         params["targetname"] = theme.name || "Microsoft MakeCode";
         params["docsheader"] = theme.docsHeader || "Documentation";
-        params["targetlogo"] = theme.docsLogo ? `<img aria-hidden="true" role="presentation" class="ui ${theme.logoWide ? "small" : "mini"} image" src="${theme.docsLogo}" />` : ""
-        params["orglogo"] = (theme.organizationLogo || theme.organizationWideLogo) ? `<img aria-hidden="true" role="presentation" class="ui image" src="${theme.organizationLogo || theme.organizationWideLogo}" />` : ""
-        params["orglogomobile"] = (theme.organizationLogo) ? `<img aria-hidden="true" role="presentation" class="ui image" src="${theme.organizationLogo}" />` : ""
         params["orgtitle"] = "MakeCode";
+
+        const docsLogo = theme.docsLogo && U.htmlEscape(theme.docsLogo);
+        const orgLogo = (theme.organizationLogo || theme.organizationWideLogo) && U.htmlEscape(theme.organizationLogo || theme.organizationWideLogo);
+        const orglogomobile = theme.organizationLogo && U.htmlEscape(theme.organizationLogo)
+        params["targetlogo"] = docsLogo ? `<img aria-hidden="true" role="presentation" class="ui ${theme.logoWide ? "small" : "mini"} image" src="${docsLogo}" />` : ""
+        params["orglogo"] = orgLogo ? `<img aria-hidden="true" role="presentation" class="ui image" src="${orgLogo}" />` : ""
+        params["orglogomobile"] = orglogomobile ? `<img aria-hidden="true" role="presentation" class="ui image" src="${orglogomobile}" />` : ""
 
         let ghURLs = d.ghEditURLs || []
         if (ghURLs.length) {
