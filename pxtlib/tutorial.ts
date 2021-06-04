@@ -12,8 +12,11 @@ namespace pxt.tutorial {
         // collect code and infer editor
         const { code, templateCode, editor, language, jres, assetJson, customTs, tutorialValidationRulesStr } = computeBodyMetadata(body);
 
-        // parses tutorial rules string into a map of rules and their values
-        const tutorialValidationRules = parseTutorialValidationRules(tutorialValidationRulesStr, metadata.tutorialCodeValidation);
+        // parses tutorial rules string into a map of rules and enablement flag 
+        let tutorialValidationRules: pxt.Map<boolean>;
+        if (metadata.tutorialCodeValidation) {
+            tutorialValidationRules = pxt.Util.jsonTryParse(tutorialValidationRulesStr);
+        }
 
         // noDiffs legacy
         if (metadata.diffs === true // enabled in tutorial
@@ -239,7 +242,7 @@ ${code}
         let stepInfo: TutorialStepInfo[] = [];
         markdown.replace(stepRegex, function (match, flags, step) {
             step = step.trim();
-            let { header, hint, requiredBlocks } = parseTutorialHint(step, metadata && metadata.explicitHints);
+            let { header, hint, requiredBlocks } = parseTutorialHint(step, metadata && metadata.explicitHints, metadata.tutorialCodeValidation);
             let info: TutorialStepInfo = {
                 contentMd: step,
                 headerContentMd: header
@@ -254,7 +257,7 @@ ${code}
                 info.resetDiff = true;
             if (hint)
                 info.hintContentMd = hint;
-            if (requiredBlocks)
+            if (metadata.tutorialCodeValidation && requiredBlocks)
                 info.requiredBlockMd = requiredBlocks;
             stepInfo.push(info);
             return "";
@@ -268,7 +271,7 @@ ${code}
         return stepInfo;
     }
 
-    function parseTutorialHint(step: string, explicitHints?: boolean): { header: string, hint: string, requiredBlocks: string } {
+    function parseTutorialHint(step: string, explicitHints?: boolean, tutorialCodeValidationEnabled?: boolean): { header: string, hint: string, requiredBlocks: string } {
         // remove hidden code sections
         step = stripHiddenSnippets(step);
 
@@ -288,24 +291,18 @@ ${code}
             let hintText = step.match(hintTextRegex);
             if (hintText && hintText.length > 2) {
                 header = hintText[1].trim();
-                let hintTexts = hintText[2];
-                hintTexts = hintTexts.trim().replace(/((?!.)\s)+/g, "\n").replace(/``` *(requiredTutorialBlock)\s*\n([\s\S]*?)\n```/gmi, function (m0, m1, m2) {
-                    requiredBlocks = `{\n${m2}\n}`;
-                    return "";
-                });
-                hint = hintTexts;
+                hint = hintText[2].trim();
+                if (tutorialCodeValidationEnabled) {
+                    let hintSnippet = hintText[2].trim();
+                    hintSnippet = hintSnippet.replace(/``` *(requiredTutorialBlock)\s*\n([\s\S]*?)\n```/gmi, function (m0, m1, m2) {
+                        requiredBlocks = `{\n${m2}\n}`;
+                        return "";
+                    });
+                    hint = hintSnippet;
+                }
             }
         }
         return { header, hint, requiredBlocks };
-    }
-
-    /* Parse Tutorial Validation Rules */
-    function parseTutorialValidationRules(body: string, tutorialCodeValidation?: boolean): pxt.Map<boolean> {
-        let listOfRules: pxt.Map<boolean> = {};
-        if (tutorialCodeValidation) {
-            listOfRules = pxt.Util.jsonTryParse(body);
-        }
-        return listOfRules;
     }
 
     /* Remove hidden snippets from text */
