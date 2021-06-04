@@ -353,7 +353,7 @@ namespace ts.pxtc.ir {
         load() {
             let r = this.loadCore()
 
-            if (target.isNative && this.bitSize != BitSize.None) {
+            if (target.isNative && !isStackMachine() && this.bitSize != BitSize.None) {
                 if (this.bitSize == BitSize.UInt32)
                     return rtcall("pxt::fromUInt", [r])
                 return rtcall("pxt::fromInt", [r])
@@ -377,7 +377,7 @@ namespace ts.pxtc.ir {
             if (this.isByRefLocal()) {
                 return rtcall("pxtrt::stlocRef", [this.loadCore(), src])
             } else {
-                if (target.isNative && this.bitSize != BitSize.None) {
+                if (target.isNative && !isStackMachine() && this.bitSize != BitSize.None) {
                     let cnv = this.bitSize == BitSize.UInt32 ? "pxt::toUInt" : "pxt::toInt"
                     return this.storeDirect(rtcall(cnv, [src], 1))
                 }

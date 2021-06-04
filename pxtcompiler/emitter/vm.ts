@@ -102,6 +102,7 @@ namespace ts.pxtc.vm {
         "ldfld     $i4, $i5",
         "newobj    $i1",
         "ldcap     $i1",
+        "bitconv   $i1",
         "stglb     $i1",
         "ldglb     $i1",
         "ldint     $i1",

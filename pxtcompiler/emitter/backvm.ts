@@ -519,15 +519,6 @@ _start_${name}:
                     return
                 case EK.CellRef:
                     write("ld" + cellref(e.data))
-                    let cell = e.data as ir.Cell
-                    if (cell.isGlobal()) {
-                        // TODO
-                        if (cell.bitSize == BitSize.Int8) {
-                            write(`sgnext`)
-                        } else if (cell.bitSize == BitSize.UInt8) {
-                            write(`clrhi`)
-                        }
-                    }
                     return
                 case EK.InstanceOf:
                     emitExpr(e.args[0])
@@ -715,9 +706,10 @@ _start_${name}:
                     emitExpr(src)
                     let cell = trg.data as ir.Cell
                     let instr = "st" + cellref(cell)
-                    if (cell.isGlobal() &&
-                        (cell.bitSize == BitSize.Int8 || cell.bitSize == BitSize.UInt8)) {
-                        instr = instr.replace("stglb", "stglb1")
+                    if (cell.isGlobal() && (cell.bitSize != BitSize.None)) {
+                        const enc = sizeOfBitSize(cell.bitSize) |
+                            (isBitSizeSigned(cell.bitSize) ? 0x10 : 0x00)
+                        write("bitconv " + enc)
                     }
                     write(instr)
                     break;
