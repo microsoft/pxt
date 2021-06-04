@@ -33,6 +33,7 @@ namespace pxt.tutorial {
             step.contentMd = stripHiddenSnippets(step.contentMd)
             step.headerContentMd = stripHiddenSnippets(step.headerContentMd)
             step.hintContentMd = stripHiddenSnippets(step.hintContentMd);
+            step.requiredBlockMd = stripHiddenSnippets(step.requiredBlockMd);
         });
 
         return {
@@ -52,7 +53,7 @@ namespace pxt.tutorial {
     }
 
     export function getMetadataRegex(): RegExp {
-        return /``` *(sim|block|blocks|filterblocks|spy|ghost|typescript|ts|js|javascript|template|python|jres|assetjson|customts|tutorialValidationRules)\s*\n([\s\S]*?)\n```/gmi;
+        return /``` *(sim|block|blocks|filterblocks|spy|ghost|typescript|ts|js|javascript|template|python|jres|assetjson|customts|tutorialValidationRules|requiredTutorialBlock)\s*\n([\s\S]*?)\n```/gmi;
     }
 
     function computeBodyMetadata(body: string) {
@@ -75,6 +76,7 @@ namespace pxt.tutorial {
                 switch (m1) {
                     case "block":
                     case "blocks":
+                    case "requiredTutorialBlock":
                     case "filterblocks":
                         if (!checkTutorialEditor(pxt.BLOCKS_PROJECT_NAME))
                             return undefined;
@@ -237,7 +239,7 @@ ${code}
         let stepInfo: TutorialStepInfo[] = [];
         markdown.replace(stepRegex, function (match, flags, step) {
             step = step.trim();
-            let { header, hint } = parseTutorialHint(step, metadata && metadata.explicitHints);
+            let { header, hint, requiredBlocks } = parseTutorialHint(step, metadata && metadata.explicitHints);
             let info: TutorialStepInfo = {
                 contentMd: step,
                 headerContentMd: header
@@ -252,6 +254,8 @@ ${code}
                 info.resetDiff = true;
             if (hint)
                 info.hintContentMd = hint;
+            if (requiredBlocks)
+                info.requiredBlockMd = requiredBlocks;
             stepInfo.push(info);
             return "";
         });
@@ -264,11 +268,12 @@ ${code}
         return stepInfo;
     }
 
-    function parseTutorialHint(step: string, explicitHints?: boolean): { header: string, hint: string } {
+    function parseTutorialHint(step: string, explicitHints?: boolean): { header: string, hint: string, requiredBlocks: string } {
         // remove hidden code sections
         step = stripHiddenSnippets(step);
 
         let header = step, hint;
+        let requiredBlocks: string;
 
         if (explicitHints) {
             // hint is explicitly set with hint syntax "#### ~ tutorialhint" and terminates at the next heading
@@ -283,11 +288,15 @@ ${code}
             let hintText = step.match(hintTextRegex);
             if (hintText && hintText.length > 2) {
                 header = hintText[1].trim();
-                hint = hintText[2].trim();
+                let hintTexts = hintText[2];
+                hintTexts = hintTexts.trim().replace(/((?!.)\s)+/g, "\n").replace(/``` *(requiredTutorialBlock)\s*\n([\s\S]*?)\n```/gmi, function (m0, m1, m2) {
+                    requiredBlocks = `{\n${m2}\n}`;
+                    return "";
+                });
+                hint = hintTexts;
             }
         }
-
-        return { header, hint };
+        return { header, hint, requiredBlocks };
     }
 
     /* Parse Tutorial Validation Rules */

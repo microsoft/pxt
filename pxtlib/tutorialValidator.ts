@@ -33,17 +33,20 @@ namespace pxt.tutorial {
             for (let i = 0; i < TutorialRuleStatuses.length; i++) {
                 let currRuleToValidate = TutorialRuleStatuses[i];
                 const ruleName = TutorialRuleStatuses[i].ruleName;
-                switch (ruleName) {
-                    case "validateExactNumberOfBlocks":
-                        currRuleToValidate = validateExactNumberOfBlocks(usersBlockUsed, tutorialBlockUsed, currRuleToValidate);
-                        break;
-                    case "validateAtleastOneBlocks":
-                        currRuleToValidate = validateAtleastOneBlocks(usersBlockUsed, tutorialBlockUsed, currRuleToValidate);
-                        break;
-                    case "validateMeetRequiredBlocks":
-                        // Not properly implemented - will be fixed in the next PR
-                        //currRuleToValidate = validateMeetRequiredBlocks(usersBlockUsed, tutorialBlockUsed, currRuleToValidate);
-                        break;
+                const isRuleEnabled = TutorialRuleStatuses[i].ruleTurnOn;
+                if (isRuleEnabled) {
+                    switch (ruleName) {
+                        case "validateExactNumberOfBlocks":
+                            currRuleToValidate = validateExactNumberOfBlocks(usersBlockUsed, tutorialBlockUsed, currRuleToValidate);
+                            break;
+                        case "validateAtleastOneBlocks":
+                            currRuleToValidate = validateAtleastOneBlocks(usersBlockUsed, tutorialBlockUsed, currRuleToValidate);
+                            break;
+                        case "validateMeetRequiredBlocks":
+                            const requiredBlocksList = extractRequiredBlockSnippet(tutorial, indexdb);
+                            currRuleToValidate = validateMeetRequiredBlocks(usersBlockUsed, requiredBlocksList, currRuleToValidate);
+                            break;
+                    }
                 }
             }
         }
@@ -61,7 +64,7 @@ namespace pxt.tutorial {
         for (let i = 0; i < ruleNames.length; i++) {
             const currRule: string = ruleNames[i];
             const ruleVal: boolean = listOfRules[currRule];
-            const currRuleStatus: TutorialRuleStatus = { ruleName: currRule, ruleTurnOn: ruleVal};
+            const currRuleStatus: TutorialRuleStatus = { ruleName: currRule, ruleTurnOn: ruleVal };
             listOfRuleStatuses.push(currRuleStatus);
         }
         return listOfRuleStatuses;
@@ -102,6 +105,7 @@ namespace pxt.tutorial {
                 })
             );
     }
+
     /**
     * Extract the tutorial blocks used from code snippet
     * @param tutorial tutorial info
@@ -111,9 +115,7 @@ namespace pxt.tutorial {
     function extractBlockSnippet(tutorial: TutorialOptions, indexdb: pxt.Map<pxt.Map<number>>) {
         const { tutorialStepInfo, tutorialStep } = tutorial;
         const body = tutorial.tutorialStepInfo[tutorialStep].hintContentMd;
-
         let hintCode = "";
-        let requiredBlocks = "";
         if (body != undefined) {
             body.replace(/((?!.)\s)+/g, "\n").replace(/``` *(block|blocks)\s*\n([\s\S]*?)\n```/gmi, function (m0, m1, m2) {
                 hintCode = `{\n${m2}\n}`;
@@ -122,6 +124,23 @@ namespace pxt.tutorial {
         }
 
         const snippetStepKey = pxt.BrowserUtils.getTutorialCodeHash([hintCode]);
+        let blockMap = {};
+        if (indexdb != undefined) {
+            blockMap = indexdb[snippetStepKey];
+        }
+        return blockMap;
+    }
+
+    /**
+    * Extract the required tutorial blocks  from code snippet
+    * @param tutorial tutorial info
+    * @param indexdb database from index
+    * @return the tutorial blocks used for the current step
+    */
+    function extractRequiredBlockSnippet(tutorial: TutorialOptions, indexdb: pxt.Map<pxt.Map<number>>) {
+        const { tutorialStep } = tutorial;
+        const body = tutorial.tutorialStepInfo[tutorialStep].requiredBlockMd;
+        const snippetStepKey = pxt.BrowserUtils.getTutorialCodeHash([body]);
         let blockMap = {};
         if (indexdb != undefined) {
             blockMap = indexdb[snippetStepKey];
@@ -161,7 +180,7 @@ namespace pxt.tutorial {
     }
 
     /**
-    * Loose Rule: Checks if the users has at least one block type for each rule
+    * Passive Rule: Checks if the users has at least one block type for each rule
     * @param usersBlockUsed an array of strings
     * @param tutorialBlockUsed the next available index
     * @param currRule the current rule with its TutorialRuleStatus
