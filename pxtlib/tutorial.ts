@@ -323,7 +323,7 @@ ${code}
         const turnedOffRulesMessage = turnedOffRulesMessageArr.join(', ');
         let enabledRulesMap: pxt.Map<string> = {};
         enabledRulesMap['enableRules'] = enabledRulesMessage;
-        enabledRulesMap['turnedOffRules'] = turnedOffRulesMessage;
+        enabledRulesMap['notEnableRules'] = turnedOffRulesMessage;
         pxt.tickEvent('tutorial.validation.listOfRules ', enabledRulesMap);
     }
 
