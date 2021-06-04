@@ -1385,7 +1385,7 @@ export class ProjectView
         return undefined;
     }
 
-    loadHeaderAsync(h: pxt.workspace.Header, editorState?: pxt.editor.EditorState): Promise<void> {
+    async loadHeaderAsync(h: pxt.workspace.Header, editorState?: pxt.editor.EditorState, tryCloudSync = true): Promise<void> {
         if (!h)
             return Promise.resolve()
 
@@ -1393,22 +1393,24 @@ export class ProjectView
         if (checkAsync)
             return checkAsync.then(() => this.openHome());
 
-        let p = Promise.resolve();
         // check our multi-tab session
         if (workspace.isHeadersSessionOutdated()) {
             // reload header before loading
             pxt.log(`multi-tab sync before load`)
-            p = p.then(() => workspace.syncAsync().then(() => { }))
+            await workspace.syncAsync();
         }
 
-        // Try a quick cloud fetch. If it doesn't complete within X second(s),
-        // continue on.
-        const timeoutStart = Util.nowSeconds();
-        let timedOut = false;
-        p = p.then(() => {
-            Promise.race([
-                pxt.U.delay(1500)
-                    .then(() => { timedOut = true }),
+        if (tryCloudSync) {
+            // Try a quick cloud fetch. If it doesn't complete within X second(s),
+            // continue on.
+            const TIMEOUT_MS = 15000;
+            const timeoutStart = Util.nowSeconds();
+            let timedOut = false;
+            await Promise.race([
+                pxt.U.delay(TIMEOUT_MS)
+                    .then(() => {
+                        timedOut = true
+                    }),
                 cloud.syncAsync([h])
                     .then(changes => {
                         if (changes.length) {
@@ -1428,13 +1430,12 @@ export class ProjectView
                         }
                     })
             ]);
-        });
+        }
 
-        return p.then(() => {
+        if (h) {
             workspace.acquireHeaderSession(h);
-            if (!h) return Promise.resolve();
-            else return this.internalLoadHeaderAsync(h, editorState);
-        })
+            await this.internalLoadHeaderAsync(h, editorState);
+        }
     }
 
     private internalLoadHeaderAsync(h: pxt.workspace.Header, editorState?: pxt.editor.EditorState): Promise<void> {

@@ -12,8 +12,11 @@ namespace pxt.tutorial {
         // collect code and infer editor
         const { code, templateCode, editor, language, jres, assetJson, customTs, tutorialValidationRulesStr } = computeBodyMetadata(body);
 
-        // parses tutorial rules string into a map of rules and their values
-        const tutorialValidationRules = parseTutorialValidationRules(tutorialValidationRulesStr, metadata.tutorialCodeValidation);
+        // parses tutorial rules string into a map of rules and enablement flag 
+        let tutorialValidationRules: pxt.Map<boolean>;
+        if (metadata.tutorialCodeValidation) {
+            tutorialValidationRules = pxt.Util.jsonTryParse(tutorialValidationRulesStr);
+        }
 
         // noDiffs legacy
         if (metadata.diffs === true // enabled in tutorial
@@ -33,6 +36,7 @@ namespace pxt.tutorial {
             step.contentMd = stripHiddenSnippets(step.contentMd)
             step.headerContentMd = stripHiddenSnippets(step.headerContentMd)
             step.hintContentMd = stripHiddenSnippets(step.hintContentMd);
+            step.requiredBlockMd = stripHiddenSnippets(step.requiredBlockMd);
         });
 
         return {
@@ -52,7 +56,7 @@ namespace pxt.tutorial {
     }
 
     export function getMetadataRegex(): RegExp {
-        return /``` *(sim|block|blocks|filterblocks|spy|ghost|typescript|ts|js|javascript|template|python|jres|assetjson|customts|tutorialValidationRules)\s*\n([\s\S]*?)\n```/gmi;
+        return /``` *(sim|block|blocks|filterblocks|spy|ghost|typescript|ts|js|javascript|template|python|jres|assetjson|customts|tutorialValidationRules|requiredTutorialBlock)\s*\n([\s\S]*?)\n```/gmi;
     }
 
     function computeBodyMetadata(body: string) {
@@ -75,6 +79,7 @@ namespace pxt.tutorial {
                 switch (m1) {
                     case "block":
                     case "blocks":
+                    case "requiredTutorialBlock":
                     case "filterblocks":
                         if (!checkTutorialEditor(pxt.BLOCKS_PROJECT_NAME))
                             return undefined;
@@ -237,7 +242,7 @@ ${code}
         let stepInfo: TutorialStepInfo[] = [];
         markdown.replace(stepRegex, function (match, flags, step) {
             step = step.trim();
-            let { header, hint } = parseTutorialHint(step, metadata && metadata.explicitHints);
+            let { header, hint, requiredBlocks } = parseTutorialHint(step, metadata && metadata.explicitHints, metadata.tutorialCodeValidation);
             let info: TutorialStepInfo = {
                 contentMd: step,
                 headerContentMd: header
@@ -252,6 +257,8 @@ ${code}
                 info.resetDiff = true;
             if (hint)
                 info.hintContentMd = hint;
+            if (metadata.tutorialCodeValidation && requiredBlocks)
+                info.requiredBlockMd = requiredBlocks;
             stepInfo.push(info);
             return "";
         });
@@ -264,11 +271,12 @@ ${code}
         return stepInfo;
     }
 
-    function parseTutorialHint(step: string, explicitHints?: boolean): { header: string, hint: string } {
+    function parseTutorialHint(step: string, explicitHints?: boolean, tutorialCodeValidationEnabled?: boolean): { header: string, hint: string, requiredBlocks: string } {
         // remove hidden code sections
         step = stripHiddenSnippets(step);
 
         let header = step, hint;
+        let requiredBlocks: string;
 
         if (explicitHints) {
             // hint is explicitly set with hint syntax "#### ~ tutorialhint" and terminates at the next heading
@@ -284,19 +292,17 @@ ${code}
             if (hintText && hintText.length > 2) {
                 header = hintText[1].trim();
                 hint = hintText[2].trim();
+                if (tutorialCodeValidationEnabled) {
+                    let hintSnippet = hintText[2].trim();
+                    hintSnippet = hintSnippet.replace(/``` *(requiredTutorialBlock)\s*\n([\s\S]*?)\n```/gmi, function (m0, m1, m2) {
+                        requiredBlocks = `{\n${m2}\n}`;
+                        return "";
+                    });
+                    hint = hintSnippet;
+                }
             }
         }
-
-        return { header, hint };
-    }
-
-    /* Parse Tutorial Validation Rules */
-    function parseTutorialValidationRules(body: string, tutorialCodeValidation?: boolean): pxt.Map<boolean> {
-        let listOfRules: pxt.Map<boolean> = {};
-        if (tutorialCodeValidation) {
-            listOfRules = pxt.Util.jsonTryParse(body);
-        }
-        return listOfRules;
+        return { header, hint, requiredBlocks };
     }
 
     /* Remove hidden snippets from text */

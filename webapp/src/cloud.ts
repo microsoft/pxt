@@ -262,7 +262,7 @@ async function resolveConflict(local: Header, remoteFile: File) {
         if (app.hasEditor()) {
             const editor = await app.getEditorAsync();
             if (!editor.state.home && editor.state.header?.id === local.id) {
-                await editor.loadHeaderAsync(newCopyHdr, editor.state.editorState);
+                await editor.loadHeaderAsync(newCopyHdr, editor.state.editorState, false);
             }
         }
     } catch (e) {

@@ -84,8 +84,8 @@ function getUsedBlocksInternalAsync(code: string[], id: string, language?: strin
                         throw new Error("blocksXml failed to load");
                     }
                     const allblocks = headless.getAllBlocks();
+                    snippetBlocks[snippetHash] = {}
                     for (let bi = 0; bi < allblocks.length; ++bi) {
-                        if (!snippetBlocks[snippetHash]) snippetBlocks[snippetHash] = {}
                         const blk = allblocks[bi];
                         if (!blk.isShadow()) {
                             if (!snippetBlocks[snippetHash][blk.type]) {

@@ -1072,6 +1072,7 @@ declare namespace pxt.tutorial {
         contentMd?: string;
         headerContentMd?: string;
         hintContentMd?: string;
+        requiredBlockMd?: string;
         activity?: number;
         resetDiff?: boolean; // reset diffify algo
         listOfValidationRules?: pxt.tutorial.TutorialRuleStatus[]; // Whether the user code has been marked valid for these set of rules
