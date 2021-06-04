@@ -60,12 +60,14 @@ namespace pxt.tutorial {
     */
     function classifyRules(listOfRules: pxt.Map<boolean>): TutorialRuleStatus[] {
         let listOfRuleStatuses: TutorialRuleStatus[] = [];
-        const ruleNames: string[] = Object.keys(listOfRules);
-        for (let i = 0; i < ruleNames.length; i++) {
-            const currRule: string = ruleNames[i];
-            const ruleVal: boolean = listOfRules[currRule];
-            const currRuleStatus: TutorialRuleStatus = { ruleName: currRule, ruleTurnOn: ruleVal };
-            listOfRuleStatuses.push(currRuleStatus);
+        if (listOfRules != undefined) {
+            const ruleNames: string[] = Object.keys(listOfRules);
+            for (let i = 0; i < ruleNames.length; i++) {
+                const currRule: string = ruleNames[i];
+                const ruleVal: boolean = listOfRules[currRule];
+                const currRuleStatus: TutorialRuleStatus = { ruleName: currRule, ruleTurnOn: ruleVal };
+                listOfRuleStatuses.push(currRuleStatus);
+            }
         }
         return listOfRuleStatuses;
     }
