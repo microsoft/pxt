@@ -322,8 +322,8 @@ ${code}
         const enabledRulesMessage = enabledRulesMessageArr.join(', ');
         const turnedOffRulesMessage = turnedOffRulesMessageArr.join(', ');
         let enabledRulesMap: pxt.Map<string> = {};
-        enabledRulesMap['enableRules'] = enabledRulesMessage;
-        enabledRulesMap['notEnableRules'] = turnedOffRulesMessage;
+        enabledRulesMap['enabledRules'] = enabledRulesMessage;
+        enabledRulesMap['notEnabledRules'] = turnedOffRulesMessage;
         pxt.tickEvent('tutorial.validation.listOfRules ', enabledRulesMap);
     }
 
