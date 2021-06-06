@@ -765,7 +765,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
                 {hasNext ? <sui.Button icon={`${isRtl ? 'left' : 'right'} chevron large`} className={`nextbutton right attached ${!hasNext ? 'disabled' : ''}  ${tutorialCodeValidated ? 'isValidated' : ''}`} text={lf("Next")} textClass="widedesktop only" ariaLabel={lf("Go to the next step of the tutorial.")}
                     onClick={nextOnClick} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                 {showMissingBlockPopupMessage &&
-                    <TutorialCodeValidation.MoveOn onYesButtonClick={this.nextTutorialStep} onNoButtonClick={this.showUnusedBlocksMessage} initialVisible={this.state.showUnusedBlockMessage} isTutorialCodeInvalid={!tutorialCodeValidated} ruleComponents={stepInfo.listOfValidationRules} areStrictRulesPresent={strictRulePresent} validationRuleStepStatus={validationRuleStepStatus} parent={this.props.parent} />}
+                    <TutorialCodeValidation.ShowValidationMessage onYesButtonClick={this.nextTutorialStep} onNoButtonClick={this.showUnusedBlocksMessage} initialVisible={this.state.showUnusedBlockMessage} isTutorialCodeInvalid={!tutorialCodeValidated} ruleComponents={stepInfo.listOfValidationRules} areStrictRulesPresent={strictRulePresent} validationRuleStepStatus={validationRuleStepStatus} parent={this.props.parent} />}
                 {hasFinish ? <sui.Button icon="left checkmark" className={`orange right attached ${!tutorialReady ? 'disabled' : ''}`} text={lf("Finish")} ariaLabel={lf("Finish the tutorial.")} onClick={this.finishTutorial} onKeyDown={sui.fireClickOnEnter} /> : undefined}
             </div>
         </div>;

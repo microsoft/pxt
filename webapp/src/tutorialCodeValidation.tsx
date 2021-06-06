@@ -21,7 +21,7 @@ interface tutorialCodeValidationState {
     visible: boolean;
 }
 
-export class MoveOn extends data.Component<TutorialCodeValidationProps, tutorialCodeValidationState> {
+export class ShowValidationMessage extends data.Component<TutorialCodeValidationProps, tutorialCodeValidationState> {
     constructor(props: TutorialCodeValidationProps) {
         super(props);
 
