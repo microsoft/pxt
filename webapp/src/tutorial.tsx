@@ -723,8 +723,8 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         const showMissingBlockPopupMessage = this.state.showUnusedBlockMessage && validationEnabled;
         const strictRulePresent = this.areStrictRulesPresent(stepInfo.listOfValidationRules);
         const validationRuleStepStatus = this.getValidationRuleStepStatus();
-        const nextOnClick = (!validationEnabled || (tutorialCodeValidated && !strictRulePresent)) ?  this.nextTutorialStep : 
-        (this.state.showUnusedBlockMessage) ? this.doubleClickedNextStep : this.showUnusedBlocksMessageOnClick;
+        const nextOnClick = (!validationEnabled || (tutorialCodeValidated && !strictRulePresent)) ? this.nextTutorialStep :
+            (this.state.showUnusedBlockMessage) ? this.doubleClickedNextStep : this.showUnusedBlocksMessageOnClick;
 
         const tutorialAriaLabel = lf("Press Space or Enter to show a hint.");
         const tutorialHintTooltip = lf("Click to show a hint!");
