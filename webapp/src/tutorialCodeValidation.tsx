@@ -14,7 +14,7 @@ interface TutorialCodeValidationProps extends ISettingsProps {
     isTutorialCodeInvalid: boolean;
     ruleComponents: pxt.tutorial.TutorialRuleStatus[];
     areStrictRulesPresent: boolean;
-    codeValidAndInvalidRuleMap: pxt.Map<string>;
+    validationRuleStepStatus: pxt.Map<string | number>;
 }
 
 interface tutorialCodeValidationState {
@@ -35,15 +35,17 @@ export class MoveOn extends data.Component<TutorialCodeValidationProps, tutorial
 
 
     moveOnToNextTutorialStep() {
-        const sortedValidAndInvalidRules = this.props.codeValidAndInvalidRuleMap;
-        pxt.tickEvent('tutorial.validation.continueAnyway ', sortedValidAndInvalidRules);
+        const sortedValidAndInvalidRules = this.props.validationRuleStepStatus;
+        pxt.tickEvent('tutorial.validation.continueAnyway', sortedValidAndInvalidRules);
+        console.log('tutorial.validation.continueAnyway', sortedValidAndInvalidRules);
         this.props.onYesButtonClick();
         this.showUnusedBlocksMessage(false);
     }
 
     stayOnThisTutorialStep() {
-        const sortedValidAndInvalidRules = this.props.codeValidAndInvalidRuleMap;
-        pxt.tickEvent('tutorial.validation.keepEditing ', sortedValidAndInvalidRules);
+        const sortedValidAndInvalidRules = this.props.validationRuleStepStatus;
+        pxt.tickEvent('tutorial.validation.keepEditing', sortedValidAndInvalidRules);
+        console.log('tutorial.validation.keepEditing', sortedValidAndInvalidRules);
         this.props.onNoButtonClick();
     }
 

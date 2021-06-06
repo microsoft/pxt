@@ -16,7 +16,7 @@ namespace pxt.tutorial {
         let tutorialValidationRules: pxt.Map<boolean>;
         if (metadata.tutorialCodeValidation) {
             tutorialValidationRules = pxt.Util.jsonTryParse(tutorialValidationRulesStr);
-            categorizingValidationRules(tutorialValidationRules);
+            categorizingValidationRules(tutorialValidationRules, title);
         }
 
         // noDiffs legacy
@@ -306,25 +306,16 @@ ${code}
         return { header, hint, requiredBlocks };
     }
 
-    function categorizingValidationRules(listOfRules: pxt.Map<boolean>) {
-        const ruleNames: string[] = Object.keys(listOfRules);
-        let enabledRulesMessageArr: string[] = [];
-        let turnedOffRulesMessageArr: string[] = [];
+    function categorizingValidationRules(listOfRules: pxt.Map<boolean>, title: string) {
+        const ruleNames = Object.keys(listOfRules);
         for (let i = 0; i < ruleNames.length; i++) {
-            const currRule: string = ruleNames[i];
-            const ruleVal: boolean = listOfRules[currRule];
-            if (ruleVal) {
-                enabledRulesMessageArr.push(currRule);
-            } else {
-                turnedOffRulesMessageArr.push(currRule);
-            }
+            const setValidationRule: pxt.Map<string | number> = {};
+            setValidationRule["ruleName"] = ruleNames[i];
+            setValidationRule["enabledFlag"] = listOfRules[ruleNames[i]] ? 1 : 0;
+            setValidationRule["tutorial"] = title;
+            pxt.tickEvent('tutorial.validation.setValidationRules', setValidationRule);
+            console.log('tutorial.validation.setValidationRules', setValidationRule);
         }
-        const enabledRulesMessage = enabledRulesMessageArr.join(', ');
-        const turnedOffRulesMessage = turnedOffRulesMessageArr.join(', ');
-        let enabledRulesMap: pxt.Map<string> = {};
-        enabledRulesMap['enabledRules'] = enabledRulesMessage;
-        enabledRulesMap['notEnabledRules'] = turnedOffRulesMessage;
-        pxt.tickEvent('tutorial.validation.listOfRules ', enabledRulesMap);
     }
 
     /* Remove hidden snippets from text */

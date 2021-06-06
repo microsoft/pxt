@@ -398,6 +398,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         this.handleResize = this.handleResize.bind(this);
         this.showUnusedBlocksMessageOnClick = this.showUnusedBlocksMessageOnClick.bind(this);
         this.showUnusedBlocksMessage = this.showUnusedBlocksMessage.bind(this);
+        this.doubleClickedNextStep = this.doubleClickedNextStep.bind(this);
     }
 
     previousTutorialStep() {
@@ -413,9 +414,9 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
 
         const tutorialCodeValidationIsOn = options.metadata.tutorialCodeValidation;
         if (tutorialCodeValidationIsOn && this.state.showUnusedBlockMessage) { // disables tutorial validation pop-up if previous buttion is clicked
-            const stepInfo = options.tutorialStepInfo[currentStep];
-            const sortedValidAndInvalidRules = this.classifyingValidAndInvalidRules(stepInfo.listOfValidationRules);
-            pxt.tickEvent('tutorial.validation.clickedPreviousBttn ', sortedValidAndInvalidRules);
+            const validationRuleStepStatus: pxt.Map<string | number> = this.getValidationRuleStepStatus();
+            pxt.tickEvent('tutorial.validation.clickedPreviousBttn', validationRuleStepStatus);
+            console.log('tutorial.validation.clickedPreviousBttn', validationRuleStepStatus)
             this.setState({ showUnusedBlockMessage: false });
         }
     }
@@ -435,6 +436,13 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         if (tutorialCodeValidationIsOn && this.state.showUnusedBlockMessage) { // disables tutorial validation pop-up if next buttion is clicked
             this.setState({ showUnusedBlockMessage: false });
         }
+    }
+
+    doubleClickedNextStep() {
+        const validationRuleStepStatus: pxt.Map<string | number> = this.getValidationRuleStepStatus();
+        pxt.tickEvent('tutorial.validation.clickedNextBttn', validationRuleStepStatus);
+        console.log('tutorial.validation.clickedNextBttn', validationRuleStepStatus);
+        this.nextTutorialStep();
     }
 
     finishTutorial() {
@@ -638,9 +646,9 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
             const options = this.props.parent.state.tutorialOptions;
             const tutorialCodeValidationIsOn = options.metadata.tutorialCodeValidation;
             if (tutorialCodeValidationIsOn && this.state.showUnusedBlockMessage) {
-                const stepInfo = options.tutorialStepInfo[currentStep];
-                const sortedValidAndInvalidRules = this.classifyingValidAndInvalidRules(stepInfo.listOfValidationRules);
-                pxt.tickEvent('tutorial.validation.clickedHint ', sortedValidAndInvalidRules);
+                const validationRuleStepStatus: pxt.Map<string | number> = this.getValidationRuleStepStatus();
+                pxt.tickEvent('tutorial.validation.clickedHint', validationRuleStepStatus);
+                console.log('tutorial.validation.clickedHint', validationRuleStepStatus);
                 this.setState({ showUnusedBlockMessage: false });
             }
         }
@@ -666,29 +674,37 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         return rules?.some(rule => rule.ruleTurnOn && rule.isStrict) ?? false;
     }
 
-    classifyingValidAndInvalidRules(rules: pxt.tutorial.TutorialRuleStatus[]) {
-        let turnedOnRulesList: pxt.Map<string> = {};
-        let codeValidList = [];
-        let codeInValidList = [];
+    setValidationRuleStepStatus(rules: pxt.tutorial.TutorialRuleStatus[], tutorialName: string, tutorialStep: number) {
+        const validationRuleStepStatus: pxt.Map<string | number> = {};
         if (rules != undefined) {
+            validationRuleStepStatus["tutorial"] = tutorialName;
+            validationRuleStepStatus["step"] = tutorialStep;
+            validationRuleStepStatus["rulesPassed"] = 0;
+            validationRuleStepStatus["rulesFailed"] = 0;
             for (let i = 0; i < rules.length; i++) {
-                if (rules[i].ruleTurnOn && rules[i].ruleStatus) {
-                    codeValidList.push(rules[i].ruleName);
-                } else if (rules[i].ruleTurnOn && !rules[i].ruleStatus) {
-                    codeInValidList.push(rules[i].ruleName);
+                if (rules[i].ruleTurnOn) {
+                    if (rules[i].ruleStatus) {
+                        validationRuleStepStatus["rulesPassed"] += 1;
+                    } else {
+                        validationRuleStepStatus["rulesFailed"] += 1;
+                    }
                 }
             }
         }
-        const codeValidListStr = "step " + this.props.parent.state.tutorialOptions.tutorialStep + ": " + codeValidList.join(', ');
-        const codeInValidListStr = "step " + this.props.parent.state.tutorialOptions.tutorialStep + ": " + codeInValidList.join(', ');
-        turnedOnRulesList["codeValid"] = codeValidListStr;
-        turnedOnRulesList["codeInvalid"] = codeInValidListStr;
-        return turnedOnRulesList;
+        return validationRuleStepStatus;
+    }
+
+    getValidationRuleStepStatus() {
+        const options = this.props.parent.state.tutorialOptions;
+        const { tutorialName, tutorialStepInfo, tutorialStep } = options;
+        const stepInfo = tutorialStepInfo[tutorialStep];
+        const validationRuleStepStatus = this.setValidationRuleStepStatus(stepInfo.listOfValidationRules, tutorialName, tutorialStep);
+        return validationRuleStepStatus;
     }
 
     renderCore() {
         const options = this.props.parent.state.tutorialOptions;
-        const { tutorialReady, tutorialStepInfo, tutorialStep, tutorialStepExpanded, metadata } = options;
+        const { tutorialName, tutorialReady, tutorialStepInfo, tutorialStep, tutorialStepExpanded, metadata } = options;
         if (!tutorialReady) return <div />
         const stepInfo = tutorialStepInfo[tutorialStep];
 
@@ -706,9 +722,9 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         const tutorialCodeValidated = this.isCodeValidated(stepInfo.listOfValidationRules);
         const showMissingBlockPopupMessage = this.state.showUnusedBlockMessage && validationEnabled;
         const strictRulePresent = this.areStrictRulesPresent(stepInfo.listOfValidationRules);
-        const mapOfValidAndInvalidRules = this.classifyingValidAndInvalidRules(stepInfo.listOfValidationRules);
-        const nextOnClick = (tutorialCodeValidated || !validationEnabled ||
-            this.state.showUnusedBlockMessage || (!tutorialCodeValidated && !strictRulePresent)) ? this.nextTutorialStep : this.showUnusedBlocksMessageOnClick;
+        const validationRuleStepStatus = this.getValidationRuleStepStatus();
+        const nextOnClick = (!validationEnabled || (tutorialCodeValidated && !strictRulePresent)) ?  this.nextTutorialStep : 
+        (this.state.showUnusedBlockMessage) ? this.doubleClickedNextStep : this.showUnusedBlocksMessageOnClick;
 
         const tutorialAriaLabel = lf("Press Space or Enter to show a hint.");
         const tutorialHintTooltip = lf("Click to show a hint!");
@@ -749,7 +765,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
                 {hasNext ? <sui.Button icon={`${isRtl ? 'left' : 'right'} chevron large`} className={`nextbutton right attached ${!hasNext ? 'disabled' : ''}  ${tutorialCodeValidated ? 'isValidated' : ''}`} text={lf("Next")} textClass="widedesktop only" ariaLabel={lf("Go to the next step of the tutorial.")}
                     onClick={nextOnClick} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                 {showMissingBlockPopupMessage &&
-                    <TutorialCodeValidation.MoveOn onYesButtonClick={this.nextTutorialStep} onNoButtonClick={this.showUnusedBlocksMessage} initialVisible={this.state.showUnusedBlockMessage} isTutorialCodeInvalid={!tutorialCodeValidated} ruleComponents={stepInfo.listOfValidationRules} areStrictRulesPresent={strictRulePresent} codeValidAndInvalidRuleMap={mapOfValidAndInvalidRules} parent={this.props.parent} />}
+                    <TutorialCodeValidation.MoveOn onYesButtonClick={this.nextTutorialStep} onNoButtonClick={this.showUnusedBlocksMessage} initialVisible={this.state.showUnusedBlockMessage} isTutorialCodeInvalid={!tutorialCodeValidated} ruleComponents={stepInfo.listOfValidationRules} areStrictRulesPresent={strictRulePresent} validationRuleStepStatus={validationRuleStepStatus} parent={this.props.parent} />}
                 {hasFinish ? <sui.Button icon="left checkmark" className={`orange right attached ${!tutorialReady ? 'disabled' : ''}`} text={lf("Finish")} ariaLabel={lf("Finish the tutorial.")} onClick={this.finishTutorial} onKeyDown={sui.fireClickOnEnter} /> : undefined}
             </div>
         </div>;
