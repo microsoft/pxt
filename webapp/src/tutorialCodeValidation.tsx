@@ -14,7 +14,7 @@ interface TutorialCodeValidationProps extends ISettingsProps {
     isTutorialCodeInvalid: boolean;
     ruleComponents: pxt.tutorial.TutorialRuleStatus[];
     areStrictRulesPresent: boolean;
-    validationRuleStepStatus: pxt.Map<string | number>;
+    options: pxt.tutorial.TutorialOptions;
 }
 
 interface tutorialCodeValidationState {
@@ -35,20 +35,35 @@ export class ShowValidationMessage extends data.Component<TutorialCodeValidation
 
 
     moveOnToNextTutorialStep() {
-        const sortedValidAndInvalidRules = this.props.validationRuleStepStatus;
-        pxt.tickEvent('tutorial.validation.continueAnyway', sortedValidAndInvalidRules);
-        console.log('tutorial.validation.continueAnyway', sortedValidAndInvalidRules);
+        this.validationRuleStatus(false);
         this.props.onYesButtonClick();
         this.showUnusedBlocksMessage(false);
     }
 
     stayOnThisTutorialStep() {
-        const sortedValidAndInvalidRules = this.props.validationRuleStepStatus;
-        pxt.tickEvent('tutorial.validation.keepEditing', sortedValidAndInvalidRules);
-        console.log('tutorial.validation.keepEditing', sortedValidAndInvalidRules);
+        this.validationRuleStatus(true);
         this.props.onNoButtonClick();
     }
 
+
+    validationRuleStatus(isEditing: boolean) {
+        const { tutorialName, tutorialStepInfo, tutorialStep } = this.props.options;
+        const stepInfo = tutorialStepInfo[tutorialStep];
+        const rules = stepInfo.listOfValidationRules;
+
+        if (rules != undefined) {
+            const validationRuleStepStatus: pxt.Map<string | number> = {};
+            validationRuleStepStatus["tutorial"] = tutorialName;
+            validationRuleStepStatus["step"] = tutorialStep;
+            for (let i = 0; i < rules.length; i++) {
+                if (rules[i].ruleTurnOn) {
+                    validationRuleStepStatus["ruleName"] = rules[i].ruleName;
+                    let str = 'tutorial.validation' + (isEditing ? '.edit' : '.continue') + (rules[i].ruleStatus ? '.pass' : '.fail');
+                    pxt.tickEvent(str, validationRuleStepStatus);
+                }
+            }
+        }
+    }
 
     renderCore() {
         const codeInvalid = this.props.isTutorialCodeInvalid;
