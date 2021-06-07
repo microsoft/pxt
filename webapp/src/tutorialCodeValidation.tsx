@@ -32,8 +32,6 @@ export class ShowValidationMessage extends data.Component<TutorialCodeValidation
         this.setState({ visible: vis });
     }
 
-
-
     moveOnToNextTutorialStep() {
         this.validationRuleStatus(false);
         this.props.onYesButtonClick();

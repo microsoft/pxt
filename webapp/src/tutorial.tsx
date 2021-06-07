@@ -411,11 +411,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
 
         pxt.tickEvent(`tutorial.previous`, { tutorial: options.tutorial, step: previousStep }, { interactiveConsent: true });
         this.props.parent.setTutorialStep(previousStep);
-
-        const tutorialCodeValidationIsOn = options.metadata.tutorialCodeValidation;
-        if (tutorialCodeValidationIsOn && this.state.showUnusedBlockMessage) { // disables tutorial validation pop-up if previous buttion is clicked
-            this.setState({ showUnusedBlockMessage: false });
-        }
+        this.setState({ showUnusedBlockMessage: false });
     }
 
     nextTutorialStep() {
@@ -653,11 +649,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         }
         th.showHint(visible, showFullText);
         if (visible) { // disables tutorial validation pop-up if hint is clicked
-            const options = this.props.parent.state.tutorialOptions;
-            const tutorialCodeValidationIsOn = options.metadata.tutorialCodeValidation;
-            if (tutorialCodeValidationIsOn && this.state.showUnusedBlockMessage) {
-                this.setState({ showUnusedBlockMessage: false });
-            }
+            this.setState({ showUnusedBlockMessage: false });
         }
     }
 

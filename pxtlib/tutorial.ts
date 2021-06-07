@@ -311,10 +311,9 @@ ${code}
         for (let i = 0; i < ruleNames.length; i++) {
             const setValidationRule: pxt.Map<string | number> = {};
             setValidationRule["ruleName"] = ruleNames[i];
-            setValidationRule["enabledFlag"] = listOfRules[ruleNames[i]] ? 1 : 0;
+            setValidationRule["enabled"] = listOfRules[ruleNames[i]] ? 'true' : 'false';
             setValidationRule["tutorial"] = title;
             pxt.tickEvent('tutorial.validation.setValidationRules', setValidationRule);
-            console.log('tutorial.validation.setValidationRules', setValidationRule);
         }
     }
 
