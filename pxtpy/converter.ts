@@ -2048,7 +2048,7 @@ namespace pxt.py {
 
             let fun = namedSymbol
 
-            let recvTp: Type
+            let recvTp: Type | undefined = undefined;
             let recv: py.Expr | undefined = undefined
             let methName: string = ""
 
@@ -2222,7 +2222,13 @@ namespace pxt.py {
             if (fun) {
                 if (!fun.pyRetType)
                     error(n, 9549, lf("function missing pyRetType"));
-                unifyTypeOf(n, fun.pyRetType!)
+
+                if (isGenericType(fun.pyRetType!) && recv && isArrayType(recv) && recvTp) {
+                    unifyTypeOf(n, recvTp.typeArgs![0])
+                }
+                else {
+                    unifyTypeOf(n, fun.pyRetType!)
+                }
                 n.symbolInfo = fun
 
                 if (fun.attributes.py2tsOverride) {
