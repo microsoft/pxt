@@ -648,7 +648,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
             this.props.parent.setHintSeen(currentStep);
         }
         th.showHint(visible, showFullText);
-        if (visible) { // disables tutorial validation pop-up if hint is clicked
+        if (visible) {
             this.setState({ showUnusedBlockMessage: false });
         }
     }
@@ -676,7 +676,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
 
     renderCore() {
         const options = this.props.parent.state.tutorialOptions;
-        const { tutorialName, tutorialReady, tutorialStepInfo, tutorialStep, tutorialStepExpanded, metadata } = options;
+        const { tutorialReady, tutorialStepInfo, tutorialStep, tutorialStepExpanded, metadata } = options;
         if (!tutorialReady) return <div />
         const stepInfo = tutorialStepInfo[tutorialStep];
 
