@@ -50,7 +50,7 @@ export class ShowValidationMessage extends data.Component<TutorialCodeValidation
     componentDidMount() {
         this.props.ruleComponents.forEach(rule => {
             if (rule.blockIds && !this.state.ruleSnippets?.[rule.ruleName]?.length) {
-                this.getRuleSnippets(rule);
+                this.getRuleSnippetsAsync(rule);
             }
         })
     }
@@ -61,7 +61,7 @@ export class ShowValidationMessage extends data.Component<TutorialCodeValidation
             // Update if the list of blockids is different
             if ((rule.blockIds && rule.blockIds.sort().toString() != prev?.blockIds?.sort()?.toString())
                 || rule.blockIds.length != nextState.ruleSnippets?.[rule.ruleName]?.length) {
-                this.getRuleSnippets(rule);
+                this.getRuleSnippetsAsync(rule);
             }
         })
     }
@@ -76,7 +76,7 @@ export class ShowValidationMessage extends data.Component<TutorialCodeValidation
         }
     }
 
-    getRuleSnippets(rule: pxt.tutorial.TutorialRuleStatus) {
+    getRuleSnippetsAsync(rule: pxt.tutorial.TutorialRuleStatus) {
         if (rule.blockIds) {
             // Get all APIs from compiler
             compiler.getBlocksAsync().then(blocksInfo => {
