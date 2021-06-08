@@ -16,6 +16,7 @@ namespace pxt.tutorial {
         let tutorialValidationRules: pxt.Map<boolean>;
         if (metadata.tutorialCodeValidation) {
             tutorialValidationRules = pxt.Util.jsonTryParse(tutorialValidationRulesStr);
+            categorizingValidationRules(tutorialValidationRules, title);
         }
 
         // noDiffs legacy
@@ -303,6 +304,18 @@ ${code}
             }
         }
         return { header, hint, requiredBlocks };
+    }
+
+    function categorizingValidationRules(listOfRules: pxt.Map<boolean>, title: string) {
+        const ruleNames = Object.keys(listOfRules);
+        for (let i = 0; i < ruleNames.length; i++) {
+            const setValidationRule: pxt.Map<string> = {
+                ruleName: ruleNames[i],
+                enabled: listOfRules[ruleNames[i]] ? 'true' : 'false',
+                tutorial: title,
+            };
+            pxt.tickEvent('tutorial.validation.setValidationRules', setValidationRule);
+        }
     }
 
     /* Remove hidden snippets from text */

@@ -10,6 +10,7 @@ type ISettingsProps = pxt.editor.ISettingsProps;
 interface TutorialCodeValidationProps extends ISettingsProps {
     onYesButtonClick: () => void;
     onNoButtonClick: () => void;
+    validationTelemetry: (command: string) => void;
     initialVisible: boolean;
     isTutorialCodeInvalid: boolean;
     ruleComponents: pxt.tutorial.TutorialRuleStatus[];
@@ -20,7 +21,7 @@ interface tutorialCodeValidationState {
     visible: boolean;
 }
 
-export class MoveOn extends data.Component<TutorialCodeValidationProps, tutorialCodeValidationState> {
+export class ShowValidationMessage extends data.Component<TutorialCodeValidationProps, tutorialCodeValidationState> {
     constructor(props: TutorialCodeValidationProps) {
         super(props);
 
@@ -32,14 +33,15 @@ export class MoveOn extends data.Component<TutorialCodeValidationProps, tutorial
     }
 
     moveOnToNextTutorialStep() {
+        this.props.validationTelemetry("continue");
         this.props.onYesButtonClick();
         this.showUnusedBlocksMessage(false);
     }
 
     stayOnThisTutorialStep() {
+        this.props.validationTelemetry("edit");
         this.props.onNoButtonClick();
     }
-
 
     renderCore() {
         const codeInvalid = this.props.isTutorialCodeInvalid;
