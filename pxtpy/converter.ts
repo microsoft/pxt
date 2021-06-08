@@ -466,7 +466,7 @@ namespace pxt.py {
         else if (t.moduleType && t.moduleType.pyQName)
             return applyTypeMap(t.moduleType.pyQName) + suff("/M")
         else
-            return "?" + t.tid
+            return "any"
     }
 
     function mkDiag(astNode: py.AST | undefined | null, category: pxtc.DiagnosticCategory, code: number, messageText: string): pxtc.KsDiagnostic {
@@ -1119,7 +1119,7 @@ namespace pxt.py {
 
     function typeAnnot(t: Type, defaultToAny = false) {
         let s = t2s(t)
-        if (s[0] == "?") {
+        if (s === "any") {
             // TODO:
             // example from minecraft doc snippet:
             // player.onChat("while",function(num1){while(num1<10){}})
