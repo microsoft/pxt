@@ -433,7 +433,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
     }
 
     doubleClickedNextStep() {
-        this.validationTelemetry('.next');
+        this.validationTelemetry('next');
         this.nextTutorialStep();
     }
 
@@ -671,7 +671,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
             for (let i = 0; i < rules.length; i++) {
                 if (rules[i].ruleTurnOn) {
                     validationRuleStepStatus["ruleName"] = rules[i].ruleName;
-                    let str = 'tutorial.validation' + (command) + (rules[i].ruleStatus ? '.pass' : '.fail');
+                    let str = 'tutorial.validation.' + (command) + (rules[i].ruleStatus ? '.pass' : '.fail');
                     pxt.tickEvent(str, validationRuleStepStatus);
                 }
             }

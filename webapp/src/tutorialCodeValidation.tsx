@@ -33,13 +33,13 @@ export class ShowValidationMessage extends data.Component<TutorialCodeValidation
     }
 
     moveOnToNextTutorialStep() {
-        this.props.validationTelemetry(".continue");
+        this.props.validationTelemetry("continue");
         this.props.onYesButtonClick();
         this.showUnusedBlocksMessage(false);
     }
 
     stayOnThisTutorialStep() {
-        this.props.validationTelemetry(".edit");
+        this.props.validationTelemetry("edit");
         this.props.onNoButtonClick();
     }
 
