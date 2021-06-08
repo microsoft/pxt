@@ -116,17 +116,17 @@ ${hexLiteralAsm(data)}
     }
 
     export function utf8AsmStringLiteral(strLit: string) {
-        const SKIP_INCR = 16
+        const PXT_STRING_SKIP_INCR = 16
         let vt = "pxt::string_inline_ascii_vt"
         let utfLit = target.utf8 ? U.toUTF8(strLit, true) : strLit
         let asm = ""
         if (utfLit !== strLit) {
-            if (strLit.length > SKIP_INCR) {
+            if (strLit.length > PXT_STRING_SKIP_INCR) {
                 vt = "pxt::string_skiplist16_packed_vt"
                 let skipList: number[] = []
                 let off = 0
-                for (let i = 0; i + SKIP_INCR <= strLit.length; i += SKIP_INCR) {
-                    off += U.toUTF8(strLit.slice(i, i + SKIP_INCR), true).length
+                for (let i = 0; i + PXT_STRING_SKIP_INCR <= strLit.length; i += PXT_STRING_SKIP_INCR) {
+                    off += U.toUTF8(strLit.slice(i, i + PXT_STRING_SKIP_INCR), true).length
                     skipList.push(off)
                 }
                 asm = `
