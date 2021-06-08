@@ -1063,6 +1063,7 @@ declare namespace pxt.tutorial {
         ruleStatus?: boolean;
         ruleMessage?: string;
         isStrict?: boolean;
+        blockIds?: string[];
     }
 
     interface TutorialStepInfo {
