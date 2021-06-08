@@ -2529,7 +2529,8 @@ namespace pxt.py {
 
     function declareVariable(s: SymbolInfo) {
         const name = quote(s.name);
-        let type = t2s(getOrSetSymbolType(s));
+        const type = t2s(getOrSetSymbolType(s));
+
         return B.mkStmt(B.mkGroup([B.mkText("let "), name, B.mkText(": " + type + ";")]));
     }
 
