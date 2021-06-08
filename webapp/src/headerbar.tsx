@@ -14,10 +14,7 @@ import * as tutorial from "./tutorial";
 type ISettingsProps = pxt.editor.ISettingsProps;
 type HeaderBarView = "home" | "editor" | "tutorial" | "debugging" | "sandbox";
 
-interface HeaderBarState {
-}
-
-export class HeaderBar extends data.Component<ISettingsProps, HeaderBarState> {
+export class HeaderBar extends data.Component<ISettingsProps, {}> {
     constructor(props: ISettingsProps) {
         super(props);
     }
@@ -74,7 +71,7 @@ export class HeaderBar extends data.Component<ISettingsProps, HeaderBarState> {
         }
     }
 
-    getOrganizationLogo(targetTheme: pxt.AppTheme, highContrast?: boolean) {
+    getOrganizationLogo(targetTheme: pxt.AppTheme, highContrast?: boolean, view?: string) {
         return <div className="ui item logo organization">
             {targetTheme.organizationWideLogo || targetTheme.organizationLogo
                 ? <img className="ui logo mobile hide" src={targetTheme.organizationWideLogo || targetTheme.organizationLogo} alt={lf("{0} Logo", targetTheme.organization)} />
@@ -83,10 +80,12 @@ export class HeaderBar extends data.Component<ISettingsProps, HeaderBarState> {
         </div>
     }
 
-    getTargetLogo(targetTheme: pxt.AppTheme, highContrast?: boolean) {
-        return <div aria-label={lf("{0} Logo", targetTheme.boardName)} role="menuitem" className="ui item logo brand mobile hide" onClick={this.brandIconClick}>
+    getTargetLogo(targetTheme: pxt.AppTheme, highContrast?: boolean, view?: string) {
+        // TODO: "sandbox" view components are temporary share page layout
+        return <div aria-label={lf("{0} Logo", targetTheme.boardName)} role="menuitem" className={`ui item logo brand ${view !== "sandbox" ? "mobile hide" : ""}`} onClick={this.brandIconClick}>
             {targetTheme.useTextLogo
-            ? <span className="name">{targetTheme.textLogo}</span>
+            ? [ <span className="name" key="org-name">{targetTheme.organizationText}</span>,
+                <span className="name-short" key="org-name-short">{targetTheme.organizationShortText || targetTheme.organizationText}</span> ]
             : (targetTheme.logo || targetTheme.portraitLogo
                 ? <img className={`ui ${targetTheme.logoWide ? "small" : ""} logo`} src={targetTheme.logo || targetTheme.portraitLogo} alt={lf("{0} Logo", targetTheme.boardName)} />
                 : <span className="name">{targetTheme.boardName}</span>)}
@@ -185,10 +184,9 @@ export class HeaderBar extends data.Component<ISettingsProps, HeaderBarState> {
         // Approximate each tutorial step to be 22 px
         const manyTutorialSteps = view == "tutorial" && (tutorialOptions.tutorialStepInfo.length * 22 > window.innerWidth / 3);
 
-        // TODO clean up homemenu css entirely?
         return <div id="mainmenu" className={`ui borderless fixed menu ${targetTheme.invertedMenu ? `inverted` : ''} ${manyTutorialSteps ? "thin" : ""}`} role="menubar">
             <div className="left menu">
-                {this.getOrganizationLogo(targetTheme, highContrast)}
+                {this.getOrganizationLogo(targetTheme, highContrast, view)}
                 {view === "tutorial"
                     // TODO: temporary place for tutorial name, we will eventually redesign the header for tutorial view
                     ? <sui.Item className="tutorialname" tabIndex={-1} textClass="landscape only" text={tutorialOptions.tutorialName}/>

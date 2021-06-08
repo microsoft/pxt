@@ -376,12 +376,15 @@ div.simframe > iframe {
             position: relative;
             height: 1.5rem;
             border-left: 2px solid @white;
+            content: " ";
         }
+    }
+}
 
-        /*move to mbit*/
-        .ui.logo {
-            height: 1.05rem;
-        }
+.sandbox .menubar {
+    .logo.organization,
+    .logo.brand::before {
+        display: none;
     }
 }
 
@@ -483,13 +486,22 @@ div.simframe > iframe {
     cursor: pointer;
 }
 
-.ui.item.logo .name {
+.inHome .ui.item.logo.brand:hover {
+    cursor: auto;
+}
+
+.ui.item.logo .name,
+.ui.item.logo .name-short {
     font-family: Segoe UI, Tahoma, Geneva, Verdana;
     font-size: 18px;
     font-weight: 700;
     color: #fff;
     margin-left: 1rem;
     margin-bottom: 1px;
+}
+
+.ui.item.logo .name-short {
+    display: none;
 }
 
 .ui.item.logo svg {
@@ -949,6 +961,14 @@ p.ui.font.small {
 
     .hideEditorToolbar #filelist {
         display:none !important;
+    }
+
+    // Menu bar text logos ("MakeCode Arcade")
+    .ui.item.logo .name {
+        display: none;
+    }
+    .ui.item.logo .name-short {
+        display: block;
     }
 }
 
