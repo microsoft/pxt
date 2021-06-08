@@ -113,6 +113,7 @@ ${info.id}_IfaceVT:
         NumberLiterals = 0x03,   // array of boxed doubles and ints
         ConfigData = 0x04,       // sorted array of pairs of int32s; zero-terminated
         IfaceMemberNames = 0x05, // array of 32 bit offsets, that point to string literals
+        NumberBoxes = 0x06,      // numbers from NumberLiteral that need to be boxed on 32 bit hosts
 
         // repetitive sections
         Function = 0x20,
@@ -154,6 +155,7 @@ ${hexfile.hexPrelude()}
         additionalClassInfos = {}
         const ctx: EmitCtx = {
             dblText: [],
+            dblBoxText: [],
             dbls: {},
             opcodeMap: {},
             opcodes: vm.opcodes.map(o => "pxt::op_" + o.replace(/ .*/, "")),
@@ -237,7 +239,6 @@ _start_${name}:
         U.iterMap(bin.hexlits, (k, v) => {
             section(v, SectionType.Literal, () =>
                 `.word ${vtRef("pxt::buffer_vt")}\n` +
-                `.word 0xffffffff ; padding\n` +
                 hexLiteralAsm(k), [], pxt.BuiltInType.BoxedBuffer)
         })
 
@@ -263,8 +264,11 @@ _start_${name}:
             section(bin.strings[k], SectionType.Literal, () => text, [], tp)
         })
 
+        section("numberBoxes", SectionType.NumberBoxes, () => ctx.dblBoxText.join("\n")
+            + "\n.word 0, 0, 0 ; dummy entry to make sure not empty")
+
         section("numberLiterals", SectionType.NumberLiterals, () => ctx.dblText.join("\n")
-            + "\n.word 0 ; dummy entry to make sure not empty")
+            + "\n.word 0, 0 ; dummy entry to make sure not empty")
 
         const cfg = bin.res.configData || []
         section("configData", SectionType.ConfigData, () => cfg.map(d =>
@@ -320,6 +324,7 @@ _start_${name}:
 
     interface EmitCtx {
         dblText: string[]
+        dblBoxText: string[]
         dbls: pxt.Map<number>
         opcodeMap: pxt.Map<number>;
         opcodes: string[];
@@ -470,6 +475,7 @@ _start_${name}:
                     else {
                         let n = e.data as number
                         let n0 = 0, n1 = 0
+                        const needsBox = ((n << 1) >> 1) != n // boxing needed on PXT32?
                         if ((n | 0) == n) {
                             if (Math.abs(n) <= immMax) {
                                 if (n < 0)
@@ -494,6 +500,14 @@ _start_${name}:
                         if (id == null) {
                             id = ctx.dblText.length
                             ctx.dblText.push(`.word ${n0}, ${n1}  ; ${id}: ${e.data}`)
+                            if (needsBox) {
+                                const vt = "pxt::number_vt"
+                                ctx.dblBoxText.push(`.word ${embedVTs() ? vt : `0xffffffff ; ${vt}`}\n`)
+                                let a = new Float64Array(1)
+                                a[0] = n
+                                let u = new Uint32Array(a.buffer)
+                                ctx.dblBoxText.push(`.word ${u[0]}, ${u[1]} ; ${n}\n`)
+                            }
                             ctx.dbls[key] = id
                         }
                         write(`ldnumber ${id} ; ${e.data}`)
