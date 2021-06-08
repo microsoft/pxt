@@ -629,6 +629,7 @@ declare namespace ts.pxtc {
         useUF2?: boolean;
         useMkcd?: boolean;
         useELF?: boolean;
+        useESP?: boolean;
         saveAsPNG?: boolean;
         noSourceInFlash?: boolean;
         useModulator?: boolean;
@@ -998,6 +999,7 @@ declare namespace ts.pxtc {
         shimsDTS: string;
         enumsDTS: string;
         onlyPublic: boolean;
+        vmPointers?: string[];
         commBase?: number;
         skipCloudBuild?: boolean;
         hexinfo?: HexInfo;

@@ -507,6 +507,7 @@ namespace pxsim {
             inBackground: thread.runInBackground,
             createBuffer: BufferMethods.createBuffer,
             dmesg: (s: string) => console.log("DMESG: " + s),
+            deviceDalVersion: () => "sim",
             __log: (pri: number, s: string) => console.log("LOG: " + s.trim()),
         }
     }

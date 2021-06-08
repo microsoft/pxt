@@ -2519,10 +2519,11 @@ ${lbl}: .short 0xffff
             let currOff = numReservedGlobals * 4
             let firstPointer = 0
             for (let g of globals) {
-                let sz = sizeOfBitSize(g.bitSize)
+                const bitSize = isStackMachine() ? BitSize.None : g.bitSize
+                let sz = sizeOfBitSize(bitSize)
                 while (currOff & (sz - 1))
                     currOff++ // align
-                if (!firstPointer && g.bitSize == BitSize.None)
+                if (!firstPointer && bitSize == BitSize.None)
                     firstPointer = currOff
                 g.index = currOff
                 currOff += sz
