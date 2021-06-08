@@ -34,7 +34,7 @@ namespace ObjLit {
 
     function check(o: any, exp: string) {
         if (str(o) != exp) {
-            assert(false, "expecting:" + exp + "; got:" + str(o))
+            assert(false, `exp: '${exp}' got: '${str(o)}'`)
         }
     }
 
