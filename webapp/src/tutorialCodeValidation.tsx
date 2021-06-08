@@ -10,11 +10,11 @@ type ISettingsProps = pxt.editor.ISettingsProps;
 interface TutorialCodeValidationProps extends ISettingsProps {
     onYesButtonClick: () => void;
     onNoButtonClick: () => void;
+    validationTelemetry: (command: string) => void;
     initialVisible: boolean;
     isTutorialCodeInvalid: boolean;
     ruleComponents: pxt.tutorial.TutorialRuleStatus[];
     areStrictRulesPresent: boolean;
-    options: pxt.tutorial.TutorialOptions;
 }
 
 interface tutorialCodeValidationState {
@@ -33,34 +33,14 @@ export class ShowValidationMessage extends data.Component<TutorialCodeValidation
     }
 
     moveOnToNextTutorialStep() {
-        this.validationRuleStatus(false);
+        this.props.validationTelemetry(".continue");
         this.props.onYesButtonClick();
         this.showUnusedBlocksMessage(false);
     }
 
     stayOnThisTutorialStep() {
-        this.validationRuleStatus(true);
+        this.props.validationTelemetry(".edit");
         this.props.onNoButtonClick();
-    }
-
-
-    validationRuleStatus(isEditing: boolean) {
-        const { tutorialName, tutorialStepInfo, tutorialStep } = this.props.options;
-        const stepInfo = tutorialStepInfo[tutorialStep];
-        const rules = stepInfo.listOfValidationRules;
-
-        if (rules != undefined) {
-            const validationRuleStepStatus: pxt.Map<string | number> = {};
-            validationRuleStepStatus["tutorial"] = tutorialName;
-            validationRuleStepStatus["step"] = tutorialStep;
-            for (let i = 0; i < rules.length; i++) {
-                if (rules[i].ruleTurnOn) {
-                    validationRuleStepStatus["ruleName"] = rules[i].ruleName;
-                    let str = 'tutorial.validation' + (isEditing ? '.edit' : '.continue') + (rules[i].ruleStatus ? '.pass' : '.fail');
-                    pxt.tickEvent(str, validationRuleStepStatus);
-                }
-            }
-        }
     }
 
     renderCore() {

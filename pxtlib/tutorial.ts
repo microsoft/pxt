@@ -309,10 +309,11 @@ ${code}
     function categorizingValidationRules(listOfRules: pxt.Map<boolean>, title: string) {
         const ruleNames = Object.keys(listOfRules);
         for (let i = 0; i < ruleNames.length; i++) {
-            const setValidationRule: pxt.Map<string | number> = {};
-            setValidationRule["ruleName"] = ruleNames[i];
-            setValidationRule["enabled"] = listOfRules[ruleNames[i]] ? 'true' : 'false';
-            setValidationRule["tutorial"] = title;
+            const setValidationRule: pxt.Map<string> = {
+                ruleName: ruleNames[i],
+                enabled: listOfRules[ruleNames[i]] ? 'true' : 'false',
+                tutorial: title,
+            };
             pxt.tickEvent('tutorial.validation.setValidationRules', setValidationRule);
         }
     }

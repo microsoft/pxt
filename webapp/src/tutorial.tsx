@@ -399,6 +399,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         this.showUnusedBlocksMessageOnClick = this.showUnusedBlocksMessageOnClick.bind(this);
         this.showUnusedBlocksMessage = this.showUnusedBlocksMessage.bind(this);
         this.doubleClickedNextStep = this.doubleClickedNextStep.bind(this);
+        this.validationTelemetry = this.validationTelemetry.bind(this);
     }
 
     previousTutorialStep() {
@@ -432,22 +433,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
     }
 
     doubleClickedNextStep() {
-        const options = this.props.parent.state.tutorialOptions;
-        const { tutorialName, tutorialStepInfo, tutorialStep } = options;
-        const stepInfo = tutorialStepInfo[tutorialStep];
-        const rules = stepInfo.listOfValidationRules;
-        if (rules != undefined) {
-            const validationRuleStepStatus: pxt.Map<string | number> = {};
-            validationRuleStepStatus["tutorial"] = tutorialName;
-            validationRuleStepStatus["step"] = tutorialStep;
-            for (let i = 0; i < rules.length; i++) {
-                if (rules[i].ruleTurnOn) {
-                    validationRuleStepStatus["ruleName"] = rules[i].ruleName;
-                    let str = 'tutorial.validation.next' + (rules[i].ruleStatus ? '.pass' : '.fail');
-                    pxt.tickEvent(str, validationRuleStepStatus);
-                }
-            }
-        }
+        this.validationTelemetry('.next');
         this.nextTutorialStep();
     }
 
@@ -673,6 +659,25 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         return rules?.some(rule => rule.ruleTurnOn && rule.isStrict) ?? false;
     }
 
+    validationTelemetry(command: string) {
+        const { tutorialName, tutorialStepInfo, tutorialStep } = this.props.parent.state.tutorialOptions;
+        const stepInfo = tutorialStepInfo[tutorialStep];
+        const rules = stepInfo.listOfValidationRules;
+        if (rules != undefined) {
+            const validationRuleStepStatus: pxt.Map<string | number> = {
+                tutorial: tutorialName,
+                step: tutorialStep
+            };
+            for (let i = 0; i < rules.length; i++) {
+                if (rules[i].ruleTurnOn) {
+                    validationRuleStepStatus["ruleName"] = rules[i].ruleName;
+                    let str = 'tutorial.validation' + (command) + (rules[i].ruleStatus ? '.pass' : '.fail');
+                    pxt.tickEvent(str, validationRuleStepStatus);
+                }
+            }
+        }
+    }
+
 
     renderCore() {
         const options = this.props.parent.state.tutorialOptions;
@@ -736,7 +741,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
                 {hasNext ? <sui.Button icon={`${isRtl ? 'left' : 'right'} chevron large`} className={`nextbutton right attached ${!hasNext ? 'disabled' : ''}  ${tutorialCodeValidated ? 'isValidated' : ''}`} text={lf("Next")} textClass="widedesktop only" ariaLabel={lf("Go to the next step of the tutorial.")}
                     onClick={nextOnClick} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                 {showMissingBlockPopupMessage &&
-                    <TutorialCodeValidation.ShowValidationMessage onYesButtonClick={this.nextTutorialStep} onNoButtonClick={this.showUnusedBlocksMessage} initialVisible={this.state.showUnusedBlockMessage} isTutorialCodeInvalid={!tutorialCodeValidated} ruleComponents={stepInfo.listOfValidationRules} areStrictRulesPresent={strictRulePresent} options={this.props.parent.state.tutorialOptions} parent={this.props.parent} />}
+                    <TutorialCodeValidation.ShowValidationMessage onYesButtonClick={this.nextTutorialStep} onNoButtonClick={this.showUnusedBlocksMessage} initialVisible={this.state.showUnusedBlockMessage} isTutorialCodeInvalid={!tutorialCodeValidated} ruleComponents={stepInfo.listOfValidationRules} areStrictRulesPresent={strictRulePresent} validationTelemetry={this.validationTelemetry} parent={this.props.parent} />}
                 {hasFinish ? <sui.Button icon="left checkmark" className={`orange right attached ${!tutorialReady ? 'disabled' : ''}`} text={lf("Finish")} ariaLabel={lf("Finish the tutorial.")} onClick={this.finishTutorial} onKeyDown={sui.fireClickOnEnter} /> : undefined}
             </div>
         </div>;
