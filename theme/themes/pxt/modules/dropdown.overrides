@@ -2,7 +2,7 @@
         User Overrides
 *******************************/
 
-.ui.dropdown > .avatar > img, 
+.ui.dropdown > .avatar > img,
 .ui.dropdown > .avatar > .initials {
     height: 2.5rem;
     width: 2.5rem;
@@ -31,6 +31,11 @@
 .ui.dropdown.menuAbove > .menu {
     top: 0%;
     transform: translateY(-100%);
+}
+
+.ui.dropdown.menuLeft > .menu {
+    left: unset;
+    right: 0;
 }
 
 .ui.buttons > .ui.dropdown.menuRight:last-child .menu {

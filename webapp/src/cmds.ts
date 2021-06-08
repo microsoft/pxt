@@ -317,6 +317,10 @@ function applyExtensionResult() {
         log(`extension renderUsbPairDialog`)
         pxt.commands.renderUsbPairDialog = res.renderUsbPairDialog;
     }
+    if (res.renderIncompatibleHardwareDialog) {
+        log(`extension renderIncompatibleHardwareDialog`)
+        pxt.commands.renderIncompatibleHardwareDialog = res.renderIncompatibleHardwareDialog;
+    }
     if (res.showUploadInstructionsAsync) {
         log(`extension upload instructions async`);
         pxt.commands.showUploadInstructionsAsync = res.showUploadInstructionsAsync;
@@ -617,6 +621,61 @@ function handlePacketIOApi(r: string) {
     }
     return false;
 }
+
+export function showUnsupportedHardwareMessageAsync(resp: pxtc.CompileResult) {
+    const unsupportedParts = pxt.packetio.unsupportedParts();
+    const parts = pxtc.computeUsedParts(resp);
+
+    let unsupported: string[] = [];;
+    for (const part of unsupportedParts) {
+        if (parts.indexOf(part) !== -1) {
+            unsupported.push(part);
+            break;
+        }
+    }
+
+    if (unsupported.length) {
+        let jsx: JSX.Element;
+        if (pxt.commands.renderIncompatibleHardwareDialog) {
+            jsx = pxt.commands.renderIncompatibleHardwareDialog(unsupported);
+        }
+
+        pxt.tickEvent('unsupportedhardwaredialog.shown')
+
+        const body = jsx ? undefined : lf("Oops! Looks like your project has code that won't run on the hardware you have connected. Would you like to download anyway?");
+        const helpUrl = pxt.appTarget.appTheme.downloadDialogTheme?.incompatibleHardwareHelpURL;
+        let cancelled = true;
+        return core.confirmAsync({
+            header: lf("Incompatible Code"),
+            body,
+            jsx,
+            hasCloseIcon: true,
+            hideAgree: true,
+            helpUrl,
+            bigHelpButton: true,
+            className: 'downloaddialog',
+            buttons: [
+                {
+                    label: lf("Download Anyway"),
+                    className: "primary",
+                    onclick: () => {
+                        pxt.tickEvent('unsupportedhardwaredialog.downloadagain')
+                        cancelled = false;
+                        core.hideDialog();
+                    }
+                },
+            ]
+        }).then(() => {
+            if (cancelled) {
+                pxt.tickEvent('unsupportedhardwaredialog.cancelled')
+            }
+
+            return !cancelled;
+        });
+    }
+    return Promise.resolve(true);
+}
+
 data.mountVirtualApi("packetio", {
     getSync: handlePacketIOApi
 });

@@ -449,6 +449,7 @@ declare namespace pxt {
         downloadHelpURL?: string;
         firmwareHelpURL?: string;
         troubleshootWebUSBHelpURL?: string;
+        incompatibleHardwareHelpURL?: string;
 
         dragFileImage?: string;
         connectDeviceImage?: string;
@@ -1037,7 +1038,7 @@ declare namespace pxt.tutorial {
         assetFiles?: pxt.Map<string>;
         jres?: string; // JRES to be used when generating hints; necessary for tilemaps
         customTs?: string; // custom typescript code loaded in a separate file for the tutorial
-        tutorialValidationRules?: pxt.Map<boolean>; //a map of rules used in a tutorial and if the rules are activated 
+        tutorialValidationRules?: pxt.Map<boolean>; //a map of rules used in a tutorial and if the rules are activated
     }
 
     interface TutorialMetadata {
@@ -1055,11 +1056,11 @@ declare namespace pxt.tutorial {
     }
 
     interface TutorialRuleStatus {
-        RuleName: string;
-        RuleTurnOn: boolean;
-        RuleStatus: boolean;
-        RuleMessage: string;
-        test?: boolean;
+        ruleName: string;
+        ruleTurnOn: boolean;
+        ruleStatus?: boolean;
+        ruleMessage?: string;
+        isStrict?: boolean;
     }
 
     interface TutorialStepInfo {
@@ -1072,6 +1073,7 @@ declare namespace pxt.tutorial {
         contentMd?: string;
         headerContentMd?: string;
         hintContentMd?: string;
+        requiredBlockMd?: string;
         activity?: number;
         resetDiff?: boolean; // reset diffify algo
         listOfValidationRules?: pxt.tutorial.TutorialRuleStatus[]; // Whether the user code has been marked valid for these set of rules
@@ -1102,7 +1104,7 @@ declare namespace pxt.tutorial {
         assetFiles?: pxt.Map<string>;
         jres?: string; // JRES to be used when generating hints; necessary for tilemaps
         customTs?: string; // custom typescript code loaded in a separate file for the tutorial
-        tutorialValidationRules?: pxt.Map<boolean>; //a map of rules used in a tutorial and if the rules are activated 
+        tutorialValidationRules?: pxt.Map<boolean>; //a map of rules used in a tutorial and if the rules are activated
     }
     interface TutorialCompletionInfo {
         // id of the tutorial

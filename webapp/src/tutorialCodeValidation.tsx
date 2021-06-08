@@ -10,16 +10,18 @@ type ISettingsProps = pxt.editor.ISettingsProps;
 interface TutorialCodeValidationProps extends ISettingsProps {
     onYesButtonClick: () => void;
     onNoButtonClick: () => void;
+    validationTelemetry: (command: string) => void;
     initialVisible: boolean;
     isTutorialCodeInvalid: boolean;
     ruleComponents: pxt.tutorial.TutorialRuleStatus[];
+    areStrictRulesPresent: boolean;
 }
 
 interface tutorialCodeValidationState {
     visible: boolean;
 }
 
-export class MoveOn extends data.Component<TutorialCodeValidationProps, tutorialCodeValidationState> {
+export class ShowValidationMessage extends data.Component<TutorialCodeValidationProps, tutorialCodeValidationState> {
     constructor(props: TutorialCodeValidationProps) {
         super(props);
 
@@ -31,22 +33,25 @@ export class MoveOn extends data.Component<TutorialCodeValidationProps, tutorial
     }
 
     moveOnToNextTutorialStep() {
+        this.props.validationTelemetry("continue");
         this.props.onYesButtonClick();
         this.showUnusedBlocksMessage(false);
     }
 
     stayOnThisTutorialStep() {
+        this.props.validationTelemetry("edit");
         this.props.onNoButtonClick();
     }
 
     renderCore() {
-        const vis = this.props.isTutorialCodeInvalid;
+        const codeInvalid = this.props.isTutorialCodeInvalid;
         const rules = this.props.ruleComponents;
         const rulesDefined = (rules != undefined);
+        const strictRulePresent = this.props.areStrictRulesPresent;
         return <div>
-            <div className={`tutorialCodeValidation no-select ${!vis ? 'hidden' : ''}`}>
+            <div className={`tutorialCodeValidation no-select ${(!codeInvalid || (codeInvalid && !strictRulePresent)) ? 'hidden' : ''}`}>
                 <div className="codeValidationPopUpText">
-                    {rulesDefined ? rules.map((rule, index) => <p key={index + rule.RuleName}>{(rule.RuleTurnOn && !rule.RuleStatus) ? rule.RuleMessage : ''}</p>) : ''}
+                    {rulesDefined ? rules.map((rule, index) => <p key={index + rule.ruleName}>{(rule.ruleTurnOn && !rule.ruleStatus) ? rule.ruleMessage : ''}</p>) : ''}
                 </div>
                 <div className="codeValidationPopUpText">
                     {lf("Do you still want to continue?")}

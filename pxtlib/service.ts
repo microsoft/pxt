@@ -590,9 +590,12 @@ namespace ts.pxtc {
                     if (s.kind == SymbolKind.Method || s.kind == SymbolKind.Property) {
                         b += " %" + s.namespace.toLowerCase()
                     }
-                    for (let p of s.parameters || []) {
+
+                    const params = s.parameters?.filter(pr => !parameterTypeIsArrowFunction(pr)) ?? [];
+                    for (let p of params) {
                         b += " %" + p.name
                     }
+
                     s.attributes.block = b
                     updateBlockDef(s.attributes)
                 }
@@ -980,6 +983,10 @@ namespace ts.pxtc {
         updateBlockDef(res);
 
         return res
+    }
+
+    export function parameterTypeIsArrowFunction(pr: pxtc.ParameterDesc) {
+        return pr.type === "Action" || /^\([^\)]*\)\s*=>/.test(pr.type);
     }
 
     export function updateBlockDef(attrs: CommentAttrs) {

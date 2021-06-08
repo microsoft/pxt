@@ -1385,7 +1385,7 @@ export class ProjectView
         return undefined;
     }
 
-    loadHeaderAsync(h: pxt.workspace.Header, editorState?: pxt.editor.EditorState): Promise<void> {
+    async loadHeaderAsync(h: pxt.workspace.Header, editorState?: pxt.editor.EditorState, tryCloudSync = true): Promise<void> {
         if (!h)
             return Promise.resolve()
 
@@ -1393,22 +1393,24 @@ export class ProjectView
         if (checkAsync)
             return checkAsync.then(() => this.openHome());
 
-        let p = Promise.resolve();
         // check our multi-tab session
         if (workspace.isHeadersSessionOutdated()) {
             // reload header before loading
             pxt.log(`multi-tab sync before load`)
-            p = p.then(() => workspace.syncAsync().then(() => { }))
+            await workspace.syncAsync();
         }
 
-        // Try a quick cloud fetch. If it doesn't complete within X second(s),
-        // continue on.
-        const timeoutStart = Util.nowSeconds();
-        let timedOut = false;
-        p = p.then(() => {
-            Promise.race([
-                pxt.U.delay(1500)
-                    .then(() => { timedOut = true }),
+        if (tryCloudSync) {
+            // Try a quick cloud fetch. If it doesn't complete within X second(s),
+            // continue on.
+            const TIMEOUT_MS = 15000;
+            const timeoutStart = Util.nowSeconds();
+            let timedOut = false;
+            await Promise.race([
+                pxt.U.delay(TIMEOUT_MS)
+                    .then(() => {
+                        timedOut = true
+                    }),
                 cloud.syncAsync([h])
                     .then(changes => {
                         if (changes.length) {
@@ -1428,13 +1430,12 @@ export class ProjectView
                         }
                     })
             ]);
-        });
+        }
 
-        return p.then(() => {
+        if (h) {
             workspace.acquireHeaderSession(h);
-            if (!h) return Promise.resolve();
-            else return this.internalLoadHeaderAsync(h, editorState);
-        })
+            await this.internalLoadHeaderAsync(h, editorState);
+        }
     }
 
     private internalLoadHeaderAsync(h: pxt.workspace.Header, editorState?: pxt.editor.EditorState): Promise<void> {
@@ -2654,7 +2655,7 @@ export class ProjectView
 
     beforeCompile() { }
 
-    compile(saveOnly = false) {
+    async compile(saveOnly = false): Promise<void> {
         pxt.tickEvent("compile", { editor: this.getPreferredEditor() });
         pxt.debug('compiling...');
 
@@ -2691,90 +2692,105 @@ export class ProjectView
             if (simRestart) this.stopSimulator();
             let state = this.editor.snapshotState()
             this.syncPreferredEditor()
-            compiler.compileAsync({ native: true, forceEmit: true })
-                .then<pxtc.CompileResult>(resp => {
-                    this.editor.setDiagnostics(this.editorFile, state)
 
-                    let fn = pxt.outputName()
-                    if (!resp.outfiles[fn]) {
-                        pxt.tickEvent("compile.noemit")
-                        const noHexFileDiagnostic = resp.diagnostics?.find(diag => diag.code === 9043);
-                        if (noHexFileDiagnostic) {
-                            core.warningNotification(noHexFileDiagnostic.messageText as string);
-                        } else {
-                            core.warningNotification(lf("Compilation failed, please check your code for errors."));
-                        }
-                        return Promise.resolve(null)
-                    }
-                    resp.saveOnly = saveOnly
-                    resp.userContextWindow = userContextWindow;
-                    resp.downloadFileBaseName = pkg.genFileName("");
-                    resp.confirmAsync = core.confirmAsync;
-                    let h = this.state.header
-                    if (h)
-                        resp.headerId = h.id
-                    if (pxt.commands.patchCompileResultAsync)
-                        return pxt.commands.patchCompileResultAsync(resp).then(() => resp)
-                    else
-                        return resp
-                }).then(resp => {
-                    if (!resp) return Promise.resolve();
-                    if (saveOnly) {
-                        return pxt.commands.saveOnlyAsync(resp);
-                    }
-                    if (!resp.success) {
-                        if (!this.maybeShowPackageErrors(true)) {
-                            core.confirmAsync({
-                                header: lf("Compilation failed"),
-                                body: lf("Ooops, looks like there are errors in your program."),
-                                hideAgree: true,
-                                disagreeLbl: lf("Close")
-                            });
-                        }
-                    }
+            try {
+                const resp = await compiler.compileAsync({ native: true, forceEmit: true });
+                this.editor.setDiagnostics(this.editorFile, state);
 
-                    // restart sim early before deployment
-                    if (simRestart) {
-                        this.runSimulator();
-                        simRestart = false
-                    }
+                if (!saveOnly) {
+                    const shouldContinue = await cmds.showUnsupportedHardwareMessageAsync(resp);
+                    if (!shouldContinue) return;
+                }
 
-                    // hardware deployment
-                    let deployStartTime = Date.now()
-                    pxt.tickEvent("deploy.start")
-                    return pxt.commands.deployAsync(resp, {
+                let fn = pxt.outputName();
+                if (!resp.outfiles[fn]) {
+                    pxt.tickEvent("compile.noemit")
+                    const noHexFileDiagnostic = resp.diagnostics?.find(diag => diag.code === 9043);
+                    if (noHexFileDiagnostic) {
+                        core.warningNotification(noHexFileDiagnostic.messageText as string);
+                    } else {
+                        core.warningNotification(lf("Compilation failed, please check your code for errors."));
+                    }
+                    return;
+                }
+                resp.saveOnly = saveOnly;
+                resp.userContextWindow = userContextWindow;
+                resp.downloadFileBaseName = pkg.genFileName("");
+                resp.confirmAsync = core.confirmAsync;
+                let h = this.state.header;
+                if (h) {
+                    resp.headerId = h.id;
+                }
+                if (pxt.commands.patchCompileResultAsync) {
+                    await pxt.commands.patchCompileResultAsync(resp);
+                }
+
+                if (saveOnly) {
+                    await pxt.commands.saveOnlyAsync(resp);
+                    return;
+                }
+
+                if (!resp.success) {
+                    if (!this.maybeShowPackageErrors(true)) {
+                        core.confirmAsync({
+                            header: lf("Compilation failed"),
+                            body: lf("Ooops, looks like there are errors in your program."),
+                            hideAgree: true,
+                            disagreeLbl: lf("Close")
+                        });
+                    }
+                }
+
+                // restart sim early before deployment
+                if (simRestart) {
+                    this.runSimulator();
+                    simRestart = false
+                }
+
+                // hardware deployment
+                let deployStartTime = Date.now()
+                pxt.tickEvent("deploy.start")
+
+                try {
+                    await pxt.commands.deployAsync(resp, {
                         reportError: (e) => {
-                            pxt.tickEvent("deploy.reporterror")
-                            return core.errorNotification(e)
+                            pxt.tickEvent("deploy.reporterror");
+                            core.errorNotification(e);
                         },
                         showNotification: (msg) => core.infoNotification(msg)
                     })
-                        .then(() => {
-                            let elapsed = Date.now() - deployStartTime
-                            pxt.tickEvent("deploy.finished", { "elapsedMs": elapsed })
-                        })
-                        .catch(e => {
-                            if (e.notifyUser) {
-                                core.warningNotification(e.message);
-                            } else {
-                                const errorText = pxt.appTarget.appTheme.useUploadMessage ? lf("Upload failed, please try again.") : lf("Download failed, please try again.");
-                                core.warningNotification(errorText);
-                            }
-                            let elapsed = Date.now() - deployStartTime
-                            pxt.tickEvent("deploy.exception", { "notifyUser": e.notifyUser, "elapsedMs": elapsed })
-                            pxt.reportException(e);
-                            if (userContextWindow)
-                                try { userContextWindow.close() } catch (e) { }
-                        })
-                }).catch((e: Error) => {
+
+                    let elapsed = Date.now() - deployStartTime;
+                    pxt.tickEvent("deploy.finished", { "elapsedMs": elapsed });
+                }
+                catch (e) {
+                    if (e.notifyUser) {
+                        core.warningNotification(e.message);
+                    } else {
+                        const errorText = pxt.appTarget.appTheme.useUploadMessage ? lf("Upload failed, please try again.") : lf("Download failed, please try again.");
+                        core.warningNotification(errorText);
+                    }
+                    let elapsed = Date.now() - deployStartTime;
+                    pxt.tickEvent("deploy.exception", { "notifyUser": e.notifyUser, "elapsedMs": elapsed });
                     pxt.reportException(e);
-                    core.errorNotification(lf("Compilation failed, please contact support."));
-                    if (userContextWindow)
-                        try { userContextWindow.close() } catch (e) { }
-                }).finally(() => {
-                    this.setState({ compiling: false, isSaving: false });
-                    if (simRestart) this.runSimulator();
-                });
+                    if (userContextWindow) {
+                        try {
+                            userContextWindow.close()
+                        } catch (e) {
+                        }
+                    }
+                }
+            }
+            catch (e) {
+                pxt.reportException(e);
+                core.errorNotification(lf("Compilation failed, please contact support."));
+                if (userContextWindow)
+                    try { userContextWindow.close() } catch (e) { }
+            }
+            finally {
+                this.setState({ compiling: false, isSaving: false });
+                if (simRestart) this.runSimulator();
+            }
         } catch (e) {
             this.setState({ compiling: false, isSaving: false });
             pxt.reportException(e);

@@ -280,7 +280,13 @@ code.lang-filterblocks {
 }
 
 #tutorialcard .isValidated {
-    background: @tutorialCodeValidationMoveOn;
+    background: @tutorialCodeValidationCorrectBackground;
+    > i, > span, > i.nextbutton {
+        color: @tutorialCodeValidationCorrectTextColor !important;
+    }
+    i.large.icon, i.large.icons{
+        font-size: 1.7em;
+    }
 }
 
 /******************************

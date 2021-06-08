@@ -78,6 +78,7 @@ export interface DropdownProps extends UiProps {
     titleContent?: React.ReactNode;
     displayAbove?: boolean;
     displayRight?: boolean;
+    displayLeft?: boolean;
     dataTooltip?: string;
 }
 
@@ -140,11 +141,8 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
     }
 
     isChildFocused() {
-        const children = this.getChildren();
-        for (let i = 0; i < children.length; i++) {
-            if (document.activeElement === children[i]) return true;
-        }
-        return false;
+        const menu = this.refs["menu"] as HTMLElement;
+        return menu.contains(document.activeElement);
     }
 
     private navigateToNextElement = (e: KeyboardEvent, prev: HTMLElement, next: HTMLElement) => {
@@ -300,6 +298,11 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
         }, 1);
     }
 
+    protected captureMouseEvent = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
     private focusFirst: boolean;
     private handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
         const charCode = core.keyCodeFromEvent(e);
@@ -314,7 +317,8 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
     }
 
     renderCore() {
-        const { disabled, title, role, icon, className, titleContent, children, displayAbove, displayRight, dataTooltip } = this.props;
+        const { disabled, title, role, icon, className, titleContent, children,
+            displayAbove, displayLeft, displayRight, dataTooltip } = this.props;
         const { open } = this.state;
 
         const aria = {
@@ -335,7 +339,8 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
             icon ? 'icon' : '',
             className || '',
             displayAbove ? 'menuAbove' : '',
-            displayRight ? 'menuRight' : ''
+            displayRight ? 'menuRight' : '',
+            displayLeft ? "menuLeft" : '',
         ]);
         const menuClasses = cx([
             'menu',
@@ -356,7 +361,10 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
             >
                 {titleContent ? titleContent : genericContent(this.props)}
                 <div ref="menu" {...menuAria} className={menuClasses}
-                    role="menu">
+                    role="menu"
+                    onMouseDown={this.captureMouseEvent}
+                    onClick={this.captureMouseEvent}
+                >
                     {children}
                 </div>
             </div>);
