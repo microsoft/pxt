@@ -237,7 +237,7 @@
         color: @HCbackground !important;
     }
 
-    #mainmenu:not(.inverted), #homemenu:not(.inverted) {
+    #mainmenu:not(.inverted) {
         background-color: @HCmainMenuBackground !important;
         color: @HCmainMenuTextColor !important;
         border-bottom: 4px solid @HCtextColor;
@@ -249,7 +249,7 @@
             border: 1px solid @HCbackground !important;
         }
     }
-    #mainmenu.inverted, #homemenu.inverted {
+    #mainmenu.inverted {
         color: @HCmainMenuBackground !important;
         border-bottom: 4px solid @HCtextColor;
         background: @HCmainMenuTextColor !important;
@@ -900,8 +900,8 @@
 }
 
 @media (forced-colors: active) and (prefers-color-scheme: light) {
-    #homemenu .logo.organization img,
-    #homemenu .logo.brand img {
+    #mainmenu .logo.organization img,
+    #mainmenu .logo.brand img {
         filter: invert(1);
     }
 }
