@@ -18,11 +18,10 @@
 
         nbTokens.accessToken = result.accessToken;
         nbTokens.refreshToken = result.refreshToken;
-        nbTokens.notebookResourceId = result.notebookResourceId;
-        nbTokens.expiresIn = result.expiresIn;
+        nbTokens.notebookResourceId = result.resourceId;
         nbTokens.expiration = result.expiration;
 //        nbTokens.notebookResourceEndpoint = "https://makecode-ppe-notebook-centralus.centralus.notebooks.azure.net"  //TODO (abchatra) Need to go to backend.
-        nbTokens.notebookResourceEndpoint = result.notebookResourceEndpoint;
+        nbTokens.notebookResourceEndpoint = result.resourceEndpoint;
       }
 
       async function helloWorld() {
