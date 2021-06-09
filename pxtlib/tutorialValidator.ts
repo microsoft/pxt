@@ -6,11 +6,12 @@ namespace pxt.tutorial {
         ruleStatus?: boolean;
         ruleMessage?: string;
         isStrict?: boolean;
+        blockIds?: string[];
     }
 
     /**
     * Check the user's code to the map of tutorial validation rules from TutorialOptions and returns an array of TutorialRuleStatus
-    * @param tutorial the tutorial 
+    * @param tutorial the tutorial
     * @param workspaceBlocks Blockly blocks used of workspace
     * @param blockinfo Typescripts of the workspace
     * @return A TutorialRuleStatus
@@ -55,7 +56,7 @@ namespace pxt.tutorial {
 
     /**
     * Gives each rule from the markdown file a TutorialRuleStatus
-    * @param listOfRules a map of rules from makrdown file 
+    * @param listOfRules a map of rules from makrdown file
     * @return An array of TutorialRuleStatus
     */
     function classifyRules(listOfRules: pxt.Map<boolean>): TutorialRuleStatus[] {
@@ -161,6 +162,7 @@ namespace pxt.tutorial {
         currRule.isStrict = true;
         const userBlockKeys = Object.keys(usersBlockUsed);
         let tutorialBlockKeys: string[] = []
+        let blockIds = [];
         if (tutorialBlockUsed != undefined) {
             tutorialBlockKeys = Object.keys(tutorialBlockUsed);
         }
@@ -172,12 +174,14 @@ namespace pxt.tutorial {
             if (!usersBlockUsed[tutorialBlockKey]                                            // user did not use a specific block or
                 || usersBlockUsed[tutorialBlockKey] < tutorialBlockUsed[tutorialBlockKey]) { // user did not use enough of a certain block
                 sArr.push("- " + tutorialBlockKey);
+                blockIds.push(tutorialBlockKey);
                 isValid = false;
             }
         }
         const message: string = sArr.join('\n');
         currRule.ruleMessage = message;
         currRule.ruleStatus = isValid;
+        currRule.blockIds = blockIds;
         return currRule;
     }
 
