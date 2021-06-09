@@ -358,11 +358,12 @@ interface HeroBannerState {
 const HERO_BANNER_DELAY = 6000; // 6 seconds per card
 class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
     protected prevGalleries: pxt.CodeCard[];
+    protected static fetchedImages: pxt.Map<HTMLImageElement> = {};
     protected carouselTimeout: ReturnType<typeof setTimeout> = undefined;
     protected dragStartX: number;
 
     constructor(props: ProjectsCarouselProps) {
-        super(props)
+        super(props);
         this.state = {
             cardIndex: 0,
         };
@@ -509,6 +510,16 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
                 if (heroBanner) {
                     this.prevGalleries.unshift(heroBanner);
                 }
+
+                this.prevGalleries.forEach(card => {
+                    const bkgd = encodeURI(card.largeImageUrl || card.imageUrl);
+                    if (!HeroBanner.fetchedImages[bkgd]) {
+                        const img = new Image();
+                        img.src = bkgd;
+                        HeroBanner.fetchedImages[bkgd] = img;
+                    }
+                });
+
                 this.scheduleRefresh();
             }
         }
