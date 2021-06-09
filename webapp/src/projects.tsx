@@ -300,56 +300,6 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
     }
 }
 
-export class ProjectsMenu extends data.Component<ISettingsProps, {}> {
-
-    constructor(props: ISettingsProps) {
-        super(props);
-        this.state = {
-        }
-
-        this.brandIconClick = this.brandIconClick.bind(this);
-        this.orgIconClick = this.orgIconClick.bind(this);
-    }
-
-    brandIconClick() {
-        pxt.tickEvent("projects.brand", undefined, { interactiveConsent: true });
-    }
-
-    orgIconClick() {
-        pxt.tickEvent("projects.org", undefined, { interactiveConsent: true });
-    }
-
-    shouldComponentUpdate(nextProps: ISettingsProps, nextState: ProjectsState, nextContext: any): boolean {
-        return false;
-    }
-
-    renderCore() {
-        const targetTheme = pxt.appTarget.appTheme;
-
-        return <div id="homemenu" className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
-            <div className="left menu">
-                <a href={targetTheme.logoUrl} aria-label={lf("{0} Logo", targetTheme.boardName)} role="menuitem" target="blank" rel="noopener" className="ui item logo brand" onClick={this.brandIconClick}>
-                    {targetTheme.logo || targetTheme.portraitLogo
-                        ? <img className={`ui ${targetTheme.logoWide ? "small" : ""} logo ${targetTheme.logo ? " portrait hide" : ''}`} src={targetTheme.logo || targetTheme.portraitLogo} alt={lf("{0} Logo", targetTheme.boardName)} />
-                        : <span className="name">{targetTheme.boardName}</span>}
-                    {targetTheme.portraitLogo ? (<img className={`ui ${targetTheme.logoWide ? "small" : "mini"} image portrait only`} src={targetTheme.portraitLogo} alt={lf("{0} Logo", targetTheme.boardName)} />) : null}
-                </a>
-            </div>
-            <div className="ui item home mobile hide"><sui.Icon icon={`icon home large`} /> <span>{lf("Home")}</span></div>
-            <div className="right menu">
-                <ProjectSettingsMenu parent={this.props.parent} />
-                {auth.hasIdentity() ? <identity.UserMenu parent={this.props.parent} /> : undefined}
-                <a href={targetTheme.organizationUrl} target="blank" rel="noopener" className="ui item logo organization" onClick={this.orgIconClick}>
-                    {targetTheme.organizationWideLogo || targetTheme.organizationLogo
-                        ? <img className={`ui logo ${targetTheme.organizationWideLogo ? " portrait hide" : ''}`} src={targetTheme.organizationWideLogo || targetTheme.organizationLogo} alt={lf("{0} Logo", targetTheme.organization)} />
-                        : <span className="name">{targetTheme.organization}</span>}
-                    {targetTheme.organizationLogo ? (<img className='ui mini image portrait only' src={targetTheme.organizationLogo} alt={lf("{0} Logo", targetTheme.organization)} />) : null}
-                </a>
-            </div>
-        </div>;
-    }
-}
-
 interface HeroBannerState {
     cardIndex: number;
     paused?: boolean;

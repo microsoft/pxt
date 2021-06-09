@@ -279,6 +279,8 @@ declare namespace pxt {
         docsLogo?: string;
         docsHeader?: string;
         organization?: string;
+        organizationText?: string;
+        organizationShortText?: string;
         organizationUrl?: string;
         organizationLogo?: string;
         organizationWideLogo?: string;
@@ -309,6 +311,7 @@ declare namespace pxt {
         htmlTemplates?: Map<string>;
         githubUrl?: string;
         usbDocs?: string;
+        useTextLogo?: string; // if true: use the organization string + board name in menu bar instead of image
         invertedMenu?: boolean; // if true: apply the inverted class to the menu
         coloredToolbox?: boolean; // if true: color the blockly toolbox categories
         invertedToolbox?: boolean; // if true: use the blockly inverted toolbox
