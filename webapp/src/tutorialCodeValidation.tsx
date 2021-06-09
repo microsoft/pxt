@@ -4,7 +4,6 @@ import * as React from "react";
 import * as data from "./data";
 import * as sui from "./sui";
 import * as compiler from "./compiler";
-import { TutorialCard } from "./tutorial";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -32,14 +31,14 @@ export class ShowValidationMessage extends data.Component<TutorialCodeValidation
         this.state = { visible: this.props.initialVisible, ruleSnippets: {} };
     }
 
-    showUnusedBlocksMessage(vis: boolean) {
+    showTutorialValidationMessage(vis: boolean) {
         this.setState({ visible: vis });
     }
 
     moveOnToNextTutorialStep() {
         this.props.validationTelemetry("continue");
         this.props.onYesButtonClick();
-        this.showUnusedBlocksMessage(false);
+        this.showTutorialValidationMessage(false);
     }
 
     stayOnThisTutorialStep() {
@@ -108,6 +107,7 @@ export class ShowValidationMessage extends data.Component<TutorialCodeValidation
         const rulesDefined = (rules != undefined);
         const strictRulePresent = this.props.areStrictRulesPresent;
         return <div>
+            {this.state.visible && <div className="mask" role="region" onClick={this.props.onNoButtonClick}></div>}
             <div className={`tutorialCodeValidation no-select ${(!codeInvalid || (codeInvalid && !strictRulePresent)) ? 'hidden' : ''}`}>
                 <div className="codeValidationPopUpText">
                     {rulesDefined && rules.map((rule, index) => this.renderRule(rule, index))}
