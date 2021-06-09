@@ -92,10 +92,12 @@ export class ShowValidationMessage extends data.Component<TutorialCodeValidation
                         return snippet;
                     })
                 })).then(snippets => {
-                    this.setState({ ruleSnippets: {
-                        ...this.state.ruleSnippets,
-                        [rule.ruleName]: snippets.filter(s => !!s)
-                    } });
+                    this.setState({
+                        ruleSnippets: {
+                            ...this.state.ruleSnippets,
+                            [rule.ruleName]: snippets.filter(s => !!s)
+                        }
+                    });
                 })
             })
         }
