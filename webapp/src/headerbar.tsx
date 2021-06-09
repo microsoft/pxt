@@ -139,6 +139,7 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
                 return <sui.ButtonMenuItem className="exit-debugmode-btn" role="menuitem" icon="external" text={lf("Exit Debug Mode")} textClass="landscape only" onClick={this.toggleDebug} />
             case "sandbox":
                 if (!targetTheme.hideEmbedEdit) return <sui.Item role="menuitem" icon="external" textClass="mobile hide" text={lf("Edit")} onClick={this.launchFullEditor} />
+                break;
             case "tutorial":
                 const tutorialButtons = [];
                 if (tutorialOptions?.tutorialReportId) {
@@ -149,6 +150,7 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
                 }
 
                 if (!!tutorialButtons.length) return tutorialButtons;
+                break;
         }
 
         return <div />
@@ -161,7 +163,7 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
             case "home":
                 return <projects.ProjectSettingsMenu parent={this.props.parent} />
             case "editor":
-                return  <container.SettingsMenu parent={this.props.parent} greenScreen={greenScreen} accessibleBlocks={accessibleBlocks} showShare={!!header} />
+                return <container.SettingsMenu parent={this.props.parent} greenScreen={greenScreen} accessibleBlocks={accessibleBlocks} showShare={!!header} />
             default:
                 return <div />
         }
