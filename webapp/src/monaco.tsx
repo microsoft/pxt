@@ -630,6 +630,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const showErrorList = pxt.appTarget.appTheme.errorList;
         const isAndroid = pxt.BrowserUtils.isAndroid();
         const isWinApp = pxt.BrowserUtils.isWinRT();
+        const textElements = isWinApp ? this.getWinAppErrorMsg(): [];
+
         return (
             <div id="monacoEditorArea" className={`monacoEditorArea ${isAndroid ? "android" : ""}`} style={{ direction: 'ltr' }}>
                 {this.isVisible && <div className={`monacoToolboxDiv ${(this.toolbox && !this.toolbox.state.visible && !this.isDebugging()) ? 'invisible' : ''}`}>
@@ -640,15 +642,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 { isWinApp ?
                     <div id="winAppError">
                         <img className="ui medium centered image" alt={lf("An image of a shrugging board")} src={pxt.appTarget.appTheme.winAppDeprImage}/>
-                        <div className="ui centered" id="winAppErrorMsg"> {lf("Oops! Text editing is only available on the ")}
-                            <a href={`https://${pxt.appTarget.name}`} target="_blank" rel="noopener noreferrer">
-                                {lf("MakeCode website.")}
-                            </a>
-                            {lf(" Go ")}
-                            <a href={"/windows-app"} target="_blank" rel="noopener noreferrer">
-                                {lf("here")}
-                            </a>
-                            {lf(" for more information")}
+                        <div className="ui centered" id="winAppErrorMsg">
+                            {textElements}
                         </div>
                     </div>:
                     <div id="monacoEditorRightArea" className="monacoEditorRightArea">
@@ -668,6 +663,22 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 }
             </div>
         )
+    }
+
+    getWinAppErrorMsg(): (JSX.Element | string)[] {
+        const errMsg = lf("Oops! Text editing is only available on the {0} Go {1} for more information.", "{0}", "{1}");
+        const parts = errMsg.split(/\{\d\}/);
+        const textElements: (JSX.Element | string)[] = [
+            parts[0],
+            <a href={`https://${pxt.appTarget.name}`} target="_blank" rel="noopener noreferrer">
+                {lf("MakeCode website.")}
+            </a>,
+            parts[1],
+            <a href={"/windows-app"} target="_blank" rel="noopener noreferrer">
+                {lf("here")}
+            </a>,
+            parts[2]]
+        return textElements;
     }
 
     listenToExceptionChanges(handlerKey: string, handler: (exception: pxsim.DebuggerBreakpointMessage, locations: pxtc.LocationInfo[]) => void) {
