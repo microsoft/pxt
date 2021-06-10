@@ -60,7 +60,7 @@ export class ShowValidationMessage extends data.Component<TutorialCodeValidation
             const prev = this.props.ruleComponents.find(r => r.ruleName == rule.ruleName);
             // Update if the list of blockids is different
             if ((rule.blockIds && rule.blockIds.sort().toString() != prev?.blockIds?.sort()?.toString())
-                || rule.blockIds.length != nextState.ruleBlocks?.[rule.ruleName]?.length) {
+                || rule.blockIds?.length != nextState.ruleBlocks?.[rule.ruleName]?.length) {
                 this.getRuleBlocksAsync(rule);
             }
         })
@@ -133,4 +133,3 @@ export class ShowValidationMessage extends data.Component<TutorialCodeValidation
         </div>;
     }
 }
-
