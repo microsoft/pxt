@@ -16,6 +16,7 @@ function log(msg: string) {
 let extensionResult: pxt.editor.ExtensionResult;
 // This can be overidden by the extension result
 pxt.commands.renderBrowserDownloadInstructions = dialogs.renderBrowserDownloadInstructions;
+pxt.commands.renderIncompatibleHardwareDialog = dialogs.renderIncompatibleHardwareDialog;
 
 
 function browserDownloadAsync(text: string, name: string, contentType: string): Promise<void> {

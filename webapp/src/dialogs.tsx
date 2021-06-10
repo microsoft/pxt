@@ -788,6 +788,18 @@ export function renderBrowserDownloadInstructions() {
     </div>;
 }
 
+export function renderIncompatibleHardwareDialog() {
+    const bodyText = lf("Oops! Looks like your project has code that won't run on the hardware you have connected. Would you like to download anyway?");
+    const helpText = lf("Learn more about what's supported by your hardware…")
+    const helpURL = pxt.appTarget.appTheme.downloadDialogTheme?.incompatibleHardwareHelpURL;
+
+    return <div className="ui content">
+        {bodyText}
+        <br />
+        {helpURL && <a target="_blank" rel="noopener noreferrer" href={helpURL}>{helpText}</a>}
+    </div>;
+}
+
 export function clearDontShowDownloadDialogFlag() {
     dontShowDownloadFlag = false;
 }

@@ -2687,7 +2687,7 @@ export class ProjectView
             simRestart = false;
 
         try {
-            this.setState({ compiling: true });
+            this.setState({ compiling: true, cancelledDownload: false });
             this.clearSerial();
             this.editor.beforeCompile();
             if (simRestart) this.stopSimulator();
@@ -2700,7 +2700,10 @@ export class ProjectView
 
                 if (!saveOnly) {
                     const shouldContinue = await cmds.showUnsupportedHardwareMessageAsync(resp);
-                    if (!shouldContinue) return;
+                    if (!shouldContinue) {
+                        this.setState({ cancelledDownload: true });
+                        return;
+                    }
                 }
 
                 let fn = pxt.outputName();

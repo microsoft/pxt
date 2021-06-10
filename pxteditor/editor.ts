@@ -90,6 +90,7 @@ namespace pxt.editor {
 
         home?: boolean;
         hasError?: boolean;
+        cancelledDownload?: boolean;
 
         simSerialActive?: boolean;
         deviceSerialActive?: boolean;

@@ -250,7 +250,7 @@ function showConnectionFailureAsync(confirmAsync: ConfirmAsync) {
                             <div className="description">
                                 {firmwareText}
                                 <br/>
-                                <a target="_blank" href={theme().firmwareHelpURL}>{lf("Learn more about firmware.", boardName)}</a>
+                                <a target="_blank" href={theme().firmwareHelpURL} rel="noopener noreferrer">{lf("Learn more about firmware.", boardName)}</a>
                             </div>
                         </div>
                     </div>
