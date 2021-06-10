@@ -12,8 +12,9 @@
       let nbTokens = { };
 
       async function callBackendForTokens() {
-        //"file:" for localhost testing
-        const url = location.protocol === "file:" ? 'https://staging.pxt.io/api/notebook': '/api/notebook';
+        //change this to following before switching on in production.
+        //const url = location.protocol === "file:" ? 'https://staging.pxt.io/api/notebook': '/api/notebook';
+        const url = 'https://staging.pxt.io/api/notebook';
         // call backend get tokens back
         const response = await fetch(url);
 
