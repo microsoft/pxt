@@ -12,15 +12,17 @@
       let nbTokens = { };
 
       async function callBackendForTokens() {
+        //"file:" for localhost testing
+        const url = location.protocol === "file:" ? 'https://staging.pxt.io/api/notebook': '/api/notebook';
         // call backend get tokens back
-        const response = await fetch('http://staging.pxt.io/api/notebook');
+        const response = await fetch(url);
+
         const result = await response.json();
 
         nbTokens.accessToken = result.accessToken;
         nbTokens.refreshToken = result.refreshToken;
         nbTokens.notebookResourceId = result.resourceId;
         nbTokens.expiration = result.expiration;
-//        nbTokens.notebookResourceEndpoint = "https://makecode-ppe-notebook-centralus.centralus.notebooks.azure.net"  //TODO (abchatra) Need to go to backend.
         nbTokens.notebookResourceEndpoint = result.resourceEndpoint;
       }
 
@@ -58,7 +60,7 @@
 
           // Provide internal user's info for telemetry logging purpose
           internalUserInfo: {
-            alias: "test",
+            alias: "makecode",
             domain: "microsoft",
             tenantId: "XXXX"
           }
