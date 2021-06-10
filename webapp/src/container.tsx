@@ -337,7 +337,7 @@ class JavascriptMenuItem extends data.Component<ISettingsProps, {}> {
     }
 
     protected onClick = (): void => {
-        const isWinApp = true; // pxt.BrowserUtils.isWinRT();
+        const isWinApp = pxt.BrowserUtils.isWinRT();
         if (isWinApp) {
             showWinAppDeprecateAsync();
             return;
@@ -361,7 +361,7 @@ class PythonMenuItem extends data.Component<ISettingsProps, {}> {
     }
 
     protected onClick = (): void => {
-        const isWinApp = true; // pxt.BrowserUtils.isWinRT();
+        const isWinApp = pxt.BrowserUtils.isWinRT();
         if (isWinApp) {
             showWinAppDeprecateAsync();
             return;

@@ -404,7 +404,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         pxt.tickEvent(`typescript.showBlocks`);
         let initPromise = Promise.resolve();
 
-        const isWinApp = true; //pxt.BrowserUtils.isWinRT();
+        const isWinApp = pxt.BrowserUtils.isWinRT();
         if (isWinApp) {
             return;
         }
@@ -1334,7 +1334,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.currSource = file.content;
 
 
-        const isWinApp = true; //pxt.BrowserUtils.isWinRT();
+        const isWinApp = pxt.BrowserUtils.isWinRT();
         if (isWinApp) {
             this.currFile = file;
             return Promise.resolve();
