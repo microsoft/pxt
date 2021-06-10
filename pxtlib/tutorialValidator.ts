@@ -167,18 +167,15 @@ namespace pxt.tutorial {
             tutorialBlockKeys = Object.keys(tutorialBlockUsed);
         }
         let isValid = userBlockKeys.length >= tutorialBlockKeys.length; // user has enough blocks
-        let sArr: string[] = [];
-        sArr[0] = lf("These are the blocks you seem to be missing:");
+        const message = lf("These are the blocks you seem to be missing:");
         for (let i: number = 0; i < tutorialBlockKeys.length; i++) {
             let tutorialBlockKey = tutorialBlockKeys[i];
             if (!usersBlockUsed[tutorialBlockKey]                                            // user did not use a specific block or
                 || usersBlockUsed[tutorialBlockKey] < tutorialBlockUsed[tutorialBlockKey]) { // user did not use enough of a certain block
-                sArr.push("- " + tutorialBlockKey);
                 blockIds.push(tutorialBlockKey);
                 isValid = false;
             }
         }
-        const message: string = sArr.join('\n');
         currRule.ruleMessage = message;
         currRule.ruleStatus = isValid;
         currRule.blockIds = blockIds;
@@ -218,22 +215,22 @@ namespace pxt.tutorial {
         currRule.isStrict = true;
         const userBlockKeys = Object.keys(usersBlockUsed);
         let requiredBlockKeys: string[] = []
+        let blockIds = [];
         if (requiredBlocks != undefined) {
             requiredBlockKeys = Object.keys(requiredBlocks);
         }
         let isValid: boolean = true;
-        let sArr: string[] = [];
-        sArr[0] = lf("You are required to have the following block:");
+        const message = lf("You are required to have the following block:");
         for (let i: number = 0; i < requiredBlockKeys.length; i++) {
             let requiredBlockKey = requiredBlockKeys[i];
             if (!usersBlockUsed[requiredBlockKey]) {
-                sArr.push("- " + requiredBlockKey);
+                blockIds.push(requiredBlockKey);
                 isValid = false;
             }
         }
-        const message: string = sArr.join('\n');
         currRule.ruleMessage = message;
         currRule.ruleStatus = isValid;
+        currRule.blockIds = blockIds;
         return currRule;
     }
 }
