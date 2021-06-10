@@ -20,16 +20,16 @@ interface TutorialCodeValidationProps extends ISettingsProps {
 
 interface TutorialCodeValidationState {
     visible: boolean;
-    ruleSnippets?: pxt.Map<string[]>;
+    ruleBlocks?: pxt.Map<string[]>;
 }
 
 export class ShowValidationMessage extends data.Component<TutorialCodeValidationProps, TutorialCodeValidationState> {
-    protected snippetCache: pxt.Map<string> = {};
+    protected renderedBlockCache: pxt.Map<string> = {};
 
     constructor(props: TutorialCodeValidationProps) {
         super(props);
 
-        this.state = { visible: this.props.initialVisible, ruleSnippets: {} };
+        this.state = { visible: this.props.initialVisible, ruleBlocks: {} };
     }
 
     showUnusedBlocksMessage(vis: boolean) {
@@ -49,8 +49,8 @@ export class ShowValidationMessage extends data.Component<TutorialCodeValidation
 
     componentDidMount() {
         this.props.ruleComponents.forEach(rule => {
-            if (rule.blockIds && !this.state.ruleSnippets?.[rule.ruleName]?.length) {
-                this.getRuleSnippetsAsync(rule);
+            if (rule.blockIds && !this.state.ruleBlocks?.[rule.ruleName]?.length) {
+                this.getRuleBlocksAsync(rule);
             }
         })
     }
@@ -60,42 +60,52 @@ export class ShowValidationMessage extends data.Component<TutorialCodeValidation
             const prev = this.props.ruleComponents.find(r => r.ruleName == rule.ruleName);
             // Update if the list of blockids is different
             if ((rule.blockIds && rule.blockIds.sort().toString() != prev?.blockIds?.sort()?.toString())
-                || rule.blockIds.length != nextState.ruleSnippets?.[rule.ruleName]?.length) {
-                this.getRuleSnippetsAsync(rule);
+                || rule.blockIds?.length != nextState.ruleBlocks?.[rule.ruleName]?.length) {
+                this.getRuleBlocksAsync(rule);
             }
         })
     }
 
     renderRule(rule: pxt.tutorial.TutorialRuleStatus, index?: number) {
-        const snippets = this.state.ruleSnippets?.[rule.ruleName];
-        if (!snippets) {
+        const blockUris = this.state.ruleBlocks?.[rule.ruleName];
+        if (!blockUris) {
             return <p key={index + rule.ruleName}>{(rule.ruleTurnOn && !rule.ruleStatus) ? rule.ruleMessage : ''}</p>
         } else {
-            // TODO (jxwoon): render snippets
+            // TODO (jxwoon): render block dataUris
             return <p key={index + rule.ruleName}>{(rule.ruleTurnOn && !rule.ruleStatus) ? rule.ruleMessage : ''}</p>
         }
     }
 
-    getRuleSnippetsAsync(rule: pxt.tutorial.TutorialRuleStatus) {
+    getRuleBlocksAsync(rule: pxt.tutorial.TutorialRuleStatus) {
         if (rule.blockIds) {
             // Get all APIs from compiler
             compiler.getBlocksAsync().then(blocksInfo => {
                 return Promise.all(rule.blockIds.map(id => {
-                    if (this.snippetCache[id]) return this.snippetCache[id];
+                    if (this.renderedBlockCache[id]) return Promise.resolve(this.renderedBlockCache[id]);
 
                     const symbol = blocksInfo.blocksById[id];
-                    if (!symbol) {
-                        return Promise.resolve(undefined);
+                    if (!symbol) return Promise.resolve(undefined);
+
+                    // Render toolbox block from symbol info
+                    const fn = pxt.blocks.blockSymbol(id);
+                    if (fn) {
+                        const comp = pxt.blocks.compileInfo(fn);
+                        const blockXml = pxt.blocks.createToolboxBlock(blocksInfo, fn, comp);
+                        const svg = pxt.blocks.render(`<xml xmlns="https://developers.google.com/blockly/xml">${blockXml.outerHTML}</xml>`,
+                            { snippetMode: true, splitSvg: false }) as SVGSVGElement;
+                        const viewBox = svg.getAttribute("viewBox").split(/\s+/).map(d => parseInt(d));
+                        return pxt.blocks.layout.blocklyToSvgAsync(svg, viewBox[0], viewBox[1], viewBox[2], viewBox[3])
+                            .then(sg => {
+                                if (!sg) return Promise.resolve<string>(undefined);
+                                return pxt.BrowserUtils.encodeToPngAsync(sg.xml, { width: sg.width, height: sg.height, pixelDensity: 1  });
+                            })
                     }
-                    // Get snippet based on the qualified name
-                    return compiler.snippetAsync(symbol.qName, false).then(snippet => {
-                        this.snippetCache[id] = snippet;
-                        return snippet;
-                    })
-                })).then(snippets => {
-                    this.setState({ ruleSnippets: {
-                        ...this.state.ruleSnippets,
-                        [rule.ruleName]: snippets.filter(s => !!s)
+
+                    return Promise.resolve(undefined)
+                })).then(blockUris => {
+                    this.setState({ ruleBlocks: {
+                        ...this.state.ruleBlocks,
+                        [rule.ruleName]: blockUris.filter(b => !!b)
                     } });
                 })
             })
@@ -123,4 +133,3 @@ export class ShowValidationMessage extends data.Component<TutorialCodeValidation
         </div>;
     }
 }
-
