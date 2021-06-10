@@ -3,7 +3,6 @@
 import * as React from "react";
 import * as data from "./data";
 import * as sui from "./sui";
-import * as md from "./marked";
 import * as compiler from "./compiler";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
@@ -71,11 +70,10 @@ export class ShowValidationMessage extends data.Component<TutorialCodeValidation
         if (!blockUris) {
             return <p key={index + rule.ruleName}>{(rule.ruleTurnOn && !rule.ruleStatus) ? rule.ruleMessage : ''}</p>
         } else {
-            // TODO (jxwoon): render snippets
             return <div>
                 {rule.ruleTurnOn && !rule.ruleStatus ? rule.ruleMessage : ''}
                 <div className="validationRendering">
-                    {blockUris.map((blockUri, index) => <div> <img key={index + blockUri} src={blockUri} alt="block rendered image" /></div>)}
+                    {blockUris.map((blockUri, index) => <div> <img key={index + blockUri} src={blockUri} alt="block rendered" /></div>)}
                 </div>
             </div>
 

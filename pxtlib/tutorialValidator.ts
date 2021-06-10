@@ -37,13 +37,13 @@ namespace pxt.tutorial {
                 const isRuleEnabled = TutorialRuleStatuses[i].ruleTurnOn;
                 if (isRuleEnabled) {
                     switch (ruleName) {
-                        case "validateExactNumberOfBlocks":
+                        case "exact":
                             currRuleToValidate = validateExactNumberOfBlocks(usersBlockUsed, tutorialBlockUsed, currRuleToValidate);
                             break;
-                        case "validateAtleastOneBlocks":
+                        case "atleastone":
                             currRuleToValidate = validateAtleastOneBlocks(usersBlockUsed, tutorialBlockUsed, currRuleToValidate);
                             break;
-                        case "validateMeetRequiredBlocks":
+                        case "required":
                             const requiredBlocksList = extractRequiredBlockSnippet(tutorial, indexdb);
                             currRuleToValidate = validateMeetRequiredBlocks(usersBlockUsed, requiredBlocksList, currRuleToValidate);
                             break;
