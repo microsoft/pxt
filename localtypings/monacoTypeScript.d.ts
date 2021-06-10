@@ -14,7 +14,14 @@
         ): typeof TSWorker;
     }
 
+    export interface ICreateData {
+        compilerOptions: ts.CompilerOptions;
+        extraLibs: IExtraLibs;
+        customWorkerPath?: string;
+    }
+
     export class TSWorker implements TypeScriptWorker {
+        constructor(ctx: monaco.worker.IWorkerContext, createData: ICreateData);
         /**
          * Get diagnostic messages for any syntax issues in the given file.
          */
