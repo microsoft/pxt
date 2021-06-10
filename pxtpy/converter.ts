@@ -2048,7 +2048,7 @@ namespace pxt.py {
 
             let fun = namedSymbol
 
-            let recvTp: Type
+            let recvTp: Type | undefined = undefined;
             let recv: py.Expr | undefined = undefined
             let methName: string = ""
 
@@ -2222,7 +2222,13 @@ namespace pxt.py {
             if (fun) {
                 if (!fun.pyRetType)
                     error(n, 9549, lf("function missing pyRetType"));
-                unifyTypeOf(n, fun.pyRetType!)
+
+                if (recv && isArrayType(recv) && recvTp) {
+                    unifyArrayType(n, fun, recvTp);
+                }
+                else {
+                    unifyTypeOf(n, fun.pyRetType!)
+                }
                 n.symbolInfo = fun
 
                 if (fun.attributes.py2tsOverride) {
@@ -2930,5 +2936,38 @@ namespace pxt.py {
         }
 
         return B.mkGroup(result);
+    }
+
+    function unifyArrayType(e: Expr, fun: SymbolInfo, arrayType: Type) {
+        // Do our best to unify the generic types by special casing everything
+        switch (fun.qName!) {
+            case "Array.pop":
+            case "Array.removeAt":
+            case "Array.shift":
+            case "Array.find":
+            case "Array.get":
+            case "Array._pickRandom":
+                unifyTypeOf(e, arrayType.typeArgs![0]);
+                break;
+            case "Array.concat":
+            case "Array.slice":
+            case "Array.filter":
+            case "Array.fill":
+                unifyTypeOf(e, arrayType);
+                break;
+            case "Array.reduce":
+                if (e.kind === "Call" && (e as Call).args.length > 1) {
+                    const accumulatorType = typeOf((e as Call).args[1]);
+                    if (accumulatorType) unifyTypeOf(e, accumulatorType)
+                }
+                break;
+            case "Array.map":
+                // TODO: infer type properly from function instead of bailing out here
+                unifyTypeOf(e, mkArrayType(tpAny));
+                break;
+            default:
+                unifyTypeOf(e, fun.pyRetType!);
+                break;
+        }
     }
 }
