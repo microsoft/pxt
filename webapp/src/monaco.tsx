@@ -639,7 +639,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
                 { isWinApp ?
                     <div id="winAppError">
-                        <img className="ui medium centered image" src={pxt.appTarget.appTheme.winAppDeprImage}></img>
+                        <img className="ui medium centered image" alt={lf("An image of a shrugging board")} src={pxt.appTarget.appTheme.winAppDeprImage}/>
                         <div className="ui centered" id="winAppErrorMsg"> {lf("Oops! Text editing is only available on the ")}
                             <a href={`https://${pxt.appTarget.name}`} target="_blank" rel="noopener noreferrer">
                                 {lf("MakeCode website.")}
