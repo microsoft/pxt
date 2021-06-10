@@ -118,19 +118,24 @@ export class NotificationBanner extends data.Component<ISettingsProps, {}> {
         const isExperimentalUrlPath = location.pathname !== "/"
             && (targetTheme.appPathNames || []).indexOf(location.pathname) === -1;
         const showExperimentalBanner = !isLocalServe && isApp && isExperimentalUrlPath;
-        const isWindows10 = pxt.BrowserUtils.isWindows10();
-        const targetConfig = this.getData("target-config:") as pxt.TargetConfig;
         const showExperiments = pxt.editor.experiments.someEnabled() && !/experiments=1/.test(window.location.href);
         const isWinApp = pxt.BrowserUtils.isWinRT();
+
+        const errMsg = lf("This app is being deprecated. Please use {0} instead.", "{0}");
+        const parts = errMsg.split(/\{\d\}/);
+        const textElems = [
+            parts[0],
+            <a href={`https://${pxt.appTarget.name}`} target="_blank" rel="noopener noreferrer" onClick={()=>{pxt.tickEvent("winApp.openSite", undefined)}}>
+                {lf("the website")}
+            </a>,
+            parts[1]
+        ];
 
         if (isWinApp) {
             return <GenericBanner id="winAppBanner" parent={this.props.parent} bannerType={"negative"}>
                 <sui.Icon icon="warning circle" />
-                <div className="header">{lf("This app is being deprecated. Please use ")}
-                <a href={`https://${pxt.appTarget.name}`} target="_blank" rel="noopener noreferrer" onClick={()=>{pxt.tickEvent("winApp.openSite", undefined)}}>
-                    {lf("the website")}
-                </a>
-                {lf(" instead.")}
+                <div className="header">
+                    {textElems}
                 </div>
                 <sui.Link className="link" ariaLabel={lf("More info")} onClick={this.handleBannerClick}>{lf("More info")}</sui.Link>
 
