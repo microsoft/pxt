@@ -359,7 +359,7 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
 interface TutorialCardState {
     showHint?: boolean;
     showSeeMore?: boolean;
-    showUnusedBlockMessage?: boolean;
+    showTutorialValidationMessage?: boolean;
 }
 
 interface TutorialCardProps extends ISettingsProps {
@@ -381,7 +381,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         this.state = {
             showSeeMore: false,
             showHint: options.tutorialStepInfo[this.prevStep].showHint,
-            showUnusedBlockMessage: false
+            showTutorialValidationMessage: false
         }
 
         this.toggleHint = this.toggleHint.bind(this);
@@ -396,8 +396,8 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         this.toggleExpanded = this.toggleExpanded.bind(this);
         this.onMarkdownDidRender = this.onMarkdownDidRender.bind(this);
         this.handleResize = this.handleResize.bind(this);
-        this.showUnusedBlocksMessageOnClick = this.showUnusedBlocksMessageOnClick.bind(this);
-        this.showUnusedBlocksMessage = this.showUnusedBlocksMessage.bind(this);
+        this.showTutorialValidationMessageOnClick = this.showTutorialValidationMessageOnClick.bind(this);
+        this.closeTutorialValidationMessage = this.closeTutorialValidationMessage.bind(this);
         this.doubleClickedNextStep = this.doubleClickedNextStep.bind(this);
         this.validationTelemetry = this.validationTelemetry.bind(this);
     }
@@ -412,7 +412,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
 
         pxt.tickEvent(`tutorial.previous`, { tutorial: options.tutorial, step: previousStep }, { interactiveConsent: true });
         this.props.parent.setTutorialStep(previousStep);
-        this.setState({ showUnusedBlockMessage: false });
+        this.setState({ showTutorialValidationMessage: false });
     }
 
     nextTutorialStep() {
@@ -427,8 +427,8 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         this.props.parent.setTutorialStep(nextStep);
 
         const tutorialCodeValidationIsOn = options.metadata.tutorialCodeValidation;
-        if (tutorialCodeValidationIsOn && this.state.showUnusedBlockMessage) { // disables tutorial validation pop-up if next buttion is clicked
-            this.setState({ showUnusedBlockMessage: false });
+        if (tutorialCodeValidationIsOn && this.state.showTutorialValidationMessage) { // disables tutorial validation pop-up if next buttion is clicked
+            this.setState({ showTutorialValidationMessage: false });
         }
     }
 
@@ -571,8 +571,8 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         }
     }
 
-    private showUnusedBlocksMessageOnClick(evt?: any) {
-        this.setState({ showUnusedBlockMessage: true });
+    private showTutorialValidationMessageOnClick(evt?: any) {
+        this.setState({ showTutorialValidationMessage: true });
     }
 
     private expandedHintOnClick(evt?: any) {
@@ -635,12 +635,12 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         }
         th.showHint(visible, showFullText);
         if (visible) {
-            this.setState({ showUnusedBlockMessage: false });
+            this.setState({ showTutorialValidationMessage: false });
         }
     }
 
-    showUnusedBlocksMessage() {
-        this.setState({ showUnusedBlockMessage: false });
+    closeTutorialValidationMessage() {
+        this.setState({ showTutorialValidationMessage: false });
     }
 
     isCodeValidated(rules: pxt.tutorial.TutorialRuleStatus[]) {
@@ -697,10 +697,10 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         const showDialog = stepInfo.showDialog;
         const validationEnabled = (stepInfo.listOfValidationRules != undefined);
         const tutorialCodeValidated = this.isCodeValidated(stepInfo.listOfValidationRules);
-        const showMissingBlockPopupMessage = this.state.showUnusedBlockMessage && validationEnabled;
+        const showTutorialValidationMessage = this.state.showTutorialValidationMessage && validationEnabled;
         const strictRulePresent = this.areStrictRulesPresent(stepInfo.listOfValidationRules);
         const nextOnClick = (!validationEnabled || !strictRulePresent || (tutorialCodeValidated && strictRulePresent)) ? this.nextTutorialStep :
-            (this.state.showUnusedBlockMessage) ? this.doubleClickedNextStep : this.showUnusedBlocksMessageOnClick;
+            (this.state.showTutorialValidationMessage) ? this.doubleClickedNextStep : this.showTutorialValidationMessageOnClick;
 
         const tutorialAriaLabel = lf("Press Space or Enter to show a hint.");
         const tutorialHintTooltip = lf("Click to show a hint!");
@@ -715,7 +715,6 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         const isRtl = pxt.Util.isUserLanguageRtl();
         return <div id="tutorialcard" className={`ui ${tutorialStepExpanded ? 'tutorialExpanded' : ''} ${tutorialReady ? 'tutorialReady' : ''} ${this.state.showSeeMore ? 'seemore' : ''}  ${!this.state.showHint ? 'showTooltip' : ''} ${hasHint ? 'hasHint' : ''}`} style={tutorialStepExpanded ? this.getExpandedCardStyle('height') : null} >
             {hasHint && this.state.showHint && !showDialog && <div className="mask" role="region" onClick={this.closeHint}></div>}
-
             <div className='ui buttons'>
                 {hasPrevious ? <sui.Button icon={`${isRtl ? 'right' : 'left'} chevron large`} className={`prevbutton left attached ${!hasPrevious ? 'disabled' : ''}`} text={lf("Back")} textClass="widedesktop only" ariaLabel={lf("Go to the previous step of the tutorial.")} onClick={this.previousTutorialStep} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                 <div className="ui segment attached tutorialsegment">
@@ -740,8 +739,8 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
                 </div>
                 {hasNext ? <sui.Button icon={`${isRtl ? 'left' : 'right'} chevron large`} className={`nextbutton right attached ${!hasNext ? 'disabled' : ''}  ${tutorialCodeValidated ? 'isValidated' : ''}`} text={lf("Next")} textClass="widedesktop only" ariaLabel={lf("Go to the next step of the tutorial.")}
                     onClick={nextOnClick} onKeyDown={sui.fireClickOnEnter} /> : undefined}
-                {showMissingBlockPopupMessage &&
-                    <TutorialCodeValidation.ShowValidationMessage onYesButtonClick={this.nextTutorialStep} onNoButtonClick={this.showUnusedBlocksMessage} initialVisible={this.state.showUnusedBlockMessage} isTutorialCodeInvalid={!tutorialCodeValidated} ruleComponents={stepInfo.listOfValidationRules} areStrictRulesPresent={strictRulePresent} validationTelemetry={this.validationTelemetry} parent={this.props.parent} />}
+                {showTutorialValidationMessage &&
+                    <TutorialCodeValidation.ShowValidationMessage onYesButtonClick={this.nextTutorialStep} onNoButtonClick={this.closeTutorialValidationMessage} initialVisible={this.state.showTutorialValidationMessage} isTutorialCodeInvalid={!tutorialCodeValidated} ruleComponents={stepInfo.listOfValidationRules} areStrictRulesPresent={strictRulePresent} validationTelemetry={this.validationTelemetry} parent={this.props.parent} />}
                 {hasFinish ? <sui.Button icon="left checkmark" className={`orange right attached ${!tutorialReady ? 'disabled' : ''}`} text={lf("Finish")} ariaLabel={lf("Finish the tutorial.")} onClick={this.finishTutorial} onKeyDown={sui.fireClickOnEnter} /> : undefined}
             </div>
         </div>;

@@ -4,7 +4,6 @@ import * as React from "react";
 import * as data from "./data";
 import * as sui from "./sui";
 import * as compiler from "./compiler";
-import { TutorialCard } from "./tutorial";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -32,14 +31,14 @@ export class ShowValidationMessage extends data.Component<TutorialCodeValidation
         this.state = { visible: this.props.initialVisible, ruleBlocks: {} };
     }
 
-    showUnusedBlocksMessage(vis: boolean) {
+    showTutorialValidationMessage(vis: boolean) {
         this.setState({ visible: vis });
     }
 
     moveOnToNextTutorialStep() {
         this.props.validationTelemetry("continue");
         this.props.onYesButtonClick();
-        this.showUnusedBlocksMessage(false);
+        this.showTutorialValidationMessage(false);
     }
 
     stayOnThisTutorialStep() {
@@ -71,8 +70,13 @@ export class ShowValidationMessage extends data.Component<TutorialCodeValidation
         if (!blockUris) {
             return <p key={index + rule.ruleName}>{(rule.ruleTurnOn && !rule.ruleStatus) ? rule.ruleMessage : ''}</p>
         } else {
-            // TODO (jxwoon): render block dataUris
-            return <p key={index + rule.ruleName}>{(rule.ruleTurnOn && !rule.ruleStatus) ? rule.ruleMessage : ''}</p>
+            return <div>
+                {rule.ruleTurnOn && !rule.ruleStatus ? rule.ruleMessage : ''}
+                <div className="validationRendering">
+                    {blockUris.map((blockUri, index) => <div> <img key={index + blockUri} src={blockUri} alt="block rendered" /></div>)}
+                </div>
+            </div>
+
         }
     }
 
@@ -97,16 +101,18 @@ export class ShowValidationMessage extends data.Component<TutorialCodeValidation
                         return pxt.blocks.layout.blocklyToSvgAsync(svg, viewBox[0], viewBox[1], viewBox[2], viewBox[3])
                             .then(sg => {
                                 if (!sg) return Promise.resolve<string>(undefined);
-                                return pxt.BrowserUtils.encodeToPngAsync(sg.xml, { width: sg.width, height: sg.height, pixelDensity: 1  });
+                                return pxt.BrowserUtils.encodeToPngAsync(sg.xml, { width: sg.width, height: sg.height, pixelDensity: 1 });
                             })
                     }
 
                     return Promise.resolve(undefined)
                 })).then(blockUris => {
-                    this.setState({ ruleBlocks: {
-                        ...this.state.ruleBlocks,
-                        [rule.ruleName]: blockUris.filter(b => !!b)
-                    } });
+                    this.setState({
+                        ruleBlocks: {
+                            ...this.state.ruleBlocks,
+                            [rule.ruleName]: blockUris.filter(b => !!b)
+                        }
+                    });
                 })
             })
         }
@@ -118,6 +124,7 @@ export class ShowValidationMessage extends data.Component<TutorialCodeValidation
         const rulesDefined = (rules != undefined);
         const strictRulePresent = this.props.areStrictRulesPresent;
         return <div>
+            {this.state.visible && <div className="mask" role="region" onClick={this.props.onNoButtonClick} />}
             <div className={`tutorialCodeValidation no-select ${(!codeInvalid || (codeInvalid && !strictRulePresent)) ? 'hidden' : ''}`}>
                 <div className="codeValidationPopUpText">
                     {rulesDefined && rules.map((rule, index) => this.renderRule(rule, index))}
