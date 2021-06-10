@@ -106,11 +106,16 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
             }
         }
         else if (this.state?.compileState === "compiling") {
-            this.setState({ compileState: "success" });
-            if (this.compileTimeout) clearTimeout(this.compileTimeout);
-            this.compileTimeout = setTimeout(() => {
-                if (this.state?.compileState === "success") this.setState({ compileState: null });
-            }, 2000)
+            if (this.props.parent.state.cancelledDownload) {
+                this.setState({ compileState: null });
+            }
+            else {
+                this.setState({ compileState: "success" });
+                if (this.compileTimeout) clearTimeout(this.compileTimeout);
+                this.compileTimeout = setTimeout(() => {
+                    if (this.state?.compileState === "success") this.setState({ compileState: null });
+                }, 2000)
+            }
         }
     }
 

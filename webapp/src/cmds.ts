@@ -16,6 +16,7 @@ function log(msg: string) {
 let extensionResult: pxt.editor.ExtensionResult;
 // This can be overidden by the extension result
 pxt.commands.renderBrowserDownloadInstructions = dialogs.renderBrowserDownloadInstructions;
+pxt.commands.renderIncompatibleHardwareDialog = dialogs.renderIncompatibleHardwareDialog;
 
 
 function browserDownloadAsync(text: string, name: string, contentType: string): Promise<void> {
@@ -635,19 +636,13 @@ export function showUnsupportedHardwareMessageAsync(resp: pxtc.CompileResult) {
     }
 
     if (unsupported.length) {
-        let jsx: JSX.Element;
-        if (pxt.commands.renderIncompatibleHardwareDialog) {
-            jsx = pxt.commands.renderIncompatibleHardwareDialog(unsupported);
-        }
-
+        const jsx = pxt.commands.renderIncompatibleHardwareDialog(unsupported);
         pxt.tickEvent('unsupportedhardwaredialog.shown')
 
-        const body = jsx ? undefined : lf("Oops! Looks like your project has code that won't run on the hardware you have connected. Would you like to download anyway?");
         const helpUrl = pxt.appTarget.appTheme.downloadDialogTheme?.incompatibleHardwareHelpURL;
         let cancelled = true;
         return core.confirmAsync({
             header: lf("Incompatible Code"),
-            body,
             jsx,
             hasCloseIcon: true,
             hideAgree: true,
