@@ -1006,6 +1006,7 @@ function uploadCoreAsync(opts: UploadOptions) {
         "/doccdn/": "@commitCdnUrl@",
         "/sim/": "@commitCdnUrl@",
         "/blb/": "@blobCdnUrl@",
+        "/trgblb/": "@targetBlobUrl@",
         "@timestamp@": "",
         "data-manifest=\"\"": "@manifest@",
         "var pxtConfig = null": "var pxtConfig = @cfg@",
@@ -1694,8 +1695,8 @@ function buildWebManifest(cfg: pxt.TargetBundle) {
         "short_name": cfg.nickname || cfg.name,
         "background_color": "#FAFAFA",
         "icons": [],
-        "scope": "/",
-        "start_url": "/",
+        "scope": "./",
+        "start_url": "./",
         "display": "standalone",
         "orientation": "landscape"
     }
