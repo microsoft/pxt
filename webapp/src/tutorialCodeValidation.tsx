@@ -124,7 +124,7 @@ export class ShowValidationMessage extends data.Component<TutorialCodeValidation
         const rulesDefined = (rules != undefined);
         const strictRulePresent = this.props.areStrictRulesPresent;
         return <div>
-            {this.state.visible && <div className="mask" role="region" onClick={this.props.onNoButtonClick}></div>}
+            {this.state.visible && <div className="mask" role="region" onClick={this.props.onNoButtonClick} />}
             <div className={`tutorialCodeValidation no-select ${(!codeInvalid || (codeInvalid && !strictRulePresent)) ? 'hidden' : ''}`}>
                 <div className="codeValidationPopUpText">
                     {rulesDefined && rules.map((rule, index) => this.renderRule(rule, index))}
