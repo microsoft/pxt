@@ -26,6 +26,7 @@ pxt.webConfig = {
     monacoworkerjs: undefined,
     gifworkerjs: undefined,
     serviceworkerjs: undefined,
+    typeScriptWorkerJs: undefined,
     pxtVersion: undefined,
     pxtRelId: undefined,
     pxtCdnUrl: undefined,

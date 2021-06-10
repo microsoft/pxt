@@ -1026,6 +1026,7 @@ function uploadCoreAsync(opts: UploadOptions) {
             "monacoworkerjs": opts.localDir + "monacoworker.js",
             "gifworkerjs": opts.localDir + "gifjs/gif.worker.js",
             "serviceworkerjs": opts.localDir + "serviceworker.js",
+            "typeScriptWorkerJs": opts.localDir + "tsworker.js",
             "pxtVersion": pxtVersion(),
             "pxtRelId": "localDirRelId",
             "pxtCdnUrl": opts.localDir,
