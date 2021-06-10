@@ -440,6 +440,7 @@ declare namespace pxt {
         immersiveReader?: boolean; // enables the immersive reader for tutorials
         tutorialCodeValidation?: boolean; // Enable code validation for tutorials
         downloadDialogTheme?: DownloadDialogTheme;
+        winAppDeprImage?: string; // Image to show on Windows App for deprecation
     }
 
     interface DownloadDialogTheme {

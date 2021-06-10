@@ -689,6 +689,25 @@ export function showReportAbuseAsync(pubId?: string) {
     })
 }
 
+export function showWinAppDeprecateAsync() {
+    pxt.tickEvent("winApp.dialog", undefined)
+    return core.confirmAsync({
+        header: lf("You can't get there from here!"),
+        hideAgree: true,
+        hasCloseIcon: true,
+        helpUrl: "/windows-app",
+        jsx: <div>
+            <img className="ui medium centered image" src={pxt.appTarget.appTheme.winAppDeprImage}></img>
+            <div>
+                {lf(`This app is being deprecated. Text editing is only available on the `)}
+                <a href={`https://${pxt.appTarget.name}`} target="_blank" rel="noopener noreferrer" onClick={()=>{pxt.tickEvent("winApp.openSite", undefined)}}>
+                    {lf("MakeCode website.")}
+                </a>
+            </div>
+        </div>
+    })
+}
+
 export function showResetDialogAsync() {
     return core.confirmAsync({
         header: lf("Reset"),

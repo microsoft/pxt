@@ -8,6 +8,26 @@
 @import (reference) "semantic.less";
 
 /*******************************
+    Windows App Deprecation
+*******************************/
+#winAppError {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    #winAppErrorMsg {
+        width: 30%;
+        margin-top: 1rem;
+    }
+
+    a {
+        font-weight: 700;
+    }
+}
+
+/*******************************
         Monaco Area Layout
 *******************************/
 .monacoEditorArea {
