@@ -11,6 +11,7 @@ import * as identity from "./identity";
 import * as cloudsync from "./cloudsync";
 import * as pkg from "./package";
 import * as ImmersiveReader from "./immersivereader";
+import {showWinAppDeprecateAsync} from "./dialogs";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -336,6 +337,11 @@ class JavascriptMenuItem extends data.Component<ISettingsProps, {}> {
     }
 
     protected onClick = (): void => {
+        const isWinApp = pxt.BrowserUtils.isWinRT();
+        if (isWinApp) {
+            showWinAppDeprecateAsync();
+            return;
+        }
         pxt.tickEvent("menu.javascript", undefined, { interactiveConsent: true });
         this.props.parent.openJavaScript();
     }
@@ -355,6 +361,12 @@ class PythonMenuItem extends data.Component<ISettingsProps, {}> {
     }
 
     protected onClick = (): void => {
+        const isWinApp = pxt.BrowserUtils.isWinRT();
+        if (isWinApp) {
+            showWinAppDeprecateAsync();
+            return;
+        }
+
         pxt.tickEvent("menu.python", undefined, { interactiveConsent: true });
         this.props.parent.openPython();
     }
