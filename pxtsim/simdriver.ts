@@ -644,6 +644,7 @@ namespace pxsim {
 
         public restart() {
             this.stop();
+            this.cleanupFrames();
             this.start();
         }
 
@@ -717,11 +718,15 @@ namespace pxsim {
                     const frame = document.getElementById(frameid) as HTMLIFrameElement;
                     if (frame) {
                         const stmsg = msg as SimulatorStateMessage;
-                        switch (stmsg.state) {
-                            case "killed":
-                                if (stmsg.runtimeid == frame.dataset['runtimeid'])
+                        if (stmsg.runtimeid == frame.dataset['runtimeid']) {
+                            switch (stmsg.state) {
+                                case "running":
+                                    this.setState(SimulatorState.Running);
+                                    break;
+                                case "killed":
                                     this.setState(SimulatorState.Stopped);
-                                break;
+                                    break;
+                            }
                         }
                     }
                     break;
