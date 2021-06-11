@@ -176,6 +176,7 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
 
         const { home, header, tutorialOptions } = this.props.parent.state;
         const isController = pxt.shell.isControllerMode();
+        const hasIdentity = auth.hasIdentity();
         const activeEditor = this.props.parent.isPythonActive() ? "Python"
             : (this.props.parent.isJavaScriptActive() ? "JavaScript" : "Blocks");
 
@@ -199,11 +200,11 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
             </div>}
             <div className="right menu">
                 {this.getExitButtons(targetTheme, view, tutorialOptions)}
-                {showHomeButton && <sui.Item className="icon openproject mobile hide" role="menuitem" icon="home large" ariaLabel={lf("Home screen")} onClick={this.goHome} />}
+                {showHomeButton && <sui.Item className={`icon openproject ${hasIdentity ? "mobPile hide" : ""}`} role="menuitem" icon="home large" ariaLabel={lf("Home screen")} onClick={this.goHome} />}
                 {showShareButton && <sui.Item className="icon shareproject mobile hide" role="menuitem" ariaLabel={lf("Share Project")} icon="share alternate large" onClick={this.showShareDialog} />}
                 {showHelpButton && <container.DocsMenu parent={this.props.parent} editor={activeEditor} />}
                 {this.getSettingsMenu(view)}
-                {auth.hasIdentity() && (view === "home" || view === "editor") && <identity.UserMenu parent={this.props.parent} />}
+                {hasIdentity && (view === "home" || view === "editor") && <identity.UserMenu parent={this.props.parent} />}
             </div>
         </div>
     }
