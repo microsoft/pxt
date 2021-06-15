@@ -808,15 +808,34 @@ export function renderBrowserDownloadInstructions() {
 }
 
 export function renderIncompatibleHardwareDialog() {
+    const boardName = pxt.appTarget.appTheme.boardName || lf("device");
     const bodyText = lf("Oops! Looks like your project has code that won't run on the hardware you have connected. Would you like to download anyway?");
     const helpText = lf("Learn more about what's supported by your hardware…")
     const helpURL = pxt.appTarget.appTheme.downloadDialogTheme?.incompatibleHardwareHelpURL;
+    const imageURL = pxt.appTarget.appTheme.downloadDialogTheme?.incompatibleHardwareImage;
 
-    return <div className="ui content">
-        {bodyText}
-        <br />
-        {helpURL && <a target="_blank" rel="noopener noreferrer" href={helpURL}>{helpText}</a>}
-    </div>;
+    return <div className="ui two column grid padded">
+    <div className="column">
+        <div className="ui">
+            <div className="content">
+                <div className="description">
+                {bodyText}
+                <br />
+                {helpURL && <a target="_blank" rel="noopener noreferrer" href={helpURL}>{helpText}</a>}
+                </div>
+            </div>
+        </div>
+    </div>
+    {imageURL &&
+        <div className="column">
+            <div className="ui">
+                <div className="image download-dialog-image">
+                    <img alt={lf("Image of {0}", boardName)} className="ui medium rounded image" src={imageURL} />
+                </div>
+            </div>
+        </div>
+    }
+</div>
 }
 
 export function clearDontShowDownloadDialogFlag() {

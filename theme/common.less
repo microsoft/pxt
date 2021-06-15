@@ -1217,6 +1217,34 @@ p.ui.font.small {
     font-family: "xicon";
 }
 
+.download-troubleshoot {
+    display: flex;
+    flex-direction: row;
+    margin-top: 1rem;
+
+    .download-column {
+        padding: 0.25rem;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .download-row {
+        padding-bottom: 1rem;
+        min-height: 30%;
+
+        img {
+            width: 300px;
+            height: 100%;
+            object-fit: contain;
+            object-position: center;
+        }
+    }
+
+    .download-row.image-row {
+        flex: 2;
+    }
+}
+
 
 /*******************************
         Media Adjustments
@@ -1268,6 +1296,10 @@ p.ui.font.small {
         width: ~"calc(@{blocklyRowWidthTablet} - .25rem)";
         margin-right: 0 !important;
     }
+
+    .download-troubleshoot .download-column .download-row img {
+        width: 200px;
+    }
 }
 
 /* Mobile */
@@ -1298,6 +1330,10 @@ p.ui.font.small {
             width: 6.5rem !important;
             height: 5.5rem !important;
         }
+    }
+
+    .download-troubleshoot .download-column .download-row img {
+        width: 200px;
     }
 }
 

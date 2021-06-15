@@ -461,6 +461,7 @@ declare namespace pxt {
         connectionSuccessImage?: string;
         checkFirmwareVersionImage?: string;
         checkUSBCableImage?: string;
+        incompatibleHardwareImage?: string;
     }
 
     interface SocialOptions {
