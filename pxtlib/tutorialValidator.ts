@@ -40,7 +40,7 @@ namespace pxt.tutorial {
                         case "exact":
                             currRuleToValidate = validateExactNumberOfBlocks(usersBlockUsed, tutorialBlockUsed, currRuleToValidate);
                             break;
-                        case "atleastone":
+                        case "atleast":
                             currRuleToValidate = validateAtleastOneBlocks(usersBlockUsed, tutorialBlockUsed, currRuleToValidate);
                             break;
                         case "required":
