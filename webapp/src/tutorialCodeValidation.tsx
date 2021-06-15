@@ -71,7 +71,7 @@ export class ShowValidationMessage extends data.Component<TutorialCodeValidation
             return <p key={index + rule.ruleName}>{(rule.ruleTurnOn && !rule.ruleStatus) ? rule.ruleMessage : ''}</p>
         } else {
             return <div>
-                {rule.ruleTurnOn && !rule.ruleStatus ? rule.ruleMessage : ''}
+                <div className="codeValidationPopUpText">{rule.ruleTurnOn && !rule.ruleStatus ? rule.ruleMessage : ''}</div>
                 <div className="validationRendering">
                     {blockUris.map((blockUri, index) => <div> <img key={index + blockUri} src={blockUri} alt="block rendered" /></div>)}
                 </div>
@@ -126,7 +126,7 @@ export class ShowValidationMessage extends data.Component<TutorialCodeValidation
         return <div>
             {this.state.visible && <div className="mask" role="region" onClick={this.props.onNoButtonClick} />}
             <div className={`tutorialCodeValidation no-select ${(!codeInvalid || (codeInvalid && !strictRulePresent)) ? 'hidden' : ''}`}>
-                <div className="codeValidationPopUpText">
+                <div>
                     {rulesDefined && rules.map((rule, index) => this.renderRule(rule, index))}
                 </div>
                 <div className="codeValidationPopUpText">
