@@ -119,19 +119,17 @@ export class NotificationBanner extends data.Component<ISettingsProps, {}> {
             && (targetTheme.appPathNames || []).indexOf(location.pathname) === -1;
         const showExperimentalBanner = !isLocalServe && isApp && isExperimentalUrlPath;
         const showExperiments = pxt.editor.experiments.someEnabled() && !/experiments=1/.test(window.location.href);
-        const isWinApp = pxt.BrowserUtils.isWinRT();
+        const showWinAppBanner = pxt.appTarget.appTheme.showWinAppDeprBanner && pxt.BrowserUtils.isWinRT();
 
         const errMsg = lf("This app is being deprecated. Please use {0} instead.", "{0}");
         const parts = errMsg.split(/\{\d\}/);
         const textElems = [
             parts[0],
-            <a href={`https://${pxt.appTarget.name}`} target="_blank" rel="noopener noreferrer" onClick={()=>{pxt.tickEvent("winApp.openSite", undefined)}}>
-                {lf("the website")}
-            </a>,
+            lf("the website"),
             parts[1]
         ];
 
-        if (isWinApp) {
+        if (showWinAppBanner) {
             return <GenericBanner id="winAppBanner" parent={this.props.parent} bannerType={"negative"}>
                 <sui.Icon icon="warning circle" />
                 <div className="header">
