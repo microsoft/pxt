@@ -666,16 +666,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     getWinAppErrorMsg(): (JSX.Element | string)[] {
-        const errMsg = lf("Oops! Text editing is only available on the website at {0}. Go {1} for more information.", "{0}", "{1}");
+        const errMsg = lf("Oops! Text editing is only available on the website at {0}. Go {1} for more information.", `https://${pxt.appTarget.name}`, "{1}");
         const parts = errMsg.split(/\{\d\}/);
         const textElements: (JSX.Element | string)[] = [
             parts[0],
-            `https://${pxt.appTarget.name}`,
-            parts[1],
             <a href={"/windows-app"} target="_blank" rel="noopener noreferrer">
                 {lf("here")}
             </a>,
-            parts[2]]
+            parts[1]]
         return textElements;
     }
 

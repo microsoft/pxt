@@ -121,19 +121,13 @@ export class NotificationBanner extends data.Component<ISettingsProps, {}> {
         const showExperiments = pxt.editor.experiments.someEnabled() && !/experiments=1/.test(window.location.href);
         const showWinAppBanner = pxt.appTarget.appTheme.showWinAppDeprBanner && pxt.BrowserUtils.isWinRT();
 
-        const errMsg = lf("This app is being deprecated. Please use {0} instead.", "{0}");
-        const parts = errMsg.split(/\{\d\}/);
-        const textElems = [
-            parts[0],
-            lf("the website"),
-            parts[1]
-        ];
+        const errMsg = lf("This app is being deprecated. Please use the website instead.");
 
         if (showWinAppBanner) {
             return <GenericBanner id="winAppBanner" parent={this.props.parent} bannerType={"negative"}>
                 <sui.Icon icon="warning circle" />
                 <div className="header">
-                    {textElems}
+                    {errMsg}
                 </div>
                 <sui.Link className="link" ariaLabel={lf("More info")} onClick={this.handleBannerClick}>{lf("More info")}</sui.Link>
 
