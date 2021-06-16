@@ -64,7 +64,7 @@ function showConnectDeviceDialogAsync(confirmAsync: ConfirmAsync) {
     const boardName = getBoardName();
 
     const jsxd = () => (
-        <div className="ui two column grid padded">
+        <div className="ui two column grid padded download-dialog">
             <div className="column">
                 <div className="ui">
                     <div className="content">
@@ -139,7 +139,7 @@ function showPickWebUSBDeviceDialogAsync(confirmAsync: ConfirmAsync) {
     textElements.push(...parts);
 
     const jsxd = () => (
-        <div className="ui two column grid padded">
+        <div className="ui two column grid padded download-dialog">
             <div className="column">
                 <div className="ui">
                     <div className="content">
@@ -172,7 +172,7 @@ function showConnectionSuccessAsync(confirmAsync: ConfirmAsync) {
     const boardName = getBoardName();
 
     const jsxd = () => (
-        <div className="ui two column grid padded">
+        <div className="ui two column grid padded download-dialog">
             <div className="column">
                 <div className="ui">
                     <div className="content">
@@ -221,7 +221,7 @@ function showConnectionFailureAsync(confirmAsync: ConfirmAsync) {
 
     const jsxd = () => (
         <div>
-            <div className="ui content">
+            <div className="ui content download-troubleshoot-header">
                 {lf("We couldn't find your {0}. Here's a few ways to fix that:", boardName)}
             </div>
             <div className="download-troubleshoot">

@@ -814,7 +814,7 @@ export function renderIncompatibleHardwareDialog() {
     const helpURL = pxt.appTarget.appTheme.downloadDialogTheme?.incompatibleHardwareHelpURL;
     const imageURL = pxt.appTarget.appTheme.downloadDialogTheme?.incompatibleHardwareImage;
 
-    return <div className="ui two column grid padded">
+    return <div className="ui two column grid padded download-dialog">
     <div className="column">
         <div className="ui">
             <div className="content">
