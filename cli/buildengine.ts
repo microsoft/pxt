@@ -630,15 +630,15 @@ function msdDeployCoreAsync(res: ts.pxtc.CompileResult): Promise<void> {
         return getBoardDrivesAsync()
             .then(drives => filterDrives(drives))
             .then(drives => {
-                if (drives.length == 0) {
-                    pxt.log("cannot find any drives to deploy to");
-                    return Promise.resolve(0);
-                }
+                if (drives.length == 0)
+                    throw new Error("cannot find any drives to deploy to");
                 pxt.log(`copying ${firmwareName} to ` + drives.join(", "));
                 const writeHexFile = (drivename: string) => {
                     return writeFileAsync(path.join(drivename, firmwareName), firmware, encoding)
                         .then(() => pxt.debug("   wrote to " + drivename))
-                        .catch(() => pxt.log(`   failed writing to ${drivename}`));
+                        .catch((e: Error) => {
+                            throw new Error(`failed writing to ${drivename}; ${e.message}`);
+                        })
                 };
                 return U.promiseMapAll(drives, d => writeHexFile(d))
                     .then(() => drives.length);
