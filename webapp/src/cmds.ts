@@ -624,6 +624,8 @@ function handlePacketIOApi(r: string) {
 }
 
 export function showUnsupportedHardwareMessageAsync(resp: pxtc.CompileResult) {
+    if (!pxt.packetio.isConnected()) return true;
+
     const unsupportedParts = pxt.packetio.unsupportedParts();
     const parts = pxtc.computeUsedParts(resp);
 
