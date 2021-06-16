@@ -37,7 +37,7 @@ const worker: monaco.languages.typescript.CustomTSWebWorkerFactory = (TSWorkerCl
             const text = source.getFullText();
 
             // Try to find the position of the "." if this is a property access
-            let pos = position;
+            let pos = position - 1;
             while (pos > 0 && tsc.isIdentifierPart(text.charCodeAt(position), tsc.ScriptTarget.ES5)) {
                 pos--;
             }
@@ -64,19 +64,70 @@ const worker: monaco.languages.typescript.CustomTSWebWorkerFactory = (TSWorkerCl
                         if (sym.members) tables.push(sym.members);
                         if (sym.exports) tables.push(sym.exports);
 
+                        const symbolAttributes = parseCommentString(getComments(sym, tsc));
+                        let groups: string[] = [];
+                        if (symbolAttributes.groups) {
+                            try {
+                                const parsedGroups = JSON.parse(symbolAttributes.groups);
+                                if (Array.isArray(groups) && !groups.some(val => typeof val !== "string")) groups = parsedGroups;
+                            }
+                            catch (e) {
+                                // ignore invalid comment attrinbutes
+                            }
+                        }
+
+                        // The sorting rules for our blocks go something like this
+                        //    APIs without the "group" attribute go first
+                        //    APIs with "group" get sorted according to the order of the "groups" entry on the namespace
+                        //    If an API has a "group" that is not within "groups", arbitrarily tack them onto the end
+                        //    APIs with "advanced" always appear after all of the APIs without it
+                        //    APIs within each group are sorted by the weight attribute
+                        //    APIs without weight are assumed to have a weight of 0 (FIXME: in the toolbox, it's actually 50)
+                        const advanced: {[index: string]: [string, number][]} = {};
+                        const nonAdvanced: {[index: string]: [string, number][]} = {};
                         for (const table of tables) {
                             table.forEach(entry => {
                                 const comments = getComments(entry, tsc);
                                 const parsed = parseCommentString(comments);
-                                if (parsed.weight) {
-                                    this.weightCache[qName][entry.name] = weightToSortText(parsed.weight);
+                                let weight = 0;
+
+                                if (parsed.shim === "TD_ID") {
+                                    // These entries are filtered out below
+                                    this.weightCache[qName][entry.name] = "hidden";
+                                    return;
                                 }
-                                else {
-                                    this.weightCache[qName][entry.name] = weightToSortText(0);
+                                else if (parsed.weight) {
+                                    weight = parseInt(parsed.weight);
                                 }
-                            })
+
+                                // Put APIs with no blocks at the very end of the list with the unsorted groups
+                                const entries = (parsed.advanced || !parsed.block) ? advanced : nonAdvanced;
+                                const group = parsed.block ? (parsed.group || "*") : "ts-only";
+
+                                if (!entries[group]) entries[group] = [];
+                                entries[group].push([entry.name, weight])
+                            });
+                        }
+
+                        const allGroups = ["*"].concat(groups);
+                        for (const group of Object.keys(advanced).concat(Object.keys(nonAdvanced))) {
+                            if (allGroups.indexOf(group) === -1) allGroups.push(group);
+                        }
+
+                        const entries: string[] = [];
+                        for (const group of allGroups) {
+                            if (nonAdvanced[group]) entries.push(...nonAdvanced[group].sort((a, b) => b[1] - a[1]).map(e => e[0]))
+                        }
+                        for (const group of allGroups) {
+                            if (advanced[group]) entries.push(...advanced[group].sort((a, b) => b[1] - a[1]).map(e => e[0]))
+                        }
+
+                        for (let i = 0; i < entries.length; i++) {
+                            this.weightCache[qName][entries[i]] = weightToSortText(entries.length - i);
                         }
                     }
+
+                    res.entries = res.entries.filter(entry => this.weightCache[qName][entry.name] !== "hidden")
 
                     // We sort the entries by replacing the sortText with a string that starts
                     // with a number
@@ -124,15 +175,23 @@ function getComments(symbol: ts.Symbol, tsc: any) {
 
 function parseCommentString(comment: string) {
     const out: pxt.Map<any> = {};
-    // This doesn't support all of the magic we have in pxtlib/service.ts but it handles the basic
-    // format of //% property="value"
-    comment = comment.replace(/\/\/%[ \t]*([\w\.-]+)(=(("[^"\n]*")|'([^'\n]*)'|([^\s]*)))?/g,
-    (f: string, key: string, d0: string, d1: string,
-        v0: string, v1: string, v2: string) => {
-        const value = v0 ? JSON.parse(v0) : (d0 ? (v0 || v1 || v2) : "true");
-        out[key] = value;
-        return "";
-    });
+    if (!comment) return out;
+
+    let didSomething = true;
+
+    while (didSomething) {
+        didSomething = false;
+        // This doesn't support all of the magic we have in pxtlib/service.ts but it handles the basic
+        // format of //% property="value"
+        comment = comment.replace(/\/\/%[ \t]*([\w\.-]+)(=(("[^"\n]*")|'([^'\n]*)'|([^\s]*)))?/,
+        (f: string, key: string, d0: string, d1: string,
+            v0: string, v1: string, v2: string) => {
+            const value = v0 ? JSON.parse(v0) : (d0 ? (v0 || v1 || v2) : "true");
+            out[key] = value;
+            didSomething = true;
+            return "//% ";
+        });
+    }
     return out;
 }
 
