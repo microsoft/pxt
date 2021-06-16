@@ -64,7 +64,7 @@ function showConnectDeviceDialogAsync(confirmAsync: ConfirmAsync) {
     const boardName = getBoardName();
 
     const jsxd = () => (
-        <div className="ui two column grid padded">
+        <div className="ui two column grid padded download-dialog">
             <div className="column">
                 <div className="ui">
                     <div className="content">
@@ -139,7 +139,7 @@ function showPickWebUSBDeviceDialogAsync(confirmAsync: ConfirmAsync) {
     textElements.push(...parts);
 
     const jsxd = () => (
-        <div className="ui two column grid padded">
+        <div className="ui two column grid padded download-dialog">
             <div className="column">
                 <div className="ui">
                     <div className="content">
@@ -172,7 +172,7 @@ function showConnectionSuccessAsync(confirmAsync: ConfirmAsync) {
     const boardName = getBoardName();
 
     const jsxd = () => (
-        <div className="ui two column grid padded">
+        <div className="ui two column grid padded download-dialog">
             <div className="column">
                 <div className="ui">
                     <div className="content">
@@ -221,38 +221,26 @@ function showConnectionFailureAsync(confirmAsync: ConfirmAsync) {
 
     const jsxd = () => (
         <div>
-            <div className="ui content">
+            <div className="ui content download-troubleshoot-header">
                 {lf("We couldn't find your {0}. Here's a few ways to fix that:", boardName)}
             </div>
-            <div className="ui two column grid padded">
-                <div className="column">
-                    <div className="ui two row grid padded">
-                        <div className="row">
-                            <div className="image download-dialog-image">
-                                <img alt={lf("Image connecting {0} to a computer", boardName)} className="ui medium rounded image" src={theme().checkUSBCableImage || theme().connectDeviceImage} />
-                            </div>
-                        </div>
-                        <div className="row">
-                            <div className="description">
-                                {lf("Check the USB cable connecting your {0} to your computer.", boardName)}
-                            </div>
-                        </div>
+            <div className="download-troubleshoot">
+                <div className="download-column">
+                    <div className="download-row image-row">
+                        <img alt={lf("Image connecting {0} to a computer", boardName)} src={theme().checkUSBCableImage || theme().connectDeviceImage} />
+                    </div>
+                    <div className="download-row">
+                    {lf("Check the USB cable connecting your {0} to your computer.", boardName)}
                     </div>
                 </div>
-                <div className="column">
-                    <div className="ui two row grid padded">
-                        <div className="row">
-                            <div className="image download-dialog-image">
-                                <img alt={lf("Image depicting the firmware of {0}", boardName)} className="ui medium rounded image" src={theme().checkFirmwareVersionImage} />
-                            </div>
-                        </div>
-                        <div className="row">
-                            <div className="description">
-                                {firmwareText}
-                                <br/>
-                                <a target="_blank" href={theme().firmwareHelpURL} rel="noopener noreferrer">{lf("Learn more about firmware.", boardName)}</a>
-                            </div>
-                        </div>
+                <div className="download-column">
+                    <div className="download-row image-row">
+                        <img alt={lf("Image depicting the firmware of {0}", boardName)} src={theme().checkFirmwareVersionImage} />
+                    </div>
+                    <div className="download-row">
+                        {firmwareText}
+                        <br/>
+                        <a target="_blank" href={theme().firmwareHelpURL} rel="noopener noreferrer">{lf("Learn more about firmware.", boardName)}</a>
                     </div>
                 </div>
             </div>
