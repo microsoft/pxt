@@ -4127,7 +4127,7 @@ export class ProjectView
             pxt.BrowserUtils.isTouchEnabled() ? 'has-touch' : '',
             hideMenuBar ? 'hideMenuBar' : '',
             !showEditorToolbar || transparentEditorToolbar ? 'hideEditorToolbar' : '',
-            this.state.bannerVisible ? "notificationBannerVisible" : "",
+            this.state.bannerVisible && !inHome ? "notificationBannerVisible" : "",
             this.state.debugging ? "debugging" : "",
             sandbox && this.isEmbedSimActive() ? 'simView' : '',
             isApp ? "app" : "",

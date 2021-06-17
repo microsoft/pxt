@@ -441,6 +441,7 @@ declare namespace pxt {
         tutorialCodeValidation?: boolean; // Enable code validation for tutorials
         downloadDialogTheme?: DownloadDialogTheme;
         winAppDeprImage?: string; // Image to show on Windows App for deprecation
+        showWinAppDeprBanner?: boolean; // show banner announcing Windows App deprecation
     }
 
     interface DownloadDialogTheme {
