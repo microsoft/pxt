@@ -754,12 +754,15 @@ export function renderBrowserDownloadInstructions() {
         dontShowDownloadFlag = value;
     }
 
+    const image = pxt.appTarget.appTheme.downloadDialogTheme?.dragFileImage;
+    const columns = image ? "two" : "one";
+
     return <div className="ui grid stackable upload">
         <div className="column sixteen wide instructions">
             <div className="ui grid">
                 <div className="row">
                     <div className="column">
-                        <div className="ui two column grid padded">
+                        <div className={`ui ${columns} column grid padded`}>
                             <div className="column">
                                 <div className="ui">
                                     <div className="content">
@@ -786,13 +789,15 @@ export function renderBrowserDownloadInstructions() {
                                     </div>
                                 </div>
                             </div>
-                            <div className="column">
-                                <div className="ui">
-                                    <div className="image">
-                                        <img alt={lf("Comic moving {1} file to {0}", boardDriveName, fileExtension)} className="ui medium rounded image" src={pxt.appTarget.appTheme.downloadDialogTheme?.dragFileImage} />
+                            {image &&
+                                <div className="column">
+                                    <div className="ui">
+                                        <div className="image">
+                                            <img alt={lf("Comic moving {1} file to {0}", boardDriveName, fileExtension)} className="ui medium rounded image" src={image} />
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            }
                         </div>
                     </div>
                 </div>
@@ -813,8 +818,9 @@ export function renderIncompatibleHardwareDialog() {
     const helpText = lf("Learn more about what's supported by your hardware…")
     const helpURL = pxt.appTarget.appTheme.downloadDialogTheme?.incompatibleHardwareHelpURL;
     const imageURL = pxt.appTarget.appTheme.downloadDialogTheme?.incompatibleHardwareImage;
+    const columns = imageURL ? "two" : "one";
 
-    return <div className="ui two column grid padded download-dialog">
+    return <div className={`ui ${columns} column grid padded download-dialog`}>
     <div className="column">
         <div className="ui">
             <div className="content">

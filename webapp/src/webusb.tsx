@@ -61,10 +61,12 @@ export async function webUsbPairThemedDialogAsync(pairAsync: () => Promise<boole
 }
 
 function showConnectDeviceDialogAsync(confirmAsync: ConfirmAsync) {
+    const connectDeviceImage = theme().connectDeviceImage;
     const boardName = getBoardName();
+    const columns = connectDeviceImage ? "two" : "one";
 
     const jsxd = () => (
-        <div className="ui two column grid padded download-dialog">
+        <div className={`ui ${columns} column grid padded download-dialog`}>
             <div className="column">
                 <div className="ui">
                     <div className="content">
@@ -74,13 +76,15 @@ function showConnectDeviceDialogAsync(confirmAsync: ConfirmAsync) {
                     </div>
                 </div>
             </div>
-            <div className="column">
-                <div className="ui">
-                    <div className="image download-dialog-image">
-                        <img alt={lf("Image connecting {0} to a computer", boardName)} className="ui medium rounded image" src={theme().connectDeviceImage} />
+            {connectDeviceImage &&
+                <div className="column">
+                    <div className="ui">
+                        <div className="image download-dialog-image">
+                            <img alt={lf("Image connecting {0} to a computer", boardName)} className="ui medium rounded image" src={connectDeviceImage} />
+                        </div>
                     </div>
                 </div>
-            </div>
+            }
         </div>
     );
 
@@ -138,8 +142,11 @@ function showPickWebUSBDeviceDialogAsync(confirmAsync: ConfirmAsync) {
     }
     textElements.push(...parts);
 
+    const selectDeviceImage = theme().selectDeviceImage;
+    const columns = selectDeviceImage ? "two" : "one";
+
     const jsxd = () => (
-        <div className="ui two column grid padded download-dialog">
+        <div className={`ui ${columns} column grid padded download-dialog`}>
             <div className="column">
                 <div className="ui">
                     <div className="content">
@@ -149,13 +156,15 @@ function showPickWebUSBDeviceDialogAsync(confirmAsync: ConfirmAsync) {
                     </div>
                 </div>
             </div>
-            <div className="column">
-                <div className="ui">
-                    <div className="image download-dialog-image">
-                        <img alt={lf("Image selecting {0} from a list of web usb devices", boardName)} className="ui medium rounded image" src={theme().selectDeviceImage} />
+            {selectDeviceImage &&
+                <div className="column">
+                    <div className="ui">
+                        <div className="image download-dialog-image">
+                            <img alt={lf("Image selecting {0} from a list of web usb devices", boardName)} className="ui medium rounded image" src={selectDeviceImage} />
+                        </div>
                     </div>
                 </div>
-            </div>
+            }
         </div>
     );
 
@@ -170,9 +179,11 @@ function showPickWebUSBDeviceDialogAsync(confirmAsync: ConfirmAsync) {
 
 function showConnectionSuccessAsync(confirmAsync: ConfirmAsync) {
     const boardName = getBoardName();
+    const connectionImage = theme().connectionSuccessImage;
+    const columns = connectionImage ? "two" : "one";
 
     const jsxd = () => (
-        <div className="ui two column grid padded download-dialog">
+        <div className={`ui ${columns} column grid padded download-dialog`}>
             <div className="column">
                 <div className="ui">
                     <div className="content">
@@ -185,13 +196,15 @@ function showConnectionSuccessAsync(confirmAsync: ConfirmAsync) {
                     </div>
                 </div>
             </div>
-            <div className="column">
-                <div className="ui">
-                    <div className="image download-dialog-image">
-                        <img alt={lf("Image of {0}", boardName)} className="ui medium rounded image" src={theme().connectionSuccessImage} />
+            {connectionImage &&
+                <div className="column">
+                    <div className="ui">
+                        <div className="image download-dialog-image">
+                            <img alt={lf("Image of {0}", boardName)} className="ui medium rounded image" src={connectionImage} />
+                        </div>
                     </div>
                 </div>
-            </div>
+            }
         </div>
     );
 
@@ -219,6 +232,9 @@ function showConnectionFailureAsync(confirmAsync: ConfirmAsync) {
         firmwareText = lf("Make sure your {0} has the latest firmware.", boardName);
     }
 
+    const checkCableImage = theme().checkUSBCableImage || theme().connectDeviceImage;
+    const firmwareImage = theme().checkFirmwareVersionImage;
+
     const jsxd = () => (
         <div>
             <div className="ui content download-troubleshoot-header">
@@ -226,17 +242,21 @@ function showConnectionFailureAsync(confirmAsync: ConfirmAsync) {
             </div>
             <div className="download-troubleshoot">
                 <div className="download-column">
-                    <div className="download-row image-row">
-                        <img alt={lf("Image connecting {0} to a computer", boardName)} src={theme().checkUSBCableImage || theme().connectDeviceImage} />
-                    </div>
+                    {checkCableImage &&
+                        <div className="download-row image-row">
+                            <img alt={lf("Image connecting {0} to a computer", boardName)} src={checkCableImage} />
+                        </div>
+                    }
                     <div className="download-row">
                     {lf("Check the USB cable connecting your {0} to your computer.", boardName)}
                     </div>
                 </div>
                 <div className="download-column">
-                    <div className="download-row image-row">
-                        <img alt={lf("Image depicting the firmware of {0}", boardName)} src={theme().checkFirmwareVersionImage} />
-                    </div>
+                    { firmwareImage &&
+                        <div className="download-row image-row">
+                            <img alt={lf("Image depicting the firmware of {0}", boardName)} src={firmwareImage} />
+                        </div>
+                    }
                     <div className="download-row">
                         {firmwareText}
                         <br/>
