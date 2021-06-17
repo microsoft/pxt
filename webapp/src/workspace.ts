@@ -91,6 +91,11 @@ export function setupWorkspace(id: string) {
 }
 
 async function switchToMemoryWorkspace(reason: string): Promise<void> {
+    if (pxt.BrowserUtils.isWinRT()) {
+        // windows app can fail on occasion, in particular when deleting projects;
+        // ignore and keep trying to read from / write.
+        return;
+    }
     pxt.log(`workspace: error '${reason}', switching from ${implType} to memory workspace`);
 
     const expectedMemWs = pxt.appTarget.appTheme.disableMemoryWorkspaceWarning
