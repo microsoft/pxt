@@ -705,7 +705,8 @@ namespace pxsim {
                 const channel = new Channel();
                 channel.gain = context().createGain();
                 channel.gain.gain.value = 0;
-                channel.gain.gain.setValueAtTime(volume, context().currentTime);
+                if (!_mute)
+                    channel.gain.gain.setValueAtTime(volume, context().currentTime);
                 channel.gain.connect(context().destination);
 
                 if (channels.length > 5)
