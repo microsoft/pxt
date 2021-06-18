@@ -6,7 +6,6 @@ Let's take a look at a simple class-based example:
 
 ```python-ignore
 class Greeter:
-    greeting = ""
     def __init__(self, message):
         self.greeting = message
     def greet(self):
@@ -31,7 +30,6 @@ Let's take a look at an example:
 
 ```python-ignore
 class Animal:
-    name = ""
     def __init__(self, theName):
         self.name = theName
     def move(self, distanceInMeters = 0):
@@ -85,97 +83,45 @@ we haven't had to use the word `public` to accomplish this; for instance,
 C# requires that each member be explicitly labeled `public` to be visible.
 In python, each member is `public` by default.
 
-You may still mark a member `public` explicitly.
-We could have written the `Animal` class from the previous section in the following way:
-
-```python-ignore
-class Animal:
-    name = ""
-    def __init__(self, theName):
-        self.name = theName
-    def move(self, distanceInMeters):
-        print(str.format("{0} moved {1}m.", self.name, distanceInMeters))
-```
-
 ### Understanding `private`
 
 When a member is prefixes with a double underscore `__` it is **private** and cannot be accessed from outside of its containing class. For example:
 
 ```python-ignore
 class Animal:
-    __name = ""
     def __init__(self, theName):
-        self.name = theName
+        self.__name = theName
     def move(self, distanceInMeters):
-        print(str.format("{0} moved {1}m.", self.name, distanceInMeters))
+        print(str.format("{0} moved {1}m.", self.__name, distanceInMeters))
 
-Animal("Cat").name # Error: 'name' is private
+Animal("Cat").__name # AttributeError: 'Animal' object has no attribute '__name'
 ```
-
-Python is a structural type system.
-When we compare two different types, regardless of where they came from, if the types of all members are compatible, then we say the types themselves are compatible.
-
-However, when comparing types that have **private** and **protected** members, we treat these types differently.
-For two types to be considered compatible, if one of them has a **private** member, 
-then the other must have a **private** member that originated in the same declaration.
-The same applies to **protected** members.
-
-Let's look at an example to better see how this plays out in practice:
-
-```python-ignore
-class Animal:
-    __name = ""
-    def __init__(self, theName):
-        self.__name = theName
-class Rhino(Animal):
-    def __init__(self):
-        Animal.__init__(self, "Rhino")
-class Employee:
-    __name = ""
-    def __init__(self, theName):
-        self.__name = theName
-
-animal = Animal("Goat")
-rhino = Rhino()
-employee = Employee("Bob")
-
-animal = rhino
-animal = employee # Error: 'Animal' and 'Employee' are not compatible
-```
-
-In this example, we have an `Animal` and a `Rhino`, with `Rhino` being a subclass of `Animal`.
-We also have a new class `Employee` that looks identical to `Animal` in terms of shape.
-We create some instances of these classes and then try to assign them to each other to see what will happen.
-Because `Animal` and `Rhino` share the private side of their shape from the same declaration of 
-`__ name = ""` in `Animal`, they are compatible. However, this is not the case for `Employee`.
-When we try to assign from an `Employee` to `Animal` we get an error that these types are not compatible.
-Even though `Employee` also has a private member called `name`, it's not the one we declared in `Animal`.
 
 ### Understanding `protected`
 
 The **protected** modifier `_` acts much like the **private** modifier with the exception that members 
-declared protected can also be accessed by instances of deriving classes. For example,
+declared protected can also be accessed by instances of deriving classes. Note that Python will not
+prevent these members being accessed in other situations - it's merely a convention.
+
+For example,
 
 ```python-ignore
 class Person:
-    _name = ""
     def __init__(self, name):
-        self.name = name
+        self._name = name
 
 class Employee(Person):
-    __department = ""
-
     def __init__(self, name, department):
         Person.__init__(self, name)
-        self.department = department
+        self.__department = department
 
     def getElevatorPitch(self):
-        return "Hello, my name is " + self.name + " and I work in " + self.department + "."
+        return "Hello, my name is " + self._name + " and I work in " + self.__department + "."
 
 howard = Employee("Howard", "Sales")
 print(howard.getElevatorPitch())
-print(howard.name) # error
+print(howard._name) # Disallowed by convention
 ```
 
-Notice that while we can't use `name` from outside of `Person`, 
+Notice that while we can't use `_name` from outside of `Person` (by convention), 
 we can still use it from within an instance method of `Employee` because `Employee` derives from `Person`.
