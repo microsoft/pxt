@@ -17,4 +17,5 @@ This page was written using this documentation system, check it out at https://g
 * [Routing](/writing-docs/routing)
 * [Tutorials](/writing-docs/tutorials)
 * [User Tutorials](/writing-docs/user-tutorials)
+* [Skillmaps](/writing-docs/skillmaps)
 * [Testing](/writing-docs/testing)
