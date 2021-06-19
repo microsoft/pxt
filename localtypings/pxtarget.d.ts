@@ -1045,6 +1045,7 @@ declare namespace pxt.tutorial {
         jres?: string; // JRES to be used when generating hints; necessary for tilemaps
         customTs?: string; // custom typescript code loaded in a separate file for the tutorial
         tutorialValidationRules?: pxt.Map<boolean>; //a map of rules used in a tutorial and if the rules are activated
+        validationOverlapBlocks?: pxt.Map<string>; // a map of dropdown kinds used for a overlap block in a single tutorial
     }
 
     interface TutorialMetadata {
@@ -1112,6 +1113,7 @@ declare namespace pxt.tutorial {
         jres?: string; // JRES to be used when generating hints; necessary for tilemaps
         customTs?: string; // custom typescript code loaded in a separate file for the tutorial
         tutorialValidationRules?: pxt.Map<boolean>; //a map of rules used in a tutorial and if the rules are activated
+        validationOverlapBlocks?: pxt.Map<string>; // a map of dropdown kinds used for a overlap block in a single tutorial
     }
     interface TutorialCompletionInfo {
         // id of the tutorial
