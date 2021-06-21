@@ -4839,7 +4839,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 useLang = hashLang || cloudLang || cookieLang || theme.defaultLocale || (navigator as any).userLanguage || navigator.language;
 
                 const locstatic = /staticlang=1/i.test(window.location.href);
-                const serveLocal = pxt.BrowserUtils.isPxtElectron() || pxt.BrowserUtils.isLocalHostDev();
+                const serveLocal = pxt.BrowserUtils.isPxtElectron()
+                    || (pxt.BrowserUtils.isLocalHostDev() && (pxt.appTarget.appTheme.defaultLocale || "en") === useLang);
                 const stringUpdateDisabled = locstatic || serveLocal || theme.disableLiveTranslations;
 
                 if (!stringUpdateDisabled || requestLive) {

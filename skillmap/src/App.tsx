@@ -124,7 +124,8 @@ class AppImpl extends React.Component<AppProps, AppState> {
         const targetId = pxt.appTarget.id;
         const pxtBranch = pxt.appTarget.versions.pxtCrowdinBranch;
         const targetBranch = pxt.appTarget.versions.targetCrowdinBranch;
-        if (!pxt.BrowserUtils.isLocalHostDev() && !pxt.BrowserUtils.isPxtElectron()) {
+        if (!(pxt.BrowserUtils.isLocalHostDev() && (pxt.appTarget.appTheme.defaultLocale || "en") === useLang)
+            && !pxt.BrowserUtils.isPxtElectron()) {
             pxt.Util.enableLiveLocalizationUpdates();
         }
 
