@@ -44,6 +44,10 @@
     }
     .menubar .left.menu > .item.icon:not(.logo),  .menubar .right.menu > .item.icon:not(.logo) {
         width: 48px;
+
+        & > i.icon {
+            margin-left: -8px;
+        }
     }
     .sandbox .menubar .ui.menu {
         height: @sandboxMobileMenuHeight !important;
