@@ -127,8 +127,11 @@ namespace pxt.Cloud {
         const downloadAndSetMarkdownAsync = async () => {
             try {
                 const r = await downloadMarkdownAsync(docid, locale, entry?.etag);
-                await db.setAsync(locale, docid, branch, r.etag, undefined, r.md || entry?.md);
-                return r.md;
+                if (entry?.etag !== r.etag) {
+                    await db.setAsync(locale, docid, branch, r.etag, undefined, r.md || entry?.md);
+                    return r.md;
+                }
+                return entry.md;
             } catch {
                 return ""; // no translation
             }
