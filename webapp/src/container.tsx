@@ -515,8 +515,10 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
 
     setPath(path: string, blocksEditor: boolean) {
         this.openingSideDoc = true;
-        const docsUrl = this.rootDocsUrl();
+        let docsUrl = this.rootDocsUrl();
         const mode = blocksEditor ? "blocks" : "js";
+        const query = pxt.BrowserUtils.isPxtElectron() ? "?pxtElectron=true" : "";
+        if (query && docsUrl.endsWith("#")) docsUrl = docsUrl.substr(0, docsUrl.length - 1) + query + "#";
         const url = `${docsUrl}doc:${path}:${mode}:${pxt.Util.localeInfo()}`;
         this.setUrl(url);
     }
