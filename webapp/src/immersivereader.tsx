@@ -237,9 +237,9 @@ export function launchImmersiveReader(content: string, tutorialOptions: pxt.tuto
 
     getTokenAsync().then(res => {
         if (Cloud.isOnline()) {
-            const syncStart = pxt.Util.now();
+            const launchStart = pxt.Util.now();
             return ImmersiveReader.launchAsync(res.token, res.subdomain, tutorialData, options).then(res => {
-                const elapsed = pxt.Util.now() - syncStart;
+                const elapsed = pxt.Util.now() - launchStart;
                 pxt.tickEvent("immersiveReader.launch.finished", {elapsed: elapsed})
             })
         } else {
