@@ -5,6 +5,7 @@ import * as data from "./data";
 import * as sui from "./sui";
 
 import * as auth from "./auth";
+import * as cmds from "./cmds"
 import * as container from "./container";
 import * as identity from "./identity";
 import * as pkg from "./package";
@@ -176,6 +177,7 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
 
         const { home, header, tutorialOptions } = this.props.parent.state;
         const isController = pxt.shell.isControllerMode();
+        const isNativeHost = cmds.isNativeHost();
         const hasIdentity = auth.hasIdentity();
         const activeEditor = this.props.parent.isPythonActive() ? "Python"
             : (this.props.parent.isJavaScriptActive() ? "JavaScript" : "Blocks");
@@ -189,6 +191,7 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
 
         return <div id="mainmenu" className={`ui borderless fixed menu ${targetTheme.invertedMenu ? `inverted` : ''} ${manyTutorialSteps ? "thin" : ""}`} role="menubar">
             <div className="left menu">
+                {isNativeHost && <sui.Item className="icon" role="menuitem" icon="chevron left large" ariaLabel={lf("Back to application")} onClick={cmds.nativeHostBackAsync} />}
                 {this.getOrganizationLogo(targetTheme, highContrast, view)}
                 {view === "tutorial"
                     // TODO: temporary place for tutorial name, we will eventually redesign the header for tutorial view
