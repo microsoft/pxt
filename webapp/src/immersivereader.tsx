@@ -185,30 +185,29 @@ function beautifyText(content: string): string {
 }
 
 function getTokenAsync(): Promise<ImmersiveReaderToken> {
-    if (Cloud.isOnline()) {
-        const IMMERSIVE_READER_ID = "immReader";
-        const storedTokenString = pxt.storage.getLocal(IMMERSIVE_READER_ID);
-        const cachedToken: ImmersiveReaderToken = pxt.Util.jsonTryParse(storedTokenString);
+    const IMMERSIVE_READER_ID = "immReader";
+    const storedTokenString = pxt.storage.getLocal(IMMERSIVE_READER_ID);
+    const cachedToken: ImmersiveReaderToken = pxt.Util.jsonTryParse(storedTokenString);
 
-        if (!cachedToken || (Date.now() / 1000 > cachedToken.expiration)) {
-            return pxt.Util.requestAsync({ url: "/api/immreader", method: "GET" }).then(
-                res => {
-                    pxt.storage.setLocal(IMMERSIVE_READER_ID, JSON.stringify(res.json));
-                    return res.json;
-                },
-                e => {
-                    pxt.storage.removeLocal(IMMERSIVE_READER_ID);
-                    pxt.reportException(e)
-                    pxt.tickEvent("immersiveReader.error", {error: e.statusCode, message: e.message});
-                    return Promise.reject(new Error("token"));
+    if (!cachedToken || (Date.now() / 1000 > cachedToken.expiration)) {
+        return pxt.Cloud.privateGetAsync("immreader").then(
+            res => {
+                pxt.storage.setLocal(IMMERSIVE_READER_ID, JSON.stringify(res));
+                return res;
+            },
+            e => {
+                pxt.storage.removeLocal(IMMERSIVE_READER_ID);
+                pxt.reportException(e)
+                pxt.tickEvent("immersiveReader.error", {error: e.statusCode, message: e.message});
+                if (e.isOffline) {
+                    return Promise.reject(new Error("offline"))
                 }
-            );
-        } else {
-            pxt.tickEvent("immersiveReader.cachedToken");
-            return Promise.resolve(cachedToken);
-        }
+                return Promise.reject(new Error("token"));
+            }
+        );
     } else {
-        return Promise.reject(new Error("offline"));
+        pxt.tickEvent("immersiveReader.cachedToken");
+        return Promise.resolve(cachedToken);
     }
 }
 
@@ -232,12 +231,17 @@ export function launchImmersiveReader(content: string, tutorialOptions: pxt.tuto
         onPreferencesChanged: (pref: string) => {
             auth.updateUserPreferencesAsync({reader: pref})
         },
-        preferences: userReaderPref
+        preferences: userReaderPref,
+        timeout: 5000
     }
 
     getTokenAsync().then(res => {
         if (Cloud.isOnline()) {
-            return ImmersiveReader.launchAsync(res.token, res.subdomain, tutorialData, options)
+            const syncStart = pxt.Util.now();
+            return ImmersiveReader.launchAsync(res.token, res.subdomain, tutorialData, options).then(res => {
+                const elapsed = pxt.Util.now() - syncStart;
+                pxt.tickEvent("immersiveReader.launch.finished", {elapsed: elapsed})
+            })
         } else {
             return Promise.reject(new Error("offline"));
         }
