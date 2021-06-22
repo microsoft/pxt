@@ -299,7 +299,6 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
     }
 
     protected captureMouseEvent = (e: React.MouseEvent) => {
-        e.preventDefault();
         e.stopPropagation();
     }
 

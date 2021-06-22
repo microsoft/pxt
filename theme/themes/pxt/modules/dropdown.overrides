@@ -48,6 +48,11 @@
     display: none;
 }
 
+.ui.dropdown.button:hover,
+.ui.dropdown.button:focus {
+    z-index: @dropdownMenuZIndex;
+}
+
 /* inverted */
 .ui.form.inverted .ui.dropdown {
     background: #333940 !important;
