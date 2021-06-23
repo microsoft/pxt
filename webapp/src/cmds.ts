@@ -185,6 +185,17 @@ export function nativeHostBackAsync(): Promise<void> {
     return Promise.resolve();
 }
 
+export function nativeHostLongpressAsync(): Promise<void> {
+    log(`native longpress`)
+    const nativePostMessage = nativeHostPostMessageFunction();
+    if (nativePostMessage) {
+        nativePostMessage(<pxt.editor.NativeHostMessage>{
+            longpress: true
+        })
+    }
+    return Promise.resolve();
+}
+
 export function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.DeployOptions): Promise<void> {
     pxt.tickEvent(`hid.deploy`);
     log(`hid deploy`)

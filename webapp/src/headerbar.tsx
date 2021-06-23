@@ -14,8 +14,11 @@ import * as tutorial from "./tutorial";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 type HeaderBarView = "home" | "editor" | "tutorial" | "debugging" | "sandbox";
+const LONGPRESS_DURATION = 750;
 
 export class HeaderBar extends data.Component<ISettingsProps, {}> {
+    protected longpressTimer: any;
+
     constructor(props: ISettingsProps) {
         super(props);
     }
@@ -55,6 +58,14 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
     brandIconClick = () => {
         pxt.tickEvent("projects.brand", undefined, { interactiveConsent: true });
         this.goHome();
+    }
+
+    backButtonTouchStart = () => {
+        this.longpressTimer = setTimeout(() => cmds.nativeHostLongpressAsync(), LONGPRESS_DURATION);
+    }
+
+    backButtonTouchEnd = () => {
+        clearTimeout(this.longpressTimer);
     }
 
     protected getView = (): HeaderBarView => {
@@ -191,7 +202,8 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
 
         return <div id="mainmenu" className={`ui borderless fixed menu ${targetTheme.invertedMenu ? `inverted` : ''} ${manyTutorialSteps ? "thin" : ""}`} role="menubar">
             <div className="left menu">
-                {isNativeHost && <sui.Item className="icon" role="menuitem" icon="chevron left large" ariaLabel={lf("Back to application")} onClick={cmds.nativeHostBackAsync} />}
+                {isNativeHost && <sui.Item className="icon" role="menuitem" icon="chevron left large" ariaLabel={lf("Back to application")}
+                    onClick={cmds.nativeHostBackAsync} onMouseDown={this.backButtonTouchStart} onMouseUp={this.backButtonTouchEnd} onMouseLeave={this.backButtonTouchEnd} />}
                 {this.getOrganizationLogo(targetTheme, highContrast, view)}
                 {view === "tutorial"
                     // TODO: temporary place for tutorial name, we will eventually redesign the header for tutorial view
