@@ -487,6 +487,9 @@ export interface ItemProps extends UiProps {
     active?: boolean;
     value?: string;
     onClick?: () => void;
+    onMouseDown?: () => void;
+    onMouseUp?: () => void;
+    onMouseLeave?: () => void;
     onKeyDown?: (e: React.KeyboardEvent<HTMLElement>) => void;
 }
 
@@ -510,6 +513,11 @@ export class Item extends data.Component<ItemProps, {}> {
                 key={this.props.value}
                 data-value={this.props.value}
                 onClick={this.props.onClick}
+                onMouseDown={this.props.onMouseDown}
+                onTouchStart={this.props.onMouseDown}
+                onMouseUp={this.props.onMouseUp}
+                onTouchEnd={this.props.onMouseUp}
+                onMouseLeave={this.props.onMouseLeave}
                 onKeyDown={this.props.onKeyDown || fireClickOnEnter}>
                 {genericContent(this.props)}
                 {this.props.children}
