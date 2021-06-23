@@ -218,7 +218,9 @@ namespace pxt.runner {
             const mlang = /(live)?(force)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(href);
             lang = mlang ? mlang[3] : (cookieValue && cookieValue[1] || pxt.appTarget.appTheme.defaultLocale || (navigator as any).userLanguage || navigator.language);
 
-            const liveTranslationsDisabled = pxt.BrowserUtils.isPxtElectron() || pxt.BrowserUtils.isLocalHostDev() || pxt.appTarget.appTheme.disableLiveTranslations;
+            const liveTranslationsDisabled = pxt.BrowserUtils.isPxtElectron()
+                || (pxt.BrowserUtils.isLocalHostDev() && (pxt.appTarget.appTheme.defaultLocale || "en") === lang)
+                || pxt.appTarget.appTheme.disableLiveTranslations;
             if (!liveTranslationsDisabled || !!mlang?.[1]) {
                 pxt.Util.enableLiveLocalizationUpdates();
             }
