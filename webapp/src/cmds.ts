@@ -174,6 +174,17 @@ function nativeHostSaveCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     return Promise.resolve();
 }
 
+export function nativeHostBackAsync(): Promise<void> {
+    log(`native back`)
+    const nativePostMessage = nativeHostPostMessageFunction();
+    if (nativePostMessage) {
+        nativePostMessage(<pxt.editor.NativeHostMessage>{
+            back: true
+        })
+    }
+    return Promise.resolve();
+}
+
 export function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.DeployOptions): Promise<void> {
     pxt.tickEvent(`hid.deploy`);
     log(`hid deploy`)
