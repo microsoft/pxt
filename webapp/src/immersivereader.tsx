@@ -231,11 +231,12 @@ export function launchImmersiveReader(content: string, tutorialOptions: pxt.tuto
         onPreferencesChanged: (pref: string) => {
             auth.updateUserPreferencesAsync({reader: pref})
         },
-        preferences: userReaderPref,
-        timeout: 5000
+        preferences: userReaderPref
     }
 
-    getTokenAsync().then(res => {
+    getTokenAsync().then(res =>{
+        return testConnectionAsync(res);
+    }).then(res => {
         if (Cloud.isOnline()) {
             const launchStart = pxt.Util.now();
             return ImmersiveReader.launchAsync(res.token, res.subdomain, tutorialData, options).then(res => {
@@ -246,27 +247,33 @@ export function launchImmersiveReader(content: string, tutorialOptions: pxt.tuto
             return Promise.reject(new Error("offline"));
         }
     }).catch(e => {
-        switch (e.message) {
-            case "offline": {
-                core.warningNotification(lf("Immersive Reader cannot be used offline"));
-                break;
-            }
-            case "token": {
-                break;
-            }
-            default: {
-                core.warningNotification(lf("Immersive Reader could not be launched"));
-                if (typeof e == "string") {
-                    pxt.tickEvent("immersiveReader.error", {message: e});
-                } else {
-                    pxt.tickEvent("immersiveReader.error", {message: e.message, statusCode: e.statusCode})
+        if (e.isOffline) {
+            core.warningNotification(lf("Immersive Reader cannot be used offline"));
+        } else {
+            switch (e.message) {
+                case "offline": {
+                    core.warningNotification(lf("Immersive Reader cannot be used offline"));
+                    break;
                 }
+                case "token":
+                default: {
+                    core.warningNotification(lf("Immersive Reader could not be launched"));
+                    if (typeof e == "string") {
+                        pxt.tickEvent("immersiveReader.error", {message: e});
+                    } else {
+                        pxt.tickEvent("immersiveReader.error", {message: e.message, statusCode: e.statusCode})
+                    }
 
+                }
             }
         }
         pxt.reportException(e);
         ImmersiveReader.close();
     });
+
+    function testConnectionAsync(token: ImmersiveReaderToken): Promise<ImmersiveReaderToken> {
+        return pxt.Cloud.privateGetAsync("ping").then(() => {return token});
+    }
 }
 
 
