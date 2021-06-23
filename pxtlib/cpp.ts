@@ -1371,7 +1371,7 @@ namespace pxt.hexloader {
                         return U.httpGetTextAsync(hexurl + ".hex")
                     })
                     .then(r => r, e =>
-                        Cloud.privatePostAsync("compile/extension", { data: extInfo.compileData })
+                        Cloud.privatePostAsync("compile/extension", { data: extInfo.compileData }, true)
                             .then(ret => new Promise<string>((resolve, reject) => {
                                 let retry = 0;
                                 const delay = 8000; // ms
