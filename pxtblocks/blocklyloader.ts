@@ -268,6 +268,7 @@ namespace pxt.blocks {
         const itemCount = fieldValues ? fieldValues.length : 2;
         const mut = document.createElement('mutation');
         mut.setAttribute("items", "" + itemCount);
+        mut.setAttribute("horizontalafter", "" + itemCount);
         shadow.appendChild(mut);
 
         for (let i = 0; i < itemCount; i++) {

@@ -649,7 +649,7 @@ namespace pxsim {
 
         const MAX_SCHEDULED_BUFFER_NODES = 3;
 
-        export function playPCMBufferStreamAsync(pull: () => Float32Array, sampleRate: number, volume = 0.3) {
+        export function playPCMBufferStreamAsync(pull: () => Float32Array, sampleRate: number, volume = 0.3, isCancelled?: () => boolean) {
             return new Promise<void>(resolve => {
                 let nodes: AudioBufferSourceNode[] = [];
                 let nextTime = context().currentTime;
@@ -660,8 +660,8 @@ namespace pxsim {
                 // do it when the previous node completes (which sounds SUPER choppy in
                 // FireFox).
                 function playNext() {
-                    const isCancelled = !channel.gain;
-                    while (!allScheduled && nodes.length < MAX_SCHEDULED_BUFFER_NODES && !isCancelled) {
+                    const cancelled = isCancelled && isCancelled();
+                    while (!allScheduled && nodes.length < MAX_SCHEDULED_BUFFER_NODES && !cancelled) {
                         const data = pull();
                         if (!data || !data.length) {
                             allScheduled = true;
@@ -670,7 +670,7 @@ namespace pxsim {
                         play(data);
                     }
 
-                    if ((allScheduled && nodes.length === 0) || isCancelled) {
+                    if ((allScheduled && nodes.length === 0)) {
                         channel.remove();
                         if (resolve) resolve();
                         resolve = undefined;
@@ -705,7 +705,8 @@ namespace pxsim {
                 const channel = new Channel();
                 channel.gain = context().createGain();
                 channel.gain.gain.value = 0;
-                channel.gain.gain.setValueAtTime(volume, context().currentTime);
+                if (!_mute)
+                    channel.gain.gain.setValueAtTime(volume, context().currentTime);
                 channel.gain.connect(context().destination);
 
                 if (channels.length > 5)
