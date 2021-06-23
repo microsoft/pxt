@@ -179,7 +179,7 @@ export function nativeHostBackAsync(): Promise<void> {
     const nativePostMessage = nativeHostPostMessageFunction();
     if (nativePostMessage) {
         nativePostMessage(<pxt.editor.NativeHostMessage>{
-            back: true
+            cmd: "backtap"
         })
     }
     return Promise.resolve();
@@ -190,7 +190,7 @@ export function nativeHostLongpressAsync(): Promise<void> {
     const nativePostMessage = nativeHostPostMessageFunction();
     if (nativePostMessage) {
         nativePostMessage(<pxt.editor.NativeHostMessage>{
-            longpress: true
+            cmd: "backpress"
         })
     }
     return Promise.resolve();
