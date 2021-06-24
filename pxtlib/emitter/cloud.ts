@@ -127,8 +127,9 @@ namespace pxt.Cloud {
         const downloadAndSetMarkdownAsync = async () => {
             try {
                 const r = await downloadMarkdownAsync(docid, locale, entry?.etag);
-                if (entry?.etag !== r.etag) {
-                    await db.setAsync(locale, docid, branch, r.etag, undefined, r.md || entry?.md);
+                // TODO directly compare the entry/response etags after backend change
+                if (!entry || (r.md && entry.md !== r.md)) {
+                    await db.setAsync(locale, docid, branch, r.etag, undefined, r.md);
                     return r.md;
                 }
                 return entry.md;
