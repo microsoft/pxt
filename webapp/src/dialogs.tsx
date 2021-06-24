@@ -734,7 +734,7 @@ export function promptTranslateBlock(blockid: string, blockTranslationIds: strin
     });
 }
 
-export function renderBrowserDownloadInstructions() {
+export function renderBrowserDownloadInstructions(saveonly?: boolean) {
     const boardName = pxt.appTarget.appTheme.boardName || lf("device");
     const boardDriveName = pxt.appTarget.appTheme.driveDisplayName || pxt.appTarget.compile.driveName || "???";
     const fileExtension = pxt.appTarget.compile?.useUF2 ? ".uf2" : ".hex";
@@ -801,10 +801,12 @@ export function renderBrowserDownloadInstructions() {
                 </div>
             </div>
             <div>
-                <sui.Checkbox
-                    inputLabel={lf("Don't show this again")}
-                    onChange={onCheckboxClicked}
-                />
+                {!saveonly &&
+                    <sui.Checkbox
+                        inputLabel={lf("Don't show this again")}
+                        onChange={onCheckboxClicked}
+                    />
+                }
             </div>
         </div>
     </div>;
