@@ -14,33 +14,63 @@ What is the one part of programming the micro:bit that is the biggest pain? If y
 
 We are continuing to focus on making sure every student has a great experience with MakeCode. For low-vision students, we’ve made some improvements to the color contrasts – most notably in the tutorial interface. And for students with literacy challenges, we’ve added support for Immersive Reader in tutorials. Watch this video to see how it works:
 
+https://youtu.be/ZYJhQ0HNvq4
+
 ## Updated banner
 
 One of the first things you might notice is a new banner carousel on the home page! There are so many great lessons and resources for the micro:bit, this is a nice way to feature different ones. We also cleaned up the top navigation bar a bit.
+
+**New carousel:**
+
+![Homepage Carousel](/static/blog/microbit/2021-release/carousel.gif)
+
+**Navigation bar:**
+
+![Navigation bar](/static/blog/microbit/2021-release/navbar.png)
 
 ## Data logging extension
 
 Now it is possible to collect and store data on the new version of the micro:bit! This is a new extension for MakeCode that allows you to collect data from the micro:bit sensors and record the data on the board. This is helpful if you are running an experiment over a longer period of time or disconnected from a computer. It’s still in Beta, but here’s a short video demonstration:
 
+https://youtu.be/fWfwb8ZSsjc
+
 ## Functions with array parameters
 
-Every year we add more functionality to our Functions . This year, we did a small update as a result of your feedback to support array types as parameters.
+Every year we add more functionality to our **Functions**. This year, we did a small update as a result of your feedback to support array types as parameters.
+
+**Function editing:**
+
+![Edit function](/static/blog/microbit/2021-release/edit-function.png)
+
+**Edited function example:**
+
+![Function sample](/static/blog/microbit/2021-release/function-sample.png)
 
 ## Updates to Loops
 
-When you open up the Loops Toolbox drawer, you may see a couple changes.
+When you open up the **Loops Toolbox** drawer, you may see a couple changes.
 
 ### While loop
 
-We’ve found that “While True” loops can get students into a lot of trouble as infinite loops in their programs! So, we changed the default value to be “false” as a safer way for them to start using this block and set the appropriate conditions for exiting the loop
+We’ve found that "While True" loops can get students into a lot of trouble, becoming infinite loops in their programs! So, we changed the default value to be "false" as a safer way for them to start using this block and to have the appropriate conditions set for exiting the loop.
+
+![New while loop block](/static/blog/microbit/2021-release/while.png)
 
 ### Every time interval block
 
 This new block is useful for looping on a given time interval (in milliseconds).
 
+![New every loop block](/static/blog/microbit/2021-release/every.png)
+
 ## Text coding not available in Windows app
 
-Now that one-click downloads are supported with the web version of MakeCode, in this release we are starting the journey to deprecate the Windows 10 app. You will no longer be able to use the text editor in the app, and we will stop updating the app by the 2022 release next June. If you do need full offline access of an app, we recommend using the [Offline App](https://makecode.microbit.org/offline).
+Now that one-click downloads are supported with the web version of MakeCode, in this release we are starting the journey to deprecate the Windows 10 app. You will no longer be able to use the text editor in the app, and we will stop updating the app by the 2022 release next June.
+
+![No text editing message](/static/blog/microbit/2021-release/no-text-editing.png)
+
+If you do need full offline access of an app, we recommend using the [Offline App](https://makecode.microbit.org/offline).
+
+![MakeCode App logo](/static/blog/microbit/2021-release/app-logo.png)
 
 Thank you to everyone who has logged bugs, translated and suggested new features throughout the year! Any new bugs you find in this release, please log them in [GitHub](https://github.com/Microsoft/pxt-microbit/issues).
 
