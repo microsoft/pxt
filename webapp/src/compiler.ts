@@ -643,7 +643,15 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
     }
 
     if (externalPackages.length) {
-        const db = await ApiInfoIndexedDb.createAsync();
+        let db: ApiInfoIndexedDb;
+        try {
+            db = await ApiInfoIndexedDb.createAsync();
+        }
+        catch (e) {
+            // Don't fail if the indexeddb fails, but log it
+            console.log("Unable to open API info cache DB");
+            return null;
+        }
 
         for (const dep of externalPackages) {
             const entry = await db.getAsync(dep);
@@ -708,7 +716,16 @@ async function cacheApiInfoAsync(project: pkg.EditorPackage, info: pxtc.ApisInfo
 
     if (externalPackages.length) {
         const apiList = Object.keys(info.byQName);
-        const db = await ApiInfoIndexedDb.createAsync();
+        let db: ApiInfoIndexedDb;
+
+        try {
+            db = await ApiInfoIndexedDb.createAsync();
+        }
+        catch (e) {
+            // Don't fail if the indexeddb fails, but log it
+            pxt.log("Unable to create DB to cache API info");
+            return;
+        }
 
         for (const dep of externalPackages) {
             const pkgId = dep.getPkgId();

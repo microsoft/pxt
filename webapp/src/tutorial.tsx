@@ -78,7 +78,13 @@ function getUsedBlocksInternalAsync(code: string[], id: string, language?: strin
                 if (pxt.options.debug)
                     pxt.debug(JSON.stringify(usedBlocks, null, 2));
 
-                if (db && !skipCache) db.setAsync(id, usedBlocks, code);
+                try {
+                    if (db && !skipCache) db.setAsync(id, usedBlocks, code);
+                }
+                catch (e) {
+                    // Don't fail if the indexeddb fails, but log it
+                    pxt.log("Unable to cache used blocks in DB");
+                }
                 pxt.tickEvent(`tutorial.usedblocks.computed`, { tutorial: id });
                 return usedBlocks;
             } else {
