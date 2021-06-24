@@ -711,7 +711,13 @@ export async function getPublishedScriptAsync(id: string) {
                 files = await (Cloud.downloadScriptFilesAsync(id)
                     .catch(core.handleNetworkError))
             }
-            await scripts.setAsync({ id: eid, files: files })
+            try {
+                await scripts.setAsync({ id: eid, files: files })
+            }
+            catch (e) {
+                // Don't fail if the indexeddb fails, but log it
+                pxt.log("Unable to cache script in DB");
+            }
         }
         return fixupFileNames(files)
     })
