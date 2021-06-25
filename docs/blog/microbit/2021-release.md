@@ -66,7 +66,7 @@ This new block is useful for looping on a given time interval (in milliseconds).
 
 ## Text coding not available in Windows app
 
-Now that one-click downloads are supported with the web version of MakeCode, this release starts the journey to deprecate the Windows 10 app. You can no longer use the text editor in the app, and we will stop updating the app by the 2022 release next June.
+Now that one-click downloads are supported with the web version of MakeCode, this release starts the journey to deprecate the Windows 10 app. You can no longer use the text editor in the app, and update support for the app will stop after the 2022 release next June.
 
 ![No text editing message](/static/blog/microbit/2021-release/no-text-editing.png)
 
