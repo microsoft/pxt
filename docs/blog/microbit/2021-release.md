@@ -8,7 +8,7 @@ Here’s a run-down of the new features in the 2021 release:
 
 ## One-click Download
 
-What is the one part of programming the micro:bit experience that is the biggest pain? If you said dragging-and-dropping program files, you’re not alone! To help relieve the pain, we’ve invested even more effort in making WebUSB easier to use. This new web technology allows you to 'pair' USB devices to your web browser, so when you click the Download button, it really does download directly to the micro:bit! To take advantage of this capability, you will need the latest firmware on your micro:bit device and you’ll need to be using either Edge or Chrome as the browser.
+What is the one part of programming the micro:bit experience that is the biggest pain? If you said dragging-and-dropping program files, you’re not alone! To help relieve the pain, we’ve invested even more effort in making WebUSB easier to use. This new web technology allows you to 'pair' USB devices to your web browser, so when you click the Download button, it really does download directly to the micro:bit! To take advantage of this capability, you will need the latest firmware on your micro:bit device and you’ll need to be using either Edge or Chrome as the browser (![Learn more](https://makecode.microbit.org/device/usb/webusb/troubleshoot)).
 
 ![WebUSB](/static/blog/microbit/2021-release/webusb.gif)
 
@@ -32,7 +32,7 @@ One of the first things you might notice is the new banner carousel on the home 
 
 ## Data logging extension
 
-The new version of the micro:bit it is able to collect and store its own data! There is a new extension for MakeCode too that allows you to collect data from the micro:bit sensors and record the data on the board. This is helpful if you are running an experiment over a longer period of time or when the micro:bit is disconnected from a computer that does the data recording. It’s still in Beta, but here’s a short video demonstration:
+The new version of the micro:bit it is able to collect and store its own data! There is a new extension for MakeCode too that allows you to collect data from the micro:bit sensors and record the data on the board. This is helpful if you are running an experiment over a longer period of time or when the micro:bit is disconnected from a computer that does the data recording. It’s still in Beta, so we'd love to get your feedback.  Here’s a short video demonstration:
 
 https://youtu.be/fWfwb8ZSsjc
 
