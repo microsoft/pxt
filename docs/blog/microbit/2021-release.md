@@ -76,7 +76,7 @@ If you do need an app with full capabilities but for offline use, we recommend u
 
 Thank you to everyone who has logged bugs, helped with translations, and suggested new features throughout the year! Any new bugs you find in this release, please log them in [GitHub](https://github.com/Microsoft/pxt-microbit/issues).
 
-Any other comments, suggestions, and feedback, please participate in the micro:bit community on [Slack](https://tech.microbit.org/get-involved/where-to-find/). And, please let us know what you think of this year’s updates on Twitter [@MSMakeCode](https://twitter.com/MSMakeCode).
+Any other comments, suggestions, and feedback, please participate in the micro:bit community on [Slack](https://tech.microbit.org/community/). And, please let us know what you think of this year’s updates on Twitter [@MSMakeCode](https://twitter.com/MSMakeCode).
 
 <br/>
 Happy Making and Coding!
