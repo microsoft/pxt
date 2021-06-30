@@ -1288,7 +1288,6 @@ function readLocalPxTarget() {
 function forEachBundledPkgAsync(f: (pkg: pxt.MainPackage, dirname: string) => Promise<void>, includeProjects: boolean = false) {
     let prev = process.cwd()
     let folders = pxt.appTarget.bundleddirs;
-
     if (includeProjects) {
         let projects = nodeutil.allFiles("libs", 1, /*allowMissing*/ false, /*includeDirs*/ true).filter(f => /prj$/.test(f));
         folders = folders.concat(projects);
@@ -2169,14 +2168,13 @@ function compressApiInfo(inf: Map<pxt.PackageApiInfo>) {
     return inf
 }
 
-function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
+async function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
     let cfg = readLocalPxTarget()
     updateDefaultProjects(cfg);
     updateTOC(cfg);
 
     cfg.bundledpkgs = {}
     pxt.setAppTarget(cfg);
-    let statFiles: Map<number> = {}
     dirsToWatch = cfg.bundleddirs.slice()
     if (pxt.appTarget.id != "core") {
         if (fs.existsSync("theme")) {
@@ -2206,42 +2204,99 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
     let coreDependencies: string[];
     const corepkg = "libs/" + pxt.appTarget.corepkg;
 
-    return buildWebStringsAsync()
-        .then(() => options.quick ? null : internalGenDocsAsync(false, true))
-        .then(() => pxt.appTarget.cacheusedblocksdirs ? internalCacheUsedBlocksAsync().then((usedBlocks) => cfg.tutorialInfo = usedBlocks) : null)
-        .then(() => forEachBundledPkgAsync((pkg, dirname) => {
-            pxt.log(`building bundled ${dirname}`);
-            let isPrj = /prj$/.test(dirname);
-            const isHw = /hw---/.test(dirname);
-            const config = nodeutil.readPkgConfig(".")
-            const isCore = !!config.core;
-            for (let p of config.additionalFilePaths)
-                dirsToWatch.push(path.resolve(p));
+    const packageDirs = pxt.appTarget.bundleddirs.map(dir => path.resolve(dir));
+    const rootDir = process.cwd();
 
-            return pkg.filesToBePublishedAsync(true)
-                .then(res => {
-                    if (!isPrj) {
-                        cfg.bundledpkgs[path.basename(dirname)] = res
+    await buildWebStringsAsync();
+    if (!options.quick) await internalGenDocsAsync(false, true)
+    if (pxt.appTarget.cacheusedblocksdirs) cfg.tutorialInfo = await internalCacheUsedBlocksAsync();
+
+    await forEachBundledPkgAsync(async (pkg, dirname) => {
+        pxt.log(`building bundled ${dirname}`);
+        let isPrj = /prj$/.test(dirname);
+        const isHw = /hw---/.test(dirname);
+        const config = nodeutil.readPkgConfig(".")
+        const isCore = !!config.core;
+        for (let p of config.additionalFilePaths)
+            dirsToWatch.push(path.resolve(p));
+
+        const publishFiles = await pkg.filesToBePublishedAsync(true);
+        if (!isPrj) {
+            cfg.bundledpkgs[path.basename(dirname)] = publishFiles
+        }
+        if (isHw || (isCore && pxt.appTarget.simulator && pxt.appTarget.simulator.dynamicBoardDefinition)) {
+            isPrj = true
+        }
+
+        let res: TargetPackageInfo = null;
+        if (!options.quick) {
+            res = await testForBuildTargetAsync(isPrj || (!options.skipCore && isCore), builtInfo[dirname] && builtInfo[dirname].sha);
+        }
+
+        if (!res) return;
+
+        const { options: pkgOptions, api, sha: packageSha } = res;
+
+        if (pkgOptions && api) {
+            // JRES is already included in the target bundle
+            api.jres = undefined;
+            builtInfo[dirname] = {
+                apis: api,
+                sha: packageSha
+            };
+
+            if (dirname === corepkg) {
+                coreDependencies = mainPkg.sortedDeps().map(p => p.config.name).filter(n => n !== pxt.appTarget.corepkg);
+            }
+        }
+
+        // For the projects, we need to save the base HEX file to the offline HEX cache
+        if (isPrj && pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
+            if (!pkgOptions) {
+                pxt.debug(`Failed to extract native image for project ${dirname}`);
+                return;
+            }
+
+            const hexFileExtInfo = [pkgOptions.extinfo, ...(pkgOptions.otherMultiVariants?.map(el => el.extinfo) || [])];
+            for (const extinfo of hexFileExtInfo) {
+                // Place the base HEX image in the hex cache if necessary
+                let sha = extinfo.sha;
+                let hex: string[] = extinfo.hexinfo.hex;
+                let hexFile = path.join(hexCachePath, sha + ".hex");
+
+                if (fs.existsSync(hexFile)) {
+                    pxt.debug(`native image already in offline cache for project ${dirname}: ${hexFile}`);
+                } else {
+                    nodeutil.writeFileSync(hexFile, hex.join(os.EOL));
+                    pxt.debug(`created native image in offline cache for project ${dirname}: ${hexFile}`);
+                }
+            }
+
+            if (!options.packaged) return;
+
+            // We want to cache a hex file for each of the native packages in case they are added to a project.
+            // This won't cover the whole matrix, but handles the common case of projects that add one extra
+            // extension in the offline app.
+            const allDeps = pkg.sortedDeps(true).map(dep => path.resolve(path.join(dirname, dep.verArgument())));
+            const config = nodeutil.readPkgConfig(dirname);
+            const host = pkg.host() as Host;
+
+            for (const extraPackage of packageDirs.filter(dirname => allDeps.indexOf(dirname) == -1)) {
+                process.chdir(path.join(rootDir, dirname));
+                host.fileOverrides["pxt.json"] = JSON.stringify({
+                    ...config,
+                    dependencies: {
+                        ...config.dependencies,
+                        extra: "file:" + path.relative(path.resolve("."), extraPackage)
                     }
-                    if (isHw) isPrj = true
-                    if (isCore && pxt.appTarget.simulator &&
-                        pxt.appTarget.simulator.dynamicBoardDefinition)
-                        isPrj = true
                 })
-                .then(() => options.quick ? null : testForBuildTargetAsync(isPrj || (!options.skipCore && isCore), builtInfo[dirname] && builtInfo[dirname].sha))
-                .then(res => {
-                    if (!res)
-                        return;
+                mainPkg = new pxt.MainPackage(host);
 
-                    const { options, api, sha: packageSha } = res;
-                    // For the projects, we need to save the base HEX file to the offline HEX cache
-                    if (isPrj && pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
-                        if (!options) {
-                            pxt.debug(`Failed to extract native image for project ${dirname}`);
-                            return;
-                        }
+                try {
+                    const extraRes = await testForBuildTargetAsync(true, null);
 
-                        const hexFileExtInfo = [options.extinfo, ...(options.otherMultiVariants?.map(el => el.extinfo) || [])];
+                    if (extraRes) {
+                        const hexFileExtInfo = [extraRes.options.extinfo, ...(extraRes.options.otherMultiVariants?.map(el => el.extinfo) || [])];
                         for (const extinfo of hexFileExtInfo) {
                             // Place the base HEX image in the hex cache if necessary
                             let sha = extinfo.sha;
@@ -2256,91 +2311,83 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                             }
                         }
                     }
-
-                    if (options && api) {
-                        // JRES is already included in the target bundle
-                        api.jres = undefined;
-                        builtInfo[dirname] = {
-                            apis: api,
-                            sha: packageSha
-                        };
-
-                        if (dirname === corepkg) {
-                            coreDependencies = mainPkg.sortedDeps().map(p => p.config.name).filter(n => n !== pxt.appTarget.corepkg);
-                        }
-                    }
-                });
-        }, /*includeProjects*/ true))
-        .then(() => {
-            // patch icons in bundled packages
-            Object.keys(cfg.bundledpkgs).forEach(pkgid => {
-                const res = cfg.bundledpkgs[pkgid];
-                // path config before storing
-                const config = JSON.parse(res[pxt.CONFIG_NAME]) as pxt.PackageConfig;
-                if (!config.icon)
-                    // try known location
-                    ['png', 'jpg'].map(ext => `/static/libs/${config.name}.${ext}`)
-                        .filter(ip => fs.existsSync("docs" + ip))
-                        .forEach(ip => config.icon = ip);
-
-                res[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(config);
-            })
-
-            // Trim redundant API info from packages
-            const coreInfo = builtInfo[corepkg];
-
-            if (coreInfo) {
-                // Don't bother with dependencies of the core package
-                if (coreDependencies) {
-                    coreDependencies
-                        .map(dep => builtInfo["libs/" + dep])
-                        .filter(bi => !!bi)
-                        .forEach(bi => bi.apis.byQName = {});
                 }
-
-                Object.keys(builtInfo).filter(k => k !== corepkg).map(k => builtInfo[k]).forEach(info => {
-                    deleteRedundantSymbols(coreInfo.apis.byQName, info.apis.byQName)
-                });
+                catch (e) {
+                    // We're not being smart and verifying that the packages are actually compatible, so
+                    // we might get some errors. Ignore them and keep going.
+                    pxt.debug(`Unable to cache hex for project ${dirname} with '${extraPackage}'`);
+                }
             }
+        }
+    }, true);
 
-            const compressedBuiltInfo = compressApiInfo(builtInfo);
-            cfg.apiInfo = compressedBuiltInfo;
+    // patch icons in bundled packages
+    Object.keys(cfg.bundledpkgs).forEach(pkgid => {
+        const res = cfg.bundledpkgs[pkgid];
+        // path config before storing
+        const config = JSON.parse(res[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+        if (!config.icon)
+            // try known location
+            ['png', 'jpg'].map(ext => `/static/libs/${config.name}.${ext}`)
+                .filter(ip => fs.existsSync("docs" + ip))
+                .forEach(ip => config.icon = ip);
 
-            const info = ciBuildInfo()
-            cfg.versions = {
-                branch: info.branch,
-                tag: info.tag,
-                commits: info.commitUrl,
-                target: readJson("package.json")["version"],
-                pxt: pxtVersion(),
-                pxtCrowdinBranch: pxtCrowdinBranch(),
-                targetCrowdinBranch: targetCrowdinBranch()
-            }
-            saveThemeJson(cfg, options.localDir, options.packaged)
-            fillInCompilerExtension(cfg);
+        res[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(config);
+    })
 
-            const webmanifest = buildWebManifest(cfg)
-            cfg = U.clone(cfg)
-            cfg.compile.switches = {} // otherwise we leak the switches set with PXT_COMPILE_SWITCHES=
-            const targetjson = nodeutil.stringify(cfg)
-            nodeutil.writeFileSync("built/target.json", targetjson)
-            nodeutil.writeFileSync("built/target.js", targetJsPrefix + targetjson)
-            pxt.setAppTarget(cfg) // make sure we're using the latest version
-            let targetlight = U.flatClone(cfg)
-            delete targetlight.bundleddirs;
-            delete targetlight.bundledpkgs;
-            delete targetlight.appTheme;
-            delete targetlight.apiInfo;
-            delete targetlight.tutorialInfo;
-            if (targetlight.compile)
-                delete targetlight.compile.compilerExtension;
-            const targetlightjson = nodeutil.stringify(targetlight);
-            nodeutil.writeFileSync("built/targetlight.json", targetlightjson)
-            nodeutil.writeFileSync("built/sim.webmanifest", nodeutil.stringify(webmanifest))
-        })
-        .then(() => {
-            console.log("target.json built.")
-        })
+    // Trim redundant API info from packages
+    const coreInfo = builtInfo[corepkg];
+
+    if (coreInfo) {
+        // Don't bother with dependencies of the core package
+        if (coreDependencies) {
+            coreDependencies
+                .map(dep => builtInfo["libs/" + dep])
+                .filter(bi => !!bi)
+                .forEach(bi => bi.apis.byQName = {});
+        }
+
+        Object.keys(builtInfo).filter(k => k !== corepkg).map(k => builtInfo[k]).forEach(info => {
+            deleteRedundantSymbols(coreInfo.apis.byQName, info.apis.byQName)
+        });
+    }
+
+    const compressedBuiltInfo = compressApiInfo(builtInfo);
+    cfg.apiInfo = compressedBuiltInfo;
+
+    const info = ciBuildInfo()
+    cfg.versions = {
+        branch: info.branch,
+        tag: info.tag,
+        commits: info.commitUrl,
+        target: readJson("package.json")["version"],
+        pxt: pxtVersion(),
+        pxtCrowdinBranch: pxtCrowdinBranch(),
+        targetCrowdinBranch: targetCrowdinBranch()
+    }
+    saveThemeJson(cfg, options.localDir, options.packaged)
+    fillInCompilerExtension(cfg);
+
+    const webmanifest = buildWebManifest(cfg)
+    cfg = U.clone(cfg)
+    cfg.compile.switches = {} // otherwise we leak the switches set with PXT_COMPILE_SWITCHES=
+    const targetjson = nodeutil.stringify(cfg)
+    nodeutil.writeFileSync("built/target.json", targetjson)
+    nodeutil.writeFileSync("built/target.js", targetJsPrefix + targetjson)
+    pxt.setAppTarget(cfg) // make sure we're using the latest version
+    let targetlight = U.flatClone(cfg)
+    delete targetlight.bundleddirs;
+    delete targetlight.bundledpkgs;
+    delete targetlight.appTheme;
+    delete targetlight.apiInfo;
+    delete targetlight.tutorialInfo;
+    if (targetlight.compile)
+        delete targetlight.compile.compilerExtension;
+    const targetlightjson = nodeutil.stringify(targetlight);
+    nodeutil.writeFileSync("built/targetlight.json", targetlightjson)
+    nodeutil.writeFileSync("built/sim.webmanifest", nodeutil.stringify(webmanifest))
+
+    console.log("target.json built.");
 }
 
 function fillInCompilerExtension(cfg: pxt.TargetBundle) {
