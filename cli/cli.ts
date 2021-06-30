@@ -1286,16 +1286,12 @@ function readLocalPxTarget() {
 }
 
 function forEachBundledPkgAsync(f: (pkg: pxt.MainPackage, dirname: string) => Promise<void>, includeProjects: boolean = false) {
-    let folders = pxt.appTarget.bundleddirs.slice();
+    let prev = process.cwd()
+    let folders = pxt.appTarget.bundleddirs;
     if (includeProjects) {
         let projects = nodeutil.allFiles("libs", 1, /*allowMissing*/ false, /*includeDirs*/ true).filter(f => /prj$/.test(f));
         folders = folders.concat(projects);
     }
-    return forEachPkgDirAsync(folders, f);
-}
-
-function forEachPkgDirAsync(folders: string[], f: (pkg: pxt.MainPackage, dirname: string) => Promise<void>) {
-    let prev = process.cwd()
 
     return U.promiseMapAllSeries(folders, (dirname) => {
         const host = new Host();
