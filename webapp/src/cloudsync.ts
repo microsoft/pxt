@@ -1,13 +1,10 @@
 // TODO cloud save indication in the editor somewhere
 
 import * as core from "./core";
-import * as pkg from "./package";
 import * as ws from "./workspace";
 import * as data from "./data";
-import * as cloud from "./cloud";
 
 type Header = pxt.workspace.Header;
-type File = pxt.workspace.File;
 
 import U = pxt.Util;
 const lf = U.lf
@@ -501,7 +498,7 @@ export function refreshToken() {
 }
 
 export function syncAsync(): Promise<void> {
-    return Promise.all([githubSyncAsync(), cloud.syncAsync()])
+    return githubSyncAsync()
         .then(() => { });
 }
 
@@ -510,183 +507,6 @@ function githubSyncAsync(): Promise<void> {
     return gp ? updateNameAsync(gp) : Promise.resolve();
 }
 
-function cloudSyncAsync(): Promise<void> {
-    if (!currentProvider)
-        return Promise.resolve(undefined)
-    if (!currentProvider.hasSync())
-        return updateNameAsync(currentProvider);
-
-    const provider = currentProvider as Provider;
-    let numUp = 0
-    let numDown = 0
-    let updated: pxt.Map<number> = {}
-
-    function uninstallAsync(h: Header) {
-        pxt.debug(`uninstall local ${h.blobId_}`)
-        h.isDeleted = true
-        h.blobVersion_ = "DELETED"
-        h.blobCurrent_ = false
-        return ws.saveAsync(h, null, true)
-    }
-
-    async function resolveConflictAsync(header: Header, cloudHeader: FileInfo) {
-        // rename current script
-        let newHd = await ws.duplicateAsync(header)
-        header.blobId_ = null
-        header.blobVersion_ = null
-        header.blobCurrent_ = false
-        await ws.saveAsync(header)
-        // get the cloud version
-        await syncDownAsync(newHd, cloudHeader)
-        // TODO move the user out of editor, or otherwise force reload
-    }
-
-    function syncDownAsync(header0: Header, cloudHeader: FileInfo) {
-        let header = header0
-        if (!header) {
-            header = <any>{
-                blobId: cloudHeader.id
-            }
-        }
-
-        numDown++
-        U.assert(header.blobId_ == cloudHeader.id)
-        let blobId = cloudHeader.version
-        pxt.debug(`sync down ${header.blobId_} - ${blobId}`)
-        return provider.downloadAsync(cloudHeader.id)
-            .catch(core.handleNetworkError)
-            .then((resp: FileInfo) => {
-                U.assert(resp.id == header.blobId_)
-                let files = resp.content
-                let hd = JSON.parse(files[HEADER_JSON] || "{}") as Header
-                delete files[HEADER_JSON]
-
-                header.blobCurrent_ = true
-                header.blobVersion_ = resp.version
-                // TODO copy anything else from the cloud?
-                header.name = hd.name || header.name || "???"
-                header.id = header.id || hd.id || U.guidGen()
-                header.pubId = hd.pubId
-                header.pubCurrent = hd.pubCurrent
-                delete header.isDeleted
-                header.saveId = null
-                header.target = pxt.appTarget.id
-                header.recentUse = hd.recentUse
-                header.modificationTime = hd.modificationTime
-                if (!header.modificationTime)
-                    header.modificationTime = resp.updatedAt || U.nowSeconds()
-                if (!header.recentUse)
-                    header.recentUse = header.modificationTime
-                updated[header.blobId_] = 1;
-
-                if (!header0)
-                    return ws.importAsync(header, files, true)
-                else
-                    return ws.saveAsync(header, files, true)
-            })
-            .then(() => progress(--numDown))
-    }
-
-    function progressMsg(m: string) {
-        core.infoNotification(m)
-    }
-
-    function progress(dummy: number) {
-        let msg = ""
-        if (numDown == 0 && numUp == 0)
-            msg = lf("All synced")
-        else {
-            msg = lf("Syncing") + " ("
-            if (numDown) msg += lf("{0} down", numDown)
-            if (numUp) msg += (numDown ? ", " : "") + lf("{0} up", numUp)
-            msg += ")"
-        }
-        progressMsg(msg)
-    }
-
-    function syncUpAsync(h: Header) {
-        numUp++
-        return syncOneUpAsync(provider, h)
-            .then(() => progress(--numUp))
-    }
-
-    function syncDeleteAsync(h: Header) {
-        return provider.deleteAsync(h.blobId_)
-            .then(() => uninstallAsync(h))
-    }
-
-    setStatus("syncing");
-
-    return updateNameAsync(provider)
-        .then(() => provider.listAsync())
-        .then(entries => {
-            // Get all local headers including those that had been deleted
-            const allScripts = ws.getHeaders(true)
-            const cloudHeaders = U.toDictionary(entries, e => e.id)
-            const existingHeaders = U.toDictionary(allScripts.filter(h => h.blobId_), h => h.blobId_)
-            //console.log('all', allScripts);
-            //console.log('cloud', cloudHeaders);
-            //console.log('existing', existingHeaders);
-            //console.log('syncthese', allScripts.filter(hd => hd.cloudSync));
-            // Only syncronize those that have been marked with cloudSync
-            let waitFor = allScripts.filter(hd => hd.cloudUserId).map(hd => {
-                if (cloudHeaders.hasOwnProperty(hd.blobId_)) {
-                    let chd = cloudHeaders[hd.blobId_]
-
-                    // The script was deleted locally, delete on cloud
-                    if (hd.isDeleted) {
-                        console.log("deleted header: " + hd.id)
-                        return syncDeleteAsync(hd)
-                    }
-
-                    if (chd.version == hd.blobVersion_) {
-                        if (hd.blobCurrent_) {
-                            // nothing to do
-                            return Promise.resolve()
-                        } else {
-                            console.log('might have synced up: ', hd.name);
-                            return syncUpAsync(hd)
-                        }
-                    } else {
-                        if (hd.blobCurrent_) {
-                            console.log('might have synced down: ', hd.name);
-                            return syncDownAsync(hd, chd)
-                        } else {
-                            console.log("there's a conflict with these two: ", hd, chd);
-                            return resolveConflictAsync(hd, chd)
-                        }
-                    }
-                } else {
-                    if (hd.blobVersion_)
-                        // this has been pushed once to the cloud - uninstall wins
-                        return uninstallAsync(hd)
-                    else {
-                        // never pushed before
-                        console.log('might have synced up: ', hd.name);
-                        return syncUpAsync(hd)
-                    }
-                }
-            })
-            waitFor = waitFor.concat(entries.filter(e => !existingHeaders[e.id]).map(e => syncDownAsync(null, e)))
-            progress(0)
-            return Promise.all(waitFor)
-        })
-        .then(() => {
-            setStatus("")
-            progressMsg(lf("Syncing done"))
-        })
-        .then(() => pkg.notifySyncDone(updated))
-        .catch(e => {
-            if (e.isSyncError) {
-                // for login errors there was already a notification
-                if (!e.isLoginError)
-                    core.warningNotification(e.message)
-                return
-            } else {
-                core.handleNetworkError(e)
-            }
-        })
-}
 
 export function loginCheck() {
     const provs = identityProviders();
@@ -747,13 +567,6 @@ export function saveToCloudAsync(h: Header) {
         return syncOneUpAsync(provider, h)
 
     return Promise.resolve();
-}
-
-function setStatus(s: string) {
-    if (s != status) {
-        status = s
-        data.invalidate("sync:status")
-    }
 }
 
 export function userInitials(username: string): string {
