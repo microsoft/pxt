@@ -334,7 +334,7 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
         if (fullSync) {
             hdrs = getLocalCloudHeaders();
         }
-    
+
         pxt.log(`Synchronizing ${hdrs.length} local project(s) with the cloud...`);
 
         const localCloudHeaders = getLocalCloudHeaders(hdrs);
@@ -388,7 +388,7 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
             return undefined;
         }
         let errors: Error[] = [];
-        
+
         async function syncOneUp(local: Header): Promise<void> {
             try {
                 // track the fact that we're checking for updates on each project
@@ -510,7 +510,7 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
         await U.promisePoolAsync(
             MAX_CONCURRENCY,
             U.values(remoteHeadersToProcess)
-            .filter(h => !h.isDeleted),  // don't bother downloading deleted projects
+                .filter(h => !h.isDeleted),  // don't bother downloading deleted projects
             syncOneDown);
 
         // log failed sync tasks.
