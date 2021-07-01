@@ -48,6 +48,10 @@ The example function here is using the array parameter:
 
 ![Function sample](/static/blog/microbit/2021-release/function-sample.png)
 
+## New micro:bit tutorials
+
+You may notice a few new tutorials available now for the new micro:bit.  These tutorials make use of the new micro:bit features like the microphone and the speaker.
+
 ## Updates to Loops
 
 When you open up the **Loops Toolbox** drawer, you may see a couple of changes.
