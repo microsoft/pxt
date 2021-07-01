@@ -50,7 +50,9 @@ The example function here is using the array parameter:
 
 ## New micro:bit tutorials
 
-You may notice a few new tutorials available now for the new micro:bit.  These tutorials make use of the new micro:bit features like the microphone and the speaker.
+You may notice a few new tutorials available now for the new micro:bit. These tutorials make use of the new micro:bit features like the microphone and the speaker.
+
+![New v2 tutorials](/static/blog/microbit/2021-release/v2tutorials.png)
 
 ## Updates to Loops
 
