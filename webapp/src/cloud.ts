@@ -329,8 +329,14 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
     if (!auth.hasIdentity()) { return []; }
     if (!await auth.loggedIn()) { return []; }
     try {
-        const partialSync = hdrs && hdrs.length > 0
-        pxt.log(`Synchronizing${partialSync ? ` ${hdrs.length} project(s) ` : " all projects "}with the cloud...`)
+        const fullSync = !hdrs;
+
+        if (fullSync) {
+            hdrs = getLocalCloudHeaders();
+        }
+    
+        pxt.log(`Synchronizing ${hdrs.length} local project(s) with the cloud...`);
+
         const localCloudHeaders = getLocalCloudHeaders(hdrs);
         const syncStart = U.nowSeconds()
         pxt.tickEvent(`identity.sync.start`)
@@ -350,22 +356,14 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
                 return undefined;
             }
         }
-        if (partialSync) {
-            // during a partial sync, get the full files for each cloud project and
-            // save them to our temporary cache
-            await Promise.all(hdrs.map(h => getWithCacheAsync(h)))
-        }
-        let remoteHeaders: Header[];
-        if (partialSync) {
-            remoteHeaders = U.values(remoteFiles).filter(f => f).map(f => f.header) // a partial set of cloud headers
-        }
-        else {
-            try {
-                remoteHeaders = await listAsync() // all cloud headers
-            } catch (e) {
-                // We're offline or something.
-                remoteHeaders = [];
-            }
+
+        // Fetch all cloud headers
+        let remoteHeaders = await listAsync();
+
+        // If not doing a full sync, filter to headers that already exist locally.
+        // TODO: Support passing a set of header ids to listAsync. Requires backend change.
+        if (!fullSync) {
+            remoteHeaders = remoteHeaders.filter(remote => localCloudHeaders.some(local => local.id === remote.id));
         }
         const numDiff = remoteHeaders.length - localCloudHeaders.length
         if (numDiff !== 0) {
@@ -389,9 +387,9 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
             }
             return undefined;
         }
-        let didProjectCountChange = false;
         let errors: Error[] = [];
-        let tasks: Promise<void>[] = localCloudHeaders.map(async (local) => {
+        
+        async function syncOneUp(local: Header): Promise<void> {
             try {
                 // track the fact that we're checking for updates on each project
                 updateCloudTempMetadata(local.id, { cloudInProgressSyncStartTime: U.nowSeconds() });
@@ -425,7 +423,6 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
                             pxt.debug(`Propagating ${projShorthand} delete from cloud.`)
                             const newHdr = await fromCloud(local, remoteFile);
                             if (!newHdr) throw new Error(`Failed to propagate cloud deletion of ${projShorthand}`);
-                            didProjectCountChange = true;
                             pxt.tickEvent(`identity.sync.cloudDeleteUpdatedLocal`)
                         }
                         // if it's not a delete...
@@ -461,7 +458,7 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
                         }
                     }
                     // no changes
-                } else if (!partialSync) {
+                } else if (fullSync) {
                     if (local.cloudVersion) {
                         pxt.debug(`Project ${local.id} incorrectly thinks it is synced to the cloud (ver: ${local.cloudVersion})`)
                         local.cloudVersion = null;
@@ -478,33 +475,43 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
                     }
                 }
                 else {
-                    // no remote verison so nothing to do
+                    // no remote version and not doing a full sync so nothing to do
                 }
             } catch (e) {
                 errors.push(e);
             }
-        });
-        tasks = [...tasks, ...U.values(remoteHeadersToProcess)
-            .filter(h => !h.isDeleted) // don't bother downloading deleted projects
-            .map(async (remote) => {
-                try {
-                    // Project exists remotely and not locally, download it.
-                    const remoteFile = await getWithCacheAsync(remote);
-                    if (!remoteFile) {
-                        pxt.tickEvent(`identity.sync.failed.importCloudProjectFailed`)
-                        throw new Error(`Failed to download ${remote.id} from the cloud.`)
-                    }
-                    pxt.debug(`importing new cloud project '${remoteFile.header.name}' (${remoteFile.header.id})`)
-                    const res = await fromCloud(null, remoteFile)
-                    if (!res) throw new Error(`Failed to import new cloud project ${remoteFile.header.name} ${remoteFile.header.id}`);
-                    pxt.tickEvent(`identity.sync.importCloudProject`)
-                    didProjectCountChange = true;
-                } catch (e) {
-                    errors.push(e);
-                }
-            })];
+        }
 
-        await Promise.all(tasks);
+        async function syncOneDown(remote: Header): Promise<void> {
+            try {
+                // Project exists remotely and not locally, download it.
+                const remoteFile = await getWithCacheAsync(remote);
+                if (!remoteFile) {
+                    pxt.tickEvent(`identity.sync.failed.importCloudProjectFailed`)
+                    throw new Error(`Failed to download ${remote.id} from the cloud.`)
+                }
+                pxt.debug(`importing new cloud project '${remoteFile.header.name}' (${remoteFile.header.id})`)
+                const res = await fromCloud(null, remoteFile)
+                if (!res) throw new Error(`Failed to import new cloud project ${remoteFile.header.name} ${remoteFile.header.id}`);
+                pxt.tickEvent(`identity.sync.importCloudProject`)
+            } catch (e) {
+                errors.push(e);
+            }
+        }
+
+        const MAX_CONCURRENCY = 10;
+
+        // Sync local changes to cloud
+        await U.promisePoolAsync(
+            MAX_CONCURRENCY,
+            localCloudHeaders,
+            syncOneUp);
+        // Sync remote changes from cloud
+        await U.promisePoolAsync(
+            MAX_CONCURRENCY,
+            U.values(remoteHeadersToProcess)
+            .filter(h => !h.isDeleted),  // don't bother downloading deleted projects
+            syncOneDown);
 
         // log failed sync tasks.
         errors.forEach(err => pxt.log(err));
