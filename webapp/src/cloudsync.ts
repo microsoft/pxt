@@ -1,10 +1,7 @@
 // TODO cloud save indication in the editor somewhere
 
 import * as core from "./core";
-import * as ws from "./workspace";
 import * as data from "./data";
-
-type Header = pxt.workspace.Header;
 
 import U = pxt.Util;
 const lf = U.lf
@@ -38,7 +35,6 @@ export interface IdentityProvider {
     logout(): void;
     loginCallback(rememberMe: boolean, queryString: pxt.Map<string>): void;
     getUserInfoAsync(): Promise<pxt.editor.UserInfo>;
-    hasSync(): boolean;
     user(): pxt.editor.UserInfo;
     setUser(user: pxt.editor.UserInfo): void;
 }
@@ -108,10 +104,6 @@ export class ProviderBase {
 
     constructor(public name: string, public friendlyName: string, public icon: string, public urlRoot: string) {
         this._token = pxt.storage.getLocal(this.name + TOKEN)
-    }
-
-    hasSync(): boolean {
-        return true;
     }
 
     syncError(msg: string) {
@@ -326,7 +318,6 @@ export function reconstructMeta(files: pxt.Map<string>) {
 }
 
 // these imports have to be after the ProviderBase class definition; otherwise we get crash on startup
-import * as googledrive from "./googledrive";
 import * as githubprovider from "./githubprovider";
 
 // All identity providers, including github
@@ -335,11 +326,6 @@ function identityProviders(): IdentityProvider[] {
         allProviders = {}
         const cl = pxt.appTarget.cloud
 
-        if (cl && cl.cloudProviders) {
-            [new googledrive.Provider()]
-                .filter(p => !!cl.cloudProviders[p.name])
-                .forEach(p => allProviders[p.name] = p);
-        }
         if (cl && cl.githubPackages) {
             const gh = new githubprovider.GithubProvider();
             allProviders[gh.name] = gh;
@@ -347,13 +333,6 @@ function identityProviders(): IdentityProvider[] {
     }
 
     return pxt.Util.values(allProviders);
-}
-
-/**
- * All cloud synchronization providers
- */
-export function providers(): Provider[] {
-    return identityProviders().filter(p => p.hasSync()).map(p => <Provider>p);
 }
 
 export function githubProvider(required?: boolean): githubprovider.GithubProvider {
@@ -377,50 +356,6 @@ function setProvider(impl: IdentityProvider) {
     if (impl !== currentProvider) {
         currentProvider = impl
         invalidateData();
-    }
-}
-
-async function syncOneUpAsync(provider: Provider, h: Header) {
-    let saveId = {}
-    h.saveId = saveId;
-    let text = await ws.getTextAsync(h.id)
-
-    text = U.flatClone(text)
-    text[HEADER_JSON] = JSON.stringify(h, null, 4)
-
-    let firstTime = h.blobId_ == null
-
-    let info: FileInfo
-
-    try {
-        info = await provider.uploadAsync(h.blobId_, h.blobVersion_, text)
-    } catch (e) {
-        if (e.statusCode == 409) {
-            core.warningNotification(lf("Conflict saving {0}; please do a full cloud sync", h.name))
-            return
-        } else {
-            throw e
-        }
-    }
-    pxt.debug(`synced up ${info.id}`)
-
-    if (firstTime) {
-        h.blobId_ = info.id
-    } else {
-        U.assert(h.blobId_ == info.id)
-    }
-    h.blobVersion_ = info.version
-    if (h.saveId === saveId)
-        h.blobCurrent_ = true
-    await ws.saveAsync(h, null, true)
-}
-
-export async function renameAsync(h: Header, newName: string) {
-    const provider = currentProvider && currentProvider.hasSync() && currentProvider as Provider;
-    try {
-        await provider.updateAsync(h.blobId_, newName)
-    } catch (e) {
-
     }
 }
 
@@ -453,38 +388,6 @@ function updateNameAsync(provider: IdentityProvider) {
         .then(info => {
             if (!info) // invalid token or info
                 return Promise.resolve();
-            // check for new identity
-            if (provider.hasSync()) {
-                const id = provider.name + ":" + info.id
-                const currId = pxt.storage.getLocal("cloudId")
-                if (currId && currId != id) {
-                    core.confirmAsync({
-                        header: lf("Sign in mismatch"),
-                        body: lf("You have previously signed in with a different account. You can sign out now, which will locally clear all projects, or you can try to sign in again."),
-                        agreeClass: "red",
-                        agreeIcon: "sign out",
-                        agreeLbl: lf("Sign out"),
-                        disagreeLbl: lf("Sign in again"),
-                        disagreeIcon: "user circle"
-                    }).then(res => {
-                        if (res) {
-                            ws.resetAsync()
-                                .then(() => {
-                                    // FIXME: should call ProjectView.reloadEditor()
-                                    location.hash = "#reload"
-                                    location.reload()
-                                })
-                        } else {
-                            console.log("Show the cloud sign in dialog")
-                            //dialogs.showCloudSignInDialog()
-                        }
-                    })
-                    // never return
-                    return new Promise<void>(() => { })
-                } else {
-                    pxt.storage.setLocal("cloudId", id)
-                }
-            }
             if (!info.initials)
                 info.initials = userInitials(info.name);
             provider.setUser(info);
@@ -558,17 +461,6 @@ export function loginCheck() {
         impl.loginCheck();
 }
 
-export function saveToCloudAsync(h: Header) {
-    if (!currentProvider || !currentProvider.hasSync())
-        return Promise.resolve();
-
-    const provider = currentProvider as Provider;
-    if (provider)
-        return syncOneUpAsync(provider, h)
-
-    return Promise.resolve();
-}
-
 export function userInitials(username: string): string {
     if (!username) return "?";
     // Parse the user name for user initials
@@ -585,18 +477,11 @@ function syncApiHandler(p: string) {
             return !!provider;
         case "status":
             return status;
-        case "hascloud":
-            return providers().length > 0
-        case "hassync":
-            return provider && provider.hasSync();
         case "provider":
             return provider && provider.name;
         case "providericon":
             if (provider)
                 return provider.icon;
-            const prs = providers();
-            if (prs.length == 1)
-                return prs[0].icon;
             return "user";
     }
     return null
@@ -647,8 +532,6 @@ function invalidateData() {
     data.invalidate("sync:status")
     data.invalidate("sync:user")
     data.invalidate("sync:loggedin")
-    data.invalidate("sync:hascloud")
-    data.invalidate("sync:hassync")
     data.invalidate("sync:provider")
     data.invalidate("sync:providericon")
     data.invalidate("github:user");

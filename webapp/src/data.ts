@@ -347,14 +347,6 @@ export class Component<TProps, TState> extends React.Component<TProps, TState> i
         return getCached(this, path)
     }
 
-    hasCloud(): boolean {
-        return !!this.getData("sync:hascloud");
-    }
-
-    hasSync(): boolean {
-        return !!this.getData("sync:hassync")
-    }
-
     onDataChanged(): void {
         this.forceUpdate();
     }

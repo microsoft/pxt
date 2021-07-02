@@ -183,10 +183,6 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                 return false; // null means cancelled
             return workspace.duplicateAsync(header, res)
                 .then(clonedHeader => {
-                    delete clonedHeader.blobId_
-                    delete clonedHeader.blobVersion_
-                    delete clonedHeader.blobCurrent_
-
                     return workspace.saveAsync(clonedHeader);
                 })
                 .then(() => {
