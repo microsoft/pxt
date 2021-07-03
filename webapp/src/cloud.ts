@@ -105,7 +105,56 @@ function getAsync(h: Header): Promise<File> {
     });
 }
 
-export type CloudStateSummary = ""/*none*/ | "synced" | "justSynced" | "offline" | "syncing" | "conflict" | "localEdits";
+export type CloudStatus = "none" | "synced" | "justSynced" | "offline" | "syncing" | "conflict" | "localEdits";
+
+export type CloudStatusInfo = {
+    value: CloudStatus,
+    icon?: string,
+    tooltip?: string,
+    indicator?: string
+};
+
+const cloudStatusInfos: { [index in CloudStatus]: CloudStatusInfo } = {
+    "none": {
+        value: "none",
+    },
+    "synced": {
+        value: "synced",
+        icon: "cloud-saved-b",
+        tooltip: lf("Project saved to cloud"),
+        indicator: "",
+    },
+    ["justSynced"]: {
+        value: "justSynced",
+        icon: "cloud-saved-b",
+        tooltip: lf("Project saved to cloud"),
+        indicator: "",
+    },
+    ["offline"]: {
+        value: "offline",
+        icon: "cloud-error-b",
+        tooltip: lf("Unable to connect to cloud"),
+        indicator: lf("offline"),
+    },
+    ["syncing"]: {
+        value: "syncing",
+        icon: "cloud-saving-b",
+        tooltip: lf("Syncing project to the cloud..."),
+        indicator: lf("syncing..."),
+    },
+    ["conflict"]: {
+        value: "conflict",
+        icon: "cloud-error-b",
+        tooltip: lf("Project was edited in two places and the changes conflict"),
+        indicator: "!"
+    },
+    ["localEdits"]: {
+        value: "localEdits",
+        icon: "cloud-saving-b",
+        tooltip: lf("Saving project to the cloud..."),
+        indicator: "*"
+    },
+};
 
 // temporary per-project cloud metadata is only kept in memory and shouldn't be persisted to storage.
 export class CloudTempMetadata {
@@ -134,22 +183,22 @@ export class CloudTempMetadata {
         }, 1500);
     }
 
-    public cloudStateSummary(): CloudStateSummary {
+    public cloudStatus(): CloudStatusInfo {
         const h = workspace.getHeader(this.headerId);
         if (!h.cloudUserId)
-            return "" // none
+            return undefined;
         if (!auth.loggedInSync())
-            return "offline"
+            return cloudStatusInfos["offline"];
         if (this._syncStartTime > 0)
-            return "syncing"
+            return cloudStatusInfos["syncing"];
         if (!h.cloudCurrent)
-            return "localEdits"
+            return cloudStatusInfos["localEdits"];
         if (this.justSynced)
-            return "justSynced"
+            return cloudStatusInfos["justSynced"];
         if (h.cloudLastSyncTime > 0)
-            return "synced"
+            return cloudStatusInfos["synced"];
         pxt.reportError("cloudsave", `Invalid project cloud state for project ${h.name}(${h.id.substr(0, 4)}..): user: ${h.cloudUserId}, inProg: ${this._syncStartTime}, cloudCurr: ${h.cloudCurrent}, lastCloud: ${h.cloudLastSyncTime}`);
-        return ""
+        return undefined;
     }
 }
 const temporaryHeaderMetadata: { [key: string]: CloudTempMetadata } = {};

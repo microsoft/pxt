@@ -298,32 +298,17 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
 
     getCloudStatus(header: pxt.workspace.Header): JSX.Element {
         const cloudMd = this.getData<cloud.CloudTempMetadata>(`${cloud.HEADER_CLOUDSTATE}:${header.id}`);
-        const cloudState = cloudMd.cloudStateSummary();
-        const showCloudButton = !!cloudState && auth.hasIdentity();
+        const cloudStatus = cloudMd.cloudStatus();
+        const showCloudButton = !!cloudStatus && cloudStatus.value !== "none" && auth.hasIdentity();
         if (!showCloudButton) { return undefined; }
-        const getCloudIcon = () => {
-            if (cloudState === "syncing" || cloudState === "localEdits")
-                return "cloud-saving-b"
-            if (cloudState === "conflict" || cloudState === "offline")
-                return "cloud-error-b"
-            return "cloud-saved-b"
-        }
-        const getCloudTooltip = () => {
-            if (cloudState === "syncing" || cloudState === "localEdits")
-                return lf("Saving project to the cloud...")
-            if (cloudState === "conflict")
-                return lf("Project was edited in two places and the changes conflict")
-            if (cloudState === "offline")
-                return lf("Unable to connect to cloud")
-            return lf("Project saved to cloud")
-        }
+
         return (<div className="cloudstatusarea">
-            {showCloudButton && <i className={"ui large right floated cloudicon xicon " + getCloudIcon()} title={getCloudTooltip()}></i>}
-            {showCloudButton && cloudState === "localEdits" && <span className="ui mobile hide cloudtext">{lf("saving...")}</span>}
-            {showCloudButton && cloudState === "syncing" && <span className="ui mobile hide cloudtext">{lf("saving...")}</span>}
-            {showCloudButton && cloudState === "justSynced" && <span className="ui mobile hide cloudtext">{lf("saved!")}</span>}
-            {showCloudButton && cloudState === "offline" && <span className="ui mobile hide cloudtext">{lf("offline")}</span>}
-            {showCloudButton && cloudState === "conflict" && <span className="ui mobile hide cloudtext">{lf("conflict!")}</span>}
+            {showCloudButton && <i className={"ui large right floated cloudicon xicon " + cloudStatus.icon} title={cloudStatus.tooltip}></i>}
+            {showCloudButton && cloudStatus.value === "localEdits" && <span className="ui mobile hide cloudtext">{lf("saving...")}</span>}
+            {showCloudButton && cloudStatus.value === "syncing" && <span className="ui mobile hide cloudtext">{lf("saving...")}</span>}
+            {showCloudButton && cloudStatus.value === "justSynced" && <span className="ui mobile hide cloudtext">{lf("saved!")}</span>}
+            {showCloudButton && cloudStatus.value === "offline" && <span className="ui mobile hide cloudtext">{lf("offline")}</span>}
+            {showCloudButton && cloudStatus.value === "conflict" && <span className="ui mobile hide cloudtext">{lf("conflict!")}</span>}
         </div>);
     }
 

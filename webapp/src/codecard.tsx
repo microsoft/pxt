@@ -84,8 +84,9 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
         const header = card.projectId ? this.getData<pxt.workspace.Header>(`header:${card.projectId}`) : null;
         const name = header ? header.name : card.name;
         const cloudMd = card.projectId ? this.getData<cloud.CloudTempMetadata>(`${cloud.HEADER_CLOUDSTATE}:${card.projectId}`) : null;
-        const cloudState = header ? cloudMd?.cloudStateSummary() : "";
-        const lastCloudSave = cloudState ? Math.min(header.cloudLastSyncTime, header.modificationTime) : card.time;
+        const cloudStatus = cloudMd?.cloudStatus();
+        const lastCloudSave = cloudStatus ? Math.min(header.cloudLastSyncTime, header.modificationTime) : card.time;
+        const cloudShowTimestamp = cloudStatus && (cloudStatus.value === "synced" || cloudStatus.value === "justSynced" || cloudStatus.value === "localEdits");
 
         const ariaLabel = card.ariaLabel || card.title || card.shortName || name;
 
@@ -130,23 +131,14 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
                 </div> : undefined}
             {card.time ? <div className="meta">
                 {card.tutorialLength ? <span className={`ui tutorial-progress ${tutorialDone ? "green" : "orange"} left floated label`}><i className={`${tutorialDone ? "trophy" : "circle"} icon`}></i>&nbsp;{lf("{0}/{1}", (card.tutorialStep || 0) + 1, card.tutorialLength)}</span> : undefined}
-                {!cloudState && card.time && <span key="date" className="date">{pxt.Util.timeSince(card.time)}</span>}
-                {(cloudState === "synced" || cloudState === "justSynced") &&
-                    <span key="date" className="date">{pxt.Util.timeSince(lastCloudSave)}</span>
+                {!cloudStatus && card.time && <span key="date" className="date">{pxt.Util.timeSince(card.time)}</span>}
+                {cloudStatus && cloudShowTimestamp &&
+                    <span key="date" className="date">{pxt.Util.timeSince(lastCloudSave)}{cloudStatus.indicator}</span>
                 }
-                {cloudState === "localEdits" &&
-                    <span key="date" className="date">{pxt.Util.timeSince(lastCloudSave)}*</span>
+                {cloudStatus && !cloudShowTimestamp &&
+                    <span key="date" className="date">{cloudStatus.indicator}</span>
                 }
-                {cloudState === "conflict" &&
-                    lf("needs attention!")
-                }
-                {cloudState === "offline" &&
-                    lf("offline")
-                }
-                {cloudState === "syncing" &&
-                    lf("syncing...")
-                }
-                {cloudState &&
+                {cloudStatus &&
                     // TODO: alternate icons depending on state
                     <i className="ui large right floated icon cloud"></i>
                 }
