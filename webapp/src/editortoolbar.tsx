@@ -296,6 +296,37 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         return el;
     }
 
+    getCloudStatus(header: pxt.workspace.Header): JSX.Element {
+        const cloudMd = this.getData<cloud.CloudTempMetadata>(`${cloud.HEADER_CLOUDSTATE}:${header.id}`);
+        const cloudState = cloudMd.cloudStateSummary();
+        const showCloudButton = !!cloudState && auth.hasIdentity();
+        if (!showCloudButton) { return undefined; }
+        const getCloudIcon = () => {
+            if (cloudState === "syncing" || cloudState === "localEdits")
+                return "cloud-saving-b"
+            if (cloudState === "conflict" || cloudState === "offline")
+                return "cloud-error-b"
+            return "cloud-saved-b"
+        }
+        const getCloudTooltip = () => {
+            if (cloudState === "syncing" || cloudState === "localEdits")
+                return lf("Saving project to the cloud...")
+            if (cloudState === "conflict")
+                return lf("Project was edited in two places and the changes conflict")
+            if (cloudState === "offline")
+                return lf("Unable to connect to cloud")
+            return lf("Project saved to cloud")
+        }
+        return (<div className="cloudstatusarea">
+            {showCloudButton && <i className={"ui large right floated cloudicon xicon " + getCloudIcon()} title={getCloudTooltip()}></i>}
+            {showCloudButton && cloudState === "localEdits" && <span className="ui mobile hide cloudtext">{lf("saving...")}</span>}
+            {showCloudButton && cloudState === "syncing" && <span className="ui mobile hide cloudtext">{lf("saving...")}</span>}
+            {showCloudButton && cloudState === "justSynced" && <span className="ui mobile hide cloudtext">{lf("saved!")}</span>}
+            {showCloudButton && cloudState === "offline" && <span className="ui mobile hide cloudtext">{lf("offline")}</span>}
+            {showCloudButton && cloudState === "conflict" && <span className="ui mobile hide cloudtext">{lf("conflict!")}</span>}
+        </div>);
+    }
+
     renderCore() {
         const { tutorialOptions, projectName, compiling, isSaving, simState, debugging, editorState } = this.props.parent.state;
         const header = this.getData(`header:${this.props.parent.state.header.id}`) ?? this.props.parent.state.header;
@@ -361,28 +392,6 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
             saveButtonClasses = "disabled";
         }
 
-        // cloud status
-        const cloudMd = this.getData<cloud.CloudTempMetadata>(`${cloud.HEADER_CLOUDSTATE}:${header.id}`);
-        const cloudState = cloud.getCloudSummary(header, cloudMd);
-        const showCloudButton = !!cloudState && auth.hasIdentity()
-        const getCloudIcon = () => {
-            if (cloudState === "syncing" || cloudState === "localEdits")
-                return "cloud-saving-b"
-            if (cloudState === "conflict" || cloudState === "offline")
-                return "cloud-error-b"
-            return "cloud-saved-b"
-        }
-        const getCloudTooltip = () => {
-            if (cloudState === "syncing" || cloudState === "localEdits")
-                return lf("Saving project to the cloud...")
-            if (cloudState === "conflict")
-                return lf("Project was edited in two places and the changes conflict.")
-            if (cloudState === "offline")
-                return lf("Unable to connect to the cloud.")
-            return lf("Project saved to the cloud.")
-        }
-        const cloudButton = <EditorToolbarButton icon={"xicon " + getCloudIcon()} className={`editortools-btn`} title={getCloudTooltip()} onButtonClick={this.cloudButtonClick} view='computer' />;
-
         return <div id="editortools" className="ui" role="region" aria-label={lf("Editor toolbar")}>
             <div id="downloadArea" role="menu" className="ui column items">{headless &&
                 <div className="ui item">
@@ -403,8 +412,8 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
                     <div className={`ui right ${showSave ? "labeled" : ""} input projectname-input projectname-computer`}>
                         {showProjectRename && this.getSaveInput(showSave, "fileNameInput2", projectName, showProjectRenameReadonly)}
                         {showGithub && <githubbutton.GithubButton parent={this.props.parent} key={`githubbtn${computer}`} />}
-                        {showCloudButton && cloudButton}
-                </div>
+                        {this.getCloudStatus(header)}
+                    </div>
                 </div>}
             <div id="editorToolbarArea" role="menu" className="ui column items">
                 {showUndoRedo && <div className="ui icon buttons">{this.getUndoRedo(computer)}</div>}

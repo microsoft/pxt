@@ -83,8 +83,8 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
         // they won't update dynamically when headers change.
         const header = card.projectId ? this.getData<pxt.workspace.Header>(`header:${card.projectId}`) : null;
         const name = header ? header.name : card.name;
-        const cloudMd = card.projectId ? this.getData<cloud.CloudTempMetadata>(`${cloud.HEADER_CLOUDSTATE}:${card.projectId}`) : {};
-        const cloudState = header ? cloud.getCloudSummary(header, cloudMd) : "";
+        const cloudMd = card.projectId ? this.getData<cloud.CloudTempMetadata>(`${cloud.HEADER_CLOUDSTATE}:${card.projectId}`) : null;
+        const cloudState = header ? cloudMd?.cloudStateSummary() : "";
         const lastCloudSave = cloudState ? Math.min(header.cloudLastSyncTime, header.modificationTime) : card.time;
 
         const ariaLabel = card.ariaLabel || card.title || card.shortName || name;
@@ -131,7 +131,7 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
             {card.time ? <div className="meta">
                 {card.tutorialLength ? <span className={`ui tutorial-progress ${tutorialDone ? "green" : "orange"} left floated label`}><i className={`${tutorialDone ? "trophy" : "circle"} icon`}></i>&nbsp;{lf("{0}/{1}", (card.tutorialStep || 0) + 1, card.tutorialLength)}</span> : undefined}
                 {!cloudState && card.time && <span key="date" className="date">{pxt.Util.timeSince(card.time)}</span>}
-                {(cloudState === "saved" || cloudState === "justSaved") &&
+                {(cloudState === "synced" || cloudState === "justSynced") &&
                     <span key="date" className="date">{pxt.Util.timeSince(lastCloudSave)}</span>
                 }
                 {cloudState === "localEdits" &&
