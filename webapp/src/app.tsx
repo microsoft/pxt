@@ -1270,7 +1270,7 @@ export class ProjectView
             let tutorialOptions = this.state.tutorialOptions;
             tutorialOptions.tutorialStep = step;
             tutorialOptions.tutorialStepExpanded = false;
-            this.setState({ tutorialOptions: tutorialOptions });
+            this.setState({ tutorialOptions: tutorialOptions }, () => this.postTutorialProgress());
             const showHint = tutorialOptions.tutorialStepInfo[step].showHint;
             if (showHint) this.showTutorialHint();
 
@@ -1293,6 +1293,22 @@ export class ProjectView
 
         // Update the state with the code status, so the tutorial card can re-render
         this.setState({ tutorialOptions: tutorialOptions });
+    }
+
+    protected postTutorialProgress() {
+        const currentStep = this.state.tutorialOptions?.tutorialStep || this.state.header.tutorialCompleted?.steps || 0;
+        const totalSteps = this.state.tutorialOptions?.tutorialStepInfo?.length || this.state.header.tutorialCompleted?.steps || 0;
+        const tutorialId = this.state.tutorialOptions?.tutorial || this.state.header?.tutorialCompleted.id
+
+        pxt.editor.postHostMessageAsync({
+            type: "pxthost",
+            action: "tutorialevent",
+            currentStep,
+            totalSteps,
+            tutorialId,
+            projectHeaderId: this.state.header.id,
+            isCompleted: !!this.state.header.tutorialCompleted
+        } as pxt.editor.EditorMessageTutorialEventRequest)
     }
 
     handleMessage(msg: pxsim.SimulatorMessage) {
@@ -2006,6 +2022,11 @@ export class ProjectView
             })
     }
 
+    openProjectByHeaderIdAsync(headerId: string) {
+        const header = workspace.getHeader(headerId);
+        return this.loadHeaderAsync(header);
+    }
+
     initDragAndDrop() {
         draganddrop.setupDragAndDrop(document.body,
             file => file.size < 1000000 && this.isHexFile(file.name) || this.isBlocksFile(file.name),
@@ -2389,7 +2410,8 @@ export class ProjectView
             cloudUserId: this.getUser()?.id,
             temporary: options.temporary,
             tutorial: options.tutorial,
-            extensionUnderTest: options.extensionUnderTest
+            extensionUnderTest: options.extensionUnderTest,
+            isSkillmapProject: options.skillmapProject
         }, files);
 
         await this.loadHeaderAsync(hd, { filters: options.filters });
@@ -3749,8 +3771,11 @@ export class ProjectView
                     tutorial: options,
                     preferredEditor: editor,
                     dependencies,
-                    temporary: temporary
-                }).then(() => autoChooseBoard ? this.autoChooseBoardAsync(features) : Promise.resolve());
+                    temporary: temporary,
+                    skillmapProject: isSkillmap()
+                })
+                .then(() => autoChooseBoard ? this.autoChooseBoardAsync(features) : Promise.resolve())
+                .then(() => this.postTutorialProgress())
             })
             .catch((e) => {
                 pxt.reportException(e, { tutorialId });
@@ -3786,7 +3811,7 @@ export class ProjectView
 
         // clear tutorial field
         const tutorial = this.state.header.tutorial;
-        if (tutorial) {
+        if (tutorial && !this.state.header.isSkillmapProject) {
             // don't keep track of completion for microtutorials
             if (this.state.tutorialOptions && this.state.tutorialOptions.tutorialRecipe)
                 this.state.header.tutorialCompleted = undefined;
@@ -3811,7 +3836,10 @@ export class ProjectView
                 .then(() => {
                     let curr = pkg.mainEditorPkg().header;
                     return this.loadHeaderAsync(curr);
-                }).finally(() => core.hideLoading("leavingtutorial"))
+                }).finally(() => {
+                    core.hideLoading("leavingtutorial")
+                    this.postTutorialProgress();
+                })
                 .then(() => {
                     if (pxt.appTarget.cloud &&
                         pxt.appTarget.cloud.sharing &&
@@ -4636,6 +4664,12 @@ function clearHashChange() {
 function saveAsBlocks(): boolean {
     try {
         return /saveblocks=1/.test(window.location.href) && !!pkg.mainPkg.readFile("main.blocks")
+    } catch (e) { return false; }
+}
+
+function isSkillmap(): boolean {
+    try {
+        return /skill(?:s?)Map=1/.test(window.location.href);
     } catch (e) { return false; }
 }
 

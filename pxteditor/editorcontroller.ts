@@ -44,6 +44,7 @@ namespace pxt.editor {
         | "newproject"
         | "importproject"
         | "importtutorial"
+        | "openheader"
         | "proxytosim" // EditorMessageSimulatorMessageProxyRequest
         | "undo"
         | "redo"
@@ -73,6 +74,7 @@ namespace pxt.editor {
         | "event"
         | "simevent"
         | "info" // return info data`
+        | "tutorialevent"
 
         // package extension messasges
         | ExtInitializeType
@@ -96,6 +98,15 @@ namespace pxt.editor {
         message?: string;
         // custom data
         data?: Map<string | number>;
+    }
+
+    export interface EditorMessageTutorialEventRequest extends EditorMessageRequest {
+        action: "tutorialevent";
+        currentStep: number;
+        totalSteps: number;
+        isCompleted: boolean;
+        tutorialId: string;
+        projectHeaderId: string;
     }
 
     export interface EditorMessageStopRequest extends EditorMessageRequest {
@@ -196,6 +207,11 @@ namespace pxt.editor {
         action: "importtutorial";
         // markdown to load
         markdown: string;
+    }
+
+    export interface EditorMessageOpenHeaderRequest extends EditorMessageRequest {
+        action: "openheader";
+        headerId: string;
     }
 
     export interface EditorMessageRenderBlocksRequest extends EditorMessageRequest {
@@ -383,6 +399,10 @@ namespace pxt.editor {
                                             filters: load.filters,
                                             searchBar: load.searchBar
                                         }));
+                                }
+                                case "openheader": {
+                                    const open = data as EditorMessageOpenHeaderRequest;
+                                    return projectView.openProjectByHeaderIdAsync(open.headerId)
                                 }
                                 case "startactivity": {
                                     const msg = data as EditorMessageStartActivity;
