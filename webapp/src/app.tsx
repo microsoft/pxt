@@ -3393,9 +3393,6 @@ export class ProjectView
                     this.setState({
                         projectName: name
                     })
-            })
-            .then(() => {
-                return workspace.renameAsync(this.state.header, name);
             });
     }
 

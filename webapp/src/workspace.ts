@@ -505,7 +505,6 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
         && (h.isDeleted || text && await hasUserFileChanges())
     if (isUserChange) {
         h.pubCurrent = false
-        h.blobCurrent_ = false
         h.cloudCurrent = false
         h.modificationTime = U.nowSeconds();
         h.targetVersion = h.targetVersion || "0.0.0";
@@ -535,17 +534,6 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
         e.text = text
     if (text || h.isDeleted) {
         h.saveId = null
-    }
-
-    // perma-delete
-    if (h.isDeleted && h.blobVersion_ == "DELETED") {
-        let idx = allScripts.indexOf(e)
-        U.assert(idx >= 0)
-        allScripts.splice(idx, 1)
-        return headerQ.enqueue(h.id, () =>
-            fixupVersionAsync(e).then(() =>
-                impl.deleteAsync ? impl.deleteAsync(h, e.version) : impl.setAsync(h, e.version, {})))
-            .finally(() => refreshHeadersSession())
     }
 
     // check if we have dynamic boards, store board info for home page rendering
@@ -580,7 +568,6 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
 
         if (isUserChange) {
             h.pubCurrent = false;
-            h.blobCurrent_ = false;
             h.cloudCurrent = false;
             h.saveId = null;
         }
@@ -635,11 +622,6 @@ export function installAsync(h0: InstallHeader, text: ScriptText) {
     return pxt.github.cacheProjectDependenciesAsync(cfg)
         .then(() => importAsync(h, text))
         .then(() => h);
-}
-
-export function renameAsync(h: Header, newName: string) {
-    checkHeaderSession(h);
-    return cloudsync.renameAsync(h, newName);
 }
 
 export async function duplicateAsync(h: Header, newName?: string): Promise<Header> {
