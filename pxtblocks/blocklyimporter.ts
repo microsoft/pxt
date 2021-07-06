@@ -246,6 +246,18 @@ namespace pxt.blocks {
                     }));
             }
 
+            // Blockly doesn't allow top-level shadow blocks. We've had bugs in the past where shadow blocks
+            // have ended up as top-level blocks, so promote them to regular blocks just in case
+            const shadows = getDirectChildren(doc.children.item(0), "shadow");
+            for (const shadow of shadows) {
+                const block = doc.createElement("block");
+                shadow.getAttributeNames().forEach(attr => block.setAttribute(attr, shadow.getAttribute(attr)));
+                for (let j = 0; j < shadow.childNodes.length; j++) {
+                    block.appendChild(shadow.childNodes.item(j));
+                }
+                shadow.replaceWith(block);
+            }
+
             // build upgrade map
             const enums: Map<string> = {};
             Object.keys(info.apis.byQName).forEach(k => {
