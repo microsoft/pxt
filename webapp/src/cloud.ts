@@ -47,24 +47,6 @@ export function excludeCloudMetadataFields(h: Header): Header {
     return excludeMetadataFields(h, cloudMetadataFields);
 }
 
-export type CloudStateSummary = ""/*none*/ | "saved" | "justSaved" | "offline" | "syncing" | "conflict" | "localEdits";
-export function getCloudSummary(h: pxt.workspace.Header, md: CloudTempMetadata): CloudStateSummary {
-    if (!h.cloudUserId || !md)
-        return "" // none
-    if (!auth.loggedInSync())
-        return "offline"
-    if (md.cloudInProgressSyncStartTime > 0)
-        return "syncing"
-    if (!h.cloudCurrent)
-        return "localEdits"
-    if (md.justSaved)
-        return "justSaved"
-    if (h.cloudLastSyncTime > 0)
-        return "saved"
-    pxt.reportError("cloudsave", `Invalid project cloud state for project ${h.name}(${h.id.substr(0, 4)}..): user: ${h.cloudUserId}, inProg: ${md.cloudInProgressSyncStartTime}, cloudCurr: ${h.cloudCurrent}, lastCloud: ${h.cloudLastSyncTime}`);
-    return ""
-}
-
 async function listAsync(): Promise<Header[]> {
     return new Promise(async (resolve, reject) => {
         const result = await auth.apiAsync<CloudProject[]>("/api/user/project");
@@ -91,81 +73,175 @@ async function listAsync(): Promise<Header[]> {
 
 function getAsync(h: Header): Promise<File> {
     return new Promise(async (resolve, reject) => {
-        const result = await auth.apiAsync<CloudProject>(`/api/user/project/${h.id}`);
-        if (result.success) {
-            const userId = auth.user()?.id;
-            const project = result.resp;
-            const rawHeader = JSON.parse(project.header);
-            const header = excludeLocalOnlyMetadataFields(rawHeader)
-            const text = JSON.parse(project.text);
-            const version = project.version;
-            const file: File = {
-                header,
-                text,
-                version
-            };
-            file.header.cloudCurrent = true;
-            file.header.cloudVersion = file.version;
-            file.header.cloudUserId = userId;
-            file.header.cloudLastSyncTime = U.nowSeconds();
-            pxt.tickEvent(`identity.cloudApi.getProject.success`);
-            resolve(file);
-        } else {
-            pxt.tickEvent(`identity.cloudApi.getProject.failed`);
-            reject(result.err);
+        const cloudMeta = getCloudTempMetadata(h.id);
+        try {
+            cloudMeta.syncInProgress();
+            const result = await auth.apiAsync<CloudProject>(`/api/user/project/${h.id}`);
+            if (result.success) {
+                const userId = auth.user()?.id;
+                const project = result.resp;
+                const rawHeader = JSON.parse(project.header);
+                const header = excludeLocalOnlyMetadataFields(rawHeader)
+                const text = JSON.parse(project.text);
+                const version = project.version;
+                const file: File = {
+                    header,
+                    text,
+                    version
+                };
+                file.header.cloudCurrent = true;
+                file.header.cloudVersion = file.version;
+                file.header.cloudUserId = userId;
+                file.header.cloudLastSyncTime = U.nowSeconds();
+                pxt.tickEvent(`identity.cloudApi.getProject.success`);
+                resolve(file);
+            } else {
+                pxt.tickEvent(`identity.cloudApi.getProject.failed`);
+                reject(result.err);
+            }
+        } finally {
+            cloudMeta.syncFinished();
         }
     });
 }
 
+export type CloudStatus = "none" | "synced" | "justSynced" | "offline" | "syncing" | "conflict" | "localEdits";
+
+export type CloudStatusInfo = {
+    value: CloudStatus,
+    icon?: string,
+    tooltip?: string,
+    indicator?: string
+};
+
+const cloudStatusInfos: { [index in CloudStatus]: CloudStatusInfo } = {
+    "none": {
+        value: "none",
+    },
+    "synced": {
+        value: "synced",
+        icon: "cloud-saved-b",
+        tooltip: lf("Project saved to cloud"),
+        indicator: "",
+    },
+    ["justSynced"]: {
+        value: "justSynced",
+        icon: "cloud-saved-b",
+        tooltip: lf("Project saved to cloud"),
+        indicator: "",
+    },
+    ["offline"]: {
+        value: "offline",
+        icon: "cloud-error-b",
+        tooltip: lf("Unable to connect to cloud"),
+        indicator: lf("offline"),
+    },
+    ["syncing"]: {
+        value: "syncing",
+        icon: "cloud-saving-b",
+        tooltip: lf("Syncing project to the cloud..."),
+        indicator: lf("syncing..."),
+    },
+    ["conflict"]: {
+        value: "conflict",
+        icon: "cloud-error-b",
+        tooltip: lf("Project was edited in two places and the changes conflict"),
+        indicator: "!"
+    },
+    ["localEdits"]: {
+        value: "localEdits",
+        icon: "cloud-saving-b",
+        tooltip: lf("Saving project to the cloud..."),
+        indicator: "*"
+    },
+};
+
 // temporary per-project cloud metadata is only kept in memory and shouldn't be persisted to storage.
-export interface CloudTempMetadata {
-    cloudInProgressSyncStartTime?: number,
-    justSaved?: boolean,
+export class CloudTempMetadata {
+    constructor(public headerId: string) { }
+    private _justSynced: boolean;
+    private _syncStartTime: number;
+
+    public get justSynced() { return this._justSynced; }
+
+    public syncInProgress() {
+        this._syncStartTime = U.nowSeconds();
+        data.invalidate(`${HEADER_CLOUDSTATE}:${this.headerId}`);
+    }
+
+    public syncFinished() {
+        this._syncStartTime = 0;
+        this._justSynced = true;
+        data.invalidate(`${HEADER_CLOUDSTATE}:${this.headerId}`);
+        // slightly hacky, but we want to keep around a "saved!" message for a small time after
+        // a save succeeds so we notify metadata subscribers again after a delay.
+        setTimeout(() => {
+            if (this._syncStartTime === 0) { // not currently syncing?
+                this._justSynced = false;
+                data.invalidate(`${HEADER_CLOUDSTATE}:${this.headerId}`);
+            }
+        }, 1500);
+    }
+
+    public cloudStatus(): CloudStatusInfo {
+        const h = workspace.getHeader(this.headerId);
+        if (!h.cloudUserId)
+            return undefined;
+        if (!auth.loggedInSync())
+            return cloudStatusInfos["offline"];
+        if (this._syncStartTime > 0)
+            return cloudStatusInfos["syncing"];
+        if (!h.cloudCurrent)
+            return cloudStatusInfos["localEdits"];
+        if (this.justSynced)
+            return cloudStatusInfos["justSynced"];
+        if (h.cloudLastSyncTime > 0)
+            return cloudStatusInfos["synced"];
+        pxt.reportError("cloudsave", `Invalid project cloud state for project ${h.name}(${h.id.substr(0, 4)}..): user: ${h.cloudUserId}, inProg: ${this._syncStartTime}, cloudCurr: ${h.cloudCurrent}, lastCloud: ${h.cloudLastSyncTime}`);
+        return undefined;
+    }
 }
 const temporaryHeaderMetadata: { [key: string]: CloudTempMetadata } = {};
 export function getCloudTempMetadata(headerId: string): CloudTempMetadata {
-    return temporaryHeaderMetadata[headerId] || {};
-}
-function updateCloudTempMetadata(headerId: string, props: Partial<CloudTempMetadata>) {
-    const oldMd = temporaryHeaderMetadata[headerId] || {};
-    const newMd = { ...oldMd, ...props }
-    temporaryHeaderMetadata[headerId] = newMd
-    data.invalidate(`${HEADER_CLOUDSTATE}:${headerId}`);
+    if (!temporaryHeaderMetadata[headerId]) {
+        temporaryHeaderMetadata[headerId] = new CloudTempMetadata(headerId);
+    }
+    return temporaryHeaderMetadata[headerId];
 }
 
 function setAsync(h: Header, prevVersion: string, text?: ScriptText): Promise<string> {
     return new Promise(async (resolve, reject) => {
-        const userId = auth.user()?.id;
-        h.cloudUserId = userId;
-        h.cloudCurrent = false;
-        h.cloudVersion = prevVersion;
-        updateCloudTempMetadata(h.id, { cloudInProgressSyncStartTime: U.nowSeconds() })
-        const project: CloudProject = {
-            id: h.id,
-            header: JSON.stringify(excludeLocalOnlyMetadataFields(h)),
-            text: text ? JSON.stringify(text) : undefined,
-            version: prevVersion
+        const cloudMeta = getCloudTempMetadata(h.id);
+        try {
+            const userId = auth.user()?.id;
+            h.cloudUserId = userId;
+            h.cloudCurrent = false;
+            h.cloudVersion = prevVersion;
+            cloudMeta.syncInProgress();
+            const project: CloudProject = {
+                id: h.id,
+                header: JSON.stringify(excludeLocalOnlyMetadataFields(h)),
+                text: text ? JSON.stringify(text) : undefined,
+                version: prevVersion
+            }
+            const result = await auth.apiAsync<string>('/api/user/project', project);
+            if (result.success) {
+                h.cloudCurrent = true;
+                h.cloudVersion = result.resp;
+                h.cloudLastSyncTime = U.nowSeconds()
+                pxt.tickEvent(`identity.cloudApi.setProject.success`);
+                resolve(result.resp);
+            } else if (result.statusCode === 409) {
+                // conflict
+                pxt.tickEvent(`identity.cloudApi.setProject.conflict`);
+                resolve(undefined)
+            } else {
+                pxt.tickEvent(`identity.cloudApi.setProject.failed`);
+                reject(result.err);
+            }
         }
-        const result = await auth.apiAsync<string>('/api/user/project', project);
-        updateCloudTempMetadata(h.id, { cloudInProgressSyncStartTime: 0, justSaved: true })
-        setTimeout(() => {
-            // slightly hacky, but we want to keep around a "saved!" message for a small time after
-            // a save succeeds so we notify metadata subscribers again afte a delay.
-            updateCloudTempMetadata(h.id, { justSaved: false })
-        }, 1000);
-        if (result.success) {
-            h.cloudCurrent = true;
-            h.cloudVersion = result.resp;
-            h.cloudLastSyncTime = U.nowSeconds()
-            pxt.tickEvent(`identity.cloudApi.setProject.success`);
-            resolve(result.resp);
-        } else if (result.statusCode === 409) {
-            // conflict
-            pxt.tickEvent(`identity.cloudApi.setProject.conflict`);
-            resolve(undefined)
-        } else {
-            pxt.tickEvent(`identity.cloudApi.setProject.failed`);
-            reject(result.err);
+        finally {
+            cloudMeta.syncFinished();
         }
     });
 }
@@ -391,9 +467,6 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
 
         async function syncOneUp(local: Header): Promise<void> {
             try {
-                // track the fact that we're checking for updates on each project
-                updateCloudTempMetadata(local.id, { cloudInProgressSyncStartTime: U.nowSeconds() });
-
                 const remote = remoteHeadersToProcess[local.id];
                 delete remoteHeadersToProcess[local.id];
                 if (remote) {
@@ -516,13 +589,6 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
         // log failed sync tasks.
         errors.forEach(err => pxt.log(err));
         errors = [];
-
-        // reset cloud state sync metadata if there is any
-        getLocalCloudHeaders(hdrs).forEach(hdr => {
-            if (getCloudTempMetadata(hdr.id).cloudInProgressSyncStartTime > 0) {
-                updateCloudTempMetadata(hdr.id, { cloudInProgressSyncStartTime: 0 });
-            }
-        })
 
         const elapsed = U.nowSeconds() - syncStart;
         const localHeaderChangesList = U.values(localHeaderChanges)

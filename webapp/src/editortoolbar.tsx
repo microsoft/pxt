@@ -296,6 +296,22 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         return el;
     }
 
+    getCloudStatus(header: pxt.workspace.Header): JSX.Element {
+        const cloudMd = this.getData<cloud.CloudTempMetadata>(`${cloud.HEADER_CLOUDSTATE}:${header.id}`);
+        const cloudStatus = cloudMd.cloudStatus();
+        const showCloudButton = !!cloudStatus && cloudStatus.value !== "none" && auth.hasIdentity();
+        if (!showCloudButton) { return undefined; }
+
+        return (<div className="cloudstatusarea">
+            {showCloudButton && <i className={"ui large right floated cloudicon xicon " + cloudStatus.icon} title={cloudStatus.tooltip}></i>}
+            {showCloudButton && cloudStatus.value === "localEdits" && <span className="ui mobile hide cloudtext">{lf("saving...")}</span>}
+            {showCloudButton && cloudStatus.value === "syncing" && <span className="ui mobile hide cloudtext">{lf("saving...")}</span>}
+            {showCloudButton && cloudStatus.value === "justSynced" && <span className="ui mobile hide cloudtext">{lf("saved!")}</span>}
+            {showCloudButton && cloudStatus.value === "offline" && <span className="ui mobile hide cloudtext">{lf("offline")}</span>}
+            {showCloudButton && cloudStatus.value === "conflict" && <span className="ui mobile hide cloudtext">{lf("conflict!")}</span>}
+        </div>);
+    }
+
     renderCore() {
         const { tutorialOptions, projectName, compiling, isSaving, simState, debugging, editorState } = this.props.parent.state;
         const header = this.getData(`header:${this.props.parent.state.header.id}`) ?? this.props.parent.state.header;
@@ -361,28 +377,6 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
             saveButtonClasses = "disabled";
         }
 
-        // cloud status
-        const cloudMd = this.getData<cloud.CloudTempMetadata>(`${cloud.HEADER_CLOUDSTATE}:${header.id}`);
-        const cloudState = cloud.getCloudSummary(header, cloudMd);
-        const showCloudButton = !!cloudState && auth.hasIdentity()
-        const getCloudIcon = () => {
-            if (cloudState === "syncing" || cloudState === "localEdits")
-                return "cloud-saving-b"
-            if (cloudState === "conflict" || cloudState === "offline")
-                return "cloud-error-b"
-            return "cloud-saved-b"
-        }
-        const getCloudTooltip = () => {
-            if (cloudState === "syncing" || cloudState === "localEdits")
-                return lf("Saving project to the cloud...")
-            if (cloudState === "conflict")
-                return lf("Project was edited in two places and the changes conflict.")
-            if (cloudState === "offline")
-                return lf("Unable to connect to the cloud.")
-            return lf("Project saved to the cloud.")
-        }
-        const cloudButton = <EditorToolbarButton icon={"xicon " + getCloudIcon()} className={`editortools-btn`} title={getCloudTooltip()} onButtonClick={this.cloudButtonClick} view='computer' />;
-
         return <div id="editortools" className="ui" role="region" aria-label={lf("Editor toolbar")}>
             <div id="downloadArea" role="menu" className="ui column items">{headless &&
                 <div className="ui item">
@@ -403,8 +397,8 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
                     <div className={`ui right ${showSave ? "labeled" : ""} input projectname-input projectname-computer`}>
                         {showProjectRename && this.getSaveInput(showSave, "fileNameInput2", projectName, showProjectRenameReadonly)}
                         {showGithub && <githubbutton.GithubButton parent={this.props.parent} key={`githubbtn${computer}`} />}
-                        {showCloudButton && cloudButton}
-                </div>
+                        {this.getCloudStatus(header)}
+                    </div>
                 </div>}
             <div id="editorToolbarArea" role="menu" className="ui column items">
                 {showUndoRedo && <div className="ui icon buttons">{this.getUndoRedo(computer)}</div>}
