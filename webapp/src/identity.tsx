@@ -205,13 +205,13 @@ export class CloudSaveStatus extends data.Component<CloudSaveStatusProps, {}> {
         const syncing = preparing || cloudStatus.value === "syncing";
 
         return (<div className="cloudstatusarea">
-            {!syncing && <i className={"ui tiny cloudicon xicon " + cloudStatus.icon}></i>}
-            {syncing && <div className={"ui tiny inline loader active cloudprogress " + (preparing ? "indeterminate" : "")}></div>}
-            {cloudStatus.value === "localEdits" && <span className="ui mobile hide cloudtext">{lf("saving...")}</span>}
-            {cloudStatus.value === "syncing" && <span className="ui mobile hide cloudtext">{lf("saving...")}</span>}
-            {cloudStatus.value === "justSynced" && <span className="ui mobile hide cloudtext">{lf("saved!")}</span>}
-            {cloudStatus.value === "offline" && <span className="ui mobile hide cloudtext">{lf("offline")}</span>}
-            {cloudStatus.value === "conflict" && <span className="ui mobile hide cloudtext">{lf("conflict!")}</span>}
+            {!syncing && <sui.Item className={"ui tiny cloudicon xicon " + cloudStatus.icon} title={cloudStatus.tooltip}></sui.Item>}
+            {syncing && <sui.Item className={"ui tiny inline loader active cloudprogress" + (preparing ? " indeterminate" : "")} title={cloudStatus.tooltip}></sui.Item>}
+            {cloudStatus.value === "localEdits" && <span className="ui mobile hide cloudtext" role="note">{lf("saving...")}</span>}
+            {cloudStatus.value === "syncing" && <span className="ui mobile hide cloudtext" role="note">{lf("saving...")}</span>}
+            {cloudStatus.value === "justSynced" && <span className="ui mobile hide cloudtext" role="note">{lf("saved!")}</span>}
+            {cloudStatus.value === "offline" && <span className="ui mobile hide cloudtext" role="note">{lf("offline")}</span>}
+            {cloudStatus.value === "conflict" && <span className="ui mobile hide cloudtext" role="note">{lf("conflict!")}</span>}
         </div>);
     }
 }
