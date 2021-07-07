@@ -7,6 +7,7 @@ import * as githubbutton from "./githubbutton";
 import * as cmds from "./cmds"
 import * as cloud from "./cloud";
 import * as auth from "./auth";
+import * as identity from "./identity";
 import { ProjectView } from "./app";
 import { clearDontShowDownloadDialogFlag } from "./dialogs";
 
@@ -296,22 +297,6 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         return el;
     }
 
-    getCloudStatus(header: pxt.workspace.Header): JSX.Element {
-        const cloudMd = this.getData<cloud.CloudTempMetadata>(`${cloud.HEADER_CLOUDSTATE}:${header.id}`);
-        const cloudStatus = cloudMd.cloudStatus();
-        const showCloudButton = !!cloudStatus && cloudStatus.value !== "none" && auth.hasIdentity();
-        if (!showCloudButton) { return undefined; }
-
-        return (<div className="cloudstatusarea">
-            {showCloudButton && <i className={"ui large right floated cloudicon xicon " + cloudStatus.icon} title={cloudStatus.tooltip}></i>}
-            {showCloudButton && cloudStatus.value === "localEdits" && <span className="ui mobile hide cloudtext">{lf("saving...")}</span>}
-            {showCloudButton && cloudStatus.value === "syncing" && <span className="ui mobile hide cloudtext">{lf("saving...")}</span>}
-            {showCloudButton && cloudStatus.value === "justSynced" && <span className="ui mobile hide cloudtext">{lf("saved!")}</span>}
-            {showCloudButton && cloudStatus.value === "offline" && <span className="ui mobile hide cloudtext">{lf("offline")}</span>}
-            {showCloudButton && cloudStatus.value === "conflict" && <span className="ui mobile hide cloudtext">{lf("conflict!")}</span>}
-        </div>);
-    }
-
     renderCore() {
         const { tutorialOptions, projectName, compiling, isSaving, simState, debugging, editorState } = this.props.parent.state;
         const header = this.getData(`header:${this.props.parent.state.header.id}`) ?? this.props.parent.state.header;
@@ -397,7 +382,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
                     <div className={`ui right ${showSave ? "labeled" : ""} input projectname-input projectname-computer`}>
                         {showProjectRename && this.getSaveInput(showSave, "fileNameInput2", projectName, showProjectRenameReadonly)}
                         {showGithub && <githubbutton.GithubButton parent={this.props.parent} key={`githubbtn${computer}`} />}
-                        {this.getCloudStatus(header)}
+                        <identity.CloudSaveStatus headerId={header.id} />
                     </div>
                 </div>}
             <div id="editorToolbarArea" role="menu" className="ui column items">
