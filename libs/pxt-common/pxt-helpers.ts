@@ -418,7 +418,6 @@ namespace helpers {
         return r
     }
 
-    // TODO move to PXT
     // also note this doesn't handle unicode, but neither does JS (there's toLocaleLowerCase())
     export function stringToLowerCase(s: string): string {
         let r = ""
