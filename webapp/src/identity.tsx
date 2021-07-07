@@ -205,8 +205,8 @@ export class CloudSaveStatus extends data.Component<CloudSaveStatusProps, {}> {
         const syncing = preparing || cloudStatus.value === "syncing";
 
         return (<div className="cloudstatusarea">
-            {!syncing && <sui.Item className={"ui tiny cloudicon xicon " + cloudStatus.icon} title={cloudStatus.tooltip}></sui.Item>}
-            {syncing && <sui.Item className={"ui tiny inline loader active cloudprogress" + (preparing ? " indeterminate" : "")} title={cloudStatus.tooltip}></sui.Item>}
+            {!syncing && <sui.Item className={"ui tiny cloudicon xicon " + cloudStatus.icon} title={cloudStatus.tooltip} tabIndex={-1}></sui.Item>}
+            {syncing && <sui.Item className={"ui tiny inline loader active cloudprogress" + (preparing ? " indeterminate" : "")} title={cloudStatus.tooltip} tabIndex={-1}></sui.Item>}
             {cloudStatus.value === "localEdits" && <span className="ui mobile hide cloudtext" role="note">{lf("saving...")}</span>}
             {cloudStatus.value === "syncing" && <span className="ui mobile hide cloudtext" role="note">{lf("saving...")}</span>}
             {cloudStatus.value === "justSynced" && <span className="ui mobile hide cloudtext" role="note">{lf("saved!")}</span>}
