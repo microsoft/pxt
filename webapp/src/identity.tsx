@@ -3,8 +3,8 @@ import * as sui from "./sui";
 import * as core from "./core";
 import * as auth from "./auth";
 import * as data from "./data";
-import * as codecard from "./codecard";
 import * as cloudsync from "./cloudsync";
+import * as cloud from "./cloud";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -181,11 +181,37 @@ export class UserMenu extends auth.Component<UserMenuProps, UserMenuState> {
                         </div>
                         <span>{lf("Unlink GitHub")}</span>
                     </sui.Item>
-                : undefined}
+                    : undefined}
                 {showGhUnlink ? <div className="ui divider"></div> : undefined}
                 {!loggedIn ? <sui.Item role="menuitem" text={lf("Sign in")} onClick={this.handleLoginClicked} /> : undefined}
                 {loggedIn ? <sui.Item role="menuitem" text={lf("Sign out")} onClick={this.handleLogoutClicked} /> : undefined}
             </sui.DropdownMenu>
         );
+    }
+}
+
+export type CloudSaveStatusProps = {
+    headerId: string;
+};
+
+export class CloudSaveStatus extends data.Component<CloudSaveStatusProps, {}> {
+    renderCore() {
+        if (!this.props.headerId) { return null; }
+        const cloudMd = this.getData<cloud.CloudTempMetadata>(`${cloud.HEADER_CLOUDSTATE}:${this.props.headerId}`);
+        const cloudStatus = cloudMd.cloudStatus();
+        const showCloudButton = !!cloudStatus && cloudStatus.value !== "none" && auth.hasIdentity();
+        if (!showCloudButton) { return null; }
+        const preparing = cloudStatus.value === "localEdits";
+        const syncing = preparing || cloudStatus.value === "syncing";
+
+        return (<div className="cloudstatusarea">
+            {!syncing && <sui.Item className={"ui tiny cloudicon xicon " + cloudStatus.icon} title={cloudStatus.tooltip} tabIndex={-1}></sui.Item>}
+            {syncing && <sui.Item className={"ui tiny inline loader active cloudprogress" + (preparing ? " indeterminate" : "")} title={cloudStatus.tooltip} tabIndex={-1}></sui.Item>}
+            {cloudStatus.value === "localEdits" && <span className="ui mobile hide no-select cloudtext" role="note">{lf("saving...")}</span>}
+            {cloudStatus.value === "syncing" && <span className="ui mobile hide no-select cloudtext" role="note">{lf("saving...")}</span>}
+            {cloudStatus.value === "justSynced" && <span className="ui mobile hide no-select cloudtext" role="note">{lf("saved!")}</span>}
+            {cloudStatus.value === "offline" && <span className="ui mobile hide no-select cloudtext" role="note">{lf("offline")}</span>}
+            {cloudStatus.value === "conflict" && <span className="ui mobile hide no-select cloudtext" role="note">{lf("conflict!")}</span>}
+        </div>);
     }
 }
