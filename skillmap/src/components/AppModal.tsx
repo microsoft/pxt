@@ -7,7 +7,6 @@ import { ModalType, SkillMapState } from '../store/reducer';
 import { dispatchHideModal, dispatchRestartActivity, dispatchOpenActivity, dispatchResetUser, dispatchSetReloadHeaderState, dispatchShowCarryoverModal } from '../actions/dispatch';
 import { tickEvent, postAbuseReportAsync, postShareAsync } from "../lib/browserUtils";
 import { lookupActivityProgress, lookupPreviousActivityStates, lookupPreviousCompletedActivityState } from "../lib/skillMapUtils";
-import { carryoverProjectCode } from "../lib/codeCarryover";
 import { getProjectAsync } from "../lib/workspaceProvider";
 
 import { Modal, ModalAction } from './Modal';
