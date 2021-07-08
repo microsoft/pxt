@@ -175,18 +175,6 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
         }
     }
 
-    // protected onResponseReceived(original: any, response: pxt.editor.EditorMessageResponse) {
-    //     // FIXME RBK: Other half of importing carryover project
-    //     if (original.action === "importproject") {
-    //         if (this.props.reload === "reload") {
-    //             this.props.dispatchSetReloadHeaderState("active");
-    //         }
-    //         else {
-    //             this.onEditorLoaded();
-    //         }
-    //     }
-    // }
-
     protected sendMessageAsync(message: any) {
         return new Promise(resolve => {
             const sendMessageCore = (message: any) => {
@@ -212,68 +200,6 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
             }
         });
     }
-
-    // protected handleWorkspaceSyncRequest(request: pxt.editor.EditorWorkspaceSyncRequest) {
-    //     this.sendMessage({
-    //         ...request,
-    //         success: true,
-    //         projects: []
-    //     } as pxt.editor.EditorWorkspaceSyncResponse);
-    // }
-
-    // protected async handleWorkspaceSaveRequestAsync(request: pxt.editor.EditorWorkspaceSaveRequest) {
-    //     const { dispatchSetHeaderIdForActivity, activityHeaderId, activityType, title, mapId, activityId } = this.props;
-
-    //     const project = {
-    //         ...request.project,
-    //         header: {
-    //             ...request.project.header!,
-    //             id: activityHeaderId || request.project.header!.id
-    //         }
-    //     };
-
-    //     // Patch the name, otherwise it will be the name of the GitHub repo
-    //     if (project.header?.name !== title) {
-    //         project.header!.name = title;
-    //         const pxtJSON = project.text!["pxt.json"];
-    //         if (pxtJSON) {
-    //             const config = JSON.parse(pxtJSON);
-    //             config.name = title;
-    //             project.text!["pxt.json"] = pxt.Package.stringifyConfig(config);
-    //         }
-    //     }
-
-    //     if (project.header.tutorialCompleted) {
-    //         const existing = await getProjectAsync(project.header.id);
-
-    //         if (existing?.header?.tutorial) {
-    //             project.header.tutorial = existing.header.tutorial;
-    //             project.header.tutorial.tutorialStep = project.header.tutorialCompleted.steps - 1;
-    //             delete project.header.tutorialCompleted;
-    //         }
-    //     }
-
-    //     if (project.header!.tutorial) {
-    //         dispatchSetHeaderIdForActivity(
-    //             mapId,
-    //             activityId,
-    //             project.header.id,
-    //             (project.header.tutorial.tutorialStep || 0) + 1,
-    //             project.header.tutorial.tutorialStepInfo!.length,
-    //             false
-    //         );
-    //     }
-    //     else if (project.header!.tutorialCompleted) {
-    //         dispatchSetHeaderIdForActivity(
-    //             mapId,
-    //             activityId,
-    //             project.header.id,
-    //             project.header.tutorialCompleted.steps,
-    //             project.header.tutorialCompleted.steps,
-    //             true
-    //         );
-    //     }
-    // }
 
     protected async handleWorkspaceReadyEventAsync() {
         if (this.props.activityHeaderId) {
