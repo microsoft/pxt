@@ -1663,17 +1663,16 @@ export class ProjectView
         // Delete from the header so that we don't overwrite the user code if the tutorial is
         // re-opened
         delete header.tutorial.templateCode;
-
+        let currentText = await workspace.getTextAsync(header.id);
 
         // If we're starting in the asset editor, always load into TS
         const preferredEditor = header.tutorial.metadata?.preferredEditor;
         if (preferredEditor && filenameForEditor(preferredEditor) === pxt.ASSETS_FILE) {
-            pkg.mainEditorPkg().setFile("main.ts", template);
+            currentText["main.ts"] = template;
         }
 
         const projectname = projectNameForEditor(preferredEditor || header.editor);
 
-        let currentText = await workspace.getTextAsync(header.id);
 
         if (projectname === pxt.JAVASCRIPT_PROJECT_NAME) {
             currentText["main.ts"] = template;
@@ -1727,6 +1726,8 @@ export class ProjectView
         }
 
         await pkg.mainEditorPkg().buildAssetsAsync();
+        await pkg.mainEditorPkg().saveFilesAsync();
+
     }
 
     private loadTutorialJresCodeAsync(): Promise<void> {
