@@ -200,7 +200,7 @@ export class CloudSaveStatus extends data.Component<CloudSaveStatusProps, {}> {
         const cloudStatus = cloudMd.cloudStatus();
         return !!cloudStatus && cloudStatus.value !== "none" && auth.hasIdentity();
     }
-    
+
     renderCore() {
         if (!this.props.headerId) { return null; }
         const cloudMd = this.getData<cloud.CloudTempMetadata>(`${cloud.HEADER_CLOUDSTATE}:${this.props.headerId}`);
