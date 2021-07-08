@@ -108,7 +108,14 @@ namespace pxtblockly {
                     if (pxt.assetEquals(this.asset, result)) return;
 
                     const oldId = isTemporaryAsset(this.asset) ? null : this.asset.id;
-                    const newId = isTemporaryAsset(result) ? null : result.id;
+                    let newId = isTemporaryAsset(result) ? null : result.id;
+
+                    if (!oldId && newId === this.sourceBlock_.id) {
+                        // The temporary assets we create just use the block id as the id; give it something
+                        // a little nicer
+                        result.id = project.generateNewID(result.type);
+                        newId = result.id;
+                    }
 
                     this.pendingEdit = true;
 
