@@ -214,7 +214,20 @@ function pxtcommon() {
 
 // TODO: Copied from Jakefile; should be async
 function updatestrings() {
-    return buildStrings("built/strings.json", ["pxtlib", "pxtblocks", "pxtblocks/fields", "webapp/src"]);
+    return buildStrings("built/strings.json", [
+        "cli",
+        "pxtblocks",
+        "pxtblocks/fields",
+        "pxtcompiler",
+        "pxteditor",
+        "pxteditor/monaco-fields",
+        "pxtlib",
+        "pxtlib/emitter",
+        "pxtlib/melody-editor",
+        "pxtpy",
+        "pxtsim",
+        "webapp/src",
+    ]);
 }
 
 function updateSkillMapStrings() {
