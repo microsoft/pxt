@@ -195,7 +195,7 @@ export type CloudSaveStatusProps = {
 };
 
 export class CloudSaveStatus extends data.Component<CloudSaveStatusProps, {}> {
-    public static WouldRender(headerId: string): boolean {
+    public static wouldRender(headerId: string): boolean {
         const cloudMd = cloud.getCloudTempMetadata(headerId);
         const cloudStatus = cloudMd.cloudStatus();
         return !!cloudStatus && cloudStatus.value !== "none" && auth.hasIdentity();
