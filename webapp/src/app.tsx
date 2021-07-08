@@ -1706,6 +1706,27 @@ export class ProjectView
         }
 
         await workspace.saveAsync(header);
+
+        let parsedTilemap: any;
+        let parsedImage: any;
+
+        try {
+            parsedTilemap = newText[pxt.TILEMAP_JRES] ? JSON.parse(newText[pxt.TILEMAP_JRES]) : null;
+            parsedImage = newText[pxt.IMAGES_JRES] ? JSON.parse(newText[pxt.IMAGES_JRES]) : null;
+        }
+        catch (e) {
+            return Promise.reject(e);
+        }
+
+        const project = pxt.react.getTilemapProject();
+        if (parsedTilemap) {
+            project.loadTilemapJRes(pxt.inflateJRes(parsedTilemap), true);
+        }
+        if (parsedImage) {
+            project.loadAssetsJRes(pxt.inflateJRes(parsedImage));
+        }
+
+        await pkg.mainEditorPkg().buildAssetsAsync();
     }
 
     private loadTutorialJresCodeAsync(): Promise<void> {

@@ -110,7 +110,7 @@ export class ActivityActionsImpl extends React.Component<ActivityActionsProps> {
 }
 
 function mapStateToProps(state: SkillMapState, ownProps: any) {
-    if (!state || !state.editorView) return {};
+    if (!state) return {};
 
     const props = ownProps as OwnProps;
     const map = state.maps[ownProps.mapId];
