@@ -217,17 +217,13 @@ function updatestrings() {
     return buildStrings("built/strings.json", [
         "cli",
         "pxtblocks",
-        "pxtblocks/fields",
         "pxtcompiler",
         "pxteditor",
-        "pxteditor/monaco-fields",
         "pxtlib",
-        "pxtlib/emitter",
-        "pxtlib/melody-editor",
         "pxtpy",
         "pxtsim",
         "webapp/src",
-    ]);
+    ], true);
 }
 
 function updateSkillMapStrings() {
@@ -244,12 +240,15 @@ function buildStrings(out, rootPaths, recursive) {
         if (!/\.(ts|tsx|html)$/.test(filename)) return
         if (/\.d\.ts$/.test(filename)) return
 
-        //console.log('extracting strings from %s', filename);
+        // console.log(`extracting strings from ${filename}`);
         fs.readFileSync(filename, "utf8").split('\n').forEach((line, idx) => {
             function err(msg) {
-                console.log("%s(%d): %s", filename, idx, msg);
+                console.log("%s(%d): %s", filename, idx + 1, msg);
                 errCnt++;
             }
+
+            if (/@ignorelf@/.test(line))
+                return;
 
             while (true) {
                 let newLine = line.replace(/\blf(_va)?\s*\(\s*(.*)/, (all, a, args) => {
@@ -262,8 +261,7 @@ function buildStrings(out, rootPaths, recursive) {
                             err("cannot JSON-parse " + m[1])
                         }
                     } else {
-                        if (!/util\.ts$/.test(filename))
-                            err("invalid format of lf() argument: " + args)
+                        err("invalid format of lf() argument: " + args)
                     }
                     return "BLAH " + args
                 })

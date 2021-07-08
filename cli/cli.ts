@@ -1730,8 +1730,12 @@ function processLf(filename: string, translationStrings: pxt.Map<string>): void 
     fs.readFileSync(filename, { encoding: "utf8" })
         .split('\n').forEach((line, idx) => {
             function err(msg: string) {
-                console.error(`${filename}(${idx}): ${msg}`);
+                console.error(`${filename}(${idx + 1}): ${msg}`);
             }
+
+            if (/@ignorelf@/.test(line))
+                return;
+
             while (true) {
                 const newLine = line.replace(/\blf(_va)?\s*\(\s*(.*)/, (all, a, args) => {
                     const m = /^("([^"]|(\\"))+")\s*[\),]/.exec(args)
@@ -1744,7 +1748,7 @@ function processLf(filename: string, translationStrings: pxt.Map<string>): void 
                         }
                     } else {
                         if (!/util\.ts$/.test(filename))
-                            err("invalid format of lf() argument: " + args)
+                            err("invalid format of lf() argument: " + args) // @ignorelf@
                     }
                     return "BLAH " + args
                 })
@@ -6108,9 +6112,12 @@ function extractLocStringsAsync(output: string, dirs: string[]): Promise<void> {
         pxt.debug(`extracting strings from${filename}`);
         fs.readFileSync(filename, "utf8").split('\n').forEach((line: string, idx: number) => {
             function err(msg: string) {
-                console.log("%s(%d): %s", filename, idx, msg);
+                console.log("%s(%d): %s", filename, idx + 1, msg);
                 errCnt++;
             }
+
+            if (/@ignorelf@/.test(line))
+                return;
 
             while (true) {
                 let newLine = line.replace(/\blf(_va)?\s*\(\s*(.*)/, (all, a, args) => {
@@ -6124,7 +6131,7 @@ function extractLocStringsAsync(output: string, dirs: string[]): Promise<void> {
                         }
                     } else {
                         if (!/util\.ts$/.test(filename))
-                            err("invalid format of lf() argument: " + args)
+                            err("invalid format of lf() argument: " + args) // @ignorelf@
                     }
                     return "BLAH " + args
                 })
