@@ -356,7 +356,7 @@ namespace pxt {
         }
 
         public createNewImage(width = 16, height = 16) {
-            const id = this.generateNewID(AssetType.Image, pxt.sprite.IMAGE_PREFIX, pxt.sprite.IMAGES_NAMESPACE);
+            const id = this.generateNewID(AssetType.Image);
             const bitmap = new pxt.sprite.Bitmap(width, height).data()
 
             const newImage: ProjectImage = {
@@ -371,7 +371,7 @@ namespace pxt {
         }
 
         public createNewAnimation(width = 16, height = 16) {
-            const id = this.generateNewID(AssetType.Animation, pxt.sprite.ANIMATION_PREFIX, pxt.sprite.ANIMATION_NAMESPACE);
+            const id = this.generateNewID(AssetType.Animation);
             const bitmap = new pxt.sprite.Bitmap(width, height).data()
 
             const newAnimation: Animation = {
@@ -386,7 +386,7 @@ namespace pxt {
         }
 
         public createNewAnimationFromData(frames: pxt.sprite.BitmapData[], interval = 500, displayName?: string) {
-            const id = this.generateNewID(AssetType.Animation, pxt.sprite.ANIMATION_PREFIX, pxt.sprite.ANIMATION_NAMESPACE);
+            const id = this.generateNewID(AssetType.Animation);
 
             const newAnimation: Animation = {
                 internalID: this.getNewInternalId(),
@@ -434,7 +434,7 @@ namespace pxt {
             this.onChange();
 
             if (!id || this.isNameTaken(AssetType.Tile, id)) {
-                id = this.generateNewID(AssetType.Tile, pxt.sprite.TILE_PREFIX, pxt.sprite.TILE_NAMESPACE);
+                id = this.generateNewID(AssetType.Tile);
             }
 
             const newTile: Tile = {
@@ -457,7 +457,7 @@ namespace pxt {
 
             const newImage: ProjectImage = {
                 internalID: this.getNewInternalId(),
-                id: this.generateNewID(AssetType.Image, pxt.sprite.IMAGE_PREFIX, pxt.sprite.IMAGES_NAMESPACE),
+                id: this.generateNewID(AssetType.Image),
                 type: AssetType.Image,
                 jresData: pxt.sprite.base64EncodeBitmap(data),
                 meta: {
@@ -601,7 +601,7 @@ namespace pxt {
         public createNewTilemapFromData(data: pxt.sprite.TilemapData, name?: string): [string, pxt.sprite.TilemapData] {
             this.onChange()
 
-            const id = this.generateNewID(AssetType.Tilemap, name || lf("level"));
+            const id = this.generateNewIDInternal(AssetType.Tilemap, name || lf("level"));
             this.state.tilemaps.add({
                 internalID: this.getNewInternalId(),
                 id,
@@ -1204,7 +1204,20 @@ namespace pxt {
             return animation;
         }
 
-        protected generateNewID(type: AssetType, varPrefix: string, namespaceString?: string) {
+        generateNewID(type: AssetType) {
+            switch (type) {
+                case AssetType.Animation:
+                    return this.generateNewIDInternal(AssetType.Animation, pxt.sprite.ANIMATION_PREFIX, pxt.sprite.ANIMATION_NAMESPACE);
+                case AssetType.Image:
+                    return this.generateNewIDInternal(AssetType.Image, pxt.sprite.IMAGE_PREFIX, pxt.sprite.IMAGES_NAMESPACE);
+                case AssetType.Tile:
+                    return this.generateNewIDInternal(AssetType.Tile, pxt.sprite.TILE_PREFIX, pxt.sprite.TILE_NAMESPACE);
+                case AssetType.Tilemap:
+                    return this.generateNewIDInternal(AssetType.Tilemap, lf("level"));
+            }
+        }
+
+        protected generateNewIDInternal(type: AssetType, varPrefix: string, namespaceString?: string) {
             varPrefix = varPrefix.replace(/\d+$/, "");
             const prefix = namespaceString ? namespaceString + "." + varPrefix : varPrefix;
             let index = 1;

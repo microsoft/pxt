@@ -1162,17 +1162,26 @@ p.ui.font.small {
     font-size: 0.95rem;
 }
 
-#projectNameArea .cloudstatusarea {
+.cloudstatusarea {
     color: @teal;
     align-self: center;
-}
+    display: flex;
 
-#projectNameArea .cloudicon {
-    margin-left: 0.5rem;
-}
+    .cloudicon {
+        margin-left: 0.5rem;
+    }
 
-#projectNameArea .cloudtext {
-    margin-left: 0.5rem;
+    .cloudprogress {
+        margin-left: 0.5rem !important;
+    }
+
+    .cloudtext {
+        margin-left: 0.5rem;
+    }
+
+    .ui.loader:after {
+        border-top-color: @teal;
+    }
 }
 
 /*******************************
