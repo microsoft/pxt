@@ -606,11 +606,11 @@ export function importAsync(h: Header, text: ScriptText, isCloud = false) {
     return forceSaveAsync(h, text, isCloud)
 }
 
-export function installAsync(h0: InstallHeader, text: ScriptText) {
+export function installAsync(h0: InstallHeader, text: ScriptText, dontOverwriteID = false) {
     U.assert(h0.target == pxt.appTarget.id);
 
     const h = <Header>h0
-    h.id = ts.pxtc.Util.guidGen();
+    if (!dontOverwriteID) h.id = ts.pxtc.Util.guidGen();
     h.recentUse = U.nowSeconds()
     h.modificationTime = h.recentUse;
 
