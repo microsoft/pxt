@@ -1386,7 +1386,7 @@ export class ProjectView
         return undefined;
     }
 
-    async loadHeaderAsync(h: pxt.workspace.Header, editorState?: pxt.editor.EditorState, tryCloudSync = true): Promise<void> {
+    async loadHeaderAsync(h: pxt.Immutable<pxt.workspace.Header>, editorState?: pxt.editor.EditorState, tryCloudSync = true): Promise<void> {
         if (!h)
             return Promise.resolve()
 
@@ -1439,7 +1439,7 @@ export class ProjectView
         }
     }
 
-    private internalLoadHeaderAsync(h: pxt.workspace.Header, editorState?: pxt.editor.EditorState): Promise<void> {
+    private internalLoadHeaderAsync(h: pxt.Immutable<pxt.workspace.Header>, editorState?: pxt.editor.EditorState): Promise<void> {
         pxt.debug(`loading ${h.id} (pxt v${h.targetVersion})`);
         this.stopSimulator(true);
         if (pxt.appTarget.simulator && pxt.appTarget.simulator.aspectRatio)

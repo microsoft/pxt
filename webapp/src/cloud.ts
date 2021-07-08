@@ -32,28 +32,28 @@ const cloudMetadataFields: (keyof Header)[] = [
     'cloudVersion', 'cloudCurrent', 'cloudLastSyncTime', 'cloudUserId'
 ]
 
-function excludeMetadataFields(h: Header, fields: (keyof Header)[]): Header {
+function excludeMetadataFields(h: pxt.Immutable<Header>, fields: (keyof Header)[]): pxt.Immutable<Header> {
     const clone = { ...h }
     for (let k of fields)
         delete clone[k]
     return clone
 }
 
-export function excludeLocalOnlyMetadataFields(h: Header): Header {
+export function excludeLocalOnlyMetadataFields(h: pxt.Immutable<Header>): pxt.Immutable<Header> {
     return excludeMetadataFields(h, localOnlyMetadataFields);
 }
 
-export function excludeCloudMetadataFields(h: Header): Header {
+export function excludeCloudMetadataFields(h: pxt.Immutable<Header>): pxt.Immutable<Header> {
     return excludeMetadataFields(h, cloudMetadataFields);
 }
 
-async function listAsync(): Promise<Header[]> {
+async function listAsync(): Promise<pxt.Immutable<Header>[]> {
     return new Promise(async (resolve, reject) => {
         const result = await auth.apiAsync<CloudProject[]>("/api/user/project");
         if (result.success) {
             const syncTime = U.nowSeconds()
             const userId = auth.user()?.id;
-            const headers: Header[] = result.resp.map(proj => {
+            const headers: pxt.Immutable<Header>[] = result.resp.map(proj => {
                 const rawHeader: pxt.workspace.Header = JSON.parse(proj.header);
                 const header = excludeLocalOnlyMetadataFields(rawHeader)
                 header.cloudUserId = userId;
@@ -71,7 +71,7 @@ async function listAsync(): Promise<Header[]> {
     });
 }
 
-function getAsync(h: Header): Promise<File> {
+function getAsync(h: pxt.Immutable<Header>): Promise<File> {
     return new Promise(async (resolve, reject) => {
         const cloudMeta = getCloudTempMetadata(h.id);
         try {
@@ -209,7 +209,7 @@ export function getCloudTempMetadata(headerId: string): CloudTempMetadata {
     return temporaryHeaderMetadata[headerId];
 }
 
-function setAsync(h: Header, prevVersion: string, text?: ScriptText): Promise<string> {
+function setAsync(h: pxt.Immutable<Header>, prevVersion: string, text?: ScriptText): Promise<string> {
     return new Promise(async (resolve, reject) => {
         const cloudMeta = getCloudTempMetadata(h.id);
         try {
@@ -246,19 +246,8 @@ function setAsync(h: Header, prevVersion: string, text?: ScriptText): Promise<st
     });
 }
 
-function deleteAsync(h: Header, prevVersion: Version, text?: ScriptText): Promise<void> {
-    // Note: we don't actually want to support permanent delete initiated from the client.
-    // Instead we use soft delete ".isDeleted" so that we have a tombstone to track that a
-    // project used to exist. Without this, we will unintentionally resync deleted projects.
-    return Promise.resolve();
-}
-
-function resetAsync(): Promise<void> {
-    return Promise.resolve();
-}
-
-let inProgressSyncPromise: Promise<pxt.workspace.Header[]>;
-export async function syncAsync(hdrs?: Header[]): Promise<Header[]> {
+let inProgressSyncPromise: Promise<pxt.Immutable<Header>[]>;
+export async function syncAsync(hdrs?: pxt.Immutable<Header>[]): Promise<pxt.Immutable<Header>[]> {
     // wait for any pending saves
     await inProgressSavePromise;
     // ensure we don't run this twice
@@ -271,7 +260,7 @@ export async function syncAsync(hdrs?: Header[]): Promise<Header[]> {
     return inProgressSyncPromise;
 }
 
-async function transferToCloud(local: Header, cloudVersion: string): Promise<Header> {
+async function transferToCloud(local: pxt.Immutable<Header>, cloudVersion: string): Promise<pxt.Immutable<Header>> {
     const text = await workspace.getTextAsync(local.id);
     // since we just fetched the text from storage and we're about to make an update,
     //  we should acquire the current header session.
@@ -284,7 +273,7 @@ async function transferToCloud(local: Header, cloudVersion: string): Promise<Hea
     return workspace.getHeader(local.id)
 }
 
-async function transferFromCloud(local: Header | null, remoteFile: File): Promise<Header> {
+async function transferFromCloud(local: pxt.Immutable<Header> | null, remoteFile: File): Promise<pxt.Immutable<Header>> {
     const newHeader = { ...local || {}, ...remoteFile.header } // make sure we keep local-only metadata like _rev
     if (local) {
         // we've decided to overwrite what we have locally with what is in the
@@ -297,12 +286,12 @@ async function transferFromCloud(local: Header | null, remoteFile: File): Promis
     return workspace.getHeader(newHeader.id)
 }
 
-function getConflictCopyName(hdr: Header): string {
+function getConflictCopyName(hdr: pxt.Immutable<Header>): string {
     // TODO: do we want a better or more descriptive name?
     return hdr.name + " - Copy";
 }
 
-async function resolveConflict(local: Header, remoteFile: File) {
+async function resolveConflict(local: pxt.Immutable<Header>, remoteFile: File) {
     // Strategy: resolve conflict by creating a copy
     // Note, we do the operations in the following order:
     // 1. create a local copy
@@ -394,14 +383,14 @@ async function resolveConflict(local: Header, remoteFile: File) {
     }
 }
 
-function getLocalCloudHeaders(allHdrs?: Header[]) {
+function getLocalCloudHeaders(allHdrs?: pxt.Immutable<Header>[]) {
     if (!auth.hasIdentity()) { return []; }
     if (!auth.loggedInSync()) { return []; }
     return (allHdrs || workspace.getHeaders(true))
         .filter(h => h.cloudUserId && h.cloudUserId === auth.user()?.id);
 }
 
-async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
+async function syncAsyncInternal(hdrs?: pxt.Immutable<Header>[]): Promise<pxt.Immutable<Header>[]> {
     if (!auth.hasIdentity()) { return []; }
     if (!await auth.loggedIn()) { return []; }
     try {
@@ -418,7 +407,7 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
         pxt.tickEvent(`identity.sync.start`)
         const agoStr = (t: number) => `${syncStart - t} seconds ago`
         const remoteFiles: { [id: string]: File } = {}
-        const getWithCacheAsync = async (h: Header): Promise<File> => {
+        const getWithCacheAsync = async (h: pxt.Immutable<Header>): Promise<File> => {
             try {
                 if (!remoteFiles[h.id]) {
                     remoteFiles[h.id] = await getAsync(h)
@@ -453,9 +442,9 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
         const lastCloudChange = remoteHeaders.length ? Math.max(...remoteHeaders.map(h => h.modificationTime)) : syncStart
         pxt.log(`Last cloud project change was ${agoStr(lastCloudChange)}`);
         const remoteHeadersToProcess = U.toDictionary(remoteHeaders, h => h.id);
-        const localHeaderChanges: pxt.Map<Header> = {}
+        const localHeaderChanges: pxt.Map<pxt.Immutable<Header>> = {}
         const toCloud = transferToCloud;
-        const fromCloud = async (loc: Header, rem: File) => {
+        const fromCloud = async (loc: pxt.Immutable<Header>, rem: File) => {
             const newLoc = await transferFromCloud(loc, rem);
             if (newLoc) {
                 localHeaderChanges[newLoc.id] = newLoc;
@@ -465,7 +454,7 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
         }
         let errors: Error[] = [];
 
-        async function syncOneUp(local: Header): Promise<void> {
+        async function syncOneUp(local: pxt.Immutable<Header>): Promise<void> {
             try {
                 const remote = remoteHeadersToProcess[local.id];
                 delete remoteHeadersToProcess[local.id];
@@ -555,7 +544,7 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
             }
         }
 
-        async function syncOneDown(remote: Header): Promise<void> {
+        async function syncOneDown(remote: pxt.Immutable<Header>): Promise<void> {
             try {
                 // Project exists remotely and not locally, download it.
                 const remoteFile = await getWithCacheAsync(remote);
@@ -639,21 +628,18 @@ let onHeaderChangeStarted: number = 0;
 const onHeaderChangeSubscriber: data.DataSubscriber = {
     subscriptions: [],
     onDataChanged: (path: string) => {
-        const parts = path.split("header:");
-        U.assert(parts.length === 2, "onHeaderChangeSubscriber has invalid path subscription: " + path)
-        const hdrId = parts[1];
+        const [ protocol, hdrId ] = path.split(":");
         if (hdrId === "*") {
             // all headers
             // TODO https://github.com/microsoft/pxt-arcade/issues/3129: this branch is being hit WAY too often.
             getLocalCloudHeaders().forEach(h => onHeaderChangeDebouncer(h));
-        } else {
+        } else if (hdrId) {
             const hdr = workspace.getHeader(hdrId);
-            U.assert(!!hdr, "cannot find header with id: " + hdrId);
-            onHeaderChangeDebouncer(hdr);
+            hdr && onHeaderChangeDebouncer(hdr);
         }
     }
 };
-async function onHeaderChangeDebouncer(h: Header) {
+async function onHeaderChangeDebouncer(h: pxt.Immutable<Header>) {
     if (!auth.hasIdentity()) return
     if (!await auth.loggedIn()) return
 
@@ -684,7 +670,7 @@ async function onHeaderChangeDebouncer(h: Header) {
         onHeaderChangeTimeout = setTimeout(doAfter, CLOUDSAVE_DEBOUNCE_MS);
     }
 }
-let inProgressSavePromise: Promise<Header[]> = Promise.resolve([]);
+let inProgressSavePromise: Promise<pxt.Immutable<Header>[]> = Promise.resolve([]);
 async function onHeadersChanged(): Promise<void> {
     if (!auth.hasIdentity()) { return; }
     if (!await auth.loggedIn()) { return; }

@@ -18,6 +18,7 @@ interface CacheEntry {
     callbackOnce: Action[];
     components: DataSubscriber[];
     api: VirtualApi;
+    _protocol?: string;
 }
 
 export enum FetchStatus {
@@ -163,8 +164,17 @@ function saveCache() {
     pxt.storage.setLocal("apiCache2", JSON.stringify(obj))
 }
 
-function matches(ce: CacheEntry, prefix: string) {
-    return ce.path.slice(0, prefix.length) == prefix;
+function matches(ce: CacheEntry, path: string) {
+    if (ce.path === path) { return true; }
+    // Check for wildcard
+    if (ce.path.endsWith(':*')) {
+        if (!ce._protocol) {
+            const [ protocol ] = ce.path.split(':');
+            ce._protocol = protocol;
+        }
+        if (path.startsWith(ce._protocol)) { return true; }
+    }
+    return false;
 }
 
 function notify(ce: CacheEntry, path: string) {
@@ -210,7 +220,16 @@ function queueNotify(ce: CacheEntry, path: string) {
     }
 }
 
+function formatPath(path: string): string {
+    // Ensure path is well-formed: must have a protocol and either a specific path element or a wildcard
+    let [a, b] = path.split(':');
+    b = b ?? '*';
+    path = [a, b].join(':');
+    return path;
+}
+
 function lookup(path: string) {
+    path = formatPath(path);
     if (!cachedData.hasOwnProperty(path))
         cachedData[path] = {
             path: path,
@@ -258,9 +277,9 @@ export function stripProtocol(path: string) {
 }
 
 export function invalidate(path: string) {
-    const prefix = path.replace(/:\*$/, ':'); // remove trailing "*";
+    path = formatPath(path);
     Util.values(cachedData).forEach(ce => {
-        if (matches(ce, prefix)) {
+        if (matches(ce, path)) {
             ce.lastRefresh = 0;
             if (ce.components.length > 0)
                 queueNotify(lookup(ce.path), path)

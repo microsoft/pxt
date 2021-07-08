@@ -2,6 +2,11 @@
 /// <reference path="apptarget.ts"/>
 /// <reference path="commonutil.ts"/>
 
+namespace pxt {
+    export type Immutable<T> = {
+        readonly [K in keyof T]: Immutable<T[K]>;
+    };
+}
 namespace ts.pxtc {
     /**
      * atob replacement

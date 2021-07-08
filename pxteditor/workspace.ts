@@ -23,16 +23,16 @@ namespace pxt.workspace {
     }
 
     export interface WorkspaceProvider {
-        listAsync(): Promise<Header[]>; // called from workspace.syncAsync (including upon startup)
-        getAsync(h: Header): Promise<File>;
-        setAsync(h: Header, prevVersion: Version, text?: ScriptText): Promise<Version>;
-        deleteAsync?: (h: Header, prevVersion: Version) => Promise<void>;
+        listAsync(): Promise<pxt.Immutable<Header[]>>; // called from workspace.syncAsync (including upon startup)
+        getAsync(h: pxt.Immutable<Header>): Promise<File>;
+        setAsync(h: pxt.Immutable<Header>, prevVersion: Version, text?: ScriptText): Promise<Version>;
+        deleteAsync?: (h: pxt.Immutable<Header>, prevVersion: Version) => Promise<void>;
         resetAsync(): Promise<void>;
         loadedAsync?: () => Promise<void>;
         getSyncState?: () => pxt.editor.EditorSyncState;
 
         // optional screenshot support
-        saveScreenshotAsync?: (h: Header, screenshot: string, icon: string) => Promise<void>;
+        saveScreenshotAsync?: (h: pxt.Immutable<Header>, screenshot: string, icon: string) => Promise<void>;
 
         // optional asset (large binary file) support
         saveAssetAsync?: (id: string, filename: string, data: Uint8Array) => Promise<void>;
@@ -41,7 +41,7 @@ namespace pxt.workspace {
         fireEvent?: (ev: pxt.editor.events.Event) => void;
     }
 
-    export function freshHeader(name: string, modTime: number) {
+    export function freshHeader(name: string, modTime: number): Header {
         let header: Header = {
             target: pxt.appTarget.id,
             targetVersion: pxt.appTarget.versions.target,

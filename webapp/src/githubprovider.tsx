@@ -212,7 +212,7 @@ export class GithubProvider extends cloudsync.ProviderBase {
             }).finally(() => core.hideLoading(LOAD_ID))
     }
 
-    async createRepositoryAsync(projectName: string, header: pxt.workspace.Header): Promise<boolean> {
+    async createRepositoryAsync(projectName: string, header: pxt.Immutable<pxt.workspace.Header>): Promise<boolean> {
         pxt.tickEvent("github.filelist.create.start");
         await this.routedLoginAsync(`create-repository:${header.id}`)
         if (!this.token()) {

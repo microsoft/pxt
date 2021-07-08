@@ -28,7 +28,7 @@ type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
 type InstallHeader = pxt.workspace.InstallHeader;
 type File = pxt.workspace.File;
 
-let allScripts: File[] = [];
+let allScripts: pxt.Immutable<File>[] = [];
 
 let headerQ = new U.PromiseQueue();
 
@@ -51,7 +51,7 @@ export function gitsha(data: string, encoding: "utf-8" | "base64" = "utf-8") {
         return (sha1("blob " + U.toUTF8(data).length + "\u0000" + data) + "")
 }
 
-export function copyProjectToLegacyEditor(header: Header, majorVersion: number): Promise<Header> {
+export function copyProjectToLegacyEditor(header: pxt.Immutable<Header>, majorVersion: number): Promise<Header> {
     if (!isBrowserWorkspace()) {
         return Promise.reject("Copy operation only works in browser workspace");
     }
@@ -141,7 +141,7 @@ export function getHeaders(withDeleted = false) {
     return r
 }
 
-export function makeBackupAsync(h: Header, text: ScriptText): Promise<Header> {
+export function makeBackupAsync(h: pxt.Immutable<Header>, text: ScriptText): Promise<pxt.Immutable<Header>> {
     let h2 = U.flatClone(h)
     h2.id = U.guidGen()
 
@@ -158,7 +158,7 @@ export function makeBackupAsync(h: Header, text: ScriptText): Promise<Header> {
 }
 
 
-export function restoreFromBackupAsync(h: Header) {
+export function restoreFromBackupAsync(h: pxt.Immutable<Header>) {
     if (!h.backupRef || h.isDeleted) return Promise.resolve();
 
     const refId = h.backupRef;
@@ -192,7 +192,7 @@ function cleanupBackupsAsync() {
     }));
 }
 
-export function getHeader(id: string) {
+export function getHeader(id: string): pxt.Immutable<Header> {
     maybeSyncHeadersAsync();
     let e = lookup(id)
     if (e && !e.header.isDeleted)
@@ -211,7 +211,7 @@ function maybeSyncHeadersAsync(): Promise<void> {
         return syncAsync().then(() => { })
     return Promise.resolve();
 }
-export function computeSessionId(hdrs: Header[]): string {
+export function computeSessionId(hdrs: pxt.Immutable<Header>[]): string {
     // use # of scripts + time of last mod as key
     return hdrs.length + ' ' + hdrs
         .map(h => h.modificationTime)
@@ -230,20 +230,20 @@ function refreshHeadersSession() {
 // this is an identifier for the current frame
 // in order to lock headers for editing
 const workspaceID: string = pxt.Util.guidGen();
-export function acquireHeaderSession(h: Header) {
+export function acquireHeaderSession(h: pxt.Immutable<Header>) {
     if (h)
         pxt.storage.setLocal('workspaceheadersessionid:' + h.id, workspaceID);
 }
-function clearHeaderSession(h: Header) {
+function clearHeaderSession(h: pxt.Immutable<Header>) {
     if (h)
         pxt.storage.removeLocal('workspaceheadersessionid:' + h.id);
 }
-export function isHeaderSessionOutdated(h: Header): boolean {
+export function isHeaderSessionOutdated(h: pxt.Immutable<Header>): boolean {
     if (!h) return false;
     const sid = pxt.storage.getLocal('workspaceheadersessionid:' + h.id);
     return sid && sid != workspaceID;
 }
-function checkHeaderSession(h: Header): void {
+function checkHeaderSession(h: pxt.Immutable<Header>): void {
     if (isHeaderSessionOutdated(h)) {
         pxt.tickEvent(`workspace.conflict.header`);
         core.errorNotification(lf("This project is already opened elsewhere."))
@@ -253,7 +253,7 @@ function checkHeaderSession(h: Header): void {
     }
 }
 // helps know when we last synced with the cloud (in seconds since epoch)
-export function getHeaderLastCloudSync(h: Header): number {
+export function getHeaderLastCloudSync(h: pxt.Immutable<Header>): number {
     return h.cloudLastSyncTime || 0/*never*/
 }
 export function getLastCloudSync(): number {
@@ -308,7 +308,7 @@ export interface ScriptMeta {
 }
 
 // https://github.com/Microsoft/pxt-backend/blob/master/docs/sharing.md#anonymous-publishing
-export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptMeta, screenshotUri?: string) {
+export function anonymousPublishAsync(h: pxt.Immutable<Header>, text: ScriptText, meta: ScriptMeta, screenshotUri?: string) {
     checkHeaderSession(h);
 
     const saveId = {}
@@ -360,7 +360,7 @@ function fixupVersionAsync(e: File) {
         })
 }
 
-export function forceSaveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Promise<void> {
+export function forceSaveAsync(h: pxt.Immutable<Header>, text?: ScriptText, isCloud?: boolean): Promise<void> {
     clearHeaderSession(h);
     return saveAsync(h, text, isCloud);
 }
@@ -375,7 +375,7 @@ interface ProjectChanges {
     header: Change<keyof Header, string>[],
     files: Change<string, number>[],
 }
-function computeChangeSummary(a: {header: Header, text: ScriptText}, b: {header: Header, text: ScriptText}): ProjectChanges {
+function computeChangeSummary(a: {header: pxt.Immutable<Header>, text: ScriptText}, b: {header: pxt.Immutable<Header>, text: ScriptText}): ProjectChanges {
     const aHdr = a.header || {} as Header
     const bHdr = b.header || {} as Header
     const aTxt = a.text || {}
@@ -452,7 +452,7 @@ export async function partialSaveAsync(id: string, filename: string, content: st
     return saveAsync(prev.header, newTxt);
 }
 
-export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: boolean): Promise<void> {
+export async function saveAsync(h: pxt.Immutable<Header>, text?: ScriptText, fromCloudSync?: boolean): Promise<void> {
     pxt.debug(`workspace.saveAsync ${dbgHdrToString(h)}`)
     if (h.isDeleted)
         clearHeaderSession(h);
@@ -586,7 +586,7 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
     });
 }
 
-function computePath(h: Header) {
+function computePath(h: pxt.Immutable<Header>) {
     let path = h.name.replace(/[^a-zA-Z0-9]+/g, " ").trim().replace(/ /g, "-")
     if (!path)
         path = "Untitled"; // do not translate
@@ -600,7 +600,7 @@ function computePath(h: Header) {
     return path
 }
 
-export function importAsync(h: Header, text: ScriptText, isCloud = false) {
+export function importAsync(h: pxt.Immutable<Header>, text: ScriptText, isCloud = false) {
     h.path = computePath(h)
     return forceSaveAsync(h, text, isCloud)
 }
@@ -624,7 +624,7 @@ export function installAsync(h0: InstallHeader, text: ScriptText) {
         .then(() => h);
 }
 
-export async function duplicateAsync(h: Header, newName?: string): Promise<Header> {
+export async function duplicateAsync(h: pxt.Immutable<Header>, newName?: string): Promise<Header> {
     const text = await getTextAsync(h.id);
 
     if (!newName)
@@ -656,7 +656,7 @@ export async function duplicateAsync(h: Header, newName?: string): Promise<Heade
         .then(() => newHdr)
 }
 
-export function createDuplicateName(h: Header) {
+export function createDuplicateName(h: pxt.Immutable<Header>) {
     let reducedName = h.name.indexOf("#") > -1 ?
         h.name.substring(0, h.name.lastIndexOf('#')).trim() : h.name;
     let names = U.toDictionary(allScripts.filter(e => !e.header.isDeleted), e => e.header.name)
@@ -666,7 +666,7 @@ export function createDuplicateName(h: Header) {
     return reducedName + " #" + n;
 }
 
-export function saveScreenshotAsync(h: Header, data: string, icon: string) {
+export function saveScreenshotAsync(h: pxt.Immutable<Header>, data: string, icon: string) {
     checkHeaderSession(h);
     return impl.saveScreenshotAsync
         ? impl.saveScreenshotAsync(h, data, icon)
@@ -726,11 +726,11 @@ export enum PullStatus {
 const GIT_JSON = pxt.github.GIT_JSON
 type GitJson = pxt.github.GitJson
 
-export async function hasPullAsync(hd: Header) {
+export async function hasPullAsync(hd: pxt.Immutable<Header>) {
     return (await pullAsync(hd, true)) == PullStatus.GotChanges
 }
 
-export async function pullAsync(hd: Header, checkOnly = false) {
+export async function pullAsync(hd: pxt.Immutable<Header>, checkOnly = false) {
     let files = await getTextAsync(hd.id)
     await recomputeHeaderFlagsAsync(hd, files)
     let gitjsontext = files[GIT_JSON]
@@ -762,7 +762,7 @@ export async function pullAsync(hd: Header, checkOnly = false) {
     }
 }
 
-export async function revertAllAsync(hd: Header) {
+export async function revertAllAsync(hd: pxt.Immutable<Header>) {
     const files = await getTextAsync(hd.id)
     const gitjsontext = files[GIT_JSON]
     if (!gitjsontext)
@@ -791,12 +791,12 @@ export async function revertAllAsync(hd: Header) {
     return PullStatus.UpToDate;
 }
 
-export async function hasMergeConflictMarkersAsync(hd: Header): Promise<boolean> {
+export async function hasMergeConflictMarkersAsync(hd: pxt.Immutable<Header>): Promise<boolean> {
     const files = await getTextAsync(hd.id)
     return !!Object.keys(files).find(k => pxt.diff.hasMergeConflictMarker(files[k]));
 }
 
-export async function prAsync(hd: Header, commitId: string, msg: string) {
+export async function prAsync(hd: pxt.Immutable<Header>, commitId: string, msg: string) {
     let parsed = pxt.github.parseRepoId(hd.githubId)
     // merge conflict - create a Pull Request
     const branchName = await pxt.github.getNewBranchNameAsync(parsed.slug, "merge-")
@@ -819,7 +819,7 @@ export function bumpedVersion(cfg: pxt.PackageConfig) {
     return pxt.semver.stringify(v)
 }
 
-export async function bumpAsync(hd: Header, newVer = "") {
+export async function bumpAsync(hd: pxt.Immutable<Header>, newVer = "") {
     checkHeaderSession(hd);
 
     const files = await getTextAsync(hd.id)
@@ -866,7 +866,7 @@ const BLOCKS_PREVIEW_PATH = ".github/makecode/blocks.png";
 const BLOCKSDIFF_PREVIEW_PATH = ".github/makecode/blocksdiff.png";
 const BINARY_JS_PATH = "assets/js/binary.js";
 const VERSION_TXT_PATH = "assets/version.txt";
-export async function commitAsync(hd: Header, options: CommitOptions = {}) {
+export async function commitAsync(hd: pxt.Immutable<Header>, options: CommitOptions = {}) {
     await cloudsync.ensureGitHubTokenAsync();
 
     let files = await getTextAsync(hd.id)
@@ -1010,7 +1010,7 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     }
 }
 
-export async function restoreCommitAsync(hd: Header, commit: pxt.github.CommitInfo) {
+export async function restoreCommitAsync(hd: pxt.Immutable<Header>, commit: pxt.github.CommitInfo) {
     await cloudsync.ensureGitHubTokenAsync();
 
     const files = await getTextAsync(hd.id)
@@ -1033,7 +1033,7 @@ export async function restoreCommitAsync(hd: Header, commit: pxt.github.CommitIn
     })
 }
 
-export async function mergeUpstreamAsync(hd: Header, base: string) {
+export async function mergeUpstreamAsync(hd: pxt.Immutable<Header>, base: string) {
     // pull in all the changes
     return Promise.resolve();
 }
@@ -1059,7 +1059,7 @@ function mergeConflictMarkerError() {
     return e
 }
 
-async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
+async function githubUpdateToAsync(hd: pxt.Immutable<Header>, options: UpdateOptions) {
     const { repo, sha, files, justJSON } = options
     const parsed = pxt.github.parseRepoId(repo)
     const commit = await pxt.github.getCommitAsync(parsed.slug, sha)
@@ -1213,7 +1213,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
     return hd
 }
 
-export async function exportToGithubAsync(hd: Header, repoid: string) {
+export async function exportToGithubAsync(hd: pxt.Immutable<Header>, repoid: string) {
     const parsed = pxt.github.parseRepoId(repoid);
     const pfiles = pxt.template.packageFiles(hd.name);
     await pxt.github.putFileAsync(parsed.fullName, ".gitignore", pfiles[".gitignore"]);
@@ -1244,7 +1244,7 @@ export async function exportToGithubAsync(hd: Header, repoid: string) {
 
 
 // to be called after loading header in a editor
-export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
+export async function recomputeHeaderFlagsAsync(h: pxt.Immutable<Header>, files: ScriptText) {
     checkHeaderSession(h);
 
     h.githubCurrent = false
@@ -1357,7 +1357,7 @@ export function prepareConfigForGithub(content: string, createRelease?: boolean)
     }
 }
 
-export async function initializeGithubRepoAsync(hd: Header, repoid: string, forceTemplateFiles: boolean, binaryJs: boolean) {
+export async function initializeGithubRepoAsync(hd: pxt.Immutable<Header>, repoid: string, forceTemplateFiles: boolean, binaryJs: boolean) {
     await cloudsync.ensureGitHubTokenAsync();
 
     let parsed = pxt.github.parseRepoId(repoid)
@@ -1629,7 +1629,7 @@ function dbgShorten(s: string): string {
     }
     return _abrvStrs[s]
 }
-export function dbgHdrToString(h: Header): string {
+export function dbgHdrToString(h: pxt.Immutable<Header>): string {
     if (!h) return "#null"
     return `${h.name} ${h.id.substr(0, 4)}..v${dbgShorten(h.cloudVersion)}@${h.modificationTime % 100}-${U.timeSince(h.modificationTime)}`;
 }
