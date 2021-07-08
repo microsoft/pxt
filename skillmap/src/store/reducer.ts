@@ -30,6 +30,7 @@ export interface EditorViewState {
     currentMapId: string;
     currentActivityId: string;
     allowCodeCarryover: boolean;
+    previousHeaderId?: string;
     state: "active" | "saving" | "reload" | "reloading";
 }
 
@@ -129,7 +130,8 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                     currentMapId: action.mapId,
                     currentActivityId: action.activityId,
                     state: "active",
-                    allowCodeCarryover: shouldAllowCodeCarryover(state, action.mapId, action.activityId),
+                    allowCodeCarryover: !!action.carryoverCode,
+                    previousHeaderId: action.previousHeaderId,
                     currentHeaderId: lookupActivityProgress(
                         state.user,
                         state.pageSourceUrl,
@@ -175,7 +177,8 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                     state: "active",
                     currentMapId: action.mapId,
                     currentActivityId: action.activityId,
-                    allowCodeCarryover: shouldAllowCodeCarryover(state, action.mapId, action.activityId),
+                    allowCodeCarryover: !!action.carryoverCode,
+                    previousHeaderId: action.previousHeaderId
                 },
                 user: setHeaderIdForActivity(
                     state.user,
@@ -199,7 +202,8 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                     action.activityId,
                     action.id,
                     action.currentStep,
-                    action.maxSteps
+                    action.maxSteps,
+                    action.isCompleted
                 )
             };
         case actions.SET_RELOAD_HEADER_STATE:

@@ -6,7 +6,7 @@ import { isLocal, resolvePath, getEditorUrl, tickEvent } from "../lib/browserUti
 import { isActivityCompleted, lookupActivityProgress, lookupPreviousActivityStates } from "../lib/skillMapUtils";
 
 import { SkillMapState } from '../store/reducer';
-import  { dispatchSetHeaderIdForActivity, dispatchCloseActivity, dispatchSaveAndCloseActivity, dispatchUpdateUserCompletedTags, dispatchShowCarryoverModal, dispatchSetReloadHeaderState } from '../actions/dispatch';
+import  { dispatchSetHeaderIdForActivity, dispatchCloseActivity, dispatchSaveAndCloseActivity, dispatchUpdateUserCompletedTags, dispatchSetReloadHeaderState } from '../actions/dispatch';
 
 /* eslint-disable import/no-unassigned-import, import/no-internal-modules */
 import '../styles/makecode-editor.css'
@@ -20,16 +20,15 @@ interface MakeCodeFrameProps {
     title: string;
     url: string;
     tutorialPath: string;
-    completed: boolean;
     activityHeaderId?: string;
     activityType: MapActivityType;
-    showCodeCarryoverModal: boolean;
-    carryoverModalVisible: boolean;
+    carryoverCode: boolean;
+    previousHeaderId?: string;
+    progress?: ActivityState;
     dispatchSetHeaderIdForActivity: (mapId: string, activityId: string, id: string, currentStep: number, maxSteps: number, isCompleted: boolean) => void;
     dispatchCloseActivity: (finished?: boolean) => void;
     dispatchSaveAndCloseActivity: () => void;
     dispatchUpdateUserCompletedTags: () => void;
-    dispatchShowCarryoverModal: (mapId: string, activityId: string) => void;
     dispatchSetReloadHeaderState: (state: "reload" | "reloading" | "active") => void;
 }
 
@@ -100,7 +99,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
     }
 
     render() {
-        const { url, title, carryoverModalVisible } = this.props;
+        const { url, title } = this.props;
         const { loaded, unloading, loadPercent } = this.state;
 
         const loadingText =  lf("Loading...")
@@ -108,7 +107,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
 
         /* eslint-disable @microsoft/sdl/react-iframe-missing-sandbox */
         return <div className="makecode-frame-outer">
-            <div className={`makecode-frame-loader ${(loaded && !carryoverModalVisible) ? "hidden" : ""}`}>
+            <div className={`makecode-frame-loader ${loaded ? "hidden" : ""}`}>
                 <img src={resolvePath("assets/logo.svg")} alt={imageAlt} />
                 {!loaded && <div className="makecode-frame-loader-bar">
                     <div className="makecode-frame-loader-fill" style={{ width: loadPercent + "%" }} />
@@ -290,7 +289,9 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
                 type: "pxteditor",
                 action: "startactivity",
                 path: this.props.tutorialPath,
-                activityType: "tutorial"
+                activityType: "tutorial",
+                carryoverPreviousCode: this.props.carryoverCode,
+                previousProjectHeaderId: this.props.previousHeaderId
             } as pxt.editor.EditorMessageStartActivity);
         }
     }
@@ -310,7 +311,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
     }
 
     protected handleTutorialProgressEvent(event: pxt.editor.EditorMessageTutorialEventRequest) {
-        const { dispatchSetHeaderIdForActivity, mapId, activityId } = this.props;
+        const { dispatchSetHeaderIdForActivity, mapId, activityId, progress } = this.props;
 
         dispatchSetHeaderIdForActivity(
             mapId,
@@ -318,12 +319,12 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
             event.projectHeaderId,
             event.currentStep + 1,
             event.totalSteps,
-            event.isCompleted
+            event.isCompleted || !!progress?.isCompleted
         );
     }
 
     protected onEditorLoaded() {
-        const { mapId, activityId, showCodeCarryoverModal } = this.props;
+        const { mapId, activityId } = this.props;
         tickEvent("skillmap.activity.loaded", { path: mapId, activity: activityId });
         this.setState({
             loaded: true
@@ -331,14 +332,25 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
 
         if (this.isNewActivity) {
             this.isNewActivity = false;
-            if (showCodeCarryoverModal) this.props.dispatchShowCarryoverModal(mapId, activityId);
         }
     }
 
     protected onTutorialFinished() {
-        const { mapId, activityId } = this.props;
+        const { mapId, activityId, progress, dispatchSetHeaderIdForActivity } = this.props;
         tickEvent("skillmap.activity.complete", { path: mapId, activity: activityId });
         this.finishedActivityState = "saving";
+
+        if (progress) {
+            dispatchSetHeaderIdForActivity(
+                mapId,
+                activityId,
+                progress.headerId!,
+                progress.currentStep!,
+                progress.maxSteps!,
+                true
+            );
+        }
+
         this.props.dispatchSaveAndCloseActivity();
     }
 }
@@ -346,7 +358,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
 function mapStateToProps(state: SkillMapState, ownProps: any) {
     if (!state || !state.editorView) return {};
 
-    const { currentActivityId, currentMapId, currentHeaderId, state: saveState } = state.editorView;
+    const { currentActivityId, currentMapId, currentHeaderId, state: saveState, allowCodeCarryover, previousHeaderId } = state.editorView;
 
     let url = editorUrl
     let title: string | undefined;
@@ -360,9 +372,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
     url += `?controller=1&skillsMap=1&noproject=1&nocookiebanner=1&ws=browser`;
     title = activity.displayName;
 
-    const previous = lookupPreviousActivityStates(state.user, state.pageSourceUrl, map, activity.activityId);
-    const previousActivityCompleted = previous.some(state => state?.isCompleted &&
-        state.maxSteps === state.currentStep);
+    const progress = lookupActivityProgress(state.user, state.pageSourceUrl, currentMapId, currentActivityId);
 
     return {
         url,
@@ -371,10 +381,10 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         mapId: currentMapId,
         activityId: currentActivityId,
         activityHeaderId: currentHeaderId,
-        completed: lookupActivityProgress(state.user, state.pageSourceUrl, currentMapId, currentActivityId)?.isCompleted,
         activityType: activity.type,
-        showCodeCarryoverModal: activity.allowCodeCarryover && previousActivityCompleted,
-        carryoverModalVisible: state.modal?.type === "carryover",
+        carryoverCode: allowCodeCarryover,
+        previousHeaderId: previousHeaderId,
+        progress,
         save: saveState === "saving",
         reload: saveState === "reload" || saveState === "reloading" ? saveState : undefined
     }
@@ -390,7 +400,6 @@ const mapDispatchToProps = {
     dispatchCloseActivity,
     dispatchSaveAndCloseActivity,
     dispatchUpdateUserCompletedTags,
-    dispatchShowCarryoverModal,
     dispatchSetReloadHeaderState
 };
 

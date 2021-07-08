@@ -270,6 +270,8 @@ namespace pxt.editor {
         action: "startactivity";
         activityType: "tutorial" | "example" | "recipe";
         path: string;
+        previousProjectHeaderId?: string;
+        carryoverPreviousCode?: boolean;
     }
 
     export interface InfoMessage {
@@ -418,7 +420,13 @@ namespace pxt.editor {
                                         tutorialPath = tutorialPath.substr(tutorialPath.indexOf(':') + 1)
                                     }
                                     return Promise.resolve()
-                                        .then(() => projectView.startActivity(msg.activityType, tutorialPath, undefined, editorProjectName));
+                                        .then(() => projectView.startActivity({
+                                            activity: msg.activityType,
+                                            path: tutorialPath,
+                                            editor: editorProjectName,
+                                            previousProjectHeaderId: msg.previousProjectHeaderId,
+                                            carryoverPreviousCode: msg.carryoverPreviousCode
+                                        }));
                                 }
                                 case "importtutorial": {
                                     const load = data as EditorMessageImportTutorialRequest;

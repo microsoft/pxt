@@ -71,6 +71,7 @@ import Cloud = pxt.Cloud;
 import Util = pxt.Util;
 import { HintManager } from "./hinttooltip";
 import { CodeCardView } from "./codecard";
+import { mergeProjectCode } from "./mergeProjects";
 
 pxsim.util.injectPolyphils();
 
@@ -1652,10 +1653,10 @@ export class ProjectView
             });
     }
 
-    private loadTutorialTemplateCodeAsync(): Promise<void> {
+    private async loadTutorialTemplateCodeAsync(): Promise<void> {
         const header = pkg.mainEditorPkg().header;
         if (!header || !header.tutorial || !header.tutorial.templateCode)
-            return Promise.resolve();
+            return;
 
         const template = header.tutorial.templateCode;
 
@@ -1663,7 +1664,6 @@ export class ProjectView
         // re-opened
         delete header.tutorial.templateCode;
 
-        let decompilePromise = Promise.resolve();
 
         // If we're starting in the asset editor, always load into TS
         const preferredEditor = header.tutorial.metadata?.preferredEditor;
@@ -1673,28 +1673,39 @@ export class ProjectView
 
         const projectname = projectNameForEditor(preferredEditor || header.editor);
 
+        let currentText = await workspace.getTextAsync(header.id);
+
         if (projectname === pxt.JAVASCRIPT_PROJECT_NAME) {
-            pkg.mainEditorPkg().setFile("main.ts", template);
+            currentText["main.ts"] = template;
         }
         else if (projectname === pxt.PYTHON_PROJECT_NAME) {
-            decompilePromise = compiler.decompilePythonSnippetAsync(template)
-                .then(pyCode => {
-                    if (pyCode) {
-                        pkg.mainEditorPkg().setFile("main.py", pyCode);
-                    }
-                })
+            const pyCode = await compiler.decompilePythonSnippetAsync(template)
+            if (pyCode) {
+                currentText["main.py"] = pyCode;
+            }
         }
         else {
-            decompilePromise = compiler.decompileBlocksSnippetAsync(template)
-                .then(resp => {
-                    const blockXML = resp.outfiles["main.blocks"];
-                    if (blockXML) {
-                        pkg.mainEditorPkg().setFile("main.blocks", blockXML);
-                    }
-                })
+            const resp = await compiler.decompileBlocksSnippetAsync(template)
+            const blockXML = resp.outfiles["main.blocks"];
+            if (blockXML) {
+                currentText["main.blocks"] = blockXML
+            }
         }
 
-        return decompilePromise.then(() => workspace.saveAsync(header));
+        let newText = currentText;
+        if (header.tutorial.mergeHeaderId) {
+            const previousHeader = workspace.getHeader(header.tutorial.mergeHeaderId);
+            if (previousHeader) {
+                const previousText = await workspace.getTextAsync(previousHeader.id);
+                newText = mergeProjectCode(previousText, currentText, !!header.tutorial.mergeCarryoverCode);
+            }
+        }
+
+        for (const file of Object.keys(newText)) {
+            pkg.mainEditorPkg().setFile(file, newText[file]);
+        }
+
+        await workspace.saveAsync(header);
     }
 
     private loadTutorialJresCodeAsync(): Promise<void> {
@@ -3732,7 +3743,7 @@ export class ProjectView
         }
     }
 
-    private startTutorialAsync(tutorialId: string, tutorialTitle?: string, recipe?: boolean, editorProjectName?: string): Promise<void> {
+    private startTutorialAsync(tutorialId: string, tutorialTitle?: string, recipe?: boolean, editorProjectName?: string, previousHeaderId?: string, carryoverCode?: boolean): Promise<void> {
         // custom tick for recipe or tutorial "completion". recipes use links in the markdown to
         // progress, so we track when a user "exits" a recipe by loading a new one
         if (this.state.header?.tutorial?.tutorial) {
@@ -3754,6 +3765,9 @@ export class ProjectView
 
                 const { options, editor: parsedEditor } = pxt.tutorial.getTutorialOptions(md, tutorialId, filename, reportId, !!recipe);
                 this.hintManager.clearViewedHints();
+
+                options.mergeCarryoverCode = carryoverCode;
+                options.mergeHeaderId = previousHeaderId;
 
                 // pick tutorial editor
                 const editor = editorProjectName || parsedEditor;
@@ -3786,22 +3800,24 @@ export class ProjectView
             .finally(() => core.hideLoading("tutorial"));
     }
 
-    startActivity(activity: pxt.editor.Activity, path: string, title?: string, editorProjectName?: string, focus = true, opts?: pxt.editor.ExampleImportOptions) {
+    async startActivity(opts: pxt.editor.StartActivityOptions) {
+        const { activity, path, editor, title, focus, importOptions, previousProjectHeaderId, carryoverPreviousCode } = opts;
+
+        this.textEditor.giveFocusOnLoading = focus;
         switch (activity) {
             case "tutorial":
-                pxt.tickEvent("tutorial.start", { tutorial: path, editor: editorProjectName });
-                this.startTutorialAsync(path, title, false, editorProjectName);
+                pxt.tickEvent("tutorial.start", { tutorial: path, editor: editor });
+                await this.startTutorialAsync(path, title, false, editor, opts.previousProjectHeaderId, opts.carryoverPreviousCode);
                 break;
             case "recipe":
-                pxt.tickEvent("recipe.start", { recipe: path, editor: editorProjectName });
-                this.startTutorialAsync(path, title, true, editorProjectName);
+                pxt.tickEvent("recipe.start", { recipe: path, editor: editor });
+                await this.startTutorialAsync(path, title, true, editor);
                 break;
             case "example":
-                pxt.tickEvent("example.start", { example: path, editor: editorProjectName });
-                this.importExampleAsync({ name: title, path, preferredEditor: editorProjectName, ...opts });
+                pxt.tickEvent("example.start", { example: path, editor: editor });
+                await this.importExampleAsync({ name: title, path, preferredEditor: editor, ...importOptions });
                 break;
         }
-        this.textEditor.giveFocusOnLoading = focus;
     }
 
     completeTutorialAsync(): Promise<void> {
@@ -4493,7 +4509,12 @@ function handleHash(newHash: { cmd: string; arg: string }, loading: boolean): bo
                     editorProjectName = pxt.BLOCKS_PROJECT_NAME;
                 tutorialPath = tutorialPath.substr(tutorialPath.indexOf(':') + 1)
             }
-            editor.startActivity(newHash.cmd, tutorialPath, undefined, editorProjectName, false);
+            editor.startActivity({
+                activity: newHash.cmd,
+                path: tutorialPath,
+                editor: editorProjectName,
+                focus: false
+            });
             pxt.BrowserUtils.changeHash("editor");
             return true;
         }
