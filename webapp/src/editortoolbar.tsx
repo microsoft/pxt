@@ -377,7 +377,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
                     {compileBtn && this.getCompileButton(mobile)}
                 </div>}
             </div>
-            {(showProjectRename || showGithub) &&
+            {(showProjectRename || showGithub || identity.CloudSaveStatus.wouldRender(header.id)) &&
                 <div id="projectNameArea" role="menu" className="ui column items">
                     <div className={`ui right ${showSave ? "labeled" : ""} input projectname-input projectname-computer`}>
                         {showProjectRename && this.getSaveInput(showSave, "fileNameInput2", projectName, showProjectRenameReadonly)}
