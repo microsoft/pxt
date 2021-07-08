@@ -2139,7 +2139,7 @@ namespace pxt.py {
             }
 
             if (!fun) {
-                error(n, 9508, U.lf(`can't find called function "${nm}"`))
+                error(n, 9508, U.lf("can't find called function '{0}'", nm))
             }
 
             let formals = fun ? fun.parameters : null

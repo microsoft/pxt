@@ -699,7 +699,7 @@ export function showWinAppDeprecateAsync() {
         jsx: <div>
             <img className="ui medium centered image" src={pxt.appTarget.appTheme.winAppDeprImage} alt={lf("An image of a shrugging board")}/>
             <div>
-                {lf(`This app is being deprecated. Text editing is only available on the MakeCode website `)}
+                {lf("This app is being deprecated. Text editing is only available on the MakeCode website ")}
                 {`(https://${pxt.appTarget.name}).`}
             </div>
         </div>

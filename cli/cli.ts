@@ -3025,7 +3025,7 @@ function installPackageNameAsync(packageName: string): Promise<void> {
         return addDepAsync(sharedId, packageName, false);
 
     // don't know
-    U.userError(lf(`unknown package ${packageName}`))
+    U.userError(lf("unknown package {0}", packageName))
     return Promise.resolve();
 }
 
