@@ -18,6 +18,7 @@ interface CacheEntry {
     callbackOnce: Action[];
     components: DataSubscriber[];
     api: VirtualApi;
+    re?: RegExp;
 }
 
 export enum FetchStatus {
@@ -163,8 +164,16 @@ function saveCache() {
     pxt.storage.setLocal("apiCache2", JSON.stringify(obj))
 }
 
-function matches(ce: CacheEntry, prefix: string) {
-    return ce.path.slice(0, prefix.length) == prefix;
+function matches(ce: CacheEntry, path: string) {
+    if (ce.path === path) { return true; }
+    if (ce.path.endsWith(':*')) {
+        if (!ce.re) {
+            const [ ceproto ] = ce.path.split(':');
+            ce.re = new RegExp(`^${ceproto}:`);
+        }
+        if (ce.re.test(path)) { return true; }
+    }
+    return false;
 }
 
 function notify(ce: CacheEntry, path: string) {
@@ -258,9 +267,8 @@ export function stripProtocol(path: string) {
 }
 
 export function invalidate(path: string) {
-    const prefix = path.replace(/:\*$/, ':'); // remove trailing "*";
     Util.values(cachedData).forEach(ce => {
-        if (matches(ce, prefix)) {
+        if (matches(ce, path)) {
             ce.lastRefresh = 0;
             if (ce.components.length > 0)
                 queueNotify(lookup(ce.path), path)

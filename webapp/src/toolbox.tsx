@@ -423,7 +423,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         if (!visible) return <div style={{ display: 'none' }} />
 
         const theme = pxt.appTarget.appTheme;
-        const tutorialOptions = parent.parent.state.tutorialOptions;
+        const tutorialOptions = parent.parent.getTutorialOptions();
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial
         const hasTopBlocks = !!theme.topBlocks && !inTutorial;
 

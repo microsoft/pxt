@@ -332,10 +332,10 @@ export class ProjectView
             }
             this.saveFileAsync();
         } else if (active) {
-            data.invalidate("header:*")
             let hdrId = this.state.header ? this.state.header.id : '';
+            data.invalidate("header:" + (!!hdrId ? hdrId : '*'));
             const inEditor = !this.state.home && hdrId
-            if ((!inEditor && workspace.isHeadersSessionOutdated())
+            if ((!inEditor && workspace.isWorkspaceOutdated())
                 || workspace.isHeaderSessionOutdated(this.state.header)) {
                 pxt.debug('workspace: changed, reloading...')
                 workspace.syncAsync()
@@ -364,6 +364,20 @@ export class ProjectView
         }
 
         pxt.storage.setLocal("editorSettings", JSON.stringify(this.settings))
+    }
+
+    getTutorialOptions(): pxt.tutorial.TutorialOptions {
+        // Return a copy to ensure the project header isn't modified
+        return  this.state?.header?.tutorial ? { ...this.state.header.tutorial } : undefined;
+    }
+
+    setTutorialOptions(tut: pxt.tutorial.TutorialOptions, callback?: () => void) {
+        // Write tutorial options to project header
+        this.state.header.tutorial = tut ? { ...tut } : undefined;
+        // Save project header in background
+        /*await*/ workspace.saveAsync(this.state.header);
+        // Force UI refresh
+        this.forceUpdate(callback);
     }
 
     private pushFileHistory(id: string, name: string, pos: any) {
@@ -414,7 +428,8 @@ export class ProjectView
     componentDidUpdate() {
         this.saveSettings()
         this.editor.domUpdate();
-        simulator.setState(this.state.header ? this.state.header.editor : '', this.state.tutorialOptions && !!this.state.tutorialOptions.tutorial)
+        const tut = this.getTutorialOptions();
+        simulator.setState(this.state.header ? this.state.header.editor : '', tut && !!tut.tutorial)
         this.editor.resize();
 
         let p = Promise.resolve();
@@ -872,7 +887,7 @@ export class ProjectView
             this.typecheck();
 
             // If we are in a tutorial, call the validator for that editor (blocks, TS, etc)
-            if (this.isTutorial() && pxt.appTarget.appTheme.tutorialCodeValidation) this.editor.validateTutorialCode(this.state.tutorialOptions);
+            if (this.isTutorial() && pxt.appTarget.appTheme.tutorialCodeValidation) this.editor.validateTutorialCode(this.getTutorialOptions());
         }
         this.markdownChangeHandler();
     }, 500, false);
@@ -1245,11 +1260,11 @@ export class ProjectView
     }
 
     setTutorialInstructionsExpanded(value: boolean): void {
-        const tutorialOptions = this.state.tutorialOptions;
+        const tutorialOptions = this.getTutorialOptions();
         tutorialOptions.tutorialStepExpanded = value;
         tutorialOptions.autoexpandStep = value;
-        this.setState(
-            { tutorialOptions: tutorialOptions },
+        this.setTutorialOptions(
+            tutorialOptions,
             () => {
                 if (this.editor == this.blocksEditor)
                     this.blocksEditor.hideFlyout()
@@ -1267,10 +1282,10 @@ export class ProjectView
         let tc = this.refs[ProjectView.tutorialCardId] as tutorial.TutorialCard;
         if (!tc) return;
         if (step > -1) {
-            let tutorialOptions = this.state.tutorialOptions;
+            let tutorialOptions = this.getTutorialOptions();
             tutorialOptions.tutorialStep = step;
             tutorialOptions.tutorialStepExpanded = false;
-            this.setState({ tutorialOptions: tutorialOptions });
+            this.setTutorialOptions(tutorialOptions);
             const showHint = tutorialOptions.tutorialStepInfo[step].showHint;
             if (showHint) this.showTutorialHint();
 
@@ -1281,18 +1296,18 @@ export class ProjectView
             if (this.textEditor.giveFocusOnLoading && this.isTextEditor()) {
                 this.textEditor.editor.focus();
             }
-            if (pxt.appTarget.appTheme.tutorialCodeValidation) this.editor.validateTutorialCode(this.state.tutorialOptions);
+            if (pxt.appTarget.appTheme.tutorialCodeValidation) this.editor.validateTutorialCode(tutorialOptions);
         }
     }
 
     setTutorialCodeStatus(step: number, status: pxt.tutorial.TutorialRuleStatus[]) {
-        const tutorialOptions = this.state.tutorialOptions;
+        const tutorialOptions = this.getTutorialOptions();
         const stepInfo = tutorialOptions.tutorialStepInfo[tutorialOptions.tutorialStep];
         const tutorialCodeValidationIsOn = tutorialOptions.metadata.tutorialCodeValidation;
         if (tutorialCodeValidationIsOn) stepInfo.listOfValidationRules = status;
 
         // Update the state with the code status, so the tutorial card can re-render
-        this.setState({ tutorialOptions: tutorialOptions });
+        this.setTutorialOptions(tutorialOptions);
     }
 
     handleMessage(msg: pxsim.SimulatorMessage) {
@@ -1318,10 +1333,10 @@ export class ProjectView
                             });
                             this.editor.filterToolbox(tt.showCategories);
                         }
-                        let tutorialOptions = this.state.tutorialOptions;
+                        let tutorialOptions = this.getTutorialOptions();
                         tutorialOptions.tutorialReady = true;
                         tutorialOptions.tutorialStepInfo = tt.stepInfo;
-                        this.setState({ tutorialOptions: tutorialOptions });
+                        this.setTutorialOptions(tutorialOptions);
                         const showHint = tutorialOptions.tutorialStepInfo[0].showHint;
                         if (showHint) this.showTutorialHint();
                         //else {
@@ -1333,7 +1348,7 @@ export class ProjectView
                         let te = msg as pxsim.TutorialFailedMessage;
                         pxt.reportException(te.message);
                         core.errorNotification(lf("We're having trouble loading this tutorial, please try again later."));
-                        this.setState({ tutorialOptions: undefined });
+                        this.setTutorialOptions(undefined);
                         // Delete the project created for this tutorial
                         let curr = pkg.mainEditorPkg().header
                         curr.isDeleted = true;
@@ -1395,7 +1410,7 @@ export class ProjectView
             return checkAsync.then(() => this.openHome());
 
         // check our multi-tab session
-        if (workspace.isHeadersSessionOutdated()) {
+        if (workspace.isWorkspaceOutdated()) {
             // reload header before loading
             pxt.log(`multi-tab sync before load`)
             await workspace.syncAsync();
@@ -1529,7 +1544,6 @@ export class ProjectView
                     home: false,
                     showFiles: h.githubId ? true : false,
                     editorState: editorState,
-                    tutorialOptions: h.tutorial,
                     header: h,
                     projectName: h.name,
                     currFile: file,
@@ -2216,7 +2230,6 @@ export class ProjectView
             home: true,
             tracing: undefined,
             fullscreen: undefined,
-            tutorialOptions: undefined,
             editorState: undefined,
             debugging: undefined,
             header: undefined,
@@ -3428,7 +3441,8 @@ export class ProjectView
     }
 
     showReportAbuse() {
-        const pubId = (this.state.tutorialOptions && this.state.tutorialOptions.tutorialReportId)
+        const tut = this.getTutorialOptions();
+        const pubId = (tut && tut.tutorialReportId)
             || (this.state.header && this.state.header.pubCurrent && this.state.header.pubId);
         dialogs.showReportAbuseAsync(pubId);
     }
@@ -3785,17 +3799,18 @@ export class ProjectView
         core.showLoading("leavingtutorial", lf("leaving tutorial..."));
 
         // clear tutorial field
-        const tutorial = this.state.header.tutorial;
-        if (tutorial) {
+        const tut = this.state.header.tutorial;
+        if (tut) {
             // don't keep track of completion for microtutorials
-            if (this.state.tutorialOptions && this.state.tutorialOptions.tutorialRecipe)
+            if (tut.tutorialRecipe) {
                 this.state.header.tutorialCompleted = undefined;
-            else
+            } else {
                 this.state.header.tutorialCompleted = {
-                    id: tutorial.tutorial,
-                    steps: tutorial.tutorialStepInfo.length
-                }
-            this.state.header.tutorial = undefined;
+                    id: tut.tutorial,
+                    steps: tut.tutorialStepInfo.length
+                };
+            }
+            this.setTutorialOptions(undefined);
         }
 
         if (pxt.BrowserUtils.isIE()) {
@@ -3842,7 +3857,6 @@ export class ProjectView
             .then(() => Util.delay(500))
             .finally(() => {
                 this.setState({
-                    tutorialOptions: undefined,
                     tracing: undefined,
                     editorState: undefined
                 });
@@ -3856,7 +3870,7 @@ export class ProjectView
     }
 
     isTutorial() {
-        return this.state.tutorialOptions != undefined;
+        return this.getTutorialOptions() != undefined;
     }
 
     getExpandedCardStyle(flyoutOnly?: boolean): any {
@@ -3887,9 +3901,10 @@ export class ProjectView
     ///////////////////////////////////////////////////////////
 
     pokeUserActivity() {
-        if (!!this.state.tutorialOptions && !!this.state.tutorialOptions.tutorial) {
+        const tut = this.getTutorialOptions();
+        if (!!tut && !!tut.tutorial) {
             // animate tutorial hint after some time of user inactivity
-            this.hintManager.pokeUserActivity(ProjectView.tutorialCardId, this.state.tutorialOptions.tutorialStep, this.state.tutorialOptions.tutorialHintCounter);
+            this.hintManager.pokeUserActivity(ProjectView.tutorialCardId, tut.tutorialStep, tut.tutorialHintCounter);
         }
     }
 
@@ -3906,12 +3921,11 @@ export class ProjectView
     }
 
     private tutorialCardHintCallback() {
-        let tutorialOptions = this.state.tutorialOptions;
+        let tutorialOptions = this.getTutorialOptions();
         tutorialOptions.tutorialHintCounter = tutorialOptions.tutorialHintCounter + 1;
 
         this.setState({
             pokeUserComponent: ProjectView.tutorialCardId,
-            tutorialOptions: tutorialOptions
         });
 
         setTimeout(() => this.clearUserPoke(), 10000);
@@ -4072,7 +4086,7 @@ export class ProjectView
         const sandbox = pxt.shell.isSandboxMode();
         const isBlocks = !this.editor.isVisible || this.getPreferredEditor() === pxt.BLOCKS_PROJECT_NAME;
         const sideDocs = !(sandbox || targetTheme.hideSideDocs);
-        const tutorialOptions = this.state.tutorialOptions;
+        const tutorialOptions = this.getTutorialOptions();
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
         const isSidebarTutorial = pxt.appTarget.appTheme.sidebarTutorial;
         const inTutorialExpanded = inTutorial && tutorialOptions.tutorialStepExpanded;

@@ -538,7 +538,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 pxt.tickEvent("blocks.create", { "block": blockId }, { interactiveConsent: true });
                 if (ev.xml.tagName == 'SHADOW')
                     this.cleanUpShadowBlocks();
-                if (!this.parent.state.tutorialOptions || !this.parent.state.tutorialOptions.metadata || !this.parent.state.tutorialOptions.metadata.flyoutOnly)
+                const tut = this.parent.getTutorialOptions();
+                if (!tut || !tut.metadata || !tut.metadata.flyoutOnly)
                     this.parent.setState({ hideEditorFloats: false });
                 workspace.fireEvent({ type: 'create', editor: 'blocks', blockId } as pxt.editor.events.CreateEvent);
             }
@@ -574,7 +575,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             }
 
             // reset tutorial hint animation on any blockly event
-            if (this.parent.state.tutorialOptions != undefined) {
+            if (this.parent.getTutorialOptions() != undefined) {
                 this.parent.pokeUserActivity();
             }
         })
@@ -1114,8 +1115,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (pxt.shell.isReadOnly()) return;
 
         // Dont show toolbox if we're in tutorial mode and we're not ready
-        if (this.parent.state.tutorialOptions != undefined &&
-            !this.parent.state.tutorialOptions.tutorialReady) {
+        const tut = this.parent.getTutorialOptions();
+        if (tut != undefined && !tut.tutorialReady) {
             return;
         }
 
@@ -1393,8 +1394,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private flyoutXmlList: Element[] = [];
     public showFlyout(treeRow: toolbox.ToolboxCategory) {
         const { nameid: ns, subns } = treeRow;
-        const inTutorial = this.parent.state.tutorialOptions
-            && !!this.parent.state.tutorialOptions.tutorial;
+        const tut = this.parent.getTutorialOptions();
+        const inTutorial = tut && !!tut.tutorial;
 
         if (ns == 'search') {
             this.showSearchFlyout();

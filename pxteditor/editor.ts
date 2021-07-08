@@ -55,7 +55,7 @@ namespace pxt.editor {
         projectName?: string;
         suppressPackageWarning?: boolean;
 
-        tutorialOptions?: pxt.tutorial.TutorialOptions;
+        //tutorialOptions?: pxt.tutorial.TutorialOptions;
         lightbox?: boolean;
         keymap?: boolean;
 
@@ -251,6 +251,8 @@ namespace pxt.editor {
         stopPokeUserActivity(): void;
         clearUserPoke(): void;
         setHintSeen(step: number): void;
+        getTutorialOptions(): pxt.tutorial.TutorialOptions;
+        setTutorialOptions(tut: pxt.tutorial.TutorialOptions): void;
 
         anonymousPublishAsync(screenshotUri?: string): Promise<string>;
 

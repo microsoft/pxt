@@ -104,7 +104,8 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const isSimulatorPending = simState == pxt.editor.SimState.Pending;
         const isFullscreen = parentState.fullscreen;
         const isMuted = parentState.mute;
-        const inTutorial = !!parentState.tutorialOptions && !!parentState.tutorialOptions.tutorial;
+        const tutorialOptions = this.props.parent.getTutorialOptions();
+        const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
 
         const run = true;
         const restart = run && !simOpts.hideRestart;

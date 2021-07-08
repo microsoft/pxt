@@ -39,7 +39,7 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
     }
 
     exitTutorial = () => {
-        const tutorialOptions = this.props.parent.state.tutorialOptions;
+        const tutorialOptions = this.props.parent.getTutorialOptions();
         pxt.tickEvent("menu.exitTutorial", { tutorial: tutorialOptions?.tutorial }, { interactiveConsent: true });
         this.props.parent.exitTutorial();
     }
@@ -69,7 +69,8 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
     }
 
     protected getView = (): HeaderBarView => {
-        const { home, debugging, tutorialOptions } = this.props.parent.state;
+        const { home, debugging } = this.props.parent.state;
+        const tutorialOptions = this.props.parent.getTutorialOptions();
         if (home) {
             return "home";
         } else if (pxt.shell.isSandboxMode()) {
@@ -186,7 +187,8 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
         const highContrast = this.getData<boolean>(auth.HIGHCONTRAST);
         const view = this.getView();
 
-        const { home, header, tutorialOptions } = this.props.parent.state;
+        const { home, header } = this.props.parent.state;
+        const tutorialOptions = this.props.parent.getTutorialOptions();
         const isController = pxt.shell.isControllerMode();
         const isNativeHost = cmds.isNativeHost();
         const hasIdentity = auth.hasIdentity();

@@ -200,32 +200,16 @@ export function getHeader(id: string) {
     return null
 }
 
-// this key is the max modificationTime value of the allHeaders
-// it is used to track if allHeaders need to be refreshed (syncAsync)
-let sessionID: string = "";
-export function isHeadersSessionOutdated() {
-    return pxt.storage.getLocal('workspacesessionid') != sessionID;
+export function isWorkspaceOutdated() {
+    return pxt.storage.getLocal('workspaceid') != workspaceID;
 }
 function maybeSyncHeadersAsync(): Promise<void> {
-    if (isHeadersSessionOutdated()) // another tab took control
+    if (isWorkspaceOutdated()) { // another tab took control
+        pxt.storage.setLocal('workspaceid', workspaceID);
+        pxt.debug(`workspace: set workspace to ${workspaceID}`);
         return syncAsync().then(() => { })
-    return Promise.resolve();
-}
-export function computeSessionId(hdrs: Header[]): string {
-    // use # of scripts + time of last mod as key
-    return hdrs.length + ' ' + hdrs
-        .map(h => h.modificationTime)
-        .reduce((l, r) => Math.max(l, r), 0)
-        .toString()
-}
-function refreshHeadersSession() {
-    sessionID = computeSessionId(allScripts.map(f => f.header))
-    if (isHeadersSessionOutdated()) {
-        pxt.storage.setLocal('workspacesessionid', sessionID);
-        pxt.debug(`workspace: refreshed headers session to ${sessionID}`);
-        data.invalidate("header:*");
-        data.invalidate("text:*");
     }
+    return Promise.resolve();
 }
 // this is an identifier for the current frame
 // in order to lock headers for editing
@@ -454,6 +438,7 @@ export async function partialSaveAsync(id: string, filename: string, content: st
 
 export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: boolean): Promise<void> {
     pxt.debug(`workspace.saveAsync ${dbgHdrToString(h)}`)
+
     if (h.isDeleted)
         clearHeaderSession(h);
     checkHeaderSession(h);
@@ -581,8 +566,6 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
             // the count of headers has changed
             data.invalidate("headers:");
         }
-
-        refreshHeadersSession();
     });
 }
 
@@ -1560,8 +1543,7 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
             })
             Promise.all([cloudsync.syncAsync(), cloud.syncAsync()]); // sync in background
         })
-        .then(() => {
-            refreshHeadersSession();
+        .then(async () => {
             return impl.getSyncState ? impl.getSyncState() : null
         })
         .finally(() => {

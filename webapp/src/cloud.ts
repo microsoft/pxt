@@ -644,12 +644,12 @@ const onHeaderChangeSubscriber: data.DataSubscriber = {
         const hdrId = parts[1];
         if (hdrId === "*") {
             // all headers
-            // TODO https://github.com/microsoft/pxt-arcade/issues/3129: this branch is being hit WAY too often.
             getLocalCloudHeaders().forEach(h => onHeaderChangeDebouncer(h));
         } else {
             const hdr = workspace.getHeader(hdrId);
-            U.assert(!!hdr, "cannot find header with id: " + hdrId);
-            onHeaderChangeDebouncer(hdr);
+            if (hdr) {
+                onHeaderChangeDebouncer(hdr);
+            }
         }
     }
 };

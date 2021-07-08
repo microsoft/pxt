@@ -298,7 +298,8 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
     }
 
     renderCore() {
-        const { tutorialOptions, projectName, compiling, isSaving, simState, debugging, editorState } = this.props.parent.state;
+        const { projectName, compiling, isSaving, simState, debugging, editorState } = this.props.parent.state;
+        const tutorialOptions = this.props.parent.getTutorialOptions();
         const header = this.getData(`header:${this.props.parent.state.header.id}`) ?? this.props.parent.state.header;
 
         const targetTheme = pxt.appTarget.appTheme;
@@ -377,7 +378,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
                     {compileBtn && this.getCompileButton(mobile)}
                 </div>}
             </div>
-            {(showProjectRename || showGithub) &&
+            {(showProjectRename || showGithub || identity.CloudSaveStatus.WouldRender(header.id)) &&
                 <div id="projectNameArea" role="menu" className="ui column items">
                     <div className={`ui right ${showSave ? "labeled" : ""} input projectname-input projectname-computer`}>
                         {showProjectRename && this.getSaveInput(showSave, "fileNameInput2", projectName, showProjectRenameReadonly)}

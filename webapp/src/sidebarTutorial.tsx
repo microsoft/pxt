@@ -13,7 +13,7 @@ export class SidebarTutorialHint extends TutorialHint {
     }
 
     renderCore() {
-        const options = this.props.parent.state.tutorialOptions;
+        const options = this.props.parent.getTutorialOptions();
         const { tutorialName, tutorialReady, tutorialStepInfo, tutorialStep, tutorialStepExpanded, metadata } = options;
         const stepInfo = tutorialStepInfo[tutorialStep];
         const tutorialHint = stepInfo.hintContentMd;
@@ -50,7 +50,7 @@ export class SidebarTutorialCard extends TutorialCard {
     }
 
     renderCore() {
-        const options = this.props.parent.state.tutorialOptions;
+        const options = this.props.parent.getTutorialOptions();
         const { tutorialName, tutorialStepInfo, tutorialStep } = options;
         const stepInfo = tutorialStepInfo[tutorialStep];
         const hasHint = !!tutorialStepInfo[tutorialStep].hintContentMd || tutorialStepInfo[tutorialStep].showDialog;
