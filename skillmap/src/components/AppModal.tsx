@@ -22,7 +22,7 @@ interface AppModalProps {
     actions?: ModalAction[];
     showCodeCarryoverModal?: boolean;
     dispatchHideModal: () => void;
-    dispatchRestartActivity: (mapId: string, activityId: string, previousHeaderId?: string, carryoverCode?: boolean)=> void;
+    dispatchRestartActivity: (mapId: string, activityId: string, previousHeaderId?: string, carryoverCode?: boolean) => void;
     dispatchOpenActivity: (mapId: string, activityId: string, previousHeaderId?: string, carryoverCode?: boolean) => void;
     dispatchShowCarryoverModal: (mapId: string, activityId: string) => void;
     dispatchResetUser: () => void;
