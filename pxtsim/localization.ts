@@ -7,7 +7,7 @@ namespace pxsim.localization {
     }
 
     let sForPlural = true;
-    export function lf(s: string, ...args: any[]): string {
+    export function lf(s: string, ...args: any[]): string { // @ignorelf@
         let lfmt = _localizeStrings[s] || s;
 
         if (!sForPlural && lfmt != s && /\d:s\}/.test(lfmt)) {
