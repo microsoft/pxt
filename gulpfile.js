@@ -261,7 +261,7 @@ function buildStrings(out, rootPaths, recursive) {
                             err("cannot JSON-parse " + m[1])
                         }
                     } else {
-                        err("invalid format of lf() argument: " + args)
+                        err("invalid format of lf() argument: " + args)  // @ignorelf@
                     }
                     return "BLAH " + args
                 })
