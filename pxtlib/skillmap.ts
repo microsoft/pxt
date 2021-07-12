@@ -43,8 +43,8 @@ namespace pxt.skillmap {
         }
 
         getAllProjectsAsync(): Promise<Project[]> {
-            return this.db.getAllAsync<Project>(IndexedDBWorkspace.projectTable)
-                .then(entries => entries.filter(e => !e.deleted))
+            return this.db.getAllAsync<{id : string, project: Project}>(IndexedDBWorkspace.projectTable)
+                .then(entries => entries.map(e => e.project).filter(e => !e.deleted));
         }
 
         deleteProjectAsync(headerId: string) {
