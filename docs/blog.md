@@ -4,7 +4,7 @@
 
 July 12th, 2021 by [Jaqster](https://github.com/jaqster)
 
-Phew! We made it through a crazy remote/hybrid school year! Now, with summer weather + vaccines + the 2021 updates to MakeCode for the micro:bit, things are starting to look up!
+Phew! We made it through a crazy remote/hybrid school year! Now, with summer weather + the 2021 updates to MakeCode for the micro:bit, things are starting to look up!
 
 **[Continue reading this blog post](/blog/microbit/2021-release)**
 
