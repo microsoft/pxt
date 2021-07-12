@@ -1,5 +1,13 @@
 # Microsoft MakeCode Blog
 
+## [MakeCode for the micro:bit - 2021 Release is here!](/blog/microbit/2021-release)
+
+June 25th, 2021 by [Jaqster](https://github.com/jaqster)
+
+Phew! We made it through a crazy remote/hybrid school year! Now, with summer weather + vaccines + the 2021 updates to MakeCode for the micro:bit, things are starting to look up!
+
+**[Continue reading this blog post](/blog/microbit/2021-release)**
+
 ## [Beginner Skillmap Sneak Peek](/blog/arcade/beginner-skillmap)
 
 Updated on May 19th by [kiki-lee](https://github.com/kiki-lee)
