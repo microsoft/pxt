@@ -375,7 +375,7 @@ interface ProjectChanges {
     header: Change<keyof Header, string>[],
     files: Change<string, number>[],
 }
-function computeChangeSummary(a: {header: Header, text: ScriptText}, b: {header: Header, text: ScriptText}): ProjectChanges {
+function computeChangeSummary(a: { header: Header, text: ScriptText }, b: { header: Header, text: ScriptText }): ProjectChanges {
     const aHdr = a.header || {} as Header
     const bHdr = b.header || {} as Header
     const aTxt = a.text || {}
@@ -388,22 +388,22 @@ function computeChangeSummary(a: {header: Header, text: ScriptText}, b: {header:
     const hasHdrChanged = (k: HeaderK) => hasObjChanged(aHdr[k], bHdr[k])
     const hdrChanges = hdrKeys.filter(hasHdrChanged)
     const hdrDels = hdrChanges.filter(k => (k in aHdr) && !(k in bHdr))
-        .map(k => ({kind: 'del', key: k, oldVal: aHdr[k]}) as Change<HeaderK, string>)
+        .map(k => ({ kind: 'del', key: k, oldVal: aHdr[k] }) as Change<HeaderK, string>)
     const hdrAdds = hdrChanges.filter(k => !(k in aHdr) && (k in bHdr))
-        .map(k => ({kind: 'add', key: k, newVal: bHdr[k]}) as Change<HeaderK, string>)
+        .map(k => ({ kind: 'add', key: k, newVal: bHdr[k] }) as Change<HeaderK, string>)
     const hdrMods = hdrChanges.filter(k => (k in aHdr) && (k in bHdr))
-        .map(k => ({kind: 'mod', key: k, oldVal: aHdr[k], newVal: bHdr[k]}) as Change<HeaderK, string>)
+        .map(k => ({ kind: 'mod', key: k, oldVal: aHdr[k], newVal: bHdr[k] }) as Change<HeaderK, string>)
 
     // files
     const filenames = U.unique([...Object.keys(aTxt), ...Object.keys(bTxt)], s => s)
     const hasFileChanged = (filename: string) => aTxt[filename] !== bTxt[filename]
     const fileChanges = filenames.filter(hasFileChanged)
     const fileDels = fileChanges.filter(k => (k in aTxt) && !(k in bTxt) && !!b.text)
-        .map(k => ({kind: 'del', key: k, oldVal: aTxt[k].length}) as Change<string, number>)
+        .map(k => ({ kind: 'del', key: k, oldVal: aTxt[k].length }) as Change<string, number>)
     const fileAdds = fileChanges.filter(k => !(k in aTxt) && (k in bTxt))
-        .map(k => ({kind: 'add', key: k, newVal: bTxt[k].length}) as Change<string, number>)
+        .map(k => ({ kind: 'add', key: k, newVal: bTxt[k].length }) as Change<string, number>)
     const fileMods = fileChanges.filter(k => (k in aTxt) && (k in bTxt))
-        .map(k => ({kind: 'mod', key: k, oldVal: aTxt[k].length, newVal: bTxt[k].length}) as Change<string, number>)
+        .map(k => ({ kind: 'mod', key: k, oldVal: aTxt[k].length, newVal: bTxt[k].length }) as Change<string, number>)
 
     return {
         header: [...hdrDels, ...hdrAdds, ...hdrMods],
@@ -413,7 +413,7 @@ function computeChangeSummary(a: {header: Header, text: ScriptText}, b: {header:
 // useful for debugging
 function stringifyChangeSummary(diff: ProjectChanges): string {
     const indent = (s: string) => '\t' + s
-    const changeToStr = (c: Change<any,any>) => `${c.kind} ${c.key}: (${c.oldVal || ''}) => (${c.newVal || ''})`
+    const changeToStr = (c: Change<any, any>) => `${c.kind} ${c.key}: (${c.oldVal || ''}) => (${c.newVal || ''})`
     let res = ''
 
     const hdrDels = diff.header.filter(k => k.kind === 'del')
@@ -447,7 +447,7 @@ export async function partialSaveAsync(id: string, filename: string, content: st
         pxt.tickEvent(`workspace.invalidSaveToUnknownProject`);
         return;
     }
-    const newTxt = {...await getTextAsync(id)}
+    const newTxt = { ...await getTextAsync(id) }
     newTxt[filename] = content;
     return saveAsync(prev.header, newTxt);
 }
@@ -484,7 +484,7 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
             return true
         }
         const prevProj = e
-        const allChanges = computeChangeSummary(prevProj, {header: h, text})
+        const allChanges = computeChangeSummary(prevProj, { header: h, text })
         const ignoredFiles = [GIT_JSON, pxt.SIMSTATE_JSON, pxt.SERIAL_EDITOR_FILE]
         const ignoredHeaderFields: (keyof Header)[] = ['recentUse', 'modificationTime', 'cloudCurrent', '_rev', '_id' as keyof Header, 'cloudVersion']
         const userChanges: ProjectChanges = {
@@ -800,10 +800,10 @@ export async function hasMergeConflictMarkersAsync(hd: Header): Promise<boolean>
 export async function prAsync(hd: Header, commitId: string, msg: string) {
     let parsed = pxt.github.parseRepoId(hd.githubId)
     // merge conflict - create a Pull Request
-    const branchName = await pxt.github.getNewBranchNameAsync(parsed.slug, "merge-")
-    await pxt.github.createNewBranchAsync(parsed.slug, branchName, commitId)
-    const url = await pxt.github.createPRFromBranchAsync(parsed.slug, parsed.tag, branchName, msg)
-    // force user back to master - we will instruct them to merge PR in github.com website
+    const branchName = await pxt.github.getNewBranchNameAsync(parsed.fullName, "merge-")
+    await pxt.github.createNewBranchAsync(parsed.fullName, branchName, commitId)
+    const url = await pxt.github.createPRFromBranchAsync(parsed.fullName, parsed.tag, branchName, msg)
+    // force user back to default branch - we will instruct them to merge PR in github.com website
     // and sync here to get the changes
     let headCommit = await pxt.github.getRefAsync(parsed.slug, parsed.tag)
     await githubUpdateToAsync(hd, {
@@ -910,7 +910,7 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     // add compiled javascript to be run in github pages
     if (pxt.appTarget.appTheme.githubCompiledJs
         && options.binaryJs
-        && (!parsed.tag || parsed.tag == "master")) {
+        && (!parsed.tag || pxt.github.isDefaultBranch(parsed.tag))) {
         const v = cfg.version || "0.0.0";
         const opts: compiler.CompileOptions = {
             jsMetaVersion: v
@@ -965,10 +965,10 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
             files,
             saveTag: options.createRelease
         })
-        if (options.createRelease) {
+        if (options.createRelease && pxt.github.isDefaultBranch(parsed.tag)) {
             await pxt.github.createReleaseAsync(parsed.slug, options.createRelease, newCommit)
             // ensure pages are on
-            await pxt.github.enablePagesAsync(parsed.slug);
+            await pxt.github.enablePagesAsync(parsed.slug, parsed.tag);
             // clear the cloud cache
             await pxt.github.listRefsAsync(parsed.slug, "tags", true, true);
         }
@@ -1217,7 +1217,12 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
 export async function exportToGithubAsync(hd: Header, repoid: string) {
     const parsed = pxt.github.parseRepoId(repoid);
     const pfiles = pxt.template.packageFiles(hd.name);
-    await pxt.github.putFileAsync(parsed.fullName, ".gitignore", pfiles[".gitignore"]);
+    if (!parsed.tag) {
+        const packagesConfig = await pxt.packagesConfigAsync()
+        const repo = await pxt.github.repoAsync(parsed.slug, packagesConfig)
+        parsed.tag = repo.defaultBranch
+    }
+    await pxt.github.putFileAsync(parsed.fullName, parsed.tag, ".gitignore", pfiles[".gitignore"]);
     const sha = await pxt.github.getRefAsync(parsed.slug, parsed.tag)
     const commit = await pxt.github.getCommitAsync(parsed.slug, sha)
     const files = await getTextAsync(hd.id)
@@ -1433,7 +1438,7 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
 
     // try enable github pages
     try {
-        await pxt.github.enablePagesAsync(parsed.slug);
+        await pxt.github.enablePagesAsync(parsed.slug, parsed.tag);
     } catch (e) {
         pxt.reportException(e);
     }
@@ -1449,7 +1454,14 @@ export async function importGithubAsync(id: string): Promise<Header> {
     let isEmpty = false
     let forceTemplateFiles = false;
     try {
+        const packagesConfig = await pxt.packagesConfigAsync()
+        const repo = await pxt.github.repoAsync(parsed.slug, packagesConfig)
+        if (!repo)
+            U.userError(`unable to find repository`)
+        parsed.tag = repo.defaultBranch
         sha = await pxt.github.getRefAsync(parsed.slug, parsed.tag)
+        if (!sha)
+            U.userError(`unable to find branch`)
         // if the repo does not have a pxt.json file, treat as empty
         // (must be done before)
         const commit = await pxt.github.getCommitAsync(parsed.slug, sha)
@@ -1479,7 +1491,7 @@ export async function importGithubAsync(id: string): Promise<Header> {
             if (pxt.shell.isReadOnly())
                 U.userError(lf("This repository looks empty."));
             await cloudsync.ensureGitHubTokenAsync();
-            await pxt.github.putFileAsync(parsed.fullName, ".gitignore", "# Initial\n");
+            await pxt.github.putFileAsync(parsed.fullName, parsed.tag, ".gitignore", "# Initial\n");
             isEmpty = true;
             forceTemplateFiles = true;
             sha = await pxt.github.getRefAsync(parsed.slug, parsed.tag)
@@ -1619,7 +1631,7 @@ export function fireEvent(ev: pxt.editor.events.Event) {
 }
 
 // debug helpers
-const _abrvStrs: {[key: string]: string} = {};
+const _abrvStrs: { [key: string]: string } = {};
 let _abrvNextInt = 1;
 function dbgShorten(s: string): string {
     if (!s)

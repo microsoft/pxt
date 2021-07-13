@@ -431,7 +431,7 @@ function updateCodalBuildAsync() {
         .then(
             () => /v\d+/.test(cs.gittag) ? Promise.resolve() : codalGitAsync("pull"),
             e =>
-                codalGitAsync("checkout", "master")
+                codalGitAsync("checkout", "master") // leave as master
                     .then(() => codalGitAsync("pull")))
         .then(() => codalGitAsync("checkout", cs.gittag))
 }

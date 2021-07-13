@@ -77,7 +77,7 @@ declare namespace pxt {
         compileService?: TargetCompileService;
         ignoreDocsErrors?: boolean;
         uploadApiStringsBranchRx?: string; // regular expression to match branches that should upload api strings
-        uploadDocs?: boolean; // enable uploading to crowdin on master or v* builds
+        uploadDocs?: boolean; // enable uploading to crowdin on default branch or v* builds
         variants?: Map<AppTarget>; // patches on top of the current AppTarget for different chip variants
         multiVariants?: string[];
         alwaysMultiVariant?: boolean;
@@ -244,7 +244,7 @@ declare namespace pxt {
         codalTarget?: string | {
             name: string; // "codal-arduino-uno"
             url: string; // "https://github.com/lancaster-university/codal-arduino-uno"
-            branch: string; // "master"
+            branch: string; // "main"
             type: string; // "git"
             branches?: pxt.Map<string>; // overrides repo url -> commit sha
         };

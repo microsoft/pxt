@@ -166,19 +166,25 @@ namespace pxt.github {
         private configs: pxt.Map<pxt.PackageConfig> = {};
         private packages: pxt.Map<CachedPackage> = {};
 
-        private proxyWithCdnLoadPackageAsync(repopath: string, tag: string): Promise<CachedPackage> {
+        private async proxyWithCdnLoadPackageAsync(repopath: string, tag: string): Promise<CachedPackage> {
             // cache lookup
-            const key = `${repopath}/${tag}`;
+            const key = `${repopath}/${tag || "default"}`;
             let res = this.packages[key];
             if (res) {
-                pxt.debug(`github cache ${repopath}/${tag}/text`);
+                pxt.debug(`github cache ${repopath}/${tag || "default"}/text`);
                 return Promise.resolve(res);
             }
 
             // load and cache
             const parsed = parseRepoId(repopath)
-            return ghProxyWithCdnJsonAsync(join(parsed.slug, tag, parsed.fileName, "text"))
-                .then(v => this.packages[key] = { files: v });
+            if (!tag || tag === "default") {
+                // resolve master vs main
+                const repo: { defaultBranch: string } = await ghProxyWithCdnJsonAsync(parsed.slug)
+                tag = repo.defaultBranch
+            }
+            const v = await ghProxyWithCdnJsonAsync(join(parsed.slug, tag, parsed.fileName, "text"))
+            const r = this.packages[key] = { files: v }
+            return r;
         }
 
         private cacheConfig(key: string, v: string) {
@@ -188,8 +194,7 @@ namespace pxt.github {
         }
 
         async loadConfigAsync(repopath: string, tag: string): Promise<pxt.PackageConfig> {
-            if (!tag) tag = "master";
-
+            U.assert(!!tag)
             // cache lookup
             const key = `${repopath}/${tag}`;
             let res = this.configs[key];
@@ -214,7 +219,7 @@ namespace pxt.github {
         }
 
         async loadPackageAsync(repopath: string, tag: string): Promise<CachedPackage> {
-            if (!tag) tag = "master";
+            U.assert(!!tag)
 
             // try using github proxy first
             if (hasProxy()) {
@@ -384,7 +389,7 @@ namespace pxt.github {
         return (resp.statusCode == 200)
     }
 
-    export async function putFileAsync(repopath: string, path: string, content: string) {
+    export async function putFileAsync(repopath: string, branch: string, path: string, content: string) {
         const parsed = parseRepoId(repopath);
         await ghRequestAsync({
             url: `https://api.github.com/repos/${pxt.github.join(parsed.slug, "contents", parsed.fileName, path)}`,
@@ -393,7 +398,7 @@ namespace pxt.github {
             data: {
                 message: lf("Initialize empty repo"),
                 content: btoa(U.toUTF8(content)),
-                branch: "master"
+                branch
             },
             successCodes: [201]
         })
@@ -451,7 +456,7 @@ namespace pxt.github {
     }
 
     export function getRefAsync(repopath: string, branch: string) {
-        branch = branch || "master";
+        U.assert(!!branch)
         return ghGetJsonAsync("https://api.github.com/repos/" + repopath + "/git/refs/heads/" + branch)
             .then(resolveRefAsync)
             .catch(err => {
@@ -563,7 +568,8 @@ namespace pxt.github {
                     .then(resolveRefAsync))
     }
 
-    export function pkgConfigAsync(repopath: string, tag = "master") {
+    export function pkgConfigAsync(repopath: string, tag: string) {
+        U.assert(!!tag)
         return db.loadConfigAsync(repopath, tag)
     }
 
@@ -662,7 +668,7 @@ namespace pxt.github {
         forks: number;
         open_issues: number;
         watchers: number;
-        default_branch: string; // "master",
+        default_branch: string;
         score: number; // 6.7371006
 
         // non-github, added to track search request
@@ -699,6 +705,16 @@ namespace pxt.github {
         updatedAt?: number;
         private?: boolean;
         fork?: boolean;
+    }
+
+    export function isDefaultBranch(branch: string, repo?: GitRepo) {
+        if (repo && repo.defaultBranch)
+            return branch === repo.defaultBranch;
+        return /^(main|master)$/.test(branch);
+    }
+
+    export function isDefaultOrReleaseBranch(branch: string, repo?: GitRepo) {
+        return isDefaultBranch(branch) || /^v\d+\.\d+\.\d+$/.test(branch);
     }
 
     export function listUserReposAsync(): Promise<GitRepo[]> {
@@ -765,7 +781,7 @@ namespace pxt.github {
         }).then(v => mkRepo(v))
     }
 
-    export async function enablePagesAsync(repo: string) {
+    export async function enablePagesAsync(repo: string, branch: string) {
         // https://developer.github.com/v3/repos/pages/#enable-a-pages-site
         // try read status
         const parsed = parseRepoId(repo);
@@ -782,7 +798,7 @@ namespace pxt.github {
             try {
                 const r = await ghPostAsync(`https://api.github.com/repos/${parsed.slug}/pages`, {
                     source: {
-                        branch: "master",
+                        branch,
                         path: "/"
                     }
                 }, {
@@ -911,7 +927,12 @@ namespace pxt.github {
         }
         // try github apis
         const r = await ghGetJsonAsync("https://api.github.com/repos/" + rid.slug)
-        return mkRepo(r, { config, fullName: rid.fullName, fileName: rid.fileName, tag: rid.tag });
+        return mkRepo(r, {
+            config,
+            fullName: rid.fullName,
+            fileName: rid.fileName,
+            tag: rid.tag,
+        });
     }
 
     function proxyRepoAsync(rid: ParsedRepo, status: GitRepoStatus): Promise<GitRepo> {
@@ -927,7 +948,7 @@ namespace pxt.github {
                     slug: rid.slug,
                     name: rid.fileName ? `${meta.name}-${rid.fileName}` : meta.name,
                     description: meta.description,
-                    defaultBranch: meta.defaultBranch || "master",
+                    defaultBranch: meta.defaultBranch,
                     tag: rid.tag,
                     status
                 };
@@ -1012,13 +1033,14 @@ namespace pxt.github {
     }
 
     export function stringifyRepo(p: ParsedRepo) {
-        return p ? "github:" + p.fullName.toLowerCase() + "#" + (p.tag || "master") : undefined;
+        return p ? "github:" + p.fullName.toLowerCase() + "#" + (p.tag || "default") : undefined;
     }
 
     export function normalizeRepoId(id: string) {
         const gid = parseRepoId(id);
         if (!gid) return undefined;
-        gid.tag = gid.tag || "master";
+        // this does not work anymore
+        gid.tag = gid.tag;
         return stringifyRepo(gid);
     }
 

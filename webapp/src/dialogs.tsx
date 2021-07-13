@@ -83,7 +83,7 @@ function renderCompileLink(variantName: string, cs: pxt.TargetCompileService) {
 
     if (typeof cs.codalTarget === "object" && typeof cs.codalTarget.url === "string") {
         url = cs.codalTarget.branch ? pxt.BrowserUtils.joinURLs(cs.codalTarget.url, "releases/tag", cs.codalTarget.branch) : cs.codalTarget.url;
-        version = cs.codalTarget.branch || "master";
+        version = cs.codalTarget.branch || "master"; // leave as "master"
         name = cs.codalTarget.name || cs.serviceId;
     }
     else {
