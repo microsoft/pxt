@@ -159,5 +159,3 @@ export class PureComponent<TProps, TState> extends React.PureComponent<TProps, T
         return this.renderCore();
     }
 }
-
-pxt.data.loadCache();
