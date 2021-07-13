@@ -4726,6 +4726,12 @@ pxt.winrt.captureInitialActivation();
 document.addEventListener("DOMContentLoaded", () => {
     pxt.perf.recordMilestone(`DOM loaded`)
 
+    // Initialization order is important here.
+    // 1. Initialize shell. Determines whether we're sandboxed.
+    // 2. Load data cache. Will implicitly initialize storage, creating local storage or memory storage, depending on sandbox flag.
+    pxt.shell.init();
+    pxt.data.loadCache();
+
     pxt.setupWebConfig((window as any).pxtConfig);
     const config = pxt.webConfig
     pxt.options.debug = /dbg=1/i.test(window.location.href);

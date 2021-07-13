@@ -11,7 +11,7 @@ namespace pxt.shell {
     let editorReadonly: boolean = false;
     let noDefaultProject: boolean = false;
 
-    function init() {
+    export function init() {
         if (layoutType !== undefined) return;
 
         const sandbox = /sandbox=1|#sandbox|#sandboxproject/i.test(window.location.href)
