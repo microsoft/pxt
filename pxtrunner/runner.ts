@@ -294,7 +294,7 @@ namespace pxt.runner {
                     if (code) {
                         //Set the custom code if provided for docs.
                         let epkg = getEditorPkg(mainPkg);
-                        epkg.files["main.ts"] = code;
+                        epkg.files[pxt.MAIN_TS] = code;
                         //set the custom doc name from the URL.
                         let cfg = JSON.parse(epkg.files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
                         cfg.name = window.location.href.split('/').pop().split(/[?#]/)[0];;
@@ -336,7 +336,7 @@ namespace pxt.runner {
     export function generateHexFileAsync(options: SimulateOptions): Promise<string> {
         return loadPackageAsync(options.id)
             .then(() => compileAsync(true, opts => {
-                if (options.code) opts.fileSystem["main.ts"] = options.code;
+                if (options.code) opts.fileSystem[pxt.MAIN_TS] = options.code;
             }))
             .then(resp => {
                 if (resp.diagnostics && resp.diagnostics.length > 0) {
@@ -350,7 +350,7 @@ namespace pxt.runner {
         pxt.setHwVariant("vm")
         return loadPackageAsync(options.id)
             .then(() => compileAsync(true, opts => {
-                if (options.code) opts.fileSystem["main.ts"] = options.code;
+                if (options.code) opts.fileSystem[pxt.MAIN_TS] = options.code;
             }))
             .then(resp => {
                 console.log(resp)
@@ -429,7 +429,7 @@ namespace pxt.runner {
                     }
                 }
             }
-            if (simOptions.code) opts.fileSystem["main.ts"] = simOptions.code;
+            if (simOptions.code) opts.fileSystem[pxt.MAIN_TS] = simOptions.code;
 
             // Api info needed for py2ts conversion, if project is shared in Python
             if (opts.target.preferredEditor === pxt.PYTHON_PROJECT_NAME) {
@@ -458,7 +458,7 @@ namespace pxt.runner {
         if (compileResult.diagnostics?.length > 0 && didUpgrade) {
             pxt.log("Compile with upgrade rules failed, trying again with original code");
             compileResult = await compileAsync(false, opts => {
-                if (simOptions.code) opts.fileSystem["main.ts"] = simOptions.code;
+                if (simOptions.code) opts.fileSystem[pxt.MAIN_TS] = simOptions.code;
             });
         }
 
@@ -1049,7 +1049,7 @@ ${linkString}
             .then(opts => {
                 // compile
                 if (code)
-                    opts.fileSystem["main.ts"] = code;
+                    opts.fileSystem[pxt.MAIN_TS] = code;
                 opts.ast = true
 
                 if (assets) {
@@ -1074,7 +1074,7 @@ ${linkString}
                 // decompile to python
                 let compilePython: pxtc.transpile.TranspileResult = undefined;
                 if (pxt.appTarget.appTheme.python) {
-                    compilePython = ts.pxtc.transpile.tsToPy(program, "main.ts");
+                    compilePython = ts.pxtc.transpile.tsToPy(program, pxt.MAIN_TS);
                 }
 
                 // decompile to blocks
@@ -1095,7 +1095,7 @@ ${linkString}
                         }
                         let bresp = pxtc.decompiler.decompileToBlocks(
                             blocksInfo,
-                            program.getSourceFile("main.ts"),
+                            program.getSourceFile(pxt.MAIN_TS),
                             {
                                 snippetMode,
                                 generateSourceMap

@@ -479,17 +479,17 @@ export class ProjectView
 
     isBlocksActive(): boolean {
         return !this.state.embedSimView && this.editor == this.blocksEditor
-            && this.editorFile && this.editorFile.name == "main.blocks";
+            && this.editorFile && this.editorFile.name == pxt.MAIN_BLOCKS;
     }
 
     isJavaScriptActive(): boolean {
         return !this.state.embedSimView && this.editor == this.textEditor
-            && this.editorFile && this.editorFile.name == "main.ts";
+            && this.editorFile && this.editorFile.name == pxt.MAIN_TS;
     }
 
     isPythonActive(): boolean {
         return !this.state.embedSimView && this.editor == this.textEditor
-            && this.editorFile && this.editorFile.name == "main.py";
+            && this.editorFile && this.editorFile.name == pxt.MAIN_PY;
     }
 
     isAssetsActive(): boolean {
@@ -557,7 +557,7 @@ export class ProjectView
             this.openTypeScriptAsync();
         } else {
             const files = pkg.mainEditorPkg().files;
-            let f = files["main.ts"];
+            let f = files[pxt.MAIN_TS];
             if (!f) // find first .ts file
                 f = files[Object.keys(files).find(fn => /\.ts$/.test(fn))];
             this.setFile(f)
@@ -672,7 +672,7 @@ export class ProjectView
         const pySrcFile = pkg.mainEditorPkg().files["main.py"];
         if (pySrcFile) { // do we have any python yet?
             // convert python to typescript, if same as current source, skip decompilation
-            const tsSrc = pkg.mainEditorPkg().files["main.ts"].content;
+            const tsSrc = pkg.mainEditorPkg().files[pxt.MAIN_TS].content;
             return this.textEditor.convertPythonToTypeScriptAsync()
                 .then(pyAsTsSrc => {
                     if (pyAsTsSrc == tsSrc) {
@@ -702,7 +702,7 @@ export class ProjectView
         }
         else {
             convertPromise = this.saveTypeScriptAsync(false)
-                .then(() => compiler.pyDecompileAsync("main.ts"))
+                .then(() => compiler.pyDecompileAsync(pxt.MAIN_TS))
                 .then(cres => {
                     if (cres && cres.success) {
                         const mainpy = cres.outfiles["main.py"];
@@ -764,7 +764,7 @@ export class ProjectView
         // Only show in blocks or main.ts
         if (this.state.currFile) {
             const fn = this.state.currFile;
-            if (!pxt.editor.isBlocks(fn) && fn.name !== "main.ts") return false;
+            if (!pxt.editor.isBlocks(fn) && fn.name !== pxt.MAIN_TS) return false;
         }
 
         if (!this.state.suppressPackageWarning || force) {
@@ -1109,7 +1109,7 @@ export class ProjectView
     setFile(fn: pkg.File, line?: number) {
         if (!fn) return;
 
-        if (fn.name === "main.ts") {
+        if (fn.name === pxt.MAIN_TS) {
             this.shouldTryDecompile = true;
         }
 
@@ -1522,7 +1522,7 @@ export class ProjectView
                     file = main.lookupFile("this/" + filenameForEditor(tutorialPreferredEditor)) || file;
                 }
 
-                if (file.name === "main.ts") {
+                if (file.name === pxt.MAIN_TS) {
                     this.shouldTryDecompile = true;
                 }
                 this.setState({
@@ -1652,13 +1652,13 @@ export class ProjectView
         // If we're starting in the asset editor, always load into TS
         const preferredEditor = header.tutorial.metadata?.preferredEditor;
         if (preferredEditor && filenameForEditor(preferredEditor) === pxt.ASSETS_FILE) {
-            pkg.mainEditorPkg().setFile("main.ts", template);
+            pkg.mainEditorPkg().setFile(pxt.MAIN_TS, template);
         }
 
         const projectname = projectNameForEditor(preferredEditor || header.editor);
 
         if (projectname === pxt.JAVASCRIPT_PROJECT_NAME) {
-            pkg.mainEditorPkg().setFile("main.ts", template);
+            pkg.mainEditorPkg().setFile(pxt.MAIN_TS, template);
         }
         else if (projectname === pxt.PYTHON_PROJECT_NAME) {
             decompilePromise = compiler.decompilePythonSnippetAsync(template)
@@ -1837,7 +1837,7 @@ export class ProjectView
         ts.pxtc.Util.fileReadAsTextAsync(file)
             .then(contents => {
                 this.newProject({
-                    filesOverride: { "main.blocks": contents, "main.ts": "  " },
+                    filesOverride: { "main.blocks": contents, [pxt.MAIN_TS]: "  " },
                     name: file.name.replace(/\.blocks$/i, '') || lf("Untitled")
                 })
             })
@@ -1848,7 +1848,7 @@ export class ProjectView
         ts.pxtc.Util.fileReadAsTextAsync(file)
             .then(contents => {
                 this.newProject({
-                    filesOverride: { "main.blocks": '', "main.ts": contents || "  " },
+                    filesOverride: { "main.blocks": '', [pxt.MAIN_TS]: contents || "  " },
                     name: file.name.replace(/\.ts$/i, '') || lf("Untitled")
                 })
             })
@@ -2367,7 +2367,7 @@ export class ProjectView
         if (options.tutorial && options.tutorial.metadata) {
             if (options.tutorial.metadata.codeStart) {
                 files[pxt.TUTORIAL_CODE_START] = `control._onCodeStart('${pxt.U.htmlEscape(options.tutorial.metadata.codeStart)}')`;
-                cfg.files.splice(cfg.files.indexOf("main.ts"), 0, pxt.TUTORIAL_CODE_START);
+                cfg.files.splice(cfg.files.indexOf(pxt.MAIN_TS), 0, pxt.TUTORIAL_CODE_START);
             }
             if (options.tutorial.metadata.codeStop) {
                 files[pxt.TUTORIAL_CODE_STOP] = `control._onCodeStop('${pxt.U.htmlEscape(options.tutorial.metadata.codeStop)}')`;
@@ -2425,7 +2425,7 @@ export class ProjectView
                         .then(() => {
                             return this.loadBlocklyAsync()
                                 .then(compiler.getBlocksAsync)
-                                .then(blocksInfo => compiler.decompileAsync("main.ts", blocksInfo))
+                                .then(blocksInfo => compiler.decompileAsync(pxt.MAIN_TS, blocksInfo))
                                 .then(resp => {
                                     pxt.debug(`example decompilation: ${resp.success}`)
                                     if (resp.success) {
@@ -2444,7 +2444,7 @@ export class ProjectView
                             // convert js to py as needed
                             if (preferredEditor == pxt.PYTHON_PROJECT_NAME && example.snippetType !== "python") {
                                 return compiler.getApisInfoAsync() // ensure compiled
-                                    .then(() => compiler.pyDecompileAsync("main.ts"))
+                                    .then(() => compiler.pyDecompileAsync(pxt.MAIN_TS))
                                     .then(resp => {
                                         pxt.debug(`example decompilation: ${resp.success}`)
                                         if (resp.success) {

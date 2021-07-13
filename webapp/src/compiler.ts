@@ -15,10 +15,10 @@ function setDiagnostics(operation: "compile" | "decompile" | "typecheck", diagno
     //  TS errors to PY
     let tsErrToPyLoc: (err: pxtc.LocationInfo) => pxtc.LocationInfo = undefined;
     if (diagnostics.length > 0
-        && mainPkg.files["main.ts"]
+        && mainPkg.files[pxt.MAIN_TS]
         && mainPkg.files["main.py"]
         && sourceMap) {
-        const tsFile = mainPkg.files["main.ts"].content
+        const tsFile = mainPkg.files[pxt.MAIN_TS].content
         const pyFile = mainPkg.files["main.py"].content
         const helpers = pxtc.BuildSourceMapHelpers(sourceMap, tsFile, pyFile)
         tsErrToPyLoc = helpers.ts.locToLoc
@@ -31,7 +31,7 @@ function setDiagnostics(operation: "compile" | "decompile" | "typecheck", diagno
             if (f) {
                 f.diagnostics.push(diagnostic)
 
-                if (tsErrToPyLoc && diagnostic.fileName === "main.ts") {
+                if (tsErrToPyLoc && diagnostic.fileName === pxt.MAIN_TS) {
                     let pyLoc = tsErrToPyLoc(diagnostic)
                     if (pyLoc) {
                         let pyError = { ...diagnostic, ...pyLoc }
@@ -293,7 +293,7 @@ export function decompileAsync(fileName: string, blockInfo?: ts.pxtc.BlocksInfo,
 
 // TS -> blocks, load blocs before calling this api
 export function decompileBlocksSnippetAsync(code: string, blockInfo?: ts.pxtc.BlocksInfo, dopts?: { snippetMode?: boolean }): Promise<pxtc.CompileResult> {
-    const snippetTs = "main.ts";
+    const snippetTs = pxt.MAIN_TS;
     const snippetBlocks = "main.blocks";
     const trg = pkg.mainPkg.getTargetOptions()
     return pkg.mainPkg.getCompileOptionsAsync(trg)
@@ -316,7 +316,7 @@ export function decompileBlocksSnippetAsync(code: string, blockInfo?: ts.pxtc.Bl
 // Py -> blocks
 export function pySnippetToBlocksAsync(code: string, blockInfo?: ts.pxtc.BlocksInfo): Promise<pxtc.CompileResult> {
     const snippetPy = "main.py";
-    const snippetTs = "main.ts";
+    const snippetTs = pxt.MAIN_TS;
     const snippetBlocks = "main.blocks";
     let trg = pkg.mainPkg.getTargetOptions()
     return waitForFirstTypecheckAsync()
@@ -362,7 +362,7 @@ export function pyDecompileAsync(fileName: string): Promise<pxtc.transpile.Trans
 
 // TS -> Py
 export function decompilePythonSnippetAsync(code: string): Promise<string> {
-    const snippetTs = "main.ts";
+    const snippetTs = pxt.MAIN_TS;
     const snippetPy = "main.py";
     let trg = pkg.mainPkg.getTargetOptions()
     return pkg.mainPkg.getCompileOptionsAsync(trg)
@@ -613,7 +613,7 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
     // If the project has a TypeScript file beside one of the generated files, it could export blocks so we can't use the cache
     const files = project.getAllFiles();
     const generatedFiles = [
-        "main.ts",
+        pxt.MAIN_TS,
         pxt.TUTORIAL_CODE_START,
         pxt.TUTORIAL_CODE_STOP,
         pxt.TILEMAP_CODE,
@@ -884,7 +884,7 @@ function upgradeFromBlocksAsync(): Promise<UpgradeResult> {
             return pxt.blocks.compileAsync(ws, info)
         })
         .then(res => {
-            patchedFiles["main.ts"] = res.source;
+            patchedFiles[pxt.MAIN_TS] = res.source;
             return project.buildAssetsAsync();
         })
         .then(() => {

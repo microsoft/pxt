@@ -4046,7 +4046,7 @@ function testPkgConflictsAsync() {
 
         const dep: pxt.Map<string> = {};
         tc.dependencies.forEach(d => dep[d] = "*");
-        let mainPkg = new pxt.MainPackage(new SnippetHost("package conflict tests", { "main.ts": tc.main }, dep));
+        let mainPkg = new pxt.MainPackage(new SnippetHost("package conflict tests", { [pxt.MAIN_TS]: tc.main }, dep));
         tc.expectedConflicts = tc.expectedConflicts.sort();
         tc.expectedInUse = tc.expectedInUse.sort();
 
@@ -4105,14 +4105,14 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
         const dep: pxt.Map<string> = {};
         if (dependency)
             dep[dependency] = "*";
-        let inPackages = { "main.ts": input, "main.py": "" }
+        let inPackages = { [pxt.MAIN_TS]: input, "main.py": "" }
         const pkg = new pxt.MainPackage(new SnippetHost("decompile-pkg", inPackages, dep, true));
 
         pkg.installAllAsync()
             .then(() => pkg.getCompileOptionsAsync())
             .then(opts => {
                 opts.ast = true;
-                const decompiled = pxtc.decompile(pxtc.getTSProgram(opts), opts, "main.ts");
+                const decompiled = pxtc.decompile(pxtc.getTSProgram(opts), opts, pxt.MAIN_TS);
                 if (decompiled.success) {
                     resolve(decompiled.outfiles["main.blocks"]);
                 }
@@ -5829,7 +5829,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                                 }
                                 addSnippet(<CodeSnippet>{
                                     name: card.name,
-                                    code: prj.filesOverride["main.ts"],
+                                    code: prj.filesOverride[pxt.MAIN_TS],
                                     type: "blocks",
                                     ext: "ts",
                                     extraFiles,
@@ -5928,9 +5928,9 @@ function internalCacheUsedBlocksAsync(): Promise<Map<pxt.BuiltTutorialInfo>> {
         if (isPy) {
             let extra: Map<string> = {};
             info.code.forEach((snippet, i) => extra["snippet_" + i + ".py"] = snippet);
-            inFiles = { "main.ts": "", "main.py": "", "main.blocks": "", ...extra }
+            inFiles = { [pxt.MAIN_TS]: "", "main.py": "", "main.blocks": "", ...extra }
         } else {
-            inFiles = { "main.ts": "", "main.py": "", "main.blocks": "" }
+            inFiles = { [pxt.MAIN_TS]: "", "main.py": "", "main.blocks": "" }
         }
 
         const host = new SnippetHost("usedblocks", inFiles, info.pkgs);

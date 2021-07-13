@@ -472,7 +472,7 @@ namespace pxt.runner {
         return renderNextSnippetAsync(options.signatureClass, (c, r) => {
             let cjs = r.compileProgram;
             if (!cjs) return;
-            let file = cjs.getSourceFile("main.ts");
+            let file = cjs.getSourceFile(pxt.MAIN_TS);
             let info = decompileCallInfo(file.statements[0]);
             if (!info || !r.apiInfo) return;
             const symbolInfo = r.apiInfo.byQName[info.qName];
@@ -784,7 +784,7 @@ namespace pxt.runner {
                 .then(r => {
                     if (r.blocksSvg) {
                         let $newel = $('<span class="block"/>').append(r.blocksSvg);
-                        const file = r.compileProgram.getSourceFile("main.ts");
+                        const file = r.compileProgram.getSourceFile(pxt.MAIN_TS);
                         const stmt = file.statements[0];
                         const info = decompileCallInfo(stmt);
                         if (info && r.apiInfo) {
@@ -910,7 +910,7 @@ namespace pxt.runner {
         return renderNextSnippetAsync(cls, (c, r) => {
             const cjs = r.compileProgram;
             if (!cjs) return;
-            const file = cjs.getSourceFile("main.ts");
+            const file = cjs.getSourceFile(pxt.MAIN_TS);
             const stmts = file.statements.slice(0);
             const ul = $('<div />').addClass('ui cards');
             ul.attr("role", "listbox");

@@ -68,7 +68,7 @@ describe("py compiler errors", () => {
 async function stsErrorTestAsync(filename: string) {
     const basename = path.basename(filename);
     const text = fs.readFileSync(filename, "utf8");
-    const pkg = new pxt.MainPackage(new TestHost(basename, { "main.ts": text }, [], true));
+    const pkg = new pxt.MainPackage(new TestHost(basename, { [pxt.MAIN_TS]: text }, [], true));
 
     const target = pkg.getTargetOptions();
 

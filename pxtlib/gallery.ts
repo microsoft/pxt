@@ -80,7 +80,7 @@ namespace pxt.gallery {
             name,
             filesOverride: {
                 "main.blocks": `<xml xmlns="http://www.w3.org/1999/xhtml"></xml>`,
-                [m[1] === "python" ? "main.py" : "main.ts"]: source
+                [m[1] === "python" ? "main.py" : pxt.MAIN_TS]: source
             },
             dependencies,
             features,

@@ -411,8 +411,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         if (!this.currFile) {
             const mainPkg = pkg.mainEditorPkg();
-            if (mainPkg && mainPkg.files["main.ts"]) {
-                initPromise = this.loadFileAsync(mainPkg.files["main.ts"]);
+            if (mainPkg && mainPkg.files[pxt.MAIN_TS]) {
+                initPromise = this.loadFileAsync(mainPkg.files[pxt.MAIN_TS]);
             }
             else {
                 return;
@@ -443,16 +443,16 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 if (!mainPkg || !mainPkg.files["main.blocks"]) {
                     // Either the project isn't loaded, or it's ts-only
                     if (mainPkg) {
-                        this.parent.setFile(mainPkg.files["main.ts"]);
+                        this.parent.setFile(mainPkg.files[pxt.MAIN_TS]);
                     }
                     return undefined;
                 }
 
                 // The current file doesn't have an associated blocks file, so switch
                 // to main.ts instead
-                this.currFile = mainPkg.files["main.ts"];
+                this.currFile = mainPkg.files[pxt.MAIN_TS];
                 blockFile = this.currFile.getVirtualFileName(pxt.BLOCKS_PROJECT_NAME);
-                tsFile = "main.ts";
+                tsFile = pxt.MAIN_TS;
             }
 
             const failedAsync = (file: string, programTooLarge = false) => {

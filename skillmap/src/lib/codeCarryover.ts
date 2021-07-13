@@ -37,7 +37,7 @@ function mergeProjectCode(previousProject: pxt.Map<string>, newProject: pxt.Map<
 
     return {
         ...newProject,
-        ["main.ts"]: carryoverCode ? previousProject["main.ts"] : newProject["main.ts"],
+        [pxt.MAIN_TS]: carryoverCode ? previousProject[pxt.MAIN_TS] : newProject[pxt.MAIN_TS],
         ["main.py"]: carryoverCode ? previousProject["main.py"] : newProject["main.py"],
         ["main.blocks"]: carryoverCode ? previousProject["main.blocks"] : newProject["main.blocks"],
         [pxt.TILEMAP_JRES]: tilemapJres,

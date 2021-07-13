@@ -116,7 +116,7 @@ class BlocklyCompilerTestHost implements pxt.Host {
                     "description": "",
                     "files": [
                         "main.blocks",
-                        "main.ts",
+                        pxt.MAIN_TS,
                         "pxt-core.d.ts",
                         "pxt-helpers.ts"
                     ]
