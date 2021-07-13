@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 
 import { dispatchOpenActivity, dispatchShowRestartActivityWarning, dispatchShowShareModal, dispatchShowCarryoverModal } from '../actions/dispatch';
 
-import { ActivityStatus, lookupPreviousActivityStates } from '../lib/skillMapUtils';
+import { ActivityStatus, lookupActivityProgress, lookupPreviousActivityStates } from '../lib/skillMapUtils';
 import { tickEvent } from '../lib/browserUtils';
 import { editorUrl } from "./makecodeFrame";
 import { SkillMapState } from "../store/reducer";
@@ -120,9 +120,10 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
     const previousActivityCompleted = previous.some(state => state?.isCompleted &&
         state.maxSteps === state.currentStep);
 
+    const progress = lookupActivityProgress(state.user, state.pageSourceUrl, ownProps.mapId, ownProps.activityId);
+
     return {
-        showCodeCarryoverModal: activity.allowCodeCarryover && previousActivityCompleted &&
-            (props.status === "restarted" || props.status === "notstarted")
+        showCodeCarryoverModal: activity.allowCodeCarryover && previousActivityCompleted && !progress?.headerId
     };
 }
 
