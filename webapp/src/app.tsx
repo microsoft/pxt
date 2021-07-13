@@ -1623,9 +1623,6 @@ export class ProjectView
         pxt.perf.measureStart("loadTutorial loadBlockly")
 
         const t = header.tutorial;
-        if (typeof t.tutorialCode === "string") {
-            t.tutorialCode = [t.tutorialCode];
-        }
 
         return this.loadBlocklyAsync()
             .then(() => tutorial.getUsedBlocksAsync(t.tutorialCode, t.tutorial, t.language))

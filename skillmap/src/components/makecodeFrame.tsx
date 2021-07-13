@@ -78,7 +78,6 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
         if (this.props.reload === "reload" && !this.sentReloadImportRequest) {
             this.sentReloadImportRequest = true;
 
-            // FIXME RBK: Should send carryover modal project here
             await this.sendMessageAsync({
                 type: "pxteditor",
                 action: "openheader",
