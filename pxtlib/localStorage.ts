@@ -72,7 +72,7 @@ namespace pxt.storage {
         const sid = storageId();
         let supported = false;
         // no local storage in sandbox mode
-        if (!sandboxed) {
+        if (!pxt.shell.isSandboxMode()) {
             try {
                 window.localStorage[sid] = '1';
                 let v = window.localStorage[sid];
@@ -87,12 +87,6 @@ namespace pxt.storage {
             impl = new LocalStorage(sid);
             pxt.debug(`storage: local under ${sid}`)
         }
-    }
-
-    let sandboxed = !pxt.BrowserUtils.hasWindow();
-    export function sandbox() {
-        U.assert(!impl);
-        sandboxed = true;
     }
 
     export function setLocal(key: string, value: string) {
