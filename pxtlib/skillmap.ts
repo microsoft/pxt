@@ -58,7 +58,7 @@ namespace pxt.skillmap {
 
         getProjectAsync(headerId: string): Promise<Project> {
             return this.db.getAsync(IndexedDBWorkspace.projectTable, headerId)
-                .then(entry => (entry as any).project);
+                .then(entry => (entry as any)?.project);
         }
 
         saveProjectAsync(project: Project): Promise<void> {

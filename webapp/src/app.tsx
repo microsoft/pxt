@@ -2042,21 +2042,44 @@ export class ProjectView
         }
     }
 
-    importSkillmapProjectAsync(headerId: string) {
+    async importSkillmapProjectAsync(headerId: string) {
+        // First check for a legacy project that hasn't been imported yet
         const skillmapWorkspace = new pxt.skillmap.IndexedDBWorkspace();
+        await skillmapWorkspace.initAsync();
+        const project = await skillmapWorkspace.getProjectAsync(headerId);
 
-        return skillmapWorkspace.initAsync()
-            .then(() => skillmapWorkspace.getProjectAsync(headerId))
-            .then(project => {
-                if (project.header.tutorial) {
-                    project.header.tutorialCompleted = {
-                        id: project.header.tutorial.tutorial,
-                        steps: project.header.tutorial.tutorialStepInfo.length
-                    };
-                    delete project.header.tutorial;
-                }
-                return this.importProjectAsync(project);
-            })
+        if (project) {
+            if (project.header.tutorial) {
+                project.header.tutorialCompleted = {
+                    id: project.header.tutorial.tutorial,
+                    steps: project.header.tutorial.tutorialStepInfo.length
+                };
+                delete project.header.tutorial;
+            }
+            return this.importProjectAsync(project);
+        }
+
+        // If it's not a legacy project, it should be in the local workspace.
+        // Duplicate it into a non-skillmap project
+        const header = workspace.getHeader(headerId);
+
+        if (!header) {
+            Util.userError(lf("Unable to import skillmap project"));
+            return;
+        }
+
+        const newHeader = await workspace.duplicateAsync(header);
+        if (newHeader.tutorial) {
+            newHeader.tutorialCompleted = {
+                id: newHeader.tutorial.tutorial,
+                steps: newHeader.tutorial.tutorialStepInfo.length
+            };
+            delete newHeader.tutorial;
+        }
+
+        newHeader.isSkillmapProject = false;
+        await workspace.saveAsync(newHeader);
+        data.invalidate("headers:");
     }
 
     openProjectByHeaderIdAsync(headerId: string) {
@@ -4580,7 +4603,10 @@ function handleHash(newHash: { cmd: string; arg: string }, loading: boolean): bo
             const headerId = newHash.arg;
             core.showLoading("skillmapimport", lf("loading project..."));
             editor.importSkillmapProjectAsync(headerId)
-                .finally(() => core.hideLoading("skillmapimport"));
+                .finally(() => {
+                    pxt.BrowserUtils.changeHash("");
+                    core.hideLoading("skillmapimport")
+                });
             return true;
         case "github": {
             const repoid = pxt.github.parseRepoId(newHash.arg);
