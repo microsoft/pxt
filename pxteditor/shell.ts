@@ -40,6 +40,7 @@ namespace pxt.shell {
                 case "ide": layoutType = EditorLayoutType.IDE; break;
             }
         }
+        if (layoutType === EditorLayoutType.Sandbox) pxt.storage.sandbox();
         pxt.debug(`shell: layout type ${EditorLayoutType[layoutType]}, readonly ${isReadOnly()}`);
     }
 

@@ -147,7 +147,7 @@ export class ProjectView
     private preserveUndoStack: boolean;
     private rootClasses: string[];
 
-    private highContrastSubscriber: data.DataSubscriber = {
+    private highContrastSubscriber: pxt.data.DataSubscriber = {
         subscriptions: [],
         onDataChanged: () => {
             this.onHighContrastChanged();
@@ -317,9 +317,9 @@ export class ProjectView
         let active = document.visibilityState == 'visible';
         pxt.debug(`page visibility: ${active}`)
         this.setState({ active: active });
-        data.invalidate('pkg-git-pull-status');
-        data.invalidate('pkg-git-pr');
-        data.invalidate('pkg-git-pages')
+        pxt.data.invalidate('pkg-git-pull-status');
+        pxt.data.invalidate('pkg-git-pr');
+        pxt.data.invalidate('pkg-git-pages')
 
         // disconnect devices to avoid locking between tabs
         if (!active && !navigator?.serviceWorker?.controller)
@@ -332,7 +332,7 @@ export class ProjectView
             }
             this.saveFileAsync();
         } else if (active) {
-            data.invalidate("header:*")
+            pxt.data.invalidate("header:*")
             let hdrId = this.state.header ? this.state.header.id : '';
             const inEditor = !this.state.home && hdrId
             if ((!inEditor && workspace.isHeadersSessionOutdated())
@@ -845,7 +845,7 @@ export class ProjectView
                 }
                 pxt.tickEvent("typecheck.complete", { editor: this.getPreferredEditor() });
                 this.editor.setDiagnostics(this.editorFile, state);
-                data.invalidate("open-pkg-meta:" + pkg.mainEditorPkg().getPkgId());
+                pxt.data.invalidate("open-pkg-meta:" + pkg.mainEditorPkg().getPkgId());
                 if (this.state.autoRun) {
                     const output = pkg.mainEditorPkg().outputPkg.files["output.txt"];
                     if (output && !output.numDiagnosticsOverride
@@ -979,11 +979,11 @@ export class ProjectView
         this.loadBlocklyAsync();
 
         // subscribe to user preference changes (for simulator or non-render subscriptions)
-        data.subscribe(this.highContrastSubscriber, auth.HIGHCONTRAST);
+        pxt.data.subscribe(this.highContrastSubscriber, auth.HIGHCONTRAST);
     }
 
     public componentWillUnmount() {
-        data.unsubscribe(this.highContrastSubscriber);
+        pxt.data.unsubscribe(this.highContrastSubscriber);
     }
 
     // Add an error guard for the entire application
@@ -3128,7 +3128,7 @@ export class ProjectView
                         if (!cancellationToken.isCancelled()) {
                             pxt.debug(`sim: run`)
 
-                            const hc = data.getData<boolean>(auth.HIGHCONTRAST)
+                            const hc = pxt.data.getData<boolean>(auth.HIGHCONTRAST)
                             simulator.run(pkg.mainPkg, opts.debug, resp, {
                                 mute: this.state.mute,
                                 highContrast: hc,
@@ -4239,7 +4239,7 @@ function getEditor() {
 }
 
 function parseLocalToken() {
-    const qs = core.parseQueryString((location.hash || "#").slice(1).replace(/%local_token/, "local_token"))
+    const qs = Util.parseQueryString((location.hash || "#").slice(1).replace(/%local_token/, "local_token"))
     if (qs["local_token"]) {
         pxt.storage.setLocal("local_token", qs["local_token"])
         location.hash = location.hash.replace(/(%23)?[\#\&\?]*local_token.*/, "")
@@ -4251,7 +4251,7 @@ function parseLocalToken() {
 function initPacketIO() {
     pxt.debug(`packetio: hook events`)
     pxt.packetio.configureEvents(
-        () => data.invalidate("packetio:*"),
+        () => pxt.data.invalidate("packetio:*"),
         (buf, isErr) => {
             const data = Util.fromUTF8(Util.uint8ArrayToString(buf))
             //pxt.debug('serial: ' + data)
@@ -4754,7 +4754,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
-    const query = core.parseQueryString(window.location.href);
+    const query = Util.parseQueryString(window.location.href);
 
     // Handle auth callback redirect.
     if (query["authcallback"]) {
