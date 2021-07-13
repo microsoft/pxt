@@ -100,11 +100,30 @@ namespace pxt.editor {
         data?: Map<string | number>;
     }
 
-    export interface EditorMessageTutorialEventRequest extends EditorMessageRequest {
+    export type EditorMessageTutorialEventRequest = EditorMessageTutorialProgressEventRequest |
+        EditorMessageTutorialCompletedEventRequest |
+        EditorMessageTutorialLoadedEventRequest;
+
+    export interface EditorMessageTutorialProgressEventRequest extends EditorMessageRequest {
         action: "tutorialevent";
+        tutorialEvent: "progress"
         currentStep: number;
         totalSteps: number;
         isCompleted: boolean;
+        tutorialId: string;
+        projectHeaderId: string;
+    }
+
+    export interface EditorMessageTutorialCompletedEventRequest extends EditorMessageRequest {
+        action: "tutorialevent";
+        tutorialEvent: "completed";
+        tutorialId: string;
+        projectHeaderId: string;
+    }
+
+    export interface EditorMessageTutorialLoadedEventRequest extends EditorMessageRequest {
+        action: "tutorialevent";
+        tutorialEvent: "loaded";
         tutorialId: string;
         projectHeaderId: string;
     }

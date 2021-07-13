@@ -259,6 +259,7 @@ namespace pxt.editor {
         completeTutorialAsync(): Promise<void>;
         showTutorialHint(): void;
         isTutorial(): boolean;
+        onTutorialLoaded(): void;
         setTutorialCodeStatus(step: number, status: pxt.tutorial.TutorialRuleStatus[]): void;
         pokeUserActivity(): void;
         stopPokeUserActivity(): void;

@@ -1307,12 +1307,37 @@ export class ProjectView
         pxt.editor.postHostMessageAsync({
             type: "pxthost",
             action: "tutorialevent",
+            tutorialEvent: "progress",
             currentStep,
             totalSteps,
             tutorialId,
             projectHeaderId: this.state.header.id,
             isCompleted: !!this.state.header.tutorialCompleted
-        } as pxt.editor.EditorMessageTutorialEventRequest)
+        } as pxt.editor.EditorMessageTutorialProgressEventRequest)
+    }
+
+    protected postTutorialLoaded() {
+        const tutorialId = this.state.tutorialOptions?.tutorial || this.state.header?.tutorialCompleted.id
+
+        pxt.editor.postHostMessageAsync({
+            type: "pxthost",
+            action: "tutorialevent",
+            tutorialEvent: "loaded",
+            tutorialId,
+            projectHeaderId: this.state.header.id
+        } as pxt.editor.EditorMessageTutorialLoadedEventRequest)
+    }
+
+    protected postTutorialCompleted() {
+        const tutorialId = this.state.tutorialOptions?.tutorial || this.state.header?.tutorialCompleted.id
+
+        pxt.editor.postHostMessageAsync({
+            type: "pxthost",
+            action: "tutorialevent",
+            tutorialEvent: "completed",
+            tutorialId,
+            projectHeaderId: this.state.header.id
+        } as pxt.editor.EditorMessageTutorialCompletedEventRequest)
     }
 
     handleMessage(msg: pxsim.SimulatorMessage) {
@@ -3873,6 +3898,7 @@ export class ProjectView
         pxt.tickEvent("tutorial.finish", { tutorial: this.state.header?.tutorial?.tutorial });
         pxt.tickEvent("tutorial.complete", { tutorial: this.state.header?.tutorial?.tutorial });
         core.showLoading("leavingtutorial", lf("leaving tutorial..."));
+        this.postTutorialCompleted();
 
         // clear tutorial field
         const tutorial = this.state.header.tutorial;
@@ -3950,6 +3976,10 @@ export class ProjectView
 
     isTutorial() {
         return this.state.tutorialOptions != undefined;
+    }
+
+    onTutorialLoaded() {
+        this.postTutorialLoaded();
     }
 
     getExpandedCardStyle(flyoutOnly?: boolean): any {

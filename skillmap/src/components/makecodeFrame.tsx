@@ -167,7 +167,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
                 }
                 break;
             case "tutorialevent":
-                this.handleTutorialProgressEvent(data as pxt.editor.EditorMessageTutorialEventRequest);
+                this.handleTutorialEvent(data as pxt.editor.EditorMessageTutorialEventRequest);
                 break;
             default:
                 // console.log(JSON.stringify(data, null, 4));
@@ -226,26 +226,30 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
             case "editor.loaded":
                 this.handleWorkspaceReadyEventAsync();
                 break;
-            case "tutorial.editorLoaded":
-                this.onEditorLoaded();
-                break;
-            case "tutorial.complete":
-                this.onTutorialFinished();
-                break;
         }
     }
 
-    protected handleTutorialProgressEvent(event: pxt.editor.EditorMessageTutorialEventRequest) {
+    protected handleTutorialEvent(event: pxt.editor.EditorMessageTutorialEventRequest) {
         const { dispatchSetHeaderIdForActivity, mapId, activityId, progress } = this.props;
 
-        dispatchSetHeaderIdForActivity(
-            mapId,
-            activityId,
-            event.projectHeaderId,
-            event.currentStep + 1,
-            event.totalSteps,
-            event.isCompleted || !!progress?.isCompleted
-        );
+        switch (event.tutorialEvent) {
+            case "progress":
+                dispatchSetHeaderIdForActivity(
+                    mapId,
+                    activityId,
+                    event.projectHeaderId,
+                    event.currentStep + 1,
+                    event.totalSteps,
+                    event.isCompleted || !!progress?.isCompleted
+                );
+                break;
+            case "loaded":
+                this.onEditorLoaded();
+                break;
+            case "completed":
+                this.onTutorialFinished();
+                break;
+        }
     }
 
     protected onEditorLoaded() {
