@@ -32,8 +32,6 @@ namespace pxt.data {
 
     const virtualApis: pxt.Map<VirtualApi> = {};
     let cachedData: pxt.Map<CacheEntry> = {};
-    let cacheName: string;
-
 
     export function subscribe(component: DataSubscriber, path: string) {
         let e = lookup(path)
@@ -70,26 +68,21 @@ namespace pxt.data {
         saveCache();
     }
 
-    export function loadCache(cacheName_: string) {
-        cacheName = cacheName_;
-        if (cacheName) {
-            JSON.parse(pxt.storage.getLocal(cacheName) || "[]").forEach((e: any) => {
-                let ce = lookup(e.path)
-                ce.data = e.data
-            });
-        }
+    export function loadCache() {
+        JSON.parse(pxt.storage.getLocal("apiCache2") || "[]").forEach((e: any) => {
+            let ce = lookup(e.path)
+            ce.data = e.data
+        });
     }
 
     function saveCache() {
-        if (cacheName) {
-            let obj = Util.values(cachedData).filter(e => shouldCache(e)).map(e => {
-                return {
-                    path: e.path,
-                    data: e.data
-                }
-            });
-            pxt.storage.setLocal(cacheName, JSON.stringify(obj));
-        }
+        let obj = Util.values(cachedData).filter(e => shouldCache(e)).map(e => {
+            return {
+                path: e.path,
+                data: e.data
+            }
+        });
+        pxt.storage.setLocal("apiCache2", JSON.stringify(obj));
     }
 
     function matches(ce: CacheEntry, prefix: string) {

@@ -160,4 +160,4 @@ export class PureComponent<TProps, TState> extends React.PureComponent<TProps, T
     }
 }
 
-pxt.data.loadCache("apiCache2");
+pxt.data.loadCache();
