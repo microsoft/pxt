@@ -528,9 +528,9 @@ export class ProjectView
         } else {
             // make sure there's .py file
             const mpkg = pkg.mainEditorPkg();
-            const mainpy = mpkg.files["main.py"];
+            const mainpy = mpkg.files[pxt.MAIN_PY];
             if (!mainpy)
-                this.updateFileAsync("main.py", "# ...", false);
+                this.updateFileAsync(pxt.MAIN_PY, "# ...", false);
             else
                 this.setFile(mainpy);
         }
@@ -669,7 +669,7 @@ export class ProjectView
     }
 
     openPythonAsync(): Promise<void> {
-        const pySrcFile = pkg.mainEditorPkg().files["main.py"];
+        const pySrcFile = pkg.mainEditorPkg().files[pxt.MAIN_PY];
         if (pySrcFile) { // do we have any python yet?
             // convert python to typescript, if same as current source, skip decompilation
             const tsSrc = pkg.mainEditorPkg().files[pxt.MAIN_TS].content;
@@ -705,7 +705,7 @@ export class ProjectView
                 .then(() => compiler.pyDecompileAsync(pxt.MAIN_TS))
                 .then(cres => {
                     if (cres && cres.success) {
-                        const mainpy = cres.outfiles["main.py"];
+                        const mainpy = cres.outfiles[pxt.MAIN_PY];
                         mainPkg.cacheTranspile(fromLanguage, fromText, "py", mainpy);
                         return this.saveVirtualFileAsync(pxt.PYTHON_PROJECT_NAME, mainpy, true);
                     } else {
@@ -1664,7 +1664,7 @@ export class ProjectView
             decompilePromise = compiler.decompilePythonSnippetAsync(template)
                 .then(pyCode => {
                     if (pyCode) {
-                        pkg.mainEditorPkg().setFile("main.py", pyCode);
+                        pkg.mainEditorPkg().setFile(pxt.MAIN_PY, pyCode);
                     }
                 })
         }
@@ -2360,9 +2360,9 @@ export class ProjectView
 
         // ensure a main.py is ready if this is the desired project
         if (cfg.preferredEditor == pxt.PYTHON_PROJECT_NAME
-            && cfg.files.indexOf("main.py") < 0) {
-            cfg.files.push("main.py");
-            if (!files["main.py"]) files["main.py"] = "\n";
+            && cfg.files.indexOf(pxt.MAIN_PY) < 0) {
+            cfg.files.push(pxt.MAIN_PY);
+            if (!files[pxt.MAIN_PY]) files[pxt.MAIN_PY] = "\n";
         }
         if (options.tutorial && options.tutorial.metadata) {
             if (options.tutorial.metadata.codeStart) {
@@ -2448,7 +2448,7 @@ export class ProjectView
                                     .then(resp => {
                                         pxt.debug(`example decompilation: ${resp.success}`)
                                         if (resp.success) {
-                                            this.overrideTypescriptFile(resp.outfiles["main.py"])
+                                            this.overrideTypescriptFile(resp.outfiles[pxt.MAIN_PY])
                                         }
                                     })
                                     .then(() => autoChooseBoard && this.autoChooseBoardAsync(features));

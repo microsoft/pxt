@@ -108,7 +108,7 @@ export function ts2pyAsync(tsInput: string, dependency: string, includeCommon: b
             const decompiled = pxt.py.decompileToPython(program, pxt.MAIN_TS);
 
             if (decompiled.success) {
-                return decompiled.outfiles["main.py"];
+                return decompiled.outfiles[pxt.MAIN_PY];
             }
             else {
                 return Promise.reject(new Error(`Could not convert ts to py: ${caseName}\n` + JSON.stringify(decompiled.diagnostics, null, 4)));
@@ -118,7 +118,7 @@ export function ts2pyAsync(tsInput: string, dependency: string, includeCommon: b
 
 export function py2tsAsync(pyInput: string, dependency: string, includeCommon: boolean, allowErrors: boolean, caseName: string): Promise<PyConverterResult> {
     const deps = [...(dependency ? [dependency] : []), ...(!includeCommon ? ["bare"] : [])]
-    return getTestCompileOptsAsync({ "main.py": pyInput, [pxt.MAIN_TS]: "// no main" }, deps, includeCommon)
+    return getTestCompileOptsAsync({ [pxt.MAIN_PY]: pyInput, [pxt.MAIN_TS]: "// no main" }, deps, includeCommon)
         .then(opts => {
             opts.target.preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME
             let stsCompRes = pxtc.compile(opts);

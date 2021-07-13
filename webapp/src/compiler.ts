@@ -16,10 +16,10 @@ function setDiagnostics(operation: "compile" | "decompile" | "typecheck", diagno
     let tsErrToPyLoc: (err: pxtc.LocationInfo) => pxtc.LocationInfo = undefined;
     if (diagnostics.length > 0
         && mainPkg.files[pxt.MAIN_TS]
-        && mainPkg.files["main.py"]
+        && mainPkg.files[pxt.MAIN_PY]
         && sourceMap) {
         const tsFile = mainPkg.files[pxt.MAIN_TS].content
-        const pyFile = mainPkg.files["main.py"].content
+        const pyFile = mainPkg.files[pxt.MAIN_PY].content
         const helpers = pxtc.BuildSourceMapHelpers(sourceMap, tsFile, pyFile)
         tsErrToPyLoc = helpers.ts.locToLoc
     }
@@ -35,7 +35,7 @@ function setDiagnostics(operation: "compile" | "decompile" | "typecheck", diagno
                     let pyLoc = tsErrToPyLoc(diagnostic)
                     if (pyLoc) {
                         let pyError = { ...diagnostic, ...pyLoc }
-                        let pyFile = mainPkg.files["main.py"]
+                        let pyFile = mainPkg.files[pxt.MAIN_PY]
                         pyFile.diagnostics.push(pyError)
                     }
                 }
@@ -315,7 +315,7 @@ export function decompileBlocksSnippetAsync(code: string, blockInfo?: ts.pxtc.Bl
 
 // Py -> blocks
 export function pySnippetToBlocksAsync(code: string, blockInfo?: ts.pxtc.BlocksInfo): Promise<pxtc.CompileResult> {
-    const snippetPy = "main.py";
+    const snippetPy = pxt.MAIN_PY;
     const snippetTs = pxt.MAIN_TS;
     const snippetBlocks = pxt.MAIN_BLOCKS;
     let trg = pkg.mainPkg.getTargetOptions()
@@ -363,7 +363,7 @@ export function pyDecompileAsync(fileName: string): Promise<pxtc.transpile.Trans
 // TS -> Py
 export function decompilePythonSnippetAsync(code: string): Promise<string> {
     const snippetTs = pxt.MAIN_TS;
-    const snippetPy = "main.py";
+    const snippetPy = pxt.MAIN_PY;
     let trg = pkg.mainPkg.getTargetOptions()
     return pkg.mainPkg.getCompileOptionsAsync(trg)
         .then(opts => {

@@ -239,7 +239,7 @@ function getCompletionTestCases(): CompletionTestCase[] {
     return testCases;
 }
 
-const fileName = (isPython: boolean) => isPython ? "main.py" : pxt.MAIN_TS
+const fileName = (isPython: boolean) => isPython ? pxt.MAIN_PY : pxt.MAIN_TS
 
 function runCompletionTestCaseAsync(testCase: CompletionTestCase): Promise<void> {
     return getOptionsAsync(testCase.fileText, testCase.isPython)

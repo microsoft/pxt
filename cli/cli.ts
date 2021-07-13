@@ -4105,7 +4105,7 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
         const dep: pxt.Map<string> = {};
         if (dependency)
             dep[dependency] = "*";
-        let inPackages = { [pxt.MAIN_TS]: input, "main.py": "" }
+        let inPackages = { [pxt.MAIN_TS]: input, [pxt.MAIN_PY]: "" }
         const pkg = new pxt.MainPackage(new SnippetHost("decompile-pkg", inPackages, dep, true));
 
         pkg.installAllAsync()
@@ -5928,9 +5928,9 @@ function internalCacheUsedBlocksAsync(): Promise<Map<pxt.BuiltTutorialInfo>> {
         if (isPy) {
             let extra: Map<string> = {};
             info.code.forEach((snippet, i) => extra["snippet_" + i + ".py"] = snippet);
-            inFiles = { [pxt.MAIN_TS]: "", "main.py": "", [pxt.MAIN_BLOCKS]: "", ...extra }
+            inFiles = { [pxt.MAIN_TS]: "", [pxt.MAIN_PY]: "", [pxt.MAIN_BLOCKS]: "", ...extra }
         } else {
-            inFiles = { [pxt.MAIN_TS]: "", "main.py": "", [pxt.MAIN_BLOCKS]: "" }
+            inFiles = { [pxt.MAIN_TS]: "", [pxt.MAIN_PY]: "", [pxt.MAIN_BLOCKS]: "" }
         }
 
         const host = new SnippetHost("usedblocks", inFiles, info.pkgs);
