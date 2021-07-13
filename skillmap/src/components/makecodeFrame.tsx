@@ -251,21 +251,9 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
     }
 
     protected onTutorialFinished() {
-        const { mapId, activityId, progress, dispatchSetHeaderIdForActivity } = this.props;
+        const { mapId, activityId } = this.props;
         tickEvent("skillmap.activity.complete", { path: mapId, activity: activityId });
-        this.finishedActivityState = "saving";
-
-        if (progress) {
-            dispatchSetHeaderIdForActivity(
-                mapId,
-                activityId,
-                progress.headerId!,
-                progress.currentStep!,
-                progress.maxSteps!,
-                true
-            );
-        }
-
+        this.finishedActivityState = "finished";
         this.props.dispatchSaveAndCloseActivity();
     }
 }
