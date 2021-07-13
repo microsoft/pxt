@@ -1697,26 +1697,26 @@ export class ProjectView
         // If we're starting in the asset editor, always load into TS
         const preferredEditor = header.tutorial.metadata?.preferredEditor;
         if (preferredEditor && filenameForEditor(preferredEditor) === pxt.ASSETS_FILE) {
-            currentText["main.ts"] = template;
+            currentText[pxt.MAIN_TS] = template;
         }
 
         const projectname = projectNameForEditor(preferredEditor || header.editor);
 
 
         if (projectname === pxt.JAVASCRIPT_PROJECT_NAME) {
-            currentText["main.ts"] = template;
+            currentText[pxt.MAIN_TS] = template;
         }
         else if (projectname === pxt.PYTHON_PROJECT_NAME) {
             const pyCode = await compiler.decompilePythonSnippetAsync(template)
             if (pyCode) {
-                currentText["main.py"] = pyCode;
+                currentText[pxt.MAIN_PY] = pyCode;
             }
         }
         else {
             const resp = await compiler.decompileBlocksSnippetAsync(template)
-            const blockXML = resp.outfiles["main.blocks"];
+            const blockXML = resp.outfiles[pxt.MAIN_BLOCKS];
             if (blockXML) {
-                currentText["main.blocks"] = blockXML
+                currentText[pxt.MAIN_BLOCKS] = blockXML
             }
         }
 
