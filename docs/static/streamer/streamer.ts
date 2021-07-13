@@ -26,6 +26,7 @@ interface SeriouslyVideo {
 
 interface StreamerState {
     sceneIndex: number,
+    face?: boolean,
     chat?: boolean,
     hardware?: boolean,
     painttool?: string,
@@ -188,6 +189,7 @@ function onYouTubeIframeAPIReady() {
     const state: StreamerState = {
         sceneIndex: -1,
         paintColor: paintColors[0],
+        face: true
     }
     let editorConfigs;
     const db = await openDbAsync()
@@ -330,6 +332,7 @@ function onYouTubeIframeAPIReady() {
         body.className = [
             scenes[state.sceneIndex],
             state.hardware && "hardware",
+            !state.face && "hideFacecam",
             state.chat && "chat",
             config.multiEditor && "multi",
             state.paint && "paint",
@@ -358,7 +361,7 @@ function onYouTubeIframeAPIReady() {
             config.stingerVideo && "hasstinger",
             config.camoverlayVideo && "hascamoverlay",
         ].filter(cls => !!cls).join(' ');
-        if (!config.faceCamId || state.faceCamError)
+        if (state.face && (!config.faceCamId || state.faceCamError))
             showSettings();
         facecamlabel.innerText = config.faceCamLabel || ""
         hardwarecamlabel.innerText = config.hardwareCamLabel || ""
@@ -400,6 +403,8 @@ function onYouTubeIframeAPIReady() {
         //addSceneButton("OpenPaneMirrored", "Move webcam right (Alt+Shift+3)", "right")
         //addSceneButton("Contact", "Webcam large (Alt+Shift+4)", "chat")
         addSceneButton("Timer", "Show countdown (Alt+Shift+5)", "countdown")
+        addButton(toolbox, "Webcam2", "Toggle webcam", toggleFace, state.face)
+
         //if (config.faceCamGreenScreen || config.hardwareCamGreenScreen) {
         //    addSep(toolbox)
         //    if (config.faceCamGreenScreen || config.hardwareCamGreenScreen)
@@ -515,6 +520,11 @@ function onYouTubeIframeAPIReady() {
         } else {
             await document.firstElementChild.requestFullscreen()
         }
+    }
+
+    function toggleFace() {
+        state.face = !state.face
+        render()
     }
 
     function setSite(url) {
