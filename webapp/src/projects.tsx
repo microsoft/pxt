@@ -1206,7 +1206,6 @@ function applyCodeCardAction(projectView: pxt.editor.IProjectView, ticSrc: "proj
     }
 
     function chgCode(name: string, path: string, loadBlocks: boolean, preferredEditor?: string, template?: pxt.ProjectTemplate) {
-        // return projectView.startActivity("example", path, name, preferredEditor, null, );
         return projectView.startActivity({
             activity: "example",
             path,

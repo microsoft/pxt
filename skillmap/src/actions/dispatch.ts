@@ -12,7 +12,6 @@ export const dispatchOpenActivity = (mapId: string, activityId: string, previous
 export const dispatchCloseActivity = (finished = false) => ({ type: actions.CLOSE_ACTIVITY, finished });
 export const dispatchSaveAndCloseActivity = () => ({ type: actions.SAVE_AND_CLOSE_ACTIVITY });
 export const dispatchRestartActivity = (mapId: string, activityId: string, previousHeaderId?: string, carryoverCode?: boolean) => ({ type: actions.RESTART_ACTIVITY, mapId, activityId, previousHeaderId, carryoverCode });
-export const dispatchSetReloadHeaderState = (state: "reloading" | "reload" | "active" ) => ({ type: actions.SET_RELOAD_HEADER_STATE, state });
 export const dispatchSetUser = (user: UserState) => ({ type: actions.SET_USER, user });
 export const dispatchUpdateUserCompletedTags = () => ({ type: actions.UPDATE_USER_COMPLETED_TAGS });
 export const dispatchResetUser = () => ({ type: actions.RESET_USER });

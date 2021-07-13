@@ -31,7 +31,7 @@ export interface EditorViewState {
     currentActivityId: string;
     allowCodeCarryover: boolean;
     previousHeaderId?: string;
-    state: "active" | "saving" | "reload" | "reloading";
+    state: "active" | "saving";
 }
 
 interface ModalState {
@@ -205,14 +205,6 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                     action.maxSteps,
                     action.isCompleted
                 )
-            };
-        case actions.SET_RELOAD_HEADER_STATE:
-            return {
-                ...state,
-                editorView: state.editorView ? {
-                    ...state.editorView,
-                    state: action.state
-                } : undefined
             };
         case actions.SET_USER:
             const pageSourceUrl = state.pageSourceUrl;

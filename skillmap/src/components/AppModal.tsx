@@ -4,7 +4,7 @@ import * as React from "react";
 import { connect } from 'react-redux';
 
 import { ModalType, SkillMapState } from '../store/reducer';
-import { dispatchHideModal, dispatchRestartActivity, dispatchOpenActivity, dispatchResetUser, dispatchSetReloadHeaderState, dispatchShowCarryoverModal } from '../actions/dispatch';
+import { dispatchHideModal, dispatchRestartActivity, dispatchOpenActivity, dispatchResetUser, dispatchShowCarryoverModal } from '../actions/dispatch';
 import { tickEvent, postAbuseReportAsync, postShareAsync } from "../lib/browserUtils";
 import { lookupActivityProgress, lookupPreviousActivityStates, lookupPreviousCompletedActivityState } from "../lib/skillMapUtils";
 import { getProjectAsync } from "../lib/workspaceProvider";
@@ -25,7 +25,6 @@ interface AppModalProps {
     dispatchOpenActivity: (mapId: string, activityId: string, previousHeaderId?: string, carryoverCode?: boolean) => void;
     dispatchShowCarryoverModal: (mapId: string, activityId: string) => void;
     dispatchResetUser: () => void;
-    dispatchSetReloadHeaderState: (state: "reload" | "reloading" | "active") => void;
 }
 
 interface AppModalState {
@@ -171,7 +170,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
     }
 
     renderCodeCarryoverModal() {
-        const  { skillMap, activity, pageSourceUrl, userState, dispatchHideModal, dispatchSetReloadHeaderState, dispatchRestartActivity } = this.props;
+        const  { skillMap, activity, pageSourceUrl, userState, dispatchHideModal, dispatchRestartActivity } = this.props;
         const carryoverModalTitle = lf("Keep code from previous activity?");
         const carryoverModalText = lf("Do you want to start with your code from {0} or start fresh with starter code? Your images, tilemaps, tiles, and animations will stick around either way.");
         const carryoverModalTextSegments = carryoverModalText.split("{0}");
@@ -295,7 +294,6 @@ const mapDispatchToProps = {
     dispatchRestartActivity,
     dispatchOpenActivity,
     dispatchResetUser,
-    dispatchSetReloadHeaderState,
     dispatchShowCarryoverModal
 };
 

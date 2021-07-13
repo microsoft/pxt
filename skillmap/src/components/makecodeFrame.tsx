@@ -1,12 +1,11 @@
 /// <reference path="../../../built/pxteditor.d.ts" />
 import * as React from "react";
 import { connect } from 'react-redux';
-import { saveProjectAsync, getProjectAsync } from "../lib/workspaceProvider";
 import { isLocal, resolvePath, getEditorUrl, tickEvent } from "../lib/browserUtils";
-import { isActivityCompleted, lookupActivityProgress, lookupPreviousActivityStates } from "../lib/skillMapUtils";
+import { lookupActivityProgress } from "../lib/skillMapUtils";
 
 import { SkillMapState } from '../store/reducer';
-import  { dispatchSetHeaderIdForActivity, dispatchCloseActivity, dispatchSaveAndCloseActivity, dispatchUpdateUserCompletedTags, dispatchSetReloadHeaderState } from '../actions/dispatch';
+import  { dispatchSetHeaderIdForActivity, dispatchCloseActivity, dispatchSaveAndCloseActivity, dispatchUpdateUserCompletedTags } from '../actions/dispatch';
 
 /* eslint-disable import/no-unassigned-import, import/no-internal-modules */
 import '../styles/makecode-editor.css'
@@ -14,7 +13,6 @@ import '../styles/makecode-editor.css'
 
 interface MakeCodeFrameProps {
     save: boolean;
-    reload: "reloading" | "reload" | undefined;
     mapId: string;
     activityId: string;
     title: string;
@@ -29,7 +27,6 @@ interface MakeCodeFrameProps {
     dispatchCloseActivity: (finished?: boolean) => void;
     dispatchSaveAndCloseActivity: () => void;
     dispatchUpdateUserCompletedTags: () => void;
-    dispatchSetReloadHeaderState: (state: "reload" | "reloading" | "active") => void;
 }
 
 interface MakeCodeFrameState {
@@ -52,7 +49,6 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
     protected nextId: number = 0;
     protected pendingMessages: {[index: string]: PendingMessage} = {};
     protected isNewActivity: boolean = false;
-    protected sentReloadImportRequest: boolean = false;
 
     constructor(props: MakeCodeFrameProps) {
         super(props);
@@ -73,16 +69,6 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
             this.setState({
                 unloading: "unloading"
             });
-        }
-
-        if (this.props.reload === "reload" && !this.sentReloadImportRequest) {
-            this.sentReloadImportRequest = true;
-
-            await this.sendMessageAsync({
-                type: "pxteditor",
-                action: "openheader",
-                headerId: this.props.activityHeaderId
-            } as pxt.editor.EditorMessageOpenHeaderRequest);
         }
     }
 
@@ -206,7 +192,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
                 type: "pxteditor",
                 action: "openheader",
                 headerId: this.props.activityHeaderId
-            });
+            }  as pxt.editor.EditorMessageOpenHeaderRequest);
         }
         else {
             this.isNewActivity = true;
@@ -314,8 +300,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         carryoverCode: allowCodeCarryover,
         previousHeaderId: previousHeaderId,
         progress,
-        save: saveState === "saving",
-        reload: saveState === "reload" || saveState === "reloading" ? saveState : undefined
+        save: saveState === "saving"
     }
 }
 
@@ -328,8 +313,7 @@ const mapDispatchToProps = {
     dispatchSetHeaderIdForActivity,
     dispatchCloseActivity,
     dispatchSaveAndCloseActivity,
-    dispatchUpdateUserCompletedTags,
-    dispatchSetReloadHeaderState
+    dispatchUpdateUserCompletedTags
 };
 
 export const MakeCodeFrame = connect(mapStateToProps, mapDispatchToProps)(MakeCodeFrameImpl);
