@@ -475,7 +475,7 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
         allScripts.push(e)
     }
 
-    const hasUserFileChanges = async () => {
+    const hasUserFileChanges = () => {
         // we see lots of frequent "saves" that don't come from real changes made by the user. This
         // causes problems for cloud sync since this can cause us to think the user is making when
         // just reading a project. The "correct" solution would be to have a full history and .gitignore
@@ -502,9 +502,10 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
 
         return hasUserChanges;
     }
+    const isHeaderOnlyChange = !fromCloudSync && !text;
     const isUserChange = !fromCloudSync
-        && (h.isDeleted || text && await hasUserFileChanges())
-    if (isUserChange) {
+        && (h.isDeleted || text && hasUserFileChanges())
+    if (isHeaderOnlyChange || isUserChange) {
         h.pubCurrent = false
         h.cloudCurrent = false
         h.modificationTime = U.nowSeconds();

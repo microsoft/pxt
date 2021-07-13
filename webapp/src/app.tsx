@@ -1271,7 +1271,10 @@ export class ProjectView
             let tutorialOptions = this.state.tutorialOptions;
             tutorialOptions.tutorialStep = step;
             tutorialOptions.tutorialStepExpanded = false;
-            this.setState({ tutorialOptions: tutorialOptions }, () => this.postTutorialProgress());
+            this.setState({ tutorialOptions: tutorialOptions }, () => {
+                this.postTutorialProgress();
+                workspace.saveAsync(this.state.header);
+            });
             const showHint = tutorialOptions.tutorialStepInfo[step].showHint;
             if (showHint) this.showTutorialHint();
 
@@ -1338,7 +1341,7 @@ export class ProjectView
                         let tutorialOptions = this.state.tutorialOptions;
                         tutorialOptions.tutorialReady = true;
                         tutorialOptions.tutorialStepInfo = tt.stepInfo;
-                        this.setState({ tutorialOptions: tutorialOptions });
+                        this.setState({ tutorialOptions: tutorialOptions }, () => workspace.saveAsync(this.state.header));
                         const showHint = tutorialOptions.tutorialStepInfo[0].showHint;
                         if (showHint) this.showTutorialHint();
                         //else {
@@ -3938,7 +3941,7 @@ export class ProjectView
                     tutorialOptions: undefined,
                     tracing: undefined,
                     editorState: undefined
-                });
+                }, () => workspace.saveAsync(this.state.header));
                 core.resetFocus();
             });
     }

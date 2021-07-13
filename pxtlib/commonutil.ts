@@ -190,7 +190,7 @@ namespace ts.pxtc.Util {
     }
 
     let sForPlural = true;
-    export function lf_va(format: string, args: any[]): string {
+    export function lf_va(format: string, args: any[]): string { // @ignorelf@
         if (!format) return format;
 
         locStats[format] = (locStats[format] || 0) + 1;
@@ -205,14 +205,14 @@ namespace ts.pxtc.Util {
         return fmt_va(lfmt, args);
     }
 
-    export function lf(format: string, ...args: any[]): string {
-        return lf_va(format, args);
+    export function lf(format: string, ...args: any[]): string { // @ignorelf@
+        return lf_va(format, args); // @ignorelf@
     }
     /**
      * Similar to lf but the string do not get extracted into the loc file.
      */
     export function rlf(format: string, ...args: any[]): string {
-        return lf_va(format, args);
+        return lf_va(format, args); // @ignorelf@
     }
 
     export function lookup<T>(m: pxt.Map<T>, key: string): T {

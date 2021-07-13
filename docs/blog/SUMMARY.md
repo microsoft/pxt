@@ -1,6 +1,7 @@
 # Microsoft MakeCode Blog
 
-* [Blog](/blog)    
+* [Blog](/blog)
+    * [MakeCode for the micro:bit - 2021 Release is here!](/blog/microbit/2021-release)
     * [Beginner Skillmap Has Launched!](/blog/arcade/beginner-skillmap)
     * [New Free Curriculum! AP CSP with MakeCode](/blog/csp/new-free-curriculum)
     * [MakeCode Arcade Spring Update!](/blog/arcade/update-spring-2021)
