@@ -120,8 +120,8 @@ export class ProviderBase {
             pxt.storage.setLocal(this.name + CLOUD_USER, JSON.stringify(user))
         else
             pxt.storage.removeLocal(this.name + CLOUD_USER);
-        data.invalidate("sync:user")
-        data.invalidate("github:user")
+            pxt.data.invalidate("sync:user")
+            pxt.data.invalidate("github:user")
     }
 
     protected token() {
@@ -418,7 +418,7 @@ export function loginCheck() {
 
     // implicit OAuth flow, via query argument
     {
-        const qs = core.parseQueryString(pxt.storage.getLocal(OAUTH_HASH) || "")
+        const qs = U.parseQueryString(pxt.storage.getLocal(OAUTH_HASH) || "")
         if (qs["access_token"]) {
             const tp = pxt.storage.getLocal(OAUTH_TYPE)
             const impl = provs.filter(p => p.name == tp)[0];
@@ -434,7 +434,7 @@ export function loginCheck() {
 
     // auth OAuth flow, via hash
     {
-        const qs = core.parseQueryString((location.hash || "#")
+        const qs = U.parseQueryString((location.hash || "#")
             .slice(1)
             .replace(/%23access_token/, "access_token"));
         if (qs["access_token"]) {
@@ -470,7 +470,7 @@ export function userInitials(username: string): string {
 
 function syncApiHandler(p: string) {
     const provider = currentProvider;
-    switch (data.stripProtocol(p)) {
+    switch (pxt.data.stripProtocol(p)) {
         case "user":
             return provider && provider.user();
         case "loggedin":
@@ -490,7 +490,7 @@ function syncApiHandler(p: string) {
 
 function githubApiHandler(p: string) {
     const provider = githubProvider();
-    switch (data.stripProtocol(p)) {
+    switch (pxt.data.stripProtocol(p)) {
         case "user":
             return provider && provider.user();
     }
@@ -498,7 +498,7 @@ function githubApiHandler(p: string) {
 }
 
 function pingApiHandlerAsync(p: string): Promise<any> {
-    const url = data.stripProtocol(p);
+    const url = pxt.data.stripProtocol(p);
     // special case favicon.ico
     if (/\.ico$/.test(p)) {
         const imgUrl = pxt.BrowserUtils.isEdge()
@@ -520,19 +520,19 @@ function pingApiHandlerAsync(p: string): Promise<any> {
         .catch(e => false)
 }
 
-data.mountVirtualApi("sync", { getSync: syncApiHandler })
-data.mountVirtualApi("github", { getSync: githubApiHandler })
-data.mountVirtualApi("ping", {
+pxt.data.mountVirtualApi("sync", { getSync: syncApiHandler })
+pxt.data.mountVirtualApi("github", { getSync: githubApiHandler })
+pxt.data.mountVirtualApi("ping", {
     getAsync: pingApiHandlerAsync,
     expirationTime: p => 24 * 3600 * 1000,
     isOffline: () => !pxt.Cloud.isOnline()
 })
 
 function invalidateData() {
-    data.invalidate("sync:status")
-    data.invalidate("sync:user")
-    data.invalidate("sync:loggedin")
-    data.invalidate("sync:provider")
-    data.invalidate("sync:providericon")
-    data.invalidate("github:user");
+    pxt.data.invalidate("sync:status")
+    pxt.data.invalidate("sync:user")
+    pxt.data.invalidate("sync:loggedin")
+    pxt.data.invalidate("sync:provider")
+    pxt.data.invalidate("sync:providericon")
+    pxt.data.invalidate("github:user");
 }

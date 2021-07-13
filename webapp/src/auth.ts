@@ -83,8 +83,8 @@ export function getState(): Readonly<State> {
         loadState();
         if (state$) {
             generateUserProfilePicDataUrl(state$.profile);
-            data.invalidate("auth:*");
-            data.invalidate("user-pref:*");
+            pxt.data.invalidate("auth:*");
+            pxt.data.invalidate("user-pref:*");
         }
     }
     if (!state$) {
@@ -149,7 +149,7 @@ function loadState() {
 function clearState() {
     state$ = {};
     pxt.storage.removeLocal(AUTH_USER_STATE);
-    data.invalidate("auth:*");
+    pxt.data.invalidate("auth:*");
     //data.invalidate("user-prefs:*"); // Should we invalidate this? Or would it be jarring visually?
 }
 
@@ -221,7 +221,7 @@ export async function loginAsync(idp: pxt.IdentityProviderId, persistent: boolea
     pxt.storage.setLocal(AUTH_LOGIN_STATE, stateStr);
 
     // Redirect to the login endpoint.
-    const loginUrl = core.stringifyQueryString('/api/auth/login', {
+    const loginUrl = U.stringifyQueryString('/api/auth/login', {
         response_type: "token",
         provider: idp,
         persistent,
@@ -349,7 +349,7 @@ export async function loginCallback(qs: pxt.Map<string>) {
 
     // Clear url parameters and redirect to the callback location.
     const hash = callbackState.hash.startsWith('#') ? callbackState.hash : `#${callbackState.hash}`;
-    const params = core.stringifyQueryString('', callbackState.params);
+    const params = U.stringifyQueryString('', callbackState.params);
     const pathname = state.callbackPathname.startsWith('/') ? state.callbackPathname : `/${state.callbackPathname}`;
     const redirect = `${pathname}${hash}${params}`;
     window.location.href = redirect;
@@ -462,13 +462,13 @@ function internalPrefUpdateAndInvalidate(newPref: Partial<UserPreferences>) {
     });
     // invalidate fields that change
     if (oldPref?.highContrast !== getState().preferences?.highContrast) {
-        data.invalidate(HIGHCONTRAST)
+        pxt.data.invalidate(HIGHCONTRAST)
     }
     if (oldPref?.language !== getState().preferences?.language) {
-        data.invalidate(LANGUAGE)
+        pxt.data.invalidate(LANGUAGE)
     }
     if (oldPref?.reader !== getState().preferences?.reader) {
-        data.invalidate(READER)
+        pxt.data.invalidate(READER)
     }
 }
 
@@ -561,8 +561,8 @@ function setUserProfile(profile: UserProfile) {
     const wasLoggedIn = loggedInSync();
     transformUserProfile(profile);
     const isLoggedIn = loggedInSync();
-    data.invalidate(PROFILE);
-    data.invalidate(LOGGED_IN);
+    pxt.data.invalidate(PROFILE);
+    pxt.data.invalidate(LOGGED_IN);
     if (isLoggedIn && !wasLoggedIn) {
         core.infoNotification(`Signed in: ${profile.idp.displayName}`);
     }
@@ -620,7 +620,7 @@ export async function apiAsync<T = any>(url: string, data?: any, method?: string
 }
 
 function authApiHandler(p: string) {
-    const field = data.stripProtocol(p);
+    const field = pxt.data.stripProtocol(p);
     const state = getState();
     switch (field) {
         case FIELD_PROFILE: return state.profile;
@@ -631,7 +631,7 @@ function authApiHandler(p: string) {
 
 function internalUserPreferencesHandler(path: string): UserPreferences | boolean | string {
     const state = getState();
-    const field = data.stripProtocol(path);
+    const field = pxt.data.stripProtocol(path);
     switch (field) {
         case FIELD_HIGHCONTRAST: return state.preferences.highContrast;
         case FIELD_LANGUAGE: return state.preferences.language;
@@ -657,13 +657,13 @@ async function userPreferencesHandlerAsync(path: string): Promise<UserPreference
 }
 
 export function init() {
-    data.mountVirtualApi(USER_PREF_MODULE, {
+    pxt.data.mountVirtualApi(USER_PREF_MODULE, {
         getSync: userPreferencesHandlerSync,
         // TODO: virtual apis don't support both sync & async
         // getAsync: userPreferencesHandlerAsync
     });
 
-    data.mountVirtualApi(MODULE, { getSync: authApiHandler });
+    pxt.data.mountVirtualApi(MODULE, { getSync: authApiHandler });
 }
 
 export function enableAuth(enabled = true) {
