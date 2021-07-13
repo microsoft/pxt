@@ -293,48 +293,43 @@ export function decompileAsync(fileName: string, blockInfo?: ts.pxtc.BlocksInfo,
 
 // TS -> blocks, load blocs before calling this api
 export function decompileBlocksSnippetAsync(code: string, blockInfo?: ts.pxtc.BlocksInfo, dopts?: { snippetMode?: boolean }): Promise<pxtc.CompileResult> {
-    const snippetTs = pxt.MAIN_TS;
-    const snippetBlocks = pxt.MAIN_BLOCKS;
     const trg = pkg.mainPkg.getTargetOptions()
     return pkg.mainPkg.getCompileOptionsAsync(trg)
         .then(opts => {
-            opts.fileSystem[snippetTs] = code;
-            opts.fileSystem[snippetBlocks] = "";
+            opts.fileSystem[pxt.MAIN_TS] = code;
+            opts.fileSystem[pxt.MAIN_BLOCKS] = "";
             opts.snippetMode = (dopts && dopts.snippetMode) || false;
 
-            if (opts.sourceFiles.indexOf(snippetTs) === -1) {
-                opts.sourceFiles.push(snippetTs);
+            if (opts.sourceFiles.indexOf(pxt.MAIN_TS) === -1) {
+                opts.sourceFiles.push(pxt.MAIN_TS);
             }
-            if (opts.sourceFiles.indexOf(snippetBlocks) === -1) {
-                opts.sourceFiles.push(snippetBlocks);
+            if (opts.sourceFiles.indexOf(pxt.MAIN_BLOCKS) === -1) {
+                opts.sourceFiles.push(pxt.MAIN_BLOCKS);
             }
             opts.ast = true;
-            return decompileCoreAsync(opts, snippetTs)
+            return decompileCoreAsync(opts, pxt.MAIN_TS)
         });
 }
 
 // Py -> blocks
 export function pySnippetToBlocksAsync(code: string, blockInfo?: ts.pxtc.BlocksInfo): Promise<pxtc.CompileResult> {
-    const snippetPy = pxt.MAIN_PY;
-    const snippetTs = pxt.MAIN_TS;
-    const snippetBlocks = pxt.MAIN_BLOCKS;
     let trg = pkg.mainPkg.getTargetOptions()
     return waitForFirstTypecheckAsync()
         .then(() => pkg.mainPkg.getCompileOptionsAsync(trg))
         .then(opts => {
-            opts.fileSystem[snippetPy] = code;
-            opts.fileSystem[snippetBlocks] = "";
+            opts.fileSystem[pxt.MAIN_PY] = code;
+            opts.fileSystem[pxt.MAIN_BLOCKS] = "";
 
-            if (opts.sourceFiles.indexOf(snippetPy) === -1) {
-                opts.sourceFiles.push(snippetPy);
+            if (opts.sourceFiles.indexOf(pxt.MAIN_PY) === -1) {
+                opts.sourceFiles.push(pxt.MAIN_PY);
             }
-            if (opts.sourceFiles.indexOf(snippetBlocks) === -1) {
-                opts.sourceFiles.push(snippetBlocks);
+            if (opts.sourceFiles.indexOf(pxt.MAIN_BLOCKS) === -1) {
+                opts.sourceFiles.push(pxt.MAIN_BLOCKS);
             }
             return workerOpAsync("py2ts", { options: opts });
         })
         .then(res => {
-            return decompileBlocksSnippetAsync(res.outfiles[snippetTs], blockInfo)
+            return decompileBlocksSnippetAsync(res.outfiles[pxt.MAIN_TS], blockInfo)
         });
 }
 
@@ -362,24 +357,22 @@ export function pyDecompileAsync(fileName: string): Promise<pxtc.transpile.Trans
 
 // TS -> Py
 export function decompilePythonSnippetAsync(code: string): Promise<string> {
-    const snippetTs = pxt.MAIN_TS;
-    const snippetPy = pxt.MAIN_PY;
     let trg = pkg.mainPkg.getTargetOptions()
     return pkg.mainPkg.getCompileOptionsAsync(trg)
         .then(opts => {
-            opts.fileSystem[snippetTs] = code;
-            opts.fileSystem[snippetPy] = "";
+            opts.fileSystem[pxt.MAIN_TS] = code;
+            opts.fileSystem[pxt.MAIN_PY] = "";
 
-            if (opts.sourceFiles.indexOf(snippetTs) === -1) {
-                opts.sourceFiles.push(snippetTs);
+            if (opts.sourceFiles.indexOf(pxt.MAIN_TS) === -1) {
+                opts.sourceFiles.push(pxt.MAIN_TS);
             }
-            if (opts.sourceFiles.indexOf(snippetPy) === -1) {
-                opts.sourceFiles.push(snippetPy);
+            if (opts.sourceFiles.indexOf(pxt.MAIN_PY) === -1) {
+                opts.sourceFiles.push(pxt.MAIN_PY);
             }
             opts.ast = true;
-            return pyDecompileCoreAsync(opts, snippetTs)
+            return pyDecompileCoreAsync(opts, pxt.MAIN_TS)
         }).then(resp => {
-            return resp.outfiles[snippetPy]
+            return resp.outfiles[pxt.MAIN_PY]
         })
 }
 
