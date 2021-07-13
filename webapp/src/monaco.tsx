@@ -425,7 +425,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             pxt.tickEvent(`${tickLang}.convertBlocks`);
 
             const mainPkg = pkg.mainEditorPkg();
-            if (!this.hasBlocks() && !mainPkg && !mainPkg.files["main.blocks"]) {
+            if (!this.hasBlocks() && !mainPkg && !mainPkg.files[pxt.MAIN_BLOCKS]) {
                 pxt.debug(`cancelling convertion to blocks, but main.blocks is missing`);
                 return undefined;
             }
@@ -440,7 +440,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 ? this.currFile.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)
                 : this.currFile.name;
             if (!this.hasBlocks()) {
-                if (!mainPkg || !mainPkg.files["main.blocks"]) {
+                if (!mainPkg || !mainPkg.files[pxt.MAIN_BLOCKS]) {
                     // Either the project isn't loaded, or it's ts-only
                     if (mainPkg) {
                         this.parent.setFile(mainPkg.files[pxt.MAIN_TS]);

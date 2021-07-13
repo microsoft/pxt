@@ -294,7 +294,7 @@ export function decompileAsync(fileName: string, blockInfo?: ts.pxtc.BlocksInfo,
 // TS -> blocks, load blocs before calling this api
 export function decompileBlocksSnippetAsync(code: string, blockInfo?: ts.pxtc.BlocksInfo, dopts?: { snippetMode?: boolean }): Promise<pxtc.CompileResult> {
     const snippetTs = pxt.MAIN_TS;
-    const snippetBlocks = "main.blocks";
+    const snippetBlocks = pxt.MAIN_BLOCKS;
     const trg = pkg.mainPkg.getTargetOptions()
     return pkg.mainPkg.getCompileOptionsAsync(trg)
         .then(opts => {
@@ -317,7 +317,7 @@ export function decompileBlocksSnippetAsync(code: string, blockInfo?: ts.pxtc.Bl
 export function pySnippetToBlocksAsync(code: string, blockInfo?: ts.pxtc.BlocksInfo): Promise<pxtc.CompileResult> {
     const snippetPy = "main.py";
     const snippetTs = pxt.MAIN_TS;
-    const snippetBlocks = "main.blocks";
+    const snippetBlocks = pxt.MAIN_BLOCKS;
     let trg = pkg.mainPkg.getTargetOptions()
     return waitForFirstTypecheckAsync()
         .then(() => pkg.mainPkg.getCompileOptionsAsync(trg))
@@ -863,7 +863,7 @@ function upgradeFromBlocksAsync(): Promise<UpgradeResult> {
     const project = pkg.getEditorPkg(mainPkg);
     const targetVersion = project.header.targetVersion;
 
-    const fileText = project.files["main.blocks"] ? project.files["main.blocks"].content : `<block type="${ts.pxtc.ON_START_TYPE}"></block>`;
+    const fileText = project.files[pxt.MAIN_BLOCKS] ? project.files[pxt.MAIN_BLOCKS].content : `<block type="${ts.pxtc.ON_START_TYPE}"></block>`;
     let ws: Blockly.Workspace;
     let patchedFiles: pxt.Map<string> = {};
 
@@ -879,7 +879,7 @@ function upgradeFromBlocksAsync(): Promise<UpgradeResult> {
             pxt.blocks.domToWorkspaceNoEvents(xml, ws);
             pxtblockly.upgradeTilemapsInWorkspace(ws, pxt.react.getTilemapProject());
             const upgradedXml = Blockly.Xml.workspaceToDom(ws);
-            patchedFiles["main.blocks"] = Blockly.Xml.domToText(upgradedXml);
+            patchedFiles[pxt.MAIN_BLOCKS] = Blockly.Xml.domToText(upgradedXml);
 
             return pxt.blocks.compileAsync(ws, info)
         })

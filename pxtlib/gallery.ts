@@ -79,7 +79,7 @@ namespace pxt.gallery {
         const prj: GalleryProject = {
             name,
             filesOverride: {
-                "main.blocks": `<xml xmlns="http://www.w3.org/1999/xhtml"></xml>`,
+                [pxt.MAIN_BLOCKS]: `<xml xmlns="http://www.w3.org/1999/xhtml"></xml>`,
                 [m[1] === "python" ? "main.py" : pxt.MAIN_TS]: source
             },
             dependencies,

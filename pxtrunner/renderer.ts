@@ -3,7 +3,7 @@ namespace pxt.runner {
     const PY_ICON = "icon xicon python";
     const BLOCKS_ICON = "icon xicon blocks";
     const PY_FILE = "main.py";
-    const BLOCKS_FILE = "main.blocks";
+    const BLOCKS_FILE = pxt.MAIN_BLOCKS;
 
     export interface ClientRenderOptions {
         snippetClass?: string;

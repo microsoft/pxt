@@ -4114,7 +4114,7 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
                 opts.ast = true;
                 const decompiled = pxtc.decompile(pxtc.getTSProgram(opts), opts, pxt.MAIN_TS);
                 if (decompiled.success) {
-                    resolve(decompiled.outfiles["main.blocks"]);
+                    resolve(decompiled.outfiles[pxt.MAIN_BLOCKS]);
                 }
                 else {
                     reject("Could not decompile " + f + JSON.stringify(decompiled.diagnostics, null, 4));
@@ -5928,9 +5928,9 @@ function internalCacheUsedBlocksAsync(): Promise<Map<pxt.BuiltTutorialInfo>> {
         if (isPy) {
             let extra: Map<string> = {};
             info.code.forEach((snippet, i) => extra["snippet_" + i + ".py"] = snippet);
-            inFiles = { [pxt.MAIN_TS]: "", "main.py": "", "main.blocks": "", ...extra }
+            inFiles = { [pxt.MAIN_TS]: "", "main.py": "", [pxt.MAIN_BLOCKS]: "", ...extra }
         } else {
-            inFiles = { [pxt.MAIN_TS]: "", "main.py": "", "main.blocks": "" }
+            inFiles = { [pxt.MAIN_TS]: "", "main.py": "", [pxt.MAIN_BLOCKS]: "" }
         }
 
         const host = new SnippetHost("usedblocks", inFiles, info.pkgs);
@@ -6366,7 +6366,7 @@ function blockTestsAsync(parsed?: commandParser.ParsedCommand) {
                         .then((configText: string) => {
                             packageName = (JSON.parse(configText) as pxt.PackageConfig).name;
                             return readDirAsync(dirPath)
-                                .then(files => U.promiseMapAll(files.filter(f => U.endsWith(f, ".blocks") && f != "main.blocks"), fn =>
+                                .then(files => U.promiseMapAll(files.filter(f => U.endsWith(f, ".blocks") && f != pxt.MAIN_BLOCKS), fn =>
                                     readFileAsync(path.join(dirPath, fn), "utf8")
                                         .then((contents: string) => testFiles.push({ testName: fn, contents }))))
                         })

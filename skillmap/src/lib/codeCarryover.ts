@@ -30,7 +30,7 @@ function mergeProjectCode(previousProject: pxt.Map<string>, newProject: pxt.Map<
         mergeJRES(previousProject[pxt.TILEMAP_JRES], newProject[pxt.TILEMAP_JRES]);
     const imageJres = carryoverCode ?
         mergeJRES(newProject[pxt.IMAGES_JRES], previousProject[pxt.IMAGES_JRES]) :
-        mergeJRES(appendTemporaryAssets(previousProject["main.blocks"], previousProject[pxt.IMAGES_JRES]), newProject[pxt.IMAGES_JRES]);
+        mergeJRES(appendTemporaryAssets(previousProject[pxt.MAIN_BLOCKS], previousProject[pxt.IMAGES_JRES]), newProject[pxt.IMAGES_JRES]);
 
     if (tilemapJres && config?.files?.indexOf(pxt.TILEMAP_JRES) < 0) config.files.push(pxt.TILEMAP_JRES)
     if (imageJres && config?.files?.indexOf(pxt.IMAGES_JRES) < 0) config.files.push(pxt.IMAGES_JRES)
@@ -39,7 +39,7 @@ function mergeProjectCode(previousProject: pxt.Map<string>, newProject: pxt.Map<
         ...newProject,
         [pxt.MAIN_TS]: carryoverCode ? previousProject[pxt.MAIN_TS] : newProject[pxt.MAIN_TS],
         ["main.py"]: carryoverCode ? previousProject["main.py"] : newProject["main.py"],
-        ["main.blocks"]: carryoverCode ? previousProject["main.blocks"] : newProject["main.blocks"],
+        [pxt.MAIN_BLOCKS]: carryoverCode ? previousProject[pxt.MAIN_BLOCKS] : newProject[pxt.MAIN_BLOCKS],
         [pxt.TILEMAP_JRES]: tilemapJres,
         [pxt.IMAGES_JRES]: imageJres,
         [pxt.CONFIG_NAME]: JSON.stringify(config)

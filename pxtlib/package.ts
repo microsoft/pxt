@@ -185,14 +185,14 @@ namespace pxt {
                 // note that the preferredEditor field will be set automatically on the first save
 
                 // 1. no main.blocks in project, open javascript
-                const hasMainBlocks = this.getFiles().indexOf("main.blocks") >= 0;
+                const hasMainBlocks = this.getFiles().indexOf(pxt.MAIN_BLOCKS) >= 0;
                 if (!hasMainBlocks)
                     return pxt.JAVASCRIPT_PROJECT_NAME;
 
                 // 2. if main.blocks is empty and main.ts is non-empty
                 //    open typescript
                 // https://github.com/microsoft/pxt/blob/master/webapp/src/app.tsx#L1032
-                const mainBlocks = this.readFile("main.blocks");
+                const mainBlocks = this.readFile(pxt.MAIN_BLOCKS);
                 const mainTs = this.readFile(pxt.MAIN_TS);
                 if (!mainBlocks && mainTs)
                     return pxt.JAVASCRIPT_PROJECT_NAME;

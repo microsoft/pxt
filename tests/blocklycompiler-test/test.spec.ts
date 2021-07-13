@@ -115,14 +115,14 @@ class BlocklyCompilerTestHost implements pxt.Host {
                     },
                     "description": "",
                     "files": [
-                        "main.blocks",
+                        pxt.MAIN_BLOCKS,
                         pxt.MAIN_TS,
                         "pxt-core.d.ts",
                         "pxt-helpers.ts"
                     ]
                 });
             }
-            else if (filename == "main.blocks") {
+            else if (filename == pxt.MAIN_BLOCKS) {
                 return "";
             }
             else if (filename == "pxt-core.d.ts" || filename == "pxt-helpers.ts") {

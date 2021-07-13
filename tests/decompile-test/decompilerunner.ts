@@ -108,7 +108,7 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
         .then(opts => {
             const decompiled = pxtc.decompile(pxtc.getTSProgram(opts), opts, pxt.MAIN_TS, true);
             if (decompiled.success) {
-                return decompiled.outfiles["main.blocks"];
+                return decompiled.outfiles[pxt.MAIN_BLOCKS];
             }
             else {
                 return Promise.reject(new Error("Could not decompile " + f + JSON.stringify(decompiled.diagnostics, null, 4)));

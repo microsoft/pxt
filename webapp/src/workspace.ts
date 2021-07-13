@@ -894,7 +894,7 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     // add screenshots
     let blocksDiffSha: string;
     if (options
-        && treeUpdate.tree.find(e => e.path == "main.blocks")) {
+        && treeUpdate.tree.find(e => e.path == pxt.MAIN_BLOCKS)) {
         if (options.blocksScreenshotAsync) {
             const png = await options.blocksScreenshotAsync();
             if (png)
@@ -1227,13 +1227,13 @@ export async function exportToGithubAsync(hd: Header, repoid: string) {
     })
 
     // assign ids to blockly blocks
-    const mainBlocks = files["main.blocks"];
+    const mainBlocks = files[pxt.MAIN_BLOCKS];
     if (mainBlocks) {
         const ws = pxt.blocks.loadWorkspaceXml(mainBlocks, true);
         if (ws) {
             const mainBlocksWithIds = pxt.blocks.saveWorkspaceXml(ws, true);
             if (mainBlocksWithIds)
-                files["main.blocks"] = mainBlocksWithIds;
+                files[pxt.MAIN_BLOCKS] = mainBlocksWithIds;
         }
     }
     // save updated files

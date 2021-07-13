@@ -192,7 +192,7 @@ namespace pxt.runner {
         let p = appTarget.tsprj
         let files = U.clone(p.files)
         files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(p.config);
-        files["main.blocks"] = "";
+        files[pxt.MAIN_BLOCKS] = "";
         return files
     }
 
@@ -302,8 +302,8 @@ namespace pxt.runner {
 
                         //Propgate the change to main package
                         mainPkg.config.name = cfg.name;
-                        if (mainPkg.config.files.indexOf("main.blocks") == -1) {
-                            mainPkg.config.files.push("main.blocks");
+                        if (mainPkg.config.files.indexOf(pxt.MAIN_BLOCKS) == -1) {
+                            mainPkg.config.files.push(pxt.MAIN_BLOCKS);
                         }
                     }
                 }).catch(e => {
@@ -1110,9 +1110,9 @@ ${linkString}
                                 compileBlocks: bresp,
                                 apiInfo: apis
                             };
-                        pxt.debug(bresp.outfiles["main.blocks"])
+                        pxt.debug(bresp.outfiles[pxt.MAIN_BLOCKS])
 
-                        const blocksSvg = pxt.blocks.render(bresp.outfiles["main.blocks"], options);
+                        const blocksSvg = pxt.blocks.render(bresp.outfiles[pxt.MAIN_BLOCKS], options);
 
                         if (tilemapJres || assetsJres) {
                             tilemapProject = null;
