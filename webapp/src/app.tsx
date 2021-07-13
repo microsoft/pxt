@@ -3979,6 +3979,7 @@ export class ProjectView
     }
 
     onTutorialLoaded() {
+        pxt.tickEvent("tutorial.editorLoaded")
         this.postTutorialLoaded();
     }
 
