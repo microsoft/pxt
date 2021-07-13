@@ -1,27 +1,14 @@
-import { guidGen } from "./browserUtils";
-import { lookupPreviousCompletedActivityState } from "./skillMapUtils";
-import { getProjectAsync, saveProjectAsync } from "./workspaceProvider";
 
-export async function carryoverProjectCode(user: UserState, pageSource: string, map: SkillMap, activityId: string, carryoverCode: boolean) {
-    const progress = user.mapProgress[pageSource][map.mapId];
-
-    const headerId = progress.activityState[activityId]?.headerId;
-
-    const previous = lookupPreviousCompletedActivityState(user, pageSource, map, activityId);
-    const previousHeaderId = previous?.headerId;
-
-    if (!headerId || !previousHeaderId) return;
-
-    const previousProject = await getProjectAsync(previousHeaderId);
-    const newProject = await getProjectAsync(headerId);
-
-    newProject.text = mergeProjectCode(previousProject.text!, newProject.text!, carryoverCode);
-
-    await saveProjectAsync(newProject);
-}
-
-
-function mergeProjectCode(previousProject: pxt.Map<string>, newProject: pxt.Map<string>, carryoverCode: boolean) {
+/**
+ * Takes an old version of a project with a new one and merges their assets together. The last
+ * argument determines if the merged project uses the project code from the old project or the new one.
+ *
+ * @param previousProject The code from the "previous" project
+ * @param newProject The code for the "new" project
+ * @param carryoverCode True if the code from the previous project should be returned, false if the code from the new project should be used
+ * @returns The merged project
+ */
+export function mergeProjectCode(previousProject: pxt.Map<string>, newProject: pxt.Map<string>, carryoverCode: boolean) {
     const configString = newProject[pxt.CONFIG_NAME];
     const config = pxt.U.jsonTryParse(configString) as pxt.PackageConfig;
 
@@ -210,7 +197,7 @@ function appendTemporaryAssets(blocks: string, assets: string) {
     let index = 0;
     getImages(blocks)
         .forEach(data => {
-            const id = guidGen();
+            const id = pxt.Util.guidGen();
             while (jres[`${pxt.sprite.IMAGES_NAMESPACE}.${pxt.sprite.IMAGE_PREFIX}${index}`]) {
                 index++;
             }
@@ -226,7 +213,7 @@ function appendTemporaryAssets(blocks: string, assets: string) {
     index = 0;
     getAnimations(blocks)
         .forEach(anim => {
-            const id = guidGen();
+            const id = pxt.Util.guidGen();
             while (jres[`${pxt.sprite.ANIMATION_NAMESPACE}.${pxt.sprite.ANIMATION_NAMESPACE}${index}`]) {
                 index++;
             }

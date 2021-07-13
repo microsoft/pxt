@@ -89,11 +89,13 @@ export class SkillGraphContainerImpl extends React.Component<SkillGraphContainer
 }
 
 
-function mapStateToProps(state: SkillMapState, ownProps: SkillGraphContainerProps) {
+function mapStateToProps(state: SkillMapState, ownProps: any) {
     if (!state) return {};
 
+    const props = ownProps as SkillGraphContainerProps
+
     // Compute graph layout, update size of skill map
-    const graphs = ownProps.maps.map(el => getGraph(el));
+    const graphs = props.maps.map(el => getGraph(el));
     const width = graphs?.length ? graphs.map(el => el.width).reduce((prev, curr) => Math.max(prev, curr)) : 0;
     const height = graphs?.length ? graphs.map(el => el.height).reduce((prev, curr) => prev + curr) : 0;
 

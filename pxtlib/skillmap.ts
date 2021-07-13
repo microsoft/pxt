@@ -4,6 +4,7 @@ namespace pxt.skillmap {
     export interface Project {
         header?: pxt.workspace.Header;
         text?: ScriptText;
+        deleted?: boolean;
     }
 
     export interface WorkspaceProvider<U> {
@@ -41,10 +42,23 @@ namespace pxt.skillmap {
             return this.db.openAsync();
         }
 
+        getAllProjectsAsync(): Promise<Project[]> {
+            return this.db.getAllAsync<{id: string, project: Project}>(IndexedDBWorkspace.projectTable)
+                .then(entries => entries.map(e => e.project).filter(e => !e.deleted));
+        }
+
+        deleteProjectAsync(headerId: string) {
+            return this.getProjectAsync(headerId)
+                .then(project => {
+                    project.deleted = true;
+                    this.saveProjectAsync(project);
+                });
+        }
+
 
         getProjectAsync(headerId: string): Promise<Project> {
             return this.db.getAsync(IndexedDBWorkspace.projectTable, headerId)
-                .then(entry => (entry as any).project);
+                .then(entry => (entry as any)?.project);
         }
 
         saveProjectAsync(project: Project): Promise<void> {

@@ -119,6 +119,7 @@ namespace pxt.editor {
         languageRestriction?: LanguageRestriction;
         preferredEditor?: string; // preferred editor to open, pxt.BLOCKS_PROJECT_NAME, ...
         extensionUnderTest?: string; // workspace id of the extension under test
+        skillmapProject?: boolean;
     }
 
     export interface ExampleImportOptions {
@@ -127,6 +128,17 @@ namespace pxt.editor {
         loadBlocks?: boolean;
         prj?: ProjectTemplate;
         preferredEditor?: string;
+    }
+
+    export interface StartActivityOptions {
+        activity: Activity;
+        path: string;
+        title?: string;
+        editor?: string;
+        focus?: boolean;
+        importOptions?: pxt.editor.ExampleImportOptions;
+        previousProjectHeaderId?: string;
+        carryoverPreviousCode?: boolean;
     }
 
     export interface ProjectFilters {
@@ -208,6 +220,7 @@ namespace pxt.editor {
         reloadHeaderAsync(): Promise<void>;
         importProjectAsync(prj: pxt.workspace.Project, editorState?: pxt.editor.EditorState): Promise<void>;
         importTutorialAsync(markdown: string): Promise<void>;
+        openProjectByHeaderIdAsync(headerId: string): Promise<void>;
         overrideTypescriptFile(text: string): void;
         overrideBlocksFile(text: string): void;
 
@@ -246,6 +259,7 @@ namespace pxt.editor {
         completeTutorialAsync(): Promise<void>;
         showTutorialHint(): void;
         isTutorial(): boolean;
+        onTutorialLoaded(): void;
         setTutorialCodeStatus(step: number, status: pxt.tutorial.TutorialRuleStatus[]): void;
         pokeUserActivity(): void;
         stopPokeUserActivity(): void;
@@ -317,7 +331,7 @@ namespace pxt.editor {
 
         editor: IEditor;
 
-        startActivity(activitity: Activity, path: string, title?: string, editor?: string, focus?: boolean, opts?: pxt.editor.ExampleImportOptions): void;
+        startActivity(options: StartActivityOptions): void;
         showLightbox(): void;
         hideLightbox(): void;
         showKeymap(show: boolean): void;
