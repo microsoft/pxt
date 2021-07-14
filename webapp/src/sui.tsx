@@ -487,9 +487,9 @@ export interface ItemProps extends UiProps {
     active?: boolean;
     value?: string;
     onClick?: () => void;
-    onMouseDown?: () => void;
-    onMouseUp?: () => void;
-    onMouseLeave?: () => void;
+    onMouseDown?: (e: any) => void;
+    onMouseUp?: (e: any) => void;
+    onMouseLeave?: (e: any) => void;
     onKeyDown?: (e: React.KeyboardEvent<HTMLElement>) => void;
 }
 
