@@ -247,7 +247,7 @@ namespace ts.pxtc {
         console.log(stringKind(n))
     }
 
-    // next free error 9282
+    // next free error 9283
     function userError(code: number, msg: string, secondary = false): Error {
         let e = new Error(msg);
         (<any>e).ksEmitterUserError = true;
@@ -4294,6 +4294,7 @@ ${lbl}: .short 0xffff
             emitBrk(node)
             let label = node.label ? node.label.text : null
             let isBreak = node.kind == SK.BreakStatement
+            let numTry = 0
             function findOuter(parent: Node): Statement {
                 if (!parent) return null;
                 if (label && parent.kind == SK.LabeledStatement &&
@@ -4303,6 +4304,7 @@ ${lbl}: .short 0xffff
                     return parent as Statement
                 if (!label && isIterationStatement(parent, false))
                     return parent as Statement
+                numTry += numBeginTry(parent)
                 return findOuter(parent.parent);
             }
             let stmt = findOuter(node)
@@ -4310,6 +4312,7 @@ ${lbl}: .short 0xffff
                 error(node, 9230, lf("cannot find outer loop"))
             else {
                 let l = getLabels(stmt)
+                emitEndTry(numTry)
                 if (node.kind == SK.ContinueStatement) {
                     if (!isIterationStatement(stmt, false))
                         error(node, 9231, lf("continue on non-loop"));
@@ -4330,6 +4333,13 @@ ${lbl}: .short 0xffff
             } else if (funcHasReturn(proc.action)) {
                 v = emitLit(undefined) // == return undefined
             }
+            let numTry = 0
+            for (let p: Node = node; p; p = p.parent) {
+                if (p == proc.action)
+                    break
+                numTry += numBeginTry(p)
+            }
+            emitEndTry(numTry)
             proc.emitJmp(getLabels(proc.action).ret, v, ir.JmpMode.Always)
         }
 
@@ -4392,6 +4402,44 @@ ${lbl}: .short 0xffff
             proc.emitExpr(rtcallMaskDirect("pxt::throwValue", [emitExpr(node.expression)]))
         }
 
+        function emitEndTry(num = 1) {
+            while (num--) {
+                proc.emitExpr(rtcallMaskDirect("pxt::endTry", []))
+            }
+        }
+
+        function jumpXFinally() {
+            userError(9282, lf("jumps (return, break, continue) through finally blocks not supported yet"))
+        }
+
+        function numBeginTry(node: Node) {
+            let r = 0
+            if (node.kind == SyntaxKind.Block && node.parent) {
+                if (node.parent.kind == SyntaxKind.CatchClause) {
+                    // from inside of catch there's at most the finally block to close
+                    const t = node.parent.parent as TryStatement
+                    if (t.finallyBlock) {
+                        r++
+                        jumpXFinally()
+                    }
+                } else if (node.parent.kind == SyntaxKind.TryStatement) {
+                    // from inside of the body of try{} there possibly the catch and finally blocks to close
+                    const t = node.parent as TryStatement
+                    if (t.tryBlock == node) {
+                        if (t.catchClause) r++
+                        if (t.finallyBlock) {
+                            r++
+                            jumpXFinally()
+                        }
+                    }
+                } else {
+                    // if we're inside of finally there's nothing to close already
+                    // (or more common this block has nothing to do with try{})
+                }
+            }
+            return r
+        }
+
         function emitTryStatement(node: TryStatement) {
             const beginTry = (lbl: ir.Stmt) =>
                 rtcallMaskDirect("pxt::beginTry", [ir.ptrlit(lbl.lblName, lbl as any)])
@@ -4414,7 +4462,7 @@ ${lbl}: .short 0xffff
 
             if (node.catchClause) {
                 const skip = proc.mkLabel("catchend")
-                proc.emitExpr(rtcallMaskDirect("pxt::endTry", []))
+                emitEndTry()
                 proc.emitJmp(skip)
 
                 proc.emitLbl(lcatch)
@@ -4430,7 +4478,7 @@ ${lbl}: .short 0xffff
             }
 
             if (node.finallyBlock) {
-                proc.emitExpr(rtcallMaskDirect("pxt::endTry", []))
+                emitEndTry()
                 proc.emitLbl(lfinally)
                 emitBlock(node.finallyBlock)
                 proc.emitExpr(rtcallMaskDirect("pxt::endFinally", []))
