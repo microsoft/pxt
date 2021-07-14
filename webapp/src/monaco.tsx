@@ -365,7 +365,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private exceptionChangesListeners: pxt.Map<(exception: pxsim.DebuggerBreakpointMessage, locations: pxtc.LocationInfo[]) => void> = {}
     private callLocations: pxtc.LocationInfo[];
 
-    private userPreferencesSubscriber: data.DataSubscriber = {
+    private userPreferencesSubscriber: pxt.data.DataSubscriber = {
         subscriptions: [],
         onDataChanged: () => {
             this.onUserPreferencesChanged();
@@ -385,11 +385,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.startDebugger = this.startDebugger.bind(this)
         this.onUserPreferencesChanged = this.onUserPreferencesChanged.bind(this);
 
-        data.subscribe(this.userPreferencesSubscriber, auth.HIGHCONTRAST);
+        pxt.data.subscribe(this.userPreferencesSubscriber, auth.HIGHCONTRAST);
     }
 
     onUserPreferencesChanged() {
-        const hc = data.getData<boolean>(auth.HIGHCONTRAST);
+        const hc = pxt.data.getData<boolean>(auth.HIGHCONTRAST);
 
         if (this.loadMonacoPromise) this.defineEditorTheme(hc, true);
     }
@@ -1467,7 +1467,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             }).finally(() => {
                 editorRightArea.removeChild(loading);
                 // Do Not Remove: This is used by the skillmap
-                if (this.parent.isTutorial()) pxt.tickEvent("tutorial.editorLoaded")
+                if (this.parent.isTutorial()) this.parent.onTutorialLoaded();
+
             });
     }
 

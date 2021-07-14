@@ -1607,7 +1607,7 @@ class CommitView extends sui.UIElement<CommitViewProps, CommitViewState> {
             core.showLoading("github.restore", lf("restoring commit..."))
             workspace.restoreCommitAsync(this.props.parent.props.parent.state.header, commit)
                 .then(() => {
-                    data.invalidate("gh-commits:*");
+                    pxt.data.invalidate("gh-commits:*");
                     return this.props.parent.props.parent.reloadHeaderAsync();
                 })
                 .finally(() => core.hideLoading("github.restore"))

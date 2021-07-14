@@ -132,6 +132,7 @@ export function getHeaders(withDeleted = false) {
     let r = allScripts.map(e => e.header).filter(h =>
         (withDeleted || !h.isDeleted) &&
         !h.isBackup &&
+        !h.isSkillmapProject &&
         (!h.cloudUserId || h.cloudUserId === cloudUserId))
     r.sort((a, b) => {
         const aTime = a.cloudUserId ? Math.min(a.cloudLastSyncTime, a.modificationTime) : a.modificationTime
@@ -223,8 +224,8 @@ function refreshHeadersSession() {
     if (isHeadersSessionOutdated()) {
         pxt.storage.setLocal('workspacesessionid', sessionID);
         pxt.debug(`workspace: refreshed headers session to ${sessionID}`);
-        data.invalidate("header:*");
-        data.invalidate("text:*");
+        pxt.data.invalidate("header:*");
+        pxt.data.invalidate("text:*");
     }
 }
 // this is an identifier for the current frame
@@ -574,13 +575,13 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
         }
 
         if (text || h.isDeleted) {
-            data.invalidate("text:" + h.id);
-            data.invalidate("pkg-git-status:" + h.id);
+            pxt.data.invalidate("text:" + h.id);
+            pxt.data.invalidate("pkg-git-status:" + h.id);
         }
         data.invalidateHeader("header", h);
         if (newSave) {
             // the count of headers has changed
-            data.invalidate("headers:");
+            pxt.data.invalidate("headers:");
         }
 
         refreshHeadersSession();
@@ -606,11 +607,11 @@ export function importAsync(h: Header, text: ScriptText, isCloud = false) {
     return forceSaveAsync(h, text, isCloud)
 }
 
-export function installAsync(h0: InstallHeader, text: ScriptText) {
+export function installAsync(h0: InstallHeader, text: ScriptText, dontOverwriteID = false) {
     U.assert(h0.target == pxt.appTarget.id);
 
     const h = <Header>h0
-    h.id = ts.pxtc.Util.guidGen();
+    if (!dontOverwriteID) h.id = ts.pxtc.Util.guidGen();
     h.recentUse = U.nowSeconds()
     h.modificationTime = h.recentUse;
 
@@ -950,7 +951,7 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     if (newCommit == null) {
         return commitId
     } else {
-        data.invalidate("gh-commits:*"); // invalid any cached commits
+        pxt.data.invalidate("gh-commits:*"); // invalid any cached commits
         // if we created a block preview, add as comment
         if (blocksDiffSha) {
             await pxt.github.postCommitComment(
@@ -1548,7 +1549,7 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
                         data.invalidateHeader("header", hd);
                         data.invalidateHeader("text", hd);
                         data.invalidateHeader("pkg-git-status", hd);
-                        data.invalidate("gh-commits:*"); // invalidate commits just in case
+                        pxt.data.invalidate("gh-commits:*"); // invalidate commits just in case
                     }
                 } else {
                     ex = {
@@ -1580,7 +1581,7 @@ export function resetAsync() {
         .then(compiler.clearApiInfoDbAsync)
         .then(() => {
             pxt.storage.clearLocal();
-            data.clearCache();
+            pxt.data.clearCache();
             // keep local token (localhost and electron) on reset
             if (Cloud.localToken)
                 pxt.storage.setLocal("local_token", Cloud.localToken);
@@ -1640,9 +1641,9 @@ export function dbgHdrToString(h: Header): string {
     header:*        - all headers
 */
 
-data.mountVirtualApi("header", {
+pxt.data.mountVirtualApi("header", {
     getSync: p => {
-        p = data.stripProtocol(p)
+        p = pxt.data.stripProtocol(p)
         if (p == "*") return getHeaders()
         return getHeader(p)
     },
@@ -1652,9 +1653,9 @@ data.mountVirtualApi("header", {
     headers:SEARCH   - search headers
 */
 
-data.mountVirtualApi("headers", {
+pxt.data.mountVirtualApi("headers", {
     getAsync: p => {
-        p = data.stripProtocol(p)
+        p = pxt.data.stripProtocol(p)
         const headers = getHeaders()
         if (!p) return Promise.resolve(headers)
         return compiler.projectSearchAsync({ term: p, headers })
@@ -1674,7 +1675,7 @@ data.mountVirtualApi("headers", {
     text:<guid>            - all files
     text:<guid>/<filename> - one file
 */
-data.mountVirtualApi("text", {
+pxt.data.mountVirtualApi("text", {
     getAsync: p => {
         const m = /^[\w\-]+:([^\/]+)(\/(.*))?/.exec(p)
         return getTextAsync(m[1])
