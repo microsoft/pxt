@@ -76,7 +76,7 @@ export function replaceFileExtension(file: string, extension: string) {
 }
 
 let cachedOpts: pxt.Map<pxtc.CompileOptions> = {}
-export function getTestCompileOptsAsync(packageFiles: pxt.Map<string> = { "main.ts": "// no main" }, dependencies: string[] = [], includeCommon = false): Promise<pxtc.CompileOptions> {
+export function getTestCompileOptsAsync(packageFiles: pxt.Map<string> = { [pxt.MAIN_TS]: "// no main" }, dependencies: string[] = [], includeCommon = false): Promise<pxtc.CompileOptions> {
     let cacheStr = Object.keys(packageFiles).concat(pxt.Util.values(packageFiles)).join("~") + dependencies.join("~") + includeCommon
     let cacheKey = pxt.Util.codalHash16(cacheStr)
     if (!cachedOpts[cacheKey]) {
@@ -100,15 +100,15 @@ export function getTestCompileOptsAsync(packageFiles: pxt.Map<string> = { "main.
 
 export function ts2pyAsync(tsInput: string, dependency: string, includeCommon: boolean, caseName: string): Promise<string> {
     const deps = [...(dependency ? [dependency] : []), ...(!includeCommon ? ["bare"] : [])]
-    return getTestCompileOptsAsync({ "main.ts": tsInput }, deps, includeCommon)
+    return getTestCompileOptsAsync({ [pxt.MAIN_TS]: tsInput }, deps, includeCommon)
         .then(opts => {
             let program = pxtc.getTSProgram(opts);
             // TODO: if needed, we can re-use the CallInfo annotations the blockly decompiler can add
             // annotate(program, tsFile, target || (pxt.appTarget && pxt.appTarget.compile));
-            const decompiled = pxt.py.decompileToPython(program, "main.ts");
+            const decompiled = pxt.py.decompileToPython(program, pxt.MAIN_TS);
 
             if (decompiled.success) {
-                return decompiled.outfiles["main.py"];
+                return decompiled.outfiles[pxt.MAIN_PY];
             }
             else {
                 return Promise.reject(new Error(`Could not convert ts to py: ${caseName}\n` + JSON.stringify(decompiled.diagnostics, null, 4)));
@@ -118,7 +118,7 @@ export function ts2pyAsync(tsInput: string, dependency: string, includeCommon: b
 
 export function py2tsAsync(pyInput: string, dependency: string, includeCommon: boolean, allowErrors: boolean, caseName: string): Promise<PyConverterResult> {
     const deps = [...(dependency ? [dependency] : []), ...(!includeCommon ? ["bare"] : [])]
-    return getTestCompileOptsAsync({ "main.py": pyInput, "main.ts": "// no main" }, deps, includeCommon)
+    return getTestCompileOptsAsync({ [pxt.MAIN_PY]: pyInput, [pxt.MAIN_TS]: "// no main" }, deps, includeCommon)
         .then(opts => {
             opts.target.preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME
             let stsCompRes = pxtc.compile(opts);
@@ -136,12 +136,12 @@ export function py2tsAsync(pyInput: string, dependency: string, includeCommon: b
             if (success || allowErrors) {
                 return {
                     python: pyInput,
-                    ts: opts.fileSystem["main.ts"],
+                    ts: opts.fileSystem[pxt.MAIN_TS],
                     diagnostics
                 };
             }
             else {
-                let partialOutput = outfiles["main.ts"]
+                let partialOutput = outfiles[pxt.MAIN_TS]
                 let errorStr = diagnostics.map(pxtc.getDiagnosticString).join()
                 return Promise.reject(new Error(`Could not convert py to ts: ${caseName}\n${errorStr}\n${partialOutput}`))
             }
@@ -150,7 +150,7 @@ export function py2tsAsync(pyInput: string, dependency: string, includeCommon: b
 
 export function stsAsync(tsMain: string, dependency?: string, includeCommon = false): Promise<pxtc.CompileResult> {
     const deps = [...(dependency ? [dependency] : []), ...(!includeCommon ? ["bare"] : [])]
-    return getTestCompileOptsAsync({ "main.ts": tsMain }, deps, includeCommon)
+    return getTestCompileOptsAsync({ [pxt.MAIN_TS]: tsMain }, deps, includeCommon)
         .then(opts => {
             const compiled = pxtc.compile(opts);
             if (compiled.success) {

@@ -480,17 +480,17 @@ export class ProjectView
 
     isBlocksActive(): boolean {
         return !this.state.embedSimView && this.editor == this.blocksEditor
-            && this.editorFile && this.editorFile.name == "main.blocks";
+            && this.editorFile && this.editorFile.name == pxt.MAIN_BLOCKS;
     }
 
     isJavaScriptActive(): boolean {
         return !this.state.embedSimView && this.editor == this.textEditor
-            && this.editorFile && this.editorFile.name == "main.ts";
+            && this.editorFile && this.editorFile.name == pxt.MAIN_TS;
     }
 
     isPythonActive(): boolean {
         return !this.state.embedSimView && this.editor == this.textEditor
-            && this.editorFile && this.editorFile.name == "main.py";
+            && this.editorFile && this.editorFile.name == pxt.MAIN_PY;
     }
 
     isAssetsActive(): boolean {
@@ -529,9 +529,9 @@ export class ProjectView
         } else {
             // make sure there's .py file
             const mpkg = pkg.mainEditorPkg();
-            const mainpy = mpkg.files["main.py"];
+            const mainpy = mpkg.files[pxt.MAIN_PY];
             if (!mainpy)
-                this.updateFileAsync("main.py", "# ...", false);
+                this.updateFileAsync(pxt.MAIN_PY, "# ...", false);
             else
                 this.setFile(mainpy);
         }
@@ -558,7 +558,7 @@ export class ProjectView
             this.openTypeScriptAsync();
         } else {
             const files = pkg.mainEditorPkg().files;
-            let f = files["main.ts"];
+            let f = files[pxt.MAIN_TS];
             if (!f) // find first .ts file
                 f = files[Object.keys(files).find(fn => /\.ts$/.test(fn))];
             this.setFile(f)
@@ -575,7 +575,7 @@ export class ProjectView
             return;
         }
 
-        const mainBlocks = pkg.mainEditorPkg().files["main.blocks"];
+        const mainBlocks = pkg.mainEditorPkg().files[pxt.MAIN_BLOCKS];
         if (this.isJavaScriptActive() || (this.shouldTryDecompile && !this.state.embedSimView))
             this.textEditor.openBlocks();
         // any other editeable .ts or pxt.json; or empty mainblocks
@@ -657,7 +657,7 @@ export class ProjectView
         }
 
         // default logic
-        const hasBlocks = !!pkg.mainEditorPkg().files["main.blocks"];
+        const hasBlocks = !!pkg.mainEditorPkg().files[pxt.MAIN_BLOCKS];
         if (this.prevEditorId == "monacoEditor" || !hasBlocks) {
             this.openJavaScript(false);
         } else {
@@ -670,10 +670,10 @@ export class ProjectView
     }
 
     openPythonAsync(): Promise<void> {
-        const pySrcFile = pkg.mainEditorPkg().files["main.py"];
+        const pySrcFile = pkg.mainEditorPkg().files[pxt.MAIN_PY];
         if (pySrcFile) { // do we have any python yet?
             // convert python to typescript, if same as current source, skip decompilation
-            const tsSrc = pkg.mainEditorPkg().files["main.ts"].content;
+            const tsSrc = pkg.mainEditorPkg().files[pxt.MAIN_TS].content;
             return this.textEditor.convertPythonToTypeScriptAsync()
                 .then(pyAsTsSrc => {
                     if (pyAsTsSrc == tsSrc) {
@@ -703,10 +703,10 @@ export class ProjectView
         }
         else {
             convertPromise = this.saveTypeScriptAsync(false)
-                .then(() => compiler.pyDecompileAsync("main.ts"))
+                .then(() => compiler.pyDecompileAsync(pxt.MAIN_TS))
                 .then(cres => {
                     if (cres && cres.success) {
-                        const mainpy = cres.outfiles["main.py"];
+                        const mainpy = cres.outfiles[pxt.MAIN_PY];
                         mainPkg.cacheTranspile(fromLanguage, fromText, "py", mainpy);
                         return this.saveVirtualFileAsync(pxt.PYTHON_PROJECT_NAME, mainpy, true);
                     } else {
@@ -765,7 +765,7 @@ export class ProjectView
         // Only show in blocks or main.ts
         if (this.state.currFile) {
             const fn = this.state.currFile;
-            if (!pxt.editor.isBlocks(fn) && fn.name !== "main.ts") return false;
+            if (!pxt.editor.isBlocks(fn) && fn.name !== pxt.MAIN_TS) return false;
         }
 
         if (!this.state.suppressPackageWarning || force) {
@@ -1110,7 +1110,7 @@ export class ProjectView
     setFile(fn: pkg.File, line?: number) {
         if (!fn) return;
 
-        if (fn.name === "main.ts") {
+        if (fn.name === pxt.MAIN_TS) {
             this.shouldTryDecompile = true;
         }
 
@@ -1567,7 +1567,7 @@ export class ProjectView
                     file = main.lookupFile("this/" + filenameForEditor(tutorialPreferredEditor)) || file;
                 }
 
-                if (file.name === "main.ts") {
+                if (file.name === pxt.MAIN_TS) {
                     this.shouldTryDecompile = true;
                 }
                 this.setState({
@@ -1915,7 +1915,7 @@ export class ProjectView
         ts.pxtc.Util.fileReadAsTextAsync(file)
             .then(contents => {
                 this.newProject({
-                    filesOverride: { "main.blocks": contents, "main.ts": "  " },
+                    filesOverride: { [pxt.MAIN_BLOCKS]: contents, [pxt.MAIN_TS]: "  " },
                     name: file.name.replace(/\.blocks$/i, '') || lf("Untitled")
                 })
             })
@@ -1926,7 +1926,7 @@ export class ProjectView
         ts.pxtc.Util.fileReadAsTextAsync(file)
             .then(contents => {
                 this.newProject({
-                    filesOverride: { "main.blocks": '', "main.ts": contents || "  " },
+                    filesOverride: { [pxt.MAIN_BLOCKS]: '', [pxt.MAIN_TS]: contents || "  " },
                     name: file.name.replace(/\.ts$/i, '') || lf("Untitled")
                 })
             })
@@ -2281,7 +2281,7 @@ export class ProjectView
     saveProjectToFileAsync(): Promise<void> {
         const mpkg = pkg.mainPkg;
         if (saveAsBlocks()) {
-            pxt.BrowserUtils.browserDownloadText(mpkg.readFile("main.blocks"), pkg.genFileName(".blocks"), { contentType: 'application/xml' });
+            pxt.BrowserUtils.browserDownloadText(mpkg.readFile(pxt.MAIN_BLOCKS), pkg.genFileName(".blocks"), { contentType: 'application/xml' });
             return Promise.resolve();
         }
         if (saveTutorialTemplate()) {
@@ -2402,7 +2402,7 @@ export class ProjectView
 
     newEmptyProject(name?: string, documentation?: string, preferredEditor?: string) {
         this.newProject({
-            filesOverride: { "main.blocks": `<xml xmlns="http://www.w3.org/1999/xhtml"></xml>` },
+            filesOverride: { [pxt.MAIN_BLOCKS]: `<xml xmlns="http://www.w3.org/1999/xhtml"></xml>` },
             name,
             documentation,
             preferredEditor,
@@ -2461,19 +2461,19 @@ export class ProjectView
 
             cfg.languageRestriction = options.languageRestriction;
             cfg.files = cfg.files.filter(f => !filesToDrop.test(f));
-            delete files["main.blocks"];
+            delete files[pxt.MAIN_BLOCKS];
         }
 
         // ensure a main.py is ready if this is the desired project
         if (cfg.preferredEditor == pxt.PYTHON_PROJECT_NAME
-            && cfg.files.indexOf("main.py") < 0) {
-            cfg.files.push("main.py");
-            if (!files["main.py"]) files["main.py"] = "\n";
+            && cfg.files.indexOf(pxt.MAIN_PY) < 0) {
+            cfg.files.push(pxt.MAIN_PY);
+            if (!files[pxt.MAIN_PY]) files[pxt.MAIN_PY] = "\n";
         }
         if (options.tutorial && options.tutorial.metadata) {
             if (options.tutorial.metadata.codeStart) {
                 files[pxt.TUTORIAL_CODE_START] = `control._onCodeStart('${pxt.U.htmlEscape(options.tutorial.metadata.codeStart)}')`;
-                cfg.files.splice(cfg.files.indexOf("main.ts"), 0, pxt.TUTORIAL_CODE_START);
+                cfg.files.splice(cfg.files.indexOf(pxt.MAIN_TS), 0, pxt.TUTORIAL_CODE_START);
             }
             if (options.tutorial.metadata.codeStop) {
                 files[pxt.TUTORIAL_CODE_STOP] = `control._onCodeStop('${pxt.U.htmlEscape(options.tutorial.metadata.codeStop)}')`;
@@ -2532,11 +2532,11 @@ export class ProjectView
                         .then(() => {
                             return this.loadBlocklyAsync()
                                 .then(compiler.getBlocksAsync)
-                                .then(blocksInfo => compiler.decompileAsync("main.ts", blocksInfo))
+                                .then(blocksInfo => compiler.decompileAsync(pxt.MAIN_TS, blocksInfo))
                                 .then(resp => {
                                     pxt.debug(`example decompilation: ${resp.success}`)
                                     if (resp.success) {
-                                        this.overrideBlocksFile(resp.outfiles["main.blocks"])
+                                        this.overrideBlocksFile(resp.outfiles[pxt.MAIN_BLOCKS])
                                     }
                                 })
                                 .then(() => autoChooseBoard && this.autoChooseBoardAsync(features));
@@ -2551,11 +2551,11 @@ export class ProjectView
                             // convert js to py as needed
                             if (preferredEditor == pxt.PYTHON_PROJECT_NAME && example.snippetType !== "python") {
                                 return compiler.getApisInfoAsync() // ensure compiled
-                                    .then(() => compiler.pyDecompileAsync("main.ts"))
+                                    .then(() => compiler.pyDecompileAsync(pxt.MAIN_TS))
                                     .then(resp => {
                                         pxt.debug(`example decompilation: ${resp.success}`)
                                         if (resp.success) {
-                                            this.overrideTypescriptFile(resp.outfiles["main.py"])
+                                            this.overrideTypescriptFile(resp.outfiles[pxt.MAIN_PY])
                                         }
                                     })
                                     .then(() => autoChooseBoard && this.autoChooseBoardAsync(features));
@@ -3395,7 +3395,7 @@ export class ProjectView
         return compiler.getBlocksAsync()
             .then(blocksInfo => compiler.decompileBlocksSnippetAsync(req.ts, blocksInfo, req))
             .then(resp => {
-                const svg = pxt.blocks.render(resp.outfiles["main.blocks"], {
+                const svg = pxt.blocks.render(resp.outfiles[pxt.MAIN_BLOCKS], {
                     snippetMode: req.snippetMode || false,
                     layout: req.layout !== undefined ? req.layout : pxt.blocks.BlockLayout.Align,
                     splitSvg: false
@@ -4541,7 +4541,7 @@ function handleHash(newHash: { cmd: string; arg: string }, loading: boolean): bo
             editor.newProject({
                 prj: pxt.appTarget.blocksprj,
                 filesOverride: {
-                    "main.blocks": ""
+                    [pxt.MAIN_BLOCKS]: ""
                 }
             });
             pxt.BrowserUtils.changeHash("");
@@ -4767,7 +4767,7 @@ function clearHashChange() {
 
 function saveAsBlocks(): boolean {
     try {
-        return /saveblocks=1/.test(window.location.href) && !!pkg.mainPkg.readFile("main.blocks")
+        return /saveblocks=1/.test(window.location.href) && !!pkg.mainPkg.readFile(pxt.MAIN_BLOCKS)
     } catch (e) { return false; }
 }
 

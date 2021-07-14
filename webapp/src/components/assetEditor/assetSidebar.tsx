@@ -92,7 +92,7 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
         if (!result.meta.displayName && result.meta.temporaryInfo) {
             getBlocksEditor().updateTemporaryAsset(result);
 
-            pkg.mainEditorPkg().lookupFile("this/main.blocks").setContentAsync(getBlocksEditor().getCurrentSource())
+            pkg.mainEditorPkg().lookupFile(`this/${pxt.MAIN_BLOCKS}`).setContentAsync(getBlocksEditor().getCurrentSource())
 
         }
         else {

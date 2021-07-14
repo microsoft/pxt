@@ -1026,9 +1026,9 @@ namespace ts.pxtc {
         if (!opts.forceEmit || res.diagnostics.length == 0) {
             let files = program.getSourceFiles().slice();
 
-            const main = files.find(sf => sf.fileName === "main.ts");
+            const main = files.find(sf => sf.fileName === pxt.MAIN_TS);
             if (main) {
-                files = files.filter(sf => sf.fileName !== "main.ts");
+                files = files.filter(sf => sf.fileName !== pxt.MAIN_TS);
                 files.push(main);
             }
 
