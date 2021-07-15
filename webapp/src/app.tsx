@@ -25,10 +25,8 @@ import * as accessibility from "./accessibility";
 import * as tutorial from "./tutorial";
 import * as sidebarTutorial from "./sidebarTutorial";
 import * as editortoolbar from "./editortoolbar";
-import * as simtoolbar from "./simtoolbar";
 import * as dialogs from "./dialogs";
 import * as identity from "./identity";
-import * as filelist from "./filelist";
 import * as container from "./container";
 import * as scriptsearch from "./scriptsearch";
 import * as projects from "./projects";
@@ -47,6 +45,7 @@ import * as auth from "./auth";
 import * as cloud from "./cloud";
 import * as user from "./user";
 import * as headerbar from "./headerbar";
+import * as sidepanel from "./sidepanel";
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -134,7 +133,6 @@ export class ProjectView
     chooseHwDialog: projects.ChooseHwDialog;
     prevEditorId: string;
     screenshotHandlers: ((msg: pxt.editor.ScreenshotData) => void)[] = [];
-    fileListRef: HTMLDivElement;
 
     private lastChangeTime: number;
     private reload: boolean;
@@ -185,6 +183,7 @@ export class ProjectView
         this.hideLightbox = this.hideLightbox.bind(this);
         this.openSimSerial = this.openSimSerial.bind(this);
         this.openDeviceSerial = this.openDeviceSerial.bind(this);
+        this.openSerial = this.openSerial.bind(this);
         this.toggleGreenScreen = this.toggleGreenScreen.bind(this);
         this.toggleSimulatorFullscreen = this.toggleSimulatorFullscreen.bind(this);
         this.toggleSimulatorCollapse = this.toggleSimulatorCollapse.bind(this);
@@ -4221,20 +4220,6 @@ export class ProjectView
         this.profileDialog = c;
     }
 
-    private handleFileListRef = (c: HTMLDivElement) => {
-        this.fileListRef = c;
-        if (c && typeof ResizeObserver !== "undefined") {
-            const observer = new ResizeObserver(() => {
-                const scrollVisible = c.scrollHeight > c.clientHeight;
-                if (scrollVisible)
-                    this.fileListRef.classList.remove("invisibleScrollbar");
-                else
-                    this.fileListRef.classList.add("invisibleScrollbar");
-            })
-            observer.observe(c);
-        }
-    }
-
     ///////////////////////////////////////////////////////////
     ////////////             RENDER               /////////////
     ///////////////////////////////////////////////////////////
@@ -4348,30 +4333,19 @@ export class ProjectView
                     {!(isSidebarTutorial && flyoutOnly) && inTutorial && <tutorial.TutorialCard ref={ProjectView.tutorialCardId} parent={this} pokeUser={this.state.pokeUserComponent == ProjectView.tutorialCardId} />}
                     {flyoutOnly && <tutorial.WorkspaceHeader parent={this} />}
                 </div>}
+                <sidepanel.Sidepanel parent={this} inHome={inHome}
+                    showKeymap={this.state.keymap && simOpts.keymap}
+                    showSerialButtons={useSerialEditor}
+                    showFileList={showFileList}
+                    showFullscreenButton={!isHeadless}
 
-                <div id="simulator" className="simulator">
-                    <div id="filelist" ref={this.handleFileListRef} className="ui items">
-                        <div id="boardview" className={`ui vertical editorFloat`} role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0}>
-                        </div>
-                        <simtoolbar.SimulatorToolbar
-                            parent={this}
-                            collapsed={this.state.collapseEditorTools}
-                            simSerialActive={this.state.simSerialActive}
-                            devSerialActive={this.state.deviceSerialActive}
-                        />
-                        {this.state.keymap && simOpts.keymap && <keymap.Keymap parent={this} />}
-                        <div className="ui item portrait hide hidefullscreen">
-                            {pxt.options.debug ? <sui.Button key='hwdebugbtn' className='teal' icon="xicon chip" text={"Dev Debug"} onClick={this.hwDebug} /> : ''}
-                        </div>
-                        {useSerialEditor ?
-                            <div id="serialPreview" className="ui editorFloat portrait hide hidefullscreen">
-                                <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={this.openSimSerial} parent={this} />
-                                <serialindicator.SerialIndicator ref="devIndicator" isSim={false} onClick={this.openDeviceSerial} parent={this} />
-                            </div> : undefined}
-                        {showFileList ? <filelist.FileList parent={this} /> : undefined}
-                        {!isHeadless && <div id="filelistOverlay" role="button" title={lf("Open in fullscreen")} onClick={this.toggleSimulatorFullscreen}></div>}
-                    </div>
-                </div>
+                    collapseEditorTools={this.state.collapseEditorTools}
+                    simSerialActive={this.state.simSerialActive}
+                    devSerialActive={this.state.deviceSerialActive}
+
+                    openSerial={this.openSerial}
+                    handleHardwareDebugClick={this.hwDebug}
+                    handleFullscreenButtonClick={this.toggleSimulatorFullscreen} />
                 <div id="maineditor" className={(sandbox ? "sandbox" : "") + (inDebugMode ? "debugging" : "")} role="main" aria-hidden={inHome}>
                     {showCollapseButton && <sui.Button id='computertogglesim' className={`computer only collapse-button large`} icon={`inverted chevron ${showRightChevron ? 'right' : 'left'}`} title={collapseIconTooltip} onClick={this.toggleSimulatorCollapse} />}
                     {this.allEditors.map(e => e.displayOuter(expandedStyle))}
