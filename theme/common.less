@@ -1938,6 +1938,21 @@ div.simframe.ui.embed {
     }
 }
 
+div.signin-button {
+    display: flex;
+    align-items: center;
+
+    .text {
+        margin-right: .5rem;
+    }
+}
+
+@media only screen and (max-width: @largestTabletScreen) {
+    .menubar .right.menu .signin-button .icon {
+        margin-left: -8px;
+    }
+}
+
 /* Profile dialog */
 .profiledialog {
     .ui.card {

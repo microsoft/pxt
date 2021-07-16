@@ -735,6 +735,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
             const headers = this.fetchLocalData()
             const showNewProject = pxt.appTarget.appTheme && !pxt.appTarget.appTheme.hideNewProjectButton;
             const showScriptManagerCard = targetTheme.scriptManager && headers.length > ProjectsCarousel.NUM_PROJECTS_HOMESCREEN;
+            const showCloudProjectsCard = auth.hasIdentity() && !auth.loggedInSync();
 
             const headersToShow = headers
                 .filter(h => !h.tutorial?.metadata?.hideIteration)
@@ -747,6 +748,13 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                         <span className="header">{lf("New Project")}</span>
                     </div>
                 </div> : undefined}
+                {showCloudProjectsCard ? <div role="button" className="ui card link buttoncard cloudprojectscard" title={lf("Sign in to see cloud projects")}
+                    onClick={e => this.props.parent.showLoginDialog()} onKeyDown={sui.fireClickOnEnter}>
+                        <div className="content">
+                            <sui.Icon icon="huge xicon cloud-profile"/>
+                            <span className="header">{lf("Cloud Projects")}</span>
+                        </div>
+                </div>: undefined}
                 {headersToShow.map((scr, index) => {
                     const tutorialStep =
                         scr.tutorial ? scr.tutorial.tutorialStep

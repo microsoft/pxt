@@ -176,6 +176,7 @@
 @sidebarTutorialColor: @lightGrey;
 
 @homeScreenBackground: #ecf0f1;
+@cloudProjectCardBackground: #58AFBA;
 
 /*-------------------
    Full screen
