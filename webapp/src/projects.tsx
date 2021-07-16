@@ -735,7 +735,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
             const headers = this.fetchLocalData()
             const showNewProject = pxt.appTarget.appTheme && !pxt.appTarget.appTheme.hideNewProjectButton;
             const showScriptManagerCard = targetTheme.scriptManager && headers.length > ProjectsCarousel.NUM_PROJECTS_HOMESCREEN;
-            const showCloudProjectsCard = auth.hasIdentity() && !auth.loggedInSync();
+            const showCloudProjectsCard = auth.hasIdentity() && !auth.loggedIn();
 
             const headersToShow = headers
                 .filter(h => !h.tutorial?.metadata?.hideIteration)
