@@ -449,8 +449,8 @@ namespace pxt.blocks {
     export function decompiledDiffAsync(oldTs: string, oldResp: pxtc.CompileResult, newTs: string, newResp: pxtc.CompileResult, options: DiffOptions = {}): DiffResult {
         const log = logger();
 
-        const oldXml = oldResp.outfiles['main.blocks'];
-        let newXml = newResp.outfiles['main.blocks'];
+        const oldXml = oldResp.outfiles[pxt.MAIN_BLOCKS];
+        let newXml = newResp.outfiles[pxt.MAIN_BLOCKS];
         log(oldXml);
         log(newXml);
 

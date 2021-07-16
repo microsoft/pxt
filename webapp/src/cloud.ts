@@ -52,7 +52,7 @@ async function listAsync(): Promise<Header[]> {
         const result = await auth.apiAsync<CloudProject[]>("/api/user/project");
         if (result.success) {
             const syncTime = U.nowSeconds()
-            const userId = auth.user()?.id;
+            const userId = auth.userProfile()?.id;
             const headers: Header[] = result.resp.map(proj => {
                 const rawHeader: pxt.workspace.Header = JSON.parse(proj.header);
                 const header = excludeLocalOnlyMetadataFields(rawHeader)
@@ -78,7 +78,7 @@ function getAsync(h: Header): Promise<File> {
             cloudMeta.syncInProgress();
             const result = await auth.apiAsync<CloudProject>(`/api/user/project/${h.id}`);
             if (result.success) {
-                const userId = auth.user()?.id;
+                const userId = auth.userProfile()?.id;
                 const project = result.resp;
                 const rawHeader = JSON.parse(project.header);
                 const header = excludeLocalOnlyMetadataFields(rawHeader)
@@ -166,19 +166,19 @@ export class CloudTempMetadata {
 
     public syncInProgress() {
         this._syncStartTime = U.nowSeconds();
-        data.invalidate(`${HEADER_CLOUDSTATE}:${this.headerId}`);
+        pxt.data.invalidate(`${HEADER_CLOUDSTATE}:${this.headerId}`);
     }
 
     public syncFinished() {
         this._syncStartTime = 0;
         this._justSynced = true;
-        data.invalidate(`${HEADER_CLOUDSTATE}:${this.headerId}`);
+        pxt.data.invalidate(`${HEADER_CLOUDSTATE}:${this.headerId}`);
         // slightly hacky, but we want to keep around a "saved!" message for a small time after
         // a save succeeds so we notify metadata subscribers again after a delay.
         setTimeout(() => {
             if (this._syncStartTime === 0) { // not currently syncing?
                 this._justSynced = false;
-                data.invalidate(`${HEADER_CLOUDSTATE}:${this.headerId}`);
+                pxt.data.invalidate(`${HEADER_CLOUDSTATE}:${this.headerId}`);
             }
         }, 1500);
     }
@@ -187,7 +187,7 @@ export class CloudTempMetadata {
         const h = workspace.getHeader(this.headerId);
         if (!h.cloudUserId)
             return undefined;
-        if (!auth.loggedInSync())
+        if (!auth.loggedIn())
             return cloudStatusInfos["offline"];
         if (this._syncStartTime > 0)
             return cloudStatusInfos["syncing"];
@@ -213,7 +213,7 @@ function setAsync(h: Header, prevVersion: string, text?: ScriptText): Promise<st
     return new Promise(async (resolve, reject) => {
         const cloudMeta = getCloudTempMetadata(h.id);
         try {
-            const userId = auth.user()?.id;
+            const userId = auth.userProfile()?.id;
             h.cloudUserId = userId;
             h.cloudCurrent = false;
             h.cloudVersion = prevVersion;
@@ -396,14 +396,15 @@ async function resolveConflict(local: Header, remoteFile: File) {
 
 function getLocalCloudHeaders(allHdrs?: Header[]) {
     if (!auth.hasIdentity()) { return []; }
-    if (!auth.loggedInSync()) { return []; }
+    if (!auth.loggedIn()) { return []; }
+    const userId = auth.userProfile()?.id;
     return (allHdrs || workspace.getHeaders(true))
-        .filter(h => h.cloudUserId && h.cloudUserId === auth.user()?.id);
+        .filter(h => h.cloudUserId && h.cloudUserId === userId);
 }
 
 async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
     if (!auth.hasIdentity()) { return []; }
-    if (!await auth.loggedIn()) { return []; }
+    if (!auth.loggedIn()) { return []; }
     try {
         const fullSync = !hdrs;
 
@@ -595,7 +596,7 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
         pxt.log(`Cloud sync finished after ${elapsed} seconds with ${localHeaderChangesList.length} local changes.`);
         pxt.tickEvent(`identity.sync.finished`, { elapsed })
 
-        data.invalidate("headers:");
+        pxt.data.invalidate("headers:");
 
         return localHeaderChangesList
     }
@@ -636,7 +637,7 @@ const CLOUDSAVE_MAX_MS = 15000;
 let headerWorklist: { [headerId: string]: boolean } = {};
 let onHeaderChangeTimeout: number = 0;
 let onHeaderChangeStarted: number = 0;
-const onHeaderChangeSubscriber: data.DataSubscriber = {
+const onHeaderChangeSubscriber: pxt.data.DataSubscriber = {
     subscriptions: [],
     onDataChanged: (path: string) => {
         const parts = path.split("header:");
@@ -655,10 +656,10 @@ const onHeaderChangeSubscriber: data.DataSubscriber = {
 };
 async function onHeaderChangeDebouncer(h: Header) {
     if (!auth.hasIdentity()) return
-    if (!await auth.loggedIn()) return
+    if (!auth.loggedIn()) return
 
     // do we actually have a significant change?
-    const hasCloudChange = h.cloudUserId === auth.user().id && !h.cloudCurrent;
+    const hasCloudChange = h.cloudUserId === auth.userProfile()?.id && !h.cloudCurrent;
     if (!hasCloudChange)
         return;
     // is another tab responsible for this project?
@@ -687,7 +688,7 @@ async function onHeaderChangeDebouncer(h: Header) {
 let inProgressSavePromise: Promise<Header[]> = Promise.resolve([]);
 async function onHeadersChanged(): Promise<void> {
     if (!auth.hasIdentity()) { return; }
-    if (!await auth.loggedIn()) { return; }
+    if (!auth.loggedIn()) { return; }
 
     // wait on any already pending saves or syncs first
     await inProgressSavePromise;
@@ -726,7 +727,7 @@ async function onHeadersChanged(): Promise<void> {
 export const HEADER_CLOUDSTATE = "header-cloudstate"
 
 function cloudHeaderMetadataHandler(p: string): any {
-    p = data.stripProtocol(p)
+    p = pxt.data.stripProtocol(p)
     if (p == "*") return workspace.getHeaders().map(h => getCloudTempMetadata(h.id))
     return getCloudTempMetadata(p)
 }
@@ -734,8 +735,8 @@ function cloudHeaderMetadataHandler(p: string): any {
 export function init() {
     console.log("cloud init");
     // mount our virtual APIs
-    data.mountVirtualApi(HEADER_CLOUDSTATE, { getSync: cloudHeaderMetadataHandler });
+    pxt.data.mountVirtualApi(HEADER_CLOUDSTATE, { getSync: cloudHeaderMetadataHandler });
 
     // subscribe to header changes
-    data.subscribe(onHeaderChangeSubscriber, "header:*");
+    pxt.data.subscribe(onHeaderChangeSubscriber, "header:*");
 }

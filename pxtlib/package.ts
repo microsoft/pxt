@@ -185,15 +185,15 @@ namespace pxt {
                 // note that the preferredEditor field will be set automatically on the first save
 
                 // 1. no main.blocks in project, open javascript
-                const hasMainBlocks = this.getFiles().indexOf("main.blocks") >= 0;
+                const hasMainBlocks = this.getFiles().indexOf(pxt.MAIN_BLOCKS) >= 0;
                 if (!hasMainBlocks)
                     return pxt.JAVASCRIPT_PROJECT_NAME;
 
                 // 2. if main.blocks is empty and main.ts is non-empty
                 //    open typescript
                 // https://github.com/microsoft/pxt/blob/master/webapp/src/app.tsx#L1032
-                const mainBlocks = this.readFile("main.blocks");
-                const mainTs = this.readFile("main.ts");
+                const mainBlocks = this.readFile(pxt.MAIN_BLOCKS);
+                const mainTs = this.readFile(pxt.MAIN_TS);
                 if (!mainBlocks && mainTs)
                     return pxt.JAVASCRIPT_PROJECT_NAME;
 
@@ -295,7 +295,7 @@ namespace pxt {
                     this.config.name, this.config.targetVersions.target, appTarget.versions.target))
         }
 
-        isPackageInUse(pkgId: string, ts: string = this.readFile("main.ts")): boolean {
+        isPackageInUse(pkgId: string, ts: string = this.readFile(pxt.MAIN_TS)): boolean {
             // Build the RegExp that will determine whether the dependency is in use. Try to use upgrade rules,
             // otherwise fallback to the package's name
             let regex: RegExp = null;
@@ -739,7 +739,7 @@ namespace pxt {
 
                     if (this.level === 0) {
                         // Check for missing packages. We need to add them 1 by 1 in case they conflict with eachother.
-                        const mainTs = this.readFile("main.ts");
+                        const mainTs = this.readFile(pxt.MAIN_TS);
                         if (!mainTs) return Promise.resolve(null);
 
                         const missingPackages = this.getMissingPackages(this.config, mainTs);

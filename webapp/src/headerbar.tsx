@@ -18,6 +18,7 @@ const LONGPRESS_DURATION = 750;
 
 export class HeaderBar extends data.Component<ISettingsProps, {}> {
     protected longpressTimer: any;
+    protected touchStartTime: number;
 
     constructor(props: ISettingsProps) {
         super(props);
@@ -60,11 +61,17 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
         this.goHome();
     }
 
-    backButtonTouchStart = () => {
+    backButtonTouchStart = (evt: any) => {
         this.longpressTimer = setTimeout(() => cmds.nativeHostLongpressAsync(), LONGPRESS_DURATION);
+        this.touchStartTime = new Date().getTime();
     }
 
-    backButtonTouchEnd = () => {
+    backButtonTouchEnd = (evt: any) => {
+        evt.preventDefault();
+        if (this.touchStartTime && (new Date().getTime() - this.touchStartTime) < LONGPRESS_DURATION) {
+            cmds.nativeHostBackAsync();
+        }
+        this.touchStartTime = null;
         clearTimeout(this.longpressTimer);
     }
 
@@ -183,7 +190,7 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
 
     renderCore() {
         const targetTheme = pxt.appTarget.appTheme;
-        const highContrast = this.getData<boolean>(auth.HIGHCONTRAST);
+        const highContrast = this.getData<boolean>(pxt.auth.HIGHCONTRAST);
         const view = this.getView();
 
         const { home, header, tutorialOptions } = this.props.parent.state;

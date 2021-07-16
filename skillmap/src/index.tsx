@@ -9,6 +9,7 @@ bundle.bundledpkgs = {}
 
 pxt.setAppTarget(bundle);
 pxt.Cloud.apiRoot = "https://www.makecode.com/api/";
+pxt.setupWebConfig((window as any).pxtConfig);
 
 ReactDOM.render(
     <Provider store={store}>

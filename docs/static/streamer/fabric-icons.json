@@ -7,116 +7,20 @@
   "hashFontFileName": true,
   "glyphs": [
     {
-      "name": "PenWorkspace",
-      "unicode": "EDC6"
-    },
-    {
-      "name": "ArrowUpRightMirrored8",
-      "unicode": "EEEF"
-    },
-    {
-      "name": "ClosedCaption",
-      "unicode": "EF84"
-    },
-    {
-      "name": "SingleBookmark",
-      "unicode": "EDFF"
-    },
-    {
-      "name": "MyMoviesTV",
-      "unicode": "EE6C"
-    },
-    {
-      "name": "BrowserScreenShot",
-      "unicode": "EBED"
-    },
-    {
-      "name": "Code",
-      "unicode": "E943"
-    },
-    {
-      "name": "Timer",
-      "unicode": "E91E"
-    },
-    {
-      "name": "Robot",
-      "unicode": "E99A"
-    },
-    {
-      "name": "ChromeClose",
-      "unicode": "E8BB"
-    },
-    {
-      "name": "OpenPane",
-      "unicode": "E8A0"
-    },
-    {
-      "name": "OpenFile",
-      "unicode": "E8E5"
-    },
-    {
-      "name": "OpenPaneMirrored",
-      "unicode": "EA5B"
-    },
-    {
-      "name": "Record2",
-      "unicode": "EA3F"
-    },
-    {
-      "name": "EditCreate",
-      "unicode": "F3C9"
-    },
-    {
-      "name": "CircleShapeSolid",
-      "unicode": "F63C"
-    },
-    {
-      "name": "PictureCenter",
-      "unicode": "F522"
-    },
-    {
-      "name": "DoubleColumn",
-      "unicode": "F1D4"
-    },
-    {
-      "name": "RectangleShape",
-      "unicode": "F1A9"
-    },
-    {
-      "name": "FullView",
-      "unicode": "F1A2"
-    },
-    {
-      "name": "CircleShape",
-      "unicode": "F1A5"
-    },
-    {
-      "name": "ImagePixel",
-      "unicode": "F30C"
+      "name": "Add",
+      "unicode": "E710"
     },
     {
       "name": "ArrowTallUpLeft",
       "unicode": "F2BD"
     },
     {
-      "name": "Reset",
-      "unicode": "E423"
+      "name": "ArrowUpRightMirrored8",
+      "unicode": "EEEF"
     },
     {
-      "name": "Contact",
-      "unicode": "E77B"
-    },
-    {
-      "name": "Highlight",
-      "unicode": "E7E6"
-    },
-    {
-      "name": "Stop",
-      "unicode": "E71A"
-    },
-    {
-      "name": "Video",
-      "unicode": "E714"
+      "name": "BrowserScreenShot",
+      "unicode": "EBED"
     },
     {
       "name": "ChevronDown",
@@ -127,32 +31,136 @@
       "unicode": "E70E"
     },
     {
-      "name": "Add",
-      "unicode": "E710"
+      "name": "ChromeClose",
+      "unicode": "E8BB"
     },
     {
-      "name": "Settings",
-      "unicode": "E713"
+      "name": "CircleShape",
+      "unicode": "F1A5"
+    },
+    {
+      "name": "CircleShapeSolid",
+      "unicode": "F63C"
+    },
+    {
+      "name": "ClosedCaption",
+      "unicode": "EF84"
+    },
+    {
+      "name": "Code",
+      "unicode": "E943"
+    },
+    {
+      "name": "Contact",
+      "unicode": "E77B"
+    },
+    {
+      "name": "DoubleColumn",
+      "unicode": "F1D4"
+    },
+    {
+      "name": "EditCreate",
+      "unicode": "F3C9"
     },
     {
       "name": "EraseTool",
       "unicode": "E75C"
     },
     {
-      "name": "Save",
-      "unicode": "E74E"
+      "name": "FullView",
+      "unicode": "F1A2"
+    },
+    {
+      "name": "Highlight",
+      "unicode": "E7E6"
+    },
+    {
+      "name": "ImagePixel",
+      "unicode": "F30C"
+    },
+    {
+      "name": "MyMoviesTV",
+      "unicode": "EE6C"
+    },
+    {
+      "name": "OfficeChat",
+      "unicode": "F70F"
+    },
+    {
+      "name": "OpenFile",
+      "unicode": "E8E5"
+    },
+    {
+      "name": "OpenPane",
+      "unicode": "E8A0"
+    },
+    {
+      "name": "OpenPaneMirrored",
+      "unicode": "EA5B"
+    },
+    {
+      "name": "PenWorkspace",
+      "unicode": "EDC6"
+    },
+    {
+      "name": "PictureCenter",
+      "unicode": "F522"
+    },
+    {
+      "name": "Record2",
+      "unicode": "EA3F"
+    },
+    {
+      "name": "RectangleShape",
+      "unicode": "F1A9"
     },
     {
       "name": "Remove",
       "unicode": "E738"
     },
     {
-      "name": "WhiteBoardApp32",
-      "unicode": "F674"
+      "name": "Reset",
+      "unicode": "E423"
     },
     {
-      "name": "OfficeChat",
-      "unicode": "F70F"
+      "name": "Robot",
+      "unicode": "E99A"
+    },
+    {
+      "name": "Save",
+      "unicode": "E74E"
+    },
+    {
+      "name": "Settings",
+      "unicode": "E713"
+    },
+    {
+      "name": "SingleBookmark",
+      "unicode": "EDFF"
+    },
+    {
+      "name": "Stop",
+      "unicode": "E71A"
+    },
+    {
+      "name": "Timer",
+      "unicode": "E91E"
+    },
+    {
+      "name": "Video",
+      "unicode": "E714"
+    },
+    {
+      "name": "Webcam2",
+      "unicode": "E960"
+    },
+    {
+      "name": "Webcam2Off",
+      "unicode": "E36D"
+    },
+    {
+      "name": "WhiteBoardApp32",
+      "unicode": "F674"
     }
   ]
 }

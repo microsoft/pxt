@@ -383,6 +383,8 @@ namespace pxt.docs {
             "printBtn",
             "breadcrumb",
             "targetlogo",
+            "orglogo",
+            "orglogomobile",
             "github",
             "JSON",
             "appstoremeta",
