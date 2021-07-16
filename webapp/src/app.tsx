@@ -148,7 +148,7 @@ export class ProjectView
     private preserveUndoStack: boolean;
     private rootClasses: string[];
 
-    private highContrastSubscriber: pxt.data.DataSubscriber = {
+    private highContrastSubscriber: data.DataSubscriber = {
         subscriptions: [],
         onDataChanged: () => {
             this.onHighContrastChanged();
@@ -318,9 +318,9 @@ export class ProjectView
         let active = document.visibilityState == 'visible';
         pxt.debug(`page visibility: ${active}`)
         this.setState({ active: active });
-        pxt.data.invalidate('pkg-git-pull-status');
-        pxt.data.invalidate('pkg-git-pr');
-        pxt.data.invalidate('pkg-git-pages')
+        data.invalidate('pkg-git-pull-status');
+        data.invalidate('pkg-git-pr');
+        data.invalidate('pkg-git-pages')
 
         // disconnect devices to avoid locking between tabs
         if (!active && !navigator?.serviceWorker?.controller)
@@ -333,7 +333,7 @@ export class ProjectView
             }
             this.saveFileAsync();
         } else if (active) {
-            pxt.data.invalidate("header:*")
+            data.invalidate("header:*")
             let hdrId = this.state.header ? this.state.header.id : '';
             const inEditor = !this.state.home && hdrId
             if ((!inEditor && workspace.isHeadersSessionOutdated())
@@ -846,7 +846,7 @@ export class ProjectView
                 }
                 pxt.tickEvent("typecheck.complete", { editor: this.getPreferredEditor() });
                 this.editor.setDiagnostics(this.editorFile, state);
-                pxt.data.invalidate("open-pkg-meta:" + pkg.mainEditorPkg().getPkgId());
+                data.invalidate("open-pkg-meta:" + pkg.mainEditorPkg().getPkgId());
                 if (this.state.autoRun) {
                     const output = pkg.mainEditorPkg().outputPkg.files["output.txt"];
                     if (output && !output.numDiagnosticsOverride
@@ -980,11 +980,11 @@ export class ProjectView
         this.loadBlocklyAsync();
 
         // subscribe to user preference changes (for simulator or non-render subscriptions)
-        pxt.data.subscribe(this.highContrastSubscriber, pxt.auth.HIGHCONTRAST);
+        data.subscribe(this.highContrastSubscriber, auth.HIGHCONTRAST);
     }
 
     public componentWillUnmount() {
-        pxt.data.unsubscribe(this.highContrastSubscriber);
+        data.unsubscribe(this.highContrastSubscriber);
     }
 
     // Add an error guard for the entire application
@@ -1056,7 +1056,7 @@ export class ProjectView
                 return previousEditor ? previousEditor.unloadFileAsync() : Promise.resolve();
             })
             .then(() => {
-                let hc = this.getData<boolean>(pxt.auth.HIGHCONTRAST)
+                let hc = this.getData<boolean>(auth.HIGHCONTRAST)
                 return this.editor.loadFileAsync(this.editorFile, hc)
             })
             .then(() => {
@@ -2104,7 +2104,7 @@ export class ProjectView
 
         newHeader.isSkillmapProject = false;
         await workspace.saveAsync(newHeader);
-        pxt.data.invalidate("headers:");
+        data.invalidate("headers:");
     }
 
     openProjectByHeaderIdAsync(headerId: string) {
@@ -3235,7 +3235,7 @@ export class ProjectView
                         if (!cancellationToken.isCancelled()) {
                             pxt.debug(`sim: run`)
 
-                            const hc = pxt.data.getData<boolean>(pxt.auth.HIGHCONTRAST)
+                            const hc = data.getData<boolean>(auth.HIGHCONTRAST)
                             simulator.run(pkg.mainPkg, opts.debug, resp, {
                                 mute: this.state.mute,
                                 highContrast: hc,
@@ -4226,7 +4226,7 @@ export class ProjectView
 
         const isApp = cmds.isNativeHost() || pxt.winrt.isWinRT() || pxt.BrowserUtils.isElectron();
 
-        const hc = this.getData<boolean>(pxt.auth.HIGHCONTRAST)
+        const hc = this.getData<boolean>(auth.HIGHCONTRAST)
 
         let rootClassList = [
             "ui",
@@ -4375,7 +4375,7 @@ function parseLocalToken() {
 function initPacketIO() {
     pxt.debug(`packetio: hook events`)
     pxt.packetio.configureEvents(
-        () => pxt.data.invalidate("packetio:*"),
+        () => data.invalidate("packetio:*"),
         (buf, isErr) => {
             const data = Util.fromUTF8(Util.uint8ArrayToString(buf))
             //pxt.debug('serial: ' + data)
@@ -4899,7 +4899,7 @@ document.addEventListener("DOMContentLoaded", () => {
         pxt.auth.loginCallback(query);
     }
 
-    pxt.auth.initVirtualApi();
+    auth.initVirtualApi();
     cloud.init(); // depends on auth.init() and workspace.ts's top level
     cloudsync.loginCheck()
     parseLocalToken();

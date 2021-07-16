@@ -120,8 +120,8 @@ export class ProviderBase {
             pxt.storage.setLocal(this.name + CLOUD_USER, JSON.stringify(user))
         else
             pxt.storage.removeLocal(this.name + CLOUD_USER);
-            pxt.data.invalidate("sync:user")
-            pxt.data.invalidate("github:user")
+            data.invalidate("sync:user")
+            data.invalidate("github:user")
     }
 
     protected token() {
@@ -470,7 +470,7 @@ export function userInitials(username: string): string {
 
 function syncApiHandler(p: string) {
     const provider = currentProvider;
-    switch (pxt.data.stripProtocol(p)) {
+    switch (data.stripProtocol(p)) {
         case "user":
             return provider && provider.user();
         case "loggedin":
@@ -490,7 +490,7 @@ function syncApiHandler(p: string) {
 
 function githubApiHandler(p: string) {
     const provider = githubProvider();
-    switch (pxt.data.stripProtocol(p)) {
+    switch (data.stripProtocol(p)) {
         case "user":
             return provider && provider.user();
     }
@@ -498,7 +498,7 @@ function githubApiHandler(p: string) {
 }
 
 function pingApiHandlerAsync(p: string): Promise<any> {
-    const url = pxt.data.stripProtocol(p);
+    const url = data.stripProtocol(p);
     // special case favicon.ico
     if (/\.ico$/.test(p)) {
         const imgUrl = pxt.BrowserUtils.isEdge()
@@ -520,19 +520,19 @@ function pingApiHandlerAsync(p: string): Promise<any> {
         .catch(e => false)
 }
 
-pxt.data.mountVirtualApi("sync", { getSync: syncApiHandler })
-pxt.data.mountVirtualApi("github", { getSync: githubApiHandler })
-pxt.data.mountVirtualApi("ping", {
+data.mountVirtualApi("sync", { getSync: syncApiHandler })
+data.mountVirtualApi("github", { getSync: githubApiHandler })
+data.mountVirtualApi("ping", {
     getAsync: pingApiHandlerAsync,
     expirationTime: p => 24 * 3600 * 1000,
     isOffline: () => !pxt.Cloud.isOnline()
 })
 
 function invalidateData() {
-    pxt.data.invalidate("sync:status")
-    pxt.data.invalidate("sync:user")
-    pxt.data.invalidate("sync:loggedin")
-    pxt.data.invalidate("sync:provider")
-    pxt.data.invalidate("sync:providericon")
-    pxt.data.invalidate("github:user");
+    data.invalidate("sync:status")
+    data.invalidate("sync:user")
+    data.invalidate("sync:loggedin")
+    data.invalidate("sync:provider")
+    data.invalidate("sync:providericon")
+    data.invalidate("github:user");
 }

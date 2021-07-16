@@ -365,7 +365,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private exceptionChangesListeners: pxt.Map<(exception: pxsim.DebuggerBreakpointMessage, locations: pxtc.LocationInfo[]) => void> = {}
     private callLocations: pxtc.LocationInfo[];
 
-    private userPreferencesSubscriber: pxt.data.DataSubscriber = {
+    private userPreferencesSubscriber: data.DataSubscriber = {
         subscriptions: [],
         onDataChanged: () => {
             this.onUserPreferencesChanged();
@@ -385,11 +385,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.startDebugger = this.startDebugger.bind(this)
         this.onUserPreferencesChanged = this.onUserPreferencesChanged.bind(this);
 
-        pxt.data.subscribe(this.userPreferencesSubscriber, pxt.auth.HIGHCONTRAST);
+        data.subscribe(this.userPreferencesSubscriber, auth.HIGHCONTRAST);
     }
 
     onUserPreferencesChanged() {
-        const hc = pxt.data.getData<boolean>(pxt.auth.HIGHCONTRAST);
+        const hc = data.getData<boolean>(auth.HIGHCONTRAST);
 
         if (this.loadMonacoPromise) this.defineEditorTheme(hc, true);
     }

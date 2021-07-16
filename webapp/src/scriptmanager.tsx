@@ -137,7 +137,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
             this.setState({ selected: {} })
             return Promise.all(promises)
                 .then(() => {
-                    pxt.data.clearCache();
+                    data.clearCache();
                 });
         }, selectedLength > 1);
     }
@@ -186,7 +186,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                     return workspace.saveAsync(clonedHeader);
                 })
                 .then(() => {
-                    pxt.data.invalidate(`headers:${this.state.searchFor}`);
+                    data.invalidate(`headers:${this.state.searchFor}`);
                     this.setState({ selected: {}, markedNew: { '0': 1 }, sortedBy: 'time', sortedAsc: false });
                     setTimeout(() => {
                         this.setState({ markedNew: {} });

@@ -631,7 +631,7 @@ async function checkIfServiceWorkerSupportedAsync() {
 }
 
 function handlePacketIOApi(r: string) {
-    const p = pxt.data.stripProtocol(r);
+    const p = data.stripProtocol(r);
     switch (p) {
         case "active":
             return pxt.packetio.isActive();
@@ -695,6 +695,6 @@ export function showUnsupportedHardwareMessageAsync(resp: pxtc.CompileResult) {
     return Promise.resolve(true);
 }
 
-pxt.data.mountVirtualApi("packetio", {
+data.mountVirtualApi("packetio", {
     getSync: handlePacketIOApi
 });

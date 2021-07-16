@@ -166,19 +166,19 @@ export class CloudTempMetadata {
 
     public syncInProgress() {
         this._syncStartTime = U.nowSeconds();
-        pxt.data.invalidate(`${HEADER_CLOUDSTATE}:${this.headerId}`);
+        data.invalidate(`${HEADER_CLOUDSTATE}:${this.headerId}`);
     }
 
     public syncFinished() {
         this._syncStartTime = 0;
         this._justSynced = true;
-        pxt.data.invalidate(`${HEADER_CLOUDSTATE}:${this.headerId}`);
+        data.invalidate(`${HEADER_CLOUDSTATE}:${this.headerId}`);
         // slightly hacky, but we want to keep around a "saved!" message for a small time after
         // a save succeeds so we notify metadata subscribers again after a delay.
         setTimeout(() => {
             if (this._syncStartTime === 0) { // not currently syncing?
                 this._justSynced = false;
-                pxt.data.invalidate(`${HEADER_CLOUDSTATE}:${this.headerId}`);
+                data.invalidate(`${HEADER_CLOUDSTATE}:${this.headerId}`);
             }
         }, 1500);
     }
@@ -596,7 +596,7 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
         pxt.log(`Cloud sync finished after ${elapsed} seconds with ${localHeaderChangesList.length} local changes.`);
         pxt.tickEvent(`identity.sync.finished`, { elapsed })
 
-        pxt.data.invalidate("headers:");
+        data.invalidate("headers:");
 
         return localHeaderChangesList
     }
@@ -637,7 +637,7 @@ const CLOUDSAVE_MAX_MS = 15000;
 let headerWorklist: { [headerId: string]: boolean } = {};
 let onHeaderChangeTimeout: number = 0;
 let onHeaderChangeStarted: number = 0;
-const onHeaderChangeSubscriber: pxt.data.DataSubscriber = {
+const onHeaderChangeSubscriber: data.DataSubscriber = {
     subscriptions: [],
     onDataChanged: (path: string) => {
         const parts = path.split("header:");
@@ -727,7 +727,7 @@ async function onHeadersChanged(): Promise<void> {
 export const HEADER_CLOUDSTATE = "header-cloudstate"
 
 function cloudHeaderMetadataHandler(p: string): any {
-    p = pxt.data.stripProtocol(p)
+    p = data.stripProtocol(p)
     if (p == "*") return workspace.getHeaders().map(h => getCloudTempMetadata(h.id))
     return getCloudTempMetadata(p)
 }
@@ -735,8 +735,8 @@ function cloudHeaderMetadataHandler(p: string): any {
 export function init() {
     console.log("cloud init");
     // mount our virtual APIs
-    pxt.data.mountVirtualApi(HEADER_CLOUDSTATE, { getSync: cloudHeaderMetadataHandler });
+    data.mountVirtualApi(HEADER_CLOUDSTATE, { getSync: cloudHeaderMetadataHandler });
 
     // subscribe to header changes
-    pxt.data.subscribe(onHeaderChangeSubscriber, "header:*");
+    data.subscribe(onHeaderChangeSubscriber, "header:*");
 }

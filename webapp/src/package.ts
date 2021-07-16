@@ -93,7 +93,7 @@ export class File implements pxt.editor.IFile {
     }
 
     private updateStatus() {
-        pxt.data.invalidate("open-meta:" + this.getName())
+        data.invalidate("open-meta:" + this.getName())
     }
 
     setBaseGitContent(newContent: string) {
@@ -373,13 +373,13 @@ export class EditorPackage {
         let f = new File(this, n, v)
         if (virtual) f.virtual = true;
         this.files[n] = f
-        pxt.data.invalidate("open-meta:")
+        data.invalidate("open-meta:")
         return f
     }
 
     removeFileAsync(n: string) {
         delete this.files[n];
-        pxt.data.invalidate("open-meta:")
+        data.invalidate("open-meta:")
         return this.updateConfigAsync(cfg => {
             cfg.files = cfg.files.filter(f => f != n)
             if (cfg.testFiles)
@@ -417,7 +417,7 @@ export class EditorPackage {
 
     setFiles(files: pxt.Map<string>) {
         this.files = Util.mapMap(files, (k, v) => new File(this, k, v))
-        pxt.data.invalidate("open-meta:")
+        data.invalidate("open-meta:")
         this.updateGitJsonCache()
     }
 
@@ -825,9 +825,9 @@ export interface FileMeta {
 /*
     open-meta:<pkgName>/<filename> - readonly/saved/unsaved + number of errors
 */
-pxt.data.mountVirtualApi("open-meta", {
+data.mountVirtualApi("open-meta", {
     getSync: p => {
-        p = pxt.data.stripProtocol(p)
+        p = data.stripProtocol(p)
         const pk = mainEditorPkg()
         const f = pk.lookupFile(p)
         if (!f) return {}
@@ -856,9 +856,9 @@ export interface PackageMeta {
 /*
     open-pkg-meta:<pkgName> - number of errors
 */
-pxt.data.mountVirtualApi("open-pkg-meta", {
+data.mountVirtualApi("open-pkg-meta", {
     getSync: p => {
-        p = pxt.data.stripProtocol(p)
+        p = data.stripProtocol(p)
         const f = allEditorPkgs().filter(pkg => pkg.getPkgId() == p)[0];
         if (!f || f.getPkgId() == "built")
             return {}
@@ -889,9 +889,9 @@ export interface PackageGitStatus {
 /*
     pkg-git-status:<guid>
 */
-pxt.data.mountVirtualApi("pkg-git-status", {
+data.mountVirtualApi("pkg-git-status", {
     getSync: p => {
-        p = pxt.data.stripProtocol(p)
+        p = data.stripProtocol(p)
         const f = allEditorPkgs().find(pkg => pkg.header && pkg.header.id == p);
         const r: PackageGitStatus = {};
         if (f) {
@@ -909,9 +909,9 @@ export function invalidatePullStatus(hd: pxt.workspace.Header) {
     data.invalidateHeader("pkg-git-pull-status", hd)
 }
 
-pxt.data.mountVirtualApi("pkg-git-pull-status", {
+data.mountVirtualApi("pkg-git-pull-status", {
     getAsync: p => {
-        p = pxt.data.stripProtocol(p)
+        p = data.stripProtocol(p)
         const f = allEditorPkgs().find(pkg => pkg.header && pkg.header.id == p);
         const ghid = f.getPkgId() == "this" && f.header && f.header.githubId;
         if (!ghid) return Promise.resolve(workspace.PullStatus.NoSourceControl)
@@ -925,12 +925,12 @@ export function invalidatePullRequestStatus(hd: pxt.workspace.Header) {
     data.invalidateHeader("pkg-git-pr", hd)
 }
 
-pxt.data.mountVirtualApi("pkg-git-pr", {
+data.mountVirtualApi("pkg-git-pr", {
     getAsync: p => {
         const missing = <pxt.github.PullRequest>{
             number: -1
         };
-        p = pxt.data.stripProtocol(p)
+        p = data.stripProtocol(p)
         const f = allEditorPkgs().find(pkg => pkg.header && pkg.header.id == p);
         const header = f.header;
         const ghid = f.getPkgId() == "this" && header && header.githubId;
@@ -947,9 +947,9 @@ export function invalidatePagesStatus(hd: pxt.workspace.Header) {
     data.invalidateHeader("pkg-git-pages", hd)
 }
 
-pxt.data.mountVirtualApi("pkg-git-pages", {
+data.mountVirtualApi("pkg-git-pages", {
     getAsync: p => {
-        p = pxt.data.stripProtocol(p)
+        p = data.stripProtocol(p)
         const f = allEditorPkgs().find(pkg => pkg.header && pkg.header.id == p);
         const header = f.header;
         const ghid = f.getPkgId() == "this" && header && header.githubId;
@@ -964,9 +964,9 @@ pxt.data.mountVirtualApi("pkg-git-pages", {
 
 
 // pkg-status:<guid>
-pxt.data.mountVirtualApi("pkg-status", {
+data.mountVirtualApi("pkg-status", {
     getSync: p => {
-        p = pxt.data.stripProtocol(p)
+        p = data.stripProtocol(p)
         const ep = allEditorPkgs().find(pkg => pkg.header && pkg.header.id == p)
         if (ep)
             return ep.savingNow ? "saving" : ""
