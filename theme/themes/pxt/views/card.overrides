@@ -154,7 +154,11 @@ a.ui.card:focus,
 }
 
 .ui.card.link.cloudprojectscard {
-    background: @cloudProjectCardBackground!important;
+    background: @cloudCardBackground!important;
+
+    .header {
+        white-space: normal;
+    }
 }
 
 @media only screen and (min-height: tallEditorBreakpoint), (min-width: @computerBreakpoint) {
