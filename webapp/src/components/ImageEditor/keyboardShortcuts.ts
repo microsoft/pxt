@@ -47,11 +47,11 @@ export function setStore(newStore?: Store<ImageEditorStore>) {
 
 function handleUndoRedo(event: KeyboardEvent) {
     const controlOrMeta = event.ctrlKey || event.metaKey; // ctrl on windows, meta on mac
-    if (event.key === "Undo" || (controlOrMeta && event.key === "z")) {
+    if (event.key === "Undo" || (controlOrMeta && event.key === "z" && !event.shiftKey)) {
         undo();
         event.preventDefault();
         event.stopPropagation();
-    } else if (event.key === "Redo" || (controlOrMeta && event.key === "y")) {
+    } else if (event.key === "Redo" || (controlOrMeta && event.key === "y") || (controlOrMeta && event.key === "Z" && event.shiftKey)) {
         redo();
         event.preventDefault();
         event.stopPropagation();
