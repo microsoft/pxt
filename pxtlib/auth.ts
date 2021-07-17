@@ -1,22 +1,4 @@
 namespace pxt.auth {
-    /**
-     * Virtual API keys
-     */
-    const MODULE = "auth";
-    const FIELD_USER_PROFILE = "profile";
-    const FIELD_LOGGED_IN = "logged-in";
-    export const USER_PROFILE = `${MODULE}:${FIELD_USER_PROFILE}`;
-    export const LOGGED_IN = `${MODULE}:${FIELD_LOGGED_IN}`;
-
-    const USER_PREF_MODULE = "user-pref";
-    const FIELD_USER_PREFERENCES = "preferences";
-    const FIELD_HIGHCONTRAST = "high-contrast";
-    const FIELD_LANGUAGE = "language";
-    const FIELD_READER = "reader";
-    export const USER_PREFERENCES = `${USER_PREF_MODULE}:${FIELD_USER_PREFERENCES}`
-    export const HIGHCONTRAST = `${USER_PREF_MODULE}:${FIELD_HIGHCONTRAST}`
-    export const LANGUAGE = `${USER_PREF_MODULE}:${FIELD_LANGUAGE}`
-    export const READER = `${USER_PREF_MODULE}:${FIELD_READER}`
 
     const CSRF_TOKEN = "csrf-token";
     const AUTH_LOGIN_STATE = "auth:login-state";
@@ -63,8 +45,9 @@ namespace pxt.auth {
         highContrast?: boolean;
         reader?: string;
     };
+    export type UserPreferencePart = "language" | "high-contrast" | "immersive-reader";
 
-    const DEFAULT_USER_PREFERENCES: () => UserPreferences = () => ({
+    export const DEFAULT_USER_PREFERENCES: () => UserPreferences = () => ({
         highContrast: false,
         language: pxt.appTarget.appTheme.defaultLocale,
         reader: ""
@@ -97,8 +80,11 @@ namespace pxt.auth {
         protected abstract onSignedIn(): Promise<void>;
         protected abstract onSignedOut(): Promise<void>;
         protected abstract onSignInFailed(): Promise<void>;
+        protected abstract onUserProfileChanged(): Promise<void>;
+        protected abstract onUserPreferencesChanged(part: UserPreferencePart): Promise<void>;
         protected abstract onProfileDeleted(userId: string): Promise<void>;
         protected abstract onApiError(err: any): Promise<void>;
+        protected abstract onStateCleared(): Promise<void>
 
         /**
          * Starts the process of authenticating the user against the given identity
@@ -285,7 +271,7 @@ namespace pxt.auth {
 
         public async updateUserPreferencesAsync(newPref: Partial<UserPreferences>) {
             // Update our local state
-            this.internalPrefUpdateAndInvalidate(newPref)
+            this.setUserPreferencesAsync(newPref)
 
             // If we're not logged in, non-persistent local state is all we'll use
             if (!await this.loggedInAsync()) { return; }
@@ -295,13 +281,13 @@ namespace pxt.auth {
             if (result.success) {
                 pxt.debug("Updating local user preferences w/ cloud data after result of POST")
                 // Set user profile from returned value so we stay in-sync
-                this.internalPrefUpdateAndInvalidate(result.resp)
+                this.setUserPreferencesAsync(result.resp)
             } else {
                 pxt.reportError("identity", "update preferences failed", result as any);
             }
         }
 
-        protected hasUserId(): boolean {
+        /*protected*/ hasUserId(): boolean {
             if (!hasIdentity()) { return false; }
             const state = this.getState();
             return !!state.profile?.id;
@@ -320,7 +306,6 @@ namespace pxt.auth {
             const result = await this.apiAsync('/api/user/profile');
             if (result.success) {
                 const profile: UserProfile = result.resp;
-                generateUserProfilePicDataUrl(profile);
                 await this.setUserProfileAsync(profile);
                 return profile;
             }
@@ -331,18 +316,18 @@ namespace pxt.auth {
             const wasLoggedIn = this.hasUserId();
             this.transformUserProfile(profile);
             const isLoggedIn = this.hasUserId();
-            pxt.data.invalidate(USER_PROFILE);
-            if (isLoggedIn !== wasLoggedIn) {
-                pxt.data.invalidate(LOGGED_IN);
-            }
+            this.onUserProfileChanged();
+            //pxt.data.invalidate(USER_PROFILE);
             if (isLoggedIn && !wasLoggedIn) {
                 await this.onSignedIn();
+                //pxt.data.invalidate(LOGGED_IN);
             } else if (!isLoggedIn && wasLoggedIn) {
                 await this.onSignedOut();
+                //pxt.data.invalidate(LOGGED_IN);
             }
         }
 
-        private internalPrefUpdateAndInvalidate(newPref: Partial<UserPreferences>) {
+        private async setUserPreferencesAsync(newPref: Partial<UserPreferences>) {
             // TODO is there a generic way to do this so we don't need to add new branches
             //  for each field that changes?
 
@@ -355,13 +340,13 @@ namespace pxt.auth {
             });
             // invalidate fields that change
             if (oldPref?.highContrast !== this.getState().preferences?.highContrast) {
-                pxt.data.invalidate(HIGHCONTRAST)
+                await this.onUserPreferencesChanged("high-contrast");
             }
             if (oldPref?.language !== this.getState().preferences?.language) {
-                pxt.data.invalidate(LANGUAGE)
+                await this.onUserPreferencesChanged("language");
             }
             if (oldPref?.reader !== this.getState().preferences?.reader) {
-                pxt.data.invalidate(READER)
+                await this.onUserPreferencesChanged("immersive-reader");
             }
         }
 
@@ -379,7 +364,7 @@ namespace pxt.auth {
                     // Note the cloud should send partial information back if it is missing
                     // a field. So e.g. if the language has never been set in the cloud, it won't
                     // overwrite the local state.
-                    this.internalPrefUpdateAndInvalidate(result.resp);
+                    this.setUserPreferencesAsync(result.resp);
 
                     // update our one-time promise for the initial load
                     return state.preferences;
@@ -408,7 +393,7 @@ namespace pxt.auth {
          * Updates user preference state and writes it to local storage.
          * Direct access to state$ allowed.
          */
-        private transformUserPreferences(preferences: UserPreferences) {
+        protected transformUserPreferences(preferences: UserPreferences) {
             this.state$ = {
                 ...this.state$,
                 preferences: {
@@ -422,13 +407,12 @@ namespace pxt.auth {
          * Read-only access to current state.
          * Direct access to state$ allowed.
          */
-        protected getState(): Readonly<State> {
+        /*private*/ getState(): Readonly<State> {
             if (!this.state$) {
                 this.loadState();
                 if (this.state$) {
-                    generateUserProfilePicDataUrl(this.state$.profile);
-                    pxt.data.invalidate("auth:*");
-                    pxt.data.invalidate("user-pref:*");
+                    this.setUserProfileAsync(this.state$.profile);
+                    this.setUserPreferencesAsync(this.state$.preferences);
                 }
             }
             if (!this.state$) {
@@ -465,8 +449,7 @@ namespace pxt.auth {
         private clearState() {
             this.state$ = {};
             pxt.storage.removeLocal(AUTH_USER_STATE);
-            pxt.data.invalidate("auth:*");
-            //data.invalidate("user-prefs:*"); // Should we invalidate this? Or would it be jarring visually?
+            this.onStateCleared().then(() => { });
         }
 
         /*protected*/ async apiAsync<T = any>(url: string, data?: any, method?: string): Promise<ApiResult<T>> {
@@ -504,48 +487,6 @@ namespace pxt.auth {
                     success: false
                 }
             });
-        }
-
-        public static authApiHandler(p: string) {
-            const cli = client();
-            if (cli) {
-                const field = pxt.data.stripProtocol(p);
-                const state = cli.getState();
-                switch (field) {
-                    case FIELD_USER_PROFILE: return { ...state.profile };
-                    case FIELD_LOGGED_IN: return cli.hasUserId();
-                }
-            }
-            return null;
-        }
-
-        public static userPreferencesHandler(path: string): UserPreferences | boolean | string {
-            const cli = client();
-            if (cli) {
-                const state = cli.getState();
-                if (!state.preferences) {
-                    cli.transformUserPreferences(DEFAULT_USER_PREFERENCES());
-                    /* await */ cli.initialUserPreferencesAsync();
-                }
-                return AuthClient.internalUserPreferencesHandler(path);
-            }
-            return null;
-        }
-
-        private static internalUserPreferencesHandler(path: string): UserPreferences | boolean | string {
-            const cli = client();
-            if (cli) {
-                const state = cli.getState();
-                const field = pxt.data.stripProtocol(path);
-                switch (field) {
-                    case FIELD_USER_PREFERENCES: return { ...state.preferences };
-                    case FIELD_HIGHCONTRAST: return state.preferences.highContrast;
-                    case FIELD_LANGUAGE: return state.preferences.language;
-                    case FIELD_READER: return state.preferences.reader;
-                }
-                return state.preferences
-            }
-            return null;
         }
     }
 
@@ -657,29 +598,8 @@ namespace pxt.auth {
         return !authDisabled && !pxt.BrowserUtils.isPxtElectron() && identityProviders().length > 0;
     }
 
-    function generateUserProfilePicDataUrl(profile: UserProfile) {
-        if (profile?.idp?.picture?.encoded) {
-            const url = window.URL || window.webkitURL;
-            try {
-                // Decode the base64 image to a data URL.
-                const decoded = pxt.Util.stringToUint8Array(atob(profile.idp.picture.encoded));
-                const blob = new Blob([decoded], { type: profile.idp.picture.mimeType });
-                profile.idp.picture.dataUrl = url.createObjectURL(blob);
-            } catch { }
-        }
-    }
-
     function idpEnabled(idp: pxt.IdentityProviderId): boolean {
         return identityProviders().filter(prov => prov.id === idp).length > 0;
-    }
-
-    export function initVirtualApi() {
-        pxt.data.mountVirtualApi(USER_PREF_MODULE, {
-            getSync: AuthClient.userPreferencesHandler,
-        });
-        pxt.data.mountVirtualApi(MODULE, {
-            getSync: AuthClient.authApiHandler
-        });
     }
 
     export function enableAuth(enabled = true) {

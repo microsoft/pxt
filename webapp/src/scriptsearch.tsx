@@ -110,10 +110,10 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         });
     }
 
-    fetchUrlData(): pxt.data.DataFetchResult<Cloud.JsonScript[]> {
-        const emptyResult: pxt.data.DataFetchResult<Cloud.JsonScript[]> = {
+    fetchUrlData(): data.DataFetchResult<Cloud.JsonScript[]> {
+        const emptyResult: data.DataFetchResult<Cloud.JsonScript[]> = {
             data: [],
-            status: pxt.data.FetchStatus.Complete
+            status: data.FetchStatus.Complete
         };
         if (!this.state.searchFor || this.state.mode != ScriptSearchMode.Extensions)
             return emptyResult;
@@ -132,10 +132,10 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         return res;
     }
 
-    fetchGhData(): pxt.data.DataFetchResult<pxt.github.GitRepo[]> {
-        const emptyResult: pxt.data.DataFetchResult<pxt.github.GitRepo[]> = {
+    fetchGhData(): data.DataFetchResult<pxt.github.GitRepo[]> {
+        const emptyResult: data.DataFetchResult<pxt.github.GitRepo[]> = {
             data: [],
-            status: pxt.data.FetchStatus.Complete
+            status: data.FetchStatus.Complete
         };
 
         if (this.state.mode != ScriptSearchMode.Extensions) return emptyResult;
@@ -148,7 +148,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
             const trgConfigFetch = this.getDataWithStatus("target-config:");
             const trgConfig = trgConfigFetch.data as pxt.TargetConfig;
 
-            if (trgConfigFetch.status === pxt.data.FetchStatus.Complete && trgConfig && trgConfig.packages && trgConfig.packages.preferredRepos) {
+            if (trgConfigFetch.status === data.FetchStatus.Complete && trgConfig && trgConfig.packages && trgConfig.packages.preferredRepos) {
                 searchFor = trgConfig.packages.preferredRepos.join("|");
             }
         }
@@ -328,7 +328,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         const urldata = this.fetchUrlData();
         const local = this.fetchLocalRepositories();
         const experiments = this.fetchExperiments();
-        const isSearching = searchFor && (ghdata.status === pxt.data.FetchStatus.Pending || urldata.status === pxt.data.FetchStatus.Pending);
+        const isSearching = searchFor && (ghdata.status === data.FetchStatus.Pending || urldata.status === data.FetchStatus.Pending);
         const disableFileAccessinMaciOs = pxt.appTarget.appTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isIOS() || pxt.BrowserUtils.isMac());
         const disableFileAccessinAndroid = pxt.appTarget.appTheme.disableFileAccessinAndroid && pxt.BrowserUtils.isAndroid();
         const showImportFile = mode == ScriptSearchMode.Extensions

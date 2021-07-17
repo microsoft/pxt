@@ -81,7 +81,7 @@ class AccountPanel extends sui.UIElement<AccountPanelProps, {}> {
     }
 
     handleDeleteAccountClick = async () => {
-        const profile = this.getData<pxt.auth.UserProfile>(pxt.auth.USER_PROFILE)
+        const profile = this.getData<pxt.auth.UserProfile>(auth.USER_PROFILE)
         const result = await core.confirmAsync({
             header: lf("Delete Profile"),
             body: lf("Are you sure? This cannot be reversed! Your cloud-saved projects will be converted to local projects on this device."),
@@ -101,7 +101,7 @@ class AccountPanel extends sui.UIElement<AccountPanelProps, {}> {
     }
 
     renderCore() {
-        const profile = this.getData<pxt.auth.UserProfile>(pxt.auth.USER_PROFILE);
+        const profile = this.getData<pxt.auth.UserProfile>(auth.USER_PROFILE);
         const provider = pxt.auth.identityProvider(profile.idp?.provider);
 
         const avatarElem = (

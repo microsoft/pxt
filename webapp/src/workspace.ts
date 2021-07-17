@@ -224,8 +224,8 @@ function refreshHeadersSession() {
     if (isHeadersSessionOutdated()) {
         pxt.storage.setLocal('workspacesessionid', sessionID);
         pxt.debug(`workspace: refreshed headers session to ${sessionID}`);
-        pxt.data.invalidate("header:*");
-        pxt.data.invalidate("text:*");
+        data.invalidate("header:*");
+        data.invalidate("text:*");
     }
 }
 // this is an identifier for the current frame
@@ -575,13 +575,13 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
         }
 
         if (text || h.isDeleted) {
-            pxt.data.invalidate("text:" + h.id);
-            pxt.data.invalidate("pkg-git-status:" + h.id);
+            data.invalidate("text:" + h.id);
+            data.invalidate("pkg-git-status:" + h.id);
         }
         data.invalidateHeader("header", h);
         if (newSave) {
             // the count of headers has changed
-            pxt.data.invalidate("headers:");
+            data.invalidate("headers:");
         }
 
         refreshHeadersSession();
@@ -951,7 +951,7 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     if (newCommit == null) {
         return commitId
     } else {
-        pxt.data.invalidate("gh-commits:*"); // invalid any cached commits
+        data.invalidate("gh-commits:*"); // invalid any cached commits
         // if we created a block preview, add as comment
         if (blocksDiffSha) {
             await pxt.github.postCommitComment(
@@ -1549,7 +1549,7 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
                         data.invalidateHeader("header", hd);
                         data.invalidateHeader("text", hd);
                         data.invalidateHeader("pkg-git-status", hd);
-                        pxt.data.invalidate("gh-commits:*"); // invalidate commits just in case
+                        data.invalidate("gh-commits:*"); // invalidate commits just in case
                     }
                 } else {
                     ex = {
@@ -1581,7 +1581,7 @@ export function resetAsync() {
         .then(compiler.clearApiInfoDbAsync)
         .then(() => {
             pxt.storage.clearLocal();
-            pxt.data.clearCache();
+            data.clearCache();
             // keep local token (localhost and electron) on reset
             if (Cloud.localToken)
                 pxt.storage.setLocal("local_token", Cloud.localToken);
@@ -1641,9 +1641,9 @@ export function dbgHdrToString(h: Header): string {
     header:*        - all headers
 */
 
-pxt.data.mountVirtualApi("header", {
+data.mountVirtualApi("header", {
     getSync: p => {
-        p = pxt.data.stripProtocol(p)
+        p = data.stripProtocol(p)
         if (p == "*") return getHeaders()
         return getHeader(p)
     },
@@ -1653,9 +1653,9 @@ pxt.data.mountVirtualApi("header", {
     headers:SEARCH   - search headers
 */
 
-pxt.data.mountVirtualApi("headers", {
+data.mountVirtualApi("headers", {
     getAsync: p => {
-        p = pxt.data.stripProtocol(p)
+        p = data.stripProtocol(p)
         const headers = getHeaders()
         if (!p) return Promise.resolve(headers)
         return compiler.projectSearchAsync({ term: p, headers })
@@ -1675,7 +1675,7 @@ pxt.data.mountVirtualApi("headers", {
     text:<guid>            - all files
     text:<guid>/<filename> - one file
 */
-pxt.data.mountVirtualApi("text", {
+data.mountVirtualApi("text", {
     getAsync: p => {
         const m = /^[\w\-]+:([^\/]+)(\/(.*))?/.exec(p)
         return getTextAsync(m[1])
