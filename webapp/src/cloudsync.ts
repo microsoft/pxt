@@ -120,8 +120,8 @@ export class ProviderBase {
             pxt.storage.setLocal(this.name + CLOUD_USER, JSON.stringify(user))
         else
             pxt.storage.removeLocal(this.name + CLOUD_USER);
-        data.invalidate("sync:user")
-        data.invalidate("github:user")
+            data.invalidate("sync:user")
+            data.invalidate("github:user")
     }
 
     protected token() {
@@ -418,7 +418,7 @@ export function loginCheck() {
 
     // implicit OAuth flow, via query argument
     {
-        const qs = core.parseQueryString(pxt.storage.getLocal(OAUTH_HASH) || "")
+        const qs = U.parseQueryString(pxt.storage.getLocal(OAUTH_HASH) || "")
         if (qs["access_token"]) {
             const tp = pxt.storage.getLocal(OAUTH_TYPE)
             const impl = provs.filter(p => p.name == tp)[0];
@@ -434,7 +434,7 @@ export function loginCheck() {
 
     // auth OAuth flow, via hash
     {
-        const qs = core.parseQueryString((location.hash || "#")
+        const qs = U.parseQueryString((location.hash || "#")
             .slice(1)
             .replace(/%23access_token/, "access_token"));
         if (qs["access_token"]) {

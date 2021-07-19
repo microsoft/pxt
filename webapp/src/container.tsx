@@ -29,7 +29,10 @@ type ISettingsProps = pxt.editor.ISettingsProps;
 
 function openTutorial(parent: pxt.editor.IProjectView, path: string) {
     pxt.tickEvent(`docs`, { path }, { interactiveConsent: true });
-    parent.startActivity("tutorial", path);
+    parent.startActivity({
+        activity: "tutorial",
+        path
+    });
 }
 
 function openDocs(parent: pxt.editor.IProjectView, path: string) {
@@ -460,7 +463,7 @@ export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
 
         // show python in toggle if: python editor currently active, or blocks editor active & saved language pref is python
         const showPython = python && !tsOnly && (parent.isPythonActive() || pxt.shell.isPyLangPref());
-        const showBlocks = !pyOnly && !tsOnly && !!pkg.mainEditorPkg().files["main.blocks"];
+        const showBlocks = !pyOnly && !tsOnly && !!pkg.mainEditorPkg().files[pxt.MAIN_BLOCKS];
         const showSandbox = sandbox && !headless;
         const showDropdown = !pyOnly && !tsOnly && python;
         const showAssets = pxt.appTarget.appTheme.assetEditor && !sandbox;

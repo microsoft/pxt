@@ -128,10 +128,11 @@ async function switchToMemoryWorkspace(reason: string): Promise<void> {
 
 export function getHeaders(withDeleted = false) {
     maybeSyncHeadersAsync();
-    const cloudUserId = auth.user()?.id;
+    const cloudUserId = auth.userProfile()?.id;
     let r = allScripts.map(e => e.header).filter(h =>
         (withDeleted || !h.isDeleted) &&
         !h.isBackup &&
+        !h.isSkillmapProject &&
         (!h.cloudUserId || h.cloudUserId === cloudUserId))
     r.sort((a, b) => {
         const aTime = a.cloudUserId ? Math.min(a.cloudLastSyncTime, a.modificationTime) : a.modificationTime
@@ -257,9 +258,9 @@ export function getHeaderLastCloudSync(h: Header): number {
     return h.cloudLastSyncTime || 0/*never*/
 }
 export function getLastCloudSync(): number {
-    if (!auth.loggedInSync())
+    if (!auth.loggedIn())
         return 0;
-    const userId = auth.user()?.id;
+    const userId = auth.userProfile()?.id;
     const cloudHeaders = getHeaders(true)
         .filter(h => h.cloudUserId && h.cloudUserId === userId);
     if (!cloudHeaders.length)
@@ -511,8 +512,8 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
         h.targetVersion = h.targetVersion || "0.0.0";
 
         // cloud user association
-        if (auth.hasIdentity() && auth.loggedInSync()) {
-            h.cloudUserId = auth.user()?.id
+        if (auth.hasIdentity() && auth.loggedIn()) {
+            h.cloudUserId = auth.userProfile()?.id
         }
     }
 
@@ -606,11 +607,11 @@ export function importAsync(h: Header, text: ScriptText, isCloud = false) {
     return forceSaveAsync(h, text, isCloud)
 }
 
-export function installAsync(h0: InstallHeader, text: ScriptText) {
+export function installAsync(h0: InstallHeader, text: ScriptText, dontOverwriteID = false) {
     U.assert(h0.target == pxt.appTarget.id);
 
     const h = <Header>h0
-    h.id = ts.pxtc.Util.guidGen();
+    if (!dontOverwriteID) h.id = ts.pxtc.Util.guidGen();
     h.recentUse = U.nowSeconds()
     h.modificationTime = h.recentUse;
 
@@ -894,7 +895,7 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     // add screenshots
     let blocksDiffSha: string;
     if (options
-        && treeUpdate.tree.find(e => e.path == "main.blocks")) {
+        && treeUpdate.tree.find(e => e.path == pxt.MAIN_BLOCKS)) {
         if (options.blocksScreenshotAsync) {
             const png = await options.blocksScreenshotAsync();
             if (png)
@@ -1227,13 +1228,13 @@ export async function exportToGithubAsync(hd: Header, repoid: string) {
     })
 
     // assign ids to blockly blocks
-    const mainBlocks = files["main.blocks"];
+    const mainBlocks = files[pxt.MAIN_BLOCKS];
     if (mainBlocks) {
         const ws = pxt.blocks.loadWorkspaceXml(mainBlocks, true);
         if (ws) {
             const mainBlocksWithIds = pxt.blocks.saveWorkspaceXml(ws, true);
             if (mainBlocksWithIds)
-                files["main.blocks"] = mainBlocksWithIds;
+                files[pxt.MAIN_BLOCKS] = mainBlocksWithIds;
         }
     }
     // save updated files

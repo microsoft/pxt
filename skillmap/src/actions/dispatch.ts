@@ -8,11 +8,10 @@ export const dispatchChangeSelectedItem = (mapId?: string, activityId?: string) 
 export const dispatchSetSkillMapCompleted = (mapId: string) => ({ type: actions.SET_SKILL_MAP_COMPLETED, mapId });
 
 export const dispatchSetHeaderIdForActivity = (mapId: string, activityId: string, id: string, currentStep: number, maxSteps: number, isCompleted: boolean) => ({ type: actions.SET_HEADERID_FOR_ACTIVITY, mapId, activityId, id, currentStep, maxSteps, isCompleted });
-export const dispatchOpenActivity = (mapId: string, activityId: string) => ({ type: actions.OPEN_ACTIVITY, mapId, activityId });
+export const dispatchOpenActivity = (mapId: string, activityId: string, previousHeaderId?: string, carryoverCode?: boolean) => ({ type: actions.OPEN_ACTIVITY, mapId, activityId, previousHeaderId, carryoverCode });
 export const dispatchCloseActivity = (finished = false) => ({ type: actions.CLOSE_ACTIVITY, finished });
 export const dispatchSaveAndCloseActivity = () => ({ type: actions.SAVE_AND_CLOSE_ACTIVITY });
-export const dispatchRestartActivity = (mapId: string, activityId: string) => ({ type: actions.RESTART_ACTIVITY, mapId, activityId });
-export const dispatchSetReloadHeaderState = (state: "reloading" | "reload" | "active" ) => ({ type: actions.SET_RELOAD_HEADER_STATE, state });
+export const dispatchRestartActivity = (mapId: string, activityId: string, previousHeaderId?: string, carryoverCode?: boolean) => ({ type: actions.RESTART_ACTIVITY, mapId, activityId, previousHeaderId, carryoverCode });
 export const dispatchSetUser = (user: UserState) => ({ type: actions.SET_USER, user });
 export const dispatchUpdateUserCompletedTags = () => ({ type: actions.UPDATE_USER_COMPLETED_TAGS });
 export const dispatchResetUser = () => ({ type: actions.RESET_USER });

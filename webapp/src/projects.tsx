@@ -1164,7 +1164,12 @@ function applyCodeCardAction(projectView: pxt.editor.IProjectView, ticSrc: "proj
             projectView.newEmptyProject(scr.name, url);
             break;
         case "tutorial":
-            projectView.startActivity("tutorial", url, scr.name, editorPref);
+            projectView.startActivity({
+                activity: "tutorial",
+                path: url,
+                title: scr.name,
+                editor: editorPref
+            });
             break;
         case "sharedExample":
             console.log("shared example")
@@ -1180,7 +1185,12 @@ function applyCodeCardAction(projectView: pxt.editor.IProjectView, ticSrc: "proj
             break;
         default:
             const m = /^\/#tutorial:([a-z0A-Z0-9\-\/]+)$/.exec(url); // Tutorial
-            if (m) projectView.startActivity("tutorial", m[1]);
+            if (m) {
+                projectView.startActivity({
+                    activity: "tutorial",
+                    path: m[1]
+                });
+            }
             else {
                 if (scr.youTubeId && !url) // Youtube video
                     return; // Handled by href
@@ -1197,7 +1207,13 @@ function applyCodeCardAction(projectView: pxt.editor.IProjectView, ticSrc: "proj
     }
 
     function chgCode(name: string, path: string, loadBlocks: boolean, preferredEditor?: string, template?: pxt.ProjectTemplate) {
-        return projectView.startActivity("example", path, name, preferredEditor, null, { path, name, loadBlocks, prj: template });
+        return projectView.startActivity({
+            activity: "example",
+            path,
+            title: name,
+            editor: preferredEditor,
+            importOptions: { path, name, loadBlocks, prj: template }
+        });
     }
 }
 

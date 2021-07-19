@@ -411,8 +411,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         if (!this.currFile) {
             const mainPkg = pkg.mainEditorPkg();
-            if (mainPkg && mainPkg.files["main.ts"]) {
-                initPromise = this.loadFileAsync(mainPkg.files["main.ts"]);
+            if (mainPkg && mainPkg.files[pxt.MAIN_TS]) {
+                initPromise = this.loadFileAsync(mainPkg.files[pxt.MAIN_TS]);
             }
             else {
                 return;
@@ -425,7 +425,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             pxt.tickEvent(`${tickLang}.convertBlocks`);
 
             const mainPkg = pkg.mainEditorPkg();
-            if (!this.hasBlocks() && !mainPkg && !mainPkg.files["main.blocks"]) {
+            if (!this.hasBlocks() && !mainPkg && !mainPkg.files[pxt.MAIN_BLOCKS]) {
                 pxt.debug(`cancelling convertion to blocks, but main.blocks is missing`);
                 return undefined;
             }
@@ -440,19 +440,19 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 ? this.currFile.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)
                 : this.currFile.name;
             if (!this.hasBlocks()) {
-                if (!mainPkg || !mainPkg.files["main.blocks"]) {
+                if (!mainPkg || !mainPkg.files[pxt.MAIN_BLOCKS]) {
                     // Either the project isn't loaded, or it's ts-only
                     if (mainPkg) {
-                        this.parent.setFile(mainPkg.files["main.ts"]);
+                        this.parent.setFile(mainPkg.files[pxt.MAIN_TS]);
                     }
                     return undefined;
                 }
 
                 // The current file doesn't have an associated blocks file, so switch
                 // to main.ts instead
-                this.currFile = mainPkg.files["main.ts"];
+                this.currFile = mainPkg.files[pxt.MAIN_TS];
                 blockFile = this.currFile.getVirtualFileName(pxt.BLOCKS_PROJECT_NAME);
-                tsFile = "main.ts";
+                tsFile = pxt.MAIN_TS;
             }
 
             const failedAsync = (file: string, programTooLarge = false) => {
@@ -1467,7 +1467,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             }).finally(() => {
                 editorRightArea.removeChild(loading);
                 // Do Not Remove: This is used by the skillmap
-                if (this.parent.isTutorial()) pxt.tickEvent("tutorial.editorLoaded")
+                if (this.parent.isTutorial()) this.parent.onTutorialLoaded();
+
             });
     }
 

@@ -39,7 +39,7 @@ export class AssetEditor extends Editor {
             .then(() => {
                 this.parent.forceUpdate()
                 // Do Not Remove: This is used by the skillmap
-                if (this.parent.isTutorial()) pxt.tickEvent("tutorial.editorLoaded")
+                if (this.parent.isTutorial()) this.parent.onTutorialLoaded();
             });
     }
 
@@ -186,7 +186,7 @@ export class AssetEditor extends Editor {
                 // for temporary (unnamed) assets, update the underlying typescript image literal
                 if (!result.meta?.displayName) {
                     this.parent.saveBlocksToTypeScriptAsync().then((src) => {
-                        if (src) pkg.mainEditorPkg().setContentAsync("main.ts", src)
+                        if (src) pkg.mainEditorPkg().setContentAsync(pxt.MAIN_TS, src)
                     })
                 }
             });

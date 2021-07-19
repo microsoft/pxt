@@ -44,6 +44,7 @@ namespace pxt.editor {
         | "newproject"
         | "importproject"
         | "importtutorial"
+        | "openheader"
         | "proxytosim" // EditorMessageSimulatorMessageProxyRequest
         | "undo"
         | "redo"
@@ -73,6 +74,7 @@ namespace pxt.editor {
         | "event"
         | "simevent"
         | "info" // return info data`
+        | "tutorialevent"
 
         // package extension messasges
         | ExtInitializeType
@@ -96,6 +98,34 @@ namespace pxt.editor {
         message?: string;
         // custom data
         data?: Map<string | number>;
+    }
+
+    export type EditorMessageTutorialEventRequest = EditorMessageTutorialProgressEventRequest |
+        EditorMessageTutorialCompletedEventRequest |
+        EditorMessageTutorialLoadedEventRequest;
+
+    export interface EditorMessageTutorialProgressEventRequest extends EditorMessageRequest {
+        action: "tutorialevent";
+        tutorialEvent: "progress"
+        currentStep: number;
+        totalSteps: number;
+        isCompleted: boolean;
+        tutorialId: string;
+        projectHeaderId: string;
+    }
+
+    export interface EditorMessageTutorialCompletedEventRequest extends EditorMessageRequest {
+        action: "tutorialevent";
+        tutorialEvent: "completed";
+        tutorialId: string;
+        projectHeaderId: string;
+    }
+
+    export interface EditorMessageTutorialLoadedEventRequest extends EditorMessageRequest {
+        action: "tutorialevent";
+        tutorialEvent: "loaded";
+        tutorialId: string;
+        projectHeaderId: string;
     }
 
     export interface EditorMessageStopRequest extends EditorMessageRequest {
@@ -198,6 +228,11 @@ namespace pxt.editor {
         markdown: string;
     }
 
+    export interface EditorMessageOpenHeaderRequest extends EditorMessageRequest {
+        action: "openheader";
+        headerId: string;
+    }
+
     export interface EditorMessageRenderBlocksRequest extends EditorMessageRequest {
         action: "renderblocks";
         // typescript code to render
@@ -254,6 +289,8 @@ namespace pxt.editor {
         action: "startactivity";
         activityType: "tutorial" | "example" | "recipe";
         path: string;
+        previousProjectHeaderId?: string;
+        carryoverPreviousCode?: boolean;
     }
 
     export interface InfoMessage {
@@ -384,6 +421,10 @@ namespace pxt.editor {
                                             searchBar: load.searchBar
                                         }));
                                 }
+                                case "openheader": {
+                                    const open = data as EditorMessageOpenHeaderRequest;
+                                    return projectView.openProjectByHeaderIdAsync(open.headerId)
+                                }
                                 case "startactivity": {
                                     const msg = data as EditorMessageStartActivity;
                                     let tutorialPath = msg.path;
@@ -398,7 +439,13 @@ namespace pxt.editor {
                                         tutorialPath = tutorialPath.substr(tutorialPath.indexOf(':') + 1)
                                     }
                                     return Promise.resolve()
-                                        .then(() => projectView.startActivity(msg.activityType, tutorialPath, undefined, editorProjectName));
+                                        .then(() => projectView.startActivity({
+                                            activity: msg.activityType,
+                                            path: tutorialPath,
+                                            editor: editorProjectName,
+                                            previousProjectHeaderId: msg.previousProjectHeaderId,
+                                            carryoverPreviousCode: msg.carryoverPreviousCode
+                                        }));
                                 }
                                 case "importtutorial": {
                                     const load = data as EditorMessageImportTutorialRequest;

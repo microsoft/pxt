@@ -1,23 +1,26 @@
 import * as React from "react";
 import { connect } from 'react-redux';
 
-import { dispatchOpenActivity, dispatchShowRestartActivityWarning, dispatchShowShareModal } from '../actions/dispatch';
+import { dispatchOpenActivity, dispatchShowRestartActivityWarning, dispatchShowShareModal, dispatchShowCarryoverModal } from '../actions/dispatch';
 
-import { ActivityStatus } from '../lib/skillMapUtils';
+import { ActivityStatus, lookupActivityProgress, isCodeCarryoverEnabled } from '../lib/skillMapUtils';
 import { tickEvent } from '../lib/browserUtils';
 import { editorUrl } from "./makecodeFrame";
+import { SkillMapState } from "../store/reducer";
 
 interface OwnProps {
     mapId: string;
     activityId: string;
     status?: ActivityStatus;
     completedHeaderId?: string;
+    showCodeCarryoverModal?: boolean;
 }
 
 interface DispatchProps {
     dispatchOpenActivity: (mapId: string, activityId: string) => void;
     dispatchShowRestartActivityWarning: (mapId: string, activityId: string) => void;
     dispatchShowShareModal: (mapId: string, activityId: string) => void;
+    dispatchShowCarryoverModal: (mapId: string, activityId: string) => void;
 }
 
 type ActivityActionsProps = OwnProps & DispatchProps;
@@ -43,7 +46,7 @@ export class ActivityActionsImpl extends React.Component<ActivityActionsProps> {
     }
 
     protected handleActionButtonClick = () => {
-        const { status, mapId, activityId, dispatchOpenActivity } = this.props;
+        const { status, mapId, activityId, dispatchOpenActivity, dispatchShowCarryoverModal, showCodeCarryoverModal } = this.props;
 
         switch (status) {
             case "locked":
@@ -54,7 +57,13 @@ export class ActivityActionsImpl extends React.Component<ActivityActionsProps> {
             case "restarted":
             default:
                 tickEvent("skillmap.activity.open", { path: mapId, activity: activityId, status: status || "" });
-                return dispatchOpenActivity(mapId, activityId);
+
+                if (showCodeCarryoverModal) {
+                    dispatchShowCarryoverModal(mapId, activityId);
+                }
+                else {
+                    dispatchOpenActivity(mapId, activityId);
+                }
         }
     }
 
@@ -100,10 +109,22 @@ export class ActivityActionsImpl extends React.Component<ActivityActionsProps> {
     }
 }
 
+function mapStateToProps(state: SkillMapState, ownProps: any) {
+    if (!state) return {};
+
+    const props = ownProps as OwnProps;
+    const map = state.maps[props.mapId];
+    const activity = map.activities[props.activityId] as MapActivity;
+    return {
+        showCodeCarryoverModal: isCodeCarryoverEnabled(state.user, state.pageSourceUrl, map, activity)
+    };
+}
+
 const mapDispatchToProps = {
     dispatchOpenActivity,
     dispatchShowRestartActivityWarning,
-    dispatchShowShareModal
+    dispatchShowShareModal,
+    dispatchShowCarryoverModal
 }
 
-export const ActivityActions = connect<{}, DispatchProps, OwnProps>(null, mapDispatchToProps)(ActivityActionsImpl);
+export const ActivityActions = connect(mapStateToProps, mapDispatchToProps)(ActivityActionsImpl);

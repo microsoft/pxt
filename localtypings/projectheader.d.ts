@@ -30,6 +30,7 @@ declare namespace pxt.workspace {
         extensionUnderTest?: string;
         // id of cloud user who created this project
         cloudUserId?: string;
+        isSkillmapProject?: boolean;
     }
 
     export interface Header extends InstallHeader {

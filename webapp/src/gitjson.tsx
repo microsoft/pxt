@@ -599,7 +599,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             message: this.state.description,
             blocksScreenshotAsync: () => this.props.parent.blocksScreenshotAsync(1, pxt.appTarget.appTheme?.embedBlocksInSnapshot),
             blocksDiffScreenshotAsync: () => {
-                const f = pkg.mainEditorPkg().sortedFiles().find(f => f.name == "main.blocks");
+                const f = pkg.mainEditorPkg().sortedFiles().find(f => f.name == pxt.MAIN_BLOCKS);
                 const diff = pxt.blocks.diffXml(f.baseGitContent, f.content);
                 if (diff && diff.ws)
                     return pxt.blocks.layout.toPngAsync(diff.ws, 1);
@@ -882,7 +882,7 @@ class DiffView extends sui.StatelessUIElement<DiffViewProps> {
             }
             return <div key={`difffile${cacheKey}${f.name}`} className="ui segments filediff">
                 <div className="ui segment diffheader">
-                    {(!blocksMode || f.name != "main.blocks") && <span>{f.name}</span>}
+                    {(!blocksMode || f.name != pxt.MAIN_BLOCKS) && <span>{f.name}</span>}
                     {!!cache.revert && <sui.Button className="small" icon="undo" text={lf("Revert")}
                         ariaLabel={lf("Revert file")} title={lf("Revert file")}
                         textClass={"landscape only"} onClick={cache.revert} />}
