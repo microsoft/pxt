@@ -12,6 +12,10 @@ namespace pxt.BrowserUtils {
         return typeof navigator !== "undefined";
     }
 
+    export function hasWindow(): boolean {
+        return typeof window !== "undefined";
+    }
+
     export function isWindows(): boolean {
         return hasNavigator() && /(Win32|Win64|WOW64)/i.test(navigator.platform);
     }

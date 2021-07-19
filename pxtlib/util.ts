@@ -1587,6 +1587,28 @@ namespace ts.pxtc.Util {
                 return res
             })
     }
+
+    export function parseQueryString(qs: string) {
+        let r: pxt.Map<string> = {}
+
+        qs.replace(/\+/g, " ").replace(/([^#?&=]+)=([^#?&=]*)/g, (f: string, k: string, v: string) => {
+            r[decodeURIComponent(k)] = decodeURIComponent(v)
+            return ""
+        })
+        return r
+    }
+
+    export function stringifyQueryString(url: string, qs: any) {
+        for (let k of Object.keys(qs)) {
+            if (url.indexOf("?") >= 0) {
+                url += "&"
+            } else {
+                url += "?"
+            }
+            url += encodeURIComponent(k) + "=" + encodeURIComponent(qs[k])
+        }
+        return url
+    }
 }
 
 namespace ts.pxtc.BrowserImpl {

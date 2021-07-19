@@ -1010,6 +1010,7 @@ function uploadCoreAsync(opts: UploadOptions) {
         "@timestamp@": "",
         "data-manifest=\"\"": "@manifest@",
         "var pxtConfig = null": "var pxtConfig = @cfg@",
+        "var pxtConfig=null": "var pxtConfig = @cfg@",
         "@defaultLocaleStrings@": defaultLocale ? "@commitCdnUrl@" + "locales/" + defaultLocale + "/strings.json" : "",
         "@cachedHexFiles@": hexFiles.length ? hexFiles.join("\n") : "",
         "@cachedHexFilesEncoded@": encodeURLs(hexFiles),
@@ -4046,7 +4047,7 @@ function testPkgConflictsAsync() {
 
         const dep: pxt.Map<string> = {};
         tc.dependencies.forEach(d => dep[d] = "*");
-        let mainPkg = new pxt.MainPackage(new SnippetHost("package conflict tests", { "main.ts": tc.main }, dep));
+        let mainPkg = new pxt.MainPackage(new SnippetHost("package conflict tests", { [pxt.MAIN_TS]: tc.main }, dep));
         tc.expectedConflicts = tc.expectedConflicts.sort();
         tc.expectedInUse = tc.expectedInUse.sort();
 
@@ -4105,16 +4106,16 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
         const dep: pxt.Map<string> = {};
         if (dependency)
             dep[dependency] = "*";
-        let inPackages = { "main.ts": input, "main.py": "" }
+        let inPackages = { [pxt.MAIN_TS]: input, [pxt.MAIN_PY]: "" }
         const pkg = new pxt.MainPackage(new SnippetHost("decompile-pkg", inPackages, dep, true));
 
         pkg.installAllAsync()
             .then(() => pkg.getCompileOptionsAsync())
             .then(opts => {
                 opts.ast = true;
-                const decompiled = pxtc.decompile(pxtc.getTSProgram(opts), opts, "main.ts");
+                const decompiled = pxtc.decompile(pxtc.getTSProgram(opts), opts, pxt.MAIN_TS);
                 if (decompiled.success) {
-                    resolve(decompiled.outfiles["main.blocks"]);
+                    resolve(decompiled.outfiles[pxt.MAIN_BLOCKS]);
                 }
                 else {
                     reject("Could not decompile " + f + JSON.stringify(decompiled.diagnostics, null, 4));
@@ -5829,7 +5830,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                                 }
                                 addSnippet(<CodeSnippet>{
                                     name: card.name,
-                                    code: prj.filesOverride["main.ts"],
+                                    code: prj.filesOverride[pxt.MAIN_TS],
                                     type: "blocks",
                                     ext: "ts",
                                     extraFiles,
@@ -5928,9 +5929,9 @@ function internalCacheUsedBlocksAsync(): Promise<Map<pxt.BuiltTutorialInfo>> {
         if (isPy) {
             let extra: Map<string> = {};
             info.code.forEach((snippet, i) => extra["snippet_" + i + ".py"] = snippet);
-            inFiles = { "main.ts": "", "main.py": "", "main.blocks": "", ...extra }
+            inFiles = { [pxt.MAIN_TS]: "", [pxt.MAIN_PY]: "", [pxt.MAIN_BLOCKS]: "", ...extra }
         } else {
-            inFiles = { "main.ts": "", "main.py": "", "main.blocks": "" }
+            inFiles = { [pxt.MAIN_TS]: "", [pxt.MAIN_PY]: "", [pxt.MAIN_BLOCKS]: "" }
         }
 
         const host = new SnippetHost("usedblocks", inFiles, info.pkgs);
@@ -6366,7 +6367,7 @@ function blockTestsAsync(parsed?: commandParser.ParsedCommand) {
                         .then((configText: string) => {
                             packageName = (JSON.parse(configText) as pxt.PackageConfig).name;
                             return readDirAsync(dirPath)
-                                .then(files => U.promiseMapAll(files.filter(f => U.endsWith(f, ".blocks") && f != "main.blocks"), fn =>
+                                .then(files => U.promiseMapAll(files.filter(f => U.endsWith(f, ".blocks") && f != pxt.MAIN_BLOCKS), fn =>
                                     readFileAsync(path.join(dirPath, fn), "utf8")
                                         .then((contents: string) => testFiles.push({ testName: fn, contents }))))
                         })

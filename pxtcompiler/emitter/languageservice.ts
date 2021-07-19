@@ -122,7 +122,7 @@ namespace ts.pxtc.service {
                 callingConvention: ir.CallingConvention.Plain,
                 paramDefl: {},
             },
-            fileName: "main.ts",
+            fileName: pxt.MAIN_TS,
             parameters: [],
             retType: "any",
         }
@@ -152,7 +152,7 @@ namespace ts.pxtc.service {
                 callingConvention: ir.CallingConvention.Plain,
                 paramDefl: {},
             },
-            fileName: "main.ts",
+            fileName: pxt.MAIN_TS,
             parameters: [],
             retType: typeName,
         }

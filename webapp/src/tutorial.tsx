@@ -110,11 +110,11 @@ function getUsedBlocksInternalAsync(code: string[], id: string, language?: strin
                     pxt.log("Unable to cache used blocks in DB");
                 }
                 pxt.tickEvent(`tutorial.usedblocks.computed`, { tutorial: id });
-
-                return { snippetBlocks, usedBlocks };
-            } else {
+            } else if (code?.length > 0) {
                 throw new Error("Failed to decompile");
             }
+
+            return { snippetBlocks, usedBlocks };
         }).catch((e) => {
             pxt.reportException(e);
             throw new Error(`Failed to decompile tutorial`);

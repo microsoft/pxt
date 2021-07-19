@@ -487,9 +487,9 @@ export interface ItemProps extends UiProps {
     active?: boolean;
     value?: string;
     onClick?: () => void;
-    onMouseDown?: () => void;
-    onMouseUp?: () => void;
-    onMouseLeave?: () => void;
+    onMouseDown?: (e: any) => void;
+    onMouseUp?: (e: any) => void;
+    onMouseLeave?: (e: any) => void;
     onKeyDown?: (e: React.KeyboardEvent<HTMLElement>) => void;
 }
 
@@ -1285,7 +1285,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
             'modal transition visible active',
             className
         ]);
-        const hc = this.getData<boolean>(auth.HIGHCONTRAST);
+        const hc = this.getData<boolean>(pxt.auth.HIGHCONTRAST);
         const portalClassName = cx([
             hc ? 'hc' : '',
             mountClasses

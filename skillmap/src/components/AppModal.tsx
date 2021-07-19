@@ -4,10 +4,9 @@ import * as React from "react";
 import { connect } from 'react-redux';
 
 import { ModalType, SkillMapState } from '../store/reducer';
-import { dispatchHideModal, dispatchRestartActivity, dispatchOpenActivity, dispatchResetUser, dispatchSetReloadHeaderState } from '../actions/dispatch';
+import { dispatchHideModal, dispatchRestartActivity, dispatchOpenActivity, dispatchResetUser, dispatchShowCarryoverModal } from '../actions/dispatch';
 import { tickEvent, postAbuseReportAsync, postShareAsync } from "../lib/browserUtils";
-import { lookupActivityProgress, lookupPreviousCompletedActivityState } from "../lib/skillMapUtils";
-import { carryoverProjectCode } from "../lib/codeCarryover";
+import { lookupActivityProgress, lookupPreviousActivityStates, lookupPreviousCompletedActivityState } from "../lib/skillMapUtils";
 import { getProjectAsync } from "../lib/workspaceProvider";
 
 import { Modal, ModalAction } from './Modal';
@@ -20,11 +19,12 @@ interface AppModalProps {
     activity?: MapNode;
     pageSourceUrl?: string;
     actions?: ModalAction[];
+    showCodeCarryoverModal?: boolean;
     dispatchHideModal: () => void;
-    dispatchRestartActivity: (mapId: string, activityId: string) => void;
-    dispatchOpenActivity: (mapId: string, activityId: string) => void;
+    dispatchRestartActivity: (mapId: string, activityId: string, previousHeaderId?: string, carryoverCode?: boolean) => void;
+    dispatchOpenActivity: (mapId: string, activityId: string, previousHeaderId?: string, carryoverCode?: boolean) => void;
+    dispatchShowCarryoverModal: (mapId: string, activityId: string) => void;
     dispatchResetUser: () => void;
-    dispatchSetReloadHeaderState: (state: "reload" | "reloading" | "active") => void;
 }
 
 interface AppModalState {
@@ -113,7 +113,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
     }
 
     renderRestartWarning() {
-        const  { mapId, activity, dispatchRestartActivity } = this.props;
+        const  { mapId, activity, dispatchRestartActivity, showCodeCarryoverModal, dispatchShowCarryoverModal } = this.props;
         const restartModalTitle = lf("Restart Activity?");
         const restartModalText = lf("Are you sure you want to restart {0}? You won't lose your path progress but the code you have written for this activity will be deleted.", "{0}");
         const restartModalTextSegments = restartModalText.split("{0}");
@@ -122,7 +122,8 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
             { label: lf("CANCEL"), onClick: this.handleOnClose },
             { label: lf("RESTART"), onClick: () => {
                 tickEvent("skillmap.activity.restart", { path: mapId, activity: activity!.activityId });
-                dispatchRestartActivity(mapId, activity!.activityId);
+                if (showCodeCarryoverModal) dispatchShowCarryoverModal(mapId, activity!.activityId);
+                else dispatchRestartActivity(mapId, activity!.activityId);
             }}
         ]
 
@@ -169,7 +170,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
     }
 
     renderCodeCarryoverModal() {
-        const  { skillMap, activity, pageSourceUrl, userState, dispatchHideModal, dispatchSetReloadHeaderState } = this.props;
+        const  { skillMap, activity, pageSourceUrl, userState, dispatchHideModal, dispatchRestartActivity } = this.props;
         const carryoverModalTitle = lf("Keep code from previous activity?");
         const carryoverModalText = lf("Do you want to start with your code from {0} or start fresh with starter code? Your images, tilemaps, tiles, and animations will stick around either way.");
         const carryoverModalTextSegments = carryoverModalText.split("{0}");
@@ -183,21 +184,13 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
             { label: lf("START FRESH"), onClick: async () => {
                 tickEvent("skillmap.startfresh", { path: skillMap!.mapId, activity: activity!.activityId, previousActivity: previous.activityId });
 
-                dispatchSetReloadHeaderState("reloading")
-
-                await carryoverProjectCode(userState!, pageSourceUrl!, skillMap!, activity!.activityId, false)
-
-                dispatchSetReloadHeaderState("reload");
+                dispatchRestartActivity(skillMap!.mapId, activity!.activityId, previousState.headerId, false);
                 dispatchHideModal();
             } },
             { label: lf("KEEP CODE"), onClick: async () => {
                 tickEvent("skillmap.keepcode", { path: skillMap!.mapId, activity: activity!.activityId, previousActivity: previous.activityId });
 
-                dispatchSetReloadHeaderState("reloading")
-
-                await carryoverProjectCode(userState!, pageSourceUrl!, skillMap!, activity!.activityId, true)
-
-                dispatchSetReloadHeaderState("reload");
+                dispatchRestartActivity(skillMap!.mapId, activity!.activityId, previousState.headerId, true);
                 dispatchHideModal();
             } }
         ]
@@ -272,13 +265,25 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
     const currentMap = state.editorView ?
         state.maps[state.editorView.currentMapId] :
         (currentMapId && state.maps[currentMapId]);
+    const activity = currentMapId && currentActivityId ? state.maps[currentMapId].activities[currentActivityId] : undefined
+
+    let showCodeCarryoverModal = false;
+
+    if (currentMap && activity) {
+        const previous = lookupPreviousActivityStates(state.user, state.pageSourceUrl, currentMap, activity.activityId);
+        const previousActivityCompleted = previous.some(state => state?.isCompleted &&
+            state.maxSteps === state.currentStep);
+
+        showCodeCarryoverModal = !!((activity as MapActivity).allowCodeCarryover && previousActivityCompleted);
+    }
+
 
     return {
         type,
         pageSourceUrl,
         skillMap: currentMap,
         userState: state.user,
-
+        showCodeCarryoverModal,
         mapId: currentMapId,
         activity: currentMapId && currentActivityId ? state.maps[currentMapId].activities[currentActivityId] : undefined
     }
@@ -289,7 +294,7 @@ const mapDispatchToProps = {
     dispatchRestartActivity,
     dispatchOpenActivity,
     dispatchResetUser,
-    dispatchSetReloadHeaderState
+    dispatchShowCarryoverModal
 };
 
 export const AppModal = connect(mapStateToProps, mapDispatchToProps)(AppModalImpl);
