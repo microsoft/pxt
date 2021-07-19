@@ -486,7 +486,7 @@ export class Select extends UIElement<SelectProps, SelectState> {
 export interface ItemProps extends UiProps {
     active?: boolean;
     value?: string;
-    onClick?: () => void;
+    onClick?: (e: React.MouseEvent<HTMLElement>) => void;
     onMouseDown?: (e: any) => void;
     onMouseUp?: (e: any) => void;
     onMouseLeave?: (e: any) => void;

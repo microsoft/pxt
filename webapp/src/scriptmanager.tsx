@@ -74,22 +74,23 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         return headers;
     }
 
-    handleCardClick(e: any, scr: any, index?: number, force?: boolean) {
+    handleCardClick(e: any, scr: any, index?: number, id?: string, force?: boolean) {
         const shifted = e.shiftKey;
         const ctrlCmd = (force && !shifted) || (pxt.BrowserUtils.isMac() ? e.metaKey : e.ctrlKey);
         let { selected, multiSelect, multiSelectStart } = this.state;
         if (shifted && ctrlCmd) return;
         // If ctrl/cmd is down, toggle from the list
         if (ctrlCmd) {
-            if (selected[index]) delete selected[index];
-            else selected[index] = 1;
-            if (selected[index]) multiSelectStart = index;
+            if (selected[id]) delete selected[id];
+            else selected[id] = 1;
+            if (selected[id]) multiSelectStart = index;
         }
         else if (shifted) {
+            const items = this.getSortedHeaders();
             selected = {};
             // Shift is down, use the start position to select all the projects in between
             for (let i = Math.min(index, multiSelectStart); i <= Math.max(index, multiSelectStart); i++) {
-                selected[i] = 1;
+                selected[this.getId(items[i])] = 1;
             }
             multiSelect = true;
         } else if (multiSelect) {
@@ -98,13 +99,13 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
             multiSelect = false;
         }
         if (!shifted && !ctrlCmd) {
-            if (Object.keys(selected).length == 1 && selected[index]) {
+            if (Object.keys(selected).length == 1 && selected[id]) {
                 // Deselect the currently selected card if we click on it again
-                delete selected[index];
+                delete selected[id];
             }
             else {
                 selected = {};
-                selected[index] = 1;
+                selected[id] = 1;
                 // Use this as an indicator for any future multi-select clicks
                 multiSelectStart = index;
             }
@@ -115,8 +116,8 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         e.preventDefault();
     }
 
-    handleCheckboxClick(e: any, scr: any, index?: number) {
-        this.handleCardClick(e, scr, index, true);
+    handleCheckboxClick(e: any, scr: any, index?: number, id?: string) {
+        this.handleCardClick(e, scr, index, id, true);
         e.preventDefault();
         e.stopPropagation();
     }
@@ -181,13 +182,15 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         return core.promptAsync(opts).then(res => {
             if (res === null)
                 return false; // null means cancelled
+            let id: string;
             return workspace.duplicateAsync(header, res)
                 .then(clonedHeader => {
+                    id = this.getId(clonedHeader);
                     return workspace.saveAsync(clonedHeader);
                 })
                 .then(() => {
                     data.invalidate(`headers:${this.state.searchFor}`);
-                    this.setState({ selected: {}, markedNew: { '0': 1 }, sortedBy: 'time', sortedAsc: false });
+                    this.setState({ selected: {}, markedNew: { [id]: 1 }, sortedBy: 'time', sortedAsc: false });
                     setTimeout(() => {
                         this.setState({ markedNew: {} });
                     }, 5 * 1000);
@@ -227,7 +230,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         } else {
             // Select all
             headers.forEach((header, index) => {
-                selected[index] = 1;
+                selected[this.getId(header)] = 1;
             })
         }
         this.setState({ selected });
@@ -239,35 +242,40 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         let { sortedBy, sortedAsc } = this.state;
         if (sortedBy == 'name' && !force) sortedAsc = !sortedAsc
         else sortedAsc = true; // Default asc
-        this.setState({ sortedBy: 'name', sortedAsc, markedNew: {}, selected: {} });
+        this.setState({ sortedBy: 'name', sortedAsc });
     }
 
     toggleSortTime = (force?: boolean) => {
         let { sortedAsc, sortedBy } = this.state;
         if (sortedBy == 'time' && !force) sortedAsc = !sortedAsc
         else sortedAsc = false; // Default desc
-        this.setState({ sortedBy: 'time', sortedAsc, markedNew: {}, selected: {} });
+        this.setState({ sortedBy: 'time', sortedAsc });
     }
 
-    handleSortName = () => {
+    handleSortName: React.MouseEventHandler = e => {
+        e.stopPropagation();
         this.toggleSortName(true);
     }
 
-    handleSortTime = () => {
+    handleSortTime: React.MouseEventHandler = e => {
+        e.stopPropagation();
         this.toggleSortTime(true);
     }
 
-    handleToggleSortName = () => {
+    handleToggleSortName: React.MouseEventHandler = e => {
+        e.stopPropagation();
         this.toggleSortName(false);
     }
 
-    handleToggleSortTime = () => {
+    handleToggleSortTime: React.MouseEventHandler = e => {
+        e.stopPropagation();
         this.toggleSortTime(false);
     }
 
-    handleSwitchSortDirection = () => {
+    handleSwitchSortDirection: React.MouseEventHandler = e => {
+        e.stopPropagation();
         const { sortedAsc } = this.state;
-        this.setState({ sortedAsc: !sortedAsc, markedNew: {}, selected: {} });
+        this.setState({ sortedAsc: !sortedAsc });
     }
 
     private getSelectedHeader() {
@@ -298,6 +306,10 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                 b.name.localeCompare(a.name);
         };
         return sortingFunction;
+    }
+
+    private getId(scr: pxt.workspace.Header) {
+        return 'local' + scr.id + scr.recentUse;
     }
 
     renderCore() {
@@ -385,8 +397,9 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                         </div>
                         <div className={"ui cards"}>
                             {headers.sort(this.getSortingFunction(sortedBy, sortedAsc)).map((scr, index) => {
-                                const isMarkedNew = !!markedNew[index];
-                                const isSelected = !!selected[index];
+                                const id = this.getId(scr);
+                                const isMarkedNew = !!markedNew[id];
+                                const isSelected = !!selected[id];
                                 const showMarkedNew = isMarkedNew && !isSelected;
 
                                 let labelIcon = `circle outline ${isSelected ? 'check' : ''} ${isSelected ? 'green' : 'grey'} ${darkTheme ? 'inverted' : ''}`;
@@ -395,9 +408,11 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                                     `right corner label large selected-label`;
                                 const label = showMarkedNew ? lf("New") : undefined;
 
+
                                 // TODO name={(scr.cloudSync && scr.blobCurrent ? '(Synced) ' : '') + scr.name}
                                 return <ProjectsCodeCard
-                                    key={'local' + scr.id + scr.recentUse}
+                                    key={id}
+                                    id={id}
                                     cardType="file"
                                     className={`file ${isMarkedNew ? 'warning' : isSelected ? 'positive' : ''}`}
                                     name={scr.name}
@@ -432,11 +447,12 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                             </thead>
                             <tbody>
                                 {headers.sort(this.getSortingFunction(sortedBy, sortedAsc)).map((scr, index) => {
-                                    const isMarkedNew = !!markedNew[index];
-                                    const isSelected = !!selected[index];
+                                    const id = this.getId(scr);
+                                    const isMarkedNew = !!markedNew[id];
+                                    const isSelected = !!selected[id];
                                     const showMarkedNew = isMarkedNew && !isSelected;
 
-                                    return <ProjectsCodeRow key={'local' + scr.id + scr.recentUse} selected={isSelected}
+                                    return <ProjectsCodeRow key={id} id={id} selected={isSelected}
                                         onRowClicked={this.handleCardClick} index={index}
                                         scr={scr} markedNew={showMarkedNew}>
                                         <td>{scr.name}</td>
@@ -455,9 +471,10 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
 interface ProjectsCodeRowProps extends pxt.CodeCard {
     scr: any;
     index?: number;
+    id?: string;
     selected?: boolean;
     markedNew?: boolean;
-    onRowClicked: (e: any, scr: any, index?: number, force?: boolean) => void;
+    onRowClicked: (e: any, scr: any, index?: number, id?: string, force?: boolean) => void;
 }
 
 class ProjectsCodeRow extends sui.StatelessUIElement<ProjectsCodeRowProps> {
@@ -474,7 +491,7 @@ class ProjectsCodeRow extends sui.StatelessUIElement<ProjectsCodeRowProps> {
     }
 
     handleCheckboxClick(e: any) {
-        this.props.onRowClicked(e, this.props.scr, this.props.index, true);
+        this.props.onRowClicked(e, this.props.scr, this.props.index, this.props.id, true);
         e.preventDefault();
         e.stopPropagation();
     }

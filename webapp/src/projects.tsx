@@ -794,9 +794,10 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
 
 interface ProjectsCodeCardProps extends pxt.CodeCard {
     scr: any;
+    id?: string;
     index?: number;
-    onCardClick: (e: any, scr: any, index?: number) => void;
-    onLabelClick?: (e: any, scr: any, index?: number) => void;
+    onCardClick: (e: any, scr: any, index?: number, id?: string) => void;
+    onLabelClick?: (e: any, scr: any, index?: number, id?: string) => void;
 }
 
 export class ProjectsCodeCard extends sui.StatelessUIElement<ProjectsCodeCardProps> {
@@ -809,11 +810,11 @@ export class ProjectsCodeCard extends sui.StatelessUIElement<ProjectsCodeCardPro
     }
 
     handleClick(e: any) {
-        this.props.onCardClick(e, this.props.scr, this.props.index);
+        this.props.onCardClick(e, this.props.scr, this.props.index, this.props.id);
     }
 
     handleLabelClick(e: any) {
-        this.props.onLabelClick(e, this.props.scr, this.props.index);
+        this.props.onLabelClick(e, this.props.scr, this.props.index, this.props.id);
     }
 
     renderCore() {
