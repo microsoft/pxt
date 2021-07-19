@@ -386,7 +386,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                             <div role="menu" className="ui compact buttons">
                                 <sui.DropdownMenu
                                     role="menuitem" text={sortedBy == 'time' ? lf("Last Modified") : lf("Name")}
-                                    title={lf("Sort by dropdown")} className={`inline button dropdown-menu ${darkTheme ? 'inverted' : ''}`}
+                                    title={lf("Sort by dropdown")} className={`inline button ${darkTheme ? 'inverted' : ''}`}
                                     displayLeft
                                 >
                                     <sui.Item role="menuitem" icon={sortedBy == 'name' ? 'check' : undefined} className={`${sortedBy != 'name' ? 'no-icon' : ''} ${darkTheme ? 'inverted' : ''}`} text={lf("Name")} tabIndex={-1} onClick={this.handleSortName} />
