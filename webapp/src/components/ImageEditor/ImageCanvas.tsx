@@ -619,10 +619,10 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             floatingRect.style.width = (xScale * (right - left)) + "px";
             floatingRect.style.height = (yScale * (bottom - top)) + "px";
 
-            floatingRect.style.borderLeft = left >= 0 ? "" : "none";
-            floatingRect.style.borderTop = top >= 0 ? "" : "none";
-            floatingRect.style.borderRight = right < state.width ? "" : "none";
-            floatingRect.style.borderBottom = bottom < state.height ? "" : "none";
+            floatingRect.style.borderLeft = state.layerOffsetX >= 0 ? "" : "none";
+            floatingRect.style.borderTop = state.layerOffsetY >= 0 ? "" : "none";
+            floatingRect.style.borderRight = state.layerOffsetX + state.floating.image.width <= state.width ? "" : "none";
+            floatingRect.style.borderBottom = state.layerOffsetY + state.floating.image.height <= state.height ? "" : "none";
         }
         else {
             floatingRect.style.display = "none"
