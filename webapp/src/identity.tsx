@@ -136,12 +136,17 @@ export class UserMenu extends auth.Component<UserMenuProps, UserMenuState> {
     renderCore() {
         const loggedIn = this.isLoggedIn();
         const user = this.getUserProfile();
-        const icon = "user large";
+        const icon = "xicon cloud-user large";
         const title = lf("User Menu");
 
-        const signedOutElem = sui.genericContent({
-            icon
-        });
+        const signedOutElem = (
+            <div className="signin-button">
+                <div className="ui text desktop only">{lf("Sign In")}</div>
+                {sui.genericContent({
+                    icon
+                })}
+            </div>
+        )
         const avatarElem = (
             <div className="avatar">
                 <img src={user?.idp?.picture?.dataUrl} alt={lf("User Menu")} />

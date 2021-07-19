@@ -735,18 +735,26 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
             const headers = this.fetchLocalData()
             const showNewProject = pxt.appTarget.appTheme && !pxt.appTarget.appTheme.hideNewProjectButton;
             const showScriptManagerCard = targetTheme.scriptManager && headers.length > ProjectsCarousel.NUM_PROJECTS_HOMESCREEN;
+            const showCloudProjectsCard = auth.hasIdentity() && !auth.loggedIn();
 
             const headersToShow = headers
                 .filter(h => !h.tutorial?.metadata?.hideIteration)
                 .slice(0, ProjectsCarousel.NUM_PROJECTS_HOMESCREEN);
             return <carousel.Carousel tickId="myprojects" bleedPercent={20}>
-                {showNewProject ? <div role="button" className="ui card link buttoncard newprojectcard" title={lf("Creates a new empty project")}
+                {showNewProject && <div role="button" className="ui card link buttoncard newprojectcard" title={lf("Creates a new empty project")}
                     onClick={this.newProject} onKeyDown={sui.fireClickOnEnter} >
                     <div className="content">
                         <sui.Icon icon="huge add circle" />
                         <span className="header">{lf("New Project")}</span>
                     </div>
-                </div> : undefined}
+                </div>}
+                {showCloudProjectsCard && <div role="button" className="ui card link buttoncard cloudprojectscard" title={lf("Sign in to see cloud projects")}
+                    onClick={e => this.props.parent.showLoginDialog()} onKeyDown={sui.fireClickOnEnter}>
+                        <div className="content">
+                            <sui.Icon icon="huge xicon cloud-profile"/>
+                            <span className="header">{lf("Cloud Projects")}</span>
+                        </div>
+                </div>}
                 {headersToShow.map((scr, index) => {
                     const tutorialStep =
                         scr.tutorial ? scr.tutorial.tutorialStep
@@ -772,13 +780,13 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                         projectId={scr.id}
                     />;
                 })}
-                {showScriptManagerCard ? <div role="button" className="ui card link buttoncard scriptmanagercard" title={lf("See all projects")}
+                {showScriptManagerCard && <div role="button" className="ui card link buttoncard scriptmanagercard" title={lf("See all projects")}
                     onClick={this.showScriptManager} onKeyDown={sui.fireClickOnEnter} >
                     <div className="content">
                         <sui.Icon icon="huge right angle" />
                         <span className="header">{lf("See all projects")}</span>
                     </div>
-                </div> : undefined}
+                </div>}
             </carousel.Carousel>
         }
     }
