@@ -54,11 +54,11 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
             <TabPane id="editorSidebar">
                 <TabContent name="tab-simulator">
                     <div className="ui items simPanel">
-                        <div id="boardview" className={`ui vertical editorFloat`} role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0} />
+                        <div id="boardview" className="ui vertical editorFloat" role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0} />
                         <simtoolbar.SimulatorToolbar parent={parent} collapsed={collapseEditorTools} simSerialActive={simSerialActive} devSerialActive={deviceSerialActive} />
                         {showKeymap && <keymap.Keymap parent={parent} />}
                         <div className="ui item portrait hide hidefullscreen">
-                            {pxt.options.debug && <sui.Button key='hwdebugbtn' className='teal' icon="xicon chip" text={"Dev Debug"} onClick={handleHardwareDebugClick} />}
+                            {pxt.options.debug && <sui.Button key="hwdebugbtn" className="teal" icon="xicon chip" text={"Dev Debug"} onClick={handleHardwareDebugClick} />}
                         </div>
                         {showSerialButtons && <div id="serialPreview" className="ui editorFloat portrait hide hidefullscreen">
                             <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={this.handleSimSerialClick} parent={parent} />
