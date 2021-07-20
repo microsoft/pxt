@@ -166,30 +166,30 @@ export function userPreferences(): pxt.auth.UserPreferences {
     return data.getData<pxt.auth.UserPreferences>(USER_PREFERENCES);
 }
 
-export function authCheckAsync(): Promise<pxt.auth.UserProfile | undefined> {
-    return client()?.authCheckAsync();
+export async function authCheckAsync(): Promise<pxt.auth.UserProfile | undefined> {
+    return await client()?.authCheckAsync();
 }
 
-export function initialUserPreferencesAsync(): Promise<pxt.auth.UserPreferences | undefined> {
-    return client()?.initialUserPreferencesAsync();
+export async function initialUserPreferencesAsync(): Promise<pxt.auth.UserPreferences | undefined> {
+    return await client()?.initialUserPreferencesAsync();
 }
 
-export function loginAsync(idp: pxt.IdentityProviderId, persistent: boolean, callbackState: pxt.auth.CallbackState = undefined): Promise<void> {
-    return client()?.loginAsync(idp, persistent, callbackState);
+export async function loginAsync(idp: pxt.IdentityProviderId, persistent: boolean, callbackState: pxt.auth.CallbackState = undefined): Promise<void> {
+    await client()?.loginAsync(idp, persistent, callbackState);
 }
 
-export function logoutAsync(): Promise<void> {
-    return client()?.logoutAsync();
+export async function logoutAsync(): Promise<void> {
+    await client()?.logoutAsync();
 }
 
-export function updateUserPreferencesAsync(newPref: Partial<pxt.auth.UserPreferences>): Promise<void> {
-    return client()?.updateUserPreferencesAsync(newPref);
+export async function updateUserPreferencesAsync(newPref: Partial<pxt.auth.UserPreferences>): Promise<void> {
+    await client()?.updateUserPreferencesAsync(newPref);
 }
 
-export function deleteProfileAsync(): Promise<void> {
-    return client()?.deleteProfileAsync();
+export async function deleteProfileAsync(): Promise<void> {
+    await client()?.deleteProfileAsync();
 }
 
-export function apiAsync<T = any>(url: string, data?: any, method?: string): Promise<pxt.auth.ApiResult<T>> {
-    return client()?.apiAsync(url, data, method);
+export async function apiAsync<T = any>(url: string, data?: any, method?: string): Promise<pxt.auth.ApiResult<T>> {
+    return await client()?.apiAsync(url, data, method);
 }
