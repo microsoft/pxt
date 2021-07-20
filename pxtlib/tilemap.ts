@@ -766,8 +766,8 @@ namespace pxt {
             }
 
             if (files) {
-                const shortId = getShortIDForAsset(asset);
-                const displayName = asset.meta?.displayName || "";
+                const shortId = Util.escapeForRegex(getShortIDForAsset(asset));
+                const displayName = Util.escapeForRegex(asset.meta?.displayName) || "";
 
                 let assetTsRefs: string;
                 switch (asset.type) {
