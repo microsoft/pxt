@@ -24,7 +24,7 @@ so may be unavailable in your MakeCode editor.
 To enable an experiment, click the gear icon ⚙️,
 go to `About` , then click `Experiments`.
 Experiments are released selectively, so 
-if an experiment you want does not show for you, 
+if an experiment you want does not show yet, 
 please be patient &emdash; it will be rolled to 
 your editor soon!
 
