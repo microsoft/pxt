@@ -696,6 +696,10 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
         // reinclude the pkg the api originates from, which is trimmed during compression
         for (const api of Object.keys(info.apis.byQName)) {
             info.apis.byQName[api].pkg = dirname;
+
+            // We had a bug where we were caching the translated language code and it broke translations.
+            // make sure we clear it on any old cached entries from before the bug was fixed
+            delete info.apis.byQName[api].attributes._translatedLanguageCode;
         }
 
         pxt.Util.jsonCopyFrom(result.byQName, info.apis.byQName);
@@ -768,6 +772,8 @@ function cleanApiForCache(apiInfo: pxtc.SymbolInfo) {
 
     // clear translations on blocks before caching
     const cachedAttrs = U.clone(cachedEntry.attributes)
+    delete cachedAttrs._translatedLanguageCode;
+
     let defChanged = false;
     if (cachedAttrs._untranslatedBlock) {
         cachedAttrs.block = cachedAttrs._untranslatedBlock;
