@@ -69,7 +69,8 @@ export async function delAsync(container: string, key: string): Promise<void> {
 
 const whitespaceRe = /[\r\n\s\t]+/g;
 const illegalRe = /[\/\?<>\\:\*\|"]/g;
-const controlRe = /[\x00-\x1f\x80-\x9f]/g;
+// eslint-disable-next-line no-control-regex
+const controlRe = /[\x00-\x1f\x80-\x9f]/g; // https://en.wikipedia.org/wiki/C0_and_C1_control_codes
 const reservedRe = /^\.+$/;
 const windowsReservedRe = /^(con|prn|aux|nul|com[0-9]|lpt[0-9])(\..*)?$/i;
 const windowsTrailingRe = /[\. ]+$/;
