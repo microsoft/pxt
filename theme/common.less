@@ -482,10 +482,17 @@ div.simframe > iframe {
     background: none;
 }
 
+.ui.item.logo.organization,
+.inHome .ui.item.logo.brand {
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+}
+
 .ui.item.logo.brand:hover {
     cursor: pointer;
 }
-
 .inHome .ui.item.logo.brand:hover {
     cursor: auto;
 }
