@@ -1803,7 +1803,6 @@ export class ProjectView
         const customTs = header.tutorial.customTs;
         await mainPkg.setContentAsync(pxt.TUTORIAL_CUSTOM_TS, customTs);
         await mainPkg.saveFilesAsync();
-        return Promise.resolve();
     }
 
     removeProject() {
