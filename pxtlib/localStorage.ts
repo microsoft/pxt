@@ -109,3 +109,77 @@ namespace pxt.storage {
         impl.clear();
     }
 }
+
+/**
+ * Storage that will be shared across localhost frames when developing locally. Uses regular browser storage in production.
+ * One side effect: Localhost storage will be shared between different browsers and incognito tabs as well. To disable this
+ * behavior, set the `routingEnabled` switch below to `false`.
+ */
+namespace pxt.storage.localhost {
+    /**
+     * Override switch. Setting this to `false` will stop routing calls to the pxt server, using browser storage instead.
+     */
+    const routingEnabled = true;
+
+    // Specify host and port explicitly so that localhost frames not served on the default port (e.g. skillmap) can access it.
+    const localhostStoreUrl = "http://localhost:3232/api/store/";
+
+    export async function getAsync<T>(container: string, key: string): Promise<T> {
+        if (routingEnabled && pxt.BrowserUtils.isLocalHostDev()) {
+            const resp = await pxt.Util.requestAsync({
+                url: `${localhostStoreUrl}${encodeURIComponent(container)}/${encodeURIComponent(key)}`,
+                method: "GET",
+                allowHttpErrors: true
+            });
+            if (resp.json) {
+                return resp.json as T;
+            } else if (resp.text) {
+                return resp.text as any as T;
+            } else {
+                return undefined;
+            }
+        } else {
+            const sval = pxt.storage.getLocal(`${container}:${key}`);
+            const val = JSON.parse(sval);
+            return val;
+        }
+    }
+
+    export async function setAsync(container: string, key: string, val: any): Promise<void> {
+        if (typeof val == "undefined") {
+            await pxt.storage.localhost.delAsync(container, key);
+            return;
+        }
+        let sval = "";
+        if (typeof val === "object")
+            sval = JSON.stringify(val);
+        else
+            sval = val.toString();
+        if (routingEnabled && BrowserUtils.isLocalHostDev()) {
+            const data = {
+                type: (typeof val === "object") ? "json" : "text",
+                val: sval
+            };
+            const sdata = JSON.stringify(data);
+            await pxt.Util.requestAsync({
+                url: `${localhostStoreUrl}${encodeURIComponent(container)}/${encodeURIComponent(key)}`,
+                method: "POST",
+                data: sdata
+            });
+        } else {
+            pxt.storage.setLocal(`${container}:${key}`, sval);
+        }
+    }
+
+    export async function delAsync(container: string, key: string): Promise<void> {
+        if (routingEnabled && BrowserUtils.isLocalHostDev()) {
+            await pxt.Util.requestAsync({
+                url: `${localhostStoreUrl}${encodeURIComponent(container)}/${encodeURIComponent(key)}`,
+                method: "DELETE",
+                allowHttpErrors: true
+            });
+        } else {
+            pxt.storage.removeLocal(`${container}:${key}`);
+        }
+    }
+}
