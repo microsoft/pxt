@@ -19,14 +19,16 @@ functions, lambdas, classes).
 
 ## ~ hint
 
-Static Python is still in an experimental phase, 
-so may be unavailable in your MakeCode editor.
-To enable an experiment, click the gear icon ⚙️,
-go to `About` , then click `Experiments`.
+Support for Static Python may still be 
+experimental for some MakeCode editors. 
+If Python isn't shown as a language choice 
+in the editor you're using, you can enable 
+it by clicking the gear icon ⚙️, going to 
+`About` , then clicking `Experiments`.
 Experiments are released selectively, so 
 if an experiment you want does not show yet, 
-please be patient &emdash; it will be rolled to 
-your editor soon!
+please be patient &emdash; it will be rolled 
+out to your editor soon!
 
 ## ~
 
