@@ -7137,7 +7137,7 @@ function errorHandler(reason: any) {
         process.exit(1)
     }
 
-    let msg = reason.stack || reason.message || (reason + "")
+    let msg = reason.stack || reason.message || reason.statusMessage || (reason + "")
     console.error("INTERNAL ERROR:", msg)
     process.exit(20)
 }
