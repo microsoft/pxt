@@ -1695,8 +1695,8 @@ function buildWebManifest(cfg: pxt.TargetBundle) {
         "short_name": cfg.nickname || cfg.name,
         "background_color": "#FAFAFA",
         "icons": [],
-        "scope": "./",
-        "start_url": "./",
+        "scope": "/",
+        "start_url": "/",
         "display": "standalone",
         "orientation": "landscape"
     }
