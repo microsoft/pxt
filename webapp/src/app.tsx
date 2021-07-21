@@ -1798,13 +1798,15 @@ export class ProjectView
         return pkg.mainEditorPkg().buildAssetsAsync();
     }
 
-    private loadTutorialCustomTsAsync(): Promise<void> {
-        const header = pkg.mainEditorPkg().header;
+    private async loadTutorialCustomTsAsync(): Promise<void> {
+        const mainPkg = pkg.mainEditorPkg();
+        const header = mainPkg.header;
         if (!header || !header.tutorial || !header.tutorial.customTs)
             return Promise.resolve();
 
         const customTs = header.tutorial.customTs;
-        return this.updateFileAsync(pxt.TUTORIAL_CUSTOM_TS, customTs);
+        await mainPkg.setContentAsync(pxt.TUTORIAL_CUSTOM_TS, customTs);
+        await mainPkg.saveFilesAsync();
     }
 
     removeProject() {
