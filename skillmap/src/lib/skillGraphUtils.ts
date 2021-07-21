@@ -32,7 +32,16 @@ export const MIN_HEIGHT = 40 * UNIT;
 export const MIN_WIDTH = 60 * UNIT;
 
 export function getGraph(map: SkillMap): SvgGraph {
-    const nodes = orthogonalGraph(map.root);
+    let nodes = [];
+    switch (map.layout) {
+        case "manual":
+            nodes = manualGraph(map.root);
+            break;
+        case "ortho":
+        default:
+            nodes = orthogonalGraph(map.root);
+    }
+
     let maxDepth = 0, maxOffset = 0;
 
     // Convert into renderable items
@@ -84,15 +93,28 @@ function getY(position: number) {
 ////////                            ////////
 ////////////////////////////////////////////
 
-interface GraphCoord {
-    depth: number; // The depth of this node (distance from root)
-    offset: number; // The offset of the node within the layer
-}
-
-interface GraphNode extends BaseNode, GraphCoord {
-    width?: number; // The maximum subtree width from this node
-    edges?: GraphCoord[][]; // Each edge is an array of (depth, offset) pairs
-    parents?: GraphNode[];
+export function manualGraph(root: MapNode): GraphNode[] {
+    const visited: string[] = [];
+    const graphNode = cloneGraph(root);
+    const nodes = dfsArray(graphNode).filter(node => node.kind !== "layout");
+    nodes.forEach(n => {
+        if (visited.indexOf(n.activityId) < 0) {
+            visited.push(n.activityId);
+            n.depth = n.position?.depth || 0;
+            n.offset = n.position?.offset || 0;
+            const edges: GraphCoord[][] = []
+            n.next.forEach((next, i) => {
+                const nextDepth = next.position?.depth || 0;
+                const nextOffset = next.position?.offset || 0;
+                const edge = n.edges?.[i] || [{ depth: nextDepth, offset: n.offset }];
+                edge.unshift({depth: n.depth, offset: n.offset });
+                edge.push({ depth: nextDepth, offset: nextOffset });
+                edges.push(edge);
+            });
+            n.edges = edges;
+        }
+    })
+    return nodes;
 }
 
 export function orthogonalGraph(root: MapNode): GraphNode[] {
@@ -329,7 +351,7 @@ function cloneGraph(root: BaseNode): GraphNode {
     const clones: { [key: string]: GraphNode} = {};
 
     // Clone all nodes, assign children to cloned nodes
-    nodes.forEach(n => clones[n.activityId] = Object.assign({}, n));
+    nodes.forEach(n => clones[n.activityId] = JSON.parse(JSON.stringify(n)));
     Object.keys(clones).forEach(cloneId => clones[cloneId].next = clones[cloneId].nextIds.map(id => clones[id] as any));
 
     return clones[root.activityId];

@@ -13,14 +13,13 @@ interface SkillMap {
     displayName: string;
     description?: string;
     prerequisites: MapPrerequisite[];
-    completionUrl?: string; // DEPRECATED, urls should be specified on completion nodes
-
-    // Indicates whether or not code can be copied from previous activity
-    // for all cards in this skillmap
-    allowCodeCarryover?: boolean;
+    allowCodeCarryover?: boolean; // Indicates if code can be copied from previous activity for all cards in this skillmap
+    layout?: "ortho" | "manual"; // The graph layout system to use. Defaults to "ortho"
 
     activities: {[index: string]: MapNode};
     root: MapNode;
+
+    completionUrl?: string; // DEPRECATED, urls should be specified on completion nodes
 }
 
 type MapPrerequisite = TagPrerequisite | MapFinishedPrerequisite;
@@ -48,6 +47,9 @@ interface BaseNode {
 
     next: MapNode[];
     nextIds: string[];
+
+    position?: GraphCoord; // INTERNAL: The (depth, offset) position of the node, for manually laid out graphs
+    edges?: GraphCoord[][]; // INTERNAL: A list of edges, where each edge is a list of (depth, offset) points
 }
 
 type MapActivityType = "tutorial";
@@ -107,6 +109,17 @@ interface ActivityState {
     currentStep?: number;
     maxSteps?: number;
     completedTime?: number;
+}
+
+interface GraphCoord {
+    depth: number; // The depth of this node (distance from root)
+    offset: number; // The offset of the node within the layer
+}
+
+interface GraphNode extends BaseNode, GraphCoord {
+    width?: number; // The maximum subtree width from this node
+    edges?: GraphCoord[][]; // Each edge is an array of (depth, offset) pairs
+    parents?: GraphNode[];
 }
 
 interface SkillGraphTheme {

@@ -172,6 +172,8 @@ function inflateSkillMap(section: MarkdownSection): Partial<SkillMap> {
         allowCodeCarryover: section.attributes["allowcodecarryover"] ? !isFalse(section.attributes["allowcodecarryover"]) : true
     };
 
+    if (section.attributes["layout"] === "manual") result["layout"] = "manual";
+
     if (section.attributes["required"]) {
         const parts = section.attributes["required"].split(",");
         for (const part of parts) {
@@ -203,6 +205,23 @@ function inflateMapNode(section: MarkdownSection): MapNode {
         next: [],
         displayName: section.attributes["name"] || section.header,
         nextIds: parseList(section.attributes["next"])
+    }
+
+    if (section.attributes["position"]) {
+        const coord = section.attributes["position"].split(" ");
+        base.position = { depth: parseInt(coord[0]) || 0, offset: parseInt(coord[1]) || 0 };
+    }
+
+    if (section.attributes["edges"]) {
+        base.edges = [];
+        const edges = parseList(section.attributes["edges"], false, ";");
+        edges.forEach(e => {
+            const points = parseList(e) || [];
+            base.edges?.push(points.map(p => {
+                const coord = p.split(" ");
+                return { depth: parseInt(coord[0]) || 0, offset: parseInt(coord[1]) || 0 };
+            }))
+        })
     }
 
     if (section.attributes.kind === "reward" || section.attributes.kind === "completion") {
@@ -374,9 +393,9 @@ function cleanInfoUrl(url?: string) {
     error("Educator info URL must be to Github or MakeCode documentation")
 }
 
-function parseList(list: string, includeDuplicates = false) {
+function parseList(list: string, includeDuplicates = false, separator = ",") {
     if (!list) return [];
-    const parts = list.split(",").map(p => p.trim().toLowerCase()).filter(p => !!p);
+    const parts = list.split(separator).map(p => p.trim().toLowerCase()).filter(p => !!p);
 
     if (!includeDuplicates) {
         let map: {[index: string]: string} = {};
