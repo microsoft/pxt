@@ -215,8 +215,8 @@ function inflateMapNode(section: MarkdownSection): MapNode {
     if (section.attributes["edges"]) {
         base.edges = [];
         const edges = parseList(section.attributes["edges"], false, ";");
-        edges.forEach(e => {
-            const points = parseList(e) || [];
+        base.nextIds?.forEach((next, i) => {
+            const points = parseList(edges[i]) || [];
             base.edges?.push(points.map(p => {
                 const coord = p.split(" ");
                 return { depth: parseInt(coord[0]) || 0, offset: parseInt(coord[1]) || 0 };

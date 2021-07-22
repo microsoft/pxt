@@ -102,13 +102,33 @@ export function manualGraph(root: MapNode): GraphNode[] {
             visited.push(n.activityId);
             n.depth = n.position?.depth || 0;
             n.offset = n.position?.offset || 0;
+
+            // Generate straight-line edges between nodes
             const edges: GraphCoord[][] = []
             n.next.forEach((next, i) => {
                 const nextDepth = next.position?.depth || 0;
                 const nextOffset = next.position?.offset || 0;
-                const edge = n.edges?.[i] || [{ depth: nextDepth, offset: n.offset }];
-                edge.unshift({depth: n.depth, offset: n.offset });
+
+                // Edge starts from current node
+                const edge = [{depth: n.depth, offset: n.offset }];
+                // If manual edge is specified for this node, push edge points
+                if (n.edges?.[i]) {
+                    n.edges[i].forEach(el => {
+                        const prev = edge[edge.length - 1];
+                        // Ensure that there are only horizontal and vertical segments
+                        if (el.depth !== prev.depth && el.offset !== prev.offset) {
+                            edge.push({ depth: el.depth, offset: prev.offset });
+                        }
+                        edge.push(el);
+                    })
+                }
+                // Edge ends at "next" node, ensure only horizontal/vertical
+                const prev = edge[edge.length - 1];
+                if (nextDepth !== prev.depth && nextOffset !== prev.offset) {
+                    edge.push({ depth: nextDepth, offset: prev.offset });
+                }
                 edge.push({ depth: nextDepth, offset: nextOffset });
+
                 edges.push(edge);
             });
             n.edges = edges;
