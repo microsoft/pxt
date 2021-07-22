@@ -27,7 +27,7 @@ it by clicking the gear icon ⚙️, going to
 `About` , then clicking `Experiments`.
 Experiments are released selectively, so 
 if an experiment you want does not show yet, 
-please be patient &emdash; it will be rolled 
+please be patient — it will be rolled 
 out to your editor soon!
 
 ## ~
