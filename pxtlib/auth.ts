@@ -82,7 +82,7 @@ namespace pxt.auth {
         public async initAsync() {
             // Load state from local storage
             try {
-                this.state$ = await pxt.storage.localhost.getAsync<State>(AUTH_CONTAINER, AUTH_USER_PROFILE_KEY);
+                this.state$ = await pxt.storage.shared.getAsync<State>(AUTH_CONTAINER, AUTH_USER_PROFILE_KEY);
             } catch { }
             if (!this.state$) {
                 this.state$ = {};
@@ -139,7 +139,7 @@ namespace pxt.auth {
                 callbackPathname: window.location.pathname,
                 idp,
             };
-            await pxt.storage.localhost.setAsync(AUTH_CONTAINER, AUTH_LOGIN_STATE_KEY, loginState);
+            await pxt.storage.shared.setAsync(AUTH_CONTAINER, AUTH_LOGIN_STATE_KEY, loginState);
 
             // Redirect to the login endpoint.
             const loginUrl = pxt.Util.stringifyQueryString('/api/auth/login', {
@@ -170,7 +170,7 @@ namespace pxt.auth {
             await this.apiAsync('/api/auth/logout');
 
             // Clear csrf token so we can no longer make authenticated requests.
-            await pxt.storage.localhost.delAsync(AUTH_CONTAINER, CSRF_TOKEN_KEY);
+            await pxt.storage.shared.delAsync(AUTH_CONTAINER, CSRF_TOKEN_KEY);
 
             // Update state and UI to reflect logged out state.
             this.clearState();
@@ -193,7 +193,7 @@ namespace pxt.auth {
             } else {
                 try {
                     // Clear csrf token so we can no longer make authenticated requests.
-                    await pxt.storage.localhost.delAsync(AUTH_CONTAINER, CSRF_TOKEN_KEY);
+                    await pxt.storage.shared.delAsync(AUTH_CONTAINER, CSRF_TOKEN_KEY);
 
                     try {
                         await this.onProfileDeleted(userId);
@@ -242,7 +242,7 @@ namespace pxt.auth {
             if (!hasIdentity()) { return undefined; }
 
             // Fail fast if we don't have csrf token.
-            if (!(await pxt.storage.localhost.getAsync(AUTH_CONTAINER, CSRF_TOKEN_KEY))) { return undefined; }
+            if (!(await pxt.storage.shared.getAsync(AUTH_CONTAINER, CSRF_TOKEN_KEY))) { return undefined; }
 
             const state = this.getState();
 
@@ -426,7 +426,7 @@ namespace pxt.auth {
          * Direct access to state$ allowed.
          */
         private saveState() {
-            pxt.storage.localhost.setAsync(AUTH_CONTAINER, AUTH_USER_PROFILE_KEY, this.state$).then(() => { });
+            pxt.storage.shared.setAsync(AUTH_CONTAINER, AUTH_USER_PROFILE_KEY, this.state$).then(() => { });
         }
 
         /**
@@ -435,13 +435,13 @@ namespace pxt.auth {
          */
         private clearState() {
             this.state$ = {};
-            pxt.storage.localhost.delAsync(AUTH_CONTAINER, AUTH_USER_PROFILE_KEY)
+            pxt.storage.shared.delAsync(AUTH_CONTAINER, AUTH_USER_PROFILE_KEY)
                 .then(() => this.onStateCleared());
         }
 
         /*protected*/ async apiAsync<T = any>(url: string, data?: any, method?: string): Promise<ApiResult<T>> {
             const headers: pxt.Map<string> = {};
-            const csrfToken = await pxt.storage.localhost.getAsync<string>(AUTH_CONTAINER, CSRF_TOKEN_KEY);
+            const csrfToken = await pxt.storage.shared.getAsync<string>(AUTH_CONTAINER, CSRF_TOKEN_KEY);
             if (csrfToken) {
                 headers["authorization"] = `mkcd ${csrfToken}`;
             }
@@ -508,12 +508,12 @@ namespace pxt.auth {
 
         do {
             // Read and remove auth state from local storage
-            loginState = await pxt.storage.localhost.getAsync<LoginState>(AUTH_CONTAINER, AUTH_LOGIN_STATE_KEY);
+            loginState = await pxt.storage.shared.getAsync<LoginState>(AUTH_CONTAINER, AUTH_LOGIN_STATE_KEY);
             if (!loginState) {
                 pxt.debug("Auth state not found in storge.");
                 return;
             }
-            await pxt.storage.localhost.delAsync(AUTH_CONTAINER, AUTH_LOGIN_STATE_KEY)
+            await pxt.storage.shared.delAsync(AUTH_CONTAINER, AUTH_LOGIN_STATE_KEY)
 
             const stateKey = qs['state'];
             if (!stateKey || loginState.key !== stateKey) {
@@ -550,7 +550,7 @@ namespace pxt.auth {
             // "Remember me" wasn't selected because this token is not usable
             // without its cookie-based counterpart. When "Remember me" is false,
             // the cookie is not persisted.
-            await pxt.storage.localhost.setAsync(AUTH_CONTAINER, CSRF_TOKEN_KEY, authToken);
+            await pxt.storage.shared.setAsync(AUTH_CONTAINER, CSRF_TOKEN_KEY, authToken);
 
             pxt.tickEvent('auth.login.success', { 'provider': loginState.idp });
         } while (false);
