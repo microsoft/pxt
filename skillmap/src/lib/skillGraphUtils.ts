@@ -32,14 +32,14 @@ export const MIN_HEIGHT = 40 * UNIT;
 export const MIN_WIDTH = 60 * UNIT;
 
 export function getGraph(map: SkillMap): SvgGraph {
-    let nodes = [];
+    let nodes: GraphNode[] = [];
     switch (map.layout) {
         case "manual":
-            nodes = manualGraph(map.root);
+            nodes = nodes.concat(manualGraph(map.root));
             break;
         case "ortho":
         default:
-            nodes = orthogonalGraph(map.root);
+            nodes = nodes.concat(orthogonalGraph(map.root));
     }
 
     let maxDepth = 0, maxOffset = 0;

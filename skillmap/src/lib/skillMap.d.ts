@@ -118,7 +118,6 @@ interface GraphCoord {
 
 interface GraphNode extends BaseNode, GraphCoord {
     width?: number; // The maximum subtree width from this node
-    edges?: GraphCoord[][]; // Each edge is an array of (depth, offset) pairs
     parents?: GraphNode[];
 }
 
