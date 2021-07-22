@@ -30,6 +30,8 @@ interface AppModalProps {
 interface AppModalState {
     loading?: boolean;
     data?: ShareModalData;
+    rememberMe?: boolean; // For the Login modal
+    continuationHash?: string; // for login modal
 }
 
 interface ShareModalData {
@@ -60,6 +62,8 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                 return this.renderCodeCarryoverModal();
             case "share":
                 return this.renderShareModal();
+            case "login":
+                return this.renderLoginModal();
             default:
                 return <div/>
         }
@@ -254,6 +258,34 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
         </Modal>
     }
 
+    renderLoginModal() {
+        const providers = pxt.auth.identityProviders();
+        const actions: ModalAction[] = [];
+        providers.map((p, key) => (
+            actions.push({label: p.name?p.name:"", iconClass:`xicon ${p.id}`, onClick: async () => {
+                pxt.tickEvent(`identity.loginClick`, { provider: p.name?p.name:"", rememberMe: this.state.rememberMe!.toString() });
+                // await auth.loginAsync(provider.id, rememberMe, {
+                //     hash: this.props.continuationHash
+                // });
+            }})
+        ))
+
+        return <Modal title={lf("Sign in or Signup")} actions={actions} onClose={this.handleOnClose}>
+            <div className="description">
+                <p>{lf("Connect an existing account in order to sign in or signup for the first time.")}</p>
+                {/* <Link className="ui" text={lf("Learn more")} icon="external alternate" ariaLabel={lf("Learn more")} href="https://aka.ms/cloudsave" target="_blank" onKeyDown={sui.fireClickOnEnter} /></p> */}
+            </div>
+            <div className="container">
+                <div className="prompt">
+                    <p>Choose an account to connect:</p>
+                </div>
+                <div className="remember-me">
+                    <i className="icon box"/>
+                    {/* <sui.PlainCheckbox label={lf("Remember me")} onChange={this.handleRememberMeChanged} /> */}
+                </div>
+            </div>
+        </Modal>
+    }
 }
 
 function mapStateToProps(state: SkillMapState, ownProps: any) {

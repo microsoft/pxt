@@ -1,11 +1,15 @@
 import * as React from "react";
+import { connect } from 'react-redux';
+import { dispatchShowLoginModal } from "../actions/dispatch";
+
+import { SkillMapState } from "../store/reducer";
 
 interface OwnProps {
 
 }
 
 interface DispatchProps {
-
+    dispatchShowLoginModal: () => void;
 }
 
 type CloudActionsProps = OwnProps & DispatchProps;
@@ -14,16 +18,27 @@ type CloudActionsProps = OwnProps & DispatchProps;
 // VVN TODO Handle tablet view
 export class CloudActionsImpl extends React.Component<CloudActionsProps> {
     render () {
-        let isLoggedIn = true
+        let isLoggedIn = pxt.Cloud.isLoggedIn();
         return <div className="cloud-action">
             {
                 isLoggedIn
                 ? <div className="cloud-indicator">
                     <div className={"ui tiny cloudicon xicon cloud-saved-b"} title={lf("Project saved to cloud")} tabIndex={-1}></div>
-                    Saved To Cloud!
+                    {lf("Saved To Cloud!")}
                 </div>
-                : <div className="sign-in-button">Sign in to Save</div>
+                : <div className="sign-in-button" onClick={this.props.dispatchShowLoginModal}>
+                    {lf("Sign in to Save")}
+                </div>
             }
         </div>
     }
 }
+
+function mapStateToProps(state: SkillMapState, ownProps: any) {
+}
+
+const mapDispatchToProps = {
+    dispatchShowLoginModal
+}
+
+export const CloudActions = connect(mapStateToProps, mapDispatchToProps)(CloudActionsImpl);
