@@ -140,7 +140,7 @@ namespace pxt.storage.shared {
             }
         } else {
             const sval = pxt.storage.getLocal(`${container}:${key}`);
-            const val = JSON.parse(sval);
+            const val = pxt.Util.jsonTryParse(sval);
             return val;
         }
     }
