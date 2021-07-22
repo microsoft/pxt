@@ -4,7 +4,7 @@ namespace pxt.auth {
     const CSRF_TOKEN_KEY = "csrf-token"; // stored in local storage.
     const AUTH_LOGIN_STATE_KEY = "login-state"; // stored in local storage.
     const AUTH_USER_PROFILE_KEY = "user-state"; // stored in local storage.
-    const X_PXT_TARGET = "x-pxt-target"; // header passed in rest call.
+    const X_PXT_TARGET = "x-pxt-target"; // header passed in auth rest calls.
 
     export type ApiResult<T> = {
         resp: T;
@@ -546,7 +546,7 @@ namespace pxt.auth {
                 break;
             }
 
-            // Store csrf token in index db. It is ok to do this even when
+            // Store csrf token in local storage. It is ok to do this even when
             // "Remember me" wasn't selected because this token is not usable
             // without its cookie-based counterpart. When "Remember me" is false,
             // the cookie is not persisted.
