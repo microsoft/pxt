@@ -33,3 +33,6 @@ export const dispatchShowCarryoverModal = (mapId: string, activityId: string) =>
 export const dispatchShowShareModal = (mapId: string, activityId: string) => ({ type: actions.SHOW_SHARE_MODAL, mapId, activityId });
 
 export const dispatchHideModal = () => ({ type: actions.HIDE_MODAL });
+
+export const dispatchSetUserProfile = (profile?: pxt.auth.UserProfile) => ({ type: actions.SET_USER_PROFILE, profile });
+export const dispatchSetUserPreferences = (preferences?: pxt.auth.UserPreferences) => ({ type: actions.SET_USER_PROFILE, preferences });

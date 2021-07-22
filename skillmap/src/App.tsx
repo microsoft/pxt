@@ -4,6 +4,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 import store from "./store/store";
+import * as auth from "./lib/authClient";
 
 import {
     dispatchAddSkillMap,
@@ -44,6 +45,7 @@ interface AppProps {
     activityOpen: boolean;
     backgroundImageUrl: string;
     theme: SkillGraphTheme;
+    signedIn: boolean;
     dispatchAddSkillMap: (map: SkillMap) => void;
     dispatchClearSkillMaps: () => void;
     dispatchClearMetadata: () => void;
@@ -215,6 +217,10 @@ class AppImpl extends React.Component<AppProps, AppState> {
     async componentDidMount() {
         this.unsubscribeChangeListener = store.subscribe(this.onStoreChange);
         this.queryFlags = parseQuery();
+        if (this.queryFlags["authcallback"]) {
+            await auth.loginCallbackAsync(this.queryFlags);
+        }
+        await auth.authCheckAsync();
         await this.initLocalizationAsync();
         await this.parseHashAsync();
     }
@@ -241,6 +247,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
                         { !error && <InfoPanel />}
                     </div>
                 }
+                <div>{this.props.signedIn ? "Signed In" : "Not Signed In"}</div>
                 <AppModal />
             </div>);
     }
@@ -305,7 +312,8 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         skillMaps: state.maps,
         activityOpen: !!state.editorView,
         backgroundImageUrl: state.backgroundImageUrl,
-        theme: state.theme
+        theme: state.theme,
+        signedIn: state.auth.signedIn
     };
 }
 interface LocalizationUpdateOptions {

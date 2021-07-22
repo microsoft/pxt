@@ -23,6 +23,7 @@ export interface SkillMapState {
     editorView?: EditorViewState;
     modal?: ModalState;
     theme: SkillGraphTheme;
+    auth: AuthState;
 }
 
 export interface EditorViewState {
@@ -38,6 +39,12 @@ interface ModalState {
     type: ModalType;
     currentMapId?: string;
     currentActivityId?: string;
+}
+
+interface AuthState {
+    signedIn: boolean;
+    profile?: pxt.auth.UserProfile;
+    preferences?: pxt.auth.UserPreferences;
 }
 
 const initialState: SkillMapState = {
@@ -67,7 +74,10 @@ const initialState: SkillMapState = {
         selectedStrokeColor: "var(--hover-color)",
         pathOpacity: 0.5,
     },
-    maps: {}
+    maps: {},
+    auth: {
+        signedIn: false
+    }
 }
 
 const topReducer = (state: SkillMapState = initialState, action: any): SkillMapState => {
@@ -325,6 +335,23 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
             return {
                 ...state,
                 modal: undefined
+            };
+        case actions.SET_USER_PROFILE:
+            return {
+                ...state,
+                auth: {
+                    ...state.auth,
+                    profile: action.profile,
+                    signedIn: !!action.profile?.id
+                }
+            };
+        case actions.SET_USER_PREFERENCES:
+            return {
+                ...state,
+                auth: {
+                    ...state.auth,
+                    preferences: action.preferences,
+                }
             };
         default:
             return state
