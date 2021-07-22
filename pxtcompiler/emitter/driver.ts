@@ -64,7 +64,7 @@ namespace ts.pxtc {
                     length: d.length,
                     line: 0,
                     column: 0,
-                    messageText: d.messageText,
+                    messageText: ts.flattenDiagnosticMessageText(d.messageText, "\n"),
                     category: d.category,
                     fileName: "?",
                 }
@@ -78,7 +78,7 @@ namespace ts.pxtc {
                 length: d.length,
                 line: pos.line,
                 column: pos.character,
-                messageText: d.messageText,
+                messageText: ts.flattenDiagnosticMessageText(d.messageText, "\n"),
                 category: d.category,
                 fileName: d.file.fileName,
             }
