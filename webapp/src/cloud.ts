@@ -185,7 +185,7 @@ export class CloudTempMetadata {
 
     public cloudStatus(): CloudStatusInfo {
         const h = workspace.getHeader(this.headerId);
-        if (!h.cloudUserId)
+        if (!h || !h.cloudUserId)
             return undefined;
         if (!auth.loggedIn())
             return cloudStatusInfos["offline"];
