@@ -115,7 +115,7 @@ namespace pxt.storage {
  * One side effect: Localhost storage will be shared between different browsers and incognito tabs as well. To disable this
  * behavior, set the `routingEnabled` switch below to `false`.
  */
-namespace pxt.storage.localhost {
+namespace pxt.storage.shared {
     /**
      * Override switch. Setting this to `false` will stop routing calls to the pxt server, using browser storage instead.
      */
@@ -147,7 +147,7 @@ namespace pxt.storage.localhost {
 
     export async function setAsync(container: string, key: string, val: any): Promise<void> {
         if (typeof val == "undefined") {
-            await pxt.storage.localhost.delAsync(container, key);
+            await pxt.storage.shared.delAsync(container, key);
             return;
         }
         let sval = "";

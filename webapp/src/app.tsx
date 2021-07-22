@@ -4177,7 +4177,7 @@ export class ProjectView
 
     private handleFileListRef = (c: HTMLDivElement) => {
         this.fileListRef = c;
-        if (typeof ResizeObserver !== "undefined") {
+        if (c && typeof ResizeObserver !== "undefined") {
             const observer = new ResizeObserver(() => {
                 const scrollVisible = c.scrollHeight > c.clientHeight;
                 if (scrollVisible)
@@ -4868,7 +4868,7 @@ function filenameForEditor(editor: string): string {
 }
 
 pxt.winrt.captureInitialActivation();
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
     pxt.perf.recordMilestone(`DOM loaded`)
 
     pxt.setupWebConfig((window as any).pxtConfig);
@@ -4903,14 +4903,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Handle auth callback redirect.
     if (query["authcallback"]) {
-        pxt.auth.loginCallback(query);
+        await auth.loginCallbackAsync(query);
     }
 
-    auth.initVirtualApi();
+    await auth.initAsync();
     cloud.init(); // depends on auth.init() and workspace.ts's top level
     cloudsync.loginCheck()
     parseLocalToken();
-    auth.authCheckAsync();
     hash = parseHash();
     appcache.init(() => theEditor.reloadEditor());
     blocklyFieldView.init();

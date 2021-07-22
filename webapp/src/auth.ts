@@ -83,7 +83,7 @@ class AuthClient extends pxt.auth.AuthClient {
     }
 
     public static authApiHandler(p: string): pxt.auth.UserProfile | boolean | string {
-        const cli = client();
+        const cli = pxt.auth.client();
         if (cli) {
             const field = data.stripProtocol(p);
             const state = cli.getState();
@@ -96,7 +96,7 @@ class AuthClient extends pxt.auth.AuthClient {
     }
 
     public static userPreferencesHandler(path: string): pxt.auth.UserPreferences | boolean | string {
-        const cli = client();
+        const cli = pxt.auth.client();
         if (cli) {
             const state = cli.getState();
             if (!state.preferences) {
@@ -108,7 +108,7 @@ class AuthClient extends pxt.auth.AuthClient {
     }
 
     private static internalUserPreferencesHandler(path: string): pxt.auth.UserPreferences | boolean | string {
-        const cli = client();
+        const cli = pxt.auth.client();
         if (cli) {
             const state = cli.getState();
             const field = data.stripProtocol(path);
@@ -124,7 +124,13 @@ class AuthClient extends pxt.auth.AuthClient {
     }
 }
 
-export function initVirtualApi() {
+export async function initAsync() {
+    initVirtualApi();
+    const cli = await clientAsync();
+    await cli?.authCheckAsync();
+}
+
+function initVirtualApi() {
     data.mountVirtualApi(USER_PREF_MODULE, {
         getSync: AuthClient.userPreferencesHandler,
     });
@@ -145,9 +151,13 @@ function generateUserProfilePicDataUrl(profile: pxt.auth.UserProfile) {
     }
 }
 
-function client() {
+async function clientAsync(): Promise<AuthClient | undefined> {
     if (!pxt.auth.hasIdentity()) { return undefined; }
-    return pxt.auth.client() ?? new AuthClient();
+    let cli = pxt.auth.client();
+    if (cli) { return cli as AuthClient; }
+    cli = new AuthClient();
+    await cli.initAsync();
+    return cli as AuthClient;
 }
 
 export function hasIdentity(): boolean {
@@ -167,29 +177,40 @@ export function userPreferences(): pxt.auth.UserPreferences {
 }
 
 export async function authCheckAsync(): Promise<pxt.auth.UserProfile | undefined> {
-    return await client()?.authCheckAsync();
+    const cli = await clientAsync();
+    return await cli?.authCheckAsync();
 }
 
 export async function initialUserPreferencesAsync(): Promise<pxt.auth.UserPreferences | undefined> {
-    return await client()?.initialUserPreferencesAsync();
+    const cli = await clientAsync();
+    return await cli?.initialUserPreferencesAsync();
 }
 
 export async function loginAsync(idp: pxt.IdentityProviderId, persistent: boolean, callbackState: pxt.auth.CallbackState = undefined): Promise<void> {
-    await client()?.loginAsync(idp, persistent, callbackState);
+    const cli = await clientAsync();
+    return await cli?.loginAsync(idp, persistent, callbackState);
+}
+
+export async function loginCallbackAsync(qs: pxt.Map<string>): Promise<void> {
+    return await pxt.auth.loginCallbackAsync(qs);
 }
 
 export async function logoutAsync(): Promise<void> {
-    await client()?.logoutAsync();
+    const cli = await clientAsync();
+    return await cli?.logoutAsync();
 }
 
 export async function updateUserPreferencesAsync(newPref: Partial<pxt.auth.UserPreferences>): Promise<void> {
-    await client()?.updateUserPreferencesAsync(newPref);
+    const cli = await clientAsync();
+    return await cli?.updateUserPreferencesAsync(newPref);
 }
 
 export async function deleteProfileAsync(): Promise<void> {
-    await client()?.deleteProfileAsync();
+    const cli = await clientAsync();
+    return await cli?.deleteProfileAsync();
 }
 
 export async function apiAsync<T = any>(url: string, data?: any, method?: string): Promise<pxt.auth.ApiResult<T>> {
-    return await client()?.apiAsync(url, data, method);
+    const cli = await clientAsync();
+    return await cli?.apiAsync(url, data, method);
 }
