@@ -157,7 +157,7 @@ namespace pxt.BrowserUtils {
             return /skill(?:s?)Map=1/.test(window.location.href);
         } catch (e) { return false; }
     }
-    
+
     export function hasPointerEvents(): boolean {
         return typeof window != "undefined" && !!(window as any).PointerEvent;
     }
