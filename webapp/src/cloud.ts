@@ -260,12 +260,18 @@ function resetAsync(): Promise<void> {
 let inProgressSyncPromise: Promise<pxt.workspace.Header[]>;
 export async function syncAsync(hdrs?: Header[]): Promise<Header[]> {
     // wait for any pending saves
-    await inProgressSavePromise;
+    try {
+        await inProgressSavePromise;
+    } catch {
+        // Rejected global promise. Reset it.
+        inProgressSavePromise = undefined;
+    }
     // ensure we don't run this twice
     if (!inProgressSyncPromise) {
         inProgressSyncPromise = syncAsyncInternal(hdrs).then(res => {
-            inProgressSyncPromise = undefined;
             return res;
+        }).finally(() => {
+            inProgressSyncPromise = undefined;
         });
     }
     return inProgressSyncPromise;
@@ -691,8 +697,18 @@ async function onHeadersChanged(): Promise<void> {
     if (!auth.loggedIn()) { return; }
 
     // wait on any already pending saves or syncs first
-    await inProgressSavePromise;
-    await inProgressSyncPromise;
+    try {
+        await inProgressSavePromise;
+    } catch {
+        // Rejected global promise. Reset it.
+        inProgressSavePromise = undefined;
+    }
+    try {
+        await inProgressSyncPromise;
+    } catch {
+        // Rejected global promise. Reset it.
+        inProgressSyncPromise = undefined;
+    }
 
     // get our work
     const hdrs = getLocalCloudHeaders().filter(h => headerWorklist[h.id])
@@ -707,16 +723,21 @@ async function onHeadersChanged(): Promise<void> {
     inProgressSavePromise = Promise.all(saveTasks);
 
     // check the response
-    const allRes = await inProgressSavePromise;
-    const anyFailed = allRes.some(r => !r);
-    if (anyFailed) {
-        pxt.tickEvent(`identity.cloudSaveFailedTriggeringPartialSync`);
-        // if any saves failed, then we're out of sync with the cloud so resync.
-        await syncAsync(hdrs);
-    } else {
-        // success!
-        const elapsedSec = U.nowSeconds() - saveStart;
-        pxt.tickEvent(`identity.cloudSaveSucceeded`, { elapsedSec });
+    try {
+        const allRes = await inProgressSavePromise;
+        const anyFailed = allRes.some(r => !r);
+        if (anyFailed) {
+            pxt.tickEvent(`identity.cloudSaveFailedTriggeringPartialSync`);
+            // if any saves failed, then we're out of sync with the cloud so resync.
+            await syncAsync(hdrs);
+        } else {
+            // success!
+            const elapsedSec = U.nowSeconds() - saveStart;
+            pxt.tickEvent(`identity.cloudSaveSucceeded`, { elapsedSec });
+        }
+    } catch {
+        // Rejected global promise. Reset it.
+        inProgressSavePromise = undefined;
     }
 }
 
