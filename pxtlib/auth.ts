@@ -16,7 +16,9 @@ namespace pxt.auth {
     const DEV_BACKEND_DEFAULT = "";
     const DEV_BACKEND_PROD = "https://www.makecode.com";
     const DEV_BACKEND_STAGING = "https://staging.pxt.io";
-    const DEV_BACKEND_LOCALHOST = "http://localhost:5500";
+    // Localhost endpoints. Ensure matching port number in pxt-backend/node/.vscode/launch.json
+    const DEV_BACKEND_LOCALHOST_5500 = "http://localhost:5500"; // if running in Docker container
+    const DEV_BACKEND_LOCALHOST_8080 = "http://localhost:8080"; // if not running in Docker
 
     const DEV_BACKEND = DEV_BACKEND_STAGING;
 

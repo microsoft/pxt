@@ -141,7 +141,7 @@ namespace pxt.storage.shared {
         } else {
             const sval = pxt.storage.getLocal(`${container}:${key}`);
             const val = pxt.Util.jsonTryParse(sval);
-            return val;
+            return val ? val : sval;
         }
     }
 
