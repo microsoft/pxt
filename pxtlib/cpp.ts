@@ -272,7 +272,7 @@ namespace pxt.cpp {
             }
 
             for (const fn of pkg.getFiles()) {
-                if (["Makefile", "sdkconfig.defaults", "CMakeLists.txt"].indexOf(fn) >= 0) {
+                if (["Makefile", "sdkconfig.defaults", "CMakeLists.txt"].indexOf(fn) >= 0 || U.endsWith(fn, ".mk")) {
                     res.generatedFiles["/" + fn] = pkg.host().readFile(pkg, fn)
                 }
             }
