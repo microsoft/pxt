@@ -5056,7 +5056,10 @@ document.addEventListener("DOMContentLoaded", async () => {
                 return pxt.winrt.loadActivationProject();
             }
             if (pxt.shell.isNoProject()) {
-                workspace.fireEvent({ type: "createproject", editor: "blocks" });
+                pxt.editor.postHostMessageAsync({
+                    action: "newproject",
+                    options: { preferredEditor: "blocks" }
+                } as pxt.editor.EditorMessageNewProjectRequest)
                 return Promise.resolve();
             }
             if (showHome) return Promise.resolve();

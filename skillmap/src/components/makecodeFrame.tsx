@@ -144,13 +144,8 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
         }
 
         switch (data.action) {
-            case "event":
-                this.handleEditorTickEvent(data as pxt.editor.EditorMessageEventRequest);
-                break;
-            case "workspaceevent":
-                if ((data as pxt.editor.EditorWorkspaceEvent).event.type === "createproject") {
-                    this.handleWorkspaceReadyEventAsync();
-                }
+            case "newproject":
+                this.handleWorkspaceReadyEventAsync();
                 break;
             case "tutorialevent":
                 this.handleTutorialEvent(data as pxt.editor.EditorMessageTutorialEventRequest);
@@ -204,14 +199,6 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
                 carryoverPreviousCode: this.props.carryoverCode,
                 previousProjectHeaderId: this.props.previousHeaderId
             } as pxt.editor.EditorMessageStartActivity);
-        }
-    }
-
-    protected handleEditorTickEvent(event: pxt.editor.EditorMessageEventRequest) {
-        switch (event.tick) {
-            case "editor.loaded":
-                this.handleWorkspaceReadyEventAsync();
-                break;
         }
     }
 
