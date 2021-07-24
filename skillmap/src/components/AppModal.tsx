@@ -260,28 +260,35 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
 
     renderLoginModal() {
         const providers = pxt.auth.identityProviders();
-        const actions: ModalAction[] = [];
-        providers.map((p, key) => (
-            actions.push({label: p.name?p.name:"", iconClass:`xicon ${p.id}`, onClick: async () => {
-                pxt.tickEvent(`identity.loginClick`, { provider: p.name?p.name:"", rememberMe: this.state.rememberMe!.toString() });
-                // await auth.loginAsync(provider.id, rememberMe, {
-                //     hash: this.props.continuationHash
-                // });
-            }})
-        ))
 
-        return <Modal title={lf("Sign in or Signup")} actions={actions} onClose={this.handleOnClose}>
-            <div className="description">
-                <p>{lf("Connect an existing account in order to sign in or signup for the first time.")}</p>
-                {/* <Link className="ui" text={lf("Learn more")} icon="external alternate" ariaLabel={lf("Learn more")} href="https://aka.ms/cloudsave" target="_blank" onKeyDown={sui.fireClickOnEnter} /></p> */}
+        return <Modal title={lf("Sign in or Signup")} onClose={this.handleOnClose}>
+            <div className="sign-in-description">
+                <p>{lf("Connect an existing account in order to sign in or signup for the first time.")}
+                    <a href="https://aka.ms/cloudsave" target="_blank" onClick={()=>{window.open("https://aka.ms/cloudsave", "_blank")}}>
+                        <i className="icon external alternate"/>{lf("Learn more")}
+                    </a>
+                </p>
             </div>
-            <div className="container">
-                <div className="prompt">
+            <div className="sign-in-container">
+                <div className="sign-in-prompt">
                     <p>Choose an account to connect:</p>
                 </div>
-                <div className="remember-me">
-                    <i className="icon box"/>
-                    {/* <sui.PlainCheckbox label={lf("Remember me")} onChange={this.handleRememberMeChanged} /> */}
+                {providers.map((p, key) => {
+                    return <div className="modal-button" key={key} role="button" onClick={async () => {
+                        pxt.tickEvent(`identity.loginClick`, { provider: p.name?p.name:"", rememberMe: this.state.rememberMe!.toString() });
+                        // await auth.loginAsync(provider.id, rememberMe, {
+                        //     hash: this.props.continuationHash
+                        // });
+                    }}>
+                        <i className={`xicon ${p.id}`}/>
+                        <div className="label">
+                            {p.name}
+                        </div>
+                    </div>
+                })}
+                <div className="sign-in-remember" onClick={()=>this.setState({rememberMe: !this.state.rememberMe})}>
+                    <i className={`icon square outline ${this.state.rememberMe? "check" : ""}`}/>
+                    {lf("Remember me")}
                 </div>
             </div>
         </Modal>

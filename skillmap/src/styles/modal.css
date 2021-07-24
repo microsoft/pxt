@@ -107,6 +107,25 @@
     cursor: pointer;
 }
 
+/* LOGIN MODAL */
+.sign-in-description {
+    margin-bottom: 20px;
+}
+
+.sign-in-container {
+    display: grid;
+    row-gap: 10px;
+    justify-content: center;
+}
+
+.sign-in-prompt {
+    justify-self: center;
+}
+
+.sign-in-remember {
+    user-select: none;
+}
+
 /* COMPLETION CONFETTI */
 .confetti-container {
     position: absolute;
