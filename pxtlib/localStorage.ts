@@ -126,6 +126,7 @@ namespace pxt.storage.shared {
 
     export async function getAsync<T>(container: string, key: string): Promise<T> {
         if (routingEnabled && pxt.BrowserUtils.isLocalHostDev()) {
+            container += '-' + pxt.BrowserUtils.browser();
             const resp = await pxt.Util.requestAsync({
                 url: `${localhostStoreUrl}${encodeURIComponent(container)}/${encodeURIComponent(key)}`,
                 method: "GET",
@@ -156,6 +157,7 @@ namespace pxt.storage.shared {
         else
             sval = val.toString();
         if (routingEnabled && BrowserUtils.isLocalHostDev()) {
+            container += '-' + pxt.BrowserUtils.browser();
             const data = {
                 type: (typeof val === "object") ? "json" : "text",
                 val: sval
@@ -173,6 +175,7 @@ namespace pxt.storage.shared {
 
     export async function delAsync(container: string, key: string): Promise<void> {
         if (routingEnabled && BrowserUtils.isLocalHostDev()) {
+            container += '-' + pxt.BrowserUtils.browser();
             await pxt.Util.requestAsync({
                 url: `${localhostStoreUrl}${encodeURIComponent(container)}/${encodeURIComponent(key)}`,
                 method: "DELETE",

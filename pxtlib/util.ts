@@ -333,6 +333,114 @@ namespace ts.pxtc.Util {
         return res
     }
 
+    export type JsonPatchOp = {
+        op: 'add' | 'remove' | 'replace';
+        path: (string | number)[];
+        value?: string | number | boolean | object;
+    };
+
+    /**
+     * Returns the diff of two objects as a set of change operations, following the
+     * "JSON Patch" format: https://datatracker.ietf.org/doc/html/rfc6902, with one
+     * slight difference in how paths are encoded.
+     */
+    export function jsonDiff(outerObjA: any, outerObjB: any): JsonPatchOp[] {
+        const diff: {
+            add: JsonPatchOp[],
+            remove: JsonPatchOp[],
+            replace: JsonPatchOp[]
+        } = {
+            add: [],
+            remove: [],
+            replace: []
+        };
+
+        function diffRecursive(objA: any, objB: any, basePath: (string | number)[]) {
+            for (const baseKey of Object.keys(objA)) {
+                const key = Array.isArray(objA) ? Number(baseKey) : baseKey;
+                if (!(key in objB)) {
+                    // Gather remove ops
+                    diff.remove.push({
+                        op: 'remove',
+                        path: basePath.concat(key)
+                    });
+                }
+            }
+
+            for (const baseKey of Object.keys(objB)) {
+                const key = Array.isArray(objB) ? Number(baseKey) : baseKey;
+                const atObjA = objA[key];
+                const atObjB = objB[key];
+                if (!(key in objA)) {
+                    // Gather add ops
+                    diff.add.push({
+                        op: 'add',
+                        path: basePath.concat(key),
+                        value: atObjB
+                    });
+                } else if (!Object.is(atObjA, atObjB)) {
+                    // Value exists in both, and they're not the same instance.
+                    if (typeof atObjA !== typeof atObjB) {
+                        // Type changed. Replace the whole subtree.
+                        diff.replace.push({
+                            op: 'replace',
+                            path: basePath.concat(key),
+                            value: atObjB
+                        });
+                    } else {
+                        if (typeof atObjA !== 'object' &&
+                            typeof atObjB !== 'object' &&
+                            atObjA != atObjB) {
+                            // Leaf nodes with differing values. Replace.
+                            diff.replace.push({
+                                op: 'replace',
+                                path: basePath.concat(key),
+                                value: atObjB
+                            });
+                        } else {
+                            // Recurse
+                            diffRecursive(atObjA, atObjB, basePath.concat(key));
+                        }
+                    }
+                }
+            }
+        }
+
+        diffRecursive(outerObjA, outerObjB, []);
+
+        return [...diff.remove.reverse(), ...diff.replace, ...diff.add];
+    }
+
+    /**
+     * Applies a set of JSON Patch operations to the object.
+     */
+    export function jsonPatchInPlace(obj: any, ops: JsonPatchOp[]): void {
+        if (!obj || typeof obj !== 'object') {
+            throw new Error("jsonPatch: Must be an object or an array.");
+        }
+        for (const op of ops) {
+            const path = op.path.slice();
+            const lastKey: any = path.pop();
+            if (lastKey == null) {
+                throw new Error("jsonPath: missing last key");
+            }
+            let subObj = obj;
+            // Add sub-objects for each path element except the last one.
+            let currKey: any;
+            while (((currKey = path.shift())) != null) {
+                if (!(currKey in subObj)) {
+                    subObj[currKey] = {};
+                }
+                subObj = subObj[currKey];
+            }
+            if (op.op === 'remove') {
+                Array.isArray(subObj) ? subObj.splice(lastKey, 1) : delete subObj[lastKey];
+            } else if (op.op === 'add' || op.op === 'replace') {
+                subObj[lastKey] = op.value;
+            }
+        }
+    }
+
     export function strcmp(a: string, b: string) {
         if (a == b) return 0;
         if (a < b) return -1;
