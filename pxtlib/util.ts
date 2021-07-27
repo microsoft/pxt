@@ -434,6 +434,7 @@ namespace ts.pxtc.Util {
                 subObj = subObj[currKey];
             }
             if (op.op === 'remove') {
+                // eslint-disable-next-line
                 Array.isArray(subObj) ? subObj.splice(lastKey, 1) : delete subObj[lastKey];
             } else if (op.op === 'add' || op.op === 'replace') {
                 subObj[lastKey] = op.value;
