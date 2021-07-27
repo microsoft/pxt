@@ -271,6 +271,14 @@ namespace pxt.blocks {
         return ground(check);
     }
 
+    function returnTypeWithInheritance(e: Environment, b: Blockly.Block) {
+        if (!b.outputConnection?.check_?.length || b.outputConnection.check_[0] === "Array" || b.outputConnection.check_[0] === "T") {
+            return [returnType(e, b)];
+        }
+
+        return b.outputConnection.check_.map(t => ground(t))
+    }
+
     function getReturnTypeOfFunction(e: Environment, name: string) {
         if (!e.userFunctionReturnValues[name]) {
             const definition = Blockly.Functions.getDefinition(name, e.workspace);
@@ -462,11 +470,20 @@ namespace pxt.blocks {
                         attachPlaceholderIf(e, b, "VALUE");
                         let rhs = getInputTargetBlock(b, "VALUE");
                         if (rhs) {
-                            let tr = returnType(e, rhs);
-                            try {
-                                union(p1, tr);
-                            } catch (e) {
-                                // TypeScript should catch this error and bubble it up
+                            // Get the inheritance chain for this type and check to see if the existing
+                            // type shows up in it somewhere
+                            let tr = returnTypeWithInheritance(e, rhs);
+                            const t1 = find(p1);
+                            if (t1.type && tr.slice(1).some(p => p.type === t1.type)) {
+                                // If it does, we want to take the most narrow type (which will always be in 0)
+                                p1.link = find(tr[0]);
+                            }
+                            else {
+                                try {
+                                    union(p1, tr[0]);
+                                } catch (e) {
+                                    // TypeScript should catch this error and bubble it up
+                                }
                             }
                         }
                         break;
