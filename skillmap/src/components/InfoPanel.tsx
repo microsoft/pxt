@@ -5,6 +5,7 @@ import { SkillMapState } from '../store/reducer';
 import { ActivityActions } from './ActivityActions';
 import { RewardActions } from './RewardActions';
 import { MapActions } from './MapActions';
+import { CloudActions } from "./CloudActions";
 
 import { ActivityStatus, isActivityUnlocked, isMapUnlocked, lookupActivityProgress,
     isActivityCompleted, getActivityStatus, isRewardNode } from '../lib/skillMapUtils';
@@ -55,6 +56,8 @@ export class InfoPanelImpl extends React.Component<InfoPanelProps> {
         const isMap = !node;
         const isActivity = node && !isRewardNode(node);
         const tags = isActivity && (node as MapActivity).tags || undefined;
+
+        const hasCloudSync = true;
         return <div className="info-panel">
             <div className="info-panel-image">
                 {imageUrl
@@ -81,6 +84,7 @@ export class InfoPanelImpl extends React.Component<InfoPanelProps> {
                     ? <ActivityActions mapId={mapId} activityId={node!.activityId} status={status} completedHeaderId={completedHeaderId} />
                     : <RewardActions mapId={mapId} activityId={node!.activityId} status={status} type={(node as MapReward).type} />)
                 }
+                {hasCloudSync && <CloudActions/>}
             </div>
         </div>
     }

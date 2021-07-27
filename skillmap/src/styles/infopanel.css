@@ -6,8 +6,6 @@
     margin: 1rem;
     z-index: var(--above-graph-zindex);
     background-color: var(--body-background-color);
-
-    border: 1px solid #000; /* TEMP */
 }
 
 /* Preview Image */
@@ -20,6 +18,7 @@
     overflow: hidden;
     text-align: center;
     background-color: var(--primary-color);
+    border: 1px solid #000; /* TEMP */
 }
 
 .info-panel-image img {
@@ -35,6 +34,9 @@
 
 .info-panel-content {
     padding: 1rem;
+    flex-grow: 100;
+    border: 1px solid #000; /* TEMP */
+    overflow-y: auto;
 }
 
 /* Vertical Padding */
@@ -126,6 +128,28 @@
     cursor: default;
 }
 
+/* Cloud Button */
+/* VVN TODO COLORS */
+.cloud-action {
+    margin-top: 1rem;
+}
+
+.sign-in-button {
+    color: white;
+    background-color: #2EA9B0;
+    border-radius: .4rem;
+    padding: .5rem;
+    text-align: center
+}
+
+.cloud-indicator {
+    display: flex;
+    color: #2EA9B0;
+}
+
+.cloud-indicator > .xicon {
+    margin-right: .5rem;
+}
 
 /*******************************/
 /*****     TABLET VIEW     *****/

@@ -42,7 +42,9 @@ export class Modal extends React.Component<ModalProps> {
                 </div>
                 {actions && actions.length > 0 && <div className="modal-actions">
                     {actions.map((el, i) => {
-                        return <div key={i} className={`modal-button ${el.className || ""}`} onClick={el.onClick} role="button">{el.label}</div>
+                        return <div key={i} className={`modal-button ${el.className || ""}`} onClick={el.onClick} role="button">
+                            {el.label}
+                        </div>
                     })}
                 </div>}
             </div>

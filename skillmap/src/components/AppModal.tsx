@@ -30,6 +30,8 @@ interface AppModalProps {
 interface AppModalState {
     loading?: boolean;
     data?: ShareModalData;
+    rememberMe?: boolean; // For the Login modal
+    continuationHash?: string; // for login modal
 }
 
 interface ShareModalData {
@@ -60,6 +62,8 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                 return this.renderCodeCarryoverModal();
             case "share":
                 return this.renderShareModal();
+            case "login":
+                return this.renderLoginModal();
             default:
                 return <div/>
         }
@@ -254,6 +258,41 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
         </Modal>
     }
 
+    renderLoginModal() {
+        const providers = pxt.auth.identityProviders();
+
+        return <Modal title={lf("Sign in or Signup")} onClose={this.handleOnClose}>
+            <div className="sign-in-description">
+                <p>{lf("Connect an existing account in order to sign in or signup for the first time.")}
+                    <a href="https://aka.ms/cloudsave" target="_blank" onClick={()=>{window.open("https://aka.ms/cloudsave", "_blank")}}>
+                        <i className="icon external alternate"/>{lf("Learn more")}
+                    </a>
+                </p>
+            </div>
+            <div className="sign-in-container">
+                <div className="sign-in-prompt">
+                    <p>Choose an account to connect:</p>
+                </div>
+                {providers.map((p, key) => {
+                    return <div className="modal-button" key={key} role="button" onClick={async () => {
+                        pxt.tickEvent(`identity.loginClick`, { provider: p.name?p.name:"", rememberMe: this.state.rememberMe!.toString() });
+                        // await auth.loginAsync(provider.id, rememberMe, {
+                        //     hash: this.props.continuationHash
+                        // });
+                    }}>
+                        <i className={`xicon ${p.id}`}/>
+                        <div className="label">
+                            {p.name}
+                        </div>
+                    </div>
+                })}
+                <div className="sign-in-remember" onClick={()=>this.setState({rememberMe: !this.state.rememberMe})}>
+                    <i className={`icon square outline ${this.state.rememberMe? "check" : ""}`}/>
+                    {lf("Remember me")}
+                </div>
+            </div>
+        </Modal>
+    }
 }
 
 function mapStateToProps(state: SkillMapState, ownProps: any) {
