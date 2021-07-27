@@ -190,10 +190,10 @@ function getTokenAsync(): Promise<ImmersiveReaderToken> {
     const cachedToken: ImmersiveReaderToken = pxt.Util.jsonTryParse(storedTokenString);
 
     if (!cachedToken || (Date.now() / 1000 > cachedToken.expiration)) {
-        return pxt.Cloud.privateGetAsync("immreader").then(
+        return pxt.Util.requestAsync({ url: "https://makecode.com/api/immreader", method: "GET" }).then(
             res => {
-                pxt.storage.setLocal(IMMERSIVE_READER_ID, JSON.stringify(res));
-                return res;
+                pxt.storage.setLocal(IMMERSIVE_READER_ID, JSON.stringify(res.json));
+                return res.json;
             },
             e => {
                 pxt.storage.removeLocal(IMMERSIVE_READER_ID);
@@ -272,7 +272,7 @@ export function launchImmersiveReader(content: string, tutorialOptions: pxt.tuto
     });
 
     function testConnectionAsync(token: ImmersiveReaderToken): Promise<ImmersiveReaderToken> {
-        return pxt.Cloud.privateGetAsync("ping").then(() => {return token});
+        return pxt.Util.requestAsync({url: "https://makecode.com/api/ping"}).then(() => {return token});
     }
 }
 
