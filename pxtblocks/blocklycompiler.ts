@@ -470,9 +470,12 @@ namespace pxt.blocks {
                         attachPlaceholderIf(e, b, "VALUE");
                         let rhs = getInputTargetBlock(b, "VALUE");
                         if (rhs) {
+                            // Get the inheritance chain for this type and check to see if the existing
+                            // type shows up in it somewhere
                             let tr = returnTypeWithInheritance(e, rhs);
                             const t1 = find(p1);
                             if (t1.type && tr.slice(1).some(p => p.type === t1.type)) {
+                                // If it does, we want to take the most narrow type (which will always be in 0)
                                 p1.link = find(tr[0]);
                             }
                             else {
