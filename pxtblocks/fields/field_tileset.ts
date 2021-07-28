@@ -93,7 +93,9 @@ namespace pxtblockly {
 
         getValue() {
             if (this.selectedOption_) {
-                const tile = this.selectedOption_[2];
+                let tile = this.selectedOption_[2];
+                tile = pxt.react.getTilemapProject().lookupAsset(tile.type, tile.id);
+
                 return pxt.getTSReferenceForAsset(tile);
             }
             const v = super.getValue();

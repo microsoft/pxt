@@ -547,4 +547,10 @@ describe("blockly compiler", function () {
             blockTestAsync("action_event").then(done, done);
         });
     })
+
+    describe("compiling variable set", () => {
+        it("should attempt narrow types to the most specific type when set", done => {
+            blockTestAsync("inheritance").then(done, done);
+        });
+    })
 });
