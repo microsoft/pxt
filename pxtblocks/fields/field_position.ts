@@ -118,7 +118,6 @@ namespace pxtblockly {
                     label.textContent = `${this.params.xInputName}=${x} ${this.params.yInputName}=${y}`;
                 }
                 
-
                 // Position the label so that it doesn't go outside the screen bounds
                 const bb = label.getBoundingClientRect();
                 if (x > this.params.screenWidth / 2) {
