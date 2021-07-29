@@ -12,7 +12,7 @@ namespace pxt.tutorial {
         // collect code and infer editor
         const { code, templateCode, editor, language, jres, assetJson, customTs, tutorialValidationRulesStr } = computeBodyMetadata(body);
 
-        // parses tutorial rules string into a map of rules and enablement flag 
+        // parses tutorial rules string into a map of rules and enablement flag
         let tutorialValidationRules: pxt.Map<boolean>;
         if (metadata.tutorialCodeValidation) {
             tutorialValidationRules = pxt.Util.jsonTryParse(tutorialValidationRulesStr);
@@ -355,8 +355,8 @@ ${code}
         let text = pre.textContent;
 
         // collapse image python/js literales
-        text = text.replace(/img\s*\(\s*"{3}(.|\n)*"{3}\s*\)/g, `img(""" """)`);
-        text = text.replace(/img\s*\s*`(.|\n)*`\s*/g, "img` `");
+        text = text.replace(/img\s*\(\s*"{3}[\s\da-f.#tngrpoyw]*"{3}\s*\)/g, `img(""" """)`);
+        text = text.replace(/img\s*`[\s\da-f.#tngrpoyw]*`\s*/g, "img` `");
 
         if (!/@highlight/.test(text)) { // shortcut, nothing to do
             pre.textContent = text;
