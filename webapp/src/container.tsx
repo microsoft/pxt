@@ -135,6 +135,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.pair = this.pair.bind(this);
         this.pairBluetooth = this.pairBluetooth.bind(this);
         this.showAboutDialog = this.showAboutDialog.bind(this);
+        this.showTurnBackTimeDialog = this.showTurnBackTimeDialog.bind(this);
         this.print = this.print.bind(this);
     }
 
@@ -229,6 +230,11 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.props.parent.showAboutDialog();
     }
 
+    showTurnBackTimeDialog() {
+        pxt.tickEvent("menu.turnBackTime");
+        this.props.parent.showTurnBackTimeDialogAsync();
+    }
+
     print() {
         pxt.tickEvent("menu.print");
         this.props.parent.printCode();
@@ -303,6 +309,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...")} onClick={this.showReportAbuse} /> : undefined}
             {!isController ? <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={this.showResetDialog} /> : undefined}
             <sui.Item role="menuitem" text={lf("About...")} onClick={this.showAboutDialog} />
+            <sui.Item role="menuitem" text={lf("Turn back time...")} onClick={this.showTurnBackTimeDialog} />
             {
                 // we always need a way to clear local storage, regardless if signed in or not
             }

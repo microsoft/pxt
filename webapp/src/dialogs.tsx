@@ -6,9 +6,12 @@ import * as core from "./core";
 import * as coretsx from "./coretsx";
 import * as pkg from "./package";
 import * as cloudsync from "./cloudsync";
+import * as workspace from "./workspace";
+import * as codecard from "./codecard";
 
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
+import { TimeMachine } from "./timeMachine";
 
 let dontShowDownloadFlag = false;
 
@@ -850,4 +853,32 @@ export function clearDontShowDownloadDialogFlag() {
 
 export function isDontShowDownloadDialogFlagSet() {
     return dontShowDownloadFlag;
+}
+
+export async function showTurnBackTimeDialogAsync(header: pxt.workspace.Header, reloadHeader: () => void) {
+    const history = await workspace.getScriptHistoryAsync(header);
+    const text = await workspace.getTextAsync(header.id);
+
+    const onTimestampSelect = async (timestamp: number) => {
+        core.hideDialog();
+
+        let currentText = text;
+
+        for (let i = 0; i < history.length; i++) {
+            const entry = history[history.length - 1 - i];
+            currentText = workspace.applyDiff(currentText, entry, false);
+            if (entry.timestamp === timestamp) break;
+        }
+
+        await workspace.saveAsync(header, currentText);
+        reloadHeader();
+    }
+
+    await core.dialogAsync({
+        header: lf("Turn back time"),
+        className: "time-machine-dialog",
+        size: "fullscreen",
+        hasCloseIcon: true,
+        jsx: <TimeMachine history={history} text={text} onTimestampSelect={onTimestampSelect} />
+    })
 }

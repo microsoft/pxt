@@ -54,5 +54,6 @@ declare namespace pxt.workspace {
 
         // Other
         _rev: string; // used for idb / pouchdb revision tracking
+        historyRev: string;
     }
 }

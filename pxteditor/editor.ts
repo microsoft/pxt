@@ -341,6 +341,7 @@ namespace pxt.editor {
         showLanguagePicker(): void;
         showShareDialog(title?: string): void;
         showAboutDialog(): void;
+        showTurnBackTimeDialogAsync(): Promise<void>;
 
         showLoginDialog(continuationHash?: string): void;
         showProfileDialog(location?: string): void;

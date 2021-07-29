@@ -3551,6 +3551,12 @@ export class ProjectView
         dialogs.showAboutDialogAsync(this);
     }
 
+    showTurnBackTimeDialogAsync() {
+        return dialogs.showTurnBackTimeDialogAsync(this.state.header, () => {
+            this.reloadHeaderAsync()
+        });
+    }
+
     showLoginDialog(continuationHash?: string) {
         this.loginDialog.show(continuationHash);
     }

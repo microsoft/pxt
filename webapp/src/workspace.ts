@@ -15,6 +15,8 @@ import * as compiler from "./compiler"
 import * as auth from "./auth"
 import * as cloud from "./cloud"
 
+import * as diff from "diff";
+
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
 
@@ -553,6 +555,35 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
         const toWrite = text ? e.text : null;
 
         try {
+            if (toWrite && impl.setHistoryAsync && impl.getHistoryAsync) {
+                const previous = await impl.getAsync(h);
+
+                if (previous) {
+                    const diff = diffScriptText(previous.text, toWrite);
+
+                    if (diff) {
+                        const history = (await impl.getHistoryAsync(h)) || [];
+
+                        const top = history[history.length - 1];
+
+                        if (top && canCombine(top, diff)) {
+                            top.timestamp = diff.timestamp;
+                            diff.changes.forEach(change => top.changes.push(change));
+                        }
+                        else {
+                            history.push(diff);
+                        }
+
+                        h.historyRev = await impl.setHistoryAsync(h, history, h.historyRev);
+                    }
+                }
+            }
+        }
+        catch (e) {
+
+        }
+
+        try {
             ver = await impl.setAsync(h, e.version, toWrite);
         } catch (e) {
             // Write failed; use in memory db.
@@ -588,6 +619,10 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
     });
 }
 
+export function getScriptHistoryAsync(header: Header): Promise<pxt.workspace.HistoryEntry[]> {
+    return impl.getHistoryAsync ? impl.getHistoryAsync(header) : Promise.resolve(undefined);
+}
+
 function computePath(h: Header) {
     let path = h.name.replace(/[^a-zA-Z0-9]+/g, " ").trim().replace(/ /g, "-")
     if (!path)
@@ -600,6 +635,95 @@ function computePath(h: Header) {
     }
 
     return path
+}
+
+function diffScriptText(oldVersion: pxt.workspace.ScriptText, newVersion: pxt.workspace.ScriptText): pxt.workspace.HistoryEntry {
+    const changes: pxt.workspace.FileChange[] = [];
+
+    for (const file of Object.keys(oldVersion)) {
+        if (!(file.endsWith(".ts") || file.endsWith(".jres") || file.endsWith(".py") || file.endsWith(".blocks") || file === "pxt.json")) continue;
+        if (newVersion[file] == undefined) {
+            changes.push({
+                type: "removed",
+                filename: file,
+                value: oldVersion[file]
+            });
+        }
+        else if (oldVersion[file] !== newVersion[file]) {
+            changes.push({
+                type: "edited",
+                filename: file,
+                forwardPatch: diff.createPatch(file, oldVersion[file], newVersion[file]),
+                backwardPatch: diff.createPatch(file, newVersion[file], oldVersion[file])
+            });
+        }
+    }
+
+    for (const file of Object.keys(newVersion)) {
+        if (!(file.endsWith(".ts") || file.endsWith(".jres") || file.endsWith(".py") || file.endsWith(".blocks") || file === "pxt.json")) continue;
+
+        if (oldVersion[file] == undefined) {
+            changes.push({
+                type: "added",
+                filename: file,
+                value: newVersion[file]
+            });
+        }
+    }
+
+    if (!changes.length) return undefined;
+
+    return {
+        timestamp: Date.now(),
+        changes
+    }
+}
+
+
+export function applyDiff(text: ScriptText, history: pxt.workspace.HistoryEntry, forwards: boolean) {
+    if (forwards) {
+        for (const change of history.changes) {
+            if (change.type === "added") {
+                text[change.filename] = change.value;
+            }
+            else if (change.type === "removed") {
+                delete text[change.filename]
+            }
+            else {
+                text[change.filename] = diff.applyPatch(text[change.filename], change.forwardPatch);
+            }
+        }
+    }
+    else {
+        for (const change of history.changes) {
+            if (change.type === "added") {
+                delete text[change.filename]
+            }
+            else if (change.type === "removed") {
+                text[change.filename] = change.value;
+            }
+            else {
+                text[change.filename] = diff.applyPatch(text[change.filename], change.backwardPatch);
+            }
+        }
+    }
+
+    return text;
+}
+
+function canCombine(oldEntry: pxt.workspace.HistoryEntry, newEntry: pxt.workspace.HistoryEntry) {
+    if (newEntry.timestamp - oldEntry.timestamp > 3000) return false;
+
+    let fileNames: pxt.Map<boolean> = {};
+
+    for (const change of oldEntry.changes) {
+        fileNames[change.filename] = true;
+    }
+
+    for (const change of newEntry.changes) {
+        if (fileNames[change.filename]) return false;
+    }
+    return true;
 }
 
 export function importAsync(h: Header, text: ScriptText, isCloud = false) {

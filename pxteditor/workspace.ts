@@ -22,10 +22,38 @@ namespace pxt.workspace {
         version: Version;
     }
 
+    export interface HistoryEntry {
+        timestamp: number;
+        changes: FileChange[];
+    }
+
+    export type FileChange = FileAddedChange | FileRemovedChange | FileEditedChange;
+
+    export interface FileAddedChange {
+        type: "added";
+        filename: string;
+        value: string;
+    }
+
+    export interface FileRemovedChange {
+        type: "removed";
+        filename: string;
+        value: string;
+    }
+
+    export interface FileEditedChange {
+        type: "edited";
+        filename: string;
+        forwardPatch: any;
+        backwardPatch: any;
+    }
+
     export interface WorkspaceProvider {
         listAsync(): Promise<Header[]>; // called from workspace.syncAsync (including upon startup)
         getAsync(h: Header): Promise<File>;
         setAsync(h: Header, prevVersion: Version, text?: ScriptText): Promise<Version>;
+        setHistoryAsync?: (h: Header, history: HistoryEntry[], preVer: string) => Promise<string>;
+        getHistoryAsync?: (h: Header) => Promise<HistoryEntry[]>;
         deleteAsync?: (h: Header, prevVersion: Version) => Promise<void>;
         resetAsync(): Promise<void>;
         loadedAsync?: () => Promise<void>;
@@ -51,6 +79,7 @@ namespace pxt.workspace {
             pubId: "",
             pubCurrent: false,
             _rev: null,
+            historyRev: null,
             id: U.guidGen(),
             recentUse: modTime,
             modificationTime: modTime,
