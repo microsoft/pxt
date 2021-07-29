@@ -182,8 +182,8 @@ namespace pxt.Cloud {
         } else {
             url = `md/${pxt.appTarget.id}/${docid.replace(/^\//, "")}?targetVersion=${encodeURIComponent(targetVersion)}`;
         }
-        if (!packaged && locale != "en") {
-            url += `&lang=${encodeURIComponent(locale)}`
+        if (locale != "en") {
+            url += `${packaged ? "?" : "&"}lang=${encodeURIComponent(locale)}`
         }
         if (pxt.BrowserUtils.isLocalHost() && !pxt.Util.liveLocalizationEnabled()) {
             return localRequestAsync(url).then(resp => {
