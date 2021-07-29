@@ -16,6 +16,7 @@ namespace pxt {
         MMap = 10, // linux, mostly ev3
         BoxedString_SkipList = 11, // used by VM bytecode representation only
         BoxedString_ASCII = 12, // ditto
+        ZPin = 13,
         User0 = 16,
     }
 }
