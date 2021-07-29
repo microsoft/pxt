@@ -78,7 +78,7 @@ function getSectionsFromText(text: string) {
 
         if (currentSection) {
             const keyMatch = /^[*-]\s+(?:([^:]+):)?(.*)$/.exec(line);
-            const subkeyMatch = /^    ([*-])\s+(.*)$/.exec(line);
+            const subkeyMatch = /^ {4}([*-])\s+(.*)$/.exec(line);
 
             if (keyMatch) {
                 if (keyMatch[1]) {
