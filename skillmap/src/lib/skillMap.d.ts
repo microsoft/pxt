@@ -74,10 +74,18 @@ interface MapReward extends BaseNode {
     kind: "reward";
     type: MapRewardType;
     url: string;
+    actions: MapCompletionAction[];
 }
 
 interface MapCompletionNode extends MapReward {
     kind: "completion";
+}
+
+interface MapCompletionAction {
+    kind: "activity" | "map" | "docs" | "editor";
+    label?: string;
+    activityId?: string;
+    url?: string;
 }
 
 interface MapLayoutNode extends BaseNode {
