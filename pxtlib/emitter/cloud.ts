@@ -113,11 +113,12 @@ namespace pxt.Cloud {
         })
     }
 
-    // 1h check on markdown content if not on development server
-    const MARKDOWN_EXPIRATION = pxt.BrowserUtils.isLocalHostDev() ? 0 : 1 * 60 * 60 * 1000;
-    // 1w check don't use cached version and wait for new content
-    const FORCE_MARKDOWN_UPDATE = MARKDOWN_EXPIRATION * 24 * 7;
     export async function markdownAsync(docid: string, locale?: string): Promise<string> {
+        // 1h check on markdown content if not on development server
+        const MARKDOWN_EXPIRATION = pxt.BrowserUtils.isLocalHostDev() ? 0 : 1 * 60 * 60 * 1000;
+        // 1w check don't use cached version and wait for new content
+        const FORCE_MARKDOWN_UPDATE = MARKDOWN_EXPIRATION * 24 * 7;
+
         locale = locale || pxt.Util.userLanguage();
         const branch = "";
 
