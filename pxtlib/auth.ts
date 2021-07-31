@@ -20,7 +20,7 @@ namespace pxt.auth {
     const DEV_BACKEND_LOCALHOST_5500 = "http://localhost:5500"; // if running in Docker container
     const DEV_BACKEND_LOCALHOST_8080 = "http://localhost:8080"; // if not running in Docker
 
-    const DEV_BACKEND = DEV_BACKEND_LOCALHOST_8080;
+    const DEV_BACKEND = DEV_BACKEND_STAGING;
 
     let authDisabled = false;
 
