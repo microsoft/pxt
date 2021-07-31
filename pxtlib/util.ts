@@ -333,115 +333,6 @@ namespace ts.pxtc.Util {
         return res
     }
 
-    export type JsonPatchOp = {
-        op: 'add' | 'remove' | 'replace';
-        path: (string | number)[];
-        value?: string | number | boolean | object;
-    };
-
-    /**
-     * Returns the diff of two objects as a set of change operations, following the
-     * "JSON Patch" format: https://datatracker.ietf.org/doc/html/rfc6902, with one
-     * slight difference in how paths are encoded.
-     */
-    export function jsonDiff(outerObjA: any, outerObjB: any): JsonPatchOp[] {
-        const diff: {
-            add: JsonPatchOp[],
-            remove: JsonPatchOp[],
-            replace: JsonPatchOp[]
-        } = {
-            add: [],
-            remove: [],
-            replace: []
-        };
-
-        function diffRecursive(objA: any, objB: any, basePath: (string | number)[]) {
-            for (const baseKey of Object.keys(objA)) {
-                const key = Array.isArray(objA) ? Number(baseKey) : baseKey;
-                if (!(key in objB)) {
-                    // Gather remove ops
-                    diff.remove.push({
-                        op: 'remove',
-                        path: basePath.concat(key)
-                    });
-                }
-            }
-
-            for (const baseKey of Object.keys(objB)) {
-                const key = Array.isArray(objB) ? Number(baseKey) : baseKey;
-                const atObjA = objA[key];
-                const atObjB = objB[key];
-                if (!(key in objA)) {
-                    // Gather add ops
-                    diff.add.push({
-                        op: 'add',
-                        path: basePath.concat(key),
-                        value: atObjB
-                    });
-                } else if (!Object.is(atObjA, atObjB)) {
-                    // Value exists in both, and they're not the same instance.
-                    if (typeof atObjA !== typeof atObjB) {
-                        // Type changed. Replace the whole subtree.
-                        diff.replace.push({
-                            op: 'replace',
-                            path: basePath.concat(key),
-                            value: atObjB
-                        });
-                    } else {
-                        if (typeof atObjA !== 'object' &&
-                            typeof atObjB !== 'object' &&
-                            atObjA != atObjB) {
-                            // Leaf nodes with differing values. Replace.
-                            diff.replace.push({
-                                op: 'replace',
-                                path: basePath.concat(key),
-                                value: atObjB
-                            });
-                        } else {
-                            // Recurse
-                            diffRecursive(atObjA, atObjB, basePath.concat(key));
-                        }
-                    }
-                }
-            }
-        }
-
-        diffRecursive(outerObjA, outerObjB, []);
-
-        return [...diff.remove.reverse(), ...diff.replace, ...diff.add];
-    }
-
-    /**
-     * Applies a set of JSON Patch operations to the object.
-     */
-    export function jsonPatchInPlace(obj: any, ops: JsonPatchOp[]): void {
-        if (!obj || typeof obj !== 'object') {
-            throw new Error("jsonPatch: Must be an object or an array.");
-        }
-        for (const op of ops) {
-            const path = op.path.slice();
-            const lastKey: any = path.pop();
-            if (lastKey == null) {
-                throw new Error("jsonPath: missing last key");
-            }
-            let subObj = obj;
-            // Add sub-objects for each path element except the last one.
-            let currKey: any;
-            while (((currKey = path.shift())) != null) {
-                if (!(currKey in subObj)) {
-                    subObj[currKey] = {};
-                }
-                subObj = subObj[currKey];
-            }
-            if (op.op === 'remove') {
-                // eslint-disable-next-line
-                Array.isArray(subObj) ? subObj.splice(lastKey, 1) : delete subObj[lastKey];
-            } else if (op.op === 'add' || op.op === 'replace') {
-                subObj[lastKey] = op.value;
-            }
-        }
-    }
-
     export function strcmp(a: string, b: string) {
         if (a == b) return 0;
         if (a < b) return -1;
@@ -1913,4 +1804,351 @@ namespace ts.pxtc.BrowserImpl {
     export function sha256string(s: string) {
         return sha256buffer(Util.stringToUint8Array(Util.toUTF8(s)))
     }
+}
+
+namespace ts.pxtc.jsonPatch {
+    export type AddOperation = {
+        op: 'add',
+        path: (string | number)[];
+        value: string | number | boolean | object;
+    };
+
+    export type ReplaceOperation = {
+        op: 'replace',
+        path: (string | number)[];
+        value: string | number | boolean | object;
+    };
+
+    export type RemoveOperation = {
+        op: 'remove',
+        path: (string | number)[];
+    };
+
+    export type PatchOperation = AddOperation | ReplaceOperation | RemoveOperation;
+
+    interface Ops {
+        add(obj: any, key: string | number, value: any): void;
+        replace(obj: any, key: string | number, value: any): void;
+        remove(obj: any, key: string | number): void;
+    }
+
+    const objOps: Ops = {
+        add: (obj: any, key: string | number, value: any) => {
+            if (typeof obj !== 'object') throw new Error("jsonPatch: expected object type");
+            if (key in obj) throw new Error(`jsonPatch: object already contains key ${key}`);
+            obj[key] = value;
+        },
+        replace: (obj: any, key: string | number, value: any) => {
+            if (typeof obj !== 'object') throw new Error("jsonPatch: expected object type");
+            obj[key] = value;
+        },
+        remove: (obj: any, key: string | number) => {
+            if (typeof obj !== 'object') throw new Error("jsonPatch: expected object type");
+            delete obj[key];
+        },
+    }
+
+    const arrOps: Ops = {
+        add: (arr: any, key: string | number, value: any) => {
+            if (!Array.isArray(arr)) throw new Error("jsonPatch: expected array type");
+            if (key in arr) throw new Error(`jsonPatch: key ${key} already exists in array`);
+            if (typeof key === 'number') {
+                if (key === Math.floor(key)) {
+                    arr.splice(key, 0, value);
+                    return;
+                }
+            }
+            (arr as any)[key] = value;
+        },
+        replace: (arr: any, key: string | number, value: any) => {
+            if (!Array.isArray(arr)) throw new Error("jsonPatch: expected array type");
+            if (typeof key === 'number') {
+                if (key === Math.floor(key)) {
+                    arr.splice(key, 1, value);
+                    return;
+                }
+            }
+            (arr as any)[key] = value;
+        },
+        remove: (arr: any, key: string | number) => {
+            if (!Array.isArray(arr)) throw new Error("jsonPatch: expected array type");
+            if (typeof key === 'number') {
+                if (key === Math.floor(key)) {
+                    arr.splice(key, 1);
+                    return;
+                }
+            }
+            delete (arr as any)[key];
+        },
+    }
+
+    /**
+     * Returns the diff of two objects as a set of change operations, following the
+     * "JSON Patch" format: https://datatracker.ietf.org/doc/html/rfc6902 (with a
+     * small difference to the way paths are encoded).
+     */
+    export function diff(oldObj: any, newObj: any): PatchOperation[] {
+        const diff: {
+            add: AddOperation[]; remove: RemoveOperation[]; replace: ReplaceOperation[];
+        } = {
+            add: [], remove: [], replace: []
+        };
+
+        function _resolveKey(refObj: any, key: string): string | number {
+            if (!Array.isArray(refObj)) return key;
+            const nkey = Number.parseFloat(key);
+            return Number.isNaN(nkey) ? key : nkey;
+        }
+
+        function _diff(oldObj: any, newObj: any, basePath: (string | number)[]) {
+            if (Object.is(oldObj, newObj)) { return; }
+
+            for (let baseKey of Object.keys(oldObj)) {
+                if (!(baseKey in newObj)) {
+                    const key = _resolveKey(oldObj, baseKey);
+                    // key exists in oldObj but not in newObj -> remove op
+                    diff.remove.push({
+                        op: 'remove',
+                        path: basePath.concat(key)
+                    });
+                }
+            }
+
+            for (const baseKey of Object.keys(newObj)) {
+                const oldVal = oldObj[baseKey];
+                const newVal = newObj[baseKey];
+                const key = _resolveKey(newObj, baseKey);
+                if (!(key in oldObj)) {
+                    if (newObj[key] !== undefined) {
+                        // key exists in newObj but not in oldObj -> add op
+                        diff.add.push({
+                            op: 'add',
+                            path: basePath.concat(key),
+                            value: newVal
+                        });
+                    }
+                } else if (typeof oldVal !== 'object' && typeof newVal !== 'object' && oldVal !== newVal) {
+                    // Leaf nodes of same type with differing values -> replace op
+                    diff.replace.push({
+                        op: 'replace',
+                        path: basePath.concat(key),
+                        value: newVal
+                    });
+                } else if (typeof oldVal !== typeof newVal || Array.isArray(oldVal) !== Array.isArray(newVal)) {
+                    // Type changed -> replace op
+                    diff.replace.push({
+                        op: 'replace',
+                        path: basePath.concat(key),
+                        value: newVal
+                    });
+                } else {
+                    // Recurse
+                    _diff(oldVal, newVal, basePath.concat(key));
+                }
+            }
+        }
+
+        _diff(oldObj, newObj, []);
+
+        return [...diff.remove.reverse(), ...diff.replace, ...diff.add];
+    }
+
+    /**
+     * Applies a set of JSON Patch operations to the object.
+     */
+    export function patchInPlace(obj: any, ops: PatchOperation[]): void {
+        if (!obj || typeof obj !== 'object') {
+            throw new Error("jsonPatch: Must be an object or an array.");
+        }
+        for (const op of ops) {
+            const path = op.path.slice();
+            const lastKey: (string | number) = path.pop();
+            if (lastKey == null) {
+                throw new Error("jsonPatch: missing last key");
+            }
+            let parent = obj;
+            // Find parent object of lastKey
+            let currKey = path.shift();
+            while (currKey != null) {
+                if (!(currKey in parent)) {
+                    throw new Error(`jsonPatch: missing parent element ${currKey}`);
+                }
+                parent = parent[currKey];
+                currKey = path.shift();
+            }
+            if (Array.isArray(parent) && typeof lastKey !== 'number') {
+                throw new Error(`jsonPatch: expected numeric index for array object`);
+            }
+            const ops = Array.isArray(parent) ? arrOps : objOps;
+            if (op.op === 'remove') {
+                ops.remove(parent, lastKey);
+            } else if (op.op === 'add' && !(lastKey in parent)) {
+                ops.add(parent, lastKey, op.value);
+            } else if (op.op === 'replace') {
+                ops.replace(parent, lastKey, op.value);
+            }
+        }
+    }
+}
+
+namespace ts.pxtc.jsonPatch.tests {
+    export function diffTests() {
+        const tests: {
+            comment: string;
+            obja: any;
+            objb: any;
+            expected: ts.pxtc.jsonPatch.PatchOperation[]
+        }[] = [
+                {
+                    comment: "test 1",
+                    obja: { a: 4, b: 5 },
+                    objb: { a: 3, b: 5 },
+                    expected: [
+                        { op: "replace", path: ['a'], value: 3 }
+                    ]
+                },
+                {
+                    comment: "test 2",
+                    obja: { a: 3, b: 5 },
+                    objb: { a: 4, c: 5 },
+                    expected: [
+                        { op: "remove", path: ['b'] },
+                        { op: "replace", path: ['a'], value: 4 },
+                        { op: "add", path: ['c'], value: 5 }
+                    ]
+                },
+                {
+                    comment: "test 3",
+                    obja: { a: 4, b: [1, 2, 3] },
+                    objb: { a: 3, b: [1, 2, 4] },
+                    expected: [
+                        { op: "replace", path: ['a'], value: 3 },
+                        { op: "replace", path: ['b', 2], value: 4 }
+                    ]
+                },
+                {
+                    comment: "test 4",
+                    obja: { a: 3, b: [1, 2, 4] },
+                    objb: { a: 3, b: [1, 2, 4, 5] },
+                    expected: [
+                        { op: "add", path: ['b', 3], value: 5 }
+                    ]
+                },
+                {
+                    comment: "test 5",
+                    obja: { a: 4, b: { c: 3 } },
+                    objb: { a: 4, b: { c: 4 } },
+                    expected: [
+                        { op: "replace", path: ['b', 'c'], value: 4 }
+                    ]
+                },
+                {
+                    comment: "test 6",
+                    obja: { a: 4, b: { c: 4 } },
+                    objb: { a: 5, b: { d: 4 } },
+                    expected: [
+                        { op: "remove", path: ['b', 'c'] },
+                        { op: "replace", path: ['a'], value: 5 },
+                        { op: "add", path: ['b', 'd'], value: 4 }
+                    ]
+                }
+            ];
+
+        for (const test of tests) {
+            console.log(test.comment);
+            const patches = ts.pxtc.jsonPatch.diff(test.obja, test.objb);
+            if (deepEqual(patches, test.expected)) {
+                console.log("succeeded");
+            } else {
+                console.error("FAILED");
+                console.log("got", patches);
+                console.log("expected", test.expected);
+            }
+        }
+    }
+
+    export function patchTests() {
+        const tests: {
+            comment: string;
+            obj: any;
+            patches: ts.pxtc.jsonPatch.PatchOperation[];
+            expected?: any;
+        }[] = [
+                {
+                    comment: "test 1",
+                    obj: { a: "foo", b: [ 4, 11 ] },
+                    patches: [
+                        { op: "remove", path: ['b'] },
+                        { op: "replace", path: ['a'], value: 4 },
+                        { op: "add", path: ['c'], value: 5 }
+                    ],
+                    expected: { a: 4, c: 5 },
+                },
+                {
+                    comment: "test 2",
+                    obj: { a: 4, b: [1, 2, 3] },
+                    patches: [
+                        { op: "replace", path: ['a'], value: 3 },
+                        { op: "replace", path: ['b', 2], value: 4 },
+                        { op: "add", path: ['b', 3], value: 9 }
+                    ],
+                    expected: { a: 3, b: [1, 2, 4, 9] }
+                },
+                {
+                    comment: "test 3",
+                    obj: { a: 4, b: { c: 3 } },
+                    patches: [
+                        { op: "replace", path: ['a'], value: 5 },
+                        { op: "remove", path: ['b', 'c'] },
+                        { op: "add", path: ['b', 'd'], value: 4 }
+                    ],
+                    expected: { a: 5, b: { d: 4 } }
+                }
+            ];
+
+        for (const test of tests) {
+            console.log(test.comment);
+            ts.pxtc.jsonPatch.patchInPlace(test.obj, test.patches);
+            if (deepEqual(test.obj, test.expected)) {
+                console.log("succeeded");
+            } else if (test.expected) {
+                console.error("FAILED");
+                console.log("got", test.obj);
+                console.log("expected", test.expected);
+            }
+        }
+    }
+
+    function deepEqual(a: any, b: any): boolean {
+        if (a === b) { return true; }
+
+        if (a && b && typeof a === 'object' && typeof b === 'object') {
+            const arrA = Array.isArray(a);
+            const arrB = Array.isArray(b);
+
+            if (arrA && arrB) {
+                if (a.length !== b.length) { return false; }
+                for (let i = 0; i < a.length; ++i) {
+                    if (!deepEqual(a[i], b[i])) { return false; }
+                }
+                return true;
+            }
+
+            if (arrA !== arrB) { return false; }
+
+            const keysA = Object.keys(a);
+
+            if (keysA.length !== Object.keys(b).length) { return false; }
+
+            for (const key of keysA) {
+                if (!b.hasOwnProperty(key)) { return false; }
+                if (!deepEqual(a[key], b[key])) { return false; }
+            }
+
+            return true;
+        }
+
+        // True if both are NaN, false otherwise
+        return a !== a && b !== b;
+    };
 }

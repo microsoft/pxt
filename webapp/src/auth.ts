@@ -53,7 +53,7 @@ class AuthClient extends pxt.auth.AuthClient {
         data.invalidate("auth:*");
         return Promise.resolve();
     }
-    protected onUserPreferencesChanged(diff: pxt.Util.JsonPatchOp[]): Promise<void> {
+    protected onUserPreferencesChanged(diff: ts.pxtc.jsonPatch.PatchOperation[]): Promise<void> {
         for (const op of diff) {
             switch (op.path.join('/')) {
                 case "language": data.invalidate(LANGUAGE); break;
@@ -207,7 +207,7 @@ export async function deleteProfileAsync(): Promise<void> {
     await cli?.deleteProfileAsync();
 }
 
-export async function patchUserPreferencesAsync(ops: pxt.Util.JsonPatchOp | pxt.Util.JsonPatchOp[]): Promise<void> {
+export async function patchUserPreferencesAsync(ops: ts.pxtc.jsonPatch.PatchOperation | ts.pxtc.jsonPatch.PatchOperation[]): Promise<void> {
     const cli = await clientAsync();
     await cli?.patchUserPreferencesAsync(ops);
 }

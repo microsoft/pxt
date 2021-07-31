@@ -18,7 +18,7 @@ class AuthClient extends pxt.auth.AuthClient {
         store.dispatch(dispatchSetUserProfile(this.getState().profile));
         return Promise.resolve();
     }
-    protected onUserPreferencesChanged(diff: pxt.Util.JsonPatchOp[]): Promise<void> {
+    protected onUserPreferencesChanged(diff: ts.pxtc.jsonPatch.PatchOperation[]): Promise<void> {
         // TODO: Dispatch individual preference fields individually (if changed): language, highContrast, etc.
         return Promise.resolve();
     }

@@ -102,7 +102,7 @@ namespace pxt.auth {
         protected abstract onSignedOut(): Promise<void>;
         protected abstract onSignInFailed(): Promise<void>;
         protected abstract onUserProfileChanged(): Promise<void>;
-        protected abstract onUserPreferencesChanged(diff: pxt.Util.JsonPatchOp[]): Promise<void>;
+        protected abstract onUserPreferencesChanged(diff: ts.pxtc.jsonPatch.PatchOperation[]): Promise<void>;
         protected abstract onProfileDeleted(userId: string): Promise<void>;
         protected abstract onApiError(err: any): Promise<void>;
         protected abstract onStateCleared(): Promise<void>
@@ -289,11 +289,11 @@ namespace pxt.auth {
             return result.success;
         }
 
-        public async patchUserPreferencesAsync(ops: pxt.Util.JsonPatchOp | pxt.Util.JsonPatchOp[]) {
+        public async patchUserPreferencesAsync(ops: ts.pxtc.jsonPatch.PatchOperation | ts.pxtc.jsonPatch.PatchOperation[]) {
             ops = Array.isArray(ops) ? ops : [ops];
             if (!ops.length) { return; }
             const curPref = await this.userPreferencesAsync();
-            pxt.Util.jsonPatchInPlace(curPref, ops);
+            ts.pxtc.jsonPatch.patchInPlace(curPref, ops);
             await this.setUserPreferencesAsync(curPref);
             // If we're not logged in, non-persistent local state is all we'll use
             if (!await this.loggedInAsync()) { return; }
@@ -350,7 +350,7 @@ namespace pxt.auth {
 
         private async setUserPreferencesAsync(newPref: Partial<UserPreferences>) {
             const oldPref = this.getState().preferences ?? DEFAULT_USER_PREFERENCES()
-            const diff = pxt.Util.jsonDiff(oldPref, newPref);
+            const diff = ts.pxtc.jsonPatch.diff(oldPref, newPref);
             // update
             this.transformUserPreferences({
                 ...oldPref,
