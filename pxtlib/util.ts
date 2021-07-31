@@ -1921,6 +1921,13 @@ namespace ts.pxtc.jsonPatch {
                 if (!(key in oldObj)) {
                     if (newObj[key] !== undefined) {
                         // key exists in newObj but not in oldObj -> add op
+                        if (basePath.length) {
+                            diff.add.push({
+                                op: 'add',
+                                path: basePath,
+                                value: Array.isArray(newObj) ? [] : {}
+                            });
+                        }
                         diff.add.push({
                             op: 'add',
                             path: basePath.concat(key),
@@ -1950,7 +1957,7 @@ namespace ts.pxtc.jsonPatch {
 
         _diff(oldObj, newObj, []);
 
-        return [...diff.remove.reverse(), ...diff.replace, ...diff.add];
+        return [...diff.remove.reverse(), ...diff.replace, ...diff.add.sort((a, b) => a.path.length - b.path.length)];
     }
 
     /**
@@ -2031,6 +2038,7 @@ namespace ts.pxtc.jsonPatch.tests {
                     obja: { a: 3, b: [1, 2, 4] },
                     objb: { a: 3, b: [1, 2, 4, 5] },
                     expected: [
+                        { op: "add", path: ['b'], value: [] },
                         { op: "add", path: ['b', 3], value: 5 }
                     ]
                 },
@@ -2049,7 +2057,17 @@ namespace ts.pxtc.jsonPatch.tests {
                     expected: [
                         { op: "remove", path: ['b', 'c'] },
                         { op: "replace", path: ['a'], value: 5 },
+                        { op: "add", path: ['b'], value: {} },
                         { op: "add", path: ['b', 'd'], value: 4 }
+                    ]
+                },
+                {
+                    comment: "test 7",
+                    obja: { a: 4, b: [2, "foo"] },
+                    objb: { a: 4, b: [2, "foo", ["this", "that"]] },
+                    expected: [
+                        { op: "add", path: ['b'], value: [] },
+                        { op: "add", path: ['b', 2], value: ["this", "that"] }
                     ]
                 }
             ];
@@ -2062,7 +2080,7 @@ namespace ts.pxtc.jsonPatch.tests {
             } else {
                 console.error("FAILED");
                 console.log("got", patches);
-                console.log("expected", test.expected);
+                console.log("exp", test.expected);
             }
         }
     }
@@ -2072,17 +2090,18 @@ namespace ts.pxtc.jsonPatch.tests {
             comment: string;
             obj: any;
             patches: ts.pxtc.jsonPatch.PatchOperation[];
-            expected?: any;
+            expected: any;
+            validate?: (obj: any) => boolean;
         }[] = [
                 {
                     comment: "test 1",
-                    obj: { a: "foo", b: [ 4, 11 ] },
+                    obj: { a: "foo", b: [4, 11] },
                     patches: [
                         { op: "remove", path: ['b'] },
                         { op: "replace", path: ['a'], value: 4 },
                         { op: "add", path: ['c'], value: 5 }
                     ],
-                    expected: { a: 4, c: 5 },
+                    expected: { a: 4, c: 5 }
                 },
                 {
                     comment: "test 2",
@@ -2103,18 +2122,33 @@ namespace ts.pxtc.jsonPatch.tests {
                         { op: "add", path: ['b', 'd'], value: 4 }
                     ],
                     expected: { a: 5, b: { d: 4 } }
+                },
+                {
+                    comment: "test 4",
+                    obj: { a: 4 },
+                    patches: [
+                        { op: "add", path: ['b'], value: [] },
+                        { op: "add", path: ['b', 0], value: "foo" },
+                        { op: "add", path: ['b', 1], value: "bar" }
+                    ],
+                    expected: { a: 4, b: ["foo", "bar"] },
+                    validate: (obj: any): boolean => {
+                        return obj['b'] && obj['b'].forEach;
+                    }
                 }
             ];
 
         for (const test of tests) {
             console.log(test.comment);
             ts.pxtc.jsonPatch.patchInPlace(test.obj, test.patches);
-            if (deepEqual(test.obj, test.expected)) {
+            const equal = deepEqual(test.obj, test.expected);
+            const succeeded = equal && test.validate ? test.validate(test.obj) : true;
+            if (succeeded) {
                 console.log("succeeded");
             } else if (test.expected) {
                 console.error("FAILED");
                 console.log("got", test.obj);
-                console.log("expected", test.expected);
+                console.log("exp", test.expected);
             }
         }
     }
