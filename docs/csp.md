@@ -117,7 +117,11 @@ All of the materials for the **AP Computer Science Principles with Microsoft Mak
 
 If you decide to use the AP Computer Science Principles with Microsoft MakeCode curriculum or materials, please keep in touch. Join the [Microsoft MakeCode AP CSP Forum](https://forum.makecode.com/c/ap-cs-principles/23) to connect with other Educators teaching the course, ask questions, or give feedback on course materials. Please also follow [@MSMakeCode](https://twitter.com/MSMakeCode) on Twitter for the latest news and announcements.
 
-## FAQ 
+## FAQ
+
+* Are there professional development opportunities or other training available for this curriculum?
+
+>The professional development workshops for the 2021-2022 academic year have concluded. However, we will publish the schedule for Summer 2022 workshops in the Spring. Join the [Microsoft MakeCode AP CSP Forum](https://forum.makecode.com/c/ap-cs-principles/23) to be notified of the upcoming workshops.
 
 * How is the course graded/assessed?
 
@@ -135,7 +139,7 @@ If you decide to use the AP Computer Science Principles with Microsoft MakeCode 
 
 >The curriculum is all online and browser-based, so works on any platform (Windows, MacOS, iPads, and Chromebooks)
 
-* How does this course promote diversity & inclusion in computer science?
+* How does this course promote diversity and inclusion in computer science?
 
 >The Microsoft MakeCode curriculum was written to be culturally relevant to a wide variety of students with diverse backgrounds and experience levels with technology.  All computing terms are explained using language and analogies that students understand, most projects encourage student choice in the topic to ensure that the learning aligns to their interests, and no prior knowledge or computing experience is assumed in the course design and pacing.
 
