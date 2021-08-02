@@ -305,12 +305,12 @@ export function toggleHighContrast() {
     setHighContrast(!getHighContrastOnce())
 }
 export async function setHighContrast(on: boolean) {
-    await auth.updateUserPreferencesAsync({ highContrast: on });
+    await auth.setHighContrastPrefAsync(on);
 }
 
 export async function setLanguage(lang: string) {
     pxt.BrowserUtils.setCookieLang(lang);
-    await auth.updateUserPreferencesAsync({ language: lang });
+    await auth.setLangaugePrefAsync(lang);
 }
 
 export function resetFocus() {
