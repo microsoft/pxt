@@ -23,6 +23,7 @@
     --subtitle-text-color: #6e6e6e;
 
     --header-height: 4rem;
+    --header-padding-top: 1rem;
 
     --body-font-family: "Share Tech Mono", Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
 
@@ -32,6 +33,18 @@
 
     --graph-backround-zindex: 10;
     --above-graph-zindex: 20;
+}
+
+
+/*******************************/
+/***** SMALL DESKTOP VIEW  *****/
+/*******************************/
+
+@media only screen and (max-height: 44rem) and (min-width: 767px) {
+    :root {
+        --header-height: 3rem;
+        --header-padding-top: .5rem;
+    }
 }
 
 body {
@@ -174,7 +187,7 @@ code {
 .header-button {
     color: var(--invert-active-color);
     height: 100%;
-    padding: 1rem;
+    padding: var(--header-padding-top) 0.5rem;
     font-size: 1.2rem;
     text-align: center;
     cursor: pointer;
@@ -191,7 +204,7 @@ code {
 
 .header-button.icon-only {
     font-size: unset;
-    padding: 1rem 0.5rem;
+    padding: var(--header-padding-top) 0.5rem;
 }
 
 .header-button .header-button-label {
