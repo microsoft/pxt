@@ -110,7 +110,7 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
         return <div className="user-menu">
             {signedIn
              ? <Dropdown icon="star" items={items} picture={avatarElem || initialsElem} className="header-dropdown"/>
-             : <HeaderBarButton icon="xicon icon cloud-user" title={lf("Sign In")} label={lf("Sign In")} labelLeft={true} onClick={this.props.dispatchShowLoginModal}/>}
+             : <HeaderBarButton className="sign-in" icon="xicon icon cloud-user" title={lf("Sign In")} label={lf("Sign In")} labelLeft={true} onClick={this.props.dispatchShowLoginModal}/>}
         </div>;
     }
 
@@ -169,13 +169,14 @@ interface HeaderBarButtonProps {
     label?: string;
     title: string;
     onClick: () => void;
-    labelLeft?: boolean; // Put the label on the left side of the button
+    labelLeft?: boolean; // Put the label on the left side of the button;
+    className?: string;
 }
 
 const HeaderBarButton = (props: HeaderBarButtonProps) => {
-    const { icon, label, labelLeft, title, onClick } = props;
+    const { icon, label, labelLeft, title, onClick, className } = props;
 
-    return <div className={`header-button ${!label ? "icon-only" : "with-label"}`} title={title} role="button" onClick={onClick}>
+    return <div className={`header-button ${!label ? "icon-only" : "with-label"} ${className}`} title={title} role="button" onClick={onClick}>
         {label && labelLeft && <span className="header-button-label">{label}</span>}
         <i className={icon} />
         {label && !labelLeft && <span className="header-button-label">{label}</span>}

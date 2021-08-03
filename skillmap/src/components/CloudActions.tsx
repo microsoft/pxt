@@ -25,10 +25,10 @@ export class CloudActionsImpl extends React.Component<CloudActionsProps> {
                     <div className={"ui tiny cloudicon xicon cloud-saved-b"} title={lf("Project saved to cloud")} tabIndex={-1}></div>
                     {lf("Saved To Cloud!")}
                 </div>
-                : undefined
-                // : <div className="sign-in-button" onClick={this.props.dispatchShowLoginModal}>
-                //     {lf("Sign in to Save")}
-                // </div>
+
+                : <div className="sign-in-button" onClick={this.props.dispatchShowLoginModal}>
+                    {lf("Sign in to Save")}
+                </div>
             }
         </div>
     }

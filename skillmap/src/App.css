@@ -36,17 +36,6 @@
 }
 
 
-/*******************************/
-/***** SMALL DESKTOP VIEW  *****/
-/*******************************/
-
-@media only screen and (max-height: 44rem) and (min-width: 767px) {
-    :root {
-        --header-height: 3rem;
-        --header-padding-top: .5rem;
-    }
-}
-
 body {
     position: relative;
     margin: 0;
@@ -133,6 +122,21 @@ code {
 
 .user-menu {
     height: 100%;
+}
+
+.user-menu .header-button.sign-in {
+    border-radius: 6px;
+    background-color: var(--secondary-color);
+    color: #393939;
+    height: 80%;
+    margin: .5rem;
+    padding-top: .7rem;
+    padding-left: 1rem;;
+}
+
+.user-menu .header-button.sign-in:hover {
+    color: var(--secondary-color);
+    background-color: #393939;
 }
 
 .user-menu .header-dropdown {
@@ -331,25 +335,37 @@ code {
     }
 }
 
+/*******************************/
+/***** SMALL DESKTOP VIEW  *****/
+/*******************************/
+
+@media only screen and (max-height: 44rem) and (min-width: 767px) {
+    :root {
+        --header-height: 3rem;
+        --header-padding-top: .5rem;
+    }
+
+    .header-button.with-label {
+        flex-grow: 1;
+    }
+
+
+    .user-menu .header-button.sign-in {
+        padding-top: .2rem!important;
+        margin-top: .4rem;
+    }
+}
 
 /*******************************/
 /*****     MOBILE VIEW     *****/
 /*******************************/
 
 @media only screen and (max-width: 767px) {
-    .header-button .header-button-label {
-        display: none;
-    }
-
     .header-org-logo .header-org-logo-large {
         display: none;
     }
 
     .header-org-logo .header-org-logo-small {
         display: block;
-    }
-
-    .header-button.with-label {
-        flex-grow: 1;
     }
 }
