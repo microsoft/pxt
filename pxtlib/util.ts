@@ -1902,6 +1902,8 @@ namespace ts.pxtc.jsonPatch {
 
         function _diff(oldObj: any, newObj: any, basePath: (string | number)[]) {
             if (Object.is(oldObj, newObj)) { return; }
+            newObj = newObj || {};
+            oldObj = oldObj || {};
 
             for (let baseKey of Object.keys(oldObj)) {
                 if (!(baseKey in newObj)) {
