@@ -20,7 +20,7 @@ namespace pxt.auth {
     const DEV_BACKEND_LOCALHOST_5500 = "http://localhost:5500"; // if running in Docker container
     const DEV_BACKEND_LOCALHOST_8080 = "http://localhost:8080"; // if not running in Docker
 
-    const DEV_BACKEND = DEV_BACKEND_PROD;
+    const DEV_BACKEND = DEV_BACKEND_STAGING;
 
     let authDisabled = false;
 
@@ -40,6 +40,11 @@ namespace pxt.auth {
         };
     };
 
+    export type UserSkillmapState = {
+        mapProgress: any;
+        completedTags: any;
+    };
+
     /**
      * User preference state that should be synced with the cloud.
      */
@@ -47,8 +52,8 @@ namespace pxt.auth {
         language?: string;
         highContrast?: boolean;
         reader?: string;
+        skillmap?: UserSkillmapState;
     };
-    export type UserPreferencePart = "language" | "high-contrast" | "immersive-reader";
 
     export const DEFAULT_USER_PREFERENCES: () => UserPreferences = () => ({
         highContrast: false,
@@ -57,7 +62,7 @@ namespace pxt.auth {
     });
 
     /**
-     * In-memory auth state. Changes to this state trigger virtual API subscription callbacks.
+     * Cloud-synced user state.
      */
     export type State = {
         profile?: UserProfile;
@@ -97,7 +102,7 @@ namespace pxt.auth {
         protected abstract onSignedOut(): Promise<void>;
         protected abstract onSignInFailed(): Promise<void>;
         protected abstract onUserProfileChanged(): Promise<void>;
-        protected abstract onUserPreferencesChanged(part: UserPreferencePart): Promise<void>;
+        protected abstract onUserPreferencesChanged(diff: ts.pxtc.jsonPatch.PatchOperation[]): Promise<void>;
         protected abstract onProfileDeleted(userId: string): Promise<void>;
         protected abstract onApiError(err: any): Promise<void>;
         protected abstract onStateCleared(): Promise<void>
@@ -232,7 +237,7 @@ namespace pxt.auth {
         }
 
         public async userPreferencesAsync(): Promise<UserPreferences | undefined> {
-            if (!await this.loggedInAsync()) { return undefined; }
+            //if (!await this.loggedInAsync()) { return undefined; } // allow even when not signed in.
             const state = this.getState();
             return { ...state.preferences };
         }
@@ -286,15 +291,16 @@ namespace pxt.auth {
             return result.success;
         }
 
-        public async updateUserPreferencesAsync(newPref: Partial<UserPreferences>) {
-            // Update our local state
-            this.setUserPreferencesAsync(newPref)
-
+        public async patchUserPreferencesAsync(ops: ts.pxtc.jsonPatch.PatchOperation | ts.pxtc.jsonPatch.PatchOperation[]) {
+            ops = Array.isArray(ops) ? ops : [ops];
+            if (!ops.length) { return; }
+            const curPref = await this.userPreferencesAsync();
+            ts.pxtc.jsonPatch.patchInPlace(curPref, ops);
+            await this.setUserPreferencesAsync(curPref);
             // If we're not logged in, non-persistent local state is all we'll use
             if (!await this.loggedInAsync()) { return; }
-
             // If the user is logged in, save to cloud
-            const result = await this.apiAsync<UserPreferences>('/api/user/preferences', newPref);
+            const result = await this.apiAsync<UserPreferences>('/api/user/preferences', ops, 'PATCH');
             if (result.success) {
                 pxt.debug("Updating local user preferences w/ cloud data after result of POST")
                 // Set user profile from returned value so we stay in-sync
@@ -345,26 +351,14 @@ namespace pxt.auth {
         }
 
         private async setUserPreferencesAsync(newPref: Partial<UserPreferences>) {
-            // TODO is there a generic way to do this so we don't need to add new branches
-            //  for each field that changes?
-
-            // remember old
             const oldPref = this.getState().preferences ?? DEFAULT_USER_PREFERENCES()
+            const diff = ts.pxtc.jsonPatch.diff(oldPref, newPref);
             // update
             this.transformUserPreferences({
                 ...oldPref,
                 ...newPref
             });
-            // invalidate fields that change
-            if (oldPref?.highContrast !== this.getState().preferences?.highContrast) {
-                await this.onUserPreferencesChanged("high-contrast");
-            }
-            if (oldPref?.language !== this.getState().preferences?.language) {
-                await this.onUserPreferencesChanged("language");
-            }
-            if (oldPref?.reader !== this.getState().preferences?.reader) {
-                await this.onUserPreferencesChanged("immersive-reader");
-            }
+            await this.onUserPreferencesChanged(diff);
         }
 
         private async fetchUserPreferencesAsync(): Promise<UserPreferences | undefined> {

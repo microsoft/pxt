@@ -158,6 +158,12 @@ namespace pxt.BrowserUtils {
         } catch (e) { return false; }
     }
 
+    export function noSharedLocalStorage(): boolean {
+        try {
+            return /nosharedlocalstorage/i.test(window.location.href);
+        } catch (e) { return false; }
+    }
+
     export function hasPointerEvents(): boolean {
         return typeof window != "undefined" && !!(window as any).PointerEvent;
     }

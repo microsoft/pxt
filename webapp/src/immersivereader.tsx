@@ -229,7 +229,7 @@ export function launchImmersiveReader(content: string, tutorialOptions: pxt.tuto
             pxt.tickEvent("immersiveReader.close", {tutorial: tutorialOptions.tutorial, tutorialStep: tutorialOptions.tutorialStep})
         },
         onPreferencesChanged: (pref: string) => {
-            auth.updateUserPreferencesAsync({reader: pref})
+            auth.setImmersiveReaderPrefAsync(pref)
         },
         preferences: userReaderPref
     }

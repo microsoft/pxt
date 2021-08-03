@@ -28,7 +28,7 @@ import { InfoPanel } from './components/InfoPanel';
 
 import { parseSkillMap } from './lib/skillMapParser';
 import { parseHash, getMarkdownAsync, MarkdownSource, parseQuery,
-    guidGen, setPageTitle, setPageSourceUrl, ParsedHash } from './lib/browserUtils';
+    setPageTitle, setPageSourceUrl, ParsedHash } from './lib/browserUtils';
 
 import { MakeCodeFrame } from './components/makecodeFrame';
 import { getUserStateAsync, saveUserStateAsync } from './lib/workspaceProvider';
@@ -195,15 +195,6 @@ class AppImpl extends React.Component<AppProps, AppState> {
         }
 
         let user = await getUserStateAsync();
-
-        if (!user) {
-            user = {
-                id: guidGen(),
-                completedTags: {},
-                mapProgress: {},
-                version: pxt.skillmap.USER_VERSION
-            };
-        }
 
         if (fetched && !user.completedTags[fetched]) {
             user.completedTags[fetched] = {};

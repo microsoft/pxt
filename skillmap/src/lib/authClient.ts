@@ -23,8 +23,8 @@ class AuthClient extends pxt.auth.AuthClient {
         store.dispatch(dispatchSetUserProfile(state.profile));
         return Promise.resolve();
     }
-    protected onUserPreferencesChanged(part: pxt.auth.UserPreferencePart): Promise<void> {
-        store.dispatch(dispatchSetUserPreferences(this.getState().preferences));
+    protected onUserPreferencesChanged(diff: ts.pxtc.jsonPatch.PatchOperation[]): Promise<void> {
+        // TODO: Dispatch individual preference fields individually (if changed): language, highContrast, etc.
         return Promise.resolve();
     }
     protected onStateCleared(): Promise<void> {
@@ -56,4 +56,21 @@ export async function authCheckAsync() {
 
 export async function loginCallbackAsync(qs: pxt.Map<string>): Promise<void> {
     return await pxt.auth.loginCallbackAsync(qs);
+}
+
+export async function saveSkillmapStateAsync(state: pxt.auth.UserSkillmapState): Promise<void> {
+    const cli = await clientAsync();
+    await cli?.patchUserPreferencesAsync({
+        op: 'replace',
+        path: ['skillmap'],
+        value: state
+    });
+}
+
+export async function getSkillmapStateAsync(): Promise<pxt.auth.UserSkillmapState | undefined> {
+    const cli = await clientAsync();
+    if (cli) {
+        const prefs = await cli.userPreferencesAsync();
+        return prefs?.skillmap;
+    }
 }
