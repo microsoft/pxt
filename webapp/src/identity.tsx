@@ -154,19 +154,10 @@ export class UserMenu extends auth.Component<UserMenuProps, UserMenuState> {
         );
         const initialsElem = (
             <div className="avatar">
-                <span>{cloudsync.userInitials(user?.idp?.displayName)}</span>
+                <span>{pxt.auth.userInitials(user?.idp?.displayName)}</span>
             </div>
         );
         const signedInElem = user?.idp?.picture?.dataUrl ? avatarElem : initialsElem;
-
-        let pictureElem: React.ReactNode;
-        if (user?.idp?.picture?.dataUrl) {
-            pictureElem = (
-                <div className="avatar">
-                    <img src={user.idp.picture.dataUrl} alt={title} />
-                </div>
-            );
-        }
 
         const githubUser = this.getData("github:user") as pxt.editor.UserInfo;
         const showGhUnlink = !loggedIn && githubUser;

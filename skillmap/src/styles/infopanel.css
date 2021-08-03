@@ -139,7 +139,8 @@
     background-color: #2EA9B0;
     border-radius: .4rem;
     padding: .5rem;
-    text-align: center
+    text-align: center;
+    cursor: pointer;
 }
 
 .cloud-indicator {
