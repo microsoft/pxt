@@ -247,7 +247,6 @@ class AppImpl extends React.Component<AppProps, AppState> {
                         { !error && <InfoPanel />}
                     </div>
                 }
-                <div>{this.props.signedIn ? "Signed In" : "Not Signed In"}</div>
                 <AppModal />
             </div>);
     }

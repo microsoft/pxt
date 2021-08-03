@@ -163,7 +163,7 @@ namespace pxt.auth {
         /**
          * Sign out the user and clear the auth token cookie.
          */
-        public async logoutAsync() {
+        public async logoutAsync(continuationHash?: string) {
             if (!hasIdentity()) { return; }
 
             pxt.tickEvent('auth.logout');
@@ -176,10 +176,12 @@ namespace pxt.auth {
 
             // Update state and UI to reflect logged out state.
             this.clearState();
+            const hash = continuationHash ? continuationHash.startsWith('#') ? continuationHash : `#${continuationHash}` : "";
 
-            // Redirect to home screen.
+            // Redirect to home screen, or skillmap home screen
             if (pxt.BrowserUtils.hasWindow()) {
-                window.location.href = `${window.location.origin}${window.location.pathname}`;
+                window.location.href = `${window.location.origin}${window.location.pathname}${hash}`;
+                location.reload();
             }
         }
 
@@ -586,5 +588,24 @@ namespace pxt.auth {
 
     export function enableAuth(enabled = true) {
         authDisabled = !enabled;
+    }
+
+    export function userInitials(username: string): string {
+        if (!username) return "?";
+        // Parse the user name for user initials
+        const initials = username.match(/\b\w/g) || [];
+        return ((initials.shift() || '') + (initials.pop() || '')).toUpperCase();
+    }
+
+    export function generateUserProfilePicDataUrl(profile: pxt.auth.UserProfile) {
+        if (profile?.idp?.picture?.encoded) {
+            const url = window.URL || window.webkitURL;
+            try {
+                // Decode the base64 image to a data URL.
+                const decoded = pxt.Util.stringToUint8Array(atob(profile.idp.picture.encoded));
+                const blob = new Blob([decoded], { type: profile.idp.picture.mimeType });
+                profile.idp.picture.dataUrl = url.createObjectURL(blob);
+            } catch { }
+        }
     }
 }

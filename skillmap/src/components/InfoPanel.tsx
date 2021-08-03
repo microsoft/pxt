@@ -57,7 +57,7 @@ export class InfoPanelImpl extends React.Component<InfoPanelProps> {
         const isActivity = node && !isRewardNode(node);
         const tags = isActivity && (node as MapActivity).tags || undefined;
 
-        const hasCloudSync = true;
+        const hasCloudSync = pxt.auth.hasIdentity();
         return <div className="info-panel">
             <div className="info-panel-image">
                 {imageUrl

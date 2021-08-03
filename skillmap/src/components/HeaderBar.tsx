@@ -2,7 +2,7 @@
 import * as React from "react";
 
 import { connect } from 'react-redux';
-import { dispatchSaveAndCloseActivity, dispatchShowResetUserModal } from '../actions/dispatch';
+import { dispatchSaveAndCloseActivity, dispatchShowResetUserModal, dispatchShowLoginModal } from '../actions/dispatch';
 import { SkillMapState } from '../store/reducer';
 import { isLocal, resolvePath, tickEvent } from "../lib/browserUtils";
 
@@ -15,8 +15,10 @@ interface HeaderBarProps {
     activityOpen: boolean;
     showReportAbuse?: boolean;
     currentActivityDisplayName?: string;
+    signedIn: boolean;
     dispatchSaveAndCloseActivity: () => void;
     dispatchShowResetUserModal: () => void;
+    dispatchShowLoginModal: () => void;
 }
 
 export class HeaderBarImpl extends React.Component<HeaderBarProps> {
@@ -48,6 +50,30 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
         return items;
     }
 
+    protected getOrganizationLogo(targetTheme: pxt.AppTheme) {
+        // VVN TODO MObILE LOGO VIEW
+        // VVN TODO MATCH DIR STRUCTURE W/ REGULAR HEADER IMAGES
+        const logoUrl = targetTheme.skillmapOrganizationLogo || targetTheme.organizationLogo;
+
+        return <div className="header-logo">
+            {logoUrl
+                ? <img src={resolvePath(logoUrl)} alt={lf("{0} Logo", targetTheme.organization)}/>
+                : <span className="name">{targetTheme.organization}</span>}
+        </div>
+    }
+
+    protected getTargetLogo(targetTheme: pxt.AppTheme) {
+        return <div className="ui item logo brand ">
+            {targetTheme.useTextLogo
+                ? [<span className="name" key="org-name" onClick={this.onHomeClicked}>{targetTheme.organizationText}</span>,
+                   <span className="name-short" key="org-name-short" onClick={this.onHomeClicked}>{targetTheme.organizationShortText || targetTheme.organizationText}</span>]
+                : (targetTheme.logo || targetTheme.portraitLogo
+                    ? <img className="logo" src={targetTheme.logo || targetTheme.portraitLogo} alt={lf("{0} Logo", targetTheme.boardName)}/>
+                    : <span className="name"> {targetTheme.boardName}</span>)
+            }
+        </div>
+    }
+
     protected getHelpItems(): DropdownItem[] {
         const items: DropdownItem[] = [];
         if (this.props.activityOpen) {
@@ -60,38 +86,58 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
         return items;
     }
 
+    protected getUserMenu() {
+        const { signedIn } = this.props;
+        const items = [];
+        const user = pxt.auth.client()?.getState().profile;
+
+        if (signedIn) {
+            items.push({
+                id: "signout",
+                label: lf("Sign Out"),
+                onClick: this.onLogoutClicked
+            })
+        } // VVN TODO ADD USER PROFILE
+
+        const avatarElem = user?.idp?.picture?.dataUrl
+            ? <div className="avatar"><img src={user?.idp?.picture?.dataUrl} alt={lf("User Menu")}/></div>
+            : undefined;
+
+        const initialsElem = user?.idp?.displayName
+            ? <span className="circle">{pxt.auth.userInitials(user?.idp?.displayName)}</span>
+            : undefined;
+
+        return <div className="user-menu">
+            {signedIn
+             ? <Dropdown icon="star" items={items} picture={avatarElem || initialsElem} className="header-dropdown"/>
+             : <HeaderBarButton icon="xicon icon cloud-user" title={lf("Sign In")} label={lf("Sign In")} labelLeft={true} onClick={this.props.dispatchShowLoginModal}/>}
+        </div>;
+    }
+
     render() {
         const { activityOpen, currentActivityDisplayName } = this.props;
         const logoAlt = "MakeCode Logo";
         const organizationLogoAlt = "Microsoft Logo";
         const logoSrc = (isLocal() || !pxt.appTarget?.appTheme?.logoUrl ) ? resolvePath("assets/logo.svg") : pxt.appTarget?.appTheme?.logo;
+        const hasIdentity = pxt.auth.hasIdentity();
 
+        const appTheme = pxt.appTarget?.appTheme;
         const settingItems = this.getSettingItems();
         const helpItems = this.getHelpItems();
 
         return <div className="header">
             <div className="header-left">
-                <div className="header-logo">
-                    <img src={logoSrc} alt={logoAlt} />
-                </div>
-                { activityOpen ?
-                    <HeaderBarButton icon="icon arrow left" label={lf("Back")} title={lf("Return to activity selection")} onClick={this.onBackClicked}/> :
-                    <HeaderBarButton icon="icon home" label={lf("Home")} title={lf("Return to the editor homepage")} onClick={this.onHomeClicked}/>
-                }
+                {this.getOrganizationLogo(appTheme)}
+                {this.getTargetLogo(appTheme)}
             </div>
-            { currentActivityDisplayName &&
-                <div className="header-activity-display-name" title={currentActivityDisplayName}>
-                    {currentActivityDisplayName}
-                </div>
-            }
+
             <div className="spacer" />
             <div className="header-right">
+                {activityOpen && <HeaderBarButton icon="icon arrow left" title={lf("Return to activity selection")} onClick={this.onBackClicked}/>}
+                <HeaderBarButton icon="icon home" title={lf("Return to the editor homepage")} onClick={this.onHomeClicked}/>
                 { helpItems?.length > 0 && <Dropdown icon="help circle" className="header-dropdown" items={helpItems} /> }
                 { settingItems?.length > 0 && <Dropdown icon="setting" className="header-dropdown" items={settingItems} /> }
-                <div className="header-org-logo">
-                    <img className="header-org-logo-large" src={resolvePath("assets/microsoft.png")} alt={organizationLogoAlt} />
-                    <img className="header-org-logo-small" src={resolvePath("assets/microsoft-square.png")} alt={organizationLogoAlt} />
-                </div>
+                { hasIdentity && this.getUserMenu()}
             </div>
         </div>
     }
@@ -111,6 +157,11 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
         tickEvent("skillmap.bugreport");
         (window as any).usabilla_live?.("click");
     }
+
+    onLogoutClicked = async () => {
+        console.log("VVN logout clicked")
+        await pxt.auth.client().logoutAsync(location.hash)
+    }
 }
 
 interface HeaderBarButtonProps {
@@ -118,14 +169,16 @@ interface HeaderBarButtonProps {
     label?: string;
     title: string;
     onClick: () => void;
+    labelLeft?: boolean; // Put the label on the left side of the button
 }
 
 const HeaderBarButton = (props: HeaderBarButtonProps) => {
-    const { icon, label, title, onClick } = props;
+    const { icon, label, labelLeft, title, onClick } = props;
 
-    return <div className={`header-button ${!label ? "icon-only" : ""}`} title={title} role="button" onClick={onClick}>
+    return <div className={`header-button ${!label ? "icon-only" : "with-label"}`} title={title} role="button" onClick={onClick}>
+        {label && labelLeft && <span className="header-button-label">{label}</span>}
         <i className={icon} />
-        {label && <span className="header-button-label">{label}</span>}
+        {label && !labelLeft && <span className="header-button-label">{label}</span>}
     </div>
 }
 
@@ -154,14 +207,16 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         currentMapId: activityOpen && state.editorView?.currentMapId,
         currentActivityId: activityOpen && state.editorView?.currentActivityId,
         showReportAbuse: state.pageSourceStatus === "unknown",
-        currentActivityDisplayName
+        currentActivityDisplayName,
+        signedIn: state.auth.signedIn
     }
 }
 
 
 const mapDispatchToProps = {
     dispatchSaveAndCloseActivity,
-    dispatchShowResetUserModal
+    dispatchShowResetUserModal,
+    dispatchShowLoginModal
 };
 
 export const HeaderBar = connect(mapStateToProps, mapDispatchToProps)(HeaderBarImpl);
