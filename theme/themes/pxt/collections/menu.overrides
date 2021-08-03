@@ -37,17 +37,20 @@
     transform: scale(1.2);
 }
 
-@media only screen and (max-width: @largestTabletScreen) {
-    .menubar .ui.menu {
-        height: @mobileMenuHeight !important;
-        min-height: @mobileMenuHeight !important;
-    }
+@media only screen and (max-width: @largestMobileScreen) {
     .menubar .left.menu > .item.icon:not(.logo),  .menubar .right.menu > .item.icon:not(.logo) {
         width: 48px;
 
         & > i.icon {
             margin-left: -8px;
         }
+    }
+}
+
+@media only screen and (max-width: @largestTabletScreen) {
+    .menubar .ui.menu {
+        height: @mobileMenuHeight !important;
+        min-height: @mobileMenuHeight !important;
     }
     .sandbox .menubar .ui.menu {
         height: @sandboxMobileMenuHeight !important;
