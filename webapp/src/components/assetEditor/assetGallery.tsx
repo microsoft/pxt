@@ -13,6 +13,7 @@ interface AssetGalleryProps {
     view: GalleryView;
     galleryAssets: pxt.Asset[];
     userAssets: pxt.Asset[];
+    disableCreateButton?: boolean;
     showAssetFieldView?: (asset: pxt.Asset, cb: (result: any) => void) => void;
     dispatchUpdateUserAssets?: () => void;
 }
@@ -113,7 +114,7 @@ class AssetGalleryImpl extends React.Component<AssetGalleryProps, AssetGallerySt
     }
 
     render() {
-        const { view, galleryAssets, userAssets } = this.props;
+        const { view, galleryAssets, userAssets, disableCreateButton } = this.props;
         const { showCreateModal } = this.state;
         const isBlocksProject = pkg.mainPkg?.config && pkg.mainPkg.getPreferredEditor() === pxt.BLOCKS_PROJECT_NAME;
 
@@ -121,7 +122,7 @@ class AssetGalleryImpl extends React.Component<AssetGalleryProps, AssetGallerySt
             <AssetTopbar />
             <div className={`asset-editor-card-list ${view !== GalleryView.User ? "hidden" : ""}`}>
                 <AssetCardList assets={filterAssets(userAssets, isBlocksProject)}>
-                    <div className="create-new" role="button" onClick={this.showCreateModal}>
+                    <div className={`create-new ${disableCreateButton ? "disabled" : ""}`} role="button" onClick={!disableCreateButton && this.showCreateModal}>
                         <i className="icon huge add circle" />
                         <span>{lf("New Asset")}</span>
                     </div>
