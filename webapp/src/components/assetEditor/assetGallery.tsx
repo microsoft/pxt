@@ -80,7 +80,7 @@ class AssetGalleryImpl extends React.Component<AssetGalleryProps, AssetGallerySt
 
     protected getEmptyAsset(type: pxt.AssetType): pxt.Asset {
         const project = pxt.react.getTilemapProject();
-        const asset = { type, id: "", internalID: 0, meta: { displayName: this.getEmptyAssetDisplayName(type) } } as pxt.Asset;
+        const asset = { type, id: "", internalID: 0, meta: { displayName: pxt.getDefaultAssetDisplayName(type) } } as pxt.Asset;
         switch (type) {
             case pxt.AssetType.Image:
             case pxt.AssetType.Tile:
@@ -96,21 +96,6 @@ class AssetGalleryImpl extends React.Component<AssetGalleryProps, AssetGallerySt
 
         }
         return asset;
-    }
-
-    protected getEmptyAssetDisplayName(type: pxt.AssetType): string {
-        switch (type) {
-            case pxt.AssetType.Image:
-                return lf("myImage");
-            case pxt.AssetType.Tile:
-                return lf("myTile");
-            case pxt.AssetType.Tilemap:
-                return lf("level");
-            case pxt.AssetType.Animation:
-                return lf("myAnim");
-            default:
-                return lf("asset")
-        }
     }
 
     render() {
