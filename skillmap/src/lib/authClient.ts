@@ -1,10 +1,14 @@
 import { dispatchSetUserProfile, dispatchSetUserPreferences, dispatchLogout } from '../actions/dispatch';
 import store from '../store/store';
+import { getPageSourceUrl } from './browserUtils';
+import { getFlattenedHeaderIds } from './skillMapUtils';
 
 class AuthClient extends pxt.auth.AuthClient {
-    protected onSignedIn(): Promise<void> {
-        // Show a notification?
-        return Promise.resolve();
+    protected async onSignedIn(): Promise<void> {
+        // When the user signs in, do some cloud syncing:
+        // - Save any local projects that are part of the current skillmap to the cloud.
+        // - Sync projects from remote.
+        await this.cloudSyncAsync();
     }
     protected onSignedOut(): Promise<void> {
         // Show a notification?
@@ -37,6 +41,13 @@ class AuthClient extends pxt.auth.AuthClient {
     protected onApiError(err: any): Promise<void> {
         // Show a notification?
         return Promise.resolve();
+    }
+
+    private async cloudSyncAsync() {
+        const user = (await this.userPreferencesAsync())?.skillmap as UserState;
+        if (user) {
+            const headerIds = getFlattenedHeaderIds(user, getPageSourceUrl());
+        }
     }
 }
 

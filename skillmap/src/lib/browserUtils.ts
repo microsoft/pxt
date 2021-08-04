@@ -259,6 +259,10 @@ export function setPageSourceUrl(url: string) {
     pageSourceUrl = url;
 }
 
+export function getPageSourceUrl() {
+    return pageSourceUrl;
+}
+
 export function tickEvent(id: string, data?: { [key: string]: string | number }) {
     data = data || {};
     data["page"] = pageSourceUrl;

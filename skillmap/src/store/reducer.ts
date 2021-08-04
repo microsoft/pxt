@@ -20,6 +20,7 @@ export interface SkillMapState {
     maps: { [key: string]: SkillMap };
     selectedItem?: { mapId: string, activityId: string };
 
+    workspaceLoaded: boolean;
     editorView?: EditorViewState;
     modal?: ModalState;
     theme: SkillGraphTheme;
@@ -52,6 +53,7 @@ const initialState: SkillMapState = {
     description: lf("Level up your game making skills by completing the tutorials in this guide."),
     pageSourceStatus: "unknown",
     pageSourceUrl: "default",
+    workspaceLoaded: false,
     user: {
         version: pxt.skillmap.USER_VERSION,
         isDebug: true,
@@ -215,6 +217,11 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                     action.maxSteps,
                     action.isCompleted
                 )
+            };
+        case actions.WORKSPACE_LOADED:
+            return {
+                ...state,
+                workspaceLoaded: true
             };
         case actions.SET_USER:
             const pageSourceUrl = state.pageSourceUrl;

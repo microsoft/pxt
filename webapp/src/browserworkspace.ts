@@ -15,6 +15,14 @@ type TextDbEntry = {
     _rev: any // This must be set to the return value of the last PouchDB/CouchDB
 }
 
+function loadedAsync(): Promise<void> {
+    return pxt.editor.postHostMessageAsync(<pxt.editor.EditorWorkspaceSyncRequest>{
+        type: "pxthost",
+        action: "workspaceloaded",
+        response: true
+    }).then(() => { })
+}
+
 function migratePrefixesAsync(): Promise<void> {
     const currentVersion = pxt.semver.parse(pxt.appTarget.versions.target);
     const currentMajor = currentVersion.major;
@@ -152,4 +160,5 @@ export const provider: WorkspaceProvider = {
     deleteAsync,
     listAsync,
     resetAsync,
+    loadedAsync
 }

@@ -42,6 +42,7 @@ import './arcade.css';
 /* eslint-enable import/no-unassigned-import */
 interface AppProps {
     skillMaps: { [key: string]: SkillMap };
+    workspaceLoaded: boolean;
     activityOpen: boolean;
     backgroundImageUrl: string;
     theme: SkillGraphTheme;
@@ -224,13 +225,13 @@ class AppImpl extends React.Component<AppProps, AppState> {
     }
 
     render() {
-        const { skillMaps, activityOpen, backgroundImageUrl, theme } = this.props;
+        const { skillMaps, workspaceLoaded, activityOpen, backgroundImageUrl, theme } = this.props;
         const { error } = this.state;
         const maps = Object.keys(skillMaps).map((id: string) => skillMaps[id]);
         return (<div className={`app-container ${pxt.appTarget.id}`}>
                 <HeaderBar />
-                { activityOpen ? <MakeCodeFrame /> :
-                    <div className="skill-map-container" style={{ backgroundColor: theme.backgroundColor }}>
+                <MakeCodeFrame />
+                { workspaceLoaded && !activityOpen && <div className="skill-map-container" style={{ backgroundColor: theme.backgroundColor }}>
                         { error
                             ? <div className="skill-map-error">{error}</div>
                             : <SkillGraphContainer maps={maps} backgroundImageUrl={backgroundImageUrl} />
@@ -300,12 +301,14 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
     if (!state) return {};
     return {
         skillMaps: state.maps,
+        workspaceLoaded: state.workspaceLoaded,
         activityOpen: !!state.editorView,
         backgroundImageUrl: state.backgroundImageUrl,
         theme: state.theme,
         signedIn: state.auth.signedIn
     };
 }
+
 interface LocalizationUpdateOptions {
     targetId: string;
     baseUrl: string;

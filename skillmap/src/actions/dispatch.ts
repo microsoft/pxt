@@ -15,6 +15,7 @@ export const dispatchRestartActivity = (mapId: string, activityId: string, previ
 export const dispatchSetUser = (user: UserState) => ({ type: actions.SET_USER, user });
 export const dispatchUpdateUserCompletedTags = () => ({ type: actions.UPDATE_USER_COMPLETED_TAGS });
 export const dispatchResetUser = () => ({ type: actions.RESET_USER });
+export const dispatchWorkspaceLoaded = () => ({ type: actions.WORKSPACE_LOADED });
 
 export const dispatchSetPageTitle = (title: string) => ({ type: actions.SET_PAGE_TITLE, title });
 export const dispatchSetPageDescription = (description: string) => ({ type: actions.SET_PAGE_DESCRIPTION, description });

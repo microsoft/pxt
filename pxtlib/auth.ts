@@ -3,7 +3,7 @@ namespace pxt.auth {
     const AUTH_CONTAINER = "auth"; // local storage "namespace".
     const CSRF_TOKEN_KEY = "csrf-token"; // stored in local storage.
     const AUTH_LOGIN_STATE_KEY = "login-state"; // stored in local storage.
-    const AUTH_USER_PROFILE_KEY = "user-state"; // stored in local storage.
+    const AUTH_USER_STATE_KEY = "user-state"; // stored in local storage.
     const X_PXT_TARGET = "x-pxt-target"; // header passed in auth rest calls.
 
     export type ApiResult<T> = {
@@ -89,7 +89,7 @@ namespace pxt.auth {
         public async initAsync() {
             // Load state from local storage
             try {
-                this.state$ = await pxt.storage.shared.getAsync<State>(AUTH_CONTAINER, AUTH_USER_PROFILE_KEY);
+                this.state$ = await pxt.storage.shared.getAsync<State>(AUTH_CONTAINER, AUTH_USER_STATE_KEY);
             } catch { }
             if (!this.state$) {
                 this.state$ = {};
@@ -340,13 +340,10 @@ namespace pxt.auth {
             this.transformUserProfile(profile);
             const isLoggedIn = this.hasUserId();
             this.onUserProfileChanged();
-            //pxt.data.invalidate(USER_PROFILE);
             if (isLoggedIn && !wasLoggedIn) {
                 await this.onSignedIn();
-                //pxt.data.invalidate(LOGGED_IN);
             } else if (!isLoggedIn && wasLoggedIn) {
                 await this.onSignedOut();
-                //pxt.data.invalidate(LOGGED_IN);
             }
         }
 
@@ -424,7 +421,7 @@ namespace pxt.auth {
          * Direct access to state$ allowed.
          */
         private saveState() {
-            pxt.storage.shared.setAsync(AUTH_CONTAINER, AUTH_USER_PROFILE_KEY, this.state$).then(() => { });
+            pxt.storage.shared.setAsync(AUTH_CONTAINER, AUTH_USER_STATE_KEY, this.state$).then(() => { });
         }
 
         /**
@@ -433,7 +430,7 @@ namespace pxt.auth {
          */
         private clearState() {
             this.state$ = {};
-            pxt.storage.shared.delAsync(AUTH_CONTAINER, AUTH_USER_PROFILE_KEY)
+            pxt.storage.shared.delAsync(AUTH_CONTAINER, AUTH_USER_STATE_KEY)
                 .then(() => this.onStateCleared());
         }
 

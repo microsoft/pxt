@@ -157,6 +157,15 @@ export function isRewardNode(node: MapNode) {
     return node.kind === "reward" || node.kind === "completion";
 }
 
+export function getFlattenedHeaderIds(user: UserState, pageSource: string): string[] {
+    return Object
+        .values(user.mapProgress[pageSource] ?? [])
+        .map(map => Object.values(map.activityState))
+        .reduce((a, b) => a.concat(b, []))
+        .map(act => act.headerId)
+        .filter(id => !!id) as string[];
+}
+
 export function applyUserUpgrades(user: UserState, currentVersion: string, pageSource: string, maps: { [key: string]: SkillMap }) {
     const oldVersion = pxt.semver.parse(user.version || "0.0.0");
     const newVersion = pxt.semver.parse(currentVersion);
