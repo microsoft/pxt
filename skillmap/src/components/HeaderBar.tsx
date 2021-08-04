@@ -14,7 +14,6 @@ interface HeaderBarProps {
     currentActivityId?: string;
     activityOpen: boolean;
     showReportAbuse?: boolean;
-    currentActivityDisplayName?: string;
     signedIn: boolean;
     dispatchSaveAndCloseActivity: () => void;
     dispatchShowResetUserModal: () => void;
@@ -113,10 +112,7 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
     }
 
     render() {
-        const { activityOpen, currentActivityDisplayName } = this.props;
-        const logoAlt = "MakeCode Logo";
-        const organizationLogoAlt = "Microsoft Logo";
-        const logoSrc = (isLocal() || !pxt.appTarget?.appTheme?.logoUrl ) ? resolvePath("assets/logo.svg") : pxt.appTarget?.appTheme?.logo;
+        const { activityOpen } = this.props;
         const hasIdentity = pxt.auth.hasIdentity();
 
         const appTheme = pxt.appTarget?.appTheme;
@@ -191,13 +187,9 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
     }
 
     const activityOpen = !!state.editorView;
-    let currentActivityDisplayName: string | undefined;
 
     if (state.editorView?.currentActivityId) {
         const activity = state.maps[state.editorView.currentMapId]?.activities[state.editorView.currentActivityId];
-        if (activity) {
-            currentActivityDisplayName = activity.displayName;
-        }
     }
 
     return {
@@ -205,7 +197,6 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         currentMapId: activityOpen && state.editorView?.currentMapId,
         currentActivityId: activityOpen && state.editorView?.currentActivityId,
         showReportAbuse: state.pageSourceStatus === "unknown",
-        currentActivityDisplayName,
         signedIn: state.auth.signedIn
     }
 }
