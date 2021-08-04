@@ -68,7 +68,7 @@ class SkillGraphImpl extends React.Component<SkillGraphProps> {
 
         if (isCodeCarryoverEnabled(user, pageSourceUrl, map, activity)) {
             dispatchShowCarryoverModal(map.mapId, activityId);
-        } else if (kind == "activity") {
+        } else if (kind == "activity" && status !== "locked") {
             dispatchOpenActivity(map.mapId, activityId);
         }
     }
