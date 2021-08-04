@@ -126,10 +126,11 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         let { selected } = this.state;
         const headers = this.getSortedHeaders();
         const selectedLength = Object.keys(selected).length;
-        core.confirmDelete(selectedLength == 1 ? headers[parseInt(Object.keys(selected)[0])].name : selectedLength.toString(), () => {
+        core.confirmDelete(selectedLength == 1 ? headers.find((h) => Object.keys(selected)[0].includes(h.id)).name
+                                               : selectedLength.toString(), () => {
             const promises: Promise<void>[] = [];
             headers.forEach((header, index) => {
-                if (selected[index]) {
+                if (selected[this.getId(header)]) {
                     // Delete each selected project
                     header.isDeleted = true;
                     promises.push(workspace.forceSaveAsync(header, {}));
