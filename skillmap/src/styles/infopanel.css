@@ -45,7 +45,8 @@
     margin-bottom: 0.5rem;
 }
 
-.info-panel-content > .tablet-spacer {
+.info-panel-content > .tablet-spacer,
+.info-panel-content> .info-panel-tags {
     margin: 0;
 }
 
@@ -92,14 +93,17 @@
 
 .info-panel-tags {
     display: flex;
+    flex-wrap: wrap;
 }
 
 .info-panel-tags > div {
     color: var(--active-color);
     border: 1px solid var(--active-color);
     padding: 0.2rem 0.5rem;
-    margin-right: 0.5rem;
     font-size: 0.8rem;
+    margin: 0 0.5rem 0.5rem 0;
+    white-space: nowrap;
+    user-select: none;
 }
 
 /* Buttons */

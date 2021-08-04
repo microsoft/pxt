@@ -6,8 +6,9 @@ import { connect } from 'react-redux';
 import { ModalType, SkillMapState } from '../store/reducer';
 import { dispatchHideModal, dispatchRestartActivity, dispatchOpenActivity, dispatchResetUser, dispatchShowCarryoverModal } from '../actions/dispatch';
 import { tickEvent, postAbuseReportAsync, postShareAsync } from "../lib/browserUtils";
-import { lookupActivityProgress, lookupPreviousActivityStates, lookupPreviousCompletedActivityState } from "../lib/skillMapUtils";
+import { lookupActivityProgress, lookupPreviousActivityStates, lookupPreviousCompletedActivityState, isCodeCarryoverEnabled } from "../lib/skillMapUtils";
 import { getProjectAsync } from "../lib/workspaceProvider";
+import { editorUrl } from "./makecodeFrame";
 
 import { Modal, ModalAction } from './Modal';
 
@@ -73,17 +74,75 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
         this.props.dispatchHideModal();
     }
 
-    protected getRewardText(type: MapRewardType) {
-        switch (type) {
-            case "certificate":
-                return lf("Certificate");
+    protected handleRewardClick = () => {
+        const  { mapId, skillMap, type, activity } = this.props;
+        const reward = activity as MapReward;
+        tickEvent("skillmap.reward", { path: mapId, activity: reward.activityId });
+        window.open(reward.url || skillMap!.completionUrl);
+    }
+
+    protected getCompletionActionText(action: MapCompletionAction) {
+        switch (action.kind) {
+            case "activity":
+                return lf("Start Activity")
+            case "map":
+                return lf("Start Skill Map")
+            case "editor":
+                return lf("Keep Building")
+            case "docs":
             default:
-                return lf("Reward");
+                return lf("Learn More")
         }
     }
 
+    protected getCompletionActions(actions: MapCompletionAction[]) {
+        const { userState, pageSourceUrl, mapId, skillMap, activity,
+            dispatchOpenActivity, dispatchShowCarryoverModal } = this.props;
+        const reward = activity as MapReward;
+        const modalActions: ModalAction[] = [];
+        actions?.forEach(el => {
+            const action: Partial<ModalAction> = {
+                label: el.label || this.getCompletionActionText(el),
+                url: el.url
+            }
+            switch (el.kind) {
+                case "activity":
+                    const nextActivity = skillMap?.activities[el.activityId || ""];
+                    if (nextActivity) {
+                        action.onClick = () => {
+                            tickEvent("skillmap.reward.action.activity", { path: mapId, activity: reward.activityId, nextActivityId: nextActivity.activityId });
+                            this.handleOnClose();
+                            if (isCodeCarryoverEnabled(userState!, pageSourceUrl!, skillMap!, nextActivity)) {
+                                dispatchShowCarryoverModal(skillMap!.mapId, nextActivity.activityId);
+                            } else {
+                                dispatchOpenActivity(mapId, nextActivity.activityId);
+                            }
+                        };
+                        modalActions.push(action as ModalAction);
+                    }
+                    break;
+                case "editor":
+                    const previousActivity = lookupPreviousCompletedActivityState(userState!, pageSourceUrl!, skillMap!, activity!.activityId);
+                    if (previousActivity?.headerId) {
+                        action.onClick = () => {
+                            tickEvent("skillmap.reward.action.editor", { path: mapId, activity: reward.activityId });
+                            window.open(`${editorUrl}#skillmapimport:${previousActivity.headerId}`);
+                        };
+                        modalActions.push(action as ModalAction);
+                    }
+                    break;
+                case "map":
+                case "docs":
+                default:
+                    action.onClick = () => tickEvent(`skillmap.reward.action.${el.kind}`, { path: mapId, activity: reward.activityId, url: action.url || "" });
+                    modalActions.push(action as ModalAction);
+            }
+        })
+        return modalActions;
+    }
+
     renderCompletionModal() {
-        const  { mapId, skillMap, type, activity } = this.props;
+        const  { skillMap, type, activity } = this.props;
         if (!type || !skillMap) return <div />
 
         const reward = activity as MapReward;
@@ -94,16 +153,13 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
 
         const density = 100;
 
-        const actions = [
-            { label: this.getRewardText(reward.type),  onClick: () => {
-                tickEvent("skillmap.reward", { path: mapId, activity: reward.activityId });
-                window.open(reward.url || skillMap.completionUrl);
-            } }
-        ]
-
         return <div className="confetti-container">
-            <Modal title={completionModalTitle} actions={actions} className="completion" onClose={this.handleOnClose}>
+            <Modal title={completionModalTitle} actions={this.getCompletionActions(reward.actions)} className="completion" onClose={this.handleOnClose}>
                 {completionModalTextSegments[0]}{<strong>{skillMap.displayName}</strong>}{completionModalTextSegments[1]}
+                <div className="completion-reward" onClick={this.handleRewardClick}>
+                    <i className="icon gift" />
+                    <span>{lf("Claim your reward!")}</span>
+                </div>
             </Modal>
             {Array(density).fill(0).map((el, i) => {
                 const style = {
@@ -302,7 +358,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
     const currentMap = state.editorView ?
         state.maps[state.editorView.currentMapId] :
         (currentMapId && state.maps[currentMapId]);
-    const activity = currentMapId && currentActivityId ? state.maps[currentMapId].activities[currentActivityId] : undefined
+    const activity = (currentMapId && currentActivityId) ? state.maps[currentMapId]?.activities[currentActivityId] : undefined
 
     let showCodeCarryoverModal = false;
 

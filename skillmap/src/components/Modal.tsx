@@ -8,6 +8,7 @@ export interface ModalAction {
     label: string;
     className?: string;
     onClick: () => void;
+    url?: string;
 }
 
 interface ModalProps {
@@ -20,7 +21,6 @@ interface ModalProps {
 export class Modal extends React.Component<ModalProps> {
     protected handleModalClick = (e: any) => {
         e.stopPropagation();
-        e.preventDefault();
     }
 
     protected handleCloseClick = () => {
@@ -42,9 +42,9 @@ export class Modal extends React.Component<ModalProps> {
                 </div>
                 {actions && actions.length > 0 && <div className="modal-actions">
                     {actions.map((el, i) => {
-                        return <div key={i} className={`modal-button ${el.className || ""}`} onClick={el.onClick} role="button">
-                            {el.label}
-                        </div>
+                        return el.url
+                            ? <a key={i} className={`modal-button ${el.className || ""}`} href={el.url} onClick={el.onClick} target="_blank" rel="noopener noreferrer" role="button">{el.label}</a>
+                            : <div key={i} className={`modal-button ${el.className || ""}`} onClick={el.onClick} role="button">{el.label}</div>
                     })}
                 </div>}
             </div>

@@ -528,6 +528,11 @@ namespace ts.pxtc {
                 }
                 drom.data = trg
                 const resbuf = pxt.esp.toBuffer(img)
+                if (uf2) {
+                    UF2.writeBytes(uf2, 0, resbuf)
+                    saveSourceToUF2(uf2, bin)
+                    return [UF2.serializeFile(uf2)]
+                }
                 return [U.uint8ArrayToString(resbuf)]
             }
 
@@ -583,16 +588,9 @@ namespace ts.pxtc {
 
             if (bin.packedSource) {
                 if (uf2) {
-                    addr = (uf2.currPtr + 0x1000) & ~0xff
-                    let buf = new Uint8Array(256)
-                    for (let ptr = 0; ptr < bin.packedSource.length; ptr += 256) {
-                        for (let i = 0; i < 256; ++i)
-                            buf[i] = bin.packedSource.charCodeAt(ptr + i)
-                        UF2.writeBytes(uf2, addr, buf, UF2.UF2_FLAG_NOFLASH)
-                        addr += 256
-                    }
+                    saveSourceToUF2(uf2, bin)
                 } else {
-                    addr = 0
+                    let addr = 0
                     for (let i = 0; i < bin.packedSource.length; i += 16) {
                         let bytes = [0x10, (addr >> 8) & 0xff, addr & 0xff, 0x0E]
                         for (let j = 0; j < 16; ++j) {
@@ -611,6 +609,19 @@ namespace ts.pxtc {
                 return [UF2.serializeFile(uf2)]
             else
                 return myhex;
+        }
+    }
+
+    function saveSourceToUF2(uf2: UF2.BlockFile, bin: Binary) {
+        if (!bin.packedSource)
+            return
+        let addr = (uf2.currPtr + 0x1000) & ~0xff
+        let buf = new Uint8Array(256)
+        for (let ptr = 0; ptr < bin.packedSource.length; ptr += 256) {
+            for (let i = 0; i < 256; ++i)
+                buf[i] = bin.packedSource.charCodeAt(ptr + i)
+            UF2.writeBytes(uf2, addr, buf, UF2.UF2_FLAG_NOFLASH)
+            addr += 256
         }
     }
 

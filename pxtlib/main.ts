@@ -506,9 +506,12 @@ namespace pxt {
     export function outputName(trg: pxtc.CompileTarget = null) {
         if (!trg) trg = appTarget.compile
 
-        if (trg.nativeType == ts.pxtc.NATIVE_TYPE_VM)
-            return trg.useESP ? ts.pxtc.BINARY_ESP : ts.pxtc.BINARY_PXT64
-        else if (trg.useUF2 && !trg.switches.rawELF)
+        if (trg.nativeType == ts.pxtc.NATIVE_TYPE_VM) {
+            if (trg.useESP)
+                return trg.useUF2 ? ts.pxtc.BINARY_UF2 : ts.pxtc.BINARY_ESP
+            else
+                return ts.pxtc.BINARY_PXT64
+        } else if (trg.useUF2 && !trg.switches.rawELF)
             return ts.pxtc.BINARY_UF2
         else if (trg.useELF)
             return ts.pxtc.BINARY_ELF

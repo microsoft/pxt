@@ -823,6 +823,10 @@ export class ProjectView
                 pxt.debug(`sim: don't restart when debugging or tracing`)
                 return;
             }
+            if (this.state.collapseEditorTools) {
+                pxt.debug(`sim: don't restart when simulator collapsed`);
+                return;
+            }
             this.runSimulator({ debug: !!this.state.debugging, background: true });
         },
         1000, true);

@@ -197,7 +197,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
     let currentActivityDisplayName: string | undefined;
 
     if (state.editorView?.currentActivityId) {
-        const activity = state.maps[state.editorView.currentMapId].activities[state.editorView.currentActivityId];
+        const activity = state.maps[state.editorView.currentMapId]?.activities[state.editorView.currentActivityId];
         if (activity) {
             currentActivityDisplayName = activity.displayName;
         }

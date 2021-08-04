@@ -312,7 +312,7 @@ _start_${name}:
 
             if (embedVTs()) {
                 bin.writeFile(pxtc.BINARY_PXT64, binstring)
-                const patched = hexfile.patchHex(bin, res.buf, false, false)[0]
+                const patched = hexfile.patchHex(bin, res.buf, false, !!target.useUF2)[0]
                 bin.writeFile(pxt.outputName(target), ts.pxtc.encodeBase64(patched))
             } else {
                 bin.writeFile(pxt.outputName(target), binstring)
