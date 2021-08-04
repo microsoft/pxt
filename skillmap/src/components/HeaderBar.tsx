@@ -51,9 +51,7 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
     }
 
     protected getOrganizationLogo(targetTheme: pxt.AppTheme) {
-        // VVN TODO MObILE LOGO VIEW
-        // VVN TODO MATCH DIR STRUCTURE W/ REGULAR HEADER IMAGES
-        const logoUrl = targetTheme.skillmapOrganizationLogo || targetTheme.organizationLogo;
+        const logoUrl = targetTheme.organizationWideLogo;
 
         return <div className="header-logo">
             {logoUrl
@@ -97,7 +95,7 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
                 label: lf("Sign Out"),
                 onClick: this.onLogoutClicked
             })
-        } // VVN TODO ADD USER PROFILE
+        }
 
         const avatarElem = user?.idp?.picture?.dataUrl
             ? <div className="avatar"><img src={user?.idp?.picture?.dataUrl} alt={lf("User Menu")}/></div>
@@ -159,7 +157,6 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
     }
 
     onLogoutClicked = async () => {
-        console.log("VVN logout clicked")
         await pxt.auth.client().logoutAsync(location.hash)
     }
 }
