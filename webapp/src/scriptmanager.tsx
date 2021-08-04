@@ -283,9 +283,9 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         const { selected } = this.state;
         const indexes = Object.keys(selected);
         if (indexes.length !== 1) return null; // Sanity check
-        const index = parseInt(indexes[0]);
-        const headers = this.getSortedHeaders();
-        return headers[index];
+        const id = Object.keys(selected)[0];
+        const headers = this.fetchLocalData()
+        return headers.find((h) => id.includes(h.id))
     }
 
     private getSortedHeaders() {
