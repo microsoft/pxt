@@ -3871,7 +3871,7 @@ export class ProjectView
                     preferredEditor: editor,
                     dependencies,
                     temporary: temporary,
-                    skillmapProject: isSkillmap()
+                    skillmapProject: pxt.BrowserUtils.isSkillmapEditor()
                 })
                 .then(() => autoChooseBoard ? this.autoChooseBoardAsync(features) : Promise.resolve())
                 .then(() => this.postTutorialProgress())
@@ -4779,12 +4779,6 @@ function clearHashChange() {
 function saveAsBlocks(): boolean {
     try {
         return /saveblocks=1/.test(window.location.href) && !!pkg.mainPkg.readFile(pxt.MAIN_BLOCKS)
-    } catch (e) { return false; }
-}
-
-function isSkillmap(): boolean {
-    try {
-        return /skill(?:s?)Map=1/.test(window.location.href);
     } catch (e) { return false; }
 }
 

@@ -141,7 +141,7 @@ export class UserMenu extends auth.Component<UserMenuProps, UserMenuState> {
 
         const signedOutElem = (
             <div className="signin-button">
-                <div className="ui text widedesktop only">{lf("Sign In")}</div>
+                <div className="ui text desktop only">{lf("Sign In")}</div>
                 {sui.genericContent({
                     icon
                 })}
@@ -154,19 +154,10 @@ export class UserMenu extends auth.Component<UserMenuProps, UserMenuState> {
         );
         const initialsElem = (
             <div className="avatar">
-                <span>{cloudsync.userInitials(user?.idp?.displayName)}</span>
+                <span>{pxt.auth.userInitials(user?.idp?.displayName)}</span>
             </div>
         );
         const signedInElem = user?.idp?.picture?.dataUrl ? avatarElem : initialsElem;
-
-        let pictureElem: React.ReactNode;
-        if (user?.idp?.picture?.dataUrl) {
-            pictureElem = (
-                <div className="avatar">
-                    <img src={user.idp.picture.dataUrl} alt={title} />
-                </div>
-            );
-        }
 
         const githubUser = this.getData("github:user") as pxt.editor.UserInfo;
         const showGhUnlink = !loggedIn && githubUser;
@@ -174,8 +165,9 @@ export class UserMenu extends auth.Component<UserMenuProps, UserMenuState> {
         return (
             <sui.DropdownMenu role="menuitem"
                 title={title}
-                className="item icon user-dropdown-menuitem"
+                className="item icon user-dropdown-menuitem sign-in-dropdown"
                 titleContent={loggedIn ? signedInElem : signedOutElem}
+                tabIndex={loggedIn? 0 : -1}
             >
                 {loggedIn ? <sui.Item role="menuitem" text={lf("My Profile")} onClick={this.handleProfileClicked} /> : undefined}
                 {loggedIn ? <div className="ui divider"></div> : undefined}
@@ -188,7 +180,7 @@ export class UserMenu extends auth.Component<UserMenuProps, UserMenuState> {
                     </sui.Item>
                     : undefined}
                 {showGhUnlink ? <div className="ui divider"></div> : undefined}
-                {!loggedIn ? <sui.Item role="menuitem" text={lf("Sign in")} onClick={this.handleLoginClicked} /> : undefined}
+                {!loggedIn ? <sui.Item role="menuitem" text={lf("Sign in")} onClick={this.handleLoginClicked}/> : undefined}
                 {loggedIn ? <sui.Item role="menuitem" text={lf("Sign out")} onClick={this.handleLogoutClicked} /> : undefined}
             </sui.DropdownMenu>
         );

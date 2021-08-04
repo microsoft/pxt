@@ -132,7 +132,7 @@ export function getHeaders(withDeleted = false) {
     let r = allScripts.map(e => e.header).filter(h =>
         (withDeleted || !h.isDeleted) &&
         !h.isBackup &&
-        !h.isSkillmapProject &&
+        !!h.isSkillmapProject === pxt.BrowserUtils.isSkillmapEditor() &&
         (!h.cloudUserId || h.cloudUserId === cloudUserId))
     r.sort((a, b) => {
         const aTime = a.cloudUserId ? Math.min(a.cloudLastSyncTime, a.modificationTime) : a.modificationTime

@@ -111,7 +111,7 @@ class AccountPanel extends sui.UIElement<AccountPanelProps, {}> {
         );
         const initialsElem = (
             <div className="profile-pic avatar">
-                <span>{cloudsync.userInitials(profile?.idp?.displayName)}</span>
+                <span>{pxt.auth.userInitials(profile?.idp?.displayName)}</span>
             </div>
         );
 
