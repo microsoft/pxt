@@ -113,7 +113,9 @@
 }
 
 .sign-in-container {
-    display: grid;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
     row-gap: 10px;
     justify-content: center;
 }

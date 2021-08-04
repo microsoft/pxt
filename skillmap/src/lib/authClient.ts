@@ -1,4 +1,4 @@
-import { dispatchSetUserProfile, dispatchSetUserPreferences } from '../actions/dispatch';
+import { dispatchSetUserProfile, dispatchSetUserPreferences, dispatchLogout } from '../actions/dispatch';
 import store from '../store/store';
 
 class AuthClient extends pxt.auth.AuthClient {
@@ -8,6 +8,7 @@ class AuthClient extends pxt.auth.AuthClient {
     }
     protected onSignedOut(): Promise<void> {
         // Show a notification?
+        store.dispatch(dispatchLogout());
         return Promise.resolve();
     }
     protected onSignInFailed(): Promise<void> {
@@ -15,7 +16,11 @@ class AuthClient extends pxt.auth.AuthClient {
         return Promise.resolve();
     }
     protected onUserProfileChanged(): Promise<void> {
-        store.dispatch(dispatchSetUserProfile(this.getState().profile));
+        const state = this.getState();
+        if (state.profile) {
+            pxt.auth.generateUserProfilePicDataUrl(state.profile);
+        }
+        store.dispatch(dispatchSetUserProfile(state.profile));
         return Promise.resolve();
     }
     protected onUserPreferencesChanged(diff: ts.pxtc.jsonPatch.PatchOperation[]): Promise<void> {

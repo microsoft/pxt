@@ -31,7 +31,6 @@ interface AppModalState {
     loading?: boolean;
     data?: ShareModalData;
     rememberMe?: boolean; // For the Login modal
-    continuationHash?: string; // for login modal
 }
 
 interface ShareModalData {
@@ -260,6 +259,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
 
     renderLoginModal() {
         const providers = pxt.auth.identityProviders();
+        const rememberMeSelected = this.state.rememberMe ?? false;
 
         return <Modal title={lf("Sign in or Signup")} onClose={this.handleOnClose}>
             <div className="sign-in-description">
@@ -275,10 +275,8 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                 </div>
                 {providers.map((p, key) => {
                     return <div className="modal-button" key={key} role="button" onClick={async () => {
-                        pxt.tickEvent(`identity.loginClick`, { provider: p.name?p.name:"", rememberMe: this.state.rememberMe!.toString() });
-                        // await auth.loginAsync(provider.id, rememberMe, {
-                        //     hash: this.props.continuationHash
-                        // });
+                        pxt.tickEvent(`identity.loginClick`, { provider: p.name?p.name:"", rememberMe: rememberMeSelected.toString() });
+                        pxt.auth.client().loginAsync(p.id, rememberMeSelected, {hash: location.hash})
                     }}>
                         <i className={`xicon ${p.id}`}/>
                         <div className="label">
@@ -286,8 +284,8 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                         </div>
                     </div>
                 })}
-                <div className="sign-in-remember" onClick={()=>this.setState({rememberMe: !this.state.rememberMe})}>
-                    <i className={`icon square outline ${this.state.rememberMe? "check" : ""}`}/>
+                <div className="sign-in-remember" onClick={()=>this.setState({rememberMe: !rememberMeSelected})}>
+                    <i className={`icon square outline ${rememberMeSelected? "check" : ""}`}/>
                     {lf("Remember me")}
                 </div>
             </div>
@@ -315,7 +313,6 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
 
         showCodeCarryoverModal = !!((activity as MapActivity).allowCodeCarryover && previousActivityCompleted);
     }
-
 
     return {
         type,

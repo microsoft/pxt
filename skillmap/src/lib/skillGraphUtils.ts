@@ -117,7 +117,7 @@ export function manualGraph(root: MapNode): GraphNode[] {
                         const prev = edge[edge.length - 1];
                         // Ensure that there are only horizontal and vertical segments
                         if (el.depth !== prev.depth && el.offset !== prev.offset) {
-                            edge.push({ depth: el.depth, offset: prev.offset });
+                            edge.push({ depth: prev.depth, offset: el.offset });
                         }
                         edge.push(el);
                     })
@@ -125,7 +125,7 @@ export function manualGraph(root: MapNode): GraphNode[] {
                 // Edge ends at "next" node, ensure only horizontal/vertical
                 const prev = edge[edge.length - 1];
                 if (nextDepth !== prev.depth && nextOffset !== prev.offset) {
-                    edge.push({ depth: nextDepth, offset: prev.offset });
+                    edge.push({ depth: prev.depth, offset: nextOffset });
                 }
                 edge.push({ depth: nextDepth, offset: nextOffset });
 
@@ -240,12 +240,12 @@ export function orthogonalGraph(root: MapNode): GraphNode[] {
                     const spaceBelow = n.offset > p.offset && !((offsets[nodeIndex + 1] - offsets[nodeIndex]) < (n.offset - p.offset));
                     const spaceAbove = n.offset < p.offset && !((offsets[nodeIndex] - offsets[nodeIndex - 1]) < (p.offset - n.offset));
                     if (spaceBelow || spaceAbove) {
-                        edge.push({ depth: p.depth, offset: n.offset });
-                    } else {
                         edge.push({ depth: n.depth, offset: p.offset });
+                    } else {
+                        edge.push({ depth: p.depth, offset: n.offset });
                     }
                 } else {
-                    edge.push({ depth: n.depth, offset: p.offset });
+                    edge.push({ depth: p.depth, offset: n.offset });
                 }
                 edge.push({ depth: n.depth, offset: n.offset });
                 n.edges?.push(edge);

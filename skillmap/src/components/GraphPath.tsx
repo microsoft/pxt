@@ -12,19 +12,19 @@ export class GraphPath extends React.Component<GraphPathProps> {
     render() {
         const { points, strokeWidth, color } = this.props;
 
-        let pathStart = "M 0 0";
+        let pathStart = `M 0 0`;
         let pathEnd = "";
-        let start, end: SvgCoord;
+        let next, prev: SvgCoord;
         points.forEach(p => {
-            start = p;
-            if (end) {
-                pathStart += ` l ${(end?.x || 0) - start.x} ${(end?.y || 0) - start.y}`;
-                pathEnd = ` l ${start.x - (end?.x || 0)} ${start.y - (end?.y || 0)} ${pathEnd}`;
+            next = p;
+            if (prev) {
+                pathStart += ` l ${(next?.x || 0) - prev.x} ${(next?.y || 0) - prev.y}`;
+                pathEnd = ` l ${prev.x - (next?.x || 0)} ${prev.y - (next?.y || 0)} ${pathEnd}`;
             }
-            end = start;
+            prev = next;
         })
 
-        return  <g transform={`translate(${end!.x || 0} ${end!.y || 0})`}>
+        return  <g transform={`translate(${points[0]!.x || 0} ${points[0]!.y || 0})`}>
             <path stroke={color} strokeWidth={strokeWidth} d={`${pathStart} ${pathEnd}`} />
         </g>
     }

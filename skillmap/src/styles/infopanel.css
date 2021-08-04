@@ -139,7 +139,8 @@
     background-color: #2EA9B0;
     border-radius: .4rem;
     padding: .5rem;
-    text-align: center
+    text-align: center;
+    cursor: pointer;
 }
 
 .cloud-indicator {
@@ -230,6 +231,10 @@
     .info-panel .action-button:last-child,
     .info-panel .grid .action-button:nth-child(2) {
         margin-right: 0;
+    }
+
+    .sign-in-button {
+        display: none;
     }
 }
 

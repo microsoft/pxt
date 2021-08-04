@@ -358,6 +358,14 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                     preferences: action.preferences,
                 }
             };
+        case actions.USER_LOG_OUT:
+            return {
+                ...state,
+                auth: {
+                    ...state.auth,
+                    signedIn: false
+                }
+            }
         default:
             return state
     }

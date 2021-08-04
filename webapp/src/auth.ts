@@ -49,7 +49,7 @@ class AuthClient extends pxt.auth.AuthClient {
     }
     protected onUserProfileChanged(): Promise<void> {
         const state = this.getState();
-        generateUserProfilePicDataUrl(state.profile);
+        pxt.auth.generateUserProfilePicDataUrl(state.profile);
         data.invalidate("auth:*");
         return Promise.resolve();
     }
@@ -69,7 +69,7 @@ class AuthClient extends pxt.auth.AuthClient {
     }
     protected onStateLoaded(): Promise<void> {
         const state = this.getState();
-        generateUserProfilePicDataUrl(state.profile);
+        pxt.auth.generateUserProfilePicDataUrl(state.profile);
         data.invalidate("auth:*");
         data.invalidate("user-pref:*");
         return Promise.resolve();
@@ -139,18 +139,6 @@ function initVirtualApi() {
     data.mountVirtualApi(MODULE, {
         getSync: AuthClient.authApiHandler
     });
-}
-
-function generateUserProfilePicDataUrl(profile: pxt.auth.UserProfile) {
-    if (profile?.idp?.picture?.encoded) {
-        const url = window.URL || window.webkitURL;
-        try {
-            // Decode the base64 image to a data URL.
-            const decoded = pxt.Util.stringToUint8Array(atob(profile.idp.picture.encoded));
-            const blob = new Blob([decoded], { type: profile.idp.picture.mimeType });
-            profile.idp.picture.dataUrl = url.createObjectURL(blob);
-        } catch { }
-    }
 }
 
 async function clientAsync(): Promise<AuthClient | undefined> {

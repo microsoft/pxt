@@ -284,6 +284,7 @@ declare namespace pxt {
         organizationUrl?: string;
         organizationLogo?: string;
         organizationWideLogo?: string;
+        skillmapOrganizationLogo?: string;
         homeUrl?: string;
         shareUrl?: string;
         embedUrl?: string;

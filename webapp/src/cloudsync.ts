@@ -389,7 +389,7 @@ function updateNameAsync(provider: IdentityProvider) {
             if (!info) // invalid token or info
                 return Promise.resolve();
             if (!info.initials)
-                info.initials = userInitials(info.name);
+                info.initials = pxt.auth.userInitials(info.name);
             provider.setUser(info);
             return null
         })
@@ -459,13 +459,6 @@ export function loginCheck() {
     // notify cloud providers
     for (const impl of provs)
         impl.loginCheck();
-}
-
-export function userInitials(username: string): string {
-    if (!username) return "?";
-    // Parse the user name for user initials
-    const initials = username.match(/\b\w/g) || [];
-    return ((initials.shift() || '') + (initials.pop() || '')).toUpperCase();
 }
 
 function syncApiHandler(p: string) {
