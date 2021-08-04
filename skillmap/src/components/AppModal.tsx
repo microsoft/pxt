@@ -321,7 +321,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
     const currentMap = state.editorView ?
         state.maps[state.editorView.currentMapId] :
         (currentMapId && state.maps[currentMapId]);
-    const activity = currentMapId && currentActivityId ? state.maps[currentMapId].activities[currentActivityId] : undefined
+    const activity = (currentMapId && currentActivityId) ? state.maps[currentMapId]?.activities[currentActivityId] : undefined
 
     let showCodeCarryoverModal = false;
 

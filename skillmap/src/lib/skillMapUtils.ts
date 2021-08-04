@@ -139,8 +139,10 @@ export function lookupPreviousCompletedActivityState(user: UserState, pageSource
 export function isCodeCarryoverEnabled(user: UserState, pageSource: string, map: SkillMap, activity: MapNode) {
     if (activity.kind !== "activity") return false;
 
+    const prevActivities = lookupPreviousActivities(map, activity.activityId);
     const progress = lookupActivityProgress(user, pageSource, map.mapId, activity.activityId);
-    return activity.allowCodeCarryover && isActivityUnlocked(user, pageSource, map, activity.activityId) && !progress?.headerId;
+    return activity.allowCodeCarryover && prevActivities.length > 0
+        && isActivityUnlocked(user, pageSource, map, activity.activityId) && !progress?.headerId;
 }
 
 export function flattenRewardNodeChildren(node: MapNode): MapNode[] {
