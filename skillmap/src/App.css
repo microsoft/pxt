@@ -126,17 +126,15 @@ code {
 
 .user-menu .header-button.sign-in {
     border-radius: 6px;
-    background-color: var(--secondary-color);
+    background-color: var(--body-background-color);
     color: #393939;
     height: 80%;
     margin: .5rem;
-    padding-top: .7rem;
-    padding-left: 1rem;;
-}
-
-.user-menu .header-button.sign-in:hover {
-    color: var(--secondary-color);
-    background-color: #393939;
+    margin-right: 1rem;
+    padding-top: .5rem;
+    padding-left: 1rem;
+    font-family: Segoe UI,Tahoma,Geneva,Verdana;
+    font-weight: 500;
 }
 
 .user-menu .header-dropdown {
@@ -219,8 +217,21 @@ code {
 }
 
 .header-button:hover, .header-dropdown:hover {
-    background-color: var(--hover-color);
-    color: var(--invert-hover-text-color);
+    background-color: rgba(0,0,0,.1);
+}
+
+.header-button:hover>.icon,
+.header-dropdown:hover>.icon {
+    transform: scale(1.2);
+}
+
+.header-button.sign-in:hover {
+    transform: scale(1.1);
+}
+
+.header-button.sign-in:hover>span,
+.header-button.sign-in:hover>.icon {
+    transform: none;
 }
 
 .header-activity-display-name {
@@ -351,7 +362,7 @@ code {
 
 
     .user-menu .header-button.sign-in {
-        padding-top: .2rem!important;
+        padding: .2rem .8rem;
         margin-top: .4rem;
     }
 }
@@ -367,5 +378,13 @@ code {
 
     .header-org-logo .header-org-logo-small {
         display: block;
+    }
+
+    .user-menu .header-button.sign-in {
+        padding-left: .6rem;
+    }
+
+    .user-menu .header-button.sign-in .header-button-label {
+        display: none;
     }
 }

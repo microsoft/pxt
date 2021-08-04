@@ -165,8 +165,9 @@ export class UserMenu extends auth.Component<UserMenuProps, UserMenuState> {
         return (
             <sui.DropdownMenu role="menuitem"
                 title={title}
-                className="item icon user-dropdown-menuitem"
+                className="item icon user-dropdown-menuitem sign-in-dropdown"
                 titleContent={loggedIn ? signedInElem : signedOutElem}
+                tabIndex={loggedIn? 0 : -1}
             >
                 {loggedIn ? <sui.Item role="menuitem" text={lf("My Profile")} onClick={this.handleProfileClicked} /> : undefined}
                 {loggedIn ? <div className="ui divider"></div> : undefined}
@@ -179,7 +180,7 @@ export class UserMenu extends auth.Component<UserMenuProps, UserMenuState> {
                     </sui.Item>
                     : undefined}
                 {showGhUnlink ? <div className="ui divider"></div> : undefined}
-                {!loggedIn ? <sui.Item role="menuitem" text={lf("Sign in")} onClick={this.handleLoginClicked} /> : undefined}
+                {!loggedIn ? <sui.Item role="menuitem" text={lf("Sign in")} onClick={this.handleLoginClicked}/> : undefined}
                 {loggedIn ? <sui.Item role="menuitem" text={lf("Sign out")} onClick={this.handleLogoutClicked} /> : undefined}
             </sui.DropdownMenu>
         );

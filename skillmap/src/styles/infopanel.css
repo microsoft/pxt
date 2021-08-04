@@ -232,6 +232,10 @@
     .info-panel .grid .action-button:nth-child(2) {
         margin-right: 0;
     }
+
+    .sign-in-button {
+        display: none;
+    }
 }
 
 @media only screen and (max-width: 762px) {
