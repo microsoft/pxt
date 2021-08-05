@@ -107,7 +107,10 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
         return <div className="user-menu">
             {signedIn
              ? <Dropdown icon="star" items={items} picture={avatarElem || initialsElem} className="header-dropdown"/>
-             : <HeaderBarButton className="sign-in" icon="xicon icon cloud-user" title={lf("Sign In")} label={lf("Sign In")} onClick={this.props.dispatchShowLoginModal}/>}
+             : <HeaderBarButton className="sign-in" icon="xicon icon cloud-user" title={lf("Sign In")} label={lf("Sign In")} onClick={ () => {
+                pxt.tickEvent(`skillmap.usermenu.signin`);
+                 this.props.dispatchShowLoginModal();
+            }}/>}
         </div>;
     }
 
@@ -153,7 +156,8 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
     }
 
     onLogoutClicked = async () => {
-        await pxt.auth.client().logoutAsync(location.hash)
+        pxt.tickEvent(`skillmap.usermenu.signout`);
+        await pxt.auth.client().logoutAsync(location.hash);
     }
 }
 
