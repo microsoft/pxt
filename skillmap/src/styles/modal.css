@@ -111,14 +111,14 @@
 
 /* LOGIN MODAL */
 .sign-in-description {
-    margin-bottom: 20px;
+    margin-bottom: 1rem;
 }
 
 .sign-in-container {
     display: flex;
     align-items: center;
     flex-direction: column;
-    row-gap: 10px;
+    row-gap: 1rem;
     justify-content: center;
 }
 
