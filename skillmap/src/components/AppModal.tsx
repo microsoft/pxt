@@ -327,7 +327,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
             </div>
             <div className="sign-in-container">
                 <div className="sign-in-prompt">
-                    <p>Choose an account to connect:</p>
+                    <p>{lf("Choose an account to connect:")}</p>
                 </div>
                 {providers.map((p, key) => {
                     return <div className="modal-button" key={key} role="button" onClick={async () => {

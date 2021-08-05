@@ -14,8 +14,6 @@ interface DispatchProps {
 
 type CloudActionsProps = OwnProps & DispatchProps;
 
-
-// VVN TODO Handle tablet view
 export class CloudActionsImpl extends React.Component<CloudActionsProps> {
     render () {
         return <div className="cloud-action">

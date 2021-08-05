@@ -14,7 +14,6 @@ interface HeaderBarProps {
     currentActivityId?: string;
     activityOpen: boolean;
     showReportAbuse?: boolean;
-    currentActivityDisplayName?: string;
     signedIn: boolean;
     dispatchSaveAndCloseActivity: () => void;
     dispatchShowResetUserModal: () => void;
@@ -51,9 +50,7 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
     }
 
     protected getOrganizationLogo(targetTheme: pxt.AppTheme) {
-        // VVN TODO MObILE LOGO VIEW
-        // VVN TODO MATCH DIR STRUCTURE W/ REGULAR HEADER IMAGES
-        const logoUrl = targetTheme.skillmapOrganizationLogo || targetTheme.organizationLogo;
+        const logoUrl = targetTheme.organizationWideLogo;
 
         return <div className="header-logo">
             {logoUrl
@@ -97,7 +94,7 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
                 label: lf("Sign Out"),
                 onClick: this.onLogoutClicked
             })
-        } // VVN TODO ADD USER PROFILE
+        }
 
         const avatarElem = user?.idp?.picture?.dataUrl
             ? <div className="avatar"><img src={user?.idp?.picture?.dataUrl} alt={lf("User Menu")}/></div>
@@ -110,15 +107,12 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
         return <div className="user-menu">
             {signedIn
              ? <Dropdown icon="star" items={items} picture={avatarElem || initialsElem} className="header-dropdown"/>
-             : <HeaderBarButton className="sign-in" icon="xicon icon cloud-user" title={lf("Sign In")} label={lf("Sign In")} labelLeft={true} onClick={this.props.dispatchShowLoginModal}/>}
+             : <HeaderBarButton className="sign-in" icon="xicon icon cloud-user" title={lf("Sign In")} label={lf("Sign In")} onClick={this.props.dispatchShowLoginModal}/>}
         </div>;
     }
 
     render() {
-        const { activityOpen, currentActivityDisplayName } = this.props;
-        const logoAlt = "MakeCode Logo";
-        const organizationLogoAlt = "Microsoft Logo";
-        const logoSrc = (isLocal() || !pxt.appTarget?.appTheme?.logoUrl ) ? resolvePath("assets/logo.svg") : pxt.appTarget?.appTheme?.logo;
+        const { activityOpen } = this.props;
         const hasIdentity = pxt.auth.hasIdentity();
 
         const appTheme = pxt.appTarget?.appTheme;
@@ -159,7 +153,6 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
     }
 
     onLogoutClicked = async () => {
-        console.log("VVN logout clicked")
         await pxt.auth.client().logoutAsync(location.hash)
     }
 }
@@ -169,17 +162,15 @@ interface HeaderBarButtonProps {
     label?: string;
     title: string;
     onClick: () => void;
-    labelLeft?: boolean; // Put the label on the left side of the button;
     className?: string;
 }
 
 const HeaderBarButton = (props: HeaderBarButtonProps) => {
-    const { icon, label, labelLeft, title, onClick, className } = props;
+    const { icon, label, title, onClick, className } = props;
 
     return <div className={`header-button ${!label ? "icon-only" : "with-label"} ${className}`} title={title} role="button" onClick={onClick}>
-        {label && labelLeft && <span className="header-button-label">{label}</span>}
         <i className={icon} />
-        {label && !labelLeft && <span className="header-button-label">{label}</span>}
+        {label && <span className="header-button-label">{label}</span>}
     </div>
 }
 
@@ -194,13 +185,9 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
     }
 
     const activityOpen = !!state.editorView;
-    let currentActivityDisplayName: string | undefined;
 
     if (state.editorView?.currentActivityId) {
         const activity = state.maps[state.editorView.currentMapId]?.activities[state.editorView.currentActivityId];
-        if (activity) {
-            currentActivityDisplayName = activity.displayName;
-        }
     }
 
     return {
@@ -208,7 +195,6 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         currentMapId: activityOpen && state.editorView?.currentMapId,
         currentActivityId: activityOpen && state.editorView?.currentActivityId,
         showReportAbuse: state.pageSourceStatus === "unknown",
-        currentActivityDisplayName,
         signedIn: state.auth.signedIn
     }
 }

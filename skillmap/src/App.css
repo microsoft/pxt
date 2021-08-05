@@ -135,6 +135,7 @@ code {
     padding-left: 1rem;
     font-family: Segoe UI,Tahoma,Geneva,Verdana;
     font-weight: 500;
+    flex-direction: row-reverse;
 }
 
 .user-menu .header-dropdown {
