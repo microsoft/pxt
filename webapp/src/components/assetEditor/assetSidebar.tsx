@@ -107,7 +107,7 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
         pxt.tickEvent("assets.duplicate", { type: this.props.asset.type.toString(), gallery: isGalleryAsset.toString() });
 
         const asset = this.props.asset;
-        const displayName = asset.meta.displayName
+        const displayName = asset.meta?.displayName
             || getDisplayNameForAsset(asset, isGalleryAsset)
             || pxt.getDefaultAssetDisplayName(asset.type);
 
