@@ -51,15 +51,17 @@ class AuthClient extends pxt.auth.AuthClient {
     }
     protected onUserProfileChanged(): Promise<void> {
         const state = this.getState();
-        generateUserProfilePicDataUrl(state.profile);
+        pxt.auth.generateUserProfilePicDataUrl(state.profile);
         data.invalidate("auth:*");
         return Promise.resolve();
     }
-    protected onUserPreferencesChanged(part: pxt.auth.UserPreferencePart): Promise<void> {
-        switch (part) {
-            case "language": data.invalidate(LANGUAGE); break;
-            case "high-contrast": data.invalidate(HIGHCONTRAST); break;
-            case "immersive-reader": data.invalidate(READER); break;
+    protected onUserPreferencesChanged(diff: ts.pxtc.jsonPatch.PatchOperation[]): Promise<void> {
+        for (const op of diff) {
+            switch (op.path.join('/')) {
+                case "language": data.invalidate(LANGUAGE); break;
+                case "highContrast": data.invalidate(HIGHCONTRAST); break;
+                case "reader": data.invalidate(READER); break;
+            }
         }
         return Promise.resolve();
     }
@@ -69,7 +71,7 @@ class AuthClient extends pxt.auth.AuthClient {
     }
     protected onStateLoaded(): Promise<void> {
         const state = this.getState();
-        generateUserProfilePicDataUrl(state.profile);
+        pxt.auth.generateUserProfilePicDataUrl(state.profile);
         data.invalidate("auth:*");
         data.invalidate("user-pref:*");
         return Promise.resolve();
@@ -141,18 +143,6 @@ function initVirtualApi() {
     });
 }
 
-function generateUserProfilePicDataUrl(profile: pxt.auth.UserProfile) {
-    if (profile?.idp?.picture?.encoded) {
-        const url = window.URL || window.webkitURL;
-        try {
-            // Decode the base64 image to a data URL.
-            const decoded = pxt.Util.stringToUint8Array(atob(profile.idp.picture.encoded));
-            const blob = new Blob([decoded], { type: profile.idp.picture.mimeType });
-            profile.idp.picture.dataUrl = url.createObjectURL(blob);
-        } catch { }
-    }
-}
-
 async function clientAsync(): Promise<AuthClient | undefined> {
     if (!pxt.auth.hasIdentity()) { return undefined; }
     let cli = pxt.auth.client();
@@ -190,26 +180,50 @@ export async function initialUserPreferencesAsync(): Promise<pxt.auth.UserPrefer
 
 export async function loginAsync(idp: pxt.IdentityProviderId, persistent: boolean, callbackState: pxt.auth.CallbackState = undefined): Promise<void> {
     const cli = await clientAsync();
-    return await cli?.loginAsync(idp, persistent, callbackState);
+    await cli?.loginAsync(idp, persistent, callbackState);
 }
 
 export async function loginCallbackAsync(qs: pxt.Map<string>): Promise<void> {
-    return await pxt.auth.loginCallbackAsync(qs);
+    await pxt.auth.loginCallbackAsync(qs);
 }
 
 export async function logoutAsync(): Promise<void> {
     const cli = await clientAsync();
-    return await cli?.logoutAsync();
-}
-
-export async function updateUserPreferencesAsync(newPref: Partial<pxt.auth.UserPreferences>): Promise<void> {
-    const cli = await clientAsync();
-    return await cli?.updateUserPreferencesAsync(newPref);
+    await cli?.logoutAsync();
 }
 
 export async function deleteProfileAsync(): Promise<void> {
     const cli = await clientAsync();
-    return await cli?.deleteProfileAsync();
+    await cli?.deleteProfileAsync();
+}
+
+export async function patchUserPreferencesAsync(ops: ts.pxtc.jsonPatch.PatchOperation | ts.pxtc.jsonPatch.PatchOperation[]): Promise<void> {
+    const cli = await clientAsync();
+    await cli?.patchUserPreferencesAsync(ops);
+}
+
+export async function setHighContrastPrefAsync(highContrast: boolean): Promise<void> {
+    await patchUserPreferencesAsync({
+        op: 'replace',
+        path: ['highContrast'],
+        value: highContrast
+    });
+}
+
+export async function setLangaugePrefAsync(lang: string): Promise<void> {
+    await patchUserPreferencesAsync({
+        op: 'replace',
+        path: ['language'],
+        value: lang
+    });
+}
+
+export async function setImmersiveReaderPrefAsync(pref: string): Promise<void> {
+    await patchUserPreferencesAsync({
+        op: 'replace',
+        path: ['reader'],
+        value: pref
+    });
 }
 
 export async function apiAsync<T = any>(url: string, data?: any, method?: string): Promise<pxt.auth.ApiResult<T>> {

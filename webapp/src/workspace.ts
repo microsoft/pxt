@@ -130,9 +130,13 @@ export function getHeaders(withDeleted = false) {
     maybeSyncHeadersAsync();
     const cloudUserId = auth.userProfile()?.id;
     let r = allScripts.map(e => e.header).filter(h =>
+        // Filter deleted projects
         (withDeleted || !h.isDeleted) &&
+        // Hide backup projects
         !h.isBackup &&
-        !h.isSkillmapProject &&
+        // If this is the skillmap editor, filter to only skillmap projects, otherwise filter out skillmap projects
+        !!h.isSkillmapProject === pxt.BrowserUtils.isSkillmapEditor() &&
+        // Filter to local projects and projects belonging to this signed in user
         (!h.cloudUserId || h.cloudUserId === cloudUserId))
     r.sort((a, b) => {
         const aTime = a.cloudUserId ? Math.min(a.cloudLastSyncTime, a.modificationTime) : a.modificationTime

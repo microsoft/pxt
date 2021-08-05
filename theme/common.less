@@ -1945,18 +1945,50 @@ div.simframe.ui.embed {
     }
 }
 
+.sign-in-dropdown {
+    padding: .3rem;
+    justify-content: center;
+}
+
 div.signin-button {
     display: flex;
     align-items: center;
+    background-color: @homeScreenBackground;
+    color: black;
+    border-radius: 6px;
+    height: 3rem;
+    padding: 1rem;
+    font-family: Segoe UI,Tahoma,Geneva,Verdana;
+    font-weight: 500;
 
     .text {
         margin-right: .5rem;
     }
 }
 
+div.signin-button:hover {
+    transform: scale(1.1);
+}
+
+div.signin-button:focus {
+    border: 3px solid #fff;
+    outline: 1px ridge #000;
+}
+
 @media only screen and (max-width: @largestTabletScreen) {
     .menubar .right.menu .signin-button .icon {
         margin-left: -8px;
+    }
+
+    .sign-in-dropdown {
+        padding-left: .1rem;
+        padding-right: .1rem;
+    }
+
+    div.signin-button {
+        height: 2.5rem;
+        padding: 1.3rem;
+        padding-left: 1rem;
     }
 }
 

@@ -124,8 +124,13 @@ namespace pxt.storage.shared {
     // Specify host and port explicitly so that localhost frames not served on the default port (e.g. skillmap) can access it.
     const localhostStoreUrl = "http://localhost:3232/api/store/";
 
+    function useSharedLocalStorage(): boolean {
+        return routingEnabled && pxt.BrowserUtils.isLocalHostDev() && !pxt.BrowserUtils.noSharedLocalStorage();
+    }
+
     export async function getAsync<T>(container: string, key: string): Promise<T> {
-        if (routingEnabled && pxt.BrowserUtils.isLocalHostDev()) {
+        if (useSharedLocalStorage()) {
+            container += '-' + pxt.BrowserUtils.browser();
             const resp = await pxt.Util.requestAsync({
                 url: `${localhostStoreUrl}${encodeURIComponent(container)}/${encodeURIComponent(key)}`,
                 method: "GET",
@@ -155,7 +160,8 @@ namespace pxt.storage.shared {
             sval = JSON.stringify(val);
         else
             sval = val.toString();
-        if (routingEnabled && BrowserUtils.isLocalHostDev()) {
+        if (useSharedLocalStorage()) {
+            container += '-' + pxt.BrowserUtils.browser();
             const data = {
                 type: (typeof val === "object") ? "json" : "text",
                 val: sval
@@ -172,7 +178,8 @@ namespace pxt.storage.shared {
     }
 
     export async function delAsync(container: string, key: string): Promise<void> {
-        if (routingEnabled && BrowserUtils.isLocalHostDev()) {
+        if (useSharedLocalStorage()) {
+            container += '-' + pxt.BrowserUtils.browser();
             await pxt.Util.requestAsync({
                 url: `${localhostStoreUrl}${encodeURIComponent(container)}/${encodeURIComponent(key)}`,
                 method: "DELETE",

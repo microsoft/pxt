@@ -4,6 +4,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 import store from "./store/store";
+import * as auth from "./lib/authClient";
 
 import {
     dispatchAddSkillMap,
@@ -27,7 +28,7 @@ import { InfoPanel } from './components/InfoPanel';
 
 import { parseSkillMap } from './lib/skillMapParser';
 import { parseHash, getMarkdownAsync, MarkdownSource, parseQuery,
-    guidGen, setPageTitle, setPageSourceUrl, ParsedHash } from './lib/browserUtils';
+    setPageTitle, setPageSourceUrl, ParsedHash } from './lib/browserUtils';
 
 import { MakeCodeFrame } from './components/makecodeFrame';
 import { getUserStateAsync, saveUserStateAsync } from './lib/workspaceProvider';
@@ -44,6 +45,7 @@ interface AppProps {
     activityOpen: boolean;
     backgroundImageUrl: string;
     theme: SkillGraphTheme;
+    signedIn: boolean;
     dispatchAddSkillMap: (map: SkillMap) => void;
     dispatchClearSkillMaps: () => void;
     dispatchClearMetadata: () => void;
@@ -194,15 +196,6 @@ class AppImpl extends React.Component<AppProps, AppState> {
 
         let user = await getUserStateAsync();
 
-        if (!user) {
-            user = {
-                id: guidGen(),
-                completedTags: {},
-                mapProgress: {},
-                version: pxt.skillmap.USER_VERSION
-            };
-        }
-
         if (fetched && !user.completedTags[fetched]) {
             user.completedTags[fetched] = {};
         }
@@ -215,6 +208,10 @@ class AppImpl extends React.Component<AppProps, AppState> {
     async componentDidMount() {
         this.unsubscribeChangeListener = store.subscribe(this.onStoreChange);
         this.queryFlags = parseQuery();
+        if (this.queryFlags["authcallback"]) {
+            await auth.loginCallbackAsync(this.queryFlags);
+        }
+        await auth.authCheckAsync();
         await this.initLocalizationAsync();
         await this.parseHashAsync();
     }
@@ -305,7 +302,8 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         skillMaps: state.maps,
         activityOpen: !!state.editorView,
         backgroundImageUrl: state.backgroundImageUrl,
-        theme: state.theme
+        theme: state.theme,
+        signedIn: state.auth.signedIn
     };
 }
 interface LocalizationUpdateOptions {

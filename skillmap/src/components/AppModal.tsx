@@ -31,6 +31,7 @@ interface AppModalProps {
 interface AppModalState {
     loading?: boolean;
     data?: ShareModalData;
+    rememberMe?: boolean; // For the Login modal
 }
 
 interface ShareModalData {
@@ -61,6 +62,8 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                 return this.renderCodeCarryoverModal();
             case "share":
                 return this.renderShareModal();
+            case "login":
+                return this.renderLoginModal();
             default:
                 return <div/>
         }
@@ -310,6 +313,47 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
         </Modal>
     }
 
+    renderLoginModal() {
+        const providers = pxt.auth.identityProviders();
+        const rememberMeSelected = this.state.rememberMe ?? false;
+
+        return <Modal title={lf("Sign in or Signup")} onClose={this.handleOnClose}>
+            <div className="sign-in-description">
+                <p>{lf("Connect an existing account in order to sign in or signup for the first time.")}
+                    <a href="https://aka.ms/cloudsave" target="_blank" onClick={() => {
+                        tickEvent("skillmap.signindialog.learn", { link: "https://aka.ms/cloudsave" });
+                        window.open("https://aka.ms/cloudsave", "_blank");
+                    }}>
+                        <i className="icon external alternate" />{lf("Learn more")}
+                    </a>
+                </p>
+            </div>
+            <div className="sign-in-container">
+                <div className="sign-in-prompt">
+                    <p>{lf("Choose an account to connect:")}</p>
+                </div>
+                {providers.map((p, key) => {
+                    return <div className="modal-button" key={key} role="button" onClick={async () => {
+                        pxt.tickEvent(`skillmap.signindialog.signin`, { provider: p.name ? p.name : "", rememberMe: rememberMeSelected.toString() });
+                        pxt.auth.client().loginAsync(p.id, rememberMeSelected, { hash: location.hash })
+                    }}>
+                        <i className={`xicon ${p.id}`} />
+                        <div className="label">
+                            {p.name}
+                        </div>
+                    </div>
+                })}
+                <div className="sign-in-remember" onClick={() => {
+                    const rememberMe = !rememberMeSelected;
+                    tickEvent("skillmap.signindialog.rememberme", { rememberMe: rememberMe.toString() });
+                    this.setState({ rememberMe });
+                }}>
+                    <i className={`icon square outline ${rememberMeSelected ? "check" : ""}`} />
+                    {lf("Remember me")}
+                </div>
+            </div>
+        </Modal>
+    }
 }
 
 function mapStateToProps(state: SkillMapState, ownProps: any) {
@@ -332,7 +376,6 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
 
         showCodeCarryoverModal = !!((activity as MapActivity).allowCodeCarryover && previousActivityCompleted);
     }
-
 
     return {
         type,

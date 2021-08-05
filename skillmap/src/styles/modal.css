@@ -109,6 +109,27 @@
     cursor: pointer;
 }
 
+/* LOGIN MODAL */
+.sign-in-description {
+    margin-bottom: 1rem;
+}
+
+.sign-in-container {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    row-gap: 1rem;
+    justify-content: center;
+}
+
+.sign-in-prompt {
+    justify-self: center;
+}
+
+.sign-in-remember {
+    user-select: none;
+}
+
 /* COMPLETION MODAL */
 .completion-reward {
     display: flex;

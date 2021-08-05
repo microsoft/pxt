@@ -31,5 +31,10 @@ export const dispatchShowReportAbuseModal = () => ({ type: actions.SHOW_REPORT_A
 export const dispatchShowResetUserModal = () => ({ type: actions.SHOW_RESET_USER_MODAL });
 export const dispatchShowCarryoverModal = (mapId: string, activityId: string) => ({ type: actions.SHOW_CARRYOVER_MODAL, mapId, activityId });
 export const dispatchShowShareModal = (mapId: string, activityId: string) => ({ type: actions.SHOW_SHARE_MODAL, mapId, activityId });
+export const dispatchShowLoginModal = () => ({ type: actions.SHOW_LOGIN_MODAL});
 
 export const dispatchHideModal = () => ({ type: actions.HIDE_MODAL });
+
+export const dispatchSetUserProfile = (profile?: pxt.auth.UserProfile) => ({ type: actions.SET_USER_PROFILE, profile });
+export const dispatchSetUserPreferences = (preferences?: pxt.auth.UserPreferences) => ({ type: actions.SET_USER_PREFERENCES, preferences });
+export const dispatchLogout = () => ({type: actions.USER_LOG_OUT});
