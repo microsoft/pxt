@@ -320,8 +320,11 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
         return <Modal title={lf("Sign in or Signup")} onClose={this.handleOnClose}>
             <div className="sign-in-description">
                 <p>{lf("Connect an existing account in order to sign in or signup for the first time.")}
-                    <a href="https://aka.ms/cloudsave" target="_blank" onClick={()=>{window.open("https://aka.ms/cloudsave", "_blank")}}>
-                        <i className="icon external alternate"/>{lf("Learn more")}
+                    <a href="https://aka.ms/cloudsave" target="_blank" onClick={() => {
+                        tickEvent("skillmap.signindialog.learn", { link: "https://aka.ms/cloudsave" });
+                        window.open("https://aka.ms/cloudsave", "_blank");
+                    }}>
+                        <i className="icon external alternate" />{lf("Learn more")}
                     </a>
                 </p>
             </div>
@@ -331,17 +334,21 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                 </div>
                 {providers.map((p, key) => {
                     return <div className="modal-button" key={key} role="button" onClick={async () => {
-                        pxt.tickEvent(`identity.loginClick`, { provider: p.name?p.name:"", rememberMe: rememberMeSelected.toString() });
-                        pxt.auth.client().loginAsync(p.id, rememberMeSelected, {hash: location.hash})
+                        pxt.tickEvent(`skillmap.signindialog.signin`, { provider: p.name ? p.name : "", rememberMe: rememberMeSelected.toString() });
+                        pxt.auth.client().loginAsync(p.id, rememberMeSelected, { hash: location.hash })
                     }}>
-                        <i className={`xicon ${p.id}`}/>
+                        <i className={`xicon ${p.id}`} />
                         <div className="label">
                             {p.name}
                         </div>
                     </div>
                 })}
-                <div className="sign-in-remember" onClick={()=>this.setState({rememberMe: !rememberMeSelected})}>
-                    <i className={`icon square outline ${rememberMeSelected? "check" : ""}`}/>
+                <div className="sign-in-remember" onClick={() => {
+                    const rememberMe = !rememberMeSelected;
+                    tickEvent("skillmap.signindialog.rememberme", { rememberMe: rememberMe.toString() });
+                    this.setState({ rememberMe });
+                }}>
+                    <i className={`icon square outline ${rememberMeSelected ? "check" : ""}`} />
                     {lf("Remember me")}
                 </div>
             </div>
