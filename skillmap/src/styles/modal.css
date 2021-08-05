@@ -18,6 +18,16 @@
     padding: 1.5rem;
 }
 
+.modal.fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    max-width: none;
+}
+
 .modal-header {
     display: flex;
     font-size: 1.2rem;
@@ -128,6 +138,88 @@
 
 .sign-in-remember {
     user-select: none;
+}
+
+
+/* Profile dialog */
+.profiledialog .ui.card {
+    margin: 0;
+    margin-right: 14px;
+    margin-bottom: 14px;
+    border-radius: 0;
+    color: black;
+    border: 1px solid black !important;
+    background-color: white;
+}
+
+.profiledialog button {
+    margin: 0;
+}
+
+.profiledialog label.title {
+    font-weight: bold;
+}
+
+.profiledialog p.value {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.profiledialog p.description {
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.profiledialog p.warning {
+    background-color: #F5BC5F;
+    padding: 6px;
+}
+
+.profiledialog div.header-text {
+    font-size: 20px;
+    white-space: nowrap;
+    grid-row-start: 1;
+    grid-row-end: 1;
+    grid-column-start: 1;
+    grid-column-end: 2;
+    justify-self: start;
+}
+
+.profiledialog div.profile-pic {
+    grid-row-start: 1;
+    grid-row-end: 1;
+    grid-column-start: 2;
+    grid-column-end: 2;
+    justify-self: end;
+}
+.profiledialog .ui.card.panel {
+    width: fit-content;
+    min-width: 350px;
+    max-width: 500px;
+    padding: 14px;
+    display: inline-grid;
+    row-gap: 20px;
+    grid-template-rows: auto;
+    grid-template-columns: auto;
+}
+
+.profiledialog .ui.card.panel div.row {
+    grid-row-start: auto;
+    grid-row-end: auto;
+    grid-column-start: 1;
+    grid-column-end: 2;
+    justify-self: start;
+    max-width: 100%;
+}
+
+.profiledialog .ui.card.panel div.row-span-two {
+    grid-row-start: auto;
+    grid-row-end: auto;
+    grid-column-start: 1;
+    grid-column-end: 3;
+    justify-self: start;
+    max-width: 100%;
 }
 
 /* COMPLETION MODAL */

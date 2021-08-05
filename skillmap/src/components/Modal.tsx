@@ -16,6 +16,7 @@ interface ModalProps {
     actions?: ModalAction[];
     className?: string;
     onClose?: () => void;
+    fullscreen?: boolean;
 }
 
 export class Modal extends React.Component<ModalProps> {
@@ -29,9 +30,9 @@ export class Modal extends React.Component<ModalProps> {
     }
 
     render() {
-        const  { title, actions, className } = this.props;
+        const  { title, actions, className, fullscreen } = this.props;
         return <div className="modal-overlay" onClick={this.handleCloseClick} role="region">
-            <div className={`modal ${className || ""}`} onClick={this.handleModalClick} role="dialog">
+            <div className={`modal ${className || ""} ${fullscreen && `fullscreen`}`} onClick={this.handleModalClick} role="dialog">
                 <div className="modal-header">
                     <div className="modal-title">{title}</div>
                     <div className="spacer" />

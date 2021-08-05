@@ -38,3 +38,4 @@ export const dispatchHideModal = () => ({ type: actions.HIDE_MODAL });
 export const dispatchSetUserProfile = (profile?: pxt.auth.UserProfile) => ({ type: actions.SET_USER_PROFILE, profile });
 export const dispatchSetUserPreferences = (preferences?: pxt.auth.UserPreferences) => ({ type: actions.SET_USER_PREFERENCES, preferences });
 export const dispatchLogout = () => ({type: actions.USER_LOG_OUT});
+export const dispatchShowProfileModal = () => ({type: actions.SHOW_USER_PROFILE});

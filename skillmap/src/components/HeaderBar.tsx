@@ -2,7 +2,7 @@
 import * as React from "react";
 
 import { connect } from 'react-redux';
-import { dispatchSaveAndCloseActivity, dispatchShowResetUserModal, dispatchShowLoginModal } from '../actions/dispatch';
+import { dispatchSaveAndCloseActivity, dispatchShowResetUserModal, dispatchShowLoginModal, dispatchShowProfileModal } from '../actions/dispatch';
 import { SkillMapState } from '../store/reducer';
 import { isLocal, resolvePath, tickEvent } from "../lib/browserUtils";
 
@@ -18,6 +18,7 @@ interface HeaderBarProps {
     dispatchSaveAndCloseActivity: () => void;
     dispatchShowResetUserModal: () => void;
     dispatchShowLoginModal: () => void;
+    dispatchShowProfileModal: () => void;
 }
 
 export class HeaderBarImpl extends React.Component<HeaderBarProps> {
@@ -90,6 +91,10 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
 
         if (signedIn) {
             items.push({
+                id: "profile",
+                label: lf("My Profile"),
+                onClick: this.onProfileClicked
+            },{
                 id: "signout",
                 label: lf("Sign Out"),
                 onClick: this.onLogoutClicked
@@ -155,6 +160,10 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
     onLogoutClicked = async () => {
         await pxt.auth.client().logoutAsync(location.hash)
     }
+
+    onProfileClicked = () => {
+        this.props.dispatchShowProfileModal();
+    }
 }
 
 interface HeaderBarButtonProps {
@@ -203,7 +212,8 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
 const mapDispatchToProps = {
     dispatchSaveAndCloseActivity,
     dispatchShowResetUserModal,
-    dispatchShowLoginModal
+    dispatchShowLoginModal,
+    dispatchShowProfileModal
 };
 
 export const HeaderBar = connect(mapStateToProps, mapDispatchToProps)(HeaderBarImpl);

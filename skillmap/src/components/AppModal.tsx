@@ -12,6 +12,8 @@ import { editorUrl } from "./makecodeFrame";
 
 import { Modal, ModalAction } from './Modal';
 
+import { UserProfile } from "./UserProfile";
+
 interface AppModalProps {
     type: ModalType;
     skillMap?: SkillMap;
@@ -64,6 +66,8 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                 return this.renderShareModal();
             case "login":
                 return this.renderLoginModal();
+            case "profile":
+                return this.renderProfileModal();
             default:
                 return <div/>
         }
@@ -345,6 +349,12 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                     {lf("Remember me")}
                 </div>
             </div>
+        </Modal>
+    }
+
+    renderProfileModal() {
+        return <Modal title={lf("User Profile")} fullscreen={true}>
+            <UserProfile/>
         </Modal>
     }
 }
