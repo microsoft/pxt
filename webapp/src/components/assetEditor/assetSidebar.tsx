@@ -89,15 +89,13 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
 
         const project = pxt.react.getTilemapProject();
         project.pushUndo();
-        if (!result.meta.displayName && result.meta.temporaryInfo) {
+        if (!this.props.asset.meta?.displayName && result.meta.temporaryInfo) {
             getBlocksEditor().updateTemporaryAsset(result);
-
-            pkg.mainEditorPkg().lookupFile(`this/${pxt.MAIN_BLOCKS}`).setContentAsync(getBlocksEditor().getCurrentSource())
-
+            pkg.mainEditorPkg().lookupFile(`this/${pxt.MAIN_BLOCKS}`).setContentAsync(getBlocksEditor().getCurrentSource());
         }
-        else {
-            project.updateAsset(result);
-        }
+
+        if (result.meta.displayName) project.updateAsset(result);
+
         this.props.dispatchChangeGalleryView(GalleryView.User);
         this.updateAssets().then(() => simulator.setDirty());
     }

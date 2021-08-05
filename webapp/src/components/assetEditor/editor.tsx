@@ -186,7 +186,7 @@ export class AssetEditor extends Editor {
 
             Promise.resolve(cb(result)).then(() => {
                 // for temporary (unnamed) assets, update the underlying typescript image literal
-                if (!result.meta?.displayName) {
+                if (!asset.meta?.displayName) {
                     this.parent.saveBlocksToTypeScriptAsync().then((src) => {
                         if (src) pkg.mainEditorPkg().setContentAsync(pxt.MAIN_TS, src)
                     })
