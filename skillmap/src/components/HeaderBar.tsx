@@ -101,7 +101,7 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
             : undefined;
 
         const initialsElem = user?.idp?.displayName
-            ? <span className="circle">{pxt.auth.userInitials(user?.idp?.displayName)}</span>
+            ? <span className="circle">{pxt.auth.userInitials(user?.idp?.displayName ?? user?.idp?.username)}</span>
             : undefined;
 
         return <div className="user-menu">

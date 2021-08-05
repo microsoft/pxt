@@ -37,7 +37,7 @@ export class Component<TProps, TState> extends data.Component<TProps, TState> {
 class AuthClient extends pxt.auth.AuthClient {
     protected async onSignedIn(): Promise<void> {
         const state = this.getState();
-        core.infoNotification(lf("Signed in: {0}", state.profile.idp.displayName));
+        core.infoNotification(lf("Signed in: {0}", state.profile.idp.displayName ?? state.profile.idp.username ?? "??"));
         await cloud.syncAsync();
         pxt.storage.setLocal(HAS_USED_CLOUD, "true");
     }

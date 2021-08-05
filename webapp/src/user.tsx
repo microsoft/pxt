@@ -102,7 +102,7 @@ class AccountPanel extends sui.UIElement<AccountPanelProps, {}> {
 
     renderCore() {
         const profile = this.getData<pxt.auth.UserProfile>(auth.USER_PROFILE);
-        const provider = pxt.auth.identityProvider(profile.idp?.provider);
+        const provider = pxt.auth.identityProvider(profile?.idp?.provider);
 
         const avatarElem = (
             <div className="profile-pic avatar">
@@ -111,7 +111,7 @@ class AccountPanel extends sui.UIElement<AccountPanelProps, {}> {
         );
         const initialsElem = (
             <div className="profile-pic avatar">
-                <span>{pxt.auth.userInitials(profile?.idp?.displayName)}</span>
+                <span>{pxt.auth.userInitials(profile?.idp?.displayName ?? profile?.idp?.username)}</span>
             </div>
         );
 

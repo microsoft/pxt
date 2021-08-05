@@ -585,10 +585,16 @@ namespace pxt.auth {
     }
 
     export function userInitials(username: string): string {
-        if (!username) return "?";
-        // Parse the user name for user initials
-        const initials = username.match(/\b\w/g) || [];
-        return ((initials.shift() || '') + (initials.pop() || '')).toUpperCase();
+        if (!username) return "??";
+        if (/^\w+@/.test(username)) {
+            // Looks like an email address. Return first two characters.
+            const initials = username.match(/^\w\w/);
+            return initials.shift().toUpperCase();
+        } else {
+            // Parse the user name for user initials
+            const initials = username.match(/\b\w/g) || [];
+            return ((initials.shift() || '') + (initials.pop() || '')).toUpperCase();
+        }
     }
 
     export function generateUserProfilePicDataUrl(profile: pxt.auth.UserProfile) {

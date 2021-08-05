@@ -154,7 +154,7 @@ export class UserMenu extends auth.Component<UserMenuProps, UserMenuState> {
         );
         const initialsElem = (
             <div className="avatar">
-                <span>{pxt.auth.userInitials(user?.idp?.displayName)}</span>
+                <span>{pxt.auth.userInitials(user?.idp?.displayName ?? user?.idp?.username)}</span>
             </div>
         );
         const signedInElem = user?.idp?.picture?.dataUrl ? avatarElem : initialsElem;
