@@ -103,16 +103,19 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
     }
 
     protected duplicateAssetHandler = () => {
-        pxt.tickEvent("assets.duplicate", { type: this.props.asset.type.toString(), gallery: this.props.isGalleryAsset.toString() });
+        const { isGalleryAsset } = this.props;
+        pxt.tickEvent("assets.duplicate", { type: this.props.asset.type.toString(), gallery: isGalleryAsset.toString() });
 
         const asset = this.props.asset;
-        if (!asset.meta?.displayName) asset.meta = { ...asset.meta, displayName: getDisplayNameForAsset(asset, this.props.isGalleryAsset) }
+        const displayName = asset.meta?.displayName
+            || getDisplayNameForAsset(asset, isGalleryAsset)
+            || pxt.getDefaultAssetDisplayName(asset.type);
 
         const project = pxt.react.getTilemapProject();
         project.pushUndo();
-        const { type, id } = project.duplicateAsset(asset);
+        const { type, id } = project.duplicateAsset(asset, displayName);
         this.updateAssets().then(() => {
-            this.props.dispatchChangeGalleryView(GalleryView.User, type, id);
+            if (isGalleryAsset) this.props.dispatchChangeGalleryView(GalleryView.User, type, id);
         });
     }
 
@@ -218,9 +221,10 @@ function getDisplayNameForAsset(asset: pxt.Asset, isGalleryAsset?: boolean) {
         return lf("No asset selected");
     } else if (asset?.meta?.displayName) {
         return asset.meta.displayName;
-    } else {
-        return isGalleryAsset ? asset.id.split('.').pop() : lf("Temporary asset");
+    } else if (isGalleryAsset) {
+        return asset.id.split('.').pop();
     }
+    return null;
 }
 
 function mapStateToProps(state: AssetEditorState, ownProps: any) {
