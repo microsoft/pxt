@@ -26,6 +26,10 @@ export async function saveProjectAsync(project: pxt.workspace.Project): Promise<
 export async function getUserStateAsync(): Promise<UserState> {
     const ws = await getWorkspaceAsync();
 
+    // User state is stored in two places, so we read both sources here and merge them.
+    // Though the entire user state is saved to the local workspace, the authClient
+    // module is the authoritative source for the completedTags and mapProgress fields.
+
     let userState = await ws.getUserStateAsync();
     if (!userState) {
         userState = {
@@ -35,6 +39,7 @@ export async function getUserStateAsync(): Promise<UserState> {
             version: pxt.skillmap.USER_VERSION
         };
     }
+
     // Read synchronized skillmap state from cloud profile.
     const skillmapState = await authClient.getSkillmapStateAsync();
     userState = {
@@ -42,6 +47,7 @@ export async function getUserStateAsync(): Promise<UserState> {
         mapProgress: skillmapState?.mapProgress ?? {},
         completedTags: skillmapState?.completedTags ?? {}
     };
+
     return userState;
 }
 
@@ -52,7 +58,9 @@ export async function saveUserStateAsync(user: UserState): Promise<void> {
     const ws = await getWorkspaceAsync();
     await ws.saveUserStateAsync(user);
 
-    // Sync skillmap progress to cloud
+    // Sync skillmap progress to cloud. This state will always be stored locally, and synced
+    // to the cloud if the user is signed in. authClient is the authoritative source for the
+    // mapProgress and completedTags fields.
     await authClient.saveSkillmapStateAsync({
         mapProgress: user.mapProgress,
         completedTags: user.completedTags
