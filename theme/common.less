@@ -1699,20 +1699,6 @@ p.ui.font.small {
     }
 }
 
-/* Thin view, for navbar size management */
-@media only screen and (max-width: @mediumScreenWidth) {
-    .ui.thin.hide {
-        display: none!important;
-    }
-}
-
-@media only screen and (min-width: @mediumScreenWidth) {
-    .ui.thin.only {
-        display: none!important;
-    }
-}
-
-
 /* Custom width treshold to force vertical stacking on the start page */
 @media only screen and (max-width: 1095px) {
     .ui.modal.projectsdialog h2.editorname {
@@ -1976,8 +1962,9 @@ div.simframe.ui.embed {
     }
 }
 
-.sign-in-dropdown {
-    padding: .3rem;
+.ui.menu .item.sign-in-dropdown {
+    padding-left: 0rem;
+    padding-right: .3rem;
     justify-content: center;
 }
 
@@ -1988,7 +1975,7 @@ div.signin-button {
     color: black;
     border-radius: 6px;
     height: 3rem;
-    padding: 1rem;
+    padding: .6rem;
     font-family: Segoe UI,Tahoma,Geneva,Verdana;
     font-weight: 500;
 
