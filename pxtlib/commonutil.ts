@@ -49,6 +49,17 @@ namespace ts.pxtc.Util {
         return "\"" + jsStringQuote(s) + "\"";
     }
 
+    export function initials(username: string): string {
+        if (/^\w+@/.test(username)) {
+            // Looks like an email address. Return first two characters.
+            const initials = username.match(/^\w\w/);
+            return initials.shift().toUpperCase();
+        } else {
+            // Parse the user name for user initials
+            const initials = username.match(/\b\w/g) || [];
+            return ((initials.shift() || '') + (initials.pop() || '')).toUpperCase();
+        }
+    }
 
     // Localization functions. Please port any modifications over to pxtsim/localization.ts
     let _localizeLang: string = "en";

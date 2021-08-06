@@ -1,5 +1,7 @@
 namespace pxt.auth {
 
+    const EMPTY_USERNAME = "??";
+
     const AUTH_CONTAINER = "auth"; // local storage "namespace".
     const CSRF_TOKEN_KEY = "csrf-token"; // stored in local storage.
     const AUTH_LOGIN_STATE_KEY = "login-state"; // stored in local storage.
@@ -584,11 +586,13 @@ namespace pxt.auth {
         authDisabled = !enabled;
     }
 
-    export function userInitials(username: string): string {
-        if (!username) return "?";
-        // Parse the user name for user initials
-        const initials = username.match(/\b\w/g) || [];
-        return ((initials.shift() || '') + (initials.pop() || '')).toUpperCase();
+    export function userName(user: pxt.auth.UserProfile): string {
+        return user?.idp?.displayName ?? user?.idp?.username ?? EMPTY_USERNAME;
+    }
+
+    export function userInitials(user: pxt.auth.UserProfile): string {
+        const username = pxt.auth.userName(user);
+        return ts.pxtc.Util.initials(username);
     }
 
     export function generateUserProfilePicDataUrl(profile: pxt.auth.UserProfile) {
