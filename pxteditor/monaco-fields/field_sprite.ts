@@ -38,12 +38,12 @@ namespace pxt.editor {
         protected resultToText(result: pxt.ProjectImage): string {
             if (result.meta?.displayName) {
                 const project = pxt.react.getTilemapProject();
-                if (this.isAsset) {
+                if (this.isAsset || project.lookupAsset(result.type, result.id)) {
                     result = project.updateAsset(result)
                 } else {
-                    this.isAsset = true;
                     result = project.createNewProjectImage(result.bitmap, result.meta.displayName);
                 }
+                this.isAsset = true;
                 return pxt.getTSReferenceForAsset(result, this.isPython);
             }
             return pxt.sprite.bitmapToImageLiteral(pxt.sprite.Bitmap.fromData(result.bitmap), this.isPython ? "python" : "typescript");
