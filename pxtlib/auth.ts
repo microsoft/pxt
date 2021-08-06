@@ -183,6 +183,9 @@ namespace pxt.auth {
 
             // Update state and UI to reflect logged out state.
             this.clearState();
+
+            await this.onSignedOut();
+
             const hash = continuationHash ? continuationHash.startsWith('#') ? continuationHash : `#${continuationHash}` : "";
 
             // Redirect to home screen, or skillmap home screen
@@ -342,13 +345,8 @@ namespace pxt.auth {
             this.transformUserProfile(profile);
             const isLoggedIn = this.hasUserId();
             this.onUserProfileChanged();
-            //pxt.data.invalidate(USER_PROFILE);
             if (isLoggedIn && !wasLoggedIn) {
                 await this.onSignedIn();
-                //pxt.data.invalidate(LOGGED_IN);
-            } else if (!isLoggedIn && wasLoggedIn) {
-                await this.onSignedOut();
-                //pxt.data.invalidate(LOGGED_IN);
             }
         }
 

@@ -1,4 +1,4 @@
-import { dispatchSetUserProfile, dispatchSetUserPreferences, dispatchLogout } from '../actions/dispatch';
+import { dispatchSetUserProfile, dispatchSetUserPreferences, dispatchLogout, dispatchResetUser } from '../actions/dispatch';
 import store from '../store/store';
 
 class AuthClient extends pxt.auth.AuthClient {
@@ -9,6 +9,7 @@ class AuthClient extends pxt.auth.AuthClient {
     protected onSignedOut(): Promise<void> {
         // Show a notification?
         store.dispatch(dispatchLogout());
+        store.dispatch(dispatchResetUser());
         return Promise.resolve();
     }
     protected onSignInFailed(): Promise<void> {
