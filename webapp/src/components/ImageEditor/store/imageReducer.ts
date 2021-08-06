@@ -222,10 +222,26 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
             const toOpen: pxt.Asset = action.asset;
             const gallery = action.gallery || (action.keepPast ? state.editor.tileGallery : [])
 
+            let selectedColor = -1;
+            if (toOpen.type === pxt.AssetType.Tilemap) {
+                // Add the first gallery tile to the tileset so the editor will have a default
+                // selected color. If unused, this will be trimmed when the editor is closed.
+                const tilemapData = action.asset.data as pxt.sprite.TilemapData;
+                if (pxt.sprite.isEmptyTilemap(tilemapData)) {
+                    const tiles = tilemapData.tileset.tiles as pxt.Tile[] || [];
+                    const firstTileName = (gallery as GalleryTile[]).find(t => t.tags.indexOf("forest") !== -1)?.qualifiedName;
+                    const firstTile = lookupAsset(pxt.AssetType.Tile, firstTileName) as pxt.Tile;
+                    if (firstTile && !tiles.find(t => t.id === firstTileName)) {
+                        tiles.push(firstTile);
+                    }
+                    selectedColor = tiles.indexOf(firstTile);
+                }
+            }
+
             return {
                 ...state,
                 editor: toOpen.type === pxt.AssetType.Tilemap ? {
-                    selectedColor: -1,
+                    selectedColor,
                     backgroundColor: -1,
                     isTilemap: true,
                     tilemapPalette: {
