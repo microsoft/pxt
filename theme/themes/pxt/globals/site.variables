@@ -55,7 +55,7 @@
 
 @tallEditorBreakpoint: 44rem;
 @thinEditorBreakpoint: 50rem;
-@mediumScreenWidth: 1313px;
+@mediumScreenWidth: 82rem;
 
 /*--------------
    Form Input
