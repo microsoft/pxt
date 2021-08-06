@@ -29,7 +29,7 @@ export async function getUserStateAsync(): Promise<UserState> {
     // User state is stored in two places, so we read both sources here and merge them.
     // Though the entire user state is saved to the local workspace, the authClient
     // module is the authoritative source for the completedTags and mapProgress fields
-    // when signed in.
+    // when auth is enabled.
 
     let userState = await ws.getUserStateAsync();
     if (!userState) {
@@ -61,7 +61,7 @@ export async function saveUserStateAsync(user: UserState): Promise<void> {
 
     // Sync skillmap progress to cloud. This state will always be stored locally, and synced
     // to the cloud if the user is signed in. authClient is the authoritative source for the
-    // mapProgress and completedTags fields when signed in.
+    // mapProgress and completedTags fields when auth is enabled.
     await authClient.saveSkillmapStateAsync({
         mapProgress: user.mapProgress,
         completedTags: user.completedTags
