@@ -1699,6 +1699,20 @@ p.ui.font.small {
     }
 }
 
+/* Thin view, for navbar size management */
+@media only screen and (max-width: @mediumScreenWidth) {
+    .ui.thin.hide {
+        display: none!important;
+    }
+}
+
+@media only screen and (min-width: @mediumScreenWidth) {
+    .ui.thin.only {
+        display: none!important;
+    }
+}
+
+
 /* Custom width treshold to force vertical stacking on the start page */
 @media only screen and (max-width: 1095px) {
     .ui.modal.projectsdialog h2.editorname {
