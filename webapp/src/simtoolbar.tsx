@@ -105,6 +105,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const isFullscreen = parentState.fullscreen;
         const isMuted = parentState.mute;
         const inTutorial = !!parentState.tutorialOptions && !!parentState.tutorialOptions.tutorial;
+        const inCodeEditor = parent.isBlocksActive() || parent.isJavaScriptActive() || parent.isPythonActive();
 
         const run = true;
         const restart = run && !simOpts.hideRestart;
@@ -117,7 +118,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const isHeadless = simOpts.headless;
         const screenshot = !!targetTheme.simScreenshot;
         const screenshotClass = !!parentState.screenshoting ? "loading" : "";
-        const debugBtnEnabled = !isStarting && !isSimulatorPending;
+        const debugBtnEnabled = !isStarting && !isSimulatorPending && inCodeEditor;
         const runControlsEnabled = !debugging && !isStarting && !isSimulatorPending;
         const collapse = !targetTheme.bigRunButton;
 

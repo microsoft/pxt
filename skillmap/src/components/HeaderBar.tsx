@@ -106,13 +106,16 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
             : undefined;
 
         const initialsElem = user?.idp?.displayName
-            ? <span className="circle">{pxt.auth.userInitials(user?.idp?.displayName)}</span>
+            ? <span className="circle">{pxt.auth.userInitials(user)}</span>
             : undefined;
 
         return <div className="user-menu">
             {signedIn
              ? <Dropdown icon="star" items={items} picture={avatarElem || initialsElem} className="header-dropdown"/>
-             : <HeaderBarButton className="sign-in" icon="xicon icon cloud-user" title={lf("Sign In")} label={lf("Sign In")} onClick={this.props.dispatchShowLoginModal}/>}
+             : <HeaderBarButton className="sign-in" icon="xicon icon cloud-user" title={lf("Sign In")} label={lf("Sign In")} onClick={ () => {
+                pxt.tickEvent(`skillmap.usermenu.signin`);
+                 this.props.dispatchShowLoginModal();
+            }}/>}
         </div>;
     }
 
@@ -149,7 +152,19 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
 
     onHomeClicked = () => {
         tickEvent("skillmap.home");
-        window.open(pxt.appTarget.appTheme.homeUrl);
+
+        // relprefix looks like "/beta---", need to chop off the hyphens and slash
+        let rel = pxt.webConfig?.relprefix.substr(0, pxt.webConfig.relprefix.length - 3);
+        if (pxt.appTarget.appTheme.homeUrl && rel) {
+            if (pxt.appTarget.appTheme.homeUrl?.lastIndexOf("/") === pxt.appTarget.appTheme.homeUrl?.length - 1) {
+                rel = rel.substr(1);
+            }
+            window.open(pxt.appTarget.appTheme.homeUrl + rel);
+        }
+        else {
+            window.open(pxt.appTarget.appTheme.homeUrl);
+        }
+
     }
 
     onBugClicked = () => {
@@ -158,6 +173,7 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
     }
 
     onLogoutClicked = async () => {
+        pxt.tickEvent(`skillmap.usermenu.signout`);
         await pxt.auth.client().logoutAsync(location.hash)
     }
 

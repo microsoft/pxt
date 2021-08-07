@@ -389,7 +389,7 @@ function updateNameAsync(provider: IdentityProvider) {
             if (!info) // invalid token or info
                 return Promise.resolve();
             if (!info.initials)
-                info.initials = pxt.auth.userInitials(info.name);
+                info.initials = U.initials(info.name);
             provider.setUser(info);
             return null
         })

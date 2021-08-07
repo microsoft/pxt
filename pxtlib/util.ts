@@ -778,11 +778,11 @@ namespace ts.pxtc.Util {
     }
 
     export function escapeForRegex(str: string) {
-        return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
+        return str?.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
     }
 
     export function stripUrlProtocol(str: string) {
-        return str.replace(/.*?:\/\//g, "");
+        return str?.replace(/.*?:\/\//g, "");
     }
 
     export function normalizePath(path: string) {
