@@ -721,6 +721,8 @@ async function onHeadersChanged(): Promise<void> {
         // If the header is deleted, return undefined. If transfer to cloud failed, return null.
         // This allows us to distinguish between successful sync of a deleted project, and a
         // sync failure.
+        // TODO: Return a richer sync result that clearly indicates success or failure. Distinguishing
+        // between null and undefined to tease out the error condition is not ideal, or maintainable.
         return h.isDeleted ? undefined : newHdr ? newHdr : null;
     });
     inProgressSavePromise = Promise.all(saveTasks);
