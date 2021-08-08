@@ -41,32 +41,38 @@ export class LoginDialog extends auth.Component<LoginDialogProps, LoginDialogSta
         this.setState({ visible: false });
     }
 
+    private async signInAsync(provider: pxt.AppCloudProvider): Promise<void> {
+        pxt.tickEvent(`identity.loginClick`, { provider: provider.name, rememberMe: this.state.rememberMe.toString() });
+        await auth.loginAsync(provider.id, this.state.rememberMe, {
+            hash: this.state.continuationHash
+        });
+    }
+
     renderCore() {
         const { visible } = this.state;
-        const providers = pxt.auth.identityProviders();
+        const msft = pxt.auth.identityProvider("microsoft");
+
+        const buttons: sui.ModalButton[] = [];
+        buttons.push({
+            label: lf("Sign in"),
+            onclick: async () => await this.signInAsync(msft),
+            icon: "checkmark",
+            approveButton: true,
+            className: "positive"
+        });
+
+        const actions: JSX.Element[] = [];
+        actions.push(<div className="remember-me"><sui.PlainCheckbox label={lf("Remember me")} onChange={this.handleRememberMeChanged} /></div>);
 
         return (
             <sui.Modal isOpen={visible} className="signindialog" size="tiny"
-                onClose={this.hide} dimmer={true}
-                closeIcon={true} header={lf("Sign in or Signup")}
+                onClose={this.hide} dimmer={true} buttons={buttons} actions={actions}
+                closeIcon={true} header={lf("Sign into {0}", pxt.appTarget.appTheme.organizationText)}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape>
                 <div className="description">
-                    <p>{lf("Connect an existing account in order to sign in or signup for the first time.")} <sui.Link className="ui" text={lf("Learn more")} icon="external alternate" ariaLabel={lf("Learn more")} href="https://aka.ms/cloudsave" target="_blank" onKeyDown={sui.fireClickOnEnter} /></p>
-                </div>
-                <div className="container">
-                    <div className="prompt">
-                        <p>Choose an account to connect:</p>
-                    </div>
-                    <div className="providers">
-                        <div className="provider">
-                            {providers.map((p, key) => (
-                                <ProviderButton key={key} provider={p} rememberMe={this.state.rememberMe} continuationHash={this.state.continuationHash} />
-                            ))}
-                        </div>
-                        <div className="remember-me">
-                            <sui.PlainCheckbox label={lf("Remember me")} onChange={this.handleRememberMeChanged} />
-                        </div>
-                    </div>
+                    <p>{lf("Sign in with your Microsoft Account. We'll save your projects to the cloud, where they're accessible from anywhere.")}</p>
+                    <p>{lf("Don't have a Microsoft Account? Start signing in to create one!")}</p>
+                    <sui.Link className="ui" text={lf("Learn more")} icon="external alternate" ariaLabel={lf("Learn more")} href="https://aka.ms/cloudsave" target="_blank" onKeyDown={sui.fireClickOnEnter} />
                 </div>
             </sui.Modal>
         );
@@ -92,7 +98,7 @@ class ProviderButton extends data.PureComponent<ProviderButtonProps, {}> {
     renderCore() {
         const { provider } = this.props;
         return (
-            <sui.Button icon={`xicon ${provider.id}`} text={provider.name} onClick={this.handleLoginClicked} />
+            <sui.Button icon={`xicon ${provider.id}`} text={lf("Sign In")} onClick={this.handleLoginClicked} />
         );
     }
 }
@@ -167,7 +173,7 @@ export class UserMenu extends auth.Component<UserMenuProps, UserMenuState> {
                 title={title}
                 className="item icon user-dropdown-menuitem sign-in-dropdown"
                 titleContent={loggedIn ? signedInElem : signedOutElem}
-                tabIndex={loggedIn? 0 : -1}
+                tabIndex={loggedIn ? 0 : -1}
             >
                 {loggedIn ? <sui.Item role="menuitem" text={lf("My Profile")} onClick={this.handleProfileClicked} /> : undefined}
                 {loggedIn ? <div className="ui divider"></div> : undefined}
@@ -180,7 +186,7 @@ export class UserMenu extends auth.Component<UserMenuProps, UserMenuState> {
                     </sui.Item>
                     : undefined}
                 {showGhUnlink ? <div className="ui divider"></div> : undefined}
-                {!loggedIn ? <sui.Item role="menuitem" text={lf("Sign in")} onClick={this.handleLoginClicked}/> : undefined}
+                {!loggedIn ? <sui.Item role="menuitem" text={lf("Sign in")} onClick={this.handleLoginClicked} /> : undefined}
                 {loggedIn ? <sui.Item role="menuitem" text={lf("Sign out")} onClick={this.handleLogoutClicked} /> : undefined}
             </sui.DropdownMenu>
         );

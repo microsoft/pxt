@@ -1167,6 +1167,7 @@ export interface ModalProps extends ReactModal.Props {
 
     helpUrl?: string;
     headerActions?: JSX.Element[];
+    actions?: JSX.Element[];
     buttons?: ModalButton[];
     onPositionChanged?: Function;
     allowResetFocus?: boolean;
@@ -1333,9 +1334,10 @@ export class Modal extends data.Component<ModalProps, ModalState> {
             <div id={this.id + 'desc'} className={`${longer ? 'scrolling' : ''} ${headerActions ? 'has-actions' : ''} content`}>
                 {children}
             </div>
-            {!isFullscreen && this.props.buttons && this.props.buttons.length > 0 ?
+            {!isFullscreen && (this.props.actions && this.props.actions.length || this.props.buttons && this.props.buttons.length) ?
                 <div className="actions">
-                    {this.props.buttons.map(action =>
+                    {this.props.actions}
+                    {this.props.buttons?.map(action =>
                         action.url ?
                             <Link
                                 key={`action_${action.label}`}
