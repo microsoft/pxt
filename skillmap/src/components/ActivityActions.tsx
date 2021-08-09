@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 
 import { dispatchOpenActivity, dispatchShowRestartActivityWarning, dispatchShowShareModal, dispatchShowCarryoverModal } from '../actions/dispatch';
 
-import { ActivityStatus, lookupActivityProgress, isCodeCarryoverEnabled } from '../lib/skillMapUtils';
+import { ActivityStatus, isCodeCarryoverEnabled } from '../lib/skillMapUtils';
 import { tickEvent } from '../lib/browserUtils';
 import { editorUrl } from "./makecodeFrame";
 import { SkillMapState } from "../store/reducer";
