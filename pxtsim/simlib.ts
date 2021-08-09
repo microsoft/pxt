@@ -575,7 +575,12 @@ namespace pxsim {
 
                 ch.gain.gain.setValueAtTime(scaledStart, ctx.currentTime + (timeOff / 1000))
                 timeOff += duration
-                ch.gain.gain.linearRampToValueAtTime(scaledEnd, ctx.currentTime + (timeOff / 1000))
+
+                // To prevent clipping, we ramp to this value slightly earlier than intended. This is so that we
+                // can go for a smooth ramp to 0 in ch.mute() without this operation interrupting it. If we had
+                // more accurate timing this would not be necessary, but we'd probably have to do something like
+                // running a metronome in a webworker to get the level of precision we need
+                ch.gain.gain.linearRampToValueAtTime(scaledEnd, ctx.currentTime + ((timeOff - 50) / 1000))
 
                 return loopAsync()
             }
