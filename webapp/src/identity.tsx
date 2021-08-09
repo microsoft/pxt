@@ -72,33 +72,9 @@ export class LoginDialog extends auth.Component<LoginDialogProps, LoginDialogSta
                 <div className="description">
                     <p>{lf("Sign in with your Microsoft Account. We'll save your projects to the cloud, where they're accessible from anywhere.")}</p>
                     <p>{lf("Don't have a Microsoft Account? Start signing in to create one!")}</p>
-                    <sui.Link className="ui" text={lf("Learn more")} icon="external alternate" ariaLabel={lf("Learn more")} href="https://aka.ms/cloudsave" target="_blank" onKeyDown={sui.fireClickOnEnter} />
+                    <sui.Link className="ui" text={lf("Learn more")} icon="external alternate" ariaLabel={lf("Learn more")} href="/identity/sign-in" target="_blank" onKeyDown={sui.fireClickOnEnter} />
                 </div>
             </sui.Modal>
-        );
-    }
-}
-
-type ProviderButtonProps = {
-    provider: pxt.AppCloudProvider;
-    rememberMe: boolean;
-    continuationHash: string;
-};
-
-class ProviderButton extends data.PureComponent<ProviderButtonProps, {}> {
-
-    handleLoginClicked = async () => {
-        const { provider, rememberMe } = this.props;
-        pxt.tickEvent(`identity.loginClick`, { provider: provider.name, rememberMe: rememberMe.toString() });
-        await auth.loginAsync(provider.id, rememberMe, {
-            hash: this.props.continuationHash
-        });
-    }
-
-    renderCore() {
-        const { provider } = this.props;
-        return (
-            <sui.Button icon={`xicon ${provider.id}`} text={lf("Sign In")} onClick={this.handleLoginClicked} />
         );
     }
 }
