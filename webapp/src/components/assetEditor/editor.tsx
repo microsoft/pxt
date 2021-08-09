@@ -83,10 +83,12 @@ export class AssetEditor extends Editor {
     }
 
     display(): JSX.Element {
+        // TODO: re-enable the create asset button in tutorials when we add
+        // the ability to switch editors inside a tutorial
         return <Provider store={store}>
             <div className="asset-editor-outer">
                 <AssetSidebar showAssetFieldView={this.showAssetFieldView} />
-                <AssetGallery showAssetFieldView={this.showAssetFieldView} />
+                <AssetGallery showAssetFieldView={this.showAssetFieldView} disableCreateButton={this.parent.isTutorial()} />
             </div>
         </Provider>
     }
@@ -184,7 +186,7 @@ export class AssetEditor extends Editor {
 
             Promise.resolve(cb(result)).then(() => {
                 // for temporary (unnamed) assets, update the underlying typescript image literal
-                if (!result.meta?.displayName) {
+                if (!asset.meta?.displayName) {
                     this.parent.saveBlocksToTypeScriptAsync().then((src) => {
                         if (src) pkg.mainEditorPkg().setContentAsync(pxt.MAIN_TS, src)
                     })

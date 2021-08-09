@@ -201,6 +201,12 @@
     background-color: darken(@green, 10%);
 }
 
+.create-new.disabled,
+.create-new.disabled:hover {
+    cursor: not-allowed;
+    background-color: @assetUnselected;
+}
+
 .delete-asset {
     margin: 0.5rem;
     text-align: center;

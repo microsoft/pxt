@@ -6,7 +6,8 @@ const testMap = ``
 interface MarkdownSection {
     headerKind: "single" | "double" | "triple";
     header: string;
-    attributes: {[index: string]: string};
+    attributes: { [index: string]: string };
+    listAttributes?: { [index: string]: string[] };
 }
 
 export function test() {
@@ -77,6 +78,7 @@ function getSectionsFromText(text: string) {
 
         if (currentSection) {
             const keyMatch = /^[*-]\s+(?:([^:]+):)?(.*)$/.exec(line);
+            const subkeyMatch = /^ {4}([*-])\s+(.*)$/.exec(line);
 
             if (keyMatch) {
                 if (keyMatch[1]) {
@@ -88,6 +90,12 @@ function getSectionsFromText(text: string) {
                 }
                 else if (currentKey) {
                     currentValue += keyMatch[2];
+                }
+            } else if (subkeyMatch && currentKey) {
+                if (!currentSection.listAttributes) currentSection.listAttributes = {};
+                if (!currentSection.listAttributes[currentKey]) currentSection.listAttributes[currentKey] = [];
+                if (subkeyMatch[2]) {
+                    currentSection.listAttributes[currentKey].push(subkeyMatch[2].trim());
                 }
             }
         }
@@ -259,6 +267,40 @@ function inflateMapReward(section: MarkdownSection, base: Partial<MapReward>): M
         }
     }
 
+    if (section.listAttributes?.["actions"]) {
+        const parsedActions: MapCompletionAction[] = [];
+        const actions = section.listAttributes["actions"];
+        for (const action of actions) {
+            let [kind, ...rest] = action.split(":");
+            const valueMatch = /\s*\[\s*(.*)\s*\]\(([^\s]+)\)/gi.exec(rest.join(":"));
+            const label = valueMatch?.[1];
+            const link = valueMatch?.[2];
+            switch (kind) {
+                case "activity":
+                    parsedActions.push({kind: "activity", label, activityId: link });
+                    break;
+                case "map":
+                    if (link) {
+                        let prefix = validGithubUrl(link) ? "github" : (validDocsUrl(link) ? "docs" : undefined);
+                        if (!prefix) error(`URL: ${link} must be to Github or MakeCode documentation`);
+                        parsedActions.push({ kind: "map", label, url: `#${prefix}:${link}` });
+                    }
+                    break;
+                case "docs":
+                    if (link) {
+                        let docsUrl = (link.startsWith("/") ? "" : "/") + link;
+                        if (!validDocsUrl(docsUrl)) error(`URL: ${docsUrl} must be to MakeCode documentation`);
+                        parsedActions.push({ kind: "docs", label, url: docsUrl });
+                    }
+                    break;
+                case "editor":
+                    parsedActions.push({ kind: "editor", label });
+                    break;
+            }
+        }
+        if (parsedActions.length) result.actions = parsedActions;
+    }
+
     return result as MapReward;
 }
 
@@ -380,17 +422,25 @@ function getContrastingColor(color: string) {
     }
 }
 
+function validGithubUrl(url: string) {
+    return url.match(/^(https?:\/\/)?(www\.)?github\.com\//gi);
+}
+
+function validDocsUrl(url: string) {
+    return url.indexOf(".") < 0;
+}
+
 function cleanInfoUrl(url?: string) {
     // No info URL provided
     if (!url) return undefined;
 
     // Valid URL to Github (eg a README)
-    if (url.match(/^(https?:\/\/)?(www\.)?github\.com\//gi)) return url.replace(/\?[\s\S]+$/gi, "");
+    if (validGithubUrl(url)) return url.replace(/\?[\s\S]+$/gi, "");
 
     // Valid URL to MakeCode docs
-    if (url.indexOf(".") < 0) return `${url.startsWith("/") ? "" : "/"}${url}`;
+    if (validDocsUrl(url)) return `${url.startsWith("/") ? "" : "/"}${url}`;
 
-    error("Educator info URL must be to Github or MakeCode documentation")
+    error(`URL: ${url} must be to Github or MakeCode documentation`);
 }
 
 function parseList(list: string, includeDuplicates = false, separator = ",") {

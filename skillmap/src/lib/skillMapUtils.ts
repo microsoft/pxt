@@ -137,10 +137,13 @@ export function lookupPreviousCompletedActivityState(user: UserState, pageSource
 
 // Code carryover is enabled for unlocked activities (non-rewards) that haven't been started
 export function isCodeCarryoverEnabled(user: UserState, pageSource: string, map: SkillMap, activity: MapNode) {
-    if (activity.kind !== "activity") return false;
+    if (!user || !map || !activity || activity.kind !== "activity") return false;
 
-    const progress = lookupActivityProgress(user, pageSource, map.mapId, activity.activityId);
-    return activity.allowCodeCarryover && isActivityUnlocked(user, pageSource, map, activity.activityId) && !progress?.headerId;
+    const previous = lookupPreviousActivityStates(user, pageSource, map, activity.activityId);
+    const previousActivityCompleted = previous?.some(state => state?.isCompleted &&
+        state.maxSteps === state.currentStep);
+    return activity.allowCodeCarryover && previous.length > 0 && previousActivityCompleted
+        && isActivityUnlocked(user, pageSource, map, activity.activityId);
 }
 
 export function flattenRewardNodeChildren(node: MapNode): MapNode[] {

@@ -26,6 +26,7 @@
     --header-padding-top: 1rem;
 
     --body-font-family: "Share Tech Mono", Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
+    --feature-text-font: Segoe UI,Tahoma,Geneva,Verdana;
 
     --frame-loader-zindex: 30;
     --above-frame-zindex: 50;
@@ -133,8 +134,9 @@ code {
     margin-right: 1rem;
     padding-top: .5rem;
     padding-left: 1rem;
-    font-family: Segoe UI,Tahoma,Geneva,Verdana;
+    font-family: var(--feature-text-font);
     font-weight: 500;
+    flex-direction: row-reverse;
 }
 
 .user-menu .header-dropdown {

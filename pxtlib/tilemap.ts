@@ -924,28 +924,28 @@ namespace pxt {
             }
         }
 
-        public duplicateAsset(asset: ProjectImage): ProjectImage;
-        public duplicateAsset(asset: Tile): Tile;
-        public duplicateAsset(asset: ProjectTilemap): ProjectTilemap;
-        public duplicateAsset(asset: Animation): Animation;
-        public duplicateAsset(asset: Asset): Asset;
-        public duplicateAsset(asset: Asset) {
+        public duplicateAsset(asset: ProjectImage, displayName?: string): ProjectImage;
+        public duplicateAsset(asset: Tile, displayName?: string): Tile;
+        public duplicateAsset(asset: ProjectTilemap, displayName?: string): ProjectTilemap;
+        public duplicateAsset(asset: Animation, displayName?: string): Animation;
+        public duplicateAsset(asset: Asset, displayName?: string): Asset;
+        public duplicateAsset(asset: Asset, displayName?: string) {
             this.onChange();
             const clone = cloneAsset(asset);
-            const displayName = clone.meta?.displayName;
+            const name = displayName || clone.meta?.displayName;
 
             let newAsset: pxt.Asset;
             switch (asset.type) {
                 case AssetType.Image:
-                    newAsset = this.createNewProjectImage((clone as pxt.ProjectImage).bitmap, displayName); break;
+                    newAsset = this.createNewProjectImage((clone as pxt.ProjectImage).bitmap, name); break;
                 case AssetType.Tile:
-                    newAsset = this.createNewTile((clone as pxt.Tile).bitmap, null, displayName); break;
+                    newAsset = this.createNewTile((clone as pxt.Tile).bitmap, null, name); break;
                 case AssetType.Tilemap:
-                    const [id, tilemap] = this.createNewTilemapFromData((clone as pxt.ProjectTilemap).data, displayName);
+                    const [id, tilemap] = this.createNewTilemapFromData((clone as pxt.ProjectTilemap).data, name);
                     newAsset = this.getTilemap(id);
                     break;
                 case AssetType.Animation:
-                    newAsset = this.createNewAnimationFromData((clone as pxt.Animation).frames, (clone as pxt.Animation).interval, displayName)
+                    newAsset = this.createNewAnimationFromData((clone as pxt.Animation).frames, (clone as pxt.Animation).interval, name)
             }
             return newAsset;
         }
@@ -1577,6 +1577,21 @@ namespace pxt {
         }
 
         return undefined
+    }
+
+    export function getDefaultAssetDisplayName(type: pxt.AssetType): string {
+        switch (type) {
+            case pxt.AssetType.Image:
+                return lf("myImage");
+            case pxt.AssetType.Tile:
+                return lf("myTile");
+            case pxt.AssetType.Tilemap:
+                return lf("level");
+            case pxt.AssetType.Animation:
+                return lf("myAnim");
+            default:
+                return lf("asset")
+        }
     }
 
     export function getShortIDForAsset(asset: pxt.Asset) {

@@ -1429,6 +1429,10 @@ p.ui.font.small {
         bottom: 2.2rem;
         margin: 0;
     }
+
+    .ui.card .meta .date.small-screen.hide {
+        display: none;
+    }
 }
 
 @media only screen and (min-width: @tabletBreakpoint) {
@@ -1764,10 +1768,6 @@ p.ui.font.small {
             font-size: 0.8em !important;
         }
 
-        #projectNameArea {
-            padding-left: 0;
-        }
-
         .ui.button {
             font-size: .92857143rem !important;
         }
@@ -1953,7 +1953,7 @@ div.simframe.ui.embed {
 div.signin-button {
     display: flex;
     align-items: center;
-    background-color: #FEF3E0;
+    background-color: @homeScreenBackground;
     color: black;
     border-radius: 6px;
     height: 3rem;

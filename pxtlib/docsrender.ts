@@ -305,7 +305,7 @@ namespace pxt.docs {
         params["orgtitle"] = "MakeCode";
 
         const docsLogo = theme.docsLogo && U.htmlEscape(theme.docsLogo);
-        const orgLogo = (theme.organizationLogo || theme.organizationWideLogo) && U.htmlEscape(theme.organizationLogo || theme.organizationWideLogo);
+        const orgLogo = (theme.organizationWideLogo || theme.organizationLogo) && U.htmlEscape(theme.organizationWideLogo || theme.organizationLogo);
         const orglogomobile = theme.organizationLogo && U.htmlEscape(theme.organizationLogo)
         params["targetlogo"] = docsLogo ? `<img aria-hidden="true" role="presentation" class="ui ${theme.logoWide ? "small" : "mini"} image" src="${docsLogo}" />` : ""
         params["orglogo"] = orgLogo ? `<img aria-hidden="true" role="presentation" class="ui image" src="${orgLogo}" />` : ""

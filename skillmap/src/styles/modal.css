@@ -38,15 +38,15 @@
 }
 
 .modal-actions {
-    display: flex;
-    justify-content: space-around;
-    margin-top: 1rem;
+    display: grid;
+    margin-top: 1.5rem;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
 }
 
 .modal-button {
     border: 1px solid var(--active-color);
-
-    width: 8rem;
+    color: var(--active-color);
     padding: 0.5rem;
     text-align: center;
     cursor: pointer;
@@ -56,6 +56,8 @@
 
 .modal-button:hover {
     background-color: var(--hover-color);
+    color: var(--active-color);
+    text-decoration: none;
 }
 
 /* SHARE MODAL */
@@ -109,14 +111,14 @@
 
 /* LOGIN MODAL */
 .sign-in-description {
-    margin-bottom: 20px;
+    margin-bottom: 1rem;
 }
 
 .sign-in-container {
     display: flex;
     align-items: center;
     flex-direction: column;
-    row-gap: 10px;
+    row-gap: 1rem;
     justify-content: center;
 }
 
@@ -126,6 +128,27 @@
 
 .sign-in-remember {
     user-select: none;
+}
+
+/* COMPLETION MODAL */
+.completion-reward {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+    margin: 1rem 0;
+    color: var(--white);
+    background-color: var(--primary-color);
+    border-radius: 2rem;
+    font-size: 1.2rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+.completion-reward i {
+    margin-right: 0.5rem;
+    font-size: 2rem;
+    line-height: 2rem;
 }
 
 /* COMPLETION CONFETTI */

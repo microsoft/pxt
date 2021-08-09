@@ -14,7 +14,6 @@ interface HeaderBarProps {
     currentActivityId?: string;
     activityOpen: boolean;
     showReportAbuse?: boolean;
-    currentActivityDisplayName?: string;
     signedIn: boolean;
     dispatchSaveAndCloseActivity: () => void;
     dispatchShowResetUserModal: () => void;
@@ -51,13 +50,12 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
     }
 
     protected getOrganizationLogo(targetTheme: pxt.AppTheme) {
-        // VVN TODO MObILE LOGO VIEW
-        // VVN TODO MATCH DIR STRUCTURE W/ REGULAR HEADER IMAGES
-        const logoUrl = targetTheme.skillmapOrganizationLogo || targetTheme.organizationLogo;
+        const logoUrl = targetTheme.organizationWideLogo;
 
+        // TODO FIX LOCALSERVE FETCH OF LOGO
         return <div className="header-logo">
             {logoUrl
-                ? <img src={resolvePath(logoUrl)} alt={lf("{0} Logo", targetTheme.organization)}/>
+                ? <img src={isLocal() ? logoUrl : logoUrl} alt={lf("{0} Logo", targetTheme.organization)}/>
                 : <span className="name">{targetTheme.organization}</span>}
         </div>
     }
@@ -97,28 +95,28 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
                 label: lf("Sign Out"),
                 onClick: this.onLogoutClicked
             })
-        } // VVN TODO ADD USER PROFILE
+        }
 
         const avatarElem = user?.idp?.picture?.dataUrl
             ? <div className="avatar"><img src={user?.idp?.picture?.dataUrl} alt={lf("User Menu")}/></div>
             : undefined;
 
         const initialsElem = user?.idp?.displayName
-            ? <span className="circle">{pxt.auth.userInitials(user?.idp?.displayName)}</span>
+            ? <span className="circle">{pxt.auth.userInitials(user)}</span>
             : undefined;
 
         return <div className="user-menu">
             {signedIn
              ? <Dropdown icon="star" items={items} picture={avatarElem || initialsElem} className="header-dropdown"/>
-             : <HeaderBarButton className="sign-in" icon="xicon icon cloud-user" title={lf("Sign In")} label={lf("Sign In")} labelLeft={true} onClick={this.props.dispatchShowLoginModal}/>}
+             : <HeaderBarButton className="sign-in" icon="xicon icon cloud-user" title={lf("Sign In")} label={lf("Sign In")} onClick={ () => {
+                pxt.tickEvent(`skillmap.usermenu.signin`);
+                 this.props.dispatchShowLoginModal();
+            }}/>}
         </div>;
     }
 
     render() {
-        const { activityOpen, currentActivityDisplayName } = this.props;
-        const logoAlt = "MakeCode Logo";
-        const organizationLogoAlt = "Microsoft Logo";
-        const logoSrc = (isLocal() || !pxt.appTarget?.appTheme?.logoUrl ) ? resolvePath("assets/logo.svg") : pxt.appTarget?.appTheme?.logo;
+        const { activityOpen } = this.props;
         const hasIdentity = pxt.auth.hasIdentity();
 
         const appTheme = pxt.appTarget?.appTheme;
@@ -150,7 +148,19 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
 
     onHomeClicked = () => {
         tickEvent("skillmap.home");
-        window.open(pxt.appTarget.appTheme.homeUrl);
+
+        // relprefix looks like "/beta---", need to chop off the hyphens and slash
+        let rel = pxt.webConfig?.relprefix.substr(0, pxt.webConfig.relprefix.length - 3);
+        if (pxt.appTarget.appTheme.homeUrl && rel) {
+            if (pxt.appTarget.appTheme.homeUrl?.lastIndexOf("/") === pxt.appTarget.appTheme.homeUrl?.length - 1) {
+                rel = rel.substr(1);
+            }
+            window.open(pxt.appTarget.appTheme.homeUrl + rel);
+        }
+        else {
+            window.open(pxt.appTarget.appTheme.homeUrl);
+        }
+
     }
 
     onBugClicked = () => {
@@ -159,8 +169,8 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
     }
 
     onLogoutClicked = async () => {
-        console.log("VVN logout clicked")
-        await pxt.auth.client().logoutAsync(location.hash)
+        pxt.tickEvent(`skillmap.usermenu.signout`);
+        await pxt.auth.client().logoutAsync(location.hash);
     }
 }
 
@@ -169,15 +179,13 @@ interface HeaderBarButtonProps {
     label?: string;
     title: string;
     onClick: () => void;
-    labelLeft?: boolean; // Put the label on the left side of the button;
     className?: string;
 }
 
 const HeaderBarButton = (props: HeaderBarButtonProps) => {
-    const { icon, label, labelLeft, title, onClick, className } = props;
+    const { icon, label, title, onClick, className } = props;
 
     return <div className={`header-button ${!label ? "icon-only" : "with-label"} ${className}`} title={title} role="button" onClick={onClick}>
-        {label && labelLeft && <span className="header-button-label">{label}</span>}
         <i className={icon} />
         {label && !labelLeft && <span className="header-button-label">{label}</span>}
     </div>
@@ -194,13 +202,9 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
     }
 
     const activityOpen = !!state.editorView;
-    let currentActivityDisplayName: string | undefined;
 
     if (state.editorView?.currentActivityId) {
-        const activity = state.maps[state.editorView.currentMapId].activities[state.editorView.currentActivityId];
-        if (activity) {
-            currentActivityDisplayName = activity.displayName;
-        }
+        const activity = state.maps[state.editorView.currentMapId]?.activities[state.editorView.currentActivityId];
     }
 
     return {
@@ -208,7 +212,6 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         currentMapId: activityOpen && state.editorView?.currentMapId,
         currentActivityId: activityOpen && state.editorView?.currentActivityId,
         showReportAbuse: state.pageSourceStatus === "unknown",
-        currentActivityDisplayName,
         signedIn: state.auth.signedIn
     }
 }

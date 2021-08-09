@@ -20,6 +20,7 @@ export const USER_PREFERENCES = `${USER_PREF_MODULE}:${FIELD_USER_PREFERENCES}`
 export const HIGHCONTRAST = `${USER_PREF_MODULE}:${FIELD_HIGHCONTRAST}`
 export const LANGUAGE = `${USER_PREF_MODULE}:${FIELD_LANGUAGE}`
 export const READER = `${USER_PREF_MODULE}:${FIELD_READER}`
+export const HAS_USED_CLOUD = "has-used-cloud"; // Key into local storage to see if this computer has logged in before
 
 export class Component<TProps, TState> extends data.Component<TProps, TState> {
     public getUserProfile(): pxt.auth.UserProfile {
@@ -36,8 +37,9 @@ export class Component<TProps, TState> extends data.Component<TProps, TState> {
 class AuthClient extends pxt.auth.AuthClient {
     protected async onSignedIn(): Promise<void> {
         const state = this.getState();
-        core.infoNotification(lf("Signed in: {0}", state.profile.idp.displayName));
+        core.infoNotification(lf("Signed in: {0}", pxt.auth.userName(state.profile)));
         await cloud.syncAsync();
+        pxt.storage.setLocal(HAS_USED_CLOUD, "true");
     }
     protected onSignedOut(): Promise<void> {
         core.infoNotification(lf("Signed out"));
@@ -187,7 +189,7 @@ export async function loginCallbackAsync(qs: pxt.Map<string>): Promise<void> {
 
 export async function logoutAsync(): Promise<void> {
     const cli = await clientAsync();
-    await cli?.logoutAsync();
+    await cli?.logoutAsync("#");
 }
 
 export async function deleteProfileAsync(): Promise<void> {
