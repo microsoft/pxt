@@ -107,7 +107,7 @@ class AssetGalleryImpl extends React.Component<AssetGalleryProps, AssetGallerySt
             <AssetTopbar />
             <div className={`asset-editor-card-list ${view !== GalleryView.User ? "hidden" : ""}`}>
                 <AssetCardList assets={filterAssets(userAssets, isBlocksProject)}>
-                    <div className={`create-new ${disableCreateButton ? "disabled" : ""}`} role="button" onClick={!disableCreateButton && this.showCreateModal}>
+                    <div className={`create-new ${disableCreateButton ? "disabled" : ""}`} role="button" onClick={!disableCreateButton ? this.showCreateModal : undefined}>
                         <i className="icon huge add circle" />
                         <span>{lf("New Asset")}</span>
                     </div>
