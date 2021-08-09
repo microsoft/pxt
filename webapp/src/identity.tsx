@@ -93,6 +93,17 @@ export class UserMenu extends auth.Component<UserMenuProps, UserMenuState> {
         };
     }
 
+    handleDropdownClicked = () => {
+        const loggedIn = this.isLoggedIn();
+        const githubUser = this.getData("github:user") as pxt.editor.UserInfo;
+        if (loggedIn || githubUser) {
+            return true;
+        } else {
+            this.props.parent.showLoginDialog(this.props.continuationHash);
+            return false;
+        }
+    }
+
     handleLoginClicked = () => {
         this.props.parent.showLoginDialog(this.props.continuationHash);
     }
@@ -149,7 +160,8 @@ export class UserMenu extends auth.Component<UserMenuProps, UserMenuState> {
                 title={title}
                 className="item icon user-dropdown-menuitem sign-in-dropdown"
                 titleContent={loggedIn ? signedInElem : signedOutElem}
-                tabIndex={loggedIn ? 0 : -1}
+                tabIndex={loggedIn? 0 : -1}
+                onClick={this.handleDropdownClicked}
             >
                 {loggedIn ? <sui.Item role="menuitem" text={lf("My Profile")} onClick={this.handleProfileClicked} /> : undefined}
                 {loggedIn ? <div className="ui divider"></div> : undefined}
