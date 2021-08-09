@@ -48,22 +48,22 @@ export class ActivityActionsImpl extends React.Component<ActivityActionsProps> {
     protected handleActionButtonClick = () => {
         const { status, mapId, activityId, dispatchOpenActivity, dispatchShowCarryoverModal, showCodeCarryoverModal } = this.props;
 
+        if (status === "locked") return;
+
+        tickEvent("skillmap.activity.open", { path: mapId, activity: activityId, status: status || "" });
         switch (status) {
-            case "locked":
+            case "notstarted":
+                if (showCodeCarryoverModal) {
+                    dispatchShowCarryoverModal(mapId, activityId);
+                } else {
+                    dispatchOpenActivity(mapId, activityId);
+                }
                 break;
             case "completed":
             case "inprogress":
-            case "notstarted":
             case "restarted":
             default:
-                tickEvent("skillmap.activity.open", { path: mapId, activity: activityId, status: status || "" });
-
-                if (showCodeCarryoverModal) {
-                    dispatchShowCarryoverModal(mapId, activityId);
-                }
-                else {
-                    dispatchOpenActivity(mapId, activityId);
-                }
+                dispatchOpenActivity(mapId, activityId);
         }
     }
 
