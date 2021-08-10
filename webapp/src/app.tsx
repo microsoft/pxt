@@ -2116,6 +2116,7 @@ export class ProjectView
         newHeader.isSkillmapProject = false;
         await workspace.saveAsync(newHeader);
         data.invalidate("headers:");
+        await this.loadHeaderAsync(newHeader)
     }
 
     openProjectByHeaderIdAsync(headerId: string) {
