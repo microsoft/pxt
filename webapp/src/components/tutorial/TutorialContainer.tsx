@@ -43,15 +43,15 @@ export class TutorialContainer extends React.Component<TutorialContainerProps, T
 
         const markdown = steps[currentStep].headerContentMd;
 
-        return <div>
-            <div></div>
+        return <div className="tutorial-container">
+            {/* for title, steps, etc <div></div> */}
             <div className="tutorial-content">
                 <md.MarkedContent className="no-select" tabIndex={0} markdown={markdown} parent={parent} />
             </div>
             <div className="tutorial-controls">
-                <Button icon="arrow left" text={lf("Previous")} onClick={this.previousArrowClickHandler} />
-                <Button icon="lightbulb" />
-                <Button icon="arrow right" text={lf("Next")} onClick={this.nextArrowClickHandler} />
+                <Button icon="arrow circle  left" text={lf("Back")} onClick={this.previousArrowClickHandler} />
+                <Button icon="lightbulb" className="tutorial-hint" />
+                <Button icon="arrow circle right" text={lf("Next")} textFirst={true} onClick={this.nextArrowClickHandler} />
             </div>
         </div>
     }

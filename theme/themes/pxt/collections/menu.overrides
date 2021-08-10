@@ -109,6 +109,7 @@
 }
 
 /* Tutorial mode */
+// SHAKAO remove this....
 .tutorial .ui.inverted.menu {
     background: @mainMenuTutorialBackground !important;
 }

@@ -1,12 +1,65 @@
+#editorSidebar .tab-tutorial.active {
+    background-color: #fff;
+}
+
+.tab-content {
+    &.tab-tutorial {
+        padding-top: 0.5rem;
+        background-color: #fff;
+
+        > div {
+            display: flex;
+            height: 100%;
+        }
+    }
+
+    &.tab-simulator {
+        padding: 0.5rem;
+    }
+}
+
+.tutorial-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.tutorial-content {
+    flex: 1;
+    padding: 1.5rem;
+    overflow-x: hidden;
+    overflow-y: auto;
+
+    span.docs.inlineblock {
+        white-space: break-spaces;
+    }
+}
+
 // Tutorial controls
 .tutorial-controls {
     display: flex;
+    justify-content: center;
+    margin-bottom: 1rem;
+
+    > div {
+        margin: 0.25rem;
+    }
+
+    .core-button {
+        background-color: @teal;
+        color: @blue;
+    }
+}
+
+.tutorial-hint {
+    border-radius: 50%;
 }
 
 // Simulator pane
-.tab-simulator.hidden {
+.tab-simulator.tab-content.hidden {
     display: block !important;
     height: 0;
+    padding: 0;
 
     .simPanel {
         & > * { display: none; }

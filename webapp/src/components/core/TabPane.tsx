@@ -34,7 +34,7 @@ export class TabPane extends React.Component<TabPaneProps, TabPaneState> {
             {Array.isArray(children) && <div className="tab-navigation">
                 {children.map(el => {
                     const { className, icon, title } = el.props as TabContentProps;
-                    return <div key={className} className={`tab-element ${className == activeTabName ? "active" : ""}`} onClick={this.getTabClickHandler(className)}>
+                    return <div key={className} className={`tab-icon ${className} ${className == activeTabName ? "active" : ""}`} onClick={this.getTabClickHandler(className)}>
                         <i className={`ui icon ${icon}`} />
                         <span>{title}</span>
                     </div>

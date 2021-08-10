@@ -7,15 +7,25 @@
     display: flex;
 }
 
-.tab-element {
-    padding: 0.5rem;
+.tab-icon {
+    padding: 1rem;
+    font-size: 1.5rem;
     cursor: pointer;
 }
 
-.tab-element:hover {
-    opacity: 0.6;
+.tab-icon:not(.active):hover {
+    background-color: rgba(0, 0, 0, 0.2);
 }
 
 .core-button {
+    display: flex;
     padding: 1rem;
+    border-radius: 0.2rem;
+    font-weight: 700;
+    cursor: pointer;
+    user-select: none;
+}
+
+.core-button.text-first {
+    flex-direction: row-reverse;
 }
