@@ -1,6 +1,6 @@
 # Cloud Synchronization in MakeCode
 
-> Note: This feature only available in [**MakeCode Arcade**](https://arcade.makecode.com).
+**Note**: This feature only available in [**MakeCode Arcade**](https://arcade.makecode.com).
 
 ## What is Cloud Sync?
 
@@ -8,7 +8,7 @@ Cloud Synchronization, or Cloud Sync, is a feature available to signed-in users 
 
 ## How do I enable Cloud Sync?
 
-All you need to do is sign into MakeCode with your Microsoft Account and Cloud Sync is automatically enabled. Learn more about signing into MakeCode [here]("/identity/sign-in").
+All you need to do is sign into MakeCode with your Microsoft Account and Cloud Sync is automatically enabled. Learn more about signing into MakeCode [here](/identity/sign-in).
 
 ## Does it cost money?
 
@@ -16,7 +16,7 @@ Nope! Cloud Sync completely is free.
 
 ## What are the limits?
 
-Individual projects must be less than 512k in size to be synced to cloud. You may store up to 1000 projects in the cloud.
+Individual projects must be less than 512K bytes in size to be synced to cloud. You may store up to 1000 projects in the cloud.
 
 ## When is a project saved to the cloud?
 
@@ -36,5 +36,5 @@ If you're editing a project in two places at the same time, you may make changes
 
 ## Is anything else saved to cloud?
 
-If you've set your High Contrast or Language settings, they will be cloud-synchronized.
+If you've set your High Contrast or Language settings, they will be cloud-synchronized too.
 
