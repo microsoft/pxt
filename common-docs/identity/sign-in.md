@@ -24,7 +24,7 @@ Your signed in status is visible only to you. In the future we may add features 
 
 ## Do I already have a Microsoft Account?
 
-It is possible! Do you play Minecraft, games on an Xbox, subscribe to Office 365, or use any other Microsoft products or services? If so, you probably already have a Microsoft Account.
+It is possible! Do you play Minecraft, game on an Xbox, subscribe to Office 365, or use any other Microsoft products or services? If so, you probably already have a Microsoft Account.
 
 ## Does this mean I have to create a new email address?
 
