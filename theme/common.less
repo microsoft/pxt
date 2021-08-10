@@ -1217,6 +1217,10 @@ p.ui.font.small {
     margin-left: 4px;
 }
 
+.ui.modal .actions .left-action {
+    float: left;
+}
+
 .download-callout {
     background-color: #EAE7FF;
     color: #4C309D;
@@ -1920,46 +1924,6 @@ div.simframe.ui.embed {
 	image-rendering: optimize-contrast;
 	image-rendering: pixelated;
     -ms-interpolation-mode: nearest-neighbor;
-}
-
-/* Sign in dialog */
-.ui.modal.signindialog {
-    .content {
-        padding: 24px 20px;
-    }
-
-    div.description {
-        margin-bottom: 20px;
-    }
-
-    div.warning {
-        background-color: #F5BC5F;
-        padding: 6px;
-        margin-bottom: 20px;
-    }
-
-    div.container {
-        display: grid;
-        row-gap: 10px;
-        grid-template-rows: 36px auto;
-        grid-template-columns: auto;
-        justify-content: center;
-
-        button {
-            margin: 0;
-        }
-
-        div.prompt {
-            justify-self: center;
-        }
-
-        div.providers {
-            display: grid;
-            row-gap: 20px;
-            grid-template-rows: auto;
-            justify-content: center;
-        }
-    }
 }
 
 .ui.menu .item.sign-in-dropdown {
