@@ -35,3 +35,5 @@ export const HIDE_MODAL = "HIDE_MODAL";
 export const SET_USER_PROFILE = "SET_USER_PROFILE";
 export const SET_USER_PREFERENCES = "SET_USER_PREFERENCES";
 export const USER_LOG_OUT = "USER_LOG_OUT";
+
+export const SET_SHARE_STATUS = "SET_SHARE_STATUS";

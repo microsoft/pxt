@@ -5,7 +5,7 @@ import { isLocal, resolvePath, getEditorUrl, tickEvent } from "../lib/browserUti
 import { lookupActivityProgress } from "../lib/skillMapUtils";
 
 import { SkillMapState } from '../store/reducer';
-import  { dispatchSetHeaderIdForActivity, dispatchCloseActivity, dispatchSaveAndCloseActivity, dispatchUpdateUserCompletedTags } from '../actions/dispatch';
+import  { dispatchSetHeaderIdForActivity, dispatchCloseActivity, dispatchSaveAndCloseActivity, dispatchUpdateUserCompletedTags, dispatchSetShareStatus } from '../actions/dispatch';
 
 /* eslint-disable import/no-unassigned-import, import/no-internal-modules */
 import '../styles/makecode-editor.css'
@@ -22,23 +22,26 @@ interface MakeCodeFrameProps {
     carryoverCode: boolean;
     previousHeaderId?: string;
     progress?: ActivityState;
+    shareHeaderId?: string;
     dispatchSetHeaderIdForActivity: (mapId: string, activityId: string, id: string, currentStep: number, maxSteps: number, isCompleted: boolean) => void;
     dispatchCloseActivity: (finished?: boolean) => void;
     dispatchSaveAndCloseActivity: () => void;
     dispatchUpdateUserCompletedTags: () => void;
+    dispatchSetShareStatus: (headerId?: string, url?: string) => void;
 }
 
-type FrameState = "loading" | "home" | "opening-project" | "project-open" | "closing-project";
+type FrameState = "loading" | "no-project" | "opening-project" | "project-open" | "closing-project";
 
 interface MakeCodeFrameState {
     frameState: FrameState;
     loadPercent?: number; // Progress bar load % from 0 - 100 (loaded)
     workspaceReady: boolean;
+    pendingShare: boolean;
 }
 
 interface PendingMessage {
     original: pxt.editor.EditorMessageRequest;
-    handler: (original: any) => void;
+    handler: (response: any) => void;
 }
 
 export const editorUrl: string = isLocal() ? "http://localhost:3232/index.html" : getEditorUrl((window as any).pxtTargetBundle.appTheme.embedUrl)
@@ -56,20 +59,28 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
         this.state = {
             frameState: "loading",
             workspaceReady: false,
-            loadPercent: 0
+            loadPercent: 0,
+            pendingShare: false
         };
     }
 
     async componentDidUpdate() {
-        const { frameState } = this.state;
+        const { shareHeaderId } = this.props;
+        const { frameState, pendingShare } = this.state;
         if (frameState === "project-open" && this.props.save) {
             this.setState({ frameState: "closing-project" }, async () => {
                 await this.closeActivityAsync();
             })
         }
-        else if (frameState === "home" && this.props.activityId) {
+        else if (frameState === "no-project" && this.props.activityId) {
             this.setState({ frameState: "opening-project", loadPercent: 0 }, async () => {
                 await this.startActivityAsync();
+            });
+        }
+
+        if (shareHeaderId && !pendingShare) {
+            this.setState({ pendingShare: true }, async () => {
+                await this.shareProjectAsync();
             });
         }
     }
@@ -121,18 +132,6 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
             window.addEventListener("message", this.onMessageReceived);
             this.ref = ref;
 
-            // this.ref.addEventListener("load", () => {
-            //     // This is a workaround for a bug in Chrome where for some reason the page hangs when
-            //     // trying to unload the makecode iframe. Instead, we set the src to about:blank, wait for
-            //     // that to load, and then unload the iframe
-            //     if (this.state.unloading === "unloading") {
-
-
-            //         this.finishedActivityState = undefined;
-            //         this.setState({ unloading: "unloaded" });
-            //     }
-            // });
-
             // Hide Usabilla widget + footer when inside iframe view
             setElementVisible(".usabilla_live_button_container", false);
             setElementVisible("footer", false);
@@ -148,7 +147,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
 
         if (data.type === "pxteditor" && data.id && this.pendingMessages[data.id]) {
             const pending = this.pendingMessages[data.id];
-            pending.handler(pending.original);
+            pending.handler(data);
             delete this.pendingMessages[data.id];
             return;
         }
@@ -156,7 +155,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
         switch (data.action) {
             case "newproject":
                 if (this.state.frameState === "loading") {
-                    this.setState({ frameState: "home" });
+                    this.setState({ frameState: "no-project" });
                 }
                 break;
             case "tutorialevent":
@@ -225,10 +224,25 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
 
         await this.sendMessageAsync({
             type: "pxteditor",
-            action: "home"
+            action: "unloadproject"
         } as pxt.editor.EditorMessageRequest);
 
-        this.setState({ frameState: "home" });
+        this.setState({ frameState: "no-project" });
+    }
+
+    protected async shareProjectAsync() {
+        const { shareHeaderId, dispatchSetShareStatus } = this.props;
+
+        const resp = (await this.sendMessageAsync({
+            type: "pxteditor",
+            action: "shareproject",
+            headerId: shareHeaderId
+        })) as any;
+
+        dispatchSetShareStatus(shareHeaderId, resp.resp.shortid);
+        this.setState({
+            pendingShare: false
+        });
     }
 
     protected handleTutorialEvent(event: pxt.editor.EditorMessageTutorialEventRequest) {
@@ -277,7 +291,11 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
 }
 
 function mapStateToProps(state: SkillMapState, ownProps: any) {
-    if (!state || !state.editorView) return {};
+    const shareHeaderId = !state.shareState?.url ? state.shareState?.headerId : undefined;
+
+    if (!state || !state.editorView) return {
+        shareHeaderId
+    };
 
     const { currentActivityId, currentMapId, currentHeaderId, state: saveState, allowCodeCarryover, previousHeaderId } = state.editorView;
 
@@ -299,7 +317,8 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         carryoverCode: allowCodeCarryover,
         previousHeaderId: previousHeaderId,
         progress,
-        save: saveState === "saving"
+        save: saveState === "saving",
+        shareHeaderId
     }
 }
 
@@ -312,7 +331,8 @@ const mapDispatchToProps = {
     dispatchSetHeaderIdForActivity,
     dispatchCloseActivity,
     dispatchSaveAndCloseActivity,
-    dispatchUpdateUserCompletedTags
+    dispatchUpdateUserCompletedTags,
+    dispatchSetShareStatus
 };
 
 export const MakeCodeFrame = connect(mapStateToProps, mapDispatchToProps)(MakeCodeFrameImpl);

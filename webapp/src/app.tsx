@@ -3478,6 +3478,29 @@ export class ProjectView
             })
     }
 
+    async anonymousPublishHeaderByIdAsync(headerId: string): Promise<Cloud.JsonScript> {
+        const header = workspace.getHeader(headerId);
+        const text = await workspace.getTextAsync(headerId);
+        const stext = JSON.stringify(text, null, 2) + "\n"
+        const scrReq = {
+            name: header.name,
+            target: header.target,
+            targetVersion: header.targetVersion,
+            description: lf("Made with ❤️ in {0}.", pxt.appTarget.title || pxt.appTarget.name),
+            editor: header.editor,
+            text: text,
+
+            // FIXME: skillmap shares should set the metadata properly
+            meta: {
+                versions: pxt.appTarget.versions,
+                blocksHeight: 0,
+                blocksWidth: 0
+            }
+        }
+        pxt.debug(`publishing script; ${stext.length} bytes`)
+        return Cloud.privatePostAsync("scripts", scrReq, /* forceLiveEndpoint */ true)
+    }
+
     private debouncedSaveProjectName: () => void;
 
     updateHeaderName(name: string) {

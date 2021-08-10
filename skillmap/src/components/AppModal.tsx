@@ -3,8 +3,8 @@
 import * as React from "react";
 import { connect } from 'react-redux';
 
-import { ModalType, SkillMapState } from '../store/reducer';
-import { dispatchHideModal, dispatchRestartActivity, dispatchOpenActivity, dispatchResetUser, dispatchShowCarryoverModal } from '../actions/dispatch';
+import { ModalType, ShareState, SkillMapState } from '../store/reducer';
+import { dispatchHideModal, dispatchRestartActivity, dispatchOpenActivity, dispatchResetUser, dispatchShowCarryoverModal, dispatchSetShareStatus } from '../actions/dispatch';
 import { tickEvent, postAbuseReportAsync, postShareAsync } from "../lib/browserUtils";
 import { lookupActivityProgress, lookupPreviousActivityStates, lookupPreviousCompletedActivityState, isCodeCarryoverEnabled } from "../lib/skillMapUtils";
 import { getProjectAsync } from "../lib/workspaceProvider";
@@ -21,11 +21,13 @@ interface AppModalProps {
     pageSourceUrl?: string;
     actions?: ModalAction[];
     showCodeCarryoverModal?: boolean;
+    shareState?: ShareState;
     dispatchHideModal: () => void;
     dispatchRestartActivity: (mapId: string, activityId: string, previousHeaderId?: string, carryoverCode?: boolean) => void;
     dispatchOpenActivity: (mapId: string, activityId: string, previousHeaderId?: string, carryoverCode?: boolean) => void;
     dispatchShowCarryoverModal: (mapId: string, activityId: string) => void;
     dispatchResetUser: () => void;
+    dispatchSetShareStatus: (headerId?: string, url?: string) => void;
 }
 
 interface AppModalState {
@@ -72,6 +74,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
     protected handleOnClose = () => {
         this.setState({ loading: false, data: undefined });
         this.props.dispatchHideModal();
+        this.props.dispatchSetShareStatus();
     }
 
     protected handleRewardClick = () => {
@@ -271,40 +274,41 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
     }
 
     renderShareModal() {
-        const { userState, pageSourceUrl, mapId, activity } = this.props;
-        const { loading, data } = this.state;
-        const resetModalTitle = data?.shortId ? lf("Share Project") : lf("Publish Project");
+        const { userState, pageSourceUrl, mapId, activity, shareState, dispatchSetShareStatus } = this.props;
+        const { loading } = this.state;
+
+        const shortId = shareState?.url;
+
+        const resetModalTitle = shortId ? lf("Share Project") : lf("Publish Project");
 
         const actions = [];
-        if (!data?.shortId) {
+        if (!shortId) {
             actions.push({ label: lf("Cancel"), onClick: () => this.handleOnClose });
             actions.push({ label: lf("Publish"), onClick: async () => {
                 tickEvent("skillmap.share", { path: mapId, activity: activity!.activityId });
                 this.setState({ loading: true });
 
                 const progress = lookupActivityProgress(userState!, pageSourceUrl!, mapId!, activity!.activityId);
-                const project = await getProjectAsync(progress?.headerId || "");
-                const jsonScript = await postShareAsync(project?.header, project?.text);
 
-                if (jsonScript?.shortid) this.setState({ loading: false, data: { shortId: jsonScript?.shortid} });
+                dispatchSetShareStatus(progress?.headerId);
             }});
         }
 
 
         return <Modal title={resetModalTitle} actions={actions} onClose={this.handleOnClose}>
-            {data?.shortId ?
+            {shortId ?
                 <div>{ lf("Your project is ready! Use the address below to share your projects.") }</div> :
                 <div className="share-disclaimer">
                     { lf("You need to publish your project to share it or embed it in other web pages. You acknowledge having consent to publish this project.") }
                 </div>
             }
-            {loading && <div className="share-loader">
+            {(loading && !shortId) && <div className="share-loader">
                 <div className="ui active inline loader" />
                 <span>{lf("Loading...")}</span>
             </div>}
-            {data?.shortId && <div className="share-input">
+            {shortId && <div className="share-input">
                 <input type="text" readOnly={true} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
-                    value={`https://makecode.com/${data?.shortId}`} onClick={this.handleShareInputClick}></input>
+                    value={`https://makecode.com/${shortId}`} onClick={this.handleShareInputClick}></input>
                 <div className="share-copy" onClick={this.handleShareCopyClick} role="button">
                     <i className="icon copy" />
                     {lf("Copy")}
@@ -358,7 +362,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
 
 function mapStateToProps(state: SkillMapState, ownProps: any) {
     if (!state) return {};
-    const { pageSourceUrl } = state;
+    const { pageSourceUrl, shareState } = state;
     const { currentMapId, currentActivityId, type } = state.modal || {};
 
     // Set the map as currently open map (editorView), or mapId passed into modal
@@ -374,7 +378,8 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         userState: state.user,
         showCodeCarryoverModal: currentMap && activity && isCodeCarryoverEnabled(state.user, state.pageSourceUrl, currentMap, activity),
         mapId: currentMapId,
-        activity: currentMapId && currentActivityId ? state.maps[currentMapId].activities[currentActivityId] : undefined
+        activity: currentMapId && currentActivityId ? state.maps[currentMapId].activities[currentActivityId] : undefined,
+        shareState
     }
 }
 
@@ -383,7 +388,8 @@ const mapDispatchToProps = {
     dispatchRestartActivity,
     dispatchOpenActivity,
     dispatchResetUser,
-    dispatchShowCarryoverModal
+    dispatchShowCarryoverModal,
+    dispatchSetShareStatus
 };
 
 export const AppModal = connect(mapStateToProps, mapDispatchToProps)(AppModalImpl);
