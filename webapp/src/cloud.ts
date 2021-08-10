@@ -492,7 +492,7 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
                             // Mark remote copy as deleted.
                             pxt.debug(`Propagating ${projShorthand} delete to cloud.`)
                             const newHdr = await toCloud(local, remoteFile.version)
-                            if (!newHdr) {
+                            if (newHdr === null) {
                                 pxt.tickEvent(`identity.sync.failed.localDeleteUpdatedCloudFailed`)
                                 throw new Error(`Failed to save ${local.id} to the cloud.`)
                             }
@@ -515,7 +515,7 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
                             // Local has unpushed changes, push them now
                             pxt.debug(`local project '${local.name}' has changes that will be pushed to the cloud.`)
                             const newHdr = await toCloud(local, remoteFile.version);
-                            if (!newHdr) {
+                            if (newHdr === null) {
                                 pxt.tickEvent(`identity.sync.failed.localProjectUpdatedToCloudFailed`)
                                 throw new Error(`Failed to save ${local.id} to the cloud.`)
                             }
@@ -549,7 +549,7 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
                     // Local cloud synced project exists, but it didn't make it to the server,
                     // so let's push it now.
                     const newHdr = await toCloud(local, null)
-                    if (!newHdr) {
+                    if (newHdr === null) {
                         pxt.tickEvent(`identity.sync.failed.orphanedLocalProjectPushedToCloudFailed`)
                         throw new Error(`Failed to save ${local.id} to the cloud.`)
                     }
@@ -718,14 +718,19 @@ async function onHeadersChanged(): Promise<void> {
     const saveStart = U.nowSeconds()
     const saveTasks = hdrs.map(async h => {
         const newHdr = await transferToCloud(h, h.cloudVersion);
-        return newHdr
+        // If the header is deleted, return undefined. If transfer to cloud failed, return null.
+        // This allows us to distinguish between successful sync of a deleted project, and a
+        // sync failure.
+        // TODO: Return a richer sync result that clearly indicates success or failure. Distinguishing
+        // between null and undefined to tease out the error condition is not ideal, or maintainable.
+        return h.isDeleted ? undefined : newHdr ? newHdr : null;
     });
     inProgressSavePromise = Promise.all(saveTasks);
 
     // check the response
     try {
         const allRes = await inProgressSavePromise;
-        const anyFailed = allRes.some(r => !r);
+        const anyFailed = allRes.some(r => r === null);
         if (anyFailed) {
             pxt.tickEvent(`identity.cloudSaveFailedTriggeringPartialSync`);
             // if any saves failed, then we're out of sync with the cloud so resync.

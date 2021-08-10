@@ -982,10 +982,23 @@ p.ui.font.small {
     .ui.item.logo .name-short {
         display: block;
     }
+
+    .menubar .right.menu .signin-button {
+        height: 2.5rem;
+    }
+
+    .sign-in-dropdown {
+        padding-left: .1rem;
+        padding-right: .1rem;
+    }
 }
 
 /* Mobile only */
 @media only screen and (max-width: @largestMobileScreen) {
+    .menubar .right.menu .signin-button .icon {
+        margin-left: -.7rem;
+    }
+
     .ui.mobile.only {
         display:unset !important;
     }
@@ -1005,6 +1018,10 @@ p.ui.font.small {
     }
     .simView #boardview {
         padding-top: @thinMenuHeight;
+    }
+
+    .menubar .right.menu .signin-button {
+        height: 2.5rem;
     }
 }
 @media only screen and (min-height: @thinEditorBreakpoint) {
@@ -1198,6 +1215,10 @@ p.ui.font.small {
 .ui.modal .actions .dialog-help-large {
     float: left;
     margin-left: 4px;
+}
+
+.ui.modal .actions .left-action {
+    float: left;
 }
 
 .download-callout {
@@ -1905,48 +1926,9 @@ div.simframe.ui.embed {
     -ms-interpolation-mode: nearest-neighbor;
 }
 
-/* Sign in dialog */
-.ui.modal.signindialog {
-    .content {
-        padding: 24px 20px;
-    }
-
-    div.description {
-        margin-bottom: 20px;
-    }
-
-    div.warning {
-        background-color: #F5BC5F;
-        padding: 6px;
-        margin-bottom: 20px;
-    }
-
-    div.container {
-        display: grid;
-        row-gap: 10px;
-        grid-template-rows: 36px auto;
-        grid-template-columns: auto;
-        justify-content: center;
-
-        button {
-            margin: 0;
-        }
-
-        div.prompt {
-            justify-self: center;
-        }
-
-        div.providers {
-            display: grid;
-            row-gap: 20px;
-            grid-template-rows: auto;
-            justify-content: center;
-        }
-    }
-}
-
-.sign-in-dropdown {
-    padding: .3rem;
+.ui.menu .item.sign-in-dropdown {
+    padding-left: 0rem;
+    padding-right: .3rem;
     justify-content: center;
 }
 
@@ -1957,7 +1939,7 @@ div.signin-button {
     color: black;
     border-radius: 6px;
     height: 3rem;
-    padding: 1rem;
+    padding: .6rem;
     font-family: Segoe UI,Tahoma,Geneva,Verdana;
     font-weight: 500;
 
@@ -1975,22 +1957,7 @@ div.signin-button:focus {
     outline: 1px ridge #000;
 }
 
-@media only screen and (max-width: @largestTabletScreen) {
-    .menubar .right.menu .signin-button .icon {
-        margin-left: -8px;
-    }
 
-    .sign-in-dropdown {
-        padding-left: .1rem;
-        padding-right: .1rem;
-    }
-
-    div.signin-button {
-        height: 2.5rem;
-        padding: 1.3rem;
-        padding-left: 1rem;
-    }
-}
 
 /* Profile dialog */
 .profiledialog {

@@ -72,6 +72,11 @@ code {
     width: 100%;
 }
 
+.noclick {
+    pointer-events: none;
+    cursor: default;
+}
+
 /* HEADER BAR */
 .header {
     background-color: var(--tertiary-color);

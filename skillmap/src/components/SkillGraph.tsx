@@ -7,7 +7,7 @@ import { dispatchChangeSelectedItem, dispatchShowCompletionModal,
 import { GraphNode } from './GraphNode';
 import { GraphPath } from "./GraphPath";
 
-import { getActivityStatus, isCodeCarryoverEnabled } from '../lib/skillMapUtils';
+import { getActivityStatus, isCodeCarryoverEnabled, lookupActivityProgress } from '../lib/skillMapUtils';
 import { SvgGraphItem, SvgGraphPath } from '../lib/skillGraphUtils';
 import { tickEvent } from "../lib/browserUtils";
 
@@ -66,7 +66,8 @@ class SkillGraphImpl extends React.Component<SkillGraphProps> {
         const activity = map.activities[activityId];
         tickEvent("skillmap.activity.open.doubleclick", { path: map.mapId, activity: activityId, status: status || "" });
 
-        if (isCodeCarryoverEnabled(user, pageSourceUrl, map, activity)) {
+        const progress = lookupActivityProgress(user, pageSourceUrl, map.mapId, activity.activityId);
+        if (isCodeCarryoverEnabled(user, pageSourceUrl, map, activity) && !progress?.headerId) {
             dispatchShowCarryoverModal(map.mapId, activityId);
         } else if (kind == "activity" && status !== "locked") {
             dispatchOpenActivity(map.mapId, activityId);

@@ -53,18 +53,20 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
     protected getOrganizationLogo(targetTheme: pxt.AppTheme) {
         const logoUrl = targetTheme.organizationWideLogo;
 
+        // TODO FIX LOCALSERVE FETCH OF LOGO
         return <div className="header-logo">
             {logoUrl
-                ? <img src={resolvePath(logoUrl)} alt={lf("{0} Logo", targetTheme.organization)}/>
+                ? <img src={isLocal() ? logoUrl : logoUrl} alt={lf("{0} Logo", targetTheme.organization)}/>
                 : <span className="name">{targetTheme.organization}</span>}
         </div>
     }
 
     protected getTargetLogo(targetTheme: pxt.AppTheme) {
-        return <div className="ui item logo brand ">
+        const { activityOpen } = this.props;
+        return <div className={`ui item logo brand ${!activityOpen ? "noclick" : ""}`}>
             {targetTheme.useTextLogo
-                ? [<span className="name" key="org-name" onClick={this.onHomeClicked}>{targetTheme.organizationText}</span>,
-                   <span className="name-short" key="org-name-short" onClick={this.onHomeClicked}>{targetTheme.organizationShortText || targetTheme.organizationText}</span>]
+                ? [<span className="name" key="org-name" onClick={this.onBackClicked}>{targetTheme.organizationText}</span>,
+                   <span className="name-short" key="org-name-short" onClick={this.onBackClicked}>{targetTheme.organizationShortText || targetTheme.organizationText}</span>]
                 : (targetTheme.logo || targetTheme.portraitLogo
                     ? <img className="logo" src={targetTheme.logo || targetTheme.portraitLogo} alt={lf("{0} Logo", targetTheme.boardName)}/>
                     : <span className="name"> {targetTheme.boardName}</span>)
@@ -135,11 +137,11 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
 
             <div className="spacer" />
             <div className="header-right">
-                {activityOpen && <HeaderBarButton icon="icon arrow left" title={lf("Return to activity selection")} onClick={this.onBackClicked}/>}
+                { activityOpen && <HeaderBarButton icon="icon arrow left" title={lf("Return to activity selection")} onClick={this.onBackClicked}/> }
                 <HeaderBarButton icon="icon home" title={lf("Return to the editor homepage")} onClick={this.onHomeClicked}/>
                 { helpItems?.length > 0 && <Dropdown icon="help circle" className="header-dropdown" items={helpItems} /> }
                 { settingItems?.length > 0 && <Dropdown icon="setting" className="header-dropdown" items={settingItems} /> }
-                { hasIdentity && this.getUserMenu()}
+                { hasIdentity && this.getUserMenu() }
             </div>
         </div>
     }

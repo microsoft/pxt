@@ -189,7 +189,7 @@ export async function loginCallbackAsync(qs: pxt.Map<string>): Promise<void> {
 
 export async function logoutAsync(): Promise<void> {
     const cli = await clientAsync();
-    await cli?.logoutAsync();
+    await cli?.logoutAsync("#");
 }
 
 export async function deleteProfileAsync(): Promise<void> {

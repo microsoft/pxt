@@ -377,22 +377,12 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         (currentMapId && state.maps[currentMapId]);
     const activity = (currentMapId && currentActivityId) ? state.maps[currentMapId]?.activities[currentActivityId] : undefined
 
-    let showCodeCarryoverModal = false;
-
-    if (currentMap && activity) {
-        const previous = lookupPreviousActivityStates(state.user, state.pageSourceUrl, currentMap, activity.activityId);
-        const previousActivityCompleted = previous.some(state => state?.isCompleted &&
-            state.maxSteps === state.currentStep);
-
-        showCodeCarryoverModal = !!((activity as MapActivity).allowCodeCarryover && previousActivityCompleted);
-    }
-
     return {
         type,
         pageSourceUrl,
         skillMap: currentMap,
         userState: state.user,
-        showCodeCarryoverModal,
+        showCodeCarryoverModal: currentMap && activity && isCodeCarryoverEnabled(state.user, state.pageSourceUrl, currentMap, activity),
         mapId: currentMapId,
         activity: currentMapId && currentActivityId ? state.maps[currentMapId].activities[currentActivityId] : undefined
     }
