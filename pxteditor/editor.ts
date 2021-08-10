@@ -253,6 +253,7 @@ namespace pxt.editor {
         updateFileAsync(name: string, content: string, open?: boolean): Promise<void>;
 
         openHome(): void;
+        unloadProjectAsync(home?: boolean): Promise<void>;
         setTutorialStep(step: number): void;
         setTutorialInstructionsExpanded(value: boolean): void;
         exitTutorial(): void;

@@ -229,15 +229,16 @@ class AppImpl extends React.Component<AppProps, AppState> {
         const maps = Object.keys(skillMaps).map((id: string) => skillMaps[id]);
         return (<div className={`app-container ${pxt.appTarget.id}`}>
                 <HeaderBar />
-                { activityOpen ? <MakeCodeFrame /> :
-                    <div className="skill-map-container" style={{ backgroundColor: theme.backgroundColor }}>
-                        { error
-                            ? <div className="skill-map-error">{error}</div>
-                            : <SkillGraphContainer maps={maps} backgroundImageUrl={backgroundImageUrl} />
-                        }
-                        { !error && <InfoPanel />}
-                    </div>
-                }
+                    { !activityOpen &&
+                        <div className="skill-map-container" style={{ backgroundColor: theme.backgroundColor }}>
+                            { error
+                                ? <div className="skill-map-error">{error}</div>
+                                : <SkillGraphContainer maps={maps} backgroundImageUrl={backgroundImageUrl} />
+                            }
+                            { !error && <InfoPanel />}
+                        </div>
+                    }
+                    <MakeCodeFrame />
                 <AppModal />
             </div>);
     }
