@@ -52,11 +52,9 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
 
     protected getOrganizationLogo(targetTheme: pxt.AppTheme) {
         const logoUrl = targetTheme.organizationWideLogo;
-
-        // TODO FIX LOCALSERVE FETCH OF LOGO
         return <div className="header-logo">
             {logoUrl
-                ? <img src={isLocal() ? logoUrl : logoUrl} alt={lf("{0} Logo", targetTheme.organization)}/>
+                ? <img src={isLocal() ? `./assets/${logoUrl}`: logoUrl} alt={lf("{0} Logo", targetTheme.organization)}/>
                 : <span className="name">{targetTheme.organization}</span>}
         </div>
     }
