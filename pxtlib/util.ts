@@ -1209,7 +1209,7 @@ namespace ts.pxtc.Util {
         "ur-PK": { englishName: "Urdu (Pakistan)", localizedName: "اردو (پاکستان)" },
         "vi": { englishName: "Vietnamese", localizedName: "Tiếng việt" },
         "zh-CN": { englishName: "Chinese (Simplified)", localizedName: "简体中文" },
-        "zh-TW": { englishName: "Chinese (Traditional)", localizedName: "繁体中文" },
+        "zh-TW": { englishName: "Chinese (Traditional)", localizedName: "繁體中文" },
     };
 
     export function isLocaleEnabled(code: string): boolean {
