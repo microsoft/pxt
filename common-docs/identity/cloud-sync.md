@@ -4,11 +4,11 @@
 
 ## What is Cloud Sync?
 
-Cloud Synchronization, or Cloud Sync, is a feature available to signed-in users that lets MakeCode save your projects in the cloud, where they're available anywhere you can sign into MakeCode.
+Cloud Synchronization, or Cloud Sync, is a feature available to signed in users that lets MakeCode save your projects in the cloud, where they're available anywhere you can sign in to MakeCode.
 
 ## How do I enable Cloud Sync?
 
-All you need to do is sign into MakeCode with your Microsoft Account and Cloud Sync is automatically enabled. Learn more about signing into MakeCode [here](/identity/sign-in).
+All you need to do is sign in to MakeCode with your Microsoft Account and Cloud Sync is automatically enabled. Learn more about signing in to MakeCode [here](/identity/sign-in).
 
 ## Does it cost money?
 
