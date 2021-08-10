@@ -1,6 +1,6 @@
 # Microsoft Accounts and MakeCode
 
-> Note: This feature only available in [**MakeCode Arcade**](https://arcade.makecode.com).
+**Note**: This feature only available in [**MakeCode Arcade**](https://arcade.makecode.com).
 
 ## What is a Microsoft Account?
 
@@ -8,7 +8,7 @@ A Microsoft Account, or MSA, is the personal user account you create when you wa
 
 ## How does it work in MakeCode?
 
-A number of new features are coming that will only be available to signed-in users. These features need to know your identity so they can do things for you like store data in the cloud, and connect you to other users. The first of these features is one we're calling [Cloud Sync](/identity/cloud-sync.md). With Cloud Sync, when you're signed into MakeCode, we'll store your projects in the cloud where they're accessible from anywhere.
+A number of new features are coming that will only be available to signed-in users. These features need to know your identity so they can do things for you like store data in the cloud, and connect you to other users. The first of these features is one we're calling [Cloud Sync](/identity/cloud-sync). With Cloud Sync, when you're signed into MakeCode, we'll store your projects in the cloud where they're accessible from anywhere.
 
 ## Is it required?
 
@@ -24,7 +24,7 @@ Your signed in status is visible only to you. In the future we may add features 
 
 ## Do I already have a Microsoft Account?
 
-It is possible! Do you play Minecraft, game on an Xbox, subscribe to Office 365, or use any other Microsoft products or services? If so, you probably already have a Microsoft Account.
+It is possible! Do you play Minecraft, games on an Xbox, subscribe to Office 365, or use any other Microsoft products or services? If so, you probably already have a Microsoft Account.
 
 ## Does this mean I have to create a new email address?
 
