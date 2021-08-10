@@ -195,6 +195,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
                 type: "pxteditor",
                 action: "startactivity",
                 path: this.props.tutorialPath,
+                title: this.props.title,
                 activityType: "tutorial",
                 carryoverPreviousCode: this.props.carryoverCode,
                 previousProjectHeaderId: this.props.previousHeaderId

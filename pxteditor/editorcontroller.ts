@@ -289,6 +289,7 @@ namespace pxt.editor {
         action: "startactivity";
         activityType: "tutorial" | "example" | "recipe";
         path: string;
+        title?: string;
         previousProjectHeaderId?: string;
         carryoverPreviousCode?: boolean;
     }
@@ -442,6 +443,7 @@ namespace pxt.editor {
                                         .then(() => projectView.startActivity({
                                             activity: msg.activityType,
                                             path: tutorialPath,
+                                            title: msg.title,
                                             editor: editorProjectName,
                                             previousProjectHeaderId: msg.previousProjectHeaderId,
                                             carryoverPreviousCode: msg.carryoverPreviousCode
