@@ -4303,7 +4303,9 @@ export class ProjectView
 
                     openSerial={this.openSerial}
                     handleHardwareDebugClick={this.hwDebug}
-                    handleFullscreenButtonClick={this.toggleSimulatorFullscreen} />
+                    handleFullscreenButtonClick={this.toggleSimulatorFullscreen}
+
+                    tutorialOptions={tutorialOptions} />
                 <div id="maineditor" className={(sandbox ? "sandbox" : "") + (inDebugMode ? "debugging" : "")} role="main" aria-hidden={inHome}>
                     {showCollapseButton && <sui.Button id='computertogglesim' className={`computer only collapse-button large`} icon={`inverted chevron ${showRightChevron ? 'right' : 'left'}`} title={collapseIconTooltip} onClick={this.toggleSimulatorCollapse} />}
                     {this.allEditors.map(e => e.displayOuter(expandedStyle))}

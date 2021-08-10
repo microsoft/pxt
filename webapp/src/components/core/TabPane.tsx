@@ -14,25 +14,10 @@ interface TabPaneState {
 }
 
 export class TabPane extends React.Component<TabPaneProps, TabPaneState> {
-    protected containerRef: HTMLDivElement;
     constructor(props: TabPaneProps) {
         super(props);
 
-        this.state = { activeTabName: props.activeTabName || props.children?.[0]?.props?.name };
-    }
-
-    protected handleContainerRef = (c: HTMLDivElement) => {
-        this.containerRef = c;
-        if (c && typeof ResizeObserver !== "undefined") {
-            const observer = new ResizeObserver(() => {
-                const scrollVisible = c.scrollHeight > c.clientHeight;
-                if (scrollVisible)
-                    this.containerRef.classList.remove("invisibleScrollbar");
-                else
-                    this.containerRef.classList.add("invisibleScrollbar");
-            })
-            observer.observe(c);
-        }
+        this.state = { activeTabName: props.activeTabName || props.children?.[0]?.props?.className };
     }
 
     protected getTabClickHandler = (name: string) => {
@@ -40,23 +25,25 @@ export class TabPane extends React.Component<TabPaneProps, TabPaneState> {
     }
 
     render() {
-        const { id, children, className } = this.props;
+        let { id, children, className } = this.props;
         const { activeTabName } = this.state;
 
-        return <div id={id} className={`tab-container ${className || ""}`} ref={this.handleContainerRef}>
+        children = children.filter((el: any) => !!el);
+
+        return <div id={id} className={`tab-container ${className || ""}`}>
             {Array.isArray(children) && <div className="tab-navigation">
                 {children.map(el => {
-                    const { name, icon, title } = el.props as TabContentProps;
-                    return <div key={name} className={`tab-element ${name == activeTabName ? "active" : ""}`} onClick={this.getTabClickHandler(name)}>
+                    const { className, icon, title } = el.props as TabContentProps;
+                    return <div key={className} className={`tab-element ${className == activeTabName ? "active" : ""}`} onClick={this.getTabClickHandler(className)}>
                         <i className={`ui icon ${icon}`} />
                         <span>{title}</span>
                     </div>
                 })}
             </div>}
             {Array.isArray(children)
-                ? children.map((el: any) => {
-                    const { name } = el.props as TabContentProps;
-                    return <div className={`tab-content ${name !== activeTabName ? "hidden" : ""}`}>
+                ? children.map((el: any, i: number) => {
+                    const { className } = el.props as TabContentProps;
+                    return <div key={`tab-content-${i}`} className={`tab-content ${className} ${className !== activeTabName ? "hidden" : ""}`}>
                         {el}
                     </div>
                 })
