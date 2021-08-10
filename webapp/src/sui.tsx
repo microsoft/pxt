@@ -1336,7 +1336,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
             </div>
             {!isFullscreen && (this.props.actions && this.props.actions.length || this.props.buttons && this.props.buttons.length) ?
                 <div className="actions">
-                    {this.props.actions}
+                    {this.props.actions?.map(action => <div className="left-action">{action}</div>)}
                     {this.props.buttons?.map(action =>
                         action.url ?
                             <Link

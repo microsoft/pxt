@@ -62,18 +62,16 @@ export class LoginDialog extends auth.Component<LoginDialogProps, LoginDialogSta
         });
 
         const actions: JSX.Element[] = [];
-        actions.push(<div className="remember-me"><sui.PlainCheckbox label={lf("Remember me")} onChange={this.handleRememberMeChanged} /></div>);
+        actions.push(<sui.PlainCheckbox label={lf("Remember me")} onChange={this.handleRememberMeChanged} />);
 
         return (
             <sui.Modal isOpen={visible} className="signindialog" size="tiny"
                 onClose={this.hide} dimmer={true} buttons={buttons} actions={actions}
                 closeIcon={true} header={lf("Sign into {0}", pxt.appTarget.appTheme.organizationText)}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape>
-                <div className="description">
-                    <p>{lf("Sign in with your Microsoft Account. We'll save your projects to the cloud, where they're accessible from anywhere.")}</p>
-                    <p>{lf("Don't have a Microsoft Account? Start signing in to create one!")}</p>
-                    <sui.Link className="ui" text={lf("Learn more")} icon="external alternate" ariaLabel={lf("Learn more")} href="/identity/sign-in" target="_blank" onKeyDown={sui.fireClickOnEnter} />
-                </div>
+                <p>{lf("Sign in with your Microsoft Account. We'll save your projects to the cloud, where they're accessible from anywhere.")}</p>
+                <p>{lf("Don't have a Microsoft Account? Start signing in to create one!")}</p>
+                <sui.Link className="ui" text={lf("Learn more")} icon="external alternate" ariaLabel={lf("Learn more")} href="/identity/sign-in" target="_blank" onKeyDown={sui.fireClickOnEnter} />
             </sui.Modal>
         );
     }
