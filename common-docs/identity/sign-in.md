@@ -28,7 +28,7 @@ It is possible! Do you play Minecraft, game on an Xbox, subscribe to Office 365,
 
 ## Does this mean I have to create a new email address?
 
-No. You can create an MSA using your current email address if it is not hosted by Microsoft (e.g.: GMail, Yahoo Mail, and others). When creating your MSA account, just enter your existing email address.
+No. You can create an MSA using your current email address if it is not hosted by Microsoft (e.g.: Gmail, Yahoo Mail, and others). When creating your MSA account, just enter your existing email address.
 
 ## Can I use my school or work account?
 
