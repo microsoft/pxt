@@ -253,6 +253,7 @@ namespace pxt.editor {
         updateFileAsync(name: string, content: string, open?: boolean): Promise<void>;
 
         openHome(): void;
+        unloadProjectAsync(home?: boolean): Promise<void>;
         setTutorialStep(step: number): void;
         setTutorialInstructionsExpanded(value: boolean): void;
         exitTutorial(): void;
@@ -267,6 +268,7 @@ namespace pxt.editor {
         setHintSeen(step: number): void;
 
         anonymousPublishAsync(screenshotUri?: string): Promise<string>;
+        anonymousPublishHeaderByIdAsync(headerId: string): Promise<Cloud.JsonScript>;
 
         startStopSimulator(opts?: SimulatorStartOptions): void;
         stopSimulator(unload?: boolean, opts?: SimulatorStartOptions): void;
