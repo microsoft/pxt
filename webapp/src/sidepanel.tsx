@@ -89,7 +89,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                 </TabContent>
                 {tutorialOptions && <TabContent className="tab-tutorial" icon="pencil">
                     <TutorialContainer parent={parent} steps={tutorialOptions?.tutorialStepInfo}
-                        currentStep={tutorialOptions?.tutorialStep} />
+                        currentStep={tutorialOptions?.tutorialStep} tutorialOptions={tutorialOptions} />
                 </TabContent>}
                 {/* NOTE gotta hide every element in the sim panel except the boardview when that tab is not active... */}
             </TabPane>

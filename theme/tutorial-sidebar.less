@@ -26,7 +26,7 @@
 
 .tutorial-content {
     flex: 1;
-    padding: 1.5rem;
+    padding: 1rem;
     overflow-x: hidden;
     overflow-y: auto;
 
@@ -42,7 +42,7 @@
     margin-bottom: 1rem;
 
     > div {
-        margin: 0.25rem;
+        margin: 0.5rem;
     }
 
     .core-button {
@@ -51,8 +51,37 @@
     }
 }
 
+// Tutorial top buttons
+.tutorial-top-bar {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 1rem 0;
+}
+
+// Tutorial step counter
+.tutorial-step-counter {
+    flex: 1;
+}
+
+.tutorial-step-bar {
+    height: 1rem;
+    overflow: hidden;
+    border-radius: 1rem;
+    background-color: @blue;
+}
+
+.tutorial-step-bar-fill {
+    background-color: @teal;
+    height: 100%;
+    transition: width 0.5s ease-out;
+    pointer-events: none;
+}
+
 .tutorial-hint {
+    height: 3rem;
+    width: 3rem;
     border-radius: 50%;
+    font-size: 1.5rem;
 }
 
 // Simulator pane
@@ -125,4 +154,18 @@
         margin-right: .5rem;
         padding-bottom: 81.96%!important;
     }
+}
+
+// immersive reader in tutorial (move it with other immersive reader code later)
+
+#editorSidebar .immersive-reader-button.ui.item,
+#editorSidebar .immersive-reader-button.ui.item:focus {
+    background-image: @immersiveReaderIcon;
+    width: 2.5rem;
+    height: 2.5rem;
+    margin-left: 1rem;
+    background-repeat: no-repeat;
+    background-size: 80%;
+    background-position: center;
+    border-radius: .2em!important;
 }
