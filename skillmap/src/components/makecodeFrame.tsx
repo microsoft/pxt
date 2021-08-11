@@ -222,6 +222,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
 
         this.props.dispatchCloseActivity(this.finishedActivityState === "finished");
         this.props.dispatchUpdateUserCompletedTags();
+        this.finishedActivityState = undefined;
 
         await this.sendMessageAsync({
             type: "pxteditor",
