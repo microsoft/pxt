@@ -40,11 +40,13 @@ export class TutorialContainer extends React.Component<TutorialContainerProps, T
         const { parent, steps, tutorialOptions } = this.props;
         const { currentStep } = this.state;
 
-        const showImmersiveReader = pxt.appTarget.appTheme.immersiveReader;
         const markdown = steps[currentStep].headerContentMd;
 
+        const showImmersiveReader = pxt.appTarget.appTheme.immersiveReader;
+        const disableBack = currentStep === 0;
+        const disableNext = currentStep === steps.length - 1;
+
         return <div className="tutorial-container">
-            {/* for title, steps, etc <div></div> */}
             <div className="tutorial-top-bar">
                 <TutorialStepCounter currentStep={currentStep} totalSteps={steps.length} setTutorialStep={this.setTutorialStep} />
                 {showImmersiveReader && <ImmersiveReaderButton content={markdown} tutorialOptions={tutorialOptions} />}
@@ -53,10 +55,9 @@ export class TutorialContainer extends React.Component<TutorialContainerProps, T
                 <md.MarkedContent className="no-select" tabIndex={0} markdown={markdown} parent={parent} />
             </div>
             <div className="tutorial-controls">
-                <Button icon="arrow circle  left" text={lf("Back")} onClick={this.previousArrowClickHandler} />
+                <Button icon="arrow circle left" disabled={disableBack} text={lf("Back")} onClick={this.previousArrowClickHandler} />
                 <Button icon="lightbulb" className="tutorial-hint" />
-                {/* TODO has prev has next css  */}
-                <Button icon="arrow circle right" text={lf("Next")} textFirst={true} onClick={this.nextArrowClickHandler} />
+                <Button icon="arrow circle right" disabled={disableNext} text={lf("Next")} textFirst={true} onClick={this.nextArrowClickHandler} />
             </div>
         </div>
     }

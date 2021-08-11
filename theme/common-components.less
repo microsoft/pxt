@@ -21,6 +21,7 @@
     display: flex;
     padding: 0.75rem 1rem;;
     border-radius: 0.2rem;
+    font-size: 1.2rem;
     font-weight: 700;
     cursor: pointer;
     user-select: none;
@@ -28,4 +29,9 @@
 
 .core-button.text-first {
     flex-direction: row-reverse;
+}
+
+.core-button.disabled {
+    opacity: 0.5;
+    pointer-events: none;
 }

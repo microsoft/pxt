@@ -26,7 +26,8 @@
 
 .tutorial-content {
     flex: 1;
-    padding: 1rem;
+    padding: 0 1rem;
+    margin: 1rem 0;
     overflow-x: hidden;
     overflow-y: auto;
 
@@ -84,78 +85,83 @@
     font-size: 1.5rem;
 }
 
-// Simulator pane
+// Simulator is always visible
 .tab-simulator.tab-content.hidden {
     display: block !important;
-    height: 0;
-    padding: 0;
-
-    .simPanel {
-        & > * { display: none; }
-        #boardview { display: inline-block; }
-        .simtoolbar, #miniSimOverlay { display: block; }
-    }
-
-    /* Layout */
-    .simPanel.ui.items {
-        position: fixed;
-        padding: 0;
-        margin: 1em;
-        bottom: ~"calc(4.5rem + var(--extra-mobile-sim-padding))" !important;
-        right: 0.5rem;
-        top: unset;
-        left: unset;
-        width: auto;
-        min-width: inherit;
-        max-width: inherit;
-        background: transparent !important;
-        overflow: visible;
-        z-index: 20;
-    }
-    #boardview {
-        width: 10rem;
-    }
-    .simPanel .simtoolbar {
-        margin: 0.5em 0;
-        width: 3rem;
-        float: right;
-    }
-    .simPanel .simtoolbar > div:not(:first-child),
-    .simPanel .simtoolbar > .buttons > .button {
-        display: none;
-    }
-    .simPanel .simtoolbar > div:first-child {
-        flex-direction: column;
-        border-radius: 4px;
-        overflow: hidden;
-
-        .fullscreen-button, .expand-button {
-            display: block !important;
-        }
-    }
-    .simPanel .simtoolbar > div:first-child > button {
-        border-radius: 0;
-        font-size: .92857143rem;
-    }
-    #miniSimOverlay {
-        position: absolute;
-        width: 10rem; /* match width of div.simframe */
-        height: 9rem;
-    }
-
-    #simulators {
-        flex-direction: row;
-        display: flex!important;
-    }
-
-    div.simframe {
-        display: inline-block;
-        width: 10rem;
-        margin-right: .5rem;
-        padding-bottom: 81.96%!important;
-    }
 }
 
+// Simulator pane
+#root:not(.fullscreensim) {
+    .tab-simulator.tab-content.hidden {
+        height: 0;
+        padding: 0;
+
+        .simPanel {
+            & > * { display: none; }
+            #boardview { display: inline-block; }
+            .simtoolbar, #miniSimOverlay { display: block; }
+        }
+
+        /* Layout */
+        .simPanel.ui.items {
+            position: fixed;
+            padding: 0;
+            margin: 1em;
+            bottom: ~"calc(4.5rem + var(--extra-mobile-sim-padding))" !important;
+            right: 0.5rem;
+            top: unset;
+            left: unset;
+            width: auto;
+            min-width: inherit;
+            max-width: inherit;
+            background: transparent !important;
+            overflow: visible;
+            z-index: 20;
+        }
+        #boardview {
+            width: 10rem;
+        }
+        .simPanel .simtoolbar {
+            margin: 0.5em 0;
+            width: 3rem;
+            float: right;
+        }
+        .simPanel .simtoolbar > div:not(:first-child),
+        .simPanel .simtoolbar > .buttons > .button {
+            display: none;
+        }
+        .simPanel .simtoolbar > div:first-child {
+            flex-direction: column;
+            border-radius: 4px;
+            overflow: hidden;
+
+            .fullscreen-button, .expand-button {
+                display: block !important;
+            }
+        }
+        .simPanel .simtoolbar > div:first-child > button {
+            border-radius: 0;
+            font-size: .92857143rem;
+        }
+        #miniSimOverlay {
+            position: absolute;
+            width: 10rem; /* match width of div.simframe */
+            height: 9rem;
+        }
+
+        #simulators {
+            flex-direction: row;
+            display: flex!important;
+        }
+
+        div.simframe {
+            display: inline-block;
+            width: 10rem;
+            margin-right: .5rem;
+            padding-bottom: 81.96%!important;
+        }
+    }
+}
 // immersive reader in tutorial (move it with other immersive reader code later)
 
 #editorSidebar .immersive-reader-button.ui.item,

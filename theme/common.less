@@ -106,6 +106,7 @@ pre {
     z-index: @editorToolsZIndex;
     height: @editorToolsCollapsedHeight;
     background-color: @editorToolsBackground;
+    border-top: 2px solid darken(desaturate(@editorToolsBackground, 60%), 10%);
 
     display: flex;
     justify-content: space-between;
@@ -219,7 +220,7 @@ pre {
 
 #downloadArea {
     margin: unset;
-    background-color: @simulatorBackground;
+    // background-color: @simulatorBackground;
 
     > div {
         margin: 0;

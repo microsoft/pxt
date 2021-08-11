@@ -12,6 +12,7 @@ export interface ButtonProps {
     icon?: string;
     text?: string;
     textFirst?: boolean;
+    disabled?: boolean;
 
     onClick?: (evt: React.MouseEvent) => void;
     onKeyDown?: (evt: React.KeyboardEvent) => void;
@@ -19,9 +20,16 @@ export interface ButtonProps {
 
 export function Button(props: ButtonProps) {
     const { className, id, role, title, tabIndex, ariaLabel, ariaExpanded,
-        icon, text, textFirst, onClick, onKeyDown } = props;
-    return <div className={`core-button ${className || ""} ${textFirst ? "text-first" : "" }`} id={id} role={role} title={title} tabIndex={tabIndex || 0}
-        aria-label={ariaLabel} aria-expanded={ariaExpanded} onClick={onClick} onKeyDown={onKeyDown} >
+        icon, text, textFirst, disabled, onClick, onKeyDown } = props;
+    return <div className={`core-button ${className || ""} ${textFirst ? "text-first" : "" } ${disabled ? "disabled" : "" }`}
+        id={id}
+        role={role}
+        title={title}
+        tabIndex={tabIndex || 0}
+        aria-label={ariaLabel}
+        aria-expanded={ariaExpanded}
+        onClick={onClick}
+        onKeyDown={onKeyDown} >
             {icon && <i className={`ui icon ${icon}`} />}
             {text}
     </div>
