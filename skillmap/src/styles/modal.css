@@ -26,6 +26,7 @@
     bottom: 0;
     width: 100%;
     max-width: none;
+    padding: 0;
 }
 
 .modal-header {
@@ -33,6 +34,12 @@
     font-size: 1.2rem;
     font-weight: 600;
     margin-bottom: 0.5rem;
+}
+
+.modal.fullscreen .modal-header {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 1.7rem;
 }
 
 .modal-header i.icon {
