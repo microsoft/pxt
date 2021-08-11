@@ -1738,7 +1738,9 @@ export class ProjectView
         }
 
         for (const file of Object.keys(newText)) {
-            pkg.mainEditorPkg().setFile(file, newText[file]);
+            if (newText[file] !== undefined) {
+                pkg.mainEditorPkg().setFile(file, newText[file]);
+            }
         }
 
         await workspace.saveAsync(header);
