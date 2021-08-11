@@ -1304,8 +1304,8 @@ export class ProjectView
     }
 
     protected postTutorialProgress() {
-        const currentStep = this.state.tutorialOptions?.tutorialStep || this.state.header.tutorialCompleted?.steps || 0;
-        const totalSteps = this.state.tutorialOptions?.tutorialStepInfo?.length || this.state.header.tutorialCompleted?.steps || 0;
+        const currentStep = this.state.tutorialOptions?.tutorialStep || this.state.header?.tutorialCompleted?.steps || 0;
+        const totalSteps = this.state.tutorialOptions?.tutorialStepInfo?.length || this.state.header?.tutorialCompleted?.steps || 0;
         const tutorialId = this.state.tutorialOptions?.tutorial || this.state.header?.tutorialCompleted.id
 
         pxt.editor.postHostMessageAsync({
@@ -1315,8 +1315,8 @@ export class ProjectView
             currentStep,
             totalSteps,
             tutorialId,
-            projectHeaderId: this.state.header.id,
-            isCompleted: !!this.state.header.tutorialCompleted
+            projectHeaderId: this.state.header?.id,
+            isCompleted: !!this.state.header?.tutorialCompleted
         } as pxt.editor.EditorMessageTutorialProgressEventRequest)
     }
 
@@ -4016,7 +4016,7 @@ export class ProjectView
                 tracing: undefined,
                 editorState: undefined
             });
-            await workspace.saveAsync(this.state.header);
+            if (this.state.header) await workspace.saveAsync(this.state.header);
         }
     }
 
