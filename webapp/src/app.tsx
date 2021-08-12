@@ -3979,7 +3979,6 @@ export class ProjectView
                 return this.exitTutorialAsync()
                     .finally(() => {
                         core.hideLoading("leavingtutorial")
-                        this.postTutorialProgress();
                     })
             }
             else {
