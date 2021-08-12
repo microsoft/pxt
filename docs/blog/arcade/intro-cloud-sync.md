@@ -16,11 +16,11 @@ Perhaps you've had the experience of returning to a lab computer only to realize
 
 Cloud sync is enabled automatically when you sign into MakeCode. However, after signing in, your existing projects remain local, meaning they're not automatically transferred to the cloud all at once. To transfer an existing project to the cloud, just open it in the editor. The editor's auto-save feature will trigger a cloud save and voilà, your project is in the cloud. New projects are cloud-synced automatically from the start. Look for the editor's new cloud save indicator:
 
-![Cloud Save Indicator](/static/arcade/intro-cloud-sync/cloud-save.gif)
+![Cloud Save Indicator](/static/blog/arcade/intro-cloud-sync/cloud-save.gif)
 
 On the home screen, you can tell a project is saved to cloud if it has a visible cloud status icon:
 
-![Cloud Status Icon](/static/arcade/intro-cloud-sync/cloud-status-icon.png)
+![Cloud Status Icon](/static/blog/arcade/intro-cloud-sync/cloud-status-icon.png)
 
 ## The Future
 
