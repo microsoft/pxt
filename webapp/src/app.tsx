@@ -827,6 +827,10 @@ export class ProjectView
                 pxt.debug(`sim: don't restart when simulator collapsed`);
                 return;
             }
+            if (pxt.BrowserUtils.isSkillmapEditor() && !this.state.header) {
+                pxt.debug(`sim: don't restart when no project is open`);
+                return;
+            }
             this.runSimulator({ debug: !!this.state.debugging, background: true });
         },
         1000, true);
@@ -3971,22 +3975,30 @@ export class ProjectView
             return Promise.resolve(); // TODO cleanup
         }
         else {
-            return this.exitTutorialAsync()
-                .then(() => {
-                    let curr = pkg.mainEditorPkg().header;
-                    return this.loadHeaderAsync(curr);
-                }).finally(() => {
-                    core.hideLoading("leavingtutorial")
-                    this.postTutorialProgress();
-                })
-                .then(() => {
-                    if (pxt.appTarget.cloud &&
-                        pxt.appTarget.cloud.sharing &&
-                        pxt.appTarget.appTheme.shareFinishedTutorials) {
-                        pxt.tickEvent("tutorial.share", undefined, { interactiveConsent: false });
-                        this.showShareDialog(lf("Well done! Would you like to share your project?"));
-                    }
-                })
+            if (pxt.BrowserUtils.isSkillmapEditor()) {
+                return this.exitTutorialAsync()
+                    .finally(() => {
+                        core.hideLoading("leavingtutorial")
+                    })
+            }
+            else {
+                return this.exitTutorialAsync()
+                    .then(() => {
+                        let curr = pkg.mainEditorPkg().header;
+                        return this.loadHeaderAsync(curr);
+                    }).finally(() => {
+                        core.hideLoading("leavingtutorial")
+                        this.postTutorialProgress();
+                    })
+                    .then(() => {
+                        if (pxt.appTarget.cloud &&
+                            pxt.appTarget.cloud.sharing &&
+                            pxt.appTarget.appTheme.shareFinishedTutorials) {
+                            pxt.tickEvent("tutorial.share", undefined, { interactiveConsent: false });
+                            this.showShareDialog(lf("Well done! Would you like to share your project?"));
+                        }
+                    })
+            }
         }
     }
 
