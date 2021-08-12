@@ -4,11 +4,11 @@
 
 **Note**: As of this writing, sign-in and cloud sync are only available in [MakeCode Arcade](https://arcade.makecode.com).
 
-Over the past year we've been working hard to bring you the ability to sign into MakeCode with a [Microsoft Account](https://aka.ms/AAdd6f8). When you sign into MakeCode, you make it possible for us to remember who you, and this unlocks a bunch of exciting new possibilities. For example, it becomes possible for us to remember what you were working on and make your projects available wherever you use MakeCode. In fact this is the first feature we've built for our signed in users, and we're calling it **Cloud Sync**.
+Over the past year we've been working hard to bring you the ability to sign into MakeCode with a [Microsoft Account](https://aka.ms/AAdd6f8). When you sign into MakeCode, you make it possible for us to remember who you are, and this unlocks a bunch of exciting new possibilities. For example, it becomes possible for us to remember what you were working on and make your projects available wherever you use MakeCode. In fact this is the first feature we've built for our signed in users, and we're calling it **Cloud Sync**.
 
 ## What is Cloud Sync?
 
-Have you ever been working on a MakeCode project at school and wanted to take it home? In the past, users have found creative ways to move projects from device to device and browser to browser, and these methods will still work! But Cloud Sync makes this a seamless experience: when you sign into MakeCode, your cloud-saved projects are download to you automatically.
+Have you ever been working on a MakeCode project at school and wanted to take it home? In the past, users have found creative ways to move projects from device to device and browser to browser, and these methods will still work! But Cloud Sync makes this a seamless experience: when you sign into MakeCode, your cloud-saved projects are downloaded to your browser automatically.
 
 Perhaps you've had the experience of returning to a lab computer only to realize the machine had been reset overnight, erasing your projects with it. Losing all your work can be devastating. Cloud Sync guards against this by continouously saving your work to the cloud as you edit your project.
 
