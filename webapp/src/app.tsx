@@ -827,6 +827,10 @@ export class ProjectView
                 pxt.debug(`sim: don't restart when simulator collapsed`);
                 return;
             }
+            if (pxt.BrowserUtils.isSkillmapEditor() && !this.state.header) {
+                pxt.debug(`sim: don't restart when no project is open`);
+                return;
+            }
             this.runSimulator({ debug: !!this.state.debugging, background: true });
         },
         1000, true);
