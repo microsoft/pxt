@@ -1,7 +1,5 @@
 # Microsoft MakeCode Blog
 
-**[Continue reading this blog post](/blog/arcade/intro-cloud-sync)**
-
 ## [MakeCode for the micro:bit - 2021 Release is here!](/blog/microbit/2021-release)
 
 July 12th, 2021 by [Jaqster](https://github.com/jaqster)
