@@ -130,8 +130,8 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
     protected handleFrameRef = (ref: HTMLIFrameElement) => {
         if (ref && ref.contentWindow) {
             window.addEventListener("message", this.onMessageReceived);
+            ref.addEventListener("load", this.handleFrameReload)
             this.ref = ref;
-
             // Hide Usabilla widget + footer when inside iframe view
             setElementVisible(".usabilla_live_button_container", false);
             setElementVisible("footer", false);
@@ -139,6 +139,10 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
             const root = document.getElementById("root");
             if (root) pxt.BrowserUtils.addClass(root, "editor");
         }
+    }
+
+    protected handleFrameReload = () => {
+        this.setState({frameState: "loading"})
     }
 
     protected onMessageReceived = (event: MessageEvent) => {
