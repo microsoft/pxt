@@ -4,7 +4,7 @@
 
 **Note**: As of this writing, sign-in and cloud sync are only available in [MakeCode Arcade](https://arcade.makecode.com).
 
-Over the past year we've been working to make it possible to sign into MakeCode with a [Microsoft Account](https://aka.ms/AAdd6f8). When you sign into MakeCode, you make it possible for us to remember who you are, and this unlocks a bunch of exciting new possibilities. For example, it becomes possible for us to remember what you were working on and make your projects available wherever you are. In fact this is the first feature we've built for our signed in users, and we're calling it **Cloud Sync**.
+Over the past year we've been working hard to bring you the ability to sign into MakeCode with a [Microsoft Account](https://aka.ms/AAdd6f8). When you sign into MakeCode, you make it possible for us to remember who you, and this unlocks a bunch of exciting new possibilities. For example, it becomes possible for us to remember what you were working on and make your projects available wherever you use MakeCode. In fact this is the first feature we've built for our signed in users, and we're calling it **Cloud Sync**.
 
 ## What is Cloud Sync?
 
@@ -14,11 +14,11 @@ Perhaps you've had the experience of returning to a lab computer only to realize
 
 ## Nice! How do I enable it?
 
-Cloud sync is enabled automatically when you sign into MakeCode. After signing in, your existing projects remain local, meaning they're not automatically transferred to the cloud all at once. To transfer an existing project to the cloud, just open it in the editor. The editor's auto-save feature will trigger a cloud save and voilà, your project is in the cloud. Look for the editor's new cloud save indicator:
+Cloud sync is enabled automatically when you sign into MakeCode. However, after signing in, your existing projects remain local, meaning they're not automatically transferred to the cloud all at once. To transfer an existing project to the cloud, just open it in the editor. The editor's auto-save feature will trigger a cloud save and voilà, your project is in the cloud. New projects are cloud-synced automatically from the start. Look for the editor's new cloud save indicator:
 
 ![Cloud Save Indicator](/static/arcade/intro-cloud-sync/cloud-save.gif)
 
-On the home screen, you can tell a project is cloud synced if it has a visible cloud status icon:
+On the home screen, you can tell a project is saved to cloud if it has a visible cloud status icon:
 
 ![Cloud Status Icon](/static/arcade/intro-cloud-sync/cloud-status-icon.png)
 
