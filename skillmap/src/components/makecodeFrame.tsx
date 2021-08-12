@@ -274,13 +274,15 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
 
     protected onEditorLoaded() {
         const { mapId, activityId } = this.props;
-        tickEvent("skillmap.activity.loaded", { path: mapId, activity: activityId });
-        this.setState({
-            frameState: "project-open"
-        });
+        if (mapId && activityId) {
+            tickEvent("skillmap.activity.loaded", { path: mapId, activity: activityId });
+            this.setState({
+                frameState: "project-open"
+            });
 
-        if (this.isNewActivity) {
-            this.isNewActivity = false;
+            if (this.isNewActivity) {
+                this.isNewActivity = false;
+            }
         }
     }
 
