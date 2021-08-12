@@ -1,6 +1,7 @@
 # Microsoft MakeCode Blog
 
 * [Blog](/blog)
+    * [Introducing Cloud Sync for MakeCode Arcade](/blog/arcade/intro-cloud-sync)
     * [MakeCode for the micro:bit - 2021 Release is here!](/blog/microbit/2021-release)
     * [Beginner Skillmap Has Launched!](/blog/arcade/beginner-skillmap)
     * [New Free Curriculum! AP CSP with MakeCode](/blog/csp/new-free-curriculum)
