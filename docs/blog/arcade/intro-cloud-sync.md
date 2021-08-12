@@ -22,11 +22,6 @@ On the home screen, you can tell a project is cloud synced if it has a visible c
 
 ![Cloud Status Icon](/static/arcade/intro-cloud-sync/cloud-status-icon.png)
 
-## Additional Resources
-
-* Learn more about Cloud Sync [here](/identity/cloud-sync).
-* More on identity in MakeCode and Microsoft Accounts [here](/identity/sign-in).
-
 ## The Future
 
 The addition of identity to MakeCode represents a new foundation upon which a wide range of user-aware features can be built. We're excited by all the possiblities! But we're going to build on this new foundation carefully and thoughtfully, with your privacy and safety always our first priority.
@@ -34,3 +29,12 @@ The addition of identity to MakeCode represents a new foundation upon which a wi
 ## Feedback?
 
 Love it? Hate it? Have a suggestion? We'd love to hear from you! Drop us a note in the MakeCode forums at https://forum.makecode.com.
+
+## Additional Resources
+
+* Learn more about Cloud Sync [here](/identity/cloud-sync).
+* More on identity in MakeCode [here](/identity/sign-in).
+* [What are Microsoft Accounts?](https://account.microsoft.com/account)
+* [Create a Microsoft Account](https://signup.live.com/signup)
+* [MSA Terms of Service](https://www.microsoft.com/servicesagreement)
+* [Microsoft Privacy Statement](https://privacy.microsoft.com/privacystatement)
