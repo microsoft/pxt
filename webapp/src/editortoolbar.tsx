@@ -543,29 +543,60 @@ interface EditorToolbarSaveInputProps extends React.DetailedHTMLProps<React.Inpu
     onChangeValue: (value: string, view: string) => void;
 }
 
-class EditorToolbarSaveInput extends sui.StatelessUIElement<EditorToolbarSaveInputProps> {
+interface EditorToolbarSaveInputState {
+    editValue: string | undefined;
+}
 
+class EditorToolbarSaveInput extends React.Component<EditorToolbarSaveInputProps, EditorToolbarSaveInputState> {
     constructor(props: EditorToolbarSaveInputProps) {
         super(props);
-
-        this.handleChange = this.handleChange.bind(this);
+        this.state = {
+            editValue: undefined
+        };
     }
 
-    handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-        const { onChangeValue, view } = this.props;
-        onChangeValue((e.target as any).value, view);
-    }
-
-    renderCore() {
+    render() {
         const { onChange, onChangeValue, view, ...rest } = this.props;
+        const { editValue } = this.state;
+
+
         return <input
-            onChange={this.handleChange}
+            onChange={this.onChange}
+            onBlur={this.onBlur}
+            onKeyDown={this.onKeyDown}
             className="mobile hide ui"
             autoComplete="off"
             autoCorrect="off"
             autoCapitalize="off"
             spellCheck={false}
             {...rest}
+            value={editValue !== undefined ? editValue : this.props.value}
         />
+    }
+
+    protected onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        this.setState({
+            editValue: e.target.value
+        });
+
+        const { onChangeValue, view } = this.props;
+        onChangeValue(e.target.value, view);
+    }
+
+    protected onBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+        if (!this.state.editValue) return;
+
+        const { onChangeValue, view } = this.props;
+        onChangeValue(e.target.value, view);
+        this.setState({
+            editValue: undefined
+        });
+    }
+
+    protected onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === "Enter" && !e.metaKey && !e.shiftKey) {
+            (e.target as HTMLInputElement).blur();
+            e.stopPropagation();
+        }
     }
 }
