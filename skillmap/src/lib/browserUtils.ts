@@ -62,7 +62,23 @@ export async function getMarkdownAsync(source: MarkdownSource, url: string): Pro
             break;
     }
 
-    const markdown = await httpGetAsync(toFetch);
+    let markdown: string;
+
+    if (pxt.BrowserUtils.isSafari()) {
+        // FIXME: safari adds the "If-None-Match" header which
+        // causes an exception, so sometimes we need to retry.
+        try {
+            markdown = await httpGetAsync(toFetch);
+        }
+        catch (e) {
+            markdown = await httpGetAsync(toFetch);
+        }
+    }
+    else {
+        markdown = await httpGetAsync(toFetch);
+    }
+
+
 
     return {
         text: markdown,
