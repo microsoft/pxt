@@ -4,7 +4,7 @@
 
 August 12th, 2021 by [eanders-ms](https://github.com/eanders-ms)
 
-Over the past year we've been working to make it possible to sign into MakeCode with a [Microsoft Account](https://aka.ms/AAdd6f8). When you sign into MakeCode, you make it possible for us to remember who you are, and this unlocks a bunch of exciting new possibilities.
+Over the past year we've been working hard to bring you the ability to sign into MakeCode with a [Microsoft Account](https://aka.ms/AAdd6f8). When you sign into MakeCode, you make it possible for us to remember who you, and this unlocks a bunch of exciting new possibilities.
 
 **[Continue reading this blog post](/blog/arcade/intro-cloud-sync)**
 
