@@ -429,7 +429,7 @@ const mapDispatchToProps = {
     dispatchOpenActivity,
     dispatchResetUser,
     dispatchShowCarryoverModal,
-    dispatchCloseUserProfile
+    dispatchCloseUserProfile,
     dispatchSetShareStatus
 };
 
