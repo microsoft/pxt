@@ -11,6 +11,10 @@
     z-index: var(--modal-dimmer-zindex);
 }
 
+.modal-overlay.fullscreen {
+    z-index: var(--fullscren-modal-zindex)
+}
+
 .modal {
     background-color: var(--body-background-color);
     width: 50%;
@@ -18,7 +22,7 @@
     padding: 1.5rem;
 }
 
-.modal.fullscreen {
+.fullscreen .modal {
     position: fixed;
     top: 0;
     left: 0;
@@ -36,10 +40,11 @@
     margin-bottom: 0.5rem;
 }
 
-.modal.fullscreen .modal-header {
+.fullscreen .modal-header {
     background-color: var(--primary-color);
     color: white;
-    padding: 1.7rem;
+    padding: 1rem;
+    margin-bottom: 0;
 }
 
 .modal-header i.icon {
@@ -52,6 +57,32 @@
 .modal-body {
     min-height: 4rem;
     max-height: 12rem;
+}
+
+
+.fullscreen .modal-body {
+    min-height: 96%;
+    background-color: var(--body-background-color);
+    padding: 1rem;
+}
+
+.fullscreen .modal .ui.card {
+    margin-right: 14px;
+    margin-bottom: 14px;
+    color: black;
+    border: 5px solid #e9eef2 !important;
+    background-color: white;
+}
+
+.fullscreen .modal .ui.card.panel {
+    width: fit-content;
+    min-width: 350px;
+    max-width: 500px;
+    padding: 14px;
+    display: inline-grid;
+    row-gap: 20px;
+    grid-template-rows: auto;
+    grid-template-columns: auto;
 }
 
 .modal-actions {
@@ -75,6 +106,22 @@
     background-color: var(--hover-color);
     color: var(--active-color);
     text-decoration: none;
+}
+
+.modal-button.disabled {
+    background-color: var(--inactive-color);
+    color: var(--inactive-hover-color);
+    border: 1px solid var(--inactive-hover-color);
+}
+
+.modal-button.disabled:hover {
+    background-color: var(--inactive-color);
+    color: var(--inactive-hover-color);
+    text-decoration: none;
+}
+
+.modal .checkbox {
+    user-select: none;
 }
 
 /* SHARE MODAL */
@@ -126,6 +173,11 @@
     cursor: pointer;
 }
 
+/* DELETE PROFILE MODAL */
+.delete .checkbox {
+    padding-top: 1rem;
+}
+
 /* LOGIN MODAL */
 .sign-in-description {
     margin-bottom: 1rem;
@@ -141,10 +193,6 @@
 
 .sign-in-prompt {
     justify-self: center;
-}
-
-.sign-in-remember {
-    user-select: none;
 }
 
 

@@ -10,6 +10,7 @@
     --hover-color: var(--secondary-color);
     --active-color: var(--tertiary-color);
     --inactive-color: var(--secondary-color);
+    --inactive-hover-color: #6e6e6e;
 
     --invert-active-color: #fff;
     --invert-hover-text-color: #850A6B;
@@ -31,6 +32,8 @@
     --frame-loader-zindex: 30;
     --above-frame-zindex: 50;
     --modal-dimmer-zindex: 100;
+
+    --fullscren-modal-zindex: 90;
 
     --graph-backround-zindex: 10;
     --above-graph-zindex: 20;

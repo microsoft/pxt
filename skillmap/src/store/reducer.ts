@@ -3,7 +3,7 @@ import { guidGen } from '../lib/browserUtils';
 import { getCompletedTags, lookupActivityProgress, isMapCompleted,
     isRewardNode, applyUserUpgrades, applyUserMigrations } from '../lib/skillMapUtils';
 
-export type ModalType = "restart-warning" | "completion" | "report-abuse" | "reset" | "carryover" | "share" | "login" | "profile";
+export type ModalType = "restart-warning" | "completion" | "report-abuse" | "reset" | "carryover" | "share" | "login" | "delete-account";
 export type PageSourceStatus = "approved" | "banned" | "unknown";
 
 // State for the entire page
@@ -22,6 +22,7 @@ export interface SkillMapState {
 
     editorView?: EditorViewState;
     modal?: ModalState;
+    showProfile?: boolean;
     theme: SkillGraphTheme;
     auth: AuthState;
 }
@@ -334,13 +335,23 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
         case actions.SHOW_LOGIN_MODAL:
             return {
                 ...state,
-                modal: { type: "login"}
+                modal: { type: "login" }
+            }
+        case actions.SHOW_DELETE_ACCOUNT_MODAL:
+            return {
+                ...state,
+                modal: { type: "delete-account" }
             }
         case actions.SHOW_USER_PROFILE:
             return {
                 ...state,
-                modal: { type: "profile"}
-            }
+                showProfile: true
+            };
+        case actions.HIDE_USER_PROFILE:
+            return {
+                ...state,
+                showProfile: false
+            };
         case actions.HIDE_MODAL:
             return {
                 ...state,

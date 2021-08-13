@@ -39,6 +39,7 @@ import './App.css';
 
 // TODO: this file needs to read colors from the target
 import './arcade.css';
+import { UserProfile } from './components/UserProfile';
 /* eslint-enable import/no-unassigned-import */
 interface AppProps {
     skillMaps: { [key: string]: SkillMap };
@@ -239,6 +240,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
                     </div>
                 }
                 <AppModal />
+                <UserProfile />
             </div>);
     }
 

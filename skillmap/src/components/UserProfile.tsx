@@ -1,19 +1,38 @@
 import * as React from "react";
- import { connect } from "react-redux";
+import { connect } from "react-redux";
 import { SkillMapState } from "../store/reducer";
+
+import { Modal } from './Modal';
+
+import { dispatchCloseUserProfile, dispatchShowDeleteAccountModal } from "../actions/dispatch"
 
 interface UserProfileProps {
     signedIn: boolean;
     profile: pxt.auth.UserProfile
+    showProfile: boolean;
+    dispatchCloseUserProfile: () => void;
+    dispatchShowDeleteAccountModal: () => void;
 }
 
 
-export class UserProfilImpl extends React.Component<UserProfileProps> {
+export class UserProfilImpl extends React.Component<UserProfileProps, {}> {
     render() {
-        return <div className="profiledialog">
+        const { showProfile } = this.props;
+
+        if (showProfile) {
+            return this.renderUserProfile();
+        }
+
+        return <div/>
+    }
+
+    renderUserProfile = () => {
+        return <Modal title={lf("User Profile")} fullscreen={true} onClose={this.handleOnClose}>
+        <div className="profiledialog">
             {this.getAccountPanel()}
             {this.getFeedbackPanel()}
         </div>
+        </Modal>
     }
 
     getAccountPanel = () => {
@@ -27,11 +46,11 @@ export class UserProfilImpl extends React.Component<UserProfileProps> {
         );
         const initialsElem = (
             <div className="profile-pic avatar">
-                <span>{pxt.auth.userInitials(profile?.idp?.displayName || "")}</span>
+                <span>{pxt.auth.userInitials(profile)}</span>
             </div>
         );
 
-        return <div className="account-panel ui card">
+        return <div className="account panel ui card">
             <div className="header-text">
                 <label>{lf("Profile")}</label>
             </div>
@@ -52,13 +71,17 @@ export class UserProfilImpl extends React.Component<UserProfileProps> {
                 {/* <sui.Button text={lf("Sign out")} icon={`xicon ${profile?.idp?.provider}`} ariaLabel={lf("Sign out {0}", profile?.idp?.provider)} onClick={this.handleSignoutClicked} /> */}
             </div>
             <div className="row-span-two">
-                {/* <sui.Link className="ui" text={lf("I want to delete my profile")} ariaLabel={lf("delete profile")} onClick={this.handleDeleteAccountClick} /> */}
+                <a className="ui" title={lf("delete profile")} onClick={this.handleDeleteAccountClick}>{lf("I want to delete my profile")} </a>
             </div>
         </div>
     }
 
+    handleOnClose = () => {
+        this.props.dispatchCloseUserProfile();
+    }
+
     getFeedbackPanel = () => {
-        return <div className="feedback-panel ui card">
+        return <div className="feedback panel ui card">
             <div className="header-text">
                 <label>{lf("Feedback")}</label>
             </div>
@@ -73,6 +96,10 @@ export class UserProfilImpl extends React.Component<UserProfileProps> {
             </div>
         </div>
     }
+
+    handleDeleteAccountClick = async () => {
+        this.props.dispatchShowDeleteAccountModal();
+    }
 }
 
 function mapStateToProps(state: SkillMapState) {
@@ -80,8 +107,14 @@ function mapStateToProps(state: SkillMapState) {
 
     return {
         signedIn: state.auth.signedIn,
-        profile: state.auth.profile
+        profile: state.auth.profile,
+        showProfile: state.showProfile
     }
 }
 
-export const UserProfile = connect(mapStateToProps)(UserProfilImpl);
+const mapDispatchToProps = {
+    dispatchCloseUserProfile,
+    dispatchShowDeleteAccountModal
+}
+
+export const UserProfile = connect(mapStateToProps, mapDispatchToProps)(UserProfilImpl);

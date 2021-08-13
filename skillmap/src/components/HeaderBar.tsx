@@ -2,7 +2,7 @@
 import * as React from "react";
 
 import { connect } from 'react-redux';
-import { dispatchSaveAndCloseActivity, dispatchShowResetUserModal, dispatchShowLoginModal, dispatchShowProfileModal } from '../actions/dispatch';
+import { dispatchSaveAndCloseActivity, dispatchShowResetUserModal, dispatchShowLoginModal, dispatchShowUserProfile } from '../actions/dispatch';
 import { SkillMapState } from '../store/reducer';
 import { isLocal, resolvePath, tickEvent } from "../lib/browserUtils";
 
@@ -18,7 +18,7 @@ interface HeaderBarProps {
     dispatchSaveAndCloseActivity: () => void;
     dispatchShowResetUserModal: () => void;
     dispatchShowLoginModal: () => void;
-    dispatchShowProfileModal: () => void;
+    dispatchShowUserProfile: () => void;
 }
 
 export class HeaderBarImpl extends React.Component<HeaderBarProps> {
@@ -178,7 +178,7 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
     }
 
     onProfileClicked = () => {
-        this.props.dispatchShowProfileModal();
+        this.props.dispatchShowUserProfile();
     }
 }
 
@@ -229,7 +229,7 @@ const mapDispatchToProps = {
     dispatchSaveAndCloseActivity,
     dispatchShowResetUserModal,
     dispatchShowLoginModal,
-    dispatchShowProfileModal
+    dispatchShowUserProfile
 };
 
 export const HeaderBar = connect(mapStateToProps, mapDispatchToProps)(HeaderBarImpl);
