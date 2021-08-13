@@ -827,6 +827,10 @@ export class ProjectView
                 pxt.debug(`sim: don't restart when simulator collapsed`);
                 return;
             }
+            if (pxt.BrowserUtils.isSkillmapEditor() && !this.state.header) {
+                pxt.debug(`sim: don't restart when no project is open`);
+                return;
+            }
             this.runSimulator({ debug: !!this.state.debugging, background: true });
         },
         1000, true);
@@ -1304,8 +1308,8 @@ export class ProjectView
     }
 
     protected postTutorialProgress() {
-        const currentStep = this.state.tutorialOptions?.tutorialStep || this.state.header.tutorialCompleted?.steps || 0;
-        const totalSteps = this.state.tutorialOptions?.tutorialStepInfo?.length || this.state.header.tutorialCompleted?.steps || 0;
+        const currentStep = this.state.tutorialOptions?.tutorialStep || this.state.header?.tutorialCompleted?.steps || 0;
+        const totalSteps = this.state.tutorialOptions?.tutorialStepInfo?.length || this.state.header?.tutorialCompleted?.steps || 0;
         const tutorialId = this.state.tutorialOptions?.tutorial || this.state.header?.tutorialCompleted.id
 
         pxt.editor.postHostMessageAsync({
@@ -1315,8 +1319,8 @@ export class ProjectView
             currentStep,
             totalSteps,
             tutorialId,
-            projectHeaderId: this.state.header.id,
-            isCompleted: !!this.state.header.tutorialCompleted
+            projectHeaderId: this.state.header?.id,
+            isCompleted: !!this.state.header?.tutorialCompleted
         } as pxt.editor.EditorMessageTutorialProgressEventRequest)
     }
 
@@ -1738,7 +1742,9 @@ export class ProjectView
         }
 
         for (const file of Object.keys(newText)) {
-            pkg.mainEditorPkg().setFile(file, newText[file]);
+            if (newText[file] !== undefined) {
+                pkg.mainEditorPkg().setFile(file, newText[file]);
+            }
         }
 
         await workspace.saveAsync(header);
@@ -2322,16 +2328,31 @@ export class ProjectView
             && !pxt.appTarget.appTheme.lockedEditor;
         if (!hasHome) return;
 
+        this.unloadProjectAsync(true)
+    }
+
+    private homeLoaded() {
+        pxt.tickEvent('app.home');
+    }
+
+    private editorLoaded() {
+        pxt.tickEvent('app.editor');
+    }
+
+    unloadProjectAsync(home?: boolean) {
         this.stopSimulator(true); // don't keep simulator around
         this.showKeymap(false); // close keymap if open
         cmds.disconnectAsync(); // turn off any kind of logging
         if (this.editor) this.editor.unloadFileAsync();
         this.extensions.unload();
-        // clear the hash
-        pxt.BrowserUtils.changeHash("", true);
         this.editorFile = undefined;
-        this.setStateAsync({
-            home: true,
+
+        if (home) {
+            // clear the hash
+            pxt.BrowserUtils.changeHash("", true);
+        }
+        return this.setStateAsync({
+            home: home !== undefined ? home : this.state.home,
             tracing: undefined,
             fullscreen: undefined,
             tutorialOptions: undefined,
@@ -2342,18 +2363,14 @@ export class ProjectView
             fileState: undefined
         }).then(() => {
             this.allEditors.forEach(e => e.setVisible(false));
-            this.homeLoaded();
-            this.showPackageErrorsOnNextTypecheck();
+
+            if (home) {
+                this.homeLoaded();
+                this.showPackageErrorsOnNextTypecheck();
+            }
             return workspace.syncAsync();
-        });
-    }
-
-    private homeLoaded() {
-        pxt.tickEvent('app.home');
-    }
-
-    private editorLoaded() {
-        pxt.tickEvent('app.editor');
+        })
+        .then(() => {})
     }
 
     reloadEditor() {
@@ -3468,6 +3485,29 @@ export class ProjectView
             })
     }
 
+    async anonymousPublishHeaderByIdAsync(headerId: string): Promise<Cloud.JsonScript> {
+        const header = workspace.getHeader(headerId);
+        const text = await workspace.getTextAsync(headerId);
+        const stext = JSON.stringify(text, null, 2) + "\n"
+        const scrReq = {
+            name: header.name,
+            target: header.target,
+            targetVersion: header.targetVersion,
+            description: lf("Made with ❤️ in {0}.", pxt.appTarget.title || pxt.appTarget.name),
+            editor: header.editor,
+            text: text,
+
+            // FIXME: skillmap shares should set the metadata properly
+            meta: {
+                versions: pxt.appTarget.versions,
+                blocksHeight: 0,
+                blocksWidth: 0
+            }
+        }
+        pxt.debug(`publishing script; ${stext.length} bytes`)
+        return Cloud.privatePostAsync("scripts", scrReq, /* forceLiveEndpoint */ true)
+    }
+
     private debouncedSaveProjectName: () => void;
 
     updateHeaderName(name: string) {
@@ -3935,22 +3975,30 @@ export class ProjectView
             return Promise.resolve(); // TODO cleanup
         }
         else {
-            return this.exitTutorialAsync()
-                .then(() => {
-                    let curr = pkg.mainEditorPkg().header;
-                    return this.loadHeaderAsync(curr);
-                }).finally(() => {
-                    core.hideLoading("leavingtutorial")
-                    this.postTutorialProgress();
-                })
-                .then(() => {
-                    if (pxt.appTarget.cloud &&
-                        pxt.appTarget.cloud.sharing &&
-                        pxt.appTarget.appTheme.shareFinishedTutorials) {
-                        pxt.tickEvent("tutorial.share", undefined, { interactiveConsent: false });
-                        this.showShareDialog(lf("Well done! Would you like to share your project?"));
-                    }
-                })
+            if (pxt.BrowserUtils.isSkillmapEditor()) {
+                return this.exitTutorialAsync()
+                    .finally(() => {
+                        core.hideLoading("leavingtutorial")
+                    })
+            }
+            else {
+                return this.exitTutorialAsync()
+                    .then(() => {
+                        let curr = pkg.mainEditorPkg().header;
+                        return this.loadHeaderAsync(curr);
+                    }).finally(() => {
+                        core.hideLoading("leavingtutorial")
+                        this.postTutorialProgress();
+                    })
+                    .then(() => {
+                        if (pxt.appTarget.cloud &&
+                            pxt.appTarget.cloud.sharing &&
+                            pxt.appTarget.appTheme.shareFinishedTutorials) {
+                            pxt.tickEvent("tutorial.share", undefined, { interactiveConsent: false });
+                            this.showShareDialog(lf("Well done! Would you like to share your project?"));
+                        }
+                    })
+            }
         }
     }
 
@@ -3965,20 +4013,25 @@ export class ProjectView
             })
     }
 
-    exitTutorialAsync(removeProject?: boolean): Promise<void> {
+    async exitTutorialAsync(removeProject?: boolean): Promise<void> {
         let curr = pkg.mainEditorPkg().header;
         curr.isDeleted = removeProject;
         let files = pkg.mainEditorPkg().getAllFiles();
-        return workspace.saveAsync(curr, files)
-            .then(() => Util.delay(500))
-            .finally(() => {
-                this.setState({
-                    tutorialOptions: undefined,
-                    tracing: undefined,
-                    editorState: undefined
-                }, () => workspace.saveAsync(this.state.header));
-                core.resetFocus();
+
+        try {
+            await workspace.saveAsync(curr, files)
+            await Util.delay(500)
+        }
+        catch (e) {}
+        finally {
+            core.resetFocus();
+            await this.setStateAsync({
+                tutorialOptions: undefined,
+                tracing: undefined,
+                editorState: undefined
             });
+            if (this.state.header) await workspace.saveAsync(this.state.header);
+        }
     }
 
     showTutorialHint(showFullText?: boolean) {

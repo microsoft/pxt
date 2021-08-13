@@ -41,3 +41,5 @@ export const dispatchSetUserPreferences = (preferences?: pxt.auth.UserPreference
 export const dispatchLogout = () => ({ type: actions.USER_LOG_OUT });
 export const dispatchShowUserProfile = () => ({ type: actions.SHOW_USER_PROFILE });
 export const dispatchCloseUserProfile = () => ({ type: actions.HIDE_USER_PROFILE });
+
+export const dispatchSetShareStatus = (headerId?: string, url?: string) =>  ({ type: actions.SET_SHARE_STATUS, headerId, url })

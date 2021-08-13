@@ -26,6 +26,10 @@
     height: 100%;
 }
 
+.skill-graph-content:not(.has-background) .skill-graph-background {
+    position: absolute;
+}
+
 .skill-graph-activities svg,
 .skill-graph-background img {
     object-fit: contain;

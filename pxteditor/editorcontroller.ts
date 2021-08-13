@@ -53,6 +53,8 @@ namespace pxt.editor {
         | "setscale"
         | "startactivity"
         | "saveproject"
+        | "unloadproject"
+        | "shareproject"
 
         | "toggletrace" // EditorMessageToggleTraceRequest
         | "togglehighcontrast"
@@ -319,6 +321,16 @@ namespace pxt.editor {
         type: "pxtsim";
     }
 
+    export interface EditorShareRequest extends EditorMessageRequest {
+        action: "shareproject";
+        headerId: string;
+    }
+
+    export interface EditorShareResponse extends EditorMessageRequest {
+        action: "shareproject";
+        script: Cloud.JsonScript;
+    }
+
     const pendingRequests: pxt.Map<{
         resolve: (res?: EditorMessageResponse | PromiseLike<EditorMessageResponse>) => void;
         reject: (err: any) => void;
@@ -386,6 +398,7 @@ namespace pxt.editor {
                                 case "hidesimulator": return Promise.resolve().then(() => projectView.collapseSimulator());
                                 case "showsimulator": return Promise.resolve().then(() => projectView.expandSimulator());
                                 case "closeflyout": return Promise.resolve().then(() => projectView.closeFlyout());
+                                case "unloadproject": return Promise.resolve().then(() => projectView.unloadProjectAsync());
                                 case "saveproject": return projectView.saveProjectAsync();
                                 case "redo": return Promise.resolve()
                                     .then(() => {
@@ -515,6 +528,13 @@ namespace pxt.editor {
                                                 locale: ts.pxtc.Util.userLanguage(),
                                                 availableLocales: pxt.appTarget.appTheme.availableLocales
                                             }
+                                        });
+                                }
+                                case "shareproject": {
+                                    const msg = data as EditorShareRequest;
+                                    return projectView.anonymousPublishHeaderByIdAsync(msg.headerId)
+                                        .then(scriptInfo => {
+                                            resp = scriptInfo;
                                         });
                                 }
                             }

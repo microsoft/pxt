@@ -52,11 +52,12 @@ export class SkillGraphContainerImpl extends React.Component<SkillGraphContainer
         const padding = PADDING * UNIT;
         const graphAspectRatio = graphSize.width / graphSize.height;
         const backgroundAspectRatio = backgroundSize.width / backgroundSize.height;
+        const useBackground = backgroundImageUrl && backgroundSize.width > 0 && backgroundSize.height > 0;
 
         let height = Math.max(MIN_HEIGHT, graphSize.height);
         let width = Math.max(MIN_WIDTH, graphSize.width);
 
-        if (backgroundImageUrl) {
+        if (useBackground) {
             // Scale the SVG to exactly fit the background image
             if (graphAspectRatio - backgroundAspectRatio > THRESHOLD) {
                 height = width * (1 / backgroundAspectRatio);
@@ -69,7 +70,7 @@ export class SkillGraphContainerImpl extends React.Component<SkillGraphContainer
         const widthDiff = Math.max(width - graphSize.width, 0) / 2;
 
         return <div className="skill-graph-wrapper">
-            <div className={`skill-graph-content ${backgroundImageUrl ? "has-background" : ""}`}>
+            <div className={`skill-graph-content ${useBackground ? "has-background" : ""}`}>
                 <div className="skill-graph-activities">
                     <svg viewBox={`-${widthDiff + padding} -${heightDiff + padding} ${width + padding * 2} ${height + padding * 2}`} preserveAspectRatio="xMidYMid meet">
                         {graphs.map((el, i) => {

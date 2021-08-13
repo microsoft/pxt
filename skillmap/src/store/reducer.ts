@@ -20,6 +20,8 @@ export interface SkillMapState {
     maps: { [key: string]: SkillMap };
     selectedItem?: { mapId: string, activityId: string };
 
+    shareState?: ShareState;
+
     editorView?: EditorViewState;
     modal?: ModalState;
     showProfile?: boolean;
@@ -40,6 +42,11 @@ interface ModalState {
     type: ModalType;
     currentMapId?: string;
     currentActivityId?: string;
+}
+
+export interface ShareState {
+    headerId: string;
+    url?: string;
 }
 
 interface AuthState {
@@ -260,6 +267,14 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                         [state.pageSourceUrl]: getCompletedTags(state.user, state.pageSourceUrl, Object.keys(state.maps).map(key => state.maps[key]))
                     }
                 }
+            }
+        case actions.SET_SHARE_STATUS:
+            return {
+                ...state,
+                shareState: action.headerId || action.url ? {
+                    headerId: action.headerId,
+                    url: action.url
+                } : undefined
             }
         case actions.SET_PAGE_TITLE:
             return {
