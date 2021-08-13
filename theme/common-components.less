@@ -1,0 +1,23 @@
+.tab-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.tab-navigation {
+    display: flex;
+}
+
+.tab-icon {
+    padding: 1rem;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.tab-icon:not(.active):hover {
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+.tab-content,
+.tab-content > div {
+    height: 100%;
+}

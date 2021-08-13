@@ -106,6 +106,7 @@ pre {
     z-index: @editorToolsZIndex;
     height: @editorToolsCollapsedHeight;
     background-color: @editorToolsBackground;
+    border-top: 2px solid darken(desaturate(@editorToolsBackground, 60%), 10%);
 
     display: flex;
     justify-content: space-between;
@@ -188,19 +189,12 @@ pre {
 }
 
 #editorSidebar {
-    padding-top: 1em;
-    padding-right: ~"calc(2em - @{customScrollbarWidth})";
-    padding-bottom: 1em;
-    padding-left: 2em;
-    overflow-x: hidden;
+    overflow: hidden;
     margin-top: 0;
     margin-bottom: 0;
     width: 100%;
     background-color: @filelistBackgroundColor;
     z-index: @filelistZIndex;
-
-    // the scroll bar is always visible, but we hide it when needed
-    overflow-y: scroll;
 }
 
 .invisibleScrollbar::-webkit-scrollbar {
@@ -226,7 +220,6 @@ pre {
 
 #downloadArea {
     margin: unset;
-    background-color: @simulatorBackground;
 
     > div {
         margin: 0;
@@ -881,6 +874,25 @@ Field editors
     background-color: @primaryColor;
 }
 
+
+/*******************************
+        Editor Sidebar
+*******************************/
+
+#editorSidebar {
+    border-right: 2px solid darken(desaturate(@blocklyToolboxColor, 60%), 10%);
+
+    .tab-navigation {
+        color: @blue;
+        background-color: @teal;
+    }
+
+    .tab-icon.active {
+        color: @teal;
+        background-color: @blue;
+    }
+}
+
 /*******************************
         Layout Variables
 *******************************/
@@ -1305,6 +1317,120 @@ p.ui.font.small {
 
 
 /*******************************
+           Mini sim view
+*******************************/
+
+#root.miniSim:not(.fullscreensim) {
+    /* Layout */
+    .simPanel.ui.items {
+        position: fixed;
+        padding: 0;
+        margin: 1em;
+        bottom: ~"calc(4.5rem + var(--extra-mobile-sim-padding))" !important;
+        right: 0.5rem;
+        top: unset;
+        left: unset;
+        width: auto;
+        height: auto;
+        min-width: inherit;
+        max-width: inherit;
+        background: transparent !important;
+        overflow: visible;
+        z-index: 20;
+    }
+    .simPanel .simtoolbar > .buttons {
+        > .debug-button {
+            display: block !important;
+        }
+    }
+    .collapsedEditorTools .simPanel {
+        > div {
+            display: none !important;
+        }
+        aside.simtoolbar button:not(.expand-button) {
+            display: none !important;
+        }
+    }
+    #miniSimOverlay {
+        position: absolute;
+        display: block;
+        width: 10rem; /* match width of div.simframe */
+        height: 9rem;
+    }
+
+    .simPanel {
+        bottom: @editorToolsCollapsedMobileHeight;
+    }
+
+    &:not(.headless):not(.sandbox) {
+        #boardview {
+            display: inline-block;
+            width: 10rem;
+        }
+        .simPanel .simtoolbar {
+            margin: 0.5em 0;
+            width: 3rem;
+            float: right;
+        }
+        .simPanel .simtoolbar > div:not(:first-child),
+        .simPanel .simtoolbar > .buttons > .button {
+            display: none;
+        }
+        .simPanel .simtoolbar > div:first-child {
+            flex-direction: column;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .simPanel .simtoolbar > div:first-child > button {
+            border-radius: 0;
+            font-size: .92857143rem;
+        }
+        #editortools .left .buttons:first-child {
+            position: absolute;
+            bottom: 0;
+        }
+    }
+    &.headless {
+        .simPanel {
+            left: 5rem!important;
+            z-index: 42!important;
+        }
+    }
+
+    /* Simulator */
+    div.simframe {
+        display:inline-block;
+        width: 10rem;
+        margin-right:0.5rem;
+        padding-bottom: 81.96% !important;
+    }
+    div.simframe:not(:first-child) {
+        display:none;
+    }
+    #simulators {
+        flex-direction: row;
+        display: flex !important;
+    }
+    /* Simulator Toggle Button */
+    #mobiletogglesim,
+    .collapsedEditorTools #mobiletogglesim {
+        border-top-right-radius: 100px;
+        border-top-left-radius: 100px;
+        border-bottom-right-radius: 0;
+        border-bottom-left-radius: 0;
+        top: auto;
+        left: 40%;
+        width: 20%;
+        height: auto;
+        bottom: 10rem;
+    }
+    .collapsedEditorTools #mobiletogglesim {
+        bottom: @editorToolsCollapsedHeight;
+    }
+}
+
+
+/*******************************
         Media Adjustments
 *******************************/
 
@@ -1472,43 +1598,8 @@ p.ui.font.small {
         bottom: 2rem;
         margin: 0;
     }
-    /* Layout */
-    .simPanel.ui.items {
-        position: fixed;
-        padding: 0;
-        margin: 1em;
-        bottom: ~"calc(4.5rem + var(--extra-mobile-sim-padding))" !important;
-        right: 0.5rem;
-        top: unset;
-        left: unset;
-        width: auto;
-        min-width: inherit;
-        max-width: inherit;
-        background: transparent !important;
-        overflow: visible;
-        z-index: 20;
-    }
-    .simPanel .simtoolbar > .buttons {
-        > .debug-button {
-            display: block !important;
-        }
-    }
-    .collapsedEditorTools .simPanel {
-        > div {
-            display: none !important;
-        }
-        aside.simtoolbar button:not(.expand-button) {
-            display: none !important;
-        }
-    }
-    #miniSimOverlay {
-        position: absolute;
-        display: block;
-        width: 10rem; /* match width of div.simframe */
-        height: 9rem;
-    }
 
-    #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #assetEditor, .simPanel {
+    #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #assetEditor {
         bottom: @editorToolsCollapsedMobileHeight;
     }
 
@@ -1540,40 +1631,6 @@ p.ui.font.small {
         padding: 0;
     }
 
-    #root:not(.fullscreensim):not(.headless):not(.sandbox) {
-        #boardview {
-            display: inline-block;
-            width: 10rem;
-        }
-        .simPanel .simtoolbar {
-            margin: 0.5em 0;
-            width: 3rem;
-            float: right;
-        }
-        .simPanel .simtoolbar > div:not(:first-child),
-        .simPanel .simtoolbar > .buttons > .button {
-            display: none;
-        }
-        .simPanel .simtoolbar > div:first-child {
-            flex-direction: column;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-        .simPanel .simtoolbar > div:first-child > button {
-            border-radius: 0;
-            font-size: .92857143rem;
-        }
-        #editortools .left .buttons:first-child {
-            position: absolute;
-            bottom: 0;
-        }
-    }
-    #root.headless {
-        .simPanel {
-            left: 5rem!important;
-            z-index: 42!important;
-        }
-    }
     #root.collapsedEditorTools #editortools .left .buttons:first-child {
         bottom: auto!important; // undo bottom positioning for collapsed toolbar
     }
@@ -1602,36 +1659,7 @@ p.ui.font.small {
     .hideEditorFloats #tutorialcard.bottom {
         bottom: @editorToolsCollapsedMobileHeight;
     }
-    /* Simulator */
-    div.simframe {
-        display:inline-block;
-        width: 10rem;
-        margin-right:0.5rem;
-        padding-bottom: 81.96% !important;
-    }
-    div.simframe:not(:first-child) {
-        display:none;
-    }
-    #simulators {
-        flex-direction: row;
-        display: flex !important;
-    }
-    /* Simulator Toggle Button */
-    #mobiletogglesim,
-    .collapsedEditorTools #mobiletogglesim {
-        border-top-right-radius: 100px;
-        border-top-left-radius: 100px;
-        border-bottom-right-radius: 0;
-        border-bottom-left-radius: 0;
-        top: auto;
-        left: 40%;
-        width: 20%;
-        height: auto;
-        bottom: 10rem;
-    }
-    .collapsedEditorTools #mobiletogglesim {
-        bottom: @editorToolsCollapsedHeight;
-    }
+
     /* Hide floating editors */
     .hideEditorFloats .editorFloat {
         display:none;
@@ -1772,7 +1800,6 @@ p.ui.font.small {
     }
     #editorSidebar {
         top: @thinMenuHeight;
-        padding: 0.5rem 1.5rem;
     }
     #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #assetEditor, #editorSidebar {
         bottom: @editorToolsThinHeight;

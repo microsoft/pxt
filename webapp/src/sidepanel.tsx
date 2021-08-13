@@ -11,6 +11,7 @@ import * as simtoolbar from "./simtoolbar";
 
 import { TabContent } from "./components/core/TabContent";
 import { TabPane } from "./components/core/TabPane";
+import { TutorialContainer } from "./components/tutorial/TutorialContainer";
 
 interface SidepanelState {
 }
@@ -27,12 +28,16 @@ interface SidepanelProps extends pxt.editor.ISettingsProps {
     simSerialActive?: boolean;
     deviceSerialActive?: boolean;
 
+    tutorialOptions?: pxt.tutorial.TutorialOptions;
+
+    showMiniSim: (visible?: boolean) => void;
     openSerial: (isSim: boolean) => void;
     handleHardwareDebugClick: () => void;
     handleFullscreenButtonClick: () => void;
 }
 
 export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
+    protected simPanelRef: HTMLDivElement;
     constructor(props: SidepanelProps) {
         super(props);
     }
@@ -45,15 +50,37 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         this.props.openSerial(false);
     }
 
+    protected handleSimTabSelected = () => {
+        this.props.showMiniSim(false);
+    }
+
+    protected handleTutorialTabSelected = () => {
+        this.props.showMiniSim(true);
+    }
+
+    protected handleSimPanelRef = (c: HTMLDivElement) => {
+        this.simPanelRef = c;
+        if (c && typeof ResizeObserver !== "undefined") {
+            const observer = new ResizeObserver(() => {
+                const scrollVisible = c.scrollHeight > c.clientHeight;
+                if (scrollVisible)
+                    this.simPanelRef.classList.remove("invisibleScrollbar");
+                else
+                    this.simPanelRef.classList.add("invisibleScrollbar");
+            })
+            observer.observe(c);
+        }
+    }
+
     renderCore() {
         const { parent, inHome, showKeymap, showSerialButtons, showFileList, showFullscreenButton,
-            collapseEditorTools, simSerialActive, deviceSerialActive,
+            collapseEditorTools, simSerialActive, deviceSerialActive, tutorialOptions,
             handleHardwareDebugClick, handleFullscreenButtonClick } = this.props;
 
         return <div id="simulator" className="simulator">
             <TabPane id="editorSidebar">
-                <TabContent name="tab-simulator">
-                    <div className="ui items simPanel">
+                <TabContent name="tab-simulator" icon="game" onSelected={this.handleSimTabSelected}>
+                    <div className="ui items simPanel" ref={this.handleSimPanelRef}>
                         <div id="boardview" className="ui vertical editorFloat" role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0} />
                         <simtoolbar.SimulatorToolbar parent={parent} collapsed={collapseEditorTools} simSerialActive={simSerialActive} devSerialActive={deviceSerialActive} />
                         {showKeymap && <keymap.Keymap parent={parent} />}
@@ -68,6 +95,10 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                         {showFullscreenButton && <div id="miniSimOverlay" role="button" title={lf("Open in fullscreen")} onClick={handleFullscreenButtonClick} />}
                     </div>
                 </TabContent>
+                {tutorialOptions && <TabContent name="tab-tutorial" icon="pencil" onSelected={this.handleTutorialTabSelected}>
+                    <TutorialContainer parent={parent} steps={tutorialOptions?.tutorialStepInfo}
+                        currentStep={tutorialOptions?.tutorialStep} tutorialOptions={tutorialOptions} />
+                </TabContent>}
             </TabPane>
         </div>
     }

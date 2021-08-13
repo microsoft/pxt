@@ -496,15 +496,26 @@ code.lang-filterblocks {
 /******************************
     Immersive Reader button
 ******************************/
+// TODO (shakao) remove #mainmenu items when cleaning up
+// old tutorial code
+#editorSidebar .immersive-reader-button.ui.item,
+#editorSidebar .immersive-reader-button.ui.item:focus,
 #mainmenu .immersive-reader-button.ui.item,
 #mainmenu .immersive-reader-button.ui.item:focus {
-    background-image: @immersiveReaderLightIcon;
     width: 2rem;
     height: 2rem;
     background-repeat: no-repeat;
     background-size: 80%;
     background-position: center;
     border-radius: .2em!important;
+}
+#mainmenu .immersive-reader-button.ui.item,
+#mainmenu .immersive-reader-button.ui.item:focus {
+    background-image: @immersiveReaderLightIcon;
+}
+#editorSidebar .immersive-reader-button.ui.item,
+#editorSidebar .immersive-reader-button.ui.item:focus{
+    background-image: @immersiveReaderIcon;
 }
 
 #mainmenu .immersive-reader-button:focus,
