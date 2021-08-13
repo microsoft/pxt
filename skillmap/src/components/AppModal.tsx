@@ -382,7 +382,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
             onClick: this.props.dispatchHideModal
         })
 
-        return <Modal title={lf("Delete Profile")} className="delete" actions={buttons} >
+        return <Modal title={lf("Delete Profile")} className="delete" actions={buttons} onClose={this.handleOnClose}>
             <div>{lf("Are you sure? This cannot be reversed! Your cloud-saved projects will be converted to local projects on this device.")}</div>
 
             <div className="confirm-delete checkbox" onClick={() => {

@@ -35,12 +35,12 @@ export class Modal extends React.Component<ModalProps> {
         return <div className={`modal-overlay ${className || ""} ${fullscreen && `fullscreen`}`} onClick={this.handleCloseClick} role="region">
             <div className="modal" onClick={this.handleModalClick} role="dialog">
                 <div className="modal-header">
-                    {fullscreen && <div className="header-close back-button" onClick={this.handleCloseClick}>
+                    {fullscreen && <div className="close button" onClick={this.handleCloseClick}>
                         <i className="icon arrow left"/>
                         {lf("Go Back")}
                     </div>}
                     <div className="modal-title">{title}</div>
-                    <div className="spacer" />
+                    {!fullscreen && <div className="spacer" />}
                     {!fullscreen && <div className="modal-close-icon" onClick={this.handleCloseClick} role="button"><i className="icon close"/></div>}
                 </div>
                 <div className="modal-body">

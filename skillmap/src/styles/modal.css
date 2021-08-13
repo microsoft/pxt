@@ -59,6 +59,13 @@
     max-height: 12rem;
 }
 
+.fullscreen .modal-title {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
 
 .fullscreen .modal-body {
     min-height: 96%;
@@ -90,6 +97,19 @@
     margin-top: 1.5rem;
     grid-template-columns: 1fr 1fr;
     gap: 1rem;
+}
+
+.modal-header .button {
+    cursor: pointer;
+}
+
+.modal-header .button:hover {
+    transform: scale(1.2);
+    background-color: rgba(0,0,0,.1);
+}
+
+.modal-header .icon {
+    padding-right: 2rem
 }
 
 .modal-button {

@@ -27,7 +27,9 @@ export class UserProfilImpl extends React.Component<UserProfileProps, {}> {
     }
 
     renderUserProfile = () => {
-        return <Modal title={lf("User Profile")} fullscreen={true} onClose={this.handleOnClose}>
+        const user = this.props.profile;
+
+        return <Modal title={user?.idp?.displayName || ""} fullscreen={true} onClose={this.handleOnClose}>
         <div className="profiledialog">
             {this.getAccountPanel()}
             {this.getFeedbackPanel()}
@@ -67,8 +69,11 @@ export class UserProfilImpl extends React.Component<UserProfileProps, {}> {
                 <label className="title">{lf("Provider")}</label>
                 <p className="value">{provider?.name}</p>
             </div>
-            <div className="row-span-two">
-                {/* <sui.Button text={lf("Sign out")} icon={`xicon ${profile?.idp?.provider}`} ariaLabel={lf("Sign out {0}", profile?.idp?.provider)} onClick={this.handleSignoutClicked} /> */}
+            <div className="row-span-two" onClick={this.handleSignout}>
+                <div className="sign-out ui icon button" >
+                    <span className={`xicon ${profile?.idp?.provider}`} />
+                    <span> {lf("Sign out")} </span>
+                </div>
             </div>
             <div className="row-span-two">
                 <a className="ui" title={lf("delete profile")} onClick={this.handleDeleteAccountClick}>{lf("I want to delete my profile")} </a>
@@ -95,6 +100,11 @@ export class UserProfilImpl extends React.Component<UserProfileProps, {}> {
                 </a>
             </div>
         </div>
+    }
+
+    handleSignout = async () => {
+        pxt.tickEvent(`skillmap.userprofile.signout`);
+        pxt.auth.client().logoutAsync(location.hash)
     }
 
     handleDeleteAccountClick = async () => {
