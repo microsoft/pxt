@@ -368,6 +368,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
 
             onClick: async () => {
                 if (checkboxSelected) {
+                    tickEvent("skillmap.profile.delete", { link: "https://aka.ms/cloudsave" });
                     this.props.dispatchHideModal();
                     this.props.dispatchCloseUserProfile();
                     await pxt.auth.client().deleteProfileAsync();
@@ -383,16 +384,14 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
         })
 
         return <Modal title={lf("Delete Profile")} className="delete" actions={buttons} onClose={this.handleOnClose}>
-            <div>{lf("Are you sure? This cannot be reversed! Your cloud-saved projects will be converted to local projects on this device.")}</div>
-
+            <div> { lf("Are you sure? This cannot be reversed! Your cloud-saved projects will be converted to local projects on this device.") }
+            </div>
             <div className="confirm-delete checkbox" onClick={() => {
-                    // VVN TODO Tick
                     this.setState({ checkboxSelected: !checkboxSelected });
                 }}>
                 <i className={`icon square outline ${checkboxSelected ? "check" : ""}`} />
-                {lf("I understand this is permanent. No undo.")}
+                { lf("I understand this is permanent. No undo.") }
             </div>
-
         </Modal>
     }
 }

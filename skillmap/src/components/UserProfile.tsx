@@ -91,12 +91,12 @@ export class UserProfilImpl extends React.Component<UserProfileProps, {}> {
                 <label>{lf("Feedback")}</label>
             </div>
             <div className="row-span-two">
-                {lf("What do you think about the Sign In & Cloud Save feature? Is there something you'd like to change? Did you encounter issues? Please let us know!")}
+                { lf("What do you think about the Sign In & Cloud Save feature? Is there something you'd like to change? Did you encounter issues? Please let us know!") }
             </div>
             <div className="row-span-two">
                 <a className="ui"  title={lf("Provide feedback in a from")} href="https://aka.ms/AAcnpaj" target="_blank">
                     <i className="icon external alternate"></i>
-                    {lf("Take the Survey")}
+                    { lf("Take the Survey") }
                 </a>
             </div>
         </div>

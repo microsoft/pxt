@@ -18,6 +18,7 @@
     --body-background-color: #F9F9F9;
     --default-card-color: #CCC;
     --card-hover-color: #BFBFBF;
+    --card-border-color: #e9eef2;
     --dropdown-hover-color: #CCC;
     --modal-overlay-color: rgba(0, 0, 0, 0.5);
     --inverted-text-color: var(--white);

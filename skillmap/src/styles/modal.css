@@ -77,7 +77,7 @@
     margin-right: 14px;
     margin-bottom: 14px;
     color: black;
-    border: 5px solid #e9eef2 !important;
+    border: 5px solid var(--card-border-color) !important;
     background-color: white;
 }
 
@@ -216,7 +216,8 @@
 }
 
 
-/* Profile dialog */
+/* PROFILE DIALOG */
+/* Most of this CSS is copied from the webapp in commons.less */
 .profiledialog .ui.card {
     margin: 0;
     margin-right: 14px;
@@ -244,11 +245,6 @@
 .profiledialog p.description {
     text-overflow: ellipsis;
     overflow: hidden;
-}
-
-.profiledialog p.warning {
-    background-color: #F5BC5F;
-    padding: 6px;
 }
 
 .profiledialog div.header-text {
