@@ -12,18 +12,25 @@ interface TutorialContainerProps {
     currentStep?: number;
 
     tutorialOptions?: pxt.tutorial.TutorialOptions; // TODO (shakao) pass in only necessary subset
+
+    onTutorialStepChange?: (step: number) => void;
 }
 
 export function TutorialContainer(props: TutorialContainerProps) {
-    const { parent, steps, tutorialOptions } = props;
+    const { parent, steps, tutorialOptions, onTutorialStepChange } = props;
     const [ currentStep, setCurrentStep ] = React.useState(props.currentStep || 0);
 
     const markdown = steps[currentStep].headerContentMd;
     const showImmersiveReader = pxt.appTarget.appTheme.immersiveReader;
 
+    const setTutorialStep = (step: number) => {
+        onTutorialStepChange(step);
+        setCurrentStep(step);
+    }
+
     return <div className="tutorial-container">
         <div className="tutorial-top-bar">
-            <TutorialStepCounter currentStep={currentStep} totalSteps={steps.length} setTutorialStep={setCurrentStep} />
+            <TutorialStepCounter currentStep={currentStep} totalSteps={steps.length} setTutorialStep={setTutorialStep} />
             {showImmersiveReader && <ImmersiveReaderButton content={markdown} tutorialOptions={tutorialOptions} />}
         </div>
         <div className="tutorial-content">
@@ -31,10 +38,10 @@ export function TutorialContainer(props: TutorialContainerProps) {
         </div>
         <div className="tutorial-controls">
             <Button icon="arrow circle left" disabled={currentStep === 0}
-                text={lf("Back")} onClick={() => setCurrentStep(Math.max(currentStep - 1, 0))} />
+                text={lf("Back")} onClick={() => setTutorialStep(Math.max(currentStep - 1, 0))} />
             <Button icon="lightbulb" className="tutorial-hint" />
             <Button icon="arrow circle right" disabled={currentStep === steps.length - 1}
-                text={lf("Next")} onClick={() => setCurrentStep(Math.min(currentStep + 1, props.steps.length - 1))} />
+                text={lf("Next")} onClick={() => setTutorialStep(Math.min(currentStep + 1, props.steps.length - 1))} />
         </div>
     </div>
 }
