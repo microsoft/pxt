@@ -30,6 +30,7 @@ interface SidepanelProps extends pxt.editor.ISettingsProps {
     deviceSerialActive?: boolean;
 
     tutorialOptions?: pxt.tutorial.TutorialOptions;
+    onTutorialStepChange?: (step: number) => void;
 
     showMiniSim: (visible?: boolean) => void;
     openSerial: (isSim: boolean) => void;
@@ -87,7 +88,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
     renderCore() {
         const { parent, inHome, showKeymap, showSerialButtons, showFileList, showFullscreenButton,
             collapseEditorTools, simSerialActive, deviceSerialActive, tutorialOptions,
-            handleHardwareDebugClick } = this.props;
+            handleHardwareDebugClick, onTutorialStepChange } = this.props;
 
         return <div id="simulator" className="simulator">
             <TabPane id="editorSidebar" activeTabName={this.state.activeTab}>
@@ -109,7 +110,8 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                 </TabContent>
                 {tutorialOptions && <TabContent name="tab-tutorial" icon="pencil" onSelected={this.handleTutorialTabSelected}>
                     <TutorialContainer parent={parent} steps={tutorialOptions?.tutorialStepInfo}
-                        currentStep={tutorialOptions?.tutorialStep} tutorialOptions={tutorialOptions} />
+                        currentStep={tutorialOptions?.tutorialStep} tutorialOptions={tutorialOptions}
+                        onTutorialStepChange={onTutorialStepChange} />
                 </TabContent>}
             </TabPane>
         </div>

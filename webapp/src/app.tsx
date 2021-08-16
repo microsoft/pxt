@@ -190,6 +190,7 @@ export class ProjectView
         this.showKeymap = this.showKeymap.bind(this);
         this.toggleKeymap = this.toggleKeymap.bind(this);
         this.showMiniSim = this.showMiniSim.bind(this);
+        this.setTutorialStep = this.setTutorialStep.bind(this);
         this.initSimulatorMessageHandlers();
 
         // add user hint IDs and callback to hint manager
@@ -1274,7 +1275,7 @@ export class ProjectView
 
         this.stopPokeUserActivity();
         let tc = this.refs[ProjectView.tutorialCardId] as tutorial.TutorialCard;
-        if (!tc) return;
+        if (!this.isTutorial()) return;
         if (step > -1) {
             let tutorialOptions = this.state.tutorialOptions;
             tutorialOptions.tutorialStep = step;
@@ -1284,7 +1285,7 @@ export class ProjectView
                 workspace.saveAsync(this.state.header);
             });
             const showHint = tutorialOptions.tutorialStepInfo[step].showHint;
-            if (showHint) this.showTutorialHint();
+            if (showHint && tc) this.showTutorialHint();
 
             const isCompleted = tutorialOptions.tutorialStepInfo[step].tutorialCompleted;
             if (isCompleted && pxt.commands.onTutorialCompleted) pxt.commands.onTutorialCompleted();
@@ -4370,7 +4371,8 @@ export class ProjectView
                     handleHardwareDebugClick={this.hwDebug}
                     handleFullscreenButtonClick={this.toggleSimulatorFullscreen}
 
-                    tutorialOptions={isVerticalTutorial ? tutorialOptions : undefined}/>
+                    tutorialOptions={isVerticalTutorial ? tutorialOptions : undefined}
+                    onTutorialStepChange={this.setTutorialStep} />
                 <div id="maineditor" className={(sandbox ? "sandbox" : "") + (inDebugMode ? "debugging" : "")} role="main" aria-hidden={inHome}>
                     {showCollapseButton && <sui.Button id='computertogglesim' className={`computer only collapse-button large`} icon={`inverted chevron ${showRightChevron ? 'right' : 'left'}`} title={collapseIconTooltip} onClick={this.toggleSimulatorCollapse} />}
                     {this.allEditors.map(e => e.displayOuter(expandedStyle))}
