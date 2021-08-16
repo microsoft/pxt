@@ -194,6 +194,7 @@ export class ProjectView
         this.toggleSimulatorCollapse = this.toggleSimulatorCollapse.bind(this);
         this.showKeymap = this.showKeymap.bind(this);
         this.toggleKeymap = this.toggleKeymap.bind(this);
+        this.showMiniSim = this.showMiniSim.bind(this);
         this.initSimulatorMessageHandlers();
 
         // add user hint IDs and callback to hint manager
@@ -1501,6 +1502,7 @@ export class ProjectView
     private internalLoadHeaderAsync(h: pxt.workspace.Header, editorState?: pxt.editor.EditorState): Promise<void> {
         pxt.debug(`loading ${h.id} (pxt v${h.targetVersion})`);
         this.stopSimulator(true);
+        this.showMiniSim(false);
         if (pxt.appTarget.simulator && pxt.appTarget.simulator.aspectRatio)
             simulator.driver.preload(pxt.appTarget.simulator.aspectRatio);
         this.clearSerial()
@@ -3209,6 +3211,10 @@ export class ProjectView
         simulator.suspend()
     }
 
+    showMiniSim(visible?: boolean) {
+        this.setState({ showMiniSim: visible });
+    }
+
     onHighContrastChanged() {
         this.clearSerial();
         // Not this.restartSimulator; need full restart to consistently update visuals,
@@ -4290,6 +4296,8 @@ export class ProjectView
         const selectLanguage = targetTheme.selectLanguage;
         const showEditorToolbar = inEditor && !hideEditorToolbar && this.editor.hasEditorToolbar();
         const useSerialEditor = pxt.appTarget.serial && !!pxt.appTarget.serial.useEditor;
+        // Check to see if we should show the mini simulator (<= tablet size)
+        const showMiniSim = this.state.showMiniSim || window?.innerWidth <= pxt.BREAKPOINT_TABLET;
 
         const showSideDoc = sideDocs && this.state.sideDocsLoadUrl && !this.state.sideDocsCollapsed;
         const showCollapseButton = showEditorToolbar && !inHome && !sandbox && !targetTheme.simCollapseInMenu && (!isHeadless || inDebugMode);
@@ -4313,6 +4321,7 @@ export class ProjectView
             transparentEditorToolbar ? "transparentEditorTools" : '',
             invertedTheme ? 'inverted-theme' : '',
             this.state.fullscreen ? 'fullscreensim' : '',
+            showMiniSim ? 'miniSim' : '',
             hc ? 'hc' : '',
             showSideDoc ? 'sideDocs' : '',
             pxt.shell.layoutTypeClass(),
@@ -4382,6 +4391,7 @@ export class ProjectView
                     simSerialActive={this.state.simSerialActive}
                     devSerialActive={this.state.deviceSerialActive}
 
+                    showMiniSim={this.showMiniSim}
                     openSerial={this.openSerial}
                     handleHardwareDebugClick={this.hwDebug}
                     handleFullscreenButtonClick={this.toggleSimulatorFullscreen} />
@@ -5155,6 +5165,13 @@ document.addEventListener("DOMContentLoaded", async () => {
                 setTimeout(() => {
                     theEditor.editor.resize(ev);
                 }, 1000);
+            }
+
+            // Check to see if we should show the mini simulator (<= tablet size)
+            if (window?.innerWidth <= pxt.BREAKPOINT_TABLET) {
+                theEditor.showMiniSim(true);
+            } else {
+                theEditor.showMiniSim(false);
             }
         }
     }, false);

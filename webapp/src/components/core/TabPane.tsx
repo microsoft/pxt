@@ -9,59 +9,36 @@ interface TabPaneProps {
     activeTabName?: string;
 }
 
-interface TabPaneState {
-    activeTabName: string;
-}
+export function TabPane(props: TabPaneProps) {
+    const { id, children, className } = props;
+    const [ activeTab, setActiveTab ] = React.useState(props.activeTabName);
+    const childArray = Array.isArray(children) ? children.filter((el: any) => !!el) : [children];
 
-export class TabPane extends React.Component<TabPaneProps, TabPaneState> {
-    protected containerRef: HTMLDivElement;
-    constructor(props: TabPaneProps) {
-        super(props);
-
-        this.state = { activeTabName: props.activeTabName || props.children?.[0]?.props?.name };
-    }
-
-    protected handleContainerRef = (c: HTMLDivElement) => {
-        this.containerRef = c;
-        if (c && typeof ResizeObserver !== "undefined") {
-            const observer = new ResizeObserver(() => {
-                const scrollVisible = c.scrollHeight > c.clientHeight;
-                if (scrollVisible)
-                    this.containerRef.classList.remove("invisibleScrollbar");
-                else
-                    this.containerRef.classList.add("invisibleScrollbar");
-            })
-            observer.observe(c);
+    React.useEffect(() => {
+        if (!childArray.some((el: any) => el.props.name === activeTab)) {
+            setActiveTab(childArray[0].props.name)
         }
-    }
+    }, [children])
 
-    protected getTabClickHandler = (name: string) => {
-        return () => this.setState({ activeTabName: name });
-    }
-
-    render() {
-        const { id, children, className } = this.props;
-        const { activeTabName } = this.state;
-
-        return <div id={id} className={`tab-container ${className || ""}`} ref={this.handleContainerRef}>
-            {Array.isArray(children) && <div className="tab-navigation">
-                {children.map(el => {
-                    const { name, icon, title } = el.props as TabContentProps;
-                    return <div key={name} className={`tab-element ${name == activeTabName ? "active" : ""}`} onClick={this.getTabClickHandler(name)}>
-                        <i className={`ui icon ${icon}`} />
-                        <span>{title}</span>
-                    </div>
-                })}
-            </div>}
-            {Array.isArray(children)
-                ? children.map((el: any) => {
-                    const { name } = el.props as TabContentProps;
-                    return <div className={`tab-content ${name !== activeTabName ? "hidden" : ""}`}>
-                        {el}
-                    </div>
-                })
-                : children
-            }
-        </div>
-    }
+    return <div id={id} className={`tab-container ${className || ""}`}>
+        {childArray.length > 1 && <div className="tab-navigation">
+            {childArray.map(el => {
+                const { name, icon, title, onSelected } = el.props as TabContentProps;
+                const tabClickHandler = () => {
+                    if (onSelected) onSelected();
+                    setActiveTab(name);
+                }
+                return <div key={name} className={`tab-icon ${name} ${name == activeTab ? "active" : ""}`} onClick={tabClickHandler}>
+                    <i className={`ui icon ${icon}`} />
+                    <span>{title}</span>
+                </div>
+            })}
+        </div>}
+        {childArray.map((el: any, i: number) => {
+            const { name } = el.props as TabContentProps;
+            return <div key={`tab-content-${i}`} className={`tab-content ${name} ${name !== activeTab ? "hidden" : ""}`}>
+                {el}
+            </div>
+        })}
+    </div>
 }

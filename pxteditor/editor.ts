@@ -70,6 +70,7 @@ namespace pxt.editor {
         showBlocks?: boolean;
         showParts?: boolean;
         fullscreen?: boolean;
+        showMiniSim?: boolean;
         mute?: boolean;
         embedSimView?: boolean;
         editorPosition?: {
