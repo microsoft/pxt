@@ -2089,7 +2089,7 @@ export class ProjectView
         await skillmapWorkspace.initAsync();
         const project = await skillmapWorkspace.getProjectAsync(headerId);
 
-        if (project) {
+        if (project && !project.deleted) {
             if (project.header.tutorial) {
                 project.header.tutorialCompleted = {
                     id: project.header.tutorial.tutorial,
