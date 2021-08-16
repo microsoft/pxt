@@ -10,15 +10,23 @@ interface TabPaneProps {
 }
 
 export function TabPane(props: TabPaneProps) {
-    const { id, children, className } = props;
-    const [ activeTab, setActiveTab ] = React.useState(props.activeTabName);
+    const { id, children, className, activeTabName } = props;
+    const [ activeTab, setActiveTab ] = React.useState(activeTabName);
     const childArray = Array.isArray(children) ? children.filter((el: any) => !!el) : [children];
 
     React.useEffect(() => {
         if (!childArray.some((el: any) => el.props.name === activeTab)) {
-            setActiveTab(childArray[0].props.name)
+            setActiveTab(childArray[0].props.name);
         }
     }, [children])
+
+    React.useEffect(() => {
+        if (childArray.some((el: any) => el.props.name === activeTabName)) {
+            setActiveTab(activeTabName);
+        } else {
+            setActiveTab(childArray[0].props.name);
+        }
+    }, [activeTabName])
 
     return <div id={id} className={`tab-container ${className || ""}`}>
         {childArray.length > 1 && <div className="tab-navigation">

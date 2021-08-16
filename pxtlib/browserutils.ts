@@ -164,6 +164,12 @@ namespace pxt.BrowserUtils {
         } catch (e) { return false; }
     }
 
+    export function isVerticalTutorial(): boolean {
+        try {
+            return /tutoriallayout=v/.test(window.location.href);
+        } catch (e) { return false; }
+    }
+
     export function hasPointerEvents(): boolean {
         return typeof window != "undefined" && !!(window as any).PointerEvent;
     }
