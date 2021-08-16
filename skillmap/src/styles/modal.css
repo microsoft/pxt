@@ -200,14 +200,7 @@
 
 .sign-in-container {
     display: flex;
-    align-items: center;
-    flex-direction: column;
-    row-gap: 1rem;
-    justify-content: center;
-}
 
-.sign-in-prompt {
-    justify-self: center;
 }
 
 
