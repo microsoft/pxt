@@ -318,35 +318,33 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
     }
 
     renderLoginModal() {
-        const providers = pxt.auth.identityProviders();
         const rememberMeSelected = this.state.rememberMe ?? false;
 
-        return <Modal title={lf("Sign in or Signup")} onClose={this.handleOnClose}>
+        const msft = pxt.auth.identityProvider("microsoft");
+        const buttons = [];
+        buttons.push({
+            label: lf("Sign In"),
+            onClick: async () => {
+                pxt.tickEvent(`skillmap.signindialog.signin`, { provider: msft.name ? msft.name : "", rememberMe: rememberMeSelected.toString() });
+                pxt.auth.client().loginAsync(msft.id, rememberMeSelected, { hash: location.hash })
+            }
+        })
+
+        return <Modal title={lf("Sign into MakeCode Arcade")} onClose={this.handleOnClose} actions={buttons}>
             <div className="sign-in-description">
-                <p>{lf("Connect an existing account in order to sign in or signup for the first time.")}
-                    <a href="https://aka.ms/cloudsave" target="_blank" onClick={() => {
-                        tickEvent("skillmap.signindialog.learn", { link: "https://aka.ms/cloudsave" });
-                        window.open("https://aka.ms/cloudsave", "_blank");
-                    }}>
-                        <i className="icon external alternate" />{lf("Learn more")}
-                    </a>
-                </p>
-            </div>
-            <div className="sign-in-container">
-                <div className="sign-in-prompt">
-                    <p>{lf("Choose an account to connect:")}</p>
+                <p>{lf("Sign in with your Microsoft Account. We'll save your projects to the cloud, where they're accessible from anywhere.")}</p>
+
+                <div className="sign-in-container">
+                    <i className="xicon icon cloud-user"/>
+                    <p>{ lf("Don't have a Microsoft Account? Start signing in to create one!")}
+                        <a href="https://aka.ms/cloudsave" target="_blank" onClick={() => {
+                            tickEvent("skillmap.signindialog.learn", { link: "https://aka.ms/cloudsave" });
+                            window.open("https://aka.ms/cloudsave", "_blank");
+                        }}>
+                            <i className="icon external alternate" />{lf("Learn more")}
+                        </a>
+                    </p>
                 </div>
-                {providers.map((p, key) => {
-                    return <div className="modal-button" key={key} role="button" onClick={async () => {
-                        pxt.tickEvent(`skillmap.signindialog.signin`, { provider: p.name ? p.name : "", rememberMe: rememberMeSelected.toString() });
-                        pxt.auth.client().loginAsync(p.id, rememberMeSelected, { hash: location.hash })
-                    }}>
-                        <i className={`xicon ${p.id}`} />
-                        <div className="label">
-                            {p.name}
-                        </div>
-                    </div>
-                })}
                 <div className="sign-in-remember" onClick={() => {
                     const rememberMe = !rememberMeSelected;
                     tickEvent("skillmap.signindialog.rememberme", { rememberMe: rememberMe.toString() });
