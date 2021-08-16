@@ -396,7 +396,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
                 case pxt.AssetType.Animation:
                     return assets.filter(t => t.type === pxt.AssetType.Animation);
                 case pxt.AssetType.Image:
-                    return assets.filter(t => t.type === pxt.AssetType.Tile || t.type === pxt.AssetType.Image);
+                    return assets.filter(t => t.type === pxt.AssetType.Image);
                 case pxt.AssetType.Tile:
                     return assets.filter(t => t.type === pxt.AssetType.Tile);
                 case pxt.AssetType.Tilemap:
