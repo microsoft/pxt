@@ -328,7 +328,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
             <div className="sign-in-description">
                 <p>{lf("Connect an existing account in order to sign in or signup for the first time.")}
                     <a href="https://aka.ms/cloudsave" target="_blank" onClick={() => {
-                        tickEvent("skillmap.signindialog.learn", { link: "https://aka.ms/cloudsave" });
+                        tickEvent("skillmap.signindialog.learn");
                         window.open("https://aka.ms/cloudsave", "_blank");
                     }}>
                         <i className="icon external alternate" />{lf("Learn more")}
@@ -372,7 +372,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
 
             onClick: async () => {
                 if (checkboxSelected) {
-                    tickEvent("skillmap.profile.delete", { link: "https://aka.ms/cloudsave" });
+                    tickEvent("skillmap.profile.delete");
                     this.props.dispatchHideModal();
                     this.props.dispatchCloseUserProfile();
                     await pxt.auth.client().deleteProfileAsync();

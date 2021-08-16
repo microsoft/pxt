@@ -178,6 +178,7 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
     }
 
     onProfileClicked = () => {
+        pxt.tickEvent(`skillmap.profile`)
         this.props.dispatchShowUserProfile();
     }
 }

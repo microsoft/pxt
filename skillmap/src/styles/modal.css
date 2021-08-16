@@ -12,7 +12,7 @@
 }
 
 .modal-overlay.fullscreen {
-    z-index: var(--fullscren-modal-zindex)
+    z-index: var(--fullscreen-modal-zindex)
 }
 
 .modal {
@@ -132,12 +132,7 @@
     background-color: var(--inactive-color);
     color: var(--inactive-hover-color);
     border: 1px solid var(--inactive-hover-color);
-}
-
-.modal-button.disabled:hover {
-    background-color: var(--inactive-color);
-    color: var(--inactive-hover-color);
-    text-decoration: none;
+    cursor: auto;
 }
 
 .modal .checkbox {

@@ -123,7 +123,7 @@ class AccountPanel extends sui.UIElement<AccountPanelProps, {}> {
                 {profile?.idp?.picture?.dataUrl ? avatarElem : initialsElem}
                 <div className="row-span-two">
                     <label className="title">{lf("Name")}</label>
-                    <p className="value">{profile?.idp?.displayName}</p>
+                    <p className="value">{profile?.idp?.displayName || profile?.idp?.username}</p>
                 </div>
                 <div className="row-span-two">
                     <label className="title">{lf("Username")}</label>

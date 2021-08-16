@@ -15,7 +15,7 @@ interface UserProfileProps {
 }
 
 
-export class UserProfilImpl extends React.Component<UserProfileProps, {}> {
+export class UserProfileImpl extends React.Component<UserProfileProps, {}> {
     render() {
         const { showProfile } = this.props;
 
@@ -59,7 +59,7 @@ export class UserProfilImpl extends React.Component<UserProfileProps, {}> {
             {profile?.idp?.picture?.dataUrl ? avatarElem : initialsElem}
             <div className="row-span-two">
                 <label className="title">{lf("Name")}</label>
-                <p className="value">{profile?.idp?.displayName}</p>
+                <p className="value">{profile?.idp?.displayName || profile?.idp?.username}</p>
             </div>
             <div className="row-span-two">
                 <label className="title">{lf("Username")}</label>
@@ -70,7 +70,7 @@ export class UserProfilImpl extends React.Component<UserProfileProps, {}> {
                 <p className="value">{provider?.name}</p>
             </div>
             <div className="row-span-two" onClick={this.handleSignout}>
-                <div className="sign-out ui icon button" >
+                <div className="sign-out modal-button" >
                     <span className={`xicon ${profile?.idp?.provider}`} />
                     <span> {lf("Sign out")} </span>
                 </div>
@@ -127,4 +127,4 @@ const mapDispatchToProps = {
     dispatchShowDeleteAccountModal
 }
 
-export const UserProfile = connect(mapStateToProps, mapDispatchToProps)(UserProfilImpl);
+export const UserProfile = connect(mapStateToProps, mapDispatchToProps)(UserProfileImpl);
