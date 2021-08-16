@@ -4255,6 +4255,7 @@ export class ProjectView
         const tutorialOptions = this.state.tutorialOptions;
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
         const isSidebarTutorial = pxt.appTarget.appTheme.sidebarTutorial;
+        const isVerticalTutorial = pxt.BrowserUtils.isVerticalTutorial();
         const inTutorialExpanded = inTutorial && tutorialOptions.tutorialStepExpanded;
         const hideTutorialIteration = inTutorial && tutorialOptions.metadata && tutorialOptions.metadata.hideIteration;
         const inDebugMode = this.state.debugging;
@@ -4273,7 +4274,7 @@ export class ProjectView
         const showMiniSim = this.state.showMiniSim || window?.innerWidth <= pxt.BREAKPOINT_TABLET;
 
         const showSideDoc = sideDocs && this.state.sideDocsLoadUrl && !this.state.sideDocsCollapsed;
-        const showCollapseButton = showEditorToolbar && !inHome && !sandbox && !targetTheme.simCollapseInMenu && (!isHeadless || inDebugMode);
+        const showCollapseButton = showEditorToolbar && !inHome && !sandbox && !targetTheme.simCollapseInMenu && (!isHeadless || inDebugMode) && !isVerticalTutorial;
         const shouldHideEditorFloats = this.state.hideEditorFloats || this.state.collapseEditorTools;
         const logoWide = !!targetTheme.logoWide;
         const hwDialog = !sandbox && pxt.hasHwVariants();
@@ -4299,8 +4300,8 @@ export class ProjectView
             showSideDoc ? 'sideDocs' : '',
             pxt.shell.layoutTypeClass(),
             inHome ? 'inHome' : '',
-            inTutorial ? 'tutorial' : '',
-            inTutorialExpanded ? 'tutorialExpanded' : '',
+            inTutorial && !isVerticalTutorial ? 'tutorial' : '',
+            inTutorialExpanded && !isVerticalTutorial ? 'tutorialExpanded' : '',
             isSidebarTutorial ? 'sidebarTutorial' : '',
             inDebugMode ? 'debugger' : '',
             pxt.options.light ? 'light' : '',
@@ -4350,7 +4351,7 @@ export class ProjectView
                         <headerbar.HeaderBar parent={this} />
                     </header>}
                 {isSidebarTutorial && flyoutOnly && inTutorial && <sidebarTutorial.SidebarTutorialCard ref={ProjectView.tutorialCardId} parent={this} pokeUser={this.state.pokeUserComponent == ProjectView.tutorialCardId} />}
-                {inTutorial && <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
+                {inTutorial && !isVerticalTutorial && <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
                     {!(isSidebarTutorial && flyoutOnly) && inTutorial && <tutorial.TutorialCard ref={ProjectView.tutorialCardId} parent={this} pokeUser={this.state.pokeUserComponent == ProjectView.tutorialCardId} />}
                     {flyoutOnly && <tutorial.WorkspaceHeader parent={this} />}
                 </div>}
@@ -4367,7 +4368,9 @@ export class ProjectView
                     showMiniSim={this.showMiniSim}
                     openSerial={this.openSerial}
                     handleHardwareDebugClick={this.hwDebug}
-                    handleFullscreenButtonClick={this.toggleSimulatorFullscreen} />
+                    handleFullscreenButtonClick={this.toggleSimulatorFullscreen}
+
+                    tutorialOptions={isVerticalTutorial ? tutorialOptions : undefined}/>
                 <div id="maineditor" className={(sandbox ? "sandbox" : "") + (inDebugMode ? "debugging" : "")} role="main" aria-hidden={inHome}>
                     {showCollapseButton && <sui.Button id='computertogglesim' className={`computer only collapse-button large`} icon={`inverted chevron ${showRightChevron ? 'right' : 'left'}`} title={collapseIconTooltip} onClick={this.toggleSimulatorCollapse} />}
                     {this.allEditors.map(e => e.displayOuter(expandedStyle))}
@@ -5145,10 +5148,12 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
 
             // Check to see if we should show the mini simulator (<= tablet size)
-            if (window?.innerWidth <= pxt.BREAKPOINT_TABLET) {
-                theEditor.showMiniSim(true);
-            } else {
-                theEditor.showMiniSim(false);
+            if (!theEditor.isTutorial() || !pxt.BrowserUtils.isVerticalTutorial()) {
+                if (window?.innerWidth <= pxt.BREAKPOINT_TABLET) {
+                    theEditor.showMiniSim(true);
+                } else {
+                    theEditor.showMiniSim(false);
+                }
             }
         }
     }, false);

@@ -83,7 +83,7 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
             return "sandbox";
         } else if (debugging) {
             return "debugging";
-        } else if (!!tutorialOptions?.tutorial) {
+        } else if (!!tutorialOptions?.tutorial && !pxt.BrowserUtils.isVerticalTutorial()) {
             return "tutorial";
         } else {
             return "editor";
@@ -116,7 +116,8 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
         const languageRestriction = pkg.mainPkg?.config?.languageRestriction;
         // If there is only one editor (eg Py only, no assets), we display a label instead of a toggle
         const hideToggle = !showAssets && (languageRestriction === pxt.editor.LanguageRestriction.JavaScriptOnly
-            || languageRestriction === pxt.editor.LanguageRestriction.PythonOnly) || targetTheme.blocksOnly;
+            || languageRestriction === pxt.editor.LanguageRestriction.PythonOnly) || targetTheme.blocksOnly
+            || pxt.BrowserUtils.isVerticalTutorial();
 
         switch (view) {
             case "tutorial":
