@@ -44,6 +44,12 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         super(props);
     }
 
+    UNSAFE_componentWillReceiveProps(props: SidepanelProps) {
+        if (!this.props.tutorialOptions && props.tutorialOptions) {
+            this.setState({ activeTab: "tab-tutorial" });
+        }
+    }
+
     protected handleSimSerialClick = () => {
         this.props.openSerial(true);
     }
