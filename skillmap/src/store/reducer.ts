@@ -251,8 +251,14 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                 ...state,
                 user: {
                     ...state.user,
-                    completedTags: {},
-                    mapProgress: {}
+                    completedTags: {
+                        ...state.user.completedTags,
+                        [state.pageSourceUrl]: {}
+                    },
+                    mapProgress: {
+                        ...state.user.mapProgress,
+                        [state.pageSourceUrl]: {}
+                    }
                 }
             };
         case actions.UPDATE_USER_COMPLETED_TAGS:
