@@ -502,6 +502,7 @@ namespace pxt {
     export const TUTORIAL_CODE_STOP = "_onCodeStop.ts";
     export const TUTORIAL_INFO_FILE = "tutorial-info-cache.json";
     export const TUTORIAL_CUSTOM_TS = "tutorial.custom.ts";
+    export const BREAKPOINT_TABLET = 991; // TODO (shakao) revisit when tutorial stuff is more settled
 
     export function outputName(trg: pxtc.CompileTarget = null) {
         if (!trg) trg = appTarget.compile

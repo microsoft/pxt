@@ -1,0 +1,132 @@
+/*******************************
+        Tutorial Tab
+*******************************/
+
+#editorSidebar .tab-tutorial.active {
+    background-color: @white;
+}
+
+.tab-tutorial.tab-content {
+    padding-top: 0.5rem;
+    background-color: @white;
+}
+
+.tutorial-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.tutorial-content {
+    flex: 1;
+    padding: 0 1rem;
+    margin: 1rem 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+
+    span.docs.inlineblock {
+        white-space: break-spaces;
+    }
+}
+
+/*******************************
+        Tutorial Controls
+*******************************/
+
+.tutorial-controls {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1rem;
+
+    > div {
+        margin: 0.5rem;
+    }
+
+    .ui.button {
+        margin: 0 0.4rem;
+        color: @blue;
+        background: @teal;
+        box-shadow: none;
+        font-size: 1.2rem;
+    }
+
+    .tutorial-hint.ui.button {
+        height: 3.2rem;
+        width: 3.2rem;
+        border-radius: 50%;
+        font-size: 1.5rem;
+    }
+
+    .tutorial-hint, .tutorial-hint > i {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+
+/*******************************
+       Tutorial Top Buttons
+*******************************/
+
+.tutorial-top-bar {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 1rem 0;
+}
+
+/*******************************
+         Step Counter
+*******************************/
+
+.tutorial-step-counter {
+    flex: 1;
+    margin-right: 0.5rem;
+}
+
+.tutorial-step-bar {
+    height: 1rem;
+    overflow: hidden;
+    border-radius: 1rem;
+    background-color: @blue;
+    cursor: pointer;
+}
+
+.tutorial-step-bar-fill {
+    background-color: @teal;
+    height: 100%;
+    transition: width 0.5s ease-out;
+    pointer-events: none;
+}
+
+/*******************************
+        Simulator Tab
+*******************************/
+
+.tab-simulator.tab-content.hidden {
+    display: block !important;
+}
+
+.tab-simulator .simPanel {
+    height: 100%;
+    padding: 1rem 0.5rem 1rem 1rem;
+    overflow-x: hidden;
+    overflow-y: scroll;
+}
+
+// Mini sim is visible when tab is hidden
+#root:not(.fullscreensim) {
+    .tab-simulator.tab-content.hidden {
+        height: 0;
+        padding: 0;
+
+        .simPanel {
+            & > * { display: none; }
+
+            #boardview { display: inline-block; }
+
+            .simtoolbar, #miniSimOverlay { display: block; }
+            .fullscreen-button, .expand-button { display: block !important; }
+        }
+    }
+}
