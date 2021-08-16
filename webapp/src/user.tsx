@@ -123,7 +123,7 @@ class AccountPanel extends sui.UIElement<AccountPanelProps, {}> {
                 {profile?.idp?.picture?.dataUrl ? avatarElem : initialsElem}
                 <div className="row-span-two">
                     <label className="title">{lf("Name")}</label>
-                    <p className="value">{profile?.idp?.displayName}</p>
+                    <p className="value">{profile?.idp?.displayName || profile?.idp?.username}</p>
                 </div>
                 <div className="row-span-two">
                     <label className="title">{lf("Username")}</label>
@@ -231,7 +231,7 @@ class FeedbackPanel extends sui.UIElement<FeedbackPanelProps, {}> {
                     {lf("What do you think about the Sign In & Cloud Save feature? Is there something you'd like to change? Did you encounter issues? Please let us know!")}
                 </div>
                 <div className="row-span-two">
-                    <sui.Link className="ui" text={lf("Take the Survey")} icon="external alternate" ariaLabel={lf("Provide feedback at GitHub")} href="https://aka.ms/AAcnpaj" target="_blank" onKeyDown={sui.fireClickOnEnter} />
+                    <sui.Link className="ui" text={lf("Take the Survey")} icon="external alternate" ariaLabel={lf("Provide feedback in a form")} href="https://aka.ms/AAcnpaj" target="_blank" onKeyDown={sui.fireClickOnEnter} />
                 </div>
             </div>
         );

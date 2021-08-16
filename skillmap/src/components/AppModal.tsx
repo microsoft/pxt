@@ -2,9 +2,9 @@
 
 import * as React from "react";
 import { connect } from 'react-redux';
-
 import { ModalType, ShareState, SkillMapState } from '../store/reducer';
-import { dispatchHideModal, dispatchRestartActivity, dispatchOpenActivity, dispatchResetUser, dispatchShowCarryoverModal, dispatchSetShareStatus } from '../actions/dispatch';
+import { dispatchHideModal, dispatchRestartActivity, dispatchOpenActivity, dispatchResetUser, dispatchShowCarryoverModal, dispatchSetShareStatus, dispatchCloseUserProfile } from '../actions/dispatch';
+
 import { tickEvent, postAbuseReportAsync, postShareAsync } from "../lib/browserUtils";
 import { lookupActivityProgress, lookupPreviousActivityStates, lookupPreviousCompletedActivityState, isCodeCarryoverEnabled } from "../lib/skillMapUtils";
 import { getProjectAsync } from "../lib/workspaceProvider";
@@ -26,6 +26,7 @@ interface AppModalProps {
     dispatchRestartActivity: (mapId: string, activityId: string, previousHeaderId?: string, carryoverCode?: boolean) => void;
     dispatchOpenActivity: (mapId: string, activityId: string, previousHeaderId?: string, carryoverCode?: boolean) => void;
     dispatchShowCarryoverModal: (mapId: string, activityId: string) => void;
+    dispatchCloseUserProfile: () => void;
     dispatchResetUser: () => void;
     dispatchSetShareStatus: (headerId?: string, url?: string) => void;
 }
@@ -33,7 +34,7 @@ interface AppModalProps {
 interface AppModalState {
     loading?: boolean;
     data?: ShareModalData;
-    rememberMe?: boolean; // For the Login modal
+    checkboxSelected?: boolean; // For the Login modal and delete confirmation
 }
 
 interface ShareModalData {
@@ -66,13 +67,15 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                 return this.renderShareModal();
             case "login":
                 return this.renderLoginModal();
+            case "delete-account":
+                return this.renderDeleteAccountModal();
             default:
                 return <div/>
         }
     }
 
     protected handleOnClose = () => {
-        this.setState({ loading: false, data: undefined });
+        this.setState({ loading: false, data: undefined, checkboxSelected: false });
         this.props.dispatchHideModal();
         this.props.dispatchSetShareStatus();
     }
@@ -319,13 +322,13 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
 
     renderLoginModal() {
         const providers = pxt.auth.identityProviders();
-        const rememberMeSelected = this.state.rememberMe ?? false;
+        const rememberMeSelected = this.state.checkboxSelected ?? false;
 
         return <Modal title={lf("Sign in or Signup")} onClose={this.handleOnClose}>
             <div className="sign-in-description">
                 <p>{lf("Connect an existing account in order to sign in or signup for the first time.")}
                     <a href="https://aka.ms/cloudsave" target="_blank" onClick={() => {
-                        tickEvent("skillmap.signindialog.learn", { link: "https://aka.ms/cloudsave" });
+                        tickEvent("skillmap.signindialog.learn");
                         window.open("https://aka.ms/cloudsave", "_blank");
                     }}>
                         <i className="icon external alternate" />{lf("Learn more")}
@@ -347,14 +350,51 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                         </div>
                     </div>
                 })}
-                <div className="sign-in-remember" onClick={() => {
+                <div className="sign-in-remember checkbox" onClick={() => {
                     const rememberMe = !rememberMeSelected;
                     tickEvent("skillmap.signindialog.rememberme", { rememberMe: rememberMe.toString() });
-                    this.setState({ rememberMe });
+                    this.setState({ checkboxSelected: rememberMe });
                 }}>
                     <i className={`icon square outline ${rememberMeSelected ? "check" : ""}`} />
                     {lf("Remember me")}
                 </div>
+            </div>
+        </Modal>
+    }
+
+    renderDeleteAccountModal() {
+        const { checkboxSelected } = this.state;
+
+        const buttons = [];
+        buttons.push({
+            label: lf("Confirm"),
+            className: checkboxSelected ? "confirm" : "confirm disabled",
+
+            onClick: async () => {
+                if (checkboxSelected) {
+                    tickEvent("skillmap.profile.delete");
+                    this.props.dispatchHideModal();
+                    this.props.dispatchCloseUserProfile();
+                    await pxt.auth.client().deleteProfileAsync();
+                    location.reload();
+                }
+            }
+        })
+
+        buttons.push({
+            label: lf("Back to safety"),
+            className: "disagree",
+            onClick: this.props.dispatchHideModal
+        })
+
+        return <Modal title={lf("Delete Profile")} className="delete" actions={buttons} onClose={this.handleOnClose}>
+            <div> { lf("Are you sure? This cannot be reversed! Your cloud-saved projects will be converted to local projects on this device.") }
+            </div>
+            <div className="confirm-delete checkbox" onClick={() => {
+                    this.setState({ checkboxSelected: !checkboxSelected });
+                }}>
+                <i className={`icon square outline ${checkboxSelected ? "check" : ""}`} />
+                { lf("I understand this is permanent. No undo.") }
             </div>
         </Modal>
     }
@@ -389,6 +429,7 @@ const mapDispatchToProps = {
     dispatchOpenActivity,
     dispatchResetUser,
     dispatchShowCarryoverModal,
+    dispatchCloseUserProfile,
     dispatchSetShareStatus
 };
 
