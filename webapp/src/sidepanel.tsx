@@ -38,6 +38,9 @@ interface SidepanelProps extends pxt.editor.ISettingsProps {
     handleFullscreenButtonClick: () => void;
 }
 
+const TUTORIAL_TAB = "tab-tutorial";
+const SIMULATOR_TAB = "tab-simulator";
+
 export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
     protected simPanelRef: HTMLDivElement;
     constructor(props: SidepanelProps) {
@@ -45,9 +48,22 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
     }
 
     UNSAFE_componentWillReceiveProps(props: SidepanelProps) {
-        if (!this.props.tutorialOptions && props.tutorialOptions) {
-            this.setState({ activeTab: "tab-tutorial" });
+        if ((!this.props.tutorialOptions && props.tutorialOptions)
+            || (this.props.inHome && !props.inHome)) {
+            this.showTutorialTab();
+        } else if (!this.props.inHome && props.inHome) {
+            this.showSimulatorTab();
         }
+    }
+
+    protected showSimulatorTab = () => {
+        this.props.showMiniSim(false);
+        this.setState({ activeTab: SIMULATOR_TAB });
+    }
+
+    protected showTutorialTab = () => {
+        this.props.showMiniSim(true);
+        this.setState({ activeTab: TUTORIAL_TAB });
     }
 
     protected handleSimSerialClick = () => {
@@ -56,15 +72,6 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
 
     protected handleDeviceSerialClick = () => {
         this.props.openSerial(false);
-    }
-
-    protected handleSimTabSelected = () => {
-        this.props.showMiniSim(false);
-    }
-
-    protected handleTutorialTabSelected = () => {
-        this.setState({ activeTab: "tab-tutorial" });
-        this.props.showMiniSim(true);
     }
 
     protected handleSimOverlayClick = () => {
@@ -98,7 +105,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
 
         return <div id="simulator" className="simulator">
             <TabPane id="editorSidebar" activeTabName={this.state.activeTab}>
-                <TabContent name="tab-simulator" icon="game" onSelected={this.handleSimTabSelected}>
+                <TabContent name={SIMULATOR_TAB} icon="game" onSelected={this.showSimulatorTab}>
                     <div className="ui items simPanel" ref={this.handleSimPanelRef}>
                         <div id="boardview" className="ui vertical editorFloat" role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0} />
                         <simtoolbar.SimulatorToolbar parent={parent} collapsed={collapseEditorTools} simSerialActive={simSerialActive} devSerialActive={deviceSerialActive} />
@@ -114,9 +121,9 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                         {showFullscreenButton && <div id="miniSimOverlay" role="button" title={lf("Open in fullscreen")} onClick={this.handleSimOverlayClick} />}
                     </div>
                 </TabContent>
-                {tutorialOptions && <TabContent name="tab-tutorial" icon="pencil" onSelected={this.handleTutorialTabSelected}>
-                    <TutorialContainer parent={parent} steps={tutorialOptions?.tutorialStepInfo}
-                        currentStep={tutorialOptions?.tutorialStep} tutorialOptions={tutorialOptions}
+                {tutorialOptions && <TabContent name={TUTORIAL_TAB} icon="pencil" onSelected={this.showTutorialTab}>
+                    <TutorialContainer parent={parent} name={tutorialOptions.tutorialName} steps={tutorialOptions.tutorialStepInfo}
+                        currentStep={tutorialOptions.tutorialStep} tutorialOptions={tutorialOptions}
                         onTutorialStepChange={onTutorialStepChange} />
                 </TabContent>}
             </TabPane>

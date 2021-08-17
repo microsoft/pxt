@@ -1,13 +1,14 @@
 import * as React from "react";
 import * as md from "../../marked";
 
-import { Button } from "../../sui";
+import { Button, Modal, ModalButton } from "../../sui";
 
-import { ImmersiveReaderButton } from "../../immersivereader";
+import { ImmersiveReaderButton, launchImmersiveReader } from "../../immersivereader";
 import { TutorialStepCounter } from "./TutorialStepCounter";
 
 interface TutorialContainerProps {
     parent: pxt.editor.IProjectView;
+    name: string;
     steps: pxt.tutorial.TutorialStepInfo[];
     currentStep?: number;
 
@@ -17,31 +18,62 @@ interface TutorialContainerProps {
 }
 
 export function TutorialContainer(props: TutorialContainerProps) {
-    const { parent, steps, tutorialOptions, onTutorialStepChange } = props;
+    const { parent, name, steps, tutorialOptions, onTutorialStepChange } = props;
     const [ currentStep, setCurrentStep ] = React.useState(props.currentStep || 0);
+    const [ hideModal, setHideModal ] = React.useState(false);
 
-    const markdown = steps[currentStep].headerContentMd;
+    const currentStepInfo = steps[currentStep];
+    if (!steps[currentStep]) return <div />;
+
+    const isModal = currentStepInfo.showDialog;
+    const visibleStep = isModal ? Math.min(currentStep + 1, steps.length - 1) : currentStep;
+    const markdown = steps[visibleStep].headerContentMd;
+
+    const showBack = currentStep !== 0;
+    const showNext = currentStep !== steps.length - 1;
     const showImmersiveReader = pxt.appTarget.appTheme.immersiveReader;
 
     const setTutorialStep = (step: number) => {
         onTutorialStepChange(step);
         setCurrentStep(step);
+        if (showNext) setHideModal(false);
+    }
+    const tutorialStepNext = () => setTutorialStep(Math.min(currentStep + 1, props.steps.length - 1));
+    const tutorialStepBack = () => setTutorialStep(Math.max(currentStep - 1, 0));
+
+    let modalActions: ModalButton[] = [
+        { label: lf("Back"), onclick: tutorialStepBack, icon: "arrow circle left", disabled: !showBack, labelPosition: "left" },
+        { label: lf("Ok"), onclick: tutorialStepNext, icon: "arrow circle right", disabled: !showNext, className: "green" }
+    ];
+
+    if (showImmersiveReader) {
+        modalActions.push({
+            className: "immersive-reader-button",
+            onclick: () => { launchImmersiveReader(currentStepInfo.contentMd, tutorialOptions) },
+            ariaLabel: lf("Launch Immersive Reader"),
+            title: lf("Launch Immersive Reader")
+        })
     }
 
     return <div className="tutorial-container">
         <div className="tutorial-top-bar">
-            <TutorialStepCounter currentStep={currentStep} totalSteps={steps.length} setTutorialStep={setTutorialStep} />
+            <TutorialStepCounter currentStep={visibleStep} totalSteps={steps.length} setTutorialStep={setTutorialStep} />
             {showImmersiveReader && <ImmersiveReaderButton content={markdown} tutorialOptions={tutorialOptions} />}
         </div>
         <div className="tutorial-content">
             <md.MarkedContent className="no-select" tabIndex={0} markdown={markdown} parent={parent} />
         </div>
         <div className="tutorial-controls">
-            <Button icon="arrow circle left" disabled={currentStep === 0}
-                text={lf("Back")} onClick={() => setTutorialStep(Math.max(currentStep - 1, 0))} />
+            <Button icon="arrow circle left" disabled={!showBack}
+                text={lf("Back")} onClick={tutorialStepBack} />
             <Button icon="lightbulb" className="tutorial-hint" />
-            <Button icon="arrow circle right" disabled={currentStep === steps.length - 1}
-                text={lf("Next")} onClick={() => setTutorialStep(Math.min(currentStep + 1, props.steps.length - 1))} />
+            <Button icon="arrow circle right" disabled={!showNext}
+                text={lf("Next")} onClick={tutorialStepNext} />
         </div>
+        {isModal && !hideModal && <Modal isOpen={isModal} closeIcon={false} header={name} buttons={modalActions}
+            className="hintdialog" onClose={showNext ? tutorialStepNext : () => setHideModal(true)} dimmer={true}
+            longer={true} closeOnDimmerClick closeOnDocumentClick closeOnEscape>
+            <md.MarkedContent markdown={currentStepInfo.contentMd} parent={parent} />
+        </Modal>}
     </div>
 }
