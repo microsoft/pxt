@@ -18,7 +18,7 @@ Watch this video for a demonstration of creating a Microsoft Account and signing
 
 https://youtu.be/4r5tGfi2BFI
 
-Once you've signed in, you'll see your login initials displayed in the upper-right corner of the editor.
+Once you've signed in, you'll see your profile picture (or your login initials if you don't have a picture) displayed in the upper-right corner of the editor.
 
 ![Identity initials](/static/identity/login-id.jpg)
 
@@ -52,9 +52,13 @@ If your school or employer's email system is managed by Microsoft Azure Active D
 
 The privacy and safety of our users is very important to us. Microsoft MakeCode adheres to Microsoft's Privacy Policy https://makecode.com/privacy. We do not collect or use personal data beyond that needed to operate and support MakeCode features and services.
 
-## How can I completely remove my data and account information?
+## How can I completely remove my data and profile information?
 
 After you sign into MakeCode, you can delete your user profile and all associated data at any time by clicking on 'My Profile' and selecting 'I want to delete my profile'. This will remove you from our system and permanently delete all your cloud saved information.
+
+## When my profile is deleted, do all of my cloud projects just vanish?
+
+No. At the time you delete your profile, all of your cloud saved projects are exported and saved locally to the current browser on the computer or device you are using.
 
 ## How does this work with GitHub?
 
