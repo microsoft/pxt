@@ -38,10 +38,6 @@
     justify-content: center;
     margin-bottom: 1rem;
 
-    > div {
-        margin: 0.5rem;
-    }
-
     .ui.button {
         margin: 0 0.4rem;
         color: @blue;
@@ -49,21 +45,50 @@
         box-shadow: none;
         font-size: 1.2rem;
     }
-
-    .tutorial-hint.ui.button {
-        height: 3.2rem;
-        width: 3.2rem;
-        border-radius: 50%;
-        font-size: 1.5rem;
-    }
-
-    .tutorial-hint, .tutorial-hint > i {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
 }
 
+/*******************************
+        Tutorial Hint
+*******************************/
+
+.tutorial-hint.ui.button {
+    height: 3.2rem;
+    width: 3.2rem;
+    border-radius: 50%;
+    font-size: 1.5rem;
+}
+
+.tutorial-hint.ui.button,
+.tutorial-hint.ui.button > i {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+// Overrides, largely using old tutorial hint CSS
+.tutorialhint {
+    position: fixed;
+    top: unset;
+    right: unset;
+    bottom: 11rem;
+    left: 2rem;
+    max-width: 50%;
+}
+
+.tutorialhint:before {
+    top: auto;
+    left: 6.5rem;
+    bottom: -2.5rem;
+    transform: rotate(-90deg);
+}
+
+.tutorial-hint-mask {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+}
 
 /*******************************
        Tutorial Top Buttons

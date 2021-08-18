@@ -1,10 +1,11 @@
 import * as React from "react";
-import * as md from "../../marked";
 
+import { MarkedContent } from "../../marked";
 import { Button, Modal, ModalButton } from "../../sui";
 
 import { ImmersiveReaderButton, launchImmersiveReader } from "../../immersivereader";
 import { TutorialStepCounter } from "./TutorialStepCounter";
+import { TutorialHint } from "./TutorialHint";
 
 interface TutorialContainerProps {
     parent: pxt.editor.IProjectView;
@@ -28,6 +29,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
     const isModal = currentStepInfo.showDialog;
     const visibleStep = isModal ? Math.min(currentStep + 1, steps.length - 1) : currentStep;
     const markdown = steps[visibleStep].headerContentMd;
+    const hintMarkdown = steps[visibleStep].hintContentMd;
 
     const showBack = currentStep !== 0;
     const showNext = currentStep !== steps.length - 1;
@@ -61,19 +63,19 @@ export function TutorialContainer(props: TutorialContainerProps) {
             {showImmersiveReader && <ImmersiveReaderButton content={markdown} tutorialOptions={tutorialOptions} />}
         </div>
         <div className="tutorial-content">
-            <md.MarkedContent className="no-select" tabIndex={0} markdown={markdown} parent={parent} />
+            <MarkedContent className="no-select" tabIndex={0} markdown={markdown} parent={parent} />
         </div>
         <div className="tutorial-controls">
             <Button icon="arrow circle left" disabled={!showBack}
                 text={lf("Back")} onClick={tutorialStepBack} />
-            <Button icon="lightbulb" className="tutorial-hint" />
+            <TutorialHint markdown={hintMarkdown} parent={parent} />
             <Button icon="arrow circle right" disabled={!showNext}
                 text={lf("Next")} onClick={tutorialStepNext} />
         </div>
         {isModal && !hideModal && <Modal isOpen={isModal} closeIcon={false} header={name} buttons={modalActions}
             className="hintdialog" onClose={showNext ? tutorialStepNext : () => setHideModal(true)} dimmer={true}
             longer={true} closeOnDimmerClick closeOnDocumentClick closeOnEscape>
-            <md.MarkedContent markdown={currentStepInfo.contentMd} parent={parent} />
+            <MarkedContent markdown={currentStepInfo.contentMd} parent={parent} />
         </Modal>}
     </div>
 }
