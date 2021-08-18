@@ -19,18 +19,17 @@ export function TutorialHint(props: TutorialHintProps) {
     }
 
     const closeHint = (e: any) => {
-        captureEvent(e);
-        setVisible(false);
         document.removeEventListener("click", closeHint);
+        setVisible(false);
     }
 
     const toggleHint = () => {
-        setVisible(!visible);
         if (!visible) {
             document.addEventListener("click", closeHint);
         } else {
             document.removeEventListener("click", closeHint);
         }
+        setVisible(!visible);
     }
 
     return <div className="tutorial-hint-container">
