@@ -66,20 +66,22 @@
 }
 
 // Overrides, largely using old tutorial hint CSS
-.tutorialhint {
-    position: fixed;
-    top: unset;
-    right: unset;
-    bottom: 11rem;
-    left: 2rem;
-    max-width: 50%;
-}
+.tab-tutorial {
+    .tutorialhint {
+        position: fixed;
+        top: unset;
+        right: unset;
+        bottom: 11rem;
+        left: 2rem;
+        max-width: 50%;
+    }
 
-.tutorialhint:before {
-    top: auto;
-    left: 6.5rem;
-    bottom: -2.5rem;
-    transform: rotate(-90deg);
+    .tutorialhint:before {
+        top: auto;
+        left: 6.5rem;
+        bottom: -2.5rem;
+        transform: rotate(-90deg);
+    }
 }
 
 .tutorial-hint-mask {
