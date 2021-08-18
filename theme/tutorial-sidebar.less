@@ -44,6 +44,10 @@
         background: @teal;
         box-shadow: none;
         font-size: 1.2rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 8rem;
     }
 }
 
@@ -72,7 +76,7 @@
         top: unset;
         right: unset;
         bottom: 11rem;
-        left: 2rem;
+        left: 5.5rem;
         max-width: 50%;
     }
 
@@ -155,5 +159,17 @@
             .simtoolbar, #miniSimOverlay { display: block; }
             .fullscreen-button, .expand-button { display: block !important; }
         }
+    }
+}
+
+
+/*******************************
+        Media Adjustments
+*******************************/
+
+/* Small Monitor */
+@media only screen and (min-width: @computerBreakpoint) and (max-width: @largestSmallMonitor) {
+    .tutorialhint {
+        left: 2rem;
     }
 }
