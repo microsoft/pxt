@@ -22,6 +22,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
     const { parent, name, steps, tutorialOptions, onTutorialStepChange } = props;
     const [ currentStep, setCurrentStep ] = React.useState(props.currentStep || 0);
     const [ hideModal, setHideModal ] = React.useState(false);
+    const [ layout, setLayout ] = React.useState<"vertical" | "horizontal">("vertical");
 
     const currentStepInfo = steps[currentStep];
     if (!steps[currentStep]) return <div />;
@@ -43,6 +44,19 @@ export function TutorialContainer(props: TutorialContainerProps) {
     const tutorialStepNext = () => setTutorialStep(Math.min(currentStep + 1, props.steps.length - 1));
     const tutorialStepBack = () => setTutorialStep(Math.max(currentStep - 1, 0));
 
+    React.useEffect(() => {
+        const observer = new ResizeObserver(() => {
+            if (window.innerWidth <= pxt.BREAKPOINT_TABLET) {
+                setLayout("horizontal");
+            } else {
+                setLayout("vertical");
+            }
+        });
+        observer.observe(document.body)
+        return () => observer.disconnect();
+    }, [document.body])
+
+
     let modalActions: ModalButton[] = [
         { label: lf("Back"), onclick: tutorialStepBack, icon: "arrow circle left", disabled: !showBack, labelPosition: "left" },
         { label: lf("Ok"), onclick: tutorialStepNext, icon: "arrow circle right", disabled: !showNext, className: "green" }
@@ -62,16 +76,18 @@ export function TutorialContainer(props: TutorialContainerProps) {
             <TutorialStepCounter currentStep={visibleStep} totalSteps={steps.length} setTutorialStep={setTutorialStep} />
             {showImmersiveReader && <ImmersiveReaderButton content={markdown} tutorialOptions={tutorialOptions} />}
         </div>
+        {layout === "horizontal" &&
+            <Button icon="arrow circle left" disabled={!showBack} text={lf("Back")} onClick={tutorialStepBack} />}
         <div className="tutorial-content">
             <MarkedContent className="no-select" tabIndex={0} markdown={markdown} parent={parent} />
         </div>
-        <div className="tutorial-controls">
-            <Button icon="arrow circle left" disabled={!showBack}
-                text={lf("Back")} onClick={tutorialStepBack} />
+        {layout === "horizontal" &&
+            <Button icon="arrow circle right" disabled={!showNext} text={lf("Next")} onClick={tutorialStepNext} />}
+        {layout === "vertical" && <div className="tutorial-controls">
+            <Button icon="arrow circle left" disabled={!showBack} text={lf("Back")} onClick={tutorialStepBack} />
             <TutorialHint markdown={hintMarkdown} parent={parent} />
-            <Button icon="arrow circle right" disabled={!showNext}
-                text={lf("Next")} onClick={tutorialStepNext} />
-        </div>
+            <Button icon="arrow circle right" disabled={!showNext} text={lf("Next")} onClick={tutorialStepNext} />
+        </div>}
         {isModal && !hideModal && <Modal isOpen={isModal} closeIcon={false} header={name} buttons={modalActions}
             className="hintdialog" onClose={showNext ? tutorialStepNext : () => setHideModal(true)} dimmer={true}
             longer={true} closeOnDimmerClick closeOnDocumentClick closeOnEscape>
