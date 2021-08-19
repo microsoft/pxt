@@ -1,9 +1,11 @@
 # Snippets
 
-While defining markdown, MakeCode has a variety of options for rendering code in text and
-block format. These generally work across tutorials and docs pages, though not always!
+MakeCode has its own markdown extensions providing a variety of options for rendering code in text and in
+block format. These generally work across tutorials and document pages, but not always!
 
 ## Text Formatting
+
+Extending formatting options allow styling for buttons and block names.
 
 | **Snippet**            | **Tutorial** | **Docs Page** | **Sim (Docs)** |
 |--------------------|:--------:|:---------:|:----------------:|
@@ -25,7 +27,8 @@ or ``||secondary buttons||``.
 
 ### Namespace coloring
 
-Buttons can be colored using a namespace identifier along with the button text. This is
+Buttons can be colored using a namespace identifier along with the button text. The color associated with code namespace
+(toolbox category color) is applied to the text background in the button. This is
 often used in tutorials as a shorthand for blocks, eg ``||loops:repeat 4 times||``. Use
 the namespace name separated with a ``:``.
 
@@ -35,19 +38,21 @@ the namespace name separated with a ``:``.
 
 ### highlight
 
-The renderer will higlight the next line or block following a comment containing
+Although used in snippets, the renderer will higlight the next line of code or block following a comment containing
 **@highlight**. Use `// @highlight` in blocks and TypeScript, and `# @highlight`
 in Python.
 
-    ```blocks
-    console.log(":)")
-    // @highlight
-    console.log(":(")
-    ```
+````
+```blocks
+console.log(":)")
+// @highlight
+console.log(":(")
+```
+````
 
 ## Language Snippets
 
-To avoid changing screenshots, PXT automatically renders code snippets to blocks,
+To avoid using screenshots for code (which often needed updating) PXT automatically renders code snippets to blocks,
 javascript, or python. This is done by specifying a pseudo-language on a code section.
 
 | **Snippet**            | **Tutorial** | **Docs Page** | **Sim (Docs)** |
