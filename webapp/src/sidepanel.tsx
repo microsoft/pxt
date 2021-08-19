@@ -48,8 +48,11 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
     }
 
     UNSAFE_componentWillReceiveProps(props: SidepanelProps) {
+        // This is necessary because we are not properly mounting and
+        // unmounting the component as we enter/exit the editor. We
+        // instead manually reset the state as we transition
         if ((!this.props.tutorialOptions && props.tutorialOptions)
-            || (this.props.inHome && !props.inHome)) {
+            || (this.props.inHome && !props.inHome && props.tutorialOptions)) {
             this.showTutorialTab();
         } else if (!this.props.inHome && props.inHome) {
             this.showSimulatorTab();
