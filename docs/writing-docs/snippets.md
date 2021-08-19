@@ -139,8 +139,9 @@ information on using ``spy`` to author Python and TypeScript tutorials.
 
 ### python
 
-Snippets can also be specified directly in Static Python, and will be rendered
-with syntax highlighting and in **docs**, a simulator.
+You can specify a Static Python directly too, and will be rendered
+with syntax highlighting. In the **docs** view, an embedded simulator is included to
+run the snippet in the same page.
 
     ```python
     x = 0
@@ -148,28 +149,29 @@ with syntax highlighting and in **docs**, a simulator.
         x += i
     ```
 
-### ghost (tutorial only)
+### ghost (tutorials only)
 
-The **ghost** snippet causes addtional blocks to appear in the Toolbox during
+The **ghost** snippet will have addtional blocks to appear in the Toolbox during
 a tutorial step. This is used to provide additional block choices other than
-those matching the code snippet in a **blocks** section. The **ghost** blocks
-don't render but serve to identify other blocks to add to the Toolbox choices.
+those exactly matching the code snippet in a **blocks** section. The **ghost** blocks
+don't render any code but serve to identify other blocks to add into the Toolbox choices.
 
     ```ghost
     let x = 0
     ```
 
-### template (tutorial only)
+### template (tutorials only)
 
-The **template** "language" is used to specify the initial code that appears
-in the workspace at the start of a tutorial. If there is no **template** block
-present in the tutorial, the default "new project" code will be used.
+A **template** is used to specify some initial code that appears
+in the workspace at the start of a tutorial. This provides starting code for a
+user when needed to reduce the length or complexity of the tutorial. If there
+is no **template** block present in the tutorial, the default "new project" code will be used.
 
     ```template
     let x = 0
     ```
 
-### customts (tutorial only)
+### customts (tutorials only)
 
 If you want to load existing code into a tutorial but have it hidden from
 the user, you can include a `customts` block. The code in the snippet will
@@ -186,7 +188,9 @@ the user, you can include a `customts` block. The code in the snippet will
 
 ### ignore #ignore
 
-Append `-ignore` to any of the above to ignore a snippet in automated testing:
+Append `-ignore` to any of the above snippet types to bypass automated testing for
+the code in the snippet. This let's you use a snippet for descriptive purposes but
+have it excluded from any validation checks.
 
     ```typescript-ignore
     // You can include illegal TS in here, e.g. to showcase concepts/psuedocode
