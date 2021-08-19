@@ -213,17 +213,19 @@ You can use diffs to highlight important changes in large chunks of code.
 
 #### Diffs in tutorials
 
-In tutorials MakeCode can render a diff between each typescript or spy snippet.
+In tutorials MakeCode can render a diff between each typescript or spy snippet between
+the current and previous step.
 To reset the diff on a step, use the ``@resetDiff`` metadata.
 
-Use ``### @diffs true/false`` to enable/disable diffs for the entire tutorial.
+Use ``### @diffs true`` or ``### @diffs false`` at the beginning of the tutorial to
+enable/disable diffs for the entire tutorial.
 
 ### ~
 
 ### diff
 
-Render a diff between two JavaScript snippets. The snippet consists of two text
-section separated by a line of ``-`` (at least 10).
+Render a diff between two JavaScript snippets. To show diff snippet, include both the previous
+and current code sections separated by a line of ``-`` characters (use at least 10).
 
     ```diff
     let x = 1
@@ -242,8 +244,8 @@ Avoid using trailing ``;`` in your JavaScript snippets.
 
 ### diffblocks
 
-Render a diff of blocks between two JavaScript snippets. The snippet consists
-of two text section separated by a line of ``-`` (at least 10).
+Render a diff of two JavaScript snippets as blocks. To show a diff of blocks, include both the previous
+and current code sections separated by a line of ``-`` characters (use at least 10).
 
     ```diffblocks
     let x = 1
@@ -255,10 +257,8 @@ of two text section separated by a line of ``-`` (at least 10).
 ### diffspy (tutorial only)
 
 Render a diff of blocks between two JavaScript snippets. The snippet consists
-of two text section separated by a line of ``-`` (at least 10), and will render
-in blocks, JavaScript, or Python, depending on the tutorial's preferred
-editor language.
-
+of two code sections separated by a line of ``-`` characters (at least 10), and will render
+in blocks, JavaScript, or Python, depending on the tutorial's preferred editor language.
 
     ```diffspy
     let x = 1
