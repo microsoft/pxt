@@ -269,23 +269,30 @@ in blocks, JavaScript, or Python, depending on the tutorial's preferred editor l
 
 ## Resources
 
-For certain targets, a tutorial or docs page may require more complex resources
-(images, tilemaps) to be included in the markdown. The preferred way to do this
-is using the `assetjson` snippet, though older files with `jres` snippets will
-also render. See the [Adding Resources](/writing-docs/tutorials/resources)
+For certain MakeCode targets (such as MakeCode Arcade), a tutorial or docs page may require more
+complex resources (images, tilemaps) to be included in the markdown. The preferred way to do this
+is using the `assetjson` snippet. See the [Adding Resources](/writing-docs/tutorials/resources)
 page for more.
 
-| **Snippet**            | **Tutorial** | **Docs Page** | **Sim (Docs)** |
+### ~ hint
+
+#### jres resoures
+
+The older `jres` format was previously used to include tile resources. Although older files with `jres` snippets will
+still render, the `assetjson` is the preferred resource format.
+
+### ~
+
+| **Section**            | **Tutorial** | **Docs Page** | **Sim (Docs)** |
 |--------------------|:--------:|:---------:|:----------------:|
 | assetjson          |     ✔️    |     ✔️     |                  |
 | jres               |     ✔️    |     ✔️     |                  ||
 
 ## Configuration
 
-Additional configuration for a tutorial or documentation page can come in the
-form of extensions or required features.
+Additional configuration information can be specified for extensions or other required features.
 
-| **Snippet**            | **Tutorial** | **Docs Page** | **Sim (Docs)** |
+| **Section**            | **Tutorial** | **Docs Page** | **Sim (Docs)** |
 |--------------------|:--------:|:---------:|:----------------:|
 | package            |     ✔️    |     ✔️     |                  |
 | config             |          |     ✔️     |                  ||
@@ -294,14 +301,16 @@ form of extensions or required features.
 
 If any snippet on a page uses blocks that are not included in the default
 toolbox (that is, extension blocks) you will need declare the required
-packages. Simply provide a list of name using the ``package`` macro.
+extensions (formerly known as _packages_). Provide a list of required extension
+names using the ``package`` macro. Note, the name **package** is still used even
+though these are now called **extensions**.
 
-The package listed last in the example below is hosted in a separate GitHub
-repository. You can find this in the ``Project Settings`` / ``pxt.json`` file,
-listed under ``dependencies``. Notice that it lists the exact version to use;
-this isn't required (that is, you can leave off the `#v0.6.12`), but it is
-highly recommended so that future changes to the extension don't break your
-tutorial.
+The package setting listed last in the example below uses a special format to reference
+its location in a separate GitHub repository. You can find this _package specification_ 
+in the ``Project Settings`` / ``pxt.json`` file, listed under ``dependencies``. Notice
+that it lists the exact version to use; this isn't required (that is, you can leave off
+the `#v0.6.12`), but it is highly recommended you include this so that future changes to
+the extension won't break your tutorial.
 
     ```package
     devices
@@ -311,7 +320,7 @@ tutorial.
 
 ### config
 
-You can specify required "features" for a given documentation page. In the
+You can specify the "features" required for a particular documentation page. In the
 case of a multi-board editor, MakeCode will match the feature set with existing boards.
 
     ```config
