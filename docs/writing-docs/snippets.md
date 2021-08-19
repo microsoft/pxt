@@ -52,7 +52,7 @@ console.log(":(")
 
 ## Language Snippets
 
-To avoid using screenshots for code (which often needed updating) PXT automatically renders code snippets to blocks,
+To avoid using screenshots for code (which often needed updating), PXT automatically renders code snippets to blocks,
 javascript, or python. This is done by specifying a pseudo-language on a code section.
 
 | **Snippet**            | **Tutorial** | **Docs Page** | **Sim (Docs)** |
@@ -70,9 +70,9 @@ javascript, or python. This is done by specifying a pseudo-language on a code se
 
 ### blocks
 
-The **blocks** snippet renders a JavaScript snippet into blocks, wrapping floating
-blocks into an ``||loops:on start||`` block. In **docs** it also provides a simulator
-and options to view the snippet in JavaScript or Python.
+The **blocks** snippet renders a JavaScript snippet into blocks. Blocks not contained in loop or function
+(floating blocks) are wrapped into an ``||loops:on start||`` block. When viewed in **docs**, a simulator to
+run the snippet in the current page is provided and there are tabbed options to view the snippet in JavaScript or Python.
 
 ```blocks
 let count = 0
@@ -90,8 +90,8 @@ for (let i = 0; i < 4; i++) {
 
 ### block
 
-The **block** snippet renders a JavaScript snippet into blocks without any simulator
-and does not wrap floating blocks in the "on start".
+The **block** snippet renders a JavaScript snippet into blocks in a standalone view without any simulator
+and floating blocks are not contained in the "on start" block.
 
     ```block
     basic.showNumber(5)
@@ -99,8 +99,8 @@ and does not wrap floating blocks in the "on start".
 
 ### typescript
 
-If you need a rendering of JavaScript or TypeScript code use ``typescript``. In **docs**
-it also provides a simulator.
+If you want a text rendering of JavaScript or TypeScript code use ``typescript``. In the **docs**
+view it also includes an embedded simulator to run the snippets in the current page.
 
     ```typescript
     let x = 0
@@ -108,7 +108,7 @@ it also provides a simulator.
 
 ### typescript-invalid (docs only)
 
-This will showcase an **incorrect** code snippet, rendering it on a red background:
+This option will let you "showcase" an **incorrect** code snippet, rendering the invalid code on a red background:
 
     ```typescript-invalid
     // You can include illegal TS in here, e.g. to document syntax errors
@@ -117,7 +117,7 @@ This will showcase an **incorrect** code snippet, rendering it on a red backgrou
 
 ### typescript-valid (docs only)
 
-This will showcase a **correct** code snippet, rendering it on a green background:
+This lets you make special a note of a **correct** code snippet, rendering it on a green background:
 
     ```typescript-valid
     // You can include any TS in here, e.g. to showcase correct syntax
@@ -127,8 +127,8 @@ This will showcase a **correct** code snippet, rendering it on a green backgroun
 ### spy
 
 If your editor supports [Static Python](/js/python), you can specify a TypeScript
-snippet to be rendered as Static Python using the ``spy`` macro. In **docs** it
-also provides a simulator and options to view the code in TypeScript.
+snippet in the ``spy`` macro and it will be rendered as Static Python instead. In the **docs** view
+it also includes an embedded simulator and options to view the code in TypeScript.
 
     ```spy
     let x = 0
