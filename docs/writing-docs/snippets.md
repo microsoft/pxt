@@ -426,10 +426,10 @@ with a ``URL, EDITOR, CARD_TYPE`` format.
     * otherAction: URL, py, example
     ### ~
 
-## Special (docs only)
+## Special snippet types (docs only)
 
-Some additional snippets for documentation pages provide the ability to render
-a simulator, the code of a project, or a block in-line with some text.
+Some additional snippets for use in documentation pages provide the ability to render
+a simulator, the code of a project, or an inline block with some text.
 
 | **Snippet**            | **Tutorial** | **Docs Page** | **Sim (Docs)** |
 |--------------------|:--------:|:---------:|:----------------:|
@@ -438,11 +438,11 @@ a simulator, the code of a project, or a block in-line with some text.
 | sig                |          |     ✔️     |                  |
 | sim                |          |     ✔️     |                ||
 
-## Inline code snippets
+### Inline code snippets
 
-If an inline code snippet start with `[` and ends with `]`, the doc engine will
+If an inline code snippet starts with `[` and ends with `]`, the doc engine will
 try to render it as a block. If the renderer finds a documentation page matching
-this API call, it will also make the block a hyperlink.
+this API call, it will also make the block a hyperlink to that page.
 
 Generally these snippets can only be one line of code, but a variable block can
 be included like: ``[let myNum: number = null; pause(myNum)]``
@@ -455,8 +455,8 @@ be included like: ``[let myNum: number = null; pause(myNum)]``
 
 ### project
 
-The **project** snippet takes the URL of a shared project and renders the code, in
-blocks, of that entire project.
+The **project** snippet take the code from a shared project and render it blocks, for the entire project.
+The project is specified by its share URL.
 
     ```project
     https://makecode.com/_h5A28L06PWxd
@@ -465,7 +465,7 @@ blocks, of that entire project.
 ### sig
 
 The **sig** snippet displays a signature of the first function call in the snippet,
-rendering it in blocks, JavaScript, and Python.
+rendering it in blocks, JavaScript, and Python. 
 
     ```sig
     basic.showNumber(5)
@@ -476,21 +476,29 @@ and it's [markdown](https://github.com/Microsoft/pxt-microbit/blob/master/docs/r
 
 ### sim
 
-The **sim** snippet takes a chunk of JavaScript code and renders a simulator
-running this code.
+The **sim** snippet takes a chunk of JavaScript code and renders a simulator that runs the code
+
+````
+```sim
+basic.showString("It's my birthday! Press A to see my age.)
+input.onButtonPressed(Button.A, function () {
+    basic.showNumber(14)
+})
+```
+````
 
 **Example:** the [Lemonade City](https://arcade.makecode.com/courses/csintro4/data/lemonade) game in the
 CS Intro curriculum, and its [markdown](https://github.com/microsoft/pxt-arcade/blob/master/docs/courses/csintro4/data/lemonade.md) source.
 
 ## Testing MakeCode Markdown
 
-To test a documentation page locally you must have a development environment
-set up and be able to run `pxt serve`. Once you have that, simply load the
-relative path to your page **after** the `/docs/` folder:
+To test a documentation pages locally you must have a MakeCode development environment
+set up and be able to run the [pxt command line](https://makecode.com/cli) (in particular, `pxt serve`). Once you
+have that running, simply load the relative path to your page **after** the `/docs/` folder:
 
     http://localhost:3232/tutorials/chase-the-pizza.md
 
-To test a tutorial locally, we highly recommend you use the
+To test a tutorial locally, it's recommended that you use the
 [**Tutorial Tool**](https://makecode.com/tutorial-tool).
 
 ## Reference
