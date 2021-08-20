@@ -1,6 +1,6 @@
 # Snippets
 
-MakeCode has its own markdown extensions providing a variety of options for rendering code in text and in
+MakeCode has its own markdown "code syntax" extensions providing a variety of options for rendering code in text and in
 block format. These generally work across tutorials and document pages, but not always!
 
 ## Text Formatting
