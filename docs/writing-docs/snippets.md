@@ -330,7 +330,7 @@ case of a multi-board editor, MakeCode will match the feature set with existing 
 
 ## Code Cards (docs only)
 
-On docs pages, there are a number of different ways to render code cards.
+In the **docs** pages, there are a number of different ways to render code cards.
 
 | **Snippet**            | **Tutorial** | **Docs Page** | **Sim (Docs)** |
 |--------------------|:--------:|:---------:|:----------------:|
@@ -342,7 +342,9 @@ On docs pages, there are a number of different ways to render code cards.
 
 ### cards
 
-The **cards** "language" displays a code card for each function call.
+The **cards** "language" displays a code card for a valid namespace member. The card
+will show a block (when defined) the namespace member along with its jsDoc description.
+The card also serves as a clickable link to a reference doc page, if available, for the function.
 
     ```cards
     basic.showNumber(0)
@@ -362,7 +364,8 @@ and it's [markdown](https://github.com/Microsoft/pxt-microbit/blob/master/docs/r
 
 ### namespaces
 
-The **namespaces** "language" displays a code card for the first symbol of each namespace.
+The **namespaces** "language" displays a code card for the first symbol of each namespace. The cards rendered
+show the namespace description and are clickable links to any code card pages defined for the namespace.
 
     ```namespaces
     basic.showNumber(0)
@@ -374,7 +377,7 @@ and it's [markdown](https://github.com/Microsoft/pxt-microbit/blob/master/docs/r
 
 ### apis
 
-Render all blocks from a given set of namespaces as code cards.
+Render all blocks as code card for each namespaces listed in the section.
 
     ```apis
     basic
@@ -382,7 +385,9 @@ Render all blocks from a given set of namespaces as code cards.
 
 ### codecard
 
-To render one or more code cards as JSON into cards, use **codecard**.
+To render one or more code cards as JSON into cards, use **codecard**. These look similar
+to cards rendered for namespace members using ```` ```card ```` but instead they are general
+purpose card links for documents, tutorials, videos, and external resources.
 
     ```codecard
     [{
