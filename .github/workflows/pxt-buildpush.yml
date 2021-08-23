@@ -1,0 +1,36 @@
+name: pxt-buildpush
+
+on:
+  push:
+    # main/master has its own build that includes the crowdin key
+    branches-ignore:
+      - 'main'
+      - 'master'
+
+jobs:
+  build:
+    name: buildpush
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: Set Node.js version
+        uses: actions/setup-node@v1
+        with:
+          node-version: '14.x'
+      - name: npm install
+        run: |
+          sudo apt-get install xvfb
+          sudo npm install -g pxt
+          npm install
+      - name: npm test
+        run: |
+          npm test
+        env:
+          PXT_ACCESS_TOKEN: ${{ secrets.PXT_ACCESS_TOKEN }}
+          NPM_ACCESS_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
+          PXT_ENV: production
+          CHROME_BIN: chromium-browser
+          DISPLAY: :99.0
+          CI: true

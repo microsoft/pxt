@@ -1,0 +1,38 @@
+{
+    "editor": "blocksprj",
+    "title": "Getting started",
+    "steps": [
+        {
+            "contentMd": "Let's get started!",
+            "headerContentMd": "Let's get started!",
+            "showHint": true,
+            "showDialog": true
+        },
+        {
+            "contentMd": "Welcome! Place the ``||basic:show string||`` block in the ``||basic:on start||`` slot to scroll your name.\n\n```blocks\nbasic.showString(\"Micro!\")\n```",
+            "headerContentMd": "Welcome! Place the ``||basic:show string||`` block in the ``||basic:on start||`` slot to scroll your name.",
+            "showHint": true,
+            "hintContentMd": "```blocks\nbasic.showString(\"Micro!\")\n```"
+        },
+        {
+            "contentMd": "Type your name into the input field\n\n```blocks\nbasic.showString(\"Your Name Here\")\n```",
+            "headerContentMd": "Type your name into the input field",
+            "hintContentMd": "```blocks\nbasic.showString(\"Your Name Here\")\n```"
+        },
+        {
+            "contentMd": "Now hit **Play** on the simulator to see your name appear.",
+            "headerContentMd": "Now hit **Play** on the simulator to see your name appear.",
+            "showHint": true
+        },
+        {
+            "contentMd": "Click ``|Download|`` to transfer your code to your microbit!",
+            "headerContentMd": "Click ``|Download|`` to transfer your code to your microbit!"
+        }
+    ],
+    "activities": null,
+    "code": [
+        "{\nbasic.showString(\"Micro!\")\n}",
+        "{\nbasic.showString(\"Your Name Here\")\n}"
+    ],
+    "metadata": {}
+}

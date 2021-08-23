@@ -49,8 +49,6 @@ function onYouTubeIframeAPIReady() {
 (async function () {
     const body = document.body;
     const container = document.getElementById("container");
-    const editor = document.getElementById("editor");
-    const editor2 = document.getElementById("editor2");
     const selectapp = document.getElementById("selectapp");
     const facecamcontainer = document.getElementById("facecam");
     const facecam = document.getElementById("facecamvideo");
@@ -78,8 +76,10 @@ function onYouTubeIframeAPIReady() {
     const backgroundvideo = document.getElementById('backgroundvideo');
     const backgroundyoutube = document.getElementById('backgroundyoutube');
     const intro = document.getElementById('intro');
+    const addsiteinput = document.getElementById('addsiteinput');
     const hasGetDisplayMedia = !!navigator?.mediaDevices?.getDisplayMedia;
-    const frames = [editor, editor2];
+    const cachedFrames = {};
+    const cachedFrames2 = {};
     const paintColors = ["#ffe135", "#00d9ff", "#cf1fdb", "#ee0000"];
     const scenes = ["leftscene", "rightscene", "chatscene", "countdownscene"];
     const LEFT_SCENE_INDEX = scenes.indexOf("leftscene");
@@ -91,6 +91,7 @@ function onYouTubeIframeAPIReady() {
     const state = {
         sceneIndex: -1,
         paintColor: paintColors[0],
+        face: true
     };
     let editorConfigs;
     const db = await openDbAsync();
@@ -106,6 +107,7 @@ function onYouTubeIframeAPIReady() {
         initVideos();
         initSubtitles();
         initAccessibility();
+        initAddSite();
         loadPaint();
         loadEditor();
         loadToolbox();
@@ -126,6 +128,12 @@ function onYouTubeIframeAPIReady() {
         trackException(e, "load");
         console.error(e);
     }
+    function editor() {
+        return document.getElementById("editor");
+    }
+    function editor2() {
+        return document.getElementById("editor2");
+    }
     function saveConfig(config) {
         if (!config)
             throw new Error("missing config");
@@ -144,16 +152,33 @@ function onYouTubeIframeAPIReady() {
     }
     async function showSettings() {
         await loadSettings();
+        state.addSite = false;
         settings.classList.remove("hidden");
+        render();
     }
     async function hideSettings() {
         settings.classList.add("hidden");
     }
+    function settingsVisible() {
+        return !/hidden/.test(settings.className);
+    }
     function toggleSettings() {
-        if (/hidden/.test(settings.className))
+        if (!settingsVisible())
             showSettings();
         else
             hideSettings();
+    }
+    function defaultConfig() {
+        const cfg = {
+            editor: "microbit",
+            multiEditor: false,
+            faceCamLabel: "",
+            hardwareCamLabel: "",
+            emojis: "😄🤔😭👀",
+            micDelay: 300,
+            title: ""
+        };
+        return cfg;
     }
     function readConfig() {
         try {
@@ -165,15 +190,7 @@ function onYouTubeIframeAPIReady() {
         catch (e) {
             console.log(e);
         }
-        const cfg = {
-            editor: "microbit",
-            multiEditor: false,
-            faceCamLabel: "",
-            hardwareCamLabel: "",
-            emojis: "😄🤔😭👀",
-            micDelay: 300,
-            title: "STARTING SOON"
-        };
+        const cfg = defaultConfig();
         saveConfig(cfg);
         return cfg;
     }
@@ -201,6 +218,7 @@ function onYouTubeIframeAPIReady() {
         body.className = [
             scenes[state.sceneIndex],
             state.hardware && "hardware",
+            !state.face && "hideFacecam",
             state.chat && "chat",
             config.multiEditor && "multi",
             state.paint && "paint",
@@ -208,6 +226,7 @@ function onYouTubeIframeAPIReady() {
             state.recording && "recording",
             state.screenshoting && "screenshoting",
             state.stingering && "stingering",
+            state.addSite && "addsite",
             (config.faceCamGreenScreen || config.hardwareCamGreenScreen) && state.thumbnail && "thumbnail",
             config.micDelay === undefined && "micdelayerror",
             !hasGetDisplayMedia && "displaymediaerror",
@@ -228,16 +247,14 @@ function onYouTubeIframeAPIReady() {
             config.stingerVideo && "hasstinger",
             config.camoverlayVideo && "hascamoverlay",
         ].filter(cls => !!cls).join(' ');
-        if (!config.faceCamId || state.faceCamError)
+        if (state.face && (!config.faceCamId || state.faceCamError))
             showSettings();
         facecamlabel.innerText = config.faceCamLabel || "";
         hardwarecamlabel.innerText = config.hardwareCamLabel || "";
     }
     function loadToolbox() {
         const config = readConfig();
-        // tslint:disable-next-line: no-inner-html
         toolbox.innerHTML = "";
-        // tslint:disable-next-line: no-inner-html
         paintbox.innerHTML = "";
         // paint
         const emojis = [];
@@ -268,6 +285,7 @@ function onYouTubeIframeAPIReady() {
         //addSceneButton("OpenPaneMirrored", "Move webcam right (Alt+Shift+3)", "right")
         //addSceneButton("Contact", "Webcam large (Alt+Shift+4)", "chat")
         addSceneButton("Timer", "Show countdown (Alt+Shift+5)", "countdown");
+        addButton(toolbox, "Webcam2", "Toggle webcam", toggleFace, state.face);
         //if (config.faceCamGreenScreen || config.hardwareCamGreenScreen) {
         //    addSep(toolbox)
         //    if (config.faceCamGreenScreen || config.hardwareCamGreenScreen)
@@ -277,11 +295,15 @@ function onYouTubeIframeAPIReady() {
         //if (config.twitch)
         //    addButton(toolbox, "OfficeChat", "Chat  (Alt+Shift+8)", toggleChat, state.chat)
         //}
-        if (config.extraSites && config.extraSites.length) {
+        if (document.fullscreenEnabled) {
             addSep(toolbox);
-            config.extraSites.forEach(addSiteButton);
-            addButton(toolbox, "Code", "Reload MakeCode editor", () => startStinger(config.stingerVideo, loadEditor, config.stingerVideoGreenScreen, config.stingerVideoDelay));
+            addButton(toolbox, "FullView", "Toggle full screen", toggleFullscreen);
         }
+        addSep(toolbox);
+        addButton(toolbox, "Add", "Add web site", addAddSiteButton);
+        if (config.extraSites)
+            config.extraSites.forEach(addSiteButton);
+        addButton(toolbox, "Code", "Reload MakeCode editor", () => startStinger(config.stingerVideo, loadEditor, config.stingerVideoGreenScreen, config.stingerVideoDelay));
         addSep(toolbox);
         if (state.speech)
             addButton(toolbox, "ClosedCaption", "Captions", toggleSpeech, state.speechRunning);
@@ -338,6 +360,11 @@ function onYouTubeIframeAPIReady() {
             }, false);
             paintbox.append(btn);
         }
+        function addAddSiteButton() {
+            state.addSite = true;
+            render();
+            addsiteinput.focus();
+        }
         function addSiteButton(url) {
             addButton(toolbox, "SingleBookmark", url, () => setSite(url), false);
         }
@@ -356,16 +383,30 @@ function onYouTubeIframeAPIReady() {
             });
         }
     }
+    async function toggleFullscreen() {
+        if (document.fullscreen) {
+            await document.exitFullscreen();
+        }
+        else {
+            await document.firstElementChild.requestFullscreen();
+        }
+    }
+    function toggleFace() {
+        state.face = !state.face;
+        render();
+    }
     function setSite(url) {
         const config = readConfig();
         const ytid = parseYouTubeVideoId(url);
         if (ytid)
             url = createYouTubeEmbedUrl(ytid, true);
         startStinger(config.stingerVideo, () => {
+            if (state.sceneIndex === CHAT_SCENE_INDEX || state.sceneIndex == COUNTDOWN_SCENE_INDEX)
+                setScene("right");
             if (config.multiEditor && state.sceneIndex == LEFT_SCENE_INDEX)
-                editor2.src = url;
+                setFrameUrl(editor2(), url, true);
             else
-                editor.src = url;
+                setFrameUrl(editor(), url);
         }, config.stingerVideoGreenScreen, config.stingerVideoDelay);
     }
     function setScene(scene) {
@@ -568,7 +609,7 @@ function onYouTubeIframeAPIReady() {
         if (!evs)
             return;
         let ev;
-        // tslint:disable-next-line: no-conditional-assignment
+        // eslint-disable-next-line  no-cond-assign
         while (ev = evs.pop()) {
             if (ev.type == "down" || ev.type == "whiteboard") {
                 clearPaint();
@@ -620,7 +661,7 @@ function onYouTubeIframeAPIReady() {
                 painttoolCtx.moveTo(mouse.x, mouse.y);
             }
             else if (tool == 'arrow') {
-                painttoolCtx.lineWidth = 42;
+                painttoolCtx.lineWidth = Math.max(16, (paint.width / 60) | 0);
             }
         }
         function move(ev) {
@@ -705,6 +746,24 @@ function onYouTubeIframeAPIReady() {
             ctx.restore();
         }
     }
+    function setFrameUrl(frame, url, secondary) {
+        const caches = secondary ? cachedFrames2 : cachedFrames;
+        let cached = caches[url];
+        if (!cached) {
+            cached = caches[url] = document.createElement("iframe");
+            cached.className = "box animated site hidden";
+            cached.setAttribute("allow", "usb;camera");
+            cached.setAttribute("sandbox", "allow-scripts allow-same-origin allow-top-navigation allow-downloads allow-popups allow-popups-to-escape-sandbox allow-forms");
+            cached.src = url;
+            frame.parentElement.insertBefore(cached, frame);
+        }
+        // insert and remove
+        frame.classList.add('hidden');
+        const id = frame.getAttribute("id");
+        frame.setAttribute("id", "");
+        cached.setAttribute("id", id);
+        cached.classList.remove('hidden');
+    }
     function loadEditor(hash) {
         const config = readConfig();
         // update first editor
@@ -714,20 +773,22 @@ function onYouTubeIframeAPIReady() {
             loadStyle();
             return;
         }
-        let url = `${editorConfig.url}?editorLayout=ide&nosandbox=1`;
+        let url = `${editorConfig.url}?editorLayout=ide&nosandbox=1}`;
         if (config.multiEditor)
             url += `&nestededitorsim=1`;
         if (hash)
             url += `#${hash}`;
-        editor.src = url;
+        setFrameUrl(editor(), url);
         if (config.multiEditor) {
-            if (!editor2.parentElement)
-                container.insertBefore(editor2, editor);
-            editor2.src = url;
+            if (!editor2().parentElement)
+                container.insertBefore(editor2(), editor());
+            setFrameUrl(editor2(), url, true);
         }
         else {
             // remove from DOM
-            editor2.remove();
+            const e2 = editor2();
+            if (e2)
+                e2.remove();
         }
         loadStyle();
     }
@@ -850,8 +911,7 @@ background-image: url(${config.backgroundImage});
         const config = readConfig();
         if (!(config.twitch || config.restream))
             state.chat = false;
-        const editorConfig = editorConfigs[config.editor];
-        titleEl.innerText = config.title || (editorConfig && `MakeCode for ${editorConfig.name}`) || "";
+        titleEl.innerText = config.title || "";
     }
     function loadChat() {
         const config = readConfig();
@@ -1002,6 +1062,39 @@ background-image: url(${config.backgroundImage});
             console.log(e);
         }
     }
+    function initAddSite() {
+        accessify(addsiteinput);
+        addsiteinput.addEventListener("click", ev => {
+            const value = addsiteinput.value;
+            if (!value)
+                return; // ignore click
+            state.addSite = false;
+            const config = readConfig();
+            // emoji?
+            const em = /(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])+/.exec(value);
+            if (em) {
+                addsiteinput.value = "";
+                config.emojis = em[0];
+                saveConfig(config);
+                state.emoji = config.emojis.substr(0, 2);
+                setPaintTool("emoji");
+            }
+            else {
+                const url = normalizeUrl(value);
+                if (url) {
+                    addsiteinput.value = "";
+                    if (!config.extraSites)
+                        config.extraSites = [];
+                    if (config.extraSites.indexOf(url) < 0) {
+                        config.extraSites.push(url);
+                        saveConfig(config);
+                    }
+                    setSite(url);
+                }
+            }
+            render();
+        });
+    }
     function initVideos() {
         accessify(facecam.parentElement);
         accessify(hardwarecam.parentElement);
@@ -1122,7 +1215,7 @@ background-image: url(${config.backgroundImage});
                 h: 1080,
                 name: "HD 1080p"
             }, {
-                w: 1080,
+                w: 1280,
                 h: 720,
                 name: "SD 720p"
             }
@@ -1156,9 +1249,12 @@ background-image: url(${config.backgroundImage});
             const source = msg.source;
             if (!!data.broadcast) {
                 data.outer = true;
-                frames
-                    .filter(ifrm => ifrm.contentWindow !== source)
-                    .forEach((ifrm) => ifrm.contentWindow.postMessage(data, "*"));
+                const frames = document.querySelectorAll("iframe.site");
+                for (let i = 0; i < frames.length; ++i) {
+                    const ifrm = frames.item(i);
+                    if (ifrm.contentWindow !== source)
+                        ifrm.contentWindow.postMessage(data, "*");
+                }
             }
         };
         window.onhashchange = handleHashChange;
@@ -1191,7 +1287,7 @@ background-image: url(${config.backgroundImage});
                         const editorConfig = editorConfigs[config.editor];
                         config.multiEditor = true;
                         const doc = editorConfig.url.trim(/\/\w+$/) + "/" + arg.replace(/^\//, "");
-                        editor2.src = doc;
+                        setFrameUrl(editor2(), doc, true);
                         render();
                         break;
                     }
@@ -1563,6 +1659,17 @@ background-image: url(${config.backgroundImage});
         a.download = name;
         a.click();
     }
+    function normalizeUrl(url) {
+        if (!url)
+            return undefined;
+        url = url.trim();
+        const m = /<iframe.*?src="([^"]+)".*?>/i.exec(url);
+        if (m)
+            url = decodeURI(m[1]).replace(/&amp;/g, "&");
+        if (!/^http?s:\/\//i.test(url))
+            url = "https://" + url;
+        return url;
+    }
     async function loadSettings() {
         const config = readConfig();
         const cams = await listCameras();
@@ -1577,6 +1684,15 @@ background-image: url(${config.backgroundImage});
             tickEvent("streamer.settingsclose", undefined, { interactiveConsent: true });
             stopEvent(e);
             hideSettings();
+        };
+        const settingsreset = document.getElementById("settingsreset");
+        settingsreset.onclick = function (e) {
+            tickEvent("streamer.settingsclear", undefined, { interactiveConsent: true });
+            stopEvent(e);
+            if (confirm("This command will erase all your settings, are you sure?")) {
+                saveConfig(defaultConfig());
+                window.location.reload();
+            }
         };
         const importsettingsinput = document.getElementById("importsettingsinput");
         const importsettings = document.getElementById("importsettings");
@@ -1595,7 +1711,6 @@ background-image: url(${config.backgroundImage});
             downloadUrl(url, "streamer.json");
         };
         const editorselect = document.getElementById("editorselect");
-        // tslint:disable-next-line: no-inner-html
         editorselect.innerHTML = ""; // remove all web cams
         Object.keys(editorConfigs).forEach(editorid => {
             const editor = editorConfigs[editorid];
@@ -1650,14 +1765,13 @@ background-image: url(${config.backgroundImage});
         extrasitesarea.value = (config.extraSites || []).join('\n');
         extrasitesarea.onchange = function (e) {
             config.extraSites = (extrasitesarea.value || "").split('\n')
-                .filter(line => /^https:\/\//.test(line))
+                .filter(line => /^https?:\/\//.test(line))
                 .map(line => line.trim());
             saveConfig(config);
             loadToolbox();
             render();
         };
         const facecamselect = document.getElementById("facecamselect");
-        // tslint:disable-next-line: no-inner-html
         facecamselect.innerHTML = ""; // remove all web cams
         // no Off option
         cams.forEach(cam => {
@@ -1810,7 +1924,6 @@ background-image: url(${config.backgroundImage});
         else
             facecamerror.classList.add("hidden");
         const hardwarecamselect = document.getElementById("hardwarecamselect");
-        // tslint:disable-next-line: no-inner-html
         hardwarecamselect.innerHTML = ""; // remove all web cams
         {
             const option = document.createElement("option");
@@ -2136,7 +2249,6 @@ background-image: url(${config.backgroundImage});
             render();
         };
         const micselect = document.getElementById("micselect");
-        // tslint:disable-next-line: no-inner-html
         micselect.innerHTML = ""; // remove all web cams
         {
             const option = document.createElement("option");
@@ -2284,6 +2396,18 @@ background-image: url(${config.backgroundImage});
                     break;
             }
         }
+        // esc
+        if (ev.keyCode === 27) {
+            if (state.addSite)
+                state.addSite = false;
+            if (state.paint)
+                togglePaint();
+            if (settingsVisible())
+                toggleSettings();
+            if (intro.parentNode)
+                intro.remove();
+            render();
+        }
         function setPaintTool(ev, name) {
             state.painttool = name;
             if (!state.paint)
@@ -2310,17 +2434,22 @@ background-image: url(${config.backgroundImage});
         }
     }
     function tickEvent(id, data, opts) {
-        if (typeof pxt === "undefined" || !pxt.aiTrackException || !pxt.aiTrackEvent)
+        if (typeof pxt === "undefined")
             return;
-        if (opts && opts.interactiveConsent && typeof mscc !== "undefined" && !mscc.hasConsent()) {
-            mscc.setConsent();
+        if (opts?.interactiveConsent && pxt.setInteractiveConsent)
+            pxt.setInteractiveConsent(true);
+        if (pxt.aiTrackEvent) {
+            const args = tickProps(data);
+            pxt.aiTrackEvent(id, args[0], args[1]);
         }
-        const args = tickProps(data);
-        pxt.aiTrackEvent(id, args[0], args[1]);
     }
     function trackException(err, id, data) {
-        const args = tickProps(data);
-        pxt.aiTrackException(err, id, args[0]);
+        if (typeof pxt === "undefined")
+            return;
+        if (pxt.aiTrackException) {
+            const args = tickProps(data);
+            pxt.aiTrackException(err, id, args[0]);
+        }
     }
     function tickProps(data) {
         const config = readConfig();
@@ -2364,7 +2493,7 @@ background-image: url(${config.backgroundImage});
         };
         const stingeryoutube = document.getElementById('stingeryoutube');
         const ytVideoId = parseYouTubeVideoId(url);
-        if (ytVideoId) {
+        if (ytVideoId && stingerPlayer) {
             state.stingering = true;
             render();
             stopGreenScreen(stingervideo);
@@ -2396,7 +2525,8 @@ background-image: url(${config.backgroundImage});
             state.stingering = true;
             render();
             url = await resolveBlob(url);
-            stingerPlayer.stopVideo();
+            if (stingerPlayer)
+                stingerPlayer.stopVideo();
             stingeryoutube.classList.add("hidden");
             stingervideo.src = url;
             stingervideo.onplay = () => {
@@ -2419,7 +2549,8 @@ background-image: url(${config.backgroundImage});
         }
         else {
             stingervideo.src = undefined;
-            stingerPlayer.stopVideo();
+            if (stingerPlayer)
+                stingerPlayer.stopVideo();
             stingervideo.classList.add("hidden");
             stingeryoutube.classList.add("hidden");
             state.stingering = false;
@@ -2434,7 +2565,7 @@ background-image: url(${config.backgroundImage});
             const urls = url.split(/\n/g);
             url = urls[Math.floor(Math.random() * urls.length)];
         }
-        const blob = url.startsWith("blob:") && url.substr("blob:".length);
+        const blob = /^blob:/.test(url) && url.substr("blob:".length);
         if (blob) {
             const file = await db.get(blob);
             if (file)

@@ -1,3 +1,19 @@
 /*******************************
          Site Overrides
 *******************************/
+
+.field.checkbox input[type=checkbox] {
+    position: relative;
+    bottom: -0.15rem;
+    margin-right: 0.8em;
+    width: 17px;
+    height: 17px;
+    border: 1px solid #d4d4d5;
+    border-radius: .21428571rem;
+    background: #fff;
+}
+
+.ui.toggle.checkbox .box:before,
+.ui.toggle.checkbox label:before {
+    border: 1px solid #949494;
+}

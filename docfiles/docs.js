@@ -264,7 +264,7 @@ function renderSnippets() {
                 options.hex = true;
                 options.hexName = path;
                 return pxt.runner.renderAsync(options);
-            }).done();
+            });
     });
 }
 
@@ -314,6 +314,13 @@ function buildLangPicker() {
         var modalContainer = document.querySelector("#langmodal");
         var initialLang = pxt && pxt.Util.normalizeLanguageCode(pxt.BrowserUtils.getCookieLang())[0];
         var localesContainer = document.querySelector("#availablelocales");
+
+        if (!localesContainer || !modalContainer) {
+            var langPicker = document.querySelector('#langpicker');
+            if (langPicker) langPicker.remove();
+            return;
+        }
+
         appTheme.availableLocales.forEach(function(locale) {
             var card = languageOption(locale);
             localesContainer.appendChild(card);

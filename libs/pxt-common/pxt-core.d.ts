@@ -195,11 +195,21 @@ interface Array<T> {
     /**
      * Store a value at a particular index
      * @param index the zero-based position in the list to store the value, eg: 0
-     * @param the value to insert, eg: 0
+     * @param value the value to insert, eg: 0
      */
     //% help=arrays/set
     //% shim=Array_::setAt weight=84
     set(index: number, value: T): void;
+
+    /**
+     * Return a random value from the array
+     */
+    //% help=arrays/pick-random
+    //% helper=arrayPickRandom weight=25
+    //% blockId="array_pickRandom" block="get random value from %list"
+    //% blockNamespace="arrays"
+    //% group="Read"
+    _pickRandom(): T;
 
     [n: number]: T;
 
@@ -288,9 +298,9 @@ declare interface String {
     /**
      * Return a substring of the current string.
      * @param start first character index; can be negative from counting from the end, eg:0
-     * @param length number of characters to extract
+     * @param length number of characters to extract, eg: 10
      */
-    //% shim=String_::substr length.defl=10
+    //% helper=stringSubstr
     //% help=text/substr
     //% blockId="string_substr" block="substring of %this=text|from %start|of length %length" blockNamespace="text"
     substr(start: number, length?: number): string;
@@ -325,6 +335,7 @@ declare interface String {
 
     /** Returns a value indicating if the string is empty */
     //% helper=stringEmpty
+    //% help=text/is-empty
     //% blockId="string_isempty" blockNamespace="text"
     //% block="%this=text| is empty"
     isEmpty(): boolean;
@@ -365,7 +376,15 @@ declare interface String {
     /**
      * Return a substring of the current string with whitespace removed from both ends
      */
+    //% helper=stringTrim
     trim(): string;
+
+    /**
+     * Converts the string to upper case characters.
+     */
+    //% helper=stringToUpperCase
+    //% help=text/to-upper-case
+    toUpperCase(): string;
 
     /**
      * Converts the string to lower case characters.
@@ -403,10 +422,10 @@ interface Object { }
 interface Function {
   __assignableToFunction: Function;
 }
-interface IArguments { 
+interface IArguments {
   __assignableToIArguments: IArguments;
 }
-interface RegExp { 
+interface RegExp {
   __assignableToRegExp: RegExp;
 }
 type TemplateStringsArray = Array<string>;
@@ -505,6 +524,7 @@ declare namespace Math {
      * @param x A number
      */
     //% shim=Math_::log
+    //% help=math
     function log(x: number): number;
 
     /**
@@ -512,6 +532,7 @@ declare namespace Math {
      * @param x A number
      */
     //% shim=Math_::exp
+    //% help=math
     function exp(x: number): number;
 
     /**
@@ -535,6 +556,7 @@ declare namespace Math {
      * @param x An angle in radians
      */
     //% shim=Math_::tan
+    //% help=math/trigonometry
     function tan(x: number): number;
 
     /**
@@ -542,6 +564,7 @@ declare namespace Math {
      * @param x A number
      */
     //% shim=Math_::asin
+    //% help=math/trigonometry
     function asin(x: number): number;
 
     /**
@@ -549,6 +572,7 @@ declare namespace Math {
      * @param x A number
      */
     //% shim=Math_::acos
+    //% help=math/trigonometry
     function acos(x: number): number;
 
     /**
@@ -556,6 +580,7 @@ declare namespace Math {
      * @param x A number
      */
     //% shim=Math_::atan
+    //% help=math/trigonometry
     function atan(x: number): number;
 
     /**
@@ -564,6 +589,7 @@ declare namespace Math {
      * @param x A number
      */
     //% shim=Math_::atan2
+    //% help=math/trigonometry
     function atan2(y: number, x: number): number;
 
     /**
@@ -571,6 +597,7 @@ declare namespace Math {
      * @param x A numeric expression.
      */
     //% shim=Math_::sqrt
+    //% help=math
     function sqrt(x: number): number;
 
     /**
@@ -611,6 +638,7 @@ declare namespace Math {
      * @param y The second number
      */
     //% shim=Math_::imul
+    //% help=math
     function imul(x: number, y: number): number;
 
     /**
@@ -619,6 +647,7 @@ declare namespace Math {
      * @param y The second number
      */
     //% shim=Math_::idiv
+    //% help=math
     function idiv(x: number, y: number): number;
 }
 

@@ -30,7 +30,7 @@ namespace pxtblockly {
             if (this.params.max) this.max_ = parseInt(this.params.max)
         }
 
-        showEditor_() {
+        showEditor_(_opt_e?: Event) {
             // Find out which field we're in (x or y) and set the appropriate max.
             const xField = this.getFieldByName(this.params.xInputName);
             if (xField === this) {
@@ -44,7 +44,7 @@ namespace pxtblockly {
             }
 
             // Call super to render the slider and show the dropdown div
-            super.showEditor_();
+            super.showEditor_(_opt_e);
 
             // Now render the screen in the dropdown div below the slider
             this.renderScreenPicker();
@@ -107,7 +107,16 @@ namespace pxtblockly {
                 x = Math.round(Math.max(0, Math.min(this.params.screenWidth, x / width * this.params.screenWidth)));
                 y = Math.round(Math.max(0, Math.min(this.params.screenHeight, y / height * this.params.screenHeight)));
 
-                label.textContent = `${this.params.xInputName}=${x} ${this.params.yInputName}=${y}`;
+                // Check to see if label exists instead of showing NaN
+                if(isNaN(x)) {
+                    label.textContent = `${this.params.yInputName}=${y}`;
+                }
+                else if(isNaN(y)) {
+                    label.textContent = `${this.params.xInputName}=${x}`;
+                }
+                else {
+                    label.textContent = `${this.params.xInputName}=${x} ${this.params.yInputName}=${y}`;
+                }
 
                 // Position the label so that it doesn't go outside the screen bounds
                 const bb = label.getBoundingClientRect();

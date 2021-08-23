@@ -36,10 +36,6 @@ export class GithubProvider extends cloudsync.ProviderBase {
         window.location.href = "https://github.com/logout";
     }
 
-    hasSync(): boolean {
-        return false;
-    }
-
     hasToken(): boolean {
         this.loginCheck();
         return !!this.token();
@@ -77,6 +73,11 @@ export class GithubProvider extends cloudsync.ProviderBase {
 
         let useToken = !oAuthSupported;
         let form: HTMLElement;
+        let rememberMe = false
+        const handleRememberMe = (v: boolean) => {
+            rememberMe = v;
+            core.forceUpdate();
+        }
         return core.confirmAsync({
             header: lf("Sign in with GitHub"),
             hasCloseIcon: true,
@@ -88,9 +89,10 @@ export class GithubProvider extends cloudsync.ProviderBase {
             jsxd: () => <div className="ui form">
                 <p>{lf("You need to sign in with GitHub to use this feature.")}</p>
                 <p>{lf("You can host your code on GitHub and collaborate with friends on projects.")}</p>
+                <div><sui.PlainCheckbox label={lf("Remember me")} onChange={handleRememberMe} /></div>
                 {!useToken && <p className="ui small">
                     {lf("Looking to use a Developer token instead?")}
-                    <sui.Link className="link" text={lf("Use Developer token")} onClick={showToken} />
+                    <sui.Link className="link" text={lf("Use Developer token")} onClick={showToken} href="#" />
                 </p>}
                 {useToken && <ol>
                     <li>
@@ -111,7 +113,7 @@ export class GithubProvider extends cloudsync.ProviderBase {
                 </ol>}
                 {useToken && <div className="ui field">
                     <label id="selectUrlToOpenLabel">{lf("Paste GitHub token here:")}</label>
-                    <input type="url" tabIndex={0} autoFocus aria-labelledby="selectUrlToOpenLabel" placeholder="0123abcd..." className="ui blue fluid"></input>
+                    <input id="githubTokenInput" type="url" tabIndex={0} autoFocus aria-labelledby="selectUrlToOpenLabel" placeholder="ghp_ABC..." className="ui blue fluid"></input>
                 </div>}
             </div>,
         }).then(res => {
@@ -120,12 +122,12 @@ export class GithubProvider extends cloudsync.ProviderBase {
                 return Promise.resolve()
             } else {
                 if (useToken) {
-                    const input = form.querySelectorAll('input')[0] as HTMLInputElement;
-                    const hextoken = input.value.trim();
-                    return this.saveAndValidateTokenAsync(hextoken);
+                    const input = form.querySelector(`#githubTokenInput`) as HTMLInputElement;
+                    const hextoken = input?.value?.trim();
+                    return this.saveAndValidateTokenAsync(hextoken, rememberMe);
                 }
                 else {
-                    return this.oauthRedirectAsync(route);
+                    return this.oauthRedirectAsync(rememberMe, route);
                 }
             }
         })
@@ -136,14 +138,14 @@ export class GithubProvider extends cloudsync.ProviderBase {
         }
     }
 
-    public authorizeAppAsync(route?: string) {
-        return this.oauthRedirectAsync(route || window.location.hash, true);
+    public authorizeAppAsync(rememberMe: boolean, route?: string) {
+        return this.oauthRedirectAsync(rememberMe, route || window.location.hash, true);
     }
 
-    private oauthRedirectAsync(route: string, consent?: boolean): Promise<void> {
+    private oauthRedirectAsync(rememberMe: boolean, route: string, consent?: boolean): Promise<void> {
         core.showLoading("ghlogin", lf("Signing you into GitHub..."))
         route = (route || "").replace(/^#/, "");
-        const state = cloudsync.setOauth(this.name, route ? `#github:${route}` : undefined);
+        const state = cloudsync.setOauth(this.name, rememberMe, route ? `#github:${route}` : undefined);
         const self = window.location.href.replace(/#.*/, "")
         const login = pxt.Cloud.getServiceUrl() +
             "/oauth/login?state=" + state +
@@ -151,7 +153,7 @@ export class GithubProvider extends cloudsync.ProviderBase {
             "&response_type=token&client_id=gh-token&redirect_uri=" +
             encodeURIComponent(self)
         window.location.href = login;
-        return Promise.delay(1000);
+        return pxt.Util.delay(1000);
     }
 
     getUserInfoAsync(): Promise<pxt.editor.UserInfo> {
@@ -173,46 +175,40 @@ export class GithubProvider extends cloudsync.ProviderBase {
             })
     }
 
-    setNewToken(token: string) {
-        super.setNewToken(token);
+    setNewToken(token: string, rememberMe: boolean) {
+        super.setNewToken(token, rememberMe);
         pxt.github.token = token;
     }
 
-    private saveAndValidateTokenAsync(hextoken: string): Promise<void> {
+    private saveAndValidateTokenAsync(hextoken: string, rememberMe: boolean): Promise<void> {
         const LOAD_ID = "githubtokensave";
         core.showLoading(LOAD_ID, lf("validating GitHub token..."));
         return Promise.resolve()
             .then(() => {
-                if (hextoken.length != 40 || !/^[a-f0-9]+$/.test(hextoken)) {
-                    pxt.tickEvent("github.token.invalid");
-                    core.errorNotification(lf("Invalid token format"))
-                    return Promise.resolve();
-                } else {
-                    pxt.github.token = hextoken
-                    // try to create a bogus repo - it will fail with
-                    // 401 - invalid token, 404 - when token doesn't have repo permission,
-                    // 422 - because the request is bogus, but token OK
-                    // Don't put any string in repo name - github seems to normalize these
-                    return pxt.github.createRepoAsync(undefined, "")
-                        .then(r => {
-                            // what?!
-                            pxt.reportError("github", "Succeeded creating undefined repo!")
-                            core.infoNotification(lf("Something went wrong with validation; token stored"))
-                            this.setNewToken(hextoken);
-                            pxt.tickEvent("github.token.wrong");
-                        }, err => {
-                            pxt.github.token = ""
-                            if (!dialogs.showGithubTokenError(err)) {
-                                if (err.statusCode == 422)
-                                    core.infoNotification(lf("Token validated and stored"))
-                                else
-                                    core.infoNotification(lf("Token stored but not validated"))
-                                this.setNewToken(hextoken);
-                                pxt.tickEvent("github.token.ok");
-                            }
-                        })
-                        .then(() => cloudsync.syncAsync())
-                }
+                pxt.github.token = hextoken
+                // try to create a bogus repo - it will fail with
+                // 401 - invalid token, 404 - when token doesn't have repo permission,
+                // 422 - because the request is bogus, but token OK
+                // Don't put any string in repo name - github seems to normalize these
+                return pxt.github.createRepoAsync(undefined, "")
+                    .then(r => {
+                        // what?!
+                        pxt.reportError("github", "Succeeded creating undefined repo!")
+                        core.infoNotification(lf("Something went wrong with validation; token stored"))
+                        this.setNewToken(hextoken, rememberMe);
+                        pxt.tickEvent("github.token.wrong");
+                    }, err => {
+                        pxt.github.token = ""
+                        if (!dialogs.showGithubTokenError(err)) {
+                            if (err.statusCode == 422)
+                                core.infoNotification(lf("Token validated and stored"))
+                            else
+                                core.infoNotification(lf("Token stored but not validated"))
+                            this.setNewToken(hextoken, rememberMe);
+                            pxt.tickEvent("github.token.ok");
+                        }
+                    })
+                    .then(() => cloudsync.syncAsync())
             }).finally(() => core.hideLoading(LOAD_ID))
     }
 

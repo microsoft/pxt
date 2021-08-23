@@ -29,6 +29,7 @@
 @docsCardHoverBorderColor: #1dacf4;
 
 #docs .footer,
+#docs .topbar,
 .ui.menu.fixed.docs,
 #docs {
     top: auto;
@@ -449,6 +450,44 @@
 
 .sideDocs #sidedocsbar a {
     color: @docsLinkColor;
+}
+
+#top-bar {
+    .header-org-logo img,
+    .header-org-logo-sm img {
+        height: 1.4rem;
+    }
+
+    .header-org-logo-sm {
+        display: none;
+    }
+
+    .header-title:before {
+        content: "";
+        position: relative;
+        height: 1.5rem;
+        border-left: 2px solid #fff;
+        margin: 0.75rem;
+    }
+
+    .header-title span {
+        margin: 0.5rem;
+        font-size: 18px;
+        font-weight: 700;
+    }
+}
+
+@media only screen and (max-width: 767px) {
+    #top-bar {
+        .header-org-logo,
+        .header-title {
+            display: none;
+        }
+
+        .header-org-logo-sm {
+            display: block;
+        }
+    }
 }
 
 .replaceDocsAvatar() when not (@docsAvatarImage = none) {

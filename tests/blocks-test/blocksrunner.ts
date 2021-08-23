@@ -26,6 +26,7 @@ pxt.webConfig = {
     monacoworkerjs: undefined,
     gifworkerjs: undefined,
     serviceworkerjs: undefined,
+    typeScriptWorkerJs: undefined,
     pxtVersion: undefined,
     pxtRelId: undefined,
     pxtCdnUrl: undefined,
@@ -104,7 +105,8 @@ class BlocklyCompilerTestHost implements pxt.Host {
     }
 }
 
-function fail(msg: string) {
+// @ts-ignore
+function fail(msg: string): never {
     chai.assert(false, msg);
 }
 

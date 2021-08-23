@@ -13,7 +13,10 @@
         }
     ],
     "activities": null,
-    "code": "\n{\nlet x = 8;\nlet y = x + 2;\n}\n\n{\nbasic.showIcon(IconNames.Square)\n}\n",
+    "code": [
+        "{\nlet x = 8;\nlet y = x + 2;\n}",
+        "{\nbasic.showIcon(IconNames.Square)\n}"
+    ],
     "metadata": {
         "diffs": false,
         "flyoutOnly": true

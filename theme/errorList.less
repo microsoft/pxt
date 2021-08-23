@@ -55,21 +55,21 @@
         overflow-y: auto;
 
         .exceptionMessage {
-            color: black;
+            color: @textColor;
             padding: 0.5em 1em;
             width: 70%;
         }
 
         // errors
         .ui.selection.list {
-            color: black;
+            color: @textColor;
             cursor: pointer;
             margin: 0;
 
             .item {
                 border-radius: unset;
                 padding: 0.5em 1em;
-                color: black;
+                color: @textColor;
 
                 &:hover, &:focus {
                     background-color: @errorListMessageHoverColor !important;
@@ -77,10 +77,6 @@
 
                 &:nth-child(even):not(:hover) {
                     background-color: @errorListEven;
-                }
-
-                &:nth-child(odd):not(:hover) {
-                    background-color: @errorListOdd;
                 }
 
                 &.stackframe {
@@ -116,5 +112,32 @@
 
     &:hover {
         background-color: @errorListMessageHoverColor;
+    }
+}
+
+.inverted-theme .errorList {
+    .errorListHeader {
+        color: @errorListInvertedTextColor;
+    }
+
+    .errorListInner {
+        .exceptionMessage {
+            color: @errorListInvertedTextColor;
+        }
+        .ui.selection.list {
+            color: @errorListInvertedTextColor;
+
+            .item {
+                color: @errorListInvertedTextColor;
+
+                &:hover, &:focus {
+                    background-color: @errorListInvertedMessageHoverColor !important;
+                }
+
+                &:nth-child(even):not(:hover) {
+                    background-color: @errorListInvertedEven;
+                }
+            }
+        }
     }
 }

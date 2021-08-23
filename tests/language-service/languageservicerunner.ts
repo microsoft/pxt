@@ -1,6 +1,5 @@
 /// <reference path="../../built/pxtcompiler.d.ts"/>
 
-
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -9,20 +8,9 @@ import * as chai from "chai";
 
 import * as util from "../common/testUtils";
 
-const casesDir = path.join(process.cwd(), "tests", "language-service", "cases");
+const completionCasesDir = path.join(process.cwd(), "tests", "language-service", "completion_cases");
+const snippetCasesDir = path.join(process.cwd(), "tests", "language-service", "snippet_cases");
 const testPackage = path.relative(process.cwd(), path.join("tests", "language-service", "test-package"));
-
-interface CompletionTestCase {
-    fileName: string;
-    fileText: string;
-    lineText: string;
-    isPython: boolean;
-    position: number;
-    wordStartPos: number;
-    wordEndPos: number;
-    expectedSymbols: string[];
-    unwantedSymbols: string[];
-}
 
 function initGlobals() {
     let g = global as any
@@ -36,60 +24,163 @@ function initGlobals() {
 initGlobals();
 pxt.setAppTarget(util.testAppTarget);
 
-describe("language service", () => {
-    const cases = getTestCases();
+enum FileCheck {
+    Keep,
+    Only,
+    Skip
+}
 
-    for (const testCase of cases) {
-        it("get completions " + testCase.fileName + testCase.position, () => {
-            return runCompletionTestCaseAsync(testCase);
-        });
+function checkTestFile(file: string): FileCheck {
+    // ignore hidden files
+    if (file[0] == ".") {
+        return FileCheck.Skip
     }
-})
 
-function getTestCases() {
-    let filenames: string[] = [];
-    for (const file of fs.readdirSync(casesDir)) {
-        // ignore hidden files
-        if (file[0] == ".") {
-            continue;
+    // ignore files that start with TODO_; these represent future work
+    if (file.indexOf("TODO") >= 0) {
+        console.log("Skipping test file marked as 'TODO': " + file);
+        return FileCheck.Skip
+    }
+
+    const ext = file.substr(-3)
+    if (ext !== ".ts" && ext !== ".py") {
+        console.error("Skipping unknown/unsupported file in test folder: " + file);
+        return FileCheck.Skip
+    }
+
+    // if a file is named "ONLY", only run that one file
+    // (this is useful for working on a specific test case when
+    // the test suite gets large)
+    if (file.indexOf("ONLY") >= 0) {
+        return FileCheck.Only
+    }
+
+    return FileCheck.Keep
+}
+function getTestCaseFilenames(dir: string) {
+    let files = fs.readdirSync(dir)
+        .map(f => [checkTestFile(f), path.join(dir, f)] as [FileCheck, string])
+        .filter(([c, _]) => c !== FileCheck.Skip)
+    if (files.some(([c, _]) => c === FileCheck.Only))
+        files = files.filter(([c, _]) => c === FileCheck.Only)
+    return files.map(([_, f]) => f)
+}
+
+interface LangServTestCase {
+    fileName: string;
+    isPython: boolean;
+}
+
+interface SnippetTestCase extends LangServTestCase {
+    qName: string;
+    expectedSnippet: string;
+}
+
+interface CompletionTestCase extends LangServTestCase {
+    fileText: string;
+    lineText: string;
+    position: number;
+    wordStartPos: number;
+    wordEndPos: number;
+    expectedSymbols: string[];
+    unwantedSymbols: string[];
+}
+
+function getSnippetTestCases(): SnippetTestCase[] {
+    const filenames = getTestCaseFilenames(snippetCasesDir)
+    const cases = filenames
+        .map(getSnippetTestCasesInFile)
+        .reduce((p, n) => [...p, ...n], [])
+    return cases;
+}
+
+function getSnippetTestCasesInFile(fileName: string): SnippetTestCase[] {
+    const testCases: SnippetTestCase[] = [];
+
+    const fileText = fs.readFileSync(fileName, { encoding: "utf8" });
+    const isPython = fileName.substr(-3) !== ".ts";
+    const commentString = isPython ? "#" : "//";
+
+    /* Snippet case spec:
+    example:
+    // testNamespace.someFunction
+    testNamespace.someFunction("")
+
+    Each line that starts in a comment begins a new test case.
+    The case ends when the next line with a comment starts or the end of file is reached.
+    The content on the comment line is read as the qualified symbol name (qName) of the symbol we want to create a snippet for.
+    The non-comment content is the expected snippet result.
+    */
+    const lines = fileText.split("\n");
+    const startsWithComment = (l: string) => l.substr(0, commentString.length) === commentString;
+    const linesAndTypes = lines.map(l => [l, startsWithComment(l)] as [string, boolean])
+
+    let currentCommentLine = ""
+    let currentCaseLines: string[] = []
+    for (let [line, startsWithComment] of linesAndTypes) {
+        if (startsWithComment) {
+            // finish current test case
+            if (currentCommentLine) {
+                const testCase = makeTestCase(currentCommentLine, currentCaseLines.join("\n"));
+                testCases.push(testCase);
+            }
+
+            // start new test case
+            currentCommentLine = line
+            currentCaseLines = []
+        } else {
+            // add to current test case
+            currentCaseLines.push(line)
         }
+    }
+    // finish last current test case
+    if (currentCommentLine) {
+        const testCase = makeTestCase(currentCommentLine, currentCaseLines.join("\n"));
+        testCases.push(testCase);
+    }
 
-        // ignore files that start with TODO_; these represent future work
-        if (file.indexOf("TODO") >= 0) {
-            console.log("Skipping test file marked as 'TODO': " + file);
-            continue;
+    return testCases;
+
+    function makeTestCase(comment: string, content: string): SnippetTestCase {
+        const qName = comment
+            .substr(commentString.length)
+            .trim()
+
+        const expectedSnippet = content.trim()
+
+        return {
+            fileName,
+            isPython,
+            qName,
+            expectedSnippet
         }
+    }
+}
 
-        const ext = file.substr(-3)
-        if (ext !== ".ts" && ext !== ".py") {
-            console.error("Skipping unknown/unsupported file in test folder: " + file);
-            continue;
-        }
-
-        const filename = path.join(casesDir, file);
-
-        // if a file is named "ONLY", only run that one file
-        // (this is useful for working on a specific test case when
-        // the test suite gets large)
-        if (file.indexOf("ONLY") >= 0) {
-            filenames = [filename]
-            break;
-        }
-
-        filenames.push(filename);
-    };
+function getCompletionTestCases(): CompletionTestCase[] {
+    const filenames = getTestCaseFilenames(completionCasesDir)
 
     const testCases: CompletionTestCase[] = [];
 
     for (const fileName of filenames) {
         const fileText = fs.readFileSync(fileName, { encoding: "utf8" });
         const isPython = fileName.substr(-3) !== ".ts";
+        const commentString = isPython ? "#" : "//";
 
         const lines = fileText.split("\n");
         let position = 0;
 
+        /*  Completion case spec:
+        example:
+        foo.ba // foo.bar; foo.baz
+
+        Each line that ends in a comment is a test cases.
+        The comment is a ";" seperated list of expected symbols.
+        Symbols that start with "!" must not be present in the completion list.
+        The completions are triggered as if  the user's cursor was at the end of
+        the line right after the last non-whitespace character.
+        */
         for (const line of lines) {
-            const commentString = isPython ? "#" : "//";
             const commentIndex = line.indexOf(commentString);
             if (commentIndex !== -1) {
                 const comment = line.substr(commentIndex + commentString.length).trim();
@@ -141,16 +232,16 @@ function getTestCases() {
                 })
             }
 
-            position += line.length + 1/*new lines*/;
+            position += line.length + 1/*new line char*/;
         }
     }
 
     return testCases;
 }
 
-const fileName = (isPython: boolean) => isPython ? "main.py" : "main.ts"
+const fileName = (isPython: boolean) => isPython ? pxt.MAIN_PY : pxt.MAIN_TS
 
-function runCompletionTestCaseAsync(testCase: CompletionTestCase) {
+function runCompletionTestCaseAsync(testCase: CompletionTestCase): Promise<void> {
     return getOptionsAsync(testCase.fileText, testCase.isPython)
         .then(opts => {
             setOptionsOp(opts);
@@ -191,6 +282,29 @@ function runCompletionTestCaseAsync(testCase: CompletionTestCase) {
         })
 }
 
+function runSnippetTestCaseAsync(testCase: SnippetTestCase): Promise<void> {
+    return getOptionsAsync("", testCase.isPython)
+        .then(opts => {
+            setOptionsOp(opts);
+            ensureAPIInfoOp();
+            const { qName, isPython, expectedSnippet } = testCase;
+            const result = snippetOp(qName, isPython);
+
+            if (pxtc.service.IsOpErr(result)) {
+                chai.assert(false, `Lang service crashed with:\n${result.errorMessage}`)
+                return;
+            }
+
+            chai.assert(typeof result === "string", `Lang service returned non-string result: ${JSON.stringify(result)}`)
+
+            const match = util.compareBaselines(result, expectedSnippet, {
+                whitespaceSensitive: false
+            })
+
+            chai.assert(match, `Snippet for ${qName} "${result}" did not match expected "${expectedSnippet}"`);
+        })
+}
+
 function getOptionsAsync(fileContent: string, isPython: boolean) {
     const packageFiles: pxt.Map<string> = {};
     packageFiles[fileName(isPython)] = fileContent;
@@ -223,3 +337,31 @@ function completionsOp(fileName: string, position: number, wordStartPos: number,
         runtime: pxt.appTarget.runtime
     }) as pxtc.service.OpError | pxtc.CompletionInfo;
 }
+
+function snippetOp(qName: string, python: boolean): pxtc.service.OpError | string {
+    return pxtc.service.performOperation("snippet", {
+        snippet: {
+            qName,
+            python
+        },
+        runtime: pxt.appTarget.runtime
+    }) as pxtc.service.OpError | string;
+}
+
+
+
+describe("language service", () => {
+    const completionCases = getCompletionTestCases();
+    for (const testCase of completionCases) {
+        it("get completions " + testCase.fileName + testCase.position, () => {
+            return runCompletionTestCaseAsync(testCase);
+        });
+    }
+
+    const snippetCases = getSnippetTestCases();
+    for (const testCase of snippetCases) {
+        it(`snippet for ${testCase.qName} in ${testCase.fileName}`, () => {
+            return runSnippetTestCaseAsync(testCase);
+        });
+    }
+})

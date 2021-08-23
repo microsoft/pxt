@@ -1,5 +1,5 @@
 /// <reference path="../../built/pxtlib.d.ts" />
-
+/// <reference path="./field_asset.ts" />
 
 namespace pxtblockly {
     import svg = pxt.svgUtil;
@@ -7,6 +7,7 @@ namespace pxtblockly {
     export interface FieldAnimationOptions {
         initWidth: string;
         initHeight: string;
+        disableResize: string;
 
         filter?: string;
     }
@@ -14,6 +15,7 @@ namespace pxtblockly {
     export interface ParsedFieldAnimationOptions {
         initWidth: number;
         initHeight: number;
+        disableResize: boolean;
         filter?: string;
     }
 
@@ -28,95 +30,33 @@ namespace pxtblockly {
     const TOTAL_HEIGHT = Y_PADDING * 2 + BG_PADDING * 2 + PREVIEW_WIDTH;
     const TOTAL_WIDTH = X_PADDING * 2 + BG_PADDING * 2 + PREVIEW_WIDTH + ICON_WIDTH;
 
-    export class FieldAnimationEditor extends Blockly.Field implements Blockly.FieldCustom {
-        public isFieldCustom_ = true;
-        public SERIALIZABLE = true;
-
-        protected params: ParsedFieldAnimationOptions;
-        protected blocksInfo: pxtc.BlocksInfo;
-        protected lightMode: boolean;
-        protected undoRedoState: any;
-
-        protected state: pxt.sprite.AnimationData;
+    export class FieldAnimationEditor extends FieldAssetEditor<FieldAnimationOptions, ParsedFieldAnimationOptions> {
         protected frames: string[];
-
         protected preview: svg.Image;
-        protected animateRef: number;
-
-        constructor(text: string, params: any, validator?: Function) {
-            super(text, validator);
-
-            this.lightMode = params.lightMode;
-            this.params = parseFieldOptions(params);
-            this.blocksInfo = params.blocksInfo;
-
-            this.initState();
-        }
+        protected animateRef: any;
+        protected asset: pxt.Animation;
+        protected initInterval: number;
 
         init() {
             if (this.fieldGroup_) {
                 // Field has already been initialized once.
                 return;
             }
-            // Build the DOM.
-            this.fieldGroup_ = Blockly.utils.dom.createSvgElement('g', {}, null) as SVGGElement;
-            if (!this.visible_) {
-                (this.fieldGroup_ as any).style.display = 'none';
-            }
 
-            this.initState();
-            this.redrawPreview();
+            super.init();
 
+            // Register mouseover events for animating preview
             (this.sourceBlock_ as Blockly.BlockSvg).getSvgRoot().addEventListener("mouseenter", this.onMouseEnter);
             (this.sourceBlock_ as Blockly.BlockSvg).getSvgRoot().addEventListener("mouseleave", this.onMouseLeave);
-
-            this.updateEditable();
-            (this.sourceBlock_ as Blockly.BlockSvg).getSvgRoot().appendChild(this.fieldGroup_);
-
-            // Force a render.
-            this.render_();
-            (this as any).mouseDownWrapper_ = Blockly.bindEventWithChecks_((this as any).getClickTarget_(), "mousedown", this, (this as any).onMouseDown_);
-
-            this.state.interval = this.getParentInterval();
         }
 
         showEditor_() {
-            (this.params as any).blocksInfo = this.blocksInfo;
-
-            this.initState();
-            const parentInterval = this.getParentInterval();
-
-            if (!isNaN(parentInterval)) this.state.interval = parentInterval;
-
-            const fv = pxt.react.getFieldEditorView("animation-editor", this.state, this.params);
-
-            if (this.undoRedoState) {
-                fv.restorePersistentData(this.undoRedoState);
+            // Read parent interval
+            if (this.asset) {
+                this.asset.interval = this.getParentInterval() || this.asset.interval;
             }
 
-            fv.onHide(() => {
-                const result = fv.getResult();
-
-                if (result) {
-                    const old = this.getValue();
-
-                    this.state = result;
-
-                    if (!isNaN(this.state.interval)) {
-                        this.setParentInterval(this.state.interval);
-                    }
-                    this.redrawPreview();
-
-                    this.undoRedoState = fv.getPersistentData();
-
-                    if (this.sourceBlock_ && Blockly.Events.isEnabled()) {
-                        Blockly.Events.fire(new Blockly.Events.BlockChange(
-                            this.sourceBlock_, 'field', this.name, old, this.getValue()));
-                    }
-                }
-            });
-
-            fv.show();
+            super.showEditor_();
         }
 
         render_() {
@@ -125,30 +65,66 @@ namespace pxtblockly {
             this.size_.width = TOTAL_WIDTH;
         }
 
-        getValue() {
-            if (!this.state) return "[]";
-            return "[" + this.state.frames.map(frame =>
-                pxt.sprite.bitmapToImageLiteral(pxt.sprite.Bitmap.fromData(frame), pxt.editor.FileType.TypeScript)
-            ).join(",") + "]"
+        protected getAssetType(): pxt.AssetType {
+            return pxt.AssetType.Animation;
         }
 
-        doValueUpdate_(newValue: string) {
-            if (newValue == null) {
-                return;
+        protected createNewAsset(text?: string): pxt.Asset {
+            const project = pxt.react.getTilemapProject();
+
+            if (text) {
+                const existing = pxt.lookupProjectAssetByTSReference(text, project);
+                if (existing) return existing;
+
+                const frames = parseImageArrayString(text);
+
+                if (frames && frames.length) {
+                    const id = this.sourceBlock_.id;
+
+                    const newAnimation: pxt.Animation = {
+                        internalID: -1,
+                        id,
+                        type: pxt.AssetType.Animation,
+                        frames,
+                        interval: this.getParentInterval(),
+                        meta: { },
+                    };
+                    return newAnimation;
+                }
+
+                const asset = project.lookupAssetByName(pxt.AssetType.Animation, text.trim());
+                    if (asset) return asset;
             }
-            this.value_ = newValue;
 
+            const id = this.sourceBlock_.id;
+            const bitmap = new pxt.sprite.Bitmap(this.params.initWidth, this.params.initHeight).data()
 
-            const frames = parseImageArrayString(newValue);
+            const newAnimation: pxt.Animation = {
+                internalID: -1,
+                id,
+                type: pxt.AssetType.Animation,
+                frames: [bitmap],
+                interval: 500,
+                meta: {},
+            };
 
-            if (frames && frames.length) {
-                this.initState();
-                this.state.frames = frames;
+            return newAnimation;
+        }
+
+        protected onEditorClose(newValue: pxt.Animation) {
+            this.setParentInterval(newValue.interval);
+        }
+
+        protected getValueText(): string {
+            if (!this.asset) return "[]";
+
+            if (this.isTemporaryAsset()) {
+                return "[" + this.asset.frames.map(frame =>
+                    pxt.sprite.bitmapToImageLiteral(pxt.sprite.Bitmap.fromData(frame), pxt.editor.FileType.TypeScript)
+                ).join(",") + "]"
             }
 
-            this.redrawPreview();
-
-            super.doValueUpdate_(newValue);
+            return pxt.getTSReferenceForAsset(this.asset);
         }
 
         protected redrawPreview() {
@@ -170,8 +146,8 @@ namespace pxtblockly {
 
             this.fieldGroup_.appendChild(icon.el);
 
-            if (this.state) {
-                this.frames = this.state.frames.map(frame => bitmapToImageURI(pxt.sprite.Bitmap.fromData(frame), PREVIEW_WIDTH, this.lightMode));
+            if (this.asset) {
+                this.frames = this.asset.frames.map(frame => bitmapToImageURI(pxt.sprite.Bitmap.fromData(frame), PREVIEW_WIDTH, this.lightMode));
                 this.preview = new svg.Image()
                     .src(this.frames[0])
                     .at(X_PADDING + BG_PADDING + ICON_WIDTH, Y_PADDING + BG_PADDING)
@@ -181,9 +157,11 @@ namespace pxtblockly {
         }
 
         protected onMouseEnter = () => {
-            if (this.animateRef) return;
+            if (this.animateRef || !this.asset) return;
 
-            const interval = this.state.interval > 50 ? this.state.interval : 50;
+            const assetInterval = this.getParentInterval() || this.asset.interval;
+
+            const interval = assetInterval > 50 ? assetInterval : 50;
 
             let index = 0;
             this.animateRef = setInterval(() => {
@@ -239,21 +217,8 @@ namespace pxtblockly {
             return 100;
         }
 
-        protected initState() {
-            if (!this.state) {
-                if (this.params) {
-                    this.state = {
-                        frames: [new pxt.sprite.Bitmap(this.params.initWidth, this.params.initHeight).data()],
-                        interval: 100
-                    }
-                }
-                else {
-                    this.state = {
-                        frames: [],
-                        interval: 100
-                    }
-                }
-            }
+        protected parseFieldOptions(opts: FieldAnimationOptions): ParsedFieldAnimationOptions {
+            return parseFieldOptions(opts);
         }
     }
 
@@ -261,6 +226,7 @@ namespace pxtblockly {
         const parsed: ParsedFieldAnimationOptions = {
             initWidth: 16,
             initHeight: 16,
+            disableResize: false
         };
 
         if (!opts) {
@@ -286,6 +252,7 @@ namespace pxtblockly {
     }
 
     function parseImageArrayString(str: string): pxt.sprite.BitmapData[] {
+        if (str.indexOf("[") === -1) return null;
         str = str.replace(/[\[\]]/mg, "");
         return str.split(",").map(s => pxt.sprite.imageLiteralToBitmap(s).data()).filter(b => b.height && b.width);
     }

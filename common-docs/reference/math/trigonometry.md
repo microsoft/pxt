@@ -17,7 +17,7 @@ Now, we don't have to worry about the radius anymore, we can just use some part 
 
 ### ~hint
 
-**What number is _pi_?**
+#### What number is _pi_?
 
 As it turns out, **_pi_** is an _irrational_ number. That means it has a fractional part that uses more digits than we can display. So, it's best to use a constant in code for the value of **_pi_**. In case you're curious, the first 32 digits of **_pi_** are: **3.1415926535897932384626433832795**.
 
@@ -29,7 +29,7 @@ In code, you use _radians_ for angle measures. All of the math functions for tri
 
 ### ~hint
 
-**Changing degrees to radians**
+#### Changing degrees to radians
 
 What's 60 degrees in radians? Well, one radian is _(2 \* Math.PI / 360)_ radians. Or, to make it
 simple, _(Math.PI / 180)_ radians. So, 60 degrees is _(60 \* Math.PI / 180)_ radians.
@@ -61,4 +61,66 @@ is 45 degrees.
 
 ```typescript-ignore
 let xSide = Math.cos(45 * Math.PI / 180)
+```
+
+## Tangent
+
+The tangent of an angle is its sine **divided** by the cosine. To find the tangent of the angle of 30 degrees:
+
+```typescript-ignore
+let tangent = Math.tan(30 * Math.PI / 180)
+```
+
+This is the same value as:
+
+```typescript-ignore
+let tangent = Math.sin(30 * Math.PI / 180) / Math.sin(30 * Math.PI / 180)
+```
+
+## Arc functions
+
+The arc functions work opposite to the way the other trigonometric functions due. Instead of returning a length value for a side from an angle, the arc functions give you an angle value from the length of a side of a right triangle.
+
+### ~ hint
+
+#### Unit circle values
+
+Now with the arc functions, they operate on lengths for the vertical and horizontal sides of right triangle that are less than or equal to `1`. The value of `1` represents the radius of a circle that always has a length of `1` called the _unit circle_. This means that the sides of a right triangle formed by the radius (hypotenuse) equal to `1` will always have the vertical and horizontal sides with values between `0` and `1`. These values are required for the **Math.asin()** and **Math.acos()** functions.
+
+### ~
+
+### asin
+
+To get the an angle for the right triangle using the length of the vertical side, use the **Math.asin()** function. A value of `30` degrees is returned for a length of `0.5` of the vertical side.
+
+```typescript-ignore
+let arcSine = Math.asin(0.5)* 180 / Math.PI
+```
+
+### acos
+
+To get the an angle for the right triangle using the length of the horizontal side, use the **Math.acos()** function. A value of `60` degrees is returned for a length of `0.5` of the horizontal side.
+
+```typescript-ignore
+let arcCosine = Math.acos(0.5)* 180 / Math.PI
+```
+
+### atan
+
+The arc tangent returns an angle for the value of the vertical side divided by the value of the horizontal side. We know that a triangle with equal vertical and horizontal sides has an angle of 45 degrees. So, if we set the `x` and `y` sides of the triangle to the same value, **Math.atan()** should give us a radian value that translates to 45 degrees.
+
+```typescript-ignore
+let x = 1
+let y = 1
+let arcTangent = Math.atan(y / x) * 180 / Math.PI
+```
+
+### atan2
+
+The Math.atan2() is very similar to Math.atan() except that the values for the vertical and horizontal sides are given separately instead of being already divided. For equal sides, the radian value that translates to 45 degrees results from using the same `x` and `y` values.
+
+```typescript-ignore
+let x = 1
+let y = 1
+let arcTangent2 = Math.atan2(y, x) * 180 / Math.PI
 ```

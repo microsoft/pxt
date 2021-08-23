@@ -15,6 +15,10 @@
 @homeDetailViewSelectedCardZIndex: @homeDetailViewZIndex+1; /* Show the card arrow above the detail view */
 @homeFooterZIndex: @homeCarouselArrowZIndex+1;
 
+@heroBannerGradientColor: rgba(0,0,0,1);
+@heroBannerDotOutlineColor: rgba(0, 0, 0, .4);
+@heroBannerDotOutlineAtiveColor: rgba(255, 255, 255, .75);
+
 #homescreen {
     background: lighten(@homeScreenBackground, 10%);
     z-index: @homeScreenZIndex;
@@ -53,6 +57,63 @@
             text-shadow: -1px 0 rgb(87, 87, 87), 0 1px rgb(87, 87, 87), 1px 0 rgb(87, 87, 87), 0 -1px rgb(87, 87, 87);
         }
     }
+    .getting-started-segment.hero {
+        -webkit-transition: background-image 0.2s ease-in;
+        transition: background-image 0.2s ease-in;
+        overflow: hidden;
+
+        .hero-banner-contents {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 20rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            margin-left: @carouselArrowSize;
+        }
+
+        .description {
+            display: flex;
+            align-items: flex-end;
+            width: 20rem;
+            height: 6.5rem;
+            overflow-y: auto;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: @white;
+            p {
+                flex-grow: 0;
+                max-height: 100%;
+            }
+        }
+
+        .action {
+            margin: 1rem 0;
+        }
+
+        .dots button {
+            transition: background-color 0.2s;
+            border: 2px solid @heroBannerDotOutlineColor;
+            margin-right: 1.25rem;
+
+            &.active {
+                border-color: @heroBannerDotOutlineAtiveColor;
+                background-color: transparent;
+            }
+        }
+
+        .gradient-overlay {
+            position: relative;
+            height: 100%;
+            width: 40rem;
+            top: 0;
+            left: 0;
+            background: linear-gradient(to right, @heroBannerGradientColor 0%, rgba(0, 0, 0, 0) 100%);
+        }
+    }
+
     .content {
         height: 100%;
     }
@@ -257,9 +318,14 @@
 
                 .button.attached i {
                     display: block;
-                    margin: auto!important;
-                    opacity: 0.05;
+                    margin: auto !important;
+                    opacity: 0.65;
                     color: @homeCardHeaderColor;
+
+                    // These three have text in front of the icons, so leave them faint.
+                    &.blocks, &.js, &.py {
+                        opacity: 0.05;
+                    }
                 }
                 .button.attached .icon:not(.xicon) {
                     margin: 0 auto!important;
@@ -372,8 +438,8 @@
         }
     }
     .ui.card:focus {
-        outline: none;
-        border: @homeCardBorderSize solid @homeCardFocusBorderColor !important;
+        border: 2px solid transparent;
+        outline: @homeCardBorderSize solid @homeCardFocusBorderColor !important;
     }
 }
 
@@ -466,6 +532,7 @@
     /* Carousel */
     .projectsdialog {
         .getting-started-segment {
+            background-position: left center;
             height: 250px;
             .getting-started {
                 padding: @carouselArrowSizeTablet;
@@ -473,6 +540,10 @@
             }
             .getting-started-header {
                 font-size: 40px;
+            }
+
+            &.hero .hero-banner-contents {
+                margin-left: @carouselArrowSizeTablet;
             }
         }
         .ui.segment.tabsegment {
@@ -525,14 +596,6 @@
             width: 200px;
         }
     }
-
-    /** squeeze the logos to sides of the screen */
-    #homemenu .left.menu {
-        margin-left: 0 !important;
-    }
-    #homemenu .right.menu {
-        margin-right: 0 !important;
-    }
 }
 
 
@@ -542,8 +605,25 @@
     /* Carousel */
     .projectsdialog {
         .getting-started-segment {
+            height: 10rem;
+            margin-bottom: 0.5rem !important;
+            .getting-started-header {
+                font-size: 30px;
+            }
             .getting-started {
                 padding: @carouselArrowSizeMobile;
+            }
+
+            &.hero .hero-banner-contents {
+                margin-left: @carouselArrowSizeMobile;
+                .description {
+                    width: 12rem;
+                    height: 4rem;
+                    font-size: 1rem;
+                }
+                .dots {
+                    display: none;
+                }
             }
         }
         .ui.segment.tabsegment {
@@ -615,13 +695,6 @@
                 padding: 0.5rem;
             }
         }
-        .getting-started-segment {
-            height: 10rem;
-            margin-bottom: 0.5rem !important;
-            .getting-started-header {
-                font-size: 30px;
-            }
-        }
         .carouselcontainer {
             padding: 1.5rem @carouselArrowSizeMobile !important;
         }
@@ -670,6 +743,10 @@
                 }
             }
         }
+    }
+
+    .hero.dots {
+        display: none;
     }
 }
 
@@ -737,6 +814,17 @@
             margin-top: -3.1rem!important;
             margin-bottom: 0rem!important;
             height: 168px;
+
+            &.hero .hero-banner-contents {
+                .description {
+                    width: 12rem;
+                    height: 4rem;
+                    font-size: 1rem;
+                }
+                .dots {
+                    display: none;
+                }
+            }
         }
     }
 }

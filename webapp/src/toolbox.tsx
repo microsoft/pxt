@@ -6,6 +6,7 @@ import * as editor from "./toolboxeditor"
 import * as sui from "./sui"
 import * as core from "./core"
 import * as gamepads from "./gamepads";
+import * as coretsx from "./coretsx";
 
 import Util = pxt.Util;
 
@@ -128,7 +129,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
             visible: false,
             loading: false,
             showAdvanced: false,
-            shouldAnimate: !Util.getToolboxAnimation()
+            shouldAnimate: !pxt.shell.getToolboxAnimation()
         }
 
         this.setSelection = this.setSelection.bind(this);
@@ -277,14 +278,14 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         }
     }
 
-    componentWillReceiveProps(props: ToolboxProps) {
+    UNSAFE_componentWillReceiveProps(props: ToolboxProps) {
         // if leaving monaco, mark toolbox animation as shown. also
         // handles full screen sim, where we hide the toolbox via css
         // without re-rendering, which will trigger the animation again
         if ((this.props.editorname == MONACO_EDITOR_NAME && props.editorname != MONACO_EDITOR_NAME)
             || (props.editorname == MONACO_EDITOR_NAME && props.parent.parent.state.fullscreen)
             && this.state.shouldAnimate) {
-            Util.setToolboxAnimation();
+            pxt.shell.setToolboxAnimation();
             this.setState({ shouldAnimate: false });
         }
     }
@@ -316,7 +317,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
 
     componentWillUnmount() {
         if (this.props.editorname == MONACO_EDITOR_NAME) {
-            Util.setToolboxAnimation();
+            pxt.shell.setToolboxAnimation();
         }
     }
 
@@ -536,7 +537,7 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
         return this.treeRowElement;
     }
 
-    componentWillReceiveProps(nextProps: CategoryItemProps) {
+    UNSAFE_componentWillReceiveProps(nextProps: CategoryItemProps) {
         const newState: CategoryItemState = {};
         if (nextProps.selected != undefined) {
             newState.selected = nextProps.selected;
@@ -548,7 +549,7 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
         const { toolbox } = this.props;
         if (this.state.selected) {
             this.props.toolbox.setSelectedItem(this);
-            if (!toolbox.state.focusSearch) this.focusElement();
+            if (!toolbox.state.focusSearch && !coretsx.dialogIsShowing()) this.focusElement();
         }
     }
 
@@ -862,7 +863,9 @@ export interface TreeGroupProps {
 export class TreeGroup extends data.Component<TreeGroupProps, {}> {
     renderCore() {
         const { visible } = this.props;
-        return <div role="group" style={{ backgroundPosition: '0px 0px', 'display': visible ? '' : 'none' }}>
+        if (!this.props.children) return <div />;
+
+        return <div role="tree" style={{ backgroundPosition: '0px 0px', 'display': visible ? '' : 'none' }}>
             {this.props.children}
         </div>
     }
@@ -932,7 +935,7 @@ export class ToolboxSearch extends data.Component<ToolboxSearchProps, ToolboxSea
 
         // Execute search
         parent.searchAsync(searchTerm)
-            .done((blocks) => {
+            .then((blocks) => {
                 if (blocks.length == 0) {
                     searchAccessibilityLabel = lf("No search results...");
                 } else {

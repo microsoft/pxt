@@ -85,10 +85,10 @@ namespace pxt.winrt.workspace {
     function writePkgAsync(logicalDirname: string, data: FsPkg): Promise<FsPkg> {
         pxt.debug(`winrt: writing package at ${logicalDirname}`);
         return promisify(folder.createFolderAsync(logicalDirname, Windows.Storage.CreationCollisionOption.openIfExists))
-            .then(() => Promise.map(data.files, f => readFileAsync(pathjoin(logicalDirname, f.name))
+            .then(() => U.promiseMapAll(data.files, f => readFileAsync(pathjoin(logicalDirname, f.name))
                 .then(text => {
-                    if (f.name == pxt.SIMSTATE_JSON)
-                        return; // ignore conflicts in sim inernal file
+                    if (f.name == pxt.SIMSTATE_JSON || f.name == pxt.ASSETS_FILE)
+                        return; // ignore conflicts in sim or assets internal file
                     else if (f.name == pxt.CONFIG_NAME) {
                         try {
                             let cfg: pxt.PackageConfig = JSON.parse(f.content)
@@ -107,7 +107,7 @@ namespace pxt.winrt.workspace {
                     }
                 }, err => { })))
             // no conflict, proceed with writing
-            .then(() => Promise.map(data.files, f => writeFileAsync(logicalDirname, f.name, f.content)))
+            .then(() => U.promiseMapAll(data.files, f => writeFileAsync(logicalDirname, f.name, f.content)))
             .then(() => writeFileAsync(logicalDirname, HEADER_JSON, JSON.stringify(data.header, null, 4)))
             .then(() => readPkgAsync(logicalDirname, false));
     }
@@ -117,7 +117,7 @@ namespace pxt.winrt.workspace {
         return readFileAsync(pathjoin(logicalDirname, pxt.CONFIG_NAME))
             .then(text => {
                 const cfg: pxt.PackageConfig = JSON.parse(text)
-                return Promise.map(pxt.allPkgFiles(cfg), fn =>
+                return U.promiseMapAll(pxt.allPkgFiles(cfg), fn =>
                     statOptAsync(pathjoin(logicalDirname, fn))
                         .then(st => {
                             const rf: FsFile = {
@@ -152,7 +152,7 @@ namespace pxt.winrt.workspace {
 
     function listPkgsAsync(): Promise<FsPkgs> {
         return promisify(folder.getFoldersAsync())
-            .then((fds) => Promise.map(fds, (fd) => readPkgAsync(fd.name, false)))
+            .then((fds) => U.promiseMapAll(fds, (fd) => readPkgAsync(fd.name, false)))
             .then((fsPkgs) => {
                 return Promise.resolve({ pkgs: fsPkgs });
             });

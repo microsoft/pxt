@@ -54,9 +54,10 @@ namespace pxt.workspace {
             id: U.guidGen(),
             recentUse: modTime,
             modificationTime: modTime,
-            blobId: null,
-            blobVersion: null,
-            blobCurrent: false,
+            cloudUserId: null,
+            cloudCurrent: false,
+            cloudVersion: null,
+            cloudLastSyncTime: 0,
             isDeleted: false,
         }
         return header

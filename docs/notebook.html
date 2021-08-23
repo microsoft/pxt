@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link href="https://notebookapis.azure.com/api/proxy/cdn/component/1/latest/aznb-bundle.css" rel="stylesheet" />
+    <script type="text/javascript" src="https://notebookapis.azure.com/api/proxy/cdn/component/1/latest/aznb-bundle.js"></script>
+  </head>
+  <body>
+    <div id="notebook1" style="height:90%;"></div>
+    <br />
+
+    <script>
+      let nbTokens = { };
+
+      async function callBackendForTokens() {
+        //change this to following before switching on in production.
+        //const url = location.protocol === "file:" ? 'https://staging.pxt.io/api/notebook': '/api/notebook';
+        const url = 'https://staging.pxt.io/api/notebook';
+        // call backend get tokens back
+        const response = await fetch(url);
+
+        const result = await response.json();
+
+        nbTokens.accessToken = result.accessToken;
+        nbTokens.refreshToken = result.refreshToken;
+        nbTokens.notebookResourceId = result.resourceId;
+        nbTokens.expiration = result.expiration;
+        nbTokens.notebookResourceEndpoint = result.resourceEndpoint;
+      }
+
+      async function helloWorld() {
+        await callBackendForTokens();                  
+        // Tokens should be kept active to ensure that the calls to AZNB are always using the validated tokens for long running sessions.
+        // In this sample, we are updating the tokens 4 hours
+        setInterval(async () => {
+          await callBackendForTokens();
+        }, 1000 * 60 * 60 * 4);
+
+        // Before hosting the Notebook component, you need to authorize with the notebook service by calling init() and passing in the notebook access token and refresh token along with resource ID
+        await AzureNotebooks.init({
+          userHasGivenCookieConsent: true,
+          getResourceAccessToken: () => {
+            // Fetch access and refresh token from your backend which will use validate API to retreive the tokens
+
+            return Promise.resolve({
+              notebookResourceId: nbTokens.notebookResourceId,
+              accessToken: nbTokens.accessToken, // Expires in 8 hours
+              refreshToken: nbTokens.refreshToken // Expires in 3 days
+            });
+          },
+          resourceUrl: nbTokens.notebookResourceEndpoint
+        });
+
+        nb = await AzureNotebooks.loadNotebook({
+          parentElementId: "notebook1",
+          filePath:
+            "https://raw.githubusercontent.com/microsoft/AzureNotebooks/master/Samples/Discover%20Sentiments%20in%20Tweets.ipynb",
+          getNotebookStorageOptions: () =>
+            Promise.resolve({
+              requestOptions: null
+            }),
+
+          // Provide internal user's info for telemetry logging purpose
+          internalUserInfo: {
+            alias: "makecode",
+            domain: "microsoft",
+            tenantId: "XXXX"
+          }
+        });
+      }
+      helloWorld();
+    </script>
+  </body>
+</html>

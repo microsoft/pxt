@@ -172,6 +172,8 @@ declare interface GIFOptions {
 
     maxFrames?: number;
     maxLength?: number;
+
+    scale?: number;
 }
 
 declare interface GIFFrameOptions {
@@ -195,11 +197,14 @@ export class GifEncoder {
     private time: number;
     private cancellationToken: pxt.Util.CancellationToken;
     private renderPromise: Promise<string>;
+    private scale = 1;
 
     constructor(private options: GIFOptions) {
         this.cancellationToken = new pxt.Util.CancellationToken();
         if (!this.options.maxFrames)
             this.options.maxFrames = 64;
+        if (options.scale)
+            this.scale = options.scale
     }
 
     start() {
@@ -240,6 +245,9 @@ export class GifEncoder {
             this.time = t;
         if (delay === undefined)
             delay = t - this.time;
+        if (this.scale != 1) {
+            dataUri = pxt.BrowserUtils.scaleImageData(dataUri, this.scale);
+        }
         pxt.debug(`gif: frame ${delay}ms`);
         this.gif.addFrame(dataUri, { delay });
         this.time = t;
@@ -249,7 +257,6 @@ export class GifEncoder {
 
     renderAsync(): Promise<string> {
         if (this.cancellationToken.isCancelled()) return Promise.resolve(undefined);
-
         // keep trying to render until size is small enough
         const tryRenderGifAsync: () => Promise<string> = () => {
             return this.renderGifAsync()
@@ -313,7 +320,8 @@ export function loadGifEncoderAsync(): Promise<GifEncoder> {
         quality: pxt.appTarget.appTheme.simGifQuality || 16,
         transparent: pxt.appTarget.appTheme.simGifTransparent,
         maxFrames: pxt.appTarget.appTheme.simGifMaxFrames || 64,
-        maxLength: pxt.appTarget.appTheme.simScreenshotMaxUriLength || 300000
+        maxLength: pxt.appTarget.appTheme.simScreenshotMaxUriLength || 300000,
+        scale: 2
     };
     return pxt.BrowserUtils.loadScriptAsync("gifjs/gif.js")
         .then(() => new GifEncoder(options));

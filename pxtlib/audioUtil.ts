@@ -51,7 +51,7 @@ namespace pxt.AudioContextManager {
 
     export function tone(frequency: number) {
         if (_mute) return;
-        if (frequency <= 0) return;
+        if (frequency < 0) return;
         _frequency = frequency;
 
         let ctx = context() as AudioContext;
@@ -63,14 +63,15 @@ namespace pxt.AudioContextManager {
                 _vco.type = 'triangle';
 
                 _gain = ctx.createGain();
+                _gain.gain.value = 0;
                 _gain.connect(ctx.destination);
 
                 _vco.connect(_gain);
                 _vco.start(0);
 
             }
-            _vco.frequency.value = frequency;
-            _gain.gain.setTargetAtTime(1, _context.currentTime, 0.015);
+            _vco.frequency.linearRampToValueAtTime(frequency, _context.currentTime)
+            _gain.gain.setTargetAtTime(.2, _context.currentTime, 0.015);
 
         } catch (e) {
             _vco = undefined;

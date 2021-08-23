@@ -3,7 +3,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-// tslint:disable:no-import-side-effect mocha-no-side-effect-code
+/* eslint-disable import/no-unassigned-import mocha-no-side-effect-code */
 import "mocha";
 import * as chai from "chai";
 
@@ -68,7 +68,7 @@ describe("py compiler errors", () => {
 async function stsErrorTestAsync(filename: string) {
     const basename = path.basename(filename);
     const text = fs.readFileSync(filename, "utf8");
-    const pkg = new pxt.MainPackage(new TestHost(basename, { "main.ts": text }, [], true));
+    const pkg = new pxt.MainPackage(new TestHost(basename, { [pxt.MAIN_TS]: text }, [], true));
 
     const target = pkg.getTargetOptions();
 

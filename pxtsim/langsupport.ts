@@ -624,6 +624,7 @@ namespace pxsim {
         export let string_inline_utf8_vt: any;
         export let string_cons_vt: any;
         export let string_skiplist16_vt: any;
+        export let string_skiplist16_packed_vt: any;
 
         export function typeOf(obj: any) {
             return typeof obj;
@@ -647,15 +648,14 @@ namespace pxsim {
         }
 
         export function runInBackground(a: RefAction) {
-            runtime.runFiberAsync(a).done()
+            runtime.runFiberAsync(a);
         }
 
         export function forever(a: RefAction) {
             function loop() {
                 runtime.runFiberAsync(a)
-                    .then(() => Promise.delay(20))
-                    .then(loop)
-                    .done()
+                    .then(() => U.delay(20))
+                    .then(loop);
             }
             pxtrt.nullCheck(a)
             loop()

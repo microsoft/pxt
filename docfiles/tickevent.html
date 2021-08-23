@@ -1,16 +1,46 @@
 <script type="text/javascript">
-    window.pxtTickEvent = function(id, data) {
-        if (window.appInsights && window.appInsights.trackEvent) {
-            const props = {};
-            const measures = {};
-            if (data) {
-                Object.keys(data).forEach(k => {
-                    if (typeof data[k] == "string") props[k] = data[k];
-                    else if (typeof data[k] == "number") measures[k] = data[k];
-                    else props[k] = JSON.stringify(data[k] || '');
+    if (!window.pxtTickEvent) {
+        let queuedTicks;
+        window.pxtTickEvent = function(id, data) {
+            if (window.appInsights && window.appInsights.trackEvent) {
+                sendTick(id, data);
+            } else {
+                if (!queuedTicks) {
+                    queuedTicks = [];
+                    var interval = window.setInterval(function() {
+                        if (window.appInsights && window.appInsights.trackEvent) {
+                            window.clearInterval(interval);
+                            for (var i = 0; i < queuedTicks.length; i++) {
+                                queuedTicks[i]();
+                            }
+                            queuedTicks = undefined;
+                        }
+                    }, 1000);
+                }
+
+                if (queuedTicks.length >= 100) {
+                    queuedTicks.shift();
+                }
+
+                queuedTicks.push(function () {
+                    sendTick(id, data);
                 });
             }
-            window.appInsights.trackEvent(id, data, measures);
+
+            function sendTick(id, data) {
+                const props = {};
+                const measures = {};
+                if (data) {
+                    Object.keys(data).forEach(k => {
+                        if (typeof data[k] == "string") props[k] = data[k];
+                        else if (typeof data[k] == "number") measures[k] = data[k];
+                        else props[k] = JSON.stringify(data[k] || '');
+                    });
+                } else {
+                    data = {};
+                }
+                window.appInsights.trackEvent(id, data, measures);
+            }
         }
     }
 </script>

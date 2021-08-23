@@ -19,6 +19,7 @@ myNumbers.insertAt(3, 2);
 ## Parameters
 
 * **index**: a [number](/types/number) which is the position in the array to insert the element at.
+* **value**: a value to insert into the array at the position of **index**. The value has the same [type](/types) as the type that array was created with, [number](/types/number), [boolean](/types/boolean), [string](/types/string), etc.
 
 ## Example
 

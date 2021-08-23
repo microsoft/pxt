@@ -9,6 +9,16 @@
             "background": "linear-gradient(90deg, #B1E3DA 0%, #E91E63 100%)"
         }
     },
+    "arcadeskillmap": {
+        "name": "Arcade Skillmap",
+        "title": "MakeCode Arcade Skillmap",
+        "url": "https://arcade.makecode.com/--skillmap",
+        "styles": {
+            "primary": "#6B4F76",
+            "menu": "#F76820",
+            "background": "linear-gradient(90deg, #B1E3DA 0%, #E91E63 100%)"
+        }
+    },
     "microbit": {
         "name": "micro:bit",
         "title": "MakeCode for micro:bit",
@@ -47,7 +57,11 @@
     "microbitbeta": {
         "name": "micro:bit BETA",
         "url": "https://makecode.microbit.org/beta",
-        "unsupported": ["streamer"]
+        "styles": {
+            "primary": "#6633cc",
+            "menu": "#3454D1",
+            "background": "linear-gradient(45deg, rgba(99, 93, 198, 1) 0%, rgba(0, 212, 255, 1) 100%)"
+        }
     },
     "minecraftbeta": {
         "name": "Minecraft BETA",
@@ -90,8 +104,7 @@
     "calliopemini": {
         "name": "Calliope Mini",
         "title": "MakeCode for Calliope",
-        "url": "https://makecode.calliope.cc/beta",
-        "unsupported": ["playground"]
+        "url": "https://makecode.calliope.cc/"
     },
     "stm32iotnode": {
         "name": "STM32L4 Discovery kit IoT node",

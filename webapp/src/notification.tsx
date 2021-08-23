@@ -1,10 +1,8 @@
 /// <reference path="../../built/pxtlib.d.ts" />
-/// <reference path="../../localtypings/mscc.d.ts" />
 
 import * as React from "react";
 import * as data from "./data";
 import * as sui from "./sui";
-import * as electron from "./electron";
 
 import Cloud = pxt.Cloud;
 
@@ -99,12 +97,7 @@ export class NotificationBanner extends data.Component<ISettingsProps, {}> {
         this.state = {
         }
 
-        this.handleBannerClick = this.handleBannerClick.bind(this);
         this.clearExperiments = this.clearExperiments.bind(this);
-    }
-
-    handleBannerClick() {
-        pxt.tickEvent("banner.linkClicked", undefined, { interactiveConsent: true });
     }
 
     clearExperiments() {
@@ -113,24 +106,33 @@ export class NotificationBanner extends data.Component<ISettingsProps, {}> {
         this.props.parent.reloadEditor();
     }
 
-    renderCore() {
-        if (pxt.analytics.isCookieBannerVisible()) {
-            // don't show any banner while cookie banner is up
-            return <div></div>;
-        }
+    handleBannerClick() {
+        pxt.tickEvent("winApp.banner", undefined);
+        window.open("/windows-app", '_blank')
+    }
 
+    renderCore() {
         const targetTheme = pxt.appTarget.appTheme;
         const isApp = pxt.winrt.isWinRT() || pxt.BrowserUtils.isElectron();
         const isLocalServe = location.hostname === "localhost";
         const isExperimentalUrlPath = location.pathname !== "/"
             && (targetTheme.appPathNames || []).indexOf(location.pathname) === -1;
         const showExperimentalBanner = !isLocalServe && isApp && isExperimentalUrlPath;
-        const isWindows10 = pxt.BrowserUtils.isWindows10();
-        const targetConfig = this.getData("target-config:") as pxt.TargetConfig;
         const showExperiments = pxt.editor.experiments.someEnabled() && !/experiments=1/.test(window.location.href);
-        const showWindowsStoreBanner = isWindows10 && Cloud.isOnline() && targetConfig && targetConfig.windowsStoreLink
-            && !isApp
-            && !pxt.shell.isSandboxMode();
+        const showWinAppBanner = pxt.appTarget.appTheme.showWinAppDeprBanner && pxt.BrowserUtils.isWinRT();
+
+        const errMsg = lf("This app is being deprecated. Please use the website instead.");
+
+        if (showWinAppBanner) {
+            return <GenericBanner id="winAppBanner" parent={this.props.parent} bannerType={"negative"}>
+                <sui.Icon icon="warning circle" />
+                <div className="header">
+                    {errMsg}
+                </div>
+                <sui.Link className="link" ariaLabel={lf("More info")} onClick={this.handleBannerClick}>{lf("More info")}</sui.Link>
+
+            </GenericBanner>
+        }
 
         if (showExperiments) {
             const displayTime = 20 * 1000; // 20 seconds
@@ -148,22 +150,6 @@ export class NotificationBanner extends data.Component<ISettingsProps, {}> {
                     <sui.Icon icon="warning circle" />
                     <div className="header">{lf("You are viewing an experimental version of the editor")}</div>
                     <sui.Link className="link" ariaLabel={lf("Go back to live editor")} href={liveUrl}>{lf("Take me back")}</sui.Link>
-                </GenericBanner>
-            );
-        }
-
-        if (showWindowsStoreBanner) {
-            const delayTime = 300 * 1000; // 5 minutes
-            const displayTime = 20 * 1000; // 20 seconds
-            const sleepTime = 24 * 7 * 3600; // 1 week
-            return (
-                <GenericBanner id="uwp" parent={this.props.parent} delayTime={delayTime} displayTime={displayTime} sleepTime={sleepTime}>
-                    <sui.Link className="link" target="_blank" ariaLabel={lf("View app in the Windows store")} href={targetConfig.windowsStoreLink} onClick={this.handleBannerClick}>
-                        <img className="bannerIcon" src={pxt.Util.pathJoin(pxt.webConfig.commitCdnUrl, `images/windowsstorebag.png`)} alt={lf("Windows store logo")}></img>
-                    </sui.Link>
-                    <sui.Link className="link" target="_blank" ariaLabel={lf("View app in the Windows store")} href={targetConfig.windowsStoreLink} onClick={this.handleBannerClick}>
-                        {lf("Want a faster download? Get the app!")}
-                    </sui.Link>
                 </GenericBanner>
             );
         }

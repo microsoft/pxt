@@ -25,10 +25,6 @@ From more information on theming, visit [http://semantic-ui.com/usage/theming.ht
 
 Use [realfavicongenerator](http://realfavicongenerator.net/) to generate all the relevant favicon icon files and save them under ``static/icons`` in the ``docs`` folder.
 
-## The cookie consent banner
-
-PXT injects a banner into each page to notify users that this website uses cookies. This banner is present on all pages including the editor, the docs, and makecode.com. If required, you can remove the banner by overriding `docfiles/tracking.html` in a target and removing the call to `pxt.initAnalytics()` (doing so will also disable Applicaiton Insights). Previously this was configured in [pxtarget.json](/targets/pxtarget).
-
 ## AppTheme
 
 [pxtarget.json](/targets/pxtarget) contains an extensive customization section (appTheme) to control logos, names, colors, etc.  Details are below (TBD):

@@ -17,7 +17,7 @@ namespace pxtblockly {
         private tempo: number = 120;
         private stringRep: string;
         private isPlaying: boolean = false;
-        private timeouts: number[] = []; // keep track of timeouts
+        private timeouts: any[] = []; // keep track of timeouts
         private invalidString: string;
         private prevString: string;
 
@@ -310,11 +310,19 @@ namespace pxtblockly {
         }
 
         protected getDropdownBackgroundColour() {
-            return this.sourceBlock_.parentBlock_.getColour();
+            if (this.sourceBlock_.parentBlock_) {
+                return this.sourceBlock_.parentBlock_.getColour();
+            } else {
+                return "#3D3D3D";
+            }
         }
 
         protected getDropdownBorderColour() {
-            return (this.sourceBlock_.parentBlock_ as Blockly.BlockSvg).getColourTertiary();
+            if (this.sourceBlock_.parentBlock_) {
+                return (this.sourceBlock_.parentBlock_ as Blockly.BlockSvg).getColourTertiary();
+            } else {
+                return "#2A2A2A";
+            }
         }
 
         private updateFieldLabel(): void {

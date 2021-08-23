@@ -3,6 +3,7 @@
 /// <reference path="commonutil.ts"/>
 
 namespace pxt.docs {
+    // eslint-disable-next-line no-var
     declare var require: any;
     import U = pxtc.Util;
 
@@ -26,7 +27,10 @@ namespace pxt.docs {
         "hideIteration": "<!-- iter -->",
         "codeStart": "<!-- start -->",
         "codeStop": "<!-- stop -->",
-        "autoOpen": "<!-- autoOpen -->"
+        "autoOpen": "<!-- autoOpen -->",
+        "autoexpandOff": "<!-- autoexpandOff -->",
+        "preferredEditor": "<!-- preferredEditor -->",
+        "tutorialCodeValidation": "<!-- tutorialCodeValidation -->"
     }
 
     function replaceAll(replIn: string, x: string, y: string) {
@@ -293,10 +297,20 @@ namespace pxt.docs {
             params["drivename"] = html2Quote(theme.driveDisplayName);
         if (theme.homeUrl)
             params["homeurl"] = html2Quote(theme.homeUrl);
+
+
         params["targetid"] = theme.id || "???";
         params["targetname"] = theme.name || "Microsoft MakeCode";
         params["docsheader"] = theme.docsHeader || "Documentation";
-        params["targetlogo"] = theme.docsLogo ? `<img aria-hidden="true" role="presentation" class="ui ${theme.logoWide ? "small" : "mini"} image" src="${theme.docsLogo}" />` : ""
+        params["orgtitle"] = "MakeCode";
+
+        const docsLogo = theme.docsLogo && U.htmlEscape(theme.docsLogo);
+        const orgLogo = (theme.organizationWideLogo || theme.organizationLogo) && U.htmlEscape(theme.organizationWideLogo || theme.organizationLogo);
+        const orglogomobile = theme.organizationLogo && U.htmlEscape(theme.organizationLogo)
+        params["targetlogo"] = docsLogo ? `<img aria-hidden="true" role="presentation" class="ui ${theme.logoWide ? "small" : "mini"} image" src="${docsLogo}" />` : ""
+        params["orglogo"] = orgLogo ? `<img aria-hidden="true" role="presentation" class="ui image" src="${orgLogo}" />` : ""
+        params["orglogomobile"] = orglogomobile ? `<img aria-hidden="true" role="presentation" class="ui image" src="${orglogomobile}" />` : ""
+
         let ghURLs = d.ghEditURLs || []
         if (ghURLs.length) {
             let ghText = `<p style="margin-top:1em">\n`
@@ -369,6 +383,8 @@ namespace pxt.docs {
             "printBtn",
             "breadcrumb",
             "targetlogo",
+            "orglogo",
+            "orglogomobile",
             "github",
             "JSON",
             "appstoremeta",
@@ -426,7 +442,7 @@ namespace pxt.docs {
             }
             // remove tutorial macros
             if (text)
-                text = text.replace(/@(fullscreen|unplugged)/g, '');
+                text = text.replace(/@(fullscreen|unplugged|showdialog|showhint)/gi, '');
             return `<h${level} id="${(this as any).options.headerPrefix}${id}">${text}</h${level}>`
         }
     }

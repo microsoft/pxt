@@ -67,7 +67,7 @@ function compareBlocksBaselines(a: string, b: string): boolean {
 }
 
 function decompileTestAsync(filename: string) {
-    return new Promise((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
         const basename = path.basename(filename);
         const baselineFile = path.join(baselineDir, util.replaceFileExtension(basename, ".blocks"))
 
@@ -104,11 +104,11 @@ function decompileTestAsync(filename: string) {
 
 function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
     const tsMain = fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
-    return util.getTestCompileOptsAsync({ "main.ts": tsMain }, [dependency], true)
+    return util.getTestCompileOptsAsync({ [pxt.MAIN_TS]: tsMain }, [dependency], true)
         .then(opts => {
-            const decompiled = pxtc.decompile(pxtc.getTSProgram(opts), opts, "main.ts", true);
+            const decompiled = pxtc.decompile(pxtc.getTSProgram(opts), opts, pxt.MAIN_TS, true);
             if (decompiled.success) {
-                return decompiled.outfiles["main.blocks"];
+                return decompiled.outfiles[pxt.MAIN_BLOCKS];
             }
             else {
                 return Promise.reject(new Error("Could not decompile " + f + JSON.stringify(decompiled.diagnostics, null, 4)));

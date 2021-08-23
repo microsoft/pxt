@@ -153,6 +153,8 @@ declare namespace pxsim {
 
     export interface SimulatorMessage {
         type: string;
+        // who created this message
+        source?: string;
     }
 
     // type=debugger

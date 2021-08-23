@@ -1,11 +1,7 @@
 namespace pxt.editor {
     export interface DataStreams<T> {
         console?: T;
-    }
-
-    export interface Permissions<T> {
-        console?: T;
-        readUserCode?: T;
+        messages?: T;
     }
 
     export interface ExtensionFiles {
@@ -15,10 +11,8 @@ namespace pxt.editor {
         asm?: string;
     }
 
-    export enum PermissionResponses {
-        Granted,
-        Denied,
-        NotAvailable
+    export interface WriteExtensionFiles extends ExtensionFiles {
+        dependencies?: pxt.Map<string>;
     }
 
     export interface ExtensionMessage extends EditorMessage {
@@ -82,6 +76,18 @@ namespace pxt.editor {
     }
 
     /**
+     * Event fired when a message packet is received
+     */
+    export interface MessagePacketEvent extends ExtensionEvent {
+        event: "extmessagepacket";
+        body: {
+            source?: string;
+            channel: string;
+            data: Uint8Array;
+        }
+    }
+
+    /**
      * Event fired when extension is first shown. Extension
      * should send init request in response
      */
@@ -108,34 +114,7 @@ namespace pxt.editor {
     }
 
     export interface DataStreamResponse extends ExtensionResponse {
-        resp: DataStreams<PermissionResponses>;
-    }
-
-    /**
-     * Queries the current permissions granted to the extension.
-     */
-    export type ExtQueryPermissionType = "extquerypermission";
-
-    export interface QueryPermissionRequest extends ExtensionRequest {
-        action: ExtQueryPermissionType;
-    }
-
-    export interface QueryPermissionResponse extends ExtensionResponse {
-        resp: Permissions<PermissionResponses>;
-    }
-
-    /**
-     * Prompts the user for the specified permission
-     */
-    export type ExtRequestPermissionType = "extrequestpermission";
-
-    export interface PermissionRequest extends ExtensionRequest {
-        action: ExtRequestPermissionType;
-        body: Permissions<boolean>;
-    }
-
-    export interface PermissionResponse extends ExtensionResponse {
-        resp: Permissions<PermissionResponses>;
+        resp: DataStreams<boolean>;
     }
 
     /**
@@ -177,7 +156,7 @@ namespace pxt.editor {
     export interface WriteCodeRequest extends ExtensionRequest {
         action: ExtWriteCodeType;
 
-        body?: ExtensionFiles;
+        body?: WriteExtensionFiles;
     }
 
     export interface WriteCodeResponse extends ExtensionResponse {
