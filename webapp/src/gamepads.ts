@@ -110,7 +110,7 @@ export class ControllerState {
 
         if (state.connected) {
             for (let i = 0; i < GamepadButton.COUNT; ++i) {
-                this.buttons[i] = state.buttons[i].value ? true : false;
+                this.buttons[i] = state.buttons[i]?.value ? true : false;
             }
             this.triggers[ControllerTrigger.Left] = state.buttons[ControllerButton.LeftTrigger].value;
             this.triggers[ControllerTrigger.Right] = state.buttons[ControllerButton.RightTrigger].value;
@@ -351,17 +351,19 @@ function gamepadUpdate() {
 
 function handleGamepad(gamepad: Gamepad) {
     if (!allControllers[gamepad.index]) {
-        initController(gamepad);
+        if (!initController(gamepad)) { return; }
     }
     allControllers[gamepad.index].update(gamepad);
 }
 
-function initController(gamepad: Gamepad) {
+function initController(gamepad: Gamepad): boolean {
+    if (!gamepad.id.includes("XInput")) return false;
     const controller = allControllers[gamepad.index] = new Controller(gamepad);
     controller.onButtonPressed((player, button) => notifyButtonPressed(player, button));
     controller.onButtonReleased((player, button) => notifyButtonReleased(player, button));
     controller.onStickChanged((player, stick, value) => notifyStickChanged(player, stick, value));
     controller.onTriggerChanged((player, trigger, value) => notifyTriggerChanged(player, trigger, value));
+    return true;
 }
 
 /**

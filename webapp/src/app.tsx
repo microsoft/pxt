@@ -214,9 +214,9 @@ export class ProjectView
             });
         });
         window.addEventListener('blur', () => {
-            this.setState({
-                gamepadEnabled: false
-            });
+            //this.setState({
+            //    gamepadEnabled: false
+            //});
         });
     }
 
@@ -4419,36 +4419,6 @@ export class ProjectView
                     {!(isSidebarTutorial && flyoutOnly) && inTutorial && <tutorial.TutorialCard ref={ProjectView.tutorialCardId} parent={this} pokeUser={this.state.pokeUserComponent == ProjectView.tutorialCardId} />}
                     {flyoutOnly && <tutorial.WorkspaceHeader parent={this} />}
                 </div>}
-/*
-                <div id="simulator" className="simulator">
-                    <div id="filelist" className="ui items">
-                        <GamepadFocusBadge
-                            marginFix="-1em -2em"
-                            zIndex={1000}
-                            opacity={(this.state.gamepadEnabled ? 1.0 : 0.5)}
-                            visible={this.shouldReadGamepads(pxt.editor.GamepadFocus.Simulator)} />
-                        <div id="boardview" className={`ui vertical editorFloat`} role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0}>
-                        </div>
-                        <simtoolbar.SimulatorToolbar
-                            parent={this}
-                            collapsed={this.state.collapseEditorTools}
-                            simSerialActive={this.state.simSerialActive}
-                            devSerialActive={this.state.deviceSerialActive}
-                        />
-                        {this.state.keymap && simOpts.keymap && <keymap.Keymap parent={this} />}
-                        <div className="ui item portrait hide hidefullscreen">
-                            {pxt.options.debug ? <sui.Button key='hwdebugbtn' className='teal' icon="xicon chip" text={"Dev Debug"} onClick={this.hwDebug} /> : ''}
-                        </div>
-                        {useSerialEditor ?
-                            <div id="serialPreview" className="ui editorFloat portrait hide hidefullscreen">
-                                <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={this.openSimSerial} parent={this} />
-                                <serialindicator.SerialIndicator ref="devIndicator" isSim={false} onClick={this.openDeviceSerial} parent={this} />
-                            </div> : undefined}
-                        {showFileList ? <filelist.FileList parent={this} /> : undefined}
-                        {!isHeadless && <div id="filelistOverlay" role="button" title={lf("Open in fullscreen")} onClick={this.toggleSimulatorFullscreen}></div>}
-                    </div>
-                </div>
-*/
                 <sidepanel.Sidepanel parent={this} inHome={inHome}
                     showKeymap={this.state.keymap && simOpts.keymap}
                     showSerialButtons={useSerialEditor}
@@ -4463,6 +4433,9 @@ export class ProjectView
                     openSerial={this.openSerial}
                     handleHardwareDebugClick={this.hwDebug}
                     handleFullscreenButtonClick={this.toggleSimulatorFullscreen}
+
+                    gamepadEnabled={this.state.gamepadEnabled}
+                    gamepadVisible={this.shouldReadGamepads(pxt.editor.GamepadFocus.Simulator)}
 
                     tutorialOptions={isVerticalTutorial ? tutorialOptions : undefined}
                     onTutorialStepChange={this.setTutorialStep} />

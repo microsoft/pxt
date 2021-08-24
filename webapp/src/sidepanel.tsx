@@ -12,6 +12,7 @@ import * as simtoolbar from "./simtoolbar";
 import { TabContent } from "./components/core/TabContent";
 import { TabPane } from "./components/core/TabPane";
 import { TutorialContainer } from "./components/tutorial/TutorialContainer";
+import { GamepadFocusBadge } from "./gamepadFocusBadge";
 
 interface SidepanelState {
     activeTab?: string;
@@ -36,6 +37,9 @@ interface SidepanelProps extends pxt.editor.ISettingsProps {
     openSerial: (isSim: boolean) => void;
     handleHardwareDebugClick: () => void;
     handleFullscreenButtonClick: () => void;
+
+    gamepadEnabled: boolean;
+    gamepadVisible: boolean;
 }
 
 const TUTORIAL_TAB = "tab-tutorial";
@@ -104,6 +108,11 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
             handleHardwareDebugClick, onTutorialStepChange } = this.props;
 
         return <div id="simulator" className="simulator">
+            <GamepadFocusBadge
+                marginFix="0 0"
+                zIndex={1000}
+                opacity={(this.props.gamepadEnabled ? 1.0 : 0.5)}
+                visible={this.props.gamepadVisible} />
             <TabPane id="editorSidebar" activeTabName={this.state.activeTab}>
                 <TabContent name={SIMULATOR_TAB} icon="game" onSelected={this.showSimulatorTab}>
                     <div className="ui items simPanel" ref={this.handleSimPanelRef}>
