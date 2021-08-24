@@ -4958,10 +4958,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         await auth.loginCallbackAsync(query);
     }
 
-    // Disable auth in skillmap, for now
-    if (pxt.BrowserUtils.isSkillmapEditor())
-        pxt.auth.enableAuth(false);
-
     await auth.initAsync();
     cloud.init(); // depends on auth.init() and workspace.ts's top level
     cloudsync.loginCheck()
