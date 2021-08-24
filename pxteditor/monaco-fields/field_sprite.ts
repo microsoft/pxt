@@ -72,9 +72,6 @@ namespace pxt.editor {
         }
     }
 
-
-    //
-
     export const spriteEditorDefinition: MonacoFieldEditorDefinition = {
         id: fieldEditorId,
         foldMatches: true,
