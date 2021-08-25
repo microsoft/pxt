@@ -16,6 +16,7 @@ namespace pxtblockly {
         private endFrequency: number = 440;
         private wave: HTMLDivElement;
         private waveType: string = "square";
+        private waveButtons:any;
         private interpolationType: string = "linear";
         private start: HTMLDivElement;
         private end: HTMLDivElement;
@@ -93,7 +94,8 @@ namespace pxtblockly {
                 const innerButton = mkElement("div", {
                     className: "melody-gallery-button melody-editor-card",
                     role: "menuitem",
-                    id: `:${samples[i].name}`
+                    id: samples[i].name,
+                    name: samples[i].type
                 } );
         
                 const label = mkElement("div", {
@@ -106,22 +108,31 @@ namespace pxtblockly {
     
     
                 outer.appendChild(innerButton);
-                innerButton.addEventListener("click", () =>{  this.updateParameters(samples[i]) ;} );
+                innerButton.addEventListener("click", () =>{  this.updateParameters(samples[i], innerButton);  /*this.waveButtons.style.setProperty("background-color", "green")*/} );
             }
         
             return outer;
         }
 
-     updateParameters(sample: any){
+     updateParameters(sample: any, innerButton: HTMLElement){
         console.log("updating parameters!" + sample.name);
         switch(sample.type){
             case "wave":
                this.waveType = sample.name;
+               document.getElementById("sine").style.setProperty("background-color", "#dcdcdc");
+               document.getElementById("square").style.setProperty("background-color", "#dcdcdc");
+               document.getElementById("triangle").style.setProperty("background-color", "#dcdcdc");
+               document.getElementById("sawtooth").style.setProperty("background-color", "#dcdcdc");
+               innerButton.style.setProperty("background-color", "#c1c1c1");
                 console.log(this.waveType);
                 return;
             case "interpolation":
                this.interpolationType = sample.name;
+               document.getElementById("linear").style.setProperty("background-color", "#dcdcdc");
+               document.getElementById("curve").style.setProperty("background-color", "#dcdcdc");
+               document.getElementById("vibrato").style.setProperty("background-color", "#dcdcdc");
                 console.log(this.interpolationType);
+                innerButton.style.setProperty("background-color", "#c1c1c1");
                 return;
         }
            
@@ -247,8 +258,8 @@ namespace pxtblockly {
             this.wave.innerText = lf("Wave shape: ");
             this.parameters.appendChild(this.wave);
             
-            const waveButtons = this.mkWaveButtons(pxtmelody.SampleWaves);
-            this.parameters.appendChild(waveButtons);
+            this.waveButtons = this.mkWaveButtons(pxtmelody.SampleWaves);
+            this.parameters.appendChild(this.waveButtons);
 
 
             this.interpolation = document.createElement("div");

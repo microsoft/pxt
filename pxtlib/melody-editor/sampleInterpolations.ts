@@ -11,8 +11,8 @@ namespace pxtmelody {
     }
 
     export const SampleInterpolations = [
-        new InterpolationInfo(lf("Linear"), "interpolation"),
-        new InterpolationInfo(lf("Curve"), "interpolation"),
-        new InterpolationInfo(lf("Vibrato"), "interpolation")
+        new InterpolationInfo(lf("linear"), "interpolation"),
+        new InterpolationInfo(lf("curve"), "interpolation"),
+        new InterpolationInfo(lf("vibrato"), "interpolation")
     ]
 }
