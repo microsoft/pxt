@@ -81,10 +81,10 @@ namespace pxt.AudioContextManager {
         }
     }
 
-    export function sound(frequency: number, wave: any, volume: number) {
+    export function sound(startFrequency: number, endFrequency: number, duration: number, wave: any, volume: number) {
         if (_mute) return;
-        if (frequency < 0) return;
-        _frequency = frequency;
+        if (startFrequency < 0) return;
+        _frequency = startFrequency;
 
         let ctx = context() as AudioContext;
         if (!ctx) return;
@@ -102,8 +102,34 @@ namespace pxt.AudioContextManager {
                 _vco.start(0);
 
             }
-            _vco.frequency.linearRampToValueAtTime(frequency, _context.currentTime);
-            _gain.gain.setTargetAtTime(volume, _context.currentTime, 0.015);
+
+            let divisor = 100;
+            let timeDivision = 
+
+
+
+
+             for(let i = 1; i < 100; i++) {
+                setTimeout(()=>{
+                    _vco.frequency.linearRampToValueAtTime(startFrequency+i, _context.currentTime);
+                    _gain.gain.setTargetAtTime(volume, _context.currentTime, 0.015);
+                   console.log(i);
+                },i *10);
+             }
+
+            /*
+            setTimeout(() => {
+                _vco.frequency.linearRampToValueAtTime(frequency , _context.currentTime);
+                _gain.gain.setTargetAtTime(volume, _context.currentTime, 0.015);
+            }, 0);
+
+           setTimeout(() => {
+                _vco.frequency.linearRampToValueAtTime(0 , _context.currentTime);
+            }, 150 );
+
+
+*/
+            
 
         } catch (e) {
             _vco = undefined;
