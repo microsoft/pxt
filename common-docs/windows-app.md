@@ -2,7 +2,7 @@
 
 Some MakeCode editors also have an associated Windows app which contains
 most of the same features of the online, web-based version. The app is
-is an alternative to web version for offline and portability purposes.
+is an alternative to the web version for offline and portability purposes.
 
 ## #deprecate-note
 
