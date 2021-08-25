@@ -1,3 +1,5 @@
+@defaultTutorialHeight: 18rem;
+
 /*******************************
         Tutorial Tab
 *******************************/
@@ -15,6 +17,11 @@
     display: flex;
     flex-direction: column;
     height: 100%;
+
+    .ui.button {
+        margin: 0;
+        box-shadow: none;
+    }
 }
 
 .tutorial-content {
@@ -30,6 +37,40 @@
 }
 
 /*******************************
+       Tutorial Top Buttons
+*******************************/
+
+.tutorial-top-bar {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 1rem 0;
+}
+
+/*******************************
+         Step Counter
+*******************************/
+
+.tutorial-step-counter {
+    flex: 1;
+    margin-right: 0.5rem;
+}
+
+.tutorial-step-bar {
+    height: 1rem;
+    overflow: hidden;
+    border-radius: 1rem;
+    background-color: @blue;
+    cursor: pointer;
+}
+
+.tutorial-step-bar-fill {
+    background-color: @teal;
+    height: 100%;
+    transition: width 0.5s ease-out;
+    pointer-events: none;
+}
+
+/*******************************
         Tutorial Controls
 *******************************/
 
@@ -42,7 +83,6 @@
         margin: 0 0.4rem;
         color: @blue;
         background: @teal;
-        box-shadow: none;
         font-size: 1.2rem;
         white-space: nowrap;
         overflow: hidden;
@@ -97,40 +137,6 @@
 }
 
 /*******************************
-       Tutorial Top Buttons
-*******************************/
-
-.tutorial-top-bar {
-    display: flex;
-    align-items: center;
-    padding: 0.5rem 1rem 0;
-}
-
-/*******************************
-         Step Counter
-*******************************/
-
-.tutorial-step-counter {
-    flex: 1;
-    margin-right: 0.5rem;
-}
-
-.tutorial-step-bar {
-    height: 1rem;
-    overflow: hidden;
-    border-radius: 1rem;
-    background-color: @blue;
-    cursor: pointer;
-}
-
-.tutorial-step-bar-fill {
-    background-color: @teal;
-    height: 100%;
-    transition: width 0.5s ease-out;
-    pointer-events: none;
-}
-
-/*******************************
         Simulator Tab
 *******************************/
 
@@ -171,5 +177,96 @@
 @media only screen and (min-width: @computerBreakpoint) and (max-width: @largestSmallMonitor) {
     .tutorialhint {
         left: 2rem;
+    }
+}
+
+/* <= Tablet (Mobile + Tablet) */
+@media only screen and (max-width: @largestTabletScreen) {
+    .tutorialVertical #maineditor > .full-abs {
+        top: @defaultTutorialHeight;
+    }
+
+    .tutorialVertical #editorSidebar {
+        top: @mobileMenuHeight;
+        height: @defaultTutorialHeight;
+        width: 100%;
+        border-right: 0;
+        border-bottom: 2px solid darken(desaturate(@blocklyToolboxColor, 60%), 10%);
+    }
+
+    .tab-tutorial.tab-content {
+        padding-top: 0;
+    }
+
+    .tutorial-container {
+        flex-direction: row;
+    }
+
+    .tutorial-content {
+        margin: 0;
+        padding: 1rem;
+    }
+
+    /*******************************
+        Tutorial Top Buttons
+    *******************************/
+
+    .tutorial-top-bar {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 14rem;
+        flex-direction: row-reverse;
+        padding: 0.2rem 1rem;
+    }
+
+    #editorSidebar .immersive-reader-button.ui.item,
+    #editorSidebar .immersive-reader-button.ui.item:focus{
+        background-image: @immersiveReaderLightIcon;
+    }
+
+    /*******************************
+            Step Counter
+    *******************************/
+
+    .tutorial-step-counter {
+        margin-left: 1rem;
+        margin-right: 0;
+        color: @white;
+    }
+
+    .tutorial-step-bar {
+        background-color: @white;
+    }
+
+    .tutorial-step-bar-fill {
+        background-color: @blue;
+    }
+
+    /*******************************
+            Tutorial Controls
+    *******************************/
+
+    .tutorial-container {
+        .ui.button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 4rem;
+            color: @teal;
+            background: @white;
+            box-shadow: none;
+            border-radius: 0;
+
+            > .arrow {
+                margin-bottom: 0.5rem!important;
+                font-size: 2rem;
+            }
+
+            > .text {
+                margin: 0 !important;
+            }
+        }
     }
 }

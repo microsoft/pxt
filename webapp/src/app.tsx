@@ -4298,8 +4298,6 @@ export class ProjectView
         const selectLanguage = targetTheme.selectLanguage;
         const showEditorToolbar = inEditor && !hideEditorToolbar && this.editor.hasEditorToolbar();
         const useSerialEditor = pxt.appTarget.serial && !!pxt.appTarget.serial.useEditor;
-        // Check to see if we should show the mini simulator (<= tablet size)
-        const showMiniSim = this.state.showMiniSim || window?.innerWidth <= pxt.BREAKPOINT_TABLET;
 
         const showSideDoc = sideDocs && this.state.sideDocsLoadUrl && !this.state.sideDocsCollapsed;
         const showCollapseButton = showEditorToolbar && !inHome && !sandbox && !targetTheme.simCollapseInMenu && (!isHeadless || inDebugMode) && !isVerticalTutorial;
@@ -4323,13 +4321,14 @@ export class ProjectView
             transparentEditorToolbar ? "transparentEditorTools" : '',
             invertedTheme ? 'inverted-theme' : '',
             this.state.fullscreen ? 'fullscreensim' : '',
-            showMiniSim ? 'miniSim' : '',
+            this.state.showMiniSim ? 'miniSim' : '',
             hc ? 'hc' : '',
             showSideDoc ? 'sideDocs' : '',
             pxt.shell.layoutTypeClass(),
             inHome ? 'inHome' : '',
             inTutorial && !isVerticalTutorial ? 'tutorial' : '',
             inTutorialExpanded && !isVerticalTutorial ? 'tutorialExpanded' : '',
+            isVerticalTutorial ? 'tutorialVertical' : '',
             isSidebarTutorial ? 'sidebarTutorial' : '',
             inDebugMode ? 'debugger' : '',
             pxt.options.light ? 'light' : '',
