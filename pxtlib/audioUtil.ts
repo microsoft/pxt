@@ -81,7 +81,7 @@ namespace pxt.AudioContextManager {
         }
     }
 
-    export function sound(frequency: number, wave: any) {
+    export function sound(frequency: number, wave: any, volume: number) {
         if (_mute) return;
         if (frequency < 0) return;
         _frequency = frequency;
@@ -102,8 +102,8 @@ namespace pxt.AudioContextManager {
                 _vco.start(0);
 
             }
-            _vco.frequency.linearRampToValueAtTime(frequency, _context.currentTime)
-            _gain.gain.setTargetAtTime(.2, _context.currentTime, 0.015);
+            _vco.frequency.linearRampToValueAtTime(frequency, _context.currentTime);
+            _gain.gain.setTargetAtTime(volume, _context.currentTime, 0.015);
 
         } catch (e) {
             _vco = undefined;

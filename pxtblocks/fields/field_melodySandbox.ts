@@ -12,6 +12,7 @@ namespace pxtblockly {
         protected params: U;
         private melody: pxtmelody.MelodyArray;
         private duration: number = 1500;
+        private volume: number = 0.2;
         private startFrequency: number = 440;
         private endFrequency: number = 440;
         private wave: HTMLDivElement;
@@ -31,6 +32,8 @@ namespace pxtblockly {
         private topDiv: HTMLDivElement;
         private editorDiv: HTMLDivElement;
         private parameters: HTMLDivElement;
+        private volumeText: HTMLDivElement;
+        private volumeInput: HTMLInputElement;
         private bottomDiv: HTMLDivElement; 
         private doneButton: HTMLButtonElement;
         private playButton: HTMLButtonElement;
@@ -109,8 +112,10 @@ namespace pxtblockly {
     
                 outer.appendChild(innerButton);
                 innerButton.addEventListener("click", () =>{  this.updateParameters(samples[i], innerButton);  /*this.waveButtons.style.setProperty("background-color", "green")*/} );
+                
             }
-        
+            
+
             return outer;
         }
 
@@ -221,6 +226,20 @@ namespace pxtblockly {
             this.parameters = document.createElement("div");
             pxt.BrowserUtils.addClass(this.topDiv, "melody-top-bar-div")
             this.parameters.style.setProperty("background-color", secondaryColor);
+
+            // Add volume input 
+            this.volumeText = document.createElement("p");
+            this.volumeText.innerText = lf("Volume:  ");
+
+            this.volumeInput = document.createElement("input");
+            pxt.BrowserUtils.addClass(this.volumeInput, "ui input");
+            this.volumeInput.type = "number";
+            this.volumeInput.title = lf("Volume");
+            this.volumeInput.id = "melody-tempo-input-start-frequency";
+            this.volumeInput.addEventListener("input", () => this.setVolume(+this.volumeInput.value));
+           
+            this.parameters.appendChild(this.volumeText);
+            this.volumeText.appendChild(this.volumeInput);
 
 
             // Add start and end frequency inputs 
@@ -467,6 +486,11 @@ namespace pxtblockly {
             console.log("set end frequency to " + this.startFrequency);
         }
 
+        private setVolume(volume:number):void{
+            this.volume = volume;
+            console.log("set end volume to " + this.volume);
+        }
+
         private setEndFrequency(frequency:number):void{
             this.startFrequency = frequency;
             console.log("set end frequency to " + this.endFrequency);
@@ -527,7 +551,7 @@ namespace pxtblockly {
 
         private playNote(): void {
             if (this.isPlaying) {
-                pxt.AudioContextManager.sound(this.startFrequency, this.waveType);
+                pxt.AudioContextManager.sound(this.startFrequency, this.waveType, this.volume);
                 console.log('playing sound' + this.waveType);
 
                 /*this.timeouts.push(setTimeout(() => {
