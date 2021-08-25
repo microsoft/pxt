@@ -11,15 +11,10 @@ namespace pxtblockly {
 
         protected params: U;
         private melody: pxtmelody.MelodyArray;
-        private duration: number = 1500;
-        private startFrequency: number = 440;
-        private endFrequency: number = 440;
-        private wave: HTMLDivElement;
-        private waveType: string = "square";
-        private interpolationType: string = "linear";
-        private start: HTMLDivElement;
-        private end: HTMLDivElement;
-        private interpolation: HTMLDivElement;
+        private soundingKeys: number = 0;
+        private numRow: number = 8;
+        private numCol: number = 8;
+        private tempo: number = 120;
         private stringRep: string;
         private isPlaying: boolean = false;
         private timeouts: any[] = []; // keep track of timeouts
@@ -29,14 +24,30 @@ namespace pxtblockly {
         // DOM references
         private topDiv: HTMLDivElement;
         private editorDiv: HTMLDivElement;
-        private parameters: HTMLDivElement;
-        private bottomDiv: HTMLDivElement; 
+        private gridDiv: SVGSVGElement;
+        private bottomDiv: HTMLDivElement;
         private doneButton: HTMLButtonElement;
         private playButton: HTMLButtonElement;
         private playIcon: HTMLElement;
-        private durationInput: HTMLInputElement;
-        private startFrequencyInput: HTMLInputElement;
-        private endFrequencyInput: HTMLInputElement;
+        private tempoInput: HTMLInputElement;
+
+        // grid elements
+        private static CELL_WIDTH = 25;
+        private static CELL_HORIZONTAL_MARGIN = 7;
+        private static CELL_VERTICAL_MARGIN = 5;
+        private static CELL_CORNER_RADIUS = 5;
+        private elt: SVGSVGElement;
+        private cells: SVGRectElement[][];
+        private static VIEWBOX_WIDTH: number;
+        private static VIEWBOX_HEIGHT: number;
+
+        // preview field elements
+        private static COLOR_BLOCK_WIDTH = 10;
+        private static COLOR_BLOCK_HEIGHT = 20;
+        private static COLOR_BLOCK_X = 20;
+        private static COLOR_BLOCK_Y = 5;
+        private static COLOR_BLOCK_SPACING = 2;
+        private static MUSIC_ICON_WIDTH = 20;
 
         // Use toggle from sprite editor
         private toggle: Toggle;
@@ -69,7 +80,7 @@ namespace pxtblockly {
 
             this.prevString = this.getValue();
 
-            // The webapp listens to this event and stops the simulator so that you don't get a sound
+            // The webapp listens to this event and stops the simulator so that you don't get the melody
             // playing twice (once in the editor and once when the code runs in the sim)
             Blockly.Events.fire(new Blockly.Events.Ui(this.sourceBlock_, "melody-editor", false, true))
 
@@ -82,51 +93,6 @@ namespace pxtblockly {
                 Blockly.Events.fire(new Blockly.Events.Ui(this.sourceBlock_, "melody-editor", true, false))
             });
         }
-
-        mkWaveButtons(samples: any){
-            console.log("made button ");
-            const outer = mkElement("div", {
-               className: "melody-gallery-button melody-editor-card",
-                id: "waveButtons"
-            });
-            for(let i = 0; i < samples.length; i++){
-                const innerButton = mkElement("div", {
-                    className: "melody-gallery-button melody-editor-card",
-                    role: "menuitem",
-                    id: `:${samples[i].name}`
-                } );
-        
-                const label = mkElement("div", {
-                    className: "melody-editor-text"
-                });
-        
-                label.innerText = samples[i].name;
-    
-                innerButton.appendChild(label);
-    
-    
-                outer.appendChild(innerButton);
-                innerButton.addEventListener("click", () =>{  this.updateParameters(samples[i]) ;} );
-            }
-        
-            return outer;
-        }
-
-     updateParameters(sample: any){
-        console.log("updating parameters!" + sample.name);
-        switch(sample.type){
-            case "wave":
-               this.waveType = sample.name;
-                console.log(this.waveType);
-                return;
-            case "interpolation":
-               this.interpolationType = sample.name;
-                console.log(this.interpolationType);
-                return;
-        }
-           
-    }
-
 
         getValue() {
             this.stringRep = this.getTypeScriptValue();
@@ -169,23 +135,22 @@ namespace pxtblockly {
         render_() {
             super.render_();
             if (!this.invalidString) {
-                this.size_.width = 45;
+                this.size_.width = FieldCustomMelody.MUSIC_ICON_WIDTH + (FieldCustomMelody.COLOR_BLOCK_WIDTH + FieldCustomMelody.COLOR_BLOCK_SPACING) * this.numCol;
             }
             this.sourceBlock_.setColour("#ffffff");
         }
 
         // Render the editor that will appear in the dropdown div when the user clicks on the field
         protected renderEditor(div: HTMLDivElement) {
-            // Set colours
             let color = this.getDropdownBackgroundColour();
             let secondaryColor = this.getDropdownBorderColour();
 
             this.topDiv = document.createElement("div");
-            pxt.BrowserUtils.addClass(this.topDiv, "melody-top-bar-div");
+            pxt.BrowserUtils.addClass(this.topDiv, "melody-top-bar-div")
 
             // Same toggle set up as sprite editor
             this.root = new svg.SVG(this.topDiv).id("melody-editor-header-controls");
-            this.toggle = new Toggle(this.root, { leftText: lf("Editor"), rightText: lf("Gallery"), baseColor: color });
+            this.toggle = new Toggle(this.root, { leftText: lf("E"), rightText: lf("Gallery"), baseColor: color });
             this.toggle.onStateChange(isLeft => {
                 if (isLeft) {
                     this.hideGallery();
@@ -200,71 +165,15 @@ namespace pxtblockly {
             div.appendChild(this.topDiv);
             div.appendChild(this.gallery.getElement());
 
-            // editor div
             this.editorDiv = document.createElement("div");
             pxt.BrowserUtils.addClass(this.editorDiv, "melody-editor-div");
             this.editorDiv.style.setProperty("background-color", secondaryColor);
 
+            this.gridDiv = this.createGridDisplay();
+            this.editorDiv.appendChild(this.gridDiv);
 
-            // add parameters div to editor div
-            this.parameters = document.createElement("div");
-            pxt.BrowserUtils.addClass(this.topDiv, "melody-top-bar-div")
-            this.parameters.style.setProperty("background-color", secondaryColor);
-
-
-            // Add start and end frequency inputs 
-            this.start = document.createElement("p");
-            this.start.innerText = lf("Start frequency:  ");
-
-            this.startFrequencyInput = document.createElement("input");
-            pxt.BrowserUtils.addClass(this.startFrequencyInput, "ui input");
-            this.startFrequencyInput.type = "number";
-            this.startFrequencyInput.title = lf("Start frequency");
-            this.startFrequencyInput.id = "melody-tempo-input-start-frequency";
-            this.startFrequencyInput.addEventListener("input", () => this.setStartFrequency(+this.startFrequencyInput.value));
-           
-            
-            this.parameters.appendChild(this.start);
-            this.start.appendChild(this.startFrequencyInput);
-
-            this.end = document.createElement("p");
-            this.end.innerText = lf("End frequency:  ");
-
-            this.endFrequencyInput = document.createElement("input");
-            pxt.BrowserUtils.addClass(this.endFrequencyInput, "ui input");
-            this.endFrequencyInput.type = "number";
-            this.endFrequencyInput.title = lf("End frequency");
-            this.endFrequencyInput.id = "melody-tempo-input-end-frequency";
-            this.endFrequencyInput.addEventListener("input", () => this.setEndFrequency(+this.endFrequencyInput.value));
-        
-            
-            this.parameters.appendChild(this.end);
-            this.end.appendChild(this.endFrequencyInput);
-
-
-            // Add wave shape buttons and interpolation buttons
-            this.wave = document.createElement("div");
-            this.wave.innerText = lf("Wave shape: ");
-            this.parameters.appendChild(this.wave);
-            
-            const waveButtons = this.mkWaveButtons(pxtmelody.SampleWaves);
-            this.parameters.appendChild(waveButtons);
-
-
-            this.interpolation = document.createElement("div");
-            this.interpolation.innerText = lf("Interpolation: ");
-            this.parameters.appendChild(this.interpolation);
-
-            const interpolationButtons = this.mkWaveButtons(pxtmelody.SampleInterpolations);
-            this.parameters.appendChild(interpolationButtons);
-
-           
-            
-
-            // Create bottom div with duration and play and done buttons
             this.bottomDiv = document.createElement("div");
             pxt.BrowserUtils.addClass(this.bottomDiv, "melody-bottom-bar-div");
-            this.bottomDiv.style.setProperty("background-color", secondaryColor);
 
             this.doneButton = document.createElement("button");
             pxt.BrowserUtils.addClass(this.doneButton, "melody-confirm-button");
@@ -281,20 +190,17 @@ namespace pxtblockly {
             pxt.BrowserUtils.addClass(this.playIcon, "play icon");
             this.playButton.appendChild(this.playIcon);
 
-            // add duration element
-            this.durationInput = document.createElement("input");
-            pxt.BrowserUtils.addClass(this.durationInput, "ui input");
-            this.durationInput.type = "number";
-            this.durationInput.title = lf("duration");
-            this.durationInput.id = "melody-tempo-input";
-            this.durationInput.addEventListener("input", () => this.setSoundDuration(+this.durationInput.value));
-            this.syncDurationField(true);
+            this.tempoInput = document.createElement("input");
+            pxt.BrowserUtils.addClass(this.tempoInput, "ui input");
+            this.tempoInput.type = "number";
+            this.tempoInput.title = lf("tempo");
+            this.tempoInput.id = "melody-tempo-input";
+            this.tempoInput.addEventListener("input", () => this.setTempo(+this.tempoInput.value));
+            this.syncTempoField(true);
 
-            this.bottomDiv.appendChild(this.durationInput);
+            this.bottomDiv.appendChild(this.tempoInput);
             this.bottomDiv.appendChild(this.playButton);
             this.bottomDiv.appendChild(this.doneButton);
-
-            this.editorDiv.appendChild(this.parameters);
             this.editorDiv.appendChild(this.bottomDiv);
 
             div.appendChild(this.editorDiv);
@@ -322,21 +228,20 @@ namespace pxtblockly {
             this.onEditorClose();
         }
 
-        //will run when the editor is closed
         private clearDomReferences() {
             this.topDiv = null;
             this.editorDiv = null;
-            this.parameters = null;
+            this.gridDiv = null;
             this.bottomDiv = null;
             this.doneButton = null;
             this.playButton = null;
             this.playIcon = null;
-            this.durationInput = null;
+            this.tempoInput = null;
+            this.elt = null;
+            this.cells = null;
             this.toggle = null;
             this.root = null;
             this.gallery.clearDomReferences();
-            this.startFrequencyInput = null;
-            this.endFrequencyInput = null;
         }
 
         // This is the string that will be inserted into the user's TypeScript code
@@ -379,7 +284,6 @@ namespace pxtblockly {
         }
 
         private isValidNote(note: string): boolean {
-            //we will make it into is this a valid input function
             switch (note) {
                 case "C":
                 case "D":
@@ -422,69 +326,72 @@ namespace pxtblockly {
         }
 
         private updateFieldLabel(): void {
-            //this will ultimately create a visual sound preview
             if (!this.fieldGroup_) return;
             pxsim.U.clear(this.fieldGroup_);
 
             let musicIcon = mkText("\uf001")
                 .appendClass("melody-editor-field-icon")
                 .at(6, 15);
-            let musicIcon2 = mkText("\uf001")
-                .appendClass("melody-editor-field-icon")
-                .at(30, 15);
             this.fieldGroup_.appendChild(musicIcon.el);
-            this.fieldGroup_.appendChild(musicIcon2.el);
-        }
 
+            let notes = this.melody.getStringRepresentation().trim().split(" ");
 
-        private setSoundDuration(duration:number): void {
-                // update duration and display to reflect new duration
-            if (this.duration != duration) {
-                this.duration = duration;
-                if (this.melody) {
-                    this.melody.setTempo(this.duration);
-                }
-                if (this.durationInput) {
-                    this.durationInput.value = this.duration + "";
-                }
-                this.syncDurationField(false);
+            for (let i = 0; i < notes.length; i++) {
+                let className = pxtmelody.getColorClass(pxtmelody.noteToRow(notes[i]));
+                const cb = new svg.Rect()
+                    .at((FieldCustomMelody.COLOR_BLOCK_WIDTH + FieldCustomMelody.COLOR_BLOCK_SPACING) * i + FieldCustomMelody.COLOR_BLOCK_X, FieldCustomMelody.COLOR_BLOCK_Y)
+                    .size(FieldCustomMelody.COLOR_BLOCK_WIDTH, FieldCustomMelody.COLOR_BLOCK_HEIGHT)
+                    .stroke("#898989", 1)
+                    .corners(3, 2);
+
+                pxt.BrowserUtils.addClass(cb.el, className);
+                this.fieldGroup_.appendChild(cb.el);
             }
         }
 
-        private setStartFrequency(frequency:number):void{
-            this.startFrequency = frequency;
-            console.log("set end frequency to " + this.startFrequency);
+        private setTempo(tempo: number): void {
+            // reset text input if input is invalid
+            if ((isNaN(tempo) || tempo <= 0) && this.tempoInput) {
+                this.tempoInput.value = this.tempo + "";
+                return
+            }
+            // update tempo and display to reflect new tempo
+            if (this.tempo != tempo) {
+                this.tempo = tempo;
+                if (this.melody) {
+                    this.melody.setTempo(this.tempo);
+                }
+                if (this.tempoInput) {
+                    this.tempoInput.value = this.tempo + "";
+                }
+                this.syncTempoField(false);
+            }
         }
 
-        private setEndFrequency(frequency:number):void{
-            this.startFrequency = frequency;
-            console.log("set end frequency to " + this.endFrequency);
-        }
-
-        // sync value from duration field on block with duration in field editor
-        private syncDurationField(blockToEditor: boolean): void {
+        // sync value from tempo field on block with tempo in field editor
+        private syncTempoField(blockToEditor: boolean): void {
             const s = this.sourceBlock_;
             if (s.parentBlock_) {
                 const p = s.parentBlock_;
                 for (const input of p.inputList) {
-                    if (input.name === "duration") {
-                        const durationBlock = input.connection.targetBlock();
-                        if (durationBlock) {
+                    if (input.name === "tempo") {
+                        const tempoBlock = input.connection.targetBlock();
+                        if (tempoBlock) {
                             if (blockToEditor)
-                                if (durationBlock.getFieldValue("SLIDER")) {
-                                    this.durationInput.value = durationBlock.getFieldValue("SLIDER");
-                                    this.duration = +this.durationInput.value;
+                                if (tempoBlock.getFieldValue("SLIDER")) {
+                                    this.tempoInput.value = tempoBlock.getFieldValue("SLIDER");
+                                    this.tempo = +this.tempoInput.value;
                                 } else {
-                                    this.durationInput.value = this.duration + "";
+                                    this.tempoInput.value = this.tempo + "";
                                 }
                             else { // Editor to block
-                                if (durationBlock.type === "math_number_minmax") {
-                                    durationBlock.setFieldValue(this.durationInput.value, "SLIDER")
+                                if (tempoBlock.type === "math_number_minmax") {
+                                    tempoBlock.setFieldValue(this.tempoInput.value, "SLIDER")
                                 }
                                 else {
-                                    durationBlock.setFieldValue(this.durationInput.value, "NUM")
+                                    tempoBlock.setFieldValue(this.tempoInput.value, "NUM")
                                 }
-                                this.durationInput.focus();
+                                this.tempoInput.focus();
                             }
                         }
                         break;
@@ -495,12 +402,10 @@ namespace pxtblockly {
 
         // ms to hold note
         private getDuration(): number {
-            //this will return the duration 
-            return this.duration;
+            return 60000 / this.tempo;
         }
 
         private createMelodyIfDoesntExist(): boolean {
-            //will become a create sound if doesn't exsist function
             if (!this.melody) {
                 this.melody = new pxtmelody.MelodyArray();
                 return true;
@@ -508,49 +413,170 @@ namespace pxtblockly {
             return false;
         }
 
-       
+        private onNoteSelect(row: number, col: number): void {
+            // update melody array
+            this.invalidString = null;
+            this.melody.updateMelody(row, col);
 
-        protected playToneCore(frequency: number) {
-            pxt.AudioContextManager.tone(frequency);
+            if (this.melody.getValue(row, col) && !this.isPlaying) {
+                this.playNote(row, col);
+            }
+
+            this.updateGrid();
+            this.updateFieldLabel();
         }
 
-        private playNote(): void {
+        private updateGrid() {
+            for (let row = 0; row < this.numRow; row++) {
+                const rowClass = pxtmelody.getColorClass(row);
+
+                for (let col = 0; col < this.numCol; col++) {
+                    const cell = this.cells[row][col];
+
+                    if (this.melody.getValue(row, col)) {
+                        pxt.BrowserUtils.removeClass(cell, "melody-default");
+                        pxt.BrowserUtils.addClass(cell, rowClass);
+                    }
+                    else {
+                        pxt.BrowserUtils.addClass(cell, "melody-default");
+                        pxt.BrowserUtils.removeClass(cell, rowClass);
+                    }
+                }
+            }
+        }
+
+        private playNote(rowNumber: number, colNumber?: number): void {
+            let count: number = ++this.soundingKeys;
+
             if (this.isPlaying) {
-                pxt.AudioContextManager.sound(this.startFrequency, this.waveType);
-                console.log('playing sound' + this.waveType);
-
-                /*this.timeouts.push(setTimeout(() => {
-                    this.playToneCore(this.startFrequency);
-                }, 0));
+                this.timeouts.push(setTimeout(() => {
+                    this.playToneCore(rowNumber);
+                }, colNumber * this.getDuration()));
 
                 this.timeouts.push(setTimeout(() => {
-                    pxt.AudioContextManager.sound(this.startFrequency, "square");
-                }, this.getDuration() ));
-
-                this.timeouts.push(setTimeout(() => {
-                    this.togglePlay();
-                }, this.getDuration() ));*/
+                    pxt.AudioContextManager.stop();
+                }, (colNumber + 1) * this.getDuration()));
             }
             else {
-                pxt.AudioContextManager.stop();
+                this.playToneCore(rowNumber);
+                this.timeouts.push(setTimeout(() => {
+                    if (this.soundingKeys == count)
+                        pxt.AudioContextManager.stop();
+                }, this.getDuration()));
             }
         }
 
-    
+        protected queueToneForColumn(column: number, delay: number, duration: number) {
+            const start = setTimeout(() => {
+                ++this.soundingKeys;
+                pxt.AudioContextManager.stop();
+
+                for (let i = 0; i < this.numRow; i++) {
+                    if (this.melody.getValue(i, column)) {
+                        this.playToneCore(i);
+                    }
+                }
+                this.highlightColumn(column, true);
+                this.timeouts = this.timeouts.filter(t => t !== start);
+            }, delay);
+
+            const end = setTimeout(() => {
+                // pxt.AudioContextManager.stop();
+                this.timeouts = this.timeouts.filter(t => t !== end);
+                this.highlightColumn(column, false);
+            }, delay + duration)
+
+            this.timeouts.push(start);
+            this.timeouts.push(end);
+        }
+
+        protected playToneCore(row: number) {
+            let tone: number = 0;
+
+            switch (row) {
+                case 0: tone = 523; break; // Tenor C
+                case 1: tone = 494; break; // Middle B
+                case 2: tone = 440; break; // Middle A
+                case 3: tone = 392; break; // Middle G
+                case 4: tone = 349; break; // Middle F
+                case 5: tone = 330; break; // Middle E
+                case 6: tone = 294; break; // Middle D
+                case 7: tone = 262; break; // Middle C
+            }
+
+            pxt.AudioContextManager.tone(tone);
+        }
+
+        private highlightColumn(col: number, on: boolean) {
+            const cells = this.cells.map(row => row[col]);
+
+            cells.forEach(cell => {
+                if (on) pxt.BrowserUtils.addClass(cell, "playing")
+                else pxt.BrowserUtils.removeClass(cell, "playing")
+            });
+        }
+
+        private createGridDisplay(): SVGSVGElement {
+            FieldCustomMelody.VIEWBOX_WIDTH = (FieldCustomMelody.CELL_WIDTH + FieldCustomMelody.CELL_VERTICAL_MARGIN) * this.numCol + FieldCustomMelody.CELL_VERTICAL_MARGIN;
+            if (pxt.BrowserUtils.isEdge()) FieldCustomMelody.VIEWBOX_WIDTH += 37;
+            FieldCustomMelody.VIEWBOX_HEIGHT = (FieldCustomMelody.CELL_WIDTH + FieldCustomMelody.CELL_HORIZONTAL_MARGIN) * this.numRow + FieldCustomMelody.CELL_HORIZONTAL_MARGIN;
+            this.elt = pxsim.svg.parseString(`<svg xmlns="http://www.w3.org/2000/svg" class="melody-grid-div" viewBox="0 0 ${FieldCustomMelody.VIEWBOX_WIDTH} ${FieldCustomMelody.VIEWBOX_HEIGHT}"/>`);
+
+            // Create the cells of the matrix that is displayed
+            this.cells = []; // initialize array that holds rect svg elements
+            for (let i = 0; i < this.numRow; i++) {
+                this.cells.push([]);
+            }
+            for (let i = 0; i < this.numRow; i++) {
+                for (let j = 0; j < this.numCol; j++) {
+                    this.createCell(i, j);
+                }
+            }
+            return this.elt;
+        }
+
+        private createCell(x: number, y: number) {
+            const tx = x * (FieldCustomMelody.CELL_WIDTH + FieldCustomMelody.CELL_HORIZONTAL_MARGIN) + FieldCustomMelody.CELL_HORIZONTAL_MARGIN;
+            const ty = y * (FieldCustomMelody.CELL_WIDTH + FieldCustomMelody.CELL_VERTICAL_MARGIN) + FieldCustomMelody.CELL_VERTICAL_MARGIN;
+
+            const cellG = pxsim.svg.child(this.elt, "g", { transform: `translate(${ty} ${tx})` }) as SVGGElement;
+            const cellRect = pxsim.svg.child(cellG, "rect", {
+                'cursor': 'pointer',
+                'width': FieldCustomMelody.CELL_WIDTH,
+                'height': FieldCustomMelody.CELL_WIDTH,
+                'stroke': 'white',
+                'data-x': x,
+                'data-y': y,
+                'rx': FieldCustomMelody.CELL_CORNER_RADIUS
+            }) as SVGRectElement;
+
+            // add appropriate class so the cell has the correct fill color
+            if (this.melody.getValue(x, y)) pxt.BrowserUtils.addClass(cellRect, pxtmelody.getColorClass(x));
+            else pxt.BrowserUtils.addClass(cellRect, "melody-default");
+
+            if ((this.sourceBlock_.workspace as any).isFlyout) return;
+
+            pxsim.pointerEvents.down.forEach(evid => cellRect.addEventListener(evid, (ev: MouseEvent) => {
+                this.onNoteSelect(x, y);
+                ev.stopPropagation();
+                ev.preventDefault();
+            }, false));
+
+            this.cells[x][y] = cellRect;
+        }
 
         private togglePlay() {
-            //this will toggle if we are playing a note
             if (!this.isPlaying) {
                 this.isPlaying = true;
-                this.playNote();
+                this.playMelody();
             } else {
                 this.stopMelody();
             }
+
             this.updatePlayButton();
         }
 
         private updatePlayButton() {
-            //can be kept the same for playing the sound
             if (this.isPlaying) {
                 pxt.BrowserUtils.removeClass(this.playIcon, "play icon");
                 pxt.BrowserUtils.addClass(this.playIcon, "stop icon");
@@ -561,30 +587,43 @@ namespace pxtblockly {
             }
         }
 
+        private playMelody() {
+            if (this.isPlaying) {
+                for (let i = 0; i < this.numCol; i++) {
+                    this.queueToneForColumn(i, i * this.getDuration(), this.getDuration());
+                }
+                this.timeouts.push(setTimeout( // call the melody again after it finishes
+                    () => this.playMelody(), (this.numCol) * this.getDuration()));
+            } else {
+                this.stopMelody();
+            }
+        }
 
         private stopMelody() {
-            //stops the sound
             if (this.isPlaying) {
                 while (this.timeouts.length) clearTimeout(this.timeouts.shift());
                 pxt.AudioContextManager.stop();
                 this.isPlaying = false;
+
+                this.cells.forEach(row => row.forEach(cell => pxt.BrowserUtils.removeClass(cell, "playing")));
             }
         }
 
         private showGallery() {
-            //for showing the gallery of sounds
             this.stopMelody();
             this.updatePlayButton();
             this.gallery.show((result: string) => {
                 if (result) {
+                    this.melody.parseNotes(result);
                     this.gallery.hide();
                     this.toggle.toggle();
+                    this.updateFieldLabel();
+                    this.updateGrid();
                 }
             });
         }
 
         private hideGallery() {
-            //this will hide our gallery
             this.gallery.hide();
         }
     }
@@ -639,12 +678,8 @@ namespace pxtblockly {
             this.isLeft = true;
         }
 
-       
-
-       
         protected buildDom() {
-            
-                        // Our css minifier mangles animation names so they need to be injected manually
+            // Our css minifier mangles animation names so they need to be injected manually
             this.root.style().content(`
             .toggle-left {
                 transform: translateX(0px);
@@ -727,7 +762,6 @@ namespace pxtblockly {
         }
 
         toggle(quiet = false) {
-            //this will toggle us between gallery and editor mode
             if (this.isLeft) {
                 this.switch.removeClass("toggle-left");
                 this.switch.appendClass("toggle-right");
@@ -776,35 +810,6 @@ namespace pxtblockly {
             .setAttribute("dominant-baseline", "middle")
             .setAttribute("dy", (pxt.BrowserUtils.isIE() || pxt.BrowserUtils.isEdge()) ? "0.3em" : "0.1em")
     }
-
-    
-
-
-
-
-    function mkElement(tag: string, props?: {[index: string]: string | number}, onClick?: () => void): HTMLElement {
-        const el = document.createElement(tag);
-        return initElement(el, props, onClick);
-    }
-
-
-    function initElement(el: HTMLElement, props?: {[index: string]: string | number}, onClick?: () => void) {
-        if (props) {
-            for (const key of Object.keys(props)) {
-                if (key === "className") el.setAttribute("class", props[key] + "")
-                else el.setAttribute(key, props[key] + "");
-            }
-        }
-
-        if (onClick) {
-            el.addEventListener("click", onClick);
-        }
-
-        return el;
-    }
-
-    
-    
 
     function defaultColors(props: Partial<ToggleProps>): ToggleProps {
         if (!props.baseColor) props.baseColor = "#e95153";

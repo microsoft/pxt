@@ -1,5 +1,5 @@
 namespace pxtmelody {
-    export class MelodyGallery {
+    export class MelodyGaller {
         protected contentDiv: HTMLDivElement;
         protected containerDiv: HTMLDivElement;
 
@@ -264,11 +264,21 @@ namespace pxtmelody {
         private createColorBlock(sample: pxtmelody.MelodyInfo): HTMLDivElement {
             let colorBlock = document.createElement("div");
             pxt.BrowserUtils.addClass(colorBlock, "melody-color-block");
-            let colorDiv = document.createElement("div");
-            pxt.BrowserUtils.addClass(colorDiv, "sound-effect-preview");
+            let notes = sample.notes.split(" ");
+            for (let i = 0; i < notes.length; i++) {
+                let className = pxtmelody.getColorClass(pxtmelody.noteToRow(notes[i]));
+                let colorDiv = document.createElement("div");
+                // create rounded effect on edge divs and fill in color
+                if (i == 0) {
+                    pxt.BrowserUtils.addClass(colorDiv, "left-edge sliver " + className);
+                } else if (i == notes.length - 1) {
+                    pxt.BrowserUtils.addClass(colorDiv, "right-edge sliver " + className);
+                } else {
+                    pxt.BrowserUtils.addClass(colorDiv, "sliver " + className);
+                }
 
-            colorBlock.appendChild(colorDiv);
-            
+                colorBlock.appendChild(colorDiv);
+            }
             return colorBlock;
         }
     }

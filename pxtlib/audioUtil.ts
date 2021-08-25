@@ -43,6 +43,8 @@ namespace pxt.AudioContextManager {
 
         _gain.gain.setTargetAtTime(0, _context.currentTime, 0.015);
         _frequency = 0;
+        _vco.disconnect();
+        _vco = undefined;
     }
 
     export function frequency(): number {
@@ -61,6 +63,36 @@ namespace pxt.AudioContextManager {
             if (!_vco) {
                 _vco = ctx.createOscillator();
                 _vco.type = 'triangle';
+
+                _gain = ctx.createGain();
+                _gain.gain.value = 0;
+                _gain.connect(ctx.destination);
+
+                _vco.connect(_gain);
+                _vco.start(0);
+
+            }
+            _vco.frequency.linearRampToValueAtTime(frequency, _context.currentTime)
+            _gain.gain.setTargetAtTime(.2, _context.currentTime, 0.015);
+
+        } catch (e) {
+            _vco = undefined;
+            return;
+        }
+    }
+
+    export function sound(frequency: number, wave: any) {
+        if (_mute) return;
+        if (frequency < 0) return;
+        _frequency = frequency;
+
+        let ctx = context() as AudioContext;
+        if (!ctx) return;
+
+        try {
+            if (!_vco) {
+                _vco = ctx.createOscillator();
+                _vco.type = wave;
 
                 _gain = ctx.createGain();
                 _gain.gain.value = 0;
