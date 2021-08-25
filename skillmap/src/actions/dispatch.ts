@@ -32,6 +32,7 @@ export const dispatchShowResetUserModal = () => ({ type: actions.SHOW_RESET_USER
 export const dispatchShowCarryoverModal = (mapId: string, activityId: string) => ({ type: actions.SHOW_CARRYOVER_MODAL, mapId, activityId });
 export const dispatchShowShareModal = (mapId: string, activityId: string) => ({ type: actions.SHOW_SHARE_MODAL, mapId, activityId });
 export const dispatchShowLoginModal = () => ({ type: actions.SHOW_LOGIN_MODAL});
+export const dispatchShowLoginPrompt = () => ({ type: actions.SHOW_LOGIN_PROMPT});
 
 export const dispatchHideModal = () => ({ type: actions.HIDE_MODAL });
 

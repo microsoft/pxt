@@ -1,6 +1,7 @@
 import { PageSourceStatus } from "../store/reducer";
 
 const apiRoot = "https://www.makecode.com/api";
+export const cloudLocalStoreKey = "-SHOWN-LOGIN-PROMPT";
 export type MarkdownSource = "docs" | "github" | "local";
 
 export interface MarkdownFetchResult {

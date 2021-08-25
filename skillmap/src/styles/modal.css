@@ -110,17 +110,32 @@
 }
 
 /* LOGIN MODAL */
-.sign-in-description {
-    margin-bottom: 1rem;
-}
-
-.sign-in-container {
+.sign-in .container {
     display: flex;
-
+    align-items: center;
 }
 
-.sign-in-remember {
+.sign-in .container a {
+    padding-left: .5rem;
+}
+
+.sign-in .remember {
     user-select: none;
+    cursor: pointer;
+    margin-top: 1rem;
+    display: flex;
+    justify-content: center;
+    padding-bottom: .5rem;
+}
+
+.sign-in .modal-actions {
+    grid-template-columns: 1fr;
+    margin-top: .5rem;
+}
+
+.modal .icon.cloud-user {
+    width: 7rem;
+    margin-right: 2rem;
 }
 
 /* COMPLETION MODAL */
