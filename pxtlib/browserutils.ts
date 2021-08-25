@@ -63,20 +63,26 @@ namespace pxt.BrowserUtils {
     Notes on browser detection
 
     Actually:             Claims to be:
-                          IE  MicrosoftEdge    Chrome  Safari  Firefox
+                          IE  MicrosoftEdge   Chrome  Safari  Firefox  NewEdge
               IE          X                           X?
     Microsoft Edge                    X       X       X
               Chrome                          X       X
               Safari                                  X       X
               Firefox                                         X
+              New Edge                        X       X                X
 
-    I allow Opera to go about claiming to be Chrome because it might as well be
+    I allow Opera to go about claiming to be Chrome because it might as well be. Same for Chromium-based Edge.
     */
 
     //Microsoft Edge lies about its user agent and claims to be Chrome, but Microsoft Edge/Version
     //is always at the end
     export function isEdge(): boolean {
         return hasNavigator() && /Edge/i.test(navigator.userAgent);
+    }
+
+    //Chromium-based Edge. Note that `isChrome()` also detects this browser, and that's ok. In most cases Chromium-Edge can be treated like Chrome. Use this method if you need to differentiate them.
+    export function isChromiumEdge(): boolean {
+        return hasNavigator() && /Edg\//i.test(navigator.userAgent);
     }
 
     //IE11 also lies about its user agent, but has Trident appear somewhere in
@@ -86,7 +92,7 @@ namespace pxt.BrowserUtils {
         return hasNavigator() && /Trident/i.test(navigator.userAgent);
     }
 
-    //Microsoft Edge and IE11 lie about being Chrome
+    //Microsoft Edge and IE11 lie about being Chrome. Chromium-based Edge ("Edgeium") will be detected as Chrome, that is ok. If you're looking for Edgeium, use `isChromiumEdge()`.
     export function isChrome(): boolean {
         return !isEdge() && !isIE() && !!navigator && (/Chrome/i.test(navigator.userAgent) || /Chromium/i.test(navigator.userAgent));
     }
