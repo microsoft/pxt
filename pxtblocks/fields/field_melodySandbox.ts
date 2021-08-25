@@ -15,13 +15,9 @@ namespace pxtblockly {
         private volume: number = 0.2;
         private startFrequency: number = 440;
         private endFrequency: number = 440;
-        private wave: HTMLDivElement;
         private waveType: string = "square";
         private waveButtons:any;
         private interpolationType: string = "linear";
-        private start: HTMLDivElement;
-        private end: HTMLDivElement;
-        private interpolation: HTMLDivElement;
         private stringRep: string;
         private isPlaying: boolean = false;
         private timeouts: any[] = []; // keep track of timeouts
@@ -34,6 +30,10 @@ namespace pxtblockly {
         private parameters: HTMLDivElement;
         private volumeText: HTMLDivElement;
         private volumeInput: HTMLInputElement;
+        private startFrequencyText: HTMLDivElement;
+        private endFrequencyText: HTMLDivElement;
+        private wave: HTMLDivElement;
+        private interpolation: HTMLDivElement;
         private bottomDiv: HTMLDivElement; 
         private doneButton: HTMLButtonElement;
         private playButton: HTMLButtonElement;
@@ -111,7 +111,7 @@ namespace pxtblockly {
     
     
                 outer.appendChild(innerButton);
-                innerButton.addEventListener("click", () =>{  this.updateParameters(samples[i], innerButton);  /*this.waveButtons.style.setProperty("background-color", "green")*/} );
+                innerButton.addEventListener("click", () =>{ this.updateParameters(samples[i], innerButton);  /*this.waveButtons.style.setProperty("background-color", "green")*/} );
                 
             }
             
@@ -134,8 +134,8 @@ namespace pxtblockly {
             case "interpolation":
                this.interpolationType = sample.name;
                document.getElementById("linear").style.setProperty("background-color", "#dcdcdc");
-               document.getElementById("curve").style.setProperty("background-color", "#dcdcdc");
-               document.getElementById("vibrato").style.setProperty("background-color", "#dcdcdc");
+               document.getElementById("exponential").style.setProperty("background-color", "#dcdcdc");
+               document.getElementById("quadratic").style.setProperty("background-color", "#dcdcdc");
                 console.log(this.interpolationType);
                 innerButton.style.setProperty("background-color", "#c1c1c1");
                 return;
@@ -243,8 +243,8 @@ namespace pxtblockly {
 
 
             // Add start and end frequency inputs 
-            this.start = document.createElement("p");
-            this.start.innerText = lf("Start frequency:  ");
+            this.startFrequencyText = document.createElement("p");
+            this.startFrequencyText.innerText = lf("Start frequency:  ");
 
             this.startFrequencyInput = document.createElement("input");
             pxt.BrowserUtils.addClass(this.startFrequencyInput, "ui input");
@@ -254,25 +254,25 @@ namespace pxtblockly {
             this.startFrequencyInput.addEventListener("input", () => this.setStartFrequency(+this.startFrequencyInput.value));
            
             
-            this.parameters.appendChild(this.start);
-            this.start.appendChild(this.startFrequencyInput);
+            this.parameters.appendChild(this.startFrequencyText);
+            this.startFrequencyText.appendChild(this.startFrequencyInput);
 
-            this.end = document.createElement("p");
-            this.end.innerText = lf("End frequency:  ");
+            this.endFrequencyText = document.createElement("p");
+            this.endFrequencyText.innerText = lf("End frequency:  ");
 
             this.endFrequencyInput = document.createElement("input");
             pxt.BrowserUtils.addClass(this.endFrequencyInput, "ui input");
             this.endFrequencyInput.type = "number";
             this.endFrequencyInput.title = lf("End frequency");
-            this.endFrequencyInput.id = "melody-tempo-input-end-frequency";
+            this.endFrequencyInput.id = "melody-tempo-input-start-frequency";
             this.endFrequencyInput.addEventListener("input", () => this.setEndFrequency(+this.endFrequencyInput.value));
         
             
-            this.parameters.appendChild(this.end);
-            this.end.appendChild(this.endFrequencyInput);
+            this.parameters.appendChild(this.endFrequencyText);
+            this.endFrequencyText.appendChild(this.endFrequencyInput);
 
 
-            // Add wave shape buttons and interpolation buttons
+            // Add wave shape and interpolation buttons
             this.wave = document.createElement("div");
             this.wave.innerText = lf("Wave shape: ");
             this.parameters.appendChild(this.wave);
@@ -289,7 +289,6 @@ namespace pxtblockly {
             this.parameters.appendChild(interpolationButtons);
 
            
-            
 
             // Create bottom div with duration and play and done buttons
             this.bottomDiv = document.createElement("div");
@@ -483,7 +482,7 @@ namespace pxtblockly {
 
         private setStartFrequency(frequency:number):void{
             this.startFrequency = frequency;
-            console.log("set end frequency to " + this.startFrequency);
+            console.log("set start frequency to " + this.startFrequency);
         }
 
         private setVolume(volume:number):void{
@@ -492,7 +491,7 @@ namespace pxtblockly {
         }
 
         private setEndFrequency(frequency:number):void{
-            this.startFrequency = frequency;
+            this.endFrequency = frequency;
             console.log("set end frequency to " + this.endFrequency);
         }
 
@@ -551,8 +550,11 @@ namespace pxtblockly {
 
         private playNote(): void {
             if (this.isPlaying) {
-                pxt.AudioContextManager.sound(this.startFrequency, this.waveType, this.volume);
-                console.log('playing sound' + this.waveType);
+                pxt.AudioContextManager.sound( this.startFrequency, this.endFrequency, this.duration, this.waveType, this.volume, this.interpolationType );
+                
+                this.timeouts.push(setTimeout(() => {
+                    this.togglePlay();
+                }, this.getDuration() ));
 
                 /*this.timeouts.push(setTimeout(() => {
                     this.playToneCore(this.startFrequency);

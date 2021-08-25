@@ -81,10 +81,10 @@ namespace pxt.AudioContextManager {
         }
     }
 
-    export function sound(startFrequency: number, endFrequency: number, duration: number, wave: any, volume: number) {
+    export function sound(startFrequency: number, endFrequency: number, duration: number, wave: any, volume: number, interpolation: any) {
         if (_mute) return;
         if (startFrequency < 0) return;
-        _frequency = startFrequency;
+       // _frequency = startFrequency;
 
         let ctx = context() as AudioContext;
         if (!ctx) return;
@@ -104,18 +104,67 @@ namespace pxt.AudioContextManager {
             }
 
             let divisor = 100;
-            let timeDivision = 
+            let timeDivision = duration/divisor;
+            let frequencyDivision = (endFrequency - startFrequency)/divisor;
 
 
+            console.log("start frequ " + startFrequency);
 
+            console.log("end frequ " + endFrequency);
+            console.log("duration " + duration);
+            console.log("rtin")
+            switch(interpolation){
+                case "linear":
+                    for(let i = 0; i < divisor; i++) {
+                        setTimeout(()=>{
+                            _vco.frequency.linearRampToValueAtTime( (startFrequency + (i * frequencyDivision)), _context.currentTime);
+                            _gain.gain.setTargetAtTime(volume, _context.currentTime, 0.015);
+                           console.log(i);
+                           if(i === divisor-1){ 
+                            setTimeout(stop, timeDivision); 
+                         }
+                        },i *timeDivision);
+                     }
+                     return;
+                case "exponential":
+                    for(let i = 0; i < divisor; i++) {
+                        setTimeout(()=>{
+                            _vco.frequency.linearRampToValueAtTime( (startFrequency + ( (endFrequency - startFrequency) / Math.pow( 1.1 , divisor-1) ) * Math.pow( 1.1 , i ) ), _context.currentTime);
+                            _gain.gain.setTargetAtTime(volume, _context.currentTime, 0.015);
+                           console.log(i);
+                           if(i === divisor-1){ 
+                            setTimeout(stop, timeDivision); 
 
-             for(let i = 1; i < 100; i++) {
-                setTimeout(()=>{
-                    _vco.frequency.linearRampToValueAtTime(startFrequency+i, _context.currentTime);
-                    _gain.gain.setTargetAtTime(volume, _context.currentTime, 0.015);
-                   console.log(i);
-                },i *10);
-             }
+                         }
+                        },i *timeDivision);
+                     }
+                     return;
+                case "quadratic":
+                    for(let i = 0; i < divisor; i++) {
+                        setTimeout(()=>{
+                            _vco.frequency.linearRampToValueAtTime( (startFrequency + ( (endFrequency - startFrequency) / Math.pow( divisor-1 , 3) ) * Math.pow( i , 3 ) ), _context.currentTime);
+                            _gain.gain.setTargetAtTime(volume, _context.currentTime, 0.015);
+                           console.log(i);
+                           if(i === divisor-1){ 
+                            setTimeout(stop, timeDivision);                            
+                          }
+                      },i *timeDivision);
+                         }
+                         return;
+                case "vibrato":
+                    for(let i = 0; i < divisor; i++) {
+                        setTimeout(()=>{
+                            _vco.frequency.linearRampToValueAtTime( (startFrequency + (i * frequencyDivision)), _context.currentTime);
+                            _gain.gain.setTargetAtTime(volume, _context.currentTime, 0.015);
+                           console.log(i);
+                           if(i === divisor-1){ 
+                            setTimeout(stop, timeDivision);                            
+                          }
+                      },i *timeDivision);
+                         }
+                         return;    
+            }
+             
 
             /*
             setTimeout(() => {
