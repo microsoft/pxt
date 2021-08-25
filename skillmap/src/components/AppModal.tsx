@@ -343,7 +343,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                     { activityPrompt && <img src="/assets/cloud-user.svg" alt={signInIconAltText} className="icon cloud-user"/> }
                     <p>{ lf("Don't have a Microsoft Account? Start signing in to create one!")}
                         <a href="https://aka.ms/cloudsave" target="_blank" onClick={() => {
-                            tickEvent("skillmap.signindialog.learn", { link: "https://aka.ms/cloudsave" });
+                            tickEvent("skillmap.signindialog.learn");
                             window.open("https://aka.ms/cloudsave", "_blank");
                         }}>
                             <i className="icon external alternate" />{lf("Learn more")}
