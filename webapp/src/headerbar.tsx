@@ -117,7 +117,7 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
         // If there is only one editor (eg Py only, no assets), we display a label instead of a toggle
         const hideToggle = !showAssets && (languageRestriction === pxt.editor.LanguageRestriction.JavaScriptOnly
             || languageRestriction === pxt.editor.LanguageRestriction.PythonOnly) || targetTheme.blocksOnly
-            || pxt.BrowserUtils.isVerticalTutorial();
+            || (tutorialOptions && pxt.BrowserUtils.isVerticalTutorial());
 
         switch (view) {
             case "tutorial":
