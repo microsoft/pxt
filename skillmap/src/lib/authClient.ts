@@ -1,4 +1,5 @@
 import { dispatchSetUserProfile, dispatchSetUserPreferences, dispatchLogout } from '../actions/dispatch';
+import { saveUserStateAsync } from './workspaceProvider';
 import store from '../store/store';
 
 class AuthClient extends pxt.auth.AuthClient {
@@ -38,24 +39,42 @@ class AuthClient extends pxt.auth.AuthClient {
         // Show a notification?
         return Promise.resolve();
     }
+    public async logoutAsync(hash: string) {
+        // Do a final save while signed in to ensure cloud and local progress are persisted separately.
+        const state = store.getState();
+        const user = state.user;
+        await saveUserStateAsync(user);
+        super.logoutAsync(hash);
+    }
 }
 
-async function clientAsync(): Promise<AuthClient | undefined> {
+let authClientPromise: Promise<AuthClient>;
+
+export async function clientAsync(): Promise<AuthClient | undefined> {
     if (!pxt.auth.hasIdentity()) { return undefined; }
-    let cli = pxt.auth.client();
-    if (cli) { return cli as AuthClient; }
-    cli = new AuthClient();
-    await cli.initAsync();
-    return cli as AuthClient;
+    if (authClientPromise) return authClientPromise;
+    authClientPromise = new Promise<AuthClient>(async (resolve, reject) => {
+        const cli = new AuthClient();
+        await cli.initAsync();
+        await cli.authCheckAsync();
+        await cli.initialUserPreferencesAsync();
+        resolve(cli as AuthClient);
+    });
+    return authClientPromise;
 }
 
-export async function authCheckAsync() {
+export async function authCheckAsync(): Promise<pxt.auth.UserProfile | undefined> {
     const cli = await clientAsync();
-    await cli?.authCheckAsync();
+    return await cli?.authCheckAsync();
 }
 
 export async function loginCallbackAsync(qs: pxt.Map<string>): Promise<void> {
     return await pxt.auth.loginCallbackAsync(qs);
+}
+
+export async function logoutAsync(hash: string) {
+    const cli = await clientAsync();
+    return await cli?.logoutAsync(hash);
 }
 
 export async function saveSkillmapStateAsync(state: pxt.auth.UserSkillmapState): Promise<void> {

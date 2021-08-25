@@ -143,13 +143,19 @@ function initVirtualApi() {
     });
 }
 
+let authClientPromise: Promise<AuthClient>;
+
 async function clientAsync(): Promise<AuthClient | undefined> {
     if (!pxt.auth.hasIdentity()) { return undefined; }
-    let cli = pxt.auth.client();
-    if (cli) { return cli as AuthClient; }
-    cli = new AuthClient();
-    await cli.initAsync();
-    return cli as AuthClient;
+    if (authClientPromise) return authClientPromise;
+    authClientPromise = new Promise<AuthClient>(async (resolve, reject) => {
+        const cli = new AuthClient();
+        await cli.initAsync();
+        await cli.authCheckAsync();
+        await cli.initialUserPreferencesAsync();
+        resolve(cli as AuthClient);
+    });
+    return authClientPromise;
 }
 
 export function hasIdentity(): boolean {

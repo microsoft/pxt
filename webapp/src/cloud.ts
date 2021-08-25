@@ -638,6 +638,15 @@ export async function convertCloudToLocal(userId: string) {
     }
 }
 
+export async function saveLocalProjectsToCloudAsync(headerIds: string[]) {
+    const headers = workspace.getHeaders()
+        .filter(h => h.cloudUserId == null)
+        .filter(h => headerIds.includes(h.id));
+    if (headers.length) {
+        await syncAsync(headers);
+    }
+}
+
 const CLOUDSAVE_DEBOUNCE_MS = 3000;
 const CLOUDSAVE_MAX_MS = 15000;
 let headerWorklist: { [headerId: string]: boolean } = {};

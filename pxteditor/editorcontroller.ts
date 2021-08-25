@@ -55,6 +55,7 @@ namespace pxt.editor {
         | "saveproject"
         | "unloadproject"
         | "shareproject"
+        | "savelocalprojectstocloud"
 
         | "toggletrace" // EditorMessageToggleTraceRequest
         | "togglehighcontrast"
@@ -222,6 +223,11 @@ namespace pxt.editor {
         // (optional) filtering argument
         filters?: pxt.editor.ProjectFilters;
         searchBar?: boolean;
+    }
+
+    export interface EditorMessageSaveLocalProjectsToCloud extends EditorMessageRequest {
+        action: "savelocalprojectstocloud";
+        headerIds: string[];
     }
 
     export interface EditorMessageImportTutorialRequest extends EditorMessageRequest {
@@ -536,6 +542,10 @@ namespace pxt.editor {
                                         .then(scriptInfo => {
                                             resp = scriptInfo;
                                         });
+                                }
+                                case "savelocalprojectstocloud": {
+                                    const msg = data as EditorMessageSaveLocalProjectsToCloud;
+                                    return projectView.saveLocalProjectsToCloudAsync(msg.headerIds);
                                 }
                             }
                             return Promise.resolve();

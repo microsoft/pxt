@@ -4,7 +4,8 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 import store from "./store/store";
-import * as auth from "./lib/authClient";
+import * as authClient from "./lib/authClient";
+import { getFlattenedHeaderIds } from "./lib/skillMapUtils";
 
 import {
     dispatchAddSkillMap,
@@ -69,6 +70,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
     protected queryFlags: {[index: string]: string} = {};
     protected unsubscribeChangeListener: Unsubscribe | undefined;
     protected loadedUser: UserState | undefined;
+    protected sendMessageAsync: ((message: any) => Promise<any>) | undefined;
 
     constructor(props: any) {
         super(props);
@@ -206,15 +208,46 @@ class AppImpl extends React.Component<AppProps, AppState> {
         this.props.dispatchSetUser(user);
     }
 
+    /* Two things must be true before cloudSyncCheckAsync can execute:
+        1. The onMakeCodeFrameLoaded callback must have been called.
+        2. This component must be mounted and parseHashAsync executed.
+       These conditions can become true in any order. We know when this component
+       is mounted, but when the MakeCodeFrame is loaded is completely variable.
+    */
+    cloudSyncCheckAsyncEmpty = async () => { }
+    cloudSyncCheckAsyncActual = async () => {
+        const state = store.getState();
+        const cli = await authClient.clientAsync();
+        if (await cli?.loggedInAsync() && this.sendMessageAsync) {
+            this.cloudSyncCheckAsyncActual = this.cloudSyncCheckAsyncEmpty; // Reset function so subesquent calls will go to stub.
+            // Transfer local skillmap projects to the cloud.
+            const headerIds = getFlattenedHeaderIds(state.user, state.pageSourceUrl);
+            await this.sendMessageAsync({
+                type: "pxteditor",
+                action: "savelocalprojectstocloud",
+                headerIds
+            } as pxt.editor.EditorMessageSaveLocalProjectsToCloud);
+        }
+    }
+    // Initialize function to a stub. Will be set to actual when conditions are right.
+    cloudSyncCheckAsync = this.cloudSyncCheckAsyncEmpty;
+
+    protected onMakeCodeFrameLoaded = async (sendMessageAsync: (message: any) => Promise<any>) => {
+        this.sendMessageAsync = sendMessageAsync;
+        await this.cloudSyncCheckAsync();
+    }
+
     async componentDidMount() {
         this.unsubscribeChangeListener = store.subscribe(this.onStoreChange);
         this.queryFlags = parseQuery();
         if (this.queryFlags["authcallback"]) {
-            await auth.loginCallbackAsync(this.queryFlags);
+            await authClient.loginCallbackAsync(this.queryFlags);
         }
-        await auth.authCheckAsync();
+        await authClient.authCheckAsync();
         await this.initLocalizationAsync();
         await this.parseHashAsync();
+        this.cloudSyncCheckAsync = this.cloudSyncCheckAsyncActual;
+        await this.cloudSyncCheckAsync();
     }
 
     componentWillUnmount() {
@@ -237,7 +270,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
                         }
                         { !error && <InfoPanel />}
                     </div>
-                    <MakeCodeFrame />
+                    <MakeCodeFrame onFrameLoaded={this.onMakeCodeFrameLoaded}/>
                 <AppModal />
                 <UserProfile />
             </div>);
