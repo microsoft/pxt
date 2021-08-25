@@ -11,7 +11,6 @@ bundle.bundledpkgs = {}
 pxt.setAppTarget(bundle);
 pxt.Cloud.apiRoot = "https://www.makecode.com/api/";
 if (!isLocal()) pxt.setupWebConfig((window as any).pxtConfig);
-pxt.auth.enableAuth(false);
 
 ReactDOM.render(
     <Provider store={store}>

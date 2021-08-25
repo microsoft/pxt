@@ -79,7 +79,7 @@ namespace pxt.editor {
         heightInPixels: 510,
         matcher: {
             // match both JS and python
-            searchString: "(?:img|assets\\s*\\.\\s*image)\\s*(?:`|\\(\\s*\"\"\")(?:[^\"`]|\\n)*\\s*(?:`|\"\"\"\\s*\\))",
+            searchString: "(?:img|assets\\s*\\.\\s*image)\\s*(?:`|\\(\\s*\"\"\")(?:(?:[^(){}:\\[\\]\"';?/,+\\-=*&|^%!`~]|\\n)*)\\s*(?:`|\"\"\"\\s*\\))",
             isRegex: true,
             matchCase: true,
             matchWholeWord: false

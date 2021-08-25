@@ -2,7 +2,7 @@
 import * as React from "react";
 
 import { connect } from 'react-redux';
-import { dispatchSaveAndCloseActivity, dispatchShowResetUserModal, dispatchShowLoginModal } from '../actions/dispatch';
+import { dispatchSaveAndCloseActivity, dispatchShowResetUserModal, dispatchShowLoginModal, dispatchShowUserProfile } from '../actions/dispatch';
 import { SkillMapState } from '../store/reducer';
 import { isLocal, resolvePath, tickEvent } from "../lib/browserUtils";
 
@@ -18,6 +18,7 @@ interface HeaderBarProps {
     dispatchSaveAndCloseActivity: () => void;
     dispatchShowResetUserModal: () => void;
     dispatchShowLoginModal: () => void;
+    dispatchShowUserProfile: () => void;
 }
 
 export class HeaderBarImpl extends React.Component<HeaderBarProps> {
@@ -51,11 +52,9 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
 
     protected getOrganizationLogo(targetTheme: pxt.AppTheme) {
         const logoUrl = targetTheme.organizationWideLogo;
-
-        // TODO FIX LOCALSERVE FETCH OF LOGO
         return <div className="header-logo">
             {logoUrl
-                ? <img src={isLocal() ? logoUrl : logoUrl} alt={lf("{0} Logo", targetTheme.organization)}/>
+                ? <img src={isLocal() ? `./assets/${logoUrl}`: logoUrl} alt={lf("{0} Logo", targetTheme.organization)}/>
                 : <span className="name">{targetTheme.organization}</span>}
         </div>
     }
@@ -92,6 +91,10 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
 
         if (signedIn) {
             items.push({
+                id: "profile",
+                label: lf("My Profile"),
+                onClick: this.onProfileClicked
+            },{
                 id: "signout",
                 label: lf("Sign Out"),
                 onClick: this.onLogoutClicked
@@ -171,7 +174,12 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
 
     onLogoutClicked = async () => {
         pxt.tickEvent(`skillmap.usermenu.signout`);
-        await pxt.auth.client().logoutAsync(location.hash);
+        await pxt.auth.client().logoutAsync(location.hash)
+    }
+
+    onProfileClicked = () => {
+        pxt.tickEvent(`skillmap.profile`)
+        this.props.dispatchShowUserProfile();
     }
 }
 
@@ -221,7 +229,8 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
 const mapDispatchToProps = {
     dispatchSaveAndCloseActivity,
     dispatchShowResetUserModal,
-    dispatchShowLoginModal
+    dispatchShowLoginModal,
+    dispatchShowUserProfile
 };
 
 export const HeaderBar = connect(mapStateToProps, mapDispatchToProps)(HeaderBarImpl);
