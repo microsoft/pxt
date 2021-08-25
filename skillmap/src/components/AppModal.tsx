@@ -322,7 +322,9 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
     }
 
     renderLoginModal(activityPrompt: boolean) {
-        const rememberMeSelected = this.state.rememberMe ?? false;
+        const rememberMeSelected = this.state.checkboxSelected ?? false;
+
+        const signInIconAltText = lf("Sign in icon")
 
         const msft = pxt.auth.identityProvider("microsoft");
         const buttons = [];
@@ -339,7 +341,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                 <p>{lf("Sign in with your Microsoft Account. We'll save your projects to the cloud, where they're accessible from anywhere.")}</p>
 
             <div className="container">
-                    { activityPrompt &&<img src="/assets/cloud-user.svg" className="icon cloud-user"/> }
+                    { activityPrompt && <img src="/assets/cloud-user.svg" alt={signInIconAltText} className="icon cloud-user"/> }
                     <p>{ lf("Don't have a Microsoft Account? Start signing in to create one!")}
                         <a href="https://aka.ms/cloudsave" target="_blank" onClick={() => {
                             tickEvent("skillmap.signindialog.learn", { link: "https://aka.ms/cloudsave" });
