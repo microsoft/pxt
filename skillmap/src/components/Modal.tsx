@@ -16,6 +16,7 @@ interface ModalProps {
     actions?: ModalAction[];
     className?: string;
     onClose?: () => void;
+    fullscreen?: boolean;
 }
 
 export class Modal extends React.Component<ModalProps> {
@@ -29,16 +30,21 @@ export class Modal extends React.Component<ModalProps> {
     }
 
     render() {
-        const  { title, actions, className } = this.props;
-        return <div className="modal-overlay" onClick={this.handleCloseClick} role="region">
-            <div className={`modal ${className || ""}`} onClick={this.handleModalClick} role="dialog">
+        const { title, actions, className, fullscreen } = this.props;
+
+        return <div className={`modal-overlay ${className || ""} ${fullscreen && `fullscreen`}`} onClick={this.handleCloseClick} role="region">
+            <div className="modal" onClick={this.handleModalClick} role="dialog">
                 <div className="modal-header">
+                    {fullscreen && <div className="close button" onClick={this.handleCloseClick}>
+                        <i className="icon arrow left" />
+                        {lf("Go Back")}
+                    </div>}
                     <div className="modal-title">{title}</div>
-                    <div className="spacer" />
-                    <div className="modal-close-icon" onClick={this.handleCloseClick} role="button"><i className="icon close"/></div>
+                    {!fullscreen && <div className="spacer" />}
+                    {!fullscreen && <div className="modal-close-icon" onClick={this.handleCloseClick} role="button"><i className="icon close" /></div>}
                 </div>
                 <div className="modal-body">
-                    { this.props.children }
+                    {this.props.children}
                 </div>
                 {actions && actions.length > 0 && <div className="modal-actions">
                     {actions.map((el, i) => {
