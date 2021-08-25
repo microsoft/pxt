@@ -3,8 +3,7 @@
 import * as React from "react";
 import { connect } from 'react-redux';
 import { ModalType, ShareState, SkillMapState } from '../store/reducer';
-import { dispatchHideModal, dispatchRestartActivity, dispatchOpenActivity, dispatchResetUser, dispatchShowCarryoverModal, dispatchSetShareStatus, dispatchCloseUserProfile } from '../actions/dispatch';
-
+import { dispatchHideModal, dispatchRestartActivity, dispatchOpenActivity, dispatchResetUser, dispatchShowCarryoverModal, dispatchSetShareStatus, dispatchShowLoginPrompt, dispatchCloseUserProfile } from '../actions/dispatch';
 import { tickEvent, postAbuseReportAsync, postShareAsync } from "../lib/browserUtils";
 import { lookupActivityProgress, lookupPreviousActivityStates, lookupPreviousCompletedActivityState, isCodeCarryoverEnabled } from "../lib/skillMapUtils";
 import { getProjectAsync } from "../lib/workspaceProvider";
@@ -65,10 +64,11 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                 return this.renderCodeCarryoverModal();
             case "share":
                 return this.renderShareModal();
-            case "login":
-                return this.renderLoginModal();
             case "delete-account":
                 return this.renderDeleteAccountModal();
+                return this.renderLoginModal(false);
+            case "login-prompt":
+                return this.renderLoginModal(true);
             default:
                 return <div/>
         }
@@ -320,9 +320,8 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
         </Modal>
     }
 
-    renderLoginModal() {
-        const providers = pxt.auth.identityProviders();
-        const rememberMeSelected = this.state.checkboxSelected ?? false;
+    renderLoginModal(activityPrompt: boolean) {
+        const rememberMeSelected = this.state.rememberMe ?? false;
 
         const msft = pxt.auth.identityProvider("microsoft");
         const buttons = [];
@@ -334,12 +333,12 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
             }
         })
 
-        return <Modal title={lf("Sign into MakeCode Arcade")} onClose={this.handleOnClose} actions={buttons}>
-            <div className="sign-in-description">
+        return <Modal title={activityPrompt ? lf("Save your Completed Activity") : lf("Sign into MakeCode Arcade")} onClose={this.handleOnClose} actions={buttons} className="sign-in">
+            <div className="description">
                 <p>{lf("Sign in with your Microsoft Account. We'll save your projects to the cloud, where they're accessible from anywhere.")}</p>
 
-                <div className="sign-in-container">
-                    <i className="xicon icon cloud-user"/>
+            <div className="container">
+                    { activityPrompt &&<img src="/assets/cloud-user.svg" className="icon cloud-user"/> }
                     <p>{ lf("Don't have a Microsoft Account? Start signing in to create one!")}
                         <a href="https://aka.ms/cloudsave" target="_blank" onClick={() => {
                             tickEvent("skillmap.signindialog.learn", { link: "https://aka.ms/cloudsave" });
@@ -349,7 +348,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                         </a>
                     </p>
                 </div>
-                <div className="sign-in-remember" onClick={() => {
+                <div className="remember" onClick={() => {
                     const rememberMe = !rememberMeSelected;
                     tickEvent("skillmap.signindialog.rememberme", { rememberMe: rememberMe.toString() });
                     this.setState({ checkboxSelected: rememberMe });

@@ -1,11 +1,12 @@
 /// <reference path="../../../built/pxteditor.d.ts" />
 import * as React from "react";
 import { connect } from 'react-redux';
-import { isLocal, resolvePath, getEditorUrl, tickEvent } from "../lib/browserUtils";
+import { isLocal, resolvePath, getEditorUrl, tickEvent, cloudLocalStoreKey } from "../lib/browserUtils";
 import { lookupActivityProgress } from "../lib/skillMapUtils";
 
 import { SkillMapState } from '../store/reducer';
-import  { dispatchSetHeaderIdForActivity, dispatchCloseActivity, dispatchSaveAndCloseActivity, dispatchUpdateUserCompletedTags, dispatchSetShareStatus } from '../actions/dispatch';
+import  { dispatchSetHeaderIdForActivity, dispatchCloseActivity, dispatchSaveAndCloseActivity, dispatchUpdateUserCompletedTags, dispatchSetShareStatus,
+          dispatchShowLoginPrompt } from '../actions/dispatch';
 
 /* eslint-disable import/no-unassigned-import, import/no-internal-modules */
 import '../styles/makecode-editor.css'
@@ -23,11 +24,14 @@ interface MakeCodeFrameProps {
     previousHeaderId?: string;
     progress?: ActivityState;
     shareHeaderId?: string;
+    signedIn?: boolean;
+    pageSourceUrl: string;
     dispatchSetHeaderIdForActivity: (mapId: string, activityId: string, id: string, currentStep: number, maxSteps: number, isCompleted: boolean) => void;
     dispatchCloseActivity: (finished?: boolean) => void;
     dispatchSaveAndCloseActivity: () => void;
     dispatchUpdateUserCompletedTags: () => void;
     dispatchSetShareStatus: (headerId?: string, url?: string) => void;
+    dispatchShowLoginPrompt: () => void;
 }
 
 type FrameState = "loading" | "no-project" | "opening-project" | "project-open" | "closing-project";
@@ -291,10 +295,15 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
     }
 
     protected onTutorialFinished() {
-        const { mapId, activityId } = this.props;
+        const { mapId, activityId, signedIn, pageSourceUrl } = this.props;
         tickEvent("skillmap.activity.complete", { path: mapId, activity: activityId });
         this.finishedActivityState = "finished";
         this.props.dispatchSaveAndCloseActivity();
+        const haveSeen = pxt.storage.getLocal(pageSourceUrl + cloudLocalStoreKey)
+        if (!signedIn && !haveSeen) {
+            this.props.dispatchShowLoginPrompt();
+            pxt.storage.setLocal(pageSourceUrl + cloudLocalStoreKey, "true")
+        }
     }
 }
 
@@ -326,7 +335,9 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         previousHeaderId: previousHeaderId,
         progress,
         save: saveState === "saving",
-        shareHeaderId
+        shareHeaderId,
+        signedIn: state.auth.signedIn,
+        pageSourceUrl: state.pageSourceUrl
     }
 }
 
@@ -340,7 +351,8 @@ const mapDispatchToProps = {
     dispatchCloseActivity,
     dispatchSaveAndCloseActivity,
     dispatchUpdateUserCompletedTags,
-    dispatchSetShareStatus
+    dispatchSetShareStatus,
+    dispatchShowLoginPrompt
 };
 
 export const MakeCodeFrame = connect(mapStateToProps, mapDispatchToProps)(MakeCodeFrameImpl);
