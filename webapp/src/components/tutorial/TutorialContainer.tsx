@@ -103,11 +103,11 @@ export function TutorialContainer(props: TutorialContainerProps) {
             <MarkedContent className="no-select" tabIndex={0} markdown={markdown} parent={parent}/>
         </div>
         {layout === "horizontal" && nextButton}
-        {layout === "vertical" && <div className="tutorial-controls">
-            { backButton }
-            <TutorialHint markdown={hintMarkdown} parent={parent} />
-            { nextButton }
-        </div>}
+        <div className="tutorial-controls">
+            { layout === "vertical" && backButton }
+            <TutorialHint markdown={hintMarkdown} parent={parent} showLabel={layout === "horizontal"} />
+            { layout === "vertical" && nextButton }
+        </div>
         {isModal && !hideModal && <Modal isOpen={isModal} closeIcon={false} header={name} buttons={modalActions}
             className="hintdialog" onClose={showNext ? tutorialStepNext : () => setHideModal(true)} dimmer={true}
             longer={true} closeOnDimmerClick closeOnDocumentClick closeOnEscape>
