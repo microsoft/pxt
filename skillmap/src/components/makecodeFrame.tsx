@@ -28,6 +28,7 @@ interface MakeCodeFrameProps {
     dispatchSaveAndCloseActivity: () => void;
     dispatchUpdateUserCompletedTags: () => void;
     dispatchSetShareStatus: (headerId?: string, url?: string) => void;
+    onFrameLoaded: (sendMessageAsync: (message: any) => Promise<any>) => void;
 }
 
 type FrameState = "loading" | "no-project" | "opening-project" | "project-open" | "closing-project";
@@ -138,6 +139,8 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
 
             const root = document.getElementById("root");
             if (root) pxt.BrowserUtils.addClass(root, "editor");
+
+            this.props.onFrameLoaded((message) => this.sendMessageAsync(message));
         }
     }
 
