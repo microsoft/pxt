@@ -44,7 +44,7 @@ namespace pxt.cloud {
             tooltip: lf("Saving project to cloud..."),
             shortStatus: lf("saving..."),
             longStatus: lf("Saving to cloud..."),
-            indicator: lf("saving..."),
+            indicator: lf("syncing..."),
         },
         ["conflict"]: {
             value: "conflict",
@@ -58,7 +58,7 @@ namespace pxt.cloud {
             value: "localEdits",
             icon: "cloud-saving-b",
             tooltip: lf("Saving project to the cloud..."),
-            shortStatus: lf("syncing..."),
+            shortStatus: lf("saving..."),
             longStatus: lf("Saving to cloud..."),
             indicator: "*"
         },

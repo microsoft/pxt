@@ -221,9 +221,9 @@ class AppImpl extends React.Component<AppProps, AppState> {
             // Tell the editor to send us the cloud status of our projects.
             await this.sendMessageAsync({
                 type: "pxteditor",
-                action: "sendprojectcloudstatus",
+                action: "requestprojectcloudstatus",
                 headerIds
-            } as pxt.editor.EditorMessageSendProjectCloudStatus);
+            } as pxt.editor.EditorMessageRequestProjectCloudStatus);
         }
     }
 

@@ -596,7 +596,7 @@ export async function saveLocalProjectsToCloudAsync(headerIds: string[]) {
     }
 }
 
-export async function sendProjectCloudStatus(headerIds: string[]): Promise<void> {
+export async function requestProjectCloudStatus(headerIds: string[]): Promise<void> {
     for (const id of headerIds) {
         const cloudMd = getCloudTempMetadata(id);
         const cloudStatus = cloudMd.cloudStatus();
