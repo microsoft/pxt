@@ -176,7 +176,7 @@
 
 /* Small Monitor */
 @media only screen and (min-width: @computerBreakpoint) and (max-width: @largestSmallMonitor) {
-    .tutorialhint {
+    .tab-tutorial .tutorialhint {
         left: 2rem;
     }
 }
@@ -249,7 +249,7 @@
     *******************************/
 
     .tutorial-container {
-        .ui.button {
+        > .ui.button {
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -270,6 +270,47 @@
             }
         }
     }
+
+    /*******************************
+            Tutorial Hint
+    *******************************/
+
+    .tutorial-controls {
+        position: absolute;
+        right: 6rem;
+        margin-top: 1rem;
+    }
+
+    .tutorial-hint.ui.button {
+        width: unset;
+        height: unset;
+        font-size: 1rem;
+        border-radius: 0.2rem;
+
+        &.disabled {
+            display: none;
+        }
+    }
+
+    // Overrides
+    .tab-tutorial {
+        .tutorialhint {
+            top: 12.5rem;
+            right: 3.2rem;
+            bottom: unset;
+            left: unset;
+            max-width: 80%;
+        }
+
+        .tutorialhint:before {
+            top: -2.5rem;
+            left: unset;
+            bottom: auto;
+            right: 4rem;
+            transform: rotate(90deg);
+        }
+    }
+
 
     /*******************************
             Simulator Tab
