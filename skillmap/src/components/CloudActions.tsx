@@ -39,7 +39,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
 
     let cloudStatus: pxt.cloud.CloudStatus = "none";
 
-    if (selectedItem) {
+    if (selectedItem?.activityId) {
         const headerId = lookupActivityProgress(
             user,
             pageSourceUrl,
@@ -47,8 +47,11 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
             selectedItem.activityId,
         )?.headerId;
         if (headerId) {
-            cloudStatus = state.cloudState && state.cloudState[headerId] || "none";
+            cloudStatus = state.cloudState && state.cloudState[headerId] || cloudStatus;
         }
+    } else {
+        // For skillmap view, show "Saved to cloud"
+        cloudStatus = "synced";
     }
 
     return {

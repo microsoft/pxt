@@ -84,7 +84,7 @@ export class InfoPanelImpl extends React.Component<InfoPanelProps> {
                     ? <ActivityActions mapId={mapId} activityId={node!.activityId} status={status} completedHeaderId={completedHeaderId} />
                     : <RewardActions mapId={mapId} activityId={node!.activityId} status={status} type={(node as MapReward).type} />)
                 }
-                {isActivity && hasCloudSync && <CloudActions />}
+                {hasCloudSync && <CloudActions />}
             </div>
         </div>
     }
