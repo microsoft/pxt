@@ -14,7 +14,7 @@ namespace pxtmelody {
         protected buttons: HTMLElement[];
 
         private timeouts: number[] = []; // keep track of timeout
-        private numSamples: number = pxtmelody.SampleMelodies.length;
+        private numSamples: number = pxtmelody.SampleSounds.length;
 
         constructor() {
             this.containerDiv = document.createElement("div");
@@ -49,7 +49,7 @@ namespace pxtmelody {
         }
 
         show(notes: (res: string) => void) {
-            this.pending = notes;
+           this.pending = notes;
             this.containerDiv.style.display = "block";
             this.buildDom();
             this.visible = true;
@@ -78,13 +78,11 @@ namespace pxtmelody {
 
         protected buildDom() {
             while (this.contentDiv.firstChild) this.contentDiv.removeChild(this.contentDiv.firstChild);
-            const buttonWidth = "255px";
-            const buttonHeight = "45px";
-            const samples = pxtmelody.SampleMelodies;
+            const samples = pxtmelody.SampleSounds;
 
             this.buttons = [];
             for (let i = 0; i < samples.length; i++) {
-                this.mkButton(samples[i], i, buttonWidth, buttonHeight);
+                this.mkButton(samples[i], i);
             }
         }
 
@@ -127,7 +125,7 @@ namespace pxtmelody {
             this.containerDiv.appendChild(style);
         }
 
-        protected mkButton(sample: pxtmelody.MelodyInfo, i: number, width: string, height: string) {
+        protected mkButton(sample: pxtmelody.SoundInfo, i: number) {
             const outer = mkElement("div", {
                 className: "melody-gallery-button melody-editor-card",
                 role: "menuitem",
@@ -177,53 +175,27 @@ namespace pxtmelody {
             this.contentDiv.appendChild(outer);
         }
 
-        protected handleSelection(sample: pxtmelody.MelodyInfo) {
-            if (this.pending) {
+        protected handleSelection(sample: pxtmelody.SoundInfo) {
+           if (this.pending) {
                 const notes = this.pending;
                 this.pending = undefined;
-                notes(sample.notes);
+               notes(sample.waveType);
+
             }
         }
 
-        private playNote(note: string, colNumber: number, tempo: number): void {
-            let tone: number = 0;
+       
 
-            switch (note) {
-                case "C5": tone = 523; break; // Tenor C
-                case "B": tone = 494; break; // Middle B
-                case "A": tone = 440; break; // Middle A
-                case "G": tone = 392; break; // Middle G
-                case "F": tone = 349; break; // Middle F
-                case "E": tone = 330; break; // Middle E
-                case "D": tone = 294; break; // Middle D
-                case "C": tone = 262; break; // Middle C
-            }
+        
 
-            // start note
-            this.timeouts.push(setTimeout(() => {
-                pxt.AudioContextManager.tone(tone);
-            }, colNumber * this.getDuration(tempo)));
-            // stop note
-            this.timeouts.push(setTimeout(() => {
-                pxt.AudioContextManager.stop();
-            }, (colNumber + 1) * this.getDuration(tempo)));
-        }
-
-        // ms to hold note
-        private getDuration(tempo: number): number {
-            return 60000 / tempo;
-        }
-
-        private previewMelody(sample: pxtmelody.MelodyInfo): void {
+        private previewMelody(sample: pxtmelody.SoundInfo): void {
             // stop playing any other melody
             this.stopMelody();
-            let notes = sample.notes.split(" ");
-            for (let i = 0; i < notes.length; i++) {
-                this.playNote(notes[i], i, sample.tempo);
-            }
+            pxt.AudioContextManager.sound( sample.startFrequency, sample.endFrequency, sample.duration, sample.waveType, sample.volume, sample.interpolation );
+                
         }
 
-        private togglePlay(sample: pxtmelody.MelodyInfo, i: number) {
+        private togglePlay(sample: pxtmelody.SoundInfo, i: number) {
             let button = this.buttons[i];
 
             if (pxt.BrowserUtils.containsClass(button, "play icon")) {
@@ -236,7 +208,7 @@ namespace pxtmelody {
                 this.timeouts.push(setTimeout(() => {
                     pxt.BrowserUtils.removeClass(button, "stop icon");
                     pxt.BrowserUtils.addClass(button, "play icon");
-                }, (sample.notes.split(" ").length) * this.getDuration(sample.tempo)));
+                },  sample.duration));
             } else {
                 pxt.BrowserUtils.removeClass(button, "stop icon");
                 pxt.BrowserUtils.addClass(button, "play icon");
@@ -261,7 +233,7 @@ namespace pxtmelody {
         }
 
         // create color representation of melody
-        private createColorBlock(sample: pxtmelody.MelodyInfo): HTMLDivElement {
+        private createColorBlock(sample: pxtmelody.SoundInfo): HTMLDivElement {
             let colorBlock = document.createElement("div");
             pxt.BrowserUtils.addClass(colorBlock, "melody-color-block");
             let colorDiv = document.createElement("div");

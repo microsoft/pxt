@@ -140,7 +140,15 @@ namespace pxtblockly {
                 innerButton.style.setProperty("background-color", "#c1c1c1");
                 return;
         }
+
+        
            
+    }
+
+    updateFields(){
+        document.getElementById(this.waveType).click();
+        document.getElementById(this.interpolationType).click();
+
     }
 
 
@@ -232,10 +240,11 @@ namespace pxtblockly {
             this.volumeText.innerText = lf("Volume:  ");
 
             this.volumeInput = document.createElement("input");
-            pxt.BrowserUtils.addClass(this.volumeInput, "ui input");
+            pxt.BrowserUtils.addClass(this.volumeInput, "ui-input");
             this.volumeInput.type = "number";
+            this.volumeInput.value = "0.2";
             this.volumeInput.title = lf("Volume");
-            this.volumeInput.id = "melody-tempo-input-start-frequency";
+            this.volumeInput.id = "volume";
             this.volumeInput.addEventListener("input", () => this.setVolume(+this.volumeInput.value));
            
             this.parameters.appendChild(this.volumeText);
@@ -247,9 +256,10 @@ namespace pxtblockly {
             this.startFrequencyText.innerText = lf("Start frequency:  ");
 
             this.startFrequencyInput = document.createElement("input");
-            pxt.BrowserUtils.addClass(this.startFrequencyInput, "ui input");
+            pxt.BrowserUtils.addClass(this.startFrequencyInput, "ui-input");
             this.startFrequencyInput.type = "number";
             this.startFrequencyInput.title = lf("Start frequency");
+            this.startFrequencyInput.value = this.startFrequency.toString();
             this.startFrequencyInput.id = "melody-tempo-input-start-frequency";
             this.startFrequencyInput.addEventListener("input", () => this.setStartFrequency(+this.startFrequencyInput.value));
            
@@ -264,6 +274,7 @@ namespace pxtblockly {
             pxt.BrowserUtils.addClass(this.endFrequencyInput, "ui input");
             this.endFrequencyInput.type = "number";
             this.endFrequencyInput.title = lf("End frequency");
+            this.endFrequencyInput.value = this.endFrequency.toString();
             this.endFrequencyInput.id = "melody-tempo-input-start-frequency";
             this.endFrequencyInput.addEventListener("input", () => this.setEndFrequency(+this.endFrequencyInput.value));
         
@@ -287,8 +298,9 @@ namespace pxtblockly {
 
             const interpolationButtons = this.mkWaveButtons(pxtmelody.SampleInterpolations);
             this.parameters.appendChild(interpolationButtons);
-
-           
+            setTimeout(() => {
+                this.updateFields();
+            }, 10);
 
             // Create bottom div with duration and play and done buttons
             this.bottomDiv = document.createElement("div");
@@ -312,7 +324,7 @@ namespace pxtblockly {
 
             // add duration element
             this.durationInput = document.createElement("input");
-            pxt.BrowserUtils.addClass(this.durationInput, "ui input");
+            pxt.BrowserUtils.addClass(this.durationInput, "ui-input");
             this.durationInput.type = "number";
             this.durationInput.title = lf("duration");
             this.durationInput.id = "melody-tempo-input";
@@ -541,8 +553,6 @@ namespace pxtblockly {
             }
             return false;
         }
-
-       
 
         protected playToneCore(frequency: number) {
             pxt.AudioContextManager.tone(frequency);
