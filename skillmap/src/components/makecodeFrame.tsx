@@ -5,7 +5,7 @@ import { isLocal, resolvePath, getEditorUrl, tickEvent } from "../lib/browserUti
 import { lookupActivityProgress } from "../lib/skillMapUtils";
 
 import { SkillMapState } from '../store/reducer';
-import  { dispatchSetHeaderIdForActivity, dispatchCloseActivity, dispatchSaveAndCloseActivity, dispatchUpdateUserCompletedTags, dispatchSetShareStatus } from '../actions/dispatch';
+import  { dispatchSetHeaderIdForActivity, dispatchCloseActivity, dispatchSaveAndCloseActivity, dispatchUpdateUserCompletedTags, dispatchSetShareStatus, dispatchSetCloudStatus } from '../actions/dispatch';
 
 /* eslint-disable import/no-unassigned-import, import/no-internal-modules */
 import '../styles/makecode-editor.css'
@@ -28,6 +28,7 @@ interface MakeCodeFrameProps {
     dispatchSaveAndCloseActivity: () => void;
     dispatchUpdateUserCompletedTags: () => void;
     dispatchSetShareStatus: (headerId?: string, url?: string) => void;
+    dispatchSetCloudStatus: (headerId: string, status: string) => void;
     onFrameLoaded: (sendMessageAsync: (message: any) => Promise<any>) => void;
 }
 
@@ -168,6 +169,11 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
             case "tutorialevent":
                 this.handleTutorialEvent(data as pxt.editor.EditorMessageTutorialEventRequest);
                 break;
+            case "projectcloudstatus": {
+                const msg = data as pxt.editor.EditorMessageProjectCloudStatus;
+                this.props.dispatchSetCloudStatus(msg.headerId, msg.status);
+                break;
+            }
             default:
                 // console.log(JSON.stringify(data, null, 4));
         }
@@ -343,7 +349,8 @@ const mapDispatchToProps = {
     dispatchCloseActivity,
     dispatchSaveAndCloseActivity,
     dispatchUpdateUserCompletedTags,
-    dispatchSetShareStatus
+    dispatchSetShareStatus,
+    dispatchSetCloudStatus
 };
 
 export const MakeCodeFrame = connect(mapStateToProps, mapDispatchToProps)(MakeCodeFrameImpl);

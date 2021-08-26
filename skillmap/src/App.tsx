@@ -218,6 +218,11 @@ class AppImpl extends React.Component<AppProps, AppState> {
                 action: "savelocalprojectstocloud",
                 headerIds
             } as pxt.editor.EditorMessageSaveLocalProjectsToCloud);
+            await this.sendMessageAsync({
+                type: "pxteditor",
+                action: "getprojectcloudstatus",
+                headerIds
+            }) as pxt.editor.EditorMessageGetProjectCloudStatus;
         }
     }
 

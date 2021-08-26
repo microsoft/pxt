@@ -56,6 +56,8 @@ namespace pxt.editor {
         | "unloadproject"
         | "shareproject"
         | "savelocalprojectstocloud"
+        | "projectcloudstatus"
+        | "getprojectcloudstatus"
 
         | "toggletrace" // EditorMessageToggleTraceRequest
         | "togglehighcontrast"
@@ -227,6 +229,17 @@ namespace pxt.editor {
 
     export interface EditorMessageSaveLocalProjectsToCloud extends EditorMessageRequest {
         action: "savelocalprojectstocloud";
+        headerIds: string[];
+    }
+
+    export interface EditorMessageProjectCloudStatus extends EditorMessageRequest {
+        action: "projectcloudstatus";
+        headerId: string;
+        status: pxt.cloud.CloudStatus;
+    }
+
+    export interface EditorMessageGetProjectCloudStatus extends EditorMessageRequest {
+        action: "getprojectcloudstatus";
         headerIds: string[];
     }
 

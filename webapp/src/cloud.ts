@@ -105,16 +105,14 @@ function getAsync(h: Header): Promise<File> {
     });
 }
 
-export type CloudStatus = "none" | "synced" | "justSynced" | "offline" | "syncing" | "conflict" | "localEdits";
-
 export type CloudStatusInfo = {
-    value: CloudStatus,
+    value: pxt.cloud.CloudStatus,
     icon?: string,
     tooltip?: string,
     indicator?: string
 };
 
-const cloudStatusInfos: { [index in CloudStatus]: CloudStatusInfo } = {
+const cloudStatusInfos: { [index in pxt.cloud.CloudStatus]: CloudStatusInfo } = {
     "none": {
         value: "none",
     },
