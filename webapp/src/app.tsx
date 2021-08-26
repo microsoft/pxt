@@ -196,6 +196,7 @@ export class ProjectView
         this.toggleKeymap = this.toggleKeymap.bind(this);
         this.showMiniSim = this.showMiniSim.bind(this);
         this.setTutorialStep = this.setTutorialStep.bind(this);
+        this.completeTutorialAsync = this.completeTutorialAsync.bind(this);
         this.setEditorOffset = this.setEditorOffset.bind(this);
         this.initSimulatorMessageHandlers();
 
@@ -4411,6 +4412,7 @@ export class ProjectView
 
                     tutorialOptions={isVerticalTutorial ? tutorialOptions : undefined}
                     onTutorialStepChange={this.setTutorialStep}
+                    onTutorialComplete={this.completeTutorialAsync}
                     setEditorOffset={this.setEditorOffset} />
                 <div id="maineditor" className={(sandbox ? "sandbox" : "") + (inDebugMode ? "debugging" : "")} role="main" aria-hidden={inHome}>
                     {showCollapseButton && <sui.Button id='computertogglesim' className={`computer only collapse-button large`} icon={`inverted chevron ${showRightChevron ? 'right' : 'left'}`} title={collapseIconTooltip} onClick={this.toggleSimulatorCollapse} />}

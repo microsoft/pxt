@@ -16,6 +16,7 @@ interface TutorialContainerProps {
     tutorialOptions?: pxt.tutorial.TutorialOptions; // TODO (shakao) pass in only necessary subset
 
     onTutorialStepChange?: (step: number) => void;
+    onTutorialComplete?: () => void;
     setParentHeight?: (height?: number) => void;
 }
 
@@ -23,7 +24,7 @@ const MIN_HEIGHT = 80;
 const MAX_HEIGHT = 212;
 
 export function TutorialContainer(props: TutorialContainerProps) {
-    const { parent, name, steps, tutorialOptions, onTutorialStepChange, setParentHeight } = props;
+    const { parent, name, steps, tutorialOptions, onTutorialStepChange, onTutorialComplete, setParentHeight } = props;
     const [ currentStep, setCurrentStep ] = React.useState(props.currentStep || 0);
     const [ hideModal, setHideModal ] = React.useState(false);
     const [ layout, setLayout ] = React.useState<"vertical" | "horizontal">("vertical");
@@ -39,6 +40,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
 
     const showBack = currentStep !== 0;
     const showNext = currentStep !== steps.length - 1;
+    const showDone = !showNext && !pxt.appTarget.appTheme.lockedEditor && !tutorialOptions?.metadata?.hideIteration;
     const showImmersiveReader = pxt.appTarget.appTheme.immersiveReader;
 
     const setTutorialStep = (step: number) => {
@@ -86,22 +88,25 @@ export function TutorialContainer(props: TutorialContainerProps) {
         })
     }
 
+    const backButton = <Button icon="arrow circle left" disabled={!showBack} text={lf("Back")} onClick={tutorialStepBack} />;
+    const nextButton = showDone
+        ? <Button icon="check circle" text={lf("Done")} onClick={onTutorialComplete} />
+        : <Button icon="arrow circle right" disabled={!showNext} text={lf("Next")} onClick={tutorialStepNext} />;
+
     return <div className="tutorial-container">
         <div className="tutorial-top-bar">
             <TutorialStepCounter currentStep={visibleStep} totalSteps={steps.length} setTutorialStep={setTutorialStep} />
             {showImmersiveReader && <ImmersiveReaderButton content={markdown} tutorialOptions={tutorialOptions} />}
         </div>
-        {layout === "horizontal" &&
-            <Button icon="arrow circle left" disabled={!showBack} text={lf("Back")} onClick={tutorialStepBack} />}
+        {layout === "horizontal" && backButton}
         <div className="tutorial-content" ref={contentRef}>
             <MarkedContent className="no-select" tabIndex={0} markdown={markdown} parent={parent}/>
         </div>
-        {layout === "horizontal" &&
-            <Button icon="arrow circle right" disabled={!showNext} text={lf("Next")} onClick={tutorialStepNext} />}
+        {layout === "horizontal" && nextButton}
         {layout === "vertical" && <div className="tutorial-controls">
-            <Button icon="arrow circle left" disabled={!showBack} text={lf("Back")} onClick={tutorialStepBack} />
+            { backButton }
             <TutorialHint markdown={hintMarkdown} parent={parent} />
-            <Button icon="arrow circle right" disabled={!showNext} text={lf("Next")} onClick={tutorialStepNext} />
+            { nextButton }
         </div>}
         {isModal && !hideModal && <Modal isOpen={isModal} closeIcon={false} header={name} buttons={modalActions}
             className="hintdialog" onClose={showNext ? tutorialStepNext : () => setHideModal(true)} dimmer={true}
