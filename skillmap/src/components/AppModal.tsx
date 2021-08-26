@@ -3,8 +3,8 @@
 import * as React from "react";
 import { connect } from 'react-redux';
 import { ModalType, ShareState, SkillMapState } from '../store/reducer';
-import { dispatchHideModal, dispatchRestartActivity, dispatchOpenActivity, dispatchResetUser, dispatchShowCarryoverModal, dispatchSetShareStatus, dispatchShowLoginPrompt, dispatchCloseUserProfile } from '../actions/dispatch';
-import { tickEvent, postAbuseReportAsync, postShareAsync } from "../lib/browserUtils";
+import { dispatchHideModal, dispatchRestartActivity, dispatchOpenActivity, dispatchResetUser, dispatchShowCarryoverModal, dispatchSetShareStatus, dispatchCloseUserProfile } from '../actions/dispatch';
+import { tickEvent, postAbuseReportAsync, resolvePath, postShareAsync } from "../lib/browserUtils";
 import { lookupActivityProgress, lookupPreviousActivityStates, lookupPreviousCompletedActivityState, isCodeCarryoverEnabled } from "../lib/skillMapUtils";
 import { getProjectAsync } from "../lib/workspaceProvider";
 import { editorUrl } from "./makecodeFrame";
@@ -341,7 +341,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                 <p>{lf("Sign in with your Microsoft Account. We'll save your projects to the cloud, where they're accessible from anywhere.")}</p>
 
             <div className="container">
-                    { activityPrompt && <img src="/assets/cloud-user.svg" alt={signInIconAltText} className="icon cloud-user"/> }
+                    { activityPrompt && <img src={resolvePath("/assets/cloud-user.svg")} alt={signInIconAltText} className="icon cloud-user"/> }
                     <p>{ lf("Don't have a Microsoft Account? Start signing in to create one!")}
                         <a href="https://aka.ms/cloudsave" target="_blank" onClick={() => {
                             tickEvent("skillmap.signindialog.learn");
