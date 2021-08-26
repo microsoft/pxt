@@ -32,6 +32,7 @@ interface SidepanelProps extends pxt.editor.ISettingsProps {
 
     tutorialOptions?: pxt.tutorial.TutorialOptions;
     onTutorialStepChange?: (step: number) => void;
+    onTutorialComplete?: () => void;
     setEditorOffset?: () => void;
 
     showMiniSim: (visible?: boolean) => void;
@@ -114,7 +115,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
     renderCore() {
         const { parent, inHome, showKeymap, showSerialButtons, showFileList, showFullscreenButton,
             collapseEditorTools, simSerialActive, deviceSerialActive, tutorialOptions,
-            handleHardwareDebugClick, onTutorialStepChange } = this.props;
+            handleHardwareDebugClick, onTutorialStepChange, onTutorialComplete } = this.props;
         const { activeTab, height } = this.state;
 
         return <div id="simulator" className="simulator">
@@ -138,7 +139,8 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                 {tutorialOptions && <TabContent name={TUTORIAL_TAB} icon="pencil" onSelected={this.showTutorialTab}>
                     <TutorialContainer parent={parent} name={tutorialOptions.tutorialName} steps={tutorialOptions.tutorialStepInfo}
                         currentStep={tutorialOptions.tutorialStep} tutorialOptions={tutorialOptions}
-                        onTutorialStepChange={onTutorialStepChange} setParentHeight={this.setComponentHeight} />
+                        onTutorialStepChange={onTutorialStepChange} onTutorialComplete={onTutorialComplete}
+                        setParentHeight={this.setComponentHeight} />
                 </TabContent>}
             </TabPane>
         </div>
