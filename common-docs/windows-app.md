@@ -6,7 +6,7 @@ is an alternative to the web version for offline and portability purposes.
 
 ## #deprecate-note
 
-### ~ warning
+### ~ alert
 
 #### Windows app deprecation
 
