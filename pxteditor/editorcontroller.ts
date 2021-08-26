@@ -57,7 +57,7 @@ namespace pxt.editor {
         | "shareproject"
         | "savelocalprojectstocloud"
         | "projectcloudstatus"
-        | "getprojectcloudstatus"
+        | "sendprojectcloudstatus"
 
         | "toggletrace" // EditorMessageToggleTraceRequest
         | "togglehighcontrast"
@@ -238,8 +238,8 @@ namespace pxt.editor {
         status: pxt.cloud.CloudStatus;
     }
 
-    export interface EditorMessageGetProjectCloudStatus extends EditorMessageRequest {
-        action: "getprojectcloudstatus";
+    export interface EditorMessageSendProjectCloudStatus extends EditorMessageRequest {
+        action: "sendprojectcloudstatus";
         headerIds: string[];
     }
 
@@ -559,6 +559,11 @@ namespace pxt.editor {
                                 case "savelocalprojectstocloud": {
                                     const msg = data as EditorMessageSaveLocalProjectsToCloud;
                                     return projectView.saveLocalProjectsToCloudAsync(msg.headerIds);
+                                }
+                                case "sendprojectcloudstatus": {
+                                    // Responses are sent as separate "projectcloudstatus" messages.
+                                    const msg = data as EditorMessageSendProjectCloudStatus;
+                                    return projectView.sendProjectCloudStatus(msg.headerIds);
                                 }
                             }
                             return Promise.resolve();

@@ -3539,6 +3539,10 @@ export class ProjectView
         await cloud.saveLocalProjectsToCloudAsync(headerIds);
     }
 
+    async sendProjectCloudStatus(headerIds: string[]): Promise<void> {
+        await cloud.sendProjectCloudStatus(headerIds);
+    }
+
     private debouncedSaveProjectName: () => void;
 
     updateHeaderName(name: string) {
