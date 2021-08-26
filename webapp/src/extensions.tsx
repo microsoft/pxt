@@ -110,7 +110,8 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
 
                 // sanity check: this should have been caught earlier
                 const packagesConfig = config?.packages;
-                if (!(packagesConfig?.approvedEditorExtensionUrls?.indexOf(url) > -1))
+                if (packagesConfig?.approvedEditorExtensionUrls?.indexOf(url) < 0 &&
+                    (!/^http:\/\/localhost:/.test(url) || !pxt.BrowserUtils.isLocalHostDev()))
                     pxt.U.userError("Trying to load an unapproved extension")
 
                 // loading
