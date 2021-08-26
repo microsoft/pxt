@@ -273,38 +273,40 @@
     /*******************************
             Simulator Tab
     *******************************/
-    .tab-simulator:not(.hidden) .simPanel {
-        display: flex;
+    #root.tutorialVertical .tab-simulator:not(.hidden) {
+        .simPanel {
+            display: flex;
 
-        #simulators {
-            width: 34rem;
-            margin: auto;
+            #simulators {
+                width: 34rem;
+                margin: auto;
+            }
+
+            .simframe {
+                padding-bottom: 39% !important;
+            }
+
+            .simtoolbar {
+                flex-direction: column;
+                flex-grow: 0;
+                width: 6rem;
+                margin-left: 1rem;
+            }
+
+            .simtoolbar > .buttons {
+                flex-direction: column;
+            }
         }
 
-        .simframe {
-            padding-bottom: 39% !important;
+        #boardview {
+            width: 100% !important;
         }
-
-        .simtoolbar {
-            flex-direction: column;
-            flex-grow: 0;
-            width: 6rem;
-            margin-left: 1rem;
-        }
-
-        .simtoolbar > .buttons {
-            flex-direction: column;
-        }
-    }
-
-    #root.tutorialVertical .tab-simulator:not(.hidden) #boardview {
-        width: 100% !important;
     }
 }
 
 /* Mobile */
 @media only screen and (max-width: @largestMobileScreen) {
-    .tab-simulator:not(.hidden) .simPanel {
+    #root.tutorialVertical .tab-simulator:not(.hidden) .simPanel {
         #simulators {
             width: 16rem;
         }
