@@ -15,6 +15,7 @@ import { TutorialContainer } from "./components/tutorial/TutorialContainer";
 
 interface SidepanelState {
     activeTab?: string;
+    height?: number;
 }
 
 interface SidepanelProps extends pxt.editor.ISettingsProps {
@@ -31,6 +32,7 @@ interface SidepanelProps extends pxt.editor.ISettingsProps {
 
     tutorialOptions?: pxt.tutorial.TutorialOptions;
     onTutorialStepChange?: (step: number) => void;
+    setEditorOffset?: () => void;
 
     showMiniSim: (visible?: boolean) => void;
     openSerial: (isSim: boolean) => void;
@@ -59,9 +61,13 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         }
     }
 
+    componentDidUpdate(props: SidepanelProps, state: SidepanelState) {
+        if ((this.state.height || state.height) && this.state.height != state.height) this.props.setEditorOffset();
+    }
+
     protected showSimulatorTab = () => {
         this.props.showMiniSim(false);
-        this.setState({ activeTab: SIMULATOR_TAB });
+        this.setState({ activeTab: SIMULATOR_TAB, height: undefined });
     }
 
     protected showTutorialTab = () => {
@@ -101,13 +107,18 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         }
     }
 
+    protected setComponentHeight = (height?: number) => {
+        if (height != this.state.height) this.setState({ height });
+    }
+
     renderCore() {
         const { parent, inHome, showKeymap, showSerialButtons, showFileList, showFullscreenButton,
             collapseEditorTools, simSerialActive, deviceSerialActive, tutorialOptions,
             handleHardwareDebugClick, onTutorialStepChange } = this.props;
+        const { activeTab, height } = this.state;
 
         return <div id="simulator" className="simulator">
-            <TabPane id="editorSidebar" activeTabName={this.state.activeTab}>
+            <TabPane id="editorSidebar" activeTabName={activeTab} style={height ? { height: `calc(${height}px + 5.5rem)` } : undefined}>
                 <TabContent name={SIMULATOR_TAB} icon="game" onSelected={this.showSimulatorTab}>
                     <div className="ui items simPanel" ref={this.handleSimPanelRef}>
                         <div id="boardview" className="ui vertical editorFloat" role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0} />
@@ -127,7 +138,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                 {tutorialOptions && <TabContent name={TUTORIAL_TAB} icon="pencil" onSelected={this.showTutorialTab}>
                     <TutorialContainer parent={parent} name={tutorialOptions.tutorialName} steps={tutorialOptions.tutorialStepInfo}
                         currentStep={tutorialOptions.tutorialStep} tutorialOptions={tutorialOptions}
-                        onTutorialStepChange={onTutorialStepChange} />
+                        onTutorialStepChange={onTutorialStepChange} setParentHeight={this.setComponentHeight} />
                 </TabContent>}
             </TabPane>
         </div>

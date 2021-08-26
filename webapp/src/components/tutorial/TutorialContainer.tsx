@@ -16,13 +16,18 @@ interface TutorialContainerProps {
     tutorialOptions?: pxt.tutorial.TutorialOptions; // TODO (shakao) pass in only necessary subset
 
     onTutorialStepChange?: (step: number) => void;
+    setParentHeight?: (height?: number) => void;
 }
 
+const MIN_HEIGHT = 80;
+const MAX_HEIGHT = 212;
+
 export function TutorialContainer(props: TutorialContainerProps) {
-    const { parent, name, steps, tutorialOptions, onTutorialStepChange } = props;
+    const { parent, name, steps, tutorialOptions, onTutorialStepChange, setParentHeight } = props;
     const [ currentStep, setCurrentStep ] = React.useState(props.currentStep || 0);
     const [ hideModal, setHideModal ] = React.useState(false);
     const [ layout, setLayout ] = React.useState<"vertical" | "horizontal">("vertical");
+    const contentRef = React.useRef(undefined);
 
     const currentStepInfo = steps[currentStep];
     if (!steps[currentStep]) return <div />;
@@ -56,6 +61,16 @@ export function TutorialContainer(props: TutorialContainerProps) {
         return () => observer.disconnect();
     }, [document.body])
 
+    React.useEffect(() => {
+        if (layout == "horizontal") {
+            const scrollHeight = contentRef?.current?.firstElementChild?.scrollHeight;
+            if (scrollHeight) {
+                setParentHeight(Math.min(Math.max(scrollHeight + 2, MIN_HEIGHT), MAX_HEIGHT));
+            }
+        } else {
+            setParentHeight();
+        }
+    })
 
     let modalActions: ModalButton[] = [
         { label: lf("Back"), onclick: tutorialStepBack, icon: "arrow circle left", disabled: !showBack, labelPosition: "left" },
@@ -78,8 +93,8 @@ export function TutorialContainer(props: TutorialContainerProps) {
         </div>
         {layout === "horizontal" &&
             <Button icon="arrow circle left" disabled={!showBack} text={lf("Back")} onClick={tutorialStepBack} />}
-        <div className="tutorial-content">
-            <MarkedContent className="no-select" tabIndex={0} markdown={markdown} parent={parent} />
+        <div className="tutorial-content" ref={contentRef}>
+            <MarkedContent className="no-select" tabIndex={0} markdown={markdown} parent={parent}/>
         </div>
         {layout === "horizontal" &&
             <Button icon="arrow circle right" disabled={!showNext} text={lf("Next")} onClick={tutorialStepNext} />}
