@@ -6,10 +6,12 @@ import { MarkedContent } from "../../marked";
 interface TutorialHintProps {
     parent: pxt.editor.IProjectView;
     markdown: string;
+
+    showLabel?: boolean;
 }
 
 export function TutorialHint(props: TutorialHintProps) {
-    const { parent, markdown } = props;
+    const { parent, markdown, showLabel } = props;
     const [ visible, setVisible ] = React.useState(false);
 
     const captureEvent = (e: any) => {
@@ -33,7 +35,8 @@ export function TutorialHint(props: TutorialHintProps) {
     }
 
     return <div className="tutorial-hint-container">
-        <Button icon="lightbulb" className="tutorial-hint" disabled={!markdown} onClick={markdown ? toggleHint : undefined} />
+        <Button icon="lightbulb" text={showLabel ? lf("Hint") : undefined} className="tutorial-hint"
+            disabled={!markdown} onClick={markdown ? toggleHint : undefined} />
         {visible && <div className={`tutorialhint no-select`} onClick={captureEvent}>
             <MarkedContent markdown={markdown} unboxSnippets={true} parent={parent} />
         </div>}
