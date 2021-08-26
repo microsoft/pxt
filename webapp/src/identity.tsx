@@ -156,7 +156,7 @@ export class UserMenu extends auth.Component<UserMenuProps, UserMenuState> {
         return (
             <sui.DropdownMenu role="menuitem"
                 title={title}
-                className="item icon user-dropdown-menuitem sign-in-dropdown"
+                className={`item icon user-dropdown-menuitem ${loggedIn ? 'logged-in-dropdown' : 'sign-in-dropdown'}`}
                 titleContent={loggedIn ? signedInElem : signedOutElem}
                 tabIndex={loggedIn? 0 : -1}
                 onClick={this.handleDropdownClicked}
