@@ -226,7 +226,7 @@ namespace pxt.blocks {
                                 if (t.parentType) {
                                     return t.parentType;
                                 }
-                                tp = ground(t.type + "[]");
+                                tp = t.type ? ground(t.type + "[]") : mkPoint(null);
                                 genericLink(tp, t);
                                 break;
                             }
@@ -260,7 +260,7 @@ namespace pxt.blocks {
                     if (parentType.childType) {
                         return parentType.childType;
                     }
-                    const p = isArrayType(parentType.type) ? mkPoint(parentType.type.substr(0, parentType.type.length - 2)) : mkPoint(null);
+                    const p = isArrayType(parentType.type) && parentType.type !== "Array" ? mkPoint(parentType.type.substr(0, parentType.type.length - 2)) : mkPoint(null);
                     genericLink(parentType, p);
                     return p;
                 }
