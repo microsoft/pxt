@@ -68,6 +68,11 @@ export async function authCheckAsync(): Promise<pxt.auth.UserProfile | undefined
     return await cli?.authCheckAsync();
 }
 
+export async function loggedInAsync(): Promise<boolean | undefined> {
+    const cli = await clientAsync();
+    return await cli?.loggedInAsync();
+}
+
 export async function loginCallbackAsync(qs: pxt.Map<string>): Promise<void> {
     return await pxt.auth.loginCallbackAsync(qs);
 }

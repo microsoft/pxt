@@ -208,19 +208,10 @@ class AppImpl extends React.Component<AppProps, AppState> {
         this.props.dispatchSetUser(user);
     }
 
-    /* Two things must be true before cloudSyncCheckAsync can execute:
-        1. The onMakeCodeFrameLoaded callback must have been called.
-        2. This component must be mounted and parseHashAsync executed.
-       These conditions can become true in any order. We know when this component
-       is mounted, but when the MakeCodeFrame is loaded is completely variable.
-    */
-    cloudSyncCheckAsyncEmpty = async () => { }
-    cloudSyncCheckAsyncActual = async () => {
-        const state = store.getState();
-        const cli = await authClient.clientAsync();
-        if (await cli?.loggedInAsync() && this.sendMessageAsync) {
-            this.cloudSyncCheckAsyncActual = this.cloudSyncCheckAsyncEmpty; // Reset function so subesquent calls will go to stub.
-            // Transfer local skillmap projects to the cloud.
+    protected async cloudSyncCheckAsync() {
+        if (await authClient.loggedInAsync() && this.sendMessageAsync && this.loadedUser) {
+            // Tell the editor to transfer local skillmap projects to the cloud.
+            const state = store.getState();
             const headerIds = getFlattenedHeaderIds(state.user, state.pageSourceUrl);
             await this.sendMessageAsync({
                 type: "pxteditor",
@@ -229,8 +220,6 @@ class AppImpl extends React.Component<AppProps, AppState> {
             } as pxt.editor.EditorMessageSaveLocalProjectsToCloud);
         }
     }
-    // Initialize function to a stub. Will be set to actual when conditions are right.
-    cloudSyncCheckAsync = this.cloudSyncCheckAsyncEmpty;
 
     protected onMakeCodeFrameLoaded = async (sendMessageAsync: (message: any) => Promise<any>) => {
         this.sendMessageAsync = sendMessageAsync;
@@ -246,7 +235,6 @@ class AppImpl extends React.Component<AppProps, AppState> {
         await authClient.authCheckAsync();
         await this.initLocalizationAsync();
         await this.parseHashAsync();
-        this.cloudSyncCheckAsync = this.cloudSyncCheckAsyncActual;
         await this.cloudSyncCheckAsync();
     }
 
