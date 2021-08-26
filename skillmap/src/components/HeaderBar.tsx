@@ -8,6 +8,7 @@ import { isLocal, resolvePath, tickEvent } from "../lib/browserUtils";
 
 import { Dropdown, DropdownItem } from "./Dropdown";
 import { isActivityCompleted } from "../lib/skillMapUtils";
+import * as authClient from '../lib/authClient';
 
 interface HeaderBarProps {
     currentMapId?: string;
@@ -174,7 +175,7 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
 
     onLogoutClicked = async () => {
         pxt.tickEvent(`skillmap.usermenu.signout`);
-        await pxt.auth.client().logoutAsync(location.hash)
+        await authClient.logoutAsync(location.hash);
     }
 
     onProfileClicked = () => {
