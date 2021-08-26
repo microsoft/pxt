@@ -14,7 +14,7 @@ namespace pxtblockly {
         private duration: number = 1500;
         private volume: number = 0.2;
         private startFrequency: number = 440;
-        private endFrequency: number = 440;
+        private endFrequency: number = 880;
         private waveType: string = "square";
         private waveButtons:any;
         private interpolationType: string = "linear";
@@ -555,21 +555,9 @@ namespace pxtblockly {
                 this.timeouts.push(setTimeout(() => {
                     this.togglePlay();
                 }, this.getDuration() ));
-
-                /*this.timeouts.push(setTimeout(() => {
-                    this.playToneCore(this.startFrequency);
-                }, 0));
-
-                this.timeouts.push(setTimeout(() => {
-                    pxt.AudioContextManager.sound(this.startFrequency, "square");
-                }, this.getDuration() ));
-
-                this.timeouts.push(setTimeout(() => {
-                    this.togglePlay();
-                }, this.getDuration() ));*/
             }
             else {
-                pxt.AudioContextManager.stop();
+                this.stopMelody();
             }
         }
 

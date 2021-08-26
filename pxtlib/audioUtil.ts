@@ -43,7 +43,6 @@ namespace pxt.AudioContextManager {
 
         _gain.gain.setTargetAtTime(0, _context.currentTime, 0.015);
         _frequency = 0;
-        _vco.disconnect();
         _vco = undefined;
     }
 
