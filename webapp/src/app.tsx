@@ -191,6 +191,7 @@ export class ProjectView
         this.toggleKeymap = this.toggleKeymap.bind(this);
         this.showMiniSim = this.showMiniSim.bind(this);
         this.setTutorialStep = this.setTutorialStep.bind(this);
+        this.setEditorOffset = this.setEditorOffset.bind(this);
         this.initSimulatorMessageHandlers();
 
         // add user hint IDs and callback to hint manager
@@ -4054,19 +4055,30 @@ export class ProjectView
         this.postTutorialLoaded();
     }
 
-    getExpandedCardStyle(flyoutOnly?: boolean): any {
-        let tc = this.refs[ProjectView.tutorialCardId] as tutorial.TutorialCard;
-        let headerHeight = 0;
-        if (flyoutOnly) {
-            let headers = document.getElementById("headers");
-            headerHeight += headers.offsetHeight;
+    setEditorOffset() {
+        if (this.isTutorial()) {
+            if (pxt.BrowserUtils.isVerticalTutorial()) {
+                const sidebarEl = document?.getElementById("editorSidebar");
+                if (sidebarEl && window?.innerWidth <= pxt.BREAKPOINT_TABLET) {
+                    this.setState({ editorOffset: sidebarEl.offsetHeight + "px" });
+                } else {
+                    this.setState({ editorOffset: undefined });
+                }
+            } else {
+                const tc = this.refs[ProjectView.tutorialCardId] as tutorial.TutorialCard;
+                const flyoutOnly = this.state.editorState && this.state.editorState.hasCategories === false;
+                let headerHeight = 0;
+                if (flyoutOnly) {
+                    let headers = document.getElementById("headers");
+                    headerHeight += headers.offsetHeight;
+                }
+                if (tc) {
+                    // maxium offset of 18rem
+                    let maxOffset = Math.min(tc.getCardHeight() + headerHeight, parseFloat(getComputedStyle(document.documentElement).fontSize) * 18);
+                    this.setState({ editorOffset: "calc(" + maxOffset + "px + 2em)" }); // 2em for margins
+                }
+            }
         }
-        if (tc) {
-            // maxium offset of 18rem
-            let maxOffset = Math.min(tc.getCardHeight() + headerHeight, parseFloat(getComputedStyle(document.documentElement).fontSize) * 18);
-            return { 'top': "calc(" + maxOffset + "px + 2em)" }; // 2em for margins
-        }
-        return null;
     }
 
     private saveTutorialTemplateAsync() {
@@ -4277,7 +4289,7 @@ export class ProjectView
         const shouldHideEditorFloats = this.state.hideEditorFloats || this.state.collapseEditorTools;
         const logoWide = !!targetTheme.logoWide;
         const hwDialog = !sandbox && pxt.hasHwVariants();
-        const expandedStyle = inTutorialExpanded ? this.getExpandedCardStyle(flyoutOnly) : null;
+        const editorOffset = ((inTutorialExpanded || isVerticalTutorial) && this.state.editorOffset) ? { top: this.state.editorOffset } : undefined;
         const invertedTheme = targetTheme.invertedMenu && targetTheme.invertedMonaco;
 
         const collapseIconTooltip = this.state.collapseEditorTools ? lf("Show the simulator") : lf("Hide the simulator");
@@ -4371,10 +4383,11 @@ export class ProjectView
                     handleFullscreenButtonClick={this.toggleSimulatorFullscreen}
 
                     tutorialOptions={isVerticalTutorial ? tutorialOptions : undefined}
-                    onTutorialStepChange={this.setTutorialStep} />
+                    onTutorialStepChange={this.setTutorialStep}
+                    setEditorOffset={this.setEditorOffset} />
                 <div id="maineditor" className={(sandbox ? "sandbox" : "") + (inDebugMode ? "debugging" : "")} role="main" aria-hidden={inHome}>
                     {showCollapseButton && <sui.Button id='computertogglesim' className={`computer only collapse-button large`} icon={`inverted chevron ${showRightChevron ? 'right' : 'left'}`} title={collapseIconTooltip} onClick={this.toggleSimulatorCollapse} />}
-                    {this.allEditors.map(e => e.displayOuter(expandedStyle))}
+                    {this.allEditors.map(e => e.displayOuter(editorOffset))}
                 </div>
                 {inHome ? <div id="homescreen" className="full-abs">
                     <div className="ui home projectsdialog">
@@ -5151,6 +5164,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                 } else {
                     theEditor.showMiniSim(false);
                 }
+            } else if (theEditor.isTutorial()) {
+                theEditor.setEditorOffset();
             }
         }
     }, false);

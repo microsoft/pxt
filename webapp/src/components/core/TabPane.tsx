@@ -5,12 +5,13 @@ import { TabContentProps } from "./TabContent";
 interface TabPaneProps {
     id?: string;
     className?: string;
+    style?: any;
     children?: any;
     activeTabName?: string;
 }
 
 export function TabPane(props: TabPaneProps) {
-    const { id, children, className, activeTabName } = props;
+    const { id, children, className, style, activeTabName } = props;
     const [ activeTab, setActiveTab ] = React.useState(activeTabName);
     const childArray = Array.isArray(children) ? children.filter((el: any) => !!el) : [children];
 
@@ -28,7 +29,7 @@ export function TabPane(props: TabPaneProps) {
         }
     }, [activeTabName])
 
-    return <div id={id} className={`tab-container ${className || ""}`}>
+    return <div id={id} className={`tab-container ${className || ""}`} style={style}>
         {childArray.length > 1 && <div className="tab-navigation">
             {childArray.map(el => {
                 const { name, icon, title, onSelected } = el.props as TabContentProps;
