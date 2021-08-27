@@ -360,7 +360,7 @@ const mapDispatchToProps = {
     dispatchSaveAndCloseActivity,
     dispatchUpdateUserCompletedTags,
     dispatchSetShareStatus,
-    dispatchShowLoginPrompt
+    dispatchShowLoginPrompt,
     dispatchSetCloudStatus
 };
 
