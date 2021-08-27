@@ -25,10 +25,8 @@ import * as accessibility from "./accessibility";
 import * as tutorial from "./tutorial";
 import * as sidebarTutorial from "./sidebarTutorial";
 import * as editortoolbar from "./editortoolbar";
-import * as simtoolbar from "./simtoolbar";
 import * as dialogs from "./dialogs";
 import * as identity from "./identity";
-import * as filelist from "./filelist";
 import * as container from "./container";
 import * as scriptsearch from "./scriptsearch";
 import * as projects from "./projects";
@@ -47,6 +45,7 @@ import * as auth from "./auth";
 import * as cloud from "./cloud";
 import * as user from "./user";
 import * as headerbar from "./headerbar";
+import * as sidepanel from "./sidepanel";
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -134,7 +133,6 @@ export class ProjectView
     chooseHwDialog: projects.ChooseHwDialog;
     prevEditorId: string;
     screenshotHandlers: ((msg: pxt.editor.ScreenshotData) => void)[] = [];
-    fileListRef: HTMLDivElement;
 
     private lastChangeTime: number;
     private reload: boolean;
@@ -154,6 +152,11 @@ export class ProjectView
             this.onHighContrastChanged();
         }
     };
+
+    private cloudStatusSubscriber: data.DataSubscriber = {
+        subscriptions: [],
+        onDataChanged: (path) => this.onCloudStatusChanged(path)
+    }
 
     // component ID strings
     static readonly tutorialCardId = "tutorialcard";
@@ -185,11 +188,16 @@ export class ProjectView
         this.hideLightbox = this.hideLightbox.bind(this);
         this.openSimSerial = this.openSimSerial.bind(this);
         this.openDeviceSerial = this.openDeviceSerial.bind(this);
+        this.openSerial = this.openSerial.bind(this);
         this.toggleGreenScreen = this.toggleGreenScreen.bind(this);
         this.toggleSimulatorFullscreen = this.toggleSimulatorFullscreen.bind(this);
         this.toggleSimulatorCollapse = this.toggleSimulatorCollapse.bind(this);
         this.showKeymap = this.showKeymap.bind(this);
         this.toggleKeymap = this.toggleKeymap.bind(this);
+        this.showMiniSim = this.showMiniSim.bind(this);
+        this.setTutorialStep = this.setTutorialStep.bind(this);
+        this.completeTutorialAsync = this.completeTutorialAsync.bind(this);
+        this.setEditorOffset = this.setEditorOffset.bind(this);
         this.initSimulatorMessageHandlers();
 
         // add user hint IDs and callback to hint manager
@@ -989,10 +997,12 @@ export class ProjectView
 
         // subscribe to user preference changes (for simulator or non-render subscriptions)
         data.subscribe(this.highContrastSubscriber, auth.HIGHCONTRAST);
+        data.subscribe(this.cloudStatusSubscriber, `${cloud.HEADER_CLOUDSTATE}:*`);
     }
 
     public componentWillUnmount() {
         data.unsubscribe(this.highContrastSubscriber);
+        data.unsubscribe(this.cloudStatusSubscriber);
     }
 
     // Add an error guard for the entire application
@@ -1274,7 +1284,7 @@ export class ProjectView
 
         this.stopPokeUserActivity();
         let tc = this.refs[ProjectView.tutorialCardId] as tutorial.TutorialCard;
-        if (!tc) return;
+        if (!this.isTutorial()) return;
         if (step > -1) {
             let tutorialOptions = this.state.tutorialOptions;
             tutorialOptions.tutorialStep = step;
@@ -1284,7 +1294,7 @@ export class ProjectView
                 workspace.saveAsync(this.state.header);
             });
             const showHint = tutorialOptions.tutorialStepInfo[step].showHint;
-            if (showHint) this.showTutorialHint();
+            if (showHint && tc) this.showTutorialHint();
 
             const isCompleted = tutorialOptions.tutorialStepInfo[step].tutorialCompleted;
             if (isCompleted && pxt.commands.onTutorialCompleted) pxt.commands.onTutorialCompleted();
@@ -1495,6 +1505,7 @@ export class ProjectView
     private internalLoadHeaderAsync(h: pxt.workspace.Header, editorState?: pxt.editor.EditorState): Promise<void> {
         pxt.debug(`loading ${h.id} (pxt v${h.targetVersion})`);
         this.stopSimulator(true);
+        this.showMiniSim(false);
         if (pxt.appTarget.simulator && pxt.appTarget.simulator.aspectRatio)
             simulator.driver.preload(pxt.appTarget.simulator.aspectRatio);
         this.clearSerial()
@@ -3203,12 +3214,28 @@ export class ProjectView
         simulator.suspend()
     }
 
+    showMiniSim(visible?: boolean) {
+        this.setState({ showMiniSim: visible });
+    }
+
     onHighContrastChanged() {
         this.clearSerial();
         // Not this.restartSimulator; need full restart to consistently update visuals,
         // and don't want to steal focus.
         this.stopSimulator();
         this.startSimulator();
+    }
+
+    onCloudStatusChanged(path: string) {
+        const cloudMd = this.getData<cloud.CloudTempMetadata>(path);
+        const cloudStatus = cloudMd.cloudStatus();
+        const msg: pxt.editor.EditorMessageProjectCloudStatus = {
+            type: "pxteditor",
+            action: "projectcloudstatus",
+            headerId: cloudMd.headerId,
+            status: cloudStatus.value
+        };
+        pxt.editor.postHostMessageAsync(msg);
     }
 
     runSimulator(opts: compiler.CompileOptions = {}): Promise<void> {
@@ -3506,6 +3533,14 @@ export class ProjectView
         }
         pxt.debug(`publishing script; ${stext.length} bytes`)
         return Cloud.privatePostAsync("scripts", scrReq, /* forceLiveEndpoint */ true)
+    }
+
+    async saveLocalProjectsToCloudAsync(headerIds: string[]): Promise<void> {
+        await cloud.saveLocalProjectsToCloudAsync(headerIds);
+    }
+
+    async requestProjectCloudStatus(headerIds: string[]): Promise<void> {
+        await cloud.requestProjectCloudStatus(headerIds);
     }
 
     private debouncedSaveProjectName: () => void;
@@ -4048,19 +4083,30 @@ export class ProjectView
         this.postTutorialLoaded();
     }
 
-    getExpandedCardStyle(flyoutOnly?: boolean): any {
-        let tc = this.refs[ProjectView.tutorialCardId] as tutorial.TutorialCard;
-        let headerHeight = 0;
-        if (flyoutOnly) {
-            let headers = document.getElementById("headers");
-            headerHeight += headers.offsetHeight;
+    setEditorOffset() {
+        if (this.isTutorial()) {
+            if (pxt.BrowserUtils.isVerticalTutorial()) {
+                const sidebarEl = document?.getElementById("editorSidebar");
+                if (sidebarEl && window?.innerWidth <= pxt.BREAKPOINT_TABLET) {
+                    this.setState({ editorOffset: sidebarEl.offsetHeight + "px" });
+                } else {
+                    this.setState({ editorOffset: undefined });
+                }
+            } else {
+                const tc = this.refs[ProjectView.tutorialCardId] as tutorial.TutorialCard;
+                const flyoutOnly = this.state.editorState && this.state.editorState.hasCategories === false;
+                let headerHeight = 0;
+                if (flyoutOnly) {
+                    let headers = document.getElementById("headers");
+                    headerHeight += headers.offsetHeight;
+                }
+                if (tc) {
+                    // maxium offset of 18rem
+                    let maxOffset = Math.min(tc.getCardHeight() + headerHeight, parseFloat(getComputedStyle(document.documentElement).fontSize) * 18);
+                    this.setState({ editorOffset: "calc(" + maxOffset + "px + 2em)" }); // 2em for margins
+                }
+            }
         }
-        if (tc) {
-            // maxium offset of 18rem
-            let maxOffset = Math.min(tc.getCardHeight() + headerHeight, parseFloat(getComputedStyle(document.documentElement).fontSize) * 18);
-            return { 'top': "calc(" + maxOffset + "px + 2em)" }; // 2em for margins
-        }
-        return null;
     }
 
     private saveTutorialTemplateAsync() {
@@ -4233,20 +4279,6 @@ export class ProjectView
         this.profileDialog = c;
     }
 
-    private handleFileListRef = (c: HTMLDivElement) => {
-        this.fileListRef = c;
-        if (c && typeof ResizeObserver !== "undefined") {
-            const observer = new ResizeObserver(() => {
-                const scrollVisible = c.scrollHeight > c.clientHeight;
-                if (scrollVisible)
-                    this.fileListRef.classList.remove("invisibleScrollbar");
-                else
-                    this.fileListRef.classList.add("invisibleScrollbar");
-            })
-            observer.observe(c);
-        }
-    }
-
     ///////////////////////////////////////////////////////////
     ////////////             RENDER               /////////////
     ///////////////////////////////////////////////////////////
@@ -4264,6 +4296,7 @@ export class ProjectView
         const tutorialOptions = this.state.tutorialOptions;
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
         const isSidebarTutorial = pxt.appTarget.appTheme.sidebarTutorial;
+        const isVerticalTutorial = inTutorial && pxt.BrowserUtils.isVerticalTutorial();
         const inTutorialExpanded = inTutorial && tutorialOptions.tutorialStepExpanded;
         const hideTutorialIteration = inTutorial && tutorialOptions.metadata && tutorialOptions.metadata.hideIteration;
         const inDebugMode = this.state.debugging;
@@ -4280,11 +4313,11 @@ export class ProjectView
         const useSerialEditor = pxt.appTarget.serial && !!pxt.appTarget.serial.useEditor;
 
         const showSideDoc = sideDocs && this.state.sideDocsLoadUrl && !this.state.sideDocsCollapsed;
-        const showCollapseButton = showEditorToolbar && !inHome && !sandbox && !targetTheme.simCollapseInMenu && (!isHeadless || inDebugMode);
+        const showCollapseButton = showEditorToolbar && !inHome && !sandbox && !targetTheme.simCollapseInMenu && (!isHeadless || inDebugMode) && !isVerticalTutorial;
         const shouldHideEditorFloats = this.state.hideEditorFloats || this.state.collapseEditorTools;
         const logoWide = !!targetTheme.logoWide;
         const hwDialog = !sandbox && pxt.hasHwVariants();
-        const expandedStyle = inTutorialExpanded ? this.getExpandedCardStyle(flyoutOnly) : null;
+        const editorOffset = ((inTutorialExpanded || isVerticalTutorial) && this.state.editorOffset) ? { top: this.state.editorOffset } : undefined;
         const invertedTheme = targetTheme.invertedMenu && targetTheme.invertedMonaco;
 
         const collapseIconTooltip = this.state.collapseEditorTools ? lf("Show the simulator") : lf("Hide the simulator");
@@ -4301,12 +4334,14 @@ export class ProjectView
             transparentEditorToolbar ? "transparentEditorTools" : '',
             invertedTheme ? 'inverted-theme' : '',
             this.state.fullscreen ? 'fullscreensim' : '',
+            this.state.showMiniSim ? 'miniSim' : '',
             hc ? 'hc' : '',
             showSideDoc ? 'sideDocs' : '',
             pxt.shell.layoutTypeClass(),
             inHome ? 'inHome' : '',
-            inTutorial ? 'tutorial' : '',
-            inTutorialExpanded ? 'tutorialExpanded' : '',
+            inTutorial && !isVerticalTutorial ? 'tutorial' : '',
+            inTutorialExpanded && !isVerticalTutorial ? 'tutorialExpanded' : '',
+            isVerticalTutorial ? 'tutorialVertical' : '',
             isSidebarTutorial ? 'sidebarTutorial' : '',
             inDebugMode ? 'debugger' : '',
             pxt.options.light ? 'light' : '',
@@ -4356,37 +4391,32 @@ export class ProjectView
                         <headerbar.HeaderBar parent={this} />
                     </header>}
                 {isSidebarTutorial && flyoutOnly && inTutorial && <sidebarTutorial.SidebarTutorialCard ref={ProjectView.tutorialCardId} parent={this} pokeUser={this.state.pokeUserComponent == ProjectView.tutorialCardId} />}
-                {inTutorial && <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
+                {inTutorial && !isVerticalTutorial && <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
                     {!(isSidebarTutorial && flyoutOnly) && inTutorial && <tutorial.TutorialCard ref={ProjectView.tutorialCardId} parent={this} pokeUser={this.state.pokeUserComponent == ProjectView.tutorialCardId} />}
                     {flyoutOnly && <tutorial.WorkspaceHeader parent={this} />}
                 </div>}
+                <sidepanel.Sidepanel parent={this} inHome={inHome}
+                    showKeymap={this.state.keymap && simOpts.keymap}
+                    showSerialButtons={useSerialEditor}
+                    showFileList={showFileList}
+                    showFullscreenButton={!isHeadless}
 
-                <div id="simulator" className="simulator">
-                    <div id="filelist" ref={this.handleFileListRef} className="ui items">
-                        <div id="boardview" className={`ui vertical editorFloat`} role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0}>
-                        </div>
-                        <simtoolbar.SimulatorToolbar
-                            parent={this}
-                            collapsed={this.state.collapseEditorTools}
-                            simSerialActive={this.state.simSerialActive}
-                            devSerialActive={this.state.deviceSerialActive}
-                        />
-                        {this.state.keymap && simOpts.keymap && <keymap.Keymap parent={this} />}
-                        <div className="ui item portrait hide hidefullscreen">
-                            {pxt.options.debug ? <sui.Button key='hwdebugbtn' className='teal' icon="xicon chip" text={"Dev Debug"} onClick={this.hwDebug} /> : ''}
-                        </div>
-                        {useSerialEditor ?
-                            <div id="serialPreview" className="ui editorFloat portrait hide hidefullscreen">
-                                <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={this.openSimSerial} parent={this} />
-                                <serialindicator.SerialIndicator ref="devIndicator" isSim={false} onClick={this.openDeviceSerial} parent={this} />
-                            </div> : undefined}
-                        {showFileList ? <filelist.FileList parent={this} /> : undefined}
-                        {!isHeadless && <div id="filelistOverlay" role="button" title={lf("Open in fullscreen")} onClick={this.toggleSimulatorFullscreen}></div>}
-                    </div>
-                </div>
+                    collapseEditorTools={this.state.collapseEditorTools}
+                    simSerialActive={this.state.simSerialActive}
+                    devSerialActive={this.state.deviceSerialActive}
+
+                    showMiniSim={this.showMiniSim}
+                    openSerial={this.openSerial}
+                    handleHardwareDebugClick={this.hwDebug}
+                    handleFullscreenButtonClick={this.toggleSimulatorFullscreen}
+
+                    tutorialOptions={isVerticalTutorial ? tutorialOptions : undefined}
+                    onTutorialStepChange={this.setTutorialStep}
+                    onTutorialComplete={this.completeTutorialAsync}
+                    setEditorOffset={this.setEditorOffset} />
                 <div id="maineditor" className={(sandbox ? "sandbox" : "") + (inDebugMode ? "debugging" : "")} role="main" aria-hidden={inHome}>
                     {showCollapseButton && <sui.Button id='computertogglesim' className={`computer only collapse-button large`} icon={`inverted chevron ${showRightChevron ? 'right' : 'left'}`} title={collapseIconTooltip} onClick={this.toggleSimulatorCollapse} />}
-                    {this.allEditors.map(e => e.displayOuter(expandedStyle))}
+                    {this.allEditors.map(e => e.displayOuter(editorOffset))}
                 </div>
                 {inHome ? <div id="homescreen" className="full-abs">
                     <div className="ui home projectsdialog">
@@ -5154,6 +5184,17 @@ document.addEventListener("DOMContentLoaded", async () => {
                 setTimeout(() => {
                     theEditor.editor.resize(ev);
                 }, 1000);
+            }
+
+            // Check to see if we should show the mini simulator (<= tablet size)
+            if (!theEditor.isTutorial() || !pxt.BrowserUtils.isVerticalTutorial()) {
+                if (window?.innerWidth <= pxt.BREAKPOINT_TABLET) {
+                    theEditor.showMiniSim(true);
+                } else {
+                    theEditor.showMiniSim(false);
+                }
+            } else if (theEditor.isTutorial()) {
+                theEditor.setEditorOffset();
             }
         }
     }, false);

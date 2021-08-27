@@ -5,8 +5,7 @@ import { isLocal, resolvePath, getEditorUrl, tickEvent, cloudLocalStoreKey } fro
 import { lookupActivityProgress } from "../lib/skillMapUtils";
 
 import { SkillMapState } from '../store/reducer';
-import  { dispatchSetHeaderIdForActivity, dispatchCloseActivity, dispatchSaveAndCloseActivity, dispatchUpdateUserCompletedTags, dispatchSetShareStatus,
-          dispatchShowLoginPrompt } from '../actions/dispatch';
+import  { dispatchSetHeaderIdForActivity, dispatchCloseActivity, dispatchSaveAndCloseActivity, dispatchUpdateUserCompletedTags, dispatchSetShareStatus, dispatchSetCloudStatus, dispatchShowLoginPrompt } from '../actions/dispatch';
 
 /* eslint-disable import/no-unassigned-import, import/no-internal-modules */
 import '../styles/makecode-editor.css'
@@ -32,6 +31,8 @@ interface MakeCodeFrameProps {
     dispatchUpdateUserCompletedTags: () => void;
     dispatchSetShareStatus: (headerId?: string, url?: string) => void;
     dispatchShowLoginPrompt: () => void;
+    dispatchSetCloudStatus: (headerId: string, status: string) => void;
+    onFrameLoaded: (sendMessageAsync: (message: any) => Promise<any>) => void;
 }
 
 type FrameState = "loading" | "no-project" | "opening-project" | "project-open" | "closing-project";
@@ -142,6 +143,8 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
 
             const root = document.getElementById("root");
             if (root) pxt.BrowserUtils.addClass(root, "editor");
+
+            this.props.onFrameLoaded((message) => this.sendMessageAsync(message));
         }
     }
 
@@ -169,6 +172,11 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
             case "tutorialevent":
                 this.handleTutorialEvent(data as pxt.editor.EditorMessageTutorialEventRequest);
                 break;
+            case "projectcloudstatus": {
+                const msg = data as pxt.editor.EditorMessageProjectCloudStatus;
+                this.props.dispatchSetCloudStatus(msg.headerId, msg.status);
+                break;
+            }
             default:
                 // console.log(JSON.stringify(data, null, 4));
         }

@@ -19,9 +19,8 @@ export interface SkillMapState {
     alternateSourceUrls?: string[];
     maps: { [key: string]: SkillMap };
     selectedItem?: { mapId: string, activityId: string };
-
     shareState?: ShareState;
-
+    cloudState?: CloudState;
     editorView?: EditorViewState;
     modal?: ModalState;
     showProfile?: boolean;
@@ -47,6 +46,10 @@ interface ModalState {
 export interface ShareState {
     headerId: string;
     url?: string;
+}
+
+interface CloudState {
+    [headerId: string]: pxt.cloud.CloudStatus;
 }
 
 interface AuthState {
@@ -85,7 +88,8 @@ const initialState: SkillMapState = {
     maps: {},
     auth: {
         signedIn: false
-    }
+    },
+    cloudState: {}
 }
 
 const topReducer = (state: SkillMapState = initialState, action: any): SkillMapState => {
@@ -284,6 +288,14 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                     url: action.url
                 } : undefined
             }
+        case actions.SET_CLOUD_STATUS:
+            return {
+                ...state,
+                cloudState: {
+                    ...state.cloudState,
+                    [action.headerId]: action.status
+                }
+            }
         case actions.SET_PAGE_TITLE:
             return {
                 ...state,
@@ -379,7 +391,21 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
             return {
                 ...state,
                 modal: { type: "login-prompt"}
+        case actions.SHOW_DELETE_ACCOUNT_MODAL:
+            return {
+                ...state,
+                modal: { type: "delete-account" }
             }
+        case actions.SHOW_USER_PROFILE:
+            return {
+                ...state,
+                showProfile: true
+            };
+        case actions.HIDE_USER_PROFILE:
+            return {
+                ...state,
+                showProfile: false
+            };
         case actions.HIDE_MODAL:
             return {
                 ...state,

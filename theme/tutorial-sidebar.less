@@ -1,0 +1,360 @@
+@defaultTutorialHeight: 18.75rem;
+
+/*******************************
+        Tutorial Tab
+*******************************/
+
+#editorSidebar .tab-tutorial.active {
+    background-color: @white;
+}
+
+.tab-tutorial.tab-content {
+    padding-top: 0.5rem;
+    background-color: @white;
+}
+
+.tutorial-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+
+    .ui.button {
+        margin: 0;
+        box-shadow: none;
+    }
+}
+
+.tutorial-content {
+    flex: 1;
+    padding: 0 1rem;
+    margin: 1rem 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+
+    span.docs.inlineblock {
+        white-space: break-spaces;
+    }
+}
+
+/*******************************
+       Tutorial Top Buttons
+*******************************/
+
+.tutorial-top-bar {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 1rem 0;
+}
+
+/*******************************
+         Step Counter
+*******************************/
+
+.tutorial-step-counter {
+    flex: 1;
+    margin-right: 0.5rem;
+}
+
+.tutorial-step-bar {
+    height: 1rem;
+    overflow: hidden;
+    border-radius: 1rem;
+    background-color: @blue;
+    cursor: pointer;
+}
+
+.tutorial-step-bar-fill {
+    background-color: @teal;
+    height: 100%;
+    transition: width 0.5s ease-out;
+    pointer-events: none;
+}
+
+/*******************************
+        Tutorial Controls
+*******************************/
+
+.tutorial-controls {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1rem;
+
+    .ui.button {
+        margin: 0 0.4rem;
+        color: @blue;
+        background: @teal;
+        font-size: 1.2rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        width: 7rem;
+    }
+}
+
+/*******************************
+        Tutorial Hint
+*******************************/
+
+.tutorial-hint.ui.button {
+    height: 3.2rem;
+    width: 3.2rem;
+    margin: 0;
+    border-radius: 50%;
+    font-size: 1.5rem;
+}
+
+.tutorial-hint.ui.button,
+.tutorial-hint.ui.button > i {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+// Overrides, largely using old tutorial hint CSS
+.tab-tutorial {
+    .tutorialhint {
+        position: fixed;
+        top: unset;
+        right: unset;
+        bottom: 11rem;
+        left: 5.5rem;
+        max-width: 50%;
+    }
+
+    .tutorialhint:before {
+        top: auto;
+        left: 6.5rem;
+        bottom: -2.5rem;
+        transform: rotate(-90deg);
+    }
+}
+
+.tutorial-hint-mask {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+}
+
+/*******************************
+        Simulator Tab
+*******************************/
+
+.tab-simulator.tab-content.hidden {
+    display: block !important;
+}
+
+.tab-simulator .simPanel {
+    height: 100%;
+    padding: 1rem 0.5rem 1rem 1rem;
+    overflow-x: hidden;
+    overflow-y: scroll;
+}
+
+// Mini sim is visible when tab is hidden
+#root:not(.fullscreensim) {
+    .tab-simulator.tab-content.hidden {
+        height: 0;
+        padding: 0;
+
+        .simPanel {
+            & > * { display: none; }
+
+            #boardview { display: inline-block; }
+
+            .simtoolbar, #miniSimOverlay { display: block; }
+            .fullscreen-button, .expand-button { display: block !important; }
+        }
+    }
+}
+
+
+/*******************************
+        Media Adjustments
+*******************************/
+
+/* Small Monitor */
+@media only screen and (min-width: @computerBreakpoint) and (max-width: @largestSmallMonitor) {
+    .tab-tutorial .tutorialhint {
+        left: 2rem;
+    }
+}
+
+/* <= Tablet (Mobile + Tablet) */
+@media only screen and (max-width: @largestTabletScreen) {
+    .tutorialVertical #maineditor > .full-abs {
+        top: @defaultTutorialHeight;
+    }
+
+    .tutorialVertical #editorSidebar {
+        top: @mobileMenuHeight;
+        height: @defaultTutorialHeight;
+        width: 100%;
+        border-right: 0;
+        border-bottom: 2px solid darken(desaturate(@blocklyToolboxColor, 60%), 10%);
+    }
+
+    .tab-tutorial.tab-content {
+        padding-top: 0;
+    }
+
+    .tutorial-container {
+        flex-direction: row;
+    }
+
+    .tutorial-content {
+        margin: 0;
+        padding: 1rem;
+    }
+
+    /*******************************
+        Tutorial Top Buttons
+    *******************************/
+
+    .tutorial-top-bar {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 14rem;
+        flex-direction: row-reverse;
+        padding: 0.2rem 1rem;
+    }
+
+    #editorSidebar .immersive-reader-button.ui.item,
+    #editorSidebar .immersive-reader-button.ui.item:focus{
+        background-image: @immersiveReaderLightIcon;
+    }
+
+    /*******************************
+            Step Counter
+    *******************************/
+
+    .tutorial-step-counter {
+        margin-left: 1rem;
+        margin-right: 0;
+        color: @white;
+    }
+
+    .tutorial-step-bar {
+        background-color: @white;
+    }
+
+    .tutorial-step-bar-fill {
+        background-color: @blue;
+    }
+
+    /*******************************
+            Tutorial Controls
+    *******************************/
+
+    .tutorial-container {
+        > .ui.button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 4rem;
+            color: @teal;
+            background: @white;
+            box-shadow: none;
+            border-radius: 0;
+
+            > .arrow, > .check {
+                margin-bottom: 0.5rem!important;
+                font-size: 2rem;
+            }
+
+            > .text {
+                margin: 0 !important;
+            }
+        }
+    }
+
+    /*******************************
+            Tutorial Hint
+    *******************************/
+
+    .tutorial-controls {
+        position: absolute;
+        right: 6rem;
+        margin-top: 1rem;
+    }
+
+    .tutorial-hint.ui.button {
+        width: unset;
+        height: unset;
+        font-size: 1rem;
+        border-radius: 0.2rem;
+
+        &.disabled {
+            display: none;
+        }
+    }
+
+    // Overrides
+    .tab-tutorial {
+        .tutorialhint {
+            top: 12.5rem;
+            right: 3.2rem;
+            bottom: unset;
+            left: unset;
+            max-width: 80%;
+        }
+
+        .tutorialhint:before {
+            top: -2.5rem;
+            left: unset;
+            bottom: auto;
+            right: 4rem;
+            transform: rotate(90deg);
+        }
+    }
+
+
+    /*******************************
+            Simulator Tab
+    *******************************/
+    #root.tutorialVertical .tab-simulator:not(.hidden) {
+        .simPanel {
+            display: flex;
+
+            #simulators {
+                width: 34rem;
+                margin: auto;
+            }
+
+            .simframe {
+                padding-bottom: 39% !important;
+            }
+
+            .simtoolbar {
+                flex-direction: column;
+                flex-grow: 0;
+                width: 6rem;
+                margin-left: 1rem;
+            }
+
+            .simtoolbar > .buttons {
+                flex-direction: column;
+            }
+        }
+
+        #boardview {
+            width: 100% !important;
+        }
+    }
+}
+
+/* Mobile */
+@media only screen and (max-width: @largestMobileScreen) {
+    #root.tutorialVertical .tab-simulator:not(.hidden) .simPanel {
+        #simulators {
+            width: 16rem;
+        }
+
+        .simframe {
+            padding-bottom: 83% !important;
+        }
+    }
+}

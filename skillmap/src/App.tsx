@@ -4,7 +4,8 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 import store from "./store/store";
-import * as auth from "./lib/authClient";
+import * as authClient from "./lib/authClient";
+import { getFlattenedHeaderIds } from "./lib/skillMapUtils";
 
 import {
     dispatchAddSkillMap,
@@ -69,6 +70,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
     protected queryFlags: {[index: string]: string} = {};
     protected unsubscribeChangeListener: Unsubscribe | undefined;
     protected loadedUser: UserState | undefined;
+    protected sendMessageAsync: ((message: any) => Promise<any>) | undefined;
 
     constructor(props: any) {
         super(props);
@@ -206,15 +208,40 @@ class AppImpl extends React.Component<AppProps, AppState> {
         this.props.dispatchSetUser(user);
     }
 
+    protected async cloudSyncCheckAsync() {
+        if (await authClient.loggedInAsync() && this.sendMessageAsync && this.loadedUser) {
+            const state = store.getState();
+            const headerIds = getFlattenedHeaderIds(state.user, state.pageSourceUrl);
+            // Tell the editor to transfer local skillmap projects to the cloud.
+            await this.sendMessageAsync({
+                type: "pxteditor",
+                action: "savelocalprojectstocloud",
+                headerIds
+            } as pxt.editor.EditorMessageSaveLocalProjectsToCloud);
+            // Tell the editor to send us the cloud status of our projects.
+            await this.sendMessageAsync({
+                type: "pxteditor",
+                action: "requestprojectcloudstatus",
+                headerIds
+            } as pxt.editor.EditorMessageRequestProjectCloudStatus);
+        }
+    }
+
+    protected onMakeCodeFrameLoaded = async (sendMessageAsync: (message: any) => Promise<any>) => {
+        this.sendMessageAsync = sendMessageAsync;
+        await this.cloudSyncCheckAsync();
+    }
+
     async componentDidMount() {
         this.unsubscribeChangeListener = store.subscribe(this.onStoreChange);
         this.queryFlags = parseQuery();
         if (this.queryFlags["authcallback"]) {
-            await auth.loginCallbackAsync(this.queryFlags);
+            await authClient.loginCallbackAsync(this.queryFlags);
         }
-        await auth.authCheckAsync();
+        await authClient.authCheckAsync();
         await this.initLocalizationAsync();
         await this.parseHashAsync();
+        await this.cloudSyncCheckAsync();
     }
 
     componentWillUnmount() {

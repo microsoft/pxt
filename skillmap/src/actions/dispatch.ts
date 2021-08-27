@@ -34,6 +34,7 @@ export const dispatchShowShareModal = (mapId: string, activityId: string) => ({ 
 export const dispatchShowDeleteAccountModal = () => ({ type: actions.SHOW_DELETE_ACCOUNT_MODAL });
 export const dispatchShowLoginModal = () => ({ type: actions.SHOW_LOGIN_MODAL});
 export const dispatchShowLoginPrompt = () => ({ type: actions.SHOW_LOGIN_PROMPT});
+export const dispatchShowDeleteAccountModal = () => ({ type: actions.SHOW_DELETE_ACCOUNT_MODAL });
 
 export const dispatchHideModal = () => ({ type: actions.HIDE_MODAL });
 
@@ -43,4 +44,5 @@ export const dispatchLogout = () => ({ type: actions.USER_LOG_OUT });
 export const dispatchShowUserProfile = () => ({ type: actions.SHOW_USER_PROFILE });
 export const dispatchCloseUserProfile = () => ({ type: actions.HIDE_USER_PROFILE });
 
-export const dispatchSetShareStatus = (headerId?: string, url?: string) =>  ({ type: actions.SET_SHARE_STATUS, headerId, url })
+export const dispatchSetShareStatus = (headerId?: string, url?: string) =>  ({ type: actions.SET_SHARE_STATUS, headerId, url });
+export const dispatchSetCloudStatus = (headerId: string, status: string) => ({ type: actions.SET_CLOUD_STATUS, headerId, status });

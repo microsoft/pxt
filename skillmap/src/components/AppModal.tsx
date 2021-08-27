@@ -64,11 +64,12 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                 return this.renderCodeCarryoverModal();
             case "share":
                 return this.renderShareModal();
-            case "delete-account":
-                return this.renderDeleteAccountModal();
+            case "login":
                 return this.renderLoginModal(false);
             case "login-prompt":
                 return this.renderLoginModal(true);
+            case "delete-account":
+                return this.renderDeleteAccountModal();
             default:
                 return <div/>
         }
