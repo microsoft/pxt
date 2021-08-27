@@ -1,9 +1,9 @@
 import * as actions from '../actions/types'
-import { guidGen } from '../lib/browserUtils';
+import { guidGen, cloudLocalStoreKey } from '../lib/browserUtils';
 import { getCompletedTags, lookupActivityProgress, isMapCompleted,
     isRewardNode, applyUserUpgrades, applyUserMigrations } from '../lib/skillMapUtils';
 
-export type ModalType = "restart-warning" | "completion" | "report-abuse" | "reset" | "carryover" | "share" | "login" | "delete-account";
+export type ModalType = "restart-warning" | "completion" | "report-abuse" | "reset" | "carryover" | "share" | "login" | "login-prompt" | "delete-account";
 export type PageSourceStatus = "approved" | "banned" | "unknown";
 
 // State for the entire page
@@ -252,6 +252,8 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                 user
             };
         case actions.RESET_USER:
+            pxt.storage.removeLocal(state.pageSourceUrl +  cloudLocalStoreKey)
+
             return {
                 ...state,
                 user: {
@@ -369,6 +371,11 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
             return {
                 ...state,
                 modal: { type: "login" }
+            }
+        case actions.SHOW_LOGIN_PROMPT:
+            return {
+                ...state,
+                modal: { type: "login-prompt"}
             }
         case actions.SHOW_DELETE_ACCOUNT_MODAL:
             return {
