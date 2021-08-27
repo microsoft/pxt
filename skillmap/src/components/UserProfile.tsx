@@ -71,7 +71,7 @@ export class UserProfileImpl extends React.Component<UserProfileProps, {}> {
                 <p className="value">{provider?.name}</p>
             </div>
             <div className="row-span-two" onClick={this.handleSignout}>
-                <div className="sign-out modal-button" >
+                <div className="ui icon button" >
                     <span className={`xicon ${profile?.idp?.provider}`} />
                     <span> {lf("Sign out")} </span>
                 </div>
