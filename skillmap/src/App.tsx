@@ -210,14 +210,20 @@ class AppImpl extends React.Component<AppProps, AppState> {
 
     protected async cloudSyncCheckAsync() {
         if (await authClient.loggedInAsync() && this.sendMessageAsync && this.loadedUser) {
-            // Tell the editor to transfer local skillmap projects to the cloud.
             const state = store.getState();
             const headerIds = getFlattenedHeaderIds(state.user, state.pageSourceUrl);
+            // Tell the editor to transfer local skillmap projects to the cloud.
             await this.sendMessageAsync({
                 type: "pxteditor",
                 action: "savelocalprojectstocloud",
                 headerIds
             } as pxt.editor.EditorMessageSaveLocalProjectsToCloud);
+            // Tell the editor to send us the cloud status of our projects.
+            await this.sendMessageAsync({
+                type: "pxteditor",
+                action: "requestprojectcloudstatus",
+                headerIds
+            } as pxt.editor.EditorMessageRequestProjectCloudStatus);
         }
     }
 
