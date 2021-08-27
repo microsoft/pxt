@@ -375,6 +375,7 @@ namespace pxt.editor {
         openNewTab(header: pxt.workspace.Header, dependent: boolean): void;
         createGitHubRepositoryAsync(): Promise<void>;
         saveLocalProjectsToCloudAsync(headerIds: string[]): Promise<void>;
+        requestProjectCloudStatus(headerIds: string[]): Promise<void>;
     }
 
     export interface IHexFileImporter {

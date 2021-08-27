@@ -153,6 +153,11 @@ export class ProjectView
         }
     };
 
+    private cloudStatusSubscriber: data.DataSubscriber = {
+        subscriptions: [],
+        onDataChanged: (path) => this.onCloudStatusChanged(path)
+    }
+
     // component ID strings
     static readonly tutorialCardId = "tutorialcard";
 
@@ -992,10 +997,12 @@ export class ProjectView
 
         // subscribe to user preference changes (for simulator or non-render subscriptions)
         data.subscribe(this.highContrastSubscriber, auth.HIGHCONTRAST);
+        data.subscribe(this.cloudStatusSubscriber, `${cloud.HEADER_CLOUDSTATE}:*`);
     }
 
     public componentWillUnmount() {
         data.unsubscribe(this.highContrastSubscriber);
+        data.unsubscribe(this.cloudStatusSubscriber);
     }
 
     // Add an error guard for the entire application
@@ -3219,6 +3226,18 @@ export class ProjectView
         this.startSimulator();
     }
 
+    onCloudStatusChanged(path: string) {
+        const cloudMd = this.getData<cloud.CloudTempMetadata>(path);
+        const cloudStatus = cloudMd.cloudStatus();
+        const msg: pxt.editor.EditorMessageProjectCloudStatus = {
+            type: "pxteditor",
+            action: "projectcloudstatus",
+            headerId: cloudMd.headerId,
+            status: cloudStatus.value
+        };
+        pxt.editor.postHostMessageAsync(msg);
+    }
+
     runSimulator(opts: compiler.CompileOptions = {}): Promise<void> {
         const emptyRun = this.firstRun
             && opts.background
@@ -3518,6 +3537,10 @@ export class ProjectView
 
     async saveLocalProjectsToCloudAsync(headerIds: string[]): Promise<void> {
         await cloud.saveLocalProjectsToCloudAsync(headerIds);
+    }
+
+    async requestProjectCloudStatus(headerIds: string[]): Promise<void> {
+        await cloud.requestProjectCloudStatus(headerIds);
     }
 
     private debouncedSaveProjectName: () => void;
