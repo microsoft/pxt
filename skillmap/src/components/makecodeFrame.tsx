@@ -352,7 +352,8 @@ const mapDispatchToProps = {
     dispatchSaveAndCloseActivity,
     dispatchUpdateUserCompletedTags,
     dispatchSetShareStatus,
-    dispatchShowLoginPrompt
+    dispatchShowLoginPrompt,
+    dispatchSetCloudStatus
 };
 
 export const MakeCodeFrame = connect(mapStateToProps, mapDispatchToProps)(MakeCodeFrameImpl);
