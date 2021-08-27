@@ -24,7 +24,7 @@ Here's the lifetime of the data tracked by Application Insights:
 
 ### Telemetry Details
 
-The following sections contain the information that the Application Insights SDK attempts to extract from the environment about the device, location, and user.
+The following sections contain the information that the Application Insights SDK attempts to collect about the environment and the user.
 
 #### Device telemetry
 
