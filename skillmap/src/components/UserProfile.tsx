@@ -1,6 +1,7 @@
 import * as React from "react";
 import { connect } from "react-redux";
 import { SkillMapState } from "../store/reducer";
+import * as authClient from "../lib/authClient";
 
 import { Modal } from './Modal';
 
@@ -104,7 +105,7 @@ export class UserProfileImpl extends React.Component<UserProfileProps, {}> {
 
     handleSignout = async () => {
         pxt.tickEvent(`skillmap.userprofile.signout`);
-        pxt.auth.client().logoutAsync(location.hash)
+        authClient.logoutAsync(location.hash);
     }
 
     handleDeleteAccountClick = async () => {

@@ -57,7 +57,16 @@ export async function saveUserStateAsync(user: UserState): Promise<void> {
     if (user.isDebug) return;
 
     const ws = await getWorkspaceAsync();
-    await ws.saveUserStateAsync(user);
+    if (await pxt.auth.client()?.loggedInAsync()) {
+        // When signed in, clear locally saved progress.
+        await ws.saveUserStateAsync({
+            ...user,
+            mapProgress: { },
+            completedTags: { }
+        });
+    } else {
+        await ws.saveUserStateAsync(user);
+    }
 
     // Sync skillmap progress to cloud. This state will always be stored locally, and synced
     // to the cloud if the user is signed in. authClient is the authoritative source for the
