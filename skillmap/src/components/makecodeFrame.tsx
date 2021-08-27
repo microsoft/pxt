@@ -1,11 +1,11 @@
 /// <reference path="../../../built/pxteditor.d.ts" />
 import * as React from "react";
 import { connect } from 'react-redux';
-import { isLocal, resolvePath, getEditorUrl, tickEvent } from "../lib/browserUtils";
+import { isLocal, resolvePath, getEditorUrl, tickEvent, cloudLocalStoreKey } from "../lib/browserUtils";
 import { lookupActivityProgress } from "../lib/skillMapUtils";
 
 import { SkillMapState } from '../store/reducer';
-import  { dispatchSetHeaderIdForActivity, dispatchCloseActivity, dispatchSaveAndCloseActivity, dispatchUpdateUserCompletedTags, dispatchSetShareStatus, dispatchSetCloudStatus } from '../actions/dispatch';
+import  { dispatchSetHeaderIdForActivity, dispatchCloseActivity, dispatchSaveAndCloseActivity, dispatchUpdateUserCompletedTags, dispatchSetShareStatus, dispatchSetCloudStatus, dispatchShowLoginPrompt } from '../actions/dispatch';
 
 /* eslint-disable import/no-unassigned-import, import/no-internal-modules */
 import '../styles/makecode-editor.css'
@@ -23,11 +23,14 @@ interface MakeCodeFrameProps {
     previousHeaderId?: string;
     progress?: ActivityState;
     shareHeaderId?: string;
+    signedIn?: boolean;
+    pageSourceUrl: string;
     dispatchSetHeaderIdForActivity: (mapId: string, activityId: string, id: string, currentStep: number, maxSteps: number, isCompleted: boolean) => void;
     dispatchCloseActivity: (finished?: boolean) => void;
     dispatchSaveAndCloseActivity: () => void;
     dispatchUpdateUserCompletedTags: () => void;
     dispatchSetShareStatus: (headerId?: string, url?: string) => void;
+    dispatchShowLoginPrompt: () => void;
     dispatchSetCloudStatus: (headerId: string, status: string) => void;
     onFrameLoaded: (sendMessageAsync: (message: any) => Promise<any>) => void;
 }
@@ -300,10 +303,15 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
     }
 
     protected onTutorialFinished() {
-        const { mapId, activityId } = this.props;
+        const { mapId, activityId, signedIn, pageSourceUrl } = this.props;
         tickEvent("skillmap.activity.complete", { path: mapId, activity: activityId });
         this.finishedActivityState = "finished";
         this.props.dispatchSaveAndCloseActivity();
+        const haveSeen = pxt.storage.getLocal(pageSourceUrl + cloudLocalStoreKey)
+        if (!signedIn && !haveSeen) {
+            this.props.dispatchShowLoginPrompt();
+            pxt.storage.setLocal(pageSourceUrl + cloudLocalStoreKey, "true")
+        }
     }
 }
 
@@ -335,7 +343,9 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         previousHeaderId: previousHeaderId,
         progress,
         save: saveState === "saving",
-        shareHeaderId
+        shareHeaderId,
+        signedIn: state.auth.signedIn,
+        pageSourceUrl: state.pageSourceUrl
     }
 }
 
@@ -350,6 +360,7 @@ const mapDispatchToProps = {
     dispatchSaveAndCloseActivity,
     dispatchUpdateUserCompletedTags,
     dispatchSetShareStatus,
+    dispatchShowLoginPrompt,
     dispatchSetCloudStatus
 };
 
