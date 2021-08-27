@@ -37,8 +37,7 @@ Property | Description
 
 #### User telemetry
 
-Data about the current user. Users are identified by a cookie, so a single person can look like
-more than one user in the telemetry if they use different machines or browsers, or delete cookies. This is randomnly generated hash and will generate a new hash every time user uses a new browser or clears the browser cache.
+Data about the current user. Users are identified by a cookie. This cookie is a randomnly generated hash by the application insights. A single user will get a new hash\cookie, every time the browser cache is cleared or a different browser is used on the same machine. A single person can look like more than one user in the telemetry, if they use different machines or browsers, or delete cookies.
 
 Property | Description
 ---|---
