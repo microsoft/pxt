@@ -89,7 +89,16 @@ function saveCache() {
 }
 
 function matches(ce: CacheEntry, prefix: string) {
-    return ce.path.slice(0, prefix.length) == prefix;
+    if (ce.path.slice(0, prefix.length) == prefix) {
+        // exact match
+        return true;
+    } else if (ce.path.endsWith(":*")) {
+        // ce.path is a wildcard
+        const [ce_proto] = ce.path.split(':');
+        const [prefix_proto] = prefix.split(':');
+        return ce_proto == prefix_proto;
+    }
+    return false;
 }
 
 function notify(ce: CacheEntry, path: string) {

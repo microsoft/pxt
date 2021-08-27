@@ -84,6 +84,7 @@ namespace pxt.editor {
         bannerVisible?: boolean;
         pokeUserComponent?: string;
         flashHint?: boolean;
+        editorOffset?: string;
 
         print?: boolean;
         greenScreen?: boolean;
@@ -267,6 +268,7 @@ namespace pxt.editor {
         stopPokeUserActivity(): void;
         clearUserPoke(): void;
         setHintSeen(step: number): void;
+        setEditorOffset(): void;
 
         anonymousPublishAsync(screenshotUri?: string): Promise<string>;
         anonymousPublishHeaderByIdAsync(headerId: string): Promise<Cloud.JsonScript>;
@@ -372,6 +374,8 @@ namespace pxt.editor {
 
         openNewTab(header: pxt.workspace.Header, dependent: boolean): void;
         createGitHubRepositoryAsync(): Promise<void>;
+        saveLocalProjectsToCloudAsync(headerIds: string[]): Promise<void>;
+        requestProjectCloudStatus(headerIds: string[]): Promise<void>;
     }
 
     export interface IHexFileImporter {

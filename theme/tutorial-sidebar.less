@@ -1,4 +1,4 @@
-@defaultTutorialHeight: 18rem;
+@defaultTutorialHeight: 18.75rem;
 
 /*******************************
         Tutorial Tab
@@ -87,7 +87,7 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        max-width: 8rem;
+        width: 7rem;
     }
 }
 
@@ -98,6 +98,7 @@
 .tutorial-hint.ui.button {
     height: 3.2rem;
     width: 3.2rem;
+    margin: 0;
     border-radius: 50%;
     font-size: 1.5rem;
 }
@@ -175,7 +176,7 @@
 
 /* Small Monitor */
 @media only screen and (min-width: @computerBreakpoint) and (max-width: @largestSmallMonitor) {
-    .tutorialhint {
+    .tab-tutorial .tutorialhint {
         left: 2rem;
     }
 }
@@ -248,7 +249,7 @@
     *******************************/
 
     .tutorial-container {
-        .ui.button {
+        > .ui.button {
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -259,7 +260,7 @@
             box-shadow: none;
             border-radius: 0;
 
-            > .arrow {
+            > .arrow, > .check {
                 margin-bottom: 0.5rem!important;
                 font-size: 2rem;
             }
@@ -267,6 +268,93 @@
             > .text {
                 margin: 0 !important;
             }
+        }
+    }
+
+    /*******************************
+            Tutorial Hint
+    *******************************/
+
+    .tutorial-controls {
+        position: absolute;
+        right: 6rem;
+        margin-top: 1rem;
+    }
+
+    .tutorial-hint.ui.button {
+        width: unset;
+        height: unset;
+        font-size: 1rem;
+        border-radius: 0.2rem;
+
+        &.disabled {
+            display: none;
+        }
+    }
+
+    // Overrides
+    .tab-tutorial {
+        .tutorialhint {
+            top: 12.5rem;
+            right: 3.2rem;
+            bottom: unset;
+            left: unset;
+            max-width: 80%;
+        }
+
+        .tutorialhint:before {
+            top: -2.5rem;
+            left: unset;
+            bottom: auto;
+            right: 4rem;
+            transform: rotate(90deg);
+        }
+    }
+
+
+    /*******************************
+            Simulator Tab
+    *******************************/
+    #root.tutorialVertical .tab-simulator:not(.hidden) {
+        .simPanel {
+            display: flex;
+
+            #simulators {
+                width: 34rem;
+                margin: auto;
+            }
+
+            .simframe {
+                padding-bottom: 39% !important;
+            }
+
+            .simtoolbar {
+                flex-direction: column;
+                flex-grow: 0;
+                width: 6rem;
+                margin-left: 1rem;
+            }
+
+            .simtoolbar > .buttons {
+                flex-direction: column;
+            }
+        }
+
+        #boardview {
+            width: 100% !important;
+        }
+    }
+}
+
+/* Mobile */
+@media only screen and (max-width: @largestMobileScreen) {
+    #root.tutorialVertical .tab-simulator:not(.hidden) .simPanel {
+        #simulators {
+            width: 16rem;
+        }
+
+        .simframe {
+            padding-bottom: 83% !important;
         }
     }
 }

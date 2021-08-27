@@ -597,6 +597,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
             }
         }
         this.setState({ showSeeMore: show });
+        this.props.parent.setEditorOffset();
     }
 
     getCardHeight() {
