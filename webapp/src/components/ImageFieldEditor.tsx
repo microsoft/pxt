@@ -39,6 +39,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
     protected galleryAssets: pxt.Asset[];
     protected userAssets: pxt.Asset[];
     protected shortcutLock: number;
+    protected lightMode: boolean;
 
     protected get asset() {
         return this.ref?.getAsset();
@@ -134,7 +135,13 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
             </div>}
             <div className="image-editor-gallery-window">
                 <div className="image-editor-gallery-content">
-                    <ImageEditor ref="image-editor" singleFrame={this.props.singleFrame} onDoneClicked={this.onDoneClick} onTileEditorOpenClose={this.onTileEditorOpenClose} />
+                    <ImageEditor
+                        ref="image-editor"
+                        singleFrame={this.props.singleFrame}
+                        onDoneClicked={this.onDoneClick}
+                        onTileEditorOpenClose={this.onTileEditorOpenClose}
+                        lightMode={this.lightMode}
+                        />
                     <ImageEditorGallery
                         items={filteredAssets}
                         hidden={currentView === "editor"}
@@ -163,6 +170,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
     init(value: U, close: () => void, options?: any) {
         this.closeEditor = close;
         this.options = options;
+        this.lightMode = options.lightMode;
 
         switch (value.type) {
             case pxt.AssetType.Image:

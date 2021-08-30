@@ -1,11 +1,13 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
+import { LIGHT_MODE_TRANSPARENT } from '../ImageEditor';
 import { ImageEditorStore, TilemapState, TileCategory } from '../store/imageReducer';
 
 export interface MinimapProps {
     colors: string[];
     tileset: pxt.TileSet;
     tilemap: pxt.sprite.ImageState;
+    lightMode: boolean;
 }
 
 const SCALE = pxt.BrowserUtils.isEdge() ? 25 : 1;
@@ -30,7 +32,7 @@ class MinimapImpl extends React.Component<MinimapProps, {}> {
     }
 
     redrawCanvas() {
-        const { tilemap } = this.props;
+        const { tilemap, lightMode } = this.props;
         let { bitmap, floating, layerOffsetX, layerOffsetY } = tilemap;
 
         const context = this.canvas.getContext("2d");
@@ -52,7 +54,10 @@ class MinimapImpl extends React.Component<MinimapProps, {}> {
                     context.fillStyle = this.getColor(index);
                     context.fillRect(x * SCALE, y * SCALE, SCALE, SCALE);
                 }
-                else {
+                else if (lightMode) {
+                    context.fillStyle = LIGHT_MODE_TRANSPARENT;
+                    context.fillRect(x * SCALE, y * SCALE, SCALE, SCALE);
+                } else {
                     context.clearRect(x * SCALE, y * SCALE, SCALE, SCALE);
                 }
             }
