@@ -20,6 +20,15 @@ more information, see:
 - [Editor](https://maker.makecode.com)
 - [GitHub](https://github.com/microsoft/pxt-maker)
 
+## Data Science Editor
+
+![Data Science Editor screenshot](/static/targets/ds/screenshot.png)
+
+An editor for building data science analysis programs.
+
+- [Editor](https://aka.ms/ds)
+- [GitHub](https://github.com/microsoft/jacdac-docs)
+
 ## ARcadia: Marker-based augment reality
 
 ![ARcadia screenshot](/static/targets/ar/screenshot.png)
