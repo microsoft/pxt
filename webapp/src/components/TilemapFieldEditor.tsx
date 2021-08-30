@@ -14,6 +14,7 @@ export interface TilemapFieldEditorState {
 
 export class TilemapFieldEditor extends React.Component<TilemapFieldEditorProps, TilemapFieldEditorState> implements FieldEditorComponent<pxt.ProjectTilemap> {
     protected blocksInfo: pxtc.BlocksInfo;
+    protected lightMode: boolean;
     protected ref: ImageEditor;
     protected closeEditor: () => void;
 
@@ -45,6 +46,7 @@ export class TilemapFieldEditor extends React.Component<TilemapFieldEditorProps,
 
     init(value: pxt.ProjectTilemap, close: () => void, options?: any) {
         this.closeEditor = close;
+        this.lightMode = options.lightMode;
         this.initTilemap(value, options);
     }
 
