@@ -1,9 +1,9 @@
 import * as actions from '../actions/types'
-import { guidGen } from '../lib/browserUtils';
+import { guidGen, cloudLocalStoreKey } from '../lib/browserUtils';
 import { getCompletedTags, lookupActivityProgress, isMapCompleted,
     isRewardNode, applyUserUpgrades, applyUserMigrations } from '../lib/skillMapUtils';
 
-export type ModalType = "restart-warning" | "completion" | "report-abuse" | "reset" | "carryover" | "share" | "login" | "delete-account";
+export type ModalType = "restart-warning" | "completion" | "report-abuse" | "reset" | "carryover" | "share" | "login" | "login-prompt" | "delete-account";
 export type PageSourceStatus = "approved" | "banned" | "unknown";
 
 // State for the entire page
@@ -19,9 +19,8 @@ export interface SkillMapState {
     alternateSourceUrls?: string[];
     maps: { [key: string]: SkillMap };
     selectedItem?: { mapId: string, activityId: string };
-
     shareState?: ShareState;
-
+    cloudState?: CloudState;
     editorView?: EditorViewState;
     modal?: ModalState;
     showProfile?: boolean;
@@ -47,6 +46,10 @@ interface ModalState {
 export interface ShareState {
     headerId: string;
     url?: string;
+}
+
+interface CloudState {
+    [headerId: string]: pxt.cloud.CloudStatus;
 }
 
 interface AuthState {
@@ -85,7 +88,8 @@ const initialState: SkillMapState = {
     maps: {},
     auth: {
         signedIn: false
-    }
+    },
+    cloudState: {}
 }
 
 const topReducer = (state: SkillMapState = initialState, action: any): SkillMapState => {
@@ -248,6 +252,8 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                 user
             };
         case actions.RESET_USER:
+            pxt.storage.removeLocal(state.pageSourceUrl +  cloudLocalStoreKey)
+
             return {
                 ...state,
                 user: {
@@ -281,6 +287,14 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                     headerId: action.headerId,
                     url: action.url
                 } : undefined
+            }
+        case actions.SET_CLOUD_STATUS:
+            return {
+                ...state,
+                cloudState: {
+                    ...state.cloudState,
+                    [action.headerId]: action.status
+                }
             }
         case actions.SET_PAGE_TITLE:
             return {
@@ -357,6 +371,11 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
             return {
                 ...state,
                 modal: { type: "login" }
+            }
+        case actions.SHOW_LOGIN_PROMPT:
+            return {
+                ...state,
+                modal: { type: "login-prompt"}
             }
         case actions.SHOW_DELETE_ACCOUNT_MODAL:
             return {

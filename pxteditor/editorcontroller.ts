@@ -55,6 +55,9 @@ namespace pxt.editor {
         | "saveproject"
         | "unloadproject"
         | "shareproject"
+        | "savelocalprojectstocloud"
+        | "projectcloudstatus"
+        | "requestprojectcloudstatus"
 
         | "toggletrace" // EditorMessageToggleTraceRequest
         | "togglehighcontrast"
@@ -222,6 +225,22 @@ namespace pxt.editor {
         // (optional) filtering argument
         filters?: pxt.editor.ProjectFilters;
         searchBar?: boolean;
+    }
+
+    export interface EditorMessageSaveLocalProjectsToCloud extends EditorMessageRequest {
+        action: "savelocalprojectstocloud";
+        headerIds: string[];
+    }
+
+    export interface EditorMessageProjectCloudStatus extends EditorMessageRequest {
+        action: "projectcloudstatus";
+        headerId: string;
+        status: pxt.cloud.CloudStatus;
+    }
+
+    export interface EditorMessageRequestProjectCloudStatus extends EditorMessageRequest {
+        action: "requestprojectcloudstatus";
+        headerIds: string[];
     }
 
     export interface EditorMessageImportTutorialRequest extends EditorMessageRequest {
@@ -536,6 +555,15 @@ namespace pxt.editor {
                                         .then(scriptInfo => {
                                             resp = scriptInfo;
                                         });
+                                }
+                                case "savelocalprojectstocloud": {
+                                    const msg = data as EditorMessageSaveLocalProjectsToCloud;
+                                    return projectView.saveLocalProjectsToCloudAsync(msg.headerIds);
+                                }
+                                case "requestprojectcloudstatus": {
+                                    // Responses are sent as separate "projectcloudstatus" messages.
+                                    const msg = data as EditorMessageRequestProjectCloudStatus;
+                                    return projectView.requestProjectCloudStatus(msg.headerIds);
                                 }
                             }
                             return Promise.resolve();

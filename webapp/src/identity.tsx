@@ -156,7 +156,7 @@ export class UserMenu extends auth.Component<UserMenuProps, UserMenuState> {
         return (
             <sui.DropdownMenu role="menuitem"
                 title={title}
-                className="item icon user-dropdown-menuitem sign-in-dropdown"
+                className={`item icon user-dropdown-menuitem ${loggedIn ? 'logged-in-dropdown' : 'sign-in-dropdown'}`}
                 titleContent={loggedIn ? signedInElem : signedOutElem}
                 tabIndex={loggedIn? 0 : -1}
                 onClick={this.handleDropdownClicked}
@@ -202,11 +202,7 @@ export class CloudSaveStatus extends data.Component<CloudSaveStatusProps, {}> {
         return (<div className="cloudstatusarea">
             {!syncing && <sui.Item className={"ui tiny cloudicon xicon " + cloudStatus.icon} title={cloudStatus.tooltip} tabIndex={-1}></sui.Item>}
             {syncing && <sui.Item className={"ui tiny inline loader active cloudprogress" + (preparing ? " indeterminate" : "")} title={cloudStatus.tooltip} tabIndex={-1}></sui.Item>}
-            {cloudStatus.value === "localEdits" && <span className="ui mobile hide no-select cloudtext" role="note">{lf("saving...")}</span>}
-            {cloudStatus.value === "syncing" && <span className="ui mobile hide no-select cloudtext" role="note">{lf("saving...")}</span>}
-            {cloudStatus.value === "justSynced" && <span className="ui mobile hide no-select cloudtext" role="note">{lf("saved!")}</span>}
-            {cloudStatus.value === "offline" && <span className="ui mobile hide no-select cloudtext" role="note">{lf("offline")}</span>}
-            {cloudStatus.value === "conflict" && <span className="ui mobile hide no-select cloudtext" role="note">{lf("conflict!")}</span>}
+            {cloudStatus.value !== "none" && cloudStatus.value !== "synced" && <span className="ui mobile hide no-select cloudtext" role="note">{cloudStatus.shortStatus}</span>}
         </div>);
     }
 }
