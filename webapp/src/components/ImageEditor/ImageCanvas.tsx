@@ -43,13 +43,6 @@ export interface ImageCanvasProps {
 }
 
 /**
- * This is a scaling factor for all of the pixels in the canvas. Scaling is not needed for browsers
- * that support "image-rendering: pixelated," so only scale for Microsoft Edge.
- */
-const SCALE = pxt.BrowserUtils.isEdge() ? 25 : 1;
-const TILE_SCALE = pxt.BrowserUtils.isEdge() ? 2 : 1;
-
-/**
  * Color for the walls
  */
 const WALL_COLOR = 2;
@@ -69,6 +62,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     protected floatingLayer: HTMLDivElement;
     protected canvasLayers: HTMLCanvasElement[];
     protected cellWidth: number;
+    protected colors: Uint8ClampedArray;
 
     protected edit: Edit;
     protected editState: EditState;
@@ -110,7 +104,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             document.activeElement.blur();
         }
 
-        this.cellWidth = this.props.isTilemap ? this.props.tilemapState.tileset.tileWidth * TILE_SCALE : SCALE;
+        this.cellWidth = this.props.isTilemap ? this.props.tilemapState.tileset.tileWidth : 1;
         this.canvas = this.refs["paint-surface"] as HTMLCanvasElement;
         this.background = this.refs["paint-surface-bg"] as HTMLCanvasElement;
         this.floatingLayer = this.refs["floating-layer-border"] as HTMLDivElement;
@@ -154,7 +148,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             this.editState = getEditState(imageState, this.props.isTilemap, this.props.drawingMode);
         }
 
-        this.cellWidth = this.props.isTilemap ? this.props.tilemapState.tileset.tileWidth * TILE_SCALE : SCALE;
+        this.cellWidth = this.props.isTilemap ? this.props.tilemapState.tileset.tileWidth : 1;
 
         if (this.props.zoomDelta || this.props.zoomDelta === 0) {
             // This is a total hack. Ideally, the zoom should be part of the global state but because
@@ -632,29 +626,39 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     protected drawOverlayLayers(layers: pxt.sprite.Bitmap[], x0 = 0, y0 = 0, transparent = true) {
         if (layers) {
             layers.forEach((layer, index) => {
-                this.drawBitmap(layer, x0, y0, transparent, this.cellWidth, this.canvasLayers[index]);
+                this.drawBitmap(layer, x0, y0, transparent, this.canvasLayers[index]);
             })
         }
     }
 
-    protected drawBitmap(bitmap: pxt.sprite.Bitmap, x0 = 0, y0 = 0, transparent = true, cellWidth = this.cellWidth, target = this.canvas) {
-        const { colors } = this.props;
+    protected drawBitmap(bitmap: pxt.sprite.Bitmap, x0 = 0, y0 = 0, transparent = false, target = this.canvas) {
+        if (!this.colors) {
+            this.colors = new Uint8ClampedArray(this.props.colors.length * 4);
 
-        const context = target.getContext("2d");
-        context.imageSmoothingEnabled = false;
-        for (let x = 0; x < bitmap.width; x++) {
-            for (let y = 0; y < bitmap.height; y++) {
-                const index = bitmap.get(x, y);
-
-                if (index) {
-                    context.fillStyle = colors[index];
-                    context.fillRect((x + x0) * cellWidth, (y + y0) * cellWidth, cellWidth, cellWidth);
-                }
-                else {
-                    if (!transparent) context.clearRect((x + x0) * cellWidth, (y + y0) * cellWidth, cellWidth, cellWidth);
-                }
+            for (let i = 0; i < this.props.colors.length; i++) {
+                const [r, g, b] = pxt.sprite.colorStringToRGB(this.props.colors[i]);
+                const start = i << 2;
+                this.colors[start] = r;
+                this.colors[start + 1] = g;
+                this.colors[start + 2] = b;
+                this.colors[start + 3] = (transparent && i === 0) ? 0 : 255;
             }
         }
+
+        const context = target.getContext("2d");
+        const data = context.getImageData(0, 0, target.width, target.height);
+
+        for (let y = 0; y < bitmap.height; y++) {
+            for (let x = 0; x < bitmap.width; x++) {
+                const i = ((x0 + x) << 2) + (((y0 + y) * target.width) << 2)
+                const colorOffset = bitmap.get(x, y) << 2;
+                data.data[i] = this.colors[colorOffset];
+                data.data[i + 1] = this.colors[colorOffset + 1];
+                data.data[i + 2] = this.colors[colorOffset + 2];
+                data.data[i + 3] = this.colors[colorOffset + 3];
+            }
+        }
+        context.putImageData(data, 0, 0);
     }
 
     protected generateTile(index: number, tileset: pxt.TileSet) {
@@ -662,9 +666,9 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             return null;
         }
         const tileImage = document.createElement("canvas");
-        tileImage.width = tileset.tileWidth * TILE_SCALE;
-        tileImage.height = tileset.tileWidth * TILE_SCALE;
-        this.drawBitmap(pxt.sprite.Bitmap.fromData(tileset.tiles[index].bitmap), 0, 0, true, TILE_SCALE, tileImage);
+        tileImage.width = tileset.tileWidth;
+        tileImage.height = tileset.tileWidth;
+        this.drawBitmap(pxt.sprite.Bitmap.fromData(tileset.tiles[index].bitmap), 0, 0, true, tileImage);
         this.tileCache[index] = tileImage;
         return tileImage;
     }
