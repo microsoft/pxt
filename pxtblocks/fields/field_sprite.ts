@@ -16,6 +16,7 @@ namespace pxtblockly {
         disableResize: string;
 
         filter?: string;
+        lightMode: boolean;
     }
 
     interface ParsedSpriteEditorOptions {
@@ -24,6 +25,7 @@ namespace pxtblockly {
         initHeight: number;
         disableResize: boolean;
         filter?: string;
+        lightMode: boolean;
     }
 
     export class FieldSpriteEditor extends FieldAssetEditor<FieldSpriteEditorOptions, ParsedSpriteEditorOptions> {
@@ -86,11 +88,14 @@ namespace pxtblockly {
             initWidth: 16,
             initHeight: 16,
             disableResize: false,
+            lightMode: false,
         };
 
         if (!opts) {
             return parsed;
         }
+
+        parsed.lightMode = opts.lightMode;
 
         if (opts.sizes) {
             const pairs = opts.sizes.split(";");
