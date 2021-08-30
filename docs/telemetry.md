@@ -6,7 +6,7 @@ Microsoft MakeCode uses the [Application Insights Javascript SDK](https://github
 
 ## Cookies
 
-There are two types of cookies stored by Microsoft MakeCode.
+There are three types of cookies stored by Microsoft MakeCode website.
 
 - Language selection cookie (PXT_LANG). This is used to persist the language selection by user across sessions (Examples: English, French or German).
 - Application Insight cookie (ai_user & ai_session) for user behavior tracking. This is used to correlate the data across sessions. No PII information is collected.
