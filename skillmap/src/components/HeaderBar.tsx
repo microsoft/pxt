@@ -220,7 +220,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         currentMapId: activityOpen && state.editorView?.currentMapId,
         currentActivityId: activityOpen && state.editorView?.currentActivityId,
         showReportAbuse: state.pageSourceStatus === "unknown",
-        signedIn: state.auth.signedIn
+        signedIn: state.auth.signedIn,
         profile: state.auth.profile
     }
 }
