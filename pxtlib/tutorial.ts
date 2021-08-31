@@ -245,6 +245,7 @@ ${code}
             step = step.trim();
             let { header, hint, requiredBlocks } = parseTutorialHint(step, metadata && metadata.explicitHints, metadata.tutorialCodeValidation);
             let info: TutorialStepInfo = {
+                title: flags, // TODO (shakao) determine format for title, strip flags
                 contentMd: step,
                 headerContentMd: header
             }
