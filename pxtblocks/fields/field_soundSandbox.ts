@@ -150,9 +150,13 @@ namespace pxtblockly {
 
     updateInputs(){
        this.volumeInput.value= this.volume.toString();
+       this.syncVolumeField(false);
        this.startFrequencyInput.value = this.startFrequency.toString();
+       this.syncStartFrequencyField(false);
        this.endFrequencyInput.value = this.endFrequency.toString();
+       this.syncEndFrequencyField(false);
        this.durationInput.value = this.duration.toString();
+       this.syncDurationField(false);
     }
 
 
