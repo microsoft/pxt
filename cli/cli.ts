@@ -717,6 +717,7 @@ function targetFileList() {
     if (simDir() != "sim")
         lst = lst.concat(nodeutil.allFiles(path.join("sim", "public"), 5, true))
     pxt.debug(`target files (on disk): ${lst.join('\r\n    ')}`)
+    lst.filter(f => {!f.includes("icons.css")})
     return lst;
 }
 
@@ -1250,7 +1251,7 @@ function uploadCoreAsync(opts: UploadOptions) {
 
     // only keep the last version of each uploadFileName()
     opts.fileList = U.values(U.toDictionary(opts.fileList, uploadFileName))
-
+    
     // check size
     const maxSize = checkFileSize(opts.fileList);
     if (maxSize > 30000000) // 30Mb max
