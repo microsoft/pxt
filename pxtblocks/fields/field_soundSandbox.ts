@@ -43,7 +43,7 @@ namespace pxtblockly {
         // Use toggle from sprite editor
         private toggle: Toggle;
         private root: svg.SVG;
-        private gallery: pxtmelody.MelodyGallery;
+        private gallery: pxtmelody.SoundGallery;
 
         constructor(value: string, params: U, validator?: Function) {
             super(value, validator);
@@ -66,7 +66,7 @@ namespace pxtblockly {
             pxt.BrowserUtils.addClass(contentDiv, "melody-content-div");
             pxt.BrowserUtils.addClass(contentDiv.parentElement, "melody-editor-dropdown");
 
-            this.gallery = new pxtmelody.MelodyGallery();
+            this.gallery = new pxtmelody.SoundGallery();
             this.renderEditor(contentDiv);
 
           //  this.prevString = this.getValue();
