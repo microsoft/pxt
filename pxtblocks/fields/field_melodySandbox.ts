@@ -71,7 +71,8 @@ namespace pxtblockly {
             this.gallery = new pxtmelody.MelodyGallery();
             this.renderEditor(contentDiv);
 
-            this.prevString = this.getValue();
+          //  this.prevString = this.getValue();
+          //  console.log(this.prevString);
 
             // The webapp listens to this event and stops the simulator so that you don't get a sound
             // playing twice (once in the editor and once when the code runs in the sim)
@@ -209,7 +210,7 @@ namespace pxtblockly {
 
             // Same toggle set up as sprite editor
             this.root = new svg.SVG(this.topDiv).id("melody-editor-header-controls");
-            this.toggle = new Toggle(this.root, { leftText: lf("Editor"), rightText: lf("Gallery"), baseColor: color });
+            this.toggle = new Toggle(this.root, { leftText: lf("Edor"), rightText: lf("Gallery"), baseColor: color });
             this.toggle.onStateChange(isLeft => {
                 if (isLeft) {
                     this.hideGallery();
@@ -262,7 +263,8 @@ namespace pxtblockly {
             this.startFrequencyInput.value = this.startFrequency.toString();
             this.startFrequencyInput.id = "melody-tempo-input-start-frequency";
             this.startFrequencyInput.addEventListener("input", () => this.setStartFrequency(+this.startFrequencyInput.value));
-           
+            this.syncStartFrequencyField(true);
+
             
             this.parameters.appendChild(this.startFrequencyText);
             this.startFrequencyText.appendChild(this.startFrequencyInput);
@@ -277,7 +279,7 @@ namespace pxtblockly {
             this.endFrequencyInput.value = this.endFrequency.toString();
             this.endFrequencyInput.id = "melody-tempo-input-start-frequency";
             this.endFrequencyInput.addEventListener("input", () => this.setEndFrequency(+this.endFrequencyInput.value));
-        
+            this.syncEndFrequencyField(true);
             
             this.parameters.appendChild(this.endFrequencyText);
             this.endFrequencyText.appendChild(this.endFrequencyInput);
@@ -416,6 +418,7 @@ namespace pxtblockly {
             } catch (e) {
                 pxt.log(e)
                 this.invalidString = oldValue;
+                console.log(value);
             }
         }
 
@@ -493,19 +496,33 @@ namespace pxtblockly {
         }
 
         private setStartFrequency(frequency:number):void{
-            this.startFrequency = frequency;
-            console.log("set start frequency to " + this.startFrequency);
+              // update startfrequency and display to reflect new start frequency
+              if (this.startFrequency != frequency) {
+                this.startFrequency = frequency;
+                if (this.startFrequencyInput) {
+                    this.startFrequencyInput.value = this.startFrequency + "";
+                }
+                this.syncStartFrequencyField(false);
         }
+    }
+
+    private setEndFrequency(frequency:number):void{
+         // update end frequency and display to reflect new end frequency
+         if (this.endFrequency != frequency) {
+            this.endFrequency = frequency;
+            if (this.endFrequencyInput) {
+                this.endFrequencyInput.value = this.endFrequency + "";
+            }
+            this.syncEndFrequencyField(false);
+    }
+    }
 
         private setVolume(volume:number):void{
             this.volume = volume;
             console.log("set end volume to " + this.volume);
         }
 
-        private setEndFrequency(frequency:number):void{
-            this.endFrequency = frequency;
-            console.log("set end frequency to " + this.endFrequency);
-        }
+
 
         // sync value from duration field on block with duration in field editor
         private syncDurationField(blockToEditor: boolean): void {
@@ -539,6 +556,70 @@ namespace pxtblockly {
             }
         }
 
+            // sync value from start frequency field on block with start frequency in field editor
+            private syncStartFrequencyField(blockToEditor: boolean): void {
+                const s = this.sourceBlock_;
+                if (s.parentBlock_) {
+                    const p = s.parentBlock_;
+                    for (const input of p.inputList) {
+                        if (input.name === "freq1") {
+                            const startFrequencyBlock = input.connection.targetBlock();
+                            if (startFrequencyBlock) {
+                                if (blockToEditor)
+                                    if (startFrequencyBlock.getFieldValue("SLIDER")) {
+                                        this.startFrequencyInput.value = startFrequencyBlock.getFieldValue("SLIDER");
+                                        this.startFrequency = +this.startFrequencyInput.value;
+                                    } else {
+                                        this.startFrequencyInput.value = this.startFrequency + "";
+                                    }
+                                else { // Editor to block
+                                    if (startFrequencyBlock.type === "math_number_minmax") {
+                                        startFrequencyBlock.setFieldValue(this.startFrequencyInput.value, "SLIDER")
+                                    }
+                                    else {
+                                        startFrequencyBlock.setFieldValue(this.startFrequencyInput.value, "NUM")
+                                    }
+                                    this.startFrequencyInput.focus();
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+    
+            // sync value from start frequency field on block with start frequency in field editor
+            private syncEndFrequencyField(blockToEditor: boolean): void {
+                const s = this.sourceBlock_;
+                if (s.parentBlock_) {
+                    const p = s.parentBlock_;
+                    for (const input of p.inputList) {
+                        if (input.name === "freq2") {
+                            const endFrequencyBlock = input.connection.targetBlock();
+                            if (endFrequencyBlock) {
+                                if (blockToEditor)
+                                    if (endFrequencyBlock.getFieldValue("SLIDER")) {
+                                        this.endFrequencyInput.value = endFrequencyBlock.getFieldValue("SLIDER");
+                                        this.endFrequency = +this.endFrequencyInput.value;
+                                    } else {
+                                        this.endFrequencyInput.value = this.endFrequency + "";
+                                    }
+                                else { // Editor to block
+                                    if (endFrequencyBlock.type === "math_number_minmax") {
+                                        endFrequencyBlock.setFieldValue(this.endFrequencyInput.value, "SLIDER")
+                                    }
+                                    else {
+                                        endFrequencyBlock.setFieldValue(this.endFrequencyInput.value, "NUM")
+                                    }
+                                    this.endFrequencyInput.focus();
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+
         // ms to hold note
         private getDuration(): number {
             //this will return the duration 
@@ -571,7 +652,6 @@ namespace pxtblockly {
             }
         }
 
-    
 
         private togglePlay() {
             //this will toggle if we are playing a note
