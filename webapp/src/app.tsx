@@ -1692,9 +1692,8 @@ export class ProjectView
             .catch(e => {
                 // Failed to decompile
                 pxt.tickEvent('tutorial.faileddecompile', { tutorial: t.tutorial });
-                core.errorNotification(lf("Oops, an error occured as we were loading the tutorial."));
-                // Reset state (delete the current project and exit the tutorial)
-                this.exitTutorial(true);
+                this.setState({ editorState: { searchBar: false, filters: undefined} });
+                core.warningNotification(lf("Could not filter tutorial blocks, displaying full toolbox."))
             })
             .finally(() => {
                 pxt.perf.measureEnd("loadTutorial loadBlockly")
