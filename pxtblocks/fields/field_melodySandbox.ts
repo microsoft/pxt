@@ -247,6 +247,7 @@ namespace pxtblockly {
             this.volumeInput.title = lf("Volume");
             this.volumeInput.id = "volume";
             this.volumeInput.addEventListener("input", () => this.setVolume(+this.volumeInput.value));
+            this.syncVolumeField(true);
            
             this.parameters.appendChild(this.volumeText);
             this.volumeText.appendChild(this.volumeInput);
@@ -292,7 +293,7 @@ namespace pxtblockly {
             
             this.waveButtons = this.mkWaveButtons(pxtmelody.SampleWaves);
             this.parameters.appendChild(this.waveButtons);
-
+           
 
             this.interpolation = document.createElement("div");
             this.interpolation.innerText = lf("Interpolation: ");
@@ -518,11 +519,15 @@ namespace pxtblockly {
     }
 
         private setVolume(volume:number):void{
+           // update end volume and display to reflect new end volume
+         if (this.volume != volume) {
             this.volume = volume;
-            console.log("set end volume to " + this.volume);
+            if (this.volumeInput) {
+                this.volumeInput.value = this.volume + "";
+            }
+            this.syncVolumeField(false);
         }
-
-
+    }
 
         // sync value from duration field on block with duration in field editor
         private syncDurationField(blockToEditor: boolean): void {
@@ -620,6 +625,39 @@ namespace pxtblockly {
                 }
             }
 
+               // sync value from volume field on block with volume in field editor
+        private syncVolumeField(blockToEditor: boolean): void {
+            const s = this.sourceBlock_;
+            if (s.parentBlock_) {
+                const p = s.parentBlock_;
+                for (const input of p.inputList) {
+                    if (input.name === "volume") {
+                        const volumeBlock = input.connection.targetBlock();
+                        if (volumeBlock) {
+                            if (blockToEditor)
+                                if (volumeBlock.getFieldValue("SLIDER")) {
+                                    this.volumeInput.value = volumeBlock.getFieldValue("SLIDER");
+                                    this.volume = +this.volumeInput.value;
+                                } else {
+                                    this.volumeInput.value = this.volume + "";
+                                }
+                            else { // Editor to block
+                                if (volumeBlock.type === "math_number_minmax") {
+                                    volumeBlock.setFieldValue(this.volumeInput.value, "SLIDER")
+                                }
+                                else {
+                                    volumeBlock.setFieldValue(this.volumeInput.value, "NUM")
+                                }
+                                this.volumeInput.focus();
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+
         // ms to hold note
         private getDuration(): number {
             //this will return the duration 
@@ -714,10 +752,6 @@ namespace pxtblockly {
     const TOGGLE_HEIGHT = 40;
     const TOGGLE_BORDER_WIDTH = 2;
     const TOGGLE_CORNER_RADIUS = 4;
-
-    const BUTTON_CORNER_RADIUS = 2;
-    const BUTTON_BORDER_WIDTH = 1;
-    const BUTTON_BOTTOM_BORDER_WIDTH = 2;
 
     interface ToggleProps {
         baseColor: string;
