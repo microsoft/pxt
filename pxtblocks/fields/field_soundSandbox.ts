@@ -21,7 +21,7 @@ namespace pxtblockly {
         private timeouts: any[] = []; // keep track of timeouts
         private invalidString: string;
         private prevString: string;
-
+      
         // DOM references
         private topDiv: HTMLDivElement;
         private editorDiv: HTMLDivElement;
@@ -69,8 +69,6 @@ namespace pxtblockly {
             this.gallery = new pxtmelody.SoundGallery();
             this.renderEditor(contentDiv);
 
-          //  this.prevString = this.getValue();
-          //  console.log(this.prevString);
 
             // The webapp listens to this event and stops the simulator so that you don't get a sound
             // playing twice (once in the editor and once when the code runs in the sim)
@@ -120,7 +118,6 @@ namespace pxtblockly {
 
      updateParameters(sample: any, innerButton: HTMLElement){
         console.log("updating parameters!" + sample.name);
-        this.syncWaveField(false);
         switch(sample.type){
             case "wave":
                this.waveType = sample.name;
@@ -149,6 +146,13 @@ namespace pxtblockly {
         document.getElementById(this.waveType).click();
         document.getElementById(this.interpolationType).click();
 
+    }
+
+    updateInputs(){
+       this.volumeInput.value= this.volume.toString();
+       this.startFrequencyInput.value = this.startFrequency.toString();
+       this.endFrequencyInput.value = this.endFrequency.toString();
+       this.durationInput.value = this.duration.toString();
     }
 
 
@@ -288,7 +292,6 @@ namespace pxtblockly {
             // Add wave shape and interpolation buttons
             this.wave = document.createElement("div");
             this.wave.innerText = lf("Wave shape: ");
-            this.syncWaveField(true);
 
             this.parameters.appendChild(this.wave);
             
@@ -390,7 +393,7 @@ namespace pxtblockly {
                 return this.invalidString;
             }
             if (this.melody) {
-                return "\"" + this.melody.getStringRepresentation() + "\"";
+                return "\"" + "\"";
             }
             return "";
         }
@@ -399,46 +402,14 @@ namespace pxtblockly {
         protected parseTypeScriptValue(value: string) {
             let oldValue: string = value;
             try {
-                value = value.slice(1, -1); // remove the boundary quotes
-                value = value.trim(); // remove boundary white space
-                this.createMelodyIfDoesntExist();
-                let notes: string[] = value.split(" ");
-
-                notes.forEach(n => {
-                    if (!this.isValidNote(n)) throw new Error(lf("Invalid note '{0}'. Notes can be C D E F G A B C5", n));
-                });
-
-                this.melody.resetMelody();
-
-                for (let j = 0; j < notes.length; j++) {
-                    if (notes[j] != "-") {
-                        let rowPos: number = pxtmelody.noteToRow(notes[j]);
-                        this.melody.updateMelody(rowPos, j);
-                    }
-                }
                 this.updateFieldLabel();
             } catch (e) {
                 pxt.log(e)
                 this.invalidString = oldValue;
-                console.log(value);
             }
         }
 
-        private isValidNote(note: string): boolean {
-            //we will make it into is this a valid input function
-            switch (note) {
-                case "C":
-                case "D":
-                case "E":
-                case "F":
-                case "G":
-                case "A":
-                case "B":
-                case "C5":
-                case "-": return true;
-            }
-            return false;
-        }
+
 
         // The width of the preview on the block itself
         protected getPreviewWidth(): number {
@@ -658,48 +629,6 @@ namespace pxtblockly {
             }
         }
 
-                      // sync value from volume field on block with volume in field editor
-                      private syncWaveField(blockToEditor: boolean): void {
-                        const s = this.sourceBlock_;
-                        if (s.parentBlock_) {
-                            const p = s.parentBlock_;
-                            for (const input of p.inputList) {
-                                if (input.name === "waveType") {
-                                    const waveBlock = input.connection.targetBlock();
-                                    if (waveBlock) {
-                                        console.log("heloo");
-                                        if (blockToEditor)
-                                            if (waveBlock.getFieldValue("DROPDOWN")) {
-                                                this.waveType = waveBlock.getFieldValue("SLIDER");
-                                                console.log("updating wave in editor")
-                                            } else {
-                                                this.waveType = this.waveType + "";
-
-                                                console.log("updating wave or")
-                                            }
-                                        else { // Editor to block
-                                            if (waveBlock.type === "math_number_minmax") {
-
-                                                console.log("updatitor")
-                                                this.waveType = waveBlock.getFieldValue("ENUM");
-                                                document.getElementById(this.waveType).click();
-                                            }
-                                            else {
-                                                waveBlock.setFieldValue(this.waveType, "NUM")
-
-                                                console.log("up")
-                                            }
-                                            this.waveButtons.focus();
-                                        }
-                                    }
-                                    break;
-                                }
-                                else {console.log("sadness")}
-                            }
-                        }
-                    }
-
-
         // ms to hold note
         private getDuration(): number {
             //this will return the duration 
@@ -770,10 +699,18 @@ namespace pxtblockly {
             //for showing the gallery of sounds
             this.stopMelody();
             this.updatePlayButton();
-            this.gallery.show((result: string) => {
-                if (result) {
+            this.gallery.show((volume: number, startFrequency: number, endFrequency: number, duration: number,  waveType: string, interpolationType:string) => {
+                if (startFrequency) {
                     this.gallery.hide();
                     this.toggle.toggle();
+                    this.volume = volume;
+                    this.startFrequency = startFrequency;
+                    this.endFrequency = endFrequency;
+                    this.duration = duration;
+                    this.waveType = waveType;
+                    this.interpolationType = interpolationType;
+                    this.updateFields();
+                    this.updateInputs();
                 }
             });
         }

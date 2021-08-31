@@ -9,7 +9,7 @@ namespace pxtmelody {
         protected value: string = null;
 
         protected visible = false;
-        protected pending: (res: string) => void;
+        protected pending: (res1: number, res2: number, res3: number, res4: number, res5: string, res6: string) => void;
 
         protected buttons: HTMLElement[];
 
@@ -48,7 +48,7 @@ namespace pxtmelody {
             return this.value;
         }
 
-        show(notes: (res: string) => void) {
+        show(notes: (res1: number, res2: number, res3: number, res4: number, res5: string, res6: string) => void) {
            this.pending = notes;
             this.containerDiv.style.display = "block";
             this.buildDom();
@@ -179,7 +179,7 @@ namespace pxtmelody {
            if (this.pending) {
                 const notes = this.pending;
                 this.pending = undefined;
-               notes(sample.waveType);
+               notes(sample.volume, sample.startFrequency, sample.endFrequency, sample.duration, sample.waveType, sample.interpolation);
 
             }
         }
