@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 
 import store from "./store/store";
 import * as authClient from "./lib/authClient";
-import { getFlattenedHeaderIds as getHeaderIdsForUnstartedMaps } from "./lib/skillMapUtils";
+import { getHeaderIdsForUnstartedMaps } from "./lib/skillMapUtils";
 
 import {
     dispatchAddSkillMap,
