@@ -32,7 +32,7 @@ import { parseHash, getMarkdownAsync, MarkdownSource, parseQuery,
     setPageTitle, setPageSourceUrl, ParsedHash } from './lib/browserUtils';
 
 import { MakeCodeFrame } from './components/makecodeFrame';
-import { getUserStateAsync, saveUserStateAsync } from './lib/workspaceProvider';
+import { getLocalUserStateAsync, getUserStateAsync, saveUserStateAsync } from './lib/workspaceProvider';
 import { Unsubscribe } from 'redux';
 
 /* eslint-disable import/no-unassigned-import */
@@ -211,18 +211,87 @@ class AppImpl extends React.Component<AppProps, AppState> {
     protected async cloudSyncCheckAsync() {
         if (await authClient.loggedInAsync() && this.sendMessageAsync && this.loadedUser) {
             const state = store.getState();
-            const headerIds = getFlattenedHeaderIds(state.user, state.pageSourceUrl);
+            const localUser = await getLocalUserStateAsync();
+
+            let currentUser = state.user;
+
+            let headerIds = getFlattenedHeaderIds(localUser, state.pageSourceUrl, state.user);
+
             // Tell the editor to transfer local skillmap projects to the cloud.
-            await this.sendMessageAsync({
+            const headerMap = (await this.sendMessageAsync({
                 type: "pxteditor",
                 action: "savelocalprojectstocloud",
                 headerIds
-            } as pxt.editor.EditorMessageSaveLocalProjectsToCloud);
+            } as pxt.editor.EditorMessageSaveLocalProjectsToCloud)).resp.headerIdMap;
+
+            if (headerMap) {
+                headerIds = headerIds.map(h => headerMap[h] || h);
+
+                // Patch all of the header ids in the user state and copy
+                // over the local progress that doesn't exist in the signed in
+                // user
+                const urls = Object.keys(state.user.mapProgress);
+                const newUser: UserState = {
+                    ...state.user,
+                    mapProgress: {}
+                }
+
+                for (const url of urls) {
+                    newUser.mapProgress[url] = {
+                        ...state.user.mapProgress[url],
+                    };
+
+                    if (!localUser.mapProgress[url]) continue;
+
+                    const maps = Object.keys(localUser.mapProgress[url]);
+                    for (const map of maps) {
+                        newUser.mapProgress[url][map] = {
+                            ...state.user.mapProgress[url][map]
+                        };
+
+                        // Only copy over state if the user hasn't started this map yet
+                        if (Object.keys(newUser.mapProgress[url][map].activityState).length !== 0) {
+                            continue;
+                        }
+
+                        const activityState: {[index: string]: ActivityState} = {};
+                        newUser.mapProgress[url][map].activityState = activityState;
+
+                        const signedInProgress = state.user.mapProgress[url][map].activityState;
+                        const localProgress = localUser.mapProgress[url][map].activityState
+
+                        for (const activity of Object.keys(signedInProgress)) {
+                            const oldState = signedInProgress[activity];
+                            activityState[activity] = {
+                                ...oldState,
+                                headerId: oldState.headerId ? (headerMap[oldState.headerId] || oldState.headerId) : oldState.headerId
+                            };
+                        }
+
+                        for (const activity of Object.keys(localProgress)) {
+                            const signedInActivity = signedInProgress[activity];
+                            const localActivity = localProgress[activity];
+                            if ((!signedInActivity || !signedInActivity.headerId) && localActivity.headerId) {
+                                const base = signedInActivity || localActivity;
+                                activityState[activity] = {
+                                    ...base,
+                                    headerId: localActivity.headerId ? (headerMap[localActivity.headerId] || localActivity.headerId) : localActivity.headerId
+                                };
+                            }
+                        }
+                    }
+                }
+
+                this.props.dispatchSetUser(newUser)
+                await saveUserStateAsync(newUser);
+                currentUser = newUser;
+            }
+
             // Tell the editor to send us the cloud status of our projects.
             await this.sendMessageAsync({
                 type: "pxteditor",
                 action: "requestprojectcloudstatus",
-                headerIds
+                headerIds: getFlattenedHeaderIds(currentUser, state.pageSourceUrl)
             } as pxt.editor.EditorMessageRequestProjectCloudStatus);
         }
     }

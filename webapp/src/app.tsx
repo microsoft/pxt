@@ -3534,8 +3534,8 @@ export class ProjectView
         return Cloud.privatePostAsync("scripts", scrReq, /* forceLiveEndpoint */ true)
     }
 
-    async saveLocalProjectsToCloudAsync(headerIds: string[]): Promise<void> {
-        await cloud.saveLocalProjectsToCloudAsync(headerIds);
+    async saveLocalProjectsToCloudAsync(headerIds: string[]): Promise<pxt.Map<string> | undefined> {
+        return cloud.saveLocalProjectsToCloudAsync(headerIds);
     }
 
     async requestProjectCloudStatus(headerIds: string[]): Promise<void> {
