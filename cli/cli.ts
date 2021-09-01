@@ -2209,7 +2209,8 @@ async function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
     let coreDependencies: string[];
     const corepkg = "libs/" + pxt.appTarget.corepkg;
 
-    const packageDirs = pxt.appTarget.bundleddirs.map(dir => path.resolve(dir));
+    // use staticpkgdirs if defined, otherwise fall back to bundledirs
+    const packageDirs = (pxt.appTarget.staticpkgdirs?.extensions || pxt.appTarget.bundleddirs).map(dir => path.resolve(dir));
     const rootDir = process.cwd();
 
     await buildWebStringsAsync();
@@ -2278,23 +2279,32 @@ async function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
             }
 
             if (!options.packaged) return;
+            if (pxt.appTarget.staticpkgdirs && pxt.appTarget.staticpkgdirs.base.indexOf(dirname) === -1) return;
 
             // We want to cache a hex file for each of the native packages in case they are added to a project.
             // This won't cover the whole matrix, but handles the common case of projects that add one extra
             // extension in the offline app.
-            const allDeps = pkg.sortedDeps(true).map(dep => path.resolve(path.join(dirname, dep.verArgument())));
+            const allDeps = pkg.sortedDeps(true).map(dep => path.resolve(path.join(dirname, dep.verArgument())))
+                .map(dep => path.resolve(dep).replace(/---.*/, "")); // keep path format (/ vs \\) consistent, trim --- suffix to avoid duplicate imports.
             const config = nodeutil.readPkgConfig(dirname);
             const host = pkg.host() as Host;
 
-            for (const extraPackage of packageDirs.filter(dirname => allDeps.indexOf(dirname) == -1)) {
+            const pkgsToBuildWith = packageDirs.filter(dirname => !allDeps.some(el => el.indexOf(dirname.replace(/---.*/, "")) !== -1));
+
+            pxt.log(`Dependencies of pkg: ${allDeps}`);
+            pxt.log(`Attemping to bundle necessary hexfiles to compile with: ${pkgsToBuildWith}`);
+            for (const extraPackage of pkgsToBuildWith) {
                 process.chdir(path.join(rootDir, dirname));
+                const deps: pxt.Map<string> = {
+                    ...config.dependencies,
+                    extra: "file:" + path.relative(path.resolve("."), extraPackage)
+                }
                 host.fileOverrides["pxt.json"] = JSON.stringify({
                     ...config,
-                    dependencies: {
-                        ...config.dependencies,
-                        extra: "file:" + path.relative(path.resolve("."), extraPackage)
-                    }
+                    dependencies: deps
                 })
+                pxt.log(`Building hex cache for ${pkg.config.name} with dependencies:`)
+                console.dir(deps);
                 mainPkg = new pxt.MainPackage(host);
 
                 try {
@@ -2320,6 +2330,8 @@ async function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                 catch (e) {
                     // We're not being smart and verifying that the packages are actually compatible, so
                     // we might get some errors. Ignore them and keep going.
+                    // -- This will likely happen if you have any packages listed that have hw specific versions,
+                    // e.g. serial && serial---linux
                     pxt.debug(`Unable to cache hex for project ${dirname} with '${extraPackage}'`);
                 }
             }
