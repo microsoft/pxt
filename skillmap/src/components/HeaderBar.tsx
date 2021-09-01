@@ -107,7 +107,7 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
             : undefined;
 
         const initialsElem = <span className="circle">{pxt.auth.userInitials(profile)}</span>
-        
+
         return <div className="user-menu">
             {signedIn
              ? <Dropdown icon="user" items={items} picture={avatarElem || initialsElem} className="header-dropdown"/>
