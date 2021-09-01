@@ -3220,6 +3220,17 @@ export class ProjectView
     ////////////             Dialogs              /////////////
     ///////////////////////////////////////////////////////////
 
+    // Classes to add to modals
+    createModalClasses(classes?: string): string {
+        const rootClassList = [
+            classes,
+            this.rootClasses.indexOf("flyoutOnly") != -1 ? "flyoutOnly" : "",
+            this.rootClasses.indexOf("inverted-theme") != -1 ? "inverted-theme" : "",
+            this.rootClasses.indexOf("hideIteration") != -1 ? "hideIteration" : ""
+        ]
+        return sui.cx(rootClassList);
+    }
+
     showReportAbuse() {
         const pubId = (this.state.tutorialOptions && this.state.tutorialOptions.tutorialReportId)
             || (this.state.header && this.state.header.pubCurrent && this.state.header.pubId);
@@ -3658,14 +3669,15 @@ export class ProjectView
 
     getExpandedCardStyle(flyoutOnly?: boolean): any {
         let tc = this.refs[ProjectView.tutorialCardId] as tutorial.TutorialCard;
-        let margin = 2;
+        let headerHeight = 0;
         if (flyoutOnly) {
-            margin += 2;
+            let headers = document.getElementById("headers");
+            headerHeight += headers.offsetHeight;
         }
         if (tc) {
             // maxium offset of 18rem
-            let maxOffset = Math.min(tc.getCardHeight(), parseFloat(getComputedStyle(document.documentElement).fontSize) * 18);
-            return { 'top': "calc(" + maxOffset + "px + " + margin + "em)" };
+            let maxOffset = Math.min(tc.getCardHeight() + headerHeight, parseFloat(getComputedStyle(document.documentElement).fontSize) * 18);
+            return { 'top': "calc(" + maxOffset + "px + 2em)" }; // 2em for margins
         }
         return null;
     }
