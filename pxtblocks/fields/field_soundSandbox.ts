@@ -109,7 +109,7 @@ namespace pxtblockly {
     
                 outer.appendChild(innerButton);
                 innerButton.addEventListener("click", () =>{ this.updateParameters(samples[i], innerButton);  /*this.waveButtons.style.setProperty("background-color", "green")*/} );
-                
+                this.syncWaveField(true);
             }
             
 
@@ -126,6 +126,7 @@ namespace pxtblockly {
                document.getElementById("triangle").style.setProperty("background-color", "#dcdcdc");
                document.getElementById("sawtooth").style.setProperty("background-color", "#dcdcdc");
                innerButton.style.setProperty("background-color", "#c1c1c1");
+               this.syncWaveField(false);
                 console.log(this.waveType);
                 return;
             case "interpolation":
@@ -354,9 +355,9 @@ namespace pxtblockly {
 
         // Runs when the editor is closed by clicking on the Blockly workspace
         protected onEditorClose() {
-            this.stopMelody();
+            this.stopSound();
             if (this.gallery) {
-                this.gallery.stopMelody();
+                this.gallery.stopSound();
             }
             this.clearDomReferences();
 
@@ -412,8 +413,6 @@ namespace pxtblockly {
                 this.invalidString = oldValue;
             }
         }
-
-
 
         // The width of the preview on the block itself
         protected getPreviewWidth(): number {
@@ -620,6 +619,8 @@ namespace pxtblockly {
                             else { // Editor to block
                                 if (volumeBlock.type === "math_number_minmax") {
                                     volumeBlock.setFieldValue(this.volumeInput.value, "SLIDER")
+                                    console.log(volumeBlock.getFieldValue("SLIDER"));
+                                  
                                 }
                                 else {
                                     volumeBlock.setFieldValue(this.volumeInput.value, "NUM")
@@ -632,6 +633,23 @@ namespace pxtblockly {
                 }
             }
         }
+
+               // sync value from wave field on block with volume in field editor
+               private syncWaveField(blockToEditor: boolean): void {
+                const s = this.sourceBlock_;
+                if (s.parentBlock_) {
+                    const p = s.parentBlock_;
+                    
+                    for (const input of p.inputList) {
+                        if (input.name === "0_optional_field0") {
+                            console.log("yesss")
+                            console.log(input);
+                           const waveBlock = input;
+                            
+                        }
+                }
+            }
+               }
 
         // ms to hold note
         private getDuration(): number {
@@ -652,7 +670,7 @@ namespace pxtblockly {
             pxt.AudioContextManager.tone(frequency);
         }
 
-        private playNote(): void {
+        private playSound(): void {
             if (this.isPlaying) {
                 pxt.AudioContextManager.sound( this.startFrequency, this.endFrequency, this.duration, this.waveType, this.volume, this.interpolationType );
                 
@@ -661,7 +679,7 @@ namespace pxtblockly {
                 }, this.getDuration() ));
             }
             else {
-                this.stopMelody();
+                this.stopSound();
             }
         }
 
@@ -670,9 +688,9 @@ namespace pxtblockly {
             //this will toggle if we are playing a note
             if (!this.isPlaying) {
                 this.isPlaying = true;
-                this.playNote();
+                this.playSound();
             } else {
-                this.stopMelody();
+                this.stopSound();
             }
             this.updatePlayButton();
         }
@@ -690,7 +708,7 @@ namespace pxtblockly {
         }
 
 
-        private stopMelody() {
+        private stopSound() {
             //stops the sound
             if (this.isPlaying) {
                 while (this.timeouts.length) clearTimeout(this.timeouts.shift());
@@ -701,7 +719,7 @@ namespace pxtblockly {
 
         private showGallery() {
             //for showing the gallery of sounds
-            this.stopMelody();
+            this.stopSound();
             this.updatePlayButton();
             this.gallery.show((volume: number, startFrequency: number, endFrequency: number, duration: number,  waveType: string, interpolationType:string) => {
                 if (startFrequency) {

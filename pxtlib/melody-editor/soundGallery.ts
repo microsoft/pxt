@@ -62,7 +62,7 @@ namespace pxtmelody {
             pxt.BrowserUtils.removeClass(this.contentDiv, "shown");
             pxt.BrowserUtils.addClass(this.contentDiv, "hidden-above");
             this.value = null;
-            this.stopMelody();
+            this.stopSound();
         }
 
         clearDomReferences() {
@@ -190,7 +190,7 @@ namespace pxtmelody {
 
         private previewMelody(sample: pxtmelody.SoundInfo): void {
             // stop playing any other melody
-            this.stopMelody();
+            this.stopSound();
             pxt.AudioContextManager.sound( sample.startFrequency, sample.endFrequency, sample.duration, sample.waveType, sample.volume, sample.interpolation );
             
         }
@@ -212,11 +212,11 @@ namespace pxtmelody {
             } else {
                 pxt.BrowserUtils.removeClass(button, "stop icon");
                 pxt.BrowserUtils.addClass(button, "play icon");
-                this.stopMelody();
+                this.stopSound();
             }
         }
 
-        public stopMelody() {
+        public stopSound() {
             while (this.timeouts.length) clearTimeout(this.timeouts.shift());
             pxt.AudioContextManager.stop();
         }
