@@ -232,6 +232,11 @@ namespace pxt.editor {
         headerIds: string[];
     }
 
+    export interface EditorMessageSaveLocalProjectsToCloudResponse extends EditorMessageResponse {
+        action: "savelocalprojectstocloud";
+        headerIdMap?: pxt.Map<string>;
+    }
+
     export interface EditorMessageProjectCloudStatus extends EditorMessageRequest {
         action: "projectcloudstatus";
         headerId: string;
@@ -558,7 +563,12 @@ namespace pxt.editor {
                                 }
                                 case "savelocalprojectstocloud": {
                                     const msg = data as EditorMessageSaveLocalProjectsToCloud;
-                                    return projectView.saveLocalProjectsToCloudAsync(msg.headerIds);
+                                    return projectView.saveLocalProjectsToCloudAsync(msg.headerIds)
+                                        .then(guidMap => {
+                                            resp = <EditorMessageSaveLocalProjectsToCloudResponse>{
+                                                headerIdMap: guidMap
+                                            };
+                                        })
                                 }
                                 case "requestprojectcloudstatus": {
                                     // Responses are sent as separate "projectcloudstatus" messages.

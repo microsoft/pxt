@@ -160,9 +160,10 @@ export function isRewardNode(node: MapNode) {
     return node.kind === "reward" || node.kind === "completion";
 }
 
-export function getFlattenedHeaderIds(user: UserState, pageSource: string): string[] {
+export function getFlattenedHeaderIds(user: UserState, pageSource: string, existing: UserState): string[] {
     return Object
         .values(user.mapProgress[pageSource] ?? [])
+        .filter(map => !existing.mapProgress[pageSource]?.[map.mapId] || Object.keys(existing.mapProgress[pageSource][map.mapId].activityState).length === 0)
         .map(map => Object.values(map.activityState))
         .reduce((a, b) => a.concat(b, []), [])
         .map(act => act.headerId)

@@ -23,14 +23,8 @@ export async function saveProjectAsync(project: pxt.workspace.Project): Promise<
     await ws.saveProjectAsync(project);
 }
 
-export async function getUserStateAsync(): Promise<UserState> {
+export async function getLocalUserStateAsync(): Promise<UserState> {
     const ws = await getWorkspaceAsync();
-
-    // User state is stored in two places, so we read both sources here and merge them.
-    // Though the entire user state is saved to the local workspace, the authClient
-    // module is the authoritative source for the completedTags and mapProgress fields
-    // when auth is enabled.
-
     let userState = await ws.getUserStateAsync();
     if (!userState) {
         userState = {
@@ -40,6 +34,16 @@ export async function getUserStateAsync(): Promise<UserState> {
             version: pxt.skillmap.USER_VERSION
         };
     }
+
+    return userState;
+}
+
+export async function getUserStateAsync(): Promise<UserState> {
+    // User state is stored in two places, so we read both sources here and merge them.
+    // Though the entire user state is saved to the local workspace, the authClient
+    // module is the authoritative source for the completedTags and mapProgress fields
+    // when auth is enabled.
+    let userState = await getLocalUserStateAsync();
 
     // Read synchronized skillmap state from cloud profile. Fallback to workspace-saved state.
     const skillmapState = await authClient.getSkillmapStateAsync();
@@ -59,11 +63,11 @@ export async function saveUserStateAsync(user: UserState): Promise<void> {
     const ws = await getWorkspaceAsync();
     if (await pxt.auth.client()?.loggedInAsync()) {
         // When signed in, clear locally saved progress.
-        await ws.saveUserStateAsync({
-            ...user,
-            mapProgress: { },
-            completedTags: { }
-        });
+        // await ws.saveUserStateAsync({
+        //     ...user,
+        //     mapProgress: { },
+        //     completedTags: { }
+        // });
     } else {
         await ws.saveUserStateAsync(user);
     }
