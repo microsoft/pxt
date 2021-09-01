@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 
 import store from "./store/store";
 import * as authClient from "./lib/authClient";
-import { getHeaderIdsForUnstartedMaps } from "./lib/skillMapUtils";
+import { getFlattenedHeaderIds } from "./lib/skillMapUtils";
 
 import {
     dispatchAddSkillMap,
@@ -213,7 +213,9 @@ class AppImpl extends React.Component<AppProps, AppState> {
             const state = store.getState();
             const localUser = await getLocalUserStateAsync();
 
-            let headerIds = getHeaderIdsForUnstartedMaps(localUser, state.pageSourceUrl, state.user);
+            let currentUser = state.user;
+
+            let headerIds = getFlattenedHeaderIds(localUser, state.pageSourceUrl, state.user);
 
             // Tell the editor to transfer local skillmap projects to the cloud.
             const headerMap = (await this.sendMessageAsync({
@@ -282,13 +284,14 @@ class AppImpl extends React.Component<AppProps, AppState> {
 
                 this.props.dispatchSetUser(newUser)
                 await saveUserStateAsync(newUser);
+                currentUser = newUser;
             }
 
             // Tell the editor to send us the cloud status of our projects.
             await this.sendMessageAsync({
                 type: "pxteditor",
                 action: "requestprojectcloudstatus",
-                headerIds
+                headerIds: getFlattenedHeaderIds(currentUser, state.pageSourceUrl)
             } as pxt.editor.EditorMessageRequestProjectCloudStatus);
         }
     }
