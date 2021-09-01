@@ -61,14 +61,7 @@ export async function saveUserStateAsync(user: UserState): Promise<void> {
     if (user.isDebug) return;
 
     const ws = await getWorkspaceAsync();
-    if (await pxt.auth.client()?.loggedInAsync()) {
-        // When signed in, clear locally saved progress.
-        // await ws.saveUserStateAsync({
-        //     ...user,
-        //     mapProgress: { },
-        //     completedTags: { }
-        // });
-    } else {
+    if (!(await pxt.auth.client()?.loggedInAsync())) {
         await ws.saveUserStateAsync(user);
     }
 
