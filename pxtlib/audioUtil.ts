@@ -117,7 +117,7 @@ namespace pxt.AudioContextManager {
                     for(let i = 0; i < divisor; i++) {
                         setTimeout(()=>{
                             _vco.frequency.linearRampToValueAtTime( (startFrequency + (i * frequencyDivision)), _context.currentTime);
-                            _gain.gain.setTargetAtTime(volume, _context.currentTime, 0.015);
+                            _gain.gain.setTargetAtTime(volume/10, _context.currentTime, 0.015);
                            console.log(i);
                            if(i === divisor-1){ 
                             setTimeout(stop, timeDivision); 

@@ -10,7 +10,7 @@ namespace pxtblockly {
         protected params: U;
         private melody: pxtmelody.MelodyArray;
         private duration: number = 1500;
-        private volume: number = 0.2;
+        private volume: number = 0.2*10;
         private startFrequency: number = 440;
         private endFrequency: number = 880;
         private waveType: string = "square";
@@ -250,7 +250,7 @@ namespace pxtblockly {
             this.volumeInput = document.createElement("input");
             pxt.BrowserUtils.addClass(this.volumeInput, "ui-input");
             this.volumeInput.type = "number";
-            this.volumeInput.value = "0.2";
+            this.volumeInput.value = "2";
             this.volumeInput.title = lf("Volume");
             this.volumeInput.id = "volume";
             this.volumeInput.addEventListener("input", () => this.setVolume(+this.volumeInput.value));
