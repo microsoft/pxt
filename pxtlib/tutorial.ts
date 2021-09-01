@@ -244,8 +244,14 @@ ${code}
         markdown.replace(stepRegex, function (match, flags, step) {
             step = step.trim();
             let { header, hint, requiredBlocks } = parseTutorialHint(step, metadata && metadata.explicitHints, metadata.tutorialCodeValidation);
+
+            // if title is not hidden ("{TITLE HERE}"), strip flags
+            const title = !flags.match(/^\{.*\}$/)
+                ? flags.replace(/@(fullscreen|unplugged|showdialog|showhint|tutorialCompleted|resetDiff)/gi, "")
+                : undefined;
+
             let info: TutorialStepInfo = {
-                title: flags, // TODO (shakao) determine format for title, strip flags
+                title,
                 contentMd: step,
                 headerContentMd: header
             }
