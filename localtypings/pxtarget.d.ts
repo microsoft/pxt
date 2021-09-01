@@ -1084,7 +1084,6 @@ declare namespace pxt.tutorial {
         title?: string;
         activity?: number;
         contentMd?: string;
-        contentItemsMd?: TutorialContentItem[];
 
         // Validation
         requiredBlockMd?: string;
@@ -1095,11 +1094,6 @@ declare namespace pxt.tutorial {
         hintContentMd?: string;
         // fullscreen?: boolean; // DEPRECATED, replaced by "showHint"
         // unplugged?: boolean: // DEPRECATED, replaced by "showDialog"
-    }
-
-    interface TutorialContentItem {
-        markdown: string;
-        icon?: string;
     }
 
     interface TutorialActivityInfo {

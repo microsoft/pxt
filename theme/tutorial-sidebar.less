@@ -148,6 +148,43 @@
 }
 
 /*******************************
+        Tutorial Markdown
+*******************************/
+.formatted-bullet-ul {
+    padding: 0;
+}
+
+.formatted-bullet-li {
+    display: flex;
+    position: relative;
+
+    p { padding: 0.4rem 0; }
+}
+
+.formatted-bullet {
+    margin-right: 1rem;
+    flex-shrink: 0;
+    background: linear-gradient(@teal, @teal) ~'no-repeat 45% / 2px 100%';
+}
+.formatted-bullet i {
+    display: block;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    color: @white;
+    background-color: @teal;
+    line-height: 2rem;
+}
+.formatted-bullet-ul .formatted-bullet-li:last-child .formatted-bullet:after {
+    content: " ";
+    position: absolute;
+    width: 1rem;
+    bottom: 0;
+    left: 0.5rem;
+    border-bottom: 2px solid @teal;
+}
+
+/*******************************
         Simulator Tab
 *******************************/
 

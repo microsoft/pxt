@@ -303,6 +303,40 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
             })
     }
 
+    private renderBullets(content: HTMLElement) {
+        const bulletRegex = /^:([^:]+):/i;
+        pxt.Util.toArray(content.querySelectorAll("li"))
+            .forEach((li: HTMLElement) => {
+                const match = li.innerHTML.match(bulletRegex);
+                if (match?.[1]) {
+                    const p = document.createElement("p");
+                    p.innerHTML = li.innerHTML;
+                    li.innerHTML = "";
+                    li.appendChild(p);
+                }
+            })
+
+        pxt.Util.toArray(content.querySelectorAll("li > p"))
+            .forEach((p: HTMLElement) => {
+                const match = p.innerText.match(bulletRegex);
+                if (match?.[1]) {
+                    p.innerHTML = p.innerHTML.replace(bulletRegex, "");
+
+                    const li = p.parentElement;
+                    li.className += " formatted-bullet-li";
+                    const ul = li.parentElement;
+                    if (!ul.classList.contains("formatted-bullet-ul")) ul.className += " formatted-bullet-ul";
+
+                    const bullet = document.createElement("div");
+                    bullet.className = "formatted-bullet";
+                    const icon = document.createElement("i");
+                    icon.className = `ui icon ${match[1]}`;
+                    bullet.appendChild(icon);
+                    li.insertBefore(bullet, p);
+                }
+            })
+    }
+
     private renderOthers(content: HTMLElement) {
         // remove package blocks
         pxt.Util.toArray(content.querySelectorAll(`.lang-package,.lang-config,.lang-apis`))
@@ -350,6 +384,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         // We'll go through a series of adjustments here, rendering inline blocks, blocks and snippets as needed
         this.renderInlineBlocks(content);
         this.renderSnippets(content);
+        this.renderBullets(content);
         this.renderOthers(content);
     }
 
