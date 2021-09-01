@@ -113,7 +113,7 @@ export class UserProfileImpl extends React.Component<UserProfileProps, {}> {
     }
 }
 
-function mapStateToProps(state: SkillMapState) {
+function mapStateToProps(state: SkillMapState, ownProps: any) {
     if (!state) return {};
 
     return {

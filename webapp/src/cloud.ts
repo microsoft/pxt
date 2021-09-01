@@ -592,8 +592,16 @@ export async function saveLocalProjectsToCloudAsync(headerIds: string[]) {
         .filter(h => h.cloudUserId == null)
         .filter(h => headerIds.includes(h.id));
     if (headers.length) {
-        await syncAsync(headers);
+        const guidMap: pxt.Map<string> = {};
+        const newHeaders: Header[] = [];
+        for (const h of headers) {
+            const newHeader = await workspace.duplicateAsync(h, h.name);
+            guidMap[h.id] = newHeader.id;
+        }
+        await syncAsync(newHeaders);
+        return guidMap;
     }
+    return undefined;
 }
 
 export async function requestProjectCloudStatus(headerIds: string[]): Promise<void> {
