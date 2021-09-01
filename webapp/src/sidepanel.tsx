@@ -89,8 +89,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         if (!tutorialOptions || !pxt.BrowserUtils.isVerticalTutorial()) {
             handleFullscreenButtonClick();
         } else {
-            this.setState({ activeTab: "tab-simulator" });
-            this.props.showMiniSim(false);
+            this.showSimulatorTab();
         }
     }
 

@@ -15,28 +15,29 @@ export function TabPane(props: TabPaneProps) {
     const [ activeTab, setActiveTab ] = React.useState(activeTabName);
     const childArray = Array.isArray(children) ? children.filter((el: any) => !!el) : [children];
 
+    const selectTab = (tabProps: TabContentProps) => {
+        const { name, onSelected } = tabProps as TabContentProps;
+        if (onSelected) onSelected();
+        setActiveTab(name);
+    }
+
     React.useEffect(() => {
         if (!childArray.some((el: any) => el.props.name === activeTab)) {
-            setActiveTab(childArray[0].props.name);
+            selectTab(childArray[0].props);
         }
     }, [children])
 
     React.useEffect(() => {
-        if (childArray.some((el: any) => el.props.name === activeTabName)) {
-            setActiveTab(activeTabName);
-        } else {
-            setActiveTab(childArray[0].props.name);
-        }
+        const tab = childArray.find((el: any) => el.props.name === activeTabName) || childArray[0];
+        selectTab(tab.props);
     }, [activeTabName])
 
     return <div id={id} className={`tab-container ${className || ""}`} style={style}>
         {childArray.length > 1 && <div className="tab-navigation">
             {childArray.map(el => {
-                const { name, icon, title, onSelected } = el.props as TabContentProps;
-                const tabClickHandler = () => {
-                    if (onSelected) onSelected();
-                    setActiveTab(name);
-                }
+                const { name, icon, title } = el.props as TabContentProps;
+                const tabClickHandler = () => selectTab(el.props);
+
                 return <div key={name} className={`tab-icon ${name} ${name == activeTab ? "active" : ""}`} onClick={tabClickHandler}>
                     <i className={`ui icon ${icon}`} />
                     <span>{title}</span>
