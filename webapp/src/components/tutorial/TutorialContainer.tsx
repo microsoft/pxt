@@ -35,6 +35,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
 
     const isModal = currentStepInfo.showDialog;
     const visibleStep = isModal ? Math.min(currentStep + 1, steps.length - 1) : currentStep;
+    const title = steps[visibleStep].title;
     const markdown = steps[visibleStep].headerContentMd;
     const hintMarkdown = steps[visibleStep].hintContentMd;
 
@@ -65,7 +66,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
 
     React.useEffect(() => {
         if (layout == "horizontal") {
-            const scrollHeight = contentRef?.current?.firstElementChild?.scrollHeight;
+            const scrollHeight = contentRef?.current?.children?.[1]?.scrollHeight;
             if (scrollHeight) {
                 setParentHeight(Math.min(Math.max(scrollHeight + 2, MIN_HEIGHT), MAX_HEIGHT));
             }
@@ -100,6 +101,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
         </div>
         {layout === "horizontal" && backButton}
         <div className="tutorial-content" ref={contentRef}>
+            {title && <div className="tutorial-title">{title}</div>}
             <MarkedContent className="no-select" tabIndex={0} markdown={markdown} parent={parent}/>
         </div>
         {layout === "horizontal" && nextButton}

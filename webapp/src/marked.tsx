@@ -22,6 +22,7 @@ interface MarkedContentState {
 }
 
 export class MarkedContent extends data.Component<MarkedContentProps, MarkedContentState> {
+    protected readonly semanticIconNames = ["access", "add", "address", "adjust", "adn", "aid", "alarm", "alarm", "ald", "alien", "align", "all", "alphabet", "als", "alternate", "alternative", "amazon", "ambulance", "american", "amex", "anchor", "android", "angellist", "angle", "announcement", "apple", "archive", "area", "arrow", "ascending", "asexual", "asl", "assistive", "asterisk", "at", "attach", "attention", "audio", "awesome", "backward", "badge", "bag", "balance", "ban", "bandcamp", "bar", "barcode", "bars", "basket", "bath", "bathtub", "battery", "bed", "beer", "beginner", "behance", "bell", "bicycle", "binary", "binoculars", "birthday", "bitbucket", "bitcoin", "black", "blind", "block", "bluetooth", "bold", "bomb", "book", "bookmark", "box", "braille", "briefcase", "broken", "browser", "brush", "btc", "bug", "building", "bullhorn", "bullseye", "bureau", "bus", "buysellads", "calculator", "calendar", "call", "camera", "camp", "cancel", "captioning", "car", "card", "caret", "cart", "cc", "center", "certificate", "chain", "chart", "chat", "check", "checked", "checkered", "checkmark", "chevron", "child", "chrome", "circle", "clipboard", "clock", "clone", "close", "closed", "cloud", "club", "cny", "cocktail", "code", "codepen", "codiepie", "coffee", "cogs", "columns", "combinator", "comment", "commenting", "comments", "commons", "compass", "compose", "compress", "computer", "configure", "connectdevelop", "contao", "content", "control", "conversation", "copy", "copyright", "cord", "creative", "credit", "crop", "crosshairs", "css3", "cube", "cubes", "currency", "cursor", "cut", "dashboard", "dashcube", "database", "deaf", "deafness", "delete", "delicious", "descending", "description", "desktop", "detective", "deviantart", "devices", "diamond", "digg", "diners", "discover", "discussions", "disk", "dislike", "doctor", "dollar", "dont", "dot", "double", "down", "download", "dribble", "drivers", "dropbox", "dropdown", "drupal", "edge", "edit", "eercast", "eject", "ellipsis", "emergency", "empire", "empty", "end", "envelope", "envira", "erase", "eraser", "etsy", "eur", "euro", "excel", "exchange", "exclamation", "expand", "expeditedssl", "explorer", "express", "external", "extinguisher", "eye", "eyedropper", "f", "fa", "facebook", "factory", "fast", "favorite", "fax", "feed", "female", "fighter", "file", "film", "filter", "find", "fire", "firefox", "first", "five", "flag", "flask", "flickr", "folder", "font", "fonticons", "food", "fork", "forms", "fort", "forumbee", "forward", "four", "foursquare", "free", "from", "frown", "full", "g", "gallery", "game", "gamepad", "gay", "gbp", "gender", "genderless", "gg", "ghost", "gift", "git", "github", "gitlab", "gittip", "glide", "globe", "google", "grab", "graduation", "graph", "gratipay", "grav", "grid", "group", "h", "hacker", "half", "hand", "handicap", "handshake", "hard", "hashtag", "hat", "hdd", "header", "headphone", "hearing", "heart", "heartbeat", "height", "help", "heterosexual", "hide", "high", "history", "home", "homosexual", "horizontal", "hospital", "hotel", "hourglass", "houzz", "html5", "hundred", "hunt", "i", "id", "idea", "ils", "image", "imdb", "in", "inbox", "indent", "industry", "info", "inr", "instagram", "intergender", "internet", "interpreting", "intersex", "ioxhost", "isle", "italic", "japan", "jcb", "jet", "joomla", "jpy", "jsfiddle", "justify", "key", "keyboard", "krw", "lab", "language", "laptop", "lastfm", "law", "layout", "leaf", "leanpub", "left", "legal", "lemon", "lesbian", "level", "license", "life", "lightbulb", "lightning", "like", "line", "linkedin", "linkify", "linode", "linux", "lira", "list", "listening", "lizard", "location", "lock", "log", "long", "low", "magic", "magnet", "magnify", "mail", "male", "man", "map", "marker", "mars", "mastercard", "maxcdn", "maximize", "meanpath", "medium", "medkit", "meetup", "meh", "mercury", "microchip", "microphone", "microsoft", "military", "minimize", "minus", "mixcloud", "mobile", "modx", "money", "moon", "motorcycle", "mouse", "move", "ms", "music", "mute", "neuter", "new", "news", "newspaper", "non", "notched", "note", "numbered", "numeric", "object", "odnoklassniki", "of", "off", "official", "ol", "on", "one", "open", "opencart", "openid", "opera", "optinmonster", "options", "order", "ordered", "other", "out", "outdent", "outline", "overflow", "pagelines", "paint", "paper", "paragraph", "paste", "pause", "paw", "payment", "paypal", "pdf", "peace", "pencil", "percent", "phone", "photo", "picture", "pie", "pied", "pin", "pinterest", "piper", "pixels", "plane", "play", "plug", "plus", "pocket", "podcast", "point", "pointer", "pointing", "pound", "power", "powerpoint", "print", "privacy", "product", "protect", "puzzle", "qq", "qrcode", "quarter", "quarters", "question", "quora", "quote", "r", "radio", "rain", "random", "ravelry", "rebel", "record", "rectangle", "recycle", "reddit", "refresh", "registered", "remove", "renren", "repeat", "reply", "resize", "restore", "retro", "retweet", "right", "ring", "rmb", "road", "rock", "rocket", "rouble", "rss", "rub", "ruble", "rupee", "s15", "safari", "save", "scissors", "scribd", "search", "selected", "sellsy", "send", "server", "setting", "settings", "share", "shekel", "sheqel", "shield", "ship", "shipping", "shirtsinbulk", "shop", "shopping", "shower", "shuffle", "shutdown", "shuttle", "sidebar", "sign", "signal", "signing", "signs", "signup", "simplybuilt", "sitemap", "skyatlas", "skype", "slack", "slash", "sliders", "slideshare", "smile", "snapchat", "snowflake", "soccer", "sort", "sound", "soundcloud", "space", "spinner", "spock", "spoon", "spotify", "spy", "square", "stack", "star", "start", "steam", "step", "sticky", "stop", "street", "strikethrough", "stripe", "stroke", "student", "stumbleupon", "subscript", "subway", "suitcase", "sun", "superpowers", "superscript", "systems", "table", "tablet", "tack", "tag", "tags", "talk", "target", "tasks", "taxi", "telegram", "telephone", "teletype", "television", "tencent", "terminal", "text", "theme", "themeisle", "thermometer", "thin", "three", "thumb", "thumbs", "ticket", "tie", "time", "times", "tint", "tm", "to", "toggle", "trademark", "train", "transgender", "translate", "trash", "travel", "treatment", "tree", "trello", "triangle", "tripadvisor", "trophy", "truck", "try", "tty", "tumblr", "tv", "twitch", "twitter", "two", "ul", "umbrella", "underline", "undo", "ungroup", "unhide", "universal", "university", "unlinkify", "unlock", "unmute", "unordered", "up", "upload", "usb", "usd", "user", "users", "vcard", "venus", "vertical", "viacoin", "viadeo", "victory", "video", "view", "vimeo", "vine", "visa", "vision", "vk", "volume", "wait", "wallet", "warning", "wechat", "weibo", "weixin", "whatsapp", "wheelchair", "wi-fi", "width", "wifi", "wikipedia", "window", "windows", "winner", "wizard", "woman", "won", "word", "wordpress", "world", "wpbeginner", "wpexplorer", "wpforms", "wrench", "write", "x", "xing", "y", "yahoo", "yc", "ycombinator", "yelp", "yen", "yoast", "youtube", "zero", "zip", "zoom"];
 
     // Local cache for images, cleared when we create a new project.
     // Stores code => data-uri image of decompiled result
@@ -303,6 +304,41 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
             })
     }
 
+    private renderBullets(content: HTMLElement) {
+        const bulletRegex = /^:([^:]+):/i;
+        pxt.Util.toArray(content.querySelectorAll("li"))
+            .forEach((li: HTMLElement) => {
+                const match = li.innerHTML.match(bulletRegex);
+                if (match?.[1]) {
+                    const p = document.createElement("p");
+                    pxt.Util.toArray(li.childNodes).forEach(n => p.appendChild(n));
+                    li.appendChild(p);
+                }
+            })
+
+        pxt.Util.toArray(content.querySelectorAll("li > p"))
+            .forEach((p: HTMLElement) => {
+                const match = p.innerText.match(bulletRegex);
+                if (match?.[1]) {
+                    const firstTextChild = pxt.Util.toArray(p.childNodes).find(n => n.nodeName === "#text");
+                    firstTextChild.nodeValue = firstTextChild.nodeValue.replace(bulletRegex, "");
+
+                    const li = p.parentElement;
+                    li.className += " formatted-bullet-li";
+                    const ul = li.parentElement;
+                    if (!ul.classList.contains("formatted-bullet-ul")) ul.className += " formatted-bullet-ul";
+
+                    const bullet = document.createElement("div");
+                    bullet.className = "formatted-bullet";
+                    const icon = document.createElement("i");
+                    const iconClasses = match[1].split(" ").filter(el => this.semanticIconNames.indexOf(el) >= 0);
+                    icon.className = `ui icon ${iconClasses.join(" ")}`;
+                    bullet.appendChild(icon);
+                    li.insertBefore(bullet, p);
+                }
+            })
+    }
+
     private renderOthers(content: HTMLElement) {
         // remove package blocks
         pxt.Util.toArray(content.querySelectorAll(`.lang-package,.lang-config,.lang-apis`))
@@ -350,6 +386,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         // We'll go through a series of adjustments here, rendering inline blocks, blocks and snippets as needed
         this.renderInlineBlocks(content);
         this.renderSnippets(content);
+        this.renderBullets(content);
         this.renderOthers(content);
     }
 

@@ -1074,19 +1074,26 @@ declare namespace pxt.tutorial {
     }
 
     interface TutorialStepInfo {
-        // fullscreen?: boolean; // DEPRECATED, replaced by "showHint"
-        // unplugged?: boolean: // DEPRECATED, replaced by "showDialog"
-
+        // Step metadata
         showHint?: boolean; // automatically displays hint
         showDialog?: boolean; // no coding, displays in modal
+        resetDiff?: boolean; // reset diffify algo
         tutorialCompleted?: boolean;
+
+        // Step content
+        title?: string;
+        activity?: number;
         contentMd?: string;
+
+        // Validation
+        requiredBlockMd?: string;
+        listOfValidationRules?: pxt.tutorial.TutorialRuleStatus[]; // Whether the user code has been marked valid for these set of rules
+
+        // Old
         headerContentMd?: string;
         hintContentMd?: string;
-        requiredBlockMd?: string;
-        activity?: number;
-        resetDiff?: boolean; // reset diffify algo
-        listOfValidationRules?: pxt.tutorial.TutorialRuleStatus[]; // Whether the user code has been marked valid for these set of rules
+        // fullscreen?: boolean; // DEPRECATED, replaced by "showHint"
+        // unplugged?: boolean: // DEPRECATED, replaced by "showDialog"
     }
 
     interface TutorialActivityInfo {

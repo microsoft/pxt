@@ -1,4 +1,6 @@
 @defaultTutorialHeight: 18.75rem;
+@tutorialFontSize: 1.125rem;
+@tutorialTitleFontSize: 1.5rem;
 
 /*******************************
         Tutorial Tab
@@ -30,6 +32,8 @@
     margin: 1rem 0;
     overflow-x: hidden;
     overflow-y: auto;
+    font-family: @segoeUIFont;
+    font-size: @tutorialFontSize;
 
     span.docs.inlineblock {
         white-space: break-spaces;
@@ -71,6 +75,16 @@
 }
 
 /*******************************
+         Title
+*******************************/
+
+.tutorial-title {
+    margin-bottom: 1rem;
+    font-size: @tutorialTitleFontSize;
+    font-weight: 700;
+}
+
+/*******************************
         Tutorial Controls
 *******************************/
 
@@ -83,7 +97,7 @@
         margin: 0 0.4rem;
         color: @blue;
         background: @teal;
-        font-size: 1.2rem;
+        font-size: @tutorialFontSize;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -100,7 +114,7 @@
     width: 3.2rem;
     margin: 0;
     border-radius: 50%;
-    font-size: 1.5rem;
+    font-size: @tutorialTitleFontSize;
 }
 
 .tutorial-hint.ui.button,
@@ -135,6 +149,44 @@
     left: 0;
     bottom: 0;
     right: 0;
+}
+
+/*******************************
+        Tutorial Markdown
+*******************************/
+
+.formatted-bullet-ul {
+    padding: 0;
+}
+
+.formatted-bullet-li {
+    display: flex;
+    position: relative;
+
+    p { padding: 0.4rem 0; }
+}
+
+.formatted-bullet {
+    margin-right: 0.5rem;
+    flex-shrink: 0;
+    background: linear-gradient(@teal, @teal) ~'no-repeat 45% / 2px 100%';
+}
+.formatted-bullet i {
+    display: block;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    color: @white;
+    background-color: @teal;
+    line-height: 2.5rem;
+}
+.formatted-bullet-ul .formatted-bullet-li:last-child .formatted-bullet:after {
+    content: " ";
+    position: absolute;
+    width: 1rem;
+    bottom: 0;
+    left: 0.75rem;
+    border-bottom: 2px solid @teal;
 }
 
 /*******************************
