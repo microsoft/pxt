@@ -172,7 +172,7 @@ namespace pxt.BrowserUtils {
 
     export function isVerticalTutorial(): boolean {
         try {
-            return /tutoriallayout=v/.test(window.location.href);
+            return !(/tutoriallayout=h/.test(window.location.href));
         } catch (e) { return false; }
     }
 
