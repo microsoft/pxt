@@ -21,7 +21,7 @@ interface TutorialContainerProps {
 }
 
 const MIN_HEIGHT = 80;
-const MAX_HEIGHT = 212;
+const MAX_HEIGHT = 170;
 
 export function TutorialContainer(props: TutorialContainerProps) {
     const { parent, name, steps, tutorialOptions, onTutorialStepChange, onTutorialComplete, setParentHeight } = props;
@@ -75,10 +75,11 @@ export function TutorialContainer(props: TutorialContainerProps) {
         }
     })
 
-    let modalActions: ModalButton[] = [
-        { label: lf("Back"), onclick: tutorialStepBack, icon: "arrow circle left", disabled: !showBack, labelPosition: "left" },
-        { label: lf("Ok"), onclick: tutorialStepNext, icon: "arrow circle right", disabled: !showNext, className: "green" }
-    ];
+    let modalActions: ModalButton[] = [{ label: lf("Ok"), onclick: tutorialStepNext,
+        icon: "arrow circle right", disabled: !showNext, className: "green" }];
+
+    if (showBack) modalActions.unshift({ label: lf("Back"), onclick: tutorialStepBack,
+        icon: "arrow circle left", disabled: !showBack, labelPosition: "left" })
 
     if (showImmersiveReader) {
         modalActions.push({
@@ -104,12 +105,12 @@ export function TutorialContainer(props: TutorialContainerProps) {
             {title && <div className="tutorial-title">{title}</div>}
             <MarkedContent className="no-select" tabIndex={0} markdown={markdown} parent={parent}/>
         </div>
-        {layout === "horizontal" && nextButton}
         <div className="tutorial-controls">
             { layout === "vertical" && backButton }
             <TutorialHint markdown={hintMarkdown} parent={parent} showLabel={layout === "horizontal"} />
             { layout === "vertical" && nextButton }
         </div>
+        {layout === "horizontal" && nextButton}
         {isModal && !hideModal && <Modal isOpen={isModal} closeIcon={false} header={name} buttons={modalActions}
             className="hintdialog" onClose={showNext ? tutorialStepNext : () => setHideModal(true)} dimmer={true}
             longer={true} closeOnDimmerClick closeOnDocumentClick closeOnEscape>
