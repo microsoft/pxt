@@ -321,7 +321,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                 const match = p.innerText.match(bulletRegex);
                 if (match?.[1]) {
                     const firstTextChild = pxt.Util.toArray(p.childNodes).find(n => n.nodeName === "#text");
-                    firstTextChild.nodeValue = firstTextChild.nodeValue.replace(bulletRegex, "");
+                    if (firstTextChild?.nodeValue) firstTextChild.nodeValue = firstTextChild.nodeValue.replace(bulletRegex, "");
 
                     const li = p.parentElement;
                     li.className += " formatted-bullet-li";
@@ -350,6 +350,8 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
     renderMarkdown(markdown: string) {
         const content = this.refs["marked-content"] as HTMLDivElement;
         const pubinfo = this.getBuiltinMacros();
+
+        if (!markdown) return;
 
         // replace pre-template in markdown
         markdown = markdown.replace(/@([a-z]+)@/ig, (m, param) => pubinfo[param] || 'unknown macro')
