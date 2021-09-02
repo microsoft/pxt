@@ -118,7 +118,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         const { activeTab, height } = this.state;
 
         return <div id="simulator" className="simulator">
-            <TabPane id="editorSidebar" activeTabName={activeTab} style={height ? { height: `calc(${height}px + 5.5rem)` } : undefined}>
+            <TabPane id="editorSidebar" activeTabName={activeTab} style={height ? { height: `calc(${height}px + 8rem)` } : undefined}>
                 <TabContent name={SIMULATOR_TAB} icon="game" onSelected={this.showSimulatorTab}>
                     <div className="ui items simPanel" ref={this.handleSimPanelRef}>
                         <div id="boardview" className="ui vertical editorFloat" role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0} />
