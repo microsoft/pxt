@@ -270,13 +270,15 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
     renderCore() {
         const { visible } = this.state;
         const options = this.props.parent.state.tutorialOptions;
-        const flyoutOnly = this.props.parent.state.editorState && this.props.parent.state.editorState.hasCategories === false;
         const { tutorialReady, tutorialStepInfo, tutorialStep, tutorialName } = options;
         if (!tutorialReady) return <div />;
 
         const step = tutorialStepInfo[tutorialStep];
         const tutorialHint = step.hintContentMd;
         const fullText = step.contentMd;
+
+        const hideIteration = options.metadata.hideIteration;
+        const flyoutOnly = options.metadata.flyoutOnly;
 
         if (!step.showDialog) {
             if (!tutorialHint) return <div />;
@@ -287,14 +289,14 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
         } else {
             let onClick = tutorialStep < tutorialStepInfo.length - 1 ? this.next : this.closeHint;
             const actions: sui.ModalButton[] = [{
-                label: lf("Start"),
+                label: hideIteration && flyoutOnly ? lf("Start") : lf("Ok"),
                 onclick: onClick,
                 icon: 'check',
                 className: 'green'
             }]
+            const classes = this.props.parent.createModalClasses("hintdialog");
 
-            const modalClasses = flyoutOnly ? "hintdialog flyoutOnly" : "hintdialog";
-            return <sui.Modal isOpen={visible} className={modalClasses}
+            return <sui.Modal isOpen={visible} className={classes}
                 closeIcon={false} header={tutorialName} buttons={actions}
                 onClose={onClick} dimmer={true} longer={true}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape>
