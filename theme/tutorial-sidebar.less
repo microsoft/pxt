@@ -1,4 +1,4 @@
-@defaultTutorialHeight: 18.75rem;
+@defaultTutorialHeight: 18.625rem;
 @tutorialFontSize: 1.125rem;
 @tutorialTitleFontSize: 1.5rem;
 
@@ -300,26 +300,37 @@
             Tutorial Controls
     *******************************/
 
-    .tutorial-container {
-        > .ui.button {
+    .tutorial-container,
+    .tutorial-controls {
+        .ui.button {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             width: 4rem;
-            color: @teal;
-            background: @white;
-            box-shadow: none;
-            border-radius: 0;
+            height: unset;
+            font-size: 1rem;
 
-            > .arrow, > .check {
+            i.icon {
+                display: flex;
+                align-items: center;
+                justify-content: center;
                 margin-bottom: 0.5rem!important;
                 font-size: 2rem;
             }
 
-            > .text {
-                margin: 0 !important;
+            > .icon-and-text.icon~.ui.text {
+                margin-left: 0 !important;
             }
+        }
+    }
+
+    .tutorial-container {
+        > .ui.button {
+            color: @teal;
+            background: @white;
+            box-shadow: none;
+            border-radius: 0;
         }
     }
 
@@ -328,16 +339,16 @@
     *******************************/
 
     .tutorial-controls {
-        position: absolute;
-        right: 6rem;
-        margin-top: 1rem;
+        display: flex;
+        align-items: center;
+        margin: 0;
     }
 
     .tutorial-hint.ui.button {
-        width: unset;
-        height: unset;
-        font-size: 1rem;
         border-radius: 0.2rem;
+        color: @teal;
+        background: @blue;
+        margin: 1rem;
 
         &.disabled {
             display: none;
@@ -347,8 +358,8 @@
     // Overrides
     .tab-tutorial {
         .tutorialhint {
-            top: 12.5rem;
-            right: 3.2rem;
+            top: 18.5rem;
+            right: 1.6rem;
             bottom: unset;
             left: unset;
             max-width: 80%;
