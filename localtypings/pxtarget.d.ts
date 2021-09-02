@@ -494,6 +494,10 @@ declare namespace pxt {
     interface TargetBundle extends AppTarget {
         bundledpkgs: Map<Map<string>>;   // @internal use only (cache)
         bundleddirs: string[];
+        staticpkgdirs?: {
+            base: string[];
+            extensions: string[];
+        }      // if defined, used in staticpkg as pkgs to combine with bundled dirs. Otherwise, bundled dirs will be combined with eachother.
         versions: TargetVersions;        // @derived
         apiInfo?: Map<PackageApiInfo>;
         tutorialInfo?: Map<BuiltTutorialInfo>; // hash of tutorial code mapped to prebuilt info for each tutorial
