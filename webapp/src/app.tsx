@@ -4972,7 +4972,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     pkg.setupAppTarget((window as any).pxtTargetBundle);
     pxt.setBundledApiInfo((window as any).pxtTargetBundle.apiInfo);
     pxt.perf.measureEnd("setAppTarget");
-    pxt.perf.report();
 
     enableAnalytics()
 
