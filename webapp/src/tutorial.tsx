@@ -87,7 +87,9 @@ function getUsedBlocksInternalAsync(code: string[], id: string, language?: strin
                     snippetBlocks[snippetHash] = {}
                     for (let bi = 0; bi < allblocks.length; ++bi) {
                         const blk = allblocks[bi];
-                        if (!blk.isShadow()) {
+                        if (blk.type == "typescript_statement") {
+                            pxt.tickEvent(`tutorial.usedblocks.greyblock`, { tutorial: id, code: code[i] });
+                        } else if (!blk.isShadow()) {
                             if (!snippetBlocks[snippetHash][blk.type]) {
                                 snippetBlocks[snippetHash][blk.type] = 0;
                             }

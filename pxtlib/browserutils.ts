@@ -1059,6 +1059,7 @@ namespace pxt.BrowserUtils {
 
     interface TutorialInfoIndexedDbEntry {
         id: string;
+        time: number;
         hash: string;
         blocks: Map<number>;
         snippets: Map<Map<number>>;
@@ -1107,7 +1108,7 @@ namespace pxt.BrowserUtils {
 
             return this.db.getAsync<TutorialInfoIndexedDbEntry>(TutorialInfoIndexedDb.TABLE, key)
                 .then((res) => {
-                    if (res && res.hash == hash) {
+                    if (res && res.hash == hash && (Util.now() - (res.time || 0)) < 86400000) {
                         return res;
                     }
 
@@ -1136,6 +1137,7 @@ namespace pxt.BrowserUtils {
 
             const entry: TutorialInfoIndexedDbEntry = {
                 id: key,
+                time: Util.now(),
                 hash,
                 snippets,
                 blocks
