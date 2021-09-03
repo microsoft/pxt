@@ -4968,8 +4968,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     } else {
         pxt.options.wsPort = 3233;
     }
+    pxt.perf.measureStart("setAppTarget");
     pkg.setupAppTarget((window as any).pxtTargetBundle);
     pxt.setBundledApiInfo((window as any).pxtTargetBundle.apiInfo);
+    pxt.perf.measureEnd("setAppTarget");
 
     enableAnalytics()
 
