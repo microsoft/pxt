@@ -1609,6 +1609,142 @@ namespace ts.pxtc.Util {
         }
         return url
     }
+    export function cloneTargetBundle(target: pxt.TargetBundle) {
+        target = {
+            ...target
+        };
+
+        const apiInfo = target.apiInfo;
+        delete target.apiInfo;
+
+        const bundleddirs = target.bundleddirs;
+        delete target.bundleddirs;
+
+        const bundledpkgs = target.bundledpkgs;
+        delete target.bundledpkgs;
+
+        const tutorialInfo = target.tutorialInfo;
+        delete target.tutorialInfo;
+
+        const res = clone(target);
+
+        if (apiInfo) {
+            res.apiInfo = {};
+            for (const key of Object.keys(apiInfo)) {
+                const apis = apiInfo[key].apis;
+
+                res.apiInfo[key] = {
+                    sha: apiInfo[key].sha,
+                    apis: {
+                        jres: { ...apis.jres },
+                        byQName: cloneApis(apis.byQName)
+                    }
+                }
+            }
+        }
+
+        if (bundleddirs) {
+            res.bundleddirs = [...bundleddirs]
+        }
+
+        if (bundledpkgs) {
+            res.bundledpkgs = {};
+            for (const key of Object.keys(bundledpkgs)) {
+                res.bundledpkgs[key] = {
+                    ...bundledpkgs[key]
+                };
+            }
+        }
+
+        if (tutorialInfo) {
+            res.tutorialInfo = {};
+
+            for (const key of Object.keys(tutorialInfo)) {
+                const built = tutorialInfo[key];
+
+                res.tutorialInfo[key] = {
+                    hash: built.hash,
+                    usedBlocks: {
+                        ...built.usedBlocks
+                    },
+                    snippetBlocks: {
+                        ...built.snippetBlocks
+                    }
+                }
+            }
+        }
+
+        return res;
+    }
+
+    export function cloneApis(byQName: pxt.Map<pxtc.SymbolInfo>) {
+        const res: pxt.Map<pxtc.SymbolInfo> = {};
+
+        for (const key of Object.keys(byQName)) {
+            res[key] = cloneSymbolInfo(byQName[key]);
+        }
+
+        return res;
+    }
+
+    export function cloneSymbolInfo(sym: pxtc.SymbolInfo): pxtc.SymbolInfo {
+        return {
+            // FIXME: This is a little dangerous, because we do edit the symbol attributes in some places
+            // for localization. However, most of those edits are to top-level properties and only edits
+            // to child objects matter so it *should* be fine
+            attributes: {
+                ...sym.attributes
+            },
+
+            parameters: sym.parameters?.map(cloneParameterDesc),
+            extendsTypes: sym.extendsTypes ? [...sym.extendsTypes] : undefined,
+            pkgs: sym.pkgs ? [...sym.pkgs] : undefined,
+            combinedProperties: sym.combinedProperties ? [...sym.combinedProperties] : undefined,
+
+            name: sym.name,
+            namespace: sym.namespace,
+            fileName: sym.fileName,
+            kind: sym.kind,
+            retType: sym.retType,
+            isInstance: sym.isInstance,
+            isContextual: sym.isContextual,
+            qName: sym.qName,
+            pkg: sym.pkg,
+            snippet: sym.snippet,
+            snippetName: sym.snippetName,
+            snippetWithMarkers: sym.snippetWithMarkers,
+            pySnippet: sym.pySnippet,
+            pySnippetName: sym.pySnippetName,
+            pySnippetWithMarkers: sym.pySnippetWithMarkers,
+            blockFields: sym.blockFields,
+            isReadOnly: sym.isReadOnly,
+            pyName: sym.pyName,
+            pyQName: sym.pyQName,
+            snippetAddsDefinitions: sym.snippetAddsDefinitions,
+        }
+    }
+
+    function cloneParameterDesc(param: pxtc.ParameterDesc): pxtc.ParameterDesc {
+        return {
+            name: param.name,
+            description: param.description,
+            type: param.type,
+            pyTypeString: param.pyTypeString,
+            initializer: param.initializer,
+            default: param.default,
+            properties: param.properties?.map(clonePropertyDesc),
+            handlerParameters: param.handlerParameters?.map(clonePropertyDesc),
+            options: param.options ? U.clone(param.options) : undefined,
+            isEnum: param.isEnum
+        }
+    }
+
+    function clonePropertyDesc(prop: pxtc.PropertyDesc): pxtc.PropertyDesc {
+        return {
+            name: prop.name,
+            type: prop.type
+        }
+    }
 }
 
 namespace ts.pxtc.BrowserImpl {

@@ -48,7 +48,7 @@ namespace pxt {
     export function setAppTarget(trg: TargetBundle) {
         appTarget = trg || <TargetBundle>{};
         patchAppTarget();
-        savedAppTarget = U.clone(appTarget)
+        savedAppTarget = U.cloneTargetBundle(appTarget)
     }
 
     let apiInfo: Map<PackageApiInfo>;
@@ -254,7 +254,7 @@ namespace pxt {
     export function reloadAppTargetVariant(temporary = false) {
         pxt.perf.measureStart("reloadAppTargetVariant")
         const curr = temporary ? "" : JSON.stringify(appTarget);
-        appTarget = U.clone(savedAppTarget)
+        appTarget = U.cloneTargetBundle(savedAppTarget)
         if (appTargetVariant) {
             const v = appTarget.variants && appTarget.variants[appTargetVariant];
             if (v)
