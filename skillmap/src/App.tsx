@@ -66,18 +66,63 @@ interface AppState {
     error?: string;
 }
 
+interface ReadyResources {
+    sendMessageAsync?: (message: any) => Promise<any>;
+}
+
+class ReadyPromise {
+    private promise_: Promise<ReadyResources>
+    private resources: ReadyResources;
+    private mounted?: boolean;
+    private resolve?: (value: ReadyResources | PromiseLike<ReadyResources>) => void;
+
+    constructor() {
+        this.resources = { };
+        this.promise_ = new Promise<ReadyResources>((resolve) => {
+            this.resolve = resolve;
+            this.checkComplete();
+        })
+    }
+
+    public promise = () => this.promise_;
+
+    public setSendMessageAsync(sendMessageAsync: (message: any) => Promise<any>) {
+        this.resources.sendMessageAsync = sendMessageAsync;
+        this.checkComplete();
+    }
+
+    public setMounted() {
+        this.mounted = true;
+        this.checkComplete();
+    }
+
+    private checkComplete() {
+        if (this.resolve &&
+            this.mounted &&
+            this.resources.sendMessageAsync
+        ) {
+            this.resolve(this.resources);
+        }
+    }
+}
+
 class AppImpl extends React.Component<AppProps, AppState> {
     protected queryFlags: {[index: string]: string} = {};
     protected unsubscribeChangeListener: Unsubscribe | undefined;
     protected loadedUser: UserState | undefined;
-    protected sendMessageAsync: ((message: any) => Promise<any>) | undefined;
+    protected readyPromise: ReadyPromise;
 
     constructor(props: any) {
         super(props);
         this.state = {};
+        this.readyPromise = new ReadyPromise();
 
         window.addEventListener("hashchange", this.handleHashChange);
+
+        this.cloudSyncCheckAsync();
     }
+
+    protected ready = (): Promise<ReadyResources> => this.readyPromise.promise();
 
     protected handleHashChange = async (e: HashChangeEvent) => {
         await this.parseHashAsync();
@@ -209,7 +254,8 @@ class AppImpl extends React.Component<AppProps, AppState> {
     }
 
     protected async cloudSyncCheckAsync() {
-        if (await authClient.loggedInAsync() && this.sendMessageAsync && this.loadedUser) {
+        const res = await this.ready();
+        if (await authClient.loggedInAsync()) {
             const state = store.getState();
             const localUser = await getLocalUserStateAsync();
 
@@ -217,7 +263,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
             let headerIds = getFlattenedHeaderIds(localUser, state.pageSourceUrl, currentUser);
 
             // Tell the editor to transfer local skillmap projects to the cloud.
-            const headerMap = (await this.sendMessageAsync({
+            const headerMap = (await res.sendMessageAsync!({
                 type: "pxteditor",
                 action: "savelocalprojectstocloud",
                 headerIds
@@ -287,7 +333,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
             }
 
             // Tell the editor to send us the cloud status of our projects.
-            await this.sendMessageAsync({
+            await res.sendMessageAsync!({
                 type: "pxteditor",
                 action: "requestprojectcloudstatus",
                 headerIds: getFlattenedHeaderIds(currentUser, state.pageSourceUrl)
@@ -296,8 +342,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
     }
 
     protected onMakeCodeFrameLoaded = async (sendMessageAsync: (message: any) => Promise<any>) => {
-        this.sendMessageAsync = sendMessageAsync;
-        await this.cloudSyncCheckAsync();
+        this.readyPromise.setSendMessageAsync(sendMessageAsync);
     }
 
     async componentDidMount() {
@@ -309,7 +354,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
         await authClient.authCheckAsync();
         await this.initLocalizationAsync();
         await this.parseHashAsync();
-        await this.cloudSyncCheckAsync();
+        this.readyPromise.setMounted();
     }
 
     componentWillUnmount() {
