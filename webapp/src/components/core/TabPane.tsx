@@ -12,8 +12,10 @@ interface TabPaneProps {
 
 export function TabPane(props: TabPaneProps) {
     const { id, children, className, style, activeTabName } = props;
+    const childArray = (Array.isArray(children) ? children : [children]).filter((el: any) => !!el);
+    if (!childArray || childArray.length == 0) return <div />;
+
     const [ activeTab, setActiveTab ] = React.useState(activeTabName);
-    const childArray = Array.isArray(children) ? children.filter((el: any) => !!el) : [children];
 
     const selectTab = (tabProps: TabContentProps) => {
         const { name, onSelected } = tabProps as TabContentProps;
