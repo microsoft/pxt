@@ -717,7 +717,7 @@ function targetFileList() {
     if (simDir() != "sim")
         lst = lst.concat(nodeutil.allFiles(path.join("sim", "public"), 5, true))
     pxt.debug(`target files (on disk): ${lst.join('\r\n    ')}`)
-    lst = lst.filter(f => !f.includes("icons.css"))
+    lst = lst.filter(f => !f.includes("icons.css")) // We want to pull icons.css from pxt-core, not the target
     return lst;
 }
 
