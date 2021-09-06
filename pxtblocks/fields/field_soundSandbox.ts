@@ -85,7 +85,6 @@ namespace pxtblockly {
         }
 
         mkWaveButtons(samples: any){
-            console.log("made button ");
             const outer = mkElement("div", {
                className: "melody-gallery-button melody-editor-card",
                 id: "waveButtons"
@@ -109,7 +108,6 @@ namespace pxtblockly {
     
                 outer.appendChild(innerButton);
                 innerButton.addEventListener("click", () =>{ this.updateParameters(samples[i], innerButton);  /*this.waveButtons.style.setProperty("background-color", "green")*/} );
-                this.syncWaveField(true);
             }
             
 
@@ -117,7 +115,6 @@ namespace pxtblockly {
         }
 
      updateParameters(sample: any, innerButton: HTMLElement){
-        console.log("updating parameters!" + sample.name);
         switch(sample.type){
             case "wave":
                this.waveType = sample.name;
@@ -127,15 +124,14 @@ namespace pxtblockly {
                document.getElementById("sawtooth").style.setProperty("background-color", "#dcdcdc");
                innerButton.style.setProperty("background-color", "#c1c1c1");
                this.syncWaveField(false);
-                console.log(this.waveType);
                 return;
             case "interpolation":
                this.interpolationType = sample.name;
                document.getElementById("linear").style.setProperty("background-color", "#dcdcdc");
                document.getElementById("exponential").style.setProperty("background-color", "#dcdcdc");
                document.getElementById("quadratic").style.setProperty("background-color", "#dcdcdc");
-                console.log(this.interpolationType);
-                innerButton.style.setProperty("background-color", "#c1c1c1");
+               innerButton.style.setProperty("background-color", "#c1c1c1");
+               this.syncInterpolationField(false);
                 return;
         }
 
@@ -241,7 +237,7 @@ namespace pxtblockly {
 
             // add parameters div to editor div
             this.parameters = document.createElement("div");
-            pxt.BrowserUtils.addClass(this.topDiv, "melody-top-bar-div")
+            pxt.BrowserUtils.addClass(this.parameters, "melody-top-bar-div-parameters")
             this.parameters.style.setProperty("background-color", secondaryColor);
 
             // Add volume input 
@@ -301,14 +297,15 @@ namespace pxtblockly {
             this.parameters.appendChild(this.wave);
             
             this.waveButtons = this.mkWaveButtons(pxtmelody.SampleWaves);
+            this.syncWaveField(true);
             this.parameters.appendChild(this.waveButtons);
-           
 
             this.interpolation = document.createElement("div");
             this.interpolation.innerText = lf("Interpolation: ");
             this.parameters.appendChild(this.interpolation);
 
             const interpolationButtons = this.mkWaveButtons(pxtmelody.SampleInterpolations);
+            this.syncInterpolationField(true);
             this.parameters.appendChild(interpolationButtons);
             setTimeout(() => {
                 this.updateFields();
@@ -618,9 +615,7 @@ namespace pxtblockly {
                                 }
                             else { // Editor to block
                                 if (volumeBlock.type === "math_number_minmax") {
-                                    volumeBlock.setFieldValue(this.volumeInput.value, "SLIDER")
-                                    console.log(volumeBlock.getFieldValue("SLIDER"));
-                                  
+                                    volumeBlock.setFieldValue(this.volumeInput.value, "SLIDER")                                  
                                 }
                                 else {
                                     volumeBlock.setFieldValue(this.volumeInput.value, "NUM")
@@ -634,7 +629,7 @@ namespace pxtblockly {
             }
         }
 
-               // sync value from wave field on block with volume in field editor
+        // sync value from wave field on block with volume in field editor
                private syncWaveField(blockToEditor: boolean): void {
                 const s = this.sourceBlock_;
                 if (s.parentBlock_) {
@@ -642,14 +637,92 @@ namespace pxtblockly {
                     
                     for (const input of p.inputList) {
                         if (input.name === "0_optional_field0") {
-                            console.log("yesss")
-                            console.log(input);
-                           const waveBlock = input;
+                            if(blockToEditor){
+                                switch(this.sourceBlock_.parentBlock_.getFieldValue("waveType")){
+                                    case "WaveType.SineWave":
+                                        this.waveType = "sine";
+                                        break;
+                                    case "WaveType.SquareWave":
+                                        this.waveType = "square";
+                                        break;
+                                    case "WaveType.TriangleWave":
+                                        this.waveType = "triangle";
+                                        break;
+                                    case "WaveType.SawtoothWave":
+                                        this.waveType = "sawtooth";
+                                        break;
+                                        
+                                }
+                                setTimeout(() => {
+                                    this.updateFields();
+                                }, 10); 
+                            
+                            }
+                            else { //editor to block
+                                switch(this.waveType){
+                                    case "sine":
+                                        this.sourceBlock_.parentBlock_.setFieldValue("WaveType.SineWave", "waveType");
+                                        break;
+                                    case "square":
+                                        this.sourceBlock_.parentBlock_.setFieldValue("WaveType.SquareWave", "waveType");
+                                        break;
+                                    case "triangle":
+                                        this.sourceBlock_.parentBlock_.setFieldValue("WaveType.TriangleWave", "waveType");
+                                        break;
+                                    case "sawtooth":
+                                        this.sourceBlock_.parentBlock_.setFieldValue("WaveType.SawtoothWave", "waveType");
+                                        break;
+                                }
+                            }
+                      
                             
                         }
                 }
             }
                }
+
+
+         // sync value from wave field on block with volume in field editor
+         private syncInterpolationField(blockToEditor: boolean): void {
+            const s = this.sourceBlock_;
+            if (s.parentBlock_) {
+                const p = s.parentBlock_;
+                
+                for (const input of p.inputList) {
+                    if (input.name === "0_optional_field1") {
+                        if(blockToEditor){
+                            switch(this.sourceBlock_.parentBlock_.getFieldValue("interpolation")){
+                                case "Interpolation.Linear":
+                                    this.interpolationType = "linear";
+                                    break;
+                                case "Interpolation.Quadratic":
+                                    this.interpolationType = "quadratic";
+                                    break;
+                                case "Interpolation.Exponential":
+                                    this.interpolationType = "exponential";
+                                    break;
+                            }
+                            setTimeout(() => {
+                                this.updateFields();
+                            }, 10); 
+                        }
+                        else { //editor to block
+                            switch(this.interpolationType){
+                                case "linear":
+                                    this.sourceBlock_.parentBlock_.setFieldValue("Interpolation.Linear", "interpolation");
+                                    break;
+                                case "quadratic":
+                                    this.sourceBlock_.parentBlock_.setFieldValue("Interpolation.Quadratic", "interpolation");
+                                    break;
+                                case "exponential":
+                                    this.sourceBlock_.parentBlock_.setFieldValue("Interpolation.Exponential", "interpolation");
+                                    break;
+                        }
+                        }     
+                    }
+            }
+        }
+           }
 
         // ms to hold note
         private getDuration(): number {
