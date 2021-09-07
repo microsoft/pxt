@@ -2,7 +2,6 @@ import * as React from "react";
 
 import { SvgCoord } from '../lib/skillGraphUtils';
 import { ActivityStatus } from '../lib/skillMapUtils';
-import { isFirefox } from "../lib/browserUtils"
 
 /* eslint-disable import/no-unassigned-import, import/no-internal-modules */
 import '../styles/graphnode.css'
@@ -109,7 +108,7 @@ export class GraphNode extends React.Component<GraphNodeProps, GraphNodeState> {
         }
 
         const selectedUnit = width / 8;
-        const yOffset = isFirefox() ? 13 : 4
+        const yOffset = pxt.BrowserUtils.isFirefox() ? 11 : 4
 
         return  <g className={`graph-activity ${selected ? "selected" : ""} ${hover ? "hover" : ""}`} transform={`translate(${position.x} ${position.y})`}
             onClick={this.handleClick} onDoubleClick={this.handleDoubleClick} ref={this.handleRef}>

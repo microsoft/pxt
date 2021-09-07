@@ -283,38 +283,3 @@ export function tickEvent(id: string, data?: { [key: string]: string | number })
 
     (window as any).pxtTickEvent?.(id, data);
 }
-
-export function hasNavigator(): boolean {
-    return typeof navigator !== "undefined";
-}
-
-// The browser matching code is the same as pxtlib/browserutils.ts
-//Microsoft Edge lies about its user agent and claims to be Chrome, but Microsoft Edge/Version
-//is always at the end
-export function isEdge(): boolean {
-    return hasNavigator() && /Edge/i.test(navigator.userAgent);
-}
-
-//IE11 also lies about its user agent, but has Trident appear somewhere in
-//the user agent. Detecting the different between IE11 and Microsoft Edge isn't
-//super-important because the UI is similar enough
-export function isIE(): boolean {
-    return hasNavigator() && /Trident/i.test(navigator.userAgent);
-}
-
-//Microsoft Edge and IE11 lie about being Chrome. Chromium-based Edge ("Edgeium") will be detected as Chrome, that is ok. If you're looking for Edgeium, use `isChromiumEdge()`.
-export function isChrome(): boolean {
-    return !isEdge() && !isIE() && !!navigator && (/Chrome/i.test(navigator.userAgent) || /Chromium/i.test(navigator.userAgent));
-}
-
-//Chrome and Microsoft Edge lie about being Safari
-export function isSafari(): boolean {
-    //Could also check isMac but I don't want to risk excluding iOS
-    //Checking for iPhone, iPod or iPad as well as Safari in order to detect home screen browsers on iOS
-    return !isChrome() && !isEdge() && !!navigator && /(Macintosh|Safari|iPod|iPhone|iPad)/i.test(navigator.userAgent);
-}
-
-//Safari and WebKit lie about being Firefox
-export function isFirefox(): boolean {
-    return !isSafari() && !!navigator && (/Firefox/i.test(navigator.userAgent) || /Seamonkey/i.test(navigator.userAgent));
-}
