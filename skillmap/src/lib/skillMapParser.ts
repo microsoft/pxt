@@ -276,7 +276,7 @@ function inflateMapReward(section: MarkdownSection, base: Partial<MapReward>): M
         const actions = section.listAttributes["actions"];
         for (const action of actions) {
             let [kind, ...rest] = action.split(":");
-            const valueMatch = /\s*\[\s*(.*)\s*\]\(([^\s]+)\)/gi.exec(rest.join(":"));
+            const valueMatch = /\s*\[\s*(.*)\s*\](?:\(([^\s]+)\))?/gi.exec(rest.join(":"));
             const label = valueMatch?.[1];
             const link = valueMatch?.[2];
             switch (kind) {
