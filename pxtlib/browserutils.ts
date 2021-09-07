@@ -74,6 +74,8 @@ namespace pxt.BrowserUtils {
     I allow Opera to go about claiming to be Chrome because it might as well be. Same for Chromium-based Edge.
     */
 
+    // Any changes to the browser detection should also be ported to skillmap's browserUtils
+
     //Microsoft Edge lies about its user agent and claims to be Chrome, but Microsoft Edge/Version
     //is always at the end
     export function isEdge(): boolean {

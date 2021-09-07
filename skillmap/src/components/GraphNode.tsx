@@ -2,6 +2,7 @@ import * as React from "react";
 
 import { SvgCoord } from '../lib/skillGraphUtils';
 import { ActivityStatus } from '../lib/skillMapUtils';
+import { isFirefox } from "../lib/browserUtils"
 
 /* eslint-disable import/no-unassigned-import, import/no-internal-modules */
 import '../styles/graphnode.css'
@@ -108,8 +109,9 @@ export class GraphNode extends React.Component<GraphNodeProps, GraphNodeState> {
         }
 
         const selectedUnit = width / 8;
+        const yOffset = isFirefox() ? 13 : 4
 
-        return  <g className={`graph-activity ${selected ? "selected" : ""} ${hover ? "hover" : ""}`} transform={`translate(${position.x} ${position.y})`}
+        return  <g className={`graph-activity ${selected ? "selected" : ""} ${hover ? "hover" : ""}`} transform={`translate(${position.x} ${position.y})`} 
             onClick={this.handleClick} onDoubleClick={this.handleDoubleClick} ref={this.handleRef}>
             { selected &&
                 (kind !== "activity" ?
@@ -121,7 +123,7 @@ export class GraphNode extends React.Component<GraphNodeProps, GraphNodeState> {
                 <rect x={-width / 2} y={-width / 2} width={width} height={width} rx={width / 10} fill={background} stroke={foreground} strokeWidth="2" />
             }
             { kind === "activity" && this.getNodeMarker(status, width, theme.selectedStrokeColor, theme.strokeColor) }
-            <text dy="4"
+            <text dy={yOffset}
                 textAnchor="middle"
                 alignmentBaseline="middle"
                 fill={foreground}
