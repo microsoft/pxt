@@ -83,7 +83,7 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
             return "sandbox";
         } else if (debugging) {
             return "debugging";
-        } else if (pxt.BrowserUtils.isVerticalTutorial()) {
+        } else if (pxt.BrowserUtils.useVerticalTutorialLayout() && !!tutorialOptions?.tutorial) {
             return "tutorial-vertical"
         } else if (!!tutorialOptions?.tutorial) {
             return "tutorial";

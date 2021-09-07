@@ -4084,7 +4084,7 @@ export class ProjectView
 
     setEditorOffset() {
         if (this.isTutorial()) {
-            if (pxt.BrowserUtils.isVerticalTutorial()) {
+            if (pxt.BrowserUtils.useVerticalTutorialLayout()) {
                 const sidebarEl = document?.getElementById("editorSidebar");
                 if (sidebarEl && window?.innerWidth < pxt.BREAKPOINT_TABLET) {
                     this.setState({ editorOffset: sidebarEl.offsetHeight + "px" });
@@ -4295,7 +4295,7 @@ export class ProjectView
         const tutorialOptions = this.state.tutorialOptions;
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
         const isSidebarTutorial = pxt.appTarget.appTheme.sidebarTutorial;
-        const isVerticalTutorial = inTutorial && pxt.BrowserUtils.isVerticalTutorial();
+        const isVerticalTutorial = inTutorial && pxt.BrowserUtils.useVerticalTutorialLayout();
         const inTutorialExpanded = inTutorial && tutorialOptions.tutorialStepExpanded;
         const hideTutorialIteration = inTutorial && tutorialOptions.metadata && tutorialOptions.metadata.hideIteration;
         const inDebugMode = this.state.debugging;
@@ -5188,7 +5188,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
 
             // Check to see if we should show the mini simulator (<= tablet size)
-            if (!theEditor.isTutorial() || !pxt.BrowserUtils.isVerticalTutorial()) {
+            if (!theEditor.isTutorial() || !pxt.BrowserUtils.useVerticalTutorialLayout()) {
                 if (window?.innerWidth < pxt.BREAKPOINT_TABLET) {
                     theEditor.showMiniSim(true);
                 } else {

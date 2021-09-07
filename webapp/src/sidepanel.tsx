@@ -86,7 +86,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
 
     protected handleSimOverlayClick = () => {
         const { tutorialOptions, handleFullscreenButtonClick } = this.props;
-        if (!tutorialOptions || !pxt.BrowserUtils.isVerticalTutorial()) {
+        if (!tutorialOptions || !pxt.BrowserUtils.useVerticalTutorialLayout()) {
             handleFullscreenButtonClick();
         } else {
             this.showSimulatorTab();
