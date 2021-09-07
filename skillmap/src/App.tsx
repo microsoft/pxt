@@ -213,9 +213,8 @@ class AppImpl extends React.Component<AppProps, AppState> {
             const state = store.getState();
             const localUser = await getLocalUserStateAsync();
 
-            let currentUser = state.user;
-
-            let headerIds = getFlattenedHeaderIds(localUser, state.pageSourceUrl, state.user);
+            let currentUser = await getUserStateAsync();
+            let headerIds = getFlattenedHeaderIds(localUser, state.pageSourceUrl, currentUser);
 
             // Tell the editor to transfer local skillmap projects to the cloud.
             const headerMap = (await this.sendMessageAsync({
@@ -230,15 +229,15 @@ class AppImpl extends React.Component<AppProps, AppState> {
                 // Patch all of the header ids in the user state and copy
                 // over the local progress that doesn't exist in the signed in
                 // user
-                const urls = Object.keys(state.user.mapProgress);
+                const urls = Object.keys(currentUser.mapProgress);
                 const newUser: UserState = {
-                    ...state.user,
+                    ...currentUser,
                     mapProgress: {}
                 }
 
                 for (const url of urls) {
                     newUser.mapProgress[url] = {
-                        ...state.user.mapProgress[url],
+                        ...currentUser.mapProgress[url],
                     };
 
                     if (!localUser.mapProgress[url]) continue;
@@ -246,7 +245,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
                     const maps = Object.keys(localUser.mapProgress[url]);
                     for (const map of maps) {
                         newUser.mapProgress[url][map] = {
-                            ...state.user.mapProgress[url][map]
+                            ...currentUser.mapProgress[url][map]
                         };
 
                         // Only copy over state if the user hasn't started this map yet
@@ -257,7 +256,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
                         const activityState: {[index: string]: ActivityState} = {};
                         newUser.mapProgress[url][map].activityState = activityState;
 
-                        const signedInProgress = state.user.mapProgress[url][map].activityState;
+                        const signedInProgress = currentUser.mapProgress[url][map].activityState;
                         const localProgress = localUser.mapProgress[url][map].activityState
 
                         for (const activity of Object.keys(signedInProgress)) {
