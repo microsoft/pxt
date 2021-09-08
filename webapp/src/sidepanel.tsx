@@ -138,7 +138,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                         {showFullscreenButton && <div id="miniSimOverlay" role="button" title={lf("Open in fullscreen")} onClick={this.handleSimOverlayClick} />}
                     </div>
                 </TabContent>}
-                {tutorialOptions && <TabContent name={TUTORIAL_TAB} icon="pencil" onSelected={this.showTutorialTab}>
+                {tutorialOptions && <TabContent name={TUTORIAL_TAB} icon="pencil" showBadge={activeTab !== TUTORIAL_TAB} onSelected={this.showTutorialTab}>
                     <TutorialContainer parent={parent} name={tutorialOptions.tutorialName} steps={tutorialOptions.tutorialStepInfo}
                         currentStep={tutorialOptions.tutorialStep} tutorialOptions={tutorialOptions}
                         onTutorialStepChange={onTutorialStepChange} onTutorialComplete={onTutorialComplete}
