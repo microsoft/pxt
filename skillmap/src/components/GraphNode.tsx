@@ -108,7 +108,7 @@ export class GraphNode extends React.Component<GraphNodeProps, GraphNodeState> {
         }
 
         const selectedUnit = width / 8;
-        const yOffset = pxt.BrowserUtils.isFirefox() ? 11 : 4
+        const yOffset = width / 12.5;
 
         return  <g className={`graph-activity ${selected ? "selected" : ""} ${hover ? "hover" : ""}`} transform={`translate(${position.x} ${position.y})`}
             onClick={this.handleClick} onDoubleClick={this.handleDoubleClick} ref={this.handleRef}>
@@ -125,6 +125,7 @@ export class GraphNode extends React.Component<GraphNodeProps, GraphNodeState> {
             <text dy={yOffset}
                 textAnchor="middle"
                 alignmentBaseline="middle"
+                dominantBaseline="middle"
                 fill={foreground}
                 className={this.getIconClass(status, kind)}>
                     {this.getIcon(status, kind)}
