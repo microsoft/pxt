@@ -219,7 +219,13 @@
             #boardview { display: inline-block; }
 
             .simtoolbar, #miniSimOverlay { display: block; }
-            .fullscreen-button, .expand-button { display: block !important; }
+            .sidebar-button, .play-button { display: block !important; }
+            .expand-button, .fullscreen-button { display: none !important; }
+        }
+    }
+    .tab-simulator.tab-content:not(.hidden) {
+        .simPanel {
+            .sidebar-button { display: none !important; }
         }
     }
 }
