@@ -54,7 +54,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
 
     React.useEffect(() => {
         const observer = new ResizeObserver(() => {
-            if (window.innerWidth <= pxt.BREAKPOINT_TABLET) {
+            if (window.innerWidth < pxt.BREAKPOINT_TABLET) {
                 setLayout("horizontal");
             } else {
                 setLayout("vertical");
@@ -66,7 +66,10 @@ export function TutorialContainer(props: TutorialContainerProps) {
 
     React.useEffect(() => {
         if (layout == "horizontal") {
-            const scrollHeight = contentRef?.current?.children?.[1]?.scrollHeight;
+            let scrollHeight = 0;
+            const children = contentRef?.current?.children ? pxt.Util.toArray(contentRef?.current?.children) : [];
+            children.forEach((el: any) => scrollHeight += el?.scrollHeight);
+
             if (scrollHeight) {
                 setParentHeight(Math.min(Math.max(scrollHeight + 2, MIN_HEIGHT), MAX_HEIGHT));
             }
@@ -111,7 +114,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
             { layout === "vertical" && nextButton }
         </div>
         {layout === "horizontal" && nextButton}
-        {isModal && !hideModal && <Modal isOpen={isModal} closeIcon={false} header={name} buttons={modalActions}
+        {isModal && !hideModal && <Modal isOpen={isModal} closeIcon={false} header={title || name} buttons={modalActions}
             className="hintdialog" onClose={showNext ? tutorialStepNext : () => setHideModal(true)} dimmer={true}
             longer={true} closeOnDimmerClick closeOnDocumentClick closeOnEscape>
             <MarkedContent markdown={currentStepInfo.contentMd} parent={parent} />

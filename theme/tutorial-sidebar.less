@@ -2,6 +2,9 @@
 @tutorialFontSize: 1.125rem;
 @tutorialTitleFontSize: 1.5rem;
 
+@tutorialPrimaryColor: @teal;
+@tutorialSecondaryColor: @blue;
+
 /*******************************
         Tutorial Tab
 *******************************/
@@ -63,12 +66,12 @@
     height: 1rem;
     overflow: hidden;
     border-radius: 1rem;
-    background-color: @blue;
+    background-color: @tutorialSecondaryColor;
     cursor: pointer;
 }
 
 .tutorial-step-bar-fill {
-    background-color: @teal;
+    background-color: @tutorialPrimaryColor;
     height: 100%;
     transition: width 0.5s ease-out;
     pointer-events: none;
@@ -95,8 +98,8 @@
 
     .ui.button {
         margin: 0 0.4rem;
-        color: @blue;
-        background: @teal;
+        color: @tutorialSecondaryColor;
+        background: @tutorialPrimaryColor;
         font-size: @tutorialFontSize;
         white-space: nowrap;
         overflow: hidden;
@@ -169,7 +172,7 @@
 .formatted-bullet {
     margin-right: 0.5rem;
     flex-shrink: 0;
-    background: linear-gradient(@teal, @teal) ~'no-repeat 45% / 2px 100%';
+    background: linear-gradient(@tutorialPrimaryColor, @tutorialPrimaryColor) ~'no-repeat 45% / 2px 100%';
 }
 .formatted-bullet i {
     display: block;
@@ -177,7 +180,7 @@
     height: 2.5rem;
     border-radius: 50%;
     color: @white;
-    background-color: @teal;
+    background-color: @tutorialPrimaryColor;
     line-height: 2.5rem;
 }
 .formatted-bullet-ul .formatted-bullet-li:last-child .formatted-bullet:after {
@@ -186,7 +189,7 @@
     width: 1rem;
     bottom: 0;
     left: 0.75rem;
-    border-bottom: 2px solid @teal;
+    border-bottom: 2px solid @tutorialPrimaryColor;
 }
 
 /*******************************
@@ -221,7 +224,6 @@
     }
 }
 
-
 /*******************************
       Skill Map Embed View
 *******************************/
@@ -232,6 +234,29 @@
     }
     .simView #boardview {
         padding-top: 0;
+    }
+}
+
+/*******************************
+    Headless (no simulator)
+*******************************/
+
+#root.headless.tutorialVertical {
+    #editorSidebar {
+        position: relative;
+        display: block !important;
+        width: @simulatorWidth;
+        height: calc(~'100%' - @mainMenuHeight);
+        top: @mainMenuHeight;
+        left: 0;
+    }
+
+    #boardview, .filemenu {
+        display: auto;
+    }
+
+    #maineditor {
+        left: @simulatorWidth;
     }
 }
 
@@ -249,16 +274,19 @@
 
 /* <= Tablet (Mobile + Tablet) */
 @media only screen and (max-width: @largestTabletScreen) {
-    .tutorialVertical #maineditor > .full-abs {
-        top: @defaultTutorialHeight;
-    }
+    #root.tutorialVertical,
+    #root.headless.tutorialVertical {
+        #maineditor > .full-abs {
+            top: @defaultTutorialHeight;
+        }
 
-    .tutorialVertical #editorSidebar {
-        top: @mobileMenuHeight;
-        height: @defaultTutorialHeight;
-        width: 100%;
-        border-right: 0;
-        border-bottom: 2px solid darken(desaturate(@blocklyToolboxColor, 60%), 10%);
+        #editorSidebar {
+            top: @mobileMenuHeight;
+            height: @defaultTutorialHeight;
+            width: 100%;
+            border-right: 0;
+            border-bottom: 2px solid darken(desaturate(@blocklyToolboxColor, 60%), 10%);
+        }
     }
 
     .tab-tutorial.tab-content {
@@ -307,7 +335,7 @@
     }
 
     .tutorial-step-bar-fill {
-        background-color: @blue;
+        background-color: @tutorialSecondaryColor;
     }
 
     /*******************************
@@ -341,7 +369,7 @@
 
     .tutorial-container {
         > .ui.button {
-            color: @teal;
+            color: @tutorialPrimaryColor;
             background: @white;
             box-shadow: none;
             border-radius: 0;
@@ -360,8 +388,8 @@
 
     .tutorial-hint.ui.button {
         border-radius: 0.2rem;
-        color: @teal;
-        background: @blue;
+        color: @tutorialPrimaryColor;
+        background: @tutorialSecondaryColor;
         margin: 1rem;
 
         &.disabled {
@@ -419,6 +447,49 @@
 
         #boardview {
             width: 100% !important;
+        }
+    }
+
+    /*******************************
+        Headless (no simulator)
+    *******************************/
+
+    #root.headless.tutorialVertical.collapsedEditorTools {
+        #maineditor { left: 0; }
+        #editorSidebar { width: 100%; }
+
+        .tutorial-top-bar {
+           right: 4rem;
+        }
+
+        #editorSidebar .immersive-reader-button.ui.item,
+        #editorSidebar .immersive-reader-button.ui.item:focus{
+            background-image: @immersiveReaderIcon;
+        }
+        .tutorial-step-counter {
+            color: @black;
+        }
+
+        .tutorial-step-bar {
+            background-color: @tutorialSecondaryColor;
+        }
+
+        .tutorial-step-bar-fill {
+            background-color: @tutorialPrimaryColor;
+        }
+
+        .tutorial-hint.ui.button {
+            flex-direction: row;
+            width: 12rem;
+            margin: 3.5rem 1rem 0;
+        }
+
+        .tutorial-controls {
+            align-items: flex-start;
+
+            .ui.button i.icon {
+                margin-bottom: 0!important;
+            }
         }
     }
 }
