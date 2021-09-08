@@ -157,7 +157,11 @@ function buildMapFromSections(header: MarkdownSection, sections: MarkdownSection
     return result as SkillMap;
 
     function checkForLoopsRecursive(root: MapNode, visited: {[index: string]: boolean} = {}) {
-        if (visited[root.activityId]) error(`Loop in map '${result.mapId}' detected`);
+        if (visited[root.activityId]) {
+            console.warn(`Loop in map '${result.mapId}' detected`);
+            return;
+        }
+
         visited[root.activityId] = true;
         reachable[root.activityId] = true;
 
@@ -272,7 +276,7 @@ function inflateMapReward(section: MarkdownSection, base: Partial<MapReward>): M
         const actions = section.listAttributes["actions"];
         for (const action of actions) {
             let [kind, ...rest] = action.split(":");
-            const valueMatch = /\s*\[\s*(.*)\s*\]\(([^\s]+)\)/gi.exec(rest.join(":"));
+            const valueMatch = /\s*\[\s*(.*)\s*\](?:\(([^\s]+)\))?/gi.exec(rest.join(":"));
             const label = valueMatch?.[1];
             const link = valueMatch?.[2];
             switch (kind) {
