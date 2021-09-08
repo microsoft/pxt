@@ -543,7 +543,7 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
             syncOneDown);
 
         // log failed sync tasks.
-        errors.forEach(err => pxt.log(err));
+        errors.forEach(err => pxt.debug(err));
         errors = [];
 
         const elapsed = U.nowSeconds() - syncStart;
@@ -635,8 +635,11 @@ const onHeaderChangeSubscriber: data.DataSubscriber = {
             getLocalCloudHeaders().forEach(h => onHeaderChangeDebouncer(h));
         } else {
             const hdr = workspace.getHeader(hdrId);
-            U.assert(!!hdr, "cannot find header with id: " + hdrId);
-            onHeaderChangeDebouncer(hdr);
+            if (!hdr) {
+                pxt.debug("cannot find header with id: " + hdrId);
+            } else {
+                onHeaderChangeDebouncer(hdr);
+            }
         }
     }
 };
