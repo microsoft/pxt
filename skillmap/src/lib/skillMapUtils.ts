@@ -117,11 +117,11 @@ export function hasUrlBeenStarted(user: UserState, pageSource: string): boolean 
     // 2. They've never visited this skillmap page before
     // 3. They've visited this page, but have reset the skillmap state.
     if (!user.mapProgress
-        || !user.mapProgress[pageSource] 
-        || Object.keys(user.mapProgress[pageSource]).length == 0 
+        || !user.mapProgress[pageSource]
+        || Object.keys(user.mapProgress[pageSource]).length == 0
         || Object.keys(user.mapProgress[pageSource]).filter(mapId => Object.keys(user.mapProgress[pageSource][mapId].activityState).length != 0).length == 0) {
         return false
-    } 
+    }
     return true;
 }
 

@@ -292,7 +292,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
                             };
                             const activityState: {[index: string]: ActivityState} = {};
                             newUser.mapProgress[url][map].activityState = activityState;
-    
+
                             const localProgress = localUser.mapProgress[url][map].activityState
                             for (const activity of Object.keys(localProgress)) {
                                 const localActivity = localProgress[activity];
@@ -305,7 +305,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
                             }
                         }
                     }
-                }                
+                }
 
                 const visitedUrls = Object.keys(currentUser.mapProgress)
                 // Copy progress from cloud user for all visited URLs.
@@ -425,7 +425,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
             // To avoid a race condition where we save to local user's state to the cloud user
             // before we get a chance to run the cloud upgrade rules on projects, we need to wait
             // for cloudSyncCheck to finish if we're logged in.
-            if (!this.props.signedIn || 
+            if (!this.props.signedIn ||
                 (this.props.signedIn && this.readyPromise.cloudSyncCheckHasFinished)) {
                 await saveUserStateAsync(user);
                 this.loadedUser = user;

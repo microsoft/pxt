@@ -54,7 +54,7 @@ export async function getUserStateAsync(): Promise<UserState> {
             completedTags: skillmapState?.completedTags || {}
         };
     }
-    
+
     return userState;
 }
 
