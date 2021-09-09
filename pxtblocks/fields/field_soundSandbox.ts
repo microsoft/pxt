@@ -100,17 +100,24 @@ namespace pxtblockly {
                 const label = mkElement("div", {
                     className: "melody-editor-text"
                 });
+
+                const im = document.createElement("img");
+                pxt.BrowserUtils.addClass(im, "wave-image");
+                im.src = samples[i].image;
+                console.log(im.height+ " " + im.width);
+                im.height = 35;
+                im.width = 60;
+            
+                
         
                 label.innerText = samples[i].name;
     
-                innerButton.appendChild(label);
-    
+               // innerButton.appendChild(label);
+                innerButton.appendChild(im);
     
                 outer.appendChild(innerButton);
                 innerButton.addEventListener("click", () =>{ this.updateParameters(samples[i], innerButton);  /*this.waveButtons.style.setProperty("background-color", "green")*/} );
             }
-            
-
             return outer;
         }
 
@@ -132,17 +139,13 @@ namespace pxtblockly {
                document.getElementById("quadratic").style.setProperty("background-color", "#dcdcdc");
                innerButton.style.setProperty("background-color", "#c1c1c1");
                this.syncInterpolationField(false);
-                return;
-        }
-
-        
-           
+               return;
+        }     
     }
 
     updateFields(){
         document.getElementById(this.waveType).click();
         document.getElementById(this.interpolationType).click();
-
     }
 
     updateInputs(){
@@ -252,10 +255,9 @@ namespace pxtblockly {
             this.volumeInput.id = "volume";
             this.volumeInput.addEventListener("input", () => this.setVolume(+this.volumeInput.value));
             this.syncVolumeField(true);
-           
+            
             this.parameters.appendChild(this.volumeText);
             this.volumeText.appendChild(this.volumeInput);
-
 
             // Add start and end frequency inputs 
             this.startFrequencyText = document.createElement("p");
@@ -333,7 +335,7 @@ namespace pxtblockly {
 
             // add duration element
             this.durationInput = document.createElement("input");
-            pxt.BrowserUtils.addClass(this.durationInput, "ui input");
+            pxt.BrowserUtils.addClass(this.durationInput, "ui-input");
             this.durationInput.type = "number";
             this.durationInput.title = lf("duration");
             this.durationInput.id = "melody-tempo-input";
