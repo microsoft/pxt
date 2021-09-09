@@ -126,7 +126,7 @@ async function switchToMemoryWorkspace(reason: string): Promise<void> {
     implType = "mem";
 }
 
-export function getHeaders(withDeleted = false) {
+export function getHeaders(withDeleted = false, filterByEditorType = true) {
     maybeSyncHeadersAsync();
     const cloudUserId = auth.userProfile()?.id;
     let r = allScripts.map(e => e.header).filter(h =>
@@ -134,10 +134,12 @@ export function getHeaders(withDeleted = false) {
         (withDeleted || !h.isDeleted) &&
         // Hide backup projects
         !h.isBackup &&
-        // If this is the skillmap editor, filter to only skillmap projects, otherwise filter out skillmap projects
-        !!h.isSkillmapProject === pxt.BrowserUtils.isSkillmapEditor() &&
         // Filter to local projects and projects belonging to this signed in user
-        (!h.cloudUserId || h.cloudUserId === cloudUserId))
+        (!h.cloudUserId || h.cloudUserId === cloudUserId));
+    if (filterByEditorType) {
+        // If this is the skillmap editor, filter to only skillmap projects, otherwise filter out skillmap projects
+        r = r.filter(h => !!h.isSkillmapProject === pxt.BrowserUtils.isSkillmapEditor());
+    }
     r.sort((a, b) => {
         const aTime = a.cloudUserId ? Math.min(a.cloudLastSyncTime, a.modificationTime) : a.modificationTime
         const bTime = b.cloudUserId ? Math.min(b.cloudLastSyncTime, b.modificationTime) : b.modificationTime

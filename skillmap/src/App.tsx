@@ -34,13 +34,15 @@ import { parseHash, getMarkdownAsync, MarkdownSource, parseQuery,
 import { MakeCodeFrame } from './components/makecodeFrame';
 import { getLocalUserStateAsync, getUserStateAsync, saveUserStateAsync } from './lib/workspaceProvider';
 import { Unsubscribe } from 'redux';
+import { UserProfile } from './components/UserProfile';
+import { ReadyResources, ReadyPromise } from './lib/readyResources';
 
 /* eslint-disable import/no-unassigned-import */
 import './App.css';
 
 // TODO: this file needs to read colors from the target
 import './arcade.css';
-import { UserProfile } from './components/UserProfile';
+
 /* eslint-enable import/no-unassigned-import */
 interface AppProps {
     skillMaps: { [key: string]: SkillMap };
@@ -64,46 +66,6 @@ interface AppProps {
 
 interface AppState {
     error?: string;
-}
-
-interface ReadyResources {
-    sendMessageAsync?: (message: any) => Promise<any>;
-}
-
-class ReadyPromise {
-    private promise_: Promise<ReadyResources>
-    private resources: ReadyResources;
-    private mounted?: boolean;
-    private resolve?: (value: ReadyResources | PromiseLike<ReadyResources>) => void;
-
-    constructor() {
-        this.resources = { };
-        this.promise_ = new Promise<ReadyResources>((resolve) => {
-            this.resolve = resolve;
-            this.checkComplete();
-        })
-    }
-
-    public promise = () => this.promise_;
-
-    public setSendMessageAsync(sendMessageAsync: (message: any) => Promise<any>) {
-        this.resources.sendMessageAsync = sendMessageAsync;
-        this.checkComplete();
-    }
-
-    public setMounted() {
-        this.mounted = true;
-        this.checkComplete();
-    }
-
-    private checkComplete() {
-        if (this.resolve &&
-            this.mounted &&
-            this.resources.sendMessageAsync
-        ) {
-            this.resolve(this.resources);
-        }
-    }
 }
 
 class AppImpl extends React.Component<AppProps, AppState> {
@@ -353,7 +315,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
         await authClient.authCheckAsync();
         await this.initLocalizationAsync();
         await this.parseHashAsync();
-        this.readyPromise.setMounted();
+        this.readyPromise.setAppMounted();
     }
 
     componentWillUnmount() {

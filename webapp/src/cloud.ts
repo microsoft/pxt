@@ -353,7 +353,7 @@ function getLocalCloudHeaders(allHdrs?: Header[]) {
     if (!auth.hasIdentity()) { return []; }
     if (!auth.loggedIn()) { return []; }
     const userId = auth.userProfile()?.id;
-    return (allHdrs || workspace.getHeaders(true))
+    return (allHdrs || workspace.getHeaders(true/*withDeleted*/, false/*filterByEditor*/))
         .filter(h => h.cloudUserId && h.cloudUserId === userId);
 }
 
@@ -575,7 +575,8 @@ export function forceReloadForCloudSync() {
 
 export async function convertCloudToLocal(userId: string) {
     if (userId) {
-        const localCloudHeaders = workspace.getHeaders(true)
+        const localCloudHeaders = workspace
+            .getHeaders(false/*withDeleted*/, false/*filterByEditorType*/)
             .filter(h => h.cloudUserId && h.cloudUserId === userId);
         const tasks: Promise<void>[] = [];
         localCloudHeaders.forEach((h) => {

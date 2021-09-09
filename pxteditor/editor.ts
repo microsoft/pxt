@@ -373,6 +373,7 @@ namespace pxt.editor {
         createGitHubRepositoryAsync(): Promise<void>;
         saveLocalProjectsToCloudAsync(headerIds: string[]): Promise<pxt.Map<string> | undefined>;
         requestProjectCloudStatus(headerIds: string[]): Promise<void>;
+        convertCloudProjectsToLocal(userId: string): Promise<void>;
     }
 
     export interface IHexFileImporter {

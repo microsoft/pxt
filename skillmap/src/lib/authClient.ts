@@ -31,9 +31,10 @@ class AuthClient extends pxt.auth.AuthClient {
     protected onStateCleared(): Promise<void> {
         return Promise.resolve();
     }
-    protected onProfileDeleted(userId: string): Promise<void> {
+    protected async onProfileDeleted(userId: string): Promise<void> {
         // Show a notification?
-        return Promise.resolve();
+        const state = store.getState();
+        await state.readyResources?.exportCloudProjectsToLocal(userId);
     }
     protected onApiError(err: any): Promise<void> {
         // Show a notification?
