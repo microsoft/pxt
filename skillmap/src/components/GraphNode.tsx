@@ -108,6 +108,7 @@ export class GraphNode extends React.Component<GraphNodeProps, GraphNodeState> {
         }
 
         const selectedUnit = width / 8;
+        const yOffset = width / 12.5;
 
         return  <g className={`graph-activity ${selected ? "selected" : ""} ${hover ? "hover" : ""}`} transform={`translate(${position.x} ${position.y})`}
             onClick={this.handleClick} onDoubleClick={this.handleDoubleClick} ref={this.handleRef}>
@@ -121,9 +122,10 @@ export class GraphNode extends React.Component<GraphNodeProps, GraphNodeState> {
                 <rect x={-width / 2} y={-width / 2} width={width} height={width} rx={width / 10} fill={background} stroke={foreground} strokeWidth="2" />
             }
             { kind === "activity" && this.getNodeMarker(status, width, theme.selectedStrokeColor, theme.strokeColor) }
-            <text dy="4"
+            <text dy={yOffset}
                 textAnchor="middle"
                 alignmentBaseline="middle"
+                dominantBaseline="middle"
                 fill={foreground}
                 className={this.getIconClass(status, kind)}>
                     {this.getIcon(status, kind)}
