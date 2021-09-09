@@ -68,10 +68,6 @@ interface AppState {
     error?: string;
 }
 
-interface ReadyResources {
-    sendMessageAsync?: (message: any) => Promise<any>;
-}
-
 class AppImpl extends React.Component<AppProps, AppState> {
     protected queryFlags: {[index: string]: string} = {};
     protected unsubscribeChangeListener: Unsubscribe | undefined;
@@ -281,7 +277,6 @@ class AppImpl extends React.Component<AppProps, AppState> {
                     }
                 }
 
-                this.readyPromise.cloudSyncCheckHasFinished = true;
                 this.props.dispatchSetUser(newUser)
                 await saveUserStateAsync(newUser);
                 currentUser = newUser;
@@ -294,6 +289,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
                 headerIds: getFlattenedHeaderIds(currentUser, state.pageSourceUrl)
             } as pxt.editor.EditorMessageRequestProjectCloudStatus);
         }
+        this.readyPromise.cloudSyncCheckHasFinished = true;
     }
 
     protected onMakeCodeFrameLoaded = async (sendMessageAsync: (message: any) => Promise<any>) => {
