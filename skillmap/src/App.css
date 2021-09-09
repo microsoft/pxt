@@ -141,11 +141,11 @@ code {
     height: 80%;
     margin: .5rem;
     margin-right: 1rem;
-    padding-top: .5rem;
-    padding-left: 1rem;
+    padding: .6rem;
     font-family: var(--feature-text-font);
     font-weight: 500;
     flex-direction: row-reverse;
+    align-items: center;
 }
 
 .user-menu .header-dropdown {

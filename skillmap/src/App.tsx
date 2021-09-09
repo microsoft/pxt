@@ -34,13 +34,15 @@ import { parseHash, getMarkdownAsync, MarkdownSource, parseQuery,
 import { MakeCodeFrame } from './components/makecodeFrame';
 import { getLocalUserStateAsync, getUserStateAsync, saveUserStateAsync } from './lib/workspaceProvider';
 import { Unsubscribe } from 'redux';
+import { UserProfile } from './components/UserProfile';
+import { ReadyResources, ReadyPromise } from './lib/readyResources';
 
 /* eslint-disable import/no-unassigned-import */
 import './App.css';
 
 // TODO: this file needs to read colors from the target
 import './arcade.css';
-import { UserProfile } from './components/UserProfile';
+
 /* eslint-enable import/no-unassigned-import */
 interface AppProps {
     skillMaps: { [key: string]: SkillMap };
@@ -345,7 +347,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
         await authClient.authCheckAsync();
         await this.initLocalizationAsync();
         await this.parseHashAsync();
-        this.readyPromise.setMounted();
+        this.readyPromise.setAppMounted();
     }
 
     componentWillUnmount() {
