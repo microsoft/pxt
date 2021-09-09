@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 
 import store from "./store/store";
 import * as authClient from "./lib/authClient";
-import { getFlattenedHeaderIds } from "./lib/skillMapUtils";
+import { getFlattenedHeaderIds, hasUrlBeenStarted } from "./lib/skillMapUtils";
 
 import {
     dispatchAddSkillMap,
@@ -74,10 +74,12 @@ class ReadyPromise {
     private promise_: Promise<ReadyResources>
     private resources: ReadyResources;
     private mounted?: boolean;
+    public cloudSyncCheckHasFinished: boolean
     private resolve?: (value: ReadyResources | PromiseLike<ReadyResources>) => void;
 
     constructor() {
         this.resources = { };
+        this.cloudSyncCheckHasFinished = false;
         this.promise_ = new Promise<ReadyResources>((resolve) => {
             this.resolve = resolve;
             this.checkComplete();
@@ -260,72 +262,62 @@ class AppImpl extends React.Component<AppProps, AppState> {
 
             let currentUser = await getUserStateAsync();
             let headerIds = getFlattenedHeaderIds(localUser, state.pageSourceUrl, currentUser);
-
             // Tell the editor to transfer local skillmap projects to the cloud.
             const headerMap = (await res.sendMessageAsync!({
                 type: "pxteditor",
                 action: "savelocalprojectstocloud",
                 headerIds
             } as pxt.editor.EditorMessageSaveLocalProjectsToCloud)).resp.headerIdMap;
-
             if (headerMap) {
-                headerIds = headerIds.map(h => headerMap[h] || h);
-
-                // Patch all of the header ids in the user state and copy
-                // over the local progress that doesn't exist in the signed in
-                // user
-                const urls = Object.keys(currentUser.mapProgress);
                 const newUser: UserState = {
                     ...currentUser,
                     mapProgress: {}
                 }
 
-                for (const url of urls) {
+                // Patch all of the header ids in the user state and copy
+                // over the local progress that doesn't exist in the signed in
+                // user
+                const localUrls = Object.keys(localUser.mapProgress);
+                for (const url of localUrls) {
                     newUser.mapProgress[url] = {
-                        ...currentUser.mapProgress[url],
-                    };
-
-                    if (!localUser.mapProgress[url]) continue;
+                        ...localUser.mapProgress[url]
+                    }
 
                     const maps = Object.keys(localUser.mapProgress[url]);
                     for (const map of maps) {
-                        newUser.mapProgress[url][map] = {
-                            ...currentUser.mapProgress[url][map]
-                        };
-
                         // Only copy over state if the user hasn't started this map yet
-                        if (Object.keys(newUser.mapProgress[url][map].activityState).length !== 0) {
-                            continue;
-                        }
-
-                        const activityState: {[index: string]: ActivityState} = {};
-                        newUser.mapProgress[url][map].activityState = activityState;
-
-                        const signedInProgress = currentUser.mapProgress[url][map].activityState;
-                        const localProgress = localUser.mapProgress[url][map].activityState
-
-                        for (const activity of Object.keys(signedInProgress)) {
-                            const oldState = signedInProgress[activity];
-                            activityState[activity] = {
-                                ...oldState,
-                                headerId: oldState.headerId ? (headerMap[oldState.headerId] || oldState.headerId) : oldState.headerId
+                        if (!hasUrlBeenStarted(currentUser, url)) {
+                            newUser.mapProgress[url][map] = {
+                                ...localUser.mapProgress[url][map]
                             };
-                        }
-
-                        for (const activity of Object.keys(localProgress)) {
-                            const signedInActivity = signedInProgress[activity];
-                            const localActivity = localProgress[activity];
-                            if ((!signedInActivity || !signedInActivity.headerId) && localActivity.headerId) {
-                                const base = signedInActivity || localActivity;
-                                activityState[activity] = {
-                                    ...base,
-                                    headerId: localActivity.headerId ? (headerMap[localActivity.headerId] || localActivity.headerId) : localActivity.headerId
-                                };
+                            const activityState: {[index: string]: ActivityState} = {};
+                            newUser.mapProgress[url][map].activityState = activityState;
+    
+                            const localProgress = localUser.mapProgress[url][map].activityState
+                            for (const activity of Object.keys(localProgress)) {
+                                const localActivity = localProgress[activity];
+                                if (localActivity.headerId) {
+                                    activityState[activity] = {
+                                        ...localActivity,
+                                        headerId: headerMap[localActivity.headerId] || localActivity.headerId
+                                    };
+                                }
                             }
+                        }
+                    }
+                }                
+
+                const visitedUrls = Object.keys(currentUser.mapProgress)
+                // Copy progress from cloud user for all visited URLs.
+                for (const url of visitedUrls) {
+                    if (hasUrlBeenStarted(currentUser, url)) {
+                        newUser.mapProgress[url] = {
+                            ...currentUser.mapProgress[url]
                         }
                     }
                 }
 
+                this.readyPromise.cloudSyncCheckHasFinished = true;
                 this.props.dispatchSetUser(newUser)
                 await saveUserStateAsync(newUser);
                 currentUser = newUser;
@@ -430,8 +422,14 @@ class AppImpl extends React.Component<AppProps, AppState> {
         const { user } = store.getState();
 
         if (user !== this.loadedUser && (!this.loadedUser || user.id === this.loadedUser.id)) {
-            await saveUserStateAsync(user);
-            this.loadedUser = user;
+            // To avoid a race condition where we save to local user's state to the cloud user
+            // before we get a chance to run the cloud upgrade rules on projects, we need to wait
+            // for cloudSyncCheck to finish if we're logged in.
+            if (!this.props.signedIn || 
+                (this.props.signedIn && this.readyPromise.cloudSyncCheckHasFinished)) {
+                await saveUserStateAsync(user);
+                this.loadedUser = user;
+            }
         }
     }
 }

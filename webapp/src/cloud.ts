@@ -597,6 +597,7 @@ export async function saveLocalProjectsToCloudAsync(headerIds: string[]) {
         for (const h of headers) {
             const newHeader = await workspace.duplicateAsync(h, h.name);
             guidMap[h.id] = newHeader.id;
+            newHeaders.push(newHeader);
         }
         await syncAsync(newHeaders);
         return guidMap;
