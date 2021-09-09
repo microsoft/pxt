@@ -1,5 +1,6 @@
 import * as actions from '../actions/types'
 import { guidGen, cloudLocalStoreKey } from '../lib/browserUtils';
+import { ReadyResources } from '../lib/readyResources';
 import { getCompletedTags, lookupActivityProgress, isMapCompleted,
     isRewardNode, applyUserUpgrades, applyUserMigrations } from '../lib/skillMapUtils';
 
@@ -26,6 +27,7 @@ export interface SkillMapState {
     showProfile?: boolean;
     theme: SkillGraphTheme;
     auth: AuthState;
+    readyResources?: ReadyResources;
 }
 
 export interface EditorViewState {
@@ -422,6 +424,12 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                     signedIn: false
                 }
             }
+        case actions.SET_READY_RESOURCES: {
+            return {
+                ...state,
+                readyResources: action.resources
+            }
+        }
         default:
             return state
     }

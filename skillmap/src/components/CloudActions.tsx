@@ -3,7 +3,6 @@ import { connect } from 'react-redux';
 import { dispatchShowLoginModal } from "../actions/dispatch";
 import { SkillMapState } from "../store/reducer";
 import { lookupActivityProgress } from "../lib/skillMapUtils";
-import { head } from "request";
 
 interface OwnProps {
     signedIn: boolean;
