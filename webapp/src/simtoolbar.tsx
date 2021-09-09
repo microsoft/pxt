@@ -107,7 +107,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const isFullscreen = parentState.fullscreen;
         const isMuted = parentState.mute;
         const inTutorial = !!parentState.tutorialOptions && !!parentState.tutorialOptions.tutorial;
-        const isVerticalTutorial = inTutorial && pxt.BrowserUtils.isVerticalTutorial(); // TODO shakao merge with "isverticaltutorial" rename change
+        const isVerticalTutorial = inTutorial && pxt.BrowserUtils.useVerticalTutorialLayout();
         const inCodeEditor = parent.isBlocksActive() || parent.isJavaScriptActive() || parent.isPythonActive();
 
         const run = true;
