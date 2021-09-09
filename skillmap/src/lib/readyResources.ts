@@ -16,10 +16,12 @@ export class ReadyPromise {
     private promise_: Promise<ReadyResources>
     private resources: ReadyResources;
     private appMounted?: boolean;
+    public cloudSyncCheckHasFinished: boolean
     private resolve?: (value: ReadyResources | PromiseLike<ReadyResources>) => void;
 
     constructor() {
         this.resources = new ReadyResources();
+        this.cloudSyncCheckHasFinished = false;
         this.promise_ = new Promise<ReadyResources>((resolve) => {
             this.resolve = resolve;
             this.checkComplete();

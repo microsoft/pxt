@@ -72,44 +72,6 @@ interface ReadyResources {
     sendMessageAsync?: (message: any) => Promise<any>;
 }
 
-class ReadyPromise {
-    private promise_: Promise<ReadyResources>
-    private resources: ReadyResources;
-    private mounted?: boolean;
-    public cloudSyncCheckHasFinished: boolean
-    private resolve?: (value: ReadyResources | PromiseLike<ReadyResources>) => void;
-
-    constructor() {
-        this.resources = { };
-        this.cloudSyncCheckHasFinished = false;
-        this.promise_ = new Promise<ReadyResources>((resolve) => {
-            this.resolve = resolve;
-            this.checkComplete();
-        })
-    }
-
-    public promise = () => this.promise_;
-
-    public setSendMessageAsync(sendMessageAsync: (message: any) => Promise<any>) {
-        this.resources.sendMessageAsync = sendMessageAsync;
-        this.checkComplete();
-    }
-
-    public setMounted() {
-        this.mounted = true;
-        this.checkComplete();
-    }
-
-    private checkComplete() {
-        if (this.resolve &&
-            this.mounted &&
-            this.resources.sendMessageAsync
-        ) {
-            this.resolve(this.resources);
-        }
-    }
-}
-
 class AppImpl extends React.Component<AppProps, AppState> {
     protected queryFlags: {[index: string]: string} = {};
     protected unsubscribeChangeListener: Unsubscribe | undefined;
