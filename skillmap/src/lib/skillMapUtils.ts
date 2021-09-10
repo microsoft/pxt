@@ -111,6 +111,20 @@ export function lookupActivityProgress(user: UserState, pageSource: string, mapI
     return lookupMapProgress(user, pageSource, mapId)?.activityState[activityId]
 }
 
+export function hasUrlBeenStarted(user: UserState, pageSource: string): boolean {
+    // The user has no progress on the given page if:
+    // 1. They've never visited any skillmaps before
+    // 2. They've never visited this skillmap page before
+    // 3. They've visited this page, but have reset the skillmap state.
+    if (!user.mapProgress
+        || !user.mapProgress[pageSource]
+        || Object.keys(user.mapProgress[pageSource]).length == 0
+        || !Object.keys(user.mapProgress[pageSource]).some(mapId => Object.keys(user.mapProgress[pageSource][mapId].activityState).length != 0)) {
+        return false
+    }
+    return true;
+}
+
 export function lookupPreviousActivities(map: SkillMap, activityId: string) {
     return Object.keys(map.activities)
         .filter(key => !isRewardNode(map.activities[key]))
