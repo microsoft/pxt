@@ -44,6 +44,8 @@
 @emSize      : 14px;
 @fontSize    : 12pt;
 
+@smallFontSize    : 0.875rem;
+
 /*-------------------
    Links
 --------------------*/

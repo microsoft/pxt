@@ -636,7 +636,25 @@ export function showReportAbuseAsync(pubId?: string) {
     const ghid = pxt.github.parseRepoId(pubId);
     if (ghid) {
         pxt.tickEvent("reportabuse.github");
-        window.open("https://github.com/contact/report-content", "_blank");
+        core.confirmAsync({
+            header: lf("Is this content inappropriate?"),
+            hasCloseIcon: true,
+            agreeLbl: lf("Report"),
+            disagreeLbl: lf("Cancel"),
+            jsx: <div className="ui form">
+                <div className="ui field">
+                    <p>{lf("This content was written by an independent user and may be inappropriate or abusive. Help us block or filter that content by reporting it to Github.")}</p>
+                </div>
+                <div className="ui field">
+                    <label id="githubContentUrlLabel">{lf("Content URL")}</label>
+                    <sui.Input type="url" aria-labelledby="githubContentUrlLabel" readOnly lines={1} copy={true} autoFocus={!pxt.BrowserUtils.isMobile()} selectOnClick={true} value={pubId}></sui.Input>
+                </div>
+            </div>,
+        }).then(res => {
+            if (res) {
+                window.open("https://github.com/contact/report-content", "_blank");
+            }
+        });
         return;
     }
 

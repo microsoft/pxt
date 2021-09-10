@@ -44,6 +44,27 @@
 }
 
 /*******************************
+        Exit Tutorial
+*******************************/
+
+.tutorial-exit {
+    position: absolute;
+    margin-right: 1rem;
+    top: 0;
+    right: 0;
+    color: @white;
+    font-family: @segoeUIFont;
+    font-size: @smallFontSize;
+    text-transform: uppercase;
+    line-height: 3.5rem;
+    cursor: pointer;
+}
+
+.tutorial-exit:hover {
+    text-decoration: underline;
+}
+
+/*******************************
        Tutorial Top Buttons
 *******************************/
 
@@ -300,6 +321,15 @@
     .tutorial-content {
         margin: 0;
         padding: 1rem;
+    }
+
+    /*******************************
+            Exit Tutorial
+    *******************************/
+
+    .tab-simulator.hidden .tutorial-exit {
+        // Shift in tutorial tab to make space for step counter
+        right: 14rem;
     }
 
     /*******************************
