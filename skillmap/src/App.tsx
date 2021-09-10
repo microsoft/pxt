@@ -237,11 +237,10 @@ class AppImpl extends React.Component<AppProps, AppState> {
                     mapProgress: {}
                 }
 
-                // Patch all of the header ids in the user state and copy
-                // over the local progress that doesn't exist in the signed in
-                // user
                 const localUrls = Object.keys(localUser.mapProgress);
                 for (const url of localUrls) {
+                    // Copy over local user progress. If there is cloud progress, it will
+                    // be overwritten
                     newUser.mapProgress[url] = {
                         ...localUser.mapProgress[url]
                     }
