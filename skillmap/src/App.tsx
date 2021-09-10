@@ -252,6 +252,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
                             newUser.mapProgress[url][map] = {
                                 ...localUser.mapProgress[url][map]
                             };
+                            newUser.completedTags[url] = localUser.completedTags[url];
                             const activityState: {[index: string]: ActivityState} = {};
                             newUser.mapProgress[url][map].activityState = activityState;
 
@@ -276,6 +277,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
                         newUser.mapProgress[url] = {
                             ...currentUser.mapProgress[url]
                         }
+                        newUser.completedTags[url] = currentUser.completedTags[url]
                     }
                 }
 
