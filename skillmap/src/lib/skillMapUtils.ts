@@ -119,7 +119,7 @@ export function hasUrlBeenStarted(user: UserState, pageSource: string): boolean 
     if (!user.mapProgress
         || !user.mapProgress[pageSource]
         || Object.keys(user.mapProgress[pageSource]).length == 0
-        || Object.keys(user.mapProgress[pageSource]).filter(mapId => Object.keys(user.mapProgress[pageSource][mapId].activityState).length != 0).length == 0) {
+        || !Object.keys(user.mapProgress[pageSource]).some(mapId => Object.keys(user.mapProgress[pageSource][mapId].activityState).length != 0)) {
         return false
     }
     return true;
