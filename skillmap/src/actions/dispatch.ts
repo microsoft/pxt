@@ -1,3 +1,4 @@
+import { ReadyResources } from '../lib/readyResources';
 import { PageSourceStatus } from '../store/reducer';
 import * as actions from './types'
 
@@ -45,3 +46,4 @@ export const dispatchCloseUserProfile = () => ({ type: actions.HIDE_USER_PROFILE
 
 export const dispatchSetShareStatus = (headerId?: string, url?: string) =>  ({ type: actions.SET_SHARE_STATUS, headerId, url });
 export const dispatchSetCloudStatus = (headerId: string, status: string) => ({ type: actions.SET_CLOUD_STATUS, headerId, status });
+export const dispatchSetReadyResources = (resources: ReadyResources) => ({ type: actions.SET_READY_RESOURCES, resources });

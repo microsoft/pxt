@@ -34,13 +34,14 @@ import { parseHash, getMarkdownAsync, MarkdownSource, parseQuery,
 import { MakeCodeFrame } from './components/makecodeFrame';
 import { getLocalUserStateAsync, getUserStateAsync, saveUserStateAsync } from './lib/workspaceProvider';
 import { Unsubscribe } from 'redux';
+import { UserProfile } from './components/UserProfile';
+import { ReadyResources, ReadyPromise } from './lib/readyResources';
 
 /* eslint-disable import/no-unassigned-import */
 import './App.css';
 
 // TODO: this file needs to read colors from the target
 import './arcade.css';
-import { UserProfile } from './components/UserProfile';
 /* eslint-enable import/no-unassigned-import */
 interface AppProps {
     skillMaps: { [key: string]: SkillMap };
@@ -70,14 +71,18 @@ class AppImpl extends React.Component<AppProps, AppState> {
     protected queryFlags: {[index: string]: string} = {};
     protected unsubscribeChangeListener: Unsubscribe | undefined;
     protected loadedUser: UserState | undefined;
-    protected sendMessageAsync: ((message: any) => Promise<any>) | undefined;
+    protected readyPromise: ReadyPromise;
 
     constructor(props: any) {
         super(props);
         this.state = {};
+        this.readyPromise = new ReadyPromise();
 
         window.addEventListener("hashchange", this.handleHashChange);
+        this.cloudSyncCheckAsync();
     }
+
+    protected ready = (): Promise<ReadyResources> => this.readyPromise.promise();
 
     protected handleHashChange = async (e: HashChangeEvent) => {
         await this.parseHashAsync();
@@ -209,7 +214,8 @@ class AppImpl extends React.Component<AppProps, AppState> {
     }
 
     protected async cloudSyncCheckAsync() {
-        if (await authClient.loggedInAsync() && this.sendMessageAsync && this.loadedUser) {
+        const res = await this.ready();
+        if (await authClient.loggedInAsync()) {
             const state = store.getState();
             const localUser = await getLocalUserStateAsync();
 
@@ -217,7 +223,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
             let headerIds = getFlattenedHeaderIds(localUser, state.pageSourceUrl, currentUser);
 
             // Tell the editor to transfer local skillmap projects to the cloud.
-            const headerMap = (await this.sendMessageAsync({
+            const headerMap = (await res.sendMessageAsync!({
                 type: "pxteditor",
                 action: "savelocalprojectstocloud",
                 headerIds
@@ -287,7 +293,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
             }
 
             // Tell the editor to send us the cloud status of our projects.
-            await this.sendMessageAsync({
+            await res.sendMessageAsync!({
                 type: "pxteditor",
                 action: "requestprojectcloudstatus",
                 headerIds: getFlattenedHeaderIds(currentUser, state.pageSourceUrl)
@@ -296,8 +302,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
     }
 
     protected onMakeCodeFrameLoaded = async (sendMessageAsync: (message: any) => Promise<any>) => {
-        this.sendMessageAsync = sendMessageAsync;
-        await this.cloudSyncCheckAsync();
+        this.readyPromise.setSendMessageAsync(sendMessageAsync);
     }
 
     async componentDidMount() {
@@ -309,7 +314,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
         await authClient.authCheckAsync();
         await this.initLocalizationAsync();
         await this.parseHashAsync();
-        await this.cloudSyncCheckAsync();
+        this.readyPromise.setAppMounted();
     }
 
     componentWillUnmount() {

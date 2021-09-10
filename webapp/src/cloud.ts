@@ -353,7 +353,7 @@ function getLocalCloudHeaders(allHdrs?: Header[]) {
     if (!auth.hasIdentity()) { return []; }
     if (!auth.loggedIn()) { return []; }
     const userId = auth.userProfile()?.id;
-    return (allHdrs || workspace.getHeaders(true))
+    return (allHdrs || workspace.getHeaders(true/*withDeleted*/, false/*filterByEditor*/))
         .filter(h => h.cloudUserId && h.cloudUserId === userId);
 }
 
@@ -543,7 +543,7 @@ async function syncAsyncInternal(hdrs?: Header[]): Promise<Header[]> {
             syncOneDown);
 
         // log failed sync tasks.
-        errors.forEach(err => pxt.log(err));
+        errors.forEach(err => pxt.debug(err));
         errors = [];
 
         const elapsed = U.nowSeconds() - syncStart;
@@ -575,7 +575,8 @@ export function forceReloadForCloudSync() {
 
 export async function convertCloudToLocal(userId: string) {
     if (userId) {
-        const localCloudHeaders = workspace.getHeaders(true)
+        const localCloudHeaders = workspace
+            .getHeaders(false/*withDeleted*/, false/*filterByEditorType*/)
             .filter(h => h.cloudUserId && h.cloudUserId === userId);
         const tasks: Promise<void>[] = [];
         localCloudHeaders.forEach((h) => {
@@ -635,8 +636,11 @@ const onHeaderChangeSubscriber: data.DataSubscriber = {
             getLocalCloudHeaders().forEach(h => onHeaderChangeDebouncer(h));
         } else {
             const hdr = workspace.getHeader(hdrId);
-            U.assert(!!hdr, "cannot find header with id: " + hdrId);
-            onHeaderChangeDebouncer(hdr);
+            if (!hdr) {
+                pxt.debug("cannot find header with id: " + hdrId);
+            } else {
+                onHeaderChangeDebouncer(hdr);
+            }
         }
     }
 };
