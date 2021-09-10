@@ -45,13 +45,15 @@ export async function getUserStateAsync(): Promise<UserState> {
     // when auth is enabled.
     let userState = await getLocalUserStateAsync();
 
-    // Read synchronized skillmap state from cloud profile. Fallback to workspace-saved state.
-    const skillmapState = await authClient.getSkillmapStateAsync();
-    userState = {
-        ...userState,
-        mapProgress: skillmapState?.mapProgress ?? userState.mapProgress,
-        completedTags: skillmapState?.completedTags ?? userState.completedTags
-    };
+    if (await authClient.loggedInAsync()) {
+        // Read synchronized skillmap state from cloud profile. Fallback to workspace-saved state.
+        const skillmapState = await authClient.getSkillmapStateAsync();
+        userState = {
+            ...userState,
+            mapProgress: skillmapState?.mapProgress || {},
+            completedTags: skillmapState?.completedTags || {}
+        };
+    }
 
     return userState;
 }
