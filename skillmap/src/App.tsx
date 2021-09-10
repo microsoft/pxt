@@ -66,6 +66,7 @@ interface AppProps {
 
 interface AppState {
     error?: string;
+    cloudSyncCheckHasFinished: boolean;
 }
 
 class AppImpl extends React.Component<AppProps, AppState> {
@@ -76,7 +77,9 @@ class AppImpl extends React.Component<AppProps, AppState> {
 
     constructor(props: any) {
         super(props);
-        this.state = {};
+        this.state = {
+            cloudSyncCheckHasFinished: false
+        };
         this.readyPromise = new ReadyPromise();
 
         window.addEventListener("hashchange", this.handleHashChange);
@@ -289,7 +292,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
                 headerIds: getFlattenedHeaderIds(currentUser, state.pageSourceUrl)
             } as pxt.editor.EditorMessageRequestProjectCloudStatus);
         }
-        this.readyPromise.cloudSyncCheckHasFinished = true;
+        this.setState({cloudSyncCheckHasFinished: true})
     }
 
     protected onMakeCodeFrameLoaded = async (sendMessageAsync: (message: any) => Promise<any>) => {
@@ -386,7 +389,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
             // before we get a chance to run the cloud upgrade rules on projects, we need to wait
             // for cloudSyncCheck to finish if we're logged in.
             if (!this.props.signedIn ||
-                (this.props.signedIn && this.readyPromise.cloudSyncCheckHasFinished)) {
+                (this.props.signedIn && this.state.cloudSyncCheckHasFinished)) {
                 await saveUserStateAsync(user);
                 this.loadedUser = user;
             }
