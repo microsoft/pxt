@@ -100,7 +100,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
 
     return <div className="tutorial-container">
         <div className="tutorial-top-bar">
-            <TutorialStepCounter currentStep={visibleStep} totalSteps={steps.length} setTutorialStep={setTutorialStep} />
+            <TutorialStepCounter currentStep={visibleStep} totalSteps={steps.length} title={name} setTutorialStep={setTutorialStep} />
             {showImmersiveReader && <ImmersiveReaderButton content={markdown} tutorialOptions={tutorialOptions} />}
         </div>
         {layout === "horizontal" && backButton}
@@ -114,7 +114,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
             { layout === "vertical" && nextButton }
         </div>
         {layout === "horizontal" && nextButton}
-        {isModal && !hideModal && <Modal isOpen={isModal} closeIcon={false} header={title || name} buttons={modalActions}
+        {isModal && !hideModal && <Modal isOpen={isModal} closeIcon={false} header={currentStepInfo.title || name} buttons={modalActions}
             className="hintdialog" onClose={showNext ? tutorialStepNext : () => setHideModal(true)} dimmer={true}
             longer={true} closeOnDimmerClick closeOnDocumentClick closeOnEscape>
             <MarkedContent markdown={currentStepInfo.contentMd} parent={parent} />

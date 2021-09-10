@@ -37,10 +37,11 @@ export function TabPane(props: TabPaneProps) {
     return <div id={id} className={`tab-container ${className || ""}`} style={style}>
         {childArray.length > 1 && <div className="tab-navigation">
             {childArray.map(el => {
-                const { name, icon, title } = el.props as TabContentProps;
+                const { name, icon, title, showBadge } = el.props as TabContentProps;
                 const tabClickHandler = () => selectTab(el.props);
 
                 return <div key={name} className={`tab-icon ${name} ${name == activeTab ? "active" : ""}`} onClick={tabClickHandler}>
+                    {showBadge && <div className="tab-badge" />}
                     <i className={`ui icon ${icon}`} />
                     <span>{title}</span>
                 </div>

@@ -62,6 +62,21 @@
     margin-right: 0.5rem;
 }
 
+.tutorial-step-label {
+    display: flex;
+}
+
+.tutorial-step-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tutorial-step-number {
+    flex-shrink: 0;
+    margin-left: 0.5rem;
+}
+
 .tutorial-step-bar {
     height: 1rem;
     overflow: hidden;
@@ -219,7 +234,13 @@
             #boardview { display: inline-block; }
 
             .simtoolbar, #miniSimOverlay { display: block; }
-            .fullscreen-button, .expand-button { display: block !important; }
+            .sidebar-button, .play-button { display: block !important; }
+            .expand-button, .fullscreen-button { display: none !important; }
+        }
+    }
+    .tab-simulator.tab-content:not(.hidden) {
+        .simPanel {
+            .sidebar-button { display: none !important; }
         }
     }
 }
