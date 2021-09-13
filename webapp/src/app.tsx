@@ -276,7 +276,7 @@ export class ProjectView
                     </p>
                     <ul>
                         {ghidToBeApproved.map(scr => <li key={scr.fullName}>
-                            <a href={`https://github.com/${scr.project}`}>{scr.fullName}</a>
+                            <a href={`https://github.com/${scr.slug}/${scr.fileName ? `tree/HEAD/${scr.fileName}` : ''}`}>{scr.fullName}</a>
                         </li>)}
                     </ul>
                     <hr />
@@ -1696,7 +1696,7 @@ export class ProjectView
             .catch(e => {
                 // Failed to decompile
                 pxt.tickEvent('tutorial.faileddecompile', { tutorial: t.tutorial });
-                this.setState({ editorState: { searchBar: false, filters: undefined} });
+                this.setState({ editorState: { searchBar: false, filters: undefined } });
                 core.warningNotification(lf("Could not filter tutorial blocks, displaying full toolbox."))
             })
             .finally(() => {
@@ -2380,7 +2380,7 @@ export class ProjectView
             }
             return workspace.syncAsync();
         })
-        .then(() => {})
+            .then(() => { })
     }
 
     reloadEditor() {
@@ -3948,8 +3948,8 @@ export class ProjectView
                     temporary: temporary,
                     skillmapProject: pxt.BrowserUtils.isSkillmapEditor()
                 })
-                .then(() => autoChooseBoard ? this.autoChooseBoardAsync(features) : Promise.resolve())
-                .then(() => this.postTutorialProgress())
+                    .then(() => autoChooseBoard ? this.autoChooseBoardAsync(features) : Promise.resolve())
+                    .then(() => this.postTutorialProgress())
             })
             .catch((e) => {
                 pxt.reportException(e, { tutorialId });
@@ -4056,7 +4056,7 @@ export class ProjectView
             await workspace.saveAsync(curr, files)
             await Util.delay(500)
         }
-        catch (e) {}
+        catch (e) { }
         finally {
             core.resetFocus();
             await this.setStateAsync({
