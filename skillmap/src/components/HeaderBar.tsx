@@ -16,6 +16,7 @@ interface HeaderBarProps {
     activityOpen: boolean;
     showReportAbuse?: boolean;
     signedIn: boolean;
+    profile: pxt.auth.UserProfile;
     dispatchSaveAndCloseActivity: () => void;
     dispatchShowResetUserModal: () => void;
     dispatchShowLoginModal: () => void;
@@ -86,9 +87,8 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
     }
 
     protected getUserMenu() {
-        const { signedIn } = this.props;
+        const { signedIn, profile } = this.props;
         const items = [];
-        const user = pxt.auth.client()?.getState().profile;
 
         if (signedIn) {
             items.push({
@@ -102,20 +102,18 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
             })
         }
 
-        const avatarElem = user?.idp?.picture?.dataUrl
-            ? <div className="avatar"><img src={user?.idp?.picture?.dataUrl} alt={lf("User Menu")}/></div>
+        const avatarElem = profile?.idp?.picture?.dataUrl
+            ? <div className="avatar"><img src={profile?.idp?.picture?.dataUrl} alt={lf("User Menu")}/></div>
             : undefined;
 
-        const initialsElem = user?.idp?.displayName
-            ? <span className="circle">{pxt.auth.userInitials(user)}</span>
-            : undefined;
+        const initialsElem = <span className="circle">{pxt.auth.userInitials(profile)}</span>
 
         return <div className="user-menu">
             {signedIn
-             ? <Dropdown icon="star" items={items} picture={avatarElem || initialsElem} className="header-dropdown"/>
-             : <HeaderBarButton className="sign-in" icon="xicon icon cloud-user" title={lf("Sign In")} label={lf("Sign In")} onClick={ () => {
+             ? <Dropdown icon="user" items={items} picture={avatarElem || initialsElem} className="header-dropdown"/>
+             : <HeaderBarButton className="sign-in" icon="xicon cloud-user" title={lf("Sign In")} label={lf("Sign In")} onClick={ () => {
                 pxt.tickEvent(`skillmap.usermenu.signin`);
-                 this.props.dispatchShowLoginModal();
+                this.props.dispatchShowLoginModal();
             }}/>}
         </div>;
     }
@@ -222,7 +220,8 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         currentMapId: activityOpen && state.editorView?.currentMapId,
         currentActivityId: activityOpen && state.editorView?.currentActivityId,
         showReportAbuse: state.pageSourceStatus === "unknown",
-        signedIn: state.auth.signedIn
+        signedIn: state.auth.signedIn,
+        profile: state.auth.profile
     }
 }
 

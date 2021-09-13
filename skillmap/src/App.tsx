@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 
 import store from "./store/store";
 import * as authClient from "./lib/authClient";
-import { getFlattenedHeaderIds } from "./lib/skillMapUtils";
+import { getFlattenedHeaderIds, hasUrlBeenStarted } from "./lib/skillMapUtils";
 
 import {
     dispatchAddSkillMap,
@@ -34,13 +34,15 @@ import { parseHash, getMarkdownAsync, MarkdownSource, parseQuery,
 import { MakeCodeFrame } from './components/makecodeFrame';
 import { getLocalUserStateAsync, getUserStateAsync, saveUserStateAsync } from './lib/workspaceProvider';
 import { Unsubscribe } from 'redux';
+import { UserProfile } from './components/UserProfile';
+import { ReadyResources, ReadyPromise } from './lib/readyResources';
 
 /* eslint-disable import/no-unassigned-import */
 import './App.css';
 
 // TODO: this file needs to read colors from the target
 import './arcade.css';
-import { UserProfile } from './components/UserProfile';
+
 /* eslint-enable import/no-unassigned-import */
 interface AppProps {
     skillMaps: { [key: string]: SkillMap };
@@ -64,20 +66,27 @@ interface AppProps {
 
 interface AppState {
     error?: string;
+    cloudSyncCheckHasFinished: boolean;
 }
 
 class AppImpl extends React.Component<AppProps, AppState> {
     protected queryFlags: {[index: string]: string} = {};
     protected unsubscribeChangeListener: Unsubscribe | undefined;
     protected loadedUser: UserState | undefined;
-    protected sendMessageAsync: ((message: any) => Promise<any>) | undefined;
+    protected readyPromise: ReadyPromise;
 
     constructor(props: any) {
         super(props);
-        this.state = {};
+        this.state = {
+            cloudSyncCheckHasFinished: false
+        };
+        this.readyPromise = new ReadyPromise();
 
         window.addEventListener("hashchange", this.handleHashChange);
+        this.cloudSyncCheckAsync();
     }
+
+    protected ready = (): Promise<ReadyResources> => this.readyPromise.promise();
 
     protected handleHashChange = async (e: HashChangeEvent) => {
         await this.parseHashAsync();
@@ -209,75 +218,66 @@ class AppImpl extends React.Component<AppProps, AppState> {
     }
 
     protected async cloudSyncCheckAsync() {
-        if (await authClient.loggedInAsync() && this.sendMessageAsync && this.loadedUser) {
+        const res = await this.ready();
+        if (await authClient.loggedInAsync()) {
             const state = store.getState();
             const localUser = await getLocalUserStateAsync();
 
             let currentUser = await getUserStateAsync();
             let headerIds = getFlattenedHeaderIds(localUser, state.pageSourceUrl, currentUser);
-
             // Tell the editor to transfer local skillmap projects to the cloud.
-            const headerMap = (await this.sendMessageAsync({
+            const headerMap = (await res.sendMessageAsync!({
                 type: "pxteditor",
                 action: "savelocalprojectstocloud",
                 headerIds
             } as pxt.editor.EditorMessageSaveLocalProjectsToCloud)).resp.headerIdMap;
-
             if (headerMap) {
-                headerIds = headerIds.map(h => headerMap[h] || h);
-
-                // Patch all of the header ids in the user state and copy
-                // over the local progress that doesn't exist in the signed in
-                // user
-                const urls = Object.keys(currentUser.mapProgress);
                 const newUser: UserState = {
                     ...currentUser,
                     mapProgress: {}
                 }
 
-                for (const url of urls) {
+                const localUrls = Object.keys(localUser.mapProgress);
+                for (const url of localUrls) {
+                    // Copy over local user progress. If there is cloud progress, it will
+                    // be overwritten
                     newUser.mapProgress[url] = {
-                        ...currentUser.mapProgress[url],
-                    };
-
-                    if (!localUser.mapProgress[url]) continue;
+                        ...localUser.mapProgress[url]
+                    }
 
                     const maps = Object.keys(localUser.mapProgress[url]);
                     for (const map of maps) {
-                        newUser.mapProgress[url][map] = {
-                            ...currentUser.mapProgress[url][map]
-                        };
-
                         // Only copy over state if the user hasn't started this map yet
-                        if (Object.keys(newUser.mapProgress[url][map].activityState).length !== 0) {
-                            continue;
-                        }
-
-                        const activityState: {[index: string]: ActivityState} = {};
-                        newUser.mapProgress[url][map].activityState = activityState;
-
-                        const signedInProgress = currentUser.mapProgress[url][map].activityState;
-                        const localProgress = localUser.mapProgress[url][map].activityState
-
-                        for (const activity of Object.keys(signedInProgress)) {
-                            const oldState = signedInProgress[activity];
-                            activityState[activity] = {
-                                ...oldState,
-                                headerId: oldState.headerId ? (headerMap[oldState.headerId] || oldState.headerId) : oldState.headerId
+                        if (!hasUrlBeenStarted(currentUser, url)) {
+                            newUser.mapProgress[url][map] = {
+                                ...localUser.mapProgress[url][map]
                             };
-                        }
+                            newUser.completedTags[url] = localUser.completedTags[url];
+                            const activityState: {[index: string]: ActivityState} = {};
+                            newUser.mapProgress[url][map].activityState = activityState;
 
-                        for (const activity of Object.keys(localProgress)) {
-                            const signedInActivity = signedInProgress[activity];
-                            const localActivity = localProgress[activity];
-                            if ((!signedInActivity || !signedInActivity.headerId) && localActivity.headerId) {
-                                const base = signedInActivity || localActivity;
-                                activityState[activity] = {
-                                    ...base,
-                                    headerId: localActivity.headerId ? (headerMap[localActivity.headerId] || localActivity.headerId) : localActivity.headerId
-                                };
+                            const localProgress = localUser.mapProgress[url][map].activityState
+                            for (const activity of Object.keys(localProgress)) {
+                                const localActivity = localProgress[activity];
+                                if (localActivity.headerId) {
+                                    activityState[activity] = {
+                                        ...localActivity,
+                                        headerId: headerMap[localActivity.headerId] || localActivity.headerId
+                                    };
+                                }
                             }
                         }
+                    }
+                }
+
+                const visitedUrls = Object.keys(currentUser.mapProgress)
+                // Copy progress from cloud user for all visited URLs.
+                for (const url of visitedUrls) {
+                    if (hasUrlBeenStarted(currentUser, url)) {
+                        newUser.mapProgress[url] = {
+                            ...currentUser.mapProgress[url]
+                        }
+                        newUser.completedTags[url] = currentUser.completedTags[url]
                     }
                 }
 
@@ -287,17 +287,17 @@ class AppImpl extends React.Component<AppProps, AppState> {
             }
 
             // Tell the editor to send us the cloud status of our projects.
-            await this.sendMessageAsync({
+            await res.sendMessageAsync!({
                 type: "pxteditor",
                 action: "requestprojectcloudstatus",
                 headerIds: getFlattenedHeaderIds(currentUser, state.pageSourceUrl)
             } as pxt.editor.EditorMessageRequestProjectCloudStatus);
         }
+        this.setState({cloudSyncCheckHasFinished: true})
     }
 
     protected onMakeCodeFrameLoaded = async (sendMessageAsync: (message: any) => Promise<any>) => {
-        this.sendMessageAsync = sendMessageAsync;
-        await this.cloudSyncCheckAsync();
+        this.readyPromise.setSendMessageAsync(sendMessageAsync);
     }
 
     async componentDidMount() {
@@ -309,7 +309,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
         await authClient.authCheckAsync();
         await this.initLocalizationAsync();
         await this.parseHashAsync();
-        await this.cloudSyncCheckAsync();
+        this.readyPromise.setAppMounted();
     }
 
     componentWillUnmount() {
@@ -386,8 +386,14 @@ class AppImpl extends React.Component<AppProps, AppState> {
         const { user } = store.getState();
 
         if (user !== this.loadedUser && (!this.loadedUser || user.id === this.loadedUser.id)) {
-            await saveUserStateAsync(user);
-            this.loadedUser = user;
+            // To avoid a race condition where we save to local user's state to the cloud user
+            // before we get a chance to run the cloud upgrade rules on projects, we need to wait
+            // for cloudSyncCheck to finish if we're logged in.
+            if (!this.props.signedIn ||
+                (this.props.signedIn && this.state.cloudSyncCheckHasFinished)) {
+                await saveUserStateAsync(user);
+                this.loadedUser = user;
+            }
         }
     }
 }

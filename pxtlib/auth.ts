@@ -60,7 +60,8 @@ namespace pxt.auth {
     export const DEFAULT_USER_PREFERENCES: () => UserPreferences = () => ({
         highContrast: false,
         language: pxt.appTarget.appTheme.defaultLocale,
-        reader: ""
+        reader: "",
+        skillmap: {mapProgress: {}, completedTags: {}}
     });
 
     /**

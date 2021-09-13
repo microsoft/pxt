@@ -3227,14 +3227,16 @@ export class ProjectView
 
     onCloudStatusChanged(path: string) {
         const cloudMd = this.getData<cloud.CloudTempMetadata>(path);
-        const cloudStatus = cloudMd.cloudStatus();
-        const msg: pxt.editor.EditorMessageProjectCloudStatus = {
-            type: "pxteditor",
-            action: "projectcloudstatus",
-            headerId: cloudMd.headerId,
-            status: cloudStatus.value
-        };
-        pxt.editor.postHostMessageAsync(msg);
+        const cloudStatus = cloudMd?.cloudStatus();
+        if (cloudStatus) {
+            const msg: pxt.editor.EditorMessageProjectCloudStatus = {
+                type: "pxteditor",
+                action: "projectcloudstatus",
+                headerId: cloudMd.headerId,
+                status: cloudStatus.value
+            };
+            pxt.editor.postHostMessageAsync(msg);
+        }
     }
 
     runSimulator(opts: compiler.CompileOptions = {}): Promise<void> {
@@ -3540,6 +3542,10 @@ export class ProjectView
 
     async requestProjectCloudStatus(headerIds: string[]): Promise<void> {
         await cloud.requestProjectCloudStatus(headerIds);
+    }
+
+    convertCloudProjectsToLocal(userId: string): Promise<void> {
+        return cloud.convertCloudToLocal(userId);
     }
 
     private debouncedSaveProjectName: () => void;
