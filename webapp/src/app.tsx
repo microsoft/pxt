@@ -276,7 +276,7 @@ export class ProjectView
                     </p>
                     <ul>
                         {ghidToBeApproved.map(scr => <li key={scr.fullName}>
-                            <a href={`https://github.com/${scr.slug}/${scr.fileName ? `tree/HEAD/${scr.fileName}` : ''}`}>{scr.fullName}</a>
+                            <a href={`/pkg/${scr.fullName}`}>{scr.fullName}</a>
                         </li>)}
                     </ul>
                     <hr />
