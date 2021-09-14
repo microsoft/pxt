@@ -353,6 +353,8 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
 
         if (!markdown) return;
 
+        pxt.perf.measureStart("renderMarkdown");
+
         // replace pre-template in markdown
         markdown = markdown.replace(/@([a-z]+)@/ig, (m, param) => pubinfo[param] || 'unknown macro')
 
@@ -380,16 +382,19 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         // prevents ugly <script ...> rendering in docs
         markdown = markdown.replace(/<\s*script[^>]*>.*<\/\s*script\s*>/g, '');
 
-        // Render the markdown and add it to the content div
-        content.innerHTML = marked(markdown);
-
-        //
+        // Render the markdown into a div outside of the DOM tree to prevent the page from reflowing
+        // when we edit the HTML it produces. Then, add the finished result to the content div
+        const tempDiv = document.createElement("div");
+        tempDiv.innerHTML = marked(markdown);
 
         // We'll go through a series of adjustments here, rendering inline blocks, blocks and snippets as needed
-        this.renderInlineBlocks(content);
-        this.renderSnippets(content);
-        this.renderBullets(content);
-        this.renderOthers(content);
+        this.renderInlineBlocks(tempDiv);
+        this.renderSnippets(tempDiv);
+        this.renderBullets(tempDiv);
+        this.renderOthers(tempDiv);
+        content.innerHTML = tempDiv.innerHTML;
+
+        pxt.perf.measureEnd("renderMarkdown");
     }
 
     componentDidMount() {
