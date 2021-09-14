@@ -41,6 +41,10 @@
     span.docs.inlineblock {
         white-space: break-spaces;
     }
+
+    p {
+        line-height: 1.5em;
+    }
 }
 
 /*******************************
@@ -118,8 +122,8 @@
     margin-bottom: 1rem;
 
     .ui.button {
-        margin: 0 0.4rem;
-        color: @tutorialSecondaryColor;
+        margin: 0 1rem;
+        color: @white;
         background: @tutorialPrimaryColor;
         font-size: @tutorialFontSize;
         white-space: nowrap;
@@ -203,6 +207,9 @@
     color: @white;
     background-color: @tutorialPrimaryColor;
     line-height: 2.5rem;
+}
+.formatted-bullet-ul .formatted-bullet-li:last-child {
+    min-height: 3.5rem;
 }
 .formatted-bullet-ul .formatted-bullet-li:last-child .formatted-bullet:after {
     content: " ";
