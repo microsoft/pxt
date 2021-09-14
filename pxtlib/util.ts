@@ -1745,6 +1745,15 @@ namespace ts.pxtc.Util {
             type: prop.type
         }
     }
+
+
+    export function toUTF8Array(s: string) {
+        return (new TextEncoder()).encode(s);
+    }
+
+    export function fromUTF8Array(s: Uint8Array) {
+        return (new TextDecoder()).decode(s);
+    }
 }
 
 namespace ts.pxtc.BrowserImpl {
@@ -1939,7 +1948,7 @@ namespace ts.pxtc.BrowserImpl {
 
     export function sha256string(s: string) {
         pxt.perf.measureStart("sha256buffer")
-        const res = sha256buffer((new TextEncoder()).encode(s));
+        const res = sha256buffer(Util.toUTF8Array(s));
         pxt.perf.measureEnd("sha256buffer")
         return res;
     }

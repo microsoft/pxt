@@ -538,7 +538,7 @@ namespace pxt.HF2 {
                     return this.talkAsync(HF2_CMD_INFO)
                 })
                 .then(buf => {
-                    this.infoRaw = U.fromUTF8(U.uint8ArrayToString(buf));
+                    this.infoRaw = pxt.Util.fromUTF8Array(buf);
                     pxt.debug("Info: " + this.infoRaw)
                     let info = {} as any
                     ("Header: " + this.infoRaw).replace(/^([\w\-]+):\s*([^\n\r]*)/mg,

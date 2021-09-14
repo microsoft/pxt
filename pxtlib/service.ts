@@ -1358,7 +1358,7 @@ namespace ts.pxtc {
                 if (len >= 0) {
                     fnbuf = fnbuf.slice(0, len)
                 }
-                filename = U.fromUTF8(U.uint8ArrayToString(fnbuf))
+                filename = U.fromUTF8Array(fnbuf);
                 fileSize = wordAt(28)
             }
 
@@ -1584,7 +1584,7 @@ namespace ts.pxtc {
                     for (let i = 32; i < 32 + 256; ++i)
                         currBlock[i] = 0xff
                     if (f.filename) {
-                        U.memcpy(currBlock, 32 + 256, U.stringToUint8Array(U.toUTF8(f.filename)))
+                        U.memcpy(currBlock, 32 + 256, U.toUTF8Array(f.filename))
                     }
                     f.blocks.push(currBlock)
                     f.ptrs.push(needAddr)
