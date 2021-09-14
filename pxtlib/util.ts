@@ -1938,7 +1938,10 @@ namespace ts.pxtc.BrowserImpl {
     }
 
     export function sha256string(s: string) {
-        return sha256buffer(Util.stringToUint8Array(Util.toUTF8(s)))
+        pxt.perf.measureStart("sha256buffer")
+        const res = sha256buffer((new TextEncoder()).encode(s));
+        pxt.perf.measureEnd("sha256buffer")
+        return res;
     }
 }
 
