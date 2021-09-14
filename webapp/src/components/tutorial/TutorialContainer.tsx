@@ -21,7 +21,7 @@ interface TutorialContainerProps {
 }
 
 const MIN_HEIGHT = 80;
-const MAX_HEIGHT = 170;
+const MAX_HEIGHT = 194;
 
 export function TutorialContainer(props: TutorialContainerProps) {
     const { parent, name, steps, tutorialOptions, onTutorialStepChange, onTutorialComplete, setParentHeight } = props;

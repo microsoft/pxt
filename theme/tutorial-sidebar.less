@@ -41,6 +41,31 @@
     span.docs.inlineblock {
         white-space: break-spaces;
     }
+
+    p {
+        line-height: 1.5em;
+    }
+}
+
+/*******************************
+        Exit Tutorial
+*******************************/
+
+.tutorial-exit {
+    position: absolute;
+    margin-right: 1rem;
+    top: 0;
+    right: 0;
+    color: @white;
+    font-family: @segoeUIFont;
+    font-size: @smallFontSize;
+    text-transform: uppercase;
+    line-height: 3.5rem;
+    cursor: pointer;
+}
+
+.tutorial-exit:hover {
+    text-decoration: underline;
 }
 
 /*******************************
@@ -112,8 +137,8 @@
     margin-bottom: 1rem;
 
     .ui.button {
-        margin: 0 0.4rem;
-        color: @tutorialSecondaryColor;
+        margin: 0 1rem;
+        color: @white;
         background: @tutorialPrimaryColor;
         font-size: @tutorialFontSize;
         white-space: nowrap;
@@ -197,6 +222,9 @@
     color: @white;
     background-color: @tutorialPrimaryColor;
     line-height: 2.5rem;
+}
+.formatted-bullet-ul .formatted-bullet-li:last-child {
+    min-height: 3.5rem;
 }
 .formatted-bullet-ul .formatted-bullet-li:last-child .formatted-bullet:after {
     content: " ";
@@ -321,6 +349,15 @@
     .tutorial-content {
         margin: 0;
         padding: 1rem;
+    }
+
+    /*******************************
+            Exit Tutorial
+    *******************************/
+
+    .tab-simulator.hidden .tutorial-exit {
+        // Shift in tutorial tab to make space for step counter
+        right: 14rem;
     }
 
     /*******************************

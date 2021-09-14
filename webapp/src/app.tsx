@@ -197,6 +197,7 @@ export class ProjectView
         this.showMiniSim = this.showMiniSim.bind(this);
         this.setTutorialStep = this.setTutorialStep.bind(this);
         this.completeTutorialAsync = this.completeTutorialAsync.bind(this);
+        this.exitTutorial = this.exitTutorial.bind(this);
         this.setEditorOffset = this.setEditorOffset.bind(this);
         this.initSimulatorMessageHandlers();
 

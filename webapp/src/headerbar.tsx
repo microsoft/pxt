@@ -167,10 +167,16 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
             case "tutorial-vertical":
                 const tutorialButtons = [];
                 if (tutorialOptions?.tutorialReportId) {
-                    tutorialButtons.push(<sui.ButtonMenuItem key="tutorial-report" className="report-tutorial-btn" role="menuitem" icon="warning circle" text={lf("Report Abuse")} textClass="landscape only" onClick={this.showReportAbuse} />)
+                    const reportTutorialLabel = lf("Unapproved Content");
+                    tutorialButtons.push(<sui.Item key="tutorial-report" role="menuitem" icon="exclamation triangle"
+                        className="report-tutorial-btn link-button icon-and-text" textClass="landscape only"
+                        text={reportTutorialLabel} ariaLabel={reportTutorialLabel} onClick={this.showReportAbuse} />);
                 }
-                if (!targetTheme.lockedEditor && !tutorialOptions?.metadata?.hideIteration && view !== "tutorial-vertical") {
-                    tutorialButtons.push(<sui.ButtonMenuItem key="tutorial-exit" className="exit-tutorial-btn" role="menuitem" icon="sign out" text={lf("Exit tutorial")} textClass="landscape only" onClick={this.exitTutorial} />)
+                if (!targetTheme.lockedEditor && !tutorialOptions?.metadata?.hideIteration && (view !== "tutorial-vertical" || pxt.appTarget.simulator?.headless)) {
+                    const exitTutorialLabel = lf("Exit tutorial");
+                    tutorialButtons.push(<sui.Item key="tutorial-exit" role="menuitem" icon="sign out large"
+                        className="exit-tutorial-btn link-button icon-and-text" textClass="landscape only"
+                        text={exitTutorialLabel} ariaLabel={exitTutorialLabel} onClick={this.exitTutorial} />);
                 }
 
                 if (!!tutorialButtons.length) return tutorialButtons;
