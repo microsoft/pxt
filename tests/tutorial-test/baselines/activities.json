@@ -3,6 +3,7 @@
     "title": "Tutorial title",
     "steps": [
         {
+            "title": "Introduction step",
             "contentMd": "Introduction text\n![Image text](/image/url.gif)",
             "headerContentMd": "Introduction text",
             "showHint": true,
@@ -11,6 +12,7 @@
             "activity": 0
         },
         {
+            "title": "Step 1",
             "contentMd": "Welcome! Place the ``||basic:show string||`` block in the ``||basic:on start||`` slot to scroll your name.\n\n```blocks\nlet x = 1;\nlet y = x + 2;\n```\n\nTry checking the blue drawer for the correct block.",
             "headerContentMd": "Welcome! Place the ``||basic:show string||`` block in the ``||basic:on start||`` slot to scroll your name.",
             "showHint": true,
@@ -18,11 +20,13 @@
             "activity": 1
         },
         {
+            "title": "Step 2",
             "contentMd": "Step two text",
             "headerContentMd": "Step two text",
             "activity": 1
         },
         {
+            "title": "Step 1",
             "contentMd": "Click ``|Download|`` to transfer your code in your unknown macro!",
             "headerContentMd": "Click ``|Download|`` to transfer your code in your unknown macro!",
             "activity": 2

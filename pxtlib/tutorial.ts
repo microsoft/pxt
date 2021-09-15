@@ -194,7 +194,7 @@ ${code}
 
     function parseTutorialTitle(tutorialmd: string): string {
         let title = tutorialmd.match(/^#[^#](.*)$/mi);
-        return title && title.length > 1 ? title[1] : null;
+        return title && title.length > 1 ? title[1].trim() : null;
     }
 
     function parseTutorialMarkdown(tutorialmd: string, metadata: TutorialMetadata): { steps: TutorialStepInfo[], activities: TutorialActivityInfo[] } {
@@ -247,7 +247,7 @@ ${code}
 
             // if title is not hidden ("{TITLE HERE}"), strip flags
             const title = !flags.match(/^\{.*\}$/)
-                ? flags.replace(/@(fullscreen|unplugged|showdialog|showhint|tutorialCompleted|resetDiff)/gi, "")
+                ? flags.replace(/@(fullscreen|unplugged|showdialog|showhint|tutorialCompleted|resetDiff)/gi, "").trim()
                 : undefined;
 
             let info: TutorialStepInfo = {
@@ -295,7 +295,7 @@ ${code}
             });
         } else {
             // everything after the first ``` section OR the first image is treated as a "hint"
-            const hintTextRegex = /(^[\s\S]*?\S)\s*((```|\[?\!\[[\s\S]+?\]\(\S+?\)(?:\]))[\s\S]*)/mi;
+            const hintTextRegex = /(^[\s\S]*?\S)\s*((```|\[?\!\[[\s\S]+?\]\(\S+?\)\]?)[\s\S]*)/mi;
             let hintText = step.match(hintTextRegex);
             if (hintText && hintText.length > 2) {
                 header = hintText[1].trim();
