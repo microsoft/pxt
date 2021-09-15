@@ -2,7 +2,7 @@
 
 namespace pxtblockly {
     import svg = pxt.svgUtil;
-
+   
     export class FieldCustomSound<U extends Blockly.FieldCustomOptions> extends Blockly.Field implements Blockly.FieldCustom {
         public isFieldCustom_ = true;
         public SERIALIZABLE = true;
@@ -12,8 +12,14 @@ namespace pxtblockly {
         private duration: number = 1500;
         private volume: number = 0.2*10;
         private startFrequency: number = 440;
+        private hz1: any;
+        private hz2: any;
+        private seconds: any;
+        private chart: any;
+        private canvas: any;
         private endFrequency: number = 880;
         private waveType: string = "square";
+        private arrow: any;
         private waveButtons:any;
         private interpolationType: string = "linear";
         private stringRep: string;
@@ -26,10 +32,11 @@ namespace pxtblockly {
         private topDiv: HTMLDivElement;
         private editorDiv: HTMLDivElement;
         private parameters: HTMLDivElement;
-        private volumeText: HTMLDivElement;
+        private frequencies:  HTMLDivElement; 
+        private volumeText: any;
         private volumeInput: HTMLInputElement;
-        private startFrequencyText: HTMLDivElement;
-        private endFrequencyText: HTMLDivElement;
+        private startFrequencyText: any;
+        private endFrequencyText: any;
         private wave: HTMLDivElement;
         private interpolation: HTMLDivElement;
         private bottomDiv: HTMLDivElement; 
@@ -242,26 +249,16 @@ namespace pxtblockly {
             this.parameters = document.createElement("div");
             pxt.BrowserUtils.addClass(this.parameters, "melody-top-bar-div-parameters")
             this.parameters.style.setProperty("background-color", secondaryColor);
-
-            // Add volume input 
-            this.volumeText = document.createElement("p");
-            this.volumeText.innerText = lf("Volume:  ");
-
-            this.volumeInput = document.createElement("input");
-            pxt.BrowserUtils.addClass(this.volumeInput, "ui-input");
-            this.volumeInput.type = "number";
-            this.volumeInput.value = "2";
-            this.volumeInput.title = lf("Volume");
-            this.volumeInput.id = "volume";
-            this.volumeInput.addEventListener("input", () => this.setVolume(+this.volumeInput.value));
-            this.syncVolumeField(true);
             
-            this.parameters.appendChild(this.volumeText);
-            this.volumeText.appendChild(this.volumeInput);
+            this.frequencies = document.createElement("div");
+            this.frequencies.style.setProperty("background-color", secondaryColor);
+            this.parameters.appendChild(this.frequencies);
+
+            
 
             // Add start and end frequency inputs 
-            this.startFrequencyText = document.createElement("p");
-            this.startFrequencyText.innerText = lf("Start frequency:  ");
+            this.startFrequencyText = document.createElement("span");
+            this.startFrequencyText.innerText = lf("Start ");
 
             this.startFrequencyInput = document.createElement("input");
             pxt.BrowserUtils.addClass(this.startFrequencyInput, "ui-input");
@@ -272,12 +269,15 @@ namespace pxtblockly {
             this.startFrequencyInput.addEventListener("input", () => this.setStartFrequency(+this.startFrequencyInput.value));
             this.syncStartFrequencyField(true);
 
-            
-            this.parameters.appendChild(this.startFrequencyText);
-            this.startFrequencyText.appendChild(this.startFrequencyInput);
+            this.hz1 = document.createElement("span");
+            this.hz1.innerText = " Hz ";
 
-            this.endFrequencyText = document.createElement("p");
-            this.endFrequencyText.innerText = lf("End frequency:  ");
+            this.arrow = document.createElement("i");
+            pxt.BrowserUtils.addClass(this.arrow, "arrow right icon");
+            
+
+            this.endFrequencyText = document.createElement("span");
+            this.endFrequencyText.innerText = lf("End ");
 
             this.endFrequencyInput = document.createElement("input");
             pxt.BrowserUtils.addClass(this.endFrequencyInput, "ui input");
@@ -287,9 +287,31 @@ namespace pxtblockly {
             this.endFrequencyInput.id = "melody-tempo-input-start-frequency";
             this.endFrequencyInput.addEventListener("input", () => this.setEndFrequency(+this.endFrequencyInput.value));
             this.syncEndFrequencyField(true);
-            
-            this.parameters.appendChild(this.endFrequencyText);
-            this.endFrequencyText.appendChild(this.endFrequencyInput);
+
+            this.hz2 = document.createElement("span");
+            this.hz2.innerText = " Hz  for  "
+
+            // add duration element
+            this.durationInput = document.createElement("input");
+            pxt.BrowserUtils.addClass(this.durationInput, "ui-input");
+            this.durationInput.type = "number";
+            this.durationInput.title = lf("duration");
+            this.durationInput.id = "melody-tempo-input-start-frequency";
+            this.durationInput.addEventListener("input", () => this.setSoundDuration(+this.durationInput.value));
+            this.syncDurationField(true);
+
+            this.seconds = document.createElement("span");
+            this.seconds.innerText = " ms  "
+
+           this.frequencies.appendChild(this.startFrequencyText);
+            this.frequencies.appendChild(this.startFrequencyInput);
+            this.frequencies.appendChild(this.hz1);
+            this.frequencies.appendChild(this.arrow);
+            this.frequencies.appendChild(this.endFrequencyText);
+            this.frequencies.appendChild(this.endFrequencyInput);
+            this.frequencies.appendChild(this.hz2);
+            this.frequencies.appendChild(this.durationInput);
+            this.frequencies.appendChild(this.seconds);
 
 
             // Add wave shape and interpolation buttons
@@ -318,6 +340,15 @@ namespace pxtblockly {
             pxt.BrowserUtils.addClass(this.bottomDiv, "melody-bottom-bar-div");
             this.bottomDiv.style.setProperty("background-color", secondaryColor);
 
+            this.volumeInput = document.createElement("input");
+            pxt.BrowserUtils.addClass(this.volumeInput, "ui-input-volume");
+            this.volumeInput.type = "number";
+            this.volumeInput.value = "2";
+            this.volumeInput.title = lf("Volume");
+            this.volumeInput.id = "volume";
+            this.volumeInput.addEventListener("input", () => this.setVolume(+this.volumeInput.value));
+            this.syncVolumeField(true);
+
             this.doneButton = document.createElement("button");
             pxt.BrowserUtils.addClass(this.doneButton, "melody-confirm-button");
             this.doneButton.innerText = lf("Done");
@@ -333,16 +364,44 @@ namespace pxtblockly {
             pxt.BrowserUtils.addClass(this.playIcon, "play icon");
             this.playButton.appendChild(this.playIcon);
 
-            // add duration element
-            this.durationInput = document.createElement("input");
-            pxt.BrowserUtils.addClass(this.durationInput, "ui-input");
-            this.durationInput.type = "number";
-            this.durationInput.title = lf("duration");
-            this.durationInput.id = "melody-tempo-input";
-            this.durationInput.addEventListener("input", () => this.setSoundDuration(+this.durationInput.value));
-            this.syncDurationField(true);
+            
 
-            this.bottomDiv.appendChild(this.durationInput);
+            this.canvas = document.createElement("canvas");
+            pxt.BrowserUtils.addClass(this.canvas, "myCanvas");
+            this.canvas.src="https://cdn.jsdelivr.net/npm/apexcharts";
+            this.canvas.width="400";
+            this.canvas.height="80";
+
+           /* this.chart = document.createElement("chart");
+            pxt.BrowserUtils.addClass(this.chart, "myChart");
+
+            
+            this.chart.id = "myChart";
+*/
+          
+            /*  var options = {
+                chart: {
+                  type: 'line'
+                },
+                series: [{
+                  name: 'sales',
+                  data: [30,40,35,50,49,60,70,91,125]
+                }],
+                xaxis: {
+                  categories: [1991,1992,1993,1994,1995,1996,1997, 1998,1999]
+                }
+              }
+              
+              var chart = new ApexCharts(document.querySelector("#chart"), options);
+              
+              chart.render();
+
+
+*/
+
+           
+            this.bottomDiv.appendChild(this.canvas);
+            this.bottomDiv.appendChild(this.volumeInput);
             this.bottomDiv.appendChild(this.playButton);
             this.bottomDiv.appendChild(this.doneButton);
 
@@ -745,10 +804,23 @@ namespace pxtblockly {
             pxt.AudioContextManager.tone(frequency);
         }
 
+        private createCsv(){
+            let divisor = 100;
+            let timeDivision = this.duration/divisor;
+            let frequencyDivision = (this.endFrequency - this.startFrequency)/divisor;
+            let csv = [];
+            for(let i = 0; i<divisor; i++){
+                let frequency = this.startFrequency + (i * frequencyDivision)
+                csv.push(frequency);
+            }
+            console.log(csv);
+            return csv;
+        }
+
         private playSound(): void {
             if (this.isPlaying) {
                 pxt.AudioContextManager.sound( this.startFrequency, this.endFrequency, this.duration, this.waveType, this.volume, this.interpolationType );
-                
+               // this.createCsv();
                 this.timeouts.push(setTimeout(() => {
                     this.togglePlay();
                 }, this.getDuration() ));
