@@ -12,6 +12,7 @@ interface TutorialContainerProps {
     name: string;
     steps: pxt.tutorial.TutorialStepInfo[];
     currentStep?: number;
+    hideIteration?: boolean;
 
     tutorialOptions?: pxt.tutorial.TutorialOptions; // TODO (shakao) pass in only necessary subset
 
@@ -24,33 +25,17 @@ const MIN_HEIGHT = 80;
 const MAX_HEIGHT = 194;
 
 export function TutorialContainer(props: TutorialContainerProps) {
-    const { parent, name, steps, tutorialOptions, onTutorialStepChange, onTutorialComplete, setParentHeight } = props;
+    const { parent, name, steps, hideIteration, tutorialOptions,
+        onTutorialStepChange, onTutorialComplete, setParentHeight } = props;
     const [ currentStep, setCurrentStep ] = React.useState(props.currentStep || 0);
     const [ hideModal, setHideModal ] = React.useState(false);
     const [ layout, setLayout ] = React.useState<"vertical" | "horizontal">("vertical");
     const contentRef = React.useRef(undefined);
 
-    const currentStepInfo = steps[currentStep];
-    if (!steps[currentStep]) return <div />;
-
-    const isModal = currentStepInfo.showDialog;
-    const visibleStep = isModal ? Math.min(currentStep + 1, steps.length - 1) : currentStep;
-    const title = steps[visibleStep].title;
-    const markdown = steps[visibleStep].headerContentMd;
-    const hintMarkdown = steps[visibleStep].hintContentMd;
-
     const showBack = currentStep !== 0;
     const showNext = currentStep !== steps.length - 1;
-    const showDone = !showNext && !pxt.appTarget.appTheme.lockedEditor && !tutorialOptions?.metadata?.hideIteration;
+    const showDone = !showNext && !pxt.appTarget.appTheme.lockedEditor && !hideIteration;
     const showImmersiveReader = pxt.appTarget.appTheme.immersiveReader;
-
-    const setTutorialStep = (step: number) => {
-        onTutorialStepChange(step);
-        setCurrentStep(step);
-        if (showNext) setHideModal(false);
-    }
-    const tutorialStepNext = () => setTutorialStep(Math.min(currentStep + 1, props.steps.length - 1));
-    const tutorialStepBack = () => setTutorialStep(Math.max(currentStep - 1, 0));
 
     React.useEffect(() => {
         const observer = new ResizeObserver(() => {
@@ -78,6 +63,29 @@ export function TutorialContainer(props: TutorialContainerProps) {
         }
     })
 
+    React.useEffect(() => {
+        console.log("props", props.currentStep)
+        setCurrentStep(props.currentStep);
+    }, [props.currentStep])
+
+    React.useEffect(() => {
+        console.log("state", currentStep)
+        onTutorialStepChange(currentStep);
+        if (showNext) setHideModal(false);
+    }, [currentStep])
+
+    const currentStepInfo = steps[currentStep];
+    if (!steps[currentStep]) return <div />;
+
+    const isModal = currentStepInfo.showDialog;
+    const visibleStep = isModal ? Math.min(currentStep + 1, steps.length - 1) : currentStep;
+    const title = steps[visibleStep].title;
+    const markdown = steps[visibleStep].headerContentMd;
+    const hintMarkdown = steps[visibleStep].hintContentMd;
+
+    const tutorialStepNext = () => setCurrentStep(Math.min(currentStep + 1, props.steps.length - 1));
+    const tutorialStepBack = () => setCurrentStep(Math.max(currentStep - 1, 0));
+
     let modalActions: ModalButton[] = [{ label: lf("Ok"), onclick: tutorialStepNext,
         icon: "arrow circle right", disabled: !showNext, className: "green" }];
 
@@ -100,7 +108,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
 
     return <div className="tutorial-container">
         <div className="tutorial-top-bar">
-            <TutorialStepCounter currentStep={visibleStep} totalSteps={steps.length} title={name} setTutorialStep={setTutorialStep} />
+            <TutorialStepCounter currentStep={visibleStep} totalSteps={steps.length} title={name} setTutorialStep={setCurrentStep} />
             {showImmersiveReader && <ImmersiveReaderButton content={markdown} tutorialOptions={tutorialOptions} />}
         </div>
         {layout === "horizontal" && backButton}

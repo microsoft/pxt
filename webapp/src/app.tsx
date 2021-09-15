@@ -1302,7 +1302,7 @@ export class ProjectView
             // Hide flyouts and popouts
             this.editor.closeFlyout();
             if (this.textEditor.giveFocusOnLoading && this.isTextEditor()) {
-                this.textEditor.editor.focus();
+                this.textEditor.editor?.focus();
             }
             if (pxt.appTarget.appTheme.tutorialCodeValidation) this.editor.validateTutorialCode(this.state.tutorialOptions);
         }

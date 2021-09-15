@@ -31,6 +31,7 @@ interface SidepanelProps extends pxt.editor.ISettingsProps {
     deviceSerialActive?: boolean;
 
     tutorialOptions?: pxt.tutorial.TutorialOptions;
+
     onTutorialStepChange?: (step: number) => void;
     onTutorialComplete?: () => void;
     setEditorOffset?: () => void;
@@ -99,9 +100,9 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
             const observer = new ResizeObserver(() => {
                 const scrollVisible = c.scrollHeight > c.clientHeight;
                 if (scrollVisible)
-                    this.simPanelRef.classList.remove("invisibleScrollbar");
+                    this.simPanelRef?.classList.remove("invisibleScrollbar");
                 else
-                    this.simPanelRef.classList.add("invisibleScrollbar");
+                    this.simPanelRef?.classList.add("invisibleScrollbar");
             })
             observer.observe(c);
         }
@@ -146,7 +147,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                 </TabContent>}
                 {tutorialOptions && <TabContent name={TUTORIAL_TAB} icon="pencil" showBadge={activeTab !== TUTORIAL_TAB} onSelected={this.showTutorialTab}>
                     <TutorialContainer parent={parent} name={tutorialOptions.tutorialName} steps={tutorialOptions.tutorialStepInfo}
-                        currentStep={tutorialOptions.tutorialStep} tutorialOptions={tutorialOptions}
+                        currentStep={tutorialOptions.tutorialStep} tutorialOptions={tutorialOptions} hideIteration={tutorialOptions.metadata?.hideIteration}
                         onTutorialStepChange={onTutorialStepChange} onTutorialComplete={onTutorialComplete}
                         setParentHeight={this.setComponentHeight} />
                 </TabContent>}
