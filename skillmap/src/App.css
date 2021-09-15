@@ -352,8 +352,7 @@ code {
     }
 
     .usabilla_live_button_container {
-        top: 10rem !important;
-        bottom: unset !important;
+        bottom: 14rem !important;
     }
 }
 
