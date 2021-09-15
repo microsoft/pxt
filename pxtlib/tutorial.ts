@@ -295,7 +295,7 @@ ${code}
             });
         } else {
             // everything after the first ``` section OR the first image is treated as a "hint"
-            const hintTextRegex = /(^[\s\S]*?\S)\s*((```|\!\[[\s\S]+?\]\(\S+?\))[\s\S]*)/mi;
+            const hintTextRegex = /(^[\s\S]*?\S)\s*((```|\[?\!\[[\s\S]+?\]\(\S+?\)(?:\]))[\s\S]*)/mi;
             let hintText = step.match(hintTextRegex);
             if (hintText && hintText.length > 2) {
                 header = hintText[1].trim();

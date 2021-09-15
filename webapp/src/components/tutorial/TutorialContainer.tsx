@@ -64,12 +64,10 @@ export function TutorialContainer(props: TutorialContainerProps) {
     })
 
     React.useEffect(() => {
-        console.log("props", props.currentStep)
         setCurrentStep(props.currentStep);
     }, [props.currentStep])
 
     React.useEffect(() => {
-        console.log("state", currentStep)
         onTutorialStepChange(currentStep);
         if (showNext) setHideModal(false);
     }, [currentStep])
@@ -85,9 +83,10 @@ export function TutorialContainer(props: TutorialContainerProps) {
 
     const tutorialStepNext = () => setCurrentStep(Math.min(currentStep + 1, props.steps.length - 1));
     const tutorialStepBack = () => setCurrentStep(Math.max(currentStep - 1, 0));
+    const onModalClose = showNext ? tutorialStepNext : () => setHideModal(true);
 
-    let modalActions: ModalButton[] = [{ label: lf("Ok"), onclick: tutorialStepNext,
-        icon: "arrow circle right", disabled: !showNext, className: "green" }];
+    let modalActions: ModalButton[] = [{ label: lf("Ok"), onclick: onModalClose,
+        icon: "arrow circle right", className: "green" }];
 
     if (showBack) modalActions.unshift({ label: lf("Back"), onclick: tutorialStepBack,
         icon: "arrow circle left", disabled: !showBack, labelPosition: "left" })
@@ -123,7 +122,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
         </div>
         {layout === "horizontal" && nextButton}
         {isModal && !hideModal && <Modal isOpen={isModal} closeIcon={false} header={currentStepInfo.title || name} buttons={modalActions}
-            className="hintdialog" onClose={showNext ? tutorialStepNext : () => setHideModal(true)} dimmer={true}
+            className="hintdialog" onClose={onModalClose} dimmer={true}
             longer={true} closeOnDimmerClick closeOnDocumentClick closeOnEscape>
             <MarkedContent markdown={currentStepInfo.contentMd} parent={parent} />
         </Modal>}
