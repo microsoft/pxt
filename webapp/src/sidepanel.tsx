@@ -31,6 +31,11 @@ interface SidepanelProps extends pxt.editor.ISettingsProps {
     deviceSerialActive?: boolean;
 
     tutorialOptions?: pxt.tutorial.TutorialOptions;
+    tutorialName?: string;
+    tutorialStepInfo?: pxt.tutorial.TutorialStepInfo[];
+    tutorialStep?: number;
+    metadata?: pxt.tutorial.TutorialMetadata;
+
     onTutorialStepChange?: (step: number) => void;
     onTutorialComplete?: () => void;
     setEditorOffset?: () => void;
@@ -99,9 +104,9 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
             const observer = new ResizeObserver(() => {
                 const scrollVisible = c.scrollHeight > c.clientHeight;
                 if (scrollVisible)
-                    this.simPanelRef.classList.remove("invisibleScrollbar");
+                    this.simPanelRef?.classList.remove("invisibleScrollbar");
                 else
-                    this.simPanelRef.classList.add("invisibleScrollbar");
+                    this.simPanelRef?.classList.add("invisibleScrollbar");
             })
             observer.observe(c);
         }
@@ -118,6 +123,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
     renderCore() {
         const { parent, inHome, showKeymap, showSerialButtons, showFileList, showFullscreenButton,
             collapseEditorTools, simSerialActive, deviceSerialActive, tutorialOptions,
+            tutorialName, tutorialStep, tutorialStepInfo, metadata,
             handleHardwareDebugClick, onTutorialStepChange, onTutorialComplete } = this.props;
         const { activeTab, height } = this.state;
 
@@ -145,8 +151,8 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                     </div>
                 </TabContent>}
                 {tutorialOptions && <TabContent name={TUTORIAL_TAB} icon="pencil" showBadge={activeTab !== TUTORIAL_TAB} onSelected={this.showTutorialTab}>
-                    <TutorialContainer parent={parent} name={tutorialOptions.tutorialName} steps={tutorialOptions.tutorialStepInfo}
-                        currentStep={tutorialOptions.tutorialStep} tutorialOptions={tutorialOptions}
+                    <TutorialContainer parent={parent} name={tutorialName} steps={tutorialStepInfo} currentStep={tutorialStep}
+                        hideIteration={metadata?.hideIteration} tutorialOptions={tutorialOptions}
                         onTutorialStepChange={onTutorialStepChange} onTutorialComplete={onTutorialComplete}
                         setParentHeight={this.setComponentHeight} />
                 </TabContent>}
