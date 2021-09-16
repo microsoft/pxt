@@ -395,8 +395,8 @@ async function syncAsyncInternal(opts: SyncAsyncOptions): Promise<pxt.workspace.
                 if (!local.cloudCurrent) {
                     if (local.isDeleted) {
                         // Deleted local project, push to cloud
-                        const newHdr = await toCloud(local, null);
-                        if (newHdr === null) {
+                        const res = await toCloud(local, null);
+                        if (res.status !== "succeeded") {
                             throw new Error(`Failed to save deleted ${projShorthand} to the cloud.`)
                         }
                     }
@@ -404,8 +404,8 @@ async function syncAsyncInternal(opts: SyncAsyncOptions): Promise<pxt.workspace.
                         const remote = remoteHeaderMap[local.id];
                         if (!remote) {
                             // It's a new local project, push to cloud without etag
-                            const newHdr = await toCloud(local, null);
-                            if (newHdr === null) {
+                            const res = await toCloud(local, null);
+                            if (res.status !== "succeeded") {
                                 pxt.tickEvent(`identity.sync.failed.localNewProjectSyncUpFailed`)
                                 throw new Error(`Failed to save new ${projShorthand} to the cloud.`)
                             }
