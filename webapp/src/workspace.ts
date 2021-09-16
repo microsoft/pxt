@@ -1566,7 +1566,7 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
                 }
                 return ex;
             })
-            Promise.all([cloudsync.syncAsync(), cloud.syncAsync()]); // sync in background
+            Promise.all([cloudsync.syncAsync()]); // sync in background
         })
         .then(() => {
             refreshHeadersSession();
