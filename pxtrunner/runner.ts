@@ -218,9 +218,14 @@ namespace pxt.runner {
             const mlang = /(live)?(force)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(href);
             lang = mlang ? mlang[3] : (cookieValue && cookieValue[1] || pxt.appTarget.appTheme.defaultLocale || (navigator as any).userLanguage || navigator.language);
 
-            const liveTranslationsDisabled = pxt.BrowserUtils.isPxtElectron()
-                || (pxt.BrowserUtils.isLocalHostDev() && (pxt.appTarget.appTheme.defaultLocale || "en") === lang)
-                || pxt.appTarget.appTheme.disableLiveTranslations;
+            const defLocale = pxt.appTarget.appTheme.defaultLocale;
+            const langLowerCase = lang?.toLocaleLowerCase();
+            const localDevServe = pxt.BrowserUtils.isLocalHostDev()
+                && (!langLowerCase || (defLocale
+                    ? defLocale.toLocaleLowerCase() === langLowerCase
+                    : "en" === langLowerCase || "en-us" === langLowerCase));
+            const serveLocal = pxt.BrowserUtils.isPxtElectron() || localDevServe;
+            const liveTranslationsDisabled = serveLocal || pxt.appTarget.appTheme.disableLiveTranslations;
             if (!liveTranslationsDisabled || !!mlang?.[1]) {
                 pxt.Util.enableLiveLocalizationUpdates();
             }

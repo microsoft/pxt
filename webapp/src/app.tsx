@@ -5070,8 +5070,13 @@ document.addEventListener("DOMContentLoaded", async () => {
                 useLang = hashLang || cloudLang || cookieLang || theme.defaultLocale || (navigator as any).userLanguage || navigator.language;
 
                 const locstatic = /staticlang=1/i.test(window.location.href);
-                const serveLocal = pxt.BrowserUtils.isPxtElectron()
-                    || (pxt.BrowserUtils.isLocalHostDev() && (pxt.appTarget.appTheme.defaultLocale || "en") === useLang);
+                const defLocale = pxt.appTarget.appTheme.defaultLocale;
+                const langLowerCase = useLang?.toLocaleLowerCase();
+                const localDevServe = pxt.BrowserUtils.isLocalHostDev()
+                    && (!langLowerCase || (defLocale
+                        ? defLocale.toLocaleLowerCase() === langLowerCase
+                        : "en" === langLowerCase || "en-us" === langLowerCase));
+                const serveLocal = pxt.BrowserUtils.isPxtElectron() || localDevServe;
                 const stringUpdateDisabled = locstatic || serveLocal || theme.disableLiveTranslations;
 
                 if (!stringUpdateDisabled || requestLive) {
