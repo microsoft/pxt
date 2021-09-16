@@ -686,6 +686,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                 </div>
             } else {
                 const selectedElement = cards[selectedIndex];
+                const hasTags = cards.some(c => c.tags && c.tags.length != 0)
                 return <div>
                     <carousel.Carousel ref="carousel" tickId={path} bleedPercent={20} selectedIndex={selectedIndex}>
                         {cards.map((scr, index) =>
@@ -704,6 +705,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                                 scr={scr} index={index}
                                 onCardClick={this.handleCardClick}
                                 cardType={scr.cardType}
+                                tallCard={hasTags}
                                 tutorialStep={scr.tutorialStep}
                                 tutorialLength={scr.tutorialLength}
                             />
@@ -796,6 +798,7 @@ interface ProjectsCodeCardProps extends pxt.CodeCard {
     scr: any;
     id?: string;
     index?: number;
+    tallCard?: boolean;
     onCardClick: (e: any, scr: any, index?: number, id?: string) => void;
     onLabelClick?: (e: any, scr: any, index?: number, id?: string) => void;
 }

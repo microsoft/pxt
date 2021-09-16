@@ -429,6 +429,9 @@
         background-color: @homeCardBackgroundColor;
         .ui.image, .ui.imagewrapper, .content {
             border-radius: @homeCardImageBorderRadius !important;
+            .tags {
+                font-size: 1rem;
+            }
         }
         .header {
             color: @homeCardHeaderColor;
@@ -653,11 +656,9 @@
     }
 
     .projectsdialog {
-        .ui.card, .ui.cards>.card {
+        .ui.card.buttoncard {
             width: 9rem;
             height: 9rem;
-        }
-        .ui.card.buttoncard {
             .content {
                 padding: 1rem;
             }
@@ -681,6 +682,12 @@
             .ui.image~.content {
                 height: 2.4rem;
                 padding: 0.7rem;
+            }
+            .ui.image~.content.tall {
+                height: 3rem;
+                .tags {
+                    font-size: .8rem;
+                }
             }
         }
         .ui.card.file {
