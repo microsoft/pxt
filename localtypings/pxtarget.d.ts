@@ -597,7 +597,10 @@ declare namespace pxt.editor {
         Standard = "",
         PythonOnly = "python-only",
         JavaScriptOnly = "javascript-only",
-        NoBlocks = "no-blocks"
+        BlocksOnly = "blocks-only",
+        NoBlocks = "no-blocks",
+        NoPython = "no-python",
+        NoJavaScript = "no-javascript"
     }
 }
 

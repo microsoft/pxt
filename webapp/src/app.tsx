@@ -605,6 +605,42 @@ export class ProjectView
         this.shouldTryDecompile = false;
     }
 
+    async openBlocksAsync() {
+        if (this.updatingEditorFile) return; // already transitioning
+
+        if (this.isBlocksActive()) {
+            if (this.state.embedSimView) this.setState({ embedSimView: false });
+            return;
+        }
+
+        const epkg = pkg.mainEditorPkg();
+
+        if (!epkg.files[pxt.MAIN_BLOCKS]) {
+            epkg.setContentAsync(pxt.MAIN_BLOCKS, "");
+        }
+
+        const mainBlocks = epkg.files[pxt.MAIN_BLOCKS];
+        if (this.isJavaScriptActive() || (this.shouldTryDecompile && !this.state.embedSimView))
+            await this.textEditor.openBlocksAsync();
+        // any other editeable .ts or pxt.json; or empty mainblocks
+        else if (this.isAnyEditeableJavaScriptOrPackageActive() || !mainBlocks.content) {
+            await this.saveFileAsync();
+            await this.textEditor.openBlocksAsync();
+        } else {
+            const header = this.state.header;
+
+            // Check to see if the last edit happened in monaco
+            if (header && header.editor !== pxt.BLOCKS_PROJECT_NAME) {
+                await this.textEditor.openBlocksAsync();
+            }
+            else {
+                this.setFile(mainBlocks)
+            }
+        }
+
+        this.shouldTryDecompile = false;
+    }
+
     openAssets() {
         const mainEditorPkg = pkg.mainEditorPkg()
         if (!mainEditorPkg) return;
@@ -2955,6 +2991,70 @@ export class ProjectView
 
     overrideBlocksFile(text: string) {
         if (this.blocksEditor) this.blocksEditor.overrideFile(text);
+    }
+
+    async setLanguageRestrictionAsync(restriction: pxt.editor.LanguageRestriction) {
+        if (this.state.header) {
+            const epkg = pkg.mainEditorPkg();
+            const pxtJsonFile = epkg.files["pxt.json"];
+            const pxtJson = pxt.Package.parseAndValidConfig(pxtJsonFile?.content);
+            if (pxtJson) {
+                pxtJson.languageRestriction = restriction;
+                await pxtJsonFile.setContentAsync(JSON.stringify(pxtJson, null, 4));
+
+                let filesToDrop: string[];
+
+                switch (restriction) {
+                    case pxt.editor.LanguageRestriction.BlocksOnly:
+                    case pxt.editor.LanguageRestriction.NoJavaScript:
+                    case pxt.editor.LanguageRestriction.Standard:
+                        filesToDrop = [];
+                        break;
+                    case pxt.editor.LanguageRestriction.JavaScriptOnly:
+                        filesToDrop = [pxt.MAIN_BLOCKS, pxt.MAIN_PY];
+                        break;
+                    case pxt.editor.LanguageRestriction.PythonOnly:
+                    case pxt.editor.LanguageRestriction.NoBlocks:
+                        filesToDrop = [pxt.MAIN_BLOCKS];
+                        break;
+                    case pxt.editor.LanguageRestriction.NoPython:
+                        filesToDrop = [pxt.MAIN_PY];
+                        break;
+                }
+
+                for (const file of filesToDrop) {
+                    await epkg.removeFileAsync(file);
+                }
+
+                switch (restriction) {
+                    case pxt.editor.LanguageRestriction.BlocksOnly:
+                    case pxt.editor.LanguageRestriction.NoJavaScript:
+                    case pxt.editor.LanguageRestriction.Standard:
+                    case pxt.editor.LanguageRestriction.NoPython:
+                        if (this.editorFile.name !== pxt.MAIN_BLOCKS) {
+                            this.openBlocksAsync();
+                            return;
+                        }
+                        break;
+                    case pxt.editor.LanguageRestriction.JavaScriptOnly:
+                    case pxt.editor.LanguageRestriction.NoBlocks:
+                        if (this.editorFile.name !== pxt.MAIN_TS) {
+                            await this.openTypeScriptAsync();
+                            return;
+                        }
+                        break;
+                    case pxt.editor.LanguageRestriction.PythonOnly:
+                        if (this.editorFile.name !== pxt.MAIN_PY) {
+                            await this.openPythonAsync();
+                            return;
+                        }
+                        break;
+                }
+
+
+                await this.reloadHeaderAsync();
+            }
+        }
     }
 
     ///////////////////////////////////////////////////////////

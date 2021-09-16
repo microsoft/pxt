@@ -59,6 +59,7 @@ namespace pxt.editor {
         | "projectcloudstatus"
         | "requestprojectcloudstatus"
         | "convertcloudprojectstolocal"
+        | "setlanguagerestriction"
 
         | "toggletrace" // EditorMessageToggleTraceRequest
         | "togglehighcontrast"
@@ -361,6 +362,11 @@ namespace pxt.editor {
         script: Cloud.JsonScript;
     }
 
+    export interface EditorSetLanguageRestriction extends EditorMessageRequest {
+        action: "setlanguagerestriction";
+        restriction: pxt.editor.LanguageRestriction;
+    }
+
     const pendingRequests: pxt.Map<{
         resolve: (res?: EditorMessageResponse | PromiseLike<EditorMessageResponse>) => void;
         reject: (err: any) => void;
@@ -584,6 +590,10 @@ namespace pxt.editor {
                                 case "convertcloudprojectstolocal": {
                                     const msg = data as EditorMessageConvertCloudProjectsToLocal;
                                     return projectView.convertCloudProjectsToLocal(msg.userId);
+                                }
+                                case "setlanguagerestriction": {
+                                    const msg = data as EditorSetLanguageRestriction;
+                                    return projectView.setLanguageRestrictionAsync(msg.restriction);
                                 }
                             }
                             return Promise.resolve();

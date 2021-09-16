@@ -64,6 +64,17 @@
             logs.innerText += "filter: " + filter + "\n";
         }
 
+        var languageRestrictions = [
+            "python-only",
+            "javascript-only",
+            "blocks-only",
+            "no-blocks",
+            "no-python",
+            "no-javascript",
+            ""
+        ];
+        var languageRestrictionIndex = 0;
+
         var pendingMsgs = {};
         var fullScreen = false;
         function sendMessage(action) {
@@ -91,6 +102,10 @@
                 msg.enabled = true;
             } else if (action == 'setsimulatorfullscreen') {
                 msg.enabled = fullScreen = !fullScreen;
+            }
+            else if (action == 'setlanguagerestriction') {
+                msg.restriction = languageRestrictions[languageRestrictionIndex];
+                languageRestrictionIndex = (languageRestrictionIndex + 1) % languageRestrictions.length;
             }
             if (msg.response)
                 pendingMsgs[msg.id] = msg;
@@ -160,6 +175,7 @@
     <div id="buttons" class="ui buttons">
         <button class="ui button" onclick="sendMessage('switchblocks')">switch to blocks</button>
         <button class="ui button" onclick="sendMessage('switchjavascript')">switch to javascript</button>
+        <button class="ui button" onclick="sendMessage('setlanguagerestriction')">restrict language</button>
         <button class="ui button" onclick="sendMessage('startsimulator')">start sim</button>
         <button class="ui button" onclick="sendMessage('restartsimulator')">reset sim</button>
         <button class="ui button" onclick="sendMessage('stopsimulator')">stop sim</button>
