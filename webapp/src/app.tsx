@@ -319,7 +319,7 @@ export class ProjectView
         return !isSandbox && !skipStartScreen && !isProjectRelatedHash(hash);
     }
 
-    updateVisibility() {
+    async updateVisibilityAsync() {
         if (pxt.BrowserUtils.isElectron() || pxt.winrt.isWinRT() || pxt.appTarget.appTheme.dontSuspendOnVisibility) {
             // Don't suspend when inside apps
             return;
@@ -348,9 +348,8 @@ export class ProjectView
             if ((!inEditor && workspace.isHeadersSessionOutdated())
                 || workspace.isHeaderSessionOutdated(this.state.header)) {
                 pxt.debug('workspace: changed, reloading...')
-                workspace.syncAsync()
-                    .then(() => inEditor ? this.loadHeaderAsync(workspace.getHeader(hdrId), this.state.editorState) : Promise.resolve());
-
+                await workspace.syncAsync();
+                if (inEditor) { await this.loadHeaderAsync(workspace.getHeader(hdrId), this.state.editorState); }
                 // device scanning restarts in loadheader
             } else if (this.state.resumeOnVisibility) {
                 this.setState({ resumeOnVisibility: false });
@@ -360,6 +359,9 @@ export class ProjectView
             } else if (!this.state.home) {
                 cmds.maybeReconnectAsync(false, true);
             }
+            // If active but not in editor, poll cloud for changes.
+            if (!inEditor) { await cloud.syncAsync({ direction: "down" }); }
+
         }
     }
 
@@ -421,7 +423,7 @@ export class ProjectView
             });
     }
 
-    componentDidUpdate() {
+    async componentDidUpdate(prevProps: Readonly<IAppProps>, prevState: Readonly<IAppState>) {
         this.saveSettings()
         this.editor.domUpdate();
         simulator.setState(this.state.header ? this.state.header.editor : '', this.state.tutorialOptions && !!this.state.tutorialOptions.tutorial)
@@ -436,6 +438,10 @@ export class ProjectView
                 this.editor.updateBreakpoints();
                 this.editor.updateToolbox()
             });
+        }
+        // If home screen became active, poll cloud for changes.
+        if (!prevState.home && this.state.home) {
+            await cloud.syncAsync({ direction: "down" });
         }
     }
 
@@ -1476,7 +1482,7 @@ export class ProjectView
                     .then(() => {
                         timedOut = true
                     }),
-                cloud.syncAsync([h])
+                cloud.syncAsync({ hdrs: [h], direction: "down" })
                     .then(changes => {
                         if (changes.length) {
                             const elapsed = Util.nowSeconds() - timeoutStart;
@@ -5120,7 +5126,10 @@ document.addEventListener("DOMContentLoaded", async () => {
                 || theme.allowSimulatorTelemetry
                 || pxt.shell.isControllerMode())
                 pxt.editor.bindEditorMessages(getEditorAsync);
-            return workspace.initAsync()
+            return workspace.initAsync().then(async s => {
+                // Poll cloud for changes after workspace is initialized
+                await cloud.syncAsync(); return s;
+            });
         })
         .then((state) => {
             render(); // this sets theEditor
@@ -5177,9 +5186,9 @@ document.addEventListener("DOMContentLoaded", async () => {
             return workspace.loadedAsync();
         });
 
-    document.addEventListener("visibilitychange", ev => {
+    document.addEventListener("visibilitychange", async ev => {
         if (theEditor)
-            theEditor.updateVisibility();
+            await theEditor.updateVisibilityAsync();
     });
 
     window.addEventListener("unload", ev => {
