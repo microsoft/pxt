@@ -170,9 +170,9 @@ namespace pxt.BrowserUtils {
         } catch (e) { return false; }
     }
 
-    export function useVerticalTutorialLayout(): boolean {
+    export function useOldTutorialLayout(): boolean {
         try {
-            return !(/tutoriallayout=h/.test(window.location.href));
+            return (/tutorialview=old/.test(window.location.href));
         } catch (e) { return false; }
     }
 

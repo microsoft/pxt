@@ -107,7 +107,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const isFullscreen = parentState.fullscreen;
         const isMuted = parentState.mute;
         const inTutorial = !!parentState.tutorialOptions && !!parentState.tutorialOptions.tutorial;
-        const isVerticalTutorial = inTutorial && pxt.BrowserUtils.useVerticalTutorialLayout();
+        const isTabTutorial = inTutorial && !pxt.BrowserUtils.useOldTutorialLayout();
         const inCodeEditor = parent.isBlocksActive() || parent.isJavaScriptActive() || parent.isPythonActive();
 
         const run = true;
@@ -141,7 +141,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
 
         return <aside className={"ui item grid centered simtoolbar" + (sandbox ? "" : " portrait ")} role="complementary" aria-label={lf("Simulator toolbar")}>
             <div className={`ui icon tiny buttons`} style={{ padding: "0" }}>
-                {isVerticalTutorial && <sui.Button key='simsidebarbtn' className="sidebar-button tablet only" icon="arrow circle left" title={sidebarTooltip} onClick={showSimulatorSidebar} />}
+                {isTabTutorial && <sui.Button key='simsidebarbtn' className="sidebar-button tablet only" icon="arrow circle left" title={sidebarTooltip} onClick={showSimulatorSidebar} />}
                 {make && <sui.Button disabled={debugging} icon='configure' className="secondary" title={makeTooltip} onClick={this.openInstructions} />}
                 {run && !targetTheme.bigRunButton && <PlayButton parent={parent} simState={parentState.simState} debugging={parentState.debugging} />}
                 {fullscreen && <sui.Button key='fullscreenbtn' className="fullscreen-button tablet only hidefullscreen" icon="xicon fullscreen" title={fullscreenTooltip} onClick={this.toggleSimulatorFullscreen} />}
