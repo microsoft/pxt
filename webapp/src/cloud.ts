@@ -299,7 +299,7 @@ async function resolveConflictAsync(local: Header, remote: Header | null) {
             }
         }
     } catch (e) {
-        // we want to swallow this and keep going since step 3. is the essential one to resolve the conflcit.
+        // we want to swallow this and keep going since step 3. is the essential one to resolve the conflict.
         pxt.reportException(e);
         pxt.tickEvent(`identity.sync.conflict.reloadEditorFailed`, { exception: e });
         anyError = true;
