@@ -605,6 +605,10 @@ export class ProjectView
         this.shouldTryDecompile = false;
     }
 
+    /**
+     * Same as openBlocks but waits for the return and ensures that main.blocks exist
+     * @returns
+     */
     async openBlocksAsync() {
         if (this.updatingEditorFile) return; // already transitioning
 
