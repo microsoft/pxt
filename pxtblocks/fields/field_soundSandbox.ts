@@ -6,7 +6,6 @@ namespace pxtblockly {
     export class FieldCustomSound<U extends Blockly.FieldCustomOptions> extends Blockly.Field implements Blockly.FieldCustom {
         public isFieldCustom_ = true;
         public SERIALIZABLE = true;
-
         protected params: U;
         private melody: pxtmelody.MelodyArray;
         private duration: number = 1500;
@@ -27,7 +26,7 @@ namespace pxtblockly {
         private timeouts: any[] = []; // keep track of timeouts
         private invalidString: string;
         private prevString: string;
-      
+    
         // DOM references
         private topDiv: HTMLDivElement;
         private editorDiv: HTMLDivElement;
@@ -119,11 +118,11 @@ namespace pxtblockly {
         
                 label.innerText = samples[i].name;
     
-               // innerButton.appendChild(label);
+               innerButton.title = samples[i].name;
                 innerButton.appendChild(im);
     
                 outer.appendChild(innerButton);
-                innerButton.addEventListener("click", () =>{ this.updateParameters(samples[i], innerButton);  /*this.waveButtons.style.setProperty("background-color", "green")*/} );
+                innerButton.addEventListener("click", () =>{ this.updateParameters(samples[i], innerButton); this.updateGraph();  /*this.waveButtons.style.setProperty("background-color", "green")*/} );
             }
             return outer;
         }
@@ -165,7 +164,6 @@ namespace pxtblockly {
        this.durationInput.value = this.duration.toString();
        this.syncDurationField(false);
     }
-
 
         getValue() {
             this.stringRep = this.getTypeScriptValue();
@@ -266,7 +264,7 @@ namespace pxtblockly {
             this.startFrequencyInput.title = lf("Start frequency");
             this.startFrequencyInput.value = this.startFrequency.toString();
             this.startFrequencyInput.id = "melody-tempo-input-start-frequency";
-            this.startFrequencyInput.addEventListener("input", () => this.setStartFrequency(+this.startFrequencyInput.value));
+            this.startFrequencyInput.addEventListener("input", () => {this.setStartFrequency(+this.startFrequencyInput.value); this.updateGraph()});
             this.syncStartFrequencyField(true);
 
             this.hz1 = document.createElement("span");
@@ -285,7 +283,7 @@ namespace pxtblockly {
             this.endFrequencyInput.title = lf("End frequency");
             this.endFrequencyInput.value = this.endFrequency.toString();
             this.endFrequencyInput.id = "melody-tempo-input-start-frequency";
-            this.endFrequencyInput.addEventListener("input", () => this.setEndFrequency(+this.endFrequencyInput.value));
+            this.endFrequencyInput.addEventListener("input", () => {this.setEndFrequency(+this.endFrequencyInput.value); this.updateGraph()});
             this.syncEndFrequencyField(true);
 
             this.hz2 = document.createElement("span");
@@ -368,39 +366,25 @@ namespace pxtblockly {
 
             this.canvas = document.createElement("canvas");
             pxt.BrowserUtils.addClass(this.canvas, "myCanvas");
-            this.canvas.src="https://cdn.jsdelivr.net/npm/apexcharts";
-            this.canvas.width="400";
-            this.canvas.height="80";
+            this.canvas.width="440";
+            this.canvas.height="100";
+            this.canvas.style="border:4px solid #d3d3d3";
 
-           /* this.chart = document.createElement("chart");
-            pxt.BrowserUtils.addClass(this.chart, "myChart");
+            var csv = this.createCsv()
+            console.log(csv)
+            var canvasWidth = this.canvas.width;
+            var canvasHeight = this.canvas.height;
+            var ctx = this.canvas.getContext("2d");
 
-            
-            this.chart.id = "myChart";
-*/
-          
-            /*  var options = {
-                chart: {
-                  type: 'line'
-                },
-                series: [{
-                  name: 'sales',
-                  data: [30,40,35,50,49,60,70,91,125]
-                }],
-                xaxis: {
-                  categories: [1991,1992,1993,1994,1995,1996,1997, 1998,1999]
+            for(let i = 0; i<csv.length; i++){
+
+                ctx.beginPath();
+                ctx.arc(Math.round((i/csv.length)*canvasWidth), 100 - Math.round(csv[i]/200), 1, 0, 2 * Math.PI);
+                ctx.stroke();
                 }
-              }
-              
-              var chart = new ApexCharts(document.querySelector("#chart"), options);
-              
-              chart.render();
-
-
-*/
 
            
-            this.bottomDiv.appendChild(this.canvas);
+            this.parameters.appendChild(this.canvas);
             this.bottomDiv.appendChild(this.volumeInput);
             this.bottomDiv.appendChild(this.playButton);
             this.bottomDiv.appendChild(this.doneButton);
@@ -449,6 +433,23 @@ namespace pxtblockly {
             this.startFrequencyInput = null;
             this.endFrequencyInput = null;
         }
+
+        private updateGraph(){
+           
+            var ctx = this.canvas.getContext("2d");
+            var csv = this.createCsv()
+
+
+ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+            for(let i = 0; i<csv.length; i++){
+
+                ctx.beginPath();
+                ctx.arc(Math.round((i/csv.length)*this.canvas.width), 100 - Math.round(csv[i]/200), 1, 0, 2 * Math.PI);
+                ctx.stroke();
+                }
+
+        } 
 
         // This is the string that will be inserted into the user's TypeScript code
         protected getTypeScriptValue(): string {
@@ -809,12 +810,35 @@ namespace pxtblockly {
             let timeDivision = this.duration/divisor;
             let frequencyDivision = (this.endFrequency - this.startFrequency)/divisor;
             let csv = [];
-            for(let i = 0; i<divisor; i++){
-                let frequency = this.startFrequency + (i * frequencyDivision)
-                csv.push(frequency);
+
+            switch(this.interpolationType){
+                case "linear":
+                    for(let i = 0; i < divisor; i++) {
+                        
+                        let frequency = this.startFrequency + (i * frequencyDivision)
+                        csv.push(frequency);
+                    }
+                     return csv;
+                case "exponential":
+                    for(let i = 0; i < divisor; i++) {
+                        let frequency = this.startFrequency + ( (this.endFrequency - this.startFrequency) / Math.pow( 1.1 , divisor-1) ) * Math.pow( 1.1 , i );
+                        csv.push(frequency);    
+                     }
+                     return csv;
+                case "quadratic":
+                    for(let i = 0; i < divisor; i++) {
+                        let frequency = this.startFrequency + ( (this.endFrequency - this.startFrequency) / Math.pow( divisor-1 , 3) ) * Math.pow( i , 3 ) ;
+                           csv.push(frequency);
+                    }
+                    return csv;
+                default:
+                    for(let i = 0; i < divisor; i++) {
+                        
+                        let frequency = this.startFrequency + (i * frequencyDivision)
+                        csv.push(frequency);
+                    }
+                     return csv;
             }
-            console.log(csv);
-            return csv;
         }
 
         private playSound(): void {

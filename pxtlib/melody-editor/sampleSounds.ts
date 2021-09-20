@@ -24,7 +24,7 @@ namespace pxtmelody {
 
     export const SampleSounds = [
         new SoundInfo(lf("Squeak"), 2, 6000, 7000, 250,  "sawtooth", "linear", "/static/online-learning/img/flashing-heart.png"),
-        new SoundInfo(lf("Croak"), 3, 80, 170, 250,  "square", "exponential", "/static/online-learning/img/flashing-heart.png"),
+        new SoundInfo(lf("Croak"), 3, 80, 170, 250,  "sawtooth", "exponential", "/static/online-learning/img/flashing-heart.png"),
         new SoundInfo(lf("Warble"), 2, 6000, 7000, 250,  "sawtooth", "linear", "/static/online-learning/img/flashing-heart.png"),
         new SoundInfo(lf("Chirp"), 2, 6000, 7000, 250,  "sawtooth", "linear", "/static/online-learning/img/flashing-heart.png"),
         new SoundInfo(lf("Meow"), 2, 6000, 7000, 250,  "sawtooth", "linear", "/static/online-learning/img/flashing-heart.png"),
