@@ -29,6 +29,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
         onTutorialStepChange, onTutorialComplete, setParentHeight } = props;
     const [ currentStep, setCurrentStep ] = React.useState(props.currentStep || 0);
     const [ hideModal, setHideModal ] = React.useState(false);
+    const [ showScrollGradient, setShowScrollGradient ] = React.useState(false);
     const [ layout, setLayout ] = React.useState<"vertical" | "horizontal">("vertical");
     const contentRef = React.useRef(undefined);
 
@@ -44,6 +45,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
             } else {
                 setLayout("vertical");
             }
+            setShowScrollGradient(contentRef?.current?.scrollHeight > contentRef?.current?.offsetHeight);
         });
         observer.observe(document.body)
         return () => observer.disconnect();
@@ -65,6 +67,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
 
     React.useEffect(() => {
         setCurrentStep(props.currentStep);
+        setShowScrollGradient(contentRef?.current?.scrollHeight > contentRef?.current?.offsetHeight);
     }, [props.currentStep])
 
     React.useEffect(() => {
@@ -84,6 +87,11 @@ export function TutorialContainer(props: TutorialContainerProps) {
     const tutorialStepNext = () => setCurrentStep(Math.min(currentStep + 1, props.steps.length - 1));
     const tutorialStepBack = () => setCurrentStep(Math.max(currentStep - 1, 0));
     const onModalClose = showNext ? tutorialStepNext : () => setHideModal(true);
+
+    const tutorialContentScroll = () => {
+        const contentDiv = contentRef?.current;
+        setShowScrollGradient(contentDiv && ((contentDiv.scrollHeight - contentDiv.scrollTop - contentDiv.clientHeight) > 1));
+    }
 
     let modalActions: ModalButton[] = [{ label: lf("Ok"), onclick: onModalClose,
         icon: "arrow circle right", className: "green" }];
@@ -111,7 +119,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
             {showImmersiveReader && <ImmersiveReaderButton content={markdown} tutorialOptions={tutorialOptions} />}
         </div>
         {layout === "horizontal" && backButton}
-        <div className="tutorial-content" ref={contentRef}>
+        <div className="tutorial-content" ref={contentRef} onScroll={tutorialContentScroll}>
             {title && <div className="tutorial-title">{title}</div>}
             <MarkedContent className="no-select" tabIndex={0} markdown={markdown} parent={parent}/>
         </div>
@@ -121,6 +129,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
             { layout === "vertical" && nextButton }
         </div>
         {layout === "horizontal" && nextButton}
+        {showScrollGradient && <div className="tutorial-scroll-gradient" />}
         {isModal && !hideModal && <Modal isOpen={isModal} closeIcon={false} header={currentStepInfo.title || name} buttons={modalActions}
             className="hintdialog" onClose={onModalClose} dimmer={true}
             longer={true} closeOnDimmerClick closeOnDocumentClick closeOnEscape>

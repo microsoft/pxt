@@ -134,6 +134,13 @@ namespace pxt.editor {
         projectHeaderId: string;
     }
 
+    export interface EditorMessageTutorialExitEventRequest extends EditorMessageRequest {
+        action: "tutorialevent";
+        tutorialEvent: "exit";
+        tutorialId: string;
+        projectHeaderId: string;
+    }
+
     export interface EditorMessageStopRequest extends EditorMessageRequest {
         action: "stopsimulator";
         /**

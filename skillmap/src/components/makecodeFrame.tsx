@@ -264,7 +264,8 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
     }
 
     protected handleTutorialEvent(event: pxt.editor.EditorMessageTutorialEventRequest) {
-        const { dispatchSetHeaderIdForActivity, mapId, activityId, progress } = this.props;
+        const { dispatchSetHeaderIdForActivity, dispatchSaveAndCloseActivity,
+            mapId, activityId, progress } = this.props;
 
         switch (event.tutorialEvent) {
             case "progress":
@@ -284,6 +285,9 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
                 break;
             case "completed":
                 this.onTutorialFinished();
+                break;
+            case "exit":
+                dispatchSaveAndCloseActivity();
                 break;
         }
     }
