@@ -227,6 +227,14 @@
         stroke-width: 3px;
     }
 
+    .cloudstatusarea {
+        color: @HCtextColor !important;
+
+        .ui.loader:after {
+            border-top-color: @HCtextColor !important;
+        }
+    }
+
     /* Menu bar */
     .menubar .menu > .item:focus > i,
     .menubar .menu > .item:focus > span {
@@ -394,6 +402,12 @@
         }
     }
 
+    .signin-button {
+        background-color: @HCbackground;
+        color: @HCtextColor;
+        border: 1px solid @HCtextColor !important;
+    }
+
     /* Inputs */
     .ui.input input,
     .ui.input .input {
@@ -525,6 +539,7 @@
         border: 2px solid @HCtextColor !important;
     }
 
+    /* banners */
     #notificationBanner {
         background: @HCbackground !important;
         border: 2px solid @HCtextColor !important;
@@ -532,6 +547,12 @@
         .header {
             color: @HCtextColor !important;
         }
+    }
+
+    .ui.message {
+        background: @HCbackground !important;
+        color: @HCtextColor !important;
+        border: 2px solid @HCtextColor !important;
     }
 
     #winAppError {
