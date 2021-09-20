@@ -1365,6 +1365,18 @@ export class ProjectView
         } as pxt.editor.EditorMessageTutorialCompletedEventRequest)
     }
 
+    protected postTutorialExit() {
+        const tutorialId = this.state.tutorialOptions?.tutorial || this.state.header?.tutorialCompleted.id
+
+        pxt.editor.postHostMessageAsync({
+            type: "pxthost",
+            action: "tutorialevent",
+            tutorialEvent: "exit",
+            tutorialId,
+            projectHeaderId: this.state.header.id
+        } as pxt.editor.EditorMessageTutorialExitEventRequest)
+    }
+
     handleMessage(msg: pxsim.SimulatorMessage) {
         switch (msg.type) {
             case "opendoc":
@@ -4052,6 +4064,7 @@ export class ProjectView
     exitTutorial(removeProject?: boolean) {
         pxt.tickEvent("tutorial.exit", { tutorial: this.state.header?.tutorial?.tutorial });
         core.showLoading("leavingtutorial", lf("leaving tutorial..."));
+        this.postTutorialExit();
 
         this.exitTutorialAsync(removeProject)
             .finally(() => {

@@ -5,6 +5,9 @@
 @tutorialPrimaryColor: @teal;
 @tutorialSecondaryColor: @blue;
 
+@tutorialTabletButtonColor: #f3f3f3;
+@tutorialTabletStepCounterWidth: 16rem;
+
 /*******************************
         Tutorial Tab
 *******************************/
@@ -32,7 +35,7 @@
 .tutorial-content {
     flex: 1;
     padding: 0 1rem;
-    margin: 1rem 0;
+    margin: 2rem 0;
     overflow-x: hidden;
     overflow-y: auto;
     font-family: @segoeUIFont;
@@ -43,8 +46,16 @@
     }
 
     p {
-        line-height: 1.5em;
+        line-height: 1.6em;
     }
+}
+
+.tutorial-scroll-gradient {
+    position: absolute;
+    height: 3rem;
+    width: calc(~'100% - 1rem');
+    bottom: 6rem;
+    background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0), @white);
 }
 
 /*******************************
@@ -57,9 +68,7 @@
     top: 0;
     right: 0;
     color: @white;
-    font-family: @segoeUIFont;
     font-size: @smallFontSize;
-    text-transform: uppercase;
     line-height: 3.5rem;
     cursor: pointer;
 }
@@ -68,13 +77,18 @@
     text-decoration: underline;
 }
 
+#mainmenu .tutorial-exit {
+    font-family: @segoeUIFont;
+    text-transform: uppercase;
+}
+
 /*******************************
        Tutorial Top Buttons
 *******************************/
 
 .tutorial-top-bar {
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     padding: 0.5rem 1rem 0;
 }
 
@@ -352,13 +366,20 @@
         padding: 1rem;
     }
 
+    .tutorial-scroll-gradient {
+        width: calc(~'100% - 15rem');
+        bottom: 0;
+        left: 4rem;
+    }
+
     /*******************************
             Exit Tutorial
     *******************************/
 
     .tab-simulator.hidden .tutorial-exit {
         // Shift in tutorial tab to make space for step counter
-        right: 14rem;
+        right: @tutorialTabletStepCounterWidth;
+        margin-right: 0;
     }
 
     /*******************************
@@ -369,9 +390,9 @@
         position: absolute;
         top: 0;
         right: 0;
-        width: 14rem;
+        width: @tutorialTabletStepCounterWidth;
         flex-direction: row-reverse;
-        padding: 0.2rem 1rem;
+        padding: 0.5rem 1rem;
     }
 
     #editorSidebar .immersive-reader-button.ui.item,
@@ -429,9 +450,15 @@
     .tutorial-container {
         > .ui.button {
             color: @tutorialPrimaryColor;
-            background: @white;
+            background: @tutorialTabletButtonColor;
             box-shadow: none;
             border-radius: 0;
+        }
+
+        > .ui.button:hover {
+            color: @white;
+            background-color: @tutorialPrimaryColor;
+            filter: none;
         }
     }
 

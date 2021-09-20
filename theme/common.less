@@ -96,7 +96,6 @@ pre {
 @editorToolsHeight: 10rem;
 @editorToolsCollapsedHeight: 4.7rem;
 @editorToolsCollapsedMobileHeight: 3.4rem;
-@editorToolsThinHeight: 3rem;
 #editortools {
     position: fixed;
     top: auto;
@@ -1801,29 +1800,6 @@ p.ui.font.small {
     }
     #editorSidebar {
         top: @thinMenuHeight;
-    }
-    #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #assetEditor, #editorSidebar {
-        bottom: @editorToolsThinHeight;
-    }
-
-
-    #editortools {
-        height: @editorToolsThinHeight;
-
-        .ui.button {
-            padding: 0.5rem;
-        }
-
-        #downloadArea,
-        #editorToolbarArea,
-        #projectNameArea,
-        input {
-            font-size: 0.8em !important;
-        }
-
-        .ui.button {
-            font-size: .92857143rem !important;
-        }
     }
 }
 
