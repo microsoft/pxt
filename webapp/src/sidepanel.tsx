@@ -87,7 +87,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
 
     protected handleSimOverlayClick = () => {
         const { tutorialOptions, handleFullscreenButtonClick } = this.props;
-        if (!tutorialOptions || !pxt.BrowserUtils.useVerticalTutorialLayout()) {
+        if (!tutorialOptions || pxt.BrowserUtils.useOldTutorialLayout()) {
             handleFullscreenButtonClick();
         } else {
             this.showSimulatorTab();
@@ -122,14 +122,14 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
             handleHardwareDebugClick, onTutorialStepChange, onTutorialComplete } = this.props;
         const { activeTab, height } = this.state;
 
-        const isVerticalTutorial = tutorialOptions?.tutorial && pxt.BrowserUtils.useVerticalTutorialLayout();
+        const isTabTutorial = tutorialOptions?.tutorial && !pxt.BrowserUtils.useOldTutorialLayout();
         const hasSimulator = !pxt.appTarget.simulator?.headless;
         const marginHeight = hasSimulator ? "6.5rem" : "3rem";
 
         return <div id="simulator" className="simulator">
             <TabPane id="editorSidebar" activeTabName={activeTab} style={height ? { height: `calc(${height}px + ${marginHeight})` } : undefined}>
                 {hasSimulator && <TabContent name={SIMULATOR_TAB} icon="game" onSelected={this.showSimulatorTab}>
-                    {isVerticalTutorial && this.tutorialExitButton()}
+                    {isTabTutorial && this.tutorialExitButton()}
                     <div className="ui items simPanel" ref={this.handleSimPanelRef}>
                         <div id="boardview" className="ui vertical editorFloat" role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0} />
                         <simtoolbar.SimulatorToolbar parent={parent} collapsed={collapseEditorTools} simSerialActive={simSerialActive} devSerialActive={deviceSerialActive} showSimulatorSidebar={this.showSimulatorTab} />
