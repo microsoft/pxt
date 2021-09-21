@@ -9,6 +9,7 @@ import { TutorialHint } from "./TutorialHint";
 
 interface TutorialContainerProps {
     parent: pxt.editor.IProjectView;
+    tutorialId: string;
     name: string;
     steps: pxt.tutorial.TutorialStepInfo[];
     currentStep?: number;
@@ -25,7 +26,7 @@ const MIN_HEIGHT = 80;
 const MAX_HEIGHT = 194;
 
 export function TutorialContainer(props: TutorialContainerProps) {
-    const { parent, name, steps, hideIteration, tutorialOptions,
+    const { parent, tutorialId, name, steps, hideIteration, tutorialOptions,
         onTutorialStepChange, onTutorialComplete, setParentHeight } = props;
     const [ currentStep, setCurrentStep ] = React.useState(props.currentStep || 0);
     const [ hideModal, setHideModal ] = React.useState(false);
@@ -84,8 +85,18 @@ export function TutorialContainer(props: TutorialContainerProps) {
     const markdown = steps[visibleStep].headerContentMd;
     const hintMarkdown = steps[visibleStep].hintContentMd;
 
-    const tutorialStepNext = () => setCurrentStep(Math.min(currentStep + 1, props.steps.length - 1));
-    const tutorialStepBack = () => setCurrentStep(Math.max(currentStep - 1, 0));
+    const tutorialStepNext = () => {
+        const step = Math.min(currentStep + 1, props.steps.length - 1);
+        pxt.tickEvent("tutorial.next", { tutorial: tutorialId, step: step, isModal: isModal ? 1 : 0 }, { interactiveConsent: true });
+        setCurrentStep(step);
+    }
+
+    const tutorialStepBack = () => {
+        const step = Math.max(currentStep - 1, 0);
+        pxt.tickEvent("tutorial.previous", { tutorial: tutorialId, step: step, isModal: isModal ? 1 : 0 }, { interactiveConsent: true });
+        setCurrentStep(step);
+    }
+
     const onModalClose = showNext ? tutorialStepNext : () => setHideModal(true);
 
     const tutorialContentScroll = () => {
@@ -115,7 +126,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
 
     return <div className="tutorial-container">
         <div className="tutorial-top-bar">
-            <TutorialStepCounter currentStep={visibleStep} totalSteps={steps.length} title={name} setTutorialStep={setCurrentStep} />
+            <TutorialStepCounter tutorialId={tutorialId} currentStep={visibleStep} totalSteps={steps.length} title={name} setTutorialStep={setCurrentStep} />
             {showImmersiveReader && <ImmersiveReaderButton content={markdown} tutorialOptions={tutorialOptions} />}
         </div>
         {layout === "horizontal" && backButton}
@@ -125,7 +136,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
         </div>
         <div className="tutorial-controls">
             { layout === "vertical" && backButton }
-            <TutorialHint markdown={hintMarkdown} parent={parent} showLabel={layout === "horizontal"} />
+            <TutorialHint tutorialId={tutorialId} currentStep={visibleStep} markdown={hintMarkdown} parent={parent} showLabel={layout === "horizontal"} />
             { layout === "vertical" && nextButton }
         </div>
         {layout === "horizontal" && nextButton}

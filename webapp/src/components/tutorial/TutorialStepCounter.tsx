@@ -1,6 +1,7 @@
 import * as React from "react";
 
 interface TutorialStepCounterProps {
+    tutorialId: string;
     currentStep: number;
     totalSteps: number;
     title?: string;
@@ -8,14 +9,16 @@ interface TutorialStepCounterProps {
 }
 
 export function TutorialStepCounter(props: TutorialStepCounterProps) {
-    const { currentStep, totalSteps, title } = props;
+    const { tutorialId, currentStep, totalSteps, title } = props;
 
     const handleStepBarClick = (e: React.MouseEvent<HTMLDivElement>) => {
         const { totalSteps, setTutorialStep } = props;
         const target = e.target as HTMLDivElement;
         const rect = target.getBoundingClientRect();
+        const step = Math.floor(((e.clientX - rect.left) / target.clientWidth) * totalSteps);
 
-        setTutorialStep(Math.floor(((e.clientX - rect.left) / target.clientWidth) * totalSteps));
+        pxt.tickEvent("tutorial.step", { tutorial: tutorialId, step: step }, { interactiveConsent: true });
+        setTutorialStep(step);
     }
 
     return <div className="tutorial-step-counter">

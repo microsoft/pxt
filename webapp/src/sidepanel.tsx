@@ -146,7 +146,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                     </div>
                 </TabContent>}
                 {tutorialOptions && <TabContent name={TUTORIAL_TAB} icon="list" showBadge={activeTab !== TUTORIAL_TAB} onSelected={this.showTutorialTab}>
-                    <TutorialContainer parent={parent} name={tutorialOptions.tutorialName} steps={tutorialOptions.tutorialStepInfo}
+                    <TutorialContainer parent={parent} tutorialId={tutorialOptions.tutorial} name={tutorialOptions.tutorialName} steps={tutorialOptions.tutorialStepInfo}
                         currentStep={tutorialOptions.tutorialStep} tutorialOptions={tutorialOptions} hideIteration={tutorialOptions.metadata?.hideIteration}
                         onTutorialStepChange={onTutorialStepChange} onTutorialComplete={onTutorialComplete}
                         setParentHeight={this.setComponentHeight} />
