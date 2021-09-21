@@ -6,12 +6,15 @@ import { MarkedContent } from "../../marked";
 interface TutorialHintProps {
     parent: pxt.editor.IProjectView;
     markdown: string;
-
     showLabel?: boolean;
+
+    // Telemetry data
+    tutorialId: string;
+    currentStep: number;
 }
 
 export function TutorialHint(props: TutorialHintProps) {
-    const { parent, markdown, showLabel } = props;
+    const { parent, markdown, showLabel, tutorialId, currentStep } = props;
     const [ visible, setVisible ] = React.useState(false);
 
     const captureEvent = (e: any) => {
@@ -27,6 +30,7 @@ export function TutorialHint(props: TutorialHintProps) {
 
     const toggleHint = () => {
         if (!visible) {
+            pxt.tickEvent(`tutorial.showhint`, { tutorial: tutorialId, step: currentStep });
             document.addEventListener("click", closeHint);
         } else {
             document.removeEventListener("click", closeHint);
