@@ -29,6 +29,7 @@
 .modals.dimmer .ui.fullscreen.scrolling.modal {
     position: absolute !important;
     top: 0 !important;
+    left: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
     border: 0 !important;
@@ -194,6 +195,46 @@
         }
     }
 }
+
+body .dimmable.dimmed .ui.page.dimmer .ui.modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+}
+
+@media only screen and (max-width: @largestMobileScreen) {
+    body .dimmable.dimmed .ui.page.dimmer .ui.modal {
+        margin: 0 0 0 -47.5%;
+    }
+}
+
+@media only screen and (min-width: @tabletBreakpoint) {
+    body .dimmable.dimmed .ui.page.dimmer .ui.modal {
+        margin: 0 0 0 -44%;
+    }
+    body .dimmable.dimmed .ui.page.dimmer .ui.tiny.modal {
+        margin: 0 0 0 -26.4%;
+    }
+}
+
+@media only screen and (min-width: @computerBreakpoint) {
+    body .dimmable.dimmed .ui.page.dimmer .ui.modal {
+        margin: 0 0 0 -425px;
+    }
+    body .dimmable.dimmed .ui.page.dimmer .ui.tiny.modal {
+        margin: 0 0 0 -255px;
+    }
+}
+
+@media only screen and (min-width: @largeMonitorBreakpoint) {
+    body .dimmable.dimmed .ui.page.dimmer .ui.modal {
+        margin: 0 0 0 -450px;
+    }
+    body .dimmable.dimmed .ui.page.dimmer .ui.tiny.modal {
+        margin: 0 0 0 -270px;
+    }
+}
+
 
 /*******************************
         Modal Close Icon
