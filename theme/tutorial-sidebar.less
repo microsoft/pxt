@@ -48,6 +48,11 @@
     p {
         line-height: 1.6em;
     }
+
+    hr {
+        border: 0;
+        border-top: 2px dashed @tutorialSecondaryColor;
+    }
 }
 
 .tutorial-scroll-gradient {
@@ -236,6 +241,7 @@
     color: @white;
     background-color: @tutorialPrimaryColor;
     line-height: 2.5rem;
+    text-align: center;
 }
 .formatted-bullet-ul .formatted-bullet-li:last-child {
     min-height: 3.5rem;
@@ -292,7 +298,7 @@
       Skill Map Embed View
 *******************************/
 
-.tutorialVertical.tutorial-embed {
+.tabTutorial.tutorial-embed {
     #editorSidebar, #maineditor, &.sideDocs #sidedocs, .simView #simulators {
         top: 0;
     }
@@ -305,7 +311,7 @@
     Headless (no simulator)
 *******************************/
 
-#root.headless.tutorialVertical {
+#root.headless.tabTutorial {
     #editorSidebar {
         position: relative;
         display: block !important;
@@ -328,7 +334,7 @@
         Keymap
 *******************************/
 
-.tutorialVertical .keymap.above {
+.tabTutorial .keymap.above {
     top: calc(5.5rem + @mainMenuHeight);
 }
 
@@ -338,8 +344,8 @@
 
 /* <= Tablet (Mobile + Tablet) */
 @media only screen and (max-width: @largestTabletScreen) {
-    #root.tutorialVertical,
-    #root.headless.tutorialVertical {
+    #root.tabTutorial,
+    #root.headless.tabTutorial {
         #maineditor > .full-abs {
             top: @defaultTutorialHeight;
         }
@@ -506,7 +512,7 @@
     /*******************************
             Simulator Tab
     *******************************/
-    #root.tutorialVertical .tab-simulator:not(.hidden) {
+    #root.tabTutorial .tab-simulator:not(.hidden) {
         .simPanel {
             display: flex;
 
@@ -540,7 +546,7 @@
         Headless (no simulator)
     *******************************/
 
-    #root.headless.tutorialVertical.collapsedEditorTools {
+    #root.headless.tabTutorial.collapsedEditorTools {
         #maineditor { left: 0; }
         #editorSidebar { width: 100%; }
 
@@ -582,7 +588,7 @@
 
 /* Mobile */
 @media only screen and (max-width: @largestMobileScreen) {
-    #root.tutorialVertical .tab-simulator:not(.hidden) .simPanel {
+    #root.tabTutorial .tab-simulator:not(.hidden) .simPanel {
         #simulators {
             width: 16rem;
         }

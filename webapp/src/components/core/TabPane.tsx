@@ -42,7 +42,7 @@ export function TabPane(props: TabPaneProps) {
 
                 return <div key={name} className={`tab-icon ${name} ${name == activeTab ? "active" : ""}`} onClick={tabClickHandler}>
                     {showBadge && <div className="tab-badge" />}
-                    <i className={`ui icon ${icon}`} />
+                    <i className={`icon ${icon}`} />
                     <span>{title}</span>
                 </div>
             })}

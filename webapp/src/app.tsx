@@ -4321,7 +4321,7 @@ export class ProjectView
         const tutorialOptions = this.state.tutorialOptions;
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
         const isSidebarTutorial = pxt.appTarget.appTheme.sidebarTutorial;
-        const isVerticalTutorial = inTutorial && !pxt.BrowserUtils.useOldTutorialLayout();
+        const isTabTutorial = inTutorial && !pxt.BrowserUtils.useOldTutorialLayout();
         const inTutorialExpanded = inTutorial && tutorialOptions.tutorialStepExpanded;
         const hideTutorialIteration = inTutorial && tutorialOptions.metadata && tutorialOptions.metadata.hideIteration;
         const inDebugMode = this.state.debugging;
@@ -4331,18 +4331,18 @@ export class ProjectView
         const flyoutOnly = this.state.editorState && this.state.editorState.hasCategories === false;
 
         const { hideEditorToolbar, transparentEditorToolbar } = targetTheme;
-        const hideMenuBar = targetTheme.hideMenuBar || hideTutorialIteration || (isVerticalTutorial && pxt.appTarget.appTheme.embeddedTutorial);
+        const hideMenuBar = targetTheme.hideMenuBar || hideTutorialIteration || (isTabTutorial && pxt.appTarget.appTheme.embeddedTutorial);
         const isHeadless = simOpts && simOpts.headless;
         const selectLanguage = targetTheme.selectLanguage;
         const showEditorToolbar = inEditor && !hideEditorToolbar && this.editor.hasEditorToolbar();
         const useSerialEditor = pxt.appTarget.serial && !!pxt.appTarget.serial.useEditor;
 
         const showSideDoc = sideDocs && this.state.sideDocsLoadUrl && !this.state.sideDocsCollapsed;
-        const showCollapseButton = showEditorToolbar && !inHome && !sandbox && !targetTheme.simCollapseInMenu && (!isHeadless || inDebugMode) && !isVerticalTutorial;
+        const showCollapseButton = showEditorToolbar && !inHome && !sandbox && !targetTheme.simCollapseInMenu && (!isHeadless || inDebugMode) && !isTabTutorial;
         const shouldHideEditorFloats = this.state.hideEditorFloats || this.state.collapseEditorTools;
         const logoWide = !!targetTheme.logoWide;
         const hwDialog = !sandbox && pxt.hasHwVariants();
-        const editorOffset = ((inTutorialExpanded || isVerticalTutorial) && this.state.editorOffset) ? { top: this.state.editorOffset } : undefined;
+        const editorOffset = ((inTutorialExpanded || isTabTutorial) && this.state.editorOffset) ? { top: this.state.editorOffset } : undefined;
         const invertedTheme = targetTheme.invertedMenu && targetTheme.invertedMonaco;
 
         const collapseIconTooltip = this.state.collapseEditorTools ? lf("Show the simulator") : lf("Hide the simulator");
@@ -4364,9 +4364,9 @@ export class ProjectView
             showSideDoc ? 'sideDocs' : '',
             pxt.shell.layoutTypeClass(),
             inHome ? 'inHome' : '',
-            inTutorial && !isVerticalTutorial ? 'tutorial' : '',
-            inTutorialExpanded && !isVerticalTutorial ? 'tutorialExpanded' : '',
-            isVerticalTutorial ? 'tutorialVertical' : '',
+            inTutorial && !isTabTutorial ? 'tutorial' : '',
+            inTutorialExpanded && !isTabTutorial ? 'tutorialExpanded' : '',
+            isTabTutorial ? 'tabTutorial' : '',
             isSidebarTutorial ? 'sidebarTutorial' : '',
             inDebugMode ? 'debugger' : '',
             pxt.options.light ? 'light' : '',
@@ -4416,7 +4416,7 @@ export class ProjectView
                         <headerbar.HeaderBar parent={this} />
                     </header>}
                 {isSidebarTutorial && flyoutOnly && inTutorial && <sidebarTutorial.SidebarTutorialCard ref={ProjectView.tutorialCardId} parent={this} pokeUser={this.state.pokeUserComponent == ProjectView.tutorialCardId} />}
-                {inTutorial && !isVerticalTutorial && <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
+                {inTutorial && !isTabTutorial && <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
                     {!(isSidebarTutorial && flyoutOnly) && inTutorial && <tutorial.TutorialCard ref={ProjectView.tutorialCardId} parent={this} pokeUser={this.state.pokeUserComponent == ProjectView.tutorialCardId} />}
                     {flyoutOnly && <tutorial.WorkspaceHeader parent={this} />}
                 </div>}
@@ -4435,7 +4435,7 @@ export class ProjectView
                     handleHardwareDebugClick={this.hwDebug}
                     handleFullscreenButtonClick={this.toggleSimulatorFullscreen}
 
-                    tutorialOptions={isVerticalTutorial ? tutorialOptions : undefined}
+                    tutorialOptions={isTabTutorial ? tutorialOptions : undefined}
                     onTutorialStepChange={this.setTutorialStep}
                     onTutorialComplete={this.completeTutorialAsync}
                     setEditorOffset={this.setEditorOffset} />
