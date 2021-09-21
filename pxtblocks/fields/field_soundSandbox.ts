@@ -14,13 +14,13 @@ namespace pxtblockly {
         private hz1: any;
         private hz2: any;
         private seconds: any;
-        private chart: any;
         private canvas: any;
         private endFrequency: number = 880;
         private waveType: string = "square";
         private arrow: any;
         private waveButtons:any;
         private interpolationType: string = "linear";
+        private repeat: number = 1; 
         private stringRep: string;
         private isPlaying: boolean = false;
         private timeouts: any[] = []; // keep track of timeouts
@@ -32,12 +32,14 @@ namespace pxtblockly {
         private editorDiv: HTMLDivElement;
         private parameters: HTMLDivElement;
         private frequencies:  HTMLDivElement; 
-        private volumeText: any;
         private volumeInput: HTMLInputElement;
         private startFrequencyText: any;
         private endFrequencyText: any;
         private wave: HTMLDivElement;
         private interpolation: HTMLDivElement;
+        private repeatText1: HTMLSpanElement;
+        private repeatText2: HTMLSpanElement;
+        private repeatInput: HTMLInputElement;
         private bottomDiv: HTMLDivElement; 
         private doneButton: HTMLButtonElement;
         private playButton: HTMLButtonElement;
@@ -159,6 +161,8 @@ namespace pxtblockly {
        this.syncVolumeField(false);
        this.startFrequencyInput.value = this.startFrequency.toString();
        this.syncStartFrequencyField(false);
+       this.repeatInput.value = this.repeat.toString()
+       this.syncRepeatField(false);
        this.endFrequencyInput.value = this.endFrequency.toString();
        this.syncEndFrequencyField(false);
        this.durationInput.value = this.duration.toString();
@@ -333,6 +337,27 @@ namespace pxtblockly {
                 this.updateFields();
             }, 10);
 
+            this.repeatText1 = document.createElement("span");
+            this.repeatText1.innerText = lf("Repeat ");
+            this.repeatText2 = document.createElement("span");
+            this.repeatText2.innerText = lf(" times ");
+
+            this.repeatInput = document.createElement("input");
+            pxt.BrowserUtils.addClass(this.repeatInput, "ui-input");
+            this.repeatInput.type = "number";
+            this.repeatInput.value = this.repeat.toString();
+            this.repeatInput.title = lf("Repeat");
+            this.repeatInput.id = "repeat";
+            this.repeatInput.addEventListener("input", () => this.setRepeat(+this.repeatInput.value));
+            this.syncRepeatField(true);
+
+            this.parameters.appendChild(this.repeatText1);
+            this.parameters.appendChild(this.repeatInput);
+            this.parameters.appendChild(this.repeatText2);
+
+
+
+
             // Create bottom div with duration and play and done buttons
             this.bottomDiv = document.createElement("div");
             pxt.BrowserUtils.addClass(this.bottomDiv, "melody-bottom-bar-div");
@@ -379,7 +404,7 @@ namespace pxtblockly {
             for(let i = 0; i<csv.length; i++){
 
                 ctx.beginPath();
-                ctx.arc(Math.round((i/csv.length)*canvasWidth), 100 - Math.round(csv[i]/200), 1, 0, 2 * Math.PI);
+                ctx.arc(Math.round((i/csv.length)*canvasWidth), 100 - Math.round(csv[i]/70), 1, 0, 2 * Math.PI);
                 ctx.stroke();
                 }
 
@@ -445,7 +470,7 @@ ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
             for(let i = 0; i<csv.length; i++){
 
                 ctx.beginPath();
-                ctx.arc(Math.round((i/csv.length)*this.canvas.width), 100 - Math.round(csv[i]/200), 1, 0, 2 * Math.PI);
+                ctx.arc(Math.round((i/csv.length)*this.canvas.width), 100 - Math.round(csv[i]/70), 1, 0, 2 * Math.PI);
                 ctx.stroke();
                 }
 
@@ -563,6 +588,17 @@ ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         }
     }
 
+    private setRepeat(repeat:number):void{
+        // update end volume and display to reflect new end volume
+      if (this.repeat != repeat) {
+         this.repeat = repeat;
+         if (this.repeatInput) {
+             this.repeatInput.value = this.repeat + "";
+         }
+         this.syncRepeatField(false);
+     }
+ }
+
         // sync value from duration field on block with duration in field editor
         private syncDurationField(blockToEditor: boolean): void {
             const s = this.sourceBlock_;
@@ -658,6 +694,38 @@ ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
                     }
                 }
             }
+
+                    // sync value from repeat field on block with repeat in field editor
+        private syncRepeatField(blockToEditor: boolean): void {
+            const s = this.sourceBlock_;
+            if (s.parentBlock_) {
+                const p = s.parentBlock_;
+                for (const input of p.inputList) {
+                    if (input.name === "repeat") {
+                        const repeatBlock = input.connection.targetBlock();
+                        if (repeatBlock) {
+                            if (blockToEditor)
+                                if (repeatBlock.getFieldValue("SLIDER")) {
+                                    this.repeatInput.value = repeatBlock.getFieldValue("SLIDER");
+                                    this.repeat = +this.repeatInput.value;
+                                } else {
+                                    this.repeatInput.value = this.repeat + "";
+                                }
+                            else { // Editor to block
+                                if (repeatBlock.type === "math_number_minmax") {
+                                    repeatBlock.setFieldValue(this.repeatInput.value, "SLIDER")                                  
+                                }
+                                else {
+                                    repeatBlock.setFieldValue(this.repeatInput.value, "NUM")
+                                }
+                                this.repeatInput.focus();
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+        }
 
                // sync value from volume field on block with volume in field editor
         private syncVolumeField(blockToEditor: boolean): void {
@@ -843,11 +911,17 @@ ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
         private playSound(): void {
             if (this.isPlaying) {
-                pxt.AudioContextManager.sound( this.startFrequency, this.endFrequency, this.duration, this.waveType, this.volume, this.interpolationType );
-               // this.createCsv();
+                for(let i = 0; i<this.repeat; i++){
+                    this.timeouts.push(setTimeout(() => {
+
+                        pxt.AudioContextManager.stop();
+
+                        pxt.AudioContextManager.sound( this.startFrequency, this.endFrequency, this.duration, this.waveType, this.volume, this.interpolationType );
+                    },this.getDuration()*i*1.1));
+                }
                 this.timeouts.push(setTimeout(() => {
                     this.togglePlay();
-                }, this.getDuration() ));
+                }, this.getDuration()*this.repeat ));
             }
             else {
                 this.stopSound();
@@ -892,7 +966,7 @@ ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
             //for showing the gallery of sounds
             this.stopSound();
             this.updatePlayButton();
-            this.gallery.show((volume: number, startFrequency: number, endFrequency: number, duration: number,  waveType: string, interpolationType:string) => {
+            this.gallery.show((volume: number, startFrequency: number, endFrequency: number, duration: number,  waveType: string, interpolationType:string, repeat: number) => {
                 if (startFrequency) {
                     this.gallery.hide();
                     this.toggle.toggle();
@@ -902,6 +976,7 @@ ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
                     this.duration = duration;
                     this.waveType = waveType;
                     this.interpolationType = interpolationType;
+                    this.repeat = repeat;
                     this.updateFields();
                     this.updateInputs();
                 }

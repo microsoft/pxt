@@ -9,7 +9,7 @@ namespace pxtmelody {
         protected value: string = null;
 
         protected visible = false;
-        protected pending: (res1: number, res2: number, res3: number, res4: number, res5: string, res6: string) => void;
+        protected pending: (res1: number, res2: number, res3: number, res4: number, res5: string, res6: string, res7: number) => void;
 
         protected buttons: HTMLElement[];
 
@@ -48,7 +48,7 @@ namespace pxtmelody {
             return this.value;
         }
 
-        show(notes: (res1: number, res2: number, res3: number, res4: number, res5: string, res6: string) => void) {
+        show(notes: (res1: number, res2: number, res3: number, res4: number, res5: string, res6: string, res7: number) => void) {
            this.pending = notes;
             this.containerDiv.style.display = "block";
             this.buildDom();
@@ -179,7 +179,7 @@ namespace pxtmelody {
            if (this.pending) {
                 const notes = this.pending;
                 this.pending = undefined;
-               notes(sample.volume, sample.startFrequency, sample.endFrequency, sample.duration, sample.waveType, sample.interpolation);
+               notes(sample.volume, sample.startFrequency, sample.endFrequency, sample.duration, sample.waveType, sample.interpolation, sample.repeat);
 
             }
         }
@@ -191,8 +191,12 @@ namespace pxtmelody {
         private previewMelody(sample: pxtmelody.SoundInfo): void {
             // stop playing any other melody
             this.stopSound();
-            pxt.AudioContextManager.sound( sample.startFrequency, sample.endFrequency, sample.duration, sample.waveType, sample.volume, sample.interpolation );
-            
+            for(let i = 0; i<sample.repeat; i++){
+                this.timeouts.push(setTimeout(() => {
+                    pxt.AudioContextManager.stop();
+                    pxt.AudioContextManager.sound( sample.startFrequency, sample.endFrequency, sample.duration, sample.waveType, sample.volume, sample.interpolation );
+                },sample.duration*i*1.1));
+            }            
         }
 
         private togglePlay(sample: pxtmelody.SoundInfo, i: number) {
