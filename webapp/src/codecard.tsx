@@ -7,7 +7,11 @@ const repeat = pxt.Util.repeatMap;
 
 export interface CodeCardState { }
 
-export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
+interface CodeCardProps extends pxt.CodeCard {
+    tallCard?: boolean;
+}
+
+export class CodeCardView extends data.Component<CodeCardProps, CodeCardState> {
 
     public element: HTMLDivElement;
 
@@ -122,8 +126,10 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
                     </div>
                 </div> : undefined}
             {(card.shortName || name || descriptions) ?
-                <div className="content">
-                    {card.shortName || name ? <div className="header">{card.shortName || name}</div> : null}
+                <div className={`content ${this.props.tallCard? "tall" : ""}`}>
+                    {card.shortName || name ? <div className="header">{card.shortName || name}
+                            <div className="tags">{card.tags}</div>
+                        </div> : null}
                     {descriptions && descriptions.map((element, index) => {
                         return <div key={`line${index}`} className={`description tall ${card.icon || card.iconContent || card.imageUrl ? "" : "long"}`}>{renderMd(element)}</div>
                     })
