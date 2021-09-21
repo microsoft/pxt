@@ -26,9 +26,9 @@
     flex-direction: column;
     height: 100%;
 
-    .ui.button {
-        margin: 0;
+    .ui.button, .ui.button:hover {
         box-shadow: none;
+        background-image: none;
     }
 }
 
@@ -164,6 +164,11 @@
         overflow: hidden;
         text-overflow: ellipsis;
         width: 7rem;
+    }
+
+    .ui.button:hover, .ui.button:focus {
+        background: darken(@tutorialPrimaryColor, 5%);
+        color: @white;
     }
 }
 
@@ -437,6 +442,7 @@
             justify-content: center;
             width: 4rem;
             height: unset;
+            margin: 0;
             font-size: 1rem;
 
             i.icon {
@@ -454,10 +460,9 @@
     }
 
     .tutorial-container {
-        > .ui.button {
+        > .ui.button, > .ui.button:focus {
             color: @tutorialPrimaryColor;
             background: @tutorialTabletButtonColor;
-            box-shadow: none;
             border-radius: 0;
         }
 
