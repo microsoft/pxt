@@ -460,19 +460,44 @@ export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
         const dropdownActive = python && (parent.isJavaScriptActive() || parent.isPythonActive());
         const tsOnly = languageRestriction === pxt.editor.LanguageRestriction.JavaScriptOnly;
         const pyOnly = languageRestriction === pxt.editor.LanguageRestriction.PythonOnly;
+        const blocksOnly = languageRestriction === pxt.editor.LanguageRestriction.BlocksOnly;
+        const noJavaScript = languageRestriction === pxt.editor.LanguageRestriction.NoJavaScript;
+        const noPython = languageRestriction === pxt.editor.LanguageRestriction.NoPython;
+        const noBlocks = languageRestriction === pxt.editor.LanguageRestriction.NoBlocks;
 
         // show python in toggle if: python editor currently active, or blocks editor active & saved language pref is python
-        const showPython = python && !tsOnly && (parent.isPythonActive() || pxt.shell.isPyLangPref());
-        const showBlocks = !pyOnly && !tsOnly && !!pkg.mainEditorPkg().files[pxt.MAIN_BLOCKS];
+        const pythonIsActive = (parent.isPythonActive() || pxt.shell.isPyLangPref());
+        const showPython = python && !tsOnly && !blocksOnly && !noPython;
+        const showBlocks = !pyOnly && !tsOnly && !noBlocks && !!pkg.mainEditorPkg().files[pxt.MAIN_BLOCKS];
+        const showJavaScript = !noJavaScript && !pyOnly && !blocksOnly;
         const showSandbox = sandbox && !headless;
-        const showDropdown = !pyOnly && !tsOnly && python;
+        const showDropdown = showPython && showJavaScript && showBlocks;
         const showAssets = pxt.appTarget.appTheme.assetEditor && !sandbox;
+
+        let textLanguage: JSX.Element = undefined;
+        let secondTextLanguage: JSX.Element = undefined;
+
+        if (showDropdown) {
+            if (pythonIsActive) textLanguage = <PythonMenuItem parent={parent}/>
+            else textLanguage = <JavascriptMenuItem parent={parent}/>
+        }
+        else if (showPython && showJavaScript) {
+            textLanguage = <JavascriptMenuItem parent={parent}/>;
+            secondTextLanguage  = <PythonMenuItem parent={parent}/>;
+        }
+        else if (showPython) {
+            textLanguage = <PythonMenuItem parent={parent}/>;
+        }
+        else if (showJavaScript) {
+            textLanguage = <JavascriptMenuItem parent={parent}/>
+        }
 
         return (
             <div id="editortoggle" className={`ui grid padded ${(pyOnly || tsOnly) ? "one-language" : ""}`} role="listbox" aria-orientation="horizontal">
                 {showSandbox && <SandboxMenuItem parent={parent} />}
                 {showBlocks && <BlocksMenuItem parent={parent} />}
-                {showPython ? <PythonMenuItem parent={parent} /> : <JavascriptMenuItem parent={parent} />}
+                {textLanguage}
+                {secondTextLanguage}
                 {showDropdown && <sui.DropdownMenu id="editordropdown" role="menuitem" icon="chevron down" rightIcon title={lf("Select code editor language")} className={`item button attached right ${dropdownActive ? "active" : ""}`}>
                     <JavascriptMenuItem parent={parent} />
                     <PythonMenuItem parent={parent} />

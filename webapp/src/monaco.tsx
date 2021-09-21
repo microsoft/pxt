@@ -401,6 +401,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     public openBlocks() {
+        this.openBlocksAsync();
+    }
+
+
+    public async openBlocksAsync() {
         pxt.tickEvent(`typescript.showBlocks`);
         let initPromise = Promise.resolve();
 
@@ -412,7 +417,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (!this.currFile) {
             const mainPkg = pkg.mainEditorPkg();
             if (mainPkg && mainPkg.files[pxt.MAIN_TS]) {
-                initPromise = this.loadFileAsync(mainPkg.files[pxt.MAIN_TS]);
+                await this.loadFileAsync(mainPkg.files[pxt.MAIN_TS]);
             }
             else {
                 return;
@@ -531,6 +536,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         });
 
         core.showLoadingAsync("switchtoblocks", lf("switching to blocks..."), promise);
+        return initPromise;
     }
 
     public showBlockConversionFailedDialog(blockFile: string, programTooLarge: boolean): Promise<void> {
