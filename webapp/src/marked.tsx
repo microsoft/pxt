@@ -402,7 +402,9 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         this.renderSnippets(tempDiv);
         this.renderBullets(tempDiv);
         this.renderOthers(tempDiv);
-        content.innerHTML = tempDiv.innerHTML;
+
+        content.innerHTML = "";
+        content.append(...tempDiv.childNodes);
 
         pxt.perf.measureEnd("renderMarkdown");
     }
