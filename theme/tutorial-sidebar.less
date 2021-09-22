@@ -290,14 +290,31 @@
             #boardview { display: inline-block; }
 
             .simtoolbar, #miniSimOverlay { display: block; }
-            .sidebar-button, .play-button { display: block !important; }
+            .sidebar-button, .play-button, .tutorial-expand-button { display: block !important; }
             .expand-button, .fullscreen-button { display: none !important; }
         }
     }
     .tab-simulator.tab-content:not(.hidden) {
         .simPanel {
-            .sidebar-button { display: none !important; }
+            .sidebar-button, .tutorial-expand-button { display: none !important; }
         }
+    }
+
+    &.collapsedEditorTools .tab-simulator.tab-content.hidden .simPanel {
+        .sidebar-button, .play-button { display: none !important; }
+    }
+}
+
+#root.miniSim.tabTutorial:not(.fullscreensim):not(.headless):not(.sandbox) {
+    #boardview, div.simframe {
+         width: 16.15rem;
+    }
+    div.simframe {
+        padding-bottom: 119% !important;
+    }
+
+    #miniSimOverlay {
+        display:none !important;
     }
 }
 

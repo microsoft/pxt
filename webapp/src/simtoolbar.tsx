@@ -152,6 +152,11 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
                     icon={`${collapsed ? 'play' : 'stop'}`}
                     title={collapseIconTooltip} onClick={this.toggleSimulatorCollapse}
                 />}
+                {isTabTutorial && collapse && <sui.Button key='simsidebarbtn1'
+                    className="tutorial-expand-button tablet only"
+                    icon={`${collapsed ? 'expand arrows alternate' : 'compress'}`}
+                    title={collapseIconTooltip} onClick={this.toggleSimulatorCollapse} />}
+
             </div>
             {!isHeadless && <div className={`ui icon tiny buttons computer only`} style={{ padding: "0" }}>
                 {audio && <sui.Button key='mutebtn' className={`mute-button ${isMuted ? 'red' : ''}`} icon={`${isMuted ? 'volume off' : 'volume up'}`} title={muteTooltip} onClick={this.toggleMute} />}

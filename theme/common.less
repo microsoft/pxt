@@ -146,6 +146,9 @@ pre {
     &.errorListExpanded {
         --extra-mobile-sim-padding: @errorListHeight;
     }
+    &.tabTutorial {
+        --extra-mobile-sim-padding: 1.1rem;
+    }
 }
 
 .transparentEditorTools #editortools {
@@ -1148,7 +1151,7 @@ p.ui.font.small {
     }
 }
 
-#root.headless.collapsedEditorTools {
+#root.headless.collapsedEditorTools:not(.tabTutorial) {
     #editorSidebar {
         position: absolute;
         width: auto;
@@ -1343,7 +1346,7 @@ p.ui.font.small {
             display: block !important;
         }
     }
-    .collapsedEditorTools .simPanel {
+    .collapsedEditorTools:not(.tabTutorial) .simPanel {
         > div {
             display: none !important;
         }
@@ -1522,7 +1525,7 @@ p.ui.font.small {
 
 /* >= Small Monitor (Small Monitor + Large Monitor + Wide Monitor) */
 @media only screen and (min-width: @computerBreakpoint) {
-    .collapsedEditorTools:not(.headless) #editorSidebar {
+    .collapsedEditorTools:not(.headless):not(.tabTutorial) #editorSidebar {
         min-width: 21px;
         width: 21px;
         padding: 0;
@@ -1531,15 +1534,15 @@ p.ui.font.small {
         }
     }
 
-    .collapsedEditorTools #downloadArea {
+    .collapsedEditorTools:not(.tabTutorial) #downloadArea {
         background: @editorToolsBackground;
     }
 
-    .collapsedEditorTools:not(.headless) #maineditor {
+    .collapsedEditorTools:not(.headless):not(.tabTutorial) #maineditor {
         left: 21px;
     }
 
-    .collapsedEditorTools.headless #maineditor {
+    .collapsedEditorTools.headless:not(.tabTutorial) #maineditor {
         left: 0;
     }
 
@@ -1630,7 +1633,7 @@ p.ui.font.small {
         padding: 0;
     }
 
-    #root.collapsedEditorTools #editortools .left .buttons:first-child {
+    #root.collapsedEditorTools:not(.tabTutorial) #editortools .left .buttons:first-child {
         bottom: auto!important; // undo bottom positioning for collapsed toolbar
     }
     #maineditor {

@@ -37,6 +37,7 @@ interface SidepanelProps extends pxt.editor.ISettingsProps {
     setEditorOffset?: () => void;
 
     showMiniSim: (visible?: boolean) => void;
+    toggleSimulatorCollapse: () => void;
     openSerial: (isSim: boolean) => void;
     handleHardwareDebugClick: () => void;
     handleFullscreenButtonClick: () => void;
@@ -69,6 +70,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
 
     protected showSimulatorTab = () => {
         this.props.showMiniSim(false);
+        if (this.props.parent.state.collapseEditorTools) this.props.toggleSimulatorCollapse();
         this.setState({ activeTab: SIMULATOR_TAB, height: undefined });
     }
 

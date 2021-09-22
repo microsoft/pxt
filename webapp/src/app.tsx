@@ -4535,6 +4535,7 @@ export class ProjectView
                     devSerialActive={this.state.deviceSerialActive}
 
                     showMiniSim={this.showMiniSim}
+                    toggleSimulatorCollapse={this.toggleSimulatorCollapse}
                     openSerial={this.openSerial}
                     handleHardwareDebugClick={this.hwDebug}
                     handleFullscreenButtonClick={this.toggleSimulatorFullscreen}
