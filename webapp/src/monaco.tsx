@@ -849,13 +849,22 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             const logoHeight = (this.parent.isJavaScriptActive()) ? this.parent.updateEditorLogo(toolboxWidth, this.getEditorColor()) : 0;
 
             this.editor.layout({ width: monacoArea.offsetWidth - toolboxWidth, height: monacoArea.offsetHeight - logoHeight });
-
-            blocklyFieldView.setEditorBounds({
-                top: 0,
-                left: 0,
-                width: window.innerWidth,
-                height: window.innerHeight
-            });
+            if (monacoArea && this.parent.isTutorial()) {
+                const containerRect = monacoArea.getBoundingClientRect();
+                blocklyFieldView.setEditorBounds({
+                    top: containerRect.top,
+                    left: containerRect.left,
+                    width: containerRect.width,
+                    height: containerRect.height
+                });
+            } else {
+                blocklyFieldView.setEditorBounds({
+                    top: 0,
+                    left: 0,
+                    width: window.innerWidth,
+                    height: window.innerHeight
+                });
+            }
 
             if (monacoToolboxDiv) monacoToolboxDiv.style.height = `100%`;
         }

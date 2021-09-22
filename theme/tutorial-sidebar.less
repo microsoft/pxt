@@ -238,7 +238,8 @@
     flex-shrink: 0;
     background: linear-gradient(@tutorialPrimaryColor, @tutorialPrimaryColor) ~'no-repeat 45% / 2px 100%';
 }
-.formatted-bullet i {
+.formatted-bullet i.icon,
+.formatted-bullet i.xicon {
     display: block;
     width: 2.5rem;
     height: 2.5rem;
@@ -271,9 +272,10 @@
 .tab-simulator .simPanel {
     height: 100%;
     padding: 1rem 0.5rem 1rem 1rem;
-    margin-top: 0;
     overflow-x: hidden;
     overflow-y: scroll;
+
+    &.ui.items { margin-top: 0; }
 }
 
 // Mini sim is visible when tab is hidden

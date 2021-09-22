@@ -1,5 +1,6 @@
 import * as React from "react";
 
+import { fireClickOnEnter } from "../../sui";
 import { TabContentProps } from "./TabContent";
 
 interface TabPaneProps {
@@ -37,10 +38,11 @@ export function TabPane(props: TabPaneProps) {
     return <div id={id} className={`tab-container ${className || ""}`} style={style}>
         {childArray.length > 1 && <div className="tab-navigation">
             {childArray.map(el => {
-                const { name, icon, title, showBadge } = el.props as TabContentProps;
+                const { name, icon, title, ariaLabel, showBadge } = el.props as TabContentProps;
                 const tabClickHandler = () => selectTab(el.props);
 
-                return <div key={name} className={`tab-icon ${name} ${name == activeTab ? "active" : ""}`} onClick={tabClickHandler}>
+                return <div key={name} className={`tab-icon ${name} ${name == activeTab ? "active" : ""}`}
+                    aria-label={ariaLabel} tabIndex={0} onClick={tabClickHandler} onKeyDown={fireClickOnEnter}>
                     {showBadge && <div className="tab-badge" />}
                     <i className={`icon ${icon}`} />
                     <span>{title}</span>

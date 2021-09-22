@@ -113,7 +113,10 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
     }
 
     protected tutorialExitButton = () => {
-        return <div className="tutorial-exit" onClick={() => this.props.parent.exitTutorial()}>{lf("Exit Tutorial")}</div>;
+        return <div className="tutorial-exit" aria-label={lf("Exit tutorial")} tabIndex={0}
+            onClick={() => this.props.parent.exitTutorial()} onKeyDown={sui.fireClickOnEnter}>
+            {lf("Exit Tutorial")}
+        </div>;
     }
 
     renderCore() {
@@ -128,7 +131,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
 
         return <div id="simulator" className="simulator">
             <TabPane id="editorSidebar" activeTabName={activeTab} style={height ? { height: `calc(${height}px + ${marginHeight})` } : undefined}>
-                {hasSimulator && <TabContent name={SIMULATOR_TAB} icon="game" onSelected={this.showSimulatorTab}>
+                {hasSimulator && <TabContent name={SIMULATOR_TAB} icon="game" onSelected={this.showSimulatorTab} ariaLabel={lf("Open the simulator tab")}>
                     {isTabTutorial && this.tutorialExitButton()}
                     <div className="ui items simPanel" ref={this.handleSimPanelRef}>
                         <div id="boardview" className="ui vertical editorFloat" role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0} />
@@ -145,7 +148,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                         {showFullscreenButton && <div id="miniSimOverlay" role="button" title={lf("Open in fullscreen")} onClick={this.handleSimOverlayClick} />}
                     </div>
                 </TabContent>}
-                {tutorialOptions && <TabContent name={TUTORIAL_TAB} icon="list" showBadge={activeTab !== TUTORIAL_TAB} onSelected={this.showTutorialTab}>
+                {tutorialOptions && <TabContent name={TUTORIAL_TAB} icon="tasks" showBadge={activeTab !== TUTORIAL_TAB} onSelected={this.showTutorialTab} ariaLabel={lf("Open the tutorial tab")}>
                     <TutorialContainer parent={parent} tutorialId={tutorialOptions.tutorial} name={tutorialOptions.tutorialName} steps={tutorialOptions.tutorialStepInfo}
                         currentStep={tutorialOptions.tutorialStep} tutorialOptions={tutorialOptions} hideIteration={tutorialOptions.metadata?.hideIteration}
                         onTutorialStepChange={onTutorialStepChange} onTutorialComplete={onTutorialComplete}
