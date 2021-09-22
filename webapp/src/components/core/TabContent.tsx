@@ -4,6 +4,7 @@ export interface TabContentProps {
     name: string;
     icon?: string;
     title?: string;
+    ariaLabel?: string;
     showBadge?: boolean;
     children?: React.ReactNode;
     onSelected?: () => void;

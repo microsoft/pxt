@@ -620,13 +620,24 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     protected resizeFieldEditorView() {
         if (!window) return;
-        // Full-screen editor
-        blocklyFieldView.setEditorBounds({
-            top: 0,
-            left: 0,
-            width: window.innerWidth,
-            height: window.innerHeight
-        });
+        const blocklyDiv = this.getBlocksEditorDiv();
+        if (blocklyDiv && this.parent.isTutorial()) {
+            const containerRect = blocklyDiv.getBoundingClientRect();
+            blocklyFieldView.setEditorBounds({
+                top: containerRect.top,
+                left: containerRect.left,
+                width: containerRect.width,
+                height: containerRect.height
+            });
+        } else {
+            // Full-screen editor
+            blocklyFieldView.setEditorBounds({
+                top: 0,
+                left: 0,
+                width: window.innerWidth,
+                height: window.innerHeight
+            });
+        }
     }
 
     hasUndo() {

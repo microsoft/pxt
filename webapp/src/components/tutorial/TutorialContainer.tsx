@@ -68,10 +68,13 @@ export function TutorialContainer(props: TutorialContainerProps) {
 
     React.useEffect(() => {
         setCurrentStep(props.currentStep);
-        setShowScrollGradient(contentRef?.current?.scrollHeight > contentRef?.current?.offsetHeight);
     }, [props.currentStep])
 
     React.useEffect(() => {
+        const contentDiv = contentRef?.current;
+        contentDiv.scrollTo(0, 0);
+        setShowScrollGradient(contentDiv.scrollHeight > contentDiv.offsetHeight);
+
         onTutorialStepChange(currentStep);
         if (showNext) setHideModal(false);
     }, [currentStep])
