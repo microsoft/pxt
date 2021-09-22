@@ -279,7 +279,10 @@ namespace pxsim {
         }
 
         function disconnectVca(gain: GainNode, osc?: AudioNode) {
-            gain.gain.setTargetAtTime(0, context().currentTime, 0.015);
+            if (gain.gain.value) {
+                gain.gain.setTargetAtTime(0, context().currentTime, 0.015);
+            }
+
             setTimeout(() => {
                 gain.disconnect();
                 if (osc) osc.disconnect();
@@ -580,7 +583,8 @@ namespace pxsim {
                 // can go for a smooth ramp to 0 in ch.mute() without this operation interrupting it. If we had
                 // more accurate timing this would not be necessary, but we'd probably have to do something like
                 // running a metronome in a webworker to get the level of precision we need
-                ch.gain.gain.linearRampToValueAtTime(scaledEnd, ctx.currentTime + ((timeOff - 50) / 1000))
+                const endTime = scaledEnd !== 0 && duration > 50 ? ((timeOff - 50) / 1000) : ((timeOff - 10) / 1000)
+                ch.gain.gain.linearRampToValueAtTime(scaledEnd, ctx.currentTime + endTime)
 
                 return loopAsync()
             }
