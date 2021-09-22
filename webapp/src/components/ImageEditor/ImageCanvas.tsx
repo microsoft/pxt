@@ -516,8 +516,8 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             this.canvas.height = imageState.bitmap.height * this.cellWidth;
 
             this.canvasLayers.forEach(layer => {
-                layer.width = this.canvas.width;
-                layer.height = this.canvas.height;
+                layer.width = this.canvas.width / this.cellWidth;
+                layer.height = this.canvas.height / this.cellWidth;
             })
 
             if (onionSkinEnabled && nextFrame) {
