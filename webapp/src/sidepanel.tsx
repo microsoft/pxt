@@ -8,6 +8,7 @@ import * as filelist from "./filelist";
 import * as keymap from "./keymap";
 import * as serialindicator from "./serialindicator"
 import * as simtoolbar from "./simtoolbar";
+import * as simulator from "./simulator";
 
 import { TabContent } from "./components/core/TabContent";
 import { TabPane } from "./components/core/TabPane";
@@ -70,6 +71,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
     protected showSimulatorTab = () => {
         this.props.showMiniSim(false);
         this.setState({ activeTab: SIMULATOR_TAB, height: undefined });
+        simulator.driver.focus();
     }
 
     protected showTutorialTab = () => {
