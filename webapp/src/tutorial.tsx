@@ -735,7 +735,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
                     <div className="avatar-container">
                         {(!showDialog && hasHint) && <sui.Button
                             className={`ui circular label blue hintbutton hidelightbox ${this.props.pokeUser ? 'shake flash' : ''}`}
-                            icon="lightbulb outline"
+                            icon="lightbulb"
                             aria-label={tutorialAriaLabel} title={tutorialHintTooltip}
                             onClick={hintOnClick} onKeyDown={sui.fireClickOnEnter}
                         />}
@@ -744,7 +744,6 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
                     </div>
                     {this.state.showSeeMore && !tutorialStepExpanded && <sui.Button className="fluid compact lightgrey" icon="chevron down" tabIndex={0} text={lf("More...")} onClick={this.toggleExpanded} onKeyDown={sui.fireClickOnEnter} />}
                     {this.state.showSeeMore && tutorialStepExpanded && <sui.Button className="fluid compact lightgrey" icon="chevron up" tabIndex={0} text={lf("Less...")} onClick={this.toggleExpanded} onKeyDown={sui.fireClickOnEnter} />}
-                    <sui.Button ref="tutorialok" id="tutorialOkButton" className="large green okbutton showlightbox" text={lf("Ok")} onClick={this.closeLightbox} onKeyDown={sui.fireClickOnEnter} />
                 </div>
                 {hasNext ? <sui.Button icon={`${isRtl ? 'left' : 'right'} chevron large`} className={`nextbutton right attached ${!hasNext ? 'disabled' : ''}  ${tutorialCodeValidated ? 'isValidated' : ''}`} text={lf("Next")} textClass="widedesktop only" ariaLabel={lf("Go to the next step of the tutorial.")}
                     onClick={nextOnClick} onKeyDown={sui.fireClickOnEnter} /> : undefined}
