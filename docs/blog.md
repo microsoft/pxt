@@ -1,6 +1,6 @@
 # Microsoft MakeCode Blog
 
-**[MakeCode Arcade Tutorial Update](/blog/arcade/tutorial-update)**
+## [MakeCode Arcade Tutorial Update](/blog/arcade/tutorial-update)
 
 September 24th, 2021 by [Jaqster](https://github.com/jaqster)
 
