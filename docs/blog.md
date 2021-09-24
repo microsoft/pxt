@@ -1,5 +1,13 @@
 # Microsoft MakeCode Blog
 
+**[MakeCode Arcade Tutorial Update](/blog/arcade/tutorial-update)**
+
+September 24th, 2021 by [Jaqster](https://github.com/jaqster)
+
+In an effort to help optimize screen layout for everyone, we’ve updated our tutorial interface...
+
+**[Continue reading this blog post](/blog/arcade/tutorial-update)**
+
 ## [Introducing Cloud Sync for MakeCode Arcade](/blog/arcade/intro-cloud-sync)
 
 August 12th, 2021 by [eanders-ms](https://github.com/eanders-ms)
