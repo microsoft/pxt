@@ -1,6 +1,7 @@
 # Microsoft MakeCode Blog
 
 * [Blog](/blog)
+    * [MakeCode Arcade Tutorial Update](/blog/arcade/tutorial-update)
     * [Introducing Cloud Sync for MakeCode Arcade](/blog/arcade/intro-cloud-sync)
     * [MakeCode for the micro:bit - 2021 Release is here!](/blog/microbit/2021-release)
     * [Beginner Skillmap Has Launched!](/blog/arcade/beginner-skillmap)
