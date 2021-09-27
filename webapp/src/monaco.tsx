@@ -849,7 +849,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             const logoHeight = (this.parent.isJavaScriptActive()) ? this.parent.updateEditorLogo(toolboxWidth, this.getEditorColor()) : 0;
 
             this.editor.layout({ width: monacoArea.offsetWidth - toolboxWidth, height: monacoArea.offsetHeight - logoHeight });
-            if (monacoArea && this.parent.isTutorial()) {
+            if (monacoArea && this.parent.isTutorial() && !pxt.BrowserUtils.isTabletSize()) {
                 const containerRect = monacoArea.getBoundingClientRect();
                 blocklyFieldView.setEditorBounds({
                     top: containerRect.top,

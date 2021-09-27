@@ -61,7 +61,7 @@ export class AssetEditor extends Editor {
     resize(e?: Event) {
         const container = this.getAssetEditorDiv();
         // In tutorial view, the image editor is smaller and has no padding
-        if (container && this.parent.isTutorial()) {
+        if (container && this.parent.isTutorial() && !pxt.BrowserUtils.isTabletSize()) {
             const containerRect = container.getBoundingClientRect();
             const editorTools = document.getElementById("editortools");
             blocklyFieldView.setEditorBounds({
