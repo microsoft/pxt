@@ -305,7 +305,7 @@ interface HeroBannerState {
     paused?: boolean;
 }
 
-const HERO_BANNER_DELAY = 6000; // 6 seconds per card
+const HERO_BANNER_DELAY = 9000; // 9 seconds per card
 class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
     protected prevGalleries: pxt.CodeCard[];
     protected static fetchedImages: pxt.Map<HTMLImageElement> = {};
