@@ -57,7 +57,9 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         // unmounting the component as we enter/exit the editor. We
         // instead manually reset the state as we transition
         if ((!this.props.tutorialOptions && props.tutorialOptions)
-            || (this.props.inHome && !props.inHome && props.tutorialOptions)) {
+            || (this.props.inHome && !props.inHome && props.tutorialOptions)
+            || (this.props.tutorialOptions?.tutorial && props.tutorialOptions?.tutorial
+                && this.props.tutorialOptions.tutorial !== props.tutorialOptions.tutorial)) {
             this.showTutorialTab();
         } else if (!this.props.inHome && props.inHome) {
             this.showSimulatorTab();
