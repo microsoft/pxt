@@ -4216,7 +4216,7 @@ export class ProjectView
         if (this.isTutorial()) {
             if (!pxt.BrowserUtils.useOldTutorialLayout()) {
                 const sidebarEl = document?.getElementById("editorSidebar");
-                if (sidebarEl && window?.innerWidth < pxt.BREAKPOINT_TABLET) {
+                if (sidebarEl && pxt.BrowserUtils.isTabletSize()) {
                     this.setState({ editorOffset: sidebarEl.offsetHeight + "px" });
                 } else {
                     this.setState({ editorOffset: undefined });
@@ -5327,7 +5327,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             // Check to see if we should show the mini simulator (<= tablet size)
             if (!theEditor.isTutorial() || pxt.BrowserUtils.useOldTutorialLayout()) {
-                if (window?.innerWidth < pxt.BREAKPOINT_TABLET) {
+                if (pxt.BrowserUtils.isTabletSize()) {
                     theEditor.showMiniSim(true);
                 } else {
                     theEditor.showMiniSim(false);
