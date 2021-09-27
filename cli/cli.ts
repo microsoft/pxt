@@ -1935,12 +1935,19 @@ function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
         cmd: "node",
         args: [lessCPath, "theme/style.less", "built/web/semantic.css", "--include-path=node_modules/semantic-ui-less:node_modules/pxt-core/theme:theme/foo/bar"]
     }).then(() => {
-        const fontFile = fs.readFileSync("node_modules/semantic-ui-less/themes/default/assets/fonts/icons.woff")
-        const url = "url(data:application/font-woff;charset=utf-8;base64,"
-            + fontFile.toString("base64") + ") format('woff')"
+        function linkFont(font: string, semCss: string) {
+            const fontFile = fs.readFileSync("node_modules/semantic-ui-less/themes/default/assets/fonts/" + font + ".woff")
+            const url = "url(data:application/font-woff;charset=utf-8;base64,"
+                + fontFile.toString("base64") + ") format('woff')"
+            const r = new RegExp(`src:.*url\\("fonts\/${font}\\.woff.*`, "g")
+            semCss = semCss.replace('src: url("fonts/' + font + '.eot");', "")
+                .replace(r, "src: " + url + ";")
+            return semCss;
+        }
         let semCss = fs.readFileSync('built/web/semantic.css', "utf8")
-        semCss = semCss.replace('src: url("fonts/icons.eot");', "")
-            .replace(/src:.*url\("fonts\/icons\.woff.*/g, "src: " + url + ";")
+        semCss = linkFont("icons", semCss)
+        semCss = linkFont("outline-icons", semCss)
+        semCss = linkFont("brand-icons", semCss)
         return semCss;
     }).then((semCss) => {
         // Append icons.css to semantic.css (custom pxt icons)

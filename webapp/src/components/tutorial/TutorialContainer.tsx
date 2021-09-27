@@ -41,7 +41,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
 
     React.useEffect(() => {
         const observer = new ResizeObserver(() => {
-            if (window.innerWidth < pxt.BREAKPOINT_TABLET) {
+            if (pxt.BrowserUtils.isTabletSize()) {
                 setLayout("horizontal");
             } else {
                 setLayout("vertical");

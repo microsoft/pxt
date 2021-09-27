@@ -30,6 +30,7 @@
     position: absolute !important;
     top: 0 !important;
     left: 0 !important;
+    transform: none;
     margin: 0 !important;
     padding: 0 !important;
     border: 0 !important;
@@ -41,6 +42,32 @@
     overflow-y: auto;
     -webkit-overflow-scrolling: 'touch';
     user-select: none;
+}
+
+.modals.dimmer .ui.scrolling.modal {
+    margin-top: 3.5rem auto !important;
+    top: auto;
+}
+
+.ui.modal {
+  position: fixed;
+  display: none;
+  z-index: @zIndex;
+  text-align: left;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, 0);
+
+  background: @background;
+  border: @border;
+  box-shadow: @boxShadow;
+  transform-origin: @transformOrigin;
+
+  flex: 0 0 auto;
+
+  border-radius: @borderRadius;
+  user-select: text;
+  will-change: top, left, margin, transform, opacity;
 }
 
 /* Back button */
@@ -192,61 +219,6 @@
         }
         .has-actions.content {
             height: calc(100% - @thinMenuHeight - @mainMenuHeight);
-        }
-    }
-}
-
-body .dimmable.dimmed .ui.page.dimmer .ui.modal {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-}
-
-@media only screen and (max-width: @largestMobileScreen) {
-    body .dimmable.dimmed .ui.page.dimmer .ui.modal {
-        margin: 0 0 0 -47.5%;
-    }
-}
-
-@media only screen and (min-width: @tabletBreakpoint) {
-    body .dimmable.dimmed .ui.page.dimmer {
-        .ui.modal {
-            margin: 0 0 0 -44%;
-        }
-        .ui.tiny.modal {
-            margin: 0 0 0 -26.4%;
-        }
-    }
-}
-
-@media only screen and (min-width: @computerBreakpoint) {
-    body .dimmable.dimmed .ui.page.dimmer {
-        .ui.modal {
-            margin: 0 0 0 -425px;
-        }
-
-        .ui.tiny.modal {
-            margin: 0 0 0 -255px;
-        }
-
-        .ui.large.modal {
-            margin: 0 0 0 -510px;
-        }
-    }
-}
-
-@media only screen and (min-width: @largeMonitorBreakpoint) {
-    body .dimmable.dimmed .ui.page.dimmer {
-        .ui.modal {
-            margin: 0 0 0 -450px;
-        }
-
-        .ui.tiny.modal {
-            margin: 0 0 0 -270px;
-        }
-
-        .ui.large.modal {
-            margin: 0 0 0 -540px;
         }
     }
 }

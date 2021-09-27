@@ -164,6 +164,14 @@ namespace pxt.BrowserUtils {
         } catch (e) { return false; }
     }
 
+    export function isTabletSize(): boolean {
+        return window?.innerWidth < pxt.BREAKPOINT_TABLET;
+    }
+
+    export function isComputerSize(): boolean {
+        return window?.innerWidth >= pxt.BREAKPOINT_TABLET;
+    }
+
     export function noSharedLocalStorage(): boolean {
         try {
             return /nosharedlocalstorage/i.test(window.location.href);
