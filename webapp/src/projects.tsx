@@ -1287,14 +1287,20 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
             && !pxt.winrt.isWinRT() // not supported in windows 10
             && !pxt.BrowserUtils.isPxtElectron()
             && pxt.appTarget?.cloud?.cloudProviders?.github;
+        const showOpenFiles = pxt.appTarget.compile && !disableFileAccessinMaciOs && !disableFileAccessinAndroid;
+
+        let cardCount = showOpenFiles ? 1 : 0;
+        cardCount += showImport ? 1 : 0;
+        cardCount += showCreateGithubRepo ? 1 : 0;
+        const cardClass = cardCount === 1 ? "one" : cardCount === 2 ? "two" : "three";
         return (
             <sui.Modal isOpen={visible} className={classes} size="small"
                 onClose={this.close} dimmer={true}
                 closeIcon={true} header={lf("Import")}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
             >
-                <div className={pxt.github.token ? "ui three cards" : "ui two cards"}>
-                    {pxt.appTarget.compile && !disableFileAccessinMaciOs && !disableFileAccessinAndroid ?
+                <div className={`ui ${cardClass} cards`}>
+                    {showOpenFiles &&
                         <codecard.CodeCardView
                             ariaLabel={lf("Open files from your computer")}
                             role="button"
@@ -1304,7 +1310,7 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
                             name={lf("Import File...")}
                             description={lf("Open files from your computer")}
                             onClick={this.importHex}
-                        /> : undefined}
+                        />}
                     {showImport &&
                         <codecard.CodeCardView
                             ariaLabel={lf("Open a shared project URL or GitHub repo")}
