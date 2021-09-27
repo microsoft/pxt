@@ -44,7 +44,7 @@ export function TabPane(props: TabPaneProps) {
                 return <div key={name} className={`tab-icon ${name} ${name == activeTab ? "active" : ""}`}
                     aria-label={ariaLabel} tabIndex={0} onClick={tabClickHandler} onKeyDown={fireClickOnEnter}>
                     {showBadge && <div className="tab-badge" />}
-                    <i className={`icon ${icon}`} />
+                    <i className={icon} />
                     <span>{title}</span>
                 </div>
             })}
