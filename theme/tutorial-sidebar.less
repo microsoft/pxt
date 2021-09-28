@@ -283,7 +283,7 @@
 }
 
 // Mini sim is visible when tab is hidden
-#root {
+#root.tabTutorial {
     &:not(.fullscreensim) .tab-simulator.tab-content.hidden {
         height: 0;
         padding: 0;
@@ -300,7 +300,7 @@
     }
     .tab-simulator.tab-content:not(.hidden) {
         .simPanel {
-            .sidebar-button, .hidefullscreen { display: none !important; }
+            .sidebar-button, .button.hidefullscreen { display: none !important; }
         }
     }
 }

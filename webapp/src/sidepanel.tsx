@@ -61,7 +61,8 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
             || (this.props.tutorialOptions?.tutorial && props.tutorialOptions?.tutorial
                 && this.props.tutorialOptions.tutorial !== props.tutorialOptions.tutorial)) {
             this.showTutorialTab();
-        } else if (!this.props.inHome && props.inHome) {
+        } else if (!this.props.inHome && props.inHome
+            || (this.props.tutorialOptions && !props.tutorialOptions)) {
             this.showSimulatorTab();
         }
     }
