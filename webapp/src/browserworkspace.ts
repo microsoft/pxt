@@ -146,10 +146,16 @@ function resetAsync() {
     // workspace.resetAsync already clears all tables
     return Promise.resolve();
 }
+
+function loadedAsync(): Promise<void> {
+    return pxt.commands.workspaceLoadedAsync?.();
+}
+
 export const provider: WorkspaceProvider = {
     getAsync,
     setAsync,
     deleteAsync,
     listAsync,
     resetAsync,
+    loadedAsync
 }
