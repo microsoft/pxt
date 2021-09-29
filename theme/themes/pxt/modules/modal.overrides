@@ -50,7 +50,7 @@
 }
 
 .ui.modal {
-  position: fixed;
+  position: absolute;
   display: none;
   z-index: @zIndex;
   text-align: left;
