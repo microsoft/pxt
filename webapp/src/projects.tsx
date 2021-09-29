@@ -7,6 +7,7 @@ import * as sui from "./sui";
 import * as core from "./core";
 import * as cloudsync from "./cloudsync";
 import * as auth from "./auth";
+import * as identity from "./identity";
 import * as codecard from "./codecard"
 import * as carousel from "./carousel";
 import { showAboutDialogAsync } from "./dialogs";
@@ -102,6 +103,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
     chgGallery(scr: pxt.CodeCard, action?: pxt.CodeCardAction) {
         applyCodeCardAction(this.props.parent, "projects", scr, action);
     }
+
 
     importProject() {
         pxt.tickEvent("projects.importdialog", undefined, { interactiveConsent: true });

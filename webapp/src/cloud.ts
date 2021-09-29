@@ -212,12 +212,10 @@ export async function syncAsync(opts?: SyncAsyncOptions): Promise<pxt.workspace.
 
     // ensure we don't run this twice
     if (!inProgressSyncPromise) {
-        cloudSyncInProgressInc();
         inProgressSyncPromise = syncAsyncInternal(opts).then(res => {
             return res;
         }).finally(() => {
             inProgressSyncPromise = undefined;
-            cloudSyncInProgressDec();
         });
     }
     return inProgressSyncPromise;
@@ -626,21 +624,7 @@ function shortName(h: Header): string {
  * Virtual API
  */
 
-let cloudSyncInProgressCount = 0;
-
-function cloudSyncInProgressInc() {
-    cloudSyncInProgressCount += 1;
-    data.invalidate(CLOUD_SYNC_IN_PROGRESS);
-}
-
-function cloudSyncInProgressDec() {
-    cloudSyncInProgressCount -= 1;
-    data.invalidate(CLOUD_SYNC_IN_PROGRESS);
-}
-
-export const HEADER_CLOUDSTATE = "header-cloudstate";
-export const CLOUD_SYNC_IN_PROGRESS_PROTOCOL = "cloud-sync-in-progress";
-export const CLOUD_SYNC_IN_PROGRESS = `${CLOUD_SYNC_IN_PROGRESS_PROTOCOL}:*`;
+export const HEADER_CLOUDSTATE = "header-cloudstate"
 
 function cloudHeaderMetadataHandler(p: string): any {
     p = data.stripProtocol(p)
@@ -648,14 +632,9 @@ function cloudHeaderMetadataHandler(p: string): any {
     return getCloudTempMetadata(p)
 }
 
-function cloudSyncInProgressHandler(p: string): boolean {
-    return cloudSyncInProgressCount > 0;
-}
-
 export function init() {
     // mount our virtual APIs
     data.mountVirtualApi(HEADER_CLOUDSTATE, { getSync: cloudHeaderMetadataHandler });
-    data.mountVirtualApi(CLOUD_SYNC_IN_PROGRESS_PROTOCOL, { getSync: cloudSyncInProgressHandler });
 
     // subscribe to header changes
     data.subscribe(onHeaderChangeSubscriber, "header:*");
