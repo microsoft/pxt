@@ -7,7 +7,7 @@ import * as sui from "./sui";
 import * as core from "./core";
 import * as cloudsync from "./cloudsync";
 import * as auth from "./auth";
-import * as identity from "./identity";
+import * as cloud from "./cloud";
 import * as codecard from "./codecard"
 import * as carousel from "./carousel";
 import { showAboutDialogAsync } from "./dialogs";
@@ -104,6 +104,14 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         applyCodeCardAction(this.props.parent, "projects", scr, action);
     }
 
+    async syncCloudProjects() {
+        await cloud.syncAsync();
+    }
+
+    renderCloudSyncButton(): JSX.Element {
+        const syncing = this.getData<boolean>(cloud.CLOUD_SYNC_IN_PROGRESS);
+        return <sui.Button key="cloud-sync" icon="cloud" loading={syncing} className="import-dialog-btn" textClass="landscape only" text={lf("Sync")} title={lf("Sync cloud projects")} onClick={this.syncCloudProjects} />
+    }
 
     importProject() {
         pxt.tickEvent("projects.importdialog", undefined, { interactiveConsent: true });
@@ -128,6 +136,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
             pxt.Util.jsonCopyFrom(galleries, targetConfig.localizedGalleries[lang]);
         if (targetConfig && targetConfig.galleries)
             pxt.Util.jsonCopyFrom(galleries, targetConfig.galleries);
+        const loggedIn = this.isLoggedIn();
 
         // lf("Make")
         // lf("Code")
@@ -155,8 +164,10 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                         </h2> : <h2 className="ui header">{lf("My Projects")}</h2>}
                     </div>
                     <div className="column right aligned" style={{ zIndex: 1 }}>
-                        {pxt.appTarget.compile || (pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing) ?
-                            <sui.Button key="import" icon="upload" className="import-dialog-btn" textClass="landscape only" text={lf("Import")} title={lf("Import a project")} onClick={this.importProject} /> : undefined}
+                        {pxt.appTarget.compile || (pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing) ? <>
+                            {loggedIn ? this.renderCloudSyncButton() : undefined}
+                            <sui.Button key="import" icon="upload" className="import-dialog-btn" textClass="landscape only" text={lf("Import")} title={lf("Import a project")} onClick={this.importProject} />
+                        </> : undefined}
                     </div>
                 </div>
                 <div className="content">

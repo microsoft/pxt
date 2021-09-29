@@ -359,9 +359,6 @@ export class ProjectView
             } else if (!this.state.home) {
                 cmds.maybeReconnectAsync(false, true);
             }
-            // If active but not in editor, poll cloud for changes.
-            if (!inEditor) { await cloud.syncAsync({ direction: "down" }); }
-
         }
     }
 
