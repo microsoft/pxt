@@ -359,9 +359,6 @@ export class ProjectView
             } else if (!this.state.home) {
                 cmds.maybeReconnectAsync(false, true);
             }
-            // If active but not in editor, poll cloud for changes.
-            if (!inEditor) { await cloud.syncAsync({ direction: "down" }); }
-
         }
     }
 
@@ -438,10 +435,6 @@ export class ProjectView
                 this.editor.updateBreakpoints();
                 this.editor.updateToolbox()
             });
-        }
-        // If home screen became active, poll cloud for changes.
-        if (!prevState.home && this.state.home) {
-            await cloud.syncAsync({ direction: "down" });
         }
     }
 
