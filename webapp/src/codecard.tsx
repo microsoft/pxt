@@ -128,7 +128,7 @@ export class CodeCardView extends data.Component<CodeCardProps, CodeCardState> {
             {(card.shortName || name || descriptions) ?
                 <div className={`content ${this.props.tallCard? "tall" : ""}`}>
                     {card.shortName || name ? <div className="header">{card.shortName || name}
-                            <div className="tags">{card.tags}</div>
+                            <div className="tags">{card.tags?.join(" ")}</div>
                         </div> : null}
                     {descriptions && descriptions.map((element, index) => {
                         return <div key={`line${index}`} className={`description tall ${card.icon || card.iconContent || card.imageUrl ? "" : "long"}`}>{renderMd(element)}</div>
