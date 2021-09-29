@@ -436,10 +436,6 @@ export class ProjectView
                 this.editor.updateToolbox()
             });
         }
-        // If home screen became active, poll cloud for changes.
-        if (!prevState.home && this.state.home) {
-            await cloud.syncAsync({ direction: "down" });
-        }
     }
 
     fireResize() {
