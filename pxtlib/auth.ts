@@ -75,6 +75,11 @@ namespace pxt.auth {
     let _client: AuthClient;
     export function client(): AuthClient { return _client; }
 
+    const PREFERENCES_DEBOUNCE_MS = 5 * 1000;
+    const PREFERENCES_DEBOUNCE_MAX_MS = 30 * 1000;
+    let debouncePreferencesChangedTimeout = 0;
+    let debouncePreferencesChangedStarted = 0;
+
     export abstract class AuthClient {
         /**
          * In-memory cache of user profile state. This is persisted in local storage.
@@ -302,15 +307,28 @@ namespace pxt.auth {
             await this.setUserPreferencesAsync(curPref);
             // If we're not logged in, non-persistent local state is all we'll use
             if (!await this.loggedInAsync()) { return; }
-            // If the user is logged in, save to cloud
-            const result = await this.apiAsync<UserPreferences>('/api/user/preferences', ops, 'PATCH');
-            if (result.success) {
-                pxt.debug("Updating local user preferences w/ cloud data after result of POST")
-                // Set user profile from returned value so we stay in-sync
-                this.setUserPreferencesAsync(result.resp)
-            } else {
-                pxt.reportError("identity", "update preferences failed", result as any);
+            // If the user is logged in, save to cloud, but debounce the api call as this can be called frequently from skillmaps
+            clearTimeout(debouncePreferencesChangedTimeout);
+            const savePrefs = async () => {
+                debouncePreferencesChangedStarted = 0;
+                const result = await this.apiAsync<UserPreferences>('/api/user/preferences', ops, 'PATCH');
+                if (result.success) {
+                    pxt.debug("Updating local user preferences w/ cloud data after result of POST")
+                    // Set user profile from returned value so we stay in-sync
+                    this.setUserPreferencesAsync(result.resp)
+                } else {
+                    pxt.reportError("identity", "update preferences failed", result as any);
+                }
             }
+            if (!debouncePreferencesChangedStarted) {
+                debouncePreferencesChangedStarted = U.now();
+            }
+            if (PREFERENCES_DEBOUNCE_MAX_MS < U.now() - debouncePreferencesChangedStarted) {
+                await savePrefs();
+            } else {
+                debouncePreferencesChangedTimeout = setTimeout(savePrefs, PREFERENCES_DEBOUNCE_MS);
+            }
+
         }
 
         /*protected*/ hasUserId(): boolean {
