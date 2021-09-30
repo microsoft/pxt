@@ -47,6 +47,7 @@
 .modals.dimmer .ui.scrolling.modal {
     margin: 3.5rem auto !important;
     top: auto;
+    position: absolute;
 }
 
 .ui.modal {
