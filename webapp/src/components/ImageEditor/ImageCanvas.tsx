@@ -40,6 +40,7 @@ export interface ImageCanvasProps {
     imageState?: pxt.sprite.ImageState;
     prevFrame?: pxt.sprite.ImageState;
     lightMode?: boolean;
+    tilesetRevision: number;
 
     suppressShortcuts: boolean;
 }
@@ -54,7 +55,7 @@ const WALL_COLOR = 2;
  */
 const overlayLayers = [TileDrawingMode.Wall];
 
-class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements GestureTarget {
+export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements GestureTarget {
     protected canvas: HTMLCanvasElement;
 
     protected imageWidth: number;
@@ -80,6 +81,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     protected lastTool: ImageEditorTool;
 
     protected tileCache: HTMLCanvasElement[] = [];
+    protected tileCacheRevision: number;
     protected hasHover: boolean;
 
     protected waitingToZoom: boolean;
@@ -696,7 +698,10 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         let index: number;
         let tileImage: HTMLCanvasElement;
 
-        this.tileCache = [];
+        if (this.tileCacheRevision !== this.props.tilesetRevision) {
+            this.tileCache = [];
+            this.tileCacheRevision = this.props.tilesetRevision;
+        }
 
         context.imageSmoothingEnabled = false;
         context.fillStyle = LIGHT_MODE_TRANSPARENT;
@@ -1075,6 +1080,7 @@ function mapStateToProps({ store: { present }, editor }: ImageEditorStore, ownPr
             isTilemap: editor.isTilemap,
             drawingMode: editor.drawingMode,
             gallery: editor.tileGallery,
+            tilesetRevision: editor.tilesetRevision
         };
     }
 
@@ -1092,6 +1098,7 @@ function mapStateToProps({ store: { present }, editor }: ImageEditorStore, ownPr
         backgroundColor: editor.backgroundColor,
         prevFrame: state.frames[state.currentFrame - 1],
         isTilemap: editor.isTilemap,
+        tilesetRevision: editor.tilesetRevision
     };
 }
 
