@@ -10,6 +10,8 @@ type ScriptText = pxt.workspace.ScriptText;
 
 import U = pxt.Util;
 
+let cloudRevision: string;
+
 type CloudProject = {
     id: string;
     header: string;
@@ -156,8 +158,26 @@ export function getCloudTempMetadata(headerId: string): CloudTempMetadata {
 }
 
 type SetAsyncResult = {
-    header: Header;
-    status: "succeeded" | "failed" | "conflict";
+    status: 'ok' | 'conflict';
+    // `project` always contains the server's version of the project.
+    //   If status is 'ok': contains the updated project.
+    //   If status is 'conflict': contains the server's version of the project.
+    project: CloudProject;
+};
+
+type SetAsyncResponse = {
+    status: 'ok' | 'conflict';
+    /* The projects list revision before change.
+     */
+    oldRev: string;
+    /* The projects list revision after change.
+     */
+    curRev: string;
+    /* `project` always contains the project as stored in the database.
+     *   If status is 'ok': contains updated project.
+     *   If status is 'conflict': contains original project.
+     */
+    project: CloudProject;
 }
 
 function setAsync(h: Header, prevVersion: string, text?: ScriptText): Promise<SetAsyncResult> {
@@ -176,17 +196,19 @@ function setAsync(h: Header, prevVersion: string, text?: ScriptText): Promise<Se
                 text: text ? JSON.stringify(text) : undefined,
                 version: prevVersion
             }
-            const result = await auth.apiAsync<string>('/api/user/project', project);
+            const result = await auth.apiAsync<string>('/api/user/project/v2', project);
             if (result.success) {
+                const resp = JSON.parse(result.resp) as SetAsyncResponse;
                 h.cloudCurrent = true;
-                h.cloudVersion = result.resp;
+                h.cloudVersion = resp.project.version;
                 h.cloudLastSyncTime = U.nowSeconds()
+                const project = resp.project;
                 pxt.tickEvent(`identity.cloudApi.setProject.success`);
-                resolve({ header: h, status: "succeeded" });
+                resolve({ project: h, status: 'ok' });
             } else if (result.statusCode === 409) {
                 // conflict
                 pxt.tickEvent(`identity.cloudApi.setProject.conflict`);
-                resolve({ header: h, status: "conflict" });
+                resolve({ header: h, status: 'conflict' });
             } else {
                 pxt.tickEvent(`identity.cloudApi.setProject.failed`);
                 reject(result.err);
@@ -200,7 +222,7 @@ function setAsync(h: Header, prevVersion: string, text?: ScriptText): Promise<Se
 
 export type SyncAsyncOptions = {
     hdrs?: Header[],
-    direction?: "up" | "down"
+    direction?: 'up' | 'down'
 };
 
 let inProgressSyncPromise: Promise<pxt.workspace.Header[]>;
@@ -349,6 +371,7 @@ function getLocalCloudHeaders(allHdrs?: Header[]) {
 
 async function syncAsyncInternal(opts: SyncAsyncOptions): Promise<pxt.workspace.Header[]> {
     try {
+        // Check if we have the latest cloud revision. If so, no need to sync down.
         const fullSync = !opts.hdrs;
 
         if (fullSync) {
@@ -401,22 +424,12 @@ async function syncAsyncInternal(opts: SyncAsyncOptions): Promise<pxt.workspace.
                         }
                     }
                     else {
-                        const remote = remoteHeaderMap[local.id];
-                        if (!remote) {
-                            // It's a new local project, push to cloud without etag
-                            const res = await toCloud(local, null);
-                            if (res.status !== "succeeded") {
-                                pxt.tickEvent(`identity.sync.failed.localNewProjectSyncUpFailed`)
-                                throw new Error(`Failed to save new ${projShorthand} to the cloud.`)
-                            }
-                        } else {
-                            // It's an updated local project, push to cloud with etag
-                            const result = await toCloud(local, local.cloudVersion);
-                            if (result.status === "conflict") {
-                                await resolveConflictAsync(local, remote);
-                            } else if (result.status !== "succeeded") {
-                                throw new Error(`Failed to save ${projShorthand} to the cloud.`)
-                            }
+                        // It's an updated local project, push to cloud with etag
+                        const result = await toCloud(local, local.cloudVersion);
+                        if (result.status === "conflict") {
+                            await resolveConflictAsync(local, result.remote);
+                        } else if (result.status !== "succeeded") {
+                            throw new Error(`Failed to save ${projShorthand} to the cloud.`)
                         }
                     }
                 }
