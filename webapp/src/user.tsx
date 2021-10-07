@@ -74,7 +74,7 @@ type PanelProps = {
 type AccountPanelProps = PanelProps & {
 };
 
-class AccountPanel extends sui.UIElement<AccountPanelProps, {}> {
+class AccountPanel extends auth.Component<AccountPanelProps, {}> {
 
     handleSignoutClicked = async () => {
         await auth.logoutAsync();
@@ -100,18 +100,23 @@ class AccountPanel extends sui.UIElement<AccountPanelProps, {}> {
         }
     }
 
+    avatarPicUrl(): string {
+        const user = this.getUserProfile();
+        return user?.idp?.pictureUrl ?? user?.idp?.picture?.dataUrl;
+    }
+
     renderCore() {
-        const profile = this.getData<pxt.auth.UserProfile>(auth.USER_PROFILE);
-        const provider = pxt.auth.identityProvider(profile?.idp?.provider);
+        const user = this.getUserProfile();
+        const provider = pxt.auth.identityProvider(user?.idp?.provider);
 
         const avatarElem = (
             <div className="profile-pic avatar">
-                <img src={profile?.idp?.picture?.dataUrl} alt={lf("User")} />
+                <img src={this.avatarPicUrl()} alt={lf("User")} />
             </div>
         );
         const initialsElem = (
             <div className="profile-pic avatar">
-                <span>{pxt.auth.userInitials(profile)}</span>
+                <span>{pxt.auth.userInitials(user)}</span>
             </div>
         );
 
@@ -120,21 +125,21 @@ class AccountPanel extends sui.UIElement<AccountPanelProps, {}> {
                 <div className="header-text">
                     <label>{lf("Profile")}</label>
                 </div>
-                {profile?.idp?.picture?.dataUrl ? avatarElem : initialsElem}
+                {this.avatarPicUrl() ? avatarElem : initialsElem}
                 <div className="row-span-two">
                     <label className="title">{lf("Name")}</label>
-                    <p className="value">{profile?.idp?.displayName || profile?.idp?.username}</p>
+                    <p className="value">{user?.idp?.displayName || user?.idp?.username}</p>
                 </div>
                 <div className="row-span-two">
                     <label className="title">{lf("Username")}</label>
-                    <p className="value">{profile?.idp?.username}</p>
+                    <p className="value">{user?.idp?.username}</p>
                 </div>
                 <div className="row-span-two">
                     <label className="title">{lf("Provider")}</label>
                     <p className="value">{provider.name}</p>
                 </div>
                 <div className="row-span-two">
-                    <sui.Button text={lf("Sign out")} icon={`xicon ${profile?.idp?.provider}`} ariaLabel={lf("Sign out {0}", profile?.idp?.provider)} onClick={this.handleSignoutClicked} />
+                    <sui.Button text={lf("Sign out")} icon={`xicon ${user?.idp?.provider}`} ariaLabel={lf("Sign out {0}", user?.idp?.provider)} onClick={this.handleSignoutClicked} />
                 </div>
                 <div className="row-span-two">
                     <sui.Link className="ui" text={lf("I want to delete my profile")} ariaLabel={lf("delete profile")} onClick={this.handleDeleteAccountClick} />
