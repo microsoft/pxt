@@ -234,8 +234,8 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
             </div>}
             <div className="right menu">
                 {this.getExitButtons(targetTheme, view, tutorialOptions)}
-                {showHomeButton && <sui.Item className={`icon openproject ${hasIdentity ? "mobPile hide" : ""}`} role="menuitem" icon="home large" ariaLabel={lf("Home screen")} onClick={this.goHome} />}
-                {showShareButton && <sui.Item className="icon shareproject mobile hide" role="menuitem" ariaLabel={lf("Share Project")} icon="share alternate large" onClick={this.showShareDialog} />}
+                {showHomeButton && <sui.Item className={`icon openproject ${hasIdentity ? "mobile hide" : ""}`} role="menuitem" title={lf("Home")} icon="home large" ariaLabel={lf("Home screen")} onClick={this.goHome} />}
+                {showShareButton && <sui.Item className="icon shareproject mobile hide" role="menuitem" title={lf("Publish your game to create a shareable link")} icon="share alternate large" ariaLabel={lf("Share Project")} onClick={this.showShareDialog} />}
                 {showHelpButton && <container.DocsMenu parent={this.props.parent} editor={activeEditor} />}
                 {this.getSettingsMenu(view)}
                 {hasIdentity && (view === "home" || view === "editor" || view === "tutorial-tab") && <identity.UserMenu parent={this.props.parent} />}
