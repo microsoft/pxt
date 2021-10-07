@@ -40,6 +40,7 @@ export interface ImageCanvasProps {
     imageState?: pxt.sprite.ImageState;
     prevFrame?: pxt.sprite.ImageState;
     lightMode?: boolean;
+    tilesetRevision: number;
 
     suppressShortcuts: boolean;
 }
@@ -54,7 +55,7 @@ const WALL_COLOR = 2;
  */
 const overlayLayers = [TileDrawingMode.Wall];
 
-class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements GestureTarget {
+export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements GestureTarget {
     protected canvas: HTMLCanvasElement;
 
     protected imageWidth: number;
@@ -80,6 +81,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     protected lastTool: ImageEditorTool;
 
     protected tileCache: HTMLCanvasElement[] = [];
+    protected tileCacheRevision: number;
     protected hasHover: boolean;
 
     protected waitingToZoom: boolean;
@@ -583,9 +585,9 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         }
     }
 
-    protected drawImage(bitmap: pxt.sprite.Bitmap, x0 = 0, y0 = 0, transparent = !this.props.lightMode) {
-        if (this.props.isTilemap) this.drawTilemap(bitmap, x0, y0, transparent);
-        else this.drawBitmap(bitmap, x0, y0, transparent);
+    protected drawImage(bitmap: pxt.sprite.Bitmap, x0 = 0, y0 = 0, transparent = false, alpha = !this.props.lightMode) {
+        if (this.props.isTilemap) this.drawTilemap(bitmap, x0, y0, transparent, alpha);
+        else this.drawBitmap(bitmap, x0, y0, transparent, alpha);
     }
 
     protected redrawFloatingLayer(state: EditState, skipImage = false) {
@@ -625,15 +627,15 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         }
     }
 
-    protected drawOverlayLayers(layers: pxt.sprite.Bitmap[], x0 = 0, y0 = 0, transparent = !this.props.lightMode) {
+    protected drawOverlayLayers(layers: pxt.sprite.Bitmap[], x0 = 0, y0 = 0, alpha = !this.props.lightMode) {
         if (layers) {
             layers.forEach((layer, index) => {
-                this.drawBitmap(layer, x0, y0, transparent, this.canvasLayers[index]);
+                this.drawBitmap(layer, x0, y0, true, alpha, this.canvasLayers[index]);
             })
         }
     }
 
-    protected drawBitmap(bitmap: pxt.sprite.Bitmap, x0 = 0, y0 = 0, transparent = !this.props.lightMode, target = this.canvas) {
+    protected drawBitmap(bitmap: pxt.sprite.Bitmap, x0 = 0, y0 = 0, transparent = false, alpha = !this.props.lightMode, target = this.canvas) {
         if (!this.colors) {
             this.colors = new Uint8ClampedArray(this.props.colors.length * 4);
 
@@ -652,22 +654,29 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             }
         }
 
-        this.colors[3] = transparent ? 0 : 255;
-
+        this.colors[3] = alpha ? 0 : 255;
         const context = target.getContext("2d");
-        const data = context.getImageData(0, 0, target.width, target.height);
+
+        const data = transparent ? context.getImageData(0, 0, target.width, target.height) : new ImageData(target.width, target.height);
 
         for (let y = 0; y < bitmap.height; y++) {
+            if (y0 + y >= target.height) break;
+            if (y0 + y < 0) continue;
+
             for (let x = 0; x < bitmap.width; x++) {
+                if (x0 + x >= target.width || x0 + x < 0) continue;
+
                 const i = ((x0 + x) << 2) + (((y0 + y) * target.width) << 2)
                 const colorOffset = bitmap.get(x, y) << 2;
+
+                if (!colorOffset && transparent) continue;
                 data.data[i] = this.colors[colorOffset];
                 data.data[i + 1] = this.colors[colorOffset + 1];
                 data.data[i + 2] = this.colors[colorOffset + 2];
                 data.data[i + 3] = this.colors[colorOffset + 3];
             }
         }
-        context.putImageData(data, 0, 0);
+        target.getContext("2d").putImageData(data, 0, 0);
     }
 
     protected generateTile(index: number, tileset: pxt.TileSet) {
@@ -677,19 +686,22 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         const tileImage = document.createElement("canvas");
         tileImage.width = tileset.tileWidth;
         tileImage.height = tileset.tileWidth;
-        this.drawBitmap(pxt.sprite.Bitmap.fromData(tileset.tiles[index].bitmap), 0, 0, !this.props.lightMode, tileImage);
+        this.drawBitmap(pxt.sprite.Bitmap.fromData(tileset.tiles[index].bitmap), 0, 0, false, !this.props.lightMode, tileImage);
         this.tileCache[index] = tileImage;
         return tileImage;
     }
 
-    protected drawTilemap(tilemap: pxt.sprite.Bitmap, x0 = 0, y0 = 0, transparent = !this.props.lightMode, target = this.canvas) {
+    protected drawTilemap(tilemap: pxt.sprite.Bitmap, x0 = 0, y0 = 0, transparent = false, alpha = !this.props.lightMode, target = this.canvas) {
         const { tilemapState: { tileset } } = this.props;
 
         const context = target.getContext("2d");
         let index: number;
         let tileImage: HTMLCanvasElement;
 
-        this.tileCache = [];
+        if (this.tileCacheRevision !== this.props.tilesetRevision) {
+            this.tileCache = [];
+            this.tileCacheRevision = this.props.tilesetRevision;
+        }
 
         context.imageSmoothingEnabled = false;
         context.fillStyle = LIGHT_MODE_TRANSPARENT;
@@ -711,7 +723,10 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
                     context.drawImage(tileImage, (x + x0) * this.cellWidth, (y + y0) * this.cellWidth);
                 }
                 else {
-                    if (!transparent) context.fillRect((x + x0) * this.cellWidth, (y + y0) * this.cellWidth, this.cellWidth, this.cellWidth);
+                    if (!transparent) {
+                        if (alpha) context.clearRect((x + x0) * this.cellWidth, (y + y0) * this.cellWidth, this.cellWidth, this.cellWidth);
+                        else context.fillRect((x + x0) * this.cellWidth, (y + y0) * this.cellWidth, this.cellWidth, this.cellWidth);
+                    }
                 }
             }
         }
@@ -1065,6 +1080,7 @@ function mapStateToProps({ store: { present }, editor }: ImageEditorStore, ownPr
             isTilemap: editor.isTilemap,
             drawingMode: editor.drawingMode,
             gallery: editor.tileGallery,
+            tilesetRevision: editor.tilesetRevision
         };
     }
 
@@ -1082,6 +1098,7 @@ function mapStateToProps({ store: { present }, editor }: ImageEditorStore, ownPr
         backgroundColor: editor.backgroundColor,
         prevFrame: state.frames[state.currentFrame - 1],
         isTilemap: editor.isTilemap,
+        tilesetRevision: editor.tilesetRevision
     };
 }
 
