@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { connect } from 'react-redux';
-import { ModalType, ShareState, SkillMapState } from '../store/reducer';
+import { ModalType, ShareState, AuthState, SkillMapState } from '../store/reducer';
 import { dispatchHideModal, dispatchRestartActivity, dispatchOpenActivity, dispatchResetUser, dispatchShowCarryoverModal, dispatchSetShareStatus, dispatchCloseUserProfile } from '../actions/dispatch';
 import { tickEvent, postAbuseReportAsync, resolvePath, postShareAsync } from "../lib/browserUtils";
 import { lookupActivityProgress, lookupPreviousActivityStates, lookupPreviousCompletedActivityState, isCodeCarryoverEnabled } from "../lib/skillMapUtils";
@@ -21,6 +21,7 @@ interface AppModalProps {
     actions?: ModalAction[];
     showCodeCarryoverModal?: boolean;
     shareState?: ShareState;
+    signedIn?: boolean
     dispatchHideModal: () => void;
     dispatchRestartActivity: (mapId: string, activityId: string, previousHeaderId?: string, carryoverCode?: boolean) => void;
     dispatchOpenActivity: (mapId: string, activityId: string, previousHeaderId?: string, carryoverCode?: boolean) => void;
@@ -86,6 +87,18 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
         const reward = activity as MapReward;
         tickEvent("skillmap.reward", { path: mapId, activity: reward.activityId });
         window.open(reward.url || skillMap!.completionUrl);
+    }
+
+    protected handleTeamsClick = () => {
+        if (this.props.signedIn) {
+            // CALL GRAPH API
+        } else {
+            const msft = pxt.auth.identityProvider("microsoft");
+            pxt.tickEvent(`skillmap.teams.signin`);
+            pxt.auth.client().loginAsync(msft.id, false, { hash: location.hash })
+
+        }
+
     }
 
     protected getCompletionActionText(action: MapCompletionAction) {
@@ -158,6 +171,12 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
         const completionModalText = lf("Congratulations on completing {0}. Take some time to explore any activities you missed, or reset your progress to try again. But first, be sure to claim your reward using the button below.", "{0}");
         const completionModalTextSegments = completionModalText.split("{0}");
 
+        const submissionId =  localStorage.getItem('assignmentId')
+        const classId = localStorage.getItem('submissionId')
+        const assignmentId = localStorage.getItem('assignmentId')
+
+        const canSubmitToTeams = submissionId && classId && assignmentId;
+
         const density = 100;
 
         return <div className="confetti-container">
@@ -167,6 +186,15 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                     <i className="icon gift" />
                     <span>{lf("Claim your reward!")}</span>
                 </div>
+                {canSubmitToTeams ?
+                <div className="completion-reward" onClick={this.handleTeamsClick}>
+                    <i className="icon send"/>
+                    <span>{lf("Submit to Teams")}</span>
+                </div> :
+                <div className="completion-reward">
+                    <i className="icon send" />
+                    <span>{lf("Share your game!")}</span>
+                </div> }
             </Modal>
             {Array(density).fill(0).map((el, i) => {
                 const style = {
@@ -420,7 +448,8 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         showCodeCarryoverModal: currentMap && activity && isCodeCarryoverEnabled(state.user, state.pageSourceUrl, currentMap, activity),
         mapId: currentMapId,
         activity: currentMapId && currentActivityId ? state.maps[currentMapId].activities[currentActivityId] : undefined,
-        shareState
+        shareState,
+        signedIn: state.auth.signedIn
     }
 }
 

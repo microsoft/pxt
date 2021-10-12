@@ -313,6 +313,16 @@ class AppImpl extends React.Component<AppProps, AppState> {
         if (this.queryFlags["authcallback"]) {
             await authClient.loginCallbackAsync(this.queryFlags);
         }
+        if (this.queryFlags["assignmentId"]) {
+            localStorage.setItem('assignmentId',  this.queryFlags["assignmentId"]);
+        }
+        if (this.queryFlags["submissionId"]) {
+            localStorage.setItem('submissionId',  this.queryFlags["submissionId"]);
+        }
+        if (this.queryFlags["classId"]) {
+            localStorage.setItem('classId',  this.queryFlags["classId"]);
+        }
+
         await authClient.authCheckAsync();
         await this.initLocalizationAsync();
         await this.parseHashAsync();
