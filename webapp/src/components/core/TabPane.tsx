@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { fireClickOnEnter } from "../../sui";
+import { fireClickOnEnter } from "../../util";
 import { TabContentProps } from "./TabContent";
 
 interface TabPaneProps {

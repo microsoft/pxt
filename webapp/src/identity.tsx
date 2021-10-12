@@ -5,6 +5,7 @@ import * as auth from "./auth";
 import * as data from "./data";
 import * as cloudsync from "./cloudsync";
 import * as cloud from "./cloud";
+import { fireClickOnEnter } from "./util";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -71,7 +72,7 @@ export class LoginDialog extends auth.Component<LoginDialogProps, LoginDialogSta
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape>
                 <p>{lf("Sign in with your Microsoft Account. We'll save your projects to the cloud, where they're accessible from anywhere.")}</p>
                 <p>{lf("Don't have a Microsoft Account? Start signing in to create one!")}</p>
-                <sui.Link className="ui" text={lf("Learn more")} icon="external alternate" ariaLabel={lf("Learn more")} href="/identity/sign-in" target="_blank" onKeyDown={sui.fireClickOnEnter} />
+                <sui.Link className="ui" text={lf("Learn more")} icon="external alternate" ariaLabel={lf("Learn more")} href="/identity/sign-in" target="_blank" onKeyDown={fireClickOnEnter} />
             </sui.Modal>
         );
     }

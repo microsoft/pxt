@@ -11,6 +11,7 @@ import * as identity from "./identity";
 import * as codecard from "./codecard"
 import * as carousel from "./carousel";
 import { showAboutDialogAsync } from "./dialogs";
+import { fireClickOnEnter } from "./util";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -145,7 +146,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
             <div key={`mystuff_gallerysegment`} className="ui segment gallerysegment mystuff-segment" role="region" aria-label={lf("My Projects")}>
                 <div className="ui heading">
                     <div className="column" style={{ zIndex: 1 }}
-                        role={scriptManager && "button"} onClick={scriptManager && this.showScriptManager} onKeyDown={scriptManager && sui.fireClickOnEnter}
+                        role={scriptManager && "button"} onClick={scriptManager && this.showScriptManager} onKeyDown={scriptManager && fireClickOnEnter}
                     >
                         {scriptManager ? <h2 className="ui header myproject-header">
                             {lf("My Projects")}
@@ -207,10 +208,10 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                 )}
             {targetTheme.organizationUrl || targetTheme.organizationUrl || targetTheme.privacyUrl || targetTheme.copyrightText ? <div className="ui horizontal small divided link list homefooter" role="contentinfo">
                 {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" target="_blank" rel="noopener noreferrer" href={targetTheme.organizationUrl}>{targetTheme.organization}</a> : undefined}
-                {targetTheme.selectLanguage ? <sui.Link className="item" icon="xicon globe" text={lf("Language")} onClick={this.showLanguagePicker} onKeyDown={sui.fireClickOnEnter} role="button" /> : undefined}
+                {targetTheme.selectLanguage ? <sui.Link className="item" icon="xicon globe" text={lf("Language")} onClick={this.showLanguagePicker} onKeyDown={fireClickOnEnter} role="button" /> : undefined}
                 {targetTheme.termsOfUseUrl ? <a target="_blank" className="item" href={targetTheme.termsOfUseUrl} rel="noopener noreferrer">{lf("Terms of Use")}</a> : undefined}
                 {targetTheme.privacyUrl ? <a target="_blank" className="item" href={targetTheme.privacyUrl} rel="noopener noreferrer">{lf("Privacy")}</a> : undefined}
-                {pxt.appTarget.versions ? <sui.Link className="item" text={`v${pxt.appTarget.versions.target}`} onClick={this.showAboutDialog} onKeyDown={sui.fireClickOnEnter} role="button" /> : undefined}
+                {pxt.appTarget.versions ? <sui.Link className="item" text={`v${pxt.appTarget.versions.target}`} onClick={this.showAboutDialog} onKeyDown={fireClickOnEnter} role="button" /> : undefined}
                 {targetTheme.copyrightText ? <div className="ui item copyright">{targetTheme.copyrightText}</div> : undefined}
             </div> : undefined}
         </div>;
@@ -744,14 +745,14 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                 .slice(0, ProjectsCarousel.NUM_PROJECTS_HOMESCREEN);
             return <carousel.Carousel tickId="myprojects" bleedPercent={20}>
                 {showNewProject && <div role="button" className="ui card link buttoncard newprojectcard" title={lf("Creates a new empty project")}
-                    onClick={this.newProject} onKeyDown={sui.fireClickOnEnter} >
+                    onClick={this.newProject} onKeyDown={fireClickOnEnter} >
                     <div className="content">
                         <sui.Icon icon="huge add circle" />
                         <span className="header">{lf("New Project")}</span>
                     </div>
                 </div>}
                 {showCloudProjectsCard && <div role="button" className="ui card link buttoncard cloudprojectscard" title={lf("Sign in to see cloud projects")}
-                    onClick={e => this.props.parent.showLoginDialog()} onKeyDown={sui.fireClickOnEnter}>
+                    onClick={e => this.props.parent.showLoginDialog()} onKeyDown={fireClickOnEnter}>
                         <div className="content">
                             <sui.Icon icon="huge xicon cloud-profile"/>
                             <span className="header">{lf("Cloud Projects")}</span>
@@ -783,7 +784,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                     />;
                 })}
                 {showScriptManagerCard && <div role="button" className="ui card link buttoncard scriptmanagercard" title={lf("See all projects")}
-                    onClick={this.showScriptManager} onKeyDown={sui.fireClickOnEnter} >
+                    onClick={this.showScriptManager} onKeyDown={fireClickOnEnter} >
                     <div className="content">
                         <sui.Icon icon="huge right angle" />
                         <span className="header">{lf("See all projects")}</span>
@@ -1152,7 +1153,7 @@ function cardActionButton(props: Partial<ProjectsDetailProps>, className: string
             text={text}
             className={className}
             onClick={onClick}
-            onKeyDown={sui.fireClickOnEnter}
+            onKeyDown={fireClickOnEnter}
             autoFocus={autoFocus}
             title={label} ariaLabel={label}
         />

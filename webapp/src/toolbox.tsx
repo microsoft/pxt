@@ -8,6 +8,7 @@ import * as core from "./core"
 import * as coretsx from "./coretsx";
 
 import Util = pxt.Util;
+import { fireClickOnEnter } from "./util"
 
 export const enum CategoryNameID {
     Loops = "loops",
@@ -578,7 +579,7 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
                 // Close the flyout
                 toolbox.closeFlyout();
             } else if (charCode == core.ENTER_KEY || charCode == core.SPACE_KEY) {
-                sui.fireClickOnEnter.call(this, e);
+                fireClickOnEnter.call(this, e);
             } else if (charCode == core.TAB_KEY
                 || charCode == 37 /* Left arrow key */
                 || charCode == 39 /* Left arrow key */
@@ -784,7 +785,7 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
             style={treeRowStyle} tabIndex={0}
             aria-label={lf("Toggle category {0}", rowTitle)} aria-expanded={selected}
             onMouseEnter={this.onmouseenter} onMouseLeave={this.onmouseleave}
-            onClick={onClick} onContextMenu={onClick} onKeyDown={onKeyDown ? onKeyDown : sui.fireClickOnEnter}>
+            onClick={onClick} onContextMenu={onClick} onKeyDown={onKeyDown ? onKeyDown : fireClickOnEnter}>
             <span className="blocklyTreeIcon" role="presentation"></span>
             {iconImageStyle}
             <span style={{ display: 'inline-block' }} className={`blocklyTreeIcon ${iconClass}`} role="presentation">{iconContent}</span>

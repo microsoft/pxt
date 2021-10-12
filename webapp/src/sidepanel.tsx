@@ -13,6 +13,7 @@ import * as simulator from "./simulator";
 import { TabContent } from "./components/core/TabContent";
 import { TabPane } from "./components/core/TabPane";
 import { TutorialContainer } from "./components/tutorial/TutorialContainer";
+import { fireClickOnEnter } from "./util";
 
 interface SidepanelState {
     activeTab?: string;
@@ -119,7 +120,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
 
     protected tutorialExitButton = () => {
         return <div className="tutorial-exit" aria-label={lf("Exit tutorial")} tabIndex={0}
-            onClick={() => this.props.parent.exitTutorial()} onKeyDown={sui.fireClickOnEnter}>
+            onClick={() => this.props.parent.exitTutorial()} onKeyDown={fireClickOnEnter}>
             {lf("Exit Tutorial")}
         </div>;
     }

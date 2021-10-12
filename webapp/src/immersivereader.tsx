@@ -6,6 +6,7 @@ import * as auth from "./auth";
 import * as ImmersiveReader from '@microsoft/immersive-reader-sdk';
 
 import Cloud = pxt.Cloud;
+import { fireClickOnEnter } from "./util";
 
 export type ImmersiveReaderToken = {
     token: string;
@@ -289,7 +290,7 @@ export class ImmersiveReaderButton extends data.Component<ImmersiveReaderProps, 
 
     render() {
         return <div className='immersive-reader-button ui item' onClick={this.buttonClickHandler}
-            aria-label={lf("Launch Immersive Reader")} role="button" onKeyDown={sui.fireClickOnEnter} tabIndex={0}
+            aria-label={lf("Launch Immersive Reader")} role="button" onKeyDown={fireClickOnEnter} tabIndex={0}
             title={lf("Launch Immersive Reader")}/>
     }
 }

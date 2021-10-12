@@ -4,8 +4,6 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 
 import { ImageFieldEditor } from "./components/ImageFieldEditor";
-import { TilemapFieldEditor } from "./components/TilemapFieldEditor";
-import * as pkg from "./package";
 
 export interface EditorBounds {
     top: number;
@@ -242,15 +240,11 @@ export function init() {
         return current;
     }
 
+    let project = new pxt.TilemapProject();
+
+    // This is overriden in app.tsx
     pxt.react.getTilemapProject = () => {
-        const epkg = pkg.mainEditorPkg();
-
-        if (!epkg.tilemapProject) {
-            epkg.tilemapProject = new pxt.TilemapProject();
-            epkg.tilemapProject.loadPackage(pkg.mainPkg);
-        }
-
-        return epkg.tilemapProject;
+        return project;
     }
 }
 

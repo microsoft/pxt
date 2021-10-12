@@ -3,6 +3,7 @@ import * as sui from "./sui";
 import * as core from "./core";
 import * as auth from "./auth";
 import * as cloudsync from "./cloudsync";
+import { fireClickOnEnter } from "./util";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -231,7 +232,7 @@ class FeedbackPanel extends sui.UIElement<FeedbackPanelProps, {}> {
                     {lf("What do you think about the Sign In & Cloud Save feature? Is there something you'd like to change? Did you encounter issues? Please let us know!")}
                 </div>
                 <div className="row-span-two">
-                    <sui.Link className="ui" text={lf("Take the Survey")} icon="external alternate" ariaLabel={lf("Provide feedback in a form")} href="https://aka.ms/AAcnpaj" target="_blank" onKeyDown={sui.fireClickOnEnter} />
+                    <sui.Link className="ui" text={lf("Take the Survey")} icon="external alternate" ariaLabel={lf("Provide feedback in a form")} href="https://aka.ms/AAcnpaj" target="_blank" onKeyDown={fireClickOnEnter} />
                 </div>
             </div>
         );
