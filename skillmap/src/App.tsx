@@ -310,6 +310,9 @@ class AppImpl extends React.Component<AppProps, AppState> {
     async componentDidMount() {
         this.unsubscribeChangeListener = store.subscribe(this.onStoreChange);
         this.queryFlags = parseQuery();
+        if (this.queryFlags["teamsSubmit"]) {
+            pxt.auth.submitToTeams(this.queryFlags["teamsSubmit"]);
+        }
         if (this.queryFlags["authcallback"]) {
             await authClient.loginCallbackAsync(this.queryFlags);
         }

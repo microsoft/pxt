@@ -3,7 +3,7 @@
 import * as React from "react";
 import { connect } from 'react-redux';
 import { ModalType, ShareState, AuthState, SkillMapState } from '../store/reducer';
-import { dispatchHideModal, dispatchRestartActivity, dispatchOpenActivity, dispatchResetUser, dispatchShowCarryoverModal, dispatchSetShareStatus, dispatchCloseUserProfile } from '../actions/dispatch';
+import { dispatchHideModal, dispatchRestartActivity, dispatchShowShareModal, dispatchOpenActivity, dispatchResetUser, dispatchShowCarryoverModal, dispatchSetShareStatus, dispatchCloseUserProfile } from '../actions/dispatch';
 import { tickEvent, postAbuseReportAsync, resolvePath, postShareAsync } from "../lib/browserUtils";
 import { lookupActivityProgress, lookupPreviousActivityStates, lookupPreviousCompletedActivityState, isCodeCarryoverEnabled } from "../lib/skillMapUtils";
 import { getProjectAsync } from "../lib/workspaceProvider";
@@ -29,6 +29,7 @@ interface AppModalProps {
     dispatchCloseUserProfile: () => void;
     dispatchResetUser: () => void;
     dispatchSetShareStatus: (headerId?: string, url?: string) => void;
+    dispatchShowShareModal: (mapId: string, activityId: string, teamsShare?: boolean) => void;
 }
 
 interface AppModalState {
@@ -49,7 +50,6 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
 
     render() {
         const  { activity, type } = this.props;
-
         switch (type) {
             case "completion":
                 if (!activity) return <div />
@@ -89,16 +89,10 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
         window.open(reward.url || skillMap!.completionUrl);
     }
 
-    protected handleTeamsClick = () => {
-        if (this.props.signedIn) {
-            // CALL GRAPH API
-        } else {
-            const msft = pxt.auth.identityProvider("microsoft");
-            pxt.tickEvent(`skillmap.teams.signin`);
-            pxt.auth.client().loginAsync(msft.id, false, { hash: location.hash })
-
-        }
-
+    protected handleShareClick = () => {
+        const { mapId, userState, pageSourceUrl, skillMap, activity, shareState } = this.props;
+        const previousState = lookupPreviousCompletedActivityState(userState!, pageSourceUrl!, skillMap!, activity!.activityId);
+        this.props.dispatchShowShareModal(mapId, previousState.activityId, true);
     }
 
     protected getCompletionActionText(action: MapCompletionAction) {
@@ -186,15 +180,10 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                     <i className="icon gift" />
                     <span>{lf("Claim your reward!")}</span>
                 </div>
-                {canSubmitToTeams ?
-                <div className="completion-reward" onClick={this.handleTeamsClick}>
-                    <i className="icon send"/>
-                    <span>{lf("Submit to Teams")}</span>
-                </div> :
-                <div className="completion-reward">
+                <div className="completion-reward" onClick={this.handleShareClick}>
                     <i className="icon send" />
                     <span>{lf("Share your game!")}</span>
-                </div> }
+                </div>
             </Modal>
             {Array(density).fill(0).map((el, i) => {
                 const style = {
@@ -325,7 +314,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                 dispatchSetShareStatus(progress?.headerId);
             }});
         }
-
+        console.log("VVN: this is the share state: " + shareState)
 
         return <Modal title={resetModalTitle} actions={actions} onClose={this.handleOnClose}>
             {shortId ?
@@ -338,13 +327,16 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                 <div className="ui active inline loader" />
                 <span>{lf("Loading...")}</span>
             </div>}
-            {shortId && <div className="share-input">
+            {(shortId && !shareState.teamsShare) && <div className="share-input">
                 <input type="text" readOnly={true} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
                     value={`https://makecode.com/${shortId}`} onClick={this.handleShareInputClick}></input>
                 <div className="share-copy" onClick={this.handleShareCopyClick} role="button">
                     <i className="icon copy" />
                     {lf("Copy")}
                 </div>
+            </div>}
+            {(shortId && shareState.teamsShare) && <div>
+                Share your game! WOOOOOOOO
             </div>}
         </Modal>
     }
@@ -460,7 +452,8 @@ const mapDispatchToProps = {
     dispatchResetUser,
     dispatchShowCarryoverModal,
     dispatchCloseUserProfile,
-    dispatchSetShareStatus
+    dispatchSetShareStatus,
+    dispatchShowShareModal
 };
 
 export const AppModal = connect(mapStateToProps, mapDispatchToProps)(AppModalImpl);

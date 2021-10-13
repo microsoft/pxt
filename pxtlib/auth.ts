@@ -597,6 +597,11 @@ namespace pxt.auth {
         return !authDisabled && !pxt.BrowserUtils.isPxtElectron() && identityProviders().length > 0;
     }
 
+    export function submitToTeams(shortId: string) {
+        // Get auth token
+        // Call Graph APIs
+    }
+
     function idpEnabled(idp: pxt.IdentityProviderId): boolean {
         return identityProviders().filter(prov => prov.id === idp).length > 0;
     }
