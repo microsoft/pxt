@@ -48,7 +48,7 @@ interface ModalState {
 export interface ShareState {
     headerId: string;
     url?: string;
-    teamsShare?: boolean;
+    rewardsShare?: boolean;
 }
 
 interface CloudState {
@@ -289,7 +289,7 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                 shareState: action.headerId || action.url ? {
                     headerId: action.headerId,
                     url: action.url,
-                    teamsShare: action.teamsShare
+                    rewardsShare: state.shareState?.rewardsShare
                 } : undefined
             }
         case actions.SET_CLOUD_STATUS:
@@ -369,7 +369,12 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
         case actions.SHOW_SHARE_MODAL:
             return {
                 ...state,
-                modal: { type: "share", currentMapId: action.mapId, currentActivityId: action.activityId }
+                modal: { type: "share", currentMapId: action.mapId, currentActivityId: action.activityId },
+                shareState: {
+                    headerId: state.shareState?.headerId || "",
+                    url: state.shareState?.url,
+                    rewardsShare: action.rewardsShare
+                }
             };
         case actions.SHOW_LOGIN_MODAL:
             return {

@@ -89,7 +89,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
         window.open(reward.url || skillMap!.completionUrl);
     }
 
-    protected handleShareClick = () => {
+    protected handleRewardShareClick = () => {
         const { mapId, userState, pageSourceUrl, skillMap, activity, shareState } = this.props;
         const previousState = lookupPreviousCompletedActivityState(userState!, pageSourceUrl!, skillMap!, activity!.activityId);
         this.props.dispatchShowShareModal(mapId, previousState.activityId, true);
@@ -155,6 +155,17 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
         return modalActions;
     }
 
+    renderConfetti() {
+        const density = 100;
+        return Array(density).fill(0).map((el, i) => {
+            const style = {
+                animationDelay: `${0.1 * (i % density)}s`,
+                left: `${1 * (Math.floor(Math.random() * density))}%`
+            }
+            return <div key={i} style={style} className={`confetti ${Math.random() > 0.5 ? "reverse" : ""} color-${Math.floor(Math.random() * 9)}`} />
+        })
+    }
+
     renderCompletionModal() {
         const  { skillMap, type, activity } = this.props;
         if (!type || !skillMap) return <div />
@@ -171,7 +182,6 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
 
         const canSubmitToTeams = submissionId && classId && assignmentId;
 
-        const density = 100;
 
         return <div className="confetti-container">
             <Modal title={completionModalTitle} actions={this.getCompletionActions(reward.actions)} className="completion" onClose={this.handleOnClose}>
@@ -180,18 +190,12 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                     <i className="icon gift" />
                     <span>{lf("Claim your reward!")}</span>
                 </div>
-                <div className="completion-reward" onClick={this.handleShareClick}>
+                <div className="completion-reward" onClick={this.handleRewardShareClick}>
                     <i className="icon send" />
                     <span>{lf("Share your game!")}</span>
                 </div>
             </Modal>
-            {Array(density).fill(0).map((el, i) => {
-                const style = {
-                    animationDelay: `${0.1 * (i % density)}s`,
-                    left: `${1 * (Math.floor(Math.random() * density))}%`
-                }
-                return <div key={i} style={style} className={`confetti ${Math.random() > 0.5 ? "reverse" : ""} color-${Math.floor(Math.random() * 9)}`} />
-            })}
+            {this.renderConfetti()}
         </div>
     }
 
@@ -314,11 +318,11 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                 dispatchSetShareStatus(progress?.headerId);
             }});
         }
-        console.log("VVN: this is the share state: " + shareState)
 
         return <Modal title={resetModalTitle} actions={actions} onClose={this.handleOnClose}>
             {shortId ?
-                <div>{ lf("Your project is ready! Use the address below to share your projects.") }</div> :
+                <div>{ shareState.rewardsShare ? "Congratulations on completing this year's Hour of Code! Use the address below to share your completed game"
+                    : lf("Your project is ready! Use the address below to share your projects.") }</div> :
                 <div className="share-disclaimer">
                     { lf("You need to publish your project to share it or embed it in other web pages. You acknowledge having consent to publish this project.") }
                 </div>
@@ -327,7 +331,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                 <div className="ui active inline loader" />
                 <span>{lf("Loading...")}</span>
             </div>}
-            {(shortId && !shareState.teamsShare) && <div className="share-input">
+            {shortId && <div className="share-input">
                 <input type="text" readOnly={true} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
                     value={`https://makecode.com/${shortId}`} onClick={this.handleShareInputClick}></input>
                 <div className="share-copy" onClick={this.handleShareCopyClick} role="button">
@@ -335,8 +339,9 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                     {lf("Copy")}
                 </div>
             </div>}
-            {(shortId && shareState.teamsShare) && <div>
-                Share your game! WOOOOOOOO
+            {(shortId && shareState.rewardsShare) && <div>
+                <img className="reward-background" src="./assets/header.gif"/>
+                {this.renderConfetti()}
             </div>}
         </Modal>
     }
