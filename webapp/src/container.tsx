@@ -136,6 +136,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.pairBluetooth = this.pairBluetooth.bind(this);
         this.showAboutDialog = this.showAboutDialog.bind(this);
         this.print = this.print.bind(this);
+        this.signOutGithub = this.signOutGithub.bind(this);
     }
 
     showExitAndSaveDialog() {
@@ -234,6 +235,16 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.props.parent.printCode();
     }
 
+    signOutGithub() {
+        pxt.tickEvent("menu.github.signout");
+        const githubProvider = cloudsync.githubProvider();
+        if (githubProvider) {
+            githubProvider.logout();
+            this.props.parent.forceUpdate();
+            core.infoNotification(lf("Signed out from GitHub..."))
+        }
+    }
+
     UNSAFE_componentWillReceiveProps(nextProps: SettingsMenuProps) {
         const newState: SettingsMenuState = {};
         if (nextProps.greenScreen !== undefined) {
@@ -255,6 +266,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
     }
 
     renderCore() {
+        const hasIdentity = pxt.auth.hasIdentity();
         const highContrast = this.getData<boolean>(auth.HIGHCONTRAST)
         const { greenScreen, accessibleBlocks } = this.state;
         const targetTheme = pxt.appTarget.appTheme;
@@ -276,7 +288,8 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         const usbIcon = pxt.appTarget.appTheme.downloadDialogTheme?.deviceIcon || "usb";
 
         // Electron does not currently support webusb
-        const githubUser = !readOnly && !isController && this.getData("github:user") as pxt.editor.UserInfo;
+        // Targets with identity show github user on the profile screen.
+        const githubUser = !hasIdentity && !readOnly && !isController && this.getData("github:user") as pxt.editor.UserInfo;
         const showPairDevice = pxt.usb.isEnabled;
 
         const showCenterDivider = targetTheme.selectLanguage || targetTheme.highContrast || showGreenScreen || githubUser;
@@ -299,6 +312,13 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             {targetTheme.accessibleBlocks ? <sui.Item role="menuitem" text={accessibleBlocks ? lf("Accessible Blocks Off") : lf("Accessible Blocks On")} onClick={this.toggleAccessibleBlocks} /> : undefined}
             {showGreenScreen ? <sui.Item role="menuitem" text={greenScreen ? lf("Green Screen Off") : lf("Green Screen On")} onClick={this.toggleGreenScreen} /> : undefined}
             {docItems && renderDocItems(this.props.parent, docItems, "setting-docs-item mobile only inherit")}
+            {githubUser ? <div className="ui divider"></div> : undefined}
+            {githubUser ? <div className="ui item" title={lf("Unlink {0} from GitHub", githubUser.name)} role="menuitem" onClick={this.signOutGithub}>
+                <div className="avatar" role="presentation">
+                    <img className="ui circular image" src={githubUser.photo} alt={lf("User picture")} />
+                </div>
+                {lf("Unlink GitHub")}
+            </div> : undefined}
             {showCenterDivider && <div className="ui divider"></div>}
             {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...")} onClick={this.showReportAbuse} /> : undefined}
             {!isController ? <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={this.showResetDialog} /> : undefined}

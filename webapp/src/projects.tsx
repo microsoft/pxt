@@ -283,14 +283,24 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
     }
 
     renderCore() {
+        const hasIdentity = pxt.auth.hasIdentity();
         const highContrast = this.getData<boolean>(auth.HIGHCONTRAST)
         const targetTheme = pxt.appTarget.appTheme;
+        // Targets with identity show github user on the profile screen.
+        const githubUser = !hasIdentity && this.getData("github:user") as pxt.editor.UserInfo;
         const reportAbuse = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing;
-        const showDivider = targetTheme.selectLanguage || targetTheme.highContrast;
+        const showDivider = targetTheme.selectLanguage || targetTheme.highContrast || githubUser;
 
         return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("More...")} className="item icon more-dropdown-menuitem">
             {targetTheme.selectLanguage && <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} />}
             {targetTheme.highContrast && <sui.Item role="menuitem" text={highContrast ? lf("High Contrast Off") : lf("High Contrast On")} onClick={this.toggleHighContrast} />}
+            {githubUser && <div className="ui divider"></div>}
+            {githubUser && <div className="ui item" title={lf("Unlink {0} from GitHub", githubUser.name)} role="menuitem" onClick={this.signOutGithub}>
+                <div className="avatar" role="presentation">
+                    <img className="ui circular image" src={githubUser.photo} alt={lf("User picture")} />
+                </div>
+                {lf("Unlink GitHub")}
+            </div>}
             {showDivider && <div className="ui divider"></div>}
             {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...")} onClick={this.showReportAbuse} /> : undefined}
             <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={this.showResetDialog} />
@@ -426,7 +436,7 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
         let heroBannerImg: string;
         if (typeof targetTheme.homeScreenHero == "string") {
             heroBannerImg = targetTheme.homeScreenHero;
-        } else if (targetTheme.homeScreenHero){
+        } else if (targetTheme.homeScreenHero) {
             heroCard = targetTheme.homeScreenHero;
         }
 
@@ -496,11 +506,11 @@ class HeroBanner extends data.Component<ISettingsProps, HeroBannerState> {
         const hasAction = !!url || !!card.youTubeId || !!card.youTubePlaylistId;
 
         return <div className="ui segment getting-started-segment hero"
-                style={{ backgroundImage: encodedBkgd }}
-                onKeyDown={this.onKeyDown}
-                onPointerDown={this.onPointerDown} onTouchStart={this.onTouchstart}
-                onPointerUp={this.onPointerUp} onTouchEnd={this.onTouchEnd}
-            >
+            style={{ backgroundImage: encodedBkgd }}
+            onKeyDown={this.onKeyDown}
+            onPointerDown={this.onPointerDown} onTouchStart={this.onTouchstart}
+            onPointerUp={this.onPointerUp} onTouchEnd={this.onTouchEnd}
+        >
             {(!!description || hasAction || isGallery) && <div className="gradient-overlay" />}
             <div className="hero-banner-contents">
                 {!!description && <div className="description">
@@ -752,10 +762,10 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                 </div>}
                 {showCloudProjectsCard && <div role="button" className="ui card link buttoncard cloudprojectscard" title={lf("Sign in to see cloud projects")}
                     onClick={e => this.props.parent.showLoginDialog()} onKeyDown={sui.fireClickOnEnter}>
-                        <div className="content">
-                            <sui.Icon icon="huge xicon cloud-profile"/>
-                            <span className="header">{lf("Cloud Projects")}</span>
-                        </div>
+                    <div className="content">
+                        <sui.Icon icon="huge xicon cloud-profile" />
+                        <span className="header">{lf("Cloud Projects")}</span>
+                    </div>
                 </div>}
                 {headersToShow.map((scr, index) => {
                     const tutorialStep =
