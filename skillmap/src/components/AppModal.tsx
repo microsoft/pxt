@@ -323,44 +323,39 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
 
     renderLoginModal(activityPrompt: boolean) {
         const rememberMeSelected = this.state.checkboxSelected ?? false;
+        activityPrompt = true;
 
-        const signInIconAltText = lf("Sign in icon")
-
-        const msft = pxt.auth.identityProvider("microsoft");
-        const buttons = [];
-        buttons.push({
-            label: lf("Sign In"),
-            onClick: async () => {
-                pxt.tickEvent(`skillmap.signindialog.signin`, { provider: msft.name ? msft.name : "", rememberMe: rememberMeSelected.toString() });
-                pxt.auth.client().loginAsync(msft.id, rememberMeSelected, { hash: location.hash })
-            }
-        })
-
-        return <Modal title={activityPrompt ? lf("Save your Completed Activity") : lf("Sign into MakeCode Arcade")} onClose={this.handleOnClose} actions={buttons} className="sign-in">
-            <div className="description">
-                <p>{lf("Sign in with your Microsoft Account. We'll save your projects to the cloud, where they're accessible from anywhere.")}</p>
-
+        return <Modal className={`sign-in ${activityPrompt ? "wide" : ""}`} title={activityPrompt ? lf("Save your Completed Activity") : lf("Sign into {0}", pxt.appTarget.appTheme.organizationText)} onClose={this.handleOnClose}>
             <div className="container">
-                    { activityPrompt && <img src={resolvePath("/assets/cloud-user.svg")} alt={signInIconAltText} className="icon cloud-user"/> }
-                    <p>{ lf("Don't have a Microsoft Account? Start signing in to create one!")}
-                        <a href="https://aka.ms/cloudsave" target="_blank" onClick={() => {
-                            tickEvent("skillmap.signindialog.learn");
-                            window.open("https://aka.ms/cloudsave", "_blank");
-                        }}>
-                            <i className="icon external alternate" />{lf("Learn more")}
-                        </a>
-                    </p>
-                </div>
-                <div className="remember" onClick={() => {
-                    const rememberMe = !rememberMeSelected;
-                    tickEvent("skillmap.signindialog.rememberme", { rememberMe: rememberMe.toString() });
-                    this.setState({ checkboxSelected: rememberMe });
-                }}>
-                    <i className={`icon square outline ${rememberMeSelected ? "check" : ""}`} />
-                    {lf("Remember me")}
+                {activityPrompt ? <div className="image"> <img src={resolvePath("/assets/cloud-user.svg")} alt={lf("Sign in icon")} className="icon cloud-user"/></div> : null}
+                <div className="description">
+                    <div key={0} className="paragraph">{lf("Sign in and we'll save your projects to the cloud, where they're accessible from anywhere.")}</div>
+                    <div key={1} className="paragraph">{lf("Don't have an account? Start signing in to create one!")}</div>
+                    <div key={2} className="paragraph">{lf("Sign in with")}</div>
+                    {pxt.auth.identityProviders().map(provider => <div key={provider.id} className="paragraph"><div className="modal-button" onClick={async () => await this.handleSigninClick(provider)} role="button">
+                        <span key={0} className={`xicon ${provider.id}`} />
+                        <span key={1}> {provider.name}</span>
+                    </div></div>)}
+                    <div key={3} className="paragraph"><div className="remember" onClick={() => this.handleRememberMeClick()}>
+                        <i className={`icon square outline ${rememberMeSelected ? "check" : ""}`} />
+                        {lf("Remember me")}
+                    </div></div>
                 </div>
             </div>
         </Modal>
+    }
+
+    async handleSigninClick(provider: pxt.AppCloudProvider) {
+        const rememberMeSelected = this.state.checkboxSelected ?? false;
+        pxt.tickEvent(`skillmap.signindialog.signin`, { provider: provider.id, rememberMe: rememberMeSelected.toString() });
+        await pxt.auth.client().loginAsync(provider.id, rememberMeSelected, { hash: location.hash });
+    }
+
+    handleRememberMeClick() {
+        const rememberMeSelected = this.state.checkboxSelected ?? false;
+        const rememberMe = !rememberMeSelected;
+        tickEvent("skillmap.signindialog.rememberme", { rememberMe: rememberMe.toString() });
+        this.setState({ checkboxSelected: rememberMe });
     }
 
     renderDeleteAccountModal() {

@@ -32,8 +32,8 @@ export class Modal extends React.Component<ModalProps> {
     render() {
         const { title, actions, className, fullscreen } = this.props;
 
-        return <div className={`modal-overlay ${className || ""} ${fullscreen && `fullscreen`}`} onClick={this.handleCloseClick} role="region">
-            <div className="modal" onClick={this.handleModalClick} role="dialog">
+        return <div className={`modal-overlay ${fullscreen ? `fullscreen` : ""}`} onClick={this.handleCloseClick} role="region">
+            <div className={`modal ${className || ""}`} onClick={this.handleModalClick} role="dialog">
                 <div className="modal-header">
                     {fullscreen && <div className="close button" onClick={this.handleCloseClick}>
                         <i className="icon arrow left" />

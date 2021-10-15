@@ -57,6 +57,7 @@ export class LoginDialog extends auth.Component<LoginDialogProps, LoginDialogSta
                 closeIcon={true} header={lf("Sign into {0}", pxt.appTarget.appTheme.organizationText)}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape>
                 <p>{lf("When you sign into MakeCode we'll save your projects to the cloud, where they're accessible from anywhere.")}</p>
+                <p>{lf("Don't have an account? Start signing in to create one!")}</p>
                 <p>{lf("Sign in with")}</p>
                 {pxt.auth.identityProviders().map(provider => <p className="auth-provider-p"><sui.Button className="auth-provider-btn" text={provider.name} iconClass={"xicon"} icon={provider.id} ariaLabel={lf("Sign in with {0}", provider.name)} onClick={async () => await this.signInAsync(provider)} /></p>)}
                 <p style={{ textAlign: "center" }}><sui.PlainCheckbox label={lf("Remember me")} onChange={this.handleRememberMeChanged} /></p>

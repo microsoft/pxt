@@ -56,7 +56,6 @@
 
 .modal-body {
     min-height: 4rem;
-    max-height: 12rem;
 }
 
 .fullscreen .modal-title {
@@ -194,32 +193,44 @@
 }
 
 /* LOGIN MODAL */
-.sign-in .container {
-    display: flex;
-    align-items: center;
+.modal .sign-in {
+    user-select: none;
 }
 
-.sign-in .container a {
-    padding-left: .5rem;
+.sign-in .container {
+    display: flex;
+    flex-direction: row;
+}
+
+.sign-in .image {
+    flex-grow: 1;
+}
+
+.sign-in .description {
+    flex-grow: 1;
+}
+
+.sign-in .paragraph {
+    user-select: none;
+    margin-top: .75rem;
+    text-align: justify;
+}
+
+.sign-in .paragraph:first-child {
+    margin-top: 1.5rem;
+}
+
+.sign-in .modal-button {
+    max-width: 14rem;
+    text-transform: initial;
+    margin: 0 auto;
 }
 
 .sign-in .remember {
     user-select: none;
     cursor: pointer;
     margin-top: 1rem;
-    display: flex;
-    justify-content: center;
-    padding-bottom: .5rem;
-}
-
-.sign-in .modal-actions {
-    grid-template-columns: 1fr;
-    margin-top: .5rem;
-}
-
-.modal .icon.cloud-user {
-    width: 7rem;
-    margin-right: 2rem;
+    text-align: center;
 }
 
 /* PROFILE DIALOG */
