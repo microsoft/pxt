@@ -289,13 +289,13 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
     }
 
     protected onStoreChange = () => {
-        if (this.props.onChange) {
-            this.props.onChange(this.props.singleFrame ? pxt.sprite.bitmapToImageLiteral(this.getCurrentFrame(), "typescript") : "")
-        }
-
         const store = this.getStore();
         const state = store.getState();
         setStore(store);
+
+        if (this.props.onChange) {
+            this.props.onChange(this.props.singleFrame && !state.editor.isTilemap ? pxt.sprite.bitmapToImageLiteral(this.getCurrentFrame(), "typescript") : "")
+        }
 
         if (state.editor) this.setState({ alert: state.editor.alert });
 

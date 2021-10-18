@@ -76,3 +76,7 @@ export class AssetPreview extends React.Component<AssetPreviewProps> {
         }
     }
 }
+
+function generatePreviewURI(asset: pxt.Asset) {
+    throw new Error("Function not implemented.");
+}

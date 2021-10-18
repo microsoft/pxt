@@ -3,10 +3,8 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-import { ImageFieldEditor } from "./components/ImageFieldEditor";
-import { FieldEditorComponent } from "./blocklyFieldView";
-import { TilemapFieldEditor } from "./components/TilemapFieldEditor";
 import { setTelemetryFunction } from './components/ImageEditor/store/imageReducer';
+import { ImageEditor } from "./components/ImageEditor/ImageEditor";
 
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -22,12 +20,14 @@ type AssetType = "sprite" | "tilemap";
 
 interface AssetEditorState {
     viewType: AssetType;
+    asset?: pxt.Asset;
 }
 
 export interface Message {
-    data: MessageData;
+    data: IncomingMessageData;
 }
-export interface MessageData {
+
+export interface BaseMessage {
     _fromVscode?: boolean;
     type: string;
     message?: string;
@@ -35,11 +35,40 @@ export interface MessageData {
     tileWidth?: number;
 }
 
+type IncomingMessageData = OpenAssetMessage | SaveAssetMessage | LegacyInitializeMessage | LegacyUpdateMessage;
+
+interface OpenAssetMessage extends BaseMessage {
+    type: "open-asset";
+    asset: pxt.Asset;
+}
+
+interface SaveAssetMessage extends BaseMessage {
+    type: "save-asset";
+    asset?: pxt.Asset;
+}
+
+interface LegacyInitializeMessage extends BaseMessage {
+    type: "initialize";
+    message: string;
+    name?: string;
+    tileWidth?: number;
+}
+
+interface LegacyUpdateMessage extends BaseMessage {
+    type: "update";
+}
+
+type OutgoingMessageData =  ReadyMessage | SaveAssetMessage | LegacyUpdateMessage;
+
+interface ReadyMessage extends BaseMessage {
+    type: "ready";
+}
+
 const DEFAULT_NAME = "tilemap_asset";
 const DEFAULT_TILE_WIDTH = 16;
 
 export class AssetEditor extends React.Component<{}, AssetEditorState> {
-    private editor: FieldEditorComponent<any>;
+    private editor: ImageEditor;
     protected tilemapProject: pxt.TilemapProject;
     protected tilemapName: string = DEFAULT_NAME;
     protected tileWidth: number = DEFAULT_TILE_WIDTH;
@@ -55,88 +84,64 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
         this.state = { viewType: view };
 
         setTelemetryFunction(tickAssetEditorEvent);
+
+        this.tilemapProject = new pxt.TilemapProject();
+        pxt.react.getTilemapProject = () => this.tilemapProject;
     }
 
     handleMessage = (msg: Message)  => {
-        if (msg.data._fromVscode) {
-            if (msg.data.type === "initialize") {
-                switch (this.state.viewType) {
-                    case "sprite":
-                        this.editor.loadJres(msg.data.message);
-                        break;
-                    case "tilemap":
-                        this.tilemapName = msg.data.name;
-                        this.tileWidth = msg.data.tileWidth;
-                        this.initTilemap(msg.data.message);
-                        break;
-                }
-            } else if (msg.data.type === "update") {
-                this.sendJres();
+        const data = msg.data;
+        if (data._fromVscode) {
+            switch (data.type) {
+                case "open-asset":
+                    this.tilemapProject = new pxt.TilemapProject();
+                    const asset = data.asset;
+
+                    if (asset.type === pxt.AssetType.Tilemap) {
+                        // Need to rehydrate after being passed between frames
+                        const oldData = asset.data;
+                        const newTm = new pxt.sprite.Tilemap(oldData.tilemap.width, oldData.tilemap.height, 0, 0, (oldData.tilemap as any).buf);
+                        asset.data = new pxt.sprite.TilemapData(newTm, oldData.tileset, oldData.layers);
+
+                        for (const tile of asset.data.tileset.tiles) {
+                            const newTile = this.tilemapProject.createNewTile(tile.bitmap, tile.id, tile.meta.displayName);
+                            tile.internalID = newTile.internalID;
+                        }
+                    }
+
+                    this.setState({ asset: asset }, () => this.editor.openAsset(asset))
+                    break;
+                case "save-asset":
+                    this.saveAsset();
+                    break;
+                default:
+                    this.handleLegacyMessage(msg);
+                    break;
             }
         }
     }
 
-    postMessage(msgData: MessageData) {
+    postMessage(msgData: OutgoingMessageData) {
         window.parent.postMessage(msgData, "*");
     }
 
-    refHandler = (e: FieldEditorComponent<any>) => {
-        this.editor = e;
-        if (this.state.viewType === "tilemap") {
-            this.initTilemap();
-        }
-    }
-
     initTilemap(s?: string) {
-        this.tilemapProject = new pxt.TilemapProject();
         this.tilemapProject.loadTilemapJRes(s ? this.parseJres(s) : {});
-        let project = this.tilemapProject.getTilemap(this.tilemapName).data;
+        let project = this.tilemapProject.getTilemap(this.tilemapName);
 
         if (!project) {
             const [ name, map ] = this.tilemapProject.createNewTilemap(this.tilemapName, this.tileWidth, 16, 16);
-            project = map;
+            project = this.tilemapProject.getTilemap(name);
             this.tilemapName = name;
         }
 
-        this.editor.init(project, this.callbackOnDoneClick);
+        this.editor.openAsset(project);
     }
 
-    updateTilemap() {
-        const data = this.editor.getValue() as pxt.sprite.TilemapData;
-
-        // reference pxteditor/monaco-fields/field_tilemap.ts
-        if (data.deletedTiles) {
-            for (const deleted of data.deletedTiles) {
-                this.tilemapProject.deleteTile(deleted);
-            }
-        }
-
-        if (data.editedTiles) {
-            for (const edit of data.editedTiles) {
-                const editedIndex = data.tileset.tiles.findIndex(t => t.id === edit);
-                const edited = data.tileset.tiles[editedIndex];
-
-                // New tiles start with *. We haven't created them yet so ignore
-                if (!edited || edited.id.startsWith("*")) continue;
-
-                data.tileset.tiles[editedIndex] = this.tilemapProject.updateTile(edited)
-            }
-        }
-
-        for (let i = 0; i < data.tileset.tiles.length; i++) {
-            const tile = data.tileset.tiles[i];
-
-            if (tile.id.startsWith("*")) {
-                const newTile = this.tilemapProject.createNewTile(tile.bitmap);
-                data.tileset.tiles[i] = newTile;
-            }
-            else if (!tile.jresData) {
-                data.tileset.tiles[i] = this.tilemapProject.resolveTile(tile.id);
-            }
-        }
-
-        this.tilemapProject.updateTilemap(this.tilemapName, data);
-
+    updateTilemapProject() {
+        const data = this.editor.getAsset() as pxt.ProjectTilemap;
+        pxt.sprite.updateTilemapReferencesFromResult(this.tilemapProject, data);
+        this.tilemapProject.updateAsset(data);
     }
 
     componentDidMount() {
@@ -153,14 +158,26 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
         this.sendJres();
     }
 
+    saveAsset() {
+        const asset = this.editor.getAsset();
+        this.postMessage({
+            type: "save-asset",
+            asset
+        });
+    }
+
     sendJres() {
         let message: string;
-        switch (this.state.viewType) {
-            case "sprite":
-                message = this.editor.getJres();
+        const asset = this.editor.getAsset();
+
+        switch (asset.type) {
+            case pxt.AssetType.Image:
+            case pxt.AssetType.Tile:
+            case pxt.AssetType.Animation:
+                message = JSON.stringify(pxt.serializeAsset(asset));
                 break;
-            case "tilemap":
-                this.updateTilemap();
+            case pxt.AssetType.Tilemap:
+                this.updateTilemapProject();
                 const jres = this.tilemapProject.getProjectTilesetJRes()
                 const tilemapFiles = { jres, ts: pxt.emitTilemapsFromJRes(jres) }
                 message = JSON.stringify(tilemapFiles);
@@ -181,12 +198,49 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
     }
 
     render() {
-        if (this.state.viewType === "tilemap") {
-            return <TilemapFieldEditor ref={ this.refHandler } />
-        }
-        return <ImageFieldEditor ref={this.refHandler} singleFrame={true} doneButtonCallback={this.callbackOnDoneClick} />
+        const { asset } = this.state;
+
+        return <ImageEditor
+            ref={this.handleImageEditorRef}
+            singleFrame={asset?.type !== pxt.AssetType.Animation}
+            onDoneClicked={this.handleDoneButtonClick}
+            onChange={this.handleAssetChange}/>
     }
 
+    protected handleDoneButtonClick = () => {
+        this.sendJres();
+        this.saveAsset();
+    }
+
+    protected handleImageEditorRef = (ref: ImageEditor) => {
+        if (ref) {
+            this.editor = ref;
+            this.postMessage({
+                type: "ready"
+            });
+        }
+    }
+
+    protected handleLegacyMessage = (msg: Message) => {
+        if (msg.data.type === "initialize") {
+            switch (this.state.viewType) {
+                case "sprite":
+                    this.editor.setCurrentFrame(pxt.sprite.getBitmapFromJResURL(msg.data.message), true);
+                    break;
+                case "tilemap":
+                    this.tilemapName = msg.data.name;
+                    this.tileWidth = msg.data.tileWidth;
+                    this.initTilemap(msg.data.message);
+                    break;
+            }
+        } else if (msg.data.type === "update") {
+            this.sendJres();
+        }
+    }
+
+    protected handleAssetChange = pxt.U.throttle(() => {
+        this.saveAsset();
+    }, 500)
 }
 
 function tickAssetEditorEvent(event: string) {
@@ -194,3 +248,4 @@ function tickAssetEditorEvent(event: string) {
         action: event
     });
 }
+

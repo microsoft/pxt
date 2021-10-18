@@ -302,7 +302,7 @@ export interface Color { r: number, g: number, b: number, a?: number }
 
 
 export function imageStateToBitmap(state: pxt.sprite.ImageState) {
-    const base = pxt.sprite.Bitmap.fromData(state.bitmap);
+    const base = pxt.sprite.Bitmap.fromData(state.bitmap).copy();
     if (state.floating && state.floating.bitmap) {
         const floating = pxt.sprite.Bitmap.fromData(state.floating.bitmap);
         floating.x0 = state.layerOffsetX || 0;
