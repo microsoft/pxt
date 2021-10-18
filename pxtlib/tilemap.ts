@@ -323,6 +323,8 @@ namespace pxt {
         protected nextID = 0;
         protected nextInternalID = 0;
 
+        protected changeListeners: ((revision: number) => void)[] = [];
+
         constructor() {
             this.committedState = {
                 revision: 0,
@@ -973,6 +975,10 @@ namespace pxt {
             }
         }
 
+        public addProjectChangeListener(listener: (revision: number) => void) {
+            this.changeListeners.push(listener)
+        }
+
         public removeChangeListener(type: AssetType, listener: () => void) {
             switch (type) {
                 case AssetType.Image: this.state.images.removeListener(listener); break;
@@ -980,6 +986,11 @@ namespace pxt {
                 case AssetType.Tilemap: this.state.tilemaps.removeListener(listener); break;
                 case AssetType.Animation: this.state.animations.removeListener(listener); break;
             }
+        }
+
+
+        public removeProjectChangeListener(listener: (revision: number) => void) {
+            this.changeListeners = this.changeListeners.filter(l => l != listener);
         }
 
         loadPackage(pack: MainPackage) {
@@ -1230,6 +1241,10 @@ namespace pxt {
         protected onChange() {
             this.needsRebuild = true;
             this.state.revision = this.nextID++;
+
+            for (const handler of this.changeListeners) {
+                handler(this.state.revision);
+            }
         }
 
         protected readImages(allJRes: Map<JRes>, isProjectFile = false) {
@@ -1449,35 +1464,44 @@ namespace pxt {
     function addAssetToJRes(asset: Asset, allJRes: pxt.Map<Partial<JRes> | string>): void {
         // Get the last part of the fully qualified name
         const id = asset.id.substr(asset.id.lastIndexOf(".") + 1);
+        const serialized = serializeAsset(asset);
 
         switch (asset.type) {
             case AssetType.Image:
-                allJRes[id] = asset.jresData;
+            case AssetType.Tile:
+            case AssetType.Animation:
+                allJRes[id] = serialized;
+                break;
+            case AssetType.Tilemap:
+                // we include the full ID for tilemaps
+                allJRes[(serialized as JRes).id] = serialized;
+                break;
+        }
+    }
+
+    export function serializeAsset(asset: Asset) {
+        switch (asset.type) {
+            case AssetType.Image:
                 if (asset.meta.displayName) {
-                    allJRes[id] = {
+                    return {
                         data: asset.jresData,
                         mimeType: IMAGE_MIME_TYPE,
                         displayName: asset.meta.displayName
                     }
                 }
-                break;
+                else return asset.jresData
             case AssetType.Tile:
-                allJRes[id] = {
+                return {
                     data: asset.jresData,
                     mimeType: IMAGE_MIME_TYPE,
                     tilemapTile: true,
                     displayName: asset.meta.displayName
                 };
-                break;
             case AssetType.Tilemap:
-                // we include the full ID for tilemaps
-                const serialized = serializeTilemap(asset.data, asset.id, asset.meta.displayName);
-                allJRes[serialized.id] = serialized;
-                break;
+                return serializeTilemap(asset.data, asset.id, asset.meta.displayName);
 
             case AssetType.Animation:
-                allJRes[id] = serializeAnimation(asset);
-                break;
+                return serializeAnimation(asset);
         }
     }
 
