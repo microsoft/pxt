@@ -1017,7 +1017,6 @@ ${hexfile.hexPrelude()}
 
         return {
             src: src,
-            srcmap: target.sourceMap ? JSON.stringify(b.getSourceMap()) : undefined,
             buf: b.buf,
             thumbFile: b
         }
@@ -1122,8 +1121,6 @@ __flash_checksums:
             bin.commSize = res.thumbFile.commPtr - hexfile.getCommBase()
         if (res.src)
             bin.writeFile(prefix + pxtc.BINARY_ASM, res.src)
-        if (res.srcmap)
-            bin.writeFile(prefix + pxtc.BINARY_SRCMAP, res.srcmap)
 
         if (dummy) {
             writeOutput()
