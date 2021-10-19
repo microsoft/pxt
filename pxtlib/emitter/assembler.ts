@@ -1,4 +1,3 @@
-/* eslint-disable no-cond-assign */
 // TODO: add a macro facility to make 8-bit assembly easier?
 
 namespace ts.pxtc.assembler {
@@ -949,6 +948,40 @@ namespace ts.pxtc.assembler {
             })
         }
 
+        public getSourceMap() {
+            const sourceMap: pxt.Map<number[]> = {}
+
+            let locFile = ""
+            let locLn = 0
+            let locPos = 0
+            let locEnd = 0
+            this.lines.forEach((ln, i) => {
+                const m = /^; ([\w\/\.-]+)\(([\d]+),\d+\):/.exec(ln.text)
+                if (m) {
+                    flush()
+                    locFile = m[1]
+                    locLn = parseInt(m[2])
+                }
+                if (ln.type == "instruction") {
+                    if (!locPos) locPos = ln.location
+                    locEnd = ln.location
+                }
+            })
+            flush()
+
+            function flush() {
+                if (locFile) {
+                    if (!sourceMap[locFile])
+                        sourceMap[locFile] = []
+                    sourceMap[locFile].push(locLn, locPos, locEnd - locPos)
+                }
+                locPos = 0
+                locEnd = 0
+            }
+
+            return sourceMap
+        }
+
 
         public getSource(clean: boolean, numStmts = 1, flashSize = 0) {
             let lenPrev = 0
@@ -984,6 +1017,9 @@ namespace ts.pxtc.assembler {
                 this.stats + "\n\n"
 
             let skipOne = false
+
+            const sourceMap: pxt.Map<number[]> = {}
+
 
             this.lines.forEach((ln, i) => {
                 if (ln.words[0] == "_stored_program") {

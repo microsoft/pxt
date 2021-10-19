@@ -26,6 +26,7 @@ namespace ts.pxtc {
     export const BINARY_ELF = "binary.elf";
     export const BINARY_PXT64 = "binary.pxt64";
     export const BINARY_ESP = "binary.bin";
+    export const BINARY_SRCMAP = "binary.srcmap";
 
     export const NATIVE_TYPE_THUMB = "thumb";
     export const NATIVE_TYPE_VM = "vm";

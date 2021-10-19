@@ -294,6 +294,8 @@ _start_${name}:
         let res = assemble(opts.target, bin, vmsource)
         if (res.src)
             bin.writeFile(pxtc.BINARY_ASM, res.src)
+        if (res.srcmap)
+            bin.writeFile(pxtc.BINARY_SRCMAP, res.srcmap)
 
         if (pxt.options.debug) {
             let pc = res.thumbFile.peepCounts
@@ -357,7 +359,7 @@ _start_${name}:
         return resText
 
         function emitAll() {
-            writeRaw(`;\n; Proc: ${proc.getFullName()}\n;`)
+            writeRaw(`;\n; ${proc.getFullName()}\n;`)
             write(".section code")
             if (bin.procs[0] == proc) {
                 writeRaw(`; main`)

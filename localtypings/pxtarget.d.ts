@@ -643,6 +643,7 @@ declare namespace ts.pxtc {
         useMkcd?: boolean;
         useELF?: boolean;
         useESP?: boolean;
+        sourceMap?: boolean;
         saveAsPNG?: boolean;
         noSourceInFlash?: boolean;
         useModulator?: boolean;
