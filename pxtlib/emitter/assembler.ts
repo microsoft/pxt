@@ -303,7 +303,7 @@ namespace ts.pxtc.assembler {
             // recursive-descent parsing of multiplication
             if (s.indexOf("*") >= 0) {
                 let m: RegExpExecArray = null;
-                while (m = /^([^\*]*)\*(.*)$/.exec(s)) {
+                while (null != (m = /^([^\*]*)\*(.*)$/.exec(s))) {
                     let tmp = this.parseOneInt(m[1])
                     if (tmp == null) return null;
                     mul *= tmp;
