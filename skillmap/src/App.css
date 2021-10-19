@@ -375,6 +375,10 @@ code {
         padding: .2rem .8rem;
         margin-top: .4rem;
     }
+
+    .sign-in .image {
+        display: none;
+    }
 }
 
 /*******************************/
@@ -395,6 +399,14 @@ code {
     }
 
     .user-menu .header-button.sign-in .header-button-label {
+        display: none;
+    }
+
+    .sign-in .image {
+        display: none;
+    }
+
+    .sign-in .create-account-hint {
         display: none;
     }
 }

@@ -50,28 +50,17 @@ export class LoginDialog extends auth.Component<LoginDialogProps, LoginDialogSta
 
     renderCore() {
         const { visible } = this.state;
-        const msft = pxt.auth.identityProvider("microsoft");
-
-        const buttons: sui.ModalButton[] = [];
-        buttons.push({
-            label: lf("Sign in"),
-            onclick: async () => await this.signInAsync(msft),
-            icon: "checkmark",
-            approveButton: true,
-            className: "positive"
-        });
-
-        const actions: JSX.Element[] = [];
-        actions.push(<sui.PlainCheckbox label={lf("Remember me")} onChange={this.handleRememberMeChanged} />);
 
         return (
             <sui.Modal isOpen={visible} className="signindialog" size="tiny"
-                onClose={this.hide} dimmer={true} buttons={buttons} actions={actions}
+                onClose={this.hide} dimmer={true}
                 closeIcon={true} header={lf("Sign into {0}", pxt.appTarget.appTheme.organizationText)}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape>
-                <p>{lf("Sign in with your Microsoft Account. We'll save your projects to the cloud, where they're accessible from anywhere.")}</p>
-                <p>{lf("Don't have a Microsoft Account? Start signing in to create one!")}</p>
-                <sui.Link className="ui" text={lf("Learn more")} icon="external alternate" ariaLabel={lf("Learn more")} href="/identity/sign-in" target="_blank" onKeyDown={sui.fireClickOnEnter} />
+                <div className="paragraph">{lf("When you sign into MakeCode we'll save your projects to the cloud, where they're accessible from anywhere.")}</div>
+                <div className="paragraph desktop tablet only">{lf("Don't have an account? Start signing in to create one!")}</div>
+                <div className="paragraph">{lf("Sign in with")}</div>
+                {pxt.auth.identityProviders().map(provider => <div key={provider.id} className="paragraph centered"><sui.Button className="provider" text={provider.name} iconClass={"xicon"} icon={provider.id} ariaLabel={lf("Sign in with {0}", provider.name)} onClick={async () => await this.signInAsync(provider)} /></div>)}
+                <div className="paragraph centered remember"><sui.PlainCheckbox label={lf("Remember me")} onChange={this.handleRememberMeChanged} /></div>
             </sui.Modal>
         );
     }
@@ -124,6 +113,11 @@ export class UserMenu extends auth.Component<UserMenuProps, UserMenuState> {
         }
     }
 
+    avatarPicUrl(): string {
+        const user = this.getUserProfile();
+        return user?.idp?.pictureUrl ?? user?.idp?.picture?.dataUrl;
+    }
+
     renderCore() {
         const loggedIn = this.isLoggedIn();
         const user = this.getUserProfile();
@@ -140,7 +134,7 @@ export class UserMenu extends auth.Component<UserMenuProps, UserMenuState> {
         )
         const avatarElem = (
             <div className="avatar">
-                <img src={user?.idp?.picture?.dataUrl} alt={lf("User Menu")} />
+                <img src={this.avatarPicUrl()} alt={lf("User Menu")} />
             </div>
         );
         const initialsElem = (
@@ -148,7 +142,7 @@ export class UserMenu extends auth.Component<UserMenuProps, UserMenuState> {
                 <span>{pxt.auth.userInitials(user)}</span>
             </div>
         );
-        const signedInElem = user?.idp?.picture?.dataUrl ? avatarElem : initialsElem;
+        const signedInElem = this.avatarPicUrl() ? avatarElem : initialsElem;
 
         const githubUser = this.getData("github:user") as pxt.editor.UserInfo;
         const showGhUnlink = !loggedIn && githubUser;
@@ -158,7 +152,7 @@ export class UserMenu extends auth.Component<UserMenuProps, UserMenuState> {
                 title={title}
                 className={`item icon user-dropdown-menuitem ${loggedIn ? 'logged-in-dropdown' : 'sign-in-dropdown'}`}
                 titleContent={loggedIn ? signedInElem : signedOutElem}
-                tabIndex={loggedIn? 0 : -1}
+                tabIndex={loggedIn ? 0 : -1}
                 onClick={this.handleDropdownClicked}
             >
                 {loggedIn ? <sui.Item role="menuitem" text={lf("My Profile")} onClick={this.handleProfileClicked} /> : undefined}

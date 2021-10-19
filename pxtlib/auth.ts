@@ -39,6 +39,7 @@ namespace pxt.auth {
                 encoded?: string;
                 dataUrl?: string;
             };
+            pictureUrl?: string;
         };
     };
 
