@@ -586,7 +586,7 @@ namespace ts.pxtc.ir {
             let name = getDeclName(this.action)
             if (this.action) {
                 let info = ts.pxtc.nodeLocationInfo(this.action)
-                name += " " + info.fileName.replace("pxt_modules/", "") + ":" + (info.line + 1)
+                name = info.fileName.replace("pxt_modules/", "") + "(" + (info.line + 1) + "," + (info.column + 1) + "): " + name
             }
             return name
         }

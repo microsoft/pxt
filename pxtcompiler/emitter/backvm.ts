@@ -186,7 +186,7 @@ _start_${name}:
             address++
         }
 
-        const now = new Date()
+        const now = new Date(0) // new Date()
         let encodedName = U.toUTF8(opts.name, true)
         if (encodedName.length > 100) encodedName = encodedName.slice(0, 100)
         let encodedLength = encodedName.length + 1
@@ -292,8 +292,28 @@ _start_${name}:
         bin.writeFile(BINARY_ASM, vmsource)
 
         let res = assemble(opts.target, bin, vmsource)
+
         if (res.src)
             bin.writeFile(pxtc.BINARY_ASM, res.src)
+
+        const srcmap = res.thumbFile.getSourceMap()
+
+        {
+            let binstring = ""
+            for (let v of res.buf)
+                binstring += String.fromCharCode(v & 0xff, v >> 8)
+            const hash = U.sha256(binstring)
+            for (let i = 0; i < 4; ++i) {
+                res.buf[16 + i] = parseInt(hash.slice(i * 4, i * 4 + 4), 16)
+            }
+            srcmap["__meta"] = {
+                name: opts.name,
+                programHash: res.buf[16] | (res.buf[16+1] << 16),
+                // TODO would be nice to include version number of editor...
+            } as any
+        }
+
+        bin.writeFile(pxtc.BINARY_SRCMAP, JSON.stringify(srcmap))
 
         if (pxt.options.debug) {
             let pc = res.thumbFile.peepCounts
@@ -357,7 +377,7 @@ _start_${name}:
         return resText
 
         function emitAll() {
-            writeRaw(`;\n; Proc: ${proc.getFullName()}\n;`)
+            writeRaw(`;\n; ${proc.getFullName()}\n;`)
             write(".section code")
             if (bin.procs[0] == proc) {
                 writeRaw(`; main`)
