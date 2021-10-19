@@ -222,7 +222,7 @@
     text-align: justify;
 }
 
-.sign-in .paragraph:first-child {
+.sign-in .paragraph:first-of-type {
     margin-top: 1.5rem;
 }
 

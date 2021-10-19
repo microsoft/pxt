@@ -328,14 +328,13 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
             <div className="container">
                 {activityPrompt ? <div className="image"> <img src={resolvePath("/assets/cloud-user.svg")} alt={lf("Sign in icon")} className="icon cloud-user"/></div> : null}
                 <div className="description">
-                    <div key={0} className="paragraph">{lf("Sign in and we'll save your projects to the cloud, where they're accessible from anywhere.")}</div>
-                    <div key={1} className="paragraph create-account-hint">{lf("Don't have an account? Start signing in to create one!")}</div>
-                    <div key={2} className="paragraph">{lf("Sign in with")}</div>
+                    <div className="paragraph">{lf("Sign in and we'll save your projects to the cloud, where they're accessible from anywhere.")}</div>
+                    <div className="paragraph create-account-hint">{lf("Don't have an account? Start signing in to create one!")}</div>
+                    <div className="paragraph">{lf("Sign in with")}</div>
                     {pxt.auth.identityProviders().map(provider => <div key={provider.id} className="paragraph"><div className="modal-button" onClick={async () => await this.handleSigninClick(provider)} role="button">
-                        <span key={0} className={`xicon ${provider.id}`} />
-                        <span key={1}> {provider.name}</span>
+                        <span className={`xicon ${provider.id}`} /> <span>{provider.name}</span>
                     </div></div>)}
-                    <div key={3} className="paragraph"><div className="remember" onClick={() => this.handleRememberMeClick()}>
+                    <div className="paragraph"><div className="remember" onClick={() => this.handleRememberMeClick()}>
                         <i className={`icon square outline ${rememberMeSelected ? "check" : ""}`} />
                         {lf("Remember me")}
                     </div></div>

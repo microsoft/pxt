@@ -56,11 +56,11 @@ export class LoginDialog extends auth.Component<LoginDialogProps, LoginDialogSta
                 onClose={this.hide} dimmer={true}
                 closeIcon={true} header={lf("Sign into {0}", pxt.appTarget.appTheme.organizationText)}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape>
-                <p>{lf("When you sign into MakeCode we'll save your projects to the cloud, where they're accessible from anywhere.")}</p>
-                <p>{lf("Don't have an account? Start signing in to create one!")}</p>
-                <p>{lf("Sign in with")}</p>
-                {pxt.auth.identityProviders().map(provider => <p className="auth-provider-p"><sui.Button className="auth-provider-btn" text={provider.name} iconClass={"xicon"} icon={provider.id} ariaLabel={lf("Sign in with {0}", provider.name)} onClick={async () => await this.signInAsync(provider)} /></p>)}
-                <p style={{ textAlign: "center" }}><sui.PlainCheckbox label={lf("Remember me")} onChange={this.handleRememberMeChanged} /></p>
+                <div className="paragraph">{lf("When you sign into MakeCode we'll save your projects to the cloud, where they're accessible from anywhere.")}</div>
+                <div className="paragraph desktop tablet only">{lf("Don't have an account? Start signing in to create one!")}</div>
+                <div className="paragraph">{lf("Sign in with")}</div>
+                {pxt.auth.identityProviders().map(provider => <div key={provider.id} className="paragraph centered"><sui.Button className="provider" text={provider.name} iconClass={"xicon"} icon={provider.id} ariaLabel={lf("Sign in with {0}", provider.name)} onClick={async () => await this.signInAsync(provider)} /></div>)}
+                <div className="paragraph centered remember"><sui.PlainCheckbox label={lf("Remember me")} onChange={this.handleRememberMeChanged} /></div>
             </sui.Modal>
         );
     }
