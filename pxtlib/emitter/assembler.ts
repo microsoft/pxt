@@ -1018,9 +1018,6 @@ namespace ts.pxtc.assembler {
 
             let skipOne = false
 
-            const sourceMap: pxt.Map<number[]> = {}
-
-
             this.lines.forEach((ln, i) => {
                 if (ln.words[0] == "_stored_program") {
                     res += "_stored_program: .string \"...\"\n"
