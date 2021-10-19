@@ -970,7 +970,7 @@ namespace ts.pxtc.assembler {
             flush()
 
             function flush() {
-                if (locFile) {
+                if (locFile && locPos) {
                     if (!sourceMap[locFile])
                         sourceMap[locFile] = []
                     sourceMap[locFile].push(locLn, locPos, locEnd - locPos)
