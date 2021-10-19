@@ -200,14 +200,20 @@
 .sign-in .container {
     display: flex;
     flex-direction: row;
+    align-items: center;
+    column-gap: 2rem;
 }
 
 .sign-in .image {
-    flex-grow: 1;
+    width: 20rem;
 }
 
 .sign-in .description {
-    flex-grow: 1;
+    width: 100%;
+}
+
+.sign-in .create-account-hint {
+    display: inherit;
 }
 
 .sign-in .paragraph {
