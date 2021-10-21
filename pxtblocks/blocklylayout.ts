@@ -148,7 +148,7 @@ namespace pxt.blocks.layout {
     export function flow(ws: Blockly.WorkspaceSvg, opts?: FlowOptions) {
         if (opts) {
             if (opts.useViewWidth) {
-                const metrics = ws.getMetrics() as Blockly.Metrics;
+                const metrics = ws.getMetrics();
 
                 // Only use the width if in portrait, otherwise the blocks are too spread out
                 if (metrics.viewHeight > metrics.viewWidth) {

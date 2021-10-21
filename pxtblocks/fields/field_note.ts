@@ -326,7 +326,7 @@ namespace pxtblockly {
             }
 
             Blockly.DropDownDiv.setColour(this.primaryColour, this.borderColour);
-            Blockly.DropDownDiv.showPositionedByBlock(this, this.sourceBlock_, () => this.onHide());
+            Blockly.DropDownDiv.showPositionedByBlock(this, this.sourceBlock_ as Blockly.BlockSvg, () => this.onHide());
         }
 
         protected playKey(key: HTMLDivElement, frequency: number) {

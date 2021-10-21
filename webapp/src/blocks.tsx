@@ -67,7 +67,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const breakpoints: number[] = []
         const map = this.breakpointsByBlock;
         if (map && this.editor) {
-            this.editor.getAllBlocks().forEach(block => {
+            this.editor.getAllBlocks(false).forEach(block => {
                 if (map[block.id] && block.isBreakpointSet()) {
                     breakpoints.push(this.breakpointsByBlock[block.id]);
                 }
@@ -283,7 +283,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private initLayout() {
         let needsLayout = false;
-        let flyoutOnly = !this.editor.toolbox_ && (this.editor as any).flyout_;
+        let flyoutOnly = !this.editor.getToolbox() && this.editor.getFlyout();
 
         let minDistanceFromOrigin: number;
         let closestToOrigin: Blockly.utils.Rect;
@@ -478,7 +478,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             }
         });
 
-        this.editor.getAllBlocks().forEach(block => {
+        this.editor.getAllBlocks(false).forEach(block => {
             if (deprecatedMap[block.type] >= 0) {
                 deprecatedMap[block.type]++;
                 deprecatedBlocksFound = true;
@@ -722,7 +722,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     async validateTutorialCode(tutorial: pxt.tutorial.TutorialOptions) {
         // Current tutorial step
         const { tutorialStep } = tutorial;
-        const blocks = this.editor.getAllBlocks();
+        const blocks = this.editor.getAllBlocks(false);
         const tutorialRulesValidated: pxt.tutorial.TutorialRuleStatus[] = await pxt.tutorial.validate(tutorial, blocks, this.blockInfo);
         this.parent.setTutorialCodeStatus(tutorialStep, tutorialRulesValidated);
     }
@@ -750,7 +750,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     public moveFocusToFlyout() {
-        const flyout = this.editor.toolbox_.getFlyout();
+        const flyout = this.editor.getFlyout();
         if (flyout && this.parent.state?.accessibleBlocks) {
             (Blockly.navigation as any).focusFlyout_();
             flyout.svgGroup_.focus();
@@ -798,7 +798,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     showPackageDialog() {
         pxt.tickEvent("blocks.addpackage");
-        if (this.editor.toolbox_) this.editor.toolbox_.clearSelection();
+        if (this.editor.getToolbox()) this.editor.getToolbox().clearSelection();
         this.parent.showPackageDialog();
     }
 
@@ -839,7 +839,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (!this.editor) return;
         const b = this.editor.newBlock(pxtc.TS_DEBUGGER_TYPE) as Blockly.BlockSvg;
         // move block roughly to the center of the screen
-        const m = this.editor.getMetrics() as Blockly.Metrics;
+        const m = this.editor.getMetrics();
         b.moveBy(m.viewWidth / 2, m.viewHeight / 3);
         b.initSvg();
         b.render();
@@ -957,7 +957,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             return;
 
         // clear previous warnings on non-disabled blocks
-        this.editor.getAllBlocks().filter(b => b.isEnabled()).forEach((b: Blockly.BlockSvg) => {
+        this.editor.getAllBlocks(false).filter(b => b.isEnabled()).forEach((b: Blockly.BlockSvg) => {
             b.setWarningText(null);
             b.setHighlightWarning(false);
         });
@@ -1013,7 +1013,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     const p = b.getRelativeToSurfaceXY();
                     const c = b.getHeightWidth();
                     const s = this.editor.scale;
-                    const m = this.editor.getMetrics() as Blockly.Metrics;
+                    const m = this.editor.getMetrics();
                     // don't center if block is still on the screen
                     const marginx = 4;
                     const marginy = 4;
@@ -1138,7 +1138,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const hasCategories = this.shouldShowCategories(!forceFlyoutOnly);
 
         // We might need to switch the toolbox type
-        if ((this.editor.toolbox_ && hasCategories) || ((this.editor as any).flyout_ && !hasCategories)) {
+        if ((this.editor.getToolbox() && hasCategories) || ((this.editor as any).flyout_ && !hasCategories)) {
             // Toolbox is consistent with current mode, safe to update
             if (hasCategories) {
                 this.toolbox.setState({ loading: false, categories: this.getAllCategories(), showSearchBox: this.shouldShowSearch() });
@@ -1236,8 +1236,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     public hideFlyout() {
-        if (this.editor.toolbox_) {
-            this.editor.toolbox_.getFlyout().hide();
+        if (this.editor.getToolbox()) {
+            this.editor.getFlyout().hide();
         }
         if (this.toolbox) this.toolbox.clear();
     }
@@ -1542,7 +1542,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         old.setVisible(false)
 
         // set the "current" flyout
-        this.editor.toolbox_.setFlyout(nw);
+        this.editor.getToolbox().setFlyout(nw);
 
         // show the new flyout
         nw.setVisible(true)
@@ -1559,8 +1559,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private flyouts: pxt.Map<{ flyout: Blockly.VerticalFlyout, blocksHash: number }> = {};
     private showFlyoutInternal_(xmlList: Element[], flyoutName: string = "default") {
         if ((!this.parent.state.editorState || this.parent.state.editorState.hasCategories !== false)
-            && this.editor.toolbox_) {
-            const oldFlyout = this.editor.toolbox_.getFlyout() as Blockly.VerticalFlyout;
+            && this.editor.getToolbox()) {
+            const oldFlyout = this.editor.getFlyout() as Blockly.VerticalFlyout;
 
             // determine if the cached flyout exists and isn't stale
             const hasCachedFlyout = flyoutName in this.flyouts
@@ -1569,7 +1569,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             const isFlyoutUpToDate = cachedBlocksHash === currentBlocksHash && !!cachedBlocksHash
 
             const mkFlyout = () => {
-                const workspace = this.editor.toolbox_.workspace_ as Blockly.WorkspaceSvg
+                const workspace = this.editor.getToolbox().getWorkspace();
                 const oldSvg = oldFlyout.svgGroup_;
                 const flyout = Blockly.Functions.createFlyout(workspace, oldSvg)
                 return flyout as Blockly.VerticalFlyout;
@@ -1798,7 +1798,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (!this.editor) return; // not loaded yet
 
         const debugging = !!this.parent.state.debugging;
-        const blocks = this.editor.getAllBlocks();
+        const blocks = this.editor.getAllBlocks(false);
         blocks.forEach(block => {
             if (block.previousConnection) {
                 block.enableBreakpoint(debugging);
