@@ -902,7 +902,7 @@ function onYouTubeIframeAPIReady() {
         if (!cached) {
             cached = caches[url] = document.createElement("iframe");
             cached.className = "box animated site hidden"
-            cached.setAttribute("allow", "usb;camera")
+            cached.setAttribute("allow", "usb;camera;serial")
             cached.setAttribute("sandbox", "allow-scripts allow-same-origin allow-top-navigation allow-downloads allow-popups allow-popups-to-escape-sandbox allow-forms");
             cached.src = url;
             frame.parentElement.insertBefore(cached, frame);
