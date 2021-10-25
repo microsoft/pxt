@@ -47,26 +47,6 @@ namespace pxt.auth {
         completedTags: any;
     };
 
-    /**
-     * Badges
-     */
-    export type BadgeType = "skillmap";
-
-    export type Badge = SkillmapBadge;
-
-    export interface BaseBadge {
-        id: string;
-        type: BadgeType;
-        timestamp: number;
-        title: string;
-        image: string;
-    }
-
-    export interface SkillmapBadge extends BaseBadge {
-        type: "skillmap";
-        sourceURL: string;
-    }
-
     export type UserBadgeState = {
         badges: Badge[];
     }

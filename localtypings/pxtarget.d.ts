@@ -29,6 +29,7 @@ declare namespace pxt {
         windowsStoreLink?: string;
         // release manifest for the electron app
         electronManifest?: pxt.electron.ElectronManifest;
+        profileNotification?: ProfileNotification;
     }
 
     interface PackagesConfig {
@@ -86,6 +87,7 @@ declare namespace pxt {
         checkdocsdirs?: string[]; // list of /docs subfolders for checkdocs, irrespective of SUMMARY.md
         cacheusedblocksdirs?: string[]; // list of /docs subfolders for parsing and caching used block ids (for tutorial loading)
         blockIdMap?: Map<string[]>; // list of target-specific blocks that are "synonyms" (eg. "agentturnright" and "minecraftAgentTurn")
+        defaultBadges?: pxt.auth.Badge[];
     }
 
     interface BrowserOptions {
@@ -577,6 +579,15 @@ declare namespace pxt {
     interface PacketIOLockStatusMessage {
         type: "serviceworker";
         action: "packet-io-status";
+    }
+
+    interface ProfileNotification {
+        message: string;
+        title: string
+        icon: string;
+        actionText: string;
+        link: string;
+        xicon?: boolean;
     }
 }
 
@@ -1137,5 +1148,24 @@ declare namespace pxt.tutorial {
         id: string;
         // number of steps completed
         steps: number;
+    }
+}
+
+declare namespace pxt.auth {
+    type BadgeType = "skillmap";
+
+    type Badge = SkillmapBadge;
+
+    interface BaseBadge {
+        id: string;
+        type: BadgeType;
+        title: string;
+        image: string;
+        timestamp?: number;
+    }
+
+    interface SkillmapBadge extends BaseBadge {
+        type: "skillmap";
+        sourceURL: string;
     }
 }

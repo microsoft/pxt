@@ -22,7 +22,7 @@ export const BadgeList = (props: BadgeListProps) => {
     }
 
     const bg: JSX.Element[] = []
-    for (let i = 0; i < badges.length + 10; i++) {
+    for (let i = 0; i < Math.max(badges.length + 10, 20); i++) {
         bg.push(<div key={i} className="placeholder-badge" />)
     }
 

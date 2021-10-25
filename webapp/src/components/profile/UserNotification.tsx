@@ -1,16 +1,11 @@
 import * as React from "react";
 
 export interface UserNotificationProps {
-    message: string;
-    title: string
-    icon: string;
-    actionText: string;
-    link: string;
-    xicon?: boolean;
+    notification: pxt.ProfileNotification;
 }
 
 export const UserNotification = (props: UserNotificationProps) => {
-    const { message, icon, actionText, link, xicon, title } = props;
+    const { message, icon, actionText, link, xicon, title } = props.notification;
 
     const onActionClick = () => {
         window.open(link, "_blank");

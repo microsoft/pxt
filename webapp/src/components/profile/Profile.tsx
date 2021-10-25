@@ -5,25 +5,30 @@ import { UserPane } from "./UserPane";
 import * as core from "../../core";
 import { BadgeInfo } from "./BadgeInfo";
 
+
+
 export interface ProfileProps {
     user: pxt.auth.State;
+    signOut: () => void;
+    deleteProfile: () => void;
+    notification?: pxt.ProfileNotification;
 }
 
 export const Profile = (props: ProfileProps) => {
-    const { user } = props;
+    const { user, signOut, deleteProfile, notification } = props;
 
-    const userProfile = user.profile || { idp: {} };
+    const userProfile = user?.profile || { idp: {} };
 
-    const userBadges = user.preferences.badges || {badges: []};
+    const userBadges = user?.preferences?.badges || {badges: []};
 
     const onBadgeClick = (badge: pxt.auth.Badge) => {
         showBadgeInfoModal(badge);
     }
 
     return <div className="user-profile">
-        <UserPane profile={userProfile} />
+        <UserPane profile={userProfile} onSignOutClick={signOut} onDeleteProfileClick={deleteProfile} notification={notification} />
         <BadgeList
-            availableBadges={testBadges}
+            availableBadges={pxt.appTarget.defaultBadges || []}
             userState={userBadges}
             onBadgeClick={onBadgeClick}
         />
@@ -40,22 +45,3 @@ function showBadgeInfoModal(badge: pxt.auth.Badge) {
         jsx: <BadgeInfo badge={badge} />
     });
 }
-
-const base: pxt.auth.Badge = {
-    id: "beginner-skillmap",
-    type: "skillmap",
-    // image: "https://pxt.azureedge.net/blob/92bdf81ef84b8ef4d3b50e08a65808cdb73722eb/static/skillmap/backgrounds/beginner.png",
-    image: "/static/beginner-badge.png",
-    title: "Beginner Skillmap",
-    timestamp: 0,
-    sourceURL: "https://www.makecode.com/api/md/arcade/skillmap/beginner-skillmap"
-}
-
-const testBadges: pxt.auth.Badge[] = []
-for (let i = 0; i < 13; i++) {
-    testBadges.push({
-        ...base,
-        id: base.id + i
-    })
-}
-

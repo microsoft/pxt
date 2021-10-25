@@ -20,18 +20,18 @@ export const BadgeInfo = (props: BadgeInfoProps) => {
         <div className="profile-badge-info-text">
             {badgeDescription(badge)}
         </div>
-        { badge.timestamp &&
+        { badge.timestamp ?
             <div className="profile-badge-info-header">
                 {lf("Awarded On:")}
             </div>
+            : undefined
         }
-        { badge.timestamp &&
+        { badge.timestamp ?
             <div className="profile-badge-info-text">
                 {date.toLocaleDateString(pxt.U.userLanguage())}
             </div>
+            : undefined
         }
-
-
     </div>
 }
 

@@ -16,6 +16,7 @@ export type ProfileDialogProps = ISettingsProps & {
 type ProfileDialogState = {
     visible?: boolean;
     location?: ProfileTab;
+    notification?: pxt.ProfileNotification;
 };
 
 export class ProfileDialog extends auth.Component<ProfileDialogProps, ProfileDialogState> {
@@ -23,8 +24,14 @@ export class ProfileDialog extends auth.Component<ProfileDialogProps, ProfileDia
         super(props);
         this.state = {
             visible: props.visible,
-            location: 'my-stuff'
+            location: 'my-stuff',
         };
+
+        pxt.targetConfigAsync().then(config => {
+            this.setState({
+                notification: config.profileNotification
+            });
+        })
     }
 
     show(location?: string) {
@@ -41,6 +48,36 @@ export class ProfileDialog extends auth.Component<ProfileDialogProps, ProfileDia
 
     handleTabClick = (id: ProfileTab) => {
         this.setState({ location: id });
+    }
+
+    onLogoutClicked = () => {
+        pxt.tickEvent("pxt.profile.signout")
+        auth.logoutAsync();
+    }
+
+    onDeleteProfileClicked = () => {
+        pxt.tickEvent("pxt.profile.delete")
+        this.deleteProfileAsync();
+    }
+
+    deleteProfileAsync = async () => {
+        const profile = this.getData<pxt.auth.UserProfile>(auth.USER_PROFILE)
+        const result = await core.confirmAsync({
+            header: lf("Delete Profile"),
+            body: lf("Are you sure? This cannot be reversed! Your cloud-saved projects will be converted to local projects on this device."),
+            agreeClass: "red",
+            agreeIcon: "trash",
+            agreeLbl: lf("Confirm"),
+            disagreeLbl: lf("Back to safety"),
+            disagreeIcon: "arrow right",
+            confirmationCheckbox: lf("I understand this is permanent. No undo.")
+        });
+        if (result) {
+            await auth.deleteProfileAsync();
+            // Exit out of the profile screen.
+            this.hide();
+            core.infoNotification(lf("Profile deleted!"));
+        }
     }
 
     renderCore() {
@@ -65,7 +102,11 @@ export class ProfileDialog extends auth.Component<ProfileDialogProps, ProfileDia
                 { ghUser ? <GitHubPanel parent={this} /> : undefined }
                 <FeedbackPanel parent={this} /> */}
 
-                <Profile user={{profile, preferences}} />
+                <Profile
+                    user={{profile, preferences}}
+                    signOut={this.onLogoutClicked}
+                    deleteProfile={this.onDeleteProfileClicked}
+                    notification={this.state.notification} />
             </sui.Modal>
         );
     }
