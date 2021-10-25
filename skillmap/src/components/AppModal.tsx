@@ -287,7 +287,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
 
         const actions = [];
         if (!shortId) {
-            actions.push({ label: lf("Cancel"), onClick: () => this.handleOnClose });
+            actions.push({ label: lf("Cancel"), onClick: this.handleOnClose });
             actions.push({ label: lf("Publish"), onClick: async () => {
                 tickEvent("skillmap.share", { path: mapId, activity: activity!.activityId });
                 this.setState({ loading: true });
