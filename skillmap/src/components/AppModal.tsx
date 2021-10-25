@@ -96,6 +96,8 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                 return lf("Start Skill Map")
             case "editor":
                 return lf("Keep Building")
+            case "tutorial":
+                return lf("Start Tutorial")
             case "docs":
             default:
                 return lf("Learn More")
@@ -138,6 +140,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                         modalActions.push(action as ModalAction);
                     }
                     break;
+                case "tutorial":
                 case "map":
                 case "docs":
                 default:
