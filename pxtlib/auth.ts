@@ -48,6 +48,30 @@ namespace pxt.auth {
     };
 
     /**
+     * Badges
+     */
+    export type BadgeType = "skillmap";
+
+    export type Badge = SkillmapBadge;
+
+    export interface BaseBadge {
+        id: string;
+        type: BadgeType;
+        timestamp: number;
+        title: string;
+        image: string;
+    }
+
+    export interface SkillmapBadge extends BaseBadge {
+        type: "skillmap";
+        sourceURL: string;
+    }
+
+    export type UserBadgeState = {
+        badges: Badge[];
+    }
+
+    /**
      * User preference state that should be synced with the cloud.
      */
     export type UserPreferences = {
@@ -55,6 +79,7 @@ namespace pxt.auth {
         highContrast?: boolean;
         reader?: string;
         skillmap?: UserSkillmapState;
+        badges?: UserBadgeState;
     };
 
     export const DEFAULT_USER_PREFERENCES: () => UserPreferences = () => ({

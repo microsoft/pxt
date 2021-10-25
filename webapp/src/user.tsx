@@ -3,6 +3,7 @@ import * as sui from "./sui";
 import * as core from "./core";
 import * as auth from "./auth";
 import * as cloudsync from "./cloudsync";
+import { Profile } from "./components/profile/Profile";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -46,7 +47,8 @@ export class ProfileDialog extends auth.Component<ProfileDialogProps, ProfileDia
         const isLoggedIn = this.isLoggedIn();
         if (!isLoggedIn) return null;
 
-        const user = this.getUserProfile();
+        const profile = this.getUserProfile();
+        const preferences = this.getUserPreferences();
 
         const github = cloudsync.githubProvider();
         const ghUser = github.user();
@@ -54,14 +56,16 @@ export class ProfileDialog extends auth.Component<ProfileDialogProps, ProfileDia
         return (
             <sui.Modal isOpen={this.state.visible} className="ui profiledialog" size="fullscreen"
                 onClose={this.hide} dimmer={true}
-                closeIcon={true} header={user?.idp?.displayName}
+                closeIcon={true} header={profile?.idp?.displayName}
                 closeOnDimmerClick={false}
                 closeOnDocumentClick={false}
                 closeOnEscape={false}
             >
-                <AccountPanel parent={this} />
+                {/* <AccountPanel parent={this} />
                 { ghUser ? <GitHubPanel parent={this} /> : undefined }
-                <FeedbackPanel parent={this} />
+                <FeedbackPanel parent={this} /> */}
+
+                <Profile user={{profile, preferences}} />
             </sui.Modal>
         );
     }

@@ -1,0 +1,187 @@
+.user-profile {
+    display: flex;
+    flex-direction: row;
+    height: 100%;
+}
+
+
+
+.profile-user-pane {
+    display: flex;
+    flex-direction: column;
+    width: 25%;
+    padding: 1rem;
+    border-right: solid 1px black;
+    height: 100%;
+    min-width: 20rem;
+}
+
+.profile-portrait {
+    border-radius: 50%;
+    overflow: hidden;
+    height: 12rem;
+    width: 12rem;
+    position: relative;
+    border: solid white 2px;
+    align-self: center;
+    margin-bottom: 1rem;
+
+    img {
+        width: 110%;
+        height: 110%;
+        position: absolute;
+        left: -5%;
+        top: -5%;
+    }
+}
+
+.profile-user-details {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.profile-display-name {
+    font-size: 1.5rem;
+    color: @textColor;
+    text-transform: uppercase;
+    font-weight: 900;
+}
+
+.profile-username {
+    font-size: 1rem;
+    color: #999999;
+}
+
+.profile-spacer {
+    flex-grow: 1;
+}
+
+.profile-actions {
+    display: flex;
+    flex-direction: row;
+
+    a {
+        flex-grow: 1;
+    }
+}
+
+.profile-notification {
+    width: 100%;
+    border: solid 1px black;
+    position: relative;
+    border-radius: 1rem;
+    padding: 1rem;
+    padding-top: 2rem;
+    background: white;
+    display: flex;
+    flex-direction: column;
+
+    .profile-notification-title {
+        font-weight: 900;
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+
+    .profile-notification-message {
+        margin-bottom: 1rem;
+    }
+
+    .profile-notification-icon {
+        width: 3.25rem;
+        height: 3.25rem;
+        border: solid 1px black;
+        border-radius: 50%;
+        position: absolute;
+        top: -1.625rem;
+        left: calc(50% - 1.625rem);
+        background: #dedede;
+
+        i.circular.icon {
+            box-shadow: none;
+        }
+    }
+}
+
+.profile-badge-list {
+    flex-grow: 1;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+}
+
+.profile-badges-scroller {
+    flex-grow: 1;
+    overflow-y: scroll;
+    position: relative;
+}
+
+.profile-badges, .profile-badges-background {
+    background-repeat: repeat;
+    min-height: 100%;
+    background-size: 20%;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    grid-auto-rows: 12rem;
+
+    .profile-badge {
+        position: relative;
+        aspect-ratio: 1;
+
+        img {
+            height: 70%;
+            width: 70%;
+            display: inline;
+            position: absolute;
+            top: 15%;
+            left: 15%;
+        }
+    }
+}
+
+.profile-badge.disabled img {
+    filter: grayscale(1);
+}
+
+.placeholder-badge {
+    background-image: url("data:image/svg+xml, %3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Ccircle cx='5' cy='5' fill='black' r='3' opacity='0.1' /%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    aspect-ratio: 1;
+}
+
+.profile-badges-background-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+}
+
+.profile-badge-title {
+    text-transform: uppercase;
+    font-weight: 900;
+    font-size: 1.5rem;
+    margin-right: 1rem;
+}
+
+.profile-badge-header {
+    margin-bottom: 1rem;
+}
+
+.profile-badge-info-header {
+    text-transform: uppercase;
+    font-weight: 900;
+    margin-top: 1rem;
+}
+
+.profile-badge-info-image {
+    .profile-badge {
+        text-align: center;
+
+        img {
+            display: inline;
+        }
+    }
+}
