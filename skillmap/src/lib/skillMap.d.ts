@@ -82,7 +82,7 @@ interface MapCompletionNode extends MapReward {
 }
 
 interface MapCompletionAction {
-    kind: "activity" | "map" | "docs" | "editor";
+    kind: "activity" | "map" | "docs" | "editor" | "tutorial";
     label?: string;
     activityId?: string;
     url?: string;
