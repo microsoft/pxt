@@ -574,7 +574,7 @@ const copySkillmapHtml = () => rimraf("webapp/public/skillmap.html")
                     .pipe(concat("skillmap.html"))
                     .pipe(gulp.dest("webapp/public")));
 
-const skillmap = gulp.series(cleanSkillmap, buildSkillmap, gulp.parallel(copySkillmapCss, copySkillmapJs, copySkillmapHtml));
+const skillmap = gulp.series(cleanSkillmap, buildSkillmap, gulp.series(copySkillmapCss, copySkillmapJs, copySkillmapHtml));
 
 
 /********************************************************
