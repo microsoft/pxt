@@ -1953,7 +1953,10 @@ function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
         // Append icons.css to semantic.css (custom pxt icons)
         const iconsFile = (pkg["name"] == "pxt-core") ? 'built/web/icons.css' : 'node_modules/pxt-core/built/web/icons.css';
         const iconsCss = fs.readFileSync(iconsFile, "utf-8");
-        semCss = semCss + "\n" + iconsCss;
+        const reactCommonFile = (pkg["name"] == "pxt-core") ? 'built/web/react-common.css' : 'node_modules/pxt-core/built/web/react-common.css';
+        const reactCommonCss = fs.readFileSync(reactCommonFile, "utf-8");
+
+        semCss = semCss + "\n" + iconsCss + "\n" + reactCommonCss;
         nodeutil.writeFileSync('built/web/semantic.css', semCss);
     }).then(() => {
         // generate blockly css
@@ -2023,6 +2026,7 @@ function buildSkillMapAsync(parsed: commandParser.ParsedCommand) {
             nodeutil.cp("node_modules/pxt-core/built/pxtlib.js", `${skillmapRoot}/public/blb`);
             nodeutil.cp("built/web/semantic.css", `${skillmapRoot}/public/blb`);
             nodeutil.cp("node_modules/pxt-core/built/web/icons.css", `${skillmapRoot}/public/blb`);
+            nodeutil.cp("node_modules/pxt-core/built/web/react-common.css", `${skillmapRoot}/public/blb`);
 
             // copy 'assets' over from docs/static
             nodeutil.cpR("docs/static/skillmap/assets", `${skillmapRoot}/public/assets`);

@@ -45,7 +45,12 @@ const pxteditor = () => compileTsProject("pxteditor");
 const pxtweb = () => compileTsProject("docfiles/pxtweb", "built/web");
 const backendutils = () => compileTsProject("backendutils")
 const cli = () => compileTsProject("cli", "built", true);
-const webapp = () => compileTsProject("webapp", "built/webapp", true);
+const webapp = () => compileTsProject("webapp", "built", true);
+const reactCommon = () => compileTsProject("react-common", "built/react-common", true);
+
+const reactCommonCss = () => gulp.src("react-common/styles/**/*.css")
+    .pipe(concat("react-common.css"))
+    .pipe(gulp.dest("built/web/"))
 
 const pxtblockly = () => gulp.src([
     "webapp/public/blockly/blockly_compressed.js",
@@ -666,8 +671,10 @@ const buildAll = gulp.series(
     gulp.parallel(pxtrunner, pxtwinrt, cli, pxtcommon),
     gulp.parallel(pxtjs, pxtdts, pxtapp, pxtworker, pxtembed),
     targetjs,
+    reactCommonCss,
     gulp.parallel(buildcss, buildSVGIcons),
     skillmap,
+    reactCommon,
     webapp,
     browserifyWebapp,
     browserifyAssetEditor,
@@ -681,6 +688,12 @@ const travis = gulp.series(lint, buildAll, testAll, targetjs, pxtTravis);
 exports.default = buildAll;
 exports.clean = clean;
 exports.build = buildAll;
+
+exports.webapp = gulp.series(
+    reactCommon,
+    webapp,
+    browserifyWebapp
+)
 
 exports.updatestrings = updatestrings;
 exports.updateblockly = copyBlockly;

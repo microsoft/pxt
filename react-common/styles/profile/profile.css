@@ -4,8 +4,6 @@
     height: 100%;
 }
 
-
-
 .profile-user-pane {
     display: flex;
     flex-direction: column;
@@ -25,14 +23,14 @@
     border: solid white 2px;
     align-self: center;
     margin-bottom: 1rem;
+}
 
-    img {
-        width: 110%;
-        height: 110%;
-        position: absolute;
-        left: -5%;
-        top: -5%;
-    }
+.profile-portrait img {
+    width: 110%;
+    height: 110%;
+    position: absolute;
+    left: -5%;
+    top: -5%;
 }
 
 .profile-user-details {
@@ -42,7 +40,7 @@
 
 .profile-display-name {
     font-size: 1.5rem;
-    color: @textColor;
+    color: black;
     text-transform: uppercase;
     font-weight: 900;
 }
@@ -60,10 +58,10 @@
     display: flex;
     flex-direction: row;
     align-items: center;
+}
 
-    a {
-        flex-grow: 1;
-    }
+.profile-actions a {
+    flex-grow: 1;
 }
 
 .profile-notification {
@@ -76,31 +74,32 @@
     background: white;
     display: flex;
     flex-direction: column;
+}
 
-    .profile-notification-title {
-        font-weight: 900;
-        text-align: center;
-        margin-bottom: 1rem;
-    }
+.profile-notification .profile-notification-title {
+    font-weight: 900;
+    text-align: center;
+    margin-bottom: 1rem;
+}
 
-    .profile-notification-message {
-        margin-bottom: 1rem;
-    }
+.profile-notification .profile-notification-message {
+    margin-bottom: 1rem;
+}
 
-    .profile-notification-icon {
-        width: 3.25rem;
-        height: 3.25rem;
-        border: solid 1px black;
-        border-radius: 50%;
-        position: absolute;
-        top: -1.625rem;
-        left: calc(50% - 1.625rem);
-        background: #dedede;
 
-        i.circular.icon {
-            box-shadow: none;
-        }
-    }
+.profile-notification .profile-notification-icon {
+    width: 3.25rem;
+    height: 3.25rem;
+    border: solid 1px black;
+    border-radius: 50%;
+    position: absolute;
+    top: -1.625rem;
+    left: calc(50% - 1.625rem);
+    background: #dedede;
+}
+
+.profile-notification .profile-notification-icon     i.circular.icon {
+    box-shadow: none;
 }
 
 .profile-badge-list {
@@ -124,21 +123,23 @@
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     grid-auto-rows: 12rem;
-
-    .profile-badge {
-        position: relative;
-        aspect-ratio: 1;
-
-        img {
-            height: 70%;
-            width: 70%;
-            display: inline;
-            position: absolute;
-            top: 15%;
-            left: 15%;
-        }
-    }
 }
+
+.profile-badges .profile-badge, .profile-badges-background .profile-badge {
+    position: relative;
+    aspect-ratio: 1;
+}
+
+
+.profile-badges .profile-badge img, .profile-badges-background .profile-badge img {
+    height: 70%;
+    width: 70%;
+    display: inline;
+    position: absolute;
+    top: 15%;
+    left: 15%;
+}
+
 
 .profile-badge.disabled img {
     filter: grayscale(1);
@@ -177,12 +178,10 @@
     margin-top: 1rem;
 }
 
-.profile-badge-info-image {
-    .profile-badge {
-        text-align: center;
+.profile-badge-info-image .profile-badge {
+    text-align: center;
+}
 
-        img {
-            display: inline;
-        }
-    }
+.profile-badge-info-image .profile-badge img {
+    display: inline;
 }

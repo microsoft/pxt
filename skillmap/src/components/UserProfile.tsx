@@ -2,6 +2,7 @@ import * as React from "react";
 import { connect } from "react-redux";
 import { SkillMapState } from "../store/reducer";
 import * as authClient from "../lib/authClient";
+import { Profile} from "react-common/profile/Profile";
 
 import { Modal } from './Modal';
 
@@ -10,6 +11,7 @@ import { dispatchCloseUserProfile, dispatchShowDeleteAccountModal } from "../act
 interface UserProfileProps {
     signedIn: boolean;
     profile: pxt.auth.UserProfile
+    preferences: pxt.auth.UserPreferences;
     showProfile: boolean;
     dispatchCloseUserProfile: () => void;
     dispatchShowDeleteAccountModal: () => void;
@@ -28,13 +30,15 @@ export class UserProfileImpl extends React.Component<UserProfileProps, {}> {
     }
 
     renderUserProfile = () => {
-        const user = this.props.profile;
+        const { profile, preferences } = this.props;
 
-        return <Modal title={user?.idp?.displayName || ""} fullscreen={true} onClose={this.handleOnClose}>
-        <div className="profiledialog">
-            {this.getAccountPanel()}
-            {this.getFeedbackPanel()}
-        </div>
+        return <Modal title={profile?.idp?.displayName || ""} fullscreen={true} onClose={this.handleOnClose}>
+                <Profile
+                    user={{profile, preferences}}
+                    signOut={this.handleSignout}
+                    deleteProfile={this.handleDeleteAccountClick}
+                    // notification={this.state.notification}
+                    showModalAsync={() => Promise.resolve()} />
         </Modal>
     }
 
@@ -119,7 +123,8 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
     return {
         signedIn: state.auth.signedIn,
         profile: state.auth.profile,
-        showProfile: state.showProfile
+        showProfile: state.showProfile,
+        preferences: state.auth.preferences
     }
 }
 

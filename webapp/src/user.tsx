@@ -3,7 +3,7 @@ import * as sui from "./sui";
 import * as core from "./core";
 import * as auth from "./auth";
 import * as cloudsync from "./cloudsync";
-import { Profile } from "./components/profile/Profile";
+import { Profile } from "../../react-common/components/profile/Profile";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -106,7 +106,8 @@ export class ProfileDialog extends auth.Component<ProfileDialogProps, ProfileDia
                     user={{profile, preferences}}
                     signOut={this.onLogoutClicked}
                     deleteProfile={this.onDeleteProfileClicked}
-                    notification={this.state.notification} />
+                    notification={this.state.notification}
+                    showModalAsync={core.dialogAsync} />
             </sui.Modal>
         );
     }

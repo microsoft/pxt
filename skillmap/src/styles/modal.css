@@ -66,11 +66,17 @@
     align-items: center;
 }
 
+.fullscreen .modal {
+    display: flex;
+    flex-direction: column;
+}
 
 .fullscreen .modal-body {
-    min-height: 96%;
+    flex-grow: 1;
     background-color: var(--body-background-color);
     padding: 1rem;
+    min-height: unset;
+    max-height: unset;
 }
 
 .fullscreen .modal .ui.card {
