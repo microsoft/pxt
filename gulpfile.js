@@ -52,6 +52,10 @@ const reactCommonCss = () => gulp.src("react-common/styles/**/*.css")
     .pipe(concat("react-common.css"))
     .pipe(gulp.dest("built/web/"))
 
+const reactCommonCss2 = () => gulp.src("react-common/styles/**/*.css")
+    .pipe(concat("react-common.css"))
+    .pipe(gulp.dest("skillmap/public/blb/"))
+
 const pxtblockly = () => gulp.src([
     "webapp/public/blockly/blockly_compressed.js",
     "webapp/public/blockly/blocks_compressed.js",
@@ -672,6 +676,7 @@ const buildAll = gulp.series(
     gulp.parallel(pxtjs, pxtdts, pxtapp, pxtworker, pxtembed),
     targetjs,
     reactCommonCss,
+    reactCommonCss2,
     reactCommon,
     gulp.parallel(buildcss, buildSVGIcons),
     skillmap,
@@ -690,6 +695,8 @@ exports.clean = clean;
 exports.build = buildAll;
 
 exports.webapp = gulp.series(
+    reactCommonCss,
+    reactCommonCss2,
     reactCommon,
     webapp,
     browserifyWebapp
