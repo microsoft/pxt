@@ -52,9 +52,6 @@ const reactCommonCss = () => gulp.src("react-common/styles/**/*.css")
     .pipe(concat("react-common.css"))
     .pipe(gulp.dest("built/web/"))
 
-const reactCommonCss2 = () => gulp.src("react-common/styles/**/*.css")
-    .pipe(concat("react-common.css"))
-    .pipe(gulp.dest("skillmap/public/blb/"))
 
 const pxtblockly = () => gulp.src([
     "webapp/public/blockly/blockly_compressed.js",
@@ -560,11 +557,18 @@ const replaceWebpackBase = () => gulp.src([`${skillmapRoot}/node_modules/react-s
     .pipe(concat("webpack.config.js"))
     .pipe(gulp.dest(`${skillmapRoot}/node_modules/react-scripts/config`));
 
-const buildSkillmap =  () => exec(!fs.existsSync(`${skillmapRoot}/node_modules`) ? "npm ci --prefer-offline" : "echo \"Skip install\"", false, { cwd: skillmapRoot })
-    .then(gulp.series([copyWebpackBase, copyWebpackOverride]))
-    .then(() => exec("npm run build", false, { cwd: skillmapRoot }))
-    .then(replaceWebpackBase)
-    .catch(replaceWebpackBase);
+
+const npmInstallSkillmap = () => exec(!fs.existsSync(`${skillmapRoot}/node_modules`) ? "npm ci --prefer-offline" : "echo \"Skip install\"", false, { cwd: skillmapRoot });
+const npmBuildSkillmap = () => exec("npm run build", false, { cwd: skillmapRoot });
+
+const buildSkillmap =
+    gulp.series(
+        npmInstallSkillmap,
+        copyWebpackBase,
+        copyWebpackOverride,
+        npmBuildSkillmap,
+        replaceWebpackBase
+    );
 
 const copySkillmapCss = () => gulp.src(`${skillmapRoot}/build/static/css/*`)
     .pipe(gulp.dest(`${skillmapOut}/css`));
@@ -676,7 +680,6 @@ const buildAll = gulp.series(
     gulp.parallel(pxtjs, pxtdts, pxtapp, pxtworker, pxtembed),
     targetjs,
     reactCommonCss,
-    reactCommonCss2,
     reactCommon,
     gulp.parallel(buildcss, buildSVGIcons),
     skillmap,
@@ -696,7 +699,6 @@ exports.build = buildAll;
 
 exports.webapp = gulp.series(
     reactCommonCss,
-    reactCommonCss2,
     reactCommon,
     webapp,
     browserifyWebapp
