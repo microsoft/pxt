@@ -48,6 +48,19 @@ const cli = () => compileTsProject("cli", "built", true);
 const webapp = () => compileTsProject("webapp", "built", true);
 const reactCommon = () => compileTsProject("react-common", "built/react-common", true);
 
+const reactCommonPackageJson = () => {
+    fs.writeFileSync(path.resolve("built/react-common/components/package.json"), `
+    {
+        "name": "react-common",
+        "description": "",
+        "version": "0.0.0",
+        "dependencies": {},
+        "devDependencies": {}
+    }
+    `)
+    return Promise.resolve();
+}
+
 const reactCommonCss = () => gulp.src("react-common/styles/**/*.css")
     .pipe(concat("react-common.css"))
     .pipe(gulp.dest("built/web/"))
@@ -561,14 +574,17 @@ const replaceWebpackBase = () => gulp.src([`${skillmapRoot}/node_modules/react-s
 const npmInstallSkillmap = () => exec(!fs.existsSync(`${skillmapRoot}/node_modules`) ? "npm ci --prefer-offline" : "echo \"Skip install\"", false, { cwd: skillmapRoot });
 const npmBuildSkillmap = () => exec("npm run build", false, { cwd: skillmapRoot });
 
-const buildSkillmap =
-    gulp.series(
-        npmInstallSkillmap,
-        copyWebpackBase,
-        copyWebpackOverride,
-        npmBuildSkillmap,
-        replaceWebpackBase
-    );
+const buildSkillmap = async () => {
+    try {
+        await npmInstallSkillmap();
+        await copyWebpackBase();
+        await copyWebpackOverride();
+        await npmBuildSkillmap();
+    }
+    finally {
+        await replaceWebpackBase();
+    }
+}
 
 const copySkillmapCss = () => gulp.src(`${skillmapRoot}/build/static/css/*`)
     .pipe(gulp.dest(`${skillmapOut}/css`));
@@ -681,6 +697,7 @@ const buildAll = gulp.series(
     targetjs,
     reactCommonCss,
     reactCommon,
+    reactCommonPackageJson,
     gulp.parallel(buildcss, buildSVGIcons),
     skillmap,
     webapp,
