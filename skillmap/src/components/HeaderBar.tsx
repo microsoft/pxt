@@ -106,11 +106,11 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
             ? <div className="avatar"><img src={profile?.idp?.picture?.dataUrl} alt={lf("User Menu")}/></div>
             : undefined;
 
-        const initialsElem = <span className="circle">{pxt.auth.userInitials(profile)}</span>
+        const initialsElem = <span><div className="avatar-initials">{pxt.auth.userInitials(profile)}</div></span>
 
         return <div className="user-menu">
             {signedIn
-             ? <Dropdown icon="user" items={items} picture={avatarElem || initialsElem} className="header-dropdown"/>
+             ? <Dropdown icon="user" items={items} picture={avatarElem || initialsElem} className="header-dropdown user-dropdown"/>
              : <HeaderBarButton className="sign-in" icon="xicon cloud-user" title={lf("Sign In")} label={lf("Sign In")} onClick={ () => {
                 pxt.tickEvent(`skillmap.usermenu.signin`);
                 this.props.dispatchShowLoginModal();

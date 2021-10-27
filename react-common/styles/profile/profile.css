@@ -123,6 +123,7 @@
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     grid-auto-rows: 12rem;
+    align-items: center;
 }
 
 .profile-badges .profile-badge, .profile-badges-background .profile-badge {
@@ -184,4 +185,31 @@
 
 .profile-badge-info-image .profile-badge img {
     display: inline;
+}
+
+.profile-initials-portrait {
+    font-size: 8rem;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: white;
+    background-color: #028B9B;
+}
+
+@media only screen and (max-width: 1200px) and (min-width: 992px) {
+    .profile-badges, .profile-badges-background {
+        background-size: 25%;
+        grid-template-columns: repeat(4, 1fr);
+        grid-auto-rows: 12rem;
+    }
+}
+
+@media only screen and (max-width: 991px) {
+    .profile-badges, .profile-badges-background {
+        background-size: 33%;
+        grid-template-columns: repeat(3, 1fr);
+        grid-auto-rows: 12rem;
+    }
 }

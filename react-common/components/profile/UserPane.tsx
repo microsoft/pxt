@@ -16,7 +16,12 @@ export const UserPane = (props: UserPaneProps) => {
 
     return <div className="profile-user-pane">
         <div className="profile-portrait">
-            <img src={picture?.dataUrl} alt={pxt.U.lf("Profile Picture")} />
+            { picture?.dataUrl ?
+                <img src={picture?.dataUrl} alt={pxt.U.lf("Profile Picture")} />
+                : <div className="profile-initials-portrait">
+                    {pxt.auth.userInitials(profile)}
+                </div>
+            }
         </div>
         <div className="profile-user-details">
             <div className="profile-display-name">

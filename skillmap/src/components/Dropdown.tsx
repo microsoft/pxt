@@ -33,7 +33,7 @@ export class Dropdown extends React.Component<DropdownProps, DropdownState> {
     }
 
     protected handleOnBlur = () => {
-        this.setState({ expanded: false })
+        // this.setState({ expanded: false })
     }
 
     protected getItemOnClick(item: DropdownItem): () => void {
