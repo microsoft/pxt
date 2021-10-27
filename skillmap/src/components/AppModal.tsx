@@ -92,7 +92,8 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
     protected handleRewardShareClick = () => {
         const { mapId, userState, pageSourceUrl, skillMap, activity, shareState } = this.props;
         const previousState = lookupPreviousCompletedActivityState(userState!, pageSourceUrl!, skillMap!, activity!.activityId);
-        this.props.dispatchShowShareModal(mapId, previousState.activityId, true);
+        if (previousState)
+            this.props.dispatchShowShareModal(mapId, previousState.activityId, true);
     }
 
     protected getCompletionActionText(action: MapCompletionAction) {
@@ -175,13 +176,6 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
         const completionModalTitle = lf("You Did It!");
         const completionModalText = lf("Congratulations on completing {0}. Take some time to explore any activities you missed, or reset your progress to try again. But first, be sure to claim your reward using the button below.", "{0}");
         const completionModalTextSegments = completionModalText.split("{0}");
-
-        const submissionId =  localStorage.getItem('assignmentId')
-        const classId = localStorage.getItem('submissionId')
-        const assignmentId = localStorage.getItem('assignmentId')
-
-        const canSubmitToTeams = submissionId && classId && assignmentId;
-
 
         return <div className="confetti-container">
             <Modal title={completionModalTitle} actions={this.getCompletionActions(reward.actions)} className="completion" onClose={this.handleOnClose}>
@@ -321,8 +315,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
 
         return <Modal title={resetModalTitle} actions={actions} onClose={this.handleOnClose}>
             {shortId ?
-                <div>{ shareState.rewardsShare ? "Congratulations on completing this year's Hour of Code! Use the address below to share your completed game"
-                    : lf("Your project is ready! Use the address below to share your projects.") }</div> :
+                <div>{ lf("Your project is ready! Use the address below to share your projects.") }</div> :
                 <div className="share-disclaimer">
                     { lf("You need to publish your project to share it or embed it in other web pages. You acknowledge having consent to publish this project.") }
                 </div>
@@ -340,7 +333,6 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                 </div>
             </div>}
             {(shortId && shareState.rewardsShare) && <div>
-                <img className="reward-background" src="./assets/header.gif"/>
                 {this.renderConfetti()}
             </div>}
         </Modal>
