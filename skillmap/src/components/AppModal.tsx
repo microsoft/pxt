@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { connect } from 'react-redux';
-import { ModalType, ShareState, AuthState, SkillMapState } from '../store/reducer';
+import { ModalType, ShareState, SkillMapState } from '../store/reducer';
 import { dispatchHideModal, dispatchRestartActivity, dispatchShowShareModal, dispatchOpenActivity, dispatchResetUser, dispatchShowCarryoverModal, dispatchSetShareStatus, dispatchCloseUserProfile } from '../actions/dispatch';
 import { tickEvent, postAbuseReportAsync, resolvePath, postShareAsync } from "../lib/browserUtils";
 import { lookupActivityProgress, lookupPreviousActivityStates, lookupPreviousCompletedActivityState, isCodeCarryoverEnabled } from "../lib/skillMapUtils";
