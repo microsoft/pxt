@@ -21,7 +21,6 @@ interface AppModalProps {
     actions?: ModalAction[];
     showCodeCarryoverModal?: boolean;
     shareState?: ShareState;
-    signedIn?: boolean
     dispatchHideModal: () => void;
     dispatchRestartActivity: (mapId: string, activityId: string, previousHeaderId?: string, carryoverCode?: boolean) => void;
     dispatchOpenActivity: (mapId: string, activityId: string, previousHeaderId?: string, carryoverCode?: boolean) => void;
@@ -437,8 +436,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         showCodeCarryoverModal: currentMap && activity && isCodeCarryoverEnabled(state.user, state.pageSourceUrl, currentMap, activity),
         mapId: currentMapId,
         activity: currentMapId && currentActivityId ? state.maps[currentMapId].activities[currentActivityId] : undefined,
-        shareState,
-        signedIn: state.auth.signedIn
+        shareState
     }
 }
 
