@@ -572,7 +572,7 @@ const replaceWebpackBase = () => gulp.src([`${skillmapRoot}/node_modules/react-s
 
 
 const npmInstallSkillmap = () => exec(!fs.existsSync(`${skillmapRoot}/node_modules`) ? "npm ci --prefer-offline" : "echo \"Skip install\"", false, { cwd: skillmapRoot });
-const npmBuildSkillmap = () => exec("npm run build", false, { cwd: skillmapRoot });
+const npmBuildSkillmap = () => exec("npm run build", true, { cwd: skillmapRoot });
 
 const buildSkillmap = async () => {
     try {

@@ -62,7 +62,6 @@ function rimraf(dirname) {
 function exec(command, log, opts) {
     return new Promise((resolve, reject) => {
         const ps = child_process.exec(command, { encoding: "utf8", ...opts}, (err, stdout) => {
-            console.log(stdout);
             if (err) reject(err);
             else resolve(stdout);
         });

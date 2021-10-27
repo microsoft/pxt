@@ -180,7 +180,6 @@ class AppImpl extends React.Component<AppProps, AppState> {
                 } else {
                     setPageSourceUrl(fetched);
                     this.props.dispatchSetPageSourceUrl(fetched, status);
-                    console.log(fetched)
                     this.props.dispatchClearMetadata();
                 }
 
