@@ -3,6 +3,7 @@ import * as sui from "./sui";
 import * as core from "./core";
 import * as auth from "./auth";
 import * as cloudsync from "./cloudsync";
+import { Profile } from "../../react-common/components/profile/Profile";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -15,6 +16,7 @@ export type ProfileDialogProps = ISettingsProps & {
 type ProfileDialogState = {
     visible?: boolean;
     location?: ProfileTab;
+    notification?: pxt.ProfileNotification;
 };
 
 export class ProfileDialog extends auth.Component<ProfileDialogProps, ProfileDialogState> {
@@ -22,8 +24,14 @@ export class ProfileDialog extends auth.Component<ProfileDialogProps, ProfileDia
         super(props);
         this.state = {
             visible: props.visible,
-            location: 'my-stuff'
+            location: 'my-stuff',
         };
+
+        pxt.targetConfigAsync().then(config => {
+            this.setState({
+                notification: config.profileNotification
+            });
+        })
     }
 
     show(location?: string) {
@@ -42,45 +50,17 @@ export class ProfileDialog extends auth.Component<ProfileDialogProps, ProfileDia
         this.setState({ location: id });
     }
 
-    renderCore() {
-        const isLoggedIn = this.isLoggedIn();
-        if (!isLoggedIn) return null;
-
-        const user = this.getUserProfile();
-
-        const github = cloudsync.githubProvider();
-        const ghUser = github.user();
-
-        return (
-            <sui.Modal isOpen={this.state.visible} className="ui profiledialog" size="fullscreen"
-                onClose={this.hide} dimmer={true}
-                closeIcon={true} header={user?.idp?.displayName}
-                closeOnDimmerClick={false}
-                closeOnDocumentClick={false}
-                closeOnEscape={false}
-            >
-                <AccountPanel parent={this} />
-                { ghUser ? <GitHubPanel parent={this} /> : undefined }
-                <FeedbackPanel parent={this} />
-            </sui.Modal>
-        );
-    }
-}
-
-type PanelProps = {
-    parent: ProfileDialog;
-};
-
-type AccountPanelProps = PanelProps & {
-};
-
-class AccountPanel extends auth.Component<AccountPanelProps, {}> {
-
-    handleSignoutClicked = async () => {
-        await auth.logoutAsync();
+    onLogoutClicked = () => {
+        pxt.tickEvent("pxt.profile.signout")
+        auth.logoutAsync();
     }
 
-    handleDeleteAccountClick = async () => {
+    onDeleteProfileClicked = () => {
+        pxt.tickEvent("pxt.profile.delete")
+        this.deleteProfileAsync();
+    }
+
+    deleteProfileAsync = async () => {
         const profile = this.getData<pxt.auth.UserProfile>(auth.USER_PROFILE)
         const result = await core.confirmAsync({
             header: lf("Delete Profile"),
@@ -95,7 +75,7 @@ class AccountPanel extends auth.Component<AccountPanelProps, {}> {
         if (result) {
             await auth.deleteProfileAsync();
             // Exit out of the profile screen.
-            this.props.parent.hide();
+            this.hide();
             core.infoNotification(lf("Profile deleted!"));
         }
     }
@@ -106,139 +86,30 @@ class AccountPanel extends auth.Component<AccountPanelProps, {}> {
     }
 
     renderCore() {
-        const user = this.getUserProfile();
-        const provider = pxt.auth.identityProvider(user?.idp?.provider);
+        const isLoggedIn = this.isLoggedIn();
+        if (!isLoggedIn) return null;
 
-        const avatarElem = (
-            <div className="profile-pic avatar">
-                <img src={this.avatarPicUrl()} alt={lf("User")} />
-            </div>
-        );
-        const initialsElem = (
-            <div className="profile-pic avatar">
-                <span>{pxt.auth.userInitials(user)}</span>
-            </div>
-        );
+        const profile = this.getUserProfile();
+        const preferences = this.getUserPreferences();
 
-        return (
-            <div className="ui card panel">
-                <div className="header-text">
-                    <label>{lf("Profile")}</label>
-                </div>
-                {this.avatarPicUrl() ? avatarElem : initialsElem}
-                <div className="row-span-two">
-                    <label className="title">{lf("Name")}</label>
-                    <p className="value">{user?.idp?.displayName || user?.idp?.username}</p>
-                </div>
-                <div className="row-span-two">
-                    <label className="title">{lf("Username")}</label>
-                    <p className="value">{user?.idp?.username}</p>
-                </div>
-                <div className="row-span-two">
-                    <label className="title">{lf("Provider")}</label>
-                    <p className="value">{provider.name}</p>
-                </div>
-                <div className="row-span-two">
-                    <sui.Button text={lf("Sign out")} icon={`xicon ${user?.idp?.provider}`} ariaLabel={lf("Sign out {0}", user?.idp?.provider)} onClick={this.handleSignoutClicked} />
-                </div>
-                <div className="row-span-two">
-                    <sui.Link className="ui" text={lf("I want to delete my profile")} ariaLabel={lf("delete profile")} onClick={this.handleDeleteAccountClick} />
-                </div>
-            </div>
-        );
-    }
-}
-
-type GitHubPanelProps = PanelProps & {
-};
-
-class GitHubPanel extends sui.UIElement<GitHubPanelProps, {}> {
-
-    handleUnlinkClicked = () => {
         const github = cloudsync.githubProvider();
-        if (github) {
-            github.logout();
-        }
-    }
-
-    renderUsername(): JSX.Element {
-        const github = cloudsync.githubProvider();
-        const user = github.user();
-        return (
-            <>
-                <div className="row-span-two">
-                    <label className="title">{lf("Name")}</label>
-                    <p className="value">{user?.name}</p>
-                </div>
-                <div className="row-span-two">
-                    <label className="title">{lf("Username")}</label>
-                    <p className="value">{user?.userName}</p>
-                </div>
-            </>
-        )
-    }
-
-    renderUserPhoto(url: string): JSX.Element {
-        return (
-            <div className="profile-pic avatar">
-                <img src={url} alt={lf("GitHub user photo")} />
-            </div>
-        );
-    }
-
-    renderUnlink(): JSX.Element {
-        return (
-            <div className="row-span-two">
-                <sui.Button text={lf("Unlink")} icon="github" ariaLabel={lf("Unlink GitHub")} onClick={this.handleUnlinkClicked} />
-            </div>
-        );
-    }
-
-    renderDisconnected(): JSX.Element {
-        return (
-            <div className="row-span-two">
-                <p className="description">{lf("You haven't linked a GitHub account.")}</p>
-            </div>
-        )
-    }
-
-    renderCore() {
-        const github = cloudsync.githubProvider();
-        if (!github) return null;
-        const user = github.user();
+        const ghUser = github.user();
 
         return (
-            <div className="ui card panel">
-                <div className="header-text">
-                    <label>{lf("GitHub")}</label>
-                </div>
-                {user?.photo ? this.renderUserPhoto(user.photo) : undefined}
-                {user ? this.renderUsername() : undefined}
-                {user ? this.renderUnlink() : undefined}
-                {!user ? this.renderDisconnected() : undefined}
-            </div>
-        );
-    }
-}
-
-type FeedbackPanelProps = PanelProps & {
-};
-
-class FeedbackPanel extends sui.UIElement<FeedbackPanelProps, {}> {
-
-    renderCore() {
-        return (
-            <div className="ui card panel">
-                <div className="header-text">
-                    <label>{lf("Feedback")}</label>
-                </div>
-                <div className="row-span-two">
-                    {lf("What do you think about the Sign In & Cloud Save feature? Is there something you'd like to change? Did you encounter issues? Please let us know!")}
-                </div>
-                <div className="row-span-two">
-                    <sui.Link className="ui" text={lf("Take the Survey")} icon="external alternate" ariaLabel={lf("Provide feedback in a form")} href="https://aka.ms/AAcnpaj" target="_blank" onKeyDown={sui.fireClickOnEnter} />
-                </div>
-            </div>
+            <sui.Modal isOpen={this.state.visible} className="ui profiledialog" size="fullscreen"
+                onClose={this.hide} dimmer={true}
+                closeIcon={true} header={profile?.idp?.displayName}
+                closeOnDimmerClick={false}
+                closeOnDocumentClick={false}
+                closeOnEscape={false}
+            >
+                <Profile
+                    user={{profile, preferences}}
+                    signOut={this.onLogoutClicked}
+                    deleteProfile={this.onDeleteProfileClicked}
+                    notification={this.state.notification}
+                    showModalAsync={core.dialogAsync} />
+            </sui.Modal>
         );
     }
 }

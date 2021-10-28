@@ -45,7 +45,26 @@ const pxteditor = () => compileTsProject("pxteditor");
 const pxtweb = () => compileTsProject("docfiles/pxtweb", "built/web");
 const backendutils = () => compileTsProject("backendutils")
 const cli = () => compileTsProject("cli", "built", true);
-const webapp = () => compileTsProject("webapp", "built/webapp", true);
+const webapp = () => compileTsProject("webapp", "built", true);
+const reactCommon = () => compileTsProject("react-common", "built/react-common", true);
+
+const reactCommonPackageJson = () => {
+    fs.writeFileSync(path.resolve("built/react-common/components/package.json"), `
+    {
+        "name": "react-common",
+        "description": "",
+        "version": "0.0.0",
+        "dependencies": {},
+        "devDependencies": {}
+    }
+    `)
+    return Promise.resolve();
+}
+
+const reactCommonCss = () => gulp.src("react-common/styles/**/*.css")
+    .pipe(concat("react-common.css"))
+    .pipe(gulp.dest("built/web/"))
+
 
 const pxtblockly = () => gulp.src([
     "webapp/public/blockly/blockly_compressed.js",
@@ -551,11 +570,21 @@ const replaceWebpackBase = () => gulp.src([`${skillmapRoot}/node_modules/react-s
     .pipe(concat("webpack.config.js"))
     .pipe(gulp.dest(`${skillmapRoot}/node_modules/react-scripts/config`));
 
-const buildSkillmap =  () => exec(!fs.existsSync(`${skillmapRoot}/node_modules`) ? "npm ci --prefer-offline" : "echo \"Skip install\"", false, { cwd: skillmapRoot })
-    .then(gulp.series([copyWebpackBase, copyWebpackOverride]))
-    .then(() => exec("npm run build", false, { cwd: skillmapRoot }))
-    .then(replaceWebpackBase)
-    .catch(replaceWebpackBase);
+
+const npmInstallSkillmap = () => exec(!fs.existsSync(`${skillmapRoot}/node_modules`) ? "npm ci --prefer-offline" : "echo \"Skip install\"", false, { cwd: skillmapRoot });
+const npmBuildSkillmap = () => exec("npm run build", true, { cwd: skillmapRoot });
+
+const buildSkillmap = async () => {
+    try {
+        await npmInstallSkillmap();
+        await copyWebpackBase();
+        await copyWebpackOverride();
+        await npmBuildSkillmap();
+    }
+    finally {
+        await replaceWebpackBase();
+    }
+}
 
 const copySkillmapCss = () => gulp.src(`${skillmapRoot}/build/static/css/*`)
     .pipe(gulp.dest(`${skillmapOut}/css`));
@@ -569,7 +598,7 @@ const copySkillmapHtml = () => rimraf("webapp/public/skillmap.html")
                     .pipe(concat("skillmap.html"))
                     .pipe(gulp.dest("webapp/public")));
 
-const skillmap = gulp.series(cleanSkillmap, buildSkillmap, gulp.parallel(copySkillmapCss, copySkillmapJs, copySkillmapHtml));
+const skillmap = gulp.series(cleanSkillmap, buildSkillmap, gulp.series(copySkillmapCss, copySkillmapJs, copySkillmapHtml));
 
 
 /********************************************************
@@ -666,6 +695,9 @@ const buildAll = gulp.series(
     gulp.parallel(pxtrunner, pxtwinrt, cli, pxtcommon),
     gulp.parallel(pxtjs, pxtdts, pxtapp, pxtworker, pxtembed),
     targetjs,
+    reactCommonCss,
+    reactCommon,
+    reactCommonPackageJson,
     gulp.parallel(buildcss, buildSVGIcons),
     skillmap,
     webapp,
@@ -681,6 +713,13 @@ const travis = gulp.series(lint, buildAll, testAll, targetjs, pxtTravis);
 exports.default = buildAll;
 exports.clean = clean;
 exports.build = buildAll;
+
+exports.webapp = gulp.series(
+    reactCommonCss,
+    reactCommon,
+    webapp,
+    browserifyWebapp
+)
 
 exports.updatestrings = updatestrings;
 exports.updateblockly = copyBlockly;

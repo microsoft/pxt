@@ -152,6 +152,9 @@ code {
     height: inherit;
     cursor: pointer;
     width: 3.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .user-menu .avatar {
@@ -252,6 +255,21 @@ code {
     flex-shrink: 10;
     font-size: 1.2rem;
     font-weight: 700;
+}
+
+.avatar-initials {
+    height: 2.5rem;
+    width: 2.5rem;
+    border-radius: 100%;
+    border: solid 2px white;
+    background-color: #028B9B;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.header-dropdown.user-dropdown .dropdown-menu {
+    top: var(--header-height);
 }
 
 /* TOP BANNER */

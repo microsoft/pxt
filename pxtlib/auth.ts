@@ -48,6 +48,10 @@ namespace pxt.auth {
         completedTags: any;
     };
 
+    export type UserBadgeState = {
+        badges: Badge[];
+    }
+
     /**
      * User preference state that should be synced with the cloud.
      */
@@ -56,6 +60,7 @@ namespace pxt.auth {
         highContrast?: boolean;
         reader?: string;
         skillmap?: UserSkillmapState;
+        badges?: UserBadgeState;
     };
 
     export const DEFAULT_USER_PREFERENCES: () => UserPreferences = () => ({
