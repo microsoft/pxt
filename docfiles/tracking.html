@@ -18,12 +18,12 @@
         appInsights.queue.push(function () {
             appInsights.context.addTelemetryInitializer(function (envelope) {
                 var telemetryItem = envelope.data.baseData;
+                telemetryItem.properties = telemetryItem.properties || {};
                 telemetryItem.properties["cookie"] = isProduction;
                 if (typeof pxtConfig === "undefined" || !pxtConfig) {
                     telemetryItem.properties["target"] = "@targetid@";
                     return;
                 }
-                telemetryItem.properties = telemetryItem.properties || {};
                 telemetryItem.properties["target"] = pxtConfig.targetId;
                 telemetryItem.properties["stage"] = (pxtConfig.relprefix || "/--").replace(/[^a-z]/ig, '')
                 if (typeof Windows !== "undefined")

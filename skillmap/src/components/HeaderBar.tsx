@@ -86,6 +86,11 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
         return items;
     }
 
+    avatarPicUrl = (): string | undefined => {
+        const { profile } = this.props;
+        return profile?.idp?.pictureUrl ?? profile?.idp?.picture?.dataUrl;
+    }
+
     protected getUserMenu() {
         const { signedIn, profile } = this.props;
         const items = [];
@@ -102,8 +107,8 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
             })
         }
 
-        const avatarElem = profile?.idp?.picture?.dataUrl
-            ? <div className="avatar"><img src={profile?.idp?.picture?.dataUrl} alt={lf("User Menu")}/></div>
+        const avatarElem = this.avatarPicUrl()
+            ? <div className="avatar"><img src={this.avatarPicUrl()} alt={lf("User Menu")}/></div>
             : undefined;
 
         const initialsElem = <span><div className="avatar-initials">{pxt.auth.userInitials(profile)}</div></span>

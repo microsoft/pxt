@@ -3890,7 +3890,7 @@ ${lbl}: .short 0xffff
 
         function emitBrk(node: Node) {
             bin.numStmts++
-            const needsComment = assembler.debug || target.switches.size
+            const needsComment = assembler.debug || target.switches.size || target.sourceMap
             let needsBreak = !!opts.breakpoints
             if (!needsComment && !needsBreak)
                 return

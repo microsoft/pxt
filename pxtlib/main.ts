@@ -173,6 +173,8 @@ namespace pxt {
         }
         if (!comp.switches)
             comp.switches = {}
+        if (comp.nativeType == pxtc.NATIVE_TYPE_VM)
+            comp.sourceMap = true
         U.jsonCopyFrom(comp.switches, savedSwitches)
         // JS ref counting currently not supported
         comp.jsRefCounting = false

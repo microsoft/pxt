@@ -80,6 +80,11 @@ export class ProfileDialog extends auth.Component<ProfileDialogProps, ProfileDia
         }
     }
 
+    avatarPicUrl(): string {
+        const user = this.getUserProfile();
+        return user?.idp?.pictureUrl ?? user?.idp?.picture?.dataUrl;
+    }
+
     renderCore() {
         const isLoggedIn = this.isLoggedIn();
         if (!isLoggedIn) return null;

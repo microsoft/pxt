@@ -290,6 +290,12 @@ function inflateMapReward(section: MarkdownSection, base: Partial<MapReward>): M
                         parsedActions.push({ kind: "map", label, url: `#${prefix}:${link}` });
                     }
                     break;
+                case "tutorial":
+                    if (link) {
+                        if (!validGithubUrl(link) && !validDocsUrl(link)) error(`URL: ${link} must be to Github or MakeCode documentation`);
+                        parsedActions.push({ kind: "tutorial", label, url: `/#tutorial:${link}` });
+                    }
+                    break;
                 case "docs":
                     if (link) {
                         let docsUrl = (link.startsWith("/") ? "" : "/") + link;

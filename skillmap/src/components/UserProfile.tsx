@@ -42,13 +42,18 @@ export class UserProfileImpl extends React.Component<UserProfileProps, {}> {
         </Modal>
     }
 
+    avatarPicUrl = (): string | undefined => {
+        const { profile } = this.props;
+        return profile?.idp?.pictureUrl ?? profile?.idp?.picture?.dataUrl;
+    }
+
     getAccountPanel = () => {
         const { profile } = this.props;
         const provider = profile?.idp?.provider && pxt.auth.identityProvider(profile?.idp?.provider);
 
         const avatarElem = (
             <div className="profile-pic avatar">
-                <img src={profile?.idp?.picture?.dataUrl} alt={lf("User")} />
+                <img src={this.avatarPicUrl()} alt={lf("User")} />
             </div>
         );
         const initialsElem = (
@@ -61,7 +66,7 @@ export class UserProfileImpl extends React.Component<UserProfileProps, {}> {
             <div className="header-text">
                 <label>{lf("Profile")}</label>
             </div>
-            {profile?.idp?.picture?.dataUrl ? avatarElem : initialsElem}
+            {this.avatarPicUrl() ? avatarElem : initialsElem}
             <div className="row-span-two">
                 <label className="title">{lf("Name")}</label>
                 <p className="value">{profile?.idp?.displayName || profile?.idp?.username}</p>

@@ -95,7 +95,7 @@ export async function getMarkdownAsync(source: MarkdownSource, url: string): Pro
  */
 async function fetchSkillMapFromGithub(path: string): Promise<MarkdownFetchResult | undefined> {
     const ghid = pxt.github.parseRepoId(path)
-    const config = await pxt.packagesConfigAsync();
+    const config = await pxt.packagesConfigAsync() || {};
 
     const baseRepo = pxt.github.parseRepoId(ghid.slug);
     const repoStatus = pxt.github.repoStatus(baseRepo, config);
