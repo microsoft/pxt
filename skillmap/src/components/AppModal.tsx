@@ -167,7 +167,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
     }
 
     renderCompletionModal() {
-        const  { skillMap, type, activity } = this.props;
+        const  { skillMap, type, activity, userState, pageSourceUrl } = this.props;
         if (!type || !skillMap) return <div />
 
         const reward = activity as MapReward;
@@ -176,6 +176,8 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
         const completionModalText = lf("Congratulations on completing {0}. Take some time to explore any activities you missed, or reset your progress to try again. But first, be sure to claim your reward using the button below.", "{0}");
         const completionModalTextSegments = completionModalText.split("{0}");
 
+        const previousState = lookupPreviousCompletedActivityState(userState!, pageSourceUrl!, skillMap!, activity!.activityId);
+
         return <div className="confetti-container">
             <Modal title={completionModalTitle} actions={this.getCompletionActions(reward.actions)} className="completion" onClose={this.handleOnClose}>
                 {completionModalTextSegments[0]}{<strong>{skillMap.displayName}</strong>}{completionModalTextSegments[1]}
@@ -183,10 +185,10 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                     <i className="icon gift" />
                     <span>{lf("Claim your reward!")}</span>
                 </div>
-                <div className="completion-reward" onClick={this.handleRewardShareClick}>
+                {(previousState && previousState.headerId) && <div className="completion-reward" onClick={this.handleRewardShareClick}>
                     <i className="icon send" />
                     <span>{lf("Share your game!")}</span>
-                </div>
+                </div>}
             </Modal>
             {this.renderConfetti()}
         </div>
