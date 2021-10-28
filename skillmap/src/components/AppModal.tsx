@@ -3,7 +3,7 @@
 import * as React from "react";
 import { connect } from 'react-redux';
 import { ModalType, ShareState, SkillMapState } from '../store/reducer';
-import { dispatchHideModal, dispatchRestartActivity, dispatchOpenActivity, dispatchResetUser, dispatchShowCarryoverModal, dispatchSetShareStatus, dispatchCloseUserProfile } from '../actions/dispatch';
+import { dispatchHideModal, dispatchRestartActivity, dispatchShowShareModal, dispatchOpenActivity, dispatchResetUser, dispatchShowCarryoverModal, dispatchSetShareStatus, dispatchCloseUserProfile } from '../actions/dispatch';
 import { tickEvent, postAbuseReportAsync, resolvePath, postShareAsync } from "../lib/browserUtils";
 import { lookupActivityProgress, lookupPreviousActivityStates, lookupPreviousCompletedActivityState, isCodeCarryoverEnabled } from "../lib/skillMapUtils";
 import { getProjectAsync } from "../lib/workspaceProvider";
@@ -28,6 +28,7 @@ interface AppModalProps {
     dispatchCloseUserProfile: () => void;
     dispatchResetUser: () => void;
     dispatchSetShareStatus: (headerId?: string, url?: string) => void;
+    dispatchShowShareModal: (mapId: string, activityId: string, teamsShare?: boolean) => void;
 }
 
 interface AppModalState {
@@ -48,7 +49,6 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
 
     render() {
         const  { activity, type } = this.props;
-
         switch (type) {
             case "completion":
                 if (!activity) return <div />
@@ -86,6 +86,13 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
         const reward = activity as MapReward;
         tickEvent("skillmap.reward", { path: mapId, activity: reward.activityId });
         window.open(reward.url || skillMap!.completionUrl);
+    }
+
+    protected handleRewardShareClick = () => {
+        const { mapId, userState, pageSourceUrl, skillMap, activity, shareState } = this.props;
+        const previousState = lookupPreviousCompletedActivityState(userState!, pageSourceUrl!, skillMap!, activity!.activityId);
+        if (previousState)
+            this.props.dispatchShowShareModal(mapId, previousState.activityId, true);
     }
 
     protected getCompletionActionText(action: MapCompletionAction) {
@@ -151,8 +158,19 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
         return modalActions;
     }
 
+    renderConfetti() {
+        const density = 100;
+        return Array(density).fill(0).map((el, i) => {
+            const style = {
+                animationDelay: `${0.1 * (i % density)}s`,
+                left: `${1 * (Math.floor(Math.random() * density))}%`
+            }
+            return <div key={i} style={style} className={`confetti ${Math.random() > 0.5 ? "reverse" : ""} color-${Math.floor(Math.random() * 9)}`} />
+        })
+    }
+
     renderCompletionModal() {
-        const  { skillMap, type, activity } = this.props;
+        const  { skillMap, type, activity, userState, pageSourceUrl } = this.props;
         if (!type || !skillMap) return <div />
 
         const reward = activity as MapReward;
@@ -161,7 +179,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
         const completionModalText = lf("Congratulations on completing {0}. Take some time to explore any activities you missed, or reset your progress to try again. But first, be sure to claim your reward using the button below.", "{0}");
         const completionModalTextSegments = completionModalText.split("{0}");
 
-        const density = 100;
+        const previousState = lookupPreviousCompletedActivityState(userState!, pageSourceUrl!, skillMap!, activity!.activityId);
 
         return <div className="confetti-container">
             <Modal title={completionModalTitle} actions={this.getCompletionActions(reward.actions)} className="completion" onClose={this.handleOnClose}>
@@ -170,14 +188,12 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                     <i className="icon gift" />
                     <span>{lf("Claim your reward!")}</span>
                 </div>
+                {(previousState && previousState.headerId) && <div className="completion-reward" onClick={this.handleRewardShareClick}>
+                    <i className="icon send" />
+                    <span>{lf("Share your game!")}</span>
+                </div>}
             </Modal>
-            {Array(density).fill(0).map((el, i) => {
-                const style = {
-                    animationDelay: `${0.1 * (i % density)}s`,
-                    left: `${1 * (Math.floor(Math.random() * density))}%`
-                }
-                return <div key={i} style={style} className={`confetti ${Math.random() > 0.5 ? "reverse" : ""} color-${Math.floor(Math.random() * 9)}`} />
-            })}
+            {this.renderConfetti()}
         </div>
     }
 
@@ -301,7 +317,6 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
             }});
         }
 
-
         return <Modal title={resetModalTitle} actions={actions} onClose={this.handleOnClose}>
             {shortId ?
                 <div>{ lf("Your project is ready! Use the address below to share your projects.") }</div> :
@@ -320,6 +335,9 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                     <i className="icon copy" />
                     {lf("Copy")}
                 </div>
+            </div>}
+            {(shortId && shareState.rewardsShare) && <div>
+                {this.renderConfetti()}
             </div>}
         </Modal>
     }
@@ -427,7 +445,8 @@ const mapDispatchToProps = {
     dispatchResetUser,
     dispatchShowCarryoverModal,
     dispatchCloseUserProfile,
-    dispatchSetShareStatus
+    dispatchSetShareStatus,
+    dispatchShowShareModal
 };
 
 export const AppModal = connect(mapStateToProps, mapDispatchToProps)(AppModalImpl);

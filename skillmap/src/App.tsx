@@ -313,6 +313,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
         if (this.queryFlags["authcallback"]) {
             await authClient.loginCallbackAsync(this.queryFlags);
         }
+
         await authClient.authCheckAsync();
         await this.initLocalizationAsync();
         await this.parseHashAsync();
