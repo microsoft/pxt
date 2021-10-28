@@ -336,7 +336,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                     {lf("Copy")}
                 </div>
             </div>}
-            {(shortId && shareState.rewardsShare) && <div>
+            {(shortId && shareState?.rewardsShare) && <div>
                 {this.renderConfetti()}
             </div>}
         </Modal>
