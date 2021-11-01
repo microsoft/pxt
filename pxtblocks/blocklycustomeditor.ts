@@ -45,7 +45,7 @@ namespace pxt.blocks {
         }
     }
 
-    export function createFieldEditor(selector: string, text: string, params: any): Blockly.FieldCustom {
+    export function createFieldEditor(sourceBlock: Blockly.Block, selector: string, text: string, params: any): Blockly.FieldCustom {
         if (registeredFieldEditors[selector] == undefined) {
             console.error(`Field editor ${selector} not registered`);
             return null;

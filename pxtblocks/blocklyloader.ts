@@ -798,7 +798,7 @@ namespace pxt.blocks {
                                     blocksInfo: info
                                 } as Blockly.FieldCustomDropdownOptions;
                                 Util.jsonMergeFrom(options, fn.attributes.paramFieldEditorOptions && fn.attributes.paramFieldEditorOptions[actName] || {});
-                                fields.push(namedField(createFieldEditor(customField, defl, options), defName));
+                                fields.push(namedField(createFieldEditor(block, customField, defl, options), defName));
                             }
                             else
                                 fields.push(namedField(new Blockly.FieldDropdown(dd), defName));
@@ -812,7 +812,7 @@ namespace pxt.blocks {
                                 blocksInfo: info
                             } as Blockly.FieldCustomOptions;
                             Util.jsonMergeFrom(options, fn.attributes.paramFieldEditorOptions && fn.attributes.paramFieldEditorOptions[pr.actualName] || {});
-                            fields.push(namedField(createFieldEditor(customField, defl, options), pr.definitionName));
+                            fields.push(namedField(createFieldEditor(block, customField, defl, options), pr.definitionName));
                         } else {
                             inputName = defName;
                             if (instance && part.name === "this") {
@@ -2124,11 +2124,6 @@ namespace pxt.blocks {
                     let blockText = '<xml>' +
                         '<block type="variables_change" gap="' + gap + '">' +
                         Blockly.Variables.generateVariableFieldXmlString(mostRecentVariable) +
-                        '<value name="DELTA">' +
-                        '<shadow type="math_number">' +
-                        '<field name="NUM">1</field>' +
-                        '</shadow>' +
-                        '</value>' +
                         '</block>' +
                         '</xml>';
                     let block = Blockly.Xml.textToDom(blockText).firstChild as HTMLElement;
