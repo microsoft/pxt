@@ -237,7 +237,7 @@ function inflateMapNode(section: MarkdownSection): MapNode {
     }
 
     if (section.attributes.kind === "reward" || section.attributes.kind === "completion") {
-        return inflateMapReward(section, base as Partial<MapReward>);
+        return inflateMapReward(section, base as Partial<MapRewardNode>);
     } else if (section.attributes.kind === "layout") {
         return inflateMapLayout(section, base as Partial<MapLayoutNode>);
     } else {
@@ -255,18 +255,21 @@ function inflateMapLayout(section: MarkdownSection, base: Partial<MapLayoutNode>
     return result as MapLayoutNode;
 }
 
-function inflateMapReward(section: MarkdownSection, base: Partial<MapReward>): MapReward {
-    const result: Partial<MapReward> = {
+function inflateMapReward(section: MarkdownSection, base: Partial<MapRewardNode>): MapRewardNode {
+    const result: Partial<MapRewardNode> = {
         ...base,
         kind: (section.attributes.kind || "reward") as any,
-        url: section.attributes.url
     };
 
     if (section.attributes["type"]) {
         const type = section.attributes["type"].toLowerCase();
         switch (type) {
             case "certificate":
-                result.type = type;
+                if (!result.rewards) result.rewards = [];
+                result.rewards?.push({
+                    type: "certificate",
+                    url: section.attributes["url"]
+                })
                 break;
         }
     }
@@ -311,7 +314,32 @@ function inflateMapReward(section: MarkdownSection, base: Partial<MapReward>): M
         if (parsedActions.length) result.actions = parsedActions;
     }
 
-    return result as MapReward;
+    if (section.listAttributes?.["rewards"]) {
+        const parsedRewards: MapReward[] = [];
+        const rewards = section.listAttributes["rewards"];
+        for (const reward of rewards) {
+            let [kind, ...value] = reward.split(":");
+
+            switch (kind) {
+                case "certificate":
+                    parsedRewards.push({
+                        type: "certificate",
+                        url: value.join(":").trim()
+                    });
+                    break;
+                case "completion-badge":
+                    parsedRewards.push({
+                        type: "completion-badge",
+                        imageUrl: value.join(":").trim()
+                    });
+                    break;
+            }
+        }
+
+        if (parsedRewards.length) result.rewards = parsedRewards;
+    }
+
+    return result as MapRewardNode;
 }
 
 function inflateActivity(section: MarkdownSection, base: Partial<MapActivity>): MapActivity {

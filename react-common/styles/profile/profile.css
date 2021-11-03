@@ -2,6 +2,8 @@
     display: flex;
     flex-direction: row;
     height: 100%;
+
+    --background-color: #fef3e0;
 }
 
 .profile-user-pane {
@@ -129,21 +131,31 @@
 .profile-badges .profile-badge, .profile-badges-background .profile-badge {
     position: relative;
     aspect-ratio: 1;
+    background-color: var(--background-color);
 }
 
 
 .profile-badges .profile-badge img, .profile-badges-background .profile-badge img {
-    height: 70%;
-    width: 70%;
+    height: 100%;
+    width: 100%;
     display: inline;
     position: absolute;
-    top: 15%;
-    left: 15%;
+    object-fit: contain;
 }
 
 
 .profile-badge.disabled img {
     filter: grayscale(1);
+    opacity: 0.5;
+}
+
+.profile-badge.disabled i.ui.icon {
+    line-height: 1;
+    vertical-align: middle;
+    font-size: 4em;
+    width: 100%;
+    z-index: 1;
+    position: absolute;
 }
 
 .placeholder-badge {
@@ -185,6 +197,31 @@
 
 .profile-badge-info-image .profile-badge img {
     display: inline;
+    height: 15rem;
+    object-fit: contain;
+}
+
+.profile-badge {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-content: center;
+    position: relative;
+}
+
+.profile-badge-and-title {
+    display: flex;
+    flex-direction: column;
+    max-height: 100%;
+}
+
+.profile-badge-and-title .profile-badge-title {
+    font-size: 1rem;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    width: 100%;
+    margin-right: 0;
+    text-align: center;
 }
 
 .profile-initials-portrait {

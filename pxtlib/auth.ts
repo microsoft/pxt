@@ -631,4 +631,15 @@ namespace pxt.auth {
             } catch { }
         }
     }
+
+    /**
+     * Checks only the ID and sourceURL
+     */
+    export function badgeEquals(badgeA: pxt.auth.Badge, badgeB: pxt.auth.Badge) {
+        return badgeA.id === badgeB.id && badgeA.sourceURL === badgeB.sourceURL;
+    }
+
+    export function hasBadge(preferences: pxt.auth.UserBadgeState, badge: pxt.auth.Badge) {
+        return preferences.badges.some(toCheck => badgeEquals(toCheck, badge));
+    }
 }

@@ -145,7 +145,6 @@ export class UserMenu extends auth.Component<UserMenuProps, UserMenuState> {
         const signedInElem = this.avatarPicUrl() ? avatarElem : initialsElem;
 
         const githubUser = this.getData("github:user") as pxt.editor.UserInfo;
-        const showGhUnlink = !loggedIn && githubUser;
 
         return (
             <sui.DropdownMenu role="menuitem"
@@ -157,7 +156,7 @@ export class UserMenu extends auth.Component<UserMenuProps, UserMenuState> {
             >
                 {loggedIn ? <sui.Item role="menuitem" text={lf("My Profile")} onClick={this.handleProfileClicked} /> : undefined}
                 {loggedIn ? <div className="ui divider"></div> : undefined}
-                {showGhUnlink ?
+                {githubUser ?
                     <sui.Item role="menuitem" title={lf("Unlink {0} from GitHub", githubUser.name)} onClick={this.handleUnlinkGitHubClicked}>
                         <div className="icon avatar" role="presentation">
                             <img className="circular image" src={githubUser.photo} alt={lf("User picture")} />
@@ -165,7 +164,7 @@ export class UserMenu extends auth.Component<UserMenuProps, UserMenuState> {
                         <span>{lf("Unlink GitHub")}</span>
                     </sui.Item>
                     : undefined}
-                {showGhUnlink ? <div className="ui divider"></div> : undefined}
+                {githubUser && <div className="ui divider"></div>}
                 {!loggedIn ? <sui.Item role="menuitem" text={lf("Sign in")} onClick={this.handleLoginClicked} /> : undefined}
                 {loggedIn ? <sui.Item role="menuitem" text={lf("Sign out")} onClick={this.handleLogoutClicked} /> : undefined}
             </sui.DropdownMenu>

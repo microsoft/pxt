@@ -1,4 +1,5 @@
 import * as React from "react";
+import { jsxLF } from "../util";
 import { Badge } from "./Badge";
 
 export interface BadgeInfoProps {
@@ -12,7 +13,7 @@ export const BadgeInfo = (props: BadgeInfoProps) => {
 
     return <div className="profile-badge-info">
         <div className="profile-badge-info-image">
-            <Badge badge={badge} />
+            <Badge badge={badge} disabled={!badge.timestamp} />
         </div>
         <div className="profile-badge-info-header">
             {lf("Awarded For:")}
@@ -38,35 +39,34 @@ export const BadgeInfo = (props: BadgeInfoProps) => {
 
 export const badgeDescription = (badge: pxt.auth.Badge) => {
     switch (badge.type) {
-        case "skillmap":
+        case "skillmap-completion":
             return <span>{jsxLF(
                 lf("Completing the {0}"),
-                <a href={badge.sourceURL}>{pxt.U.rlf(badge.title)}</a>
+                <a href={sourceURLToSkillmapURL(badge.sourceURL)}>{pxt.U.rlf(badge.title)}</a>
             )}</span>
     }
 }
 
-function jsxLF(loc: string, ...rest: JSX.Element[]) {
-    const indices: number[] = [];
-
-    loc.replace(/\{\d\}/g, match => {
-        indices.push(parseInt(match.substr(1, 1)));
-        return match;
-    });
-
-    const out: JSX.Element[] = [];
-
-    let parts: string[];
-
-    let i = 0;
-
-    for (const index of indices) {
-        parts = loc.split(`{${index}}`);
-        pxt.U.assert(parts.length === 2);
-        out.push(<span key={i++}>{parts[0]}</span>);
-        out.push(<span key={i++}>{rest[index]}</span>);
+function sourceURLToSkillmapURL(sourceURL: string) {
+    if (sourceURL.indexOf("/api/md/") !== -1) {
+        // docs url: https://www.makecode.com/api/md/arcade/skillmap/forest
+        const path = sourceURL.split("/api/md/")[1];
+        return pxt.webConfig.skillmapUrl + "#docs:" + path;
     }
-    out.push(<span key={i++}>{parts[1]}</span>);
+    else {
+        // github url: /user/repo#filename
+        const parts = sourceURL.split("#");
 
-    return out;
+        if (parts.length == 2) {
+            return pxt.webConfig.skillmapUrl + "#github:https://github.com/" + parts[0] + "/" + parts[1];
+        }
+    }
+
+    if (pxt.BrowserUtils.isLocalHostDev()) {
+        // local url: skillmap/forest
+        return "http://localhost:3000#local:" + sourceURL
+    }
+
+    return sourceURL;
 }
+

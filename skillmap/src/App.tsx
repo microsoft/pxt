@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 
 import store from "./store/store";
 import * as authClient from "./lib/authClient";
-import { getFlattenedHeaderIds, hasUrlBeenStarted } from "./lib/skillMapUtils";
+import { getCompletedBadges, getFlattenedHeaderIds, hasUrlBeenStarted } from "./lib/skillMapUtils";
 
 import {
     dispatchAddSkillMap,
@@ -20,6 +20,7 @@ import {
     dispatchSetPageBackgroundImageUrl,
     dispatchSetPageBannerImageUrl,
     dispatchSetPageTheme,
+    dispatchSetUserPreferences
 } from './actions/dispatch';
 import { PageSourceStatus, SkillMapState } from './store/reducer';
 import { HeaderBar } from './components/HeaderBar';
@@ -62,11 +63,13 @@ interface AppProps {
     dispatchSetPageSourceUrl: (url: string, status: PageSourceStatus) => void;
     dispatchSetPageAlternateUrls: (urls: string[]) => void;
     dispatchSetPageTheme: (theme: SkillGraphTheme) => void;
+    dispatchSetUserPreferences: (prefs: pxt.auth.UserPreferences) => void;
 }
 
 interface AppState {
     error?: string;
     cloudSyncCheckHasFinished: boolean;
+    badgeSyncLock: boolean;
 }
 
 class AppImpl extends React.Component<AppProps, AppState> {
@@ -78,7 +81,8 @@ class AppImpl extends React.Component<AppProps, AppState> {
     constructor(props: any) {
         super(props);
         this.state = {
-            cloudSyncCheckHasFinished: false
+            cloudSyncCheckHasFinished: false,
+            badgeSyncLock: false
         };
         this.readyPromise = new ReadyPromise();
 
@@ -391,7 +395,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
     }
 
     protected onStoreChange = async () => {
-        const { user } = store.getState();
+        const { user, maps, pageSourceUrl, pageSourceStatus } = store.getState();
 
         if (user !== this.loadedUser && (!this.loadedUser || user.id === this.loadedUser.id)) {
             // To avoid a race condition where we save to local user's state to the cloud user
@@ -403,6 +407,33 @@ class AppImpl extends React.Component<AppProps, AppState> {
                 this.loadedUser = user;
             }
         }
+
+        if (this.props.signedIn && this.state.cloudSyncCheckHasFinished && pageSourceStatus === "approved") {
+            let allBadges: pxt.auth.Badge[] = [];
+            for (const map of Object.keys(maps)) {
+                allBadges.push(...getCompletedBadges(user, pageSourceUrl, maps[map]))
+            }
+
+            if (allBadges.length) {
+                const badgeState = await authClient.getBadgeStateAsync() || { badges: [] };
+                allBadges = allBadges.filter(badge => !pxt.auth.hasBadge(badgeState, badge))
+
+                if (allBadges.length) {
+                    this.setState({ badgeSyncLock: true })
+                    try {
+                        await authClient.grantBadgesAsync(allBadges, badgeState.badges)
+                        const prefs = await authClient.userPreferencesAsync();
+                        if (prefs) {
+                            this.props.dispatchSetUserPreferences(prefs)
+                        }
+                    }
+                    finally {
+                        this.setState({ badgeSyncLock: false })
+                    }
+                }
+            }
+        }
+
     }
 }
 
@@ -463,7 +494,8 @@ const mapDispatchToProps = {
     dispatchSetPageAlternateUrls,
     dispatchSetPageBackgroundImageUrl,
     dispatchSetPageBannerImageUrl,
-    dispatchSetPageTheme
+    dispatchSetPageTheme,
+    dispatchSetUserPreferences
 };
 
 const App = connect(mapStateToProps, mapDispatchToProps)(AppImpl);

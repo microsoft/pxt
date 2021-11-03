@@ -1,4 +1,5 @@
 import * as React from "react";
+import { fireClickOnEnter } from "../util";
 
 export interface BadgeProps {
     onClick?: (badge: pxt.auth.Badge) => void;
@@ -16,21 +17,15 @@ export const Badge = (props: BadgeProps) => {
 
     return (
         <div className={`profile-badge ${disabled ? "disabled" : ""}`}
-            role="button"
-            tabIndex={0}
+            role={onClick ? "button" : undefined}
+            tabIndex={onClick ? 0 : undefined}
             title={lf("{0} Badge", badge.title)}
             onClick={onBadgeClick}
             onKeyDown={fireClickOnEnter}>
             {isNew && <div className="profile-badge-notification">{pxt.U.lf("New!")}</div>}
             <img src={badge.image} alt={badge.title} />
+            {disabled && <i className="ui huge icon lock" />}
         </div>
     );
 }
 
-function fireClickOnEnter(e: React.KeyboardEvent<HTMLElement>) {
-    const charCode = (typeof e.which == "number") ? e.which : e.keyCode;
-    if (charCode === 13 /* enter */ || charCode === 32 /* space */) {
-        e.preventDefault();
-        e.currentTarget.click();
-    }
-}

@@ -17,7 +17,6 @@ export const Profile = (props: ProfileProps) => {
     const { user, signOut, deleteProfile, notification, showModalAsync } = props;
 
     const userProfile = user?.profile || { idp: {} };
-
     const userBadges = user?.preferences?.badges || { badges: [] };
 
     const onBadgeClick = (badge: pxt.auth.Badge) => {

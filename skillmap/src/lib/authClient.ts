@@ -92,10 +92,54 @@ export async function saveSkillmapStateAsync(state: pxt.auth.UserSkillmapState):
     });
 }
 
+export async function grantBadgesAsync(badges: pxt.auth.Badge[], current: pxt.auth.Badge[]): Promise<void> {
+    const cli = await clientAsync();
+    current = current.filter(existing => !badges.some(badge => pxt.auth.badgeEquals(badge, existing)));
+
+    badges = badges.map(badge => ({
+        ...badge,
+        timestamp: Date.now()
+    }))
+
+    await cli?.patchUserPreferencesAsync({
+        op: 'replace',
+        path: ['badges'],
+        value: {
+            badges: [...current, ...badges]
+        }
+    });
+}
+
+export async function removeBadgeAsync(toRemove: pxt.auth.Badge, current: pxt.auth.Badge[]): Promise<void> {
+    const cli = await clientAsync();
+    await cli?.patchUserPreferencesAsync({
+        op: 'replace',
+        path: ['badges'],
+        value: {
+            badges: current.filter(badge => !pxt.auth.badgeEquals(badge, toRemove))
+        }
+    });
+}
+
 export async function getSkillmapStateAsync(): Promise<pxt.auth.UserSkillmapState | undefined> {
     const cli = await clientAsync();
     if (cli) {
         const prefs = await cli.userPreferencesAsync();
         return prefs?.skillmap;
+    }
+}
+
+export async function getBadgeStateAsync(): Promise<pxt.auth.UserBadgeState | undefined> {
+    const cli = await clientAsync();
+    if (cli) {
+        const prefs = await cli.userPreferencesAsync();
+        if (prefs) return prefs.badges;
+    }
+}
+
+export async function userPreferencesAsync(): Promise<pxt.auth.UserPreferences | undefined> {
+    const cli = await clientAsync();
+    if (cli) {
+        return await cli.userPreferencesAsync();
     }
 }

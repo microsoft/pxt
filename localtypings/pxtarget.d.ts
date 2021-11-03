@@ -1153,7 +1153,7 @@ declare namespace pxt.tutorial {
 }
 
 declare namespace pxt.auth {
-    type BadgeType = "skillmap";
+    type BadgeType = "skillmap-completion";
 
     type Badge = SkillmapBadge;
 
@@ -1166,7 +1166,7 @@ declare namespace pxt.auth {
     }
 
     interface SkillmapBadge extends BaseBadge {
-        type: "skillmap";
+        type: "skillmap-completion";
         sourceURL: string;
     }
 }
