@@ -72,7 +72,7 @@ body.blocklyMinimalBody {
         Blockly Text
 *******************************/
 
-.pxt-renderer {
+.pxt-renderer.classic-theme {
     text.blocklyFlyoutLabelText, .blocklyFlyoutButton text.blocklyText {
         font-family: @pageFont !important;
     }
@@ -90,12 +90,12 @@ body.blocklyMinimalBody {
         font-style: italic;
     }
 
-    text.semanticIcon {
+    .blocklyEditableText>text.semanticIcon {
         fill: #fff;
         font-family: "Icons";
         font-size: 19px;
     }
-    text.semanticIcon.inverted {
+    .blocklyEditableText>text.semanticIcon.inverted {
         fill: #000;
     }
 }
@@ -107,6 +107,13 @@ body.blocklyMinimalBody {
     color: white;
 }
 
+/*******************************
+        Blockly Toolbox
+*******************************/
+
+.blocklyTreeIcon {
+    visibility: visible;
+}
 
 /*******************************
         Blockly Flyout
@@ -216,17 +223,19 @@ text.blocklyCheckbox {
 }
 
 /* (arcade only) Sets the correct background color for the sprite image field */
-.pxt-renderer .blocklyNonEditableText > rect.blocklySpriteField,
-.pxt-renderer .blocklyNonEditableText > rect.blocklyAnimationField,
-.pxt-renderer .blocklyNonEditableText > rect.blocklyTilemapField,
-.pxt-renderer .blocklyEditableText > rect.blocklySpriteField,
-.pxt-renderer .blocklyEditableText > rect.blocklyAnimationField,
-.pxt-renderer .blocklyEditableText > rect.blocklyTilemapField {
-    fill: #dedede;
-    stroke: #898989;
-    stroke-width: 1;
-}
+.pxt-renderer.classic-theme {
+    .blocklyNonEditableText > rect.blocklySpriteField,
+    .blocklyNonEditableText > rect.blocklyAnimationField,
+    .blocklyNonEditableText > rect.blocklyTilemapField,
+    .blocklyEditableText > rect.blocklySpriteField,
+    .blocklyEditableText > rect.blocklyAnimationField,
+    .blocklyEditableText > rect.blocklyTilemapField {
+        fill: #dedede;
+        stroke: #898989;
+        stroke-width: 1;
+    }
 
+}
 
 /*******************************
         Blocks
