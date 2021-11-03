@@ -432,7 +432,6 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
             label: lf("Open Certificate"),
 
             onClick: () => {
-                tickEvent("skillmap.reward", { path: mapId, activity: activity!.activityId });
                 tickEvent("skillmap.openCertificate", { path: mapId, activity: activity!.activityId });
                 window.open((reward as MapRewardCertificate).url || skillMap!.completionUrl);
             }
