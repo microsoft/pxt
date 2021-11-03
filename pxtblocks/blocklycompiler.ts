@@ -1732,7 +1732,7 @@ namespace pxt.blocks {
     export function compileBlockAsync(b: Blockly.Block, blockInfo: pxtc.BlocksInfo): Promise<BlockCompilationResult> {
         const w = b.workspace;
         const e = mkEnv(w, blockInfo);
-        infer(w && w.getAllBlocks(), e, w);
+        infer(w && w.getAllBlocks(false), e, w);
         const compiled = compileStatementBlock(e, b)
         removeAllPlaceholders();
         return tdASTtoTS(e, compiled);
@@ -1754,7 +1754,7 @@ namespace pxt.blocks {
     function compileWorkspace(e: Environment, w: Blockly.Workspace, blockInfo: pxtc.BlocksInfo): [JsNode[], BlockDiagnostic[]] {
         try {
             // all compiled top level blocks are events
-            let allBlocks = w.getAllBlocks();
+            let allBlocks = w.getAllBlocks(false);
 
             if (pxt.react.getTilemapProject) {
                 pxt.react.getTilemapProject().removeInactiveBlockAssets(allBlocks.map(b => b.id));
@@ -2058,13 +2058,9 @@ namespace pxt.blocks {
     }
 
     function maybeAddComment(b: Blockly.Block, comments: string[]) {
-        if (b.comment) {
-            if ((typeof b.comment) === "string") {
-                comments.push(b.comment as string)
-            }
-            else {
-                comments.push((b.comment as Blockly.Comment).getText())
-            }
+        const text = b.getCommentText();
+        if (text) {
+            comments.push(text)
         }
     }
 

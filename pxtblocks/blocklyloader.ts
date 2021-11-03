@@ -819,7 +819,7 @@ namespace pxt.blocks {
                                 inputCheck = pr.type;
                             } else if (pr.type == "number" && pr.shadowBlockId && pr.shadowBlockId == "value") {
                                 inputName = undefined;
-                                fields.push(namedField(new Blockly.FieldTextInput("0", Blockly.FieldTextInput.numberValidator), defName));
+                                fields.push(namedField(new Blockly.FieldNumber("0"), defName));
                             } else if (pr.type == "string" && pr.shadowOptions && pr.shadowOptions.toString) {
                                 inputCheck = null;
                             } else {
@@ -2124,11 +2124,6 @@ namespace pxt.blocks {
                     let blockText = '<xml>' +
                         '<block type="variables_change" gap="' + gap + '">' +
                         Blockly.Variables.generateVariableFieldXmlString(mostRecentVariable) +
-                        '<value name="DELTA">' +
-                        '<shadow type="math_number">' +
-                        '<field name="NUM">1</field>' +
-                        '</shadow>' +
-                        '</value>' +
                         '</block>' +
                         '</xml>';
                     let block = Blockly.Xml.textToDom(blockText).firstChild as HTMLElement;

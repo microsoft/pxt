@@ -32,10 +32,10 @@ namespace pxt.blocks {
     function applyMetaComments(workspace: Blockly.Workspace) {
         // process meta comments
         // @highlight -> highlight block
-        workspace.getAllBlocks()
-            .filter(b => !!b.comment && b.comment instanceof Blockly.Comment)
+        workspace.getAllBlocks(false)
+            .filter(b => !!b.getCommentText())
             .forEach(b => {
-                const c = (<Blockly.Comment>b.comment).getText();
+                const c = b.getCommentText();
                 if (/@highlight/.test(c)) {
                     const cc = c.replace(/@highlight/g, '').trim();
                     b.setCommentText(cc || null);
@@ -99,7 +99,7 @@ namespace pxt.blocks {
         let xmlBlock = Blockly.Xml.textToDom(text);
         let block = Blockly.Xml.domToBlock(xmlBlock, ws) as Blockly.BlockSvg;
         if (ws.getMetrics) {
-            let metrics = ws.getMetrics() as Blockly.Metrics;
+            let metrics = ws.getMetrics();
             let blockDimensions = block.getHeightWidth();
             block.moveBy(
               metrics.viewLeft + (metrics.viewWidth / 2) - (blockDimensions.width / 2),
