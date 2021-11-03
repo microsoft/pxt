@@ -11,14 +11,29 @@ import { dispatchCloseUserProfile, dispatchShowDeleteAccountModal } from "../act
 interface UserProfileProps {
     signedIn: boolean;
     profile: pxt.auth.UserProfile
-    preferences: pxt.auth.UserPreferences;
     showProfile: boolean;
     dispatchCloseUserProfile: () => void;
     dispatchShowDeleteAccountModal: () => void;
 }
 
+interface UserProfileState {
+    preferences?: pxt.auth.UserPreferences;
+    notification?: pxt.ProfileNotification;
+    modal?: DialogOptions;
+}
 
-export class UserProfileImpl extends React.Component<UserProfileProps, {}> {
+export class UserProfileImpl extends React.Component<UserProfileProps, UserProfileState> {
+    constructor(props: UserProfileProps) {
+        super(props);
+        this.state = {};
+
+        authClient.userPreferencesAsync()
+            .then(preferences => this.setState({preferences}));
+
+        pxt.targetConfigAsync()
+            .then(config => this.setState({ notification: config.profileNotification }));
+    }
+
     render() {
         const { showProfile } = this.props;
 
@@ -30,15 +45,22 @@ export class UserProfileImpl extends React.Component<UserProfileProps, {}> {
     }
 
     renderUserProfile = () => {
-        const { profile, preferences } = this.props;
+        const { profile } = this.props;
+        const { preferences, notification, modal } = this.state;
 
         return <Modal title={profile?.idp?.displayName || ""} fullscreen={true} onClose={this.handleOnClose}>
                 <Profile
                     user={{profile, preferences}}
                     signOut={this.handleSignout}
                     deleteProfile={this.handleDeleteAccountClick}
-                    // notification={this.state.notification}
-                    showModalAsync={() => Promise.resolve()} />
+                    notification={notification}
+                    showModalAsync={this.showModalAsync} />
+
+                {modal &&
+                    <Modal title={modal.header} onClose={this.closeModal} className={modal.className}>
+                        {modal.jsx}
+                    </Modal>
+                }
         </Modal>
     }
 
@@ -119,6 +141,14 @@ export class UserProfileImpl extends React.Component<UserProfileProps, {}> {
 
     handleDeleteAccountClick = async () => {
         this.props.dispatchShowDeleteAccountModal();
+    }
+
+    showModalAsync = async (options: DialogOptions) => {
+        this.setState({ modal: options });
+    }
+
+    closeModal = () => {
+        this.setState({ modal: undefined });
     }
 }
 

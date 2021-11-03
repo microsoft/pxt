@@ -177,6 +177,32 @@ export function isRewardNode(node: MapNode) {
     return node.kind === "reward" || node.kind === "completion";
 }
 
+export function getCompletedBadges(user: UserState, pageSource: string, map: SkillMap) {
+    const result: pxt.auth.Badge[] = [];
+
+    for (const activityId of Object.keys(map.activities)) {
+        if (isRewardNode(map.activities[activityId]) && isActivityUnlocked(user, pageSource, map, activityId)) {
+            const act = map.activities[activityId] as MapRewardNode;
+            for (const reward of act.rewards) {
+                if (reward.type === "completion-badge") {
+                    result.push(getCompletionBadge(pageSource, map, act));
+                }
+            }
+        }
+    }
+    return result;
+}
+
+export function getCompletionBadge(pageSource: string, map: SkillMap, node: MapRewardNode): pxt.auth.Badge {
+    return {
+        id: `skillmap-completion-${map.mapId}}`,
+        image: (node.rewards.filter(b => b.type === "completion-badge")[0] as MapCompletionBadge)?.imageUrl,
+        sourceURL: pageSource,
+        type: "skillmap-completion",
+        title: pxt.U.lf("{0} Skillmap", map.displayName)
+    };
+}
+
 export function getFlattenedHeaderIds(user: UserState, pageSource: string, ignoreStartedMaps?: UserState): string[] {
     return Object
         .values(user.mapProgress[pageSource] ?? [])

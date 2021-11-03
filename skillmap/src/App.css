@@ -344,6 +344,15 @@ code {
     font-style: italic;
 }
 
+.badge-modal-image {
+    display: flex;
+    justify-content: center;
+}
+
+.badge-modal-image img {
+    height: 15rem;
+}
+
 /* USABILLA */
 .usabilla_live_button_container {
     top: unset !important;

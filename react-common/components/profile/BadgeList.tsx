@@ -44,11 +44,16 @@ export const BadgeList = (props: BadgeListProps) => {
                     </div>
                 </div>
                 { badges.map(badge =>
-                    <Badge key={badge.id}
-                        onClick={onBadgeClick}
-                        badge={badge}
-                        disabled={!unlocked[badge.id]}
-                    />
+                    <div className="profile-badge-and-title">
+                        <Badge key={badge.id}
+                            onClick={onBadgeClick}
+                            badge={badge}
+                            disabled={!unlocked[badge.id]}
+                        />
+                        <div className="profile-badge-title">
+                            {badge.title}
+                        </div>
+                    </div>
                 ) }
             </div>
         </div>

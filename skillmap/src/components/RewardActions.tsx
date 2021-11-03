@@ -10,7 +10,6 @@ interface OwnProps {
     mapId: string;
     activityId: string;
     status?: ActivityStatus;
-    type?: MapRewardType;
 }
 
 interface DispatchProps {
@@ -21,15 +20,6 @@ interface DispatchProps {
 type RewardActionsProps = OwnProps & DispatchProps;
 
 export class RewardActionsImpl extends React.Component<RewardActionsProps> {
-    protected getRewardActionText(): string {
-        switch (this.props.type) {
-            case "certificate":
-                return lf("Claim Certificate");
-            default:
-                return lf("Claim Reward");
-        }
-    }
-
     protected handleActionButtonClick = () => {
         const { status, mapId, activityId, dispatchShowCompletionModal } = this.props;
         switch (status) {
@@ -47,7 +37,7 @@ export class RewardActionsImpl extends React.Component<RewardActionsProps> {
 
         return <div className="actions">
             <div className="action-button" role="button" onClick={this.handleActionButtonClick}>
-                {this.getRewardActionText()}
+                {lf("Claim Reward")}
             </div>
         </div>
     }

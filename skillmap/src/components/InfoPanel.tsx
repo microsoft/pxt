@@ -82,7 +82,7 @@ export class InfoPanelImpl extends React.Component<InfoPanelProps> {
                 <div className="tablet-spacer" />
                 {!isMap && (isActivity
                     ? <ActivityActions mapId={mapId} activityId={node!.activityId} status={status} completedHeaderId={completedHeaderId} />
-                    : <RewardActions mapId={mapId} activityId={node!.activityId} status={status} type={(node as MapReward).type} />)
+                    : <RewardActions mapId={mapId} activityId={node!.activityId} status={status} />)
                 }
                 {hasCloudSync && <CloudActions />}
             </div>
