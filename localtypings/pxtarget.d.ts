@@ -659,6 +659,7 @@ declare namespace ts.pxtc {
         noSourceInFlash?: boolean;
         useModulator?: boolean;
         webUSB?: boolean; // use WebUSB when supported
+        disableHIDBridge?: boolean; // disable hid bridge
         hexMimeType?: string;
         moveHexEof?: boolean;
         driveName?: string;
