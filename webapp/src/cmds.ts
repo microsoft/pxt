@@ -413,7 +413,7 @@ export async function initAsync() {
             log(`enabled webusb`);
             pxt.usb.setEnabled(true);
             pxt.packetio.mkPacketIOAsync = pxt.usb.mkWebUSBHIDPacketIOAsync;
-        } else if (!pxt.webConfig.isStatic) {
+        } else if (!pxt.appTarget?.compile?.disableHIDBridge) {
             log(`enabled hid bridge (webusb disabled)`);
             pxt.usb.setEnabled(false);
             pxt.packetio.mkPacketIOAsync = hidbridge.mkHIDBridgePacketIOAsync;
