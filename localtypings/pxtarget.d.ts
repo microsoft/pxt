@@ -172,6 +172,8 @@ declare namespace pxt {
     }
 
     interface AppCloud {
+        // specify the desired api root, https://makecode.com/api/
+        apiRoot?: string;
         workspaces?: boolean;
         packages?: boolean;
         sharing?: boolean; // uses cloud-based anonymous sharing
