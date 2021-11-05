@@ -172,6 +172,8 @@ declare namespace pxt {
     }
 
     interface AppCloud {
+        // specify the desired api root, https://makecode.com/api/
+        apiRoot?: string;
         workspaces?: boolean;
         packages?: boolean;
         sharing?: boolean; // uses cloud-based anonymous sharing
@@ -659,6 +661,7 @@ declare namespace ts.pxtc {
         noSourceInFlash?: boolean;
         useModulator?: boolean;
         webUSB?: boolean; // use WebUSB when supported
+        disableHIDBridge?: boolean; // disable hid bridge
         hexMimeType?: string;
         moveHexEof?: boolean;
         driveName?: string;
