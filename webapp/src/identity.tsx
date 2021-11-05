@@ -50,17 +50,28 @@ export class LoginDialog extends auth.Component<LoginDialogProps, LoginDialogSta
 
     renderCore() {
         const { visible } = this.state;
+        const msft = pxt.auth.identityProvider("microsoft");
+
+        const buttons: sui.ModalButton[] = [];
+        buttons.push({
+            label: lf("Sign in"),
+            onclick: async () => await this.signInAsync(msft),
+            icon: "checkmark",
+            approveButton: true,
+            className: "positive"
+        });
+
+        const actions: JSX.Element[] = [];
+        actions.push(<sui.PlainCheckbox label={lf("Remember me")} onChange={this.handleRememberMeChanged} />);
 
         return (
             <sui.Modal isOpen={visible} className="signindialog" size="tiny"
-                onClose={this.hide} dimmer={true}
+                onClose={this.hide} dimmer={true} buttons={buttons} actions={actions}
                 closeIcon={true} header={lf("Sign into {0}", pxt.appTarget.appTheme.organizationText)}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape>
-                <div className="paragraph">{lf("When you sign into MakeCode we'll save your projects to the cloud, where they're accessible from anywhere.")}</div>
-                <div className="paragraph desktop tablet only">{lf("Don't have an account? Start signing in to create one!")}</div>
-                <div className="paragraph">{lf("Sign in with")}</div>
-                {pxt.auth.identityProviders().map(provider => <div key={provider.id} className="paragraph centered"><sui.Button className="provider" text={provider.name} iconClass={"xicon"} icon={provider.id} ariaLabel={lf("Sign in with {0}", provider.name)} onClick={async () => await this.signInAsync(provider)} /></div>)}
-                <div className="paragraph centered remember"><sui.PlainCheckbox label={lf("Remember me")} onChange={this.handleRememberMeChanged} /></div>
+                <p>{lf("Sign in with your Microsoft Account. We'll save your projects to the cloud, where they're accessible from anywhere.")}</p>
+                <p>{lf("Don't have a Microsoft Account? Start signing in to create one!")}</p>
+                <sui.Link className="ui" text={lf("Learn more")} icon="external alternate" ariaLabel={lf("Learn more")} href="/identity/sign-in" target="_blank" onKeyDown={sui.fireClickOnEnter} />
             </sui.Modal>
         );
     }
