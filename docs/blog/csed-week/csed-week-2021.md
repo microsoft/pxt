@@ -30,7 +30,7 @@ Learn more at: https://arcade.makecode.com/gamejam/global-2021.
 
 ![HoC 2021 splash banner](/static/blog/csed-week/csed-week-2021/hoc2021-splash-banner.jpg)
 
-This year’s Hour of Code experience is called "TimeCraft" where your player will travel back in time to fix **Time Splits** (mysterious errors in history) with the help of your Time Agent! There are 10 different coding challenges to fix these time splits. In one of the chanllenges, the player goes back in time to help save Jazz in the 1920's. In another, the player helps to change the Pyramids in Egypt from square shapes back into triangles!
+This year’s Hour of Code experience is called "TimeCraft" where your player will travel back in time to fix **Time Splits** (mysterious errors in history) with the help of your Time Agent! There are 10 different coding challenges to fix these time splits. In one of the challenges, the player goes back in time to help save Jazz in the 1920's. In another, the player helps to change the Pyramids in Egypt from square shapes back into triangles!
 
 ![HoC 2021 Minecraft jazz musician](/static/blog/csed-week/csed-week-2021/hoc2021-jazz-musician.png)
 
