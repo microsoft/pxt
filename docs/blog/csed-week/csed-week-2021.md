@@ -10,7 +10,7 @@ For those of you already thinking about planning activities for CS Ed Week, here
 
 The theme for this year’s CS Ed Week is "CS is Everywhere" – highlighting how technology and computer science are helping us solve some of the world’s toughest problems.
 
-The 2021 MakeCode Arcade activity focuses on the impact that computing can have in savigfthe environment – and specifically how computers and technology can help combat forest fires. The **[Save the Forest!](https://arcade.makecode.com/hour-of-code-2021)** activity guides students through creating a game that will start and spread a forest fire, and then code their airtanker plane to spray water to put out the flames.
+The 2021 MakeCode Arcade activity focuses on the impact that computing can have in saving the environment – and specifically how computers and technology can help combat forest fires. The **[Save the Forest!](https://arcade.makecode.com/hour-of-code-2021)** activity guides students through creating a game that will start and spread a forest fire, and then code their airtanker plane to spray water to put out the flames.
 
 ![Forest fire game](/static/blog/csed-week/csed-week-2021/forest-fires.gif)
 
@@ -30,7 +30,7 @@ Learn more at: https://arcade.makecode.com/gamejam/global-2021.
 
 ![HoC 2021 splash banner](/static/blog/csed-week/csed-week-2021/hoc2021-splash-banner.jpg)
 
-This year’s Hour of Code experience is called "TimeCraft" where your player will travel back in time to fix **Time Splits** (mysterious errors in history) with the help of your Time Agent! There are 10 different coding challenges help save Jazz in the 1920’s, or to help change the shape of the Pyramids in Egypt from squares to triangles.
+This year’s Hour of Code experience is called "TimeCraft" where your player will travel back in time to fix **Time Splits** (mysterious errors in history) with the help of your Time Agent! There are 10 different coding challenges to fix these time splits. In one of the chanllenges, the player goes back in time to help save Jazz in the 1920's. In another, the player helps to change the Pyramids in Egypt from square shapes back into triangles!
 
 ![HoC 2021 Minecraft jazz musician](/static/blog/csed-week/csed-week-2021/hoc2021-jazz-musician.png)
 
@@ -38,8 +38,7 @@ Head over to https://education.minecraft.net/en-us/resources/hour-code-2021 to d
 
 ## MakeCode for micro:bit
 
-If you have micro:bits in the classroom, there are many fun introductory projects that will light up imaginations and creativity through physical computing. One of the most popular projects is the [micro:pet](https://microbit.org/projects/make-it-code-it/microbit-pet/
-) where students will make and code their very own electronic pet!
+If you have micro:bits in the classroom, there are many fun introductory projects that will light up imaginations and creativity through physical computing. One of the most popular projects is the [micro:pet](https://microbit.org/projects/make-it-code-it/microbit-pet/) where students will make and code their very own electronic pet!
 
 ![micropet ladybug project](/static/blog/csed-week/csed-week-2021/micropet-ladybug.jpg)
 
