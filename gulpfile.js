@@ -48,6 +48,8 @@ const cli = () => compileTsProject("cli", "built", true);
 const webapp = () => compileTsProject("webapp", "built", true);
 const reactCommon = () => compileTsProject("react-common", "built/react-common", true);
 
+// We output a dummy package.json in the built react-common directory to prevent
+// npm from complaining when we npm install in the skillmap
 const reactCommonPackageJson = () => {
     fs.writeFileSync(path.resolve("built/react-common/components/package.json"), `
     {

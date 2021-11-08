@@ -19,7 +19,7 @@
     background-color: var(--body-background-color);
     width: 50%;
     max-width: 40rem;
-    padding: 1.5rem;
+    border-radius: .285rem;
 }
 
 .fullscreen>.modal {
@@ -31,13 +31,15 @@
     width: 100%;
     max-width: none;
     padding: 0;
+    border-radius: 0;
 }
 
 .modal-header {
     display: flex;
     font-size: 1.2rem;
     font-weight: 600;
-    margin-bottom: 0.5rem;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid rgba(34,36,38,.15);
 }
 
 .fullscreen>.modal>.modal-header {
@@ -56,6 +58,7 @@
 
 .modal-body {
     min-height: 4rem;
+    padding: 1.25rem 1.5rem;
 }
 
 .fullscreen>.modal>.modal-header .modal-title {
@@ -79,9 +82,10 @@
 
 .modal-actions {
     display: grid;
-    margin-top: 1.5rem;
     grid-template-columns: 1fr 1fr;
     gap: 1rem;
+    padding: 1.25rem 1.5rem;
+    padding-top: 0;
 }
 
 .modal-header .button {
@@ -94,7 +98,21 @@
 }
 
 .modal-header .icon {
-    padding-right: 2rem
+    padding-right: 2rem;
+}
+
+.modal-close-icon {
+    position: relative;
+}
+
+.modal-close-icon i.icon.close.remove.circle {
+    position: absolute;
+    font-size: 2.15rem;
+    line-height: 2.15rem;
+    height: 2.15rem;
+    width: 2.15rem;
+    right: 0;
+    top: -0.25rem;
 }
 
 .modal-button {

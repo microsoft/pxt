@@ -3,7 +3,7 @@
 import * as React from "react";
 import { connect } from 'react-redux';
 import { ModalState, ModalType, ShareState, SkillMapState } from '../store/reducer';
-import { dispatchHideModal, dispatchNextModal, dispatchShowShareModal, dispatchRestartActivity, dispatchOpenActivity, dispatchResetUser, dispatchShowCarryoverModal, dispatchSetShareStatus, dispatchCloseUserProfile, dispatchShowUserProfile } from '../actions/dispatch';
+import { dispatchHideModal, dispatchNextModal, dispatchShowShareModal, dispatchRestartActivity, dispatchOpenActivity, dispatchResetUser, dispatchShowCarryoverModal, dispatchSetShareStatus, dispatchCloseUserProfile, dispatchShowUserProfile, dispatchShowLoginModal } from '../actions/dispatch';
 import { tickEvent, postAbuseReportAsync, resolvePath, postShareAsync } from "../lib/browserUtils";
 import { lookupActivityProgress, lookupPreviousActivityStates, lookupPreviousCompletedActivityState, isCodeCarryoverEnabled, getCompletionBadge, isRewardNode } from "../lib/skillMapUtils";
 import { getProjectAsync } from "../lib/workspaceProvider";
@@ -26,6 +26,7 @@ interface AppModalProps {
     hasPendingModals?: boolean;
     reward?: MapReward;
     badge?: pxt.auth.Badge;
+    signedIn: boolean;
     dispatchHideModal: () => void;
     dispatchNextModal: () => void;
     dispatchRestartActivity: (mapId: string, activityId: string, previousHeaderId?: string, carryoverCode?: boolean) => void;
@@ -36,6 +37,7 @@ interface AppModalProps {
     dispatchResetUser: () => void;
     dispatchSetShareStatus: (headerId?: string, url?: string) => void;
     dispatchShowShareModal: (mapId: string, activityId: string, teamsShare?: boolean) => void;
+    dispatchShowLoginModal: () => void;
 }
 
 interface AppModalState {
@@ -454,7 +456,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
 
     renderBadgeModal(reward: MapCompletionBadge) {
         const title = lf("Rewards");
-        const  { mapId, skillMap, activity, hasPendingModals, badge, dispatchNextModal, dispatchShowUserProfile, dispatchHideModal } = this.props;
+        const  { mapId, skillMap, activity, hasPendingModals, badge, dispatchNextModal, dispatchShowUserProfile, dispatchHideModal, signedIn, dispatchShowLoginModal } = this.props;
 
         const goToBadges = () => {
             tickEvent("skillmap.goToBadges", { path: mapId, activity: activity!.activityId });
@@ -462,12 +464,40 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
             dispatchShowUserProfile();
         }
 
-        const buttons: ModalAction[] = [];
-        buttons.push({
-            label: lf("Go to Badges"),
+        const signIn = () => {
+            tickEvent("skillmap.badgeSignIn", { path: mapId, activity: activity!.activityId });
+            dispatchHideModal();
+            dispatchShowLoginModal();
+        }
 
-            onClick: goToBadges
-        })
+        const buttons: ModalAction[] = [];
+
+        let message: JSX.Element[];
+
+        if (signedIn) {
+            message = jsxLF(
+                lf("You’ve received the {0} Badge! Find it in the badges section of your {1}."),
+                <span>{pxt.U.rlf(skillMap!.displayName)}</span>,
+                <a onClick={goToBadges}>{lf("User Profile")}</a>
+            );
+            buttons.push({
+                label: lf("Go to Badges"),
+
+                onClick: goToBadges
+            })
+        }
+        else {
+            message = jsxLF(
+                lf("You’ve received the {0} Badge! {1} to save your progress"),
+                <span>{pxt.U.rlf(skillMap!.displayName)}</span>,
+                <a onClick={signIn}>{lf("Sign In")}</a>
+            );
+            buttons.push({
+                label: lf("Sign In"),
+
+                onClick: signIn
+            })
+        }
 
         if (hasPendingModals) {
             buttons.push({
@@ -479,11 +509,6 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
             })
         }
 
-        const message = jsxLF(
-            lf("You’ve received the {0} Badge! Find it in the badges section of your {1}."),
-            <span>{pxt.U.rlf(skillMap!.displayName)}</span>,
-            <a onClick={goToBadges}>{lf("User Profile")}</a>
-        );
 
         return <Modal title={title} actions={buttons} onClose={this.handleOnClose}>
             <div className="badge-modal-image">
@@ -522,7 +547,8 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         shareState,
         reward: currentReward,
         hasPendingModals: state.modalQueue?.length && state.modalQueue?.length > 1,
-        badge
+        badge,
+        signedIn: state.auth.signedIn,
     }
 }
 
@@ -536,7 +562,8 @@ const mapDispatchToProps = {
     dispatchSetShareStatus,
     dispatchShowShareModal,
     dispatchNextModal,
-    dispatchShowUserProfile
+    dispatchShowUserProfile,
+    dispatchShowLoginModal
 };
 
 export const AppModal = connect(mapStateToProps, mapDispatchToProps)(AppModalImpl);

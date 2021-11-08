@@ -41,7 +41,7 @@ export class Modal extends React.Component<ModalProps> {
                     </div>}
                     <div className="modal-title">{title}</div>
                     {!fullscreen && <div className="spacer" />}
-                    {!fullscreen && <div className="modal-close-icon" onClick={this.handleCloseClick} role="button"><i className="icon close" /></div>}
+                    {!fullscreen && <div className="modal-close-icon" onClick={this.handleCloseClick} role="button"><i className="icon close remove circle" /></div>}
                 </div>
                 <div className="modal-body">
                     {this.props.children}
