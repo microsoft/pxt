@@ -37,6 +37,12 @@
     top: @workspaceHeaderHeight;
 }
 
+.tutorial.flyoutOnly.hideIteration {
+    #tutorialcard .tutorialmessage .content {
+        overflow-y: auto;
+    }
+}
+
 /* Tutorial Mode */
 .menubar .ui.menu .item.tutorial-menuitem {
     background: rgba(27, 28, 29, 0.3) !important;
@@ -145,7 +151,7 @@ body#docs.tutorial {
     width: 100%;
     font-size: 12pt;
     padding-left: 1rem;
-    height: calc(@tutorialCardHeight - 1rem);
+    height: calc(@tutorialCardHeight - 1.5rem);
     margin-bottom: 0.4rem;
     overflow-y: hidden;
     overflow-x: auto;

@@ -1544,6 +1544,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             if (this.parent.state?.accessibleBlocks) newFlyout.svgGroup_.focus();
         } else if ((this.editor as any).flyout_) {
             (this.editor as any).flyout_.show(xmlList);
+            (this.editor as any).flyout_.setTwoScrolls();
             (this.editor as any).flyout_.scrollToStart();
         }
     }
