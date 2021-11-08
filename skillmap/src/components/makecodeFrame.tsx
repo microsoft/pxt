@@ -286,6 +286,9 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
             case "completed":
                 this.onTutorialFinished();
                 break;
+            case "exit":
+                dispatchSaveAndCloseActivity();
+                break;
         }
     }
 

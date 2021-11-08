@@ -109,7 +109,8 @@ namespace pxt.editor {
 
     export type EditorMessageTutorialEventRequest = EditorMessageTutorialProgressEventRequest |
         EditorMessageTutorialCompletedEventRequest |
-        EditorMessageTutorialLoadedEventRequest;
+        EditorMessageTutorialLoadedEventRequest |
+        EditorMessageTutorialExitEventRequest;
 
     export interface EditorMessageTutorialProgressEventRequest extends EditorMessageRequest {
         action: "tutorialevent";
