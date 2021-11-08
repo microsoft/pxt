@@ -81,8 +81,8 @@ namespace pxt.auth {
     let _client: AuthClient;
     export function client(): AuthClient { return _client; }
 
-    const PREFERENCES_DEBOUNCE_MS = 5 * 1000;
-    const PREFERENCES_DEBOUNCE_MAX_MS = 30 * 1000;
+    const PREFERENCES_DEBOUNCE_MS = 1 * 1000;
+    const PREFERENCES_DEBOUNCE_MAX_MS = 10 * 1000;
     let debouncePreferencesChangedTimeout = 0;
     let debouncePreferencesChangedStarted = 0;
 
