@@ -333,12 +333,35 @@
     font-size: 1.2rem;
     cursor: pointer;
     user-select: none;
+    border: none;
+    width: 100%;
+    font-family: var(--body-font-family);
+    flex-grow: 1;
+}
+
+.completion-reward.inverted {
+    color: var(--primary-color);
+    background-color: var(--white);
+    border: solid 1px var(--primary-color);
 }
 
 .completion-reward i {
     margin-right: 0.5rem;
     font-size: 2rem;
     line-height: 2rem;
+}
+
+.completion-reward.right-icon i {
+    font-size: 1.5rem;
+    line-height: 1.5rem;
+    margin-left: 0.5rem;
+    margin-right: 0;
+}
+
+.reward-buttons {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
 }
 
 /* COMPLETION CONFETTI */

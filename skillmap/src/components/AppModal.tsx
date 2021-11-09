@@ -188,14 +188,14 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
         return <div className="confetti-container">
             <Modal title={completionModalTitle} actions={this.getCompletionActions(reward.actions)} className="completion" onClose={this.handleOnClose}>
                 {completionModalTextSegments[0]}{<strong>{skillMap.displayName}</strong>}{completionModalTextSegments[1]}
-                <div className="completion-reward" onClick={dispatchNextModal}>
+                <button className="completion-reward" onClick={dispatchNextModal}>
                     <i className="icon gift" />
                     <span>{lf("Claim your reward!")}</span>
-                </div>
-                {(previousState && previousState.headerId) && <div className="completion-reward" onClick={this.handleRewardShareClick}>
+                </button>
+                {(previousState && previousState.headerId) && <button className="completion-reward" onClick={this.handleRewardShareClick}>
                     <i className="icon send" />
                     <span>{lf("Share your game!")}</span>
-                </div>}
+                </button>}
             </Modal>
             {this.renderConfetti()}
         </div>
@@ -421,36 +421,54 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
     renderRewardModal() {
         const { reward } = this.props;
 
-        if (reward?.type === "certificate") return this.renderCertificateModal(reward);
-        else if (reward?.type === "completion-badge") return this.renderBadgeModal(reward);
+        let modal: JSX.Element | undefined;
+
+        if (reward?.type === "certificate") modal = this.renderCertificateModal(reward);
+        else if (reward?.type === "completion-badge") modal = this.renderBadgeModal(reward);
+
+        return <div className="confetti-container">
+            {modal}
+            {this.renderConfetti()}
+        </div>
     }
 
     renderCertificateModal(reward: MapRewardCertificate) {
         const title = lf("Rewards");
         const  { mapId, skillMap, activity, hasPendingModals, dispatchNextModal } = this.props;
 
-        const buttons: ModalAction[] = [];
-        buttons.push({
-            label: lf("Open Certificate"),
+        const buttons: JSX.Element[] = [];
 
-            onClick: () => {
-                tickEvent("skillmap.openCertificate", { path: mapId, activity: activity!.activityId });
-                window.open((reward as MapRewardCertificate).url || skillMap!.completionUrl);
-            }
-        })
+        const onCertificateClick = () => {
+            tickEvent("skillmap.openCertificate", { path: mapId, activity: activity!.activityId });
+            window.open((reward as MapRewardCertificate).url || skillMap!.completionUrl);
+        };
+
+        buttons.push(
+            <button key="cert" className="completion-reward inverted right-icon" onClick={onCertificateClick}>
+                <span>{lf("Certificate")}</span>
+                <i className="icon file outline" />
+            </button>
+        )
 
         if (hasPendingModals) {
-            buttons.push({
-                label: lf("Next Reward"),
-                onClick: () => {
-                    tickEvent("skillmap.nextReward", { path: mapId, activity: activity!.activityId, currentReward: reward!.type });
-                    dispatchNextModal();
-                }
-            })
+            const onNextRewardClick = () => {
+                tickEvent("skillmap.nextReward", { path: mapId, activity: activity!.activityId, currentReward: reward!.type });
+                dispatchNextModal();
+            };
+
+            buttons.push(
+                <button key="next" className="completion-reward right-icon" onClick={onNextRewardClick}>
+                    <span>{lf("Next Reward")}</span>
+                    <i className="icon right circle arrow" />
+                </button>
+            )
         }
 
-        return <Modal title={title} actions={buttons} onClose={this.handleOnClose}>
+        return <Modal title={title} onClose={this.handleOnClose}>
             {lf("Use the button below to get your completion certificate!")}
+            <div className="reward-buttons">
+                {buttons}
+            </div>
         </Modal>
     }
 
@@ -470,8 +488,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
             dispatchShowLoginModal();
         }
 
-        const buttons: ModalAction[] = [];
-
+        const buttons: JSX.Element[] = [];
         let message: JSX.Element[];
 
         if (signedIn) {
@@ -480,11 +497,12 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                 <span>{pxt.U.rlf(skillMap!.displayName)}</span>,
                 <a onClick={goToBadges}>{lf("User Profile")}</a>
             );
-            buttons.push({
-                label: lf("Go to Badges"),
-
-                onClick: goToBadges
-            })
+            buttons.push(
+                <button key="badge" className="completion-reward inverted right-icon" onClick={goToBadges}>
+                    <span>{lf("Go to Badges")}</span>
+                    <i className="icon trophy" />
+                </button>
+            )
         }
         else {
             message = jsxLF(
@@ -492,29 +510,37 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                 <span>{pxt.U.rlf(skillMap!.displayName)}</span>,
                 <a onClick={signIn}>{lf("Sign In")}</a>
             );
-            buttons.push({
-                label: lf("Sign In"),
-
-                onClick: signIn
-            })
+            buttons.push(
+                <button key="badge" className="completion-reward inverted right-icon" onClick={signIn}>
+                    <span>{lf("Sign In")}</span>
+                    <i className="xicon cloud-user" />
+                </button>
+            )
         }
 
         if (hasPendingModals) {
-            buttons.push({
-                label: lf("Next Reward"),
-                onClick: () => {
-                    tickEvent("skillmap.nextReward", { path: mapId, activity: activity!.activityId, currentReward: reward!.type });
-                    dispatchNextModal();
-                }
-            })
+            const onNextRewardClick = () => {
+                tickEvent("skillmap.nextReward", { path: mapId, activity: activity!.activityId, currentReward: reward!.type });
+                dispatchNextModal();
+            };
+
+            buttons.push(
+                <button key="next" className="completion-reward right-icon" onClick={onNextRewardClick}>
+                    <span>{lf("Next Reward")}</span>
+                    <i className="icon right circle arrow" />
+                </button>
+            )
         }
 
 
-        return <Modal title={title} actions={buttons} onClose={this.handleOnClose}>
+        return <Modal title={title} onClose={this.handleOnClose}>
             <div className="badge-modal-image">
                 <Badge badge={badge!} />
             </div>
             {message}
+            <div className="reward-buttons">
+                {buttons}
+            </div>
         </Modal>
     }
 }
