@@ -430,7 +430,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
                 const badgeState = await authClient.getBadgeStateAsync() || { badges: [] };
                 allBadges = allBadges.filter(badge => !pxt.auth.hasBadge(badgeState, badge))
 
-                if (allBadges.length) {
+                if (allBadges.length && !this.state.badgeSyncLock) {
                     this.setState({ badgeSyncLock: true })
                     try {
                         await authClient.grantBadgesAsync(allBadges, badgeState.badges)
@@ -445,7 +445,6 @@ class AppImpl extends React.Component<AppProps, AppState> {
                 }
             }
         }
-
     }
 }
 

@@ -1,4 +1,5 @@
 import * as React from "react";
+import { fireClickOnEnter } from "../util";
 import { UserNotification } from "./UserNotification";
 
 export interface UserPaneProps {
@@ -36,7 +37,12 @@ export const UserPane = (props: UserPaneProps) => {
         { notification && <UserNotification notification={notification}/> }
         <div className="profile-spacer"></div>
         <div className="profile-actions">
-            <a onClick={onDeleteProfileClick}>{lf("Delete Profile")}</a>
+            <a role="button"
+                tabIndex={0}
+                onKeyPress={fireClickOnEnter}
+                onClick={onDeleteProfileClick}>
+                {lf("Delete Profile")}
+            </a>
             <button onClick={onSignOutClick} className="ui icon button">
                 <i className="icon sign-out"></i>
                 {lf("Sign Out")}

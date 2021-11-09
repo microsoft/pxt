@@ -336,6 +336,9 @@ function inflateMapReward(section: MarkdownSection, base: Partial<MapRewardNode>
             }
         }
 
+        const priority = ["completion-badge", "certificate"];
+        parsedRewards.sort((a, b) => priority.indexOf(a.type) - priority.indexOf(b.type));
+
         if (parsedRewards.length) result.rewards = parsedRewards;
     }
 
