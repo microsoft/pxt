@@ -3,7 +3,17 @@
     flex-direction: row;
     height: 100%;
 
+    --header-text-color: #000000;
+    --profile-portrait-border-color: #ffffff;
+    --profile-username-color: #999999;
     --background-color: #fef3e0;
+    --avatar-initials-background-color: #028B9B;
+    --avatar-initials-text-color: #ffffff;
+    --user-pane-border-color: #e4dbca;
+    --notification-background-color: #ffffff;
+    --notification-icon-background-color: #ffffff;
+    --notification-icon-color: #000000;
+    --badge-list-subtitle-color: #aba9a5;
 }
 
 .profile-user-pane {
@@ -11,7 +21,7 @@
     flex-direction: column;
     width: 25%;
     padding: 1rem;
-    border-right: solid 1px #e4dbca;
+    border-right: solid 1px var(--user-pane-border-color);
     height: 100%;
     min-width: 20rem;
 }
@@ -22,7 +32,7 @@
     height: 12rem;
     width: 12rem;
     position: relative;
-    border: solid white 2px;
+    border: solid var(--profile-portrait-border-color) 2px;
     align-self: center;
     margin-bottom: 1.5rem;
 }
@@ -42,7 +52,7 @@
 
 .profile-display-name {
     font-size: 1.5rem;
-    color: black;
+    color: var(--header-text-color);
     text-transform: uppercase;
     font-weight: 900;
     margin-bottom: 0.5rem;
@@ -50,7 +60,7 @@
 
 .profile-username {
     font-size: 1rem;
-    color: #999999;
+    color: var(--profile-username-color);
 }
 
 .profile-spacer {
@@ -84,7 +94,7 @@
     border-radius: 1rem;
     padding: 1rem;
     padding-top: 2rem;
-    background: white;
+    background: var(--notification-background-color);
     display: flex;
     flex-direction: column;
 }
@@ -108,7 +118,8 @@
     position: absolute;
     top: -1.625rem;
     left: calc(50% - 1.625rem);
-    background: #dedede;
+    color: var(--notification-icon-color);
+    background: var(--notification-icon-background-color);
 }
 
 .profile-notification .profile-notification-icon     i.circular.icon {
@@ -117,7 +128,7 @@
 
 .profile-badge-subtitle {
     font-style: italic;
-    color: #aba9a5;
+    color: var(--badge-list-subtitle-color);
 }
 
 .profile-badge-list {
@@ -202,14 +213,11 @@
     font-weight: 900;
     font-size: 1.5rem;
     margin-right: 1rem;
+    color: var(--header-text-color);
 }
 
 .profile-badge-header {
     margin-left: 1rem;
-    margin-bottom: 2rem;
-}
-
-.profile-badge-header {
     margin-bottom: 1rem;
 }
 
@@ -222,6 +230,7 @@
     text-transform: uppercase;
     font-weight: 900;
     width: 20%;
+    color: var(--header-text-color);
 }
 
 .profile-badge-info-image .profile-badge {
@@ -263,6 +272,7 @@
     width: 100%;
     margin-right: 0;
     text-align: center;
+    color: var(--header-text-color);
 }
 
 .profile-initials-portrait {
@@ -272,8 +282,8 @@
     align-items: center;
     justify-content: center;
     height: 100%;
-    color: white;
-    background-color: #028B9B;
+    color: var(--avatar-initials-text-color);
+    background-color: var(--avatar-initials-background-color);
 }
 
 @media only screen and (max-width: 1200px) and (min-width: 992px) {

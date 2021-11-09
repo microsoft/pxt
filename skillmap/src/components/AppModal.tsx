@@ -436,7 +436,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
         const title = lf("Rewards");
         const  { mapId, skillMap, activity, hasPendingModals, dispatchNextModal } = this.props;
 
-        const buttons: JSX.Element[] = [];
+        const buttons: ModalAction[] = [];
 
         const onCertificateClick = () => {
             tickEvent("skillmap.openCertificate", { path: mapId, activity: activity!.activityId });
@@ -444,10 +444,12 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
         };
 
         buttons.push(
-            <button key="cert" className="completion-reward inverted right-icon" onClick={onCertificateClick}>
-                <span>{lf("Certificate")}</span>
-                <i className="icon file outline" />
-            </button>
+            {
+                label: lf("Open Certificate"),
+                className: "completion-reward inverted",
+                icon: "file outline",
+                onClick: onCertificateClick
+            }
         )
 
         if (hasPendingModals) {
@@ -457,18 +459,17 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
             };
 
             buttons.push(
-                <button key="next" className="completion-reward right-icon" onClick={onNextRewardClick}>
-                    <span>{lf("Next Reward")}</span>
-                    <i className="icon right circle arrow" />
-                </button>
+                {
+                    label: lf("Next Reward"),
+                    className: "completion-reward",
+                    icon: "right circle arrow",
+                    onClick: onNextRewardClick
+                }
             )
         }
 
-        return <Modal title={title} onClose={this.handleOnClose}>
+        return <Modal title={title} onClose={this.handleOnClose} actions={buttons}>
             {lf("Use the button below to get your completion certificate!")}
-            <div className="reward-buttons">
-                {buttons}
-            </div>
         </Modal>
     }
 
@@ -488,7 +489,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
             dispatchShowLoginModal();
         }
 
-        const buttons: JSX.Element[] = [];
+        const buttons: ModalAction[] = [];
         let message: JSX.Element[];
 
         if (signedIn) {
@@ -498,10 +499,12 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                 <a onClick={goToBadges}>{lf("User Profile")}</a>
             );
             buttons.push(
-                <button key="badge" className="completion-reward inverted right-icon" onClick={goToBadges}>
-                    <span>{lf("Go to Badges")}</span>
-                    <i className="icon trophy" />
-                </button>
+                {
+                    label: lf("Go to Badges"),
+                    className: "completion-reward inverted",
+                    icon: "trophy",
+                    onClick: goToBadges
+                }
             )
         }
         else {
@@ -511,10 +514,13 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                 <a onClick={signIn}>{lf("Sign In")}</a>
             );
             buttons.push(
-                <button key="badge" className="completion-reward inverted right-icon" onClick={signIn}>
-                    <span>{lf("Sign In")}</span>
-                    <i className="xicon cloud-user" />
-                </button>
+                {
+                    label: lf("Sign In"),
+                    className: "completion-reward inverted",
+                    xicon: true,
+                    icon: "cloud-user",
+                    onClick: signIn
+                }
             )
         }
 
@@ -525,22 +531,21 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
             };
 
             buttons.push(
-                <button key="next" className="completion-reward right-icon" onClick={onNextRewardClick}>
-                    <span>{lf("Next Reward")}</span>
-                    <i className="icon right circle arrow" />
-                </button>
+                {
+                    label: lf("Next Reward"),
+                    className: "completion-reward",
+                    icon: "right circle arrow",
+                    onClick: onNextRewardClick
+                }
             )
         }
 
 
-        return <Modal title={title} onClose={this.handleOnClose}>
+        return <Modal title={title} onClose={this.handleOnClose} actions={buttons}>
             <div className="badge-modal-image">
                 <Badge badge={badge!} />
             </div>
             {message}
-            <div className="reward-buttons">
-                {buttons}
-            </div>
         </Modal>
     }
 }

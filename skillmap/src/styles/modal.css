@@ -88,6 +88,10 @@
     padding-top: 0;
 }
 
+.modal-actions div:only-child {
+    grid-column: auto/span 2;
+}
+
 .modal-header .button {
     cursor: pointer;
 }
@@ -125,7 +129,7 @@
     text-transform: uppercase;
 }
 
-.modal-button:hover {
+.modal-button:hover, .completion-reward.inverted.modal-button:hover {
     background-color: var(--hover-color);
     color: var(--active-color);
     text-decoration: none;
@@ -351,17 +355,11 @@
     line-height: 2rem;
 }
 
-.completion-reward.right-icon i {
+.modal-button.completion-reward i {
     font-size: 1.5rem;
     line-height: 1.5rem;
     margin-left: 0.5rem;
     margin-right: 0;
-}
-
-.reward-buttons {
-    display: flex;
-    flex-direction: row;
-    gap: 1rem;
 }
 
 /* COMPLETION CONFETTI */
