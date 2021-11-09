@@ -305,7 +305,9 @@ namespace pxt.auth {
             return result.success;
         }
 
-        public async patchUserPreferencesAsync(ops: ts.pxtc.jsonPatch.PatchOperation | ts.pxtc.jsonPatch.PatchOperation[]) {
+        private prefPatchOps: ts.pxtc.jsonPatch.PatchOperation[] = [];
+
+        public async patchUserPreferencesAsync(ops: ts.pxtc.jsonPatch.PatchOperation | ts.pxtc.jsonPatch.PatchOperation[], immediate = false) {
             ops = Array.isArray(ops) ? ops : [ops];
             if (!ops.length) { return; }
             const curPref = await this.userPreferencesAsync();
@@ -314,27 +316,35 @@ namespace pxt.auth {
             // If we're not logged in, non-persistent local state is all we'll use
             if (!await this.loggedInAsync()) { return; }
             // If the user is logged in, save to cloud, but debounce the api call as this can be called frequently from skillmaps
+            // Accumulate the ops and send to cloud in batch.
+            this.prefPatchOps.push(...ops);
             clearTimeout(debouncePreferencesChangedTimeout);
             const savePrefs = async () => {
                 debouncePreferencesChangedStarted = 0;
-                const result = await this.apiAsync<UserPreferences>('/api/user/preferences', ops, 'PATCH');
+                // Clear queued patch ops before send.
+                const prefPatchOps = this.prefPatchOps;
+                this.prefPatchOps = [];
+                const result = await this.apiAsync<UserPreferences>('/api/user/preferences', prefPatchOps, 'PATCH');
                 if (result.success) {
                     pxt.debug("Updating local user preferences w/ cloud data after result of POST")
                     // Set user profile from returned value so we stay in-sync
-                    this.setUserPreferencesAsync(result.resp)
+                    this.setUserPreferencesAsync(result.resp);
                 } else {
                     pxt.reportError("identity", "update preferences failed", result as any);
                 }
             }
-            if (!debouncePreferencesChangedStarted) {
-                debouncePreferencesChangedStarted = U.now();
-            }
-            if (PREFERENCES_DEBOUNCE_MAX_MS < U.now() - debouncePreferencesChangedStarted) {
+            if (immediate) {
                 await savePrefs();
             } else {
-                debouncePreferencesChangedTimeout = setTimeout(savePrefs, PREFERENCES_DEBOUNCE_MS);
+                if (!debouncePreferencesChangedStarted) {
+                    debouncePreferencesChangedStarted = U.now();
+                }
+                if (PREFERENCES_DEBOUNCE_MAX_MS < U.now() - debouncePreferencesChangedStarted) {
+                    await savePrefs();
+                } else {
+                    debouncePreferencesChangedTimeout = setTimeout(savePrefs, PREFERENCES_DEBOUNCE_MS);
+                }
             }
-
         }
 
         /*protected*/ hasUserId(): boolean {

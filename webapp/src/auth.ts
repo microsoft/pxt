@@ -203,9 +203,9 @@ export async function deleteProfileAsync(): Promise<void> {
     await cli?.deleteProfileAsync();
 }
 
-export async function patchUserPreferencesAsync(ops: ts.pxtc.jsonPatch.PatchOperation | ts.pxtc.jsonPatch.PatchOperation[]): Promise<void> {
+export async function patchUserPreferencesAsync(ops: ts.pxtc.jsonPatch.PatchOperation | ts.pxtc.jsonPatch.PatchOperation[], immediate = false): Promise<void> {
     const cli = await clientAsync();
-    await cli?.patchUserPreferencesAsync(ops);
+    await cli?.patchUserPreferencesAsync(ops, immediate);
 }
 
 export async function setHighContrastPrefAsync(highContrast: boolean): Promise<void> {
@@ -221,7 +221,7 @@ export async function setLangaugePrefAsync(lang: string): Promise<void> {
         op: 'replace',
         path: ['language'],
         value: lang
-    });
+    }, true); // sync this change immediately, as the page is about to reload.
 }
 
 export async function setImmersiveReaderPrefAsync(pref: string): Promise<void> {
