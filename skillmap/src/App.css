@@ -165,6 +165,7 @@ code {
 }
 
 .user-menu .avatar img {
+    border: solid 2px white;
     border-radius: 100%;
     width: 2.5rem;
     height: 2.5rem;
@@ -266,6 +267,7 @@ code {
     display: flex;
     align-items: center;
     justify-content: center;
+    font-size: 16px;
 }
 
 .header-dropdown.user-dropdown .dropdown-menu {

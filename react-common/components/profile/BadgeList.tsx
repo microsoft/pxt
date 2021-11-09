@@ -27,7 +27,7 @@ export const BadgeList = (props: BadgeListProps) => {
     }
 
     return <div className="profile-badge-list">
-        <div className="profile-badge-heder">
+        <div className="profile-badge-header">
             <span className="profile-badge-title">
                 {lf("Badges")}
             </span>
@@ -50,7 +50,7 @@ export const BadgeList = (props: BadgeListProps) => {
                             badge={badge}
                             disabled={!unlocked[badge.id]}
                         />
-                        <div className="profile-badge-title">
+                        <div className="profile-badge-name">
                             {badge.title}
                         </div>
                     </div>

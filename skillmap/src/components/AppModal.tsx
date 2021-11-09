@@ -3,7 +3,7 @@
 import * as React from "react";
 import { connect } from 'react-redux';
 import { ModalState, ModalType, ShareState, SkillMapState } from '../store/reducer';
-import { dispatchHideModal, dispatchNextModal, dispatchShowShareModal, dispatchRestartActivity, dispatchOpenActivity, dispatchResetUser, dispatchShowCarryoverModal, dispatchSetShareStatus, dispatchCloseUserProfile, dispatchShowUserProfile } from '../actions/dispatch';
+import { dispatchHideModal, dispatchNextModal, dispatchShowShareModal, dispatchRestartActivity, dispatchOpenActivity, dispatchResetUser, dispatchShowCarryoverModal, dispatchSetShareStatus, dispatchCloseUserProfile, dispatchShowUserProfile, dispatchShowLoginModal } from '../actions/dispatch';
 import { tickEvent, postAbuseReportAsync, resolvePath, postShareAsync } from "../lib/browserUtils";
 import { lookupActivityProgress, lookupPreviousActivityStates, lookupPreviousCompletedActivityState, isCodeCarryoverEnabled, getCompletionBadge, isRewardNode } from "../lib/skillMapUtils";
 import { getProjectAsync } from "../lib/workspaceProvider";
@@ -26,6 +26,7 @@ interface AppModalProps {
     hasPendingModals?: boolean;
     reward?: MapReward;
     badge?: pxt.auth.Badge;
+    signedIn: boolean;
     dispatchHideModal: () => void;
     dispatchNextModal: () => void;
     dispatchRestartActivity: (mapId: string, activityId: string, previousHeaderId?: string, carryoverCode?: boolean) => void;
@@ -36,6 +37,7 @@ interface AppModalProps {
     dispatchResetUser: () => void;
     dispatchSetShareStatus: (headerId?: string, url?: string) => void;
     dispatchShowShareModal: (mapId: string, activityId: string, teamsShare?: boolean) => void;
+    dispatchShowLoginModal: () => void;
 }
 
 interface AppModalState {
@@ -186,14 +188,14 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
         return <div className="confetti-container">
             <Modal title={completionModalTitle} actions={this.getCompletionActions(reward.actions)} className="completion" onClose={this.handleOnClose}>
                 {completionModalTextSegments[0]}{<strong>{skillMap.displayName}</strong>}{completionModalTextSegments[1]}
-                <div className="completion-reward" onClick={dispatchNextModal}>
+                <button className="completion-reward" onClick={dispatchNextModal}>
                     <i className="icon gift" />
                     <span>{lf("Claim your reward!")}</span>
-                </div>
-                {(previousState && previousState.headerId) && <div className="completion-reward" onClick={this.handleRewardShareClick}>
+                </button>
+                {(previousState && previousState.headerId) && <button className="completion-reward" onClick={this.handleRewardShareClick}>
                     <i className="icon send" />
                     <span>{lf("Share your game!")}</span>
-                </div>}
+                </button>}
             </Modal>
             {this.renderConfetti()}
         </div>
@@ -439,8 +441,15 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
     renderRewardModal() {
         const { reward } = this.props;
 
-        if (reward?.type === "certificate") return this.renderCertificateModal(reward);
-        else if (reward?.type === "completion-badge") return this.renderBadgeModal(reward);
+        let modal: JSX.Element | undefined;
+
+        if (reward?.type === "certificate") modal = this.renderCertificateModal(reward);
+        else if (reward?.type === "completion-badge") modal = this.renderBadgeModal(reward);
+
+        return <div className="confetti-container">
+            {modal}
+            {this.renderConfetti()}
+        </div>
     }
 
     renderCertificateModal(reward: MapRewardCertificate) {
@@ -448,33 +457,45 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
         const  { mapId, skillMap, activity, hasPendingModals, dispatchNextModal } = this.props;
 
         const buttons: ModalAction[] = [];
-        buttons.push({
-            label: lf("Open Certificate"),
 
-            onClick: () => {
-                tickEvent("skillmap.openCertificate", { path: mapId, activity: activity!.activityId });
-                window.open((reward as MapRewardCertificate).url || skillMap!.completionUrl);
+        const onCertificateClick = () => {
+            tickEvent("skillmap.openCertificate", { path: mapId, activity: activity!.activityId });
+            window.open((reward as MapRewardCertificate).url || skillMap!.completionUrl);
+        };
+
+        buttons.push(
+            {
+                label: lf("Open Certificate"),
+                className: "completion-reward inverted",
+                icon: "file outline",
+                onClick: onCertificateClick
             }
-        })
+        )
 
         if (hasPendingModals) {
-            buttons.push({
-                label: lf("Next Reward"),
-                onClick: () => {
-                    tickEvent("skillmap.nextReward", { path: mapId, activity: activity!.activityId, currentReward: reward!.type });
-                    dispatchNextModal();
+            const onNextRewardClick = () => {
+                tickEvent("skillmap.nextReward", { path: mapId, activity: activity!.activityId, currentReward: reward!.type });
+                dispatchNextModal();
+            };
+
+            buttons.push(
+                {
+                    label: lf("Next Reward"),
+                    className: "completion-reward",
+                    icon: "right circle arrow",
+                    onClick: onNextRewardClick
                 }
-            })
+            )
         }
 
-        return <Modal title={title} actions={buttons} onClose={this.handleOnClose}>
+        return <Modal title={title} onClose={this.handleOnClose} actions={buttons}>
             {lf("Use the button below to get your completion certificate!")}
         </Modal>
     }
 
     renderBadgeModal(reward: MapCompletionBadge) {
         const title = lf("Rewards");
-        const  { mapId, skillMap, activity, hasPendingModals, badge, dispatchNextModal, dispatchShowUserProfile, dispatchHideModal } = this.props;
+        const  { mapId, skillMap, activity, hasPendingModals, badge, dispatchNextModal, dispatchShowUserProfile, dispatchHideModal, signedIn, dispatchShowLoginModal } = this.props;
 
         const goToBadges = () => {
             tickEvent("skillmap.goToBadges", { path: mapId, activity: activity!.activityId });
@@ -482,30 +503,65 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
             dispatchShowUserProfile();
         }
 
-        const buttons: ModalAction[] = [];
-        buttons.push({
-            label: lf("Go to Badges"),
-
-            onClick: goToBadges
-        })
-
-        if (hasPendingModals) {
-            buttons.push({
-                label: lf("Next Reward"),
-                onClick: () => {
-                    tickEvent("skillmap.nextReward", { path: mapId, activity: activity!.activityId, currentReward: reward!.type });
-                    dispatchNextModal();
-                }
-            })
+        const signIn = () => {
+            tickEvent("skillmap.badgeSignIn", { path: mapId, activity: activity!.activityId });
+            dispatchHideModal();
+            dispatchShowLoginModal();
         }
 
-        const message = jsxLF(
-            lf("You’ve received the {0} Badge! Find it in the badges section of your {1}."),
-            <span>{pxt.U.rlf(skillMap!.displayName)}</span>,
-            <a onClick={goToBadges}>{lf("User Profile")}</a>
-        );
+        const buttons: ModalAction[] = [];
+        let message: JSX.Element[];
 
-        return <Modal title={title} actions={buttons} onClose={this.handleOnClose}>
+        if (signedIn) {
+            message = jsxLF(
+                lf("You’ve received the {0} Badge! Find it in the badges section of your {1}."),
+                <span>{pxt.U.rlf(skillMap!.displayName)}</span>,
+                <a onClick={goToBadges}>{lf("User Profile")}</a>
+            );
+            buttons.push(
+                {
+                    label: lf("Go to Badges"),
+                    className: "completion-reward inverted",
+                    icon: "trophy",
+                    onClick: goToBadges
+                }
+            )
+        }
+        else {
+            message = jsxLF(
+                lf("You’ve received the {0} Badge! {1} to save your progress"),
+                <span>{pxt.U.rlf(skillMap!.displayName)}</span>,
+                <a onClick={signIn}>{lf("Sign In")}</a>
+            );
+            buttons.push(
+                {
+                    label: lf("Sign In"),
+                    className: "completion-reward inverted",
+                    xicon: true,
+                    icon: "cloud-user",
+                    onClick: signIn
+                }
+            )
+        }
+
+        if (hasPendingModals) {
+            const onNextRewardClick = () => {
+                tickEvent("skillmap.nextReward", { path: mapId, activity: activity!.activityId, currentReward: reward!.type });
+                dispatchNextModal();
+            };
+
+            buttons.push(
+                {
+                    label: lf("Next Reward"),
+                    className: "completion-reward",
+                    icon: "right circle arrow",
+                    onClick: onNextRewardClick
+                }
+            )
+        }
+
+
+        return <Modal title={title} onClose={this.handleOnClose} actions={buttons}>
             <div className="badge-modal-image">
                 <Badge badge={badge!} />
             </div>
@@ -542,7 +598,8 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         shareState,
         reward: currentReward,
         hasPendingModals: state.modalQueue?.length && state.modalQueue?.length > 1,
-        badge
+        badge,
+        signedIn: state.auth.signedIn,
     }
 }
 
@@ -556,7 +613,8 @@ const mapDispatchToProps = {
     dispatchSetShareStatus,
     dispatchShowShareModal,
     dispatchNextModal,
-    dispatchShowUserProfile
+    dispatchShowUserProfile,
+    dispatchShowLoginModal
 };
 
 export const AppModal = connect(mapStateToProps, mapDispatchToProps)(AppModalImpl);

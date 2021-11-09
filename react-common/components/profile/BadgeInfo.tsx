@@ -15,24 +15,24 @@ export const BadgeInfo = (props: BadgeInfoProps) => {
         <div className="profile-badge-info-image">
             <Badge badge={badge} disabled={!badge.timestamp} />
         </div>
-        <div className="profile-badge-info-header">
-            {lf("Awarded For:")}
-        </div>
-        <div className="profile-badge-info-text">
-            {badgeDescription(badge)}
-        </div>
-        { badge.timestamp ?
+        <div className="profile-badge-info-item">
             <div className="profile-badge-info-header">
-                {lf("Awarded On:")}
+                {lf("Awarded For:")}
             </div>
-            : undefined
-        }
-        { badge.timestamp ?
             <div className="profile-badge-info-text">
-                {date.toLocaleDateString(pxt.U.userLanguage())}
+                {badgeDescription(badge)}
             </div>
-            : undefined
-        }
+        </div>
+        { badge.timestamp ?
+            <div className="profile-badge-info-item">
+                <div className="profile-badge-info-header">
+                    {lf("Awarded On:")}
+                </div>
+                <div className="profile-badge-info-text">
+                    {date.toLocaleDateString(pxt.U.userLanguage())}
+                </div>
+            </div>
+        : undefined }
     </div>
 }
 

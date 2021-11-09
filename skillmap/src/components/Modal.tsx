@@ -7,6 +7,8 @@ import '../styles/modal.css'
 export interface ModalAction {
     label: string;
     className?: string;
+    icon?: string;
+    xicon?: boolean;
     onClick: () => void;
     url?: string;
 }
@@ -41,7 +43,7 @@ export class Modal extends React.Component<ModalProps> {
                     </div>}
                     <div className="modal-title">{title}</div>
                     {!fullscreen && <div className="spacer" />}
-                    {!fullscreen && <div className="modal-close-icon" onClick={this.handleCloseClick} role="button"><i className="icon close" /></div>}
+                    {!fullscreen && <div className="modal-close-icon" onClick={this.handleCloseClick} role="button"><i className="icon close remove circle" /></div>}
                 </div>
                 <div className="modal-body">
                     {this.props.children}
@@ -50,7 +52,15 @@ export class Modal extends React.Component<ModalProps> {
                     {actions.map((el, i) => {
                         return el.url
                             ? <a key={i} className={`modal-button ${el.className || ""}`} href={el.url} onClick={el.onClick} target="_blank" rel="noopener noreferrer" role="button">{el.label}</a>
-                            : <div key={i} className={`modal-button ${el.className || ""}`} onClick={el.onClick} role="button">{el.label}</div>
+                            :
+                            <div key={i}
+                                className={`modal-button ${el.className || ""}`}
+                                onClick={el.onClick}
+                                role="button"
+                                tabIndex={0}>
+                                    {el.label}
+                                    {el.icon && <i className={`${el.xicon ? "xicon" : "icon"} ${el.icon}`} />}
+                            </div>
                     })}
                 </div>}
             </div>
