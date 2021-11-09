@@ -230,81 +230,93 @@ class AppImpl extends React.Component<AppProps, AppState> {
 
     protected async cloudSyncCheckAsync() {
         const res = await this.ready();
-        if (await authClient.loggedInAsync()) {
-            const state = store.getState();
-            const localUser = await getLocalUserStateAsync();
+        if (!await authClient.loggedInAsync()) {
+            this.setState({cloudSyncCheckHasFinished: true});
+        } else {
+            const doCloudSyncCheckAsync = async () => {
+                const state = store.getState();
+                const localUser = await getLocalUserStateAsync();
 
-            let currentUser = await getUserStateAsync();
-            let headerIds = getFlattenedHeaderIds(localUser, state.pageSourceUrl, currentUser);
-            // Tell the editor to transfer local skillmap projects to the cloud.
-            const headerMap = (await res.sendMessageAsync!({
-                type: "pxteditor",
-                action: "savelocalprojectstocloud",
-                headerIds
-            } as pxt.editor.EditorMessageSaveLocalProjectsToCloud)).resp.headerIdMap;
-            if (headerMap) {
-                const newUser: UserState = {
-                    ...currentUser,
-                    mapProgress: {}
-                }
-
-                const localUrls = Object.keys(localUser.mapProgress);
-                for (const url of localUrls) {
-                    // Copy over local user progress. If there is cloud progress, it will
-                    // be overwritten
-                    newUser.mapProgress[url] = {
-                        ...localUser.mapProgress[url]
+                let currentUser = await getUserStateAsync();
+                let headerIds = getFlattenedHeaderIds(localUser, state.pageSourceUrl, currentUser);
+                // Tell the editor to transfer local skillmap projects to the cloud.
+                const headerMap = (await res.sendMessageAsync!({
+                    type: "pxteditor",
+                    action: "savelocalprojectstocloud",
+                    headerIds
+                } as pxt.editor.EditorMessageSaveLocalProjectsToCloud)).resp.headerIdMap;
+                if (headerMap) {
+                    const newUser: UserState = {
+                        ...currentUser,
+                        mapProgress: {}
                     }
 
-                    const maps = Object.keys(localUser.mapProgress[url]);
-                    for (const map of maps) {
-                        // Only copy over state if the user hasn't started this map yet
-                        if (!hasUrlBeenStarted(currentUser, url)) {
-                            newUser.mapProgress[url][map] = {
-                                ...localUser.mapProgress[url][map]
-                            };
-                            newUser.completedTags[url] = localUser.completedTags[url];
-                            const activityState: {[index: string]: ActivityState} = {};
-                            newUser.mapProgress[url][map].activityState = activityState;
+                    const localUrls = Object.keys(localUser.mapProgress);
+                    for (const url of localUrls) {
+                        // Copy over local user progress. If there is cloud progress, it will
+                        // be overwritten
+                        newUser.mapProgress[url] = {
+                            ...localUser.mapProgress[url]
+                        }
 
-                            const localProgress = localUser.mapProgress[url][map].activityState
-                            for (const activity of Object.keys(localProgress)) {
-                                const localActivity = localProgress[activity];
-                                if (localActivity.headerId) {
-                                    activityState[activity] = {
-                                        ...localActivity,
-                                        headerId: headerMap[localActivity.headerId] || localActivity.headerId
-                                    };
+                        const maps = Object.keys(localUser.mapProgress[url]);
+                        for (const map of maps) {
+                            // Only copy over state if the user hasn't started this map yet
+                            if (!hasUrlBeenStarted(currentUser, url)) {
+                                newUser.mapProgress[url][map] = {
+                                    ...localUser.mapProgress[url][map]
+                                };
+                                newUser.completedTags[url] = localUser.completedTags[url];
+                                const activityState: {[index: string]: ActivityState} = {};
+                                newUser.mapProgress[url][map].activityState = activityState;
+
+                                const localProgress = localUser.mapProgress[url][map].activityState
+                                for (const activity of Object.keys(localProgress)) {
+                                    const localActivity = localProgress[activity];
+                                    if (localActivity.headerId) {
+                                        activityState[activity] = {
+                                            ...localActivity,
+                                            headerId: headerMap[localActivity.headerId] || localActivity.headerId
+                                        };
+                                    }
                                 }
                             }
                         }
                     }
-                }
 
-                const visitedUrls = Object.keys(currentUser.mapProgress)
-                // Copy progress from cloud user for all visited URLs.
-                for (const url of visitedUrls) {
-                    if (hasUrlBeenStarted(currentUser, url)) {
-                        newUser.mapProgress[url] = {
-                            ...currentUser.mapProgress[url]
+                    const visitedUrls = Object.keys(currentUser.mapProgress)
+                    // Copy progress from cloud user for all visited URLs.
+                    for (const url of visitedUrls) {
+                        if (hasUrlBeenStarted(currentUser, url)) {
+                            newUser.mapProgress[url] = {
+                                ...currentUser.mapProgress[url]
+                            }
+                            newUser.completedTags[url] = currentUser.completedTags[url]
                         }
-                        newUser.completedTags[url] = currentUser.completedTags[url]
                     }
+
+                    this.props.dispatchSetUser(newUser);
+                    await saveUserStateAsync(newUser);
+                    currentUser = newUser;
                 }
 
-                this.props.dispatchSetUser(newUser)
-                await saveUserStateAsync(newUser);
-                currentUser = newUser;
+                // Tell the editor to send us the cloud status of our projects.
+                await res.sendMessageAsync!({
+                    type: "pxteditor",
+                    action: "requestprojectcloudstatus",
+                    headerIds: getFlattenedHeaderIds(currentUser, state.pageSourceUrl)
+                } as pxt.editor.EditorMessageRequestProjectCloudStatus);
+                this.setState({cloudSyncCheckHasFinished: true});
             }
-
-            // Tell the editor to send us the cloud status of our projects.
-            await res.sendMessageAsync!({
-                type: "pxteditor",
-                action: "requestprojectcloudstatus",
-                headerIds: getFlattenedHeaderIds(currentUser, state.pageSourceUrl)
-            } as pxt.editor.EditorMessageRequestProjectCloudStatus);
+            // Timeout if cloud sync check doesn't complete in a reasonable timeframe.
+            const TIMEOUT_MS = 10 * 1000;
+            await Promise.race([
+                pxt.U.delay(TIMEOUT_MS).then(() => {
+                    if (!this.state.cloudSyncCheckHasFinished)
+                        this.setState({cloudSyncCheckHasFinished: true});
+                }),
+                doCloudSyncCheckAsync()]);
         }
-        this.setState({cloudSyncCheckHasFinished: true})
     }
 
     protected onMakeCodeFrameLoaded = async (sendMessageAsync: (message: any) => Promise<any>) => {
