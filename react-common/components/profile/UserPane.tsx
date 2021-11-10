@@ -43,7 +43,7 @@ export const UserPane = (props: UserPaneProps) => {
                 onClick={onDeleteProfileClick}>
                 {lf("Delete Profile")}
             </a>
-            <button onClick={onSignOutClick} className="ui icon button">
+            <button onClick={onSignOutClick} className="ui icon button sign-out">
                 <i className="icon sign-out"></i>
                 {lf("Sign Out")}
             </button>

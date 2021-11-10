@@ -14,6 +14,7 @@
     --notification-icon-background-color: #ffffff;
     --notification-icon-color: #000000;
     --badge-list-subtitle-color: #aba9a5;
+    --body-font-family: "Share Tech Mono", Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
 }
 
 .profile-user-pane {
@@ -284,6 +285,10 @@
     height: 100%;
     color: var(--avatar-initials-text-color);
     background-color: var(--avatar-initials-background-color);
+}
+
+.ui.icon.button.sign-out {
+    font-family: var(--body-font-family);
 }
 
 @media only screen and (max-width: 1200px) and (min-width: 992px) {
