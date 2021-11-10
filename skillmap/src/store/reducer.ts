@@ -520,11 +520,18 @@ function getCompletionModals(map: SkillMap, activityId: string) {
         {
             type: "completion",
             currentMapId: map.mapId,
-            currentActivityId: activityId
+            currentActivityId: activityId,
         }
     ];
 
     const activity = map.activities[activityId] as MapRewardNode;
+
+    // If we only have a certificate, don't bother showing multiple reward modals. This is mostly legacy for
+    // old skillmaps
+    if (activity.rewards.length === 1 && activity.rewards[0].type === "certificate") {
+        result[0].currentReward = activity.rewards[0];
+        return result;
+    }
 
     for (const reward of activity.rewards) {
         result.push({
