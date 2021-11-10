@@ -215,6 +215,16 @@ namespace ts.pxtc.Util {
         return arr
     }
 
+    export function arrayEquals<U>(a: U[], b: U[], compare: (c: U, d: U) => boolean = (c, d) => c === d) {
+        if (a == b) return true;
+        if (!a && b || !b && a || a.length !== b.length) return false;
+
+        for (let i = 0; i < a.length; i++) {
+            if (!compare(a[i], b[i])) return false;
+        }
+        return true;
+    }
+
     export function iterMap<T>(m: pxt.Map<T>, f: (k: string, v: T) => void) {
         Object.keys(m).forEach(k => f(k, m[k]))
     }
@@ -2145,6 +2155,10 @@ namespace ts.pxtc.jsonPatch {
                 ops.replace(parent, lastKey, op.value);
             }
         }
+    }
+
+    export function opsAreEqual(a: PatchOperation, b: PatchOperation): boolean {
+        return (a.op === b.op && U.arrayEquals(a.path, b.path));
     }
 }
 

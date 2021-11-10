@@ -309,15 +309,30 @@ namespace pxt.auth {
 
         public async patchUserPreferencesAsync(ops: ts.pxtc.jsonPatch.PatchOperation | ts.pxtc.jsonPatch.PatchOperation[], immediate = false) {
             ops = Array.isArray(ops) ? ops : [ops];
+            ops = ops.filter(op => !!op);
             if (!ops.length) { return; }
             const curPref = await this.userPreferencesAsync();
             ts.pxtc.jsonPatch.patchInPlace(curPref, ops);
             await this.setUserPreferencesAsync(curPref);
             // If we're not logged in, non-persistent local state is all we'll use
             if (!await this.loggedInAsync()) { return; }
+
             // If the user is logged in, save to cloud, but debounce the api call as this can be called frequently from skillmaps
-            // Accumulate the ops and send to cloud in batch.
-            this.prefPatchOps.push(...ops);
+
+            // Replace matching patches in the queue
+            ops.forEach((incoming, iIncoming) => {
+                this.prefPatchOps.some((existing, iExisting) => {
+                    if (!ts.pxtc.jsonPatch.opsAreEqual(existing, incoming)) return false;
+                    // Patches are equivalent, replace in queue
+                    this.prefPatchOps[iExisting] = incoming;
+                    // Clear from incoming so we don't add it below
+                    (ops as ts.pxtc.jsonPatch.PatchOperation[])[iIncoming] = null;
+                    return true;
+                });
+            });
+            // Add remaining ops to the queue
+            ops.filter(op => !!op).forEach(op => this.prefPatchOps.push(op));
+
             clearTimeout(debouncePreferencesChangedTimeout);
             const savePrefs = async () => {
                 debouncePreferencesChangedStarted = 0;
