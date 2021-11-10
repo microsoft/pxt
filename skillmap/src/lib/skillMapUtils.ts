@@ -129,7 +129,7 @@ export function lookupPreviousActivities(map: SkillMap, activityId: string) {
     return Object.keys(map.activities)
         .filter(key => !isRewardNode(map.activities[key]))
         .filter(key => {
-            return getNextActivityChildren(map.activities[key])
+            return getNextActivityChildren(map.activities[key], isRewardNode(map.activities[activityId]))
                 .map(el => el.activityId)
                 .some(id => id === activityId);
         }).map(key => map.activities[key])
@@ -161,10 +161,10 @@ export function isCodeCarryoverEnabled(user: UserState, pageSource: string, map:
 }
 
 // Get the "next" activities from this node (skipping reward/certificate nodes)
-export function getNextActivityChildren(node: MapNode): MapNode[] {
+export function getNextActivityChildren(node: MapNode, includeRewards = false): MapNode[] {
     let next: MapNode[] = []
     node.next.forEach(el => {
-        if (!isRewardNode(el)) {
+        if (includeRewards || !isRewardNode(el)) {
             next.push(el);
         } else {
             next = next.concat(getNextActivityChildren(el));
