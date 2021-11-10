@@ -174,10 +174,10 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
     }
 
     renderCompletionModal() {
-        const  { skillMap, type, activity, userState, pageSourceUrl, dispatchNextModal } = this.props;
+        const  { skillMap, type, activity, userState, pageSourceUrl, dispatchNextModal, reward, mapId } = this.props;
         if (!type || !skillMap) return <div />
 
-        const reward = activity as MapRewardNode;
+        const node = activity as MapRewardNode;
 
         const completionModalTitle = lf("You Did It!");
         const completionModalText = lf("Congratulations on completing {0}. Take some time to explore any activities you missed, or reset your progress to try again. But first, be sure to claim your reward using the button below.", "{0}");
@@ -185,10 +185,18 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
 
         const previousState = lookupPreviousCompletedActivityState(userState!, pageSourceUrl!, skillMap!, activity!.activityId);
 
+
+        const onCertificateClick = () => {
+            tickEvent("skillmap.openCertificate", { path: mapId, activity: activity!.activityId });
+            window.open((reward as MapRewardCertificate).url || skillMap!.completionUrl);
+        };
+
+        const onButtonClick = reward ? onCertificateClick : dispatchNextModal
+
         return <div className="confetti-container">
-            <Modal title={completionModalTitle} actions={this.getCompletionActions(reward.actions)} className="completion" onClose={this.handleOnClose}>
+            <Modal title={completionModalTitle} actions={this.getCompletionActions(node.actions)} className="completion" onClose={this.handleOnClose}>
                 {completionModalTextSegments[0]}{<strong>{skillMap.displayName}</strong>}{completionModalTextSegments[1]}
-                <button className="completion-reward" onClick={dispatchNextModal}>
+                <button className="completion-reward" onClick={onButtonClick}>
                     <i className="icon gift" />
                     <span>{lf("Claim your reward!")}</span>
                 </button>
