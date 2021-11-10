@@ -42,7 +42,7 @@ export const badgeDescription = (badge: pxt.auth.Badge) => {
         case "skillmap-completion":
             return <span>{jsxLF(
                 lf("Completing the {0}"),
-                <a href={sourceURLToSkillmapURL(badge.sourceURL)}>{pxt.U.rlf(badge.title)}</a>
+                <a target="_blank" href={sourceURLToSkillmapURL(badge.sourceURL)}>{pxt.U.rlf(badge.title)}</a>
             )}</span>
     }
 }
@@ -51,7 +51,9 @@ function sourceURLToSkillmapURL(sourceURL: string) {
     if (sourceURL.indexOf("/api/md/") !== -1) {
         // docs url: https://www.makecode.com/api/md/arcade/skillmap/forest
         const path = sourceURL.split("/api/md/")[1];
-        return pxt.webConfig.skillmapUrl + "#docs:" + path;
+        // remove the target from the url
+        const docsPath = path.split("/").slice(1).join("/");
+        return pxt.webConfig.skillmapUrl + "#docs:" + docsPath;
     }
     else {
         // github url: /user/repo#filename
