@@ -306,6 +306,23 @@
     max-width: 100%;
 }
 
+/* CERTIFICATE MODAL */
+.certificate-reward {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 1rem
+}
+
+.certificate-reward img {
+    max-width: 50%;
+}
+
+/* BADGE MODAL */
+.badge-modal-image {
+    margin-top: 1rem;
+}
+
 /* COMPLETION MODAL */
 .completion-reward {
     display: flex;

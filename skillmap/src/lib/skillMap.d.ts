@@ -73,6 +73,7 @@ type MapReward = MapRewardCertificate | MapCompletionBadge;
 interface MapRewardCertificate {
     type: "certificate";
     url: string;
+    previewUrl?: string;
 }
 
 interface MapCompletionBadge {

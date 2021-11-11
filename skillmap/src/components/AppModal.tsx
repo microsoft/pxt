@@ -498,6 +498,11 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
 
         return <Modal title={title} onClose={this.handleOnClose} actions={buttons}>
             {lf("Use the button below to get your completion certificate!")}
+            {reward.previewUrl &&
+                <div className="certificate-reward">
+                    <img src={reward.previewUrl} alt={lf("certificate Preview")} />
+                </div>
+            }
         </Modal>
     }
 
@@ -570,10 +575,10 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
 
 
         return <Modal title={title} onClose={this.handleOnClose} actions={buttons}>
+            {message}
             <div className="badge-modal-image">
                 <Badge badge={badge!} />
             </div>
-            {message}
         </Modal>
     }
 }
