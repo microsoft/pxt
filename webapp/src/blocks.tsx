@@ -112,7 +112,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
         else {
             pxt.Util.toArray(document.querySelectorAll(classes)).forEach((el: HTMLElement) => el.style.display = 'none');
-            if (this.editor) Blockly.hideChaff();
+            if (this.editor) {
+                Blockly.hideChaff();
+                // By default the size is set to (0, 0), which means Blockly does not update the cached size
+                this.editor.setCachedParentSvgSize(1, 1);
+            }
             if (this.toolbox) this.toolbox.clearExpandedItem();
         }
     }

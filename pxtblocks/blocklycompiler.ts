@@ -2058,7 +2058,8 @@ namespace pxt.blocks {
     }
 
     function maybeAddComment(b: Blockly.Block, comments: string[]) {
-        const text = b.getCommentText();
+        // Check if getCommentText exists, block may be placeholder
+        const text = b.getCommentText?.();
         if (text) {
             comments.push(text)
         }
