@@ -388,9 +388,8 @@ function inflateMapReward(section: MarkdownSection, base: Partial<MapRewardNode>
             else {
                 if (reward.key === "certificate") {
                     const props = reward.items.filter(i => typeof i === "string") as string[]
-                    const cert: MapRewardCertificate = {
+                    const cert: Partial<MapRewardCertificate> = {
                         type: "certificate",
-                        url: ""
                     };
 
                     for (const prop of props) {
@@ -401,7 +400,23 @@ function inflateMapReward(section: MarkdownSection, base: Partial<MapRewardNode>
                     }
 
                     if (!cert.url) error(`Certificate in activity ${section.header} is missing url attribute`);
-                    parsedRewards.push(cert);
+                    parsedRewards.push(cert as MapRewardCertificate);
+                }
+                else if (reward.key === "completion-badge") {
+                    const props = reward.items.filter(i => typeof i === "string") as string[]
+                    const badge: Partial<MapCompletionBadge> = {
+                        type: "completion-badge",
+                    };
+
+                    for (const prop of props) {
+                        let [kind, ...value] = prop.split(":");
+
+                        if (kind === "imageurl" || kind === "image") badge.imageUrl = value.join(":").trim();
+                        if (kind === "displayname" || kind === "name") badge.displayName = value.join(":").trim();
+                    }
+
+                    if (!badge.imageUrl) error(`completion-badge in activity ${section.header} is missing imageurl attribute`);
+                    parsedRewards.push(badge as MapCompletionBadge);
                 }
             }
         }

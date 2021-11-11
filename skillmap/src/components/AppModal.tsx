@@ -528,7 +528,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
         if (signedIn) {
             message = jsxLF(
                 lf("You’ve received the {0} Badge! Find it in the badges section of your {1}."),
-                <span>{pxt.U.rlf(skillMap!.displayName)}</span>,
+                <span>{pxt.U.rlf(badge!.title)}</span>,
                 <a onClick={goToBadges}>{lf("User Profile")}</a>
             );
             buttons.push(

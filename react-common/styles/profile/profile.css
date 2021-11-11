@@ -274,6 +274,7 @@
     margin-right: 0;
     text-align: center;
     color: var(--header-text-color);
+    overflow: hidden;
 }
 
 .profile-initials-portrait {

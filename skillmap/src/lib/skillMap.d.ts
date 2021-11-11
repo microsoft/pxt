@@ -79,6 +79,7 @@ interface MapRewardCertificate {
 interface MapCompletionBadge {
     type: "completion-badge";
     imageUrl: string;
+    displayName?: string;
 }
 
 interface MapRewardNode extends BaseNode {
