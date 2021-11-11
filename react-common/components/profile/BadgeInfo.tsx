@@ -41,7 +41,7 @@ export const badgeDescription = (badge: pxt.auth.Badge) => {
     switch (badge.type) {
         case "skillmap-completion":
             return <span>{jsxLF(
-                lf("Completing the {0}"),
+                lf("Completing {0}"),
                 <a target="_blank" href={sourceURLToSkillmapURL(badge.sourceURL)}>{pxt.U.rlf(badge.title)}</a>
             )}</span>
     }
