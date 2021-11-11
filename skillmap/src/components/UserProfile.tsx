@@ -12,12 +12,12 @@ interface UserProfileProps {
     signedIn: boolean;
     profile: pxt.auth.UserProfile
     showProfile: boolean;
+    preferences?: pxt.auth.UserPreferences;
     dispatchCloseUserProfile: () => void;
     dispatchShowDeleteAccountModal: () => void;
 }
 
 interface UserProfileState {
-    preferences?: pxt.auth.UserPreferences;
     notification?: pxt.ProfileNotification;
     modal?: DialogOptions;
 }
@@ -26,9 +26,6 @@ export class UserProfileImpl extends React.Component<UserProfileProps, UserProfi
     constructor(props: UserProfileProps) {
         super(props);
         this.state = {};
-
-        authClient.userPreferencesAsync()
-            .then(preferences => this.setState({preferences}));
 
         pxt.targetConfigAsync()
             .then(config => this.setState({ notification: config.profileNotification }));
@@ -45,8 +42,8 @@ export class UserProfileImpl extends React.Component<UserProfileProps, UserProfi
     }
 
     renderUserProfile = () => {
-        const { profile } = this.props;
-        const { preferences, notification, modal } = this.state;
+        const { profile, preferences } = this.props;
+        const { notification, modal } = this.state;
 
         return <Modal title={profile?.idp?.displayName || ""} fullscreen={true} onClose={this.handleOnClose}>
                 <Profile
