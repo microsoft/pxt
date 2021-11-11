@@ -16,7 +16,7 @@ export const Badge = (props: BadgeProps) => {
     })
 
     return (
-        <div className={`profile-badge ${disabled ? "disabled" : ""}`}
+        <div className={`profile-badge ${disabled ? "disabled" : ""} ${onClick ? "clickable" : ""}`}
             role={onClick ? "button" : undefined}
             tabIndex={onClick ? 0 : undefined}
             title={lf("{0} Badge", badge.title)}
