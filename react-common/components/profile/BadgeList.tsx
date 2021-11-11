@@ -16,7 +16,13 @@ export const BadgeList = (props: BadgeListProps) => {
 
     for (const badge of userState.badges) {
         unlocked[badge.id] = true;
-        if (!badges.some(b => b.id === badge.id)) {
+        const existing = badges.findIndex(b => b.id === badge.id);
+        if (existing > -1) {
+            badges[existing] = {
+                ...badges[existing],
+                timestamp: badges[existing].timestamp || badge.timestamp
+            }
+        } else {
             badges.push(badge);
         }
     }

@@ -199,7 +199,7 @@ export function getCompletionBadge(pageSource: string, map: SkillMap, node: MapR
         image: (node.rewards.filter(b => b.type === "completion-badge")[0] as MapCompletionBadge)?.imageUrl,
         sourceURL: pageSource,
         type: "skillmap-completion",
-        title: pxt.U.lf("{0} Skillmap", map.displayName)
+        title: map.displayName
     };
 }
 
