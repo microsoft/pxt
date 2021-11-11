@@ -196,7 +196,7 @@ export function getCompletedBadges(user: UserState, pageSource: string, map: Ski
 export function getCompletionBadge(pageSource: string, map: SkillMap, node: MapRewardNode): pxt.auth.Badge {
     const badge = node.rewards.filter(b => b.type === "completion-badge")[0] as MapCompletionBadge;
     return {
-        id: `skillmap-completion-${map.mapId}}`,
+        id: `skillmap-completion-${map.mapId}`,
         image: badge?.imageUrl,
         sourceURL: pageSource,
         type: "skillmap-completion",

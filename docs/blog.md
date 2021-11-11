@@ -1,5 +1,13 @@
 # Microsoft MakeCode Blog
 
+## [Computer Science Education Week 2021](/blog/csed-week/csed-week-2021)
+
+November 8th, 2021 by [Jaqster](https://github.com/jaqster)
+
+Computer Science Education Week is coming up December 6th - 12th. This is an annual event to raise the visibility of computer science in education, and to inspire teachers and students to complete an "Hour of Code" during this week.
+
+**[Continue reading this blog post](/blog/csed-week/csed-week-2021)**
+
 ## [MakeCode Arcade Tutorial Update](/blog/arcade/tutorial-update)
 
 September 24th, 2021 by [Jaqster](https://github.com/jaqster)
