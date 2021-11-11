@@ -226,6 +226,9 @@ class AppImpl extends React.Component<AppProps, AppState> {
         this.applyQueryFlags(user, loadedMaps, fetched);
         this.loadedUser = user;
         this.props.dispatchSetUser(user);
+
+        const prefs = await authClient.userPreferencesAsync();
+        if (prefs) this.props.dispatchSetUserPreferences(prefs);
     }
 
     protected async cloudSyncCheckAsync() {
@@ -298,6 +301,10 @@ class AppImpl extends React.Component<AppProps, AppState> {
                     this.props.dispatchSetUser(newUser);
                     await saveUserStateAsync(newUser);
                     currentUser = newUser;
+
+                    const prefs = await authClient.userPreferencesAsync();
+                    if (prefs) this.props.dispatchSetUserPreferences(prefs);
+                    await this.syncBadgesAsync();
                 }
 
                 // Tell the editor to send us the cloud status of our projects.
@@ -407,7 +414,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
     }
 
     protected onStoreChange = async () => {
-        const { user, maps, pageSourceUrl, pageSourceStatus } = store.getState();
+        const { user } = store.getState();
 
         if (user !== this.loadedUser && (!this.loadedUser || user.id === this.loadedUser.id)) {
             // To avoid a race condition where we save to local user's state to the cloud user
@@ -419,6 +426,12 @@ class AppImpl extends React.Component<AppProps, AppState> {
                 this.loadedUser = user;
             }
         }
+
+        await this.syncBadgesAsync();
+    }
+
+    protected  async syncBadgesAsync() {
+        const { user, maps, pageSourceUrl, pageSourceStatus } = store.getState();
 
         if (this.props.signedIn && this.state.cloudSyncCheckHasFinished && pageSourceStatus === "approved") {
             let allBadges: pxt.auth.Badge[] = [];
