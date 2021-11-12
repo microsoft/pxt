@@ -476,6 +476,7 @@ async function syncAsyncInternal(opts: SyncAsyncOptions): Promise<pxt.workspace.
 
         data.invalidate("headers:");
 
+        console.log("id sync finished", localCloudHeaders)
         return U.values(localHeaderChanges);
     }
     catch (e) {
@@ -523,7 +524,9 @@ export async function saveLocalProjectsToCloudAsync(headerIds: string[]) {
             guidMap[h.id] = newHeader.id;
             newHeaders.push(newHeader);
         }
+        console.log("save local projects syncasync")
         await syncAsync({ hdrs: newHeaders, direction: "up" });
+        console.log("syncasync complete")
         return guidMap;
     }
     return undefined;

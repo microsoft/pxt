@@ -157,14 +157,21 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
         if (this.state.frameState === "opening-project") this.setState({ loadPercent: Math.min((this.state.loadPercent || 0) + 4, 95) });
 
         if (data.type === "pxteditor" && data.id && this.pendingMessages[data.id]) {
+            console.log("pxteditor response", data)
             const pending = this.pendingMessages[data.id];
+            console.log(pending.handler)
             pending.handler(data);
+            console.log("sent response")
             delete this.pendingMessages[data.id];
             return;
         }
 
         switch (data.action) {
             case "newproject":
+                if (!this.state.workspaceReady) {
+                    this.setState({ workspaceReady: true });
+                    this.sendMessageAsync({});
+                }
                 if (this.state.frameState === "loading") {
                     this.setState({ frameState: "no-project" });
                 }
@@ -191,11 +198,12 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
                     original: message,
                     handler: resolve
                 };
+                console.log("post message", message)
                 this.ref!.contentWindow!.postMessage(message, "*");
             }
 
             if (this.ref) {
-                if (!this.ref.contentWindow) {
+                if (!this.state.workspaceReady) {
                     this.messageQueue.push(message);
                 }
                 else {

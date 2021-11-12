@@ -240,11 +240,13 @@ class AppImpl extends React.Component<AppProps, AppState> {
                 let currentUser = await getUserStateAsync();
                 let headerIds = getFlattenedHeaderIds(localUser, state.pageSourceUrl, currentUser);
                 // Tell the editor to transfer local skillmap projects to the cloud.
+                console.log("awaiting headerids")
                 const headerMap = (await res.sendMessageAsync!({
                     type: "pxteditor",
                     action: "savelocalprojectstocloud",
                     headerIds
                 } as pxt.editor.EditorMessageSaveLocalProjectsToCloud)).resp.headerIdMap;
+                console.log("got headerids", headerMap)
                 if (headerMap) {
                     const newUser: UserState = {
                         ...currentUser,

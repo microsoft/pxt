@@ -583,11 +583,13 @@ namespace pxt.editor {
                                 }
                                 case "savelocalprojectstocloud": {
                                     const msg = data as EditorMessageSaveLocalProjectsToCloud;
+                                    console.log("received savelocalprojects msg")
                                     return projectView.saveLocalProjectsToCloudAsync(msg.headerIds)
                                         .then(guidMap => {
                                             resp = <EditorMessageSaveLocalProjectsToCloudResponse>{
                                                 headerIdMap: guidMap
                                             };
+                                            console.log("editorcontroller resp", resp)
                                         })
                                 }
                                 case "requestprojectcloudstatus": {
