@@ -32,7 +32,7 @@ interface MakeCodeFrameProps {
     dispatchSetShareStatus: (headerId?: string, url?: string) => void;
     dispatchShowLoginPrompt: () => void;
     dispatchSetCloudStatus: (headerId: string, status: string) => void;
-    onFrameLoaded: (sendMessageAsync: (message: any) => Promise<any>) => void;
+    onWorkspaceReady: (sendMessageAsync: (message: any) => Promise<any>) => void;
 }
 
 type FrameState = "loading" | "no-project" | "opening-project" | "project-open" | "closing-project";
@@ -143,8 +143,6 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
 
             const root = document.getElementById("root");
             if (root) pxt.BrowserUtils.addClass(root, "editor");
-
-            this.props.onFrameLoaded((message) => this.sendMessageAsync(message));
         }
     }
 
@@ -165,6 +163,10 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
 
         switch (data.action) {
             case "newproject":
+                if (!this.state.workspaceReady) {
+                    this.setState({ workspaceReady: true });
+                    this.props.onWorkspaceReady((message) => this.sendMessageAsync(message));
+                }
                 if (this.state.frameState === "loading") {
                     this.setState({ frameState: "no-project" });
                 }
@@ -195,7 +197,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
             }
 
             if (this.ref) {
-                if (!this.ref.contentWindow) {
+                if (!this.state.workspaceReady) {
                     this.messageQueue.push(message);
                 }
                 else {
