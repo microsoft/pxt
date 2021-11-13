@@ -27,8 +27,7 @@
     display: none;
 }
 
-.makecode-frame-loader img,
-.makecode-skillmap-loader  {
+.makecode-frame-loader img {
     max-width: 200px;
     vertical-align: middle;
 
