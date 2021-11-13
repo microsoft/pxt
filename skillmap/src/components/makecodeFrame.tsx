@@ -165,6 +165,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
             case "newproject":
                 if (!this.state.workspaceReady) {
                     this.setState({ workspaceReady: true });
+                    this.sendMessageAsync(); // Flush message queue
                     this.props.onWorkspaceReady((message) => this.sendMessageAsync(message));
                 }
                 if (this.state.frameState === "loading") {
@@ -184,7 +185,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
         }
     }
 
-    protected sendMessageAsync(message: any) {
+    protected sendMessageAsync(message?: any) {
         return new Promise(resolve => {
             const sendMessageCore = (message: any) => {
                 message.response = true;
@@ -204,7 +205,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
                     while (this.messageQueue.length) {
                         sendMessageCore(this.messageQueue.shift());
                     }
-                    sendMessageCore(message);
+                    if (message) sendMessageCore(message);
                 }
             }
         });
