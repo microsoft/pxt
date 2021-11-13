@@ -358,7 +358,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
         const maps = Object.keys(skillMaps).map((id: string) => skillMaps[id]);
         return (<div className={`app-container ${pxt.appTarget.id}`}>
                 <HeaderBar />
-                {syncingLocalState &&<div className={"makecode-frame-loader"}>
+                {syncingLocalState && <div className={"makecode-frame-loader"}>
                     <img src={resolvePath("assets/logo.svg")} alt={lf("MakeCode Logo")} />
                 <div className="makecode-frame-loader-text">{lf("Saving to cloud...")}</div>
                 </div>}
