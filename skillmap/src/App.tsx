@@ -235,7 +235,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
     protected async cloudSyncCheckAsync() {
         const res = await this.ready();
         if (!await authClient.loggedInAsync()) {
-            this.setState({cloudSyncCheckHasFinished: true});
+            this.setState({cloudSyncCheckHasFinished: true, syncingLocalState: false});
         } else {
             this.setState({syncingLocalState: true});
             const doCloudSyncCheckAsync = async () => {
@@ -433,7 +433,8 @@ class AppImpl extends React.Component<AppProps, AppState> {
             }
         }
 
-        if (!this.props.signedIn || (this.props.signedIn && this.state.cloudSyncCheckHasFinished)) {
+        if ((!this.props.signedIn || (this.props.signedIn && this.state.cloudSyncCheckHasFinished))
+            && this.state.syncingLocalState) {
             this.setState({ syncingLocalState: false });
         }
 
