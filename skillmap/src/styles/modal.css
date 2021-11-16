@@ -40,6 +40,7 @@
     font-weight: 600;
     padding: 1.25rem 1.5rem;
     border-bottom: 1px solid rgba(34,36,38,.15);
+    flex-shrink: 0;
 }
 
 .fullscreen>.modal>.modal-header {
@@ -76,7 +77,6 @@
     flex-grow: 1;
     background-color: var(--body-background-color);
     padding: 1rem;
-    min-height: unset;
     max-height: unset;
 }
 

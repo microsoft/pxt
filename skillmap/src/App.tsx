@@ -30,7 +30,7 @@ import { InfoPanel } from './components/InfoPanel';
 
 import { parseSkillMap } from './lib/skillMapParser';
 import { parseHash, getMarkdownAsync, MarkdownSource, parseQuery,
-    setPageTitle, setPageSourceUrl, ParsedHash } from './lib/browserUtils';
+    setPageTitle, setPageSourceUrl, ParsedHash, resolvePath } from './lib/browserUtils';
 
 import { MakeCodeFrame } from './components/makecodeFrame';
 import { getLocalUserStateAsync, getUserStateAsync, saveUserStateAsync } from './lib/workspaceProvider';
@@ -70,6 +70,7 @@ interface AppState {
     error?: string;
     cloudSyncCheckHasFinished: boolean;
     badgeSyncLock: boolean;
+    syncingLocalState?: boolean;
 }
 
 class AppImpl extends React.Component<AppProps, AppState> {
@@ -226,13 +227,17 @@ class AppImpl extends React.Component<AppProps, AppState> {
         this.applyQueryFlags(user, loadedMaps, fetched);
         this.loadedUser = user;
         this.props.dispatchSetUser(user);
+
+        const prefs = await authClient.userPreferencesAsync();
+        if (prefs) this.props.dispatchSetUserPreferences(prefs);
     }
 
     protected async cloudSyncCheckAsync() {
         const res = await this.ready();
         if (!await authClient.loggedInAsync()) {
-            this.setState({cloudSyncCheckHasFinished: true});
+            this.setState({cloudSyncCheckHasFinished: true, syncingLocalState: false});
         } else {
+            this.setState({syncingLocalState: true});
             const doCloudSyncCheckAsync = async () => {
                 const state = store.getState();
                 const localUser = await getLocalUserStateAsync();
@@ -298,6 +303,10 @@ class AppImpl extends React.Component<AppProps, AppState> {
                     this.props.dispatchSetUser(newUser);
                     await saveUserStateAsync(newUser);
                     currentUser = newUser;
+
+                    const prefs = await authClient.userPreferencesAsync();
+                    if (prefs) this.props.dispatchSetUserPreferences(prefs);
+                    await this.syncBadgesAsync();
                 }
 
                 // Tell the editor to send us the cloud status of our projects.
@@ -306,14 +315,14 @@ class AppImpl extends React.Component<AppProps, AppState> {
                     action: "requestprojectcloudstatus",
                     headerIds: getFlattenedHeaderIds(currentUser, state.pageSourceUrl)
                 } as pxt.editor.EditorMessageRequestProjectCloudStatus);
-                this.setState({cloudSyncCheckHasFinished: true});
+                this.setState({cloudSyncCheckHasFinished: true, syncingLocalState: false});
             }
             // Timeout if cloud sync check doesn't complete in a reasonable timeframe.
             const TIMEOUT_MS = 10 * 1000;
             await Promise.race([
                 pxt.U.delay(TIMEOUT_MS).then(() => {
                     if (!this.state.cloudSyncCheckHasFinished)
-                        this.setState({cloudSyncCheckHasFinished: true});
+                        this.setState({cloudSyncCheckHasFinished: true, syncingLocalState: false});
                 }),
                 doCloudSyncCheckAsync()]);
         }
@@ -345,18 +354,22 @@ class AppImpl extends React.Component<AppProps, AppState> {
 
     render() {
         const { skillMaps, activityOpen, backgroundImageUrl, theme } = this.props;
-        const { error } = this.state;
+        const { error, syncingLocalState } = this.state;
         const maps = Object.keys(skillMaps).map((id: string) => skillMaps[id]);
         return (<div className={`app-container ${pxt.appTarget.id}`}>
                 <HeaderBar />
-                    <div className={`skill-map-container ${activityOpen ? "hidden" : ""}`} style={{ backgroundColor: theme.backgroundColor }}>
-                        { error
-                            ? <div className="skill-map-error">{error}</div>
-                            : <SkillGraphContainer maps={maps} backgroundImageUrl={backgroundImageUrl} />
-                        }
-                        { !error && <InfoPanel />}
-                    </div>
-                    <MakeCodeFrame onFrameLoaded={this.onMakeCodeFrameLoaded}/>
+                {syncingLocalState && <div className={"makecode-frame-loader"}>
+                    <img src={resolvePath("assets/logo.svg")} alt={lf("MakeCode Logo")} />
+                <div className="makecode-frame-loader-text">{lf("Saving to cloud...")}</div>
+                </div>}
+                <div className={`skill-map-container ${activityOpen ? "hidden" : ""}`} style={{ backgroundColor: theme.backgroundColor }}>
+                    { error
+                        ? <div className="skill-map-error">{error}</div>
+                        : <SkillGraphContainer maps={maps} backgroundImageUrl={backgroundImageUrl} />
+                    }
+                    { !error && <InfoPanel />}
+                </div>
+                <MakeCodeFrame onWorkspaceReady={this.onMakeCodeFrameLoaded}/>
                 <AppModal />
                 <UserProfile />
             </div>);
@@ -407,7 +420,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
     }
 
     protected onStoreChange = async () => {
-        const { user, maps, pageSourceUrl, pageSourceStatus } = store.getState();
+        const { user } = store.getState();
 
         if (user !== this.loadedUser && (!this.loadedUser || user.id === this.loadedUser.id)) {
             // To avoid a race condition where we save to local user's state to the cloud user
@@ -419,6 +432,17 @@ class AppImpl extends React.Component<AppProps, AppState> {
                 this.loadedUser = user;
             }
         }
+
+        if ((!this.props.signedIn || (this.props.signedIn && this.state.cloudSyncCheckHasFinished))
+            && this.state.syncingLocalState) {
+            this.setState({ syncingLocalState: false });
+        }
+
+        await this.syncBadgesAsync();
+    }
+
+    protected  async syncBadgesAsync() {
+        const { user, maps, pageSourceUrl, pageSourceStatus } = store.getState();
 
         if (this.props.signedIn && this.state.cloudSyncCheckHasFinished && pageSourceStatus === "approved") {
             let allBadges: pxt.auth.Badge[] = [];

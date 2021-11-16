@@ -41,7 +41,7 @@ export const badgeDescription = (badge: pxt.auth.Badge) => {
     switch (badge.type) {
         case "skillmap-completion":
             return <span>{jsxLF(
-                lf("Completing the {0}"),
+                lf("Completing {0}"),
                 <a target="_blank" rel="noopener noreferrer" href={sourceURLToSkillmapURL(badge.sourceURL)}>{pxt.U.rlf(badge.title)}</a>
             )}</span>
     }
@@ -53,7 +53,7 @@ function sourceURLToSkillmapURL(sourceURL: string) {
         const path = sourceURL.split("/api/md/")[1];
         // remove the target from the url
         const docsPath = path.split("/").slice(1).join("/");
-        return pxt.webConfig.skillmapUrl + "#docs:" + docsPath;
+        return pxt.webConfig?.skillmapUrl + "#docs:" + docsPath;
     }
     else {
         // github url: /user/repo#filename
