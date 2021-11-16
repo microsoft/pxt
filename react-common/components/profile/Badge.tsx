@@ -15,16 +15,18 @@ export const Badge = (props: BadgeProps) => {
         onClick(badge);
     })
 
+    const image = (disabled && badge.lockedImage) || badge.image;
+    const alt = disabled ? pxt.U.lf("Locked '{0}' badge", badge.title) : badge.title;
+
     return (
-        <div className={`profile-badge ${disabled ? "disabled" : ""} ${onClick ? "clickable" : ""}`}
+        <div className={`profile-badge ${onClick ? "clickable" : ""}`}
             role={onClick ? "button" : undefined}
             tabIndex={onClick ? 0 : undefined}
             title={lf("{0} Badge", badge.title)}
             onClick={onBadgeClick}
             onKeyDown={fireClickOnEnter}>
             {isNew && <div className="profile-badge-notification">{pxt.U.lf("New!")}</div>}
-            <img src={badge.image} alt={badge.title} />
-            {disabled && <i className="ui huge icon lock" />}
+            <img src={image} alt={alt} />
         </div>
     );
 }
