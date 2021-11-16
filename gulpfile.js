@@ -602,6 +602,10 @@ const copySkillmapHtml = () => rimraf("webapp/public/skillmap.html")
 
 const skillmap = gulp.series(cleanSkillmap, buildSkillmap, gulp.series(copySkillmapCss, copySkillmapJs, copySkillmapHtml));
 
+const buildSkillmapTests = () => compileTsProject("skillmap/tests", "built/tests");
+const runSkillmapTests = () => exec("./node_modules/.bin/mocha ./built/tests/tests/skillmapParser.spec.js", true)
+
+const testSkillmap = gulp.series(buildSkillmapTests, runSkillmapTests);
 
 /********************************************************
                  Tests and Linting
@@ -652,7 +656,8 @@ const testAll = gulp.series(
     testpytraces,
     testtutorials,
     testlanguageservice,
-    karma
+    karma,
+    testSkillmap
 )
 
 function testTask(testFolder, testFile) {
@@ -723,6 +728,7 @@ exports.webapp = gulp.series(
     browserifyWebapp
 )
 
+exports.skillmapTest = testSkillmap;
 exports.updatestrings = updatestrings;
 exports.updateblockly = copyBlockly;
 exports.lint = lint
