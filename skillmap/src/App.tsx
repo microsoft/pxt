@@ -70,7 +70,6 @@ interface AppState {
     error?: string;
     cloudSyncCheckHasFinished: boolean;
     badgeSyncLock: boolean;
-    syncingLocalState?: boolean;
     showingSyncLoader?: boolean;
 }
 
@@ -236,9 +235,8 @@ class AppImpl extends React.Component<AppProps, AppState> {
     protected async cloudSyncCheckAsync() {
         const res = await this.ready();
         if (!await authClient.loggedInAsync()) {
-            this.setState({cloudSyncCheckHasFinished: true, syncingLocalState: false});
+            this.setState({cloudSyncCheckHasFinished: true});
         } else {
-            this.setState({syncingLocalState: true});
             const doCloudSyncCheckAsync = async () => {
                 const state = store.getState();
                 const localUser = await getLocalUserStateAsync();
@@ -316,14 +314,14 @@ class AppImpl extends React.Component<AppProps, AppState> {
                     action: "requestprojectcloudstatus",
                     headerIds: getFlattenedHeaderIds(currentUser, state.pageSourceUrl)
                 } as pxt.editor.EditorMessageRequestProjectCloudStatus);
-                this.setState({ cloudSyncCheckHasFinished: true, syncingLocalState: false, showingSyncLoader: false });
+                this.setState({ cloudSyncCheckHasFinished: true, showingSyncLoader: false });
             }
             // Timeout if cloud sync check doesn't complete in a reasonable timeframe.
             const TIMEOUT_MS = 10 * 1000;
             await Promise.race([
                 pxt.U.delay(TIMEOUT_MS).then(() => {
                     if (!this.state.cloudSyncCheckHasFinished)
-                        this.setState({ cloudSyncCheckHasFinished: true, syncingLocalState: false, showingSyncLoader: false });
+                        this.setState({ cloudSyncCheckHasFinished: true, showingSyncLoader: false });
                 }),
                 doCloudSyncCheckAsync()]);
         }
@@ -436,11 +434,6 @@ class AppImpl extends React.Component<AppProps, AppState> {
                 await saveUserStateAsync(user);
                 this.loadedUser = user;
             }
-        }
-
-        if ((!this.props.signedIn || (this.props.signedIn && this.state.cloudSyncCheckHasFinished))
-            && this.state.syncingLocalState) {
-            this.setState({ syncingLocalState: false });
         }
 
         await this.syncBadgesAsync();
