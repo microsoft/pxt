@@ -1165,6 +1165,7 @@ declare namespace pxt.auth {
         type: BadgeType;
         title: string;
         image: string;
+        lockedImage?: string;
         timestamp?: number;
     }
 
