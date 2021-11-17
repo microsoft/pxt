@@ -178,11 +178,6 @@
 }
 
 
-.profile-badge.disabled img {
-    filter: grayscale(1);
-    opacity: 0.5;
-}
-
 .profile-badge.disabled i.ui.icon {
     line-height: 1;
     vertical-align: middle;
@@ -280,6 +275,7 @@
     margin-right: 0;
     text-align: center;
     color: var(--header-text-color);
+    overflow: hidden;
 }
 
 .profile-initials-portrait {
