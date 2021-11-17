@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 
 import store from "./store/store";
 import * as authClient from "./lib/authClient";
-import { getCompletedBadges, getFlattenedHeaderIds, hasUrlBeenStarted } from "./lib/skillMapUtils";
+import { getCompletedBadges, getFlattenedHeaderIds, hasUrlBeenStarted, isRewardNode } from "./lib/skillMapUtils";
 
 import {
     dispatchAddSkillMap,
@@ -281,6 +281,10 @@ class AppImpl extends React.Component<AppProps, AppState> {
                                         activityState[activity] = {
                                             ...localActivity,
                                             headerId: headerMap[localActivity.headerId] || localActivity.headerId
+                                        };
+                                    } else if (isRewardNode(state.maps[map].activities[activity])) {
+                                        activityState[activity] = {
+                                            ...localActivity
                                         };
                                     }
                                 }
