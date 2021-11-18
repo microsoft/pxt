@@ -3,6 +3,8 @@ import { connect } from "react-redux";
 import { SkillMapState } from "../store/reducer";
 import * as authClient from "../lib/authClient";
 import { Profile} from "react-common/profile/Profile";
+import { CheckboxStatus} from "react-common/Checkbox";
+import { infoNotification, errorNotification } from "../lib/core"
 
 import { Modal } from './Modal';
 
@@ -20,12 +22,15 @@ interface UserProfileProps {
 interface UserProfileState {
     notification?: pxt.ProfileNotification;
     modal?: DialogOptions;
+    emailSelected: CheckboxStatus;
 }
 
 export class UserProfileImpl extends React.Component<UserProfileProps, UserProfileState> {
     constructor(props: UserProfileProps) {
         super(props);
-        this.state = {};
+        this.state = {
+            emailSelected: props.preferences?.email ? CheckboxStatus.Selected: CheckboxStatus.Unselected
+        };
 
         pxt.targetConfigAsync()
             .then(config => this.setState({ notification: config.profileNotification }));
@@ -43,7 +48,7 @@ export class UserProfileImpl extends React.Component<UserProfileProps, UserProfi
 
     renderUserProfile = () => {
         const { profile, preferences } = this.props;
-        const { notification, modal } = this.state;
+        const { notification, modal, emailSelected } = this.state;
 
         return <Modal title={profile?.idp?.displayName || ""} fullscreen={true} onClose={this.handleOnClose}>
                 <Profile
@@ -51,7 +56,9 @@ export class UserProfileImpl extends React.Component<UserProfileProps, UserProfi
                     signOut={this.handleSignout}
                     deleteProfile={this.handleDeleteAccountClick}
                     notification={notification}
-                    showModalAsync={this.showModalAsync} />
+                    showModalAsync={this.showModalAsync}
+                    checkedEmail={emailSelected}
+                    onClickedEmail={this.handleEmailClick} />
 
                 {modal &&
                     <Modal title={modal.header} onClose={this.closeModal} className={modal.className}>
@@ -138,6 +145,22 @@ export class UserProfileImpl extends React.Component<UserProfileProps, UserProfi
 
     handleDeleteAccountClick = async () => {
         this.props.dispatchShowDeleteAccountModal();
+    }
+
+    onEmailPrefUpdateComplete = (success: boolean, pref: pxt.auth.UserPreferences) => {
+        if (success) {
+            infoNotification(lf("Settings saved"))
+            this.setState({emailSelected: pref.email ? CheckboxStatus.Selected : CheckboxStatus.Unselected})
+        } else {
+            errorNotification(lf("Oops, something went wrong"))
+            const localPref = this.props.preferences;
+            this.setState({emailSelected: localPref?.email ? CheckboxStatus.Selected: CheckboxStatus.Unselected})
+        }
+    }
+
+    handleEmailClick = (isClicked: boolean) => {
+        this.setState({ emailSelected: CheckboxStatus.Waiting })
+        authClient.setEmailPrefAsync(isClicked, this.onEmailPrefUpdateComplete);
     }
 
     showModalAsync = async (options: DialogOptions) => {

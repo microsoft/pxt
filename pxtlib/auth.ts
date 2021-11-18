@@ -61,13 +61,15 @@ namespace pxt.auth {
         reader?: string;
         skillmap?: UserSkillmapState;
         badges?: UserBadgeState;
+        email?: boolean;
     };
 
     export const DEFAULT_USER_PREFERENCES: () => UserPreferences = () => ({
         highContrast: false,
         language: pxt.appTarget.appTheme.defaultLocale,
         reader: "",
-        skillmap: {mapProgress: {}, completedTags: {}}
+        skillmap: {mapProgress: {}, completedTags: {}},
+        email: false
     });
 
     /**
@@ -307,7 +309,7 @@ namespace pxt.auth {
 
         private prefPatchOps: ts.pxtc.jsonPatch.PatchOperation[] = [];
 
-        public async patchUserPreferencesAsync(ops: ts.pxtc.jsonPatch.PatchOperation | ts.pxtc.jsonPatch.PatchOperation[], immediate = false) {
+        public async patchUserPreferencesAsync(ops: ts.pxtc.jsonPatch.PatchOperation | ts.pxtc.jsonPatch.PatchOperation[], immediate = false, callback?: (success: boolean, pref: UserPreferences) => void) {
             ops = Array.isArray(ops) ? ops : [ops];
             ops = ops.filter(op => !!op);
             if (!ops.length) { return; }
@@ -346,6 +348,9 @@ namespace pxt.auth {
                     this.setUserPreferencesAsync(result.resp);
                 } else {
                     pxt.reportError("identity", "update preferences failed", result as any);
+                }
+                if (callback) {
+                    callback(result.success, result.resp)
                 }
             }
             if (immediate) {
