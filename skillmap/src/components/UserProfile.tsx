@@ -147,20 +147,17 @@ export class UserProfileImpl extends React.Component<UserProfileProps, UserProfi
         this.props.dispatchShowDeleteAccountModal();
     }
 
-    onEmailPrefUpdateComplete = (success: boolean, pref: pxt.auth.UserPreferences) => {
-        if (success) {
-            infoNotification(lf("Settings saved"))
-            this.setState({ emailSelected: pref.email ? CheckboxStatus.Selected : CheckboxStatus.Unselected })
-        } else {
-            errorNotification(lf("Oops, something went wrong"))
-            const localPref = this.props.preferences;
-            this.setState({ emailSelected: localPref?.email ? CheckboxStatus.Selected: CheckboxStatus.Unselected })
-        }
-    }
-
-    handleEmailClick = (isClicked: boolean) => {
+    handleEmailClick = (isSelected: boolean) => {
         this.setState({ emailSelected: CheckboxStatus.Waiting })
-        authClient.setEmailPrefAsync(isClicked, this.onEmailPrefUpdateComplete);
+        authClient.setEmailPrefAsync(isSelected).then(setResult => {
+            if (setResult?.success) {
+                infoNotification(lf("Settings saved"))
+                this.setState({ emailSelected: setResult.res?.email ? CheckboxStatus.Selected : CheckboxStatus.Unselected})
+            } else {
+                errorNotification(lf("Oops, something went wrong"))
+                this.setState({ emailSelected: !isSelected ? CheckboxStatus.Selected: CheckboxStatus.Unselected })
+            }
+        })
     }
 
     showModalAsync = async (options: DialogOptions) => {

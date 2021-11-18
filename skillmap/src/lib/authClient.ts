@@ -144,15 +144,15 @@ export async function userPreferencesAsync(): Promise<pxt.auth.UserPreferences |
     }
 }
 
-export async function patchUserPreferencesAsync(ops: ts.pxtc.jsonPatch.PatchOperation | ts.pxtc.jsonPatch.PatchOperation[], immediate = false, callback?: (success: boolean, pref: pxt.auth.UserPreferences) => void): Promise<void> {
+export async function patchUserPreferencesAsync(ops: ts.pxtc.jsonPatch.PatchOperation | ts.pxtc.jsonPatch.PatchOperation[], immediate = false): Promise<pxt.auth.SetPrefResult | undefined> {
     const cli = await clientAsync();
-    await cli?.patchUserPreferencesAsync(ops, immediate, callback);
+    return cli?.patchUserPreferencesAsync(ops, immediate)
 }
 
-export async function setEmailPrefAsync(pref: boolean, callback?: (success: boolean, pref: pxt.auth.UserPreferences) => void) {
-    await patchUserPreferencesAsync({
+export async function setEmailPrefAsync(pref: boolean): Promise<pxt.auth.SetPrefResult | undefined> {
+    return patchUserPreferencesAsync({
         op: 'replace',
         path: ['email'],
         value: pref
-    }, true, callback)
+    }, true)
 }

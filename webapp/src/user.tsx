@@ -64,19 +64,17 @@ export class ProfileDialog extends auth.Component<ProfileDialogProps, ProfileDia
         this.deleteProfileAsync();
     }
 
-    onEmailPrefUpdateComplete = (success: boolean, pref: pxt.auth.UserPreferences) => {
-        if (success) {
-            core.infoNotification(lf("Settings saved"))
-        } else {
-            core.errorNotification(lf("Oops, something went wrong"))
-        }
-
-        this.setState({ emailSelected: pref.email ? CheckboxStatus.Selected : CheckboxStatus.Unselected })
-    }
-
     onEmailCheckClicked = (isSelected: boolean ) => {
-        auth.setEmailPrefAsync(isSelected, this.onEmailPrefUpdateComplete);
         this.setState({ emailSelected: CheckboxStatus.Waiting })
+        auth.setEmailPrefAsync(isSelected).then(setResult => {
+            if (setResult.success) {
+                core.infoNotification(lf("Settings saved"))
+                this.setState({ emailSelected: setResult.res?.email ? CheckboxStatus.Selected : CheckboxStatus.Unselected })
+            } else {
+                core.errorNotification(lf("Oops, something went wrong"))
+                this.setState({ emailSelected: !isSelected ? CheckboxStatus.Selected : CheckboxStatus.Unselected })
+            }
+        })
     }
 
     deleteProfileAsync = async () => {

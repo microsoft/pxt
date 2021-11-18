@@ -52,6 +52,11 @@ namespace pxt.auth {
         badges: Badge[];
     }
 
+    export type SetPrefResult = {
+        success: boolean;
+        res: UserPreferences;
+    }
+
     /**
      * User preference state that should be synced with the cloud.
      */
@@ -307,17 +312,19 @@ namespace pxt.auth {
             return result.success;
         }
 
+        private debounceResult: Promise<boolean>;
+
         private prefPatchOps: ts.pxtc.jsonPatch.PatchOperation[] = [];
 
-        public async patchUserPreferencesAsync(ops: ts.pxtc.jsonPatch.PatchOperation | ts.pxtc.jsonPatch.PatchOperation[], immediate = false, callback?: (success: boolean, pref: UserPreferences) => void) {
+        public async patchUserPreferencesAsync(ops: ts.pxtc.jsonPatch.PatchOperation | ts.pxtc.jsonPatch.PatchOperation[], immediate = false): Promise<SetPrefResult> {
             ops = Array.isArray(ops) ? ops : [ops];
             ops = ops.filter(op => !!op);
-            if (!ops.length) { return; }
             const curPref = await this.userPreferencesAsync();
+            if (!ops.length) { return {success: true, res: curPref} }
             ts.pxtc.jsonPatch.patchInPlace(curPref, ops);
             await this.setUserPreferencesAsync(curPref);
             // If we're not logged in, non-persistent local state is all we'll use
-            if (!await this.loggedInAsync()) { return; }
+            if (!await this.loggedInAsync()) { return {success: false, res: undefined}; }
 
             // If the user is logged in, save to cloud, but debounce the api call as this can be called frequently from skillmaps
 
@@ -349,20 +356,19 @@ namespace pxt.auth {
                 } else {
                     pxt.reportError("identity", "update preferences failed", result as any);
                 }
-                if (callback) {
-                    callback(result.success, result.resp)
-                }
+                return { success: result.success, res: result.resp};
             }
             if (immediate) {
-                await savePrefs();
+                return await savePrefs();
             } else {
                 if (!debouncePreferencesChangedStarted) {
                     debouncePreferencesChangedStarted = U.now();
                 }
                 if (PREFERENCES_DEBOUNCE_MAX_MS < U.now() - debouncePreferencesChangedStarted) {
-                    await savePrefs();
+                    return await savePrefs();
                 } else {
                     debouncePreferencesChangedTimeout = setTimeout(savePrefs, PREFERENCES_DEBOUNCE_MS);
+                    return {success: false, res: undefined}; // This needs to be implemented correctly to return a promise with the debouncer
                 }
             }
         }
