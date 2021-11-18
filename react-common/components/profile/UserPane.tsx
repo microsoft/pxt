@@ -18,6 +18,8 @@ export const UserPane = (props: UserPaneProps) => {
 
     const { username, displayName, picture } = profile.idp;
 
+    const checkboxLabel = "email-optin-label"
+
     return <div className="profile-user-pane">
         <div className="profile-portrait">
             { picture?.dataUrl ?
@@ -40,8 +42,8 @@ export const UserPane = (props: UserPaneProps) => {
         { notification && <UserNotification notification={notification}/> }
         <div className="profile-spacer"></div>
         <div className="profile-email">
-            <Checkbox isChecked={emailChecked} onClick={onEmailCheckClick}/>
-            <div>
+            <Checkbox isChecked={emailChecked} onClick={onEmailCheckClick} label={checkboxLabel}/>
+            <div className={checkboxLabel}>
                 {lf("I would like to receive the MakeCode newsletter. ")}
                 <a href="https://makecode.com/privacy" target="_blank" rel="noopener noreferrer">{lf("View Privacy Statement")}</a>
             </div>
