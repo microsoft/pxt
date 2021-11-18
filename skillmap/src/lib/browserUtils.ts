@@ -103,6 +103,7 @@ async function fetchSkillmapFromDocs(path: string): Promise<MarkdownFetchResult 
  * will just be the path. For github, it will be githubUser/reponame#path/to/skillmap.md
  */
 async function fetchSkillMapFromGithub(path: string): Promise<MarkdownFetchResult | undefined> {
+    fetchSkillmapFromDocs(path);
     const ghid = pxt.github.parseRepoId(path)
     const config = await pxt.packagesConfigAsync() || {};
 
@@ -149,6 +150,7 @@ async function fetchSkillMapFromGithub(path: string): Promise<MarkdownFetchResul
 }
 
 async function fetchSkillMapFromLocal(path: string): Promise<MarkdownFetchResult | undefined> {
+    fetchSkillmapFromDocs(path);
     if (isLocal()) {
         path = path.replace(/^\//, "").replace(/\.md$/, "");
         let res = await fetch("docs/" + path + ".md");
