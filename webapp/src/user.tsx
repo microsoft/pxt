@@ -71,12 +71,12 @@ export class ProfileDialog extends auth.Component<ProfileDialogProps, ProfileDia
             core.errorNotification(lf("Oops, something went wrong"))
         }
 
-        this.setState({emailSelected: pref.email ? CheckboxStatus.Selected : CheckboxStatus.Unselected})
+        this.setState({ emailSelected: pref.email ? CheckboxStatus.Selected : CheckboxStatus.Unselected })
     }
 
     onEmailCheckClicked = (isSelected: boolean ) => {
         auth.setEmailPrefAsync(isSelected, this.onEmailPrefUpdateComplete);
-        this.setState({emailSelected: CheckboxStatus.Waiting})
+        this.setState({ emailSelected: CheckboxStatus.Waiting })
     }
 
     deleteProfileAsync = async () => {
@@ -114,7 +114,7 @@ export class ProfileDialog extends auth.Component<ProfileDialogProps, ProfileDia
         const github = cloudsync.githubProvider();
         const ghUser = github.user();
 
-        const {emailSelected} = this.state;
+        const { emailSelected } = this.state;
 
         return (
             <sui.Modal isOpen={this.state.visible} className="ui profiledialog" size="fullscreen"

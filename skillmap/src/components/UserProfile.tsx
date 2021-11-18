@@ -4,7 +4,7 @@ import { SkillMapState } from "../store/reducer";
 import * as authClient from "../lib/authClient";
 import { Profile} from "react-common/profile/Profile";
 import { CheckboxStatus} from "react-common/Checkbox";
-import { infoNotification, errorNotification } from "../lib/core"
+import { infoNotification, errorNotification } from "../lib/notifications"
 
 import { Modal } from './Modal';
 
@@ -150,11 +150,11 @@ export class UserProfileImpl extends React.Component<UserProfileProps, UserProfi
     onEmailPrefUpdateComplete = (success: boolean, pref: pxt.auth.UserPreferences) => {
         if (success) {
             infoNotification(lf("Settings saved"))
-            this.setState({emailSelected: pref.email ? CheckboxStatus.Selected : CheckboxStatus.Unselected})
+            this.setState({ emailSelected: pref.email ? CheckboxStatus.Selected : CheckboxStatus.Unselected })
         } else {
             errorNotification(lf("Oops, something went wrong"))
             const localPref = this.props.preferences;
-            this.setState({emailSelected: localPref?.email ? CheckboxStatus.Selected: CheckboxStatus.Unselected})
+            this.setState({ emailSelected: localPref?.email ? CheckboxStatus.Selected: CheckboxStatus.Unselected })
         }
     }
 

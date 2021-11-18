@@ -43,7 +43,7 @@ export const UserPane = (props: UserPaneProps) => {
             <Checkbox isChecked={emailChecked} onClick={onEmailCheckClick}/>
             <div>
                 {lf("I would like to receive the MakeCode newsletter. ")}
-                <a href="https://makecode.com/privacy" target="_blank">{lf("View Privacy Statement")}</a>
+                <a href="https://makecode.com/privacy" target="_blank" rel="noopener noreferrer">{lf("View Privacy Statement")}</a>
             </div>
         </div>
         <div className="profile-actions">
