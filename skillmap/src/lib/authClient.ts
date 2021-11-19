@@ -83,13 +83,18 @@ export async function logoutAsync(hash: string) {
     return await cli?.logoutAsync(hash);
 }
 
-export async function saveSkillmapStateAsync(state: pxt.auth.UserSkillmapState): Promise<void> {
+export async function saveSkillmapStateAsync(skillmap: pxt.auth.UserSkillmapState): Promise<void> {
     const cli = await clientAsync();
+    const state = store.getState();
+    const page = state.pageSourceUrl;
     await cli?.patchUserPreferencesAsync({
         op: 'replace',
         path: ['skillmap'],
-        value: state
-    }, false);
+        value: skillmap
+    }, {
+        // Protect against stomping the state of other skillmaps. We may not have the most up-to-date state for every skillmap.
+        filter: op => op.path.includes(page)
+    });
 }
 
 export async function grantBadgesAsync(badges: pxt.auth.Badge[], current: pxt.auth.Badge[]): Promise<void> {
@@ -144,15 +149,18 @@ export async function userPreferencesAsync(): Promise<pxt.auth.UserPreferences |
     }
 }
 
-export async function patchUserPreferencesAsync(ops: ts.pxtc.jsonPatch.PatchOperation | ts.pxtc.jsonPatch.PatchOperation[], immediate = false): Promise<pxt.auth.SetPrefResult | undefined> {
+export async function patchUserPreferencesAsync(ops: ts.pxtc.jsonPatch.PatchOperation | ts.pxtc.jsonPatch.PatchOperation[], opts: {
+    immediate?: boolean,
+    filter?: (op: pxtc.jsonPatch.PatchOperation) => boolean
+} = {}): Promise<pxt.auth.SetPrefResult | undefined> {
     const cli = await clientAsync();
-    return cli?.patchUserPreferencesAsync(ops, immediate)
+    return await cli?.patchUserPreferencesAsync(ops, opts)
 }
 
 export async function setEmailPrefAsync(pref: boolean): Promise<pxt.auth.SetPrefResult | undefined> {
-    return patchUserPreferencesAsync({
+    return await patchUserPreferencesAsync({
         op: 'replace',
         path: ['email'],
         value: pref
-    }, true)
+    }, { immediate: true })
 }

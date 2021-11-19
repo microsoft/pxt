@@ -203,9 +203,12 @@ export async function deleteProfileAsync(): Promise<void> {
     await cli?.deleteProfileAsync();
 }
 
-export async function patchUserPreferencesAsync(ops: ts.pxtc.jsonPatch.PatchOperation | ts.pxtc.jsonPatch.PatchOperation[], immediate = false): Promise<pxt.auth.SetPrefResult> {
+export async function patchUserPreferencesAsync(ops: ts.pxtc.jsonPatch.PatchOperation | ts.pxtc.jsonPatch.PatchOperation[], opts: {
+    immediate?: boolean,
+    filter?: (op: pxtc.jsonPatch.PatchOperation) => boolean
+} = {}): Promise<pxt.auth.SetPrefResult> {
     const cli = await clientAsync();
-    return cli?.patchUserPreferencesAsync(ops, immediate);
+    return await cli?.patchUserPreferencesAsync(ops, opts);
 }
 
 export async function setHighContrastPrefAsync(highContrast: boolean): Promise<void> {
@@ -221,7 +224,7 @@ export async function setLangaugePrefAsync(lang: string): Promise<void> {
         op: 'replace',
         path: ['language'],
         value: lang
-    }, true); // sync this change immediately, as the page is about to reload.
+    }, { immediate: true }); // sync this change immediately, as the page is about to reload.
 }
 
 export async function setImmersiveReaderPrefAsync(pref: string): Promise<void> {
@@ -233,11 +236,11 @@ export async function setImmersiveReaderPrefAsync(pref: string): Promise<void> {
 }
 
 export async function setEmailPrefAsync(pref: boolean): Promise<pxt.auth.SetPrefResult> {
-    return patchUserPreferencesAsync({
+    return await patchUserPreferencesAsync({
         op: 'replace',
         path: ['email'],
         value: pref
-    }, true)
+    }, { immediate: true })
 }
 
 export async function apiAsync<T = any>(url: string, data?: any, method?: string): Promise<pxt.auth.ApiResult<T>> {
