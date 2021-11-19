@@ -89,7 +89,7 @@ export async function saveSkillmapStateAsync(state: pxt.auth.UserSkillmapState):
         op: 'replace',
         path: ['skillmap'],
         value: state
-    });
+    }, false);
 }
 
 export async function grantBadgesAsync(badges: pxt.auth.Badge[], current: pxt.auth.Badge[]): Promise<void> {
@@ -142,4 +142,17 @@ export async function userPreferencesAsync(): Promise<pxt.auth.UserPreferences |
     if (cli) {
         return await cli.userPreferencesAsync();
     }
+}
+
+export async function patchUserPreferencesAsync(ops: ts.pxtc.jsonPatch.PatchOperation | ts.pxtc.jsonPatch.PatchOperation[], immediate = false): Promise<pxt.auth.SetPrefResult | undefined> {
+    const cli = await clientAsync();
+    return cli?.patchUserPreferencesAsync(ops, immediate)
+}
+
+export async function setEmailPrefAsync(pref: boolean): Promise<pxt.auth.SetPrefResult | undefined> {
+    return patchUserPreferencesAsync({
+        op: 'replace',
+        path: ['email'],
+        value: pref
+    }, true)
 }
