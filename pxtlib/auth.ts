@@ -52,6 +52,11 @@ namespace pxt.auth {
         badges: Badge[];
     }
 
+    export type SetPrefResult = {
+        success: boolean;
+        res: UserPreferences;
+    }
+
     /**
      * User preference state that should be synced with the cloud.
      */
@@ -61,13 +66,15 @@ namespace pxt.auth {
         reader?: string;
         skillmap?: UserSkillmapState;
         badges?: UserBadgeState;
+        email?: boolean;
     };
 
     export const DEFAULT_USER_PREFERENCES: () => UserPreferences = () => ({
         highContrast: false,
         language: pxt.appTarget.appTheme.defaultLocale,
         reader: "",
-        skillmap: {mapProgress: {}, completedTags: {}}
+        skillmap: { mapProgress: {}, completedTags: {} },
+        email: false
     });
 
     /**
@@ -313,10 +320,12 @@ namespace pxt.auth {
         public async patchUserPreferencesAsync(patchOps: ts.pxtc.jsonPatch.PatchOperation | ts.pxtc.jsonPatch.PatchOperation[], opts: {
             immediate?: boolean,                                            // Sync the change with cloud immediately, don't debounce
             filter?: (op: ts.pxtc.jsonPatch.PatchOperation) => boolean      // Filter the final set of patch operations
-        } = {}) {
+        } = {}): Promise<SetPrefResult> {
+            const defaultSuccessAsync = async (): Promise<SetPrefResult> => ({ success: true, res: await this.userPreferencesAsync() });
+
             patchOps = Array.isArray(patchOps) ? patchOps : [patchOps];
             patchOps = patchOps.filter(op => !!op);
-            if (!patchOps.length) { return; }
+            if (!patchOps.length) { return await defaultSuccessAsync(); }
 
             const patchDiff = (pSrc: UserPreferences, ops: ts.pxtc.jsonPatch.PatchOperation[], filter?: (op: ts.pxtc.jsonPatch.PatchOperation) => boolean) => {
                 // Apply patches to pDst and return the diff as a set of new patch ops.
@@ -333,15 +342,15 @@ namespace pxt.auth {
                 // Apply the patch in isolation and get the diff from original
                 const curPref = await this.userPreferencesAsync();
                 const diff = patchDiff(curPref, patchOps, opts.filter);
-                if (!diff.length) { return; }
+                if (!diff.length) { return await defaultSuccessAsync(); }
 
                 // Apply the new diff to the current state
                 ts.pxtc.jsonPatch.patchInPlace(curPref, diff);
                 await this.setUserPreferencesAsync(curPref);
-
-                // If the user is not logged in, non-persistent local state is all we'll use (no sync to cloud)
-                if (!await this.loggedInAsync()) { return; }
             }
+
+            // If the user is not logged in, non-persistent local state is all we'll use (no sync to cloud)
+            if (!await this.loggedInAsync()) { return await defaultSuccessAsync(); }
 
             // If the user is logged in, sync to cloud, but debounce the api call as this can be called frequently from skillmaps
 
@@ -351,13 +360,13 @@ namespace pxt.auth {
             clearTimeout(debouncePreferencesChangedTimeout);
             const syncPrefs = async () => {
                 debouncePreferencesChangedStarted = 0;
-                if (!this.patchQueue.length) { return; }
+                if (!this.patchQueue.length) { return await defaultSuccessAsync(); }
 
                 // Fetch latest prefs from remote
                 const getResult = await this.apiAsync<Partial<UserPreferences>>('/api/user/preferences');
                 if (!getResult.success) {
                     pxt.reportError("identity", "failed to fetch preferences for patch", getResult as any);
-                    return;
+                    return { success: false, res: undefined };
                 }
 
                 // Apply queued patches to the remote state in isolation and develop a final diff to send to the backend
@@ -379,18 +388,20 @@ namespace pxt.auth {
                 } else {
                     pxt.reportError("identity", "failed to patch preferences", patchResult as any);
                 }
+                return { success: patchResult.success, res: patchResult.resp };
             }
 
             if (opts.immediate) {
-                await syncPrefs();
+                return await syncPrefs();
             } else {
                 if (!debouncePreferencesChangedStarted) {
                     debouncePreferencesChangedStarted = U.now();
                 }
                 if (PREFERENCES_DEBOUNCE_MAX_MS < U.now() - debouncePreferencesChangedStarted) {
-                    await syncPrefs();
+                    return await syncPrefs();
                 } else {
                     debouncePreferencesChangedTimeout = setTimeout(syncPrefs, PREFERENCES_DEBOUNCE_MS);
+                    return { success: false, res: undefined }; // This needs to be implemented correctly to return a promise with the debouncer
                 }
             }
         }

@@ -150,6 +150,8 @@ function initWatch() {
         updatestrings,
         gulp.parallel(pxtjs, pxtdts, pxtapp, pxtworker, pxtembed),
         targetjs,
+        reactCommonCss,
+        reactCommon,
         webapp,
         browserifyWebapp,
         browserifyAssetEditor,
@@ -171,6 +173,8 @@ function initWatch() {
     gulp.watch("./pxtwinrt/**/*", gulp.series(pxtwinrt, ...tasks.slice(5)));
     gulp.watch("./cli/**/*", gulp.series(cli, ...tasks.slice(5)));
 
+    gulp.watch("./react-common/styles/**/*.css", gulp.series(reactCommonCss, ...tasks.slice(9)))
+    gulp.watch("./react-common/**/*", gulp.series(reactCommon, ...tasks.slice(10)))
     gulp.watch("./webapp/src/**/*", gulp.series(updatestrings, webapp, browserifyWebapp, browserifyAssetEditor));
 
     gulp.watch(["./theme/**/*.less", "./theme/**/*.overrides", "./theme/**/*.variables", "./svgicons/**/*.svg"], gulp.parallel(buildcss, buildSVGIcons))

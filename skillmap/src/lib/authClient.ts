@@ -148,3 +148,19 @@ export async function userPreferencesAsync(): Promise<pxt.auth.UserPreferences |
         return await cli.userPreferencesAsync();
     }
 }
+
+export async function patchUserPreferencesAsync(ops: ts.pxtc.jsonPatch.PatchOperation | ts.pxtc.jsonPatch.PatchOperation[], opts: {
+    immediate?: boolean,
+    filter?: (op: pxtc.jsonPatch.PatchOperation) => boolean
+} = {}): Promise<pxt.auth.SetPrefResult | undefined> {
+    const cli = await clientAsync();
+    return await cli?.patchUserPreferencesAsync(ops, opts)
+}
+
+export async function setEmailPrefAsync(pref: boolean): Promise<pxt.auth.SetPrefResult | undefined> {
+    return await patchUserPreferencesAsync({
+        op: 'replace',
+        path: ['email'],
+        value: pref
+    }, { immediate: true })
+}

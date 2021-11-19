@@ -206,9 +206,9 @@ export async function deleteProfileAsync(): Promise<void> {
 export async function patchUserPreferencesAsync(ops: ts.pxtc.jsonPatch.PatchOperation | ts.pxtc.jsonPatch.PatchOperation[], opts: {
     immediate?: boolean,
     filter?: (op: pxtc.jsonPatch.PatchOperation) => boolean
-} = {}): Promise<void> {
+} = {}): Promise<pxt.auth.SetPrefResult> {
     const cli = await clientAsync();
-    await cli?.patchUserPreferencesAsync(ops, opts);
+    return await cli?.patchUserPreferencesAsync(ops, opts);
 }
 
 export async function setHighContrastPrefAsync(highContrast: boolean): Promise<void> {
@@ -233,6 +233,14 @@ export async function setImmersiveReaderPrefAsync(pref: string): Promise<void> {
         path: ['reader'],
         value: pref
     });
+}
+
+export async function setEmailPrefAsync(pref: boolean): Promise<pxt.auth.SetPrefResult> {
+    return await patchUserPreferencesAsync({
+        op: 'replace',
+        path: ['email'],
+        value: pref
+    }, { immediate: true })
 }
 
 export async function apiAsync<T = any>(url: string, data?: any, method?: string): Promise<pxt.auth.ApiResult<T>> {

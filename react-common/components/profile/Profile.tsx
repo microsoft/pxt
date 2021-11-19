@@ -4,18 +4,20 @@ import * as React from "react";
 import { BadgeList } from "./BadgeList";
 import { UserPane } from "./UserPane";
 import { BadgeInfo } from "./BadgeInfo";
+import { CheckboxStatus } from "../Checkbox";
 
 export interface ProfileProps {
     user: pxt.auth.State;
     signOut: () => void;
     deleteProfile: () => void;
+    checkedEmail: CheckboxStatus;
+    onClickedEmail: (isChecked: boolean) => void;
     notification?: pxt.ProfileNotification;
     showModalAsync(options: DialogOptions): Promise<void>;
 }
 
 export const Profile = (props: ProfileProps) => {
-    const { user, signOut, deleteProfile, notification, showModalAsync } = props;
-
+    const { user, signOut, deleteProfile, onClickedEmail, notification, checkedEmail, showModalAsync } = props;
     const userProfile = user?.profile || { idp: {} };
     const userBadges = user?.preferences?.badges || { badges: [] };
 
@@ -29,7 +31,8 @@ export const Profile = (props: ProfileProps) => {
     }
 
     return <div className="user-profile">
-        <UserPane profile={userProfile} onSignOutClick={signOut} onDeleteProfileClick={deleteProfile} notification={notification} />
+        <UserPane profile={userProfile} onSignOutClick={signOut} onDeleteProfileClick={deleteProfile} notification={notification}
+                  emailChecked={checkedEmail} onEmailCheckClick={onClickedEmail}/>
         <BadgeList
             availableBadges={pxt.appTarget.defaultBadges || []}
             userState={userBadges}
