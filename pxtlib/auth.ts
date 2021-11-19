@@ -338,16 +338,15 @@ namespace pxt.auth {
             }
 
             // Process incoming patch operations to produce a more fine-grained set of diffs. Incoming patches may be overly destructive
-            {
-                // Apply the patch in isolation and get the diff from original
-                const curPref = await this.userPreferencesAsync();
-                const diff = patchDiff(curPref, patchOps, opts.filter);
-                if (!diff.length) { return await defaultSuccessAsync(); }
 
-                // Apply the new diff to the current state
-                ts.pxtc.jsonPatch.patchInPlace(curPref, diff);
-                await this.setUserPreferencesAsync(curPref);
-            }
+            // Apply the patch in isolation and get the diff from original
+            const curPref = await this.userPreferencesAsync();
+            const diff = patchDiff(curPref, patchOps, opts.filter);
+            if (!diff.length) { return await defaultSuccessAsync(); }
+
+            // Apply the new diff to the current state
+            ts.pxtc.jsonPatch.patchInPlace(curPref, diff);
+            await this.setUserPreferencesAsync(curPref);
 
             // If the user is not logged in, non-persistent local state is all we'll use (no sync to cloud)
             if (!await this.loggedInAsync()) { return await defaultSuccessAsync(); }
