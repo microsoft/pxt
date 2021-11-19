@@ -83,12 +83,17 @@ export async function logoutAsync(hash: string) {
     return await cli?.logoutAsync(hash);
 }
 
-export async function saveSkillmapStateAsync(state: pxt.auth.UserSkillmapState): Promise<void> {
+export async function saveSkillmapStateAsync(skillmap: pxt.auth.UserSkillmapState): Promise<void> {
     const cli = await clientAsync();
+    const state = store.getState();
+    const page = state.pageSourceUrl;
     await cli?.patchUserPreferencesAsync({
         op: 'replace',
         path: ['skillmap'],
-        value: state
+        value: skillmap
+    }, {
+        // Protect against stomping the state of other skillmaps. We may not have the most up-to-date state for every skillmap.
+        filter: op => op.path.includes(page)
     });
 }
 

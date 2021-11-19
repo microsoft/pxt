@@ -305,59 +305,92 @@ namespace pxt.auth {
             return result.success;
         }
 
-        private prefPatchOps: ts.pxtc.jsonPatch.PatchOperation[] = [];
+        private patchQueue: {
+            ops: ts.pxtc.jsonPatch.PatchOperation[];
+            filter?: (op: ts.pxtc.jsonPatch.PatchOperation) => boolean;
+        }[] = [];
 
-        public async patchUserPreferencesAsync(ops: ts.pxtc.jsonPatch.PatchOperation | ts.pxtc.jsonPatch.PatchOperation[], immediate = false) {
-            ops = Array.isArray(ops) ? ops : [ops];
-            ops = ops.filter(op => !!op);
-            if (!ops.length) { return; }
-            const curPref = await this.userPreferencesAsync();
-            ts.pxtc.jsonPatch.patchInPlace(curPref, ops);
-            await this.setUserPreferencesAsync(curPref);
-            // If we're not logged in, non-persistent local state is all we'll use
-            if (!await this.loggedInAsync()) { return; }
+        public async patchUserPreferencesAsync(patchOps: ts.pxtc.jsonPatch.PatchOperation | ts.pxtc.jsonPatch.PatchOperation[], opts: {
+            immediate?: boolean,                                            // Sync the change with cloud immediately, don't debounce
+            filter?: (op: ts.pxtc.jsonPatch.PatchOperation) => boolean      // Filter the final set of patch operations
+        } = {}) {
+            patchOps = Array.isArray(patchOps) ? patchOps : [patchOps];
+            patchOps = patchOps.filter(op => !!op);
+            if (!patchOps.length) { return; }
 
-            // If the user is logged in, save to cloud, but debounce the api call as this can be called frequently from skillmaps
+            const patchDiff = (pSrc: UserPreferences, ops: ts.pxtc.jsonPatch.PatchOperation[], filter?: (op: ts.pxtc.jsonPatch.PatchOperation) => boolean) => {
+                // Apply patches to pDst and return the diff as a set of new patch ops.
+                const pDst = U.deepCopy(pSrc);
+                ts.pxtc.jsonPatch.patchInPlace(pDst, ops);
+                let diff = ts.pxtc.jsonPatch.diff(pSrc, pDst);
+                // Run caller-provided filter
+                if (diff.length && filter) { diff = diff.filter(filter); }
+                return diff;
+            }
 
-            // Replace matching patches in the queue
-            ops.forEach((incoming, iIncoming) => {
-                this.prefPatchOps.some((existing, iExisting) => {
-                    if (!ts.pxtc.jsonPatch.opsAreEqual(existing, incoming)) return false;
-                    // Patches are equivalent, replace in queue
-                    this.prefPatchOps[iExisting] = incoming;
-                    // Clear from incoming so we don't add it below
-                    (ops as ts.pxtc.jsonPatch.PatchOperation[])[iIncoming] = null;
-                    return true;
-                });
-            });
-            // Add remaining ops to the queue
-            ops.filter(op => !!op).forEach(op => this.prefPatchOps.push(op));
+            // Process incoming patch operations to produce a more fine-grained set of diffs. Incoming patches may be overly destructive
+            {
+                // Apply the patch in isolation and get the diff from original
+                const curPref = await this.userPreferencesAsync();
+                const diff = patchDiff(curPref, patchOps, opts.filter);
+                if (!diff.length) { return; }
+
+                // Apply the new diff to the current state
+                ts.pxtc.jsonPatch.patchInPlace(curPref, diff);
+                await this.setUserPreferencesAsync(curPref);
+
+                // If the user is not logged in, non-persistent local state is all we'll use (no sync to cloud)
+                if (!await this.loggedInAsync()) { return; }
+            }
+
+            // If the user is logged in, sync to cloud, but debounce the api call as this can be called frequently from skillmaps
+
+            // Queue the patch for sync with backend
+            this.patchQueue.push({ ops: patchOps, filter: opts.filter });
 
             clearTimeout(debouncePreferencesChangedTimeout);
-            const savePrefs = async () => {
+            const syncPrefs = async () => {
                 debouncePreferencesChangedStarted = 0;
-                // Clear queued patch ops before send.
-                const prefPatchOps = this.prefPatchOps;
-                this.prefPatchOps = [];
-                const result = await this.apiAsync<UserPreferences>('/api/user/preferences', prefPatchOps, 'PATCH');
-                if (result.success) {
-                    pxt.debug("Updating local user preferences w/ cloud data after result of POST")
-                    // Set user profile from returned value so we stay in-sync
-                    this.setUserPreferencesAsync(result.resp);
+                if (!this.patchQueue.length) { return; }
+
+                // Fetch latest prefs from remote
+                const getResult = await this.apiAsync<Partial<UserPreferences>>('/api/user/preferences');
+                if (!getResult.success) {
+                    pxt.reportError("identity", "failed to fetch preferences for patch", getResult as any);
+                    return;
+                }
+
+                // Apply queued patches to the remote state in isolation and develop a final diff to send to the backend
+                const remotePrefs = U.deepCopy(getResult.resp);
+                const patchQueue = this.patchQueue;
+                this.patchQueue = []; // Reset the queue
+                patchQueue.forEach(patch => {
+                    const diff = patchDiff(remotePrefs, patch.ops, patch.filter);
+                    ts.pxtc.jsonPatch.patchInPlace(remotePrefs, diff);
+                });
+
+                // Diff the original and patched remote states to get a final set of patch operations
+                const finalOps = pxtc.jsonPatch.diff(getResult.resp, remotePrefs);
+
+                const patchResult = await this.apiAsync<UserPreferences>('/api/user/preferences', finalOps, 'PATCH');
+                if (patchResult.success) {
+                    // Set user profile from returned value so we stay in sync
+                    this.setUserPreferencesAsync(patchResult.resp);
                 } else {
-                    pxt.reportError("identity", "update preferences failed", result as any);
+                    pxt.reportError("identity", "failed to patch preferences", patchResult as any);
                 }
             }
-            if (immediate) {
-                await savePrefs();
+
+            if (opts.immediate) {
+                await syncPrefs();
             } else {
                 if (!debouncePreferencesChangedStarted) {
                     debouncePreferencesChangedStarted = U.now();
                 }
                 if (PREFERENCES_DEBOUNCE_MAX_MS < U.now() - debouncePreferencesChangedStarted) {
-                    await savePrefs();
+                    await syncPrefs();
                 } else {
-                    debouncePreferencesChangedTimeout = setTimeout(savePrefs, PREFERENCES_DEBOUNCE_MS);
+                    debouncePreferencesChangedTimeout = setTimeout(syncPrefs, PREFERENCES_DEBOUNCE_MS);
                 }
             }
         }

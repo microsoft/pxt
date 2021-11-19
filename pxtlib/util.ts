@@ -483,6 +483,21 @@ namespace ts.pxtc.Util {
         return r
     }
 
+    export function deepCopy(src: any) {
+        if (typeof src !== "object" || src === null) {
+            return src;
+        }
+
+        const dst = Array.isArray(src) ? [] : {} as any;
+
+        for (const key in src) {
+            const value = src[key];
+            dst[key] = deepCopy(value);
+        }
+
+        return dst;
+    }
+
     export interface ArrayLike<T> {
         [index: number]: T;
         length: number;
