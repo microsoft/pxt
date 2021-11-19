@@ -28,10 +28,10 @@ interface UserProfileState {
 export class UserProfileImpl extends React.Component<UserProfileProps, UserProfileState> {
     constructor(props: UserProfileProps) {
         super(props);
-        this.state = {
-            emailSelected: props.preferences?.email ? CheckboxStatus.Selected: CheckboxStatus.Unselected
-        };
 
+        authClient.userPreferencesAsync().
+            then( pref => this.setState({ emailSelected: pref?.email ? CheckboxStatus.Selected : CheckboxStatus.Unselected })
+        )
         pxt.targetConfigAsync()
             .then(config => this.setState({ notification: config.profileNotification }));
     }
