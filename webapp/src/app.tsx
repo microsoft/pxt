@@ -4296,12 +4296,7 @@ export class ProjectView
     }
 
     setAccessibleBlocks(enabled: boolean) {
-        if (enabled) {
-            Blockly.navigation.enableKeyboardAccessibility();
-        } else {
-            Blockly.navigation.disableKeyboardAccessibility();
-        }
-        this.setState({ accessibleBlocks: enabled });
+        // TODO: Add accessible blocks plugin from Blockly
         pxt.tickEvent("app.accessibleblocks", { on: enabled ? 1 : 0 });
     }
 

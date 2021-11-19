@@ -25,17 +25,11 @@ namespace pxtblockly {
             this.type_ = params.type;
         }
 
-        init() {
-            if (this.fieldGroup_) {
-                // Field has already been initialized once.
+        initView() {
+            if (!this.fieldGroup_) {
                 return;
             }
 
-            // Build the DOM.
-            this.fieldGroup_ = Blockly.utils.dom.createSvgElement('g', {}, null) as SVGGElement;
-            if (!this.visible_) {
-                (this.fieldGroup_ as any).style.display = 'none';
-            }
             // Add an attribute to cassify the type of field.
             if ((this as any).getArgTypes() !== null) {
                 if (this.sourceBlock_.isShadow()) {
@@ -71,18 +65,11 @@ namespace pxtblockly {
                 },
                 this.fieldGroup_) as SVGTextElement;
 
-            this.updateEditable();
-            (this.sourceBlock_ as Blockly.BlockSvg).getSvgRoot().appendChild(this.fieldGroup_);
-
             this.switchToggle(this.state_);
             this.setValue(this.getValue());
 
             // Force a render.
-            this.render_();
-            this.size_.width = 0;
-            (this as any).mouseDownWrapper_ =
-                Blockly.bindEventWithChecks_((this as any).getClickTarget_(), 'mousedown', this,
-                    (this as any).onMouseDown_);
+            this.markDirty();
         }
 
         updateSize_() {
