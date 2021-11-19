@@ -4,6 +4,7 @@ import * as core from "./core";
 import * as auth from "./auth";
 import * as cloudsync from "./cloudsync";
 import { Profile } from "../../react-common/components/profile/Profile";
+import { CheckboxStatus } from "../../react-common/components/Checkbox";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -17,14 +18,17 @@ type ProfileDialogState = {
     visible?: boolean;
     location?: ProfileTab;
     notification?: pxt.ProfileNotification;
+    emailSelected: CheckboxStatus;
 };
 
 export class ProfileDialog extends auth.Component<ProfileDialogProps, ProfileDialogState> {
     constructor(props: ProfileDialogProps) {
         super(props);
+        const pref = auth.userPreferences();
         this.state = {
             visible: props.visible,
             location: 'my-stuff',
+            emailSelected: pref?.email ? CheckboxStatus.Selected : CheckboxStatus.Unselected
         };
 
         pxt.targetConfigAsync().then(config => {
@@ -58,6 +62,19 @@ export class ProfileDialog extends auth.Component<ProfileDialogProps, ProfileDia
     onDeleteProfileClicked = () => {
         pxt.tickEvent("pxt.profile.delete")
         this.deleteProfileAsync();
+    }
+
+    onEmailCheckClicked = (isSelected: boolean ) => {
+        this.setState({ emailSelected: CheckboxStatus.Waiting })
+        auth.setEmailPrefAsync(isSelected).then(setResult => {
+            if (setResult.success) {
+                core.infoNotification(lf("Settings saved"))
+                this.setState({ emailSelected: setResult.res?.email ? CheckboxStatus.Selected : CheckboxStatus.Unselected })
+            } else {
+                core.errorNotification(lf("Oops, something went wrong"))
+                this.setState({ emailSelected: !isSelected ? CheckboxStatus.Selected : CheckboxStatus.Unselected })
+            }
+        })
     }
 
     deleteProfileAsync = async () => {
@@ -95,6 +112,8 @@ export class ProfileDialog extends auth.Component<ProfileDialogProps, ProfileDia
         const github = cloudsync.githubProvider();
         const ghUser = github.user();
 
+        const { emailSelected } = this.state;
+
         return (
             <sui.Modal isOpen={this.state.visible} className="ui profiledialog" size="fullscreen"
                 onClose={this.hide} dimmer={true}
@@ -108,7 +127,9 @@ export class ProfileDialog extends auth.Component<ProfileDialogProps, ProfileDia
                     signOut={this.onLogoutClicked}
                     deleteProfile={this.onDeleteProfileClicked}
                     notification={this.state.notification}
-                    showModalAsync={core.dialogAsync} />
+                    showModalAsync={core.dialogAsync}
+                    onClickedEmail={this.onEmailCheckClicked}
+                    checkedEmail={emailSelected} />
             </sui.Modal>
         );
     }

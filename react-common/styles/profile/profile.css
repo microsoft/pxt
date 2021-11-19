@@ -68,6 +68,15 @@
     flex-grow: 1;
 }
 
+.profile-email {
+    display: flex;
+}
+
+.profile-email .checkbox {
+    cursor: pointer;
+    padding-right: 1rem;
+}
+
 .profile-actions {
     display: flex;
     flex-direction: row;
