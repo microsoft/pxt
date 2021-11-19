@@ -312,8 +312,6 @@ namespace pxt.auth {
             return result.success;
         }
 
-        private debounceResult: Promise<boolean>;
-
         private prefPatchOps: ts.pxtc.jsonPatch.PatchOperation[] = [];
 
         public async patchUserPreferencesAsync(ops: ts.pxtc.jsonPatch.PatchOperation | ts.pxtc.jsonPatch.PatchOperation[], immediate = false): Promise<SetPrefResult> {
@@ -324,7 +322,7 @@ namespace pxt.auth {
             ts.pxtc.jsonPatch.patchInPlace(curPref, ops);
             await this.setUserPreferencesAsync(curPref);
             // If we're not logged in, non-persistent local state is all we'll use
-            if (!await this.loggedInAsync()) { return {success: false, res: undefined}; }
+            if (!await this.loggedInAsync()) { return {success: true, res: curPref}; }
 
             // If the user is logged in, save to cloud, but debounce the api call as this can be called frequently from skillmaps
 
@@ -356,7 +354,7 @@ namespace pxt.auth {
                 } else {
                     pxt.reportError("identity", "update preferences failed", result as any);
                 }
-                return { success: result.success, res: result.resp};
+                return { success: result.success, res: result.resp };
             }
             if (immediate) {
                 return await savePrefs();
