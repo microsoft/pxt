@@ -43,7 +43,7 @@ export const UserPane = (props: UserPaneProps) => {
         <div className="profile-spacer"></div>
         <div className="profile-email">
             <Checkbox isChecked={emailChecked} onClick={onEmailCheckClick} label={checkboxLabel}/>
-            <div className={checkboxLabel}>
+            <div id={checkboxLabel}>
                 {lf("I would like to receive the MakeCode newsletter. ")}
                 <a href="https://makecode.com/privacy" target="_blank" rel="noopener noreferrer">{lf("View Privacy Statement")}</a>
             </div>
