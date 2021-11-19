@@ -18,23 +18,9 @@ namespace pxtblockly {
         protected abstract onValueChanged(newValue: string): string;
 
         init() {
-            if (this.isInitialized()) return;
-
-            // Build the DOM.
-            this.fieldGroup_ = Blockly.utils.dom.createSvgElement('g', {}, null) as SVGGElement;
-            if (!this.visible_) {
-                (this.fieldGroup_ as any).style.display = 'none';
-            }
-
+            super.init();
             this.onInit();
-
-            this.updateEditable();
-            (this.sourceBlock_ as Blockly.BlockSvg).getSvgRoot().appendChild(this.fieldGroup_);
-
-            // Force a render.
-            this.render_();
-            (this as any).mouseDownWrapper_ = Blockly.bindEventWithChecks_((this as any).getClickTarget_(), "mousedown", this, (this as any).onMouseDown_)
-        }
+       }
 
         dispose() {
             this.onDispose();

@@ -115,9 +115,9 @@ namespace pxt.blocks {
 
         // we'll ignore disabled blocks in the final output
 
-        const oldBlocks = oldWs.getAllBlocks().filter(b => b.isEnabled());
+        const oldBlocks = oldWs.getAllBlocks(false).filter(b => b.isEnabled());
         const oldTopBlocks = oldWs.getTopBlocks(false).filter(b => b.isEnabled());
-        const newBlocks = newWs.getAllBlocks().filter(b => b.isEnabled());
+        const newBlocks = newWs.getAllBlocks(false).filter(b => b.isEnabled());
         log(`blocks`, newBlocks.map(b => b.toDevString()));
         log(newBlocks);
 
@@ -143,11 +143,11 @@ namespace pxt.blocks {
         pxt.blocks.domToWorkspaceNoEvents(Blockly.Xml.textToDom(newXml), ws);
 
         // delete disabled blocks from final workspace
-        ws.getAllBlocks().filter(b => !b.isEnabled()).forEach(b => {
+        ws.getAllBlocks(false).filter(b => !b.isEnabled()).forEach(b => {
             log('disabled ', b.toDevString())
             b.dispose(false)
         })
-        const todoBlocks = Util.toDictionary(ws.getAllBlocks(), b => b.id);
+        const todoBlocks = Util.toDictionary(ws.getAllBlocks(false), b => b.id);
         log(`todo blocks`, todoBlocks)
         logTodo('start')
 
@@ -158,7 +158,7 @@ namespace pxt.blocks {
                 done(b);
                 const b2 = cloneIntoDiff(b);
                 done(b2);
-                b2.setDisabled(true);
+                b2.setEnabled(false);
             });
             logTodo('deleted top')
         }
@@ -230,7 +230,7 @@ namespace pxt.blocks {
         logTodo('unmodified')
 
         // if nothing is left in the workspace, we "missed" change
-        if (!ws.getAllBlocks().length) {
+        if (!ws.getAllBlocks(false).length) {
             pxt.tickEvent("blocks.diff", { missed: 1 })
             return {
                 ws,
@@ -267,7 +267,7 @@ namespace pxt.blocks {
         function stitch(b: Blockly.Block) {
             log(`stitching ${b.toDevString()}->${dids[b.id]}`)
             const wb = ws.getBlockById(dids[b.id]);
-            wb.setDisabled(true);
+            wb.setEnabled(false);
             markUsed(wb);
             done(wb);
             // connect previous connection to delted or existing block
@@ -308,7 +308,7 @@ namespace pxt.blocks {
         }
 
         function cloneIntoDiff(b: Blockly.Block): Blockly.Block {
-            const bdom = Blockly.Xml.blockToDom(b, false);
+            const bdom = Blockly.Xml.blockToDom(b, false) as Element;
             const b2 = Blockly.Xml.domToBlock(bdom, ws);
             // disconnect
             if (b2.nextConnection && b2.nextConnection.targetConnection)
@@ -414,7 +414,7 @@ namespace pxt.blocks {
     }
 
     function normalizedDom(b: Blockly.Block, keepChildren?: boolean): string {
-        const dom = Blockly.Xml.blockToDom(b, true);
+        const dom = Blockly.Xml.blockToDom(b, true) as Element;
         normalizeAttributes(dom);
         visDom(dom, (e) => {
             normalizeAttributes(e);
