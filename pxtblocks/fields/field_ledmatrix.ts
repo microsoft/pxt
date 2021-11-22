@@ -258,7 +258,7 @@ namespace pxtblockly {
 
         render_() {
             if (!this.visible_) {
-                this.markDirty();
+                this.size_.width = 0;
                 return;
             }
 

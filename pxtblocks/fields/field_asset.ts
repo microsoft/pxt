@@ -163,11 +163,8 @@ namespace pxtblockly {
 
         getDisplayText_() {
             // This is only used when isGreyBlock is true
-            if (this.isGreyBlock) {
-                const text = pxt.Util.htmlUnescape(this.valueText);
-                return text.substr(0, text.indexOf("(")) + "(...)";
-            }
-            return "";
+            const text = pxt.Util.htmlUnescape(this.valueText);
+            return text.substr(0, text.indexOf("(")) + "(...)";;
         }
 
         updateEditable() {

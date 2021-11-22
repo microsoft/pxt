@@ -83,7 +83,7 @@ function getUsedBlocksInternalAsync(code: string[], id: string, language?: strin
                         pxt.debug(`used blocks xml failed to load\n${blocksXml}`);
                         throw new Error("blocksXml failed to load");
                     }
-                    const allblocks = headless.getAllBlocks(false);
+                    const allblocks = headless.getAllBlocks();
                     snippetBlocks[snippetHash] = {}
                     for (let bi = 0; bi < allblocks.length; ++bi) {
                         const blk = allblocks[bi];
