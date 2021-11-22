@@ -24,9 +24,15 @@ namespace pxtblockly {
             this.type_ = params.type;
         }
 
-        initView() {
-            if (!this.fieldGroup_) {
+        init() {
+            if (this.fieldGroup_) {
+                // Field has already been initialized once.
                 return;
+            }
+            // Build the DOM.
+            this.fieldGroup_ = Blockly.utils.dom.createSvgElement('g', {}, null) as SVGGElement;
+            if (!this.visible_) {
+                (this.fieldGroup_ as any).style.display = 'none';
             }
             // Add an attribute to cassify the type of field.
             if ((this as any).getArgTypes() !== null) {
@@ -112,7 +118,11 @@ namespace pxtblockly {
             this.setValue(this.getValue());
 
             // Force a render.
-            this.markDirty();
+            this.render_();
+            this.size_.width = 0;
+            (this as any).mouseDownWrapper_ =
+                Blockly.bindEventWithChecks_((this as any).getClickTarget_(), 'mousedown', this,
+                    (this as any).onMouseDown_);
         }
 
         getDisplayText_() {

@@ -39,7 +39,14 @@ namespace pxtblockly {
         protected asset: pxt.Animation;
         protected initInterval: number;
 
-        initView() {
+        init() {
+            if (this.fieldGroup_) {
+                // Field has already been initialized once.
+                return;
+            }
+
+            super.init();
+
             // Register mouseover events for animating preview
             (this.sourceBlock_ as Blockly.BlockSvg).getSvgRoot().addEventListener("mouseenter", this.onMouseEnter);
             (this.sourceBlock_ as Blockly.BlockSvg).getSvgRoot().addEventListener("mouseleave", this.onMouseLeave);
