@@ -280,6 +280,24 @@ Tutorials are markdown pages that follow a very specific format. This is so that
 * ``@fullscreen``
 * ``@unplugged``
 
+Tutorial macros begin with the `@` character. These macros will appear as strings along with the other content of the tutorial. Leave the entire string untranslated.
+
+#### Block highlights
+
+The MakeCode markdown format provides "block highlighting" for text. This helps text in tutorial content refer to actual blocks in the Toolbox. When shown in the tutorial content panel, the text is highlighted with the color of the block category it is part of. The format of a block highlight looks like this in Crowdin:
+
+`` ||loops:for|| ``
+
+The first part of the highlight text is the block category, "loops", and the second part after the ":", "for", is the text of the for loop block. Another example is:
+
+`` ||variables:change item by 1|| ``
+
+Here, the block category is "variables" and the rest of the string after ":" is the block text. When you translate, leave the block category "variables" as it is and localize the block text of "change item by 1". The French version of this block highlight might look like:
+
+`` ||variables:modefier item de 1|| ``
+
+When possible, try to make the block text translation closely match the localized text shown for the block in the Toolbox.
+
 ### Block localization guidance
 
 * Do not capitalize words in blocks
