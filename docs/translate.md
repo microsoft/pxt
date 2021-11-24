@@ -119,7 +119,7 @@ Interested in how localization works in MakeCode? Watch this video for an overvi
 
 https://youtu.be/XpdUzpBVKFU
 
-### Languages
+## Languages
 
 On the Crowdin [home page](https://crowdin.com/project/kindscript) are the all of the languages enabled for the MakeCode project. You go here first to choose the language or languages you wish to participate in for translation.
 
@@ -155,9 +155,9 @@ Under each language there are top-level folders for all of the editors (includin
 - [ ] [calliope](https://crowdin.com/project/kindscript/en#/calliope)
 - [ ] [calliopemini](https://crowdin.com/project/kindscript/en#/calliopemini)
 
-### File types
+## Localization files
 
-#### Strings files
+### Strings files
 
 The folder tree contains both **strings** files and **markdown** files for complete document pages. If you haven't heard of the term _strings_ before, strings are text elements which are either individual words or sentences. If you select the top level ``strings.json`` file, a portion of it might contain:
 
@@ -200,7 +200,7 @@ The block strings can include syntax characters and tokens as well as the text t
 
 ![Words only translation example](/static/translation/xlate-words-only.jpg)
 
-#### Documentation pages
+### Content pages
 
 All of the documentation pages are translated. These pages are written in [markdown](https://daringfireball.net/projects/markdown/) and are copied up to Crowdin verbatim, no processing or text extraction. So, in the file folder tree you will see files with names that end with ``.md`` meaning that they are markdown files. The markdown pages support documentation for how-to pages, maker projects, lessons, coding courses, and code block reference...just to name a few.
 
@@ -212,9 +212,9 @@ In this example, a reference page for the **show animation** block is translated
 
 ![Translation example for reference page](/static/translation/md-page.jpg)
 
-### What parts of MakeCode are translated?
+## What parts of MakeCode are translated?
 
-#### MakeCode.com website
+### MakeCode.com website
 
 Not only are the strings and documentation for the various editors translated, the text for the MakeCode.com project website is translated too. Such as the pages for:
 
@@ -227,7 +227,7 @@ Not only are the strings and documentation for the various editors translated, t
 
 Strings found in the rendering code of the MakeCode.com website are placed in  ``webstrings.json``.
 
-#### Common strings and pages
+### Common strings and pages
 
 There are strings that are shared by, and therefore common to, every MakeCode target. There's a top level ``strings.json`` that is used by the webapp that the target editor runs under. These are strings for the base interface elements of the editor. Examples are strings for download actions, editor view buttons, dialog text, and common menu items.
 
@@ -235,7 +235,7 @@ There are strings that are shared by, and therefore common to, every MakeCode ta
 
 A set of base documents that each target editor "inherits" is in the ``core`` folder under ``common-docs``. These mostly document fundamental coding and programming topics that are general for any editor.
 
-#### Target editor strings and pages
+### Target editor strings and pages
 
 Strings for each target are under the target name folder, ``microbit`` for example. Strings which are used for customization of the target editor are in a file called ``target-strings.json``. The other strings files are primarily for the text in the blocks used by the that target. The files are named by the block category followed by ``-strings.json`` and ``-jsdoc-strings.json``. So, text in blocks for the ``radio`` category are found in:
 
@@ -248,7 +248,7 @@ The first file, ``radio-strings.json``, contains strings for the text of the ``r
 
 There's also a ``docs`` folder under each target folder for the all documentation pages specific to that target.
 
-### Translation file summary
+## Translation file summary
 
 The following table provides a quick guide to which parts of MakeCode the translation files and folders relate. The links here are to the [English](https://crowdin.com/project/kindscript/en#) source files just to show you the location of the files in the folder structure. Of course, you will translate in your selected language instead.
 
