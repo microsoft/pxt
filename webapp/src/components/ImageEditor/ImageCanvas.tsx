@@ -19,7 +19,7 @@ const IMAGE_MIME_TYPE = "image/x-mkcd-f4"
 export interface ImageCanvasProps {
     dispatchImageEdit: (state: pxt.sprite.ImageState) => void;
     dispatchChangeZoom: (zoom: number) => void;
-    dispatchChangeCursorLocation: (loc: [number, number]) => void;
+    dispatchChangeCursorLocation: (loc: [number, number, number, number]) => void;
     dispatchChangeImageTool: (tool: ImageEditorTool) => void;
     dispatchChangeSelectedColor: (index: number) => void;
     dispatchChangeBackgroundColor: (index: number) => void;
@@ -63,13 +63,14 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
 
     protected background: HTMLCanvasElement;
     protected floatingLayer: HTMLDivElement;
+    protected nwCorner: HTMLDivElement;
     protected canvasLayers: HTMLCanvasElement[];
     protected cellWidth: number;
     protected colors: Uint8ClampedArray;
 
     protected edit: Edit;
     protected editState: EditState;
-    protected cursorLocation: [number, number];
+    protected cursorLocation: [number, number, number, number];
     protected cursor: ToolCursor | string = ToolCursor.Crosshair;
     protected zoom = 2.5;
     protected panX = 0;
@@ -98,6 +99,10 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
                     return <canvas ref={`paint-surface-${layer.toString()}`} className={`paint-surface overlay ${!this.props.overlayEnabled ? 'hide' : ''}`} key={index} />
                 })}
                 <div ref="floating-layer-border" className="image-editor-floating-layer" />
+                <div ref="floating-layer-nw-corner" className="image-editor-floating-layer-corner"/>
+                <div ref="floating-layer-ne-corner" className="image-editor-floating-layer-corner"/>
+                <div ref="floating-layer-se-corner" className="image-editor-floating-layer-corner"/>
+                <div ref="floating-layer-sw-corner" className="image-editor-floating-layer-corner"/>
             </div>
         </div>
     }
@@ -112,6 +117,7 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
         this.canvas = this.refs["paint-surface"] as HTMLCanvasElement;
         this.background = this.refs["paint-surface-bg"] as HTMLCanvasElement;
         this.floatingLayer = this.refs["floating-layer-border"] as HTMLDivElement;
+        this.nwCorner = this.refs["floating-layer-nw-corner"] as HTMLDivElement;
         this.canvasLayers = overlayLayers.map(layer => this.refs[`paint-surface-${layer.toString()}`] as HTMLCanvasElement);
 
         bindGestureEvents(this.refs["canvas-bounds"] as HTMLDivElement, this);
@@ -421,7 +427,7 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
             const y = Math.floor(((coord.clientY - rect.top) / rect.height) * this.imageHeight);
 
             if (!this.cursorLocation || x !== this.cursorLocation[0] || y !== this.cursorLocation[1]) {
-                this.cursorLocation = [x, y];
+                this.cursorLocation = [x, y, coord.clientX, coord.clientY];
 
                 if (this.hasHover)
                     this.props.dispatchChangeCursorLocation((x < 0 || y < 0 || x >= this.imageWidth || y >= this.imageHeight) ? null : this.cursorLocation);
@@ -435,7 +441,7 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
             return false;
         }
 
-        this.cursorLocation = [0, 0];
+        this.cursorLocation = [0, 0, coord.clientX, coord.clientY];
         return false;
     }
 
@@ -476,7 +482,7 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
                 ? WALL_COLOR
                 : (isRightClick ? backgroundColor : selectedColor);
             this.edit = getEdit(tool, this.editState, color, toolWidth);
-            this.edit.start(this.cursorLocation[0], this.cursorLocation[1], this.editState);
+            this.edit.start(this.cursorLocation[0], this.cursorLocation[1], this.cursorLocation[2], this.cursorLocation[3], this.editState);
         }
     }
 
@@ -592,6 +598,12 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
 
     protected redrawFloatingLayer(state: EditState, skipImage = false) {
         const floatingRect = this.refs["floating-layer-border"] as HTMLDivElement;
+        const nwCorner = this.refs["floating-layer-nw-corner"] as HTMLDivElement;
+        const neCorner = this.refs["floating-layer-ne-corner"] as HTMLDivElement;
+        const seCorner = this.refs["floating-layer-se-corner"] as HTMLDivElement;
+        const swCorner = this.refs["floating-layer-sw-corner"] as HTMLDivElement;
+
+        const cornerHandles = [nwCorner, neCorner, seCorner, swCorner];
         if (state.floating && state.floating.image) {
             if (!skipImage) {
                 this.drawImage(state.floating.image, state.layerOffsetX, state.layerOffsetY, true);
@@ -612,18 +624,54 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
 
             if (right - left < 1 || bottom - top < 1) floatingRect.style.display = "none";
 
-            floatingRect.style.left = (-this.panX + xScale * left) + "px";
-            floatingRect.style.top = (-this.panY + yScale * top) + "px";
-            floatingRect.style.width = (xScale * (right - left)) + "px";
-            floatingRect.style.height = (yScale * (bottom - top)) + "px";
+            const calcLeft = (-this.panX + xScale * left);
+            const calcTop = (-this.panY + yScale * top);
+            const calcWidth = (xScale * (right - left))
+            const calcHeight = (yScale * (bottom - top))
+
+            floatingRect.style.left =  calcLeft + "px";
+            floatingRect.style.top = calcTop + "px";
+            floatingRect.style.width = calcWidth + "px";
+            floatingRect.style.height = calcHeight + "px";
 
             floatingRect.style.borderLeft = state.layerOffsetX >= 0 ? "" : "none";
             floatingRect.style.borderTop = state.layerOffsetY >= 0 ? "" : "none";
             floatingRect.style.borderRight = state.layerOffsetX + state.floating.image.width <= state.width ? "" : "none";
             floatingRect.style.borderBottom = state.layerOffsetY + state.floating.image.height <= state.height ? "" : "none";
+
+            const handleWidth = 16;
+            const borderThickness = 3;
+
+
+            cornerHandles.forEach( corner => {
+                corner.style.display = ""
+                corner.style.width = handleWidth + "px";
+                corner.style.height = handleWidth + "px";
+                corner.style.border = borderThickness + "px solid black"
+                corner.style.position = "absolute";
+                corner.style.backgroundColor = "white";
+            })
+            nwCorner.style.left = (calcLeft + borderThickness - handleWidth / 2 ) + "px";
+            nwCorner.style.top = (calcTop +borderThickness - handleWidth / 2) + "px";
+            nwCorner.style.cursor = "nw-resize"
+
+            neCorner.style.left = (calcLeft + calcWidth + borderThickness - handleWidth / 2) + "px";
+            neCorner.style.top = (calcTop + borderThickness - handleWidth / 2) + "px";
+            neCorner.style.cursor = "ne-resize"
+
+            seCorner.style.left = (calcLeft + calcWidth + borderThickness - handleWidth / 2) + "px";
+            seCorner.style.top = (calcTop + calcHeight + borderThickness - handleWidth / 2) + "px";
+            seCorner.style.cursor = "se-resize"
+
+            swCorner.style.left = (calcLeft + borderThickness - handleWidth / 2 ) + "px";
+            swCorner.style.top = (calcTop + calcHeight + borderThickness - handleWidth / 2) + "px";
+            swCorner.style.cursor = "sw-resize"
         }
         else {
             floatingRect.style.display = "none"
+            cornerHandles.forEach(corner => {
+                corner.style.display = "none"
+            })
         }
     }
 

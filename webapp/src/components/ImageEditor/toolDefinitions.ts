@@ -282,6 +282,10 @@ export class EditState {
         this.layerOffsetY = offset?.layerOffsetY ?? 0;
     }
 
+    setImage(bitmap: pxt.sprite.Bitmap) {
+        this.image = bitmap;
+    }
+
     toImageState(): pxt.sprite.ImageState {
         return {
             bitmap: this.image.data(),
@@ -299,6 +303,8 @@ export class EditState {
 export abstract class Edit {
     protected startCol: number;
     protected startRow: number;
+    protected startX: number;
+    protected startY: number;
     isStarted: boolean;
     showPreview: boolean;
 
@@ -319,10 +325,12 @@ export abstract class Edit {
     }
 
 
-    start(cursorCol: number, cursorRow: number, state: EditState) {
+    start(cursorCol: number, cursorRow: number, cursorX: number, cursorY: number, state: EditState) {
         this.isStarted = true;
         this.startCol = cursorCol;
         this.startRow = cursorRow;
+        this.startX = cursorX;
+        this.startY = cursorY;
     }
 
     drawCursor(col: number, row: number, draw: (c: number, r: number) => void) {
@@ -638,7 +646,7 @@ export class FillEdit extends Edit {
     protected row: number;
     showPreview = true;
 
-    start(col: number, row: number, state: EditState) {
+    start(col: number, row: number, cursorX: number, cursorY: number, state: EditState) {
         this.isStarted = true;
         this.col = col;
         this.row = row;
@@ -686,17 +694,38 @@ export class FillEdit extends Edit {
 
 export class MarqueeEdit extends SelectionEdit {
     protected isMove = false;
+    protected isResize = false;
     showPreview = false;
 
     protected startOffsetX: number;
     protected startOffsetY: number;
+    protected anchorCol: number;
+    protected anchorRow: number;
+    protected originalImage: pxt.sprite.Bitmap;
 
-    start(cursorCol: number, cursorRow: number, state: EditState) {
+    start(cursorCol: number, cursorRow: number, cursorX: number, cursorY: number, state: EditState) {
         this.isStarted = true;
         this.startCol = cursorCol;
         this.startRow = cursorRow;
+
+        const div = document.elementFromPoint(cursorX, cursorY)
+
         if (state.floating && state.floating.image) {
-            if (state.inFloatingLayer(cursorCol, cursorRow)) {
+            if (div && div.className == "image-editor-floating-layer-corner") {
+                this.isResize = true;
+                this.startOffsetX = state.layerOffsetX;
+                this.startOffsetY = state.layerOffsetY;
+                let farthestCorner = undefined;
+                let farthestCornerDistance = 0;
+                const corners = document.getElementsByClassName("image-editor-floating-layer-corner")
+                for (let i = 0; i < corners.length; i++) {
+                    const distance = Math.sqrt(Math.pow(corners[i].clientLeft - cursorX, 2) + Math.pow(corners[i].clientTop - cursorY, 2))
+                    if (distance > farthestCornerDistance) {
+                        farthestCornerDistance = distance;
+                        farthestCorner = corners[i];
+                    }
+                }
+            } else if (state.inFloatingLayer(cursorCol, cursorRow)) {
                 this.isMove = true;
                 this.startOffsetX = state.layerOffsetX;
                 this.startOffsetY = state.layerOffsetY;
@@ -716,6 +745,11 @@ export class MarqueeEdit extends SelectionEdit {
             if (this.isMove) {
                 state.layerOffsetX = this.startOffsetX + this.endCol - this.startCol;
                 state.layerOffsetY = this.startOffsetY + this.endRow - this.startRow;
+            } else if (this.isResize) {
+                // VVN TODO should this.startOffsetX be the right thing?
+                state.layerOffsetX = Math.min(this.anchorX, this.startOffsetX);
+                new pxt.sprite.Bitmap(Math.abs(this.anchorX/, this.endCol));
+                state.setImage(this.originalImage); // VVN send it through a transform
             }
             else {
                 state.mergeFloatingLayer();
