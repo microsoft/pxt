@@ -49,7 +49,8 @@
     "built/tests/blocksrunner.js",
     "docfiles",
     "theme",
-    "common-docs"
+    "common-docs",
+    "react-common"
   ],
   "main": "built/pxt.js",
   "engines": {

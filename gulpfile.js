@@ -63,11 +63,6 @@ const reactCommonPackageJson = () => {
     return Promise.resolve();
 }
 
-const reactCommonCss = () => gulp.src("react-common/styles/**/*.css")
-    .pipe(concat("react-common.css"))
-    .pipe(gulp.dest("built/web/"))
-
-
 const pxtblockly = () => gulp.src([
     "webapp/public/blockly/blockly_compressed.js",
     "webapp/public/blockly/blocks_compressed.js",
@@ -150,7 +145,6 @@ function initWatch() {
         updatestrings,
         gulp.parallel(pxtjs, pxtdts, pxtapp, pxtworker, pxtembed),
         targetjs,
-        reactCommonCss,
         reactCommon,
         webapp,
         browserifyWebapp,
@@ -173,7 +167,7 @@ function initWatch() {
     gulp.watch("./pxtwinrt/**/*", gulp.series(pxtwinrt, ...tasks.slice(5)));
     gulp.watch("./cli/**/*", gulp.series(cli, ...tasks.slice(5)));
 
-    gulp.watch("./react-common/styles/**/*.css", gulp.series(reactCommonCss, ...tasks.slice(9)))
+    gulp.watch("./react-common/styles/**/*.css", gulp.series(buildcss, ...tasks.slice(9)))
     gulp.watch("./react-common/**/*", gulp.series(reactCommon, ...tasks.slice(10)))
     gulp.watch("./webapp/src/**/*", gulp.series(updatestrings, webapp, browserifyWebapp, browserifyAssetEditor));
 
@@ -706,7 +700,6 @@ const buildAll = gulp.series(
     gulp.parallel(pxtrunner, pxtwinrt, cli, pxtcommon),
     gulp.parallel(pxtjs, pxtdts, pxtapp, pxtworker, pxtembed),
     targetjs,
-    reactCommonCss,
     reactCommon,
     reactCommonPackageJson,
     gulp.parallel(buildcss, buildSVGIcons),
@@ -726,7 +719,6 @@ exports.clean = clean;
 exports.build = buildAll;
 
 exports.webapp = gulp.series(
-    reactCommonCss,
     reactCommon,
     webapp,
     browserifyWebapp

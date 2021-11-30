@@ -1941,6 +1941,15 @@ async function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
     const lessPath = require.resolve('less');
     const lessCPath = path.join(path.dirname(lessPath), '/bin/lessc');
 
+    const lessIncludePaths = [
+        "node_modules/semantic-ui-less",
+        "node_modules/pxt-core/theme",
+        "theme/foo/bar",
+        "theme",
+        "node_modules/pxt-core/react-common/styles",
+        "react-common/styles"
+    ].join(":");
+
     // Build semantic css
     await nodeutil.spawnAsync({
         cmd: "node",
@@ -1948,7 +1957,7 @@ async function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
             lessCPath,
             "theme/style.less",
             "built/web/semantic.css",
-            "--include-path=node_modules/semantic-ui-less:node_modules/pxt-core/theme:theme/foo/bar"
+            "--include-path=" + lessIncludePaths
         ]
     })
 
@@ -1961,10 +1970,8 @@ async function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
     // Append icons.css to semantic.css (custom pxt icons)
     const iconsFile = isPxtCore ? 'built/web/icons.css' : 'node_modules/pxt-core/built/web/icons.css';
     const iconsCss = await readFileAsync(iconsFile, "utf8");
-    const reactCommonFile = isPxtCore ? 'built/web/react-common.css' : 'node_modules/pxt-core/built/web/react-common.css';
-    const reactCommonCss = await readFileAsync(reactCommonFile, "utf8");
 
-    semCss = semCss + "\n" + iconsCss + "\n" + reactCommonCss;
+    semCss = semCss + "\n" + iconsCss;
     nodeutil.writeFileSync('built/web/semantic.css', semCss);
 
     // Generate blockly css
@@ -1975,10 +1982,24 @@ async function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
                 lessCPath,
                 "theme/blockly.less",
                 "built/web/blockly.css",
-                "--include-path=node_modules/semantic-ui-less:node_modules/pxt-core/theme:theme/foo/bar"
+                "--include-path=" + lessIncludePaths
             ]
         });
     }
+
+    // Generate react-common css for skillmap
+    const skillmapFile = isPxtCore ? "react-common/styles/react-common-skillmap-core.less" :
+        "node_modules/pxt-core/react-common/styles/react-common-skillmap.less";
+    await nodeutil.spawnAsync({
+        cmd: "node",
+        args: [
+            lessCPath,
+            skillmapFile,
+            "built/web/react-common-skillmap.css",
+            "--include-path=" + lessIncludePaths
+        ]
+    });
+
 
     // Run postcss with autoprefixer and rtlcss
     pxt.debug("running postcss");
@@ -1995,13 +2016,13 @@ async function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
         "FirefoxAndroid >= 55"
     ];
 
-    const cssnano = require('cssnano')({
+    const cssnano = require("cssnano")({
         zindex: false,
         autoprefixer: { browsers: browserList, add: true }
     });
 
-    const rtlcss = require('rtlcss');
-    const files = ['semantic.css', 'blockly.css'];
+    const rtlcss = require("rtlcss");
+    const files = ["semantic.css", "blockly.css", "react-common-skillmap.css"];
 
     for (const cssFile of files) {
         const css = await readFileAsync(`built/web/${cssFile}`, "utf8");
@@ -2049,7 +2070,7 @@ function buildSkillMapAsync(parsed: commandParser.ParsedCommand) {
             nodeutil.cp("node_modules/pxt-core/built/pxtlib.js", `${skillmapRoot}/public/blb`);
             nodeutil.cp("built/web/semantic.css", `${skillmapRoot}/public/blb`);
             nodeutil.cp("node_modules/pxt-core/built/web/icons.css", `${skillmapRoot}/public/blb`);
-            nodeutil.cp("node_modules/pxt-core/built/web/react-common.css", `${skillmapRoot}/public/blb`);
+            nodeutil.cp("node_modules/pxt-core/built/web/react-common-skillmap.css", `${skillmapRoot}/public/blb`);
 
             // copy 'assets' over from docs/static
             nodeutil.cpR("docs/static/skillmap/assets", `${skillmapRoot}/public/assets`);
