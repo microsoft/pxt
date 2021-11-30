@@ -80,6 +80,7 @@ export function getSectionsFromText(text: string) {
                 }
                 currentKey = null;
                 currentValue = null;
+                currentIndent = 0;
                 continue;
             }
         }
