@@ -138,13 +138,17 @@ class AppImpl extends React.Component<AppProps, AppState> {
             force = !!mlang && !!mlang[2];
         }
 
+        const defLocale = pxt.appTarget.appTheme.defaultLocale;
+        if (!force && !pxt.Util.isLocaleEnabled(useLang!)) {
+            useLang = defLocale;
+        }
+
         // TODO: include the pxt webconfig so that we can get the commitcdnurl (and not always pass live=true)
         const baseUrl = "";
         const targetId = pxt.appTarget.id;
         const pxtBranch = pxt.appTarget.versions.pxtCrowdinBranch;
         const targetBranch = pxt.appTarget.versions.targetCrowdinBranch;
 
-        const defLocale = pxt.appTarget.appTheme.defaultLocale;
         const langLowerCase = useLang?.toLocaleLowerCase();
         const localDevServe = pxt.BrowserUtils.isLocalHostDev()
             && (!langLowerCase || (defLocale
@@ -164,9 +168,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
             force: force,
         });
 
-        if (pxt.Util.isLocaleEnabled(useLang!)) {
-            pxt.BrowserUtils.setCookieLang(useLang!);
-        }
+        pxt.BrowserUtils.setCookieLang(useLang!);
     }
 
     protected async fetchAndParseSkillMaps(source: MarkdownSource, url: string) {
