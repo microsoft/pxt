@@ -168,7 +168,10 @@ class AppImpl extends React.Component<AppProps, AppState> {
             force: force,
         });
 
-        pxt.BrowserUtils.setCookieLang(useLang!);
+        if (pxt.Util.isLocaleEnabled(useLang!)) {
+            pxt.BrowserUtils.setCookieLang(useLang!);
+            pxt.Util.setUserLanguage(useLang!);
+        }
     }
 
     protected async fetchAndParseSkillMaps(source: MarkdownSource, url: string) {
@@ -515,7 +518,6 @@ async function updateLocalizationAsync(opts: LocalizationUpdateOptions): Promise
         ts.pxtc.Util.TranslationsKind.SkillMap
     );
 
-    pxt.Util.setUserLanguage(code);
     if (translations) {
         pxt.Util.setLocalizedStrings(translations);
     }
