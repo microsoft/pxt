@@ -699,8 +699,8 @@ export class MarqueeEdit extends SelectionEdit {
 
     protected startOffsetX: number;
     protected startOffsetY: number;
-    protected anchorCol: number;
-    protected anchorRow: number;
+    protected anchorX: number;
+    protected anchorY: number;
     protected originalImage: pxt.sprite.Bitmap;
 
     start(cursorCol: number, cursorRow: number, cursorX: number, cursorY: number, state: EditState) {
@@ -725,6 +725,8 @@ export class MarqueeEdit extends SelectionEdit {
                         farthestCorner = corners[i];
                     }
                 }
+                this.anchorX = farthestCorner.clientLeft;
+                this.anchorY = farthestCorner.clientTop; //VVN TODO are these the right values
             } else if (state.inFloatingLayer(cursorCol, cursorRow)) {
                 this.isMove = true;
                 this.startOffsetX = state.layerOffsetX;
@@ -748,8 +750,8 @@ export class MarqueeEdit extends SelectionEdit {
             } else if (this.isResize) {
                 // VVN TODO should this.startOffsetX be the right thing?
                 state.layerOffsetX = Math.min(this.anchorX, this.startOffsetX);
-                new pxt.sprite.Bitmap(Math.abs(this.anchorX/, this.endCol));
-                state.setImage(this.originalImage); // VVN send it through a transform
+                const resizedImage = new pxt.sprite.Bitmap(Math.abs(this.anchorX - this.endCol), Math.abs(this.anchorY - this.endRow));// VVN send it through a transform
+                state.setImage(resizedImage);
             }
             else {
                 state.mergeFloatingLayer();
@@ -757,7 +759,11 @@ export class MarqueeEdit extends SelectionEdit {
             }
         }
         else if (!this.isMove) {
-            state.mergeFloatingLayer();
+            if (this.isResize) {
+                // VVN TODO merge it correctly :)
+            } else {
+                state.mergeFloatingLayer();
+            }
         }
     }
 }
