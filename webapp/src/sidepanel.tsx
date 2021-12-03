@@ -2,14 +2,13 @@
 
 import * as React from "react";
 import * as data from "./data";
-import * as sui from "./sui";
-
 import * as filelist from "./filelist";
 import * as keymap from "./keymap";
 import * as serialindicator from "./serialindicator"
 import * as simtoolbar from "./simtoolbar";
 import * as simulator from "./simulator";
 
+import { fireClickOnEnter, Button } from "./sui";
 import { TabContent } from "./components/core/TabContent";
 import { TabPane } from "./components/core/TabPane";
 import { TutorialContainer } from "./components/tutorial/TutorialContainer";
@@ -119,7 +118,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
 
     protected tutorialExitButton = () => {
         return <div className="tutorial-exit" aria-label={lf("Exit tutorial")} tabIndex={0}
-            onClick={() => this.props.parent.exitTutorial()} onKeyDown={sui.fireClickOnEnter}>
+            onClick={() => this.props.parent.exitTutorial()} onKeyDown={fireClickOnEnter}>
             {lf("Exit Tutorial")}
         </div>;
     }
@@ -135,6 +134,9 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         const hasSimulator = !pxt.appTarget.simulator?.headless;
         const marginHeight = hasSimulator ? "6.5rem" : "3rem";
 
+        const backButton = <Button icon="arrow circle left" text={lf("Back")} onClick={this.showTutorialTab} />;
+        const nextButton = <Button icon="arrow circle right" text={lf("Next")} onClick={this.showTutorialTab} />;
+
         return <div id="simulator" className="simulator">
             <TabPane id="editorSidebar" activeTabName={activeTab} style={height ? { height: `calc(${height}px + ${marginHeight})` } : undefined}>
                 {hasSimulator && <TabContent name={SIMULATOR_TAB} icon="xicon gamepad" onSelected={this.showSimulatorTab} ariaLabel={lf("Open the simulator tab")}>
@@ -144,7 +146,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                         <simtoolbar.SimulatorToolbar parent={parent} collapsed={collapseEditorTools} simSerialActive={simSerialActive} devSerialActive={deviceSerialActive} showSimulatorSidebar={this.showSimulatorTab} />
                         {showKeymap && <keymap.Keymap parent={parent} />}
                         <div className="ui item portrait hide hidefullscreen">
-                            {pxt.options.debug && <sui.Button key="hwdebugbtn" className="teal" icon="xicon chip" text={"Dev Debug"} onClick={handleHardwareDebugClick} />}
+                            {pxt.options.debug && <Button key="hwdebugbtn" className="teal" icon="xicon chip" text={"Dev Debug"} onClick={handleHardwareDebugClick} />}
                         </div>
                         {showSerialButtons && <div id="serialPreview" className="ui editorFloat portrait hide hidefullscreen">
                             <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={this.handleSimSerialClick} parent={parent} />
@@ -153,6 +155,11 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                         {showFileList && <filelist.FileList parent={parent} />}
                         {showFullscreenButton && <div id="miniSimOverlay" role="button" title={lf("Open in fullscreen")} onClick={this.handleSimOverlayClick} />}
                     </div>
+                    {isTabTutorial && <div className="tutorial-controls">
+                        { backButton }
+                        <Button icon="lightbulb" disabled={true} className="tutorial-hint" />
+                        { nextButton }
+                    </div>}
                 </TabContent>}
                 {tutorialOptions && <TabContent name={TUTORIAL_TAB} icon="icon tasks" showBadge={activeTab !== TUTORIAL_TAB} onSelected={this.showTutorialTab} ariaLabel={lf("Open the tutorial tab")}>
                     <TutorialContainer parent={parent} tutorialId={tutorialOptions.tutorial} name={tutorialOptions.tutorialName} steps={tutorialOptions.tutorialStepInfo}
