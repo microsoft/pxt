@@ -16,6 +16,7 @@
     margin-top: -0.25rem;
     background-color: @red;
     border-radius: 50%;
+    animation: blink 1s infinite;
 }
 
 .tab-icon {
@@ -31,4 +32,12 @@
 .tab-content,
 .tab-content > div {
     height: 100%;
+}
+
+@keyframes blink {
+    0% { opacity: 1; }
+    50% { opacity: 1; }
+    60% { opacity: 0; }
+    90% { opacity: 0; }
+    100% { opacity: 1; }
 }
