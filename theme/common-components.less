@@ -16,7 +16,7 @@
     margin-top: -0.25rem;
     background-color: @red;
     border-radius: 50%;
-    animation: blink 1s infinite;
+    animation: notification-glow 5s infinite ease-in-out;
 }
 
 .tab-icon {
@@ -34,10 +34,8 @@
     height: 100%;
 }
 
-@keyframes blink {
-    0% { opacity: 1; }
-    50% { opacity: 1; }
-    60% { opacity: 0; }
-    90% { opacity: 0; }
-    100% { opacity: 1; }
+@keyframes notification-glow {
+    0%, 50% { box-shadow: 0 0 0.12rem -0.12rem @red; }
+    10%, 40% { box-shadow: 0 0 0.12rem 0rem @red; }
+    25% { box-shadow: 0 0 0.12rem 0.12rem @white; }
 }
