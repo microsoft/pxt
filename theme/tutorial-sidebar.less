@@ -6,9 +6,15 @@
 @tutorialSecondaryColor: @blue;
 
 @tutorialTabletButtonColor: #f3f3f3;
+@tutorialTabletSimulatorButtonColor: rgba(0, 0, 0, 0.05);
 @tutorialTabletStepCounterWidth: 16rem;
 
 @tutorialHintMaskZIndex: -1; // Below tutorial pane
+
+@tutorialControlsOffset: 5.725rem;
+@tutorialBoardviewOffset: 3rem;
+@tutorialTabBarOffset: 3.5rem;
+@tutorialSimulatorMinHeight: 250px;
 
 /*******************************
         Tutorial Tab
@@ -27,11 +33,6 @@
     display: flex;
     flex-direction: column;
     height: 100%;
-
-    .ui.button, .ui.button:hover {
-        box-shadow: none;
-        background-image: none;
-    }
 }
 
 .tutorial-content {
@@ -63,6 +64,14 @@
     width: calc(~'100% - 1rem');
     bottom: 6rem;
     background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0), @white);
+}
+
+.tutorial-container,
+.tutorial-controls {
+    .ui.button, .ui.button:hover {
+        box-shadow: none;
+        background-image: none;
+    }
 }
 
 /*******************************
@@ -297,9 +306,13 @@
             .sidebar-button, .play-button { display: block !important; }
             .expand-button, .fullscreen-button { display: none !important; }
         }
+
+        .tutorial-controls { display: none; }
     }
     .tab-simulator.tab-content:not(.hidden) {
         .simPanel {
+            height: calc(100% - @tutorialControlsOffset);
+
             .sidebar-button, .button.hidefullscreen { display: none !important; }
         }
     }
@@ -352,6 +365,29 @@
 /*******************************
         Media Adjustments
 *******************************/
+
+/* Desktop Only */
+@media only screen and (max-height: @tallEditorBreakpoint) and (min-width: @largestTabletScreen) {
+    #root.tabTutorial:not(.fullscreensim) .tab-simulator:not(.hidden) {
+        .simPanel {
+            height: calc(100% - @tutorialControlsOffset);
+            min-height: @tutorialSimulatorMinHeight;
+        }
+        #boardview {
+            height: calc(100% - @tutorialBoardviewOffset);
+            min-height: @tutorialSimulatorMinHeight;
+        }
+        #simulators {
+            height: 100%;
+            min-height: @tutorialSimulatorMinHeight;
+        }
+        .simframe {
+            padding-bottom: unset !important;
+            height: 100%;
+            min-height: @tutorialSimulatorMinHeight;
+        }
+    }
+}
 
 /* <= Tablet (Mobile + Tablet) */
 @media only screen and (max-width: @largestTabletScreen) {
@@ -465,7 +501,8 @@
         }
     }
 
-    .tutorial-container {
+    .tutorial-container,
+    .tutorial-controls {
         > .ui.button, > .ui.button:focus {
             color: @tutorialPrimaryColor;
             background: @tutorialTabletButtonColor;
@@ -526,6 +563,10 @@
     #root.tabTutorial:not(.fullscreensim) .tab-simulator:not(.hidden) {
         .simPanel {
             display: flex;
+            position: relative;
+            height: 100%;
+            margin: 0 4rem;
+            z-index: 30;
 
             #simulators {
                 width: 34rem;
@@ -550,6 +591,23 @@
 
         #boardview {
             width: 100% !important;
+        }
+
+        .tutorial-controls {
+            position: absolute;
+            top: @tutorialTabBarOffset;
+            width: 100%;
+            height: calc(100% - @tutorialTabBarOffset);
+            justify-content: space-between;
+            z-index: 10;
+
+            .ui.button {
+                height: 100%;
+            }
+
+            .ui.button:not(:hover) {
+                background-color: @tutorialTabletSimulatorButtonColor;
+            }
         }
     }
 
