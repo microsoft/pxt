@@ -1,4 +1,5 @@
 import * as React from "react";
+import { Button } from "react-common/controls/Button";
 
 /* eslint-disable import/no-unassigned-import, import/no-internal-modules */
 import '../styles/modal.css'
@@ -38,30 +39,28 @@ export class Modal extends React.Component<ModalProps> {
             <div className={`modal ${className || ""}`} onClick={this.handleModalClick} role="dialog">
                 <div className="modal-header">
                     {fullscreen && <div className="close button" onClick={this.handleCloseClick}>
-                        <i className="icon arrow left" />
+                        <i className="fas fa-arrow-left" />
                         {lf("Go Back")}
                     </div>}
                     <div className="modal-title">{title}</div>
                     {!fullscreen && <div className="spacer" />}
-                    {!fullscreen && <div className="modal-close-icon" onClick={this.handleCloseClick} role="button"><i className="icon close remove circle" /></div>}
+                    {!fullscreen && <div className="modal-close-icon" onClick={this.handleCloseClick} role="button"><i className="fas fa-times-circle" /></div>}
                 </div>
                 <div className="modal-body">
                     {this.props.children}
                 </div>
                 {actions && actions.length > 0 && <div className="modal-actions">
-                    {actions.map((el, i) => {
-                        return el.url
-                            ? <a key={i} className={`modal-button ${el.className || ""}`} href={el.url} onClick={el.onClick} target="_blank" rel="noopener noreferrer" role="button">{el.label}</a>
-                            :
-                            <div key={i}
-                                className={`modal-button ${el.className || ""}`}
-                                onClick={el.onClick}
-                                role="button"
-                                tabIndex={0}>
-                                    {el.label}
-                                    {el.icon && <i className={`${el.xicon ? "xicon" : "icon"} ${el.icon}`} />}
-                            </div>
-                    })}
+                    {actions.map((el, i) =>
+                        <Button
+                            className="primary inverted"
+                            key={i}
+                            onClick={el.onClick}
+                            href={el.url}
+                            label={el.label}
+                            title={el.label}
+                            rightIcon={el.icon}
+                            rightIconClass={el.xicon ? "xicon" : undefined} />
+                    )}
                 </div>}
             </div>
         </div>

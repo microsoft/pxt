@@ -1947,7 +1947,9 @@ async function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
         "theme/foo/bar",
         "theme",
         "node_modules/pxt-core/react-common/styles",
-        "react-common/styles"
+        "react-common/styles",
+        "node_modules/@fortawesome",
+        "node_modules/pxt-core/node_modules/@fortawesome" // for locally linked dev environment
     ].join(":");
 
     // Build semantic css
@@ -2000,6 +2002,16 @@ async function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
         ]
     });
 
+    let fontAwesomeSource = "node_modules/@fortawesome/fontawesome-free/webfonts/";
+    if (!fs.existsSync(fontAwesomeSource)) {
+        fontAwesomeSource = "node_modules/pxt-core/" + fontAwesomeSource;
+    }
+
+    let skillmapCss = await readFileAsync(`built/web/react-common-skillmap.css`, "utf8");
+    skillmapCss = await linkFontAsync("fa-solid-900", skillmapCss, fontAwesomeSource, "\\.\\.\\/webfonts\\/");
+    skillmapCss = await linkFontAsync("fa-regular-400", skillmapCss, fontAwesomeSource, "\\.\\.\\/webfonts\\/");
+    await writeFileAsync(`built/web/react-common-skillmap.css`, skillmapCss, "utf8");
+
 
     // Run postcss with autoprefixer and rtlcss
     pxt.debug("running postcss");
@@ -2036,14 +2048,21 @@ async function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
 
         await writeFileAsync(`built/web/rtl${cssFile}`, processedRtl.css, "utf8");
     }
+
+    if (!isPxtCore) {
+        // This is just to support the local skillmap serve for development
+        nodeutil.cp("built/web/react-common-skillmap.css", "node_modules/pxt-core/skillmap/public/blb");
+    }
 }
 
-async function linkFontAsync(font: string, semCss: string) {
-    const fontFile = await readFileAsync("node_modules/semantic-ui-less/themes/default/assets/fonts/" + font + ".woff")
+async function linkFontAsync(font: string, semCss: string, sourceDir = "node_modules/semantic-ui-less/themes/default/assets/fonts/", refDir = "fonts\\/") {
+    const fontFile = await readFileAsync(sourceDir + font + ".woff")
     const url = "url(data:application/font-woff;charset=utf-8;base64,"
         + fontFile.toString("base64") + ") format('woff')"
-    const r = new RegExp(`src:.*url\\("fonts\/${font}\\.woff.*`, "g")
-    semCss = semCss.replace('src: url("fonts/' + font + '.eot");', "")
+    const r = new RegExp(`src:.*url\\((?:"|')${refDir + font}\\.woff.*`, "g")
+
+    semCss = semCss.replace('src: url("' + refDir + font + '.eot");', "")
+        .replace('src: url(' + refDir + font + '.eot);', "")
         .replace(r, "src: " + url + ";")
     return semCss;
 }

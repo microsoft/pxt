@@ -746,6 +746,14 @@ exports.watchCli = initWatchCli;
 exports.testlanguageservice = testlanguageservice;
 exports.onlinelearning = onlinelearning;
 exports.skillmap = skillmap;
+exports.cli = gulp.series(
+    gulp.parallel(pxtlib, pxtweb),
+    gulp.parallel(pxtcompiler, pxtsim, backendutils),
+    gulp.parallel(pxtpy, gulp.series(copyBlockly, pxtblocks, pxtblockly)),
+    pxteditor,
+    gulp.parallel(pxtrunner, pxtwinrt, cli, pxtcommon),
+    pxtjs
+);
 
 console.log(`pxt build how to:`)
 console.log(`run "gulp watch" in pxt folder`)

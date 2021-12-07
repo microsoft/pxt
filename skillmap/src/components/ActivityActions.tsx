@@ -8,6 +8,8 @@ import { tickEvent } from '../lib/browserUtils';
 import { editorUrl } from "./makecodeFrame";
 import { SkillMapState } from "../store/reducer";
 
+import { Button } from "react-common/controls/Button";
+
 interface OwnProps {
     mapId: string;
     activityId: string;
@@ -29,15 +31,15 @@ export class ActivityActionsImpl extends React.Component<ActivityActionsProps> {
     protected getActivityActionText(): string {
         switch (this.props.status) {
             case "locked":
-                return lf("LOCKED");
+                return lf("Locked");
             case "completed":
-                return lf("VIEW CODE");
+                return lf("View Code");
             case "inprogress":
             case "restarted":
-                return lf("CONTINUE");
+                return lf("Continue");
             case "notstarted":
             default:
-                return lf("START");
+                return lf("Start");
         }
     }
 
@@ -93,18 +95,34 @@ export class ActivityActionsImpl extends React.Component<ActivityActionsProps> {
 
         // Apply "grid" class when there are four actions (for a completed activity)
         return <div className={`actions ${completedHeaderId ? "grid" : ""}`}>
-            <div className="action-button" role="button" onClick={this.handleActionButtonClick}>
-                {this.getActivityActionText()}
-            </div>
-            {activityStarted && <div className="action-button" role="button" onClick={this.handleRestartButtonClick}>
-                {lf("Restart")}
-            </div>}
-            {activityStarted && <div className="action-button" role="button" onClick={this.handleShareButtonClick}>
-                {lf("Share")}
-            </div>}
-            {completedHeaderId && <div className="action-button" role="button" onClick={this.handleSaveToProjectsClick}>
-                {lf("Save to My Projects")}
-            </div>}
+            <Button
+                className="primary inverted"
+                title={this.getActivityActionText()}
+                label={this.getActivityActionText()}
+                onClick={this.handleActionButtonClick}
+            />
+            {activityStarted && <>
+                <Button
+                    className="primary inverted"
+                    title={lf("Restart")}
+                    label={lf("Restart")}
+                    onClick={this.handleRestartButtonClick}
+                />
+                <Button
+                    className="primary inverted"
+                    title={lf("Share")}
+                    label={lf("Share")}
+                    onClick={this.handleShareButtonClick}
+                />
+            </>}
+            {completedHeaderId &&
+                <Button
+                    className="primary inverted"
+                    title={lf("Save to My Projects")}
+                    label={lf("Save to My Projects")}
+                    onClick={this.handleSaveToProjectsClick}
+                />
+            }
         </div>
     }
 }

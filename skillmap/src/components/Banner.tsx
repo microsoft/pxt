@@ -20,7 +20,7 @@ export class BannerImpl extends React.Component<BannerProps> {
                     <div className="banner-title">
                         <span>{title}</span>
                         {infoUrl && <a className="banner-info" href={infoUrl} target="_blank" rel="noopener noreferrer" role="button">
-                            <i className="icon info circle" />
+                            <i className="fas fa-info-circle" />
                         </a>}
                     </div>
                     <div className="banner-description">{description}</div>

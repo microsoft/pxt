@@ -115,7 +115,7 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
 
         return <div className="user-menu">
             {signedIn
-             ? <Dropdown icon="user" items={items} picture={avatarElem || initialsElem} className="header-dropdown user-dropdown"/>
+             ? <Dropdown icon="fas fa-user" items={items} picture={avatarElem || initialsElem} className="header-dropdown user-dropdown"/>
              : <HeaderBarButton className="sign-in" icon="xicon cloud-user" title={lf("Sign In")} label={lf("Sign In")} onClick={ () => {
                 pxt.tickEvent(`skillmap.usermenu.signin`);
                 this.props.dispatchShowLoginModal();
@@ -139,10 +139,10 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
 
             <div className="spacer" />
             <div className="header-right">
-                { activityOpen && <HeaderBarButton icon="icon arrow left" title={lf("Return to activity selection")} onClick={this.onBackClicked}/> }
-                <HeaderBarButton icon="icon home" title={lf("Return to the editor homepage")} onClick={this.onHomeClicked}/>
-                { helpItems?.length > 0 && <Dropdown icon="help circle" className="header-dropdown" items={helpItems} /> }
-                { settingItems?.length > 0 && <Dropdown icon="setting" className="header-dropdown" items={settingItems} /> }
+                { activityOpen && <HeaderBarButton icon="fas fa-arrow-left" title={lf("Return to activity selection")} onClick={this.onBackClicked}/> }
+                <HeaderBarButton icon="fas fa-home" title={lf("Return to the editor homepage")} onClick={this.onHomeClicked}/>
+                { helpItems?.length > 0 && <Dropdown icon="fas fa-question-circle" className="header-dropdown" items={helpItems} /> }
+                { settingItems?.length > 0 && <Dropdown icon="fas fa-cog" className="header-dropdown" items={settingItems} /> }
                 { hasIdentity && this.getUserMenu() }
             </div>
         </div>

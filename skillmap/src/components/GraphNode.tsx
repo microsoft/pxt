@@ -59,12 +59,12 @@ export class GraphNode extends React.Component<GraphNodeProps, GraphNodeState> {
         switch (kind) {
             case "reward":
             case "completion":
-                return "graph-icon"
+                return "fas graph-icon"
             default:
                 switch (status) {
                     case "locked":
                     case "completed":
-                        return "graph-icon";
+                        return "fas graph-icon";
                     default:
                         return "graph-icon-x";
                 }

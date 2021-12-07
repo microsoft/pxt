@@ -1,0 +1,42 @@
+.common-button {
+    cursor: pointer;
+    display: inline-block;
+    min-height: 1em;
+    outline: none;
+    border: none;
+    vertical-align: middle;
+    color: rgba(0,0,0,.6);
+    font-family: @pageFont;
+    margin: 0 0.25em 0 0;
+    padding: 0.8em 2em 0.95em;
+    text-transform: none;
+    text-shadow: none;
+    font-weight: 400;
+    line-height: 1em;
+    font-style: normal;
+    text-align: center;
+    text-decoration: none;
+    border-radius: 0.2em;
+    user-select: none;
+    transition: opacity .1s ease,background-color .1s ease,box-shadow .1s ease,color .1s ease,background .1s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.common-button.rounded {
+    border-radius: 2rem;
+}
+
+.common-button.primary {
+    background: @primaryColor;
+    color: @white;
+    border: 1px solid @primaryColor;
+}
+
+.common-button.primary.inverted {
+    background: @white;
+    color: @primaryColor;
+}
+
+.common-button:hover {
+    filter: grayscale(.15) brightness(.85) contrast(1.3);
+}
