@@ -274,16 +274,14 @@ export class EditState {
         return col >= 0 && col < this.floating.image.width && row >= 0 && row < this.floating.image.height;
     }
 
-    setFloatingLayer(floatingImage: pxt.sprite.Bitmap, offset?: { layerOffsetX: number, layerOffsetY: number }) {
-        this.mergeFloatingLayer();
+    setFloatingLayer(floatingImage: pxt.sprite.Bitmap, offset?: { layerOffsetX: number, layerOffsetY: number }, merge?: boolean) {
+        if (merge) {
+            this.mergeFloatingLayer();
+        }
 
         this.floating = { image: floatingImage };
         this.layerOffsetX = offset?.layerOffsetX ?? 0;
         this.layerOffsetY = offset?.layerOffsetY ?? 0;
-    }
-
-    setImage(bitmap: pxt.sprite.Bitmap) {
-        this.image = bitmap;
     }
 
     toImageState(): pxt.sprite.ImageState {
@@ -699,8 +697,8 @@ export class MarqueeEdit extends SelectionEdit {
 
     protected startOffsetX: number;
     protected startOffsetY: number;
-    protected anchorX: number;
-    protected anchorY: number;
+    protected anchorCol: number;
+    protected anchorRow: number;
     protected originalImage: pxt.sprite.Bitmap;
 
     start(cursorCol: number, cursorRow: number, cursorX: number, cursorY: number, state: EditState) {
@@ -719,14 +717,21 @@ export class MarqueeEdit extends SelectionEdit {
                 let farthestCornerDistance = 0;
                 const corners = document.getElementsByClassName("image-editor-floating-layer-corner")
                 for (let i = 0; i < corners.length; i++) {
-                    const distance = Math.sqrt(Math.pow(corners[i].clientLeft - cursorX, 2) + Math.pow(corners[i].clientTop - cursorY, 2))
+                    let distance = Math.sqrt(Math.pow(corners[i].getBoundingClientRect().x - cursorX, 2) + Math.pow(corners[i].getBoundingClientRect().y - cursorY, 2))
                     if (distance > farthestCornerDistance) {
                         farthestCornerDistance = distance;
                         farthestCorner = corners[i];
                     }
                 }
-                this.anchorX = farthestCorner.clientLeft;
-                this.anchorY = farthestCorner.clientTop; //VVN TODO are these the right values
+                const canvas = document.getElementsByClassName("paint-surface")![0] as HTMLCanvasElement
+                const canvasLeft = canvas.getBoundingClientRect().left;
+                const canvasTop = canvas.getBoundingClientRect().top;
+                const canvasWidth = canvas.getBoundingClientRect().width;
+                const canvasHeight = canvas.getBoundingClientRect().height;
+                this.anchorCol = ((farthestCorner.getBoundingClientRect().x - canvasLeft) / canvasWidth) * this.canvasWidth;
+                this.anchorRow = ((farthestCorner.getBoundingClientRect().y - canvasTop) / canvasHeight) * this.canvasHeight;
+                if (!this.originalImage)
+                    this.originalImage = state.floating.image.copy();
             } else if (state.inFloatingLayer(cursorCol, cursorRow)) {
                 this.isMove = true;
                 this.startOffsetX = state.layerOffsetX;
@@ -740,6 +745,19 @@ export class MarqueeEdit extends SelectionEdit {
     }
 
     protected doEditCore(state: EditState): void {
+        function resize(bitmap: pxt.sprite.Bitmap, newWidth: number, newHeight: number) {
+            const image = new pxt.sprite.Bitmap(newWidth, newHeight, 0, 0)
+            for (let x = 0; x < newWidth; x++) {
+                for (let y = 0; y < newHeight; y++) {
+                    const nnX = Math.floor(((x / newWidth) * bitmap.width))
+                    const nnY = Math.floor((( y / newHeight) * bitmap.height))
+
+                    const nearestNeighborColor = bitmap.get(nnX, nnY)
+                    image.set(x, y, nearestNeighborColor)
+                }
+            }
+            return image;
+        }
         const tl = this.topLeft();
         const br = this.bottomRight();
 
@@ -748,10 +766,11 @@ export class MarqueeEdit extends SelectionEdit {
                 state.layerOffsetX = this.startOffsetX + this.endCol - this.startCol;
                 state.layerOffsetY = this.startOffsetY + this.endRow - this.startRow;
             } else if (this.isResize) {
-                // VVN TODO should this.startOffsetX be the right thing?
-                state.layerOffsetX = Math.min(this.anchorX, this.startOffsetX);
-                const resizedImage = new pxt.sprite.Bitmap(Math.abs(this.anchorX - this.endCol), Math.abs(this.anchorY - this.endRow));// VVN send it through a transform
-                state.setImage(resizedImage);
+                const resizedWidth = Math.round(Math.abs(this.anchorCol - this.endCol))
+                const resizedHeight = Math.round(Math.abs(this.anchorRow - this.endRow))
+                const resizedImage = resize(this.originalImage, resizedWidth, resizedHeight)
+                state.setFloatingLayer(resizedImage, {layerOffsetX: Math.round(Math.min(this.anchorCol, this.endCol)),
+                        layerOffsetY: Math.round(Math.min(this.anchorRow, this.endRow))}, false);
             }
             else {
                 state.mergeFloatingLayer();
@@ -759,11 +778,7 @@ export class MarqueeEdit extends SelectionEdit {
             }
         }
         else if (!this.isMove) {
-            if (this.isResize) {
-                // VVN TODO merge it correctly :)
-            } else {
-                state.mergeFloatingLayer();
-            }
+            state.mergeFloatingLayer();
         }
     }
 }

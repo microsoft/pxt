@@ -63,7 +63,6 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
 
     protected background: HTMLCanvasElement;
     protected floatingLayer: HTMLDivElement;
-    protected nwCorner: HTMLDivElement;
     protected canvasLayers: HTMLCanvasElement[];
     protected cellWidth: number;
     protected colors: Uint8ClampedArray;
@@ -103,6 +102,7 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
                 <div ref="floating-layer-ne-corner" className="image-editor-floating-layer-corner"/>
                 <div ref="floating-layer-se-corner" className="image-editor-floating-layer-corner"/>
                 <div ref="floating-layer-sw-corner" className="image-editor-floating-layer-corner"/>
+                <div ref="floating-layer-rotate-handle" className="image-editor-floating-layer-rotate"/>
             </div>
         </div>
     }
@@ -117,7 +117,6 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
         this.canvas = this.refs["paint-surface"] as HTMLCanvasElement;
         this.background = this.refs["paint-surface-bg"] as HTMLCanvasElement;
         this.floatingLayer = this.refs["floating-layer-border"] as HTMLDivElement;
-        this.nwCorner = this.refs["floating-layer-nw-corner"] as HTMLDivElement;
         this.canvasLayers = overlayLayers.map(layer => this.refs[`paint-surface-${layer.toString()}`] as HTMLCanvasElement);
 
         bindGestureEvents(this.refs["canvas-bounds"] as HTMLDivElement, this);
