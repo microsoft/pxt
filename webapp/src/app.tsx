@@ -4296,8 +4296,9 @@ export class ProjectView
     }
 
     setAccessibleBlocks(enabled: boolean) {
-        // TODO: Add accessible blocks plugin from Blockly
         pxt.tickEvent("app.accessibleblocks", { on: enabled ? 1 : 0 });
+        this.blocksEditor.enableAccessibleBlocks(enabled);
+        this.setState({ accessibleBlocks: enabled })
     }
 
     setBannerVisible(b: boolean) {
