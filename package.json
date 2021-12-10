@@ -58,6 +58,7 @@
     "npm": ">=3.0.0"
   },
   "dependencies": {
+    "@blockly/keyboard-navigation": "^0.1.18",
     "@microsoft/immersive-reader-sdk": "1.1.0",
     "applicationinsights-js": "^1.0.20",
     "browserify": "16.2.0",
