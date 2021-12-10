@@ -427,6 +427,7 @@ declare namespace pxt {
         githubEditor?: boolean; // allow editing github repositories from the editor
         githubCompiledJs?: boolean; // commit binary.js in commit when creating a github release,
         blocksCollapsing?: boolean; // collapse/uncollapse functions/event in blocks
+        workspaceSearch?: boolean; // allow CTRL+F blocks workspace search
         hideHomeDetailsVideo?: boolean; // hide video/large image from details card
         tutorialBlocksDiff?: boolean; // automatically display blocks diffs in tutorials
         tutorialTextDiff?: boolean; // automatically display text diffs in tutorials

@@ -317,6 +317,22 @@ text.blocklyCheckbox {
 }
 
 /*******************************
+        Workspace Search
+*******************************/
+
+.blockly-ws-searching {
+    path.blocklyPath:not(.blockly-ws-search-highlight-pxt) {
+        opacity: 0.6;
+    }
+
+    path.blocklyPath.blockly-ws-search-highlight-pxt.blockly-ws-search-current {
+        stroke: #FFF200;
+        stroke-width: 4px;
+        transition: none;
+    }
+}
+
+/*******************************
         Media Adjustments
 *******************************/
 

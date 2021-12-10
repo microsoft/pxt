@@ -40,7 +40,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     protected debuggerToolbox: DebuggerToolbox;
 
+    // Blockly plugins
     protected navigationController: NavigationController;
+    protected workspaceSearch: WorkspaceSearch;
 
     public nsMap: pxt.Map<toolbox.BlockDefinition[]>;
 
@@ -475,6 +477,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
+    private initWorkspaceSearch() {
+        if (pxt.appTarget.appTheme.workspaceSearch && !this.workspaceSearch) {
+            this.workspaceSearch  = new pxt.blocks.PxtWorkspaceSearch(this.editor);
+            this.workspaceSearch.init();
+        }
+    }
+
     private reportDeprecatedBlocks() {
         const deprecatedMap: pxt.Map<number> = {};
         let deprecatedBlocksFound = false;
@@ -596,6 +605,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.initBlocklyToolbox();
         this.initWorkspaceSounds();
         this.initAccessibleBlocks();
+        this.initWorkspaceSearch();
         this.resize();
 
         pxt.perf.measureEnd("prepareBlockly")
