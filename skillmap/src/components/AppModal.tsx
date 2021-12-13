@@ -387,7 +387,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                             tickEvent("skillmap.signindialog.learn");
                             window.open("https://aka.ms/cloudsave", "_blank");
                         }}>
-                            <i className="fas fa-external-link-alt" />{lf("Learn more")}
+                            <i className="fas fa-external-link-alt" aria-hidden={true} />{lf("Learn more")}
                         </a>
                     </p>
                 </div>
