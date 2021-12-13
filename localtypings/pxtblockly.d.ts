@@ -99,7 +99,7 @@ declare namespace Blockly {
  * Used for accessible blocks experiment
  */
 
- declare class NavigationController {
+declare class NavigationController {
     init(): void;
     addWorkspace(workspace: Blockly.WorkspaceSvg): void;
     enable(workspace: Blockly.WorkspaceSvg): void;
@@ -114,3 +114,19 @@ declare class Navigation {
 }
 
 declare type BlocklyNavigationState = "workspace" | "toolbox" | "flyout";
+
+/**
+ * Blockly Workspace Search plugin
+ * Used for accessible blocks experiment
+ */
+
+declare class WorkspaceSearch {
+    constructor(workspace: Blockly.WorkspaceSvg);
+    protected workspace_: Blockly.WorkspaceSvg;
+    protected htmlDiv_: HTMLDivElement;
+    init(): void;
+    protected createDom_(): void;
+    protected addEvent_(node: Element, name: string, thisObject: Object, func: Function): void;
+    open(): void;
+    close(): void;
+}
