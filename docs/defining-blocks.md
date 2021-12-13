@@ -73,7 +73,7 @@ To define your groups, add the `groups` attribute to your namespace. The `groups
  * Provides access to basic micro:bit functionality.
  */
 //% color=190 weight=100 icon="\uf1ec" block="Basic Blocks"
-//% groups=['LED matrix', 'Control flow', 'others']
+//% groups='["LED matrix", "Control flow", "others"]'
 namespace basic {
     //% block="clear LEDs"
     //% group="LED matrix"
