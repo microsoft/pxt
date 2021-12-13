@@ -58,8 +58,8 @@ export class Modal extends React.Component<ModalProps> {
                             href={el.url}
                             label={el.label}
                             title={el.label}
-                            rightIcon={el.icon}
-                            rightIconClass={el.xicon ? "xicon" : undefined} />
+                            rightIcon={(el.xicon ? "xicon " : "") + el.icon}
+                            />
                     )}
                 </div>}
             </div>
