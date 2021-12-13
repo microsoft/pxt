@@ -40,6 +40,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     protected debuggerToolbox: DebuggerToolbox;
 
+    // Blockly plugins
+    protected navigationController: NavigationController;
+    protected workspaceSearch: WorkspaceSearch;
+
     public nsMap: pxt.Map<toolbox.BlockDefinition[]>;
 
     constructor(parent: pxt.editor.IProjectView) {
@@ -448,7 +452,36 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private initAccessibleBlocks() {
-        // TODO: Add accessible blocks plugin from Blockly
+        const enabled = pxt.appTarget.appTheme?.accessibleBlocks;
+        if (enabled && !this.navigationController) {
+            this.navigationController = new NavigationController();
+
+            this.navigationController.init();
+            this.navigationController.addWorkspace(this.editor);
+
+            (Navigation as any).prototype.focusToolbox = (workspace: Blockly.WorkspaceSvg) => {
+                const toolbox = this.toolbox;
+                if (!toolbox) return;
+                this.focusToolbox();
+                this.navigationController.navigation.resetFlyout(workspace, false);
+                this.navigationController.navigation.setState(workspace, "toolbox");
+            }
+        }
+    }
+
+    public enableAccessibleBlocks(enable: boolean) {
+        if (enable) {
+            this.navigationController.enable(this.editor);
+        } else {
+            this.navigationController.disable(this.editor);
+        }
+    }
+
+    private initWorkspaceSearch() {
+        if (pxt.appTarget.appTheme.workspaceSearch && !this.workspaceSearch) {
+            this.workspaceSearch  = new pxt.blocks.PxtWorkspaceSearch(this.editor);
+            this.workspaceSearch.init();
+        }
     }
 
     private reportDeprecatedBlocks() {
@@ -572,6 +605,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.initBlocklyToolbox();
         this.initWorkspaceSounds();
         this.initAccessibleBlocks();
+        this.initWorkspaceSearch();
         this.resize();
 
         pxt.perf.measureEnd("prepareBlockly")

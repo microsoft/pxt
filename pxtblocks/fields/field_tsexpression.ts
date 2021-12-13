@@ -37,7 +37,7 @@ namespace pxtblockly {
         }
 
         applyColour() {
-            if (this.sourceBlock_ && this.constants_.FULL_BLOCK_FIELDS) {
+            if (this.sourceBlock_ && this.getConstants()?.FULL_BLOCK_FIELDS) {
                 if (this.borderRect_) {
                     this.borderRect_.setAttribute('stroke',
                         (this.sourceBlock_ as Blockly.BlockSvg).style.colourTertiary);

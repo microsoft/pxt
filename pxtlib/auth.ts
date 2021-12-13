@@ -369,7 +369,7 @@ namespace pxt.auth {
                 }
 
                 // Apply queued patches to the remote state in isolation and develop a final diff to send to the backend
-                const remotePrefs = U.deepCopy(getResult.resp);
+                const remotePrefs = U.deepCopy(getResult.resp) || DEFAULT_USER_PREFERENCES();
                 const patchQueue = this.patchQueue;
                 this.patchQueue = []; // Reset the queue
                 patchQueue.forEach(patch => {

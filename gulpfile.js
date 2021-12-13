@@ -66,6 +66,7 @@ const reactCommonPackageJson = () => {
 const pxtblockly = () => gulp.src([
     "webapp/public/blockly/blockly_compressed.js",
     "webapp/public/blockly/blocks_compressed.js",
+    "webapp/public/blockly/plugins.js",
     "webapp/public/blockly/msg/js/en.js",
     "built/pxtblocks.js"
 ])
@@ -534,6 +535,10 @@ const copyBlocklyCompressed = () => gulp.src([
 ])
     .pipe(gulp.dest("webapp/public/blockly/"));
 
+const copyBlocklyExtensions = () => gulp.src("node_modules/@blockly/**/dist/index.js")
+    .pipe(concat("plugins.js"))
+    .pipe(gulp.dest("webapp/public/blockly/"));
+
 const copyBlocklyEnJs = () => gulp.src("node_modules/pxt-blockly/msg/js/en.js")
     .pipe(gulp.dest("webapp/public/blockly/msg/js/"));
 
@@ -546,7 +551,7 @@ const copyBlocklyMedia = () => gulp.src("node_modules/pxt-blockly/media/*")
 const copyBlocklyTypings = () => gulp.src("node_modules/pxt-blockly/typings/blockly.d.ts")
     .pipe(gulp.dest("localtypings/"))
 
-const copyBlockly = gulp.parallel(copyBlocklyCompressed, copyBlocklyEnJs, copyBlocklyEnJson, copyBlocklyMedia, copyBlocklyTypings);
+const copyBlockly = gulp.parallel(copyBlocklyCompressed, copyBlocklyExtensions, copyBlocklyEnJs, copyBlocklyEnJson, copyBlocklyMedia, copyBlocklyTypings);
 
 
 /********************************************************
