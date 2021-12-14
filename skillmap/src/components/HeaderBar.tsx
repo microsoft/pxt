@@ -9,6 +9,7 @@ import { isLocal, resolvePath, tickEvent } from "../lib/browserUtils";
 import { Dropdown, DropdownItem } from "./Dropdown";
 import { isActivityCompleted } from "../lib/skillMapUtils";
 import * as authClient from '../lib/authClient';
+import { Button } from "react-common/controls/Button";
 
 interface HeaderBarProps {
     currentMapId?: string;
@@ -116,7 +117,7 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
         return <div className="user-menu">
             {signedIn
              ? <Dropdown icon="fas fa-user" items={items} picture={avatarElem || initialsElem} className="header-dropdown user-dropdown"/>
-             : <HeaderBarButton className="sign-in" icon="xicon cloud-user" title={lf("Sign In")} label={lf("Sign In")} onClick={ () => {
+             : <Button className="menu-button inverted" rightIcon="xicon cloud-user" title={lf("Sign In")} label={lf("Sign In")} onClick={ () => {
                 pxt.tickEvent(`skillmap.usermenu.signin`);
                 this.props.dispatchShowLoginModal();
             }}/>}
@@ -139,10 +140,10 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
 
             <div className="spacer" />
             <div className="header-right">
-                { activityOpen && <HeaderBarButton icon="fas fa-arrow-left" title={lf("Return to activity selection")} onClick={this.onBackClicked}/> }
-                <HeaderBarButton icon="fas fa-home" title={lf("Return to the editor homepage")} onClick={this.onHomeClicked}/>
-                { helpItems?.length > 0 && <Dropdown icon="fas fa-question-circle" className="header-dropdown" items={helpItems} /> }
-                { settingItems?.length > 0 && <Dropdown icon="fas fa-cog" className="header-dropdown" items={settingItems} /> }
+                { activityOpen && <Button className="menu-button" leftIcon="fas fa-arrow-left large" title={lf("Return to activity selection")} onClick={this.onBackClicked}/> }
+                <Button className="menu-button" leftIcon="fas fa-home large" title={lf("Return to the editor homepage")} onClick={this.onHomeClicked}/>
+                { helpItems?.length > 0 && <Dropdown icon="fas fa-question-circle large" className="header-dropdown" items={helpItems} /> }
+                { settingItems?.length > 0 && <Dropdown icon="fas fa-cog large" className="header-dropdown" items={settingItems} /> }
                 { hasIdentity && this.getUserMenu() }
             </div>
         </div>
@@ -185,23 +186,6 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
         pxt.tickEvent(`skillmap.profile`)
         this.props.dispatchShowUserProfile();
     }
-}
-
-interface HeaderBarButtonProps {
-    icon: string;
-    label?: string;
-    title: string;
-    onClick: () => void;
-    className?: string;
-}
-
-const HeaderBarButton = (props: HeaderBarButtonProps) => {
-    const { icon, label, title, onClick, className } = props;
-
-    return <div className={`header-button ${!label ? "icon-only" : "with-label"} ${className}`} title={title} role="button" onClick={onClick}>
-        <i className={icon} />
-        {label && <span className="header-button-label">{label}</span>}
-    </div>
 }
 
 function mapStateToProps(state: SkillMapState, ownProps: any) {

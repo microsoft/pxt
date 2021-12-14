@@ -198,14 +198,14 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
             <Modal title={completionModalTitle} actions={this.getCompletionActions(node.actions)} className="completion" onClose={this.handleOnClose}>
                 {completionModalTextSegments[0]}{<strong>{skillMap.displayName}</strong>}{completionModalTextSegments[1]}
                 <Button
-                    className="primary rounded completion-reward"
+                    className="primary completion-reward"
                     title={lf("Claim your reward!")}
                     label={lf("Claim your reward!")}
                     leftIcon="fas fa-gift"
                     onClick={onButtonClick} />
                 {(previousState && previousState.headerId) &&
                     <Button
-                        className="primary rounded completion-reward"
+                        className="primary completion-reward"
                         title={lf("Share your game!")}
                         label={lf("Share your game!")}
                         leftIcon="fas fa-share"
@@ -422,7 +422,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
         const buttons = [];
         buttons.push({
             label: lf("Confirm"),
-            className: checkboxSelected ? "confirm" : "confirm disabled",
+            disabled: !checkboxSelected,
 
             onClick: async () => {
                 if (checkboxSelected) {
@@ -437,7 +437,6 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
 
         buttons.push({
             label: lf("Back to safety"),
-            className: "disagree",
             onClick: this.props.dispatchHideModal
         })
 

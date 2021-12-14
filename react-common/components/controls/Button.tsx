@@ -7,7 +7,7 @@ interface ButtonProps extends ControlProps {
     label?: string;
     leftIcon?: string;
     rightIcon?: string;
-    disabled?: string;
+    disabled?: boolean;
     href?: string;
     target?: string;
 }
@@ -55,7 +55,7 @@ export const Button = (props: ButtonProps) => {
                     <span className="common-button-label">
                         {label}
                     </span>
-                    {rightIcon && <i className={rightIcon} aria-hidden={true}/>}
+                    {rightIcon && <i className={"right " + rightIcon} aria-hidden={true}/>}
                 </span>
         </button>
     );

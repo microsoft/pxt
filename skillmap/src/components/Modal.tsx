@@ -8,6 +8,7 @@ import '../styles/modal.css'
 export interface ModalAction {
     label: string;
     className?: string;
+    disabled?: boolean;
     icon?: string;
     xicon?: boolean;
     onClick: () => void;
@@ -54,6 +55,7 @@ export class Modal extends React.Component<ModalProps> {
                         <Button
                             className="primary inverted"
                             key={i}
+                            disabled={el.disabled}
                             onClick={el.onClick}
                             href={el.url}
                             label={el.label}

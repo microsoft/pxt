@@ -130,6 +130,8 @@
 /* VVN TODO COLORS */
 .cloud-action {
     margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
 }
 
 .sign-in-button {
