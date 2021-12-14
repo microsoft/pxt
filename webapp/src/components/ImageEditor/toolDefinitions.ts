@@ -305,6 +305,7 @@ export abstract class Edit {
     protected startY: number;
     isStarted: boolean;
     showPreview: boolean;
+    originalImage: pxt.sprite.Bitmap
 
     constructor (protected canvasWidth: number, protected canvasHeight: number, public color: number, protected toolWidth: number) {
     }
@@ -699,7 +700,6 @@ export class MarqueeEdit extends SelectionEdit {
     protected startOffsetY: number;
     protected anchorCol: number;
     protected anchorRow: number;
-    protected originalImage: pxt.sprite.Bitmap;
 
     start(cursorCol: number, cursorRow: number, cursorX: number, cursorY: number, state: EditState) {
         this.isStarted = true;
@@ -771,13 +771,11 @@ export class MarqueeEdit extends SelectionEdit {
                 const resizedImage = resize(this.originalImage, resizedWidth, resizedHeight)
                 state.setFloatingLayer(resizedImage, {layerOffsetX: Math.round(Math.min(this.anchorCol, this.endCol)),
                         layerOffsetY: Math.round(Math.min(this.anchorRow, this.endRow))}, false);
-            }
-            else {
+            } else {
                 state.mergeFloatingLayer();
                 state.copyToLayer(tl.x, tl.y, br.x - tl.x + 1, br.y - tl.y + 1, true);
             }
-        }
-        else if (!this.isMove) {
+        } else if (!this.isMove) {
             state.mergeFloatingLayer();
         }
     }

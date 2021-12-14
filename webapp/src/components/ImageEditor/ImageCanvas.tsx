@@ -9,7 +9,7 @@ import {
 } from "./actions/dispatch";
 import { GestureTarget, ClientCoordinates, bindGestureEvents, TilemapPatch, createTilemapPatchFromFloatingLayer } from './util';
 
-import { Edit, EditState, getEdit, getEditState, ToolCursor, tools } from './toolDefinitions';
+import { Edit, EditState, getEdit, getEditState, MarqueeEdit, ToolCursor, tools } from './toolDefinitions';
 import { createTile } from '../../assets';
 import { areShortcutsEnabled } from './keyboardShortcuts';
 import { LIGHT_MODE_TRANSPARENT } from './ImageEditor';
@@ -79,6 +79,9 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
     protected lastPanX: number;
     protected lastPanY: number;
     protected lastTool: ImageEditorTool;
+
+    protected isResizing: boolean;
+    protected originalImage: pxt.sprite.Bitmap;
 
     protected tileCache: HTMLCanvasElement[] = [];
     protected tileCacheRevision: number;
@@ -212,7 +215,9 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
             }
             return;
         }
-
+        if (this.touchesResize(coord.clientX, coord.clientY)) {
+            this.isResizing =  true;
+        }
         this.startEdit(!!isRightClick);
         this.updateEdit(this.cursorLocation[0], this.cursorLocation[1]);
         this.commitEdit();
@@ -220,6 +225,9 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
 
     onDragStart(coord: ClientCoordinates, isRightClick?: boolean): void {
         this.hasInteracted = true
+        if (this.touchesResize(coord.clientX, coord.clientY)) {
+            this.isResizing =  true;
+        }
         if (this.isPanning()) {
             this.lastPanX = coord.clientX;
             this.lastPanY = coord.clientY;
@@ -256,14 +264,21 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
             this.lastPanY = undefined;
 
             this.updateCursor(false, false);
-        }
-        else {
+        } else if (this.isResizing) {
+            if (!this.edit) return;
+            if (this.updateCursorLocation(coord))
+                this.updateEdit(this.cursorLocation[0], this.cursorLocation[1]);
+
+            this.commitEdit(false);
+            this.updateCursor(false, false);
+        } else {
             if (!this.edit) return;
             if (this.updateCursorLocation(coord))
                 this.updateEdit(this.cursorLocation[0], this.cursorLocation[1]);
 
             this.commitEdit();
         }
+        this.isResizing = false;
     }
 
     protected onKeyDown = (ev: KeyboardEvent): void => {
@@ -476,11 +491,13 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
 
         const [x, y] = this.cursorLocation;
 
-        if (this.inBounds(x, y)) {
+        if (this.inBounds(x, y) || this.isResizing) {
+            // The resize handles can be out of the canvas, but we want to allow it
             let color = drawingMode == TileDrawingMode.Wall
                 ? WALL_COLOR
                 : (isRightClick ? backgroundColor : selectedColor);
             this.edit = getEdit(tool, this.editState, color, toolWidth);
+            this.edit.originalImage = this.originalImage;
             this.edit.start(this.cursorLocation[0], this.cursorLocation[1], this.cursorLocation[2], this.cursorLocation[3], this.editState);
         }
     }
@@ -493,13 +510,18 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
         }
     }
 
-    protected commitEdit() {
+    protected commitEdit(clearImage = true) {
         const { dispatchImageEdit } = this.props;
         const imageState = this.getImageState();
 
         if (this.edit) {
             this.editState = getEditState(imageState, this.props.isTilemap, this.props.drawingMode);
             this.edit.doEdit(this.editState);
+            if (clearImage) {
+                this.originalImage = undefined;
+            } else {
+                this.originalImage = this.edit.originalImage;
+            }
             this.edit = undefined;
 
             dispatchImageEdit(this.editState.toImageState());
@@ -650,20 +672,20 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
                 corner.style.position = "absolute";
                 corner.style.backgroundColor = "white";
             })
-            nwCorner.style.left = (calcLeft + borderThickness - handleWidth / 2 ) + "px";
-            nwCorner.style.top = (calcTop +borderThickness - handleWidth / 2) + "px";
+            nwCorner.style.left = (calcLeft - handleWidth ) + "px";
+            nwCorner.style.top = (calcTop - handleWidth) + "px";
             nwCorner.style.cursor = "nw-resize"
 
-            neCorner.style.left = (calcLeft + calcWidth + borderThickness - handleWidth / 2) + "px";
-            neCorner.style.top = (calcTop + borderThickness - handleWidth / 2) + "px";
+            neCorner.style.left = (calcLeft + calcWidth) + "px";
+            neCorner.style.top = (calcTop - handleWidth) + "px";
             neCorner.style.cursor = "ne-resize"
 
-            seCorner.style.left = (calcLeft + calcWidth + borderThickness - handleWidth / 2) + "px";
-            seCorner.style.top = (calcTop + calcHeight + borderThickness - handleWidth / 2) + "px";
+            seCorner.style.left = (calcLeft + calcWidth) + "px";
+            seCorner.style.top = (calcTop + calcHeight) + "px";
             seCorner.style.cursor = "se-resize"
 
-            swCorner.style.left = (calcLeft + borderThickness - handleWidth / 2 ) + "px";
-            swCorner.style.top = (calcTop + calcHeight + borderThickness - handleWidth / 2) + "px";
+            swCorner.style.left = (calcLeft - handleWidth) + "px";
+            swCorner.style.top = (calcTop + calcHeight) + "px";
             swCorner.style.cursor = "sw-resize"
         }
         else {
@@ -1022,6 +1044,16 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
 
     protected isPanning() {
         return this.props.tool === ImageEditorTool.Pan;
+    }
+
+    protected touchesResize(cursorX: number, cursorY: number) {
+        const hovered = document.querySelectorAll( ":hover" );
+        for ( let i = 0; i < hovered.length; i ++){
+            if (hovered[i].className ==  "image-editor-floating-layer-corner") {
+                return true;
+            }
+        }
+        return false
     }
 
     protected isColorSelect() {
