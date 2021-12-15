@@ -119,29 +119,6 @@
     top: -0.25rem;
 }
 
-.modal-button {
-    border: 1px solid var(--active-color);
-    color: var(--active-color);
-    padding: 0.5rem;
-    text-align: center;
-    cursor: pointer;
-    user-select: none;
-    text-transform: uppercase;
-}
-
-.modal-button:hover, .completion-reward.inverted.modal-button:hover {
-    background-color: var(--hover-color);
-    color: var(--active-color);
-    text-decoration: none;
-}
-
-.modal-button.disabled {
-    background-color: var(--inactive-color);
-    color: var(--inactive-hover-color);
-    border: 1px solid var(--inactive-hover-color);
-    cursor: auto;
-}
-
 .modal .checkbox {
     user-select: none;
 }
