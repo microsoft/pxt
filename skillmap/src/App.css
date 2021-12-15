@@ -1,4 +1,3 @@
-
 :root {
     --black: #000;
     --white: #fff;
@@ -89,7 +88,6 @@ code {
     max-height: var(--header-height);
     display: flex;
     align-items: center;
-    font-size: 2rem;
     color: var(--inverted-text-color);
     flex-grow: 0;
     flex-shrink: 0;
@@ -184,7 +182,7 @@ code {
     display: none;
 }
 
-.header i.icon {
+.header i {
     line-height: 2rem;
     cursor: pointer;
 }
@@ -235,8 +233,8 @@ code {
     background-color: rgba(0,0,0,.1);
 }
 
-.header-button:hover>.icon,
-.header-dropdown:hover>.icon {
+.header-button:hover>i,
+.header-dropdown:hover>i {
     transform: scale(1.2);
 }
 
@@ -245,7 +243,7 @@ code {
 }
 
 .header-button.sign-in:hover>span,
-.header-button.sign-in:hover>.icon {
+.header-button.sign-in:hover>i {
     transform: none;
 }
 

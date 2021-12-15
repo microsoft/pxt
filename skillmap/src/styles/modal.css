@@ -50,7 +50,7 @@
     margin-bottom: 0;
 }
 
-.modal-header i.icon {
+.modal-header i {
     font-size: 1.2rem;
     line-height: 1.2rem;
     margin: 0;
@@ -101,7 +101,7 @@
     background-color: rgba(0,0,0,.1);
 }
 
-.modal-header .icon {
+.modal-header i {
     padding-right: 2rem;
 }
 
@@ -109,7 +109,7 @@
     position: relative;
 }
 
-.modal-close-icon i.icon.close.remove.circle {
+.modal-close-icon i.fas {
     position: absolute;
     font-size: 2.15rem;
     line-height: 2.15rem;
@@ -117,29 +117,6 @@
     width: 2.15rem;
     right: 0;
     top: -0.25rem;
-}
-
-.modal-button {
-    border: 1px solid var(--active-color);
-    color: var(--active-color);
-    padding: 0.5rem;
-    text-align: center;
-    cursor: pointer;
-    user-select: none;
-    text-transform: uppercase;
-}
-
-.modal-button:hover, .completion-reward.inverted.modal-button:hover {
-    background-color: var(--hover-color);
-    color: var(--active-color);
-    text-decoration: none;
-}
-
-.modal-button.disabled {
-    background-color: var(--inactive-color);
-    color: var(--inactive-hover-color);
-    border: 1px solid var(--inactive-hover-color);
-    cursor: auto;
 }
 
 .modal .checkbox {
@@ -325,40 +302,8 @@
 
 /* COMPLETION MODAL */
 .completion-reward {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.5rem;
     margin: 1rem 0;
-    color: var(--white);
-    background-color: var(--primary-color);
-    border-radius: 2rem;
-    font-size: 1.2rem;
-    cursor: pointer;
-    user-select: none;
-    border: none;
     width: 100%;
-    font-family: var(--body-font-family);
-    flex-grow: 1;
-}
-
-.completion-reward.inverted {
-    color: var(--primary-color);
-    background-color: var(--white);
-    border: solid 1px var(--primary-color);
-}
-
-.completion-reward i {
-    margin-right: 0.5rem;
-    font-size: 2rem;
-    line-height: 2rem;
-}
-
-.modal-button.completion-reward i {
-    font-size: 1.5rem;
-    line-height: 1.5rem;
-    margin-left: 0.5rem;
-    margin-right: 0;
 }
 
 /* COMPLETION CONFETTI */

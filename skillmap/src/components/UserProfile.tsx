@@ -131,7 +131,7 @@ export class UserProfileImpl extends React.Component<UserProfileProps, UserProfi
             </div>
             <div className="row-span-two">
                 <a className="ui"  title={lf("Provide feedback in a from")} href="https://aka.ms/AAcnpaj" target="_blank">
-                    <i className="icon external alternate"></i>
+                    <i className="fas fa-external-link-alt"></i>
                     { lf("Take the Survey") }
                 </a>
             </div>

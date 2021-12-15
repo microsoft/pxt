@@ -1,5 +1,13 @@
 import * as React from "react";
 
+export interface ControlProps {
+    id?: string;
+    className?: string;
+    ariaLabel?: string;
+    ariaHidden?: boolean;
+    role?: string;
+}
+
 export function jsxLF(loc: string, ...rest: JSX.Element[]) {
     const indices: number[] = [];
 
@@ -32,4 +40,13 @@ export function fireClickOnEnter(e: React.KeyboardEvent<HTMLElement>) {
         e.preventDefault();
         e.currentTarget.click();
     }
+}
+
+export function classList(...classes: string[]) {
+    return classes
+        .filter(c => typeof c === "string")
+        .reduce((prev, c) => prev.concat(c.split(" ")), [] as string[])
+        .map(c => c.trim())
+        .filter(c => !!c)
+        .join(" ");
 }

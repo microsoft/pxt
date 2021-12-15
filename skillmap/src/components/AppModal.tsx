@@ -12,6 +12,7 @@ import { editorUrl } from "./makecodeFrame";
 import { Modal, ModalAction } from './Modal';
 import { jsxLF } from "react-common/util";
 import { Badge } from "react-common/profile/Badge";
+import { Button } from "react-common/controls/Button";
 
 interface AppModalProps {
     type: ModalType;
@@ -196,14 +197,20 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
         return <div className="confetti-container">
             <Modal title={completionModalTitle} actions={this.getCompletionActions(node.actions)} className="completion" onClose={this.handleOnClose}>
                 {completionModalTextSegments[0]}{<strong>{skillMap.displayName}</strong>}{completionModalTextSegments[1]}
-                <button className="completion-reward" onClick={onButtonClick}>
-                    <i className="icon gift" />
-                    <span>{lf("Claim your reward!")}</span>
-                </button>
-                {(previousState && previousState.headerId) && <button className="completion-reward" onClick={this.handleRewardShareClick}>
-                    <i className="icon send" />
-                    <span>{lf("Share your game!")}</span>
-                </button>}
+                <Button
+                    className="primary completion-reward"
+                    title={lf("Claim your reward!")}
+                    label={lf("Claim your reward!")}
+                    leftIcon="fas fa-gift"
+                    onClick={onButtonClick} />
+                {(previousState && previousState.headerId) &&
+                    <Button
+                        className="primary completion-reward"
+                        title={lf("Share your game!")}
+                        label={lf("Share your game!")}
+                        leftIcon="fas fa-share"
+                        onClick={this.handleRewardShareClick} />
+                }
             </Modal>
             {this.renderConfetti()}
         </div>
@@ -344,7 +351,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                 <input type="text" readOnly={true} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
                     value={`https://makecode.com/${shortId}`} onClick={this.handleShareInputClick}></input>
                 <div className="share-copy" onClick={this.handleShareCopyClick} role="button">
-                    <i className="icon copy" />
+                    <i className="fas fa-copy" />
                     {lf("Copy")}
                 </div>
             </div>}
@@ -380,7 +387,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                             tickEvent("skillmap.signindialog.learn");
                             window.open("https://aka.ms/cloudsave", "_blank");
                         }}>
-                            <i className="icon external alternate" />{lf("Learn more")}
+                            <i className="fas fa-external-link-alt" aria-hidden={true} />{lf("Learn more")}
                         </a>
                     </p>
                 </div>
@@ -389,7 +396,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                     tickEvent("skillmap.signindialog.rememberme", { rememberMe: rememberMe.toString() });
                     this.setState({ checkboxSelected: rememberMe });
                 }}>
-                    <i className={`icon square outline ${rememberMeSelected ? "check" : ""}`} />
+                    <i className={`far ${rememberMeSelected ? "fa-check-square" : "fa-square"}`} />
                     {lf("Remember me")}
                 </div>
             </div>
@@ -415,7 +422,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
         const buttons = [];
         buttons.push({
             label: lf("Confirm"),
-            className: checkboxSelected ? "confirm" : "confirm disabled",
+            disabled: !checkboxSelected,
 
             onClick: async () => {
                 if (checkboxSelected) {
@@ -430,7 +437,6 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
 
         buttons.push({
             label: lf("Back to safety"),
-            className: "disagree",
             onClick: this.props.dispatchHideModal
         })
 
@@ -440,7 +446,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
             <div className="confirm-delete checkbox" onClick={() => {
                     this.setState({ checkboxSelected: !checkboxSelected });
                 }}>
-                <i className={`icon square outline ${checkboxSelected ? "check" : ""}`} />
+                <i className={`far ${checkboxSelected ? "fa-check-square" : "fa-square"}`} />
                 { lf("I understand this is permanent. No undo.") }
             </div>
         </Modal>

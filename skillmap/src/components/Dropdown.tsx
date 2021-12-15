@@ -47,7 +47,7 @@ export class Dropdown extends React.Component<DropdownProps, DropdownState> {
         return <div className={`dropdown ${className} ${expanded ? 'expanded' : ''}`} tabIndex={0} role="button"
                     onClick={this.handleOnClick}
                     onBlur={this.handleOnBlur}>
-            {picture ? picture : <i className={`icon ${icon}`} />}
+            {picture ? picture : <i className={icon} />}
             {expanded && <div className="dropdown-menu">
                 {items.map((el, i) => {
                     return <div key={i} className="dropdown-item" onClick={this.getItemOnClick(el)} role="menuitem">{el.label}</div>
