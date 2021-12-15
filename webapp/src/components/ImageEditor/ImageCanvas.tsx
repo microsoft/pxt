@@ -663,30 +663,31 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
             const handleWidth = 16;
             const borderThickness = 3;
 
+            if (!this.props.isTilemap) {
+                cornerHandles.forEach( corner => {
+                    corner.style.display = ""
+                    corner.style.width = handleWidth + "px";
+                    corner.style.height = handleWidth + "px";
+                    corner.style.border = borderThickness + "px solid black"
+                    corner.style.position = "absolute";
+                    corner.style.backgroundColor = "white";
+                })
+                nwCorner.style.left = (calcLeft - handleWidth ) + "px";
+                nwCorner.style.top = (calcTop - handleWidth) + "px";
+                nwCorner.style.cursor = "nw-resize"
 
-            cornerHandles.forEach( corner => {
-                corner.style.display = ""
-                corner.style.width = handleWidth + "px";
-                corner.style.height = handleWidth + "px";
-                corner.style.border = borderThickness + "px solid black"
-                corner.style.position = "absolute";
-                corner.style.backgroundColor = "white";
-            })
-            nwCorner.style.left = (calcLeft - handleWidth ) + "px";
-            nwCorner.style.top = (calcTop - handleWidth) + "px";
-            nwCorner.style.cursor = "nw-resize"
+                neCorner.style.left = (calcLeft + calcWidth) + "px";
+                neCorner.style.top = (calcTop - handleWidth) + "px";
+                neCorner.style.cursor = "ne-resize"
 
-            neCorner.style.left = (calcLeft + calcWidth) + "px";
-            neCorner.style.top = (calcTop - handleWidth) + "px";
-            neCorner.style.cursor = "ne-resize"
+                seCorner.style.left = (calcLeft + calcWidth) + "px";
+                seCorner.style.top = (calcTop + calcHeight) + "px";
+                seCorner.style.cursor = "se-resize"
 
-            seCorner.style.left = (calcLeft + calcWidth) + "px";
-            seCorner.style.top = (calcTop + calcHeight) + "px";
-            seCorner.style.cursor = "se-resize"
-
-            swCorner.style.left = (calcLeft - handleWidth) + "px";
-            swCorner.style.top = (calcTop + calcHeight) + "px";
-            swCorner.style.cursor = "sw-resize"
+                swCorner.style.left = (calcLeft - handleWidth) + "px";
+                swCorner.style.top = (calcTop + calcHeight) + "px";
+                swCorner.style.cursor = "sw-resize"
+            }
         }
         else {
             floatingRect.style.display = "none"
