@@ -225,7 +225,7 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
     onDragStart(coord: ClientCoordinates, isRightClick?: boolean): void {
         this.hasInteracted = true
         if (this.touchesResize(coord.clientX, coord.clientY)) {
-            this.isResizing =  true;
+            this.isResizing = true;
         }
         if (this.isPanning()) {
             this.lastPanX = coord.clientX;
