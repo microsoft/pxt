@@ -9,7 +9,7 @@ import {
 } from "./actions/dispatch";
 import { GestureTarget, ClientCoordinates, bindGestureEvents, TilemapPatch, createTilemapPatchFromFloatingLayer } from './util';
 
-import { Edit, EditState, getEdit, getEditState, MarqueeEdit, ToolCursor, tools } from './toolDefinitions';
+import { Edit, EditState, getEdit, getEditState, ToolCursor, tools } from './toolDefinitions';
 import { createTile } from '../../assets';
 import { areShortcutsEnabled } from './keyboardShortcuts';
 import { LIGHT_MODE_TRANSPARENT } from './ImageEditor';
@@ -105,7 +105,6 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
                 <div ref="floating-layer-ne-corner" className="image-editor-floating-layer-corner"/>
                 <div ref="floating-layer-se-corner" className="image-editor-floating-layer-corner"/>
                 <div ref="floating-layer-sw-corner" className="image-editor-floating-layer-corner"/>
-                <div ref="floating-layer-rotate-handle" className="image-editor-floating-layer-rotate"/>
             </div>
         </div>
     }

@@ -745,7 +745,7 @@ export class MarqueeEdit extends SelectionEdit {
     }
 
     protected doEditCore(state: EditState): void {
-        function resize(bitmap: pxt.sprite.Bitmap, newWidth: number, newHeight: number) {
+        function resize(bitmap: pxt.sprite.Bitmap, newWidth: number, newHeight: number): pxt.sprite.Bitmap {
             const image = new pxt.sprite.Bitmap(newWidth, newHeight, 0, 0)
             for (let x = 0; x < newWidth; x++) {
                 for (let y = 0; y < newHeight; y++) {
