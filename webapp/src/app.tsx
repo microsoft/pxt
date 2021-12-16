@@ -4296,13 +4296,9 @@ export class ProjectView
     }
 
     setAccessibleBlocks(enabled: boolean) {
-        if (enabled) {
-            Blockly.navigation.enableKeyboardAccessibility();
-        } else {
-            Blockly.navigation.disableKeyboardAccessibility();
-        }
-        this.setState({ accessibleBlocks: enabled });
         pxt.tickEvent("app.accessibleblocks", { on: enabled ? 1 : 0 });
+        this.blocksEditor.enableAccessibleBlocks(enabled);
+        this.setState({ accessibleBlocks: enabled })
     }
 
     setBannerVisible(b: boolean) {
@@ -5135,8 +5131,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     pxt.docs.requireMarked = () => require("marked");
     const importHex = (hex: pxt.cpp.HexFile, options?: pxt.editor.ImportFileOptions) => theEditor.importHex(hex, options);
 
-    const hm = /^(https:\/\/[^/]+)/.exec(window.location.href)
-    if (hm) Cloud.apiRoot = hm[1] + "/api/"
+    // allow static web site to specify custom backend
+    if (pxt.appTarget.cloud?.apiRoot)
+        Cloud.apiRoot = pxt.appTarget.cloud.apiRoot
+    else {
+        const hm = /^(https:\/\/[^/]+)/.exec(window.location.href)
+        if (hm) Cloud.apiRoot = hm[1] + "/api/"
+    }
 
     if (query["hw"]) {
         pxt.setHwVariant(query["hw"])
@@ -5167,7 +5168,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         .then(async () => {
             const href = window.location.href;
             let force = false;
-            const cloudLang = auth.userPreferences()?.language;
+            const userLang = data.getData<string>(auth.LANGUAGE);
             // kick of a user preferences check; if the language is different we'll request they reload
             auth.initialUserPreferencesAsync().then((pref) => {
                 const cookieLang = pxt.BrowserUtils.getCookieLang()
@@ -5193,7 +5194,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 const hashLang = hashLangMatch?.[3];
                 const cookieLang = pxt.BrowserUtils.getCookieLang()
                 // chose the user's language using the following ordering:
-                useLang = hashLang || cloudLang || cookieLang || theme.defaultLocale || (navigator as any).userLanguage || navigator.language;
+                useLang = hashLang || userLang || cookieLang || theme.defaultLocale || (navigator as any).userLanguage || navigator.language;
 
                 const locstatic = /staticlang=1/i.test(window.location.href);
                 const defLocale = pxt.appTarget.appTheme.defaultLocale;

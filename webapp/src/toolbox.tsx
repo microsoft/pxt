@@ -214,14 +214,8 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
 
             // Hide flyout
             this.closeFlyout();
-            if (parent.parent.state?.accessibleBlocks) {
-                Blockly.navigation.setState(Blockly.navigation.STATE_WS);
-            }
         } else {
             let handled = false;
-            if (parent.parent.state?.accessibleBlocks) {
-                Blockly.navigation.setState(Blockly.navigation.STATE_TOOLBOX);
-            }
             if (customClick) {
                 handled = customClick(parent);
                 if (handled) return;
@@ -556,8 +550,10 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
         const { toolbox } = this.props;
         const isRtl = Util.isUserLanguageRtl();
 
-        const accessibleBlocksEnabled = (Blockly.getMainWorkspace() as any).keyboardAccessibilityMode;
-        const blocklyNavigationState = (Blockly.navigation as any).currentState_ as number;
+        const mainWorkspace = Blockly.getMainWorkspace() as any;
+        const accessibleBlocksEnabled = mainWorkspace.keyboardAccessibilityMode;
+        const accessibleBlocksState = accessibleBlocksEnabled
+            && (toolbox.props.parent as any).navigationController?.navigation?.getState(mainWorkspace);
         const keyMap: { [key: string]: number } = {
             "DOWN": accessibleBlocksEnabled ? 83 : 40, // 'S' || down arrow
             "UP": accessibleBlocksEnabled ? 87 : 38, // 'W' || up arrow
@@ -566,7 +562,7 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
         }
 
         const charCode = core.keyCodeFromEvent(e);
-        if (!accessibleBlocksEnabled || blocklyNavigationState != 1) {
+        if (!accessibleBlocksEnabled || accessibleBlocksState == "toolbox") {
             if (charCode == keyMap["DOWN"]) {
                 this.nextItem();
             } else if (charCode == keyMap["UP"]) {
@@ -590,7 +586,7 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
             } else if (!accessibleBlocksEnabled) {
                 toolbox.setSearch();
             }
-        } else if (accessibleBlocksEnabled && blocklyNavigationState == 1
+        } else if (accessibleBlocksEnabled && accessibleBlocksState == "flyout"
             && ((charCode == keyMap["LEFT"] && !isRtl)
             || (charCode == keyMap["RIGHT"] && isRtl))) {
             this.focusElement();

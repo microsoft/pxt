@@ -819,7 +819,7 @@ namespace pxt.blocks {
                                 inputCheck = pr.type;
                             } else if (pr.type == "number" && pr.shadowBlockId && pr.shadowBlockId == "value") {
                                 inputName = undefined;
-                                fields.push(namedField(new Blockly.FieldTextInput("0", Blockly.FieldTextInput.numberValidator), defName));
+                                fields.push(namedField(new Blockly.FieldNumber("0"), defName));
                             } else if (pr.type == "string" && pr.shadowOptions && pr.shadowOptions.toString) {
                                 inputCheck = null;
                             } else {
@@ -2124,11 +2124,6 @@ namespace pxt.blocks {
                     let blockText = '<xml>' +
                         '<block type="variables_change" gap="' + gap + '">' +
                         Blockly.Variables.generateVariableFieldXmlString(mostRecentVariable) +
-                        '<value name="DELTA">' +
-                        '<shadow type="math_number">' +
-                        '<field name="NUM">1</field>' +
-                        '</shadow>' +
-                        '</value>' +
                         '</block>' +
                         '</xml>';
                     let block = Blockly.Xml.textToDom(blockText).firstChild as HTMLElement;
@@ -3090,5 +3085,41 @@ namespace pxt.blocks {
 
     export function getBlockDataForField(block: Blockly.Block, field: string) {
         return getBlockData(block).fieldData[field];
+    }
+
+    export class PxtWorkspaceSearch extends WorkspaceSearch {
+        protected createDom_() {
+            super.createDom_();
+            this.addEvent_(this.workspace_.getInjectionDiv(), "click", this, (e: any) => {
+                if (!this.htmlDiv_.contains(e.target)) {
+                    this.close()
+                }
+            });
+        }
+
+        protected highlightSearchGroup_(blocks: Blockly.BlockSvg[]) {
+            blocks.forEach((block) => {
+                const blockPath = block.pathObject.svgPath;
+                Blockly.utils.dom.addClass(blockPath, 'blockly-ws-search-highlight-pxt');
+            });
+        }
+
+        protected unhighlightSearchGroup_ (blocks: Blockly.BlockSvg[]) {
+            blocks.forEach((block) => {
+                const blockPath = block.pathObject.svgPath;
+                Blockly.utils.dom.removeClass(blockPath, 'blockly-ws-search-highlight-pxt');
+            });
+        }
+
+        open() {
+            super.open();
+            Blockly.utils.dom.addClass(this.workspace_.getInjectionDiv(), 'blockly-ws-searching');
+        }
+
+        close() {
+            super.close();
+            Blockly.utils.dom.removeClass(this.workspace_.getInjectionDiv(), 'blockly-ws-searching');
+        }
+
     }
 }

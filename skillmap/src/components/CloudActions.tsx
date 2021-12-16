@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import { dispatchShowLoginModal } from "../actions/dispatch";
 import { SkillMapState } from "../store/reducer";
 import { lookupActivityProgress } from "../lib/skillMapUtils";
+import { Button } from "react-common/controls/Button";
 
 interface OwnProps {
     signedIn: boolean;
@@ -25,9 +26,12 @@ export class CloudActionsImpl extends React.Component<CloudActionsProps> {
                     <div className={`ui tiny cloudicon xicon ${cloudStatus.icon}`} title={cloudStatus.tooltip} tabIndex={-1}></div>
                     {cloudStatus.longStatus}
                 </div>
-                : <div className="sign-in-button" onClick={this.props.dispatchShowLoginModal}>
-                    {lf("Sign in to Save")}
-                </div>
+                : <Button
+                    className="teal"
+                    onClick={this.props.dispatchShowLoginModal}
+                    label={lf("Sign in to Save")}
+                    title={lf("Sign in to Save")}
+                />
             }
         </div>
     }

@@ -759,6 +759,10 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
                 }
 
             }
+            else if (isDrawingWalls) {
+                context.fillStyle = this.props.colors[color]
+                context.fillRect(left, top, 1, 1);
+            }
             else {
                 context.fillStyle = this.props.colors[color]
                 context.fillRect(left * this.cellWidth, top * this.cellWidth, width * this.cellWidth, width * this.cellWidth);

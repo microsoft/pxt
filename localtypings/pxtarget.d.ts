@@ -29,6 +29,7 @@ declare namespace pxt {
         windowsStoreLink?: string;
         // release manifest for the electron app
         electronManifest?: pxt.electron.ElectronManifest;
+        profileNotification?: ProfileNotification;
     }
 
     interface PackagesConfig {
@@ -86,6 +87,7 @@ declare namespace pxt {
         checkdocsdirs?: string[]; // list of /docs subfolders for checkdocs, irrespective of SUMMARY.md
         cacheusedblocksdirs?: string[]; // list of /docs subfolders for parsing and caching used block ids (for tutorial loading)
         blockIdMap?: Map<string[]>; // list of target-specific blocks that are "synonyms" (eg. "agentturnright" and "minecraftAgentTurn")
+        defaultBadges?: pxt.auth.Badge[];
     }
 
     interface BrowserOptions {
@@ -170,6 +172,8 @@ declare namespace pxt {
     }
 
     interface AppCloud {
+        // specify the desired api root, https://makecode.com/api/
+        apiRoot?: string;
         workspaces?: boolean;
         packages?: boolean;
         sharing?: boolean; // uses cloud-based anonymous sharing
@@ -423,6 +427,7 @@ declare namespace pxt {
         githubEditor?: boolean; // allow editing github repositories from the editor
         githubCompiledJs?: boolean; // commit binary.js in commit when creating a github release,
         blocksCollapsing?: boolean; // collapse/uncollapse functions/event in blocks
+        workspaceSearch?: boolean; // allow CTRL+F blocks workspace search
         hideHomeDetailsVideo?: boolean; // hide video/large image from details card
         tutorialBlocksDiff?: boolean; // automatically display blocks diffs in tutorials
         tutorialTextDiff?: boolean; // automatically display text diffs in tutorials
@@ -578,6 +583,15 @@ declare namespace pxt {
         type: "serviceworker";
         action: "packet-io-status";
     }
+
+    interface ProfileNotification {
+        message: string;
+        title: string
+        icon: string;
+        actionText: string;
+        link: string;
+        xicon?: boolean;
+    }
 }
 
 declare namespace pxt.editor {
@@ -643,10 +657,12 @@ declare namespace ts.pxtc {
         useMkcd?: boolean;
         useELF?: boolean;
         useESP?: boolean;
+        sourceMap?: boolean;
         saveAsPNG?: boolean;
         noSourceInFlash?: boolean;
         useModulator?: boolean;
         webUSB?: boolean; // use WebUSB when supported
+        disableHIDBridge?: boolean; // disable hid bridge
         hexMimeType?: string;
         moveHexEof?: boolean;
         driveName?: string;
@@ -1137,5 +1153,25 @@ declare namespace pxt.tutorial {
         id: string;
         // number of steps completed
         steps: number;
+    }
+}
+
+declare namespace pxt.auth {
+    type BadgeType = "skillmap-completion";
+
+    type Badge = SkillmapBadge;
+
+    interface BaseBadge {
+        id: string;
+        type: BadgeType;
+        title: string;
+        image: string;
+        lockedImage?: string;
+        timestamp?: number;
+    }
+
+    interface SkillmapBadge extends BaseBadge {
+        type: "skillmap-completion";
+        sourceURL: string;
     }
 }

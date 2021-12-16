@@ -4,7 +4,7 @@
 }
 
 .graph-icon {
-    font-family: Icons;
+    font-family: 'Font Awesome 5 Free';
     font-size: 1.75rem;
     opacity: 0.8;
 }
@@ -20,7 +20,7 @@
 }
 
 .graph-status-icon {
-    font-family: Icons;
+    font-family: 'Font Awesome 5 Free';
     font-size: 1rem;
 }
 

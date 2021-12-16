@@ -9,6 +9,7 @@ import { isLocal, resolvePath, tickEvent } from "../lib/browserUtils";
 import { Dropdown, DropdownItem } from "./Dropdown";
 import { isActivityCompleted } from "../lib/skillMapUtils";
 import * as authClient from '../lib/authClient';
+import { Button } from "react-common/controls/Button";
 
 interface HeaderBarProps {
     currentMapId?: string;
@@ -86,6 +87,11 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
         return items;
     }
 
+    avatarPicUrl = (): string | undefined => {
+        const { profile } = this.props;
+        return profile?.idp?.pictureUrl ?? profile?.idp?.picture?.dataUrl;
+    }
+
     protected getUserMenu() {
         const { signedIn, profile } = this.props;
         const items = [];
@@ -102,16 +108,16 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
             })
         }
 
-        const avatarElem = profile?.idp?.picture?.dataUrl
-            ? <div className="avatar"><img src={profile?.idp?.picture?.dataUrl} alt={lf("User Menu")}/></div>
+        const avatarElem = this.avatarPicUrl()
+            ? <div className="avatar"><img src={this.avatarPicUrl()} alt={lf("User Menu")}/></div>
             : undefined;
 
-        const initialsElem = <span className="circle">{pxt.auth.userInitials(profile)}</span>
+        const initialsElem = <span><div className="avatar-initials">{pxt.auth.userInitials(profile)}</div></span>
 
         return <div className="user-menu">
             {signedIn
-             ? <Dropdown icon="user" items={items} picture={avatarElem || initialsElem} className="header-dropdown"/>
-             : <HeaderBarButton className="sign-in" icon="xicon cloud-user" title={lf("Sign In")} label={lf("Sign In")} onClick={ () => {
+             ? <Dropdown icon="fas fa-user" items={items} picture={avatarElem || initialsElem} className="header-dropdown user-dropdown"/>
+             : <Button className="menu-button inverted" rightIcon="xicon cloud-user" title={lf("Sign In")} label={lf("Sign In")} onClick={ () => {
                 pxt.tickEvent(`skillmap.usermenu.signin`);
                 this.props.dispatchShowLoginModal();
             }}/>}
@@ -134,10 +140,10 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
 
             <div className="spacer" />
             <div className="header-right">
-                { activityOpen && <HeaderBarButton icon="icon arrow left" title={lf("Return to activity selection")} onClick={this.onBackClicked}/> }
-                <HeaderBarButton icon="icon home" title={lf("Return to the editor homepage")} onClick={this.onHomeClicked}/>
-                { helpItems?.length > 0 && <Dropdown icon="help circle" className="header-dropdown" items={helpItems} /> }
-                { settingItems?.length > 0 && <Dropdown icon="setting" className="header-dropdown" items={settingItems} /> }
+                { activityOpen && <Button className="menu-button" leftIcon="fas fa-arrow-left large" title={lf("Return to activity selection")} onClick={this.onBackClicked}/> }
+                <Button className="menu-button" leftIcon="fas fa-home large" title={lf("Return to the editor homepage")} onClick={this.onHomeClicked}/>
+                { helpItems?.length > 0 && <Dropdown icon="fas fa-question-circle large" className="header-dropdown" items={helpItems} /> }
+                { settingItems?.length > 0 && <Dropdown icon="fas fa-cog large" className="header-dropdown" items={settingItems} /> }
                 { hasIdentity && this.getUserMenu() }
             </div>
         </div>
@@ -180,23 +186,6 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
         pxt.tickEvent(`skillmap.profile`)
         this.props.dispatchShowUserProfile();
     }
-}
-
-interface HeaderBarButtonProps {
-    icon: string;
-    label?: string;
-    title: string;
-    onClick: () => void;
-    className?: string;
-}
-
-const HeaderBarButton = (props: HeaderBarButtonProps) => {
-    const { icon, label, title, onClick, className } = props;
-
-    return <div className={`header-button ${!label ? "icon-only" : "with-label"} ${className}`} title={title} role="button" onClick={onClick}>
-        <i className={icon} />
-        {label && <span className="header-button-label">{label}</span>}
-    </div>
 }
 
 function mapStateToProps(state: SkillMapState, ownProps: any) {

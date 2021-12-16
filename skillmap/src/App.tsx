@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 
 import store from "./store/store";
 import * as authClient from "./lib/authClient";
-import { getFlattenedHeaderIds, hasUrlBeenStarted } from "./lib/skillMapUtils";
+import { getCompletedBadges, getFlattenedHeaderIds, hasUrlBeenStarted, isRewardNode } from "./lib/skillMapUtils";
 
 import {
     dispatchAddSkillMap,
@@ -20,6 +20,7 @@ import {
     dispatchSetPageBackgroundImageUrl,
     dispatchSetPageBannerImageUrl,
     dispatchSetPageTheme,
+    dispatchSetUserPreferences
 } from './actions/dispatch';
 import { PageSourceStatus, SkillMapState } from './store/reducer';
 import { HeaderBar } from './components/HeaderBar';
@@ -29,7 +30,7 @@ import { InfoPanel } from './components/InfoPanel';
 
 import { parseSkillMap } from './lib/skillMapParser';
 import { parseHash, getMarkdownAsync, MarkdownSource, parseQuery,
-    setPageTitle, setPageSourceUrl, ParsedHash } from './lib/browserUtils';
+    setPageTitle, setPageSourceUrl, ParsedHash, resolvePath } from './lib/browserUtils';
 
 import { MakeCodeFrame } from './components/makecodeFrame';
 import { getLocalUserStateAsync, getUserStateAsync, saveUserStateAsync } from './lib/workspaceProvider';
@@ -62,11 +63,14 @@ interface AppProps {
     dispatchSetPageSourceUrl: (url: string, status: PageSourceStatus) => void;
     dispatchSetPageAlternateUrls: (urls: string[]) => void;
     dispatchSetPageTheme: (theme: SkillGraphTheme) => void;
+    dispatchSetUserPreferences: (prefs: pxt.auth.UserPreferences) => void;
 }
 
 interface AppState {
     error?: string;
     cloudSyncCheckHasFinished: boolean;
+    badgeSyncLock: boolean;
+    showingSyncLoader?: boolean;
 }
 
 class AppImpl extends React.Component<AppProps, AppState> {
@@ -78,7 +82,8 @@ class AppImpl extends React.Component<AppProps, AppState> {
     constructor(props: any) {
         super(props);
         this.state = {
-            cloudSyncCheckHasFinished: false
+            cloudSyncCheckHasFinished: false,
+            badgeSyncLock: false
         };
         this.readyPromise = new ReadyPromise();
 
@@ -133,13 +138,17 @@ class AppImpl extends React.Component<AppProps, AppState> {
             force = !!mlang && !!mlang[2];
         }
 
+        const defLocale = pxt.appTarget.appTheme.defaultLocale;
+        if (!force && !pxt.Util.isLocaleEnabled(useLang!)) {
+            useLang = defLocale;
+        }
+
         // TODO: include the pxt webconfig so that we can get the commitcdnurl (and not always pass live=true)
         const baseUrl = "";
         const targetId = pxt.appTarget.id;
         const pxtBranch = pxt.appTarget.versions.pxtCrowdinBranch;
         const targetBranch = pxt.appTarget.versions.targetCrowdinBranch;
 
-        const defLocale = pxt.appTarget.appTheme.defaultLocale;
         const langLowerCase = useLang?.toLocaleLowerCase();
         const localDevServe = pxt.BrowserUtils.isLocalHostDev()
             && (!langLowerCase || (defLocale
@@ -161,6 +170,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
 
         if (pxt.Util.isLocaleEnabled(useLang!)) {
             pxt.BrowserUtils.setCookieLang(useLang!);
+            pxt.Util.setUserLanguage(useLang!);
         }
     }
 
@@ -222,85 +232,108 @@ class AppImpl extends React.Component<AppProps, AppState> {
         this.applyQueryFlags(user, loadedMaps, fetched);
         this.loadedUser = user;
         this.props.dispatchSetUser(user);
+
+        const prefs = await authClient.userPreferencesAsync();
+        if (prefs) this.props.dispatchSetUserPreferences(prefs);
     }
 
     protected async cloudSyncCheckAsync() {
         const res = await this.ready();
-        if (await authClient.loggedInAsync()) {
-            const state = store.getState();
-            const localUser = await getLocalUserStateAsync();
+        if (!await authClient.loggedInAsync()) {
+            this.setState({cloudSyncCheckHasFinished: true});
+        } else {
+            const doCloudSyncCheckAsync = async () => {
+                const state = store.getState();
+                const localUser = await getLocalUserStateAsync();
 
-            let currentUser = await getUserStateAsync();
-            let headerIds = getFlattenedHeaderIds(localUser, state.pageSourceUrl, currentUser);
-            // Tell the editor to transfer local skillmap projects to the cloud.
-            const headerMap = (await res.sendMessageAsync!({
-                type: "pxteditor",
-                action: "savelocalprojectstocloud",
-                headerIds
-            } as pxt.editor.EditorMessageSaveLocalProjectsToCloud)).resp.headerIdMap;
-            if (headerMap) {
-                const newUser: UserState = {
-                    ...currentUser,
-                    mapProgress: {}
-                }
-
-                const localUrls = Object.keys(localUser.mapProgress);
-                for (const url of localUrls) {
-                    // Copy over local user progress. If there is cloud progress, it will
-                    // be overwritten
-                    newUser.mapProgress[url] = {
-                        ...localUser.mapProgress[url]
+                let currentUser = await getUserStateAsync();
+                let headerIds = getFlattenedHeaderIds(localUser, state.pageSourceUrl, currentUser);
+                // Tell the editor to transfer local skillmap projects to the cloud.
+                const headerMap = (await res.sendMessageAsync!({
+                    type: "pxteditor",
+                    action: "savelocalprojectstocloud",
+                    headerIds
+                } as pxt.editor.EditorMessageSaveLocalProjectsToCloud)).resp.headerIdMap;
+                if (headerMap) {
+                    const newUser: UserState = {
+                        ...currentUser,
+                        mapProgress: {}
                     }
 
-                    const maps = Object.keys(localUser.mapProgress[url]);
-                    for (const map of maps) {
-                        // Only copy over state if the user hasn't started this map yet
-                        if (!hasUrlBeenStarted(currentUser, url)) {
-                            newUser.mapProgress[url][map] = {
-                                ...localUser.mapProgress[url][map]
-                            };
-                            newUser.completedTags[url] = localUser.completedTags[url];
-                            const activityState: {[index: string]: ActivityState} = {};
-                            newUser.mapProgress[url][map].activityState = activityState;
+                    const localUrls = Object.keys(localUser.mapProgress);
+                    for (const url of localUrls) {
+                        // Copy over local user progress. If there is cloud progress, it will
+                        // be overwritten
+                        newUser.mapProgress[url] = {
+                            ...localUser.mapProgress[url]
+                        }
 
-                            const localProgress = localUser.mapProgress[url][map].activityState
-                            for (const activity of Object.keys(localProgress)) {
-                                const localActivity = localProgress[activity];
-                                if (localActivity.headerId) {
-                                    activityState[activity] = {
-                                        ...localActivity,
-                                        headerId: headerMap[localActivity.headerId] || localActivity.headerId
-                                    };
+                        const maps = Object.keys(localUser.mapProgress[url]);
+                        for (const map of maps) {
+                            // Only copy over state if the user hasn't started this map yet
+                            if (!hasUrlBeenStarted(currentUser, url)) {
+                                newUser.mapProgress[url][map] = {
+                                    ...localUser.mapProgress[url][map]
+                                };
+                                newUser.completedTags[url] = localUser.completedTags[url];
+                                const activityState: {[index: string]: ActivityState} = {};
+                                newUser.mapProgress[url][map].activityState = activityState;
+
+                                const localProgress = localUser.mapProgress[url][map].activityState
+                                for (const activity of Object.keys(localProgress)) {
+                                    const localActivity = localProgress[activity];
+                                    if (localActivity.headerId) {
+                                        activityState[activity] = {
+                                            ...localActivity,
+                                            headerId: headerMap[localActivity.headerId] || localActivity.headerId
+                                        };
+                                    } else if (isRewardNode(state.maps[map].activities[activity])) {
+                                        activityState[activity] = {
+                                            ...localActivity
+                                        };
+                                    }
                                 }
                             }
                         }
                     }
-                }
 
-                const visitedUrls = Object.keys(currentUser.mapProgress)
-                // Copy progress from cloud user for all visited URLs.
-                for (const url of visitedUrls) {
-                    if (hasUrlBeenStarted(currentUser, url)) {
-                        newUser.mapProgress[url] = {
-                            ...currentUser.mapProgress[url]
+                    const visitedUrls = Object.keys(currentUser.mapProgress)
+                    // Copy progress from cloud user for all visited URLs.
+                    for (const url of visitedUrls) {
+                        if (hasUrlBeenStarted(currentUser, url)) {
+                            newUser.mapProgress[url] = {
+                                ...currentUser.mapProgress[url]
+                            }
+                            newUser.completedTags[url] = currentUser.completedTags[url]
                         }
-                        newUser.completedTags[url] = currentUser.completedTags[url]
                     }
+
+                    this.props.dispatchSetUser(newUser);
+                    await saveUserStateAsync(newUser);
+                    currentUser = newUser;
+
+                    const prefs = await authClient.userPreferencesAsync();
+                    if (prefs) this.props.dispatchSetUserPreferences(prefs);
+                    await this.syncBadgesAsync();
                 }
 
-                this.props.dispatchSetUser(newUser)
-                await saveUserStateAsync(newUser);
-                currentUser = newUser;
+                // Tell the editor to send us the cloud status of our projects.
+                await res.sendMessageAsync!({
+                    type: "pxteditor",
+                    action: "requestprojectcloudstatus",
+                    headerIds: getFlattenedHeaderIds(currentUser, state.pageSourceUrl)
+                } as pxt.editor.EditorMessageRequestProjectCloudStatus);
+                this.setState({ cloudSyncCheckHasFinished: true, showingSyncLoader: false });
             }
-
-            // Tell the editor to send us the cloud status of our projects.
-            await res.sendMessageAsync!({
-                type: "pxteditor",
-                action: "requestprojectcloudstatus",
-                headerIds: getFlattenedHeaderIds(currentUser, state.pageSourceUrl)
-            } as pxt.editor.EditorMessageRequestProjectCloudStatus);
+            // Timeout if cloud sync check doesn't complete in a reasonable timeframe.
+            const TIMEOUT_MS = 10 * 1000;
+            await Promise.race([
+                pxt.U.delay(TIMEOUT_MS).then(() => {
+                    if (!this.state.cloudSyncCheckHasFinished)
+                        this.setState({ cloudSyncCheckHasFinished: true, showingSyncLoader: false });
+                }),
+                doCloudSyncCheckAsync()]);
         }
-        this.setState({cloudSyncCheckHasFinished: true})
     }
 
     protected onMakeCodeFrameLoaded = async (sendMessageAsync: (message: any) => Promise<any>) => {
@@ -313,10 +346,15 @@ class AppImpl extends React.Component<AppProps, AppState> {
         if (this.queryFlags["authcallback"]) {
             await authClient.loginCallbackAsync(this.queryFlags);
         }
+
         await authClient.authCheckAsync();
         await this.initLocalizationAsync();
         await this.parseHashAsync();
         this.readyPromise.setAppMounted();
+
+        if (await authClient.loggedInAsync() && !this.state.cloudSyncCheckHasFinished) {
+            this.setState({ showingSyncLoader: true });
+        }
     }
 
     componentWillUnmount() {
@@ -328,18 +366,22 @@ class AppImpl extends React.Component<AppProps, AppState> {
 
     render() {
         const { skillMaps, activityOpen, backgroundImageUrl, theme } = this.props;
-        const { error } = this.state;
+        const { error, showingSyncLoader } = this.state;
         const maps = Object.keys(skillMaps).map((id: string) => skillMaps[id]);
         return (<div className={`app-container ${pxt.appTarget.id}`}>
                 <HeaderBar />
-                    <div className={`skill-map-container ${activityOpen ? "hidden" : ""}`} style={{ backgroundColor: theme.backgroundColor }}>
-                        { error
-                            ? <div className="skill-map-error">{error}</div>
-                            : <SkillGraphContainer maps={maps} backgroundImageUrl={backgroundImageUrl} />
-                        }
-                        { !error && <InfoPanel />}
-                    </div>
-                    <MakeCodeFrame onFrameLoaded={this.onMakeCodeFrameLoaded}/>
+                {showingSyncLoader && <div className={"makecode-frame-loader"}>
+                    <img src={resolvePath("assets/logo.svg")} alt={lf("MakeCode Logo")} />
+                <div className="makecode-frame-loader-text">{lf("Saving to cloud...")}</div>
+                </div>}
+                <div className={`skill-map-container ${activityOpen ? "hidden" : ""}`} style={{ backgroundColor: theme.backgroundColor }}>
+                    { error
+                        ? <div className="skill-map-error">{error}</div>
+                        : <SkillGraphContainer maps={maps} backgroundImageUrl={backgroundImageUrl} />
+                    }
+                    { !error && <InfoPanel />}
+                </div>
+                <MakeCodeFrame onWorkspaceReady={this.onMakeCodeFrameLoaded}/>
                 <AppModal />
                 <UserProfile />
             </div>);
@@ -402,6 +444,38 @@ class AppImpl extends React.Component<AppProps, AppState> {
                 this.loadedUser = user;
             }
         }
+
+        await this.syncBadgesAsync();
+    }
+
+    protected  async syncBadgesAsync() {
+        const { user, maps, pageSourceUrl, pageSourceStatus } = store.getState();
+
+        if (this.props.signedIn && this.state.cloudSyncCheckHasFinished && pageSourceStatus === "approved") {
+            let allBadges: pxt.auth.Badge[] = [];
+            for (const map of Object.keys(maps)) {
+                allBadges.push(...getCompletedBadges(user, pageSourceUrl, maps[map]))
+            }
+
+            if (allBadges.length) {
+                const badgeState = await authClient.getBadgeStateAsync() || { badges: [] };
+                allBadges = allBadges.filter(badge => !pxt.auth.hasBadge(badgeState, badge))
+
+                if (allBadges.length && !this.state.badgeSyncLock) {
+                    this.setState({ badgeSyncLock: true })
+                    try {
+                        await authClient.grantBadgesAsync(allBadges, badgeState.badges)
+                        const prefs = await authClient.userPreferencesAsync();
+                        if (prefs) {
+                            this.props.dispatchSetUserPreferences(prefs)
+                        }
+                    }
+                    finally {
+                        this.setState({ badgeSyncLock: false })
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -444,7 +518,6 @@ async function updateLocalizationAsync(opts: LocalizationUpdateOptions): Promise
         ts.pxtc.Util.TranslationsKind.SkillMap
     );
 
-    pxt.Util.setUserLanguage(code);
     if (translations) {
         pxt.Util.setLocalizedStrings(translations);
     }
@@ -462,7 +535,8 @@ const mapDispatchToProps = {
     dispatchSetPageAlternateUrls,
     dispatchSetPageBackgroundImageUrl,
     dispatchSetPageBannerImageUrl,
-    dispatchSetPageTheme
+    dispatchSetPageTheme,
+    dispatchSetUserPreferences
 };
 
 const App = connect(mapStateToProps, mapDispatchToProps)(AppImpl);

@@ -19,10 +19,10 @@
     background-color: var(--body-background-color);
     width: 50%;
     max-width: 40rem;
-    padding: 1.5rem;
+    border-radius: .285rem;
 }
 
-.fullscreen .modal {
+.fullscreen>.modal {
     position: fixed;
     top: 0;
     left: 0;
@@ -31,23 +31,26 @@
     width: 100%;
     max-width: none;
     padding: 0;
+    border-radius: 0;
 }
 
 .modal-header {
     display: flex;
     font-size: 1.2rem;
     font-weight: 600;
-    margin-bottom: 0.5rem;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid rgba(34,36,38,.15);
+    flex-shrink: 0;
 }
 
-.fullscreen .modal-header {
+.fullscreen>.modal>.modal-header {
     background-color: var(--primary-color);
     color: white;
     padding: 1rem;
     margin-bottom: 0;
 }
 
-.modal-header i.icon {
+.modal-header i {
     font-size: 1.2rem;
     line-height: 1.2rem;
     margin: 0;
@@ -56,47 +59,37 @@
 
 .modal-body {
     min-height: 4rem;
-    max-height: 12rem;
+    padding: 1.25rem 1.5rem;
 }
 
-.fullscreen .modal-title {
+.fullscreen>.modal>.modal-header .modal-title {
     flex-grow: 1;
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
-
-.fullscreen .modal-body {
-    min-height: 96%;
+.fullscreen>.modal {
+    display: flex;
+    flex-direction: column;
+}
+.fullscreen>.modal>.modal-body {
+    flex-grow: 1;
     background-color: var(--body-background-color);
     padding: 1rem;
-}
-
-.fullscreen .modal .ui.card {
-    margin-right: 14px;
-    margin-bottom: 14px;
-    color: black;
-    border: 5px solid var(--card-border-color) !important;
-    background-color: white;
-}
-
-.fullscreen .modal .ui.card.panel {
-    width: fit-content;
-    min-width: 350px;
-    max-width: 500px;
-    padding: 14px;
-    display: inline-grid;
-    row-gap: 20px;
-    grid-template-rows: auto;
-    grid-template-columns: auto;
+    max-height: unset;
 }
 
 .modal-actions {
     display: grid;
-    margin-top: 1.5rem;
     grid-template-columns: 1fr 1fr;
     gap: 1rem;
+    padding: 1.25rem 1.5rem;
+    padding-top: 0;
+}
+
+.modal-actions div:only-child {
+    grid-column: auto/span 2;
 }
 
 .modal-header .button {
@@ -108,31 +101,22 @@
     background-color: rgba(0,0,0,.1);
 }
 
-.modal-header .icon {
-    padding-right: 2rem
+.modal-header i {
+    padding-right: 2rem;
 }
 
-.modal-button {
-    border: 1px solid var(--active-color);
-    color: var(--active-color);
-    padding: 0.5rem;
-    text-align: center;
-    cursor: pointer;
-    user-select: none;
-    text-transform: uppercase;
+.modal-close-icon {
+    position: relative;
 }
 
-.modal-button:hover {
-    background-color: var(--hover-color);
-    color: var(--active-color);
-    text-decoration: none;
-}
-
-.modal-button.disabled {
-    background-color: var(--inactive-color);
-    color: var(--inactive-hover-color);
-    border: 1px solid var(--inactive-hover-color);
-    cursor: auto;
+.modal-close-icon i.fas {
+    position: absolute;
+    font-size: 2.15rem;
+    line-height: 2.15rem;
+    height: 2.15rem;
+    width: 2.15rem;
+    right: 0;
+    top: -0.25rem;
 }
 
 .modal .checkbox {
@@ -299,25 +283,27 @@
     max-width: 100%;
 }
 
-/* COMPLETION MODAL */
-.completion-reward {
+/* CERTIFICATE MODAL */
+.certificate-reward {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    padding: 0.5rem;
-    margin: 1rem 0;
-    color: var(--white);
-    background-color: var(--primary-color);
-    border-radius: 2rem;
-    font-size: 1.2rem;
-    cursor: pointer;
-    user-select: none;
+    margin-top: 1rem
 }
 
-.completion-reward i {
-    margin-right: 0.5rem;
-    font-size: 2rem;
-    line-height: 2rem;
+.certificate-reward img {
+    max-width: 50%;
+}
+
+/* BADGE MODAL */
+.badge-modal-image {
+    margin-top: 1rem;
+}
+
+/* COMPLETION MODAL */
+.completion-reward {
+    margin: 1rem 0;
+    width: 100%;
 }
 
 /* COMPLETION CONFETTI */

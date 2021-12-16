@@ -107,6 +107,13 @@ class AuthClient extends pxt.auth.AuthClient {
                 cli.initialUserPreferencesAsync().then(() => { });
             }
             return AuthClient.internalUserPreferencesHandler(path);
+        } else {
+            // Identity not available, read from local storage
+            switch (path) {
+                case HIGHCONTRAST: return /^true$/i.test(pxt.storage.getLocal(HIGHCONTRAST));
+                case LANGUAGE: return pxt.storage.getLocal(LANGUAGE);
+                case READER: return pxt.storage.getLocal(READER);
+            }
         }
         return null;
     }
@@ -203,33 +210,65 @@ export async function deleteProfileAsync(): Promise<void> {
     await cli?.deleteProfileAsync();
 }
 
-export async function patchUserPreferencesAsync(ops: ts.pxtc.jsonPatch.PatchOperation | ts.pxtc.jsonPatch.PatchOperation[]): Promise<void> {
+export async function patchUserPreferencesAsync(ops: ts.pxtc.jsonPatch.PatchOperation | ts.pxtc.jsonPatch.PatchOperation[], opts: {
+    immediate?: boolean,
+    filter?: (op: pxtc.jsonPatch.PatchOperation) => boolean
+} = {}): Promise<pxt.auth.SetPrefResult> {
     const cli = await clientAsync();
-    await cli?.patchUserPreferencesAsync(ops);
+    return await cli?.patchUserPreferencesAsync(ops, opts);
 }
 
 export async function setHighContrastPrefAsync(highContrast: boolean): Promise<void> {
-    await patchUserPreferencesAsync({
-        op: 'replace',
-        path: ['highContrast'],
-        value: highContrast
-    });
+    const cli = await clientAsync();
+    if (cli) {
+        await cli.patchUserPreferencesAsync({
+            op: 'replace',
+            path: ['highContrast'],
+            value: highContrast
+        });
+    } else {
+        // Identity not available, save this setting locally
+        pxt.storage.setLocal(HIGHCONTRAST, highContrast.toString());
+        data.invalidate(HIGHCONTRAST);
+    }
 }
 
 export async function setLangaugePrefAsync(lang: string): Promise<void> {
-    await patchUserPreferencesAsync({
-        op: 'replace',
-        path: ['language'],
-        value: lang
-    });
+    const cli = await clientAsync();
+    if (cli) {
+        await cli.patchUserPreferencesAsync({
+            op: 'replace',
+            path: ['language'],
+            value: lang
+        }, { immediate: true }); // sync this change immediately, as the page is about to reload.
+    } else {
+        // Identity not available, save this setting locally
+        pxt.storage.setLocal(LANGUAGE, lang);
+        data.invalidate(LANGUAGE);
+    }
 }
 
 export async function setImmersiveReaderPrefAsync(pref: string): Promise<void> {
-    await patchUserPreferencesAsync({
+    const cli = await clientAsync();
+    if (cli) {
+        await cli.patchUserPreferencesAsync({
+            op: 'replace',
+            path: ['reader'],
+            value: pref
+        });
+    } else {
+        // Identity not available, save this setting locally
+        pxt.storage.setLocal(READER, pref);
+        data.invalidate(READER);
+    }
+}
+
+export async function setEmailPrefAsync(pref: boolean): Promise<pxt.auth.SetPrefResult> {
+    return await patchUserPreferencesAsync({
         op: 'replace',
-        path: ['reader'],
+        path: ['email'],
         value: pref
-    });
+    }, { immediate: true })
 }
 
 export async function apiAsync<T = any>(url: string, data?: any, method?: string): Promise<pxt.auth.ApiResult<T>> {

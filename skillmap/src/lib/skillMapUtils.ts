@@ -129,7 +129,7 @@ export function lookupPreviousActivities(map: SkillMap, activityId: string) {
     return Object.keys(map.activities)
         .filter(key => !isRewardNode(map.activities[key]))
         .filter(key => {
-            return flattenRewardNodeChildren(map.activities[key])
+            return getNextActivityChildren(map.activities[key], isRewardNode(map.activities[activityId]))
                 .map(el => el.activityId)
                 .some(id => id === activityId);
         }).map(key => map.activities[key])
@@ -160,18 +160,48 @@ export function isCodeCarryoverEnabled(user: UserState, pageSource: string, map:
         && isActivityUnlocked(user, pageSource, map, activity.activityId);
 }
 
-export function flattenRewardNodeChildren(node: MapNode): MapNode[] {
-    if (!isRewardNode(node)) {
-        return node.next;
-    } else {
-        let next: MapNode[] = [];
-        node.next.forEach(el => next = next.concat(flattenRewardNodeChildren(el)))
-        return next;
-    }
+// Get the "next" activities from this node (skipping reward/certificate nodes)
+export function getNextActivityChildren(node: MapNode, includeRewards = false): MapNode[] {
+    let next: MapNode[] = []
+    node.next.forEach(el => {
+        if (includeRewards || !isRewardNode(el)) {
+            next.push(el);
+        } else {
+            next = next.concat(getNextActivityChildren(el));
+        }
+    })
+    return next;
 }
 
 export function isRewardNode(node: MapNode) {
     return node.kind === "reward" || node.kind === "completion";
+}
+
+export function getCompletedBadges(user: UserState, pageSource: string, map: SkillMap) {
+    const result: pxt.auth.Badge[] = [];
+
+    for (const activityId of Object.keys(map.activities)) {
+        if (isRewardNode(map.activities[activityId]) && isActivityUnlocked(user, pageSource, map, activityId)) {
+            const act = map.activities[activityId] as MapRewardNode;
+            for (const reward of act.rewards) {
+                if (reward.type === "completion-badge") {
+                    result.push(getCompletionBadge(pageSource, map, act));
+                }
+            }
+        }
+    }
+    return result;
+}
+
+export function getCompletionBadge(pageSource: string, map: SkillMap, node: MapRewardNode): pxt.auth.Badge {
+    const badge = node.rewards.filter(b => b.type === "completion-badge")[0] as MapCompletionBadge;
+    return {
+        id: `skillmap-completion-${map.mapId}`,
+        image: badge?.imageUrl,
+        sourceURL: pageSource,
+        type: "skillmap-completion",
+        title: badge?.displayName || map.displayName
+    };
 }
 
 export function getFlattenedHeaderIds(user: UserState, pageSource: string, ignoreStartedMaps?: UserState): string[] {

@@ -470,6 +470,9 @@ function ciAsync() {
     pxt.log(`upload api strings: ${uploadApiStrings}`);
     pxt.log(`upload docs: ${uploadDocs}`);
 
+    lintJSONInDirectory(path.resolve("."));
+    lintJSONInDirectory(path.resolve("docs"));
+
     function npmPublishAsync() {
         if (!npmPublish) return Promise.resolve();
         return nodeutil.runNpmAsync("publish");
@@ -522,6 +525,22 @@ function ciAsync() {
                     return Promise.resolve();
                 }
             });
+    }
+}
+
+function lintJSONInDirectory(dir: string) {
+    for (const file of fs.readdirSync(dir)) {
+        const fullPath = path.join(dir, file);
+        if (file.endsWith(".json")) {
+            const contents = fs.readFileSync(fullPath, "utf8");
+            try {
+                JSON.parse(contents)
+            }
+            catch (e) {
+                console.log("Could not parse " + fullPath)
+                process.exit(1);
+            }
+        }
     }
 }
 
@@ -1910,95 +1929,142 @@ ${gcards.map(gcard => `[${gcard.name}](${gcard.url})`).join(',\n')}
     pxt.log(`target-strings.json built`)
 }
 
-function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
-    const forceRedbuild = parsed && parsed.flags["force"] || false;
-    if (!fs.existsSync(path.join("theme", "style.less")) ||
-        !fs.existsSync(path.join("theme", "theme.config")))
-        return Promise.resolve();
-
-    let dirty = !fs.existsSync("built/web/semantic.css");
-    if (!dirty) {
-        const csstime = fs.statSync("built/web/semantic.css").mtime;
-        dirty = nodeutil.allFiles("theme")
-            .map(f => fs.statSync(f))
-            .some(stat => stat.mtime > csstime);
+async function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
+    if (!fs.existsSync(path.join("theme", "style.less")) || !fs.existsSync(path.join("theme", "theme.config"))) {
+        return;
     }
 
-    if (!dirty && !forceRedbuild) return Promise.resolve();
-
-    let pkg = readJson("package.json")
+    const pkg = readJson("package.json");
+    const isPxtCore = pkg["name"] === "pxt-core";
 
     nodeutil.mkdirP(path.join("built", "web"));
     const lessPath = require.resolve('less');
     const lessCPath = path.join(path.dirname(lessPath), '/bin/lessc');
-    return nodeutil.spawnAsync({
+
+    const lessIncludePaths = [
+        "node_modules/semantic-ui-less",
+        "node_modules/pxt-core/theme",
+        "theme/foo/bar",
+        "theme",
+        "node_modules/pxt-core/react-common/styles",
+        "react-common/styles",
+        "node_modules/@fortawesome",
+        "node_modules/pxt-core/node_modules/@fortawesome" // for locally linked dev environment
+    ].join(":");
+
+    // Build semantic css
+    await nodeutil.spawnAsync({
         cmd: "node",
-        args: [lessCPath, "theme/style.less", "built/web/semantic.css", "--include-path=node_modules/semantic-ui-less:node_modules/pxt-core/theme:theme/foo/bar"]
-    }).then(() => {
-        function linkFont(font: string, semCss: string) {
-            const fontFile = fs.readFileSync("node_modules/semantic-ui-less/themes/default/assets/fonts/" + font + ".woff")
-            const url = "url(data:application/font-woff;charset=utf-8;base64,"
-                + fontFile.toString("base64") + ") format('woff')"
-            const r = new RegExp(`src:.*url\\("fonts\/${font}\\.woff.*`, "g")
-            semCss = semCss.replace('src: url("fonts/' + font + '.eot");', "")
-                .replace(r, "src: " + url + ";")
-            return semCss;
-        }
-        let semCss = fs.readFileSync('built/web/semantic.css', "utf8")
-        semCss = linkFont("icons", semCss)
-        semCss = linkFont("outline-icons", semCss)
-        semCss = linkFont("brand-icons", semCss)
-        return semCss;
-    }).then((semCss) => {
-        // Append icons.css to semantic.css (custom pxt icons)
-        const iconsFile = (pkg["name"] == "pxt-core") ? 'built/web/icons.css' : 'node_modules/pxt-core/built/web/icons.css';
-        const iconsCss = fs.readFileSync(iconsFile, "utf-8");
-        semCss = semCss + "\n" + iconsCss;
-        nodeutil.writeFileSync('built/web/semantic.css', semCss);
-    }).then(() => {
-        // generate blockly css
-        if (!fs.existsSync(path.join("theme", "blockly.less")))
-            return Promise.resolve();
-        return nodeutil.spawnAsync({
-            cmd: "node",
-            args: [lessCPath, "theme/blockly.less", "built/web/blockly.css", "--include-path=node_modules/semantic-ui-less:node_modules/pxt-core/theme:theme/foo/bar"]
-        })
-    }).then(() => {
-        // run postcss with autoprefixer and rtlcss
-        pxt.debug("running postcss");
-        const postcss = require('postcss');
-        const browserList = [
-            "Chrome >= 38",
-            "Firefox >= 31",
-            "Edge >= 12",
-            "ie >= 11",
-            "Safari >= 9",
-            "Opera >= 21",
-            "iOS >= 9",
-            "ChromeAndroid >= 59",
-            "FirefoxAndroid >= 55"
+        args: [
+            lessCPath,
+            "theme/style.less",
+            "built/web/semantic.css",
+            "--include-path=" + lessIncludePaths
         ]
-        const cssnano = require('cssnano')({
-            zindex: false,
-            autoprefixer: { browsers: browserList, add: true }
-        });
-        const rtlcss = require('rtlcss');
-        const files = ['semantic.css', 'blockly.css']
-        files.forEach(cssFile => {
-            fs.readFile(`built/web/${cssFile}`, "utf8", (err, css) => {
-                postcss([cssnano])
-                    .process(css, { from: `built/web/${cssFile}`, to: `built/web/${cssFile}` }).then((result: any) => {
-                        fs.writeFile(`built/web/${cssFile}`, result.css, (err2) => {
-                            // process rtl css
-                            postcss([rtlcss])
-                                .process(result.css, { from: `built/web/${cssFile}`, to: `built/web/rtl${cssFile}` }).then((result2: any) => {
-                                    nodeutil.writeFileSync(`built/web/rtl${cssFile}`, result2.css, { encoding: "utf8" });
-                                });
-                        });
-                    });
-            })
-        });
     })
+
+    // Inline all of our icon fonts
+    let semCss = await readFileAsync('built/web/semantic.css', "utf8");
+    semCss = await linkFontAsync("icons", semCss);
+    semCss = await linkFontAsync("outline-icons", semCss);
+    semCss = await linkFontAsync("brand-icons", semCss);
+
+    // Append icons.css to semantic.css (custom pxt icons)
+    const iconsFile = isPxtCore ? 'built/web/icons.css' : 'node_modules/pxt-core/built/web/icons.css';
+    const iconsCss = await readFileAsync(iconsFile, "utf8");
+
+    semCss = semCss + "\n" + iconsCss;
+    nodeutil.writeFileSync('built/web/semantic.css', semCss);
+
+    // Generate blockly css
+    if (fs.existsSync(path.join("theme", "blockly.less"))) {
+        await nodeutil.spawnAsync({
+            cmd: "node",
+            args: [
+                lessCPath,
+                "theme/blockly.less",
+                "built/web/blockly.css",
+                "--include-path=" + lessIncludePaths
+            ]
+        });
+    }
+
+    // Generate react-common css for skillmap
+    const skillmapFile = isPxtCore ? "react-common/styles/react-common-skillmap-core.less" :
+        "node_modules/pxt-core/react-common/styles/react-common-skillmap.less";
+    await nodeutil.spawnAsync({
+        cmd: "node",
+        args: [
+            lessCPath,
+            skillmapFile,
+            "built/web/react-common-skillmap.css",
+            "--include-path=" + lessIncludePaths
+        ]
+    });
+
+    let fontAwesomeSource = "node_modules/@fortawesome/fontawesome-free/webfonts/";
+    if (!fs.existsSync(fontAwesomeSource)) {
+        fontAwesomeSource = "node_modules/pxt-core/" + fontAwesomeSource;
+    }
+
+    let skillmapCss = await readFileAsync(`built/web/react-common-skillmap.css`, "utf8");
+    skillmapCss = await linkFontAsync("fa-solid-900", skillmapCss, fontAwesomeSource, "\\.\\.\\/webfonts\\/");
+    skillmapCss = await linkFontAsync("fa-regular-400", skillmapCss, fontAwesomeSource, "\\.\\.\\/webfonts\\/");
+    await writeFileAsync(`built/web/react-common-skillmap.css`, skillmapCss, "utf8");
+
+
+    // Run postcss with autoprefixer and rtlcss
+    pxt.debug("running postcss");
+    const postcss = require('postcss');
+    const browserList = [
+        "Chrome >= 38",
+        "Firefox >= 31",
+        "Edge >= 12",
+        "ie >= 11",
+        "Safari >= 9",
+        "Opera >= 21",
+        "iOS >= 9",
+        "ChromeAndroid >= 59",
+        "FirefoxAndroid >= 55"
+    ];
+
+    const cssnano = require("cssnano")({
+        zindex: false,
+        autoprefixer: { browsers: browserList, add: true }
+    });
+
+    const rtlcss = require("rtlcss");
+    const files = ["semantic.css", "blockly.css", "react-common-skillmap.css"];
+
+    for (const cssFile of files) {
+        const css = await readFileAsync(`built/web/${cssFile}`, "utf8");
+        const processed = await postcss([cssnano])
+                .process(css, { from: `built/web/${cssFile}`, to: `built/web/${cssFile}` });
+
+        await writeFileAsync(`built/web/${cssFile}`, processed.css);
+
+        const processedRtl = await postcss([rtlcss])
+            .process(processed.css, { from: `built/web/${cssFile}`, to: `built/web/rtl${cssFile}` });
+
+        await writeFileAsync(`built/web/rtl${cssFile}`, processedRtl.css, "utf8");
+    }
+
+    if (!isPxtCore) {
+        // This is just to support the local skillmap serve for development
+        nodeutil.cp("built/web/react-common-skillmap.css", "node_modules/pxt-core/skillmap/public/blb");
+    }
+}
+
+async function linkFontAsync(font: string, semCss: string, sourceDir = "node_modules/semantic-ui-less/themes/default/assets/fonts/", refDir = "fonts\\/") {
+    const fontFile = await readFileAsync(sourceDir + font + ".woff")
+    const url = "url(data:application/font-woff;charset=utf-8;base64,"
+        + fontFile.toString("base64") + ") format('woff')"
+    const r = new RegExp(`src:.*url\\((?:"|')${refDir + font}\\.woff.*`, "g")
+
+    semCss = semCss.replace('src: url("' + refDir + font + '.eot");', "")
+        .replace('src: url(' + refDir + font + '.eot);', "")
+        .replace(r, "src: " + url + ";")
+    return semCss;
 }
 
 function buildWebStringsAsync() {
@@ -2023,6 +2089,7 @@ function buildSkillMapAsync(parsed: commandParser.ParsedCommand) {
             nodeutil.cp("node_modules/pxt-core/built/pxtlib.js", `${skillmapRoot}/public/blb`);
             nodeutil.cp("built/web/semantic.css", `${skillmapRoot}/public/blb`);
             nodeutil.cp("node_modules/pxt-core/built/web/icons.css", `${skillmapRoot}/public/blb`);
+            nodeutil.cp("node_modules/pxt-core/built/web/react-common-skillmap.css", `${skillmapRoot}/public/blb`);
 
             // copy 'assets' over from docs/static
             nodeutil.cpR("docs/static/skillmap/assets", `${skillmapRoot}/public/assets`);
@@ -6855,7 +6922,7 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
         help: "build required css files",
         flags: {
             force: {
-                description: "force re-compile of less files"
+                description: "deprecated; now on by default"
             }
         }
     }, buildSemanticUIAsync);

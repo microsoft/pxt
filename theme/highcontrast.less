@@ -841,6 +841,10 @@
             color: @HCbackground;
             background-color: @HCtextColor;
         }
+
+        .tab-badge {
+            display: none;
+        }
     }
 
     .ui.label {
@@ -938,6 +942,20 @@
         background-color: @HCbackground !important;
         color: @HCtextColor !important;
 
+        .ui.button {
+            color: @HCtextColor !important;
+
+            &:focus, &:hover {
+                color: @HCtextColor !important;
+                border-color: @selected !important;
+                background: @HCbackground !important;
+
+                i, span {
+                    color: @HCtextColor !important;
+                }
+            }
+        }
+
         table.diffview {
             background: @HCbackground !important;
             color: @HCtextColor !important;
@@ -955,6 +973,10 @@
                 border: 2px dotted #090 !important;
             }
         }
+    }
+
+    .ui.dropdown > .avatar > .initials {
+        background-color: @HCbackground !important;
     }
 }
 

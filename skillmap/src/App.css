@@ -1,4 +1,3 @@
-
 :root {
     --black: #000;
     --white: #fff;
@@ -89,7 +88,6 @@ code {
     max-height: var(--header-height);
     display: flex;
     align-items: center;
-    font-size: 2rem;
     color: var(--inverted-text-color);
     flex-grow: 0;
     flex-shrink: 0;
@@ -152,6 +150,9 @@ code {
     height: inherit;
     cursor: pointer;
     width: 3.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .user-menu .avatar {
@@ -162,6 +163,7 @@ code {
 }
 
 .user-menu .avatar img {
+    border: solid 2px white;
     border-radius: 100%;
     width: 2.5rem;
     height: 2.5rem;
@@ -180,7 +182,7 @@ code {
     display: none;
 }
 
-.header i.icon {
+.header i {
     line-height: 2rem;
     cursor: pointer;
 }
@@ -231,8 +233,8 @@ code {
     background-color: rgba(0,0,0,.1);
 }
 
-.header-button:hover>.icon,
-.header-dropdown:hover>.icon {
+.header-button:hover>i,
+.header-dropdown:hover>i {
     transform: scale(1.2);
 }
 
@@ -241,7 +243,7 @@ code {
 }
 
 .header-button.sign-in:hover>span,
-.header-button.sign-in:hover>.icon {
+.header-button.sign-in:hover>i {
     transform: none;
 }
 
@@ -252,6 +254,22 @@ code {
     flex-shrink: 10;
     font-size: 1.2rem;
     font-weight: 700;
+}
+
+.avatar-initials {
+    height: 2.5rem;
+    width: 2.5rem;
+    border-radius: 100%;
+    border: solid 2px white;
+    background-color: #028B9B;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+.header-dropdown.user-dropdown .dropdown-menu {
+    top: var(--header-height);
 }
 
 /* TOP BANNER */
@@ -324,6 +342,15 @@ code {
 
 .report-abuse-text::placeholder {
     font-style: italic;
+}
+
+.badge-modal-image {
+    display: flex;
+    justify-content: center;
+}
+
+.badge-modal-image img {
+    height: 15rem;
 }
 
 /* USABILLA */

@@ -42,11 +42,11 @@ export class InfoPanelImpl extends React.Component<InfoPanelProps> {
     protected getStatusIcon(status?: ActivityStatus) {
         switch (status) {
             case "locked":
-                return "lock";
+                return "fas fa-lock";
             case "completed":
-                return "check circle";
+                return "fas fa-check-circle";
             default:
-                return null;
+                return "";
         }
     }
 
@@ -62,13 +62,13 @@ export class InfoPanelImpl extends React.Component<InfoPanelProps> {
             <div className="info-panel-image">
                 {imageUrl
                 ? <img src={imageUrl} alt={lf("Preview of activity content")} />
-                : <i className={`icon image`} />}
+                : <i className={`fas fa-image`} />}
             </div>
             <div className="info-panel-content">
                 {subtitle && <div className="info-panel-subtitle">{subtitle}</div>}
                 <div className="info-panel-title">{title}</div>
                 {statusLabel && <div className="info-panel-label">
-                    <i className={`ui icon ${this.getStatusIcon(status)}`} />
+                    <i className={this.getStatusIcon(status)} />
                     <span>{statusLabel}</span>
                 </div>}
                 <div className="info-panel-description">{description}</div>
@@ -82,7 +82,7 @@ export class InfoPanelImpl extends React.Component<InfoPanelProps> {
                 <div className="tablet-spacer" />
                 {!isMap && (isActivity
                     ? <ActivityActions mapId={mapId} activityId={node!.activityId} status={status} completedHeaderId={completedHeaderId} />
-                    : <RewardActions mapId={mapId} activityId={node!.activityId} status={status} type={(node as MapReward).type} />)
+                    : <RewardActions mapId={mapId} activityId={node!.activityId} status={status} />)
                 }
                 {hasCloudSync && <CloudActions />}
             </div>

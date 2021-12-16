@@ -33,7 +33,7 @@
     line-height: 6rem;
 }
 
-.skill-card-overlay i.icon {
+.skill-card-overlay i {
     margin-bottom: 4.35rem;
 }
 
@@ -253,7 +253,7 @@
     background-color: var(--primary-color);
 }
 
-.end-card i.icon {
+.end-card i {
     opacity: 0;
     font-size: 4rem;
     line-height: 4rem;
@@ -271,7 +271,7 @@
     background-color: var(--primary-color);
 }
 
-.end-card.spin i.icon {
+.end-card.spin i {
     opacity: 1;
     cursor: pointer;
     transform: rotateZ(720deg);
