@@ -1,13 +1,13 @@
 import * as React from "react";
-import * as sui from "../sui";
 
 import { FieldEditorComponent } from '../blocklyFieldView';
 import { AssetCardView } from "./assetEditor/assetCard";
-import { assetToGalleryItem, getAssets } from "./assetEditor/store/assetEditorReducer";
+import { assetToGalleryItem, getAssets } from "../assets";
 import { ImageEditor } from "./ImageEditor/ImageEditor";
 import { obtainShortcutLock, releaseShortcutLock } from "./ImageEditor/keyboardShortcuts";
 import { GalleryTile, setTelemetryFunction } from './ImageEditor/store/imageReducer';
 import { FilterPanel } from './FilterPanel';
+import { fireClickOnEnter } from "../util";
 
 export interface ImageFieldEditorProps {
     singleFrame: boolean;
@@ -122,7 +122,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
                     <ImageEditorToggle options={toggleOptions} view={currentView} />
                 </div>
                 <div className="image-editor-header-right">
-                    <div className={`gallery-filter-button ${this.state.currentView === "gallery" ? '' : "hidden"}`} role="button" onClick={this.toggleFilter} onKeyDown={sui.fireClickOnEnter}>
+                    <div className={`gallery-filter-button ${this.state.currentView === "gallery" ? '' : "hidden"}`} role="button" onClick={this.toggleFilter} onKeyDown={fireClickOnEnter}>
                         <div className="gallery-filter-button-icon">
                             <i className="icon filter" />
                         </div>

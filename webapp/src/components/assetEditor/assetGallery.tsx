@@ -3,7 +3,7 @@ import * as pkg from "../../package";
 import * as sui from "../../sui";
 import { connect } from 'react-redux';
 
-import { AssetEditorState, GalleryView } from "./store/assetEditorReducer";
+import { AssetEditorState, GalleryView } from './store/assetEditorReducerState';
 import { dispatchUpdateUserAssets } from './actions/dispatch';
 
 import { AssetCardList } from "./assetCardList";

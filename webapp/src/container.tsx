@@ -12,6 +12,7 @@ import * as cloudsync from "./cloudsync";
 import * as pkg from "./package";
 import * as ImmersiveReader from "./immersivereader";
 import {showWinAppDeprecateAsync} from "./dialogs";
+import { fireClickOnEnter } from "./util";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -654,7 +655,7 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
                         sandbox={`allow-scripts allow-same-origin allow-forms ${lockedEditor ? "" : "allow-popups"}`} />
                 </div>
                 {!lockedEditor && <div className="ui app hide" id="sidedocsbar">
-                    <a className="ui icon link" role="button" tabIndex={0} data-content={lf("Open documentation in new tab")} aria-label={lf("Open documentation in new tab")} onClick={this.popOut} onKeyDown={sui.fireClickOnEnter} >
+                    <a className="ui icon link" role="button" tabIndex={0} data-content={lf("Open documentation in new tab")} aria-label={lf("Open documentation in new tab")} onClick={this.popOut} onKeyDown={fireClickOnEnter} >
                         <sui.Icon icon="external" />
                     </a>
                 </div>}

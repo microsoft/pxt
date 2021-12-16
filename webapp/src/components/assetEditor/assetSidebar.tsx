@@ -4,7 +4,7 @@ import * as simulator from "../../simulator";
 import * as sui from "../../sui";
 import { connect } from 'react-redux';
 
-import { AssetEditorState, GalleryView, isGalleryAsset } from './store/assetEditorReducer';
+import { AssetEditorState, GalleryView, isGalleryAsset } from './store/assetEditorReducerState';
 import { dispatchChangeGalleryView, dispatchChangeSelectedAsset, dispatchUpdateUserAssets } from './actions/dispatch';
 
 import { AssetPreview } from "./assetPreview";

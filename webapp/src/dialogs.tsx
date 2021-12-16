@@ -9,6 +9,7 @@ import * as cloudsync from "./cloudsync";
 
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
+import { fireClickOnEnter } from "./util";
 
 let dontShowDownloadFlag = false;
 
@@ -558,7 +559,7 @@ export function showImportGithubDialogAsync() {
                             <i className="large plus circle middle aligned icon"></i>
                             <div className="content">
                                 <a onClick={createNew} role="button" className="header"
-                                    tabIndex={0} onKeyDown={sui.fireClickOnEnter}
+                                    tabIndex={0} onKeyDown={fireClickOnEnter}
                                     title={lf("Create new GitHub repository")}>
                                     <b>{lf("Create new...")}</b>
                                 </a>
@@ -572,7 +573,7 @@ export function showImportGithubDialogAsync() {
                                 <i className="large github middle aligned icon"></i>
                                 <div className="content">
                                     <a onClick={r.onClick} role="button" className="header"
-                                        tabIndex={0}  onKeyDown={sui.fireClickOnEnter}
+                                        tabIndex={0}  onKeyDown={fireClickOnEnter}
                                     >{r.name}</a>
                                     <div className="description">
                                         {pxt.Util.timeSince(r.updatedAt)}

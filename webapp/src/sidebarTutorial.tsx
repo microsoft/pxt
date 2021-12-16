@@ -4,6 +4,7 @@ import * as React from "react";
 import * as sui from "./sui";
 import * as md from "./marked";
 import { TutorialCard, TutorialHint } from "./tutorial";
+import { fireClickOnEnter } from "./util";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -28,7 +29,7 @@ export class SidebarTutorialHint extends TutorialHint {
             className: 'green'
         }]
         return <div id="callout" className={`callout-container`}>
-            <sui.Button className={`callout-hint ui circular label blue hintbutton`} icon="lightbulb outline" tabIndex={-1} onKeyDown={sui.fireClickOnEnter} />
+            <sui.Button className={`callout-hint ui circular label blue hintbutton`} icon="lightbulb outline" tabIndex={-1} onKeyDown={fireClickOnEnter} />
             {!showDialog ? <div className={`callout-wrapper`}>
                 <div className="callout-hint-header">Hint:</div>
                 <div className="callout-hint-text"><md.MarkedContent markdown={tutorialHint} unboxSnippets={true} parent={this.props.parent}/></div>
@@ -67,7 +68,7 @@ export class SidebarTutorialCard extends TutorialCard {
         return <div id="sidebar">
             <div className={`tutorialTitle`}><p>{tutorialName}</p></div>
             <div ref="tutorialmessage" className={`tutorialMessage`} role="alert" aria-label={tutorialAriaLabel} tabIndex={hasHint ? 0 : -1}
-                onKeyDown={hasHint ? sui.fireClickOnEnter : undefined}>
+                onKeyDown={hasHint ? fireClickOnEnter : undefined}>
                 <div className="content">
                     {!showDialog && <md.MarkedContent className="no-select" markdown={tutorialCardContent} parent={this.props.parent} onDidRender={this.onMarkdownDidRender} />}
                 </div>

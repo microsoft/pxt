@@ -8,10 +8,11 @@ import * as serialindicator from "./serialindicator"
 import * as simtoolbar from "./simtoolbar";
 import * as simulator from "./simulator";
 
-import { fireClickOnEnter, Button } from "./sui";
+import { Button } from "./sui";
 import { TabContent } from "./components/core/TabContent";
 import { TabPane } from "./components/core/TabPane";
 import { TutorialContainer } from "./components/tutorial/TutorialContainer";
+import { fireClickOnEnter } from "./util";
 
 interface SidepanelState {
     activeTab?: string;

@@ -5115,6 +5115,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     appcache.init(() => theEditor.reloadEditor());
     blocklyFieldView.init();
 
+    pxt.react.getTilemapProject = () => {
+        const epkg = pkg.mainEditorPkg();
+
+        if (!epkg.tilemapProject) {
+            epkg.tilemapProject = new pxt.TilemapProject();
+            epkg.tilemapProject.loadPackage(pkg.mainPkg);
+        }
+
+        return epkg.tilemapProject;
+    }
+
     pxt.hexloader.showLoading = (msg) => core.showLoading("hexcloudcompiler", msg);
     pxt.hexloader.hideLoading = () => core.hideLoading("hexcloudcompiler");
     pxt.docs.requireMarked = () => require("marked");
