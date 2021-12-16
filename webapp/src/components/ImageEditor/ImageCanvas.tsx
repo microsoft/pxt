@@ -152,6 +152,8 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
             this.editState = getEditState(imageState, this.props.isTilemap, this.props.drawingMode);
         }
 
+        if (!this.props.isTilemap) this.tileCache = [];
+
         this.cellWidth = this.props.isTilemap ? this.props.tilemapState.tileset.tileWidth : 1;
 
         if (this.props.zoomDelta || this.props.zoomDelta === 0) {
