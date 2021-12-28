@@ -2,7 +2,7 @@
 
 ## [Sing 2 Skillmap](/blog/arcade/sing-2-skillmap)
 
-December 27nd, 2021 by [ElizabethRiffle](https://github.com/ElizabethRiffle)
+December 27th, 2021 by [ElizabethRiffle](https://github.com/ElizabethRiffle)
 
 This December, Microsoft MakeCode is collaborating with Universal Studios to bring you a Sing 2 inspired skillmap in Makecode Arcade!
 
