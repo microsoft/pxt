@@ -131,7 +131,7 @@ Once your translation is saved, it moves down into the suggested translations li
 
 ### Proofreader <a name="proofreader"></a>
 
-Proofreaders review new translations and approve or cdisapprove suggestions. A suggestion is approved by pressing the **Approve** button (a checkmark) next to it.
+Proofreaders review new translations and approve or disapprove suggestions. A suggestion is approved by pressing the **Approve** button (a checkmark) next to it.
 
 ![Translation suggestions list](/static/translation/translate-approve.jpg)
 
