@@ -3,8 +3,32 @@
 Microsoft MakeCode supports localized content for both MakeCode web app and target documentation.
 The default language is currently always English.
 
-Our translations are managed by Crowdin, a translation management platform. It is free to join
-and you can volunteer to translate parts of the web site.
+Our translations are managed by Crowdin, a translation management platform. It is free to join and you can volunteer to translate parts of the web site.
+
+## Table of Contents
+
+1. [Crowdin Project](#crowdin)
+2. [Translations in Context](#incontext)
+    1. [Editor](#incontexteditor)
+    2. [Documentation](#incontextdocumentation)
+3. [Translations Roles](#roles)
+    1. [Translator](#translator)
+    2. [Proofreader](#proofreader)
+4. [Languages](#languages)
+    1. [Active Targets](#active)
+5. [Crowdin deepdive](#deepdive)
+6. [Localization file types](#files)
+    1. [String Files](#stringfiles)
+    2. [Content Pages](#contentfiles)
+7. [What parts of MakeCode are translated?](#whatistranslated)
+8. [Translation file summary](#filesummary)
+9. [MakeCode extensions](#extensions)
+10. [Tips](#Tips)
+    1. [Publishing new translations](#newtranslations)
+    2. [Live Translations](#livetranslations)
+    3. [Tutorials and skillmaps](#tutorialtranslations)
+    4. [Block localization guidance](#blockguidance)
+11. [FAQ](#faq)
 
 ### ~ hint
 
@@ -14,12 +38,30 @@ Just need a quick answer to a translation question? You can check the [FAQ](#faq
 
 ### ~
 
-## Translations in context
+## Crowdin project <a name="crowdin"></a>
+
+The Crowdin translation project below contains both the resources and menu items for @homeurl@ and all its targets.
+
+* [https://crowdin.com/project/kindscript](https://crowdin.com/project/kindscript)
+
+If you want to help with translating the editor, please sign in to Crowdin (or join first if you don't already have an account) and send us a translator request.
+
+### ~ hint
+
+#### Sign up to translate
+
+For a quick explaination of how to sign up and join a MakeCode translation team, watch this
+short video:
+
+https://youtu.be/4PqWq50e8C4
+
+### ~
+
+## Translations in context <a name="incontext"></a>
 
 MakeCode has the capability for [in context translations](https://support.crowdin.com/in-context-localization/). This allows you to perform translations to text content right at the place where you see it in the editor (or in a documentation page).
 
-https://youtu.be/OugXfqhWUQo
-
+Here's a video example:
 https://youtu.be/OugXfqhWUQo
 
 ### ~ hint
@@ -33,7 +75,7 @@ and set the **SameSite by default cookies** to **Disabled** option.
 
 ### ~
 
-### Editor translation
+### Editor translation <a name="incontexteditor"></a>
 
 To enter translation mode in the editor, go the gearwheel menu, click **Languages** and then click the **Translate the editor** button at the bottom.
 
@@ -58,38 +100,18 @@ You will be prompted with a dialog that contains the block translatable string.
 
 ![Translation dialog](/static/blog/translations-in-context/block.png)
 
-### Documentation page translation
+### Documentation page translation <a name="incontextdocumentation"></a>
 
 When on any documention page, click on the **Language** button
 in the footer and then select **Translate this page** in the dialog.
 
-
-## Crowdin project
-
-The Crowdin translation project below contains both the resources and menu items from @homeurl@.
-
-* [https://crowdin.com/project/kindscript](https://crowdin.com/project/kindscript)
-
-If you want to help with translating the editor, please sign in to Crowdin (or join first if you don't already have an account) and send us a translator request.
-
-### ~ hint
-
-#### Sign up to translate
-
-For a quick explaination of how to sign up and join a MakeCode translation team, watch this
-short video:
-
-https://youtu.be/4PqWq50e8C4
-
-### ~
-
-## Translation roles
+## Translation roles <a name="roles"></a>
 
 Crowdin is a crowd-sourced translation platform with two main actors: **translators** and **proofreaders**.
 **Translators** add new translations or vote for existing translations. Once a translation is available, a **proofreader** needs
 to **validate** it in order to appear on the MakeCode web sites.
 
-### Translator
+### Translator <a name="translator"></a>
 
 As a translator you select text from a strings file or markdown page. In this case, the tutorial file ``dice.md`` is selected.
 
@@ -107,19 +129,13 @@ Once your translation is saved, it moves down into the suggested translations li
 
 ![Translation suggestions list](/static/translation/translate-suggestions.jpg)
 
-### Proofreader
+### Proofreader <a name="proofreader"></a>
 
 Proofreaders review new translations and approve or disapprove suggestions. A suggestion is approved by pressing the **Approve** button (a checkmark) next to it.
 
 ![Translation suggestions list](/static/translation/translate-approve.jpg)
 
-## Crowdin deep dive
-
-Interested in how localization works in MakeCode? Watch this video for an overview of the process.
-
-https://youtu.be/XpdUzpBVKFU
-
-## Languages
+## Languages <a name="languages"></a>
 
 On the Crowdin [home page](https://crowdin.com/project/kindscript) are the all of the languages enabled for the MakeCode project. You go here first to choose the language or languages you wish to participate in for translation.
 
@@ -135,7 +151,7 @@ The source language for all of the files is English and that's the language the 
 
 Under each language there are top-level folders for all of the editors (including the MakeCode core) supported by the MakeCode team. Some of these are featured on the [MakeCode](https://www.microsoft.com/en-us/makecode) home page. If you are interested in helping translate a particular target, you can focus your efforts in the files under its top-level folder. If you wish to help generally and want to work in more than one target, be aware that not all targets are presently active. To make your help count the most, you probably want to work with an active target. These are active and inactive targets:
 
-#### Active targets
+#### Active targets <a name="active"></a>
 
 - [x] [adafruit](https://crowdin.com/project/kindscript/en#/adafruit)
 - [x] [arcade](https://crowdin.com/project/kindscript/en#/arcade)
@@ -155,9 +171,15 @@ Under each language there are top-level folders for all of the editors (includin
 - [ ] [calliope](https://crowdin.com/project/kindscript/en#/calliope)
 - [ ] [calliopemini](https://crowdin.com/project/kindscript/en#/calliopemini)
 
-## Localization files
+## Crowdin deep dive <a name="deepdive"></a>
 
-### Strings files
+Interested in how localization works in MakeCode? Watch this video for an overview of the process.
+
+https://youtu.be/XpdUzpBVKFU
+
+## Localization file types <a name="files"></a>
+
+### Strings files <a name="stringfiles"></a>
 
 The folder tree contains both **strings** files and **markdown** files for complete document pages. If you haven't heard of the term _strings_ before, strings are text elements which are either individual words or sentences. If you select the top level ``strings.json`` file, a portion of it might contain:
 
@@ -200,7 +222,7 @@ The block strings can include syntax characters and tokens as well as the text t
 
 ![Words only translation example](/static/translation/xlate-words-only.jpg)
 
-### Content pages
+### Content pages <a name="contentfiles"></a>
 
 All of the documentation pages are translated. These pages are written in [markdown](https://daringfireball.net/projects/markdown/) and are copied up to Crowdin verbatim, no processing or text extraction. So, in the file folder tree you will see files with names that end with ``.md`` meaning that they are markdown files. The markdown pages support documentation for how-to pages, maker projects, lessons, coding courses, and code block reference...just to name a few.
 
@@ -212,9 +234,9 @@ In this example, a reference page for the **show animation** block is translated
 
 ![Translation example for reference page](/static/translation/md-page.jpg)
 
-## What parts of MakeCode are translated?
+## What parts of MakeCode are translated? <a name="whatistranslated"></a>
 
-### MakeCode.com website
+### MakeCode.com website 
 
 Not only are the strings and documentation for the various editors translated, the text for the MakeCode.com project website is translated too. Such as the pages for:
 
@@ -248,7 +270,7 @@ The first file, ``radio-strings.json``, contains strings for the text of the ``r
 
 There's also a ``docs`` folder under each target folder for the all documentation pages specific to that target.
 
-## Translation file summary
+## Translation file summary <a name="filesummary"></a>
 
 The following table provides a quick guide to which parts of MakeCode the translation files and folders relate. The links here are to the [English](https://crowdin.com/project/kindscript/en#) source files just to show you the location of the files in the folder structure. Of course, you will translate in your selected language instead.
 
@@ -259,21 +281,21 @@ The following table provides a quick guide to which parts of MakeCode the transl
 | [core/docs](https://crowdin.com/project/kindscript/en#/core/docs) | Documentation about developing new MakeCode targets, creating extensions, authoring documents, and the MakeCode blog |
 | [core/common-docs](https://crowdin.com/project/kindscript/en#/core/common-docs) | Documentation shared by all MakeCode targets. Describes use of the editor, coding concepts, and reference for the base blocks |
 
-## MakeCode extensions
+## MakeCode extensions <a name="extensions"></a>
 
 [Extensions](/extensions) provide additional code blocks for features and functions in a target editor that aren't there by default. A user adds an extension to the editor in an extensions dialog selected from the **Settings** menu. Extensions are created by anyone, not just the MakeCode team. Extensions can have their own documentation and have localization files you can edit. Translations for extensions are not part of the MakeCode Crowdin project. An extension is hosted in a GitHub repository and you will need to have a GitHub account to help with localizing an extension's strings or documents. Extension localization is described [here](/extensions/localization).
 
-## Tips and guidance
+## Tips and guidance <a name="Tips"></a>
 
-### Publishing new translations
+### Publishing new translations <a name="newtranslations"></a>
 
 Once a translation is approved by a proofreader it is published to the "live" website for MakeCode.com or the target editor. There's a scheduled process which checks for new translations in Crowdin and brings them down to the website serving a MakeCode editor. There is a period of delay from when a new translation is approved and when it will appear on the site. This is generally between 10 - 30 minutes.
 
-### Live Translations
+### Live Translations <a name="livetranslations"></a>
 
 To test your changes "live", use the [in context translations](#translations-in-context) feature to fetch the most recent translations available in any language directly from crowdin.
 
-### Tutorials
+### Tutorials and skillmaps <a name="tutorialtranslations"></a>
 
 Tutorials are markdown pages that follow a very specific format. This is so that the tutorial engine can read the individual sections and build a proper list of steps for them. Be aware that there are some macros that are unique to tutorials and you should not translate them. Some of these are:
 
@@ -298,7 +320,7 @@ Here, the block category is "variables" and the rest of the string after ":" is 
 
 When possible, try to make the block text translation closely match the localized text shown for the block in the Toolbox.
 
-### Block localization guidance
+### Block localization guidance <a name="blockguidance"></a>
 
 * Do not capitalize words in blocks
 * Do not translate any ``%variable`` or ``$variable`` names
@@ -306,7 +328,7 @@ When possible, try to make the block text translation closely match the localize
 * Maintain the same order and spacing of all ``|`` and ``%variable`` names in the block text
 > Note: If the order of the ``%variable`` names reads poorly in the translated language, it's possible change the order if there are no ``|`` symbols and you use ``$`` instead of ``%`` as a prefix for the variable.
 
-## FAQ
+## FAQ <a name="faq"></a>
 
 Here are answers to some common questions about localization and translation in Crowdin.
 
