@@ -71,6 +71,7 @@ import Util = pxt.Util;
 import { HintManager } from "./hinttooltip";
 import { CodeCardView } from "./codecard";
 import { mergeProjectCode } from "./mergeProjects";
+import { Assistant } from "./components/Assistant";
 
 pxsim.util.injectPolyphils();
 
@@ -4497,6 +4498,9 @@ export class ProjectView
             && !(isBlocks
                 || (pkg.mainPkg && pkg.mainPkg.config && (pkg.mainPkg.config.preferredEditor == pxt.BLOCKS_PROJECT_NAME)));
         const hasIdentity = pxt.auth.hasIdentity();
+
+        const currentSrc = pkg?.mainEditorPkg()?.files[pxt.MAIN_TS]?.content;
+
         return (
             <div id='root' className={rootClasses}>
                 {greenScreen ? <greenscreen.WebCam close={this.toggleGreenScreen} /> : undefined}
@@ -4561,6 +4565,7 @@ export class ProjectView
                 {hideMenuBar ? <div id="editorlogo"><a className="poweredbylogo"></a></div> : undefined}
                 {lightbox ? <sui.Dimmer isOpen={true} active={lightbox} portalClassName={'tutorial'} className={'ui modal'}
                     shouldFocusAfterRender={false} closable={true} onClose={this.hideLightbox} /> : undefined}
+                {!inHome && <Assistant parent={this} userCode={currentSrc} />}
             </div>
         );
     }
