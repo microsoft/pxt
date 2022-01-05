@@ -241,7 +241,7 @@ namespace pxt.blocks.layout {
 
     export function cleanUpBlocklySvg(svg: SVGElement): SVGElement {
         pxt.BrowserUtils.removeClass(svg, "blocklySvg");
-        pxt.BrowserUtils.addClass(svg, "blocklyPreview pxt-renderer");
+        pxt.BrowserUtils.addClass(svg, "blocklyPreview pxt-renderer classic-theme");
 
         // Remove background elements
         pxt.U.toArray(svg.querySelectorAll('.blocklyMainBackground,.blocklyScrollbarBackground'))
