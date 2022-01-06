@@ -9,7 +9,7 @@ import { lookupActivityProgress, lookupPreviousActivityStates, lookupPreviousCom
 import { getProjectAsync } from "../lib/workspaceProvider";
 import { editorUrl } from "./makecodeFrame";
 
-import { Modal, ModalAction } from './Modal';
+import { Modal, ModalAction } from 'react-common/controls/Modal';
 import { jsxLF } from "react-common/util";
 import { Badge } from "react-common/profile/Badge";
 import { Button } from "react-common/controls/Button";

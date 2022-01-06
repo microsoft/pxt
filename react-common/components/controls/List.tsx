@@ -1,8 +1,7 @@
 import * as React from "react";
-import { classList, ControlProps } from "../util";
+import { classList, ContainerProps } from "../util";
 
-export interface ListProps extends React.PropsWithChildren<ControlProps> {
-
+export interface ListProps extends ContainerProps {
 }
 
 export const List = (props: ListProps) => {

@@ -8,6 +8,9 @@ export interface ControlProps {
     role?: string;
 }
 
+export interface ContainerProps extends React.PropsWithChildren<ControlProps> {
+}
+
 export function jsxLF(loc: string, ...rest: JSX.Element[]) {
     const indices: number[] = [];
 
