@@ -1,5 +1,9 @@
 /// <reference path="../lib/skillMap.d.ts" />
 
+/* eslint-disable import/no-unassigned-import, import/no-internal-modules */
+import '../styles/modal.css'
+/* eslint-enable import/no-unassigned-import, import/no-internal-modules */
+
 import * as React from "react";
 import { connect } from 'react-redux';
 import { ModalState, ModalType, ShareState, SkillMapState } from '../store/reducer';
