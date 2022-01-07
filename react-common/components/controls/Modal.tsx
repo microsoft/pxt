@@ -10,6 +10,10 @@ export interface ModalAction {
     xicon?: boolean;
     onClick: () => void;
     url?: string;
+
+    // TODO: It would be nice to make fullscreen modals their own thing and deprecate this prop. right
+    // now it's required to render the back arrow
+    fullscreen?: boolean;
 }
 
 export interface ModalProps extends ContainerProps {
@@ -31,17 +35,13 @@ export const Modal = (props: ModalProps) => {
         role,
         title,
         actions,
-        onClose
+        onClose,
+        fullscreen
     } = props;
 
     const closeClickHandler = (e?: React.MouseEvent<HTMLButtonElement>) => {
         if (onClose) onClose();
     }
-
-    const classes = classList(
-        "common-modal-container",
-        className
-    )
 
     let firstFocusableElement: HTMLElement;
     let lastFocusableElement: HTMLElement;
@@ -79,6 +79,12 @@ export const Modal = (props: ModalProps) => {
         }
     }
 
+    const classes = classList(
+        "common-modal-container",
+        fullscreen && "fullscreen",
+        className
+    );
+
     return <div className={classes} ref={handleRef} onKeyDown={onKeyDown}>
         <div id={id}
             className="common-modal"
@@ -88,17 +94,30 @@ export const Modal = (props: ModalProps) => {
             aria-describedby={ariaDescribedBy}
             aria-labelledby="modal-title">
             <div className="common-modal-header">
+                {fullscreen &&
+                    <div className="common-modal-back">
+                        <Button
+                            className="menu-button"
+                            onClick={closeClickHandler}
+                            title={lf("Go Back")}
+                            label={lf("Go Back")}
+                            leftIcon="fas fa-arrow-left"
+                        />
+                    </div>
+                }
                 <div id="modal-title" className="common-modal-title">
                     {title}
                 </div>
-                <div className="common-modal-close">
-                    <Button
-                        className="menu-button"
-                        onClick={closeClickHandler}
-                        title={lf("Close")}
-                        rightIcon="fas fa-times-circle"
-                    />
-                </div>
+                {!fullscreen &&
+                    <div className="common-modal-close">
+                        <Button
+                            className="menu-button"
+                            onClick={closeClickHandler}
+                            title={lf("Close")}
+                            rightIcon="fas fa-times-circle"
+                        />
+                    </div>
+                }
             </div>
             <div className="common-modal-body">
                 {children}
