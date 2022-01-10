@@ -1,5 +1,5 @@
 import * as React from "react";
-import { classList, ControlProps } from "../util";
+import { classList, ControlProps, fireClickOnEnter } from "../util";
 
 interface ButtonProps extends ControlProps {
     onClick: () => void;
@@ -46,8 +46,9 @@ export const Button = (props: ButtonProps) => {
             className={classes}
             title={title}
             onClick={!disabled && clickHandler}
+            onKeyDown={fireClickOnEnter}
             role={role || "button"}
-            tabIndex={disabled ? 0 : -1}
+            tabIndex={disabled ? -1 : 0}
             aria-label={ariaLabel}
             aria-hidden={ariaHidden}>
                 <span className="common-button-flex">

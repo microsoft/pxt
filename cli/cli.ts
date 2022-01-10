@@ -2052,6 +2052,7 @@ async function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
     if (!isPxtCore) {
         // This is just to support the local skillmap serve for development
         nodeutil.cp("built/web/react-common-skillmap.css", "node_modules/pxt-core/skillmap/public/blb");
+        nodeutil.cp("built/web/semantic.css", "node_modules/pxt-core/skillmap/public/blb");
     }
 }
 

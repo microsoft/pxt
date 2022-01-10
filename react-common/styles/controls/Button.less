@@ -1,5 +1,6 @@
 .common-button {
     cursor: pointer;
+    position: relative;
     display: inline-block;
     min-height: 1rem;
     outline: none;
@@ -30,6 +31,22 @@
 .common-button .right {
     margin-left: 0.5rem;
 }
+
+.common-button:focus::after {
+    content: "";
+    position: absolute;
+    inset: 4px;
+    border: 1px solid transparent;
+    outline: @buttonFocusOutline;
+    z-index: 1;
+    border-radius: 0.2em;
+}
+
+.common-button.inverted:focus::after,
+.common-button.menu-button:focus::after {
+    outline: @buttonFocusOutlineInverted;
+}
+
 
 /****************************************************
  *                  Color Variants                   *

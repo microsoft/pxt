@@ -2,11 +2,11 @@ import * as React from "react";
 import { connect } from "react-redux";
 import { SkillMapState } from "../store/reducer";
 import * as authClient from "../lib/authClient";
-import { Profile} from "react-common/profile/Profile";
-import { CheckboxStatus} from "react-common/Checkbox";
 import { infoNotification, errorNotification } from "../lib/notifications"
 
-import { Modal } from './Modal';
+import { Modal } from 'react-common/controls/Modal';
+import { CheckboxStatus} from "react-common/Checkbox";
+import { Profile} from "react-common/profile/Profile";
 
 import { dispatchCloseUserProfile, dispatchShowDeleteAccountModal } from "../actions/dispatch"
 

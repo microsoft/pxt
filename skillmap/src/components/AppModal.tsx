@@ -1,5 +1,9 @@
 /// <reference path="../lib/skillMap.d.ts" />
 
+/* eslint-disable import/no-unassigned-import, import/no-internal-modules */
+import '../styles/modal.css'
+/* eslint-enable import/no-unassigned-import, import/no-internal-modules */
+
 import * as React from "react";
 import { connect } from 'react-redux';
 import { ModalState, ModalType, ShareState, SkillMapState } from '../store/reducer';
@@ -9,7 +13,7 @@ import { lookupActivityProgress, lookupPreviousActivityStates, lookupPreviousCom
 import { getProjectAsync } from "../lib/workspaceProvider";
 import { editorUrl } from "./makecodeFrame";
 
-import { Modal, ModalAction } from './Modal';
+import { Modal, ModalAction } from 'react-common/controls/Modal';
 import { jsxLF } from "react-common/util";
 import { Badge } from "react-common/profile/Badge";
 import { Button } from "react-common/controls/Button";
