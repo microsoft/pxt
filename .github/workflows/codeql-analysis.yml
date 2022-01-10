@@ -20,6 +20,9 @@ on:
   schedule:
     - cron: '34 6 * * 0'
 
+paths-ignore:
+  - webapp/public/vs/language/typescript/tsWorker.js
+
 jobs:
   analyze:
     name: Analyze
