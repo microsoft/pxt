@@ -560,21 +560,21 @@ const copyBlockly = gulp.parallel(copyBlocklyCompressed, copyBlocklyExtensions, 
 
 const skillmapRoot = "skillmap";
 const skillmapOut = "built/web/skillmap";
+const reactScriptsConfigRoot = `${skillmapRoot}/node_modules/react-scripts/config`;
 
 const cleanSkillmap = () => rimraf(skillmapOut);
 
-const copyWebpackBase = () => gulp.src([`${skillmapRoot}/node_modules/react-scripts/config/webpack.config.js`])
+const copyWebpackBase = () => gulp.src([`${reactScriptsConfigRoot}/webpack.config.js`])
     .pipe(concat("webpack.config.base.js"))
-    .pipe(gulp.dest(`${skillmapRoot}/node_modules/react-scripts/config`))
+    .pipe(gulp.dest(`${reactScriptsConfigRoot}`))
 
 const copyWebpackOverride = () => gulp.src([`${skillmapRoot}/webpack.config.override.js`])
     .pipe(concat("webpack.config.js"))
-    .pipe(gulp.dest(`${skillmapRoot}/node_modules/react-scripts/config`));
+    .pipe(gulp.dest(`${reactScriptsConfigRoot}`));
 
-const replaceWebpackBase = () => gulp.src([`${skillmapRoot}/node_modules/react-scripts/config/webpack.config.base.js`])
+const replaceWebpackBase = () => gulp.src([`${reactScriptsConfigRoot}/webpack.config.base.js`])
     .pipe(concat("webpack.config.js"))
-    .pipe(gulp.dest(`${skillmapRoot}/node_modules/react-scripts/config`));
-
+    .pipe(gulp.dest(`${reactScriptsConfigRoot}`));
 
 const npmInstallSkillmap = () => exec(!fs.existsSync(`${skillmapRoot}/node_modules`) ? "npm ci --prefer-offline" : "echo \"Skip install\"", false, { cwd: skillmapRoot });
 const npmBuildSkillmap = () => exec("npm run build", true, { cwd: skillmapRoot });
@@ -582,7 +582,7 @@ const npmBuildSkillmap = () => exec("npm run build", true, { cwd: skillmapRoot }
 const buildSkillmap = async () => {
     try {
         await npmInstallSkillmap();
-        await copyWebpackBase();
+        if (!fs.existsSync(`${reactScriptsConfigRoot}/webpack.config.base.js`)) await copyWebpackBase();
         await copyWebpackOverride();
         await npmBuildSkillmap();
     }

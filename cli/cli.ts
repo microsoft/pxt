@@ -2078,6 +2078,7 @@ function buildWebStringsAsync() {
 function buildSkillMapAsync(parsed: commandParser.ParsedCommand) {
     // local serve
     const skillmapRoot = "node_modules/pxt-core/skillmap";
+    const reactScriptsConfigRoot = `${skillmapRoot}/node_modules/react-scripts/config`;
     const docsPath = parsed.flags["docs"];
     return rimrafAsync(`${skillmapRoot}/public/blb`, {})
         .then(() => rimrafAsync(`${skillmapRoot}/build/assets`, {}))
@@ -2094,6 +2095,13 @@ function buildSkillMapAsync(parsed: commandParser.ParsedCommand) {
 
             // copy 'assets' over from docs/static
             nodeutil.cpR("docs/static/skillmap/assets", `${skillmapRoot}/public/assets`);
+
+            // copy default react-scripts webpack config into a webpack.config.base file if necessary
+            if (!fs.existsSync(`${reactScriptsConfigRoot}/webpack.config.base.js`)) {
+                nodeutil.cp(`${reactScriptsConfigRoot}/webpack.config.js`, reactScriptsConfigRoot, "webpack.config.base.js");
+            }
+            // wrap the config in our webpack.config.override for build customization
+            nodeutil.cp(`${skillmapRoot}/webpack.config.override.js`, reactScriptsConfigRoot, "webpack.config.js");
 
             if (docsPath) {
                 // copy docs over from specified path
