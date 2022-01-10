@@ -1,6 +1,7 @@
 'use strict';
 
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const path = require('path');
 const paths = require('./paths');
 
 const configFactory = require('../config/webpack.config.base');
@@ -35,6 +36,10 @@ module.exports = function (webpackEnv) {
         : undefined
     )
   ))
+
+  if (!isEnvProduction) {
+    config.resolve.alias['react'] = path.resolve('../node_modules/react');
+  }
 
   config.module.rules = config.module.rules.filter(el => !(el.use && el.use.some(item => !!(item.options && item.options.eslintPath))));
   return config;
