@@ -390,7 +390,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
 
         // preemptively remove script tags, although they'll be escaped anyway
         // prevents ugly <script ...> rendering in docs
-        markdown = markdown.replace(/<\s*script[^>]*>.*<\/\s*script\s*>/gi, '');
+        markdown = markdown.replace(/<\s*script[^>]*>.*<\/\s*script[^>]*>/gi, '');
 
         // Render the markdown into a div outside of the DOM tree to prevent the page from reflowing
         // when we edit the HTML it produces. Then, add the finished result to the content div
