@@ -4,7 +4,7 @@ import * as React from "react";
 import { BadgeList } from "./BadgeList";
 import { UserPane } from "./UserPane";
 import { BadgeInfo } from "./BadgeInfo";
-import { CheckboxStatus } from "../Checkbox";
+import { CheckboxStatus } from "../util";
 
 export interface ProfileProps {
     user: pxt.auth.State;
