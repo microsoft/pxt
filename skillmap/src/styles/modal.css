@@ -27,24 +27,7 @@
 }
 
 .share-input {
-    display: flex;
     margin: 1rem 0rem;
-}
-
-.share-input input {
-    flex: 1;
-    padding: 0 0.5rem;
-    font: var(--body-font-family);
-    outline: none;
-    border: 1px solid var(--inactive-color);
-    border-right-width: 0px;
-}
-
-.share-copy {
-    padding: 0.5rem 1.5rem;
-    background-color: var(--primary-color);
-    color: var(--white);
-    cursor: pointer;
 }
 
 /* DELETE PROFILE MODAL */
