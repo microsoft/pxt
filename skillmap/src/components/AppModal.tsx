@@ -18,6 +18,7 @@ import { jsxLF } from "react-common/util";
 import { Badge } from "react-common/profile/Badge";
 import { Button } from "react-common/controls/Button";
 import { Checkbox } from "react-common/controls/Checkbox";
+import { Input } from "react-common/controls/Input";
 
 interface AppModalProps {
     type: ModalType;
@@ -309,7 +310,6 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
         </Modal>
     }
 
-    protected handleShareInputClick = (evt: any) => { evt.target.select() }
     protected handleShareCopyClick = () => {
         const { mapId, activity } = this.props;
         tickEvent("skillmap.share.copy", { path: mapId, activity: activity!.activityId });
@@ -352,14 +352,17 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                 <div className="common-spinner" />
                 <span>{lf("Loading...")}</span>
             </div>}
-            {shortId && <div className="share-input">
-                <input type="text" readOnly={true} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
-                    value={`https://makecode.com/${shortId}`} onClick={this.handleShareInputClick}></input>
-                <div className="share-copy" onClick={this.handleShareCopyClick} role="button">
-                    <i className="fas fa-copy" />
-                    {lf("Copy")}
-                </div>
-            </div>}
+            {shortId && <Input
+                    type="text"
+                    className="share-input"
+                    ariaLabel="Generated shareable URL for project"
+                    initialValue={`https://makecode.com/${shortId}`}
+                    icon="fas fa-copy"
+                    iconTitle="Copy project URL"
+                    readOnly={true}
+                    autoComplete={false}
+                    selectOnClick={true}
+                    onIconClick={this.handleShareCopyClick} />}
             {(shortId && shareState?.rewardsShare) && <div>
                 {this.renderConfetti()}
             </div>}

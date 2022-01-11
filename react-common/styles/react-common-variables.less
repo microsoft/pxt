@@ -1,17 +1,21 @@
+@commonTextColor: rgb(50, 49, 48);
+@commonBorderColor: rgb(96, 94, 92);
+@commonBackgroundDisabledColor: rgb(243, 242, 241);
+
 /****************************************************
  *                    Buttons                       *
  ****************************************************/
 
-@buttonTextColor: rgb(50, 49, 48);
+@buttonTextColor: @commonTextColor;
 @buttonTextColorInverted: @white;
 @buttonBackgroundColor: @white;
-@buttonBackgroundColorDisabled: rgb(243, 242, 241);
+@buttonBackgroundColorDisabled: @commonBackgroundDisabledColor;
 
 @buttonMenuTextColor: #ffffff;
 @buttonMenuTextColorInverted: @primaryColor;
 @buttonMenuBackgroundColorInverted: @buttonMenuTextColor;
-@buttonFocusOutline: @buttonTextColorInverted solid 1px;
-@buttonFocusOutlineInverted: rgb(96, 94, 92) solid 1px;;
+@buttonFocusOutline: @buttonTextColorInverted solid 1px;;
+@buttonFocusOutlineInverted: @commonBorderColor solid 1px;
 
 /****************************************************
  *                    Modals                        *
@@ -21,10 +25,23 @@
 @modalBodyBackgroundColor: #ffffff;
 @modalHeaderBackgroundColor: @modalBodyBackgroundColor;
 @modalFooterBackgroundColor: #f9fafb;
-@modalSeparatorBorder: 1px solid rgba(34,36,38,.15);
+@modalSeparatorBorder: 1px solid rgba(34, 36, 38, .15);
 
 /****************************************************
  *                    Checkboxes                    *
  ****************************************************/
 
-@checkboxFocusOutline: rgb(96, 94, 92) solid 1px;
+@checkboxFocusOutline: @commonBorderColor solid 1px;
+
+/****************************************************
+ *                    Inputs                        *
+ ****************************************************/
+
+@inputTextColor: @commonTextColor;
+@inputTextColorDisabled: rgb(161, 159, 157);
+@inputBorderColor: @commonBorderColor;
+@inputBorderColorFocus: rgb(0, 120, 212);
+@inputBackgroundColor: #ffffff;
+@inputBackgroundColorDisabled: @commonBackgroundDisabledColor;
+@inputButtonColor: rgb(0, 120, 212);
+@inputButtonColorHover: rgb(16, 110, 190);
