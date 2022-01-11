@@ -1049,7 +1049,7 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
     protected touchesResize(cursorX: number, cursorY: number) {
         const hovered = document.querySelectorAll( ":hover" );
         for ( let i = 0; i < hovered.length; i ++){
-            if (hovered[i].className ==  "image-editor-floating-layer-corner") {
+            if (hovered[i].className == "image-editor-floating-layer-corner") {
                 return true;
             }
         }
