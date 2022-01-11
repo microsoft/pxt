@@ -45,7 +45,7 @@ export const Button = (props: ButtonProps) => {
             id={id}
             className={classes}
             title={title}
-            onClick={!disabled && clickHandler}
+            onClick={!disabled ? clickHandler : undefined}
             onKeyDown={fireClickOnEnter}
             role={role || "button"}
             tabIndex={disabled ? -1 : 0}
