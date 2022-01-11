@@ -349,7 +349,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                 </div>
             }
             {(loading && !shortId) && <div className="share-loader">
-                <div className="ui active inline loader" />
+                <div className="common-spinner" />
                 <span>{lf("Loading...")}</span>
             </div>}
             {shortId && <div className="share-input">

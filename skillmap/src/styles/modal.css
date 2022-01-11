@@ -15,15 +15,12 @@
     margin-bottom: 1.5rem;
 }
 
-.share-loader .ui.loader {
-    margin-right: 0.15rem;
+.share-loader .common-spinner {
+    margin-right: 0.5rem;
 }
 
-.share-loader .ui.loader,
-.share-loader .ui.loader:before,
-.share-loader .ui.loader:after {
-    height: 1.2rem;
-    width: 1.2rem;
+.share-loader span {
+    height: 20px;
 }
 
 .share-input {
