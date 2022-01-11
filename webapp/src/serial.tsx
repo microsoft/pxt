@@ -8,6 +8,7 @@ import * as data from "./data";
 import * as auth from "./auth";
 
 import Util = pxt.Util
+import { fireClickOnEnter } from "./util"
 
 const maxEntriesPerChart: number = 4000;
 
@@ -457,7 +458,7 @@ export class Editor extends srceditor.Editor {
                 <div id="serialHeader" className="ui serialHeader">
                     <div className="leftHeaderWrapper">
                         <div className="leftHeader">
-                            <sui.Button title={lf("Go back")} tabIndex={0} onClick={this.goBack} onKeyDown={sui.fireClickOnEnter}>
+                            <sui.Button title={lf("Go back")} tabIndex={0} onClick={this.goBack} onKeyDown={fireClickOnEnter}>
                                 <sui.Icon icon="arrow left" />
                                 <span className="ui text landscape only">{lf("Go back")}</span>
                             </sui.Button>

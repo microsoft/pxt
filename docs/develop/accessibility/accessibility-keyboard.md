@@ -24,15 +24,15 @@ The tab index is defined in HTML or JavaScript depending the page initialization
 
 Many elements respond to a mouse click. This is usually defined with the ``onClick`` attribute. If no additonal interaction is needed with a component, it is required that pressing the ``Enter`` or ``Space`` key has the same behavior to the ``onClick``.
 
-There are a helper methods to automate this action. Feel free to use them. In **React**, for example, the method is ``sui.fireClickOnEnter``.
+There are a helper methods to automate this action. Feel free to use them. In **React**, for example, the method is ``util.fireClickOnEnter``.
 You will also have to decide on which keyboard event to use: ``KeyDown``, ``KeyUp`` or ``KeyPress``. When possible, always use the ``KeyDown`` event as ``KeyPress`` has compatibility problems with Internet Explorer.
 
 Here is an example of implementation using React:
 
 ```js
-import * as sui from "./sui";
+import * as {fireClickOnEnter} from "./util";
 [...]
-<div tabIndex={0} onClick={() => action() } onKeyDown={sui.fireClickOnEnter}>Interactive element</div>
+<div tabIndex={0} onClick={() => action() } onKeyDown={fireClickOnEnter}>Interactive element</div>
 ```
 
 ## Focus trap

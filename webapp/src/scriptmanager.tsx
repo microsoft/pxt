@@ -8,6 +8,7 @@ import * as auth from "./auth";
 
 import { SearchInput } from "./components/searchInput";
 import { ProjectsCodeCard } from "./projects";
+import { fireClickOnEnter } from "./util";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -435,13 +436,13 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                         <table className={`ui definition unstackable table ${darkTheme ? 'inverted' : ''}`}>
                             <thead className="full-width">
                                 <tr>
-                                    <th onClick={this.handleSelectAll} tabIndex={0} onKeyDown={sui.fireClickOnEnter} title={selectedAll ? lf("De-select all projects") : lf("Select all projects")} style={{ cursor: 'pointer' }}>
+                                    <th onClick={this.handleSelectAll} tabIndex={0} onKeyDown={fireClickOnEnter} title={selectedAll ? lf("De-select all projects") : lf("Select all projects")} style={{ cursor: 'pointer' }}>
                                         <sui.Icon icon={`circle outline large ${selectedAll ? 'check' : ''}`} />
                                     </th>
-                                    <th onClick={this.handleToggleSortName} tabIndex={0} onKeyDown={sui.fireClickOnEnter} title={lf("Sort by Name {0}", sortedAsc ? lf("ascending") : lf("descending"))} style={{ cursor: 'pointer' }}>
+                                    <th onClick={this.handleToggleSortName} tabIndex={0} onKeyDown={fireClickOnEnter} title={lf("Sort by Name {0}", sortedAsc ? lf("ascending") : lf("descending"))} style={{ cursor: 'pointer' }}>
                                         {lf("Name")} {sortedBy == 'name' ? <sui.Icon icon={`arrow ${sortedAsc ? 'up' : 'down'}`} /> : undefined}
                                     </th>
-                                    <th onClick={this.handleToggleSortTime} tabIndex={0} onKeyDown={sui.fireClickOnEnter} title={lf("Sort by Last Modified {0}", sortedAsc ? lf("ascending") : lf("descending"))} style={{ cursor: 'pointer' }}>
+                                    <th onClick={this.handleToggleSortTime} tabIndex={0} onKeyDown={fireClickOnEnter} title={lf("Sort by Last Modified {0}", sortedAsc ? lf("ascending") : lf("descending"))} style={{ cursor: 'pointer' }}>
                                         {lf("Last Modified")} {sortedBy == 'time' ? <sui.Icon icon={`arrow ${sortedAsc ? 'up' : 'down'}`} /> : undefined}
                                     </th>
                                 </tr>
@@ -499,7 +500,7 @@ class ProjectsCodeRow extends sui.StatelessUIElement<ProjectsCodeRowProps> {
 
     renderCore() {
         const { scr, onRowClicked, onClick, selected, markedNew, children, ...rest } = this.props;
-        return <tr tabIndex={0} {...rest} onKeyDown={sui.fireClickOnEnter} onClick={this.handleClick} style={{ cursor: 'pointer' }} className={`${markedNew ? 'warning' : selected ? 'positive' : ''}`}>
+        return <tr tabIndex={0} {...rest} onKeyDown={fireClickOnEnter} onClick={this.handleClick} style={{ cursor: 'pointer' }} className={`${markedNew ? 'warning' : selected ? 'positive' : ''}`}>
             <td className="collapsing" onClick={this.handleCheckboxClick}>
                 <sui.Icon icon={`circle outline large ${selected ? `check green` : markedNew ? 'black' : ''}`} />
             </td>

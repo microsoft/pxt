@@ -3086,4 +3086,40 @@ namespace pxt.blocks {
     export function getBlockDataForField(block: Blockly.Block, field: string) {
         return getBlockData(block).fieldData[field];
     }
+
+    export class PxtWorkspaceSearch extends WorkspaceSearch {
+        protected createDom_() {
+            super.createDom_();
+            this.addEvent_(this.workspace_.getInjectionDiv(), "click", this, (e: any) => {
+                if (!this.htmlDiv_.contains(e.target)) {
+                    this.close()
+                }
+            });
+        }
+
+        protected highlightSearchGroup_(blocks: Blockly.BlockSvg[]) {
+            blocks.forEach((block) => {
+                const blockPath = block.pathObject.svgPath;
+                Blockly.utils.dom.addClass(blockPath, 'blockly-ws-search-highlight-pxt');
+            });
+        }
+
+        protected unhighlightSearchGroup_ (blocks: Blockly.BlockSvg[]) {
+            blocks.forEach((block) => {
+                const blockPath = block.pathObject.svgPath;
+                Blockly.utils.dom.removeClass(blockPath, 'blockly-ws-search-highlight-pxt');
+            });
+        }
+
+        open() {
+            super.open();
+            Blockly.utils.dom.addClass(this.workspace_.getInjectionDiv(), 'blockly-ws-searching');
+        }
+
+        close() {
+            super.close();
+            Blockly.utils.dom.removeClass(this.workspace_.getInjectionDiv(), 'blockly-ws-searching');
+        }
+
+    }
 }

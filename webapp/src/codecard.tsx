@@ -2,6 +2,7 @@ import * as React from "react";
 import * as sui from "./sui";
 import * as data from "./data";
 import * as cloud from "./cloud";
+import { fireClickOnEnter } from "./util";
 
 const repeat = pxt.Util.repeatMap;
 
@@ -97,7 +98,7 @@ export class CodeCardView extends data.Component<CodeCardProps, CodeCardState> {
         const style = card.style || "card"
         const cardDiv = <div className={`ui ${style} ${color} ${card.onClick ? "link" : ''} ${className ? className : ''}`}
             role={card.role} aria-selected={card.role === "option" ? "true" : undefined} aria-label={ariaLabel} title={card.title}
-            onClick={clickHandler} tabIndex={card.onClick ? card.tabIndex || 0 : null} onKeyDown={card.onClick ? sui.fireClickOnEnter : null}>
+            onClick={clickHandler} tabIndex={card.onClick ? card.tabIndex || 0 : null} onKeyDown={card.onClick ? fireClickOnEnter : null}>
             {card.header ?
                 <div key="header" className={"ui content " + (card.responsive ? " tall desktop only" : "")}>
                     {card.header}

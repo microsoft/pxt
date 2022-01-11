@@ -15,12 +15,12 @@ export class BannerImpl extends React.Component<BannerProps> {
         const  { title, description, icon, infoUrl } = this.props;
         return <div className="banner">
             <div className="banner-card">
-                <i className={`icon ${icon}`} />
+                <i className={icon} aria-hidden={true} />
                 <div className="banner-text">
                     <div className="banner-title">
                         <span>{title}</span>
                         {infoUrl && <a className="banner-info" href={infoUrl} target="_blank" rel="noopener noreferrer" role="button">
-                            <i className="icon info circle" />
+                            <i className="fas fa-info-circle" />
                         </a>}
                     </div>
                     <div className="banner-description">{description}</div>

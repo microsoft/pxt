@@ -107,21 +107,15 @@
 }
 
 /* Buttons */
-.info-panel .action-button {
-    color: var(--active-color);
-    border: 1px solid var(--active-color);
-    padding: 0.5rem;
-    margin-bottom: 0.5rem;
-    font-size: 1.2rem;
-    text-align: center;
-    cursor: pointer;
-    flex: 1;
-    user-select: none;
-    text-transform: uppercase;
+
+.info-panel .actions {
+    display: flex;
+    flex-direction: column;
 }
 
-.info-panel .action-button:hover {
-    background-color: var(--hover-color);
+.info-panel .actions .common-button {
+    margin-bottom: 0.5rem;
+    background-color: var(--body-background-color);
 }
 
 .locked.action-button,
@@ -136,6 +130,8 @@
 /* VVN TODO COLORS */
 .cloud-action {
     margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
 }
 
 .sign-in-button {
@@ -226,14 +222,14 @@
         row-gap: 0.5rem;
     }
 
-    .info-panel .action-button {
+    .info-panel .common-button {
         flex: 0.5;
         margin-right: 1rem;
         margin-bottom: 0;
     }
 
-    .info-panel .action-button:last-child,
-    .info-panel .grid .action-button:nth-child(2) {
+    .info-panel .common-button:last-child,
+    .info-panel .grid .common-button:nth-child(2) {
         margin-right: 0;
     }
 

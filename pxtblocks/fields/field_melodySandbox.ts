@@ -306,7 +306,7 @@ namespace pxtblockly {
 
         // The height of the preview on the block itself
         protected getPreviewHeight(): number {
-            return this.constants_.FIELD_BORDER_RECT_HEIGHT;
+            return this.getConstants()?.FIELD_BORDER_RECT_HEIGHT || 16;
         }
 
         protected getDropdownBackgroundColour() {
