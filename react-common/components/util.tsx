@@ -53,3 +53,9 @@ export function classList(...classes: string[]) {
         .filter(c => !!c)
         .join(" ");
 }
+
+export enum CheckboxStatus {
+    Selected,
+    Unselected,
+    Waiting
+}

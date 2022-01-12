@@ -1,7 +1,7 @@
 import * as React from "react";
-import { fireClickOnEnter } from "../util";
+import { fireClickOnEnter, CheckboxStatus } from "../util";
 import { UserNotification } from "./UserNotification";
-import { Checkbox, CheckboxStatus } from "../Checkbox";
+import { Checkbox } from "../controls/Checkbox";
 
 export interface UserPaneProps {
     profile: pxt.auth.UserProfile;
@@ -18,7 +18,11 @@ export const UserPane = (props: UserPaneProps) => {
 
     const { username, displayName, picture } = profile.idp;
 
-    const checkboxLabel = "email-optin-label"
+    const emailLabel = <>
+        {emailChecked === CheckboxStatus.Waiting ? <div className="common-spinner" /> : undefined}
+        {lf("I would like to receive the MakeCode newsletter. ")}
+        <a href="https://makecode.com/privacy" target="_blank" rel="noopener noreferrer">{lf("View Privacy Statement")}</a>
+    </>
 
     return <div className="profile-user-pane">
         <div className="profile-portrait">
@@ -42,11 +46,11 @@ export const UserPane = (props: UserPaneProps) => {
         { notification && <UserNotification notification={notification}/> }
         <div className="profile-spacer"></div>
         <div className="profile-email">
-            <Checkbox isChecked={emailChecked} onClick={onEmailCheckClick} label={checkboxLabel}/>
-            <div id={checkboxLabel}>
-                {lf("I would like to receive the MakeCode newsletter. ")}
-                <a href="https://makecode.com/privacy" target="_blank" rel="noopener noreferrer">{lf("View Privacy Statement")}</a>
-            </div>
+            <Checkbox id="profile-email-checkbox"
+                className={emailChecked === CheckboxStatus.Waiting ? "loading" : ""}
+                isChecked={emailChecked === CheckboxStatus.Selected}
+                onChange={onEmailCheckClick}
+                label={emailLabel}/>
         </div>
         <div className="profile-actions">
             <a role="button"

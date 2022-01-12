@@ -303,6 +303,18 @@
     font-family: var(--body-font-family);
 }
 
+.common-checkbox.loading {
+    input {
+        opacity: 0;
+    }
+
+    .common-spinner {
+        display: inline-block;
+        position: absolute;
+        left: 0px;
+    }
+}
+
 @media only screen and (max-width: 1200px) and (min-width: 992px) {
     .profile-badges, .profile-badges-background {
         background-size: 25%;

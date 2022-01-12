@@ -17,6 +17,7 @@ import { Modal, ModalAction } from 'react-common/controls/Modal';
 import { jsxLF } from "react-common/util";
 import { Badge } from "react-common/profile/Badge";
 import { Button } from "react-common/controls/Button";
+import { Checkbox } from "react-common/controls/Checkbox";
 import { Input } from "react-common/controls/Input";
 
 interface AppModalProps {
@@ -348,7 +349,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                 </div>
             }
             {(loading && !shortId) && <div className="share-loader">
-                <div className="ui active inline loader" />
+                <div className="common-spinner" />
                 <span>{lf("Loading...")}</span>
             </div>}
             {shortId && <Input
@@ -383,6 +384,11 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
             }
         })
 
+        const onRememberMeChecked = (newValue: boolean) => {
+            tickEvent("skillmap.signindialog.rememberme", { rememberMe: newValue.toString() });
+            this.setState({ checkboxSelected: newValue });
+        }
+
         return <Modal title={activityPrompt ? lf("Save your Completed Activity") : lf("Sign into MakeCode Arcade")} onClose={this.handleOnClose} actions={buttons} className="sign-in">
             <div className="description">
                 <p>{lf("Sign in with your Microsoft Account. We'll save your projects to the cloud, where they're accessible from anywhere.")}</p>
@@ -398,13 +404,8 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                         </a>
                     </p>
                 </div>
-                <div className="remember" onClick={() => {
-                    const rememberMe = !rememberMeSelected;
-                    tickEvent("skillmap.signindialog.rememberme", { rememberMe: rememberMe.toString() });
-                    this.setState({ checkboxSelected: rememberMe });
-                }}>
-                    <i className={`far ${rememberMeSelected ? "fa-check-square" : "fa-square"}`} />
-                    {lf("Remember me")}
+                <div className="remember">
+                    <Checkbox id="sign-in-remember-me" label={lf("Remember me")} onChange={onRememberMeChecked} isChecked={rememberMeSelected} />
                 </div>
             </div>
         </Modal>
