@@ -1,15 +1,24 @@
 import * as React from "react";
 import { classList, ControlProps, fireClickOnEnter } from "../util";
 
-interface ButtonProps extends ControlProps {
+export interface ButtonProps extends ControlProps {
     onClick: () => void;
+    onKeydown?: (e: React.KeyboardEvent) => void;
+    ref?: (ref: HTMLButtonElement) => void;
     title: string;
-    label?: string;
+    label?: string | JSX.Element;
     leftIcon?: string;
     rightIcon?: string;
     disabled?: boolean;
     href?: string;
     target?: string;
+
+    /** Miscellaneous aria pass-through props */
+    ariaControls?: string;
+    ariaExpanded?: boolean;
+    ariaHasPopup?: string;
+    ariaPosInSet?: number;
+    ariaSetSize?: number;
 }
 
 export const Button = (props: ButtonProps) => {
@@ -18,8 +27,15 @@ export const Button = (props: ButtonProps) => {
         className,
         ariaLabel,
         ariaHidden,
+        ariaControls,
+        ariaExpanded,
+        ariaHasPopup,
+        ariaPosInSet,
+        ariaSetSize,
         role,
         onClick,
+        onKeydown,
+        ref,
         title,
         label,
         leftIcon,
@@ -45,12 +61,18 @@ export const Button = (props: ButtonProps) => {
             id={id}
             className={classes}
             title={title}
+            ref={ref}
             onClick={!disabled ? clickHandler : undefined}
-            onKeyDown={fireClickOnEnter}
+            onKeyDown={onKeydown || fireClickOnEnter}
             role={role || "button"}
             tabIndex={disabled ? -1 : 0}
             aria-label={ariaLabel}
-            aria-hidden={ariaHidden}>
+            aria-hidden={ariaHidden}
+            aria-controls={ariaControls}
+            aria-expanded={ariaExpanded}
+            aria-haspopup={ariaHasPopup as any}
+            aria-posinset={ariaPosInSet}
+            aria-setsize={ariaSetSize}>
                 <span className="common-button-flex">
                     {leftIcon && <i className={leftIcon} aria-hidden={true}/>}
                     <span className="common-button-label">
