@@ -83,7 +83,7 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
     protected isResizing: boolean;
     protected originalImage: pxt.sprite.Bitmap;
 
-    protected tileCache: HTMLCanvasElement[] = [];
+    protected tileCache: pxt.Map<HTMLCanvasElement> = {};
     protected tileCacheRevision: number;
     protected hasHover: boolean;
 
@@ -114,6 +114,8 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
         if (document.activeElement instanceof HTMLElement) {
             document.activeElement.blur();
         }
+
+        this.tileCache = {};
 
         this.cellWidth = this.props.isTilemap ? this.props.tilemapState.tileset.tileWidth : 1;
         this.canvas = this.refs["paint-surface"] as HTMLCanvasElement;
@@ -159,6 +161,8 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
             this.editState = getEditState(imageState, this.props.isTilemap, this.props.drawingMode);
         }
 
+        if (!this.props.isTilemap) this.tileCache = {};
+
         this.cellWidth = this.props.isTilemap ? this.props.tilemapState.tileset.tileWidth : 1;
 
         if (this.props.zoomDelta || this.props.zoomDelta === 0) {
@@ -184,7 +188,7 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
     }
 
     componentWillUnmount() {
-        this.tileCache = [];
+        this.tileCache = {};
         document.removeEventListener("keydown", this.onKeyDown, true);
         document.removeEventListener("keyup", this.onKeyUp);
 
@@ -756,7 +760,7 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
         tileImage.width = tileset.tileWidth;
         tileImage.height = tileset.tileWidth;
         this.drawBitmap(pxt.sprite.Bitmap.fromData(tileset.tiles[index].bitmap), 0, 0, false, !this.props.lightMode, tileImage);
-        this.tileCache[index] = tileImage;
+        this.tileCache[tileset.tiles[index].id] = tileImage;
         return tileImage;
     }
 
@@ -768,7 +772,7 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
         let tileImage: HTMLCanvasElement;
 
         if (this.tileCacheRevision !== this.props.tilesetRevision) {
-            this.tileCache = [];
+            this.tileCache = {};
             this.tileCacheRevision = this.props.tilesetRevision;
         }
 
@@ -778,7 +782,7 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
             for (let y = 0; y < tilemap.height; y++) {
                 index = tilemap.get(x, y);
                 if (index && index < tileset.tiles.length) {
-                    tileImage = this.tileCache[index];
+                    tileImage = this.tileCache[tileset.tiles[index].id];
 
                     if (!tileImage) {
                         tileImage = this.generateTile(index, tileset);
@@ -807,11 +811,11 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
         const context = canvas.getContext("2d");
         context.imageSmoothingEnabled = false;
 
-        if (color) {
+        if (color && color !== -1) {
             if (this.props.isTilemap && !isDrawingWalls) {
                 if (color >= this.props.tilemapState.tileset.tiles.length) return;
 
-                let tileImage = this.tileCache[color];
+                let tileImage = this.tileCache[this.props.tilemapState.tileset.tiles[color].id];
                 if (!tileImage) {
                     tileImage = this.generateTile(color, this.props.tilemapState.tileset);
                 }
