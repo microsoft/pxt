@@ -570,12 +570,12 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
                 const clone = this.editState.copy();
                 clone.setActiveLayer(drawingMode);
                 this.edit.doEdit(clone);
-                this.drawImage(clone.image);
+                this.drawImage(clone.image, 0, 0, !!(onionSkinEnabled && nextFrame));
                 this.drawOverlayLayers(clone.overlayLayers);
                 this.redrawFloatingLayer(clone);
             }
             else {
-                this.drawImage(this.editState.image);
+                this.drawImage(this.editState.image, 0, 0, !!(onionSkinEnabled && nextFrame));
                 this.drawOverlayLayers(this.editState.overlayLayers);
                 this.redrawFloatingLayer(this.editState);
 
@@ -732,6 +732,11 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
 
         const data = transparent ? context.getImageData(0, 0, target.width, target.height) : new ImageData(target.width, target.height);
 
+        const colors = this.colors.slice();
+        for (let i = 0; i < colors.length; i += 4) {
+            colors[i + 3] = (colors[i + 3] * context.globalAlpha) | 0;
+        }
+
         for (let y = 0; y < bitmap.height; y++) {
             if (y0 + y >= target.height) break;
             if (y0 + y < 0) continue;
@@ -743,10 +748,10 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
                 const colorOffset = bitmap.get(x, y) << 2;
 
                 if (!colorOffset && transparent) continue;
-                data.data[i] = this.colors[colorOffset];
-                data.data[i + 1] = this.colors[colorOffset + 1];
-                data.data[i + 2] = this.colors[colorOffset + 2];
-                data.data[i + 3] = this.colors[colorOffset + 3];
+                data.data[i] = colors[colorOffset];
+                data.data[i + 1] = colors[colorOffset + 1];
+                data.data[i + 2] = colors[colorOffset + 2];
+                data.data[i + 3] = colors[colorOffset + 3];
             }
         }
         target.getContext("2d").putImageData(data, 0, 0);
