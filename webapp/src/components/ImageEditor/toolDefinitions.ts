@@ -881,3 +881,30 @@ export function flipEdit(image: EditState, vertical: boolean, isTilemap: boolean
         }
     }
 }
+
+export function outlineEdit(image: EditState, color: number) {
+    const source = image.floating?.image ? image.floating : image;
+
+    const newImage = new pxt.sprite.Bitmap(source.image.width, source.image.height);
+    newImage.apply(source.image);
+
+    for (let x = 0; x < source.image.width; x++) {
+        for (let y = 0; y < source.image.height; y++) {
+            if (source.image.get(x, y) === 0) {
+                if (source.image.get(x - 1, y) !== 0 || source.image.get(x, y - 1) !== 0 ||
+                    source.image.get(x + 1, y) !== 0 || source.image.get(x, y + 1) !== 0) {
+                    newImage.set(x, y, color);
+                }
+            }
+        }
+    }
+
+    const out = image.copy();
+    if (out.floating?.image) {
+        out.floating.image = newImage
+    }
+    else {
+        out.image = newImage;
+    }
+    return out;
+}

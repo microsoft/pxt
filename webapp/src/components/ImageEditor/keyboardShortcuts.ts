@@ -3,7 +3,7 @@ import { Store } from 'react-redux';
 import { ImageEditorTool, ImageEditorStore, TilemapState, AnimationState } from './store/imageReducer';
 import { dispatchChangeZoom, dispatchUndoImageEdit, dispatchRedoImageEdit, dispatchChangeImageTool, dispatchSwapBackgroundForeground, dispatchChangeSelectedColor, dispatchImageEdit} from './actions/dispatch';
 import { mainStore } from './store/imageStore';
-import { EditState, flipEdit, getEditState, rotateEdit } from './toolDefinitions';
+import { EditState, flipEdit, getEditState, outlineEdit, rotateEdit } from './toolDefinitions';
 let store = mainStore;
 
 let lockRefs: number[] = [];
@@ -66,6 +66,13 @@ function overrideBlocklyShortcuts(event: KeyboardEvent) {
 
 function handleKeyDown(event: KeyboardEvent) {
     if (!areShortcutsEnabled()) return;
+
+    if (event.shiftKey && event.ctrlKey && /^(?:Digit[1-9])|(?:Key[A-F])$/.test(event.code)) {
+        if (event.code.indexOf("Digit") == 0) outline(parseInt(event.code.substring(5)))
+        else outline(parseInt(event.code.substring(3), 16));
+        return;
+    }
+
     // Mostly copied from the photoshop shortcuts
     switch (event.key) {
         case "e":
@@ -175,4 +182,13 @@ export function rotate(clockwise: boolean) {
     const [ editState, type ] = currentEditState();
     const rotated = rotateEdit(editState, clockwise, type === "tilemap", type === "animation");
     dispatchAction(dispatchImageEdit(rotated.toImageState()));
+}
+
+export function outline(color: number) {
+    const [ editState, type ] = currentEditState();
+
+    if (type === "tilemap") return;
+
+    const outlined = outlineEdit(editState, color);
+    dispatchAction(dispatchImageEdit(outlined.toImageState()));
 }
