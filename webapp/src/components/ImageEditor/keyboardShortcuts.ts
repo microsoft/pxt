@@ -3,7 +3,7 @@ import { Store } from 'react-redux';
 import { ImageEditorTool, ImageEditorStore, TilemapState, AnimationState } from './store/imageReducer';
 import { dispatchChangeZoom, dispatchUndoImageEdit, dispatchRedoImageEdit, dispatchChangeImageTool, dispatchSwapBackgroundForeground, dispatchChangeSelectedColor, dispatchImageEdit} from './actions/dispatch';
 import { mainStore } from './store/imageStore';
-import { EditState, flipEdit, getEditState, outlineEdit, rotateEdit } from './toolDefinitions';
+import { EditState, flipEdit, getEditState, outlineEdit, replaceColorEdit, rotateEdit } from './toolDefinitions';
 let store = mainStore;
 
 let lockRefs: number[] = [];
@@ -121,6 +121,11 @@ function handleKeyDown(event: KeyboardEvent) {
 
     const editorState = store.getState().editor;
 
+    if (event.shiftKey && event.ctrlKey && event.code === "KeyR") {
+        replaceColor(editorState.backgroundColor, editorState.selectedColor);
+        return;
+    }
+
     if (!editorState.isTilemap && /^Digit\d$/.test(event.code)) {
         const keyAsNum = +event.code.slice(-1);
         const color = keyAsNum + (event.shiftKey ? 9 : 0);
@@ -191,4 +196,10 @@ export function outline(color: number) {
 
     const outlined = outlineEdit(editState, color);
     dispatchAction(dispatchImageEdit(outlined.toImageState()));
+}
+
+export function replaceColor(fromColor: number, toColor: number) {
+    const [ editState, type ] = currentEditState();
+    const replaced = replaceColorEdit(editState, fromColor, toColor);
+    dispatchAction(dispatchImageEdit(replaced.toImageState()));
 }

@@ -884,9 +884,9 @@ export function flipEdit(image: EditState, vertical: boolean, isTilemap: boolean
 
 export function outlineEdit(image: EditState, color: number) {
     const source = image.floating?.image ? image.floating : image;
+    const out = image.copy();
 
-    const newImage = new pxt.sprite.Bitmap(source.image.width, source.image.height);
-    newImage.apply(source.image);
+    const newImage = image?.floating?.image ? out.floating.image : out.image;
 
     for (let x = 0; x < source.image.width; x++) {
         for (let y = 0; y < source.image.height; y++) {
@@ -899,12 +899,22 @@ export function outlineEdit(image: EditState, color: number) {
         }
     }
 
+    return out;
+}
+
+export function replaceColorEdit(image: EditState, fromColor: number, toColor: number) {
+    const source = image.floating?.image ? image.floating : image;
     const out = image.copy();
-    if (out.floating?.image) {
-        out.floating.image = newImage
+
+    const newImage = image?.floating?.image ? out.floating.image : out.image;
+
+    for (let x = 0; x < source.image.width; x++) {
+        for (let y = 0; y < source.image.height; y++) {
+            if (source.image.get(x, y) === fromColor) {
+                newImage.set(x, y, toColor);
+            }
+        }
     }
-    else {
-        out.image = newImage;
-    }
+
     return out;
 }
