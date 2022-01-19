@@ -100,18 +100,21 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
 
     protected getUserMenu() {
         const { signedIn, profile } = this.props;
-        const items = [];
+        const items: MenuItem[] = [];
 
         if (signedIn) {
             items.push({
                 id: "profile",
+                title: lf("My Profile"),
                 label: lf("My Profile"),
                 onClick: this.onProfileClicked
-            },{
+            });
+            items.push({
                 id: "signout",
+                title: lf("Sign Out"),
                 label: lf("Sign Out"),
                 onClick: this.onLogoutClicked
-            })
+            });
         }
 
         const avatarElem = this.avatarPicUrl()
@@ -122,7 +125,7 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
 
         return <div className="user-menu">
             {signedIn
-             ? <Dropdown icon="fas fa-user" items={items} picture={avatarElem || initialsElem} className="header-dropdown user-dropdown"/>
+            ?  <MenuDropdown id="profile-dropdown" items={items} label={avatarElem || initialsElem} title={lf("Profile Settings")}/>
              : <Button className="menu-button inverted" rightIcon="xicon cloud-user" title={lf("Sign In")} label={lf("Sign In")} onClick={ () => {
                 pxt.tickEvent(`skillmap.usermenu.signin`);
                 this.props.dispatchShowLoginModal();
