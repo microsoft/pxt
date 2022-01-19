@@ -4,7 +4,7 @@ import { classList, ControlProps, fireClickOnEnter } from "../util";
 export interface ButtonProps extends ControlProps {
     onClick: () => void;
     onKeydown?: (e: React.KeyboardEvent) => void;
-    ref?: (ref: HTMLButtonElement) => void;
+    buttonRef?: (ref: HTMLButtonElement) => void;
     title: string;
     label?: string | JSX.Element;
     leftIcon?: string;
@@ -35,7 +35,7 @@ export const Button = (props: ButtonProps) => {
         role,
         onClick,
         onKeydown,
-        ref,
+        buttonRef,
         title,
         label,
         leftIcon,
@@ -61,7 +61,7 @@ export const Button = (props: ButtonProps) => {
             id={id}
             className={classes}
             title={title}
-            ref={ref}
+            ref={buttonRef}
             onClick={!disabled ? clickHandler : undefined}
             onKeyDown={onKeydown || fireClickOnEnter}
             role={role || "button"}

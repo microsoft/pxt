@@ -54,6 +54,15 @@ export function classList(...classes: string[]) {
         .join(" ");
 }
 
+export function nodeListToArray<U extends Node>(list: NodeListOf<U>): U[] {
+    const out: U[] = [];
+
+    for (const node of list) {
+        out.push(node);
+    }
+    return out;
+}
+
 export enum CheckboxStatus {
     Selected,
     Unselected,
