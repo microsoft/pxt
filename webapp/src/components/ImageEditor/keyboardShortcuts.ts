@@ -121,7 +121,7 @@ function handleKeyDown(event: KeyboardEvent) {
 
     const editorState = store.getState().editor;
 
-    if (event.shiftKey && event.ctrlKey && event.code === "KeyS") {
+    if (event.shiftKey && event.code === "KeyR") {
         replaceColor(editorState.backgroundColor, editorState.selectedColor);
         return;
     }
