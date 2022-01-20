@@ -21,6 +21,7 @@ You can write, edit, and test a tutorial with the online [**Tutorial Tool**](htt
 
 * [Basics](/writing-docs/tutorials/basics) - The basics of writing a tutorial
 * [Activities](/writing-docs/tutorials/activities) - Creating an activity based tutorial
+* [Snippets](/writing-docs/snippets) - Types of code snippet used in tutorials for hints, sample code, etc
 * [Control options](/writing-docs/tutorials/control-options) - Additional options and blocks to control tutorial behavior
 * [Multi-language](/writing-docs/tutorials/multi-lang) - Tutorials for both Blocks and Code
 * [Adding Resources](/writing-docs/tutorials/resources) - Including a resource section in a tutorial
