@@ -1154,6 +1154,7 @@ namespace ts.pxtc.Util {
         "bn": { englishName: "Bengali", localizedName: "বাংলা" },
         "ca": { englishName: "Catalan", localizedName: "Català" },
         "cs": { englishName: "Czech", localizedName: "Čeština" },
+        "cy": { englishName: "Welsh", localizedName: "Cymraeg" },
         "da": { englishName: "Danish", localizedName: "Dansk" },
         "de": { englishName: "German", localizedName: "Deutsch" },
         "el": { englishName: "Greek", localizedName: "Ελληνικά" },
