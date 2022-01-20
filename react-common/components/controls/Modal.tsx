@@ -1,6 +1,7 @@
 import React = require("react");
 import { classList, ContainerProps } from "../util";
 import { Button } from "./Button";
+import { FocusTrap } from "./FocusTrap";
 
 export interface ModalAction {
     label: string;
@@ -43,49 +44,13 @@ export const Modal = (props: ModalProps) => {
         if (onClose) onClose();
     }
 
-    let firstFocusableElement: HTMLElement;
-    let lastFocusableElement: HTMLElement;
-
-    const handleRef = (ref: HTMLDivElement) => {
-        if (!ref) return;
-
-        const focusable = ref.querySelectorAll(`[tabindex]:not([tabindex="-1"])`);
-
-        firstFocusableElement = focusable.item(0) as HTMLElement;
-        lastFocusableElement = focusable.item(focusable.length - 1) as HTMLElement;
-
-        // TODO: Add an error here? this should never happen
-        if (!firstFocusableElement) return;
-
-        if (!ref.contains(document.activeElement)) firstFocusableElement.focus();
-    }
-
-    const onKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
-        if (e.key !== "Tab") return;
-
-        const target = e.target;
-
-        if (e.shiftKey) {
-            if (target === firstFocusableElement) {
-                lastFocusableElement.focus();
-                e.preventDefault();
-                e.stopPropagation();
-            }
-        }
-        else if (target === lastFocusableElement) {
-            firstFocusableElement.focus();
-            e.preventDefault();
-            e.stopPropagation();
-        }
-    }
-
     const classes = classList(
         "common-modal-container",
         fullscreen && "fullscreen",
         className
     );
 
-    return <div className={classes} ref={handleRef} onKeyDown={onKeyDown}>
+    return <FocusTrap className={classes} onEscape={closeClickHandler}>
         <div id={id}
             className="common-modal"
             role={role || "dialog"}
@@ -139,5 +104,5 @@ export const Modal = (props: ModalProps) => {
                 </div>
             }
         </div>
-    </div>
+    </FocusTrap>
 }

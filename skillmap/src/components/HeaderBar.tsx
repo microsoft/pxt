@@ -6,10 +6,13 @@ import { dispatchSaveAndCloseActivity, dispatchShowResetUserModal, dispatchShowL
 import { SkillMapState } from '../store/reducer';
 import { isLocal, resolvePath, tickEvent } from "../lib/browserUtils";
 
-import { Dropdown, DropdownItem } from "./Dropdown";
 import { isActivityCompleted } from "../lib/skillMapUtils";
 import * as authClient from '../lib/authClient';
+import { Dropdown } from "./Dropdown";
 import { Button } from "react-common/controls/Button";
+import { MenuBar } from "react-common/controls/MenuBar";
+import { MenuDropdown, MenuItem } from "react-common/controls/MenuDropdown";
+
 
 interface HeaderBarProps {
     currentMapId?: string;
@@ -26,13 +29,14 @@ interface HeaderBarProps {
 
 export class HeaderBarImpl extends React.Component<HeaderBarProps> {
     protected reportAbuseUrl = "https://github.com/contact/report-content";
-    protected getSettingItems(): DropdownItem[] {
-        const items: DropdownItem[] = [];
+    protected getSettingItems(): MenuItem[] {
+        const items: MenuItem[] = [];
         if (this.props.showReportAbuse) {
             items.push({
                 id: "report",
+                title: lf("Report Abuse"),
                 label: lf("Report Abuse"),
-                onClick: (id: string) => {
+                onClick: () => {
                     tickEvent("skillmap.reportabuse");
                     window.open(this.reportAbuseUrl);
                 }
@@ -42,6 +46,7 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
         if (!this.props.activityOpen) {
             items.push({
                 id: "reset",
+                title: lf("Reset All"),
                 label: lf("Reset All"),
                 onClick: () => {
                     tickEvent("skillmap.reset.warning");
@@ -75,11 +80,12 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
         </div>
     }
 
-    protected getHelpItems(): DropdownItem[] {
-        const items: DropdownItem[] = [];
+    protected getHelpItems(): MenuItem[] {
+        const items: MenuItem[] = [];
         if (this.props.activityOpen) {
             items.push({
                 id: "feedback",
+                title: lf("Feedback"),
                 label: lf("Feedback"),
                 onClick: this.onBugClicked
             });
@@ -94,18 +100,21 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
 
     protected getUserMenu() {
         const { signedIn, profile } = this.props;
-        const items = [];
+        const items: MenuItem[] = [];
 
         if (signedIn) {
             items.push({
                 id: "profile",
+                title: lf("My Profile"),
                 label: lf("My Profile"),
                 onClick: this.onProfileClicked
-            },{
+            });
+            items.push({
                 id: "signout",
+                title: lf("Sign Out"),
                 label: lf("Sign Out"),
                 onClick: this.onLogoutClicked
-            })
+            });
         }
 
         const avatarElem = this.avatarPicUrl()
@@ -116,7 +125,7 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
 
         return <div className="user-menu">
             {signedIn
-             ? <Dropdown icon="fas fa-user" items={items} picture={avatarElem || initialsElem} className="header-dropdown user-dropdown"/>
+            ?  <MenuDropdown id="profile-dropdown" items={items} label={avatarElem || initialsElem} title={lf("Profile Settings")}/>
              : <Button className="menu-button inverted" rightIcon="xicon cloud-user" title={lf("Sign In")} label={lf("Sign In")} onClick={ () => {
                 pxt.tickEvent(`skillmap.usermenu.signin`);
                 this.props.dispatchShowLoginModal();
@@ -132,7 +141,7 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
         const settingItems = this.getSettingItems();
         const helpItems = this.getHelpItems();
 
-        return <div className="header">
+        return <MenuBar className="header">
             <div className="header-left">
                 {this.getOrganizationLogo(appTheme)}
                 {this.getTargetLogo(appTheme)}
@@ -142,11 +151,11 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
             <div className="header-right">
                 { activityOpen && <Button className="menu-button" leftIcon="fas fa-arrow-left large" title={lf("Return to activity selection")} onClick={this.onBackClicked}/> }
                 <Button className="menu-button" leftIcon="fas fa-home large" title={lf("Return to the editor homepage")} onClick={this.onHomeClicked}/>
-                { helpItems?.length > 0 && <Dropdown icon="fas fa-question-circle large" className="header-dropdown" items={helpItems} /> }
-                { settingItems?.length > 0 && <Dropdown icon="fas fa-cog large" className="header-dropdown" items={settingItems} /> }
+                { helpItems?.length > 0 && <MenuDropdown id="skillmap-help" title={lf("Help menu")} icon="fas fa-question-circle large" items={helpItems}  />}
+                { settingItems?.length > 0 && <MenuDropdown id="settings-help" title={lf("Settings menu")} icon="fas fa-cog large" items={settingItems}  />}
                 { hasIdentity && this.getUserMenu() }
             </div>
-        </div>
+        </MenuBar>
     }
 
     onBackClicked = () => {
