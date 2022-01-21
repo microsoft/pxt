@@ -37,9 +37,7 @@ module.exports = function (webpackEnv) {
     )
   ))
 
-  if (!isEnvProduction) {
-    config.resolve.alias['react'] = path.resolve('../node_modules/react');
-  }
+  config.resolve.alias['react'] = path.resolve('../node_modules/react');
 
   config.module.rules = config.module.rules.filter(el => !(el.use && el.use.some(item => !!(item.options && item.options.eslintPath))));
   return config;
