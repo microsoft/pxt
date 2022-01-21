@@ -882,7 +882,7 @@ function uploadToGitRepoAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
     if (U.startsWith(label, tid + "/"))
         label = label.slice(tid.length + 1)
     if (!/^v\d/.test(label)) {
-        console.log('label is not a version; skipping release upload');
+        console.log(`label "${label}" is not a version; skipping release upload`);
         return Promise.resolve();
     }
     let repoUrl = process.env["PXT_RELEASE_REPO"]
