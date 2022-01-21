@@ -4285,6 +4285,10 @@ export class ProjectView
         }
     }
 
+    setHighContrast(on: boolean) {
+        return core.setHighContrast(on);;
+    }
+
     toggleGreenScreen() {
         const greenScreenOn = !this.state.greenScreen;
         pxt.tickEvent("app.greenscreen", { on: greenScreenOn ? 1 : 0 });

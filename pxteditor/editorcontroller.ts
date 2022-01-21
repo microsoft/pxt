@@ -63,6 +63,7 @@ namespace pxt.editor {
 
         | "toggletrace" // EditorMessageToggleTraceRequest
         | "togglehighcontrast"
+        | "sethighcontrast" // EditorMessageSetHighContrastRequest
         | "togglegreenscreen"
         | "settracestate" //
         | "setsimulatorfullscreen" // EditorMessageSimulatorFullScreenRequest
@@ -326,6 +327,11 @@ namespace pxt.editor {
         enabled: boolean;
     }
 
+    export interface EditorMessageSetHighContrastRequest extends EditorMessageRequest {
+        action: "sethighcontrast";
+        on: boolean;
+    }
+
     export interface EditorMessageStartActivity extends EditorMessageRequest {
         action: "startactivity";
         activityType: "tutorial" | "example" | "recipe";
@@ -552,6 +558,11 @@ namespace pxt.editor {
                                 case "togglehighcontrast": {
                                     return Promise.resolve()
                                         .then(() => projectView.toggleHighContrast());
+                                }
+                                case "sethighcontrast": {
+                                    const hcmsg = data as EditorMessageSetHighContrastRequest;
+                                    return Promise.resolve()
+                                        .then(() => projectView.setHighContrast(hcmsg.on));
                                 }
                                 case "togglegreenscreen": {
                                     return Promise.resolve()
