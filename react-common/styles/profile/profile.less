@@ -315,6 +315,26 @@
     }
 }
 
+/****************************************************
+ *                 High Contrast                    *
+ ****************************************************/
+
+.high-contrast {
+    .profile-badges .profile-badge,
+    .profile-badges-background .profile-badge,
+    .profile-badge-and-title,
+    .profile-initials-portrait,
+    .profile-badge-subtitle,
+    .profile-username {
+        color: @highContrastTextColor;
+        background-color: @highContrastBackgroundColor;
+    }
+
+    .profile-badge.clickable:hover {
+        outline: @highContrastFocusOutline;
+    }
+}
+
 @media only screen and (max-width: 1200px) and (min-width: 992px) {
     .profile-badges, .profile-badges-background {
         background-size: 25%;

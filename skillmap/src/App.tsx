@@ -51,6 +51,7 @@ interface AppProps {
     backgroundImageUrl: string;
     theme: SkillGraphTheme;
     signedIn: boolean;
+    highContrast?: boolean;
     dispatchAddSkillMap: (map: SkillMap) => void;
     dispatchClearSkillMaps: () => void;
     dispatchClearMetadata: () => void;
@@ -365,10 +366,10 @@ class AppImpl extends React.Component<AppProps, AppState> {
     }
 
     render() {
-        const { skillMaps, activityOpen, backgroundImageUrl, theme } = this.props;
+        const { skillMaps, activityOpen, backgroundImageUrl, theme, highContrast } = this.props;
         const { error, showingSyncLoader } = this.state;
         const maps = Object.keys(skillMaps).map((id: string) => skillMaps[id]);
-        return (<div className={`app-container ${pxt.appTarget.id}`}>
+        return (<div className={`app-container ${pxt.appTarget.id} ${highContrast ? "high-contrast" : ""}`}>
                 <HeaderBar />
                 {showingSyncLoader && <div className={"makecode-frame-loader"}>
                     <img src={resolvePath("assets/logo.svg")} alt={lf("MakeCode Logo")} />
@@ -448,7 +449,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
         await this.syncBadgesAsync();
     }
 
-    protected  async syncBadgesAsync() {
+    protected async syncBadgesAsync() {
         const { user, maps, pageSourceUrl, pageSourceStatus } = store.getState();
 
         if (this.props.signedIn && this.state.cloudSyncCheckHasFinished && pageSourceStatus === "approved") {
@@ -486,7 +487,8 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         activityOpen: !!state.editorView,
         backgroundImageUrl: state.backgroundImageUrl,
         theme: state.theme,
-        signedIn: state.auth.signedIn
+        signedIn: state.auth.signedIn,
+        highContrast: state.auth.preferences?.highContrast
     };
 }
 interface LocalizationUpdateOptions {
