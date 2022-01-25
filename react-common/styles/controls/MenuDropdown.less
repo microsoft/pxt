@@ -34,3 +34,21 @@
 .common-menu-dropdown-item.common-button:focus::after {
     outline: @buttonFocusOutlineInverted;
 }
+
+/****************************************************
+ *                 High Contrast                    *
+ ****************************************************/
+
+.high-contrast {
+    .common-menu-dropdown-pane {
+        color: @highContrastTextColor;
+        background-color: @highContrastBackgroundColor;
+        border: 1px solid @highContrastTextColor;
+    }
+
+    .common-menu-dropdown-item:hover,
+    .common-menu-dropdown > .menu-button.expanded {
+        outline: @highContrastFocusOutline;
+        z-index: @highContrastFocusZIndex;
+    }
+}

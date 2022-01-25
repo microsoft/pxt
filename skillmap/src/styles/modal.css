@@ -195,6 +195,14 @@
 .color-7 { background-color: #87f2ff; }
 .color-8 { background-color: #8e2ec4; }
 
+/*******************************/
+/*****   HIGH CONTRAST     *****/
+/*******************************/
+
+.high-contrast .confetti {
+    display: none;
+}
+
 @keyframes confetti {
     0% { transform: rotateZ(15deg) rotateY(0deg) translate(0,0); }
     25% { transform: rotateZ(5deg) rotateY(360deg) translate(-1vw,20vh); }

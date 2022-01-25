@@ -24,6 +24,7 @@ interface MakeCodeFrameProps {
     progress?: ActivityState;
     shareHeaderId?: string;
     signedIn?: boolean;
+    highContrast?: boolean;
     pageSourceUrl: string;
     dispatchSetHeaderIdForActivity: (mapId: string, activityId: string, id: string, currentStep: number, maxSteps: number, isCompleted: boolean) => void;
     dispatchCloseActivity: (finished?: boolean) => void;
@@ -69,8 +70,18 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
         };
     }
 
+    UNSAFE_componentWillReceiveProps(nextProps: MakeCodeFrameProps) {
+        if (this.props.highContrast != nextProps.highContrast) {
+            this.sendMessageAsync({
+                type: "pxteditor",
+                action: "sethighcontrast",
+                on: nextProps.highContrast
+            }  as pxt.editor.EditorMessageSetHighContrastRequest);
+        }
+    }
+
     async componentDidUpdate() {
-        const { shareHeaderId } = this.props;
+        const { shareHeaderId, highContrast } = this.props;
         const { frameState, pendingShare } = this.state;
         if (frameState === "project-open" && this.props.save) {
             this.setState({ frameState: "closing-project" }, async () => {
@@ -352,6 +363,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         save: saveState === "saving",
         shareHeaderId,
         signedIn: state.auth.signedIn,
+        highContrast: state.auth.preferences?.highContrast,
         pageSourceUrl: state.pageSourceUrl
     }
 }

@@ -93,3 +93,21 @@
         color: @inputTextColorDisabled;
     }
 }
+
+/****************************************************
+ *                 High Contrast                    *
+ ****************************************************/
+
+.high-contrast {
+    .common-input {
+        color: @highContrastTextColor;
+        border-color: @highContrastTextColor;
+        background-color: @highContrastBackgroundColor;
+    }
+
+    .common-input-group:focus::after,
+    .common-input-group:focus-within::after {
+        border-color: @highContrastHighlightColor;
+    }
+
+}

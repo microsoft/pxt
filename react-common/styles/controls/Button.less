@@ -176,3 +176,17 @@
     color: @buttonMenuTextColorInverted;
 }
 
+/****************************************************
+ *                 High Contrast                    *
+ ****************************************************/
+
+.high-contrast .common-button {
+    color: @highContrastTextColor !important;
+    background: @highContrastBackgroundColor !important;
+    border-color: @highContrastTextColor !important;
+
+    &:hover, &:focus {
+        outline: @highContrastFocusOutline !important;
+        z-index: @highContrastFocusZIndex;
+    }
+}

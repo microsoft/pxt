@@ -28,3 +28,11 @@
     cursor: pointer;
     user-select: none;
 }
+
+/*******************************/
+/*****   HIGH CONTRAST     *****/
+/*******************************/
+
+.high-contrast .graph-activity.hover {
+    outline: var(--high-contrast-focus-outline);
+}

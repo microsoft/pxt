@@ -164,3 +164,11 @@ export async function setEmailPrefAsync(pref: boolean): Promise<pxt.auth.SetPref
         value: pref
     }, { immediate: true })
 }
+
+export async function setHighContrastPrefAsync(pref: boolean): Promise<pxt.auth.SetPrefResult | undefined> {
+    return await patchUserPreferencesAsync({
+        op: 'replace',
+        path: ['highContrast'],
+        value: pref
+    }, { immediate: true })
+}
