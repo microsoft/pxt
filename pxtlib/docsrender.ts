@@ -441,7 +441,6 @@ namespace pxt.docs {
             // remove tutorial macros
             if (text)
                 text = text.replace(/@(fullscreen|unplugged|showdialog|showhint)/gi, '');
-            text = text.trim();
             // remove brackets for hiding step title
             if (text.match(/\{([\s\S]+)\}/))
                 text = text.substr(1, text.length - 2).trim()
