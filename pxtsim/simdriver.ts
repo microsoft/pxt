@@ -733,6 +733,7 @@ namespace pxsim {
                 }
                 case 'simulator':
                     this.handleSimulatorCommand(msg as pxsim.SimulatorCommandMessage); break; //handled elsewhere
+                case 'view-button-pressed':
                 case 'serial':
                 case 'pxteditor':
                 case 'screenshot':

@@ -146,6 +146,10 @@ namespace pxsim {
         data: Uint8Array;
     }
 
+    export interface SimulatorViewChangeMessage extends SimulatorMessage {
+        type: "view-button-pressed",
+    }
+
     export interface SimulatorRadioPacketPayload {
         type: number;
         groupId: number;

@@ -159,10 +159,18 @@
         initAppCache();
 
         window.addEventListener('message', msg => {
-            if (typeof window !== 'undefined' && window.parent !== window
-                    && msg.data && msg.data.type == "messagepacket") {
-                // propagate message packets to parent frames
-                window.parent.postMessage(msg.data, "*");
+            if (typeof window !== 'undefined' && window.parent !== window && msg.data) {
+                if (msg.source == window.parent) {
+                    /** propagate message from parent frame **/
+                    const iframes = sims.querySelectorAll("iframe");
+
+                    for (let i = 0; i < iframes.length; i++) {
+                        iframes[i].contentWindow.postMessage(msg.data, "*");
+                    }
+                } else if (msg.data.type == "messagepacket" || msg.data.type == "view-button-pressed") {
+                    // propagate message packets to parent frames
+                    window.parent.postMessage(msg.data, "*");
+                }
             }
         });
 
