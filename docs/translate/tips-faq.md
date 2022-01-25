@@ -2,15 +2,15 @@
 
 ## Tips and guidance #tips
 
-### Publishing new translations <a name="newtranslations"></a>
+### Publishing new translations #newtranslations
 
 Once a translation is approved by a proofreader it is published to the "live" website for MakeCode.com or the target editor. There's a scheduled process which checks for new translations in Crowdin and brings them down to the website serving a MakeCode editor. There is a period of delay from when a new translation is approved and when it will appear on the site. This is generally between 10 - 30 minutes.
 
-### Live Translations <a name="livetranslations"></a>
+### Live Translations #livetranslations
 
 To test your changes "live", use the [in context translations](#translations-in-context) feature to fetch the most recent translations available in any language directly from crowdin.
 
-### Tutorials and skillmaps <a name="tutorialtranslations"></a>
+### Tutorials and skillmaps #tutorialtranslations
 
 Tutorials are markdown pages that follow a very specific format. This is so that the tutorial engine can read the individual sections and build a proper list of steps for them. Be aware that there are some macros that are unique to tutorials and you should not translate them. Some of these are:
 
@@ -35,7 +35,7 @@ Here, the block category is "variables" and the rest of the string after ":" is 
 
 When possible, try to make the block text translation closely match the localized text shown for the block in the Toolbox.
 
-### Block localization guidance <a name="blockguidance"></a>
+### Block localization guidance #blockguidance
 
 * Do not capitalize words in blocks
 * Do not translate any ``%variable`` or ``$variable`` names

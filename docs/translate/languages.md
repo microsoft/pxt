@@ -14,7 +14,7 @@ The source language for all of the files is English and that's the language the 
 
 Under each language there are top-level folders for all of the editors (including the MakeCode core) supported by the MakeCode team. Some of these are featured on the [MakeCode](https://www.microsoft.com/en-us/makecode) home page. If you are interested in helping translate a particular target, you can focus your efforts in the files under its top-level folder. If you wish to help generally and want to work in more than one target, be aware that not all targets are presently active. To make your help count the most, you probably want to work with an active target. These are the active and inactive targets:
 
-#### Active targets <a name="active"></a>
+#### Active targets
 
 - [x] [adafruit](https://crowdin.com/project/kindscript/en#/adafruit)
 - [x] [arcade](https://crowdin.com/project/kindscript/en#/arcade)

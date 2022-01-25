@@ -42,7 +42,7 @@ You will be prompted with a dialog that contains the block translatable string.
 
 ![Translation dialog](/static/blog/translations-in-context/block.png)
 
-## Documentation page translation <a name="incontextdocumentation"></a>
+## Documentation page translation
 
 When on any documention page, click on the **Language** button
 in the footer and then select **Translate this page** in the dialog.
