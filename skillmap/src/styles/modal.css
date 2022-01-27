@@ -55,7 +55,7 @@
     margin-top: .5rem;
 }
 
-.modal .icon.cloud-user {
+.common-modal .icon.cloud-user {
     width: 7rem;
     margin-right: 2rem;
 }
@@ -201,6 +201,10 @@
 
 .high-contrast .confetti {
     display: none;
+}
+
+.high-contrast .common-modal-container.sign-in .icon.cloud-user {
+    filter: invert();
 }
 
 @keyframes confetti {
