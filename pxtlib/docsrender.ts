@@ -443,7 +443,7 @@ namespace pxt.docs {
                 text = text.replace(/@(fullscreen|unplugged|showdialog|showhint)/gi, '');
             // remove brackets for hiding step title
             if (text.match(/\{([\s\S]+)\}/))
-                text = text.substr(1, text.length - 2).trim()
+                text = text.match(/\{([\s\S]+)\}/)[1].trim()
             if (id === "") {
                 id = text.toLowerCase().replace(/[^\w]+/g, '-')
             }
