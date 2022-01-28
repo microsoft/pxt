@@ -37,6 +37,14 @@ export class GraphNode extends React.Component<GraphNodeProps, GraphNodeState> {
         if (this.props.onItemDoubleClick) this.props.onItemDoubleClick(this.props.activityId, this.props.kind);
     }
 
+    protected handleKeyDown = (e: React.KeyboardEvent) => {
+        const charCode = (typeof e.which == "number") ? e.which : e.keyCode;
+        if (charCode === 13 /* enter */ || charCode === 32 /* space */) {
+            e.preventDefault();
+            this.handleClick();
+        }
+    }
+
     protected getIcon(status: ActivityStatus, kind: MapNodeKind): string {
         switch (kind) {
             case "reward":
@@ -92,7 +100,7 @@ export class GraphNode extends React.Component<GraphNodeProps, GraphNodeState> {
 
     render() {
         const { hover } = this.state;
-        const  { width, position, selected, status, kind, theme } = this.props;
+        const  { width, position, selected, status, kind, theme, activityId } = this.props;
         let foreground = hover ? theme.unlockedNodeColor : theme.unlockedNodeForeground;
         let background = hover ? theme.unlockedNodeForeground : theme.unlockedNodeColor;
 
@@ -110,27 +118,35 @@ export class GraphNode extends React.Component<GraphNodeProps, GraphNodeState> {
         const selectedUnit = width / 8;
         const yOffset = width / 12.5;
 
-        return  <g className={`graph-activity ${selected ? "selected" : ""} ${hover ? "hover" : ""}`} transform={`translate(${position.x} ${position.y})`}
-            onClick={this.handleClick} onDoubleClick={this.handleDoubleClick} ref={this.handleRef}>
-            { selected &&
-                (kind !== "activity" ?
-                    <circle className="highlight" cx={0} cy={0} r={width / 2 + selectedUnit} stroke={theme.selectedStrokeColor} /> :
-                    <rect className="highlight" x={-width / 2 - selectedUnit} y={-width / 2 - selectedUnit} width={width + 2 * selectedUnit} height={width + 2 * selectedUnit} rx={width / 6} stroke={theme.selectedStrokeColor} />)
-            }
-            { kind !== "activity" ?
-                <circle cx={0} cy={0} r={width / 2} fill={background} stroke={foreground} strokeWidth="2" /> :
-                <rect x={-width / 2} y={-width / 2} width={width} height={width} rx={width / 10} fill={background} stroke={foreground} strokeWidth="2" />
-            }
-            { kind === "activity" && this.getNodeMarker(status, width, theme.selectedStrokeColor, theme.strokeColor) }
-            <text dy={yOffset}
-                textAnchor="middle"
-                alignmentBaseline="middle"
-                dominantBaseline="middle"
-                fill={foreground}
-                className={this.getIconClass(status, kind)}>
-                    {this.getIcon(status, kind)}
-                </text>
-        </g>
+        return (
+            <g ref={this.handleRef}
+                className={`graph-activity ${selected ? "selected" : ""} ${hover ? "hover" : ""}`}
+                transform={`translate(${position.x} ${position.y})`}
+                tabIndex={0}
+                onKeyDown={this.handleKeyDown}
+                onClick={this.handleClick}
+                onDoubleClick={this.handleDoubleClick}
+                data-activity={activityId}>
+                { selected &&
+                    (kind !== "activity" ?
+                        <circle className="highlight" cx={0} cy={0} r={width / 2 + selectedUnit} stroke={theme.selectedStrokeColor} /> :
+                        <rect className="highlight" x={-width / 2 - selectedUnit} y={-width / 2 - selectedUnit} width={width + 2 * selectedUnit} height={width + 2 * selectedUnit} rx={width / 6} stroke={theme.selectedStrokeColor} />)
+                }
+                { kind !== "activity" ?
+                    <circle cx={0} cy={0} r={width / 2} fill={background} stroke={foreground} strokeWidth="2" /> :
+                    <rect x={-width / 2} y={-width / 2} width={width} height={width} rx={width / 10} fill={background} stroke={foreground} strokeWidth="2" />
+                }
+                { kind === "activity" && this.getNodeMarker(status, width, theme.selectedStrokeColor, theme.strokeColor) }
+                <text dy={yOffset}
+                    textAnchor="middle"
+                    alignmentBaseline="middle"
+                    dominantBaseline="middle"
+                    fill={foreground}
+                    className={this.getIconClass(status, kind)}>
+                        {this.getIcon(status, kind)}
+                    </text>
+            </g>
+        );
     }
 
     protected handleRef = (g: SVGGElement) => {

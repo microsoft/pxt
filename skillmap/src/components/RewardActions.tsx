@@ -5,6 +5,7 @@ import { dispatchOpenActivity, dispatchShowCompletionModal } from '../actions/di
 
 import { ActivityStatus } from '../lib/skillMapUtils';
 import { tickEvent } from "../lib/browserUtils";
+import { Button } from "react-common/controls/Button";
 
 interface OwnProps {
     mapId: string;
@@ -35,11 +36,17 @@ export class RewardActionsImpl extends React.Component<RewardActionsProps> {
         const { status } = this.props;
         if (status === "locked") return <div />
 
-        return <div className="actions">
-            <div className="action-button" role="button" onClick={this.handleActionButtonClick}>
-                {lf("Claim Reward")}
+        return (
+            <div className="actions">
+                <Button
+                    tabIndex={-1}
+                    className="primary inverted"
+                    title={lf("Claim Reward")}
+                    label={lf("Claim Reward")}
+                    onClick={this.handleActionButtonClick}
+                />
             </div>
-        </div>
+            )
     }
 }
 

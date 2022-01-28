@@ -97,6 +97,7 @@ export class ActivityActionsImpl extends React.Component<ActivityActionsProps> {
         return <div className={`actions ${completedHeaderId ? "grid" : ""}`}>
             <Button
                 className="primary inverted"
+                tabIndex={-1}
                 title={this.getActivityActionText()}
                 label={this.getActivityActionText()}
                 onClick={this.handleActionButtonClick}
@@ -104,12 +105,14 @@ export class ActivityActionsImpl extends React.Component<ActivityActionsProps> {
             {activityStarted && <>
                 <Button
                     className="primary inverted"
+                    tabIndex={-1}
                     title={lf("Restart")}
                     label={lf("Restart")}
                     onClick={this.handleRestartButtonClick}
                 />
                 <Button
                     className="primary inverted"
+                    tabIndex={-1}
                     title={lf("Share")}
                     label={lf("Share")}
                     onClick={this.handleShareButtonClick}
@@ -117,6 +120,7 @@ export class ActivityActionsImpl extends React.Component<ActivityActionsProps> {
             </>}
             {completedHeaderId &&
                 <Button
+                    tabIndex={-1}
                     className="primary inverted"
                     title={lf("Save to My Projects")}
                     label={lf("Save to My Projects")}

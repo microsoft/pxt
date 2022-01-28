@@ -45,7 +45,14 @@ export const MenuBar = (props: MenuBarProps) => {
         if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
             e.stopPropagation();
-            target.click();
+
+            if (target.click) {
+                target.click();
+            }
+            else {
+                // SVG Elements
+                target.dispatchEvent(new Event("click"));
+            }
         }
         else if (e.key === "ArrowRight") {
             if (index === focusableElements.length - 1 || target === menubar) {

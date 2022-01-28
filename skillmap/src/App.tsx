@@ -51,6 +51,7 @@ interface AppProps {
     backgroundImageUrl: string;
     theme: SkillGraphTheme;
     signedIn: boolean;
+    activityId: string;
     dispatchAddSkillMap: (map: SkillMap) => void;
     dispatchClearSkillMaps: () => void;
     dispatchClearMetadata: () => void;
@@ -379,7 +380,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
                         ? <div className="skill-map-error">{error}</div>
                         : <SkillGraphContainer maps={maps} backgroundImageUrl={backgroundImageUrl} />
                     }
-                    { !error && <InfoPanel />}
+                    { !error && <InfoPanel onFocusEscape={this.focusCurrentActivity} />}
                 </div>
                 <MakeCodeFrame onWorkspaceReady={this.onMakeCodeFrameLoaded}/>
                 <AppModal />
@@ -429,6 +430,11 @@ class AppImpl extends React.Component<AppProps, AppState> {
                 }
             }
         }
+    }
+
+    protected focusCurrentActivity = () => {
+        const node = document.querySelector("[data-activity=" + this.props.activityId + "]");
+        (node as HTMLElement | SVGElement).focus();
     }
 
     protected onStoreChange = async () => {
@@ -486,7 +492,8 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         activityOpen: !!state.editorView,
         backgroundImageUrl: state.backgroundImageUrl,
         theme: state.theme,
-        signedIn: state.auth.signedIn
+        signedIn: state.auth.signedIn,
+        activityId: state.selectedItem?.activityId
     };
 }
 interface LocalizationUpdateOptions {

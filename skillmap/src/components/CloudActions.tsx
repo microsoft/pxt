@@ -23,10 +23,11 @@ export class CloudActionsImpl extends React.Component<CloudActionsProps> {
             {
                 this.props.signedIn
                 ? <div className="cloud-indicator">
-                    <div className={`ui tiny cloudicon xicon ${cloudStatus.icon}`} title={cloudStatus.tooltip} tabIndex={-1}></div>
+                    <div className={`ui tiny cloudicon xicon ${cloudStatus.icon}`} title={cloudStatus.tooltip}></div>
                     {cloudStatus.longStatus}
                 </div>
                 : <Button
+                    tabIndex={-1}
                     className="teal"
                     onClick={this.props.dispatchShowLoginModal}
                     label={lf("Sign in to Save")}

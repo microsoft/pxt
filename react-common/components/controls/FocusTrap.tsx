@@ -5,6 +5,8 @@ export interface FocusTrapProps extends React.PropsWithChildren<{}> {
     onEscape: () => void;
     className?: string;
     arrowKeyNavigation?: boolean;
+    dontStealFocus?: boolean;
+    includeOutsideTabOrder?: boolean;
 }
 
 export const FocusTrap = (props: FocusTrapProps) => {
@@ -12,16 +14,27 @@ export const FocusTrap = (props: FocusTrapProps) => {
         children,
         className,
         onEscape,
-        arrowKeyNavigation
+        arrowKeyNavigation,
+        dontStealFocus,
+        includeOutsideTabOrder
     } = props;
 
     let container: HTMLDivElement;
+
+    const getElements = () => {
+        const all = nodeListToArray(
+            includeOutsideTabOrder ? container.querySelectorAll(`[tabindex]`) :
+            container.querySelectorAll(`[tabindex]:not([tabindex="-1"])`)
+        );
+
+        return all as HTMLElement[];
+    }
 
     const handleRef = (ref: HTMLDivElement) => {
         if (!ref) return;
         container = ref;
 
-        if (!ref.contains(document.activeElement)) {
+        if (!dontStealFocus && !ref.contains(document.activeElement) && getElements().length) {
             container.focus();
         }
     }
@@ -30,7 +43,9 @@ export const FocusTrap = (props: FocusTrapProps) => {
         if (!container) return;
 
         const moveFocus = (forward: boolean, goToEnd: boolean) => {
-            const focusable = nodeListToArray(container.querySelectorAll(`[tabindex]:not([tabindex="-1"])`)) as HTMLElement[];
+            const focusable = getElements();
+
+            if (!focusable.length) return;
 
             const index = focusable.indexOf(e.target as HTMLElement);
 
