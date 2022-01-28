@@ -42,6 +42,7 @@
     --high-contrast-background: var(--black);
     --high-contrast-highlight: #ffff00;
     --high-contrast-focus-outline: 2px solid var(--high-contrast-highlight);
+    --high-contrast-hyperlink: #807FFF;
 }
 
 
@@ -387,7 +388,7 @@ code {
 }
 
 .high-contrast a {
-    color: var(--high-contrast-text);
+    color: var(--high-contrast-hyperlink);
     text-decoration: underline;
 }
 .high-contrast a:hover {
