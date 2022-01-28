@@ -77,6 +77,10 @@
         text-decoration: underline;
     }
 
+    ul > li {
+        color: @HCtextColor;
+    }
+
     #tutorialcard .prevbutton,
     #tutorialcard .nextbutton {
         &:hover, &:focus {
@@ -498,7 +502,7 @@
                 border-color: @HCtextColor;
                 border-style: solid;
             }
-            .actions {
+            .ui.grid.stackable .actions {
                 .card-action {
                     border: 2px solid @HCtextColor;
                     .button.attached i {
@@ -508,6 +512,10 @@
                 }
                 .card-action-title {
                     color: @HCtextColor;
+                }
+                .card-action:hover,
+                .card-action:focus-within {
+                    border-color: @selected;
                 }
             }
         }
@@ -854,6 +862,17 @@
 
     .ui.blue.labels .label, .ui.blue.label {
         border-color: @selected !important;
+    }
+
+    .formatted-bullet {
+        background: linear-gradient(@HCtextColor, @HCtextColor) ~"no-repeat 45%/2px 100%";
+        i.icon, i.xicon {
+            color: @HCbackground;
+            background-color: @HCtextColor;
+        }
+        &:after {
+            border-color: @HCtextColor !important;
+        }
     }
 
 
