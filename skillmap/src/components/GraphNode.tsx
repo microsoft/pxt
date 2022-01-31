@@ -1,4 +1,5 @@
 import * as React from "react";
+import { Button } from "react-common/controls/Button";
 
 import { SvgCoord } from '../lib/skillGraphUtils';
 import { ActivityStatus } from '../lib/skillMapUtils';
@@ -8,6 +9,7 @@ import '../styles/graphnode.css'
 /* eslint-enable import/no-unassigned-import, import/no-internal-modules */
 
 interface GraphNodeProps {
+    title: string;
     activityId: string;
     kind: MapNodeKind;
     width: number;
@@ -41,7 +43,8 @@ export class GraphNode extends React.Component<GraphNodeProps, GraphNodeState> {
         const charCode = (typeof e.which == "number") ? e.which : e.keyCode;
         if (charCode === 13 /* enter */ || charCode === 32 /* space */) {
             e.preventDefault();
-            this.handleClick();
+            e.stopPropagation();
+            if (this.props.onItemSelect) this.props.onItemSelect(this.props.activityId, this.props.kind);
         }
     }
 
@@ -100,7 +103,7 @@ export class GraphNode extends React.Component<GraphNodeProps, GraphNodeState> {
 
     render() {
         const { hover } = this.state;
-        const  { width, position, selected, status, kind, theme, activityId } = this.props;
+        const  { width, position, selected, status, kind, theme, activityId, title } = this.props;
         let foreground = hover ? theme.unlockedNodeColor : theme.unlockedNodeForeground;
         let background = hover ? theme.unlockedNodeForeground : theme.unlockedNodeColor;
 
@@ -122,15 +125,34 @@ export class GraphNode extends React.Component<GraphNodeProps, GraphNodeState> {
             <g ref={this.handleRef}
                 className={`graph-activity ${selected ? "selected" : ""} ${hover ? "hover" : ""}`}
                 transform={`translate(${position.x} ${position.y})`}
-                tabIndex={0}
                 onKeyDown={this.handleKeyDown}
                 onClick={this.handleClick}
                 onDoubleClick={this.handleDoubleClick}
                 data-activity={activityId}>
+                    <foreignObject
+                        width={width}
+                        height={width}
+                        x={-width / 2}
+                        y={-width / 2}>
+                        <Button
+                            className="graph-node-button"
+                            title={title}
+                            onClick={this.handleClick}
+                            onKeydown={this.handleKeyDown}
+                            ariaHasPopup={status !== "locked" ? "true" : "false"}
+                            ariaExpanded={selected}
+                            ariaControls={selected ? "info-panel-actions" : undefined}
+                        />
+                    </foreignObject>
                 { selected &&
                     (kind !== "activity" ?
                         <circle className="highlight" cx={0} cy={0} r={width / 2 + selectedUnit} stroke={theme.selectedStrokeColor} /> :
                         <rect className="highlight" x={-width / 2 - selectedUnit} y={-width / 2 - selectedUnit} width={width + 2 * selectedUnit} height={width + 2 * selectedUnit} rx={width / 6} stroke={theme.selectedStrokeColor} />)
+                }
+                { kind !== "activity" ?
+                    <circle className="focus-outline" cx={0} cy={0} r={width / 2 + selectedUnit * 2} stroke="none" fill="none" /> :
+                    <rect className="focus-outline" x={-width / 2 - selectedUnit * 2} y={-width / 2 - selectedUnit * 2} width={width + 4 * selectedUnit} height={width + 4 * selectedUnit} rx={width / 6} stroke="none" fill="none" />
+
                 }
                 { kind !== "activity" ?
                     <circle cx={0} cy={0} r={width / 2} fill={background} stroke={foreground} strokeWidth="2" /> :

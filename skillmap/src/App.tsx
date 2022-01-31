@@ -9,6 +9,7 @@ import { getCompletedBadges, getFlattenedHeaderIds, hasUrlBeenStarted, isRewardN
 
 import {
     dispatchAddSkillMap,
+    dispatchChangeSelectedItem,
     dispatchClearSkillMaps,
     dispatchClearMetadata,
     dispatchSetPageTitle,
@@ -53,6 +54,7 @@ interface AppProps {
     signedIn: boolean;
     activityId: string;
     dispatchAddSkillMap: (map: SkillMap) => void;
+    dispatchChangeSelectedItem: (mapId?: string, activityId?: string) => void;
     dispatchClearSkillMaps: () => void;
     dispatchClearMetadata: () => void;
     dispatchSetPageTitle: (title: string) => void;
@@ -433,8 +435,11 @@ class AppImpl extends React.Component<AppProps, AppState> {
     }
 
     protected focusCurrentActivity = () => {
-        const node = document.querySelector("[data-activity=" + this.props.activityId + "]");
+        const node = document.querySelector("[data-activity=" + this.props.activityId + "] button");
         (node as HTMLElement | SVGElement).focus();
+
+        // Clear info panel
+        this.props.dispatchChangeSelectedItem(undefined);
     }
 
     protected onStoreChange = async () => {
@@ -543,7 +548,8 @@ const mapDispatchToProps = {
     dispatchSetPageBackgroundImageUrl,
     dispatchSetPageBannerImageUrl,
     dispatchSetPageTheme,
-    dispatchSetUserPreferences
+    dispatchSetUserPreferences,
+    dispatchChangeSelectedItem
 };
 
 const App = connect(mapStateToProps, mapDispatchToProps)(AppImpl);

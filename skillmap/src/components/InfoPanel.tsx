@@ -4,8 +4,7 @@ import { connect } from 'react-redux';
 import { SkillMapState } from '../store/reducer';
 import { ActivityActions } from './ActivityActions';
 import { RewardActions } from './RewardActions';
-import { MapActions } from './MapActions';
-import { CloudActions } from "./CloudActions";
+import { CloudStatus } from "./CloudStatus";
 
 import { FocusTrap } from "react-common/controls/FocusTrap";
 
@@ -103,12 +102,12 @@ export class InfoPanelImpl extends React.Component<InfoPanelProps> {
                     {details?.map((el, i) => <div key={`detail_${i}`}>{el}</div>)}
                 </div>
                 <div className="tablet-spacer" />
-                <FocusTrap onEscape={onFocusEscape} dontStealFocus={true} arrowKeyNavigation={true} includeOutsideTabOrder={true}>
+                <FocusTrap id="info-panel-actions" onEscape={onFocusEscape} dontStealFocus={true} arrowKeyNavigation={true} includeOutsideTabOrder={true}>
                     {!isMap && (isActivity
                         ? <ActivityActions mapId={mapId} activityId={node!.activityId} status={status} completedHeaderId={completedHeaderId} />
                         : <RewardActions mapId={mapId} activityId={node!.activityId} status={status} />)
                     }
-                    {hasCloudSync && <CloudActions />}
+                    {hasCloudSync && <CloudStatus />}
                 </FocusTrap>
             </div>
         </div>

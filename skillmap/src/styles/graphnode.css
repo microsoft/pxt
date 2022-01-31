@@ -28,3 +28,17 @@
     cursor: pointer;
     user-select: none;
 }
+
+.graph-activity:focus-within .focus-outline {
+    stroke-width: 4px;
+    fill: transparent;
+    stroke: blue;
+}
+
+.common-button.graph-node-button {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    opacity: 0;
+}

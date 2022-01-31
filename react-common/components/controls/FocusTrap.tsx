@@ -3,6 +3,7 @@ import { classList, nodeListToArray } from "../util";
 
 export interface FocusTrapProps extends React.PropsWithChildren<{}> {
     onEscape: () => void;
+    id?: string;
     className?: string;
     arrowKeyNavigation?: boolean;
     dontStealFocus?: boolean;
@@ -12,6 +13,7 @@ export interface FocusTrapProps extends React.PropsWithChildren<{}> {
 export const FocusTrap = (props: FocusTrapProps) => {
     const {
         children,
+        id,
         className,
         onEscape,
         arrowKeyNavigation,
@@ -101,7 +103,11 @@ export const FocusTrap = (props: FocusTrapProps) => {
         }
     }
 
-    return <div className={classList("common-focus-trap", className)} ref={handleRef} onKeyDown={onKeyDown} tabIndex={-1}>
+    return <div id={id}
+        className={classList("common-focus-trap", className)}
+        ref={handleRef}
+        onKeyDown={onKeyDown}
+        tabIndex={-1}>
         {children}
     </div>
 }

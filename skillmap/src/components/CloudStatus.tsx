@@ -1,9 +1,7 @@
 import * as React from "react";
 import { connect } from 'react-redux';
-import { dispatchShowLoginModal } from "../actions/dispatch";
 import { SkillMapState } from "../store/reducer";
 import { lookupActivityProgress } from "../lib/skillMapUtils";
-import { Button } from "react-common/controls/Button";
 
 interface OwnProps {
     signedIn: boolean;
@@ -11,28 +9,23 @@ interface OwnProps {
 }
 
 interface DispatchProps {
-    dispatchShowLoginModal: () => void;
 }
 
-type CloudActionsProps = OwnProps & DispatchProps;
+type CloudStatusProps = OwnProps & DispatchProps;
 
-export class CloudActionsImpl extends React.Component<CloudActionsProps> {
+export class CloudStatusImpl extends React.Component<CloudStatusProps> {
     render () {
-        const cloudStatus = pxt.cloud.cloudStatus[this.props.cloudStatus];
+        const { cloudStatus, signedIn } = this.props;
+        const cloudStatusInfo = pxt.cloud.cloudStatus[cloudStatus];
+
         return <div className="cloud-action">
             {
-                this.props.signedIn
+                signedIn
                 ? <div className="cloud-indicator">
-                    <div className={`ui tiny cloudicon xicon ${cloudStatus.icon}`} title={cloudStatus.tooltip}></div>
-                    {cloudStatus.longStatus}
+                    <div className={`ui tiny cloudicon xicon ${cloudStatusInfo.icon}`} title={cloudStatusInfo.tooltip}></div>
+                    {cloudStatusInfo.longStatus}
                 </div>
-                : <Button
-                    tabIndex={-1}
-                    className="teal"
-                    onClick={this.props.dispatchShowLoginModal}
-                    label={lf("Sign in to Save")}
-                    title={lf("Sign in to Save")}
-                />
+                : <div />
             }
         </div>
     }
@@ -65,7 +58,6 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
 }
 
 const mapDispatchToProps = {
-    dispatchShowLoginModal
 }
 
-export const CloudActions = connect(mapStateToProps, mapDispatchToProps)(CloudActionsImpl);
+export const CloudStatus = connect(mapStateToProps, mapDispatchToProps)(CloudStatusImpl);
