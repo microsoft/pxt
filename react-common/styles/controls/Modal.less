@@ -8,7 +8,7 @@
     right: 0;
     bottom: 0;
     background-color: var(--modal-overlay-color);
-    z-index: var(--modal-dimmer-zindex);
+    z-index: @modalDimmerZIndex;
 }
 
 .common-modal-container.fullscreen {
@@ -108,7 +108,7 @@
  *                 High Contrast                    *
  ****************************************************/
 
-.high-contrast {
+.high-contrast, .hc {
     .common-modal-header,
     .common-modal-body,
     .common-modal-footer {

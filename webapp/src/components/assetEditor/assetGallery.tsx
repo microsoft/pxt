@@ -124,7 +124,8 @@ class AssetGalleryImpl extends React.Component<AssetGalleryProps, AssetGallerySt
             {showCreateModal && <Modal
                 className="asset-editor-create-dialog"
                 onClose={this.hideCreateModal}
-                title={lf("Create New Asset")}>
+                title={lf("Create New Asset")}
+                parentElement={document.getElementById("root")}>
                 <div>{lf("Choose your asset type from the options below:")}</div>
                 <List className="asset-editor-create-options">{
                     this.assetCreateOptions.map((opt, i) => {

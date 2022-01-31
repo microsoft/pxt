@@ -180,13 +180,15 @@
  *                 High Contrast                    *
  ****************************************************/
 
-.high-contrast .common-button {
-    color: @highContrastTextColor !important;
-    background: @highContrastBackgroundColor !important;
-    border-color: @highContrastTextColor !important;
+.high-contrast, .hc {
+    .common-button {
+        color: @highContrastTextColor !important;
+        background: @highContrastBackgroundColor !important;
+        border-color: @highContrastTextColor !important;
 
-    &:hover, &:focus {
-        outline: @highContrastFocusOutline !important;
-        z-index: @highContrastFocusZIndex;
+        &:hover, &:focus {
+            outline: @highContrastFocusOutline !important;
+            z-index: @highContrastFocusZIndex;
+        }
     }
 }

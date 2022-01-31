@@ -223,7 +223,8 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
                 className="asset-editor-delete-dialog"
                 onClose={this.hideDeleteModal}
                 title={lf("Delete Asset")}
-                actions={actions}>
+                actions={actions}
+                parentElement={document.getElementById("root")}>
                 <div>{lf("Are you sure you want to delete {0}? Deleted assets cannot be recovered.", name)}</div>
             </Modal>}
         </div>
