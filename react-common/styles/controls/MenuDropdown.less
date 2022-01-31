@@ -10,7 +10,7 @@
 .common-menu-dropdown-pane {
     position: absolute;
     right: 0;
-    width: 10rem;
+    width: 12rem;
 
     ul {
         list-style: none;
@@ -29,8 +29,27 @@
     text-align: left;
     width: 100%;
     margin: 0;
+    padding: 1rem;
 }
 
 .common-menu-dropdown-item.common-button:focus::after {
     outline: @buttonFocusOutlineInverted;
+}
+
+/****************************************************
+ *                 High Contrast                    *
+ ****************************************************/
+
+.high-contrast {
+    .common-menu-dropdown-pane {
+        color: @highContrastTextColor;
+        background-color: @highContrastBackgroundColor;
+        border: 1px solid @highContrastTextColor;
+    }
+
+    .common-menu-dropdown-item:hover,
+    .common-menu-dropdown > .menu-button.expanded {
+        outline: @highContrastFocusOutline;
+        z-index: @highContrastFocusZIndex;
+    }
 }

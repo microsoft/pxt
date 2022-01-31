@@ -42,3 +42,17 @@
     padding: 0;
     opacity: 0;
 }
+
+/*******************************/
+/*****   HIGH CONTRAST     *****/
+/*******************************/
+
+.high-contrast .graph-activity.hover {
+    outline: var(--high-contrast-focus-outline);
+}
+
+.high-contrast .graph-activity:focus-within .focus-outline {
+    stroke-width: 4px;
+    fill: transparent;
+    stroke: white;
+}

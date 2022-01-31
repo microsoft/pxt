@@ -36,3 +36,44 @@
     width: 100%;
     max-height: 100%;
 }
+
+/*******************************/
+/*****   HIGH CONTRAST     *****/
+/*******************************/
+
+.high-contrast .skill-graph-background {
+    visibility: hidden;
+}
+
+.high-contrast .skill-map-container {
+    background-color: var(--high-contrast-background) !important;
+}
+
+.high-contrast .graph-activity rect,
+.high-contrast .graph-activity circle,
+.high-contrast .graph-activity path {
+    fill: var(--high-contrast-background);
+    stroke: var(--high-contrast-text);
+    opacity: 1;
+}
+
+.high-contrast .graph-activity text {
+    fill: var(--high-contrast-text);
+    opacity: 1;
+}
+
+.high-contrast .graph-activity .highlight {
+    stroke: var(--high-contrast-highlight);
+}
+
+.high-contrast .skill-graph > g {
+    opacity: 1;
+}
+
+.high-contrast .skill-graph-path-border {
+    stroke: var(--high-contrast-text);
+}
+
+.high-contrast .skill-graph-path {
+    stroke: var(--high-contrast-background);
+}

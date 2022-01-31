@@ -90,10 +90,10 @@ class SkillGraphImpl extends React.Component<SkillGraphProps> {
         return <g className="skill-graph">
             <g opacity={theme.pathOpacity}>
                 {paths.map((el, i) => {
-                    return <GraphPath key={`graph-activity-${i}`} strokeWidth={3 * unit} color={theme.strokeColor} points={el.points} />
+                    return <GraphPath className="skill-graph-path-border" key={`graph-activity-${i}`} strokeWidth={3 * unit} color={theme.strokeColor} points={el.points} />
                 })}
                 {paths.map((el, i) => {
-                    return <GraphPath key={`graph-activity-${i}`} strokeWidth={3 * unit - 4} color={theme.pathColor}  points={el.points} />
+                    return <GraphPath className="skill-graph-path" key={`graph-activity-${i}`} strokeWidth={3 * unit - 4} color={theme.pathColor}  points={el.points} />
                 })}
             </g>
             {items.map((el, i) => {

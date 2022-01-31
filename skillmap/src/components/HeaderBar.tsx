@@ -2,7 +2,8 @@
 import * as React from "react";
 
 import { connect } from 'react-redux';
-import { dispatchSaveAndCloseActivity, dispatchShowResetUserModal, dispatchShowLoginModal, dispatchShowUserProfile } from '../actions/dispatch';
+import { dispatchSaveAndCloseActivity, dispatchShowResetUserModal, dispatchShowLoginModal,
+    dispatchShowUserProfile, dispatchSetUserPreferences } from '../actions/dispatch';
 import { SkillMapState } from '../store/reducer';
 import { isLocal, resolvePath, tickEvent } from "../lib/browserUtils";
 
@@ -21,16 +22,37 @@ interface HeaderBarProps {
     showReportAbuse?: boolean;
     signedIn: boolean;
     profile: pxt.auth.UserProfile;
+    preferences: pxt.auth.UserPreferences;
     dispatchSaveAndCloseActivity: () => void;
     dispatchShowResetUserModal: () => void;
     dispatchShowLoginModal: () => void;
     dispatchShowUserProfile: () => void;
+    dispatchSetUserPreferences: (preferences?: pxt.auth.UserPreferences) => void;
 }
 
 export class HeaderBarImpl extends React.Component<HeaderBarProps> {
     protected reportAbuseUrl = "https://github.com/contact/report-content";
     protected getSettingItems(): MenuItem[] {
         const items: MenuItem[] = [];
+
+        if (this.props.preferences) {
+            const highContrast = this.props.preferences?.highContrast;
+            items.push({
+                id: "highcontrast",
+                title: highContrast ? lf("High Contrast Off") : lf("High Contrast On"),
+                label: highContrast ? lf("High Contrast Off") : lf("High Contrast On"),
+                onClick: () => {
+                    const newHighContrastPref = !this.props.preferences.highContrast;
+                    tickEvent("skillmap.highcontrast", { on: newHighContrastPref ? 1 : 0});
+                    authClient.setHighContrastPrefAsync(newHighContrastPref);
+                    this.props.dispatchSetUserPreferences({
+                        ...this.props.preferences,
+                        highContrast: newHighContrastPref
+                    })
+                }
+            })
+        }
+
         if (this.props.showReportAbuse) {
             items.push({
                 id: "report",
@@ -219,7 +241,8 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         currentActivityId: activityOpen && state.editorView?.currentActivityId,
         showReportAbuse: state.pageSourceStatus === "unknown",
         signedIn: state.auth.signedIn,
-        profile: state.auth.profile
+        profile: state.auth.profile,
+        preferences: state.auth.preferences
     }
 }
 
@@ -228,7 +251,8 @@ const mapDispatchToProps = {
     dispatchSaveAndCloseActivity,
     dispatchShowResetUserModal,
     dispatchShowLoginModal,
-    dispatchShowUserProfile
+    dispatchShowUserProfile,
+    dispatchSetUserPreferences
 };
 
 export const HeaderBar = connect(mapStateToProps, mapDispatchToProps)(HeaderBarImpl);

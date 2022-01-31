@@ -437,16 +437,16 @@ namespace pxt.docs {
             if (m) {
                 text = m[1]
                 id = m[2]
-            } else {
-                id = raw.toLowerCase().replace(/[^\w]+/g, '-')
             }
             // remove tutorial macros
             if (text)
                 text = text.replace(/@(fullscreen|unplugged|showdialog|showhint)/gi, '');
-            text = text.trim();
             // remove brackets for hiding step title
-            if (text.match(/^\{([\s\S]+)\}$/))
-                text = text.substr(1, text.length - 2);
+            if (text.match(/\{([\s\S]+)\}/))
+                text = text.match(/\{([\s\S]+)\}/)[1].trim()
+            if (id === "") {
+                id = text.toLowerCase().replace(/[^\w]+/g, '-')
+            }
             return `<h${level} id="${(this as any).options.headerPrefix}${id}">${text}</h${level}>`
         }
     }

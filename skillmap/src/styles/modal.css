@@ -55,7 +55,7 @@
     margin-top: .5rem;
 }
 
-.modal .icon.cloud-user {
+.common-modal .icon.cloud-user {
     width: 7rem;
     margin-right: 2rem;
 }
@@ -194,6 +194,18 @@
 .color-6 { background-color: #003fad; }
 .color-7 { background-color: #87f2ff; }
 .color-8 { background-color: #8e2ec4; }
+
+/*******************************/
+/*****   HIGH CONTRAST     *****/
+/*******************************/
+
+.high-contrast .confetti {
+    display: none;
+}
+
+.high-contrast .common-modal-container.sign-in .icon.cloud-user {
+    filter: invert();
+}
 
 @keyframes confetti {
     0% { transform: rotateZ(15deg) rotateY(0deg) translate(0,0); }

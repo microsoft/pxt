@@ -239,7 +239,7 @@ function codalBin() {
         return be.buildPath + "/" + be.outputPath
     if (cs.codalBinary)
         return be.buildPath + "/build/" + cs.codalBinary
-    return be.buildPath + "/build/" + cs.yottaTarget + "/source/" + cs.yottaBinary.replace(/\.hex$/, "").replace(/-combined$/, "")
+    return be.buildPath + "/build/" + (cs.yottaTarget.split("@")[0]) + "/source/" + cs.yottaBinary.replace(/\.hex$/, "").replace(/-combined$/, "")
 }
 
 let cachedMap = ""

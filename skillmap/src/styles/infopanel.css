@@ -153,6 +153,27 @@
 }
 
 /*******************************/
+/*****   HIGH CONTRAST     *****/
+/*******************************/
+
+.high-contrast .info-panel-image,
+.high-contrast .info-panel-content,
+.high-contrast .info-panel-label,
+.high-contrast .info-panel-tags > div {
+    color: var(--high-contrast-text);
+    border: 1px solid var(--high-contrast-text);
+    background-color: var(--high-contrast-background);
+}
+
+.high-contrast .cloud-indicator {
+    color: var(--high-contrast-text);
+}
+
+.high-contrast .info-panel .actions .common-button {
+    background-color: var(--high-contrast-background);
+}
+
+/*******************************/
 /*****     TABLET VIEW     *****/
 /*******************************/
 

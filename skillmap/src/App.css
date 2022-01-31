@@ -37,6 +37,12 @@
 
     --graph-backround-zindex: 10;
     --above-graph-zindex: 20;
+
+    --high-contrast-text: var(--white);
+    --high-contrast-background: var(--black);
+    --high-contrast-highlight: #ffff00;
+    --high-contrast-focus-outline: 2px solid var(--high-contrast-highlight);
+    --high-contrast-hyperlink: #807FFF;
 }
 
 
@@ -362,6 +368,31 @@ code {
 /** mscc cookie banner. Can be removed once the banner is out of the checked in pxtweb in doccdn */
 #msccBanner {
     display: none;
+}
+
+/*******************************/
+/*****   HIGH CONTRAST     *****/
+/*******************************/
+
+.high-contrast .header {
+    background-color: var(--high-contrast-background);
+    border-bottom: 2px solid var(--high-contrast-text);
+}
+
+.high-contrast .header-dropdown i {
+    height: calc(var(--header-height) - 2px);
+}
+
+.high-contrast .avatar-initials {
+    background-color: var(--high-contrast-background);
+}
+
+.high-contrast a {
+    color: var(--high-contrast-hyperlink);
+    text-decoration: underline;
+}
+.high-contrast a:hover {
+    outline: var(--high-contrast-focus-outline);
 }
 
 

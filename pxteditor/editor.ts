@@ -320,6 +320,7 @@ namespace pxt.editor {
         renderPythonAsync(req: EditorMessageRenderPythonRequest): Promise<EditorMessageRenderPythonResponse>;
 
         toggleHighContrast(): void;
+        setHighContrast(on: boolean): void;
         toggleGreenScreen(): void;
         toggleAccessibleBlocks(): void;
         setAccessibleBlocks(enabled: boolean): void;

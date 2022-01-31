@@ -103,3 +103,32 @@
     padding: 1rem;
     max-height: unset;
 }
+
+/****************************************************
+ *                 High Contrast                    *
+ ****************************************************/
+
+.high-contrast {
+    .common-modal-header,
+    .common-modal-body,
+    .common-modal-footer {
+        background-color: @highContrastBackgroundColor;
+        color: @highContrastTextColor;
+        border-color: @highContrastTextColor;
+
+        .common-modal-close .common-button .fas {
+            opacity: 1;
+            color: @highContrastTextColor;
+        }
+    }
+
+    .fullscreen > .common-modal > .common-modal-header,
+    .fullscreen > .common-modal > .common-modal-body {
+        background-color: @highContrastBackgroundColor;
+        color: @highContrastTextColor;
+    }
+
+    .common-modal {
+        border: 1px solid @highContrastTextColor;
+    }
+}
