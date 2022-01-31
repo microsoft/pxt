@@ -1583,6 +1583,17 @@ namespace pxt.blocks {
                 options.push(screenshotOption);
             }
 
+            if (pxt.appTarget.appTheme.workspaceSearch) {
+                options.push({
+                    text: lf("Find..."),
+                    enabled: topBlocks.length > 0,
+                    callback: () => {
+                        pxt.tickEvent("blocks.context.workspacesearch", undefined, { interactiveConsent: true });
+                        this.getComponentManager()?.getComponent("workspaceSearch")?.open();
+                    }
+                });
+            }
+
             // custom options...
             if (onShowContextMenu)
                 onShowContextMenu(this, options);
