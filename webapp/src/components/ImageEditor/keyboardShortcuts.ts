@@ -1,7 +1,7 @@
 
 import { Store } from 'react-redux';
-import { ImageEditorTool, ImageEditorStore, TilemapState, AnimationState } from './store/imageReducer';
-import { dispatchChangeZoom, dispatchUndoImageEdit, dispatchRedoImageEdit, dispatchChangeImageTool, dispatchSwapBackgroundForeground, dispatchChangeSelectedColor, dispatchImageEdit} from './actions/dispatch';
+import { ImageEditorTool, ImageEditorStore, TilemapState, AnimationState, CursorSize } from './store/imageReducer';
+import { dispatchChangeZoom, dispatchUndoImageEdit, dispatchRedoImageEdit, dispatchChangeImageTool, dispatchSwapBackgroundForeground, dispatchChangeSelectedColor, dispatchImageEdit, dispatchChangeCursorSize} from './actions/dispatch';
 import { mainStore } from './store/imageStore';
 import { EditState, flipEdit, getEditState, outlineEdit, replaceColorEdit, rotateEdit } from './toolDefinitions';
 let store = mainStore;
@@ -94,6 +94,12 @@ function handleKeyDown(event: KeyboardEvent) {
         case "u":
             setTool(ImageEditorTool.Rect);
             break;
+        case "l":
+            setTool(ImageEditorTool.Line);
+            break;
+        case "c":
+            setTool(ImageEditorTool.Circle);
+            break;
         case "-":
         case "_":
             zoom(-1);
@@ -117,6 +123,13 @@ function handleKeyDown(event: KeyboardEvent) {
         case "]":
             rotate(true);
             break;
+        case ">":
+            changeCursorSize(true);
+            break;
+        case "<":
+            changeCursorSize(false);
+            break;
+
     }
 
     const editorState = store.getState().editor;
@@ -175,6 +188,26 @@ function swapForegroundBackground() {
 
 function dispatchAction(action: any) {
     store.dispatch(action);
+}
+
+function changeCursorSize(larger: boolean) {
+    let nextSize: CursorSize;
+    const currentSize = store.getState().editor.cursorSize;
+
+    switch (currentSize) {
+        case CursorSize.One:
+            nextSize = larger ? CursorSize.Three : CursorSize.One;
+            break;
+        case CursorSize.Three:
+            nextSize = larger ? CursorSize.Five : CursorSize.One;
+            break;
+        case CursorSize.Five:
+            nextSize = larger ? CursorSize.Five : CursorSize.Three;
+    }
+
+    if (currentSize !== nextSize) {
+        dispatchAction(dispatchChangeCursorSize(nextSize));
+    }
 }
 
 export function flip(vertical: boolean) {
