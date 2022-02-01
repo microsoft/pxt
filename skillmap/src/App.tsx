@@ -9,6 +9,7 @@ import { getCompletedBadges, getFlattenedHeaderIds, hasUrlBeenStarted, isRewardN
 
 import {
     dispatchAddSkillMap,
+    dispatchChangeSelectedItem,
     dispatchClearSkillMaps,
     dispatchClearMetadata,
     dispatchSetPageTitle,
@@ -51,8 +52,10 @@ interface AppProps {
     backgroundImageUrl: string;
     theme: SkillGraphTheme;
     signedIn: boolean;
+    activityId: string;
     highContrast?: boolean;
     dispatchAddSkillMap: (map: SkillMap) => void;
+    dispatchChangeSelectedItem: (mapId?: string, activityId?: string) => void;
     dispatchClearSkillMaps: () => void;
     dispatchClearMetadata: () => void;
     dispatchSetPageTitle: (title: string) => void;
@@ -380,7 +383,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
                         ? <div className="skill-map-error">{error}</div>
                         : <SkillGraphContainer maps={maps} backgroundImageUrl={backgroundImageUrl} />
                     }
-                    { !error && <InfoPanel />}
+                    { !error && <InfoPanel onFocusEscape={this.focusCurrentActivity} />}
                 </div>
                 <MakeCodeFrame onWorkspaceReady={this.onMakeCodeFrameLoaded}/>
                 <AppModal />
@@ -430,6 +433,14 @@ class AppImpl extends React.Component<AppProps, AppState> {
                 }
             }
         }
+    }
+
+    protected focusCurrentActivity = () => {
+        const node = document.querySelector("[data-activity=" + this.props.activityId + "] button");
+        (node as HTMLElement | SVGElement).focus();
+
+        // Clear info panel
+        this.props.dispatchChangeSelectedItem(undefined);
     }
 
     protected onStoreChange = async () => {
@@ -488,6 +499,7 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         backgroundImageUrl: state.backgroundImageUrl,
         theme: state.theme,
         signedIn: state.auth.signedIn,
+        activityId: state.selectedItem?.activityId,
         highContrast: state.auth.preferences?.highContrast
     };
 }
@@ -538,7 +550,8 @@ const mapDispatchToProps = {
     dispatchSetPageBackgroundImageUrl,
     dispatchSetPageBannerImageUrl,
     dispatchSetPageTheme,
-    dispatchSetUserPreferences
+    dispatchSetUserPreferences,
+    dispatchChangeSelectedItem
 };
 
 const App = connect(mapStateToProps, mapDispatchToProps)(AppImpl);

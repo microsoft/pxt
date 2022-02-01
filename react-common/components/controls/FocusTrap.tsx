@@ -3,25 +3,40 @@ import { classList, nodeListToArray } from "../util";
 
 export interface FocusTrapProps extends React.PropsWithChildren<{}> {
     onEscape: () => void;
+    id?: string;
     className?: string;
     arrowKeyNavigation?: boolean;
+    dontStealFocus?: boolean;
+    includeOutsideTabOrder?: boolean;
 }
 
 export const FocusTrap = (props: FocusTrapProps) => {
     const {
         children,
+        id,
         className,
         onEscape,
-        arrowKeyNavigation
+        arrowKeyNavigation,
+        dontStealFocus,
+        includeOutsideTabOrder
     } = props;
 
     let container: HTMLDivElement;
+
+    const getElements = () => {
+        const all = nodeListToArray(
+            includeOutsideTabOrder ? container.querySelectorAll(`[tabindex]`) :
+            container.querySelectorAll(`[tabindex]:not([tabindex="-1"])`)
+        );
+
+        return all as HTMLElement[];
+    }
 
     const handleRef = (ref: HTMLDivElement) => {
         if (!ref) return;
         container = ref;
 
-        if (!ref.contains(document.activeElement)) {
+        if (!dontStealFocus && !ref.contains(document.activeElement) && getElements().length) {
             container.focus();
         }
     }
@@ -30,7 +45,9 @@ export const FocusTrap = (props: FocusTrapProps) => {
         if (!container) return;
 
         const moveFocus = (forward: boolean, goToEnd: boolean) => {
-            const focusable = nodeListToArray(container.querySelectorAll(`[tabindex]:not([tabindex="-1"])`)) as HTMLElement[];
+            const focusable = getElements();
+
+            if (!focusable.length) return;
 
             const index = focusable.indexOf(e.target as HTMLElement);
 
@@ -86,7 +103,11 @@ export const FocusTrap = (props: FocusTrapProps) => {
         }
     }
 
-    return <div className={classList("common-focus-trap", className)} ref={handleRef} onKeyDown={onKeyDown} tabIndex={-1}>
+    return <div id={id}
+        className={classList("common-focus-trap", className)}
+        ref={handleRef}
+        onKeyDown={onKeyDown}
+        tabIndex={-1}>
         {children}
     </div>
 }

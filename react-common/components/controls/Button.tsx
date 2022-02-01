@@ -12,6 +12,7 @@ export interface ButtonProps extends ControlProps {
     disabled?: boolean;
     href?: string;
     target?: string;
+    tabIndex?: number;
 
     /** Miscellaneous aria pass-through props */
     ariaControls?: string;
@@ -42,7 +43,8 @@ export const Button = (props: ButtonProps) => {
         rightIcon,
         disabled,
         href,
-        target
+        target,
+        tabIndex
     } = props;
 
     const classes = classList(
@@ -65,7 +67,7 @@ export const Button = (props: ButtonProps) => {
             onClick={!disabled ? clickHandler : undefined}
             onKeyDown={onKeydown || fireClickOnEnter}
             role={role || "button"}
-            tabIndex={disabled ? -1 : 0}
+            tabIndex={tabIndex || (disabled ? -1 : 0)}
             aria-label={ariaLabel}
             aria-hidden={ariaHidden}
             aria-controls={ariaControls}

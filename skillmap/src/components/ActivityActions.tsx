@@ -1,7 +1,7 @@
 import * as React from "react";
 import { connect } from 'react-redux';
 
-import { dispatchOpenActivity, dispatchShowRestartActivityWarning, dispatchShowShareModal, dispatchShowCarryoverModal } from '../actions/dispatch';
+import { dispatchOpenActivity, dispatchShowRestartActivityWarning, dispatchShowShareModal, dispatchShowCarryoverModal, dispatchShowLoginModal } from '../actions/dispatch';
 
 import { ActivityStatus, isCodeCarryoverEnabled } from '../lib/skillMapUtils';
 import { tickEvent } from '../lib/browserUtils';
@@ -16,6 +16,7 @@ interface OwnProps {
     status?: ActivityStatus;
     completedHeaderId?: string;
     showCodeCarryoverModal?: boolean;
+    signedIn?: boolean;
 }
 
 interface DispatchProps {
@@ -23,6 +24,7 @@ interface DispatchProps {
     dispatchShowRestartActivityWarning: (mapId: string, activityId: string) => void;
     dispatchShowShareModal: (mapId: string, activityId: string) => void;
     dispatchShowCarryoverModal: (mapId: string, activityId: string) => void;
+    dispatchShowLoginModal: () => void;
 }
 
 type ActivityActionsProps = OwnProps & DispatchProps;
@@ -88,15 +90,24 @@ export class ActivityActionsImpl extends React.Component<ActivityActionsProps> {
     }
 
     render() {
-        const { status, completedHeaderId } = this.props;
+        const { status, completedHeaderId, signedIn, dispatchShowLoginModal } = this.props;
         const activityStarted = (status && status !== "notstarted" && status !== "locked");
 
         if (status === "locked") return <div />
+        const showSignIn = pxt.auth.hasIdentity() && !signedIn;
+
+        let numberOfActions = 1;
+        if (activityStarted) numberOfActions += 2;
+        if (completedHeaderId) numberOfActions += 1;
+        if (showSignIn) numberOfActions += 1;
 
         // Apply "grid" class when there are four actions (for a completed activity)
         return <div className={`actions ${completedHeaderId ? "grid" : ""}`}>
             <Button
                 className="primary inverted"
+                tabIndex={-1}
+                ariaPosInSet={1}
+                ariaSetSize={numberOfActions}
                 title={this.getActivityActionText()}
                 label={this.getActivityActionText()}
                 onClick={this.handleActionButtonClick}
@@ -104,12 +115,18 @@ export class ActivityActionsImpl extends React.Component<ActivityActionsProps> {
             {activityStarted && <>
                 <Button
                     className="primary inverted"
+                    tabIndex={-1}
+                    ariaPosInSet={2}
+                    ariaSetSize={numberOfActions}
                     title={lf("Restart")}
                     label={lf("Restart")}
                     onClick={this.handleRestartButtonClick}
                 />
                 <Button
                     className="primary inverted"
+                    tabIndex={-1}
+                    ariaPosInSet={3}
+                    ariaSetSize={numberOfActions}
                     title={lf("Share")}
                     label={lf("Share")}
                     onClick={this.handleShareButtonClick}
@@ -117,10 +134,24 @@ export class ActivityActionsImpl extends React.Component<ActivityActionsProps> {
             </>}
             {completedHeaderId &&
                 <Button
+                    tabIndex={-1}
+                    ariaPosInSet={activityStarted ? 4 : 2}
+                    ariaSetSize={numberOfActions}
                     className="primary inverted"
                     title={lf("Save to My Projects")}
                     label={lf("Save to My Projects")}
                     onClick={this.handleSaveToProjectsClick}
+                />
+            }
+            {showSignIn &&
+                <Button
+                    tabIndex={-1}
+                    ariaPosInSet={numberOfActions}
+                    ariaSetSize={numberOfActions}
+                    className="teal"
+                    onClick={dispatchShowLoginModal}
+                    label={lf("Sign in to Save")}
+                    title={lf("Sign in to Save")}
                 />
             }
         </div>
@@ -134,7 +165,8 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
     const map = state.maps[props.mapId];
     const activity = map.activities[props.activityId] as MapActivity;
     return {
-        showCodeCarryoverModal: isCodeCarryoverEnabled(state.user, state.pageSourceUrl, map, activity)
+        showCodeCarryoverModal: isCodeCarryoverEnabled(state.user, state.pageSourceUrl, map, activity),
+        signedIn: state.auth.signedIn
     };
 }
 
@@ -142,7 +174,8 @@ const mapDispatchToProps = {
     dispatchOpenActivity,
     dispatchShowRestartActivityWarning,
     dispatchShowShareModal,
-    dispatchShowCarryoverModal
+    dispatchShowCarryoverModal,
+    dispatchShowLoginModal
 }
 
 export const ActivityActions = connect(mapStateToProps, mapDispatchToProps)(ActivityActionsImpl);

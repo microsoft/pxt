@@ -4,8 +4,10 @@ import { connect } from 'react-redux';
 import { SkillMapState } from '../store/reducer';
 import { ActivityActions } from './ActivityActions';
 import { RewardActions } from './RewardActions';
-import { MapActions } from './MapActions';
-import { CloudActions } from "./CloudActions";
+import { CloudStatus } from "./CloudStatus";
+
+import { FocusTrap } from "react-common/controls/FocusTrap";
+
 
 import { ActivityStatus, isActivityUnlocked, isMapUnlocked, lookupActivityProgress,
     isActivityCompleted, getActivityStatus, isRewardNode } from '../lib/skillMapUtils';
@@ -25,9 +27,12 @@ interface InfoPanelProps {
     node?: MapNode;
     status?: ActivityStatus;
     completedHeaderId?: string;
+    onFocusEscape: () => void;
 }
 
 export class InfoPanelImpl extends React.Component<InfoPanelProps> {
+    protected container: HTMLDivElement | undefined;
+
     protected getStatusLabel(status?: ActivityStatus) {
         switch (status) {
             case "locked":
@@ -50,15 +55,32 @@ export class InfoPanelImpl extends React.Component<InfoPanelProps> {
         }
     }
 
+    protected handleRef = (ref: HTMLDivElement) => {
+        if (!ref) return;
+        this.container = ref;
+    }
+
+    componentDidUpdate(prevProps: InfoPanelProps) {
+        if (this.container && this.props.node?.activityId && prevProps.node?.activityId !== this.props.node?.activityId) {
+            if (!this.container.contains(document.activeElement)) {
+                const buttons = this.container.querySelectorAll(`button[tabindex]`);
+
+                if (buttons.length) {
+                    (buttons.item(0) as HTMLElement).focus();
+                }
+            }
+        }
+    }
+
     render() {
-        const  { mapId, title, subtitle, description, infoUrl, imageUrl, details, node, status, completedHeaderId  } = this.props;
+        const  { mapId, title, subtitle, description, infoUrl, imageUrl, details, node, status, completedHeaderId, onFocusEscape } = this.props;
         const statusLabel = this.getStatusLabel(status);
         const isMap = !node;
         const isActivity = node && !isRewardNode(node);
         const tags = isActivity && (node as MapActivity).tags || undefined;
 
         const hasCloudSync = pxt.auth.hasIdentity();
-        return <div className="info-panel">
+        return <div className="info-panel" ref={this.handleRef}>
             <div className="info-panel-image">
                 {imageUrl
                 ? <img src={imageUrl} alt={lf("Preview of activity content")} />
@@ -80,11 +102,13 @@ export class InfoPanelImpl extends React.Component<InfoPanelProps> {
                     {details?.map((el, i) => <div key={`detail_${i}`}>{el}</div>)}
                 </div>
                 <div className="tablet-spacer" />
-                {!isMap && (isActivity
-                    ? <ActivityActions mapId={mapId} activityId={node!.activityId} status={status} completedHeaderId={completedHeaderId} />
-                    : <RewardActions mapId={mapId} activityId={node!.activityId} status={status} />)
-                }
-                {hasCloudSync && <CloudActions />}
+                <FocusTrap id="info-panel-actions" onEscape={onFocusEscape} dontStealFocus={true} arrowKeyNavigation={true} includeOutsideTabOrder={true}>
+                    {!isMap && (isActivity
+                        ? <ActivityActions mapId={mapId} activityId={node!.activityId} status={status} completedHeaderId={completedHeaderId} />
+                        : <RewardActions mapId={mapId} activityId={node!.activityId} status={status} />)
+                    }
+                    {hasCloudSync && <CloudStatus />}
+                </FocusTrap>
             </div>
         </div>
     }
