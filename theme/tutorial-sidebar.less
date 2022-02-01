@@ -188,7 +188,7 @@
         Tutorial Hint
 *******************************/
 
-.tutorial-hint.ui.button {
+.tutorial-hint .ui.button {
     height: 3.2rem;
     width: 3.2rem;
     margin: 0;
@@ -196,8 +196,8 @@
     font-size: @tutorialTitleFontSize;
 }
 
-.tutorial-hint.ui.button,
-.tutorial-hint.ui.button > i {
+.tutorial-hint .ui.button,
+.tutorial-hint .ui.button > i {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -205,7 +205,7 @@
 
 // Overrides, largely using old tutorial hint CSS
 .tab-tutorial {
-    .tutorialhint {
+    .tutorial-hint .tutorial-callout {
         position: fixed;
         top: unset;
         right: unset;
@@ -214,7 +214,7 @@
         max-width: 50%;
     }
 
-    .tutorialhint:before {
+    .tutorial-hint .tutorial-callout:before {
         top: auto;
         left: 6.5rem;
         bottom: -2.5rem;
@@ -222,7 +222,7 @@
     }
 }
 
-.tutorial-hint-mask {
+.tutorial-callout-mask {
     position: fixed;
     top: 0;
     left: 0;
@@ -526,7 +526,7 @@
         margin: 0;
     }
 
-    .tutorial-hint.ui.button {
+    .tutorial-hint .tutorial-callout-button.ui.button {
         border-radius: 0.2rem;
         color: @tutorialPrimaryColor;
         background: @tutorialSecondaryColor;
@@ -539,7 +539,7 @@
 
     // Overrides
     .tab-tutorial {
-        .tutorialhint {
+        .tutorial-hint .tutorial-callout {
             top: 18.5rem;
             right: 1.6rem;
             bottom: unset;
@@ -547,7 +547,7 @@
             max-width: 80%;
         }
 
-        .tutorialhint:before {
+        .tutorial-hint .tutorial-callout:before {
             top: -2.5rem;
             left: unset;
             bottom: auto;
@@ -639,7 +639,7 @@
             background-color: @tutorialPrimaryColor;
         }
 
-        .tutorial-hint.ui.button {
+        .tutorial-hint .tutorial-callout-button.ui.button {
             flex-direction: row;
             width: 12rem;
             margin: 3.5rem 1rem 0;
