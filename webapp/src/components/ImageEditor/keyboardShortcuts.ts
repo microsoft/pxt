@@ -67,7 +67,7 @@ function overrideBlocklyShortcuts(event: KeyboardEvent) {
 function handleKeyDown(event: KeyboardEvent) {
     if (!areShortcutsEnabled()) return;
 
-    if (event.shiftKey && event.ctrlKey && /^(?:Digit[1-9])|(?:Key[A-F])$/.test(event.code)) {
+    if (event.shiftKey && /^(?:Digit[1-9])|(?:Key[A-F])$/.test(event.code)) {
         if (event.code.indexOf("Digit") == 0) outline(parseInt(event.code.substring(5)))
         else outline(parseInt(event.code.substring(3), 16));
         return;
