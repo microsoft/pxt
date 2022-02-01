@@ -50,7 +50,11 @@ export class UserProfileImpl extends React.Component<UserProfileProps, UserProfi
         const { profile, preferences } = this.props;
         const { notification, modal, emailSelected } = this.state;
 
-        return <Modal title={profile?.idp?.displayName || ""} fullscreen={true} onClose={this.handleOnClose}>
+        return <Modal
+            title={profile?.idp?.displayName || ""}
+            fullscreen={true}
+            onClose={this.handleOnClose}
+            parentElement={document.querySelector(".app-container") || undefined}>
                 <Profile
                     user={{profile, preferences}}
                     signOut={this.handleSignout}

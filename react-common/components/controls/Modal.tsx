@@ -24,7 +24,7 @@ export interface ModalProps extends ContainerProps {
     actions?: ModalAction[];
     onClose?: () => void;
     fullscreen?: boolean;
-    parentElement?: HTMLElement;
+    parentElement?: Element;
 }
 
 export const Modal = (props: ModalProps) => {
