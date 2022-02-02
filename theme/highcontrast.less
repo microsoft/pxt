@@ -675,7 +675,8 @@
     #assetEditor {
         .asset-editor-sidebar,
         .asset-editor-sidebar-preview,
-        .asset-editor-preview {
+        .asset-editor-preview,
+        .asset-editor-sidebar-temp {
             color: @HCtextColor;
             background-color: @HCbackground;
             border-color: @HCtextColor;
@@ -691,7 +692,10 @@
             border-bottom: 1px solid @HCtextColor;
         }
 
-        .asset-editor-button,
+        .common-button {
+            border: 1px solid;
+        }
+
         .asset-editor-card,
         .create-new {
             color: @HCtextColor;
@@ -704,10 +708,7 @@
             color: @HCbackground;
         }
 
-        .delete-asset {
-            border: 1px solid @red;
-        }
-
+        .asset-editor-card.selected,
         .asset-editor-gallery-tab.selected,
         .asset-editor-button:hover,
         .create-new:hover {

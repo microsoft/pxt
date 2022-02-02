@@ -1,4 +1,5 @@
 import React = require("react");
+import ReactDOM = require("react-dom");
 import { classList, ContainerProps } from "../util";
 import { Button } from "./Button";
 import { FocusTrap } from "./FocusTrap";
@@ -23,6 +24,7 @@ export interface ModalProps extends ContainerProps {
     actions?: ModalAction[];
     onClose?: () => void;
     fullscreen?: boolean;
+    parentElement?: Element;
 }
 
 export const Modal = (props: ModalProps) => {
@@ -37,6 +39,7 @@ export const Modal = (props: ModalProps) => {
         title,
         actions,
         onClose,
+        parentElement,
         fullscreen
     } = props;
 
@@ -50,7 +53,7 @@ export const Modal = (props: ModalProps) => {
         className
     );
 
-    return <FocusTrap className={classes} onEscape={closeClickHandler}>
+    return ReactDOM.createPortal(<FocusTrap className={classes} onEscape={closeClickHandler}>
         <div id={id}
             className="common-modal"
             role={role || "dialog"}
@@ -104,5 +107,5 @@ export const Modal = (props: ModalProps) => {
                 </div>
             }
         </div>
-    </FocusTrap>
+    </FocusTrap>, parentElement || document.body)
 }
