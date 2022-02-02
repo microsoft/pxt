@@ -96,15 +96,15 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
         return <div ref="canvas-bounds" className={`image-editor-canvas ${isPortrait ? "portrait" : "landscape"}`} onContextMenu={this.preventContextMenu}>
             <div className="paint-container">
                 {!this.props.lightMode && <canvas ref="paint-surface-bg" className="paint-surface" />}
-                <canvas ref="paint-surface" className="paint-surface" />
+                <canvas ref="paint-surface" className="paint-surface main" />
                 {overlayLayers.map((layer, index) => {
                     return <canvas ref={`paint-surface-${layer.toString()}`} className={`paint-surface overlay ${!this.props.overlayEnabled ? 'hide' : ''}`} key={index} />
                 })}
                 <div ref="floating-layer-border" className="image-editor-floating-layer" />
-                <div ref="floating-layer-nw-corner" className="image-editor-floating-layer-corner"/>
-                <div ref="floating-layer-ne-corner" className="image-editor-floating-layer-corner"/>
-                <div ref="floating-layer-se-corner" className="image-editor-floating-layer-corner"/>
-                <div ref="floating-layer-sw-corner" className="image-editor-floating-layer-corner"/>
+                {!this.props.isTilemap && <div ref="floating-layer-nw-corner" className="image-editor-floating-layer-corner"/>}
+                {!this.props.isTilemap && <div ref="floating-layer-ne-corner" className="image-editor-floating-layer-corner"/>}
+                {!this.props.isTilemap && <div ref="floating-layer-se-corner" className="image-editor-floating-layer-corner"/>}
+                {!this.props.isTilemap && <div ref="floating-layer-sw-corner" className="image-editor-floating-layer-corner"/>}
             </div>
         </div>
     }
@@ -445,9 +445,8 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
 
             if (!this.cursorLocation || x !== this.cursorLocation[0] || y !== this.cursorLocation[1]) {
                 this.cursorLocation = [x, y, coord.clientX, coord.clientY];
-
                 if (this.hasHover)
-                    this.props.dispatchChangeCursorLocation((x < 0 || y < 0 || x >= this.imageWidth || y >= this.imageHeight) ? null : this.cursorLocation);
+                    this.props.dispatchChangeCursorLocation(this.cursorLocation);
 
                 if (!this.edit) this.redraw();
 
@@ -506,7 +505,7 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
     }
 
     protected updateEdit(x: number, y: number) {
-        if (this.edit && this.edit.inBounds(x, y)) {
+        if ((this.edit && this.edit.inBounds(x, y)) || (this.edit && this.isResizing)) {
             this.edit.update(x, y);
 
             this.redraw();
@@ -695,7 +694,8 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
         else {
             floatingRect.style.display = "none"
             cornerHandles.forEach(corner => {
-                corner.style.display = "none"
+                if (corner)
+                    corner.style.display = "none"
             })
         }
     }

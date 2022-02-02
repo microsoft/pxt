@@ -723,7 +723,13 @@ export class MarqueeEdit extends SelectionEdit {
                         farthestCorner = corners[i];
                     }
                 }
-                const canvas = document.getElementsByClassName("paint-surface")![0] as HTMLCanvasElement
+                const surfaces = document.getElementsByClassName("paint-surface")
+                let canvas: HTMLCanvasElement;
+                for (var i = 0; i < surfaces.length; i++) {
+                    if (surfaces[i].className.includes('main')) {
+                        canvas = surfaces[i] as HTMLCanvasElement
+                    }
+                }
                 const canvasLeft = canvas.getBoundingClientRect().left;
                 const canvasTop = canvas.getBoundingClientRect().top;
                 const canvasWidth = canvas.getBoundingClientRect().width;
