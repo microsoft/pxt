@@ -4,6 +4,8 @@
 
 @tutorialPrimaryColor: @teal;
 @tutorialSecondaryColor: @blue;
+@tutorialLinkColor: #0064BF;
+@tutorialLinkHoverColor: #003C94;
 
 @tutorialTabletButtonColor: #f3f3f3;
 @tutorialTabletSimulatorButtonColor: rgba(0, 0, 0, 0.05);
@@ -301,20 +303,20 @@
 .tutorial-replace-code {
     display: flex;
     justify-content: center;
-    font-family: 'Segoe UI', Roboto, 'Open Sans', 'Helvetica Neue', sans-serif;
+    font-family: @segoeUIFont;
 
     .tutorial-callout-button.ui.button {
         padding: 0;
         margin: 0 0 2rem;
-        color: #0064BF;
+        color: @tutorialLinkColor;
         background: none transparent;
-        font-family: 'Segoe UI', Roboto, 'Open Sans', 'Helvetica Neue', sans-serif;
+        font-family: @segoeUIFont;
         font-weight: 500;
     }
 
     .tutorial-callout-button.ui.button:hover,
     .tutorial-callout-button.ui.button:focus {
-        color: #003C94;
+        color: @tutorialLinkHoverColor;
     }
 
     .tutorial-callout {
