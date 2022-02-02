@@ -70,7 +70,7 @@ import Cloud = pxt.Cloud;
 import Util = pxt.Util;
 import { HintManager } from "./hinttooltip";
 import { CodeCardView } from "./codecard";
-import { mergeProjectCode } from "./mergeProjects";
+import { mergeProjectCode, appendTemporaryAssets } from "./mergeProjects";
 
 pxsim.util.injectPolyphils();
 
@@ -199,6 +199,7 @@ export class ProjectView
         this.completeTutorialAsync = this.completeTutorialAsync.bind(this);
         this.exitTutorial = this.exitTutorial.bind(this);
         this.setEditorOffset = this.setEditorOffset.bind(this);
+        this.resetTutorialTemplateCode = this.resetTutorialTemplateCode.bind(this);
         this.initSimulatorMessageHandlers();
 
         // add user hint IDs and callback to hint manager
@@ -1889,17 +1890,13 @@ export class ProjectView
         if (keepAssets) {
             // Convert all temporary assets to named assets before we load in the template
             let currentText = await workspace.getTextAsync(header.id);
-            let newText: pxt.workspace.ScriptText = mergeProjectCode(currentText, currentText, false);
-
-            for (const file of Object.keys(newText)) {
-                if (newText[file] !== undefined) {
-                    pkg.mainEditorPkg().setFile(file, newText[file]);
-                }
-            }
+            const imageJres = appendTemporaryAssets(currentText[pxt.MAIN_BLOCKS], currentText[pxt.IMAGES_JRES]);
+            pkg.mainEditorPkg().setFile(pxt.IMAGES_JRES, imageJres);
             await mainPkg.saveFilesAsync();
         }
 
         header.tutorial.templateLoaded = false;
+        delete header.tutorial.mergeHeaderId;
         await this.reloadHeaderAsync();
     }
 

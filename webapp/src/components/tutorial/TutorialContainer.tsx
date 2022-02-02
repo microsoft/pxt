@@ -6,7 +6,7 @@ import { Button, Modal, ModalButton } from "../../sui";
 import { ImmersiveReaderButton, launchImmersiveReader } from "../../immersivereader";
 import { TutorialStepCounter } from "./TutorialStepCounter";
 import { TutorialHint } from "./TutorialHint";
-import { TutorialCallout } from "./TutorialCallout";
+import { TutorialResetCode } from "./TutorialResetCode";
 
 interface TutorialContainerProps {
     parent: pxt.editor.IProjectView;
@@ -15,6 +15,7 @@ interface TutorialContainerProps {
     steps: pxt.tutorial.TutorialStepInfo[];
     currentStep?: number;
     hideIteration?: boolean;
+    hasTemplate?: boolean;
 
     tutorialOptions?: pxt.tutorial.TutorialOptions; // TODO (shakao) pass in only necessary subset
 
@@ -27,7 +28,7 @@ const MIN_HEIGHT = 80;
 const MAX_HEIGHT = 194;
 
 export function TutorialContainer(props: TutorialContainerProps) {
-    const { parent, tutorialId, name, steps, hideIteration, tutorialOptions,
+    const { parent, tutorialId, name, steps, hideIteration, hasTemplate, tutorialOptions,
         onTutorialStepChange, onTutorialComplete, setParentHeight } = props;
     const [ currentStep, setCurrentStep ] = React.useState(props.currentStep || 0);
     const [ hideModal, setHideModal ] = React.useState(false);
@@ -85,6 +86,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
 
     const isModal = currentStepInfo.showDialog;
     const visibleStep = isModal ? Math.min(currentStep + 1, steps.length - 1) : currentStep;
+    const firstNonModalStep = steps.findIndex(el => !el.showDialog);
     const title = steps[visibleStep].title;
     const markdown = steps[visibleStep].headerContentMd;
     const hintMarkdown = steps[visibleStep].hintContentMd;
@@ -139,21 +141,15 @@ export function TutorialContainer(props: TutorialContainerProps) {
             {title && <div className="tutorial-title">{title}</div>}
             <MarkedContent className="no-select" tabIndex={0} markdown={markdown} parent={parent}/>
         </div>
-        {<TutorialCallout buttonLabel={lf("Replace my code")} className="tutorial-replace-code">
-            <p>{lf("Did the code you're working with get off track? It happens.")}</p>
-            <p>{lf("Click below to replace your code with updated blocks.")}</p>
-            <p>{lf("This will delete all your current code blocks. Any custom images and tiles can still be found in the gallery under \"My Assets\"")}</p>
-            <div className="tutorial-replace-code-actions">
-                <Button className="primary" text={lf("Replace my code")} onClick={() => parent.resetTutorialTemplateCode(true)} />
-            </div>
-        </TutorialCallout>}
+        {hasTemplate && currentStep == firstNonModalStep &&
+            <TutorialResetCode tutorialId={tutorialId} currentStep={visibleStep} resetTemplateCode={parent.resetTutorialTemplateCode} />}
+        {showScrollGradient && <div className="tutorial-scroll-gradient" />}
         <div className="tutorial-controls">
             { layout === "vertical" && backButton }
             <TutorialHint tutorialId={tutorialId} currentStep={visibleStep} markdown={hintMarkdown} parent={parent} showLabel={layout === "horizontal"} />
             { layout === "vertical" && nextButton }
         </div>
         {layout === "horizontal" && nextButton}
-        {showScrollGradient && <div className="tutorial-scroll-gradient" />}
         {isModal && !hideModal && <Modal isOpen={isModal} closeIcon={false} header={currentStepInfo.title || name} buttons={modalActions}
             className="hintdialog" onClose={onModalClose} dimmer={true}
             longer={true} closeOnDimmerClick closeOnDocumentClick closeOnEscape>
