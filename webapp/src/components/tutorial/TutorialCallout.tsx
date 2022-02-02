@@ -47,6 +47,7 @@ export function TutorialCallout(props: TutorialCalloutProps) {
             disabled={!children}
             onClick={children ? handleButtonClick : undefined} />
         {visible && <div className={`tutorial-callout no-select`} onClick={captureEvent}>
+            <Button icon="close" className="tutorial-callout-close" onClick={closeCallout} />
             {children}
         </div>}
         {visible && <div className="tutorial-callout-mask" onClick={closeCallout} />}

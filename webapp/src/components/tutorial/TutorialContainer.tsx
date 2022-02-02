@@ -6,6 +6,7 @@ import { Button, Modal, ModalButton } from "../../sui";
 import { ImmersiveReaderButton, launchImmersiveReader } from "../../immersivereader";
 import { TutorialStepCounter } from "./TutorialStepCounter";
 import { TutorialHint } from "./TutorialHint";
+import { TutorialCallout } from "./TutorialCallout";
 
 interface TutorialContainerProps {
     parent: pxt.editor.IProjectView;
@@ -127,6 +128,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
         ? <Button icon="check circle" text={lf("Done")} onClick={onTutorialComplete} />
         : <Button icon="arrow circle right" disabled={!showNext} text={lf("Next")} onClick={tutorialStepNext} />;
 
+
     return <div className="tutorial-container">
         <div className="tutorial-top-bar">
             <TutorialStepCounter tutorialId={tutorialId} currentStep={visibleStep} totalSteps={steps.length} title={name} setTutorialStep={setCurrentStep} />
@@ -137,6 +139,14 @@ export function TutorialContainer(props: TutorialContainerProps) {
             {title && <div className="tutorial-title">{title}</div>}
             <MarkedContent className="no-select" tabIndex={0} markdown={markdown} parent={parent}/>
         </div>
+        {<TutorialCallout buttonLabel={lf("Replace my code")} className="tutorial-replace-code">
+            <p>{lf("Did the code you're working with get off track? It happens.")}</p>
+            <p>{lf("Click below to replace your code with updated blocks.")}</p>
+            <p>{lf("This will delete all your current code blocks. Any custom images and tiles can still be found in the gallery under \"My Assets\"")}</p>
+            <div className="tutorial-replace-code-actions">
+                <Button className="primary" text={lf("Replace my code")} onClick={() => parent.resetTutorialTemplateCode(true)} />
+            </div>
+        </TutorialCallout>}
         <div className="tutorial-controls">
             { layout === "vertical" && backButton }
             <TutorialHint tutorialId={tutorialId} currentStep={visibleStep} markdown={hintMarkdown} parent={parent} showLabel={layout === "horizontal"} />

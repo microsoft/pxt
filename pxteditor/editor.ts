@@ -225,6 +225,7 @@ namespace pxt.editor {
         openProjectByHeaderIdAsync(headerId: string): Promise<void>;
         overrideTypescriptFile(text: string): void;
         overrideBlocksFile(text: string): void;
+        resetTutorialTemplateCode(keepAssets: boolean): Promise<void>;
 
         exportAsync(): Promise<string>;
 

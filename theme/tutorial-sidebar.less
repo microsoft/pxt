@@ -62,7 +62,7 @@
     position: absolute;
     height: 3rem;
     width: calc(~'100% - 1rem');
-    bottom: 6rem;
+    bottom: 9rem;
     background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0), @white);
 }
 
@@ -205,7 +205,7 @@
 
 // Overrides, largely using old tutorial hint CSS
 .tab-tutorial {
-    .tutorial-hint .tutorial-callout {
+    .tutorial-callout {
         position: fixed;
         top: unset;
         right: unset;
@@ -214,11 +214,28 @@
         max-width: 50%;
     }
 
-    .tutorial-hint .tutorial-callout:before {
+    .tutorial-callout:before {
         top: auto;
         left: 6.5rem;
         bottom: -2.5rem;
         transform: rotate(-90deg);
+    }
+
+    .tutorial-callout-close.ui.button {
+        position: absolute;
+        right: 1rem;
+        padding: 0;
+        width: 1.5rem;
+        height: 1.5rem;
+        color: @white;
+        background-color: #000;
+        border-radius: 50%;
+
+        i.icon {
+            opacity: 1;
+            font-size: 1rem;
+            margin: 0 !important;
+        }
     }
 }
 
@@ -273,6 +290,40 @@
     left: 0.75rem;
     border-bottom: 2px solid @tutorialPrimaryColor;
 }
+
+/*******************************
+    Tutorial Replace Code
+*******************************/
+.tutorial-replace-code {
+    display: flex;
+    justify-content: center;
+    font-family: 'Segoe UI', Roboto, 'Open Sans', 'Helvetica Neue', sans-serif;
+
+    .tutorial-callout-button.ui.button {
+        padding: 0;
+        margin: 0 0 2rem;
+        color: #0064BF;
+        background: none transparent;
+        font-family: 'Segoe UI', Roboto, 'Open Sans', 'Helvetica Neue', sans-serif;
+        font-weight: 300;
+    }
+
+    .tutorial-callout-button.ui.button:hover,
+    .tutorial-callout-button.ui.button:focus {
+        color: #003C94;
+    }
+
+    .tutorial-callout {
+        bottom: 13.5rem;
+        padding: 1rem;
+    }
+
+    .tutorial-replace-code-actions {
+        display: flex;
+        justify-content: flex-end;
+    }
+}
+
 
 /*******************************
         Simulator Tab
@@ -539,7 +590,7 @@
 
     // Overrides
     .tab-tutorial {
-        .tutorial-hint .tutorial-callout {
+        .tutorial-callout {
             top: 18.5rem;
             right: 1.6rem;
             bottom: unset;
@@ -547,12 +598,30 @@
             max-width: 80%;
         }
 
-        .tutorial-hint .tutorial-callout:before {
+        .tutorial-callout:before {
             top: -2.5rem;
             left: unset;
             bottom: auto;
             right: 4rem;
             transform: rotate(90deg);
+        }
+    }
+
+    /*******************************
+         Tutorial Replace Code
+    *******************************/
+
+    .tutorial-replace-code {
+        position: absolute;
+        right: 5rem;
+        bottom: -0.5rem;
+
+        .tutorial-callout {
+            top: 22.5rem;
+        }
+
+        .tutorial-replace-code-actions .ui.button {
+            width: unset;
         }
     }
 

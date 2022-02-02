@@ -1757,14 +1757,14 @@ export class ProjectView
 
     private async loadTutorialTemplateCodeAsync(): Promise<void> {
         const header = pkg.mainEditorPkg().header;
-        if (!header || !header.tutorial || !header.tutorial.templateCode)
+        if (!header || !header.tutorial || !header.tutorial.templateCode || header.tutorial.templateLoaded)
             return;
 
         const template = header.tutorial.templateCode;
 
-        // Delete from the header so that we don't overwrite the user code if the tutorial is
-        // re-opened
-        delete header.tutorial.templateCode;
+        // Mark that the templated has been loaded so that we don't overwrite the
+        // user code if the tutorial is re-opened
+        header.tutorial.templateLoaded = true;
         let currentText = await workspace.getTextAsync(header.id);
 
         // If we're starting in the asset editor, always load into TS
@@ -1879,6 +1879,28 @@ export class ProjectView
         await mainPkg.setContentAsync(pxt.TUTORIAL_CUSTOM_TS, customTs);
         await mainPkg.saveFilesAsync();
         return Promise.resolve();
+    }
+
+    async resetTutorialTemplateCode(keepAssets: boolean): Promise<void> {
+        const mainPkg = pkg.mainEditorPkg();
+        const header = mainPkg.header;
+        if (!header?.tutorial?.templateCode) return;
+
+        if (keepAssets) {
+            // Convert all temporary assets to named assets before we load in the template
+            let currentText = await workspace.getTextAsync(header.id);
+            let newText: pxt.workspace.ScriptText = mergeProjectCode(currentText, currentText, false);
+
+            for (const file of Object.keys(newText)) {
+                if (newText[file] !== undefined) {
+                    pkg.mainEditorPkg().setFile(file, newText[file]);
+                }
+            }
+            await mainPkg.saveFilesAsync();
+        }
+
+        header.tutorial.templateLoaded = false;
+        await this.reloadHeaderAsync();
     }
 
     removeProject() {

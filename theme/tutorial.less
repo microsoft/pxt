@@ -170,7 +170,7 @@ body#docs.tutorial {
 
 #tutorialcard .tutorialmessage .content p,
 .tutorialhint p,
-.tutorial-hint .tutorial-callout p {
+.tutorial-callout p {
     line-height: 1.4em !important;
     color: @tutorialSegmentColor;
 }
@@ -224,14 +224,14 @@ body#docs.tutorial {
 @media only screen and (min-height: 400px) {
     .hintdialog .ui.segment .blocklyPreview,
     .tutorialhint .ui.segment .blocklyPreview,
-    .tutorial-hint .tutorial-callout .ui.segment .blocklyPreview {
+    .tutorial-callout .ui.segment .blocklyPreview {
         max-height: 45vh;
     }
 }
 
 @media only screen and (max-height: 800px) {
     .tutorialhint img,
-    .tutorial-hint .tutorial-callout img {
+    .tutorial-callout img {
         max-height: 30vh;
     }
 }
@@ -362,7 +362,7 @@ code.lang-filterblocks {
 }
 
 .tutorialhint,
-.tutorial-hint .tutorial-callout {
+.tutorial-callout {
     position: absolute;
     max-width: 100%;
     min-width: 300px;
@@ -377,7 +377,7 @@ code.lang-filterblocks {
 }
 
 .tutorialhint:before,
-.tutorial-hint .tutorial-callout:before {
+.tutorial-callout:before {
     content: ' ';
     position: absolute;
     width: 0;
@@ -391,18 +391,18 @@ code.lang-filterblocks {
 }
 
 .tutorialhint > div,
-.tutorial-hint .tutorial-callout > div {
+.tutorial-callout > div {
     max-height: 60vh;
     overflow: auto;
 }
 
 .tutorialhint.hidden,
-.tutorial-hint .tutorial-callout.hidden {
+.tutorial-callout.hidden {
     display: none;
 }
 
 .tutorialhint .lang-blocks .segment.raised,
-.tutorial-hint .tutorial-callout .lang-blocks .segment.raised {
+.tutorial-callout .lang-blocks .segment.raised {
     border: none;
     background: none;
     box-shadow: none;
