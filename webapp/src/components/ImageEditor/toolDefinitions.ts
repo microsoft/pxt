@@ -725,7 +725,7 @@ export class MarqueeEdit extends SelectionEdit {
                 }
                 const surfaces = document.getElementsByClassName("paint-surface")
                 let canvas: HTMLCanvasElement;
-                for (var i = 0; i < surfaces.length; i++) {
+                for (let i = 0; i < surfaces.length; i++) {
                     if (surfaces[i].className.includes('main')) {
                         canvas = surfaces[i] as HTMLCanvasElement
                     }
