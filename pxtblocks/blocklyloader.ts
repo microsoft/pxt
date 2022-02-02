@@ -1392,8 +1392,8 @@ namespace pxt.blocks {
          *     moved from the position at the start of the drag, in pixel units.
          * @package
          */
-        const blockDrag = (<any>Blockly).BlockDragger.prototype.dragBlock;
-        (<any>Blockly).BlockDragger.prototype.dragBlock = function (e: any, currentDragDeltaXY: any) {
+        const blockDrag = (<any>Blockly).BlockDragger.prototype.drag;
+        (<any>Blockly).BlockDragger.prototype.drag = function (e: any, currentDragDeltaXY: any) {
             const blocklyToolboxDiv = document.getElementsByClassName('blocklyToolboxDiv')[0] as HTMLElement;
             const blocklyTreeRoot = document.getElementsByClassName('blocklyTreeRoot')[0] as HTMLElement
                 || document.getElementsByClassName('blocklyFlyout')[0] as HTMLElement;
@@ -1425,8 +1425,8 @@ namespace pxt.blocks {
          *     moved from the position at the start of the drag, in pixel coordinates.
          * @package
          */
-        const blockEndDrag = (<any>Blockly).BlockDragger.prototype.endBlockDrag;
-        (<any>Blockly).BlockDragger.prototype.endBlockDrag = function (e: any, currentDragDeltaXY: any) {
+        const blockEndDrag = (<any>Blockly).BlockDragger.prototype.endDrag;
+        (<any>Blockly).BlockDragger.prototype.endDrag = function (e: any, currentDragDeltaXY: any) {
             blockEndDrag.call(this, e, currentDragDeltaXY);
             const blocklyToolboxDiv = document.getElementsByClassName('blocklyToolboxDiv')[0] as HTMLElement;
             const blocklyTreeRoot = document.getElementsByClassName('blocklyTreeRoot')[0] as HTMLElement
