@@ -6,7 +6,6 @@ import { TutorialCallout } from "./TutorialCallout";
 interface TutorialHintProps {
     parent: pxt.editor.IProjectView;
     markdown: string;
-    showLabel?: boolean;
 
     // Telemetry data
     tutorialId: string;
@@ -14,7 +13,7 @@ interface TutorialHintProps {
 }
 
 export function TutorialHint(props: TutorialHintProps) {
-    const { parent, markdown, showLabel, tutorialId, currentStep } = props;
+    const { parent, markdown, tutorialId, currentStep } = props;
 
     const onHintClick = (visible: boolean) => {
         if (!visible) {
@@ -23,7 +22,6 @@ export function TutorialHint(props: TutorialHintProps) {
     }
 
     return <TutorialCallout className="tutorial-hint"
-            buttonLabel={showLabel ? lf("Hint") : undefined}
             buttonIcon="lightbulb"
             onClick={onHintClick}>
                 {markdown && <MarkedContent markdown={markdown} unboxSnippets={true} parent={parent} />}

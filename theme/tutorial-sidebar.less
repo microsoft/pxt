@@ -541,8 +541,6 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            width: 4rem;
-            height: unset;
             margin: 0;
             font-size: 1rem;
 
@@ -550,7 +548,6 @@
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                margin-bottom: 0.5rem!important;
                 font-size: 2rem;
             }
 
@@ -575,6 +572,10 @@
         }
     }
 
+    .tutorial-container > .ui.button i.icon {
+        margin-bottom: 0.5rem!important;
+    }
+
     /*******************************
             Tutorial Hint
     *******************************/
@@ -586,7 +587,6 @@
     }
 
     .tutorial-hint .tutorial-callout-button.ui.button {
-        border-radius: 0.2rem;
         color: @tutorialPrimaryColor;
         background: @tutorialSecondaryColor;
         margin: 1rem;
@@ -621,8 +621,9 @@
 
     .tutorial-replace-code {
         position: absolute;
-        right: 5rem;
+        right: 4.5rem;
         bottom: -0.5rem;
+        width: 4rem;
 
         .tutorial-callout {
             top: 22.5rem;
@@ -632,6 +633,10 @@
         .tutorial-replace-code-actions .ui.button {
             width: unset;
         }
+    }
+
+    .tutorial-replace-code + .tutorial-controls > .tutorial-hint {
+        width: 5rem;
     }
 
 

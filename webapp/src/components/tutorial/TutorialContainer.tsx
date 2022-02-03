@@ -146,7 +146,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
         {showScrollGradient && <div className="tutorial-scroll-gradient" />}
         <div className="tutorial-controls">
             { layout === "vertical" && backButton }
-            <TutorialHint tutorialId={tutorialId} currentStep={visibleStep} markdown={hintMarkdown} parent={parent} showLabel={layout === "horizontal"} />
+            <TutorialHint tutorialId={tutorialId} currentStep={visibleStep} markdown={hintMarkdown} parent={parent} />
             { layout === "vertical" && nextButton }
         </div>
         {layout === "horizontal" && nextButton}
