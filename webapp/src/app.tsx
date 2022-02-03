@@ -70,7 +70,7 @@ import Cloud = pxt.Cloud;
 import Util = pxt.Util;
 import { HintManager } from "./hinttooltip";
 import { CodeCardView } from "./codecard";
-import { mergeProjectCode } from "./mergeProjects";
+import { mergeProjectCode, appendTemporaryAssets } from "./mergeProjects";
 
 pxsim.util.injectPolyphils();
 
@@ -199,6 +199,7 @@ export class ProjectView
         this.completeTutorialAsync = this.completeTutorialAsync.bind(this);
         this.exitTutorial = this.exitTutorial.bind(this);
         this.setEditorOffset = this.setEditorOffset.bind(this);
+        this.resetTutorialTemplateCode = this.resetTutorialTemplateCode.bind(this);
         this.initSimulatorMessageHandlers();
 
         // add user hint IDs and callback to hint manager
@@ -1757,14 +1758,14 @@ export class ProjectView
 
     private async loadTutorialTemplateCodeAsync(): Promise<void> {
         const header = pkg.mainEditorPkg().header;
-        if (!header || !header.tutorial || !header.tutorial.templateCode)
+        if (!header || !header.tutorial || !header.tutorial.templateCode || header.tutorial.templateLoaded)
             return;
 
         const template = header.tutorial.templateCode;
 
-        // Delete from the header so that we don't overwrite the user code if the tutorial is
-        // re-opened
-        delete header.tutorial.templateCode;
+        // Mark that the template has been loaded so that we don't overwrite the
+        // user code if the tutorial is re-opened
+        header.tutorial.templateLoaded = true;
         let currentText = await workspace.getTextAsync(header.id);
 
         // If we're starting in the asset editor, always load into TS
@@ -1879,6 +1880,24 @@ export class ProjectView
         await mainPkg.setContentAsync(pxt.TUTORIAL_CUSTOM_TS, customTs);
         await mainPkg.saveFilesAsync();
         return Promise.resolve();
+    }
+
+    async resetTutorialTemplateCode(keepAssets: boolean): Promise<void> {
+        const mainPkg = pkg.mainEditorPkg();
+        const header = mainPkg.header;
+        if (!header?.tutorial?.templateCode) return;
+
+        if (keepAssets) {
+            // Convert all temporary assets to named assets before we load in the template
+            let currentText = await workspace.getTextAsync(header.id);
+            const imageJres = appendTemporaryAssets(currentText[pxt.MAIN_BLOCKS], currentText[pxt.IMAGES_JRES]);
+            pkg.mainEditorPkg().setFile(pxt.IMAGES_JRES, imageJres);
+            await mainPkg.saveFilesAsync();
+        }
+
+        header.tutorial.templateLoaded = false;
+        delete header.tutorial.mergeHeaderId;
+        await this.reloadHeaderAsync();
     }
 
     removeProject() {

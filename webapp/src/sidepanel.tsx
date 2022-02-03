@@ -163,9 +163,17 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                     </div>}
                 </TabContent>}
                 {tutorialOptions && <TabContent name={TUTORIAL_TAB} icon="icon tasks" showBadge={activeTab !== TUTORIAL_TAB} onSelected={this.showTutorialTab} ariaLabel={lf("Open the tutorial tab")}>
-                    <TutorialContainer parent={parent} tutorialId={tutorialOptions.tutorial} name={tutorialOptions.tutorialName} steps={tutorialOptions.tutorialStepInfo}
-                        currentStep={tutorialOptions.tutorialStep} tutorialOptions={tutorialOptions} hideIteration={tutorialOptions.metadata?.hideIteration}
-                        onTutorialStepChange={onTutorialStepChange} onTutorialComplete={onTutorialComplete}
+                    <TutorialContainer
+                        parent={parent}
+                        tutorialId={tutorialOptions.tutorial}
+                        name={tutorialOptions.tutorialName}
+                        steps={tutorialOptions.tutorialStepInfo}
+                        currentStep={tutorialOptions.tutorialStep}
+                        tutorialOptions={tutorialOptions}
+                        hideIteration={tutorialOptions.metadata?.hideIteration}
+                        hasTemplate={!!tutorialOptions.templateCode}
+                        onTutorialStepChange={onTutorialStepChange}
+                        onTutorialComplete={onTutorialComplete}
                         setParentHeight={this.setComponentHeight} />
                 </TabContent>}
             </TabPane>
