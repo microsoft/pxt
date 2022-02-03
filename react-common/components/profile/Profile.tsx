@@ -26,6 +26,11 @@ export const Profile = (props: ProfileProps) => {
             header: lf("{0} Badge", badge.title),
             size: "tiny",
             hasCloseIcon: true,
+            onClose: () => {
+                // Hack to support retrapping focus in the fullscreen modal that contains this element
+                const focusable = document.body.querySelector(".common-modal-container.fullscreen [tabindex]");
+                if (focusable) (focusable as HTMLElement).focus();
+            },
             jsx: <BadgeInfo badge={badge} />
         });
     }

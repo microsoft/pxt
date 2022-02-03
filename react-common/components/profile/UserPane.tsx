@@ -21,7 +21,7 @@ export const UserPane = (props: UserPaneProps) => {
     const emailLabel = <>
         {emailChecked === CheckboxStatus.Waiting ? <div className="common-spinner" /> : undefined}
         {lf("I would like to receive the MakeCode newsletter. ")}
-        <a href="https://makecode.com/privacy" target="_blank" rel="noopener noreferrer">{lf("View Privacy Statement")}</a>
+        <a href="https://makecode.com/privacy" target="_blank" rel="noopener noreferrer" tabIndex={0}>{lf("View Privacy Statement")}</a>
     </>
 
     return <div className="profile-user-pane">

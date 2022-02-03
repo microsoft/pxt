@@ -23,6 +23,8 @@ export const FocusTrap = (props: FocusTrapProps) => {
 
     let container: HTMLDivElement;
 
+    const [stoleFocus, setStoleFocus] = React.useState(false);
+
     const getElements = () => {
         const all = nodeListToArray(
             includeOutsideTabOrder ? container.querySelectorAll(`[tabindex]`) :
@@ -36,8 +38,11 @@ export const FocusTrap = (props: FocusTrapProps) => {
         if (!ref) return;
         container = ref;
 
-        if (!dontStealFocus && !ref.contains(document.activeElement) && getElements().length) {
+        if (!dontStealFocus && !stoleFocus && !ref.contains(document.activeElement) && getElements().length) {
             container.focus();
+
+            // Only steal focus once
+            setStoleFocus(true);
         }
     }
 

@@ -51,7 +51,7 @@ export class UserProfileImpl extends React.Component<UserProfileProps, UserProfi
         const { notification, modal, emailSelected } = this.state;
 
         return <Modal
-            title={profile?.idp?.displayName || ""}
+            title={lf("My Profile")}
             fullscreen={true}
             onClose={this.handleOnClose}
             parentElement={document.querySelector(".app-container") || undefined}>
@@ -169,7 +169,10 @@ export class UserProfileImpl extends React.Component<UserProfileProps, UserProfi
     }
 
     closeModal = () => {
+        const onClose = this.state.modal?.onClose;
+
         this.setState({ modal: undefined });
+        if (onClose) onClose();
     }
 }
 

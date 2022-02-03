@@ -175,6 +175,7 @@ export interface DialogOptions {
     confirmationText?: string;      // Display a text input the user must type to confirm.
     confirmationCheckbox?: string;  // Display a checkbox the user must check to confirm.
     confirmationGranted?: boolean;
+    onClose?: () => void;
 }
 
 export function dialogAsync(options: DialogOptions): Promise<void> {
