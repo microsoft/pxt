@@ -140,7 +140,7 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
         }
 
         const avatarElem = this.avatarPicUrl()
-            ? <div className="avatar"><img src={this.avatarPicUrl()} aria-hidden="true"/></div>
+            ? <div className="avatar"><img src={this.avatarPicUrl()} aria-hidden="true" alt={lf("Profile Image")}/></div>
             : undefined;
 
         const initialsElem = <span><div className="avatar-initials" aria-hidden="true">{pxt.auth.userInitials(profile)}</div></span>
