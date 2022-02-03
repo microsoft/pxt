@@ -1763,7 +1763,7 @@ export class ProjectView
 
         const template = header.tutorial.templateCode;
 
-        // Mark that the templated has been loaded so that we don't overwrite the
+        // Mark that the template has been loaded so that we don't overwrite the
         // user code if the tutorial is re-opened
         header.tutorial.templateLoaded = true;
         let currentText = await workspace.getTextAsync(header.id);
