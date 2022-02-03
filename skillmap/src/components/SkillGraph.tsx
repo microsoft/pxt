@@ -101,10 +101,9 @@ class SkillGraphImpl extends React.Component<SkillGraphProps> {
             </g>
             {items.map((el, i) => {
                 return <GraphNode key={`graph-activity-${i}`}
-                    title={el.activity.displayName}
+                    node={el.activity}
                     theme={theme}
                     kind={el.activity.kind}
-                    activityId={el.activity.activityId}
                     position={el.position}
                     width={5 * unit}
                     selected={el.activity.activityId === selectedActivityId}

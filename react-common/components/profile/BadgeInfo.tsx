@@ -15,7 +15,7 @@ export const BadgeInfo = (props: BadgeInfoProps) => {
         <div className="profile-badge-info-image">
             <Badge badge={badge} disabled={!badge.timestamp} />
         </div>
-        <div className="profile-badge-info-item">
+        <div className="profile-badge-info-item" id={"profile-badge-info-" + badge.id}>
             <div className="profile-badge-info-header">
                 {lf("Awarded For:")}
             </div>
@@ -42,7 +42,14 @@ export const badgeDescription = (badge: pxt.auth.Badge) => {
         case "skillmap-completion":
             return <span>{jsxLF(
                 lf("Completing {0}"),
-                <a target="_blank" rel="noopener noreferrer" href={sourceURLToSkillmapURL(badge.sourceURL)}>{pxt.U.rlf(badge.title)}</a>
+                <a
+                    tabIndex={0}
+                    aria-labelledby={"profile-badge-info-" + badge.id}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    href={sourceURLToSkillmapURL(badge.sourceURL)}>
+                        {pxt.U.rlf(badge.title)}
+                </a>
             )}</span>
     }
 }

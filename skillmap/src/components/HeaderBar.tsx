@@ -140,10 +140,10 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
         }
 
         const avatarElem = this.avatarPicUrl()
-            ? <div className="avatar"><img src={this.avatarPicUrl()} alt={lf("User Menu")}/></div>
+            ? <div className="avatar"><img src={this.avatarPicUrl()} aria-hidden="true" alt={lf("Profile Image")}/></div>
             : undefined;
 
-        const initialsElem = <span><div className="avatar-initials">{pxt.auth.userInitials(profile)}</div></span>
+        const initialsElem = <span><div className="avatar-initials" aria-hidden="true">{pxt.auth.userInitials(profile)}</div></span>
 
         return <div className="user-menu">
             {signedIn
@@ -163,7 +163,7 @@ export class HeaderBarImpl extends React.Component<HeaderBarProps> {
         const settingItems = this.getSettingItems();
         const helpItems = this.getHelpItems();
 
-        return <MenuBar className="header">
+        return <MenuBar className="header" ariaLabel={lf("Header")}>
             <div className="header-left">
                 {this.getOrganizationLogo(appTheme)}
                 {this.getTargetLogo(appTheme)}

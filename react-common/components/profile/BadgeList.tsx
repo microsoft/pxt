@@ -33,7 +33,7 @@ export const BadgeList = (props: BadgeListProps) => {
     }
 
     return <div className="profile-badge-list">
-        <div className="profile-badge-header">
+        <div className="profile-badge-header" id="profile-badge-header">
             <span className="profile-badge-title">
                 {lf("Badges")}
             </span>
@@ -43,15 +43,15 @@ export const BadgeList = (props: BadgeListProps) => {
             </span>
         </div>
         <div className="profile-badges-scroller">
-            <div className="profile-badges">
-                <div className="profile-badges-background-container">
+            <div className="profile-badges" role="list" aria-labelledby="profile-badge-header">
+                <div className="profile-badges-background-container" aria-hidden="true">
                     <div className="profile-badges-background">
                         { bg }
                     </div>
                 </div>
                 { badges.map(badge =>
-                    <div className="profile-badge-and-title">
-                        <Badge key={badge.id}
+                    <div className="profile-badge-and-title" key={badge.id} role="listitem">
+                        <Badge
                             onClick={onBadgeClick}
                             badge={badge}
                             disabled={!unlocked[badge.id]}
