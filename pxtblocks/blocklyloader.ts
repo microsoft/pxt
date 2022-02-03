@@ -3102,7 +3102,7 @@ namespace pxt.blocks {
         protected createDom_() {
             super.createDom_();
             this.addEvent_(this.workspace_.getInjectionDiv(), "click", this, (e: any) => {
-                if (!this.htmlDiv_.contains(e.target)) {
+                if (this.htmlDiv_.style.display == "flex" && !this.htmlDiv_.contains(e.target)) {
                     this.close()
                 }
             });
