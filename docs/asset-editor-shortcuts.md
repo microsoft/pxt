@@ -17,6 +17,7 @@ These shortcuts allow you to quickly switch between the tools in the editor.
 | **m**          | Marquee tool |
 | **h**          | Pan tool |
 | **space**      | Temporarily enter pan mode (release space to return to previous tool) |
+| **alt**        | Temporarily enter eyedropper mode (release alt to return to previous tool)
 
 ## Editor shortcuts
 
