@@ -92,6 +92,7 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
     render() {
         const imageState = this.getImageState();
         const isPortrait = !imageState || (imageState.bitmap.height > imageState.bitmap.width);
+        const showResizeHandles = !this.props.isTilemap && this.props.tool == ImageEditorTool.Marquee;
 
         return <div ref="canvas-bounds" className={`image-editor-canvas ${isPortrait ? "portrait" : "landscape"}`} onContextMenu={this.preventContextMenu}>
             <div className="paint-container">
@@ -101,10 +102,10 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
                     return <canvas ref={`paint-surface-${layer.toString()}`} className={`paint-surface overlay ${!this.props.overlayEnabled ? 'hide' : ''}`} key={index} />
                 })}
                 <div ref="floating-layer-border" className="image-editor-floating-layer" />
-                {!this.props.isTilemap && <div ref="floating-layer-nw-corner" className="image-editor-floating-layer-corner"/>}
-                {!this.props.isTilemap && <div ref="floating-layer-ne-corner" className="image-editor-floating-layer-corner"/>}
-                {!this.props.isTilemap && <div ref="floating-layer-se-corner" className="image-editor-floating-layer-corner"/>}
-                {!this.props.isTilemap && <div ref="floating-layer-sw-corner" className="image-editor-floating-layer-corner"/>}
+                { showResizeHandles && <div ref="floating-layer-nw-corner" className="image-editor-floating-layer-corner"/>}
+                { showResizeHandles && <div ref="floating-layer-ne-corner" className="image-editor-floating-layer-corner"/>}
+                { showResizeHandles && <div ref="floating-layer-se-corner" className="image-editor-floating-layer-corner"/>}
+                { showResizeHandles && <div ref="floating-layer-sw-corner" className="image-editor-floating-layer-corner"/>}
             </div>
         </div>
     }
@@ -505,9 +506,8 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
     }
 
     protected updateEdit(x: number, y: number) {
-        if ((this.edit && this.edit.inBounds(x, y)) || (this.edit && this.isResizing)) {
+        if (this.edit && (this.edit.inBounds(x, y) || this.isResizing)) {
             this.edit.update(x, y);
-
             this.redraw();
         }
     }
@@ -662,33 +662,36 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
             floatingRect.style.borderRight = state.layerOffsetX + state.floating.image.width <= state.width ? "" : "none";
             floatingRect.style.borderBottom = state.layerOffsetY + state.floating.image.height <= state.height ? "" : "none";
 
-            const handleWidth = 16;
-            const borderThickness = 3;
+            const hasHandles = nwCorner != undefined;
+            if (hasHandles) {
+                const handleWidth = 16;
+                const borderThickness = 3;
 
-            if (!this.props.isTilemap) {
-                cornerHandles.forEach( corner => {
-                    corner.style.display = ""
-                    corner.style.width = handleWidth + "px";
-                    corner.style.height = handleWidth + "px";
-                    corner.style.border = borderThickness + "px solid black"
-                    corner.style.position = "absolute";
-                    corner.style.backgroundColor = "white";
-                })
-                nwCorner.style.left = (calcLeft - handleWidth ) + "px";
-                nwCorner.style.top = (calcTop - handleWidth) + "px";
-                nwCorner.style.cursor = "nw-resize"
+                if (!this.props.isTilemap) {
+                    cornerHandles.forEach( corner => {
+                        corner.style.display = ""
+                        corner.style.width = handleWidth + "px";
+                        corner.style.height = handleWidth + "px";
+                        corner.style.border = borderThickness + "px solid black"
+                        corner.style.position = "absolute";
+                        corner.style.backgroundColor = "white";
+                    })
+                    nwCorner.style.left = (calcLeft - handleWidth ) + "px";
+                    nwCorner.style.top = (calcTop - handleWidth) + "px";
+                    nwCorner.style.cursor = "nw-resize"
 
-                neCorner.style.left = (calcLeft + calcWidth) + "px";
-                neCorner.style.top = (calcTop - handleWidth) + "px";
-                neCorner.style.cursor = "ne-resize"
+                    neCorner.style.left = (calcLeft + calcWidth) + "px";
+                    neCorner.style.top = (calcTop - handleWidth) + "px";
+                    neCorner.style.cursor = "ne-resize"
 
-                seCorner.style.left = (calcLeft + calcWidth) + "px";
-                seCorner.style.top = (calcTop + calcHeight) + "px";
-                seCorner.style.cursor = "se-resize"
+                    seCorner.style.left = (calcLeft + calcWidth) + "px";
+                    seCorner.style.top = (calcTop + calcHeight) + "px";
+                    seCorner.style.cursor = "se-resize"
 
-                swCorner.style.left = (calcLeft - handleWidth) + "px";
-                swCorner.style.top = (calcTop + calcHeight) + "px";
-                swCorner.style.cursor = "sw-resize"
+                    swCorner.style.left = (calcLeft - handleWidth) + "px";
+                    swCorner.style.top = (calcTop + calcHeight) + "px";
+                    swCorner.style.cursor = "sw-resize"
+                }
             }
         }
         else {
