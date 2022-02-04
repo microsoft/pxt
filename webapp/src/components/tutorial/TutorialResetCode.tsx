@@ -4,7 +4,7 @@ import { Button } from "../../sui";
 import { TutorialCallout } from "./TutorialCallout";
 
 interface TutorialResetCodeProps {
-    resetTemplateCode: (keepAssets: boolean) => void;
+    resetTemplateCode: (keepAssets: boolean) => Promise<void>;
 
     // Telemetry data
     tutorialId: string;
@@ -18,9 +18,12 @@ export function TutorialResetCode(props: TutorialResetCodeProps) {
     const onResetClick = async () => {
         pxt.tickEvent(`tutorial.resetcode`, { tutorial: tutorialId, step: currentStep });
         setReloading(true);
-        await resetTemplateCode(true);
-        document.dispatchEvent(new Event("click"));
-        setReloading(false);
+        try {
+            await resetTemplateCode(true);
+        } finally {
+            document.dispatchEvent(new Event("click"));
+            setReloading(false);
+        }
     }
 
     return <TutorialCallout buttonLabel={lf("Replace my code")} className="tutorial-replace-code">
