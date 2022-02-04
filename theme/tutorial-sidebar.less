@@ -599,18 +599,18 @@
     // Overrides
     .tab-tutorial {
         .tutorial-callout {
-            top: 18.5rem;
             right: 1.6rem;
             bottom: unset;
             left: unset;
             max-width: 80%;
+            transform: translateY(15px);
         }
 
         .tutorial-callout:before {
             top: -2.5rem;
             left: unset;
             bottom: auto;
-            right: 4rem;
+            right: 3.5rem;
             transform: rotate(90deg);
         }
     }
@@ -626,8 +626,8 @@
         width: 4rem;
 
         .tutorial-callout {
-            top: 22.5rem;
             max-width: 32rem;
+            transform: translateY(65px);
         }
 
         .tutorial-replace-code-actions .ui.button {
@@ -635,7 +635,7 @@
         }
     }
 
-    .tutorial-replace-code + .tutorial-controls > .tutorial-hint {
+    .tutorial-replace-code ~ .tutorial-controls > .tutorial-hint {
         width: 5rem;
     }
 
