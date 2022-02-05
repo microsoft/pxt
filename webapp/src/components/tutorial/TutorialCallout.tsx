@@ -25,7 +25,8 @@ export function TutorialCallout(props: TutorialCalloutProps) {
         setVisible(false);
     }
 
-    const toggleCallout = () => {
+    const toggleCallout = (e: any) => {
+        captureEvent(e);
         if (!visible) {
             document.addEventListener("click", closeCallout);
         } else {
@@ -34,10 +35,10 @@ export function TutorialCallout(props: TutorialCalloutProps) {
         setVisible(!visible);
     }
 
-    const handleButtonClick = () => {
+    const handleButtonClick = (e: any) => {
         const { onClick } = props;
         if (onClick) onClick(visible);
-        toggleCallout();
+        toggleCallout(e);
     }
 
     return <div className={className}>
