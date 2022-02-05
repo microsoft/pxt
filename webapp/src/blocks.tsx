@@ -1564,7 +1564,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         // reflow if scale changed
         const flyoutWs = nw.getWorkspace();
         const targetWs = nw.targetWorkspace;
-        const scaleChange = flyoutWs.getScale() !== targetWs.getScale();
+        const scaleChange = (flyoutWs as any).oldScale_ !== targetWs.getScale();
         if (scaleChange) {
             nw.reflow();
         }
