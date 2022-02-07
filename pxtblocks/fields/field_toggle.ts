@@ -207,15 +207,22 @@ namespace pxtblockly {
                 let leftPadding = 0, rightPadding = 0;
                 switch (outputShape) {
                     case Blockly.OUTPUT_SHAPE_HEXAGONAL:
-                        width = innerWidth;
+                        width = size.width / 2;
                         halfWidth = width / 2;
-                        let quarterWidth = halfWidth / 2;
-                        // TODO: the left padding calculation is a hack, we should calculate left padding based on width (generic case)
-                        leftPadding = -halfWidth + quarterWidth;
-                        rightPadding = -quarterWidth;
-                        const topLeftPoint = -quarterWidth;
-                        const bottomRightPoint = halfWidth;
-                        this.toggleThumb_.setAttribute('points', `${topLeftPoint},-14 ${topLeftPoint - 14},0 ${topLeftPoint},14 ${bottomRightPoint},14 ${bottomRightPoint + 14},0 ${bottomRightPoint},-14`);
+                        leftPadding = -halfWidth; // total translation when toggle is left-aligned = 0
+                        rightPadding = halfWidth - innerWidth; // total translation when right-aligned = width
+
+                        /**
+                         *  Toggle defined clockwise from bottom left:
+                         *
+                         *        0,  14 ----------- width, 14
+                         *       /                           \
+                         *  -14, 0                            width + 14, 0
+                         *       \                           /
+                         *        0, -14 ----------- width, -14
+                         */
+
+                        this.toggleThumb_.setAttribute('points', `${0},-14 -14,0 ${0},14 ${width},14 ${width + 14},0 ${width},-14`);
                         break;
                     case Blockly.OUTPUT_SHAPE_ROUND:
                     case Blockly.OUTPUT_SHAPE_SQUARE:
