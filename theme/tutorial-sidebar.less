@@ -194,19 +194,22 @@
         Tutorial Hint
 *******************************/
 
+.tutorial-hint.ui.button,
 .tutorial-hint .ui.button {
     height: 3.2rem;
     width: 3.2rem;
     margin: 0;
     border-radius: 50%;
     font-size: @tutorialTitleFontSize;
-}
-
-.tutorial-hint .ui.button,
-.tutorial-hint .ui.button > i {
     display: flex;
     align-items: center;
     justify-content: center;
+
+    > i {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
 }
 
 // Overrides, largely using old tutorial hint CSS
@@ -584,6 +587,10 @@
         display: flex;
         align-items: center;
         margin: 0;
+
+        > .ui.button {
+            width: unset;
+        }
     }
 
     .tutorial-hint .tutorial-callout-button.ui.button {
