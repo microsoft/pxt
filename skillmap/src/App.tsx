@@ -361,6 +361,19 @@ class AppImpl extends React.Component<AppProps, AppState> {
         }
     }
 
+    componentDidUpdate() {
+        const { highContrast } = this.props;
+
+        const bodyIsHighContrast = document.body.classList.contains("high-contrast");
+
+        if (highContrast) {
+            if (!bodyIsHighContrast) document.body.classList.add("high-contrast");
+        }
+        else if (bodyIsHighContrast) {
+            document.body.classList.remove("high-contrast");
+        }
+    }
+
     componentWillUnmount() {
         window.removeEventListener("hashchange", this.handleHashChange);
         if (this.unsubscribeChangeListener) {
@@ -369,10 +382,10 @@ class AppImpl extends React.Component<AppProps, AppState> {
     }
 
     render() {
-        const { skillMaps, activityOpen, backgroundImageUrl, theme, highContrast } = this.props;
+        const { skillMaps, activityOpen, backgroundImageUrl, theme } = this.props;
         const { error, showingSyncLoader } = this.state;
         const maps = Object.keys(skillMaps).map((id: string) => skillMaps[id]);
-        return (<div className={`app-container ${pxt.appTarget.id} ${highContrast ? "high-contrast" : ""}`}>
+        return (<div className={`app-container ${pxt.appTarget.id}`}>
                 <HeaderBar />
                 {showingSyncLoader && <div className={"makecode-frame-loader"}>
                     <img src={resolvePath("assets/logo.svg")} alt={lf("MakeCode Logo")} />

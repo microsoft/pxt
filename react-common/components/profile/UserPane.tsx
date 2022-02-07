@@ -2,6 +2,7 @@ import * as React from "react";
 import { fireClickOnEnter, CheckboxStatus } from "../util";
 import { UserNotification } from "./UserNotification";
 import { Checkbox } from "../controls/Checkbox";
+import { Button } from "../controls/Button";
 
 export interface UserPaneProps {
     profile: pxt.auth.UserProfile;
@@ -59,10 +60,13 @@ export const UserPane = (props: UserPaneProps) => {
                 onClick={onDeleteProfileClick}>
                 {lf("Delete Profile")}
             </a>
-            <button onClick={onSignOutClick} className="ui icon button sign-out">
-                <i className="icon sign-out"></i>
-                {lf("Sign Out")}
-            </button>
+            <Button
+                className="sign-out"
+                leftIcon="fas fa-sign-out-alt"
+                title={lf("Sign Out")}
+                label={lf("Sign Out")}
+                onClick={onSignOutClick}
+                />
         </div>
     </div>
 }
