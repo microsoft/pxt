@@ -32,22 +32,6 @@
     margin-left: 0.5rem;
 }
 
-.common-button:focus::after {
-    content: "";
-    position: absolute;
-    inset: 4px;
-    border: 1px solid transparent;
-    outline: @buttonFocusOutline;
-    z-index: 1;
-    border-radius: 0.2em;
-}
-
-.common-button.inverted:focus::after,
-.common-button.menu-button:focus::after {
-    outline: @buttonFocusOutlineInverted;
-}
-
-
 /****************************************************
  *                  Color Variants                   *
  ****************************************************/
@@ -140,6 +124,34 @@
     background-color: @buttonBackgroundColorDisabled;
     color: @buttonTextColor;
     border: @buttonBackgroundColorDisabled;
+}
+
+/****************************************************
+ *                      Focus                       *
+ ****************************************************/
+
+.common-button:focus::after {
+    content: "";
+    position: absolute;
+    inset: 4px;
+    border: 1px solid transparent;
+    outline: @buttonFocusOutlineLightBackground;
+    z-index: 1;
+    border-radius: 0.2em;
+}
+
+.common-button.menu-button:focus::after,
+.common-button.primary:focus::after,
+.common-button.secondary:focus::after,
+.common-button.teal:focus::after,
+.common-button.orange:focus::after,
+.common-button.red:focus::after,
+.common-button.green:focus::after {
+    outline: @buttonFocusOutlineDarkBackground;
+}
+
+.common-button.inverted:focus::after {
+    outline: @buttonFocusOutlineLightBackground;
 }
 
 
