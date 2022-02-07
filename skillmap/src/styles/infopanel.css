@@ -108,6 +108,10 @@
 
 /* Buttons */
 
+.info-panel .sign-in-button {
+    width: 100%;
+}
+
 .info-panel .actions {
     display: flex;
     flex-direction: column;
@@ -132,15 +136,6 @@
     margin-top: 1rem;
     display: flex;
     flex-direction: column;
-}
-
-.sign-in-button {
-    color: white;
-    background-color: #2EA9B0;
-    border-radius: .4rem;
-    padding: .5rem;
-    text-align: center;
-    cursor: pointer;
 }
 
 .cloud-indicator {
@@ -254,8 +249,8 @@
         margin-right: 0;
     }
 
-    .sign-in-button {
-        display: none;
+    .info-panel .sign-in-button {
+        min-height: 3rem;
     }
 }
 
