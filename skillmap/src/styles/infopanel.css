@@ -113,7 +113,7 @@
     flex-direction: column;
 }
 
-.info-panel .actions .common-button {
+.info-panel .actions .common-button.inverted {
     margin-bottom: 0.5rem;
     background-color: var(--body-background-color);
 }
