@@ -361,6 +361,19 @@ class AppImpl extends React.Component<AppProps, AppState> {
         }
     }
 
+    componentDidUpdate() {
+        const { highContrast } = this.props;
+
+        const bodyIsHighContrast = document.body.classList.contains("high-contrast");
+
+        if (highContrast) {
+            if (!bodyIsHighContrast) document.body.classList.add("high-contrast");
+        }
+        else if (bodyIsHighContrast) {
+            document.body.classList.remove("high-contrast");
+        }
+    }
+
     componentWillUnmount() {
         window.removeEventListener("hashchange", this.handleHashChange);
         if (this.unsubscribeChangeListener) {
