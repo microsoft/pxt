@@ -124,6 +124,7 @@ declare class WorkspaceSearch {
     constructor(workspace: Blockly.WorkspaceSvg);
     protected workspace_: Blockly.WorkspaceSvg;
     protected htmlDiv_: HTMLDivElement;
+    protected inputElement_: HTMLInputElement;
     init(): void;
     protected createDom_(): void;
     protected addEvent_(node: Element, name: string, thisObject: Object, func: Function): void;
