@@ -116,7 +116,7 @@ export class InfoPanelImpl extends React.Component<InfoPanelProps> {
                 </FocusTrap>
                 {hasCloudSync && isMap && !signedIn &&
                     <Button
-                        className="teal sign-in-button"
+                        className="primary inverted sign-in-button"
                         onClick={dispatchShowLoginModal}
                         label={lf("Sign in to Save")}
                         title={lf("Sign in to Save")}
