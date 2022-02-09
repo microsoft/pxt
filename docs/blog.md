@@ -1,5 +1,13 @@
 # Microsoft MakeCode Blog
 
+## [MakeCode Arcade Valentine’s Update](/blog/arcade/valentine-update-2022)
+
+February 9th, 2022 by [Jaqster](https://github.com/jaqster)
+
+Love is in the air! But instead of a box of chocolates, we’ve got something better for you... updates for MakeCode Arcade and a Valentine’s Day tutorial! 💖
+
+**[Continue reading this blog post](/blog/arcade/valentine-update-2022)**
+
 ## [Sing 2 Skillmap](/blog/arcade/sing-2-skillmap)
 
 December 27th, 2021 by [ElizabethRiffle](https://github.com/ElizabethRiffle)
