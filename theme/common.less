@@ -9,6 +9,11 @@
              Layout
 *******************************/
 
+@mobileAndBelow: ~"only screen and (max-width: @{largestMobileScreen})";
+@tabletAndBelow: ~"only screen and (max-width: @{largestTabletScreen})";
+@computerAndBelow: ~"only screen and (max-width: @{largestSmallMonitor})";
+@largeMonitorAndBelow: ~"only screen and (max-width: @{largestLargeMonitor})";
+
 html {
     height: 100%;
     width: 100%;
