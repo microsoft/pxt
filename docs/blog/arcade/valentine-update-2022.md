@@ -2,7 +2,7 @@
 
 **Posted on February 9th, 2022 by [Jaqster](https://github.com/jaqster)**
 
-Love is in the air! But instead of a box of chocolates, we’ve got something better for you…. updates for MakeCode Arcade and a Valentine’s Day tutorial! 💖
+Love is in the air! But instead of a box of chocolates, we’ve got something better for you... updates for MakeCode Arcade and a Valentine’s Day tutorial! 💖
 
 Here’s a run-down of the updates:
 
