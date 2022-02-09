@@ -12,10 +12,9 @@ If you have a large program, it can be time consuming scrolling around, looking 
 
 ![Workspace search](/static/blog/arcade/valentine-update-2022/workspace-search.gif)
 
-While we’re talking about navigating the workspace, just a reminder of a cool feature we shipped a while ago that allows you to navigate to your function definitions. This is useful in large programs with lots of function calls – simply right-click on your function call and select “Go To Definition” to navigate to the associated function definition.
+While we’re talking about navigating the workspace, just a reminder of a cool feature we shipped a while ago that allows you to navigate to your function definitions. This is useful in large programs with lots of function calls – simply right-click on your function call and select "Go To Definition" to navigate to the associated function definition.
 
 ![Go To Definition](/static/blog/arcade/valentine-update-2022/go-to-definition.gif)
-
 
 ## Skillmap Accessibility Improvements
 
@@ -31,7 +30,7 @@ A much-requested feature! Now it’s possible to scale the size of your image. S
 
 ## Programmatic Scaling
 
-Resizing is a theme with this release! We’ve also added some new blocks in the Sprite category that will let you programmatically resize or scale your sprites.
+Resizing is a theme with this release! We’ve also added some new blocks in the **Sprite** category that will let you programmatically resize or scale your sprites.
 
 ![Scale blocks in Toolbox](/static/blog/arcade/valentine-update-2022/scale-blocks.png)
 
@@ -60,15 +59,13 @@ Also something that many folks have been asking for – this block allows you to
 
 ## New Tilemap blocks
 
-We’ve made some changes to the organization and the order of blocks in the Scene category that will hopefully make it easier to find things. And we’ve also made some small changes to the Tilemap API and added some useful new blocks
+We’ve made some changes to the organization and the order of blocks in the **Scene** category that will hopefully make it easier to find things. And we’ve also made some small changes to the Tilemap API and added some useful new blocks
 
 We created a separate tilemap block to make it easier to use multiple different tilemaps in a game.
 
-![Old set tilemap block](/static/blog/arcade/valentine-update-2022/old-tilemap.png)
+![Old tilemap blocks to new](/static/blog/arcade/valentine-update-2022/old-new-tilemap.png)
 
-![New set tilemap blocks](/static/blog/arcade/valentine-update-2022/new-tilemap.png)
-
-We also added a few new tilemap blocks under the Locations sub-category:
+We also added a few new tilemap blocks under the **Locations** sub-category:
 
 **Tilemap Location of Sprite** – returns the location on a tilemap where a specified sprite is.
 
@@ -77,7 +74,6 @@ We also added a few new tilemap blocks under the Locations sub-category:
 **Location property** – returns different properties of a tilemap location. For example, this can be helpful for translating tilemap columns/rows to screen coordinates (x/y).
 
 ![Tilemap location, column property block](/static/blog/arcade/valentine-update-2022/tilemap-location-column.png)
-
 
 ![Tilemap location example](/static/blog/arcade/valentine-update-2022/tilemap-location-example.png)
 
@@ -99,11 +95,13 @@ We’ve also made a few minor improvements to the image editors for improved usa
 
 * In the Tilemap Editor, clicking on the Wall tool button will allow you to select and deselect.
 
-![Tilemap editor wall tool](/static/blog/arcade/valentine-update-2022/wall-tool.gif)
+>![Tilemap editor wall tool](/static/blog/arcade/valentine-update-2022/wall-tool.gif)
 
 * For advanced users, there are some handy keyboard shortcuts you can use to do some cool things like:
- * Replace color/tile: shift + r
- * Outline image (image editor only): shift + 1-9 or shift + a-f More documentation on keyboard shortcuts is posted here https://makecode.com/asset-editor-shortcuts
+>* Replace color/tile: shift + r
+>* Outline image (image editor only): shift + 1-9 or shift + a-f
+
+>More documentation on keyboard shortcuts is posted here https://makecode.com/asset-editor-shortcuts
 
 ## Skillmap Reset Code
 
@@ -111,11 +109,11 @@ Based on user feedback, we changed the way you can reset code between Skillmap t
 
 ![Skillmap replace my code option](/static/blog/arcade/valentine-update-2022/replace-my-code.png)
 
-As always, if you find any issues, or have suggestions for improvements, please log them on GitHub (https://github.com/microsoft/pxt-arcade/issues).
+As always, if you find any issues, or have suggestions for improvements, please log them on [GitHub](https://github.com/microsoft/pxt-arcade/issues).
 
-If you have questions, feedback, or would like to participate in the MakeCode community, please join the Forum (https://forum.makecode.com) or follow us on social @MSMakeCode (https://twitter.com/MSMakeCode).
+If you have questions, feedback, or would like to participate in the MakeCode community, please join the [Forum](https://forum.makecode.com) or follow us on social [@MSMakeCode](https://twitter.com/MSMakeCode).
 
 ## Made with ❤️ in Microsoft MakeCode Arcade.
 
 <br/>
-- The MakeCode Team
+-- The MakeCode Team
