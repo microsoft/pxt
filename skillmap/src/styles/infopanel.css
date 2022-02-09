@@ -108,8 +108,9 @@
 
 /* Buttons */
 
-.info-panel .sign-in-button {
+.info-panel .sign-in-button.inverted {
     width: 100%;
+    background-color: var(--body-background-color);
 }
 
 .info-panel .actions {
@@ -117,8 +118,11 @@
     flex-direction: column;
 }
 
-.info-panel .actions .common-button.inverted {
+.info-panel .actions .common-button {
     margin-bottom: 0.5rem;
+}
+
+.info-panel .actions .common-button.inverted {
     background-color: var(--body-background-color);
 }
 
