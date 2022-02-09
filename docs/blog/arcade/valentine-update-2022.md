@@ -24,7 +24,7 @@ We’re continually working to make MakeCode more accessible to anyone who wants
 
 ## Image Editor Scaling
 
-A much-requested feature! Now it’s possible to scale the size of your image. Simply use the Marquee tool to select your image and drag the corners to resize.
+A much requested feature! Now it’s possible to scale the size of your image. Simply use the **Marquee** tool to select your image and drag the corners to resize.
 
 ![Image scaling](/static/blog/arcade/valentine-update-2022/image-scale.gif)
 
@@ -93,13 +93,13 @@ We also added a few new tilemap blocks under the **Locations** sub-category:
 
 We’ve also made a few minor improvements to the image editors for improved usability.
 
-* In the Tilemap Editor, clicking on the Wall tool button will allow you to select and deselect.
+* In the Tilemap Editor, clicking on the **Wall** tool button will allow you to select and deselect.
 
 >![Tilemap editor wall tool](/static/blog/arcade/valentine-update-2022/wall-tool.gif)
 
 * For advanced users, there are some handy keyboard shortcuts you can use to do some cool things like:
->* Replace color/tile: shift + r
->* Outline image (image editor only): shift + 1-9 or shift + a-f
+>* Replace color/tile: **shift + r**
+>* Outline image (image editor only): **shift + 1-9** or **shift + a-f** (e.g., **shift + 3** outlines with color number **3** in the palette)
 
 >More documentation on keyboard shortcuts is posted here https://makecode.com/asset-editor-shortcuts
 
