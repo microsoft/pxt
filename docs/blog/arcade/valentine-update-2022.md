@@ -99,6 +99,8 @@ We’ve also made a few minor improvements to the image editors for improved usa
 
 * In the Tilemap Editor, clicking on the Wall tool button will allow you to select and deselect.
 
+![Tilemap editor wall tool](/static/blog/arcade/valentine-update-2022/wall-tool.gif)
+
 * For advanced users, there are some handy keyboard shortcuts you can use to do some cool things like:
  * Replace color/tile: shift + r
  * Outline image (image editor only): shift + 1-9 or shift + a-f More documentation on keyboard shortcuts is posted here https://makecode.com/asset-editor-shortcuts
