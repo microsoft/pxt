@@ -37,6 +37,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     breakpointsSet: number[]; // the IDs of the breakpoints set.
 
     private errorChangesListeners: pxt.Map<(errors: pxt.blocks.BlockDiagnostic[]) => void> = {};
+    protected intersectionObserver: IntersectionObserver;
 
     protected debuggerToolbox: DebuggerToolbox;
 
@@ -606,9 +607,25 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.initWorkspaceSounds();
         this.initAccessibleBlocks();
         this.initWorkspaceSearch();
+        this.setupIntersectionObserver();
         this.resize();
 
         pxt.perf.measureEnd("prepareBlockly")
+    }
+
+    protected setupIntersectionObserver() {
+        if (!('IntersectionObserver' in window) || this.intersectionObserver) return;
+
+        this.intersectionObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.intersectionRatio > 0) {
+                    this.intersectionObserver.unobserve(entry.target);
+                    this.editor.refreshTheme();
+                }
+            })
+        });
+        const blocklyDiv = document.getElementById('blocksEditor');
+        this.intersectionObserver.observe(blocklyDiv);
     }
 
     resize(e?: Event) {
