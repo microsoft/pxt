@@ -2,13 +2,13 @@
 
 Microsoft MakeCode supports localized content for the MakeCode editors, their documentation, and the document pages on the [makecode.com](https://makecode.com/docs) website. Support for localization lets people use, learn, and enjoy MakeCode in their own language.
 
-Localization of MakeCode is made possible by the contributions of translators all over the world working to get MakeCode translated into many languages. Our translations are managed by [Crowdin](https://crowdin.com/project/kindscript), a translation management platform for crowd-based localization. It is free to join and you can volunteer to translate parts of the MakeCode editors and website.
+Localization of MakeCode is made possible by the contributions of translators all over the world working to get MakeCode translated into many languages. Our translations are managed by [Crowdin](https://crowdin.com/project/makecode), a translation management platform for crowd-based localization. It is free to join and you can volunteer to translate parts of the MakeCode editors and website.
 
 ## Crowdin project
 
 Our Crowdin translation project contains the text resources for the MakeCode UI, programming blocks, and content pages.
 
-* **[Microsoft MakeCode Crowdin Project](https://crowdin.com/project/kindscript)**
+* **[Microsoft MakeCode Crowdin Project](https://crowdin.com/project/makecode)**
 
 If you want to help with translating the MakeCode project, please sign in to Crowdin (or [join](https://crowdin.com/join) first if you don't already have an account) and send us a translator request.
 
