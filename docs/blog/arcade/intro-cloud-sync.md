@@ -32,8 +32,8 @@ Love it? Hate it? Have a suggestion? We'd love to hear from you! Drop us a note 
 
 ## Additional Resources
 
-* Learn more about Cloud Sync [here](/identity/cloud-sync).
-* More on identity in MakeCode [here](/identity/sign-in).
+* Learn more about Cloud Sync [here](https://arcade.makecode.com/identity/cloud-sync).
+* More on identity in MakeCode [here](https://arcade.makecode.com/identity/sign-in).
 * [What are Microsoft Accounts?](https://account.microsoft.com/account)
 * [Create a Microsoft Account](https://signup.live.com/signup)
 * [MSA Terms of Service](https://www.microsoft.com/servicesagreement)
