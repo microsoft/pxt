@@ -24,7 +24,8 @@ On the home screen, you can tell a project is saved to cloud if it has a visible
 
 ## The Future
 
-The addition of identity to MakeCode represents a new foundation upon which a wide range of user-aware features can be built. We're excited by all the possiblities! But we're going to build on this new foundation carefully and thoughtfully, with your privacy and safety always our first priority.
+The addition of identity to MakeCode represents a new foundation upon which a wide range of user-aware features can be built. We're excited by all the possiblities!
+But we're going to build on this new foundation carefully and thoughtfully, with your privacy and safety always our first priority.
 
 ## Feedback?
 
