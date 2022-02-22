@@ -1,0 +1,77 @@
+.common-editor-toggle {
+    position: relative;
+    display: grid;
+    border-radius: 0.2rem;
+    border: @editorToggleBorderWidth solid @editorToggleBorderColor;
+    background: @editorToggleBackgroundColor;
+}
+
+// Used in image/tilemap/animation editor
+.common-editor-toggle.slim .common-editor-toggle-item > .common-button {
+    padding: .6rem 1rem .75rem;
+}
+
+.common-editor-toggle-item {
+    z-index: 1;
+
+    .common-menu-dropdown {
+        & > .common-button {
+            padding: 0;
+            width: 100%;
+            border-left: 1px solid @editorToggleBorderColor;
+            border-right: 1px solid @editorToggleBorderColor;
+        }
+
+        .common-menu-dropdown-pane {
+            border-top: 1px solid @editorToggleBorderColor;
+        }
+    }
+
+    & > .common-button {
+        background: none;
+        color: @buttonTextColorInverted;
+        transition: color .25s;
+        margin: 0;
+        width: 100%;
+        padding: .8rem 1rem .95rem;
+    }
+
+    .common-button:focus::after {
+        outline: none;
+    }
+}
+
+.common-editor-toggle-item.common-editor-toggle-item-dropdown {
+    display: grid;
+    grid-template-columns: 3fr 1fr;
+}
+
+.common-editor-toggle-item.selected {
+    .common-menu-dropdown {
+        text-align: center;
+
+        & > .common-button {
+            border-right: none;
+            color: @buttonTextColor;
+        }
+    }
+
+    & > .common-button {
+        color: @buttonTextColor;
+    }
+}
+
+.common-editor-toggle-handle {
+    position: absolute;
+    background: white;
+    width: 100%;
+    height: 100%;
+    transition: left .25s, width .25s;
+    border-radius: 0.2rem;
+    margin-left: -@editorToggleBorderWidth;
+}
+
+.common-editor-toggle-handle.transparent {
+    opacity: 0;
+    margin-left: 0;
+}
