@@ -389,13 +389,18 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         })
 
         // preemptively remove script tags, although they'll be escaped anyway
-        // prevents ugly <script ...> rendering in docs
+        // prevents ugly <script ...> rendering in docs. This is not intended to sanitize
+        // the markedown, that is done using DOMPurify (see setOptions above)
         markdown = markdown.replace(/<\s*script[^>]*>.*<\/\s*script[^>]*>/gi, '');
 
         // Render the markdown into a div outside of the DOM tree to prevent the page from reflowing
         // when we edit the HTML it produces. Then, add the finished result to the content div
         const tempDiv = document.createElement("div");
+
+        // We pass DOMPurify to marked in the call to setOptions above. This should be safe
+        /* eslint-disable @microsoft/sdl/no-inner-html */
         tempDiv.innerHTML = marked(markdown);
+        /* eslint-enable @microsoft/sdl/no-inner-html */
 
         // We'll go through a series of adjustments here, rendering inline blocks, blocks and snippets as needed
         this.renderInlineBlocks(tempDiv);
