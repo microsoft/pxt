@@ -29,6 +29,7 @@ import * as dialogs from "./dialogs";
 import * as identity from "./identity";
 import * as container from "./container";
 import * as scriptsearch from "./scriptsearch";
+import * as extensionsBrowser from "./extensionsBrowser";
 import * as projects from "./projects";
 import * as scriptmanager from "./scriptmanager";
 import * as extensions from "./extensions";
@@ -120,6 +121,7 @@ export class ProjectView
     allEditors: srceditor.Editor[] = [];
     settings: EditorSettings;
     scriptSearch: scriptsearch.ScriptSearch;
+    extensionsBrowser: extensionsBrowser.ExtensionsBrowser;
     home: projects.Projects;
     extensions: extensions.Extensions;
     shareEditor: share.ShareEditor;
@@ -3858,7 +3860,8 @@ export class ProjectView
     }
 
     showPackageDialog() {
-        this.scriptSearch.showExtensions();
+        // this.scriptSearch.showExtensions();
+        this.extensionsBrowser.showExtensions();
     }
 
     showBoardDialogAsync(features?: string[], closeIcon?: boolean): Promise<void> {
@@ -4379,6 +4382,10 @@ export class ProjectView
         this.scriptSearch = c;
     }
 
+    private handleExtensionsBrowserRef = (c: extensionsBrowser.ExtensionsBrowser) => {
+        this.extensionsBrowser = c;
+    }
+
     private handleExtensionRef = (c: extensions.Extensions) => {
         this.extensions = c;
     }
@@ -4522,6 +4529,7 @@ export class ProjectView
         const hasIdentity = pxt.auth.hasIdentity();
         return (
             <div id='root' className={rootClasses}>
+                <extensionsBrowser.ExtensionsBrowser parent={this} ref={this.handleExtensionsBrowserRef}/>
                 {greenScreen ? <greenscreen.WebCam close={this.toggleGreenScreen} /> : undefined}
                 {accessibleBlocks && <accessibleblocks.AccessibleBlocksInfo />}
                 {hideMenuBar || inHome ? undefined :
