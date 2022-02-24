@@ -3448,8 +3448,6 @@ ${output}</xml>`;
                     case SK.LessThanEqualsToken:
                     case SK.GreaterThanToken:
                     case SK.GreaterThanEqualsToken:
-                    case SK.AmpersandAmpersandToken:
-                    case SK.BarBarToken:
                         return undefined;
                     default:
                         break;

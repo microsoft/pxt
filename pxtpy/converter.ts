@@ -1055,6 +1055,15 @@ namespace pxt.py {
         Mult: 1, // this can be also used on strings and arrays, but let's ignore that for now
     }
 
+    const arithmeticCompareOps: Map<number> = {
+        Eq: 1,
+        NotEq: 1,
+        Lt: 1,
+        LtE: 1,
+        Gt: 1,
+        GtE: 1
+    }
+
     const opMapping: Map<string> = {
         Add: "+",
         Sub: "-",
@@ -2032,9 +2041,32 @@ namespace pxt.py {
                 let idx = B.mkInfix(expr(n.comparators[0]), ".", B.H.mkCall("indexOf", [expr(n.left)]))
                 return B.mkInfix(idx, n.ops[0] == "In" ? ">=" : "<", B.mkText("0"))
             }
-            let r = binop(expr(n.left), n.ops[0], expr(n.comparators[0]))
+            let left = expr(n.left);
+            let right = expr(n.comparators[0]);
+
+            // Special handling for comparisons of literal types, e.g. 0 === 5
+            const castIfLiteralComparison = (op: string, leftExpr: Expr, rightExpr: Expr) => {
+                if (arithmeticCompareOps[op]) {
+                    if (isNumStringOrBool(leftExpr) && isNumStringOrBool(rightExpr) && B.flattenNode([left]) !== B.flattenNode([right])) {
+                        left = B.H.mkParenthesizedExpression(
+                            B.mkGroup([left, B.mkText(" as any")])
+                        );
+
+                        right = B.H.mkParenthesizedExpression(
+                            B.mkGroup([right, B.mkText(" as any")])
+                        );
+                    }
+                }
+            }
+
+            castIfLiteralComparison(n.ops[0], n.left, n.comparators[0]);
+
+            let r = binop(left, n.ops[0], right)
             for (let i = 1; i < n.ops.length; ++i) {
-                r = binop(r, "And", binop(expr(n.comparators[i - 1]), n.ops[i], expr(n.comparators[i])))
+                left = expr(n.comparators[i - 1]);
+                right = expr(n.comparators[i]);
+                castIfLiteralComparison(n.ops[i], n.comparators[i - 1], n.comparators[i]);
+                r = binop(r, "And", binop(left, n.ops[i], right))
             }
             return r
         },
@@ -2904,6 +2936,18 @@ namespace pxt.py {
         const t = canonicalize(typeOf(expr));
 
         return t && t.primType === "@array";
+    }
+
+    function isNumStringOrBool(expr: py.Expr) {
+        switch (expr.kind) {
+            case "Num":
+            case "Str":
+                return true;
+            case "NameConstant":
+                return (expr as NameConstant).value !== null;
+        }
+
+        return false;
     }
 
     function buildOverride(override: TypeScriptOverride, args: B.JsNode[], recv?: B.JsNode) {
