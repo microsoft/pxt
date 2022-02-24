@@ -57,11 +57,11 @@ In this example, a reference page for the **show animation** block is translated
 
 ## Common localization files
 
-The following table provides a quick guide to the parts of MakeCode that are common to all target editors. The links here are to the [English](https://crowdin.com/project/kindscript/en#) source files just to show you the location of the files in the folder structure. Of course, you will translate in your selected language instead.
+The following table provides a quick guide to the parts of MakeCode that are common to all target editors. The links here are to the [English](https://crowdin.com/project/makecode/en#) source files just to show you the location of the files in the folder structure. Of course, you will translate in your selected language instead.
 
 | File / Folder | Description |
 | - | - |
-| [strings.json](https://crowdin.com/project/kindscript/32/en-en) | MakeCode editor webapp UI elements |
-| [webstrings.json](https://crowdin.com/translate/kindscript/588/en-en) | Localized strings for parts of the [MakeCode.com](https://makecode.com/docs) website |
-| [core/docs](https://crowdin.com/project/kindscript/en#/core/docs) | Documentation about developing new MakeCode targets, creating extensions, authoring documents, and the MakeCode blog |
-| [core/common-docs](https://crowdin.com/project/kindscript/en#/core/common-docs) | Documentation shared by all MakeCode targets. Describes use of the editor, coding concepts, and reference for the base blocks |
+| [strings.json](https://crowdin.com/project/makecode/32/en-en) | MakeCode editor webapp UI elements |
+| [webstrings.json](https://crowdin.com/translate/makecode/588/en-en) | Localized strings for parts of the [MakeCode.com](https://makecode.com/docs) website |
+| [core/docs](https://crowdin.com/project/makecode/en#/core/docs) | Documentation about developing new MakeCode targets, creating extensions, authoring documents, and the MakeCode blog |
+| [core/common-docs](https://crowdin.com/project/makecode/en#/core/common-docs) | Documentation shared by all MakeCode targets. Describes use of the editor, coding concepts, and reference for the base blocks |
