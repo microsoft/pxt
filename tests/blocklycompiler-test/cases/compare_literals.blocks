@@ -1,0 +1,102 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+    <variables>
+        <variable id="f;VX,@/6}aZ0K_YcFhK!">lkhj</variable>
+        <variable id="K!+L)YM?Q{D8HKZ!(2Sn">item</variable>
+    </variables>
+    <block type="pxt-on-start" x="0" y="0">
+        <statement name="HANDLER">
+            <block type="controls_if">
+                <value name="IF0">
+                    <shadow type="logic_boolean">
+                        <field name="BOOL">TRUE</field>
+                    </shadow>
+                    <block type="logic_compare">
+                        <field name="OP">EQ</field>
+                        <value name="A">
+                            <shadow type="text">
+                                <field name="TEXT">hello</field>
+                            </shadow>
+                            <block type="logic_boolean">
+                                <field name="BOOL">TRUE</field>
+                            </block>
+                        </value>
+                        <value name="B">
+                            <shadow type="text">
+                                <field name="TEXT">goodbye</field>
+                            </shadow>
+                            <block type="logic_boolean">
+                                <field name="BOOL">FALSE</field>
+                            </block>
+                        </value>
+                    </block>
+                </value>
+                <next>
+                    <block type="controls_if">
+                        <value name="IF0">
+                            <shadow type="logic_boolean">
+                                <field name="BOOL">TRUE</field>
+                            </shadow>
+                            <block type="logic_compare">
+                                <field name="OP">EQ</field>
+                                <value name="A">
+                                    <shadow type="text">
+                                        <field name="TEXT">hello</field>
+                                    </shadow>
+                                </value>
+                                <value name="B">
+                                    <shadow type="text">
+                                        <field name="TEXT">goodbye</field>
+                                    </shadow>
+                                </value>
+                            </block>
+                        </value>
+                        <next>
+                            <block type="controls_if">
+                                <value name="IF0">
+                                    <shadow type="logic_boolean">
+                                        <field name="BOOL">TRUE</field>
+                                    </shadow>
+                                    <block type="logic_compare">
+                                        <field name="OP">EQ</field>
+                                        <value name="A">
+                                            <shadow type="math_number">
+                                                <field name="NUM">3</field>
+                                            </shadow>
+                                        </value>
+                                        <value name="B">
+                                            <shadow type="math_number">
+                                                <field name="NUM">5</field>
+                                            </shadow>
+                                        </value>
+                                    </block>
+                                </value>
+                                <next>
+                                    <block type="controls_if">
+                                        <value name="IF0">
+                                            <shadow type="logic_boolean">
+                                                <field name="BOOL">TRUE</field>
+                                            </shadow>
+                                            <block type="logic_compare">
+                                                <field name="OP">GT</field>
+                                                <value name="A">
+                                                    <shadow type="math_number">
+                                                        <field name="NUM">3</field>
+                                                    </shadow>
+                                                </value>
+                                                <value name="B">
+                                                    <shadow type="math_number">
+                                                        <field name="NUM">5</field>
+                                                    </shadow>
+                                                </value>
+                                            </block>
+                                        </value>
+                                    </block>
+                                </next>
+                            </block>
+                        </next>
+                    </block>
+                </next>
+            </block>
+        </statement>
+    </block>
+</xml>

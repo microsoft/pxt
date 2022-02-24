@@ -1,0 +1,116 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+    <block type="pxt-on-start">
+        <statement name="HANDLER">
+            <block type="controls_if">
+                <mutation elseif="0" else="0" />
+                <value name="IF0">
+                    <shadow type="logic_boolean">
+                        <field name="BOOL">TRUE</field>
+                    </shadow>
+                    <block type="logic_compare">
+                        <field name="OP">EQ</field>
+                        <value name="A">
+                            <shadow type="math_number">
+                                <field name="NUM">0</field>
+                            </shadow>
+                            <block type="logic_boolean">
+                                <field name="BOOL">TRUE</field>
+                            </block>
+                        </value>
+                        <value name="B">
+                            <shadow type="math_number">
+                                <field name="NUM">0</field>
+                            </shadow>
+                            <block type="logic_boolean">
+                                <field name="BOOL">FALSE</field>
+                            </block>
+                        </value>
+                    </block>
+                </value>
+                <statement name="DO0">
+                </statement>
+                <next>
+                    <block type="controls_if">
+                        <mutation elseif="0" else="0" />
+                        <value name="IF0">
+                            <shadow type="logic_boolean">
+                                <field name="BOOL">TRUE</field>
+                            </shadow>
+                            <block type="logic_compare">
+                                <field name="OP">EQ</field>
+                                <value name="A">
+                                    <shadow type="math_number">
+                                        <field name="NUM">0</field>
+                                    </shadow>
+                                    <block type="text">
+                                        <field name="TEXT">hello</field>
+                                    </block>
+                                </value>
+                                <value name="B">
+                                    <shadow type="math_number">
+                                        <field name="NUM">0</field>
+                                    </shadow>
+                                    <block type="text">
+                                        <field name="TEXT">goodbye</field>
+                                    </block>
+                                </value>
+                            </block>
+                        </value>
+                        <statement name="DO0">
+                        </statement>
+                        <next>
+                            <block type="controls_if">
+                                <mutation elseif="0" else="0" />
+                                <value name="IF0">
+                                    <shadow type="logic_boolean">
+                                        <field name="BOOL">TRUE</field>
+                                    </shadow>
+                                    <block type="logic_compare">
+                                        <field name="OP">EQ</field>
+                                        <value name="A">
+                                            <shadow type="math_number">
+                                                <field name="NUM">3</field>
+                                            </shadow>
+                                        </value>
+                                        <value name="B">
+                                            <shadow type="math_number">
+                                                <field name="NUM">5</field>
+                                            </shadow>
+                                        </value>
+                                    </block>
+                                </value>
+                                <statement name="DO0">
+                                </statement>
+                                <next>
+                                    <block type="controls_if">
+                                        <mutation elseif="0" else="0" />
+                                        <value name="IF0">
+                                            <shadow type="logic_boolean">
+                                                <field name="BOOL">TRUE</field>
+                                            </shadow>
+                                            <block type="logic_compare">
+                                                <field name="OP">GT</field>
+                                                <value name="A">
+                                                    <shadow type="math_number">
+                                                        <field name="NUM">3</field>
+                                                    </shadow>
+                                                </value>
+                                                <value name="B">
+                                                    <shadow type="math_number">
+                                                        <field name="NUM">5</field>
+                                                    </shadow>
+                                                </value>
+                                            </block>
+                                        </value>
+                                        <statement name="DO0">
+                                        </statement>
+                                    </block>
+                                </next>
+                            </block>
+                        </next>
+                    </block>
+                </next>
+            </block>
+        </statement>
+    </block>
+</xml>
