@@ -343,7 +343,9 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         markdown = markdown.replace(/<\s*script[^>]*>.*<\/\s*script\s*>/g, '');
 
         // Render the markdown and add it to the content div
+        /* eslint-disable @microsoft/sdl/no-inner-html */
         content.innerHTML = marked(markdown);
+        /* eslint-enable @microsoft/sdl/no-inner-html */
 
         //
 
