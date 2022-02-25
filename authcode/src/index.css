@@ -1,0 +1,14 @@
+
+.app-header {
+
+}
+
+.app-content {
+    margin-top: 2em;
+}
+
+.tokenStatus {
+    color: gray;
+    margin-top: 3em;
+    font-size: small;
+}

@@ -3,6 +3,7 @@ web/_temp
 webapp/public/blockly
 webapp/public/closure-library
 webapp/public/skillmap.html
+webapp/public/authcode.html
 localtypings/blockly.d.ts
 node_modules
 *.sw?
