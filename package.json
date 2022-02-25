@@ -63,7 +63,7 @@
     "@fortawesome/fontawesome-free": "^5.15.4",
     "@microsoft/immersive-reader-sdk": "1.1.0",
     "applicationinsights-js": "^1.0.20",
-    "browserify": "16.2.0",
+    "browserify": "16.2.3",
     "chai": "^3.5.0",
     "cssnano": "4.1.10",
     "dompurify": "2.0.8",
