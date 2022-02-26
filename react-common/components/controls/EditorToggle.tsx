@@ -35,69 +35,27 @@ export const EditorToggle = (props: EditorToggleProps) => {
         selected
     } = props;
 
-    let [expandedDropdown, setExpandedDropdown] = useState(-1);
 
-    const handleRef = (ref: HTMLDivElement) => {
-        if (!ref) return;
-
-        if (typeof ResizeObserver !== "undefined") {
-            const observer = new ResizeObserver(() => {
-                updateHandlePosition();
-            })
-            observer.observe(ref);
-        }
-    }
+    const hasDropdown = items.some(item => isDropdownItem(item));
 
     const onKeydown = (ev: React.KeyboardEvent) => {
-
+        // TODO
     }
-
-    let hiddenHandle: HTMLDivElement;
-    let visibleHandle: HTMLDivElement;
-
-    // You can't animate the transition between positions in a grid layout. To
-    // work around this, we create two handles: one that is positoned using
-    // the grid css and one that follows the other using absolute positioning.
-    // The following one is the visible one, and it's animated via css
-
-    const updateHandlePosition = () => {
-        if (!hiddenHandle || !visibleHandle) return;
-
-        const parentRect = hiddenHandle.parentElement.getBoundingClientRect();
-        const fakeRect = hiddenHandle.getBoundingClientRect();
-        visibleHandle.style.left = (fakeRect.left - parentRect.left) + "px";
-        visibleHandle.style.width = fakeRect.width + "px";
-    }
-    const handleHiddenHandleRef = (ref: HTMLDivElement) => {
-        hiddenHandle = ref;
-        updateHandlePosition();
-    }
-
-    const handleVisibleHandleRef = (ref: HTMLDivElement) => {
-        visibleHandle = ref;
-        updateHandlePosition();
-    }
-
-    const columns = items.map(i => isDropdownItem(i) ? "4fr" : "3fr").join(" ");
 
     return (
         <div id={id}
-            className={classList("common-editor-toggle", className)}
-            ref={handleRef}
+            className={classList("common-editor-toggle", hasDropdown && "has-dropdown", className)}
             role={role || "tablist"}
             aria-hidden={ariaHidden}
-            aria-label={ariaLabel}
-            style={{ gridTemplateColumns: columns }}>
+            aria-label={ariaLabel}>
                 {items.map((item, index) => {
                     const isSelected = selected === index;
-                    const isExpanded = expandedDropdown === index;
                     return (
                         <div key={index}
                             className={classList(
                                 "common-editor-toggle-item",
                                 isSelected && "selected",
                                 isDropdownItem(item) && "common-editor-toggle-item-dropdown",
-                                isExpanded && "expanded"
                             )} >
                             <ToggleButton item={item} isSelected={isSelected} onKeydown={onKeydown} />
                             { isDropdownItem(item) &&
@@ -118,14 +76,8 @@ export const EditorToggle = (props: EditorToggleProps) => {
                     );
                 })}
 
-                <div className="common-editor-toggle-handle transparent"
-                    aria-hidden={true}
-                    ref={handleHiddenHandleRef}
-                    style={{ gridColumnStart: selected + 1, gridColumnEnd: selected + 2 }} />
-
                 <div className="common-editor-toggle-handle"
                     aria-hidden={true}
-                    ref={handleVisibleHandleRef}
                 />
         </div>
     );
