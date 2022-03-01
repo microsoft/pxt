@@ -9,8 +9,7 @@
 
 // Used in image/tilemap/animation editor
 .common-editor-toggle.slim .common-editor-toggle-item > .common-button {
-    padding-top: .6rem;
-    padding-bottom: .75rem;
+    padding: .6rem 2rem .75rem;
 }
 
 .common-editor-toggle-item {
@@ -38,8 +37,6 @@
         transition: color .25s;
         margin: 0;
         width: 100%;
-        padding-left: 1rem;
-        padding-right: 1rem;
     }
 
     .common-button:focus::after {
@@ -83,23 +80,48 @@
 }
 
 .common-editor-toggle {
-    /* toggle positioning, no dropdown */
+    /* toggle size, two items, no dropdown */
+    .common-editor-toggle-item:first-child:nth-last-child(3) ~ .common-editor-toggle-handle { width: 50% }
+
+    /* toggle positioning, two items, no dropdown */
+    .common-editor-toggle-item:first-child:nth-last-child(3) ~ .common-editor-toggle-item.selected ~ .common-editor-toggle-handle { margin-left: 50%; }
+
+    /* toggle positioning, three items, no dropdown */
     .common-editor-toggle-item:nth-of-type(1).selected ~ .common-editor-toggle-handle { margin-left: 0; }
     .common-editor-toggle-item:nth-of-type(2).selected ~ .common-editor-toggle-handle { margin-left: 33%; }
     .common-editor-toggle-item:nth-of-type(3).selected ~ .common-editor-toggle-handle { margin-left: 67%; }
 
     &.has-dropdown {
+        /* flex balance, two items, has dropdown (45% to non-dropdown, 55% to dropdown) */
+       .common-editor-toggle-item:first-child:nth-last-child(3) ~ .common-editor-toggle-item-dropdown,
+       .common-editor-toggle-item.common-editor-toggle-item-dropdown:first-child:nth-last-child(3) { flex: 55 }
+       .common-editor-toggle-item:first-child:nth-last-child(3),
+       .common-editor-toggle-item-dropdown:first-child:nth-last-child(3) ~ .common-editor-toggle-item { flex: 45 }
+
+        /* toggle size, two items, has dropdown */
+        .common-editor-toggle-item:first-child:nth-last-child(3) ~ .common-editor-toggle-handle { width: 45% }
+        .common-editor-toggle-item:first-child:nth-last-child(3) ~ .common-editor-toggle-item-dropdown.selected ~ .common-editor-toggle-handle,
+        .common-editor-toggle-item.common-editor-toggle-item-dropdown.selected:first-child:nth-last-child(3) ~ .common-editor-toggle-handle { width: 55% }
+
+        /* toggle positioning, two items, first item has dropdown */
+        .common-editor-toggle-item.common-editor-toggle-item-dropdown:first-child:nth-last-child(3) + .selected ~ .common-editor-toggle-handle { margin-left: 55% }
+
+        /* toggle positioning, two items, second item has dropdown */
+        .common-editor-toggle-item:first-child:nth-last-child(3) + .common-editor-toggle-item-dropdown.selected ~ .common-editor-toggle-handle { margin-left: 45% }
+
+        /* toggle size, three items, has dropdown */
         .common-editor-toggle-handle { width: 30% }
         .common-editor-toggle-item.common-editor-toggle-item-dropdown.selected ~ .common-editor-toggle-handle { width: 40%; }
 
+        /* toggle positioning, three items, has dropdown */
         .common-editor-toggle-item:nth-of-type(2).selected ~ .common-editor-toggle-handle { margin-left: 30%; }
         .common-editor-toggle-item:nth-of-type(3).selected ~ .common-editor-toggle-handle { margin-left: 60%; }
 
-        /* toggle positioning, first item in toggle has dropdown */
+        /* toggle positioning, three items, first item in toggle has dropdown */
         .common-editor-toggle-item.common-editor-toggle-item-dropdown + .common-editor-toggle-item.selected ~ .common-editor-toggle-handle { margin-left: 40%; }
         .common-editor-toggle-item.common-editor-toggle-item-dropdown + .common-editor-toggle-item + .common-editor-toggle-item.selected ~ .common-editor-toggle-handle { margin-left: 70%; }
 
-        /* toggle positioning, second item in toggle has dropdown */
+        /* toggle positioning, three items, second item in toggle has dropdown */
         .common-editor-toggle-item + .common-editor-toggle-item.common-editor-toggle-item-dropdown + .common-editor-toggle-item.selected ~ .common-editor-toggle-handle { margin-left: 70%; }
     }
 }
@@ -110,15 +132,15 @@
  ****************************************************/
 
 @media @tabletAndBelow {
-    .common-editor-toggle > .common-editor-toggle-item > .common-button {
-        padding-left: 0.5rem;
-        padding-right: 0.5rem;
-        .common-button-label {
-            display: none;
+    .common-editor-toggle.tablet-compact {
+        & > .common-editor-toggle-item > .common-button {
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+            .common-button-label {
+                display: none;
+            }
         }
-    }
 
-    .common-editor-toggle {
         &.has-dropdown {
             .common-editor-toggle-item {
                 flex: 25;
@@ -130,6 +152,74 @@
             }
             .common-editor-toggle-handle { width: 25%; }
             .common-editor-toggle-item-dropdown.selected ~ .common-editor-toggle-handle { width: 50%; }
+
+            /* flex balance, two items, has dropdown (33% to non-dropdown, 67% to dropdown) */
+            .common-editor-toggle-item:first-child:nth-last-child(3) ~ .common-editor-toggle-item-dropdown,
+            .common-editor-toggle-item.common-editor-toggle-item-dropdown:first-child:nth-last-child(3) { flex: 67 }
+            .common-editor-toggle-item:first-child:nth-last-child(3),
+            .common-editor-toggle-item-dropdown:first-child:nth-last-child(3) ~ .common-editor-toggle-item { flex: 33 }
+
+            /* toggle size, two items, has dropdown */
+            .common-editor-toggle-item:first-child:nth-last-child(3) ~ .common-editor-toggle-handle { width: 33% }
+            .common-editor-toggle-item:first-child:nth-last-child(3) ~ .common-editor-toggle-item-dropdown.selected ~ .common-editor-toggle-handle,
+            .common-editor-toggle-item.common-editor-toggle-item-dropdown.selected:first-child:nth-last-child(3) ~ .common-editor-toggle-handle { width: 67% }
+
+            /* toggle positioning, two items, first item has dropdown */
+            .common-editor-toggle-item.common-editor-toggle-item-dropdown:first-child:nth-last-child(3) + .selected ~ .common-editor-toggle-handle { margin-left: 67% }
+
+            /* toggle positioning, two items, second item has dropdown */
+            .common-editor-toggle-item:first-child:nth-last-child(3) + .common-editor-toggle-item-dropdown.selected ~ .common-editor-toggle-handle { margin-left: 33% }
+
+            /* toggle positioning, first item in toggle has dropdown */
+            .common-editor-toggle-item.common-editor-toggle-item-dropdown + .common-editor-toggle-item.selected ~ .common-editor-toggle-handle { margin-left: 50%; }
+            .common-editor-toggle-item.common-editor-toggle-item-dropdown + .common-editor-toggle-item + .common-editor-toggle-item.selected ~ .common-editor-toggle-handle { margin-left: 75%; }
+
+            /* toggle positioning, second item in toggle has dropdown */
+            .common-editor-toggle-item + .common-editor-toggle-item.common-editor-toggle-item-dropdown.selected ~ .common-editor-toggle-handle { margin-left: 25%; }
+            .common-editor-toggle-item + .common-editor-toggle-item.common-editor-toggle-item-dropdown + .common-editor-toggle-item.selected ~ .common-editor-toggle-handle { margin-left: 75%; }
+        }
+    }
+}
+
+// Same as tablet
+@media @mobileAndBelow {
+    .common-editor-toggle.mobile-compact {
+        & > .common-editor-toggle-item > .common-button {
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+            .common-button-label {
+                display: none;
+            }
+        }
+
+        &.has-dropdown {
+            .common-editor-toggle-item {
+                flex: 25;
+            }
+            .common-editor-toggle-item.common-editor-toggle-item-dropdown {
+                flex: 50;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+            }
+            .common-editor-toggle-handle { width: 25%; }
+            .common-editor-toggle-item-dropdown.selected ~ .common-editor-toggle-handle { width: 50%; }
+
+            /* flex balance, two items, has dropdown (33% to non-dropdown, 67% to dropdown) */
+            .common-editor-toggle-item:first-child:nth-last-child(3) ~ .common-editor-toggle-item-dropdown,
+            .common-editor-toggle-item.common-editor-toggle-item-dropdown:first-child:nth-last-child(3) { flex: 67 }
+            .common-editor-toggle-item:first-child:nth-last-child(3),
+            .common-editor-toggle-item-dropdown:first-child:nth-last-child(3) ~ .common-editor-toggle-item { flex: 33 }
+
+            /* toggle size, two items, has dropdown */
+            .common-editor-toggle-item:first-child:nth-last-child(3) ~ .common-editor-toggle-handle { width: 33% }
+            .common-editor-toggle-item:first-child:nth-last-child(3) ~ .common-editor-toggle-item-dropdown.selected ~ .common-editor-toggle-handle,
+            .common-editor-toggle-item.common-editor-toggle-item-dropdown.selected:first-child:nth-last-child(3) ~ .common-editor-toggle-handle { width: 67% }
+
+            /* toggle positioning, two items, first item has dropdown */
+            .common-editor-toggle-item.common-editor-toggle-item-dropdown:first-child:nth-last-child(3) + .selected ~ .common-editor-toggle-handle { margin-left: 67% }
+
+            /* toggle positioning, two items, second item has dropdown */
+            .common-editor-toggle-item:first-child:nth-last-child(3) + .common-editor-toggle-item-dropdown.selected ~ .common-editor-toggle-handle { margin-left: 33% }
 
             /* toggle positioning, first item in toggle has dropdown */
             .common-editor-toggle-item.common-editor-toggle-item-dropdown + .common-editor-toggle-item.selected ~ .common-editor-toggle-handle { margin-left: 50%; }
