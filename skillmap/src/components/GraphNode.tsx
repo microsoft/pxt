@@ -9,8 +9,7 @@ import '../styles/graphnode.css'
 /* eslint-enable import/no-unassigned-import, import/no-internal-modules */
 
 interface GraphNodeProps {
-    title: string;
-    activityId: string;
+    node: MapNode;
     kind: MapNodeKind;
     width: number;
     position: SvgCoord;
@@ -32,11 +31,11 @@ export class GraphNode extends React.Component<GraphNodeProps, GraphNodeState> {
     }
 
     protected handleClick = () => {
-        if (this.props.onItemSelect) this.props.onItemSelect(this.props.activityId, this.props.kind);
+        if (this.props.onItemSelect) this.props.onItemSelect(this.props.node.activityId, this.props.kind);
     }
 
     protected handleDoubleClick = () => {
-        if (this.props.onItemDoubleClick) this.props.onItemDoubleClick(this.props.activityId, this.props.kind);
+        if (this.props.onItemDoubleClick) this.props.onItemDoubleClick(this.props.node.activityId, this.props.kind);
     }
 
     protected handleKeyDown = (e: React.KeyboardEvent) => {
@@ -44,7 +43,7 @@ export class GraphNode extends React.Component<GraphNodeProps, GraphNodeState> {
         if (charCode === 13 /* enter */ || charCode === 32 /* space */) {
             e.preventDefault();
             e.stopPropagation();
-            if (this.props.onItemSelect) this.props.onItemSelect(this.props.activityId, this.props.kind);
+            if (this.props.onItemSelect) this.props.onItemSelect(this.props.node.activityId, this.props.kind);
         }
     }
 
@@ -82,6 +81,22 @@ export class GraphNode extends React.Component<GraphNodeProps, GraphNodeState> {
         }
     }
 
+    protected getAccessibilityStatusText() {
+        const { status } = this.props;
+
+        switch (status) {
+            case "completed":
+                return lf("Completed activity.");
+            case "inprogress":
+                return lf("Activity in progress.");
+            case "locked":
+                return lf("This activity is locked. Complete the previous activity to unlock it.");
+            case "notstarted":
+            case "restarted":
+                return lf("Unstarted activity.");
+        }
+    }
+
     protected getNodeMarker(status: string, width: number, foreground: string, background: string): JSX.Element {
         // Used for positioning the corner circle on completed activities so that it isn't
         // perfectly aligned with the node
@@ -103,7 +118,7 @@ export class GraphNode extends React.Component<GraphNodeProps, GraphNodeState> {
 
     render() {
         const { hover } = this.state;
-        const  { width, position, selected, status, kind, theme, activityId, title } = this.props;
+        const  { width, position, selected, status, kind, theme, node } = this.props;
         let foreground = hover ? theme.unlockedNodeColor : theme.unlockedNodeForeground;
         let background = hover ? theme.unlockedNodeForeground : theme.unlockedNodeColor;
 
@@ -121,6 +136,18 @@ export class GraphNode extends React.Component<GraphNodeProps, GraphNodeState> {
         const selectedUnit = width / 8;
         const yOffset = width / 12.5;
 
+        const descriptionId = "graph-node-" + node.activityId;
+        let description: string | undefined;
+
+        switch (node.kind) {
+            case "activity":
+                description = node.description || node.displayName
+                break;
+            case "completion":
+                description = lf("A reward for completing this skillmap.");
+                break;
+        }
+
         return (
             <g ref={this.handleRef}
                 className={`graph-activity ${selected ? "selected" : ""} ${hover ? "hover" : ""}`}
@@ -128,7 +155,7 @@ export class GraphNode extends React.Component<GraphNodeProps, GraphNodeState> {
                 onKeyDown={this.handleKeyDown}
                 onClick={this.handleClick}
                 onDoubleClick={this.handleDoubleClick}
-                data-activity={activityId}>
+                data-activity={node.activityId}>
                     <foreignObject
                         width={width}
                         height={width}
@@ -136,13 +163,31 @@ export class GraphNode extends React.Component<GraphNodeProps, GraphNodeState> {
                         y={-width / 2}>
                         <Button
                             className="graph-node-button"
-                            title={title}
+                            title={node.displayName}
                             onClick={this.handleClick}
                             onKeydown={this.handleKeyDown}
+                            role="menuitem"
                             ariaHasPopup={status !== "locked" ? "true" : "false"}
                             ariaExpanded={selected}
                             ariaControls={selected ? "info-panel-actions" : undefined}
+                            ariaDescribedBy={descriptionId}
                         />
+
+                        {/**
+                         * Hidden accessibility text; ideally this would be visible in the DOM,
+                         * but we only show the description when a node has been clicked; not when it
+                         * is focused
+                         * */}
+                        <div id={descriptionId} style={{ display: "none" }}>
+                            <p>
+                                {this.getAccessibilityStatusText()}
+                            </p>
+                            {description &&
+                                <p>
+                                    {description}
+                                </p>
+                            }
+                        </div>
                     </foreignObject>
                 { selected &&
                     (kind !== "activity" ?

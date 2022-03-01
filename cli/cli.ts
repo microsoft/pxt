@@ -1966,12 +1966,18 @@ async function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
             "--include-path=" + lessIncludePaths
         ]
     })
+    let fontAwesomeSource = "node_modules/@fortawesome/fontawesome-free/webfonts/";
+    if (!fs.existsSync(fontAwesomeSource)) {
+        fontAwesomeSource = "node_modules/pxt-core/" + fontAwesomeSource;
+    }
 
     // Inline all of our icon fonts
     let semCss = await readFileAsync('built/web/semantic.css', "utf8");
     semCss = await linkFontAsync("icons", semCss);
     semCss = await linkFontAsync("outline-icons", semCss);
     semCss = await linkFontAsync("brand-icons", semCss);
+    semCss = await linkFontAsync("fa-solid-900", semCss, fontAwesomeSource, "\\.\\.\\/webfonts\\/");
+    semCss = await linkFontAsync("fa-regular-400", semCss, fontAwesomeSource, "\\.\\.\\/webfonts\\/");
 
     // Append icons.css to semantic.css (custom pxt icons)
     const iconsFile = isPxtCore ? 'built/web/icons.css' : 'node_modules/pxt-core/built/web/icons.css';
@@ -2016,11 +2022,6 @@ async function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
             "--include-path=" + lessIncludePaths
         ]
     });
-
-    let fontAwesomeSource = "node_modules/@fortawesome/fontawesome-free/webfonts/";
-    if (!fs.existsSync(fontAwesomeSource)) {
-        fontAwesomeSource = "node_modules/pxt-core/" + fontAwesomeSource;
-    }
 
     let skillmapCss = await readFileAsync(`built/web/react-common-skillmap.css`, "utf8");
     skillmapCss = await linkFontAsync("fa-solid-900", skillmapCss, fontAwesomeSource, "\\.\\.\\/webfonts\\/");

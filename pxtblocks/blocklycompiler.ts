@@ -668,9 +668,37 @@ namespace pxt.blocks {
         return H.mkNumberLiteral(extractNumber(b));
     }
 
+    function isNumericLiteral(e: Environment, b: Blockly.Block): boolean {
+        if (!b) return false;
+
+        if (b.type === "math_number" || b.type === "math_integer" || b.type === "math_number_minmax" || b.type === "math_whole_number") {
+            return true;
+        }
+
+        const blockInfo = e.stdCallTable[b.type];
+        if (!blockInfo) return false;
+
+        const { comp } = blockInfo;
+
+        if (blockInfo.attrs.shim === "TD_ID" && comp.parameters.length === 1) {
+            const fieldValue = b.getFieldValue(comp.parameters[0].definitionName);
+
+            if (fieldValue) {
+                return !isNaN(parseInt(fieldValue))
+            }
+            else {
+                return isNumericLiteral(e, getInputTargetBlock(b, comp.parameters[0].definitionName));
+            }
+        }
+
+        return false;
+    }
+
+    function isLiteral(e: Environment, b: Blockly.Block) {
+        return isNumericLiteral(e, b) || b.type === "logic_boolean" || b.type === "text";
+    }
+
     let opToTok: { [index: string]: string } = {
-        // POWER gets a special treatment because there's no operator for it in
-        // TouchDevelop
         "ADD": "+",
         "MINUS": "-",
         "MULTIPLY": "*",
@@ -686,11 +714,28 @@ namespace pxt.blocks {
         "POWER": "**"
     };
 
+    function isComparisonOp(op: string) {
+        return ["LT", "LTE", "GT", "GTE", "EQ", "NEQ"].indexOf(op) !== -1;
+    }
+
     function compileArithmetic(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
         let bOp = b.getFieldValue("OP");
         let left = getInputTargetBlock(b, "A");
         let right = getInputTargetBlock(b, "B");
         let args = [compileExpression(e, left, comments), compileExpression(e, right, comments)];
+
+        // Special handling for the case of comparing two literals (e.g. 0 === 5). TypeScript
+        // throws an error if we don't first cast to any
+        if (isComparisonOp(bOp) && isLiteral(e, left) && isLiteral(e, right)) {
+            if (flattenNode([args[0]]).output !== flattenNode([args[1]]).output) {
+                args = args.map(arg =>
+                    H.mkParenthesizedExpression(
+                        mkGroup([arg, mkText(" as any")])
+                    )
+                );
+            }
+        }
+
         let t = returnType(e, left).type;
 
         if (t == pString.type) {

@@ -28,6 +28,7 @@ export const Button = (props: ButtonProps) => {
         className,
         ariaLabel,
         ariaHidden,
+        ariaDescribedBy,
         ariaControls,
         ariaExpanded,
         ariaHasPopup,
@@ -74,7 +75,8 @@ export const Button = (props: ButtonProps) => {
             aria-expanded={ariaExpanded}
             aria-haspopup={ariaHasPopup as any}
             aria-posinset={ariaPosInSet}
-            aria-setsize={ariaSetSize}>
+            aria-setsize={ariaSetSize}
+            aria-describedby={ariaDescribedBy}>
                 <span className="common-button-flex">
                     {leftIcon && <i className={leftIcon} aria-hidden={true}/>}
                     <span className="common-button-label">

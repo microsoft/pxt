@@ -223,7 +223,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
     }
 
     renderRestartWarning() {
-        const  { mapId, activity, dispatchRestartActivity, showCodeCarryoverModal, dispatchShowCarryoverModal } = this.props;
+        const  { userState, pageSourceUrl, skillMap, mapId, activity, dispatchRestartActivity, showCodeCarryoverModal, dispatchShowCarryoverModal } = this.props;
         const restartModalTitle = lf("Restart Activity?");
         const restartModalText = lf("Are you sure you want to restart {0}? You won't lose your path progress but the code you have written for this activity will be deleted.", "{0}");
         const restartModalTextSegments = restartModalText.split("{0}");
@@ -232,8 +232,12 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
             { label: lf("CANCEL"), onClick: this.handleOnClose },
             { label: lf("RESTART"), onClick: () => {
                 tickEvent("skillmap.activity.restart", { path: mapId, activity: activity!.activityId });
-                if (showCodeCarryoverModal) dispatchShowCarryoverModal(mapId, activity!.activityId);
-                else dispatchRestartActivity(mapId, activity!.activityId);
+                if (showCodeCarryoverModal) {
+                    const previousState = lookupPreviousCompletedActivityState(userState!, pageSourceUrl!, skillMap!, activity!.activityId);
+                    dispatchRestartActivity(mapId, activity!.activityId, previousState.headerId, !!previousState.headerId);
+                } else {
+                    dispatchRestartActivity(mapId, activity!.activityId);
+                }
             }}
         ]
 

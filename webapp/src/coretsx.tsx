@@ -42,6 +42,7 @@ export class CoreDialog extends React.Component<core.PromptOptions, CoreDialogSt
     close(result?: any) {
         this.setState({ visible: false });
         this.resolve(result);
+        if (this.props.onClose) this.props.onClose();
     }
 
     componentDidMount() {

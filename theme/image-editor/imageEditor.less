@@ -275,6 +275,14 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        flex-shrink: 0;
+    }
+
+    span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        flex-shrink: 1;
+        white-space: nowrap;
     }
 }
 

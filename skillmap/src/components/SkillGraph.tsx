@@ -3,11 +3,12 @@ import { connect } from 'react-redux';
 
 import { SkillMapState } from '../store/reducer';
 import { dispatchChangeSelectedItem, dispatchShowCompletionModal,
-    dispatchSetSkillMapCompleted, dispatchOpenActivity, dispatchShowCarryoverModal } from '../actions/dispatch';
+    dispatchSetSkillMapCompleted, dispatchOpenActivity, dispatchRestartActivity } from '../actions/dispatch';
 import { GraphNode } from './GraphNode';
 import { GraphPath } from "./GraphPath";
 
-import { getActivityStatus, isCodeCarryoverEnabled, lookupActivityProgress } from '../lib/skillMapUtils';
+import { getActivityStatus, isCodeCarryoverEnabled, lookupActivityProgress,
+    lookupPreviousCompletedActivityState } from '../lib/skillMapUtils';
 import { SvgGraphItem, SvgGraphPath } from '../lib/skillGraphUtils';
 import { tickEvent } from "../lib/browserUtils";
 
@@ -32,7 +33,7 @@ export interface SkillGraphProps {
     dispatchShowCompletionModal: (mapId: string, activityId?: string) => void;
     dispatchSetSkillMapCompleted: (mapId: string) => void;
     dispatchOpenActivity: (mapId: string, activityId: string) => void;
-    dispatchShowCarryoverModal: (mapId: string, activityId: string) => void;
+    dispatchRestartActivity: (mapId: string, activityId: string, previousHeaderId?: string, carryoverCode?: boolean) => void;
 }
 
 class SkillGraphImpl extends React.Component<SkillGraphProps> {
@@ -61,14 +62,16 @@ class SkillGraphImpl extends React.Component<SkillGraphProps> {
     }
 
     protected onItemDoubleClick = (activityId: string, kind: MapNodeKind) => {
-        const { user, pageSourceUrl, map, dispatchOpenActivity, dispatchShowCarryoverModal } = this.props;
+        const { user, pageSourceUrl, map, dispatchOpenActivity, dispatchRestartActivity } = this.props;
         const { status } = getActivityStatus(user, pageSourceUrl, map, activityId);
         const activity = map.activities[activityId];
         tickEvent("skillmap.activity.open.doubleclick", { path: map.mapId, activity: activityId, status: status || "" });
 
         const progress = lookupActivityProgress(user, pageSourceUrl, map.mapId, activity.activityId);
+        const previousState = lookupPreviousCompletedActivityState(user, pageSourceUrl, map, activity.activityId);
+
         if (isCodeCarryoverEnabled(user, pageSourceUrl, map, activity) && !progress?.headerId) {
-            dispatchShowCarryoverModal(map.mapId, activityId);
+            dispatchRestartActivity(map.mapId, activityId, previousState.headerId, !!previousState.headerId);
         } else if (kind == "activity" && status !== "locked") {
             dispatchOpenActivity(map.mapId, activityId);
         }
@@ -98,10 +101,9 @@ class SkillGraphImpl extends React.Component<SkillGraphProps> {
             </g>
             {items.map((el, i) => {
                 return <GraphNode key={`graph-activity-${i}`}
-                    title={el.activity.displayName}
+                    node={el.activity}
                     theme={theme}
                     kind={el.activity.kind}
-                    activityId={el.activity.activityId}
                     position={el.position}
                     width={5 * unit}
                     selected={el.activity.activityId === selectedActivityId}
@@ -131,7 +133,7 @@ const mapDispatchToProps = {
     dispatchShowCompletionModal,
     dispatchSetSkillMapCompleted,
     dispatchOpenActivity,
-    dispatchShowCarryoverModal
+    dispatchRestartActivity
 };
 
 export const SkillGraph = connect(mapStateToProps, mapDispatchToProps)(SkillGraphImpl);

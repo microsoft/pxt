@@ -1,9 +1,9 @@
 import * as React from "react";
 import { connect } from 'react-redux';
 
-import { dispatchOpenActivity, dispatchShowRestartActivityWarning, dispatchShowShareModal, dispatchShowCarryoverModal, dispatchShowLoginModal } from '../actions/dispatch';
+import { dispatchOpenActivity, dispatchShowRestartActivityWarning, dispatchShowShareModal, dispatchRestartActivity, dispatchShowLoginModal } from '../actions/dispatch';
 
-import { ActivityStatus, isCodeCarryoverEnabled } from '../lib/skillMapUtils';
+import { ActivityStatus, isCodeCarryoverEnabled, lookupPreviousCompletedActivityState } from '../lib/skillMapUtils';
 import { tickEvent } from '../lib/browserUtils';
 import { editorUrl } from "./makecodeFrame";
 import { SkillMapState } from "../store/reducer";
@@ -15,6 +15,7 @@ interface OwnProps {
     activityId: string;
     status?: ActivityStatus;
     completedHeaderId?: string;
+    previousHeaderId?: string;
     showCodeCarryoverModal?: boolean;
     signedIn?: boolean;
 }
@@ -23,7 +24,7 @@ interface DispatchProps {
     dispatchOpenActivity: (mapId: string, activityId: string) => void;
     dispatchShowRestartActivityWarning: (mapId: string, activityId: string) => void;
     dispatchShowShareModal: (mapId: string, activityId: string) => void;
-    dispatchShowCarryoverModal: (mapId: string, activityId: string) => void;
+    dispatchRestartActivity: (mapId: string, activityId: string, previousHeaderId?: string, carryoverCode?: boolean) => void;
     dispatchShowLoginModal: () => void;
 }
 
@@ -50,7 +51,8 @@ export class ActivityActionsImpl extends React.Component<ActivityActionsProps> {
     }
 
     protected handleActionButtonClick = () => {
-        const { status, mapId, activityId, dispatchOpenActivity, dispatchShowCarryoverModal, showCodeCarryoverModal } = this.props;
+        const { status, mapId, activityId, previousHeaderId,
+            dispatchOpenActivity, dispatchRestartActivity, showCodeCarryoverModal } = this.props;
 
         if (status === "locked") return;
 
@@ -58,7 +60,7 @@ export class ActivityActionsImpl extends React.Component<ActivityActionsProps> {
         switch (status) {
             case "notstarted":
                 if (showCodeCarryoverModal) {
-                    dispatchShowCarryoverModal(mapId, activityId);
+                    dispatchRestartActivity(mapId, activityId, previousHeaderId, !!previousHeaderId);
                 } else {
                     dispatchOpenActivity(mapId, activityId);
                 }
@@ -104,7 +106,7 @@ export class ActivityActionsImpl extends React.Component<ActivityActionsProps> {
         // Apply "grid" class when there are four actions (for a completed activity)
         return <div className={`actions ${completedHeaderId ? "grid" : ""}`}>
             <Button
-                className="primary inverted"
+                className="teal"
                 tabIndex={-1}
                 ariaPosInSet={1}
                 ariaSetSize={numberOfActions}
@@ -148,7 +150,7 @@ export class ActivityActionsImpl extends React.Component<ActivityActionsProps> {
                     tabIndex={-1}
                     ariaPosInSet={numberOfActions}
                     ariaSetSize={numberOfActions}
-                    className="teal"
+                    className="primary inverted"
                     onClick={dispatchShowLoginModal}
                     label={lf("Sign in to Save")}
                     title={lf("Sign in to Save")}
@@ -164,7 +166,10 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
     const props = ownProps as OwnProps;
     const map = state.maps[props.mapId];
     const activity = map.activities[props.activityId] as MapActivity;
+    const previousState = lookupPreviousCompletedActivityState(state.user, state.pageSourceUrl, map, props.activityId);
+
     return {
+        previousHeaderId: previousState?.headerId,
         showCodeCarryoverModal: isCodeCarryoverEnabled(state.user, state.pageSourceUrl, map, activity),
         signedIn: state.auth.signedIn
     };
@@ -174,7 +179,7 @@ const mapDispatchToProps = {
     dispatchOpenActivity,
     dispatchShowRestartActivityWarning,
     dispatchShowShareModal,
-    dispatchShowCarryoverModal,
+    dispatchRestartActivity,
     dispatchShowLoginModal
 }
 

@@ -72,7 +72,7 @@ export class SkillGraphContainerImpl extends React.Component<SkillGraphContainer
 
         return <div className="skill-graph-wrapper">
             <div className={`skill-graph-content ${useBackground ? "has-background" : ""}`}>
-                <MenuBar className="skill-graph-activities">
+                <MenuBar className="skill-graph-activities" ariaLabel={lf("Skill Map")}>
                     <svg viewBox={`-${widthDiff + padding} -${heightDiff + padding} ${width + padding * 2} ${height + padding * 2}`} preserveAspectRatio="xMidYMid meet">
                         {graphs.map((el, i) => {
                             translateY += el.height;

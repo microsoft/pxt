@@ -1147,6 +1147,7 @@ declare namespace pxt.tutorial {
         jres?: string; // JRES to be used when generating hints; necessary for tilemaps
         customTs?: string; // custom typescript code loaded in a separate file for the tutorial
         tutorialValidationRules?: pxt.Map<boolean>; //a map of rules used in a tutorial and if the rules are activated
+        templateLoaded?: boolean; // if the template code has been loaded once, we skip
     }
     interface TutorialCompletionInfo {
         // id of the tutorial

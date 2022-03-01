@@ -2,6 +2,7 @@ import * as React from "react";
 import { fireClickOnEnter, CheckboxStatus } from "../util";
 import { UserNotification } from "./UserNotification";
 import { Checkbox } from "../controls/Checkbox";
+import { Button } from "../controls/Button";
 
 export interface UserPaneProps {
     profile: pxt.auth.UserProfile;
@@ -21,7 +22,7 @@ export const UserPane = (props: UserPaneProps) => {
     const emailLabel = <>
         {emailChecked === CheckboxStatus.Waiting ? <div className="common-spinner" /> : undefined}
         {lf("I would like to receive the MakeCode newsletter. ")}
-        <a href="https://makecode.com/privacy" target="_blank" rel="noopener noreferrer">{lf("View Privacy Statement")}</a>
+        <a href="https://makecode.com/privacy" target="_blank" rel="noopener noreferrer" tabIndex={0}>{lf("View Privacy Statement")}</a>
     </>
 
     return <div className="profile-user-pane">
@@ -59,10 +60,13 @@ export const UserPane = (props: UserPaneProps) => {
                 onClick={onDeleteProfileClick}>
                 {lf("Delete Profile")}
             </a>
-            <button onClick={onSignOutClick} className="ui icon button sign-out">
-                <i className="icon sign-out"></i>
-                {lf("Sign Out")}
-            </button>
+            <Button
+                className="sign-out"
+                leftIcon="fas fa-sign-out-alt"
+                title={lf("Sign Out")}
+                label={lf("Sign Out")}
+                onClick={onSignOutClick}
+                />
         </div>
     </div>
 }

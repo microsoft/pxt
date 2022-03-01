@@ -5,6 +5,7 @@ export interface ControlProps {
     className?: string;
     ariaLabel?: string;
     ariaHidden?: boolean;
+    ariaDescribedBy?: string;
     role?: string;
 }
 

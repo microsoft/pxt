@@ -899,6 +899,8 @@ ${output}</xml>`;
                         return getTaggedTemplateExpression(n as ts.TaggedTemplateExpression);
                     case SK.CallExpression:
                         return getStatementBlock(n, undefined, undefined, true) as any;
+                    case SK.AsExpression:
+                        return getOutputBlock((n as ts.AsExpression).expression);
                     default:
                         error(n, Util.lf("Unsupported syntax kind for output expression block: {0}", SK[n.kind]));
                         break;
@@ -3315,6 +3317,8 @@ ${output}</xml>`;
                 return checkStatement(n, env, true, undefined);
             case SK.TaggedTemplateExpression:
                 return checkTaggedTemplateExpression(n as ts.TaggedTemplateExpression, env);
+            case SK.AsExpression:
+                return checkAsExpression(n as ts.AsExpression);
 
         }
         return Util.lf("Unsupported syntax kind for output expression block: {0}", SK[n.kind]);
@@ -3424,6 +3428,34 @@ ${output}</xml>`;
 
         // The compiler will have already caught any invalid tags or templates
         return undefined;
+    }
+
+    function checkAsExpression(n: ts.AsExpression) {
+        // The only time we allow casts to decompile is in the very special case where someone has
+        // written a program comparing two string, boolean, or numeric literals in blocks and
+        // converted to text. e.g. 3 == 5 or true != false
+        if (n.type.getText().trim() === "any" && (ts.isStringOrNumericLiteral(n.expression) ||
+            n.expression.kind === SK.TrueKeyword || n.expression.kind === SK.FalseKeyword)) {
+            const [parent] = getParent(n);
+
+            if (parent.kind === SK.BinaryExpression) {
+                switch ((parent as ts.BinaryExpression).operatorToken.kind) {
+                    case SK.EqualsEqualsToken:
+                    case SK.EqualsEqualsEqualsToken:
+                    case SK.ExclamationEqualsToken:
+                    case SK.ExclamationEqualsEqualsToken:
+                    case SK.LessThanToken:
+                    case SK.LessThanEqualsToken:
+                    case SK.GreaterThanToken:
+                    case SK.GreaterThanEqualsToken:
+                        return undefined;
+                    default:
+                        break;
+                }
+            }
+        }
+
+        return Util.lf("Casting not supported in blocks");
     }
 
     function getParent(node: Node): [Node, Node] {

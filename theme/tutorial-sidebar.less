@@ -4,6 +4,8 @@
 
 @tutorialPrimaryColor: @teal;
 @tutorialSecondaryColor: @blue;
+@tutorialLinkColor: #0064BF;
+@tutorialLinkHoverColor: #003C94;
 
 @tutorialTabletButtonColor: #f3f3f3;
 @tutorialTabletSimulatorButtonColor: rgba(0, 0, 0, 0.05);
@@ -64,6 +66,10 @@
     width: calc(~'100% - 1rem');
     bottom: 6rem;
     background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0), @white);
+}
+
+.tutorial-replace-code + .tutorial-scroll-gradient {
+    bottom: 9rem;
 }
 
 .tutorial-container,
@@ -188,24 +194,27 @@
         Tutorial Hint
 *******************************/
 
-.tutorial-hint.ui.button {
+.tutorial-hint.ui.button,
+.tutorial-hint .ui.button {
     height: 3.2rem;
     width: 3.2rem;
     margin: 0;
     border-radius: 50%;
     font-size: @tutorialTitleFontSize;
-}
-
-.tutorial-hint.ui.button,
-.tutorial-hint.ui.button > i {
     display: flex;
     align-items: center;
     justify-content: center;
+
+    > i {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
 }
 
 // Overrides, largely using old tutorial hint CSS
 .tab-tutorial {
-    .tutorialhint {
+    .tutorial-callout {
         position: fixed;
         top: unset;
         right: unset;
@@ -214,15 +223,32 @@
         max-width: 50%;
     }
 
-    .tutorialhint:before {
+    .tutorial-callout:before {
         top: auto;
         left: 6.5rem;
         bottom: -2.5rem;
         transform: rotate(-90deg);
     }
+
+    .tutorial-callout-close.ui.button {
+        position: absolute;
+        right: 1rem;
+        padding: 0;
+        width: 1.5rem;
+        height: 1.5rem;
+        color: @white;
+        background-color: #000;
+        border-radius: 50%;
+
+        i.icon {
+            opacity: 1;
+            font-size: 1rem;
+            margin: 0 !important;
+        }
+    }
 }
 
-.tutorial-hint-mask {
+.tutorial-callout-mask {
     position: fixed;
     top: 0;
     left: 0;
@@ -273,6 +299,41 @@
     left: 0.75rem;
     border-bottom: 2px solid @tutorialPrimaryColor;
 }
+
+/*******************************
+    Tutorial Replace Code
+*******************************/
+.tutorial-replace-code {
+    display: flex;
+    justify-content: center;
+    font-family: @segoeUIFont;
+
+    .tutorial-callout-button.ui.button {
+        padding: 0;
+        margin: 0 0 2rem;
+        color: @tutorialLinkColor;
+        background: none transparent;
+        font-family: @segoeUIFont;
+        font-weight: 500;
+    }
+
+    .tutorial-callout-button.ui.button:hover,
+    .tutorial-callout-button.ui.button:focus {
+        color: @tutorialLinkHoverColor;
+    }
+
+    .tutorial-callout {
+        bottom: 13.5rem;
+        padding: 1rem;
+        max-width: 32rem;
+    }
+
+    .tutorial-replace-code-actions {
+        display: flex;
+        justify-content: flex-end;
+    }
+}
+
 
 /*******************************
         Simulator Tab
@@ -419,6 +480,7 @@
         padding: 1rem;
     }
 
+    .tutorial-replace-code + .tutorial-scroll-gradient,
     .tutorial-scroll-gradient {
         width: calc(~'100% - 15rem');
         bottom: 0;
@@ -482,8 +544,6 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            width: 4rem;
-            height: unset;
             margin: 0;
             font-size: 1rem;
 
@@ -491,7 +551,6 @@
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                margin-bottom: 0.5rem!important;
                 font-size: 2rem;
             }
 
@@ -516,6 +575,10 @@
         }
     }
 
+    .tutorial-container > .ui.button i.icon {
+        margin-bottom: 0.5rem!important;
+    }
+
     /*******************************
             Tutorial Hint
     *******************************/
@@ -524,10 +587,13 @@
         display: flex;
         align-items: center;
         margin: 0;
+
+        > .ui.button {
+            width: unset;
+        }
     }
 
-    .tutorial-hint.ui.button {
-        border-radius: 0.2rem;
+    .tutorial-hint .tutorial-callout-button.ui.button {
         color: @tutorialPrimaryColor;
         background: @tutorialSecondaryColor;
         margin: 1rem;
@@ -539,21 +605,45 @@
 
     // Overrides
     .tab-tutorial {
-        .tutorialhint {
-            top: 18.5rem;
+        .tutorial-callout {
             right: 1.6rem;
             bottom: unset;
             left: unset;
             max-width: 80%;
+            transform: translateY(15px);
         }
 
-        .tutorialhint:before {
+        .tutorial-callout:before {
             top: -2.5rem;
             left: unset;
             bottom: auto;
-            right: 4rem;
+            right: 3.5rem;
             transform: rotate(90deg);
         }
+    }
+
+    /*******************************
+         Tutorial Replace Code
+    *******************************/
+
+    .tutorial-replace-code {
+        position: absolute;
+        right: 4.5rem;
+        bottom: -0.5rem;
+        width: 4rem;
+
+        .tutorial-callout {
+            max-width: 32rem;
+            transform: translateY(65px);
+        }
+
+        .tutorial-replace-code-actions .ui.button {
+            width: unset;
+        }
+    }
+
+    .tutorial-replace-code ~ .tutorial-controls > .tutorial-hint {
+        width: 5rem;
     }
 
 
@@ -639,7 +729,7 @@
             background-color: @tutorialPrimaryColor;
         }
 
-        .tutorial-hint.ui.button {
+        .tutorial-hint .tutorial-callout-button.ui.button {
             flex-direction: row;
             width: 12rem;
             margin: 3.5rem 1rem 0;
