@@ -23,6 +23,9 @@ export const authSlice = createSlice({
             } else {
                 state.profile = undefined;
             }
+        },
+        resetTokenStatus: (state) => {
+            state.tokenStatus = 'initial';
         }
     },
     extraReducers: (builder) => {
@@ -38,7 +41,7 @@ export const authSlice = createSlice({
     }
 });
 
-export const { setUserProfile } = authSlice.actions;
+export const { setUserProfile, resetTokenStatus } = authSlice.actions;
 export default authSlice.reducer;
 
 type AuthorizeTokenResult = {

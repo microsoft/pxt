@@ -1,15 +1,17 @@
 import React from 'react';
 import './App.css';
 import { useAppSelector } from './state/store';
-import { authorizeToken } from './state/slices/auth';
+import { authorizeToken, resetTokenStatus } from './state/slices/auth';
 import * as authClient from './services/auth';
 import { useDispatch } from 'react-redux';
+import { useState } from 'react';
 
 function App() {
   const dispatch = useDispatch();
   const { signedIn, profile, tokenStatus } = useAppSelector(state => state.auth);
+  const [authBtnEnabled, setAuthBtnEnabled ] = useState(false);
 
-  let codeRef = React.useRef<HTMLInputElement | null>(null);
+  const codeRef = React.useRef<HTMLInputElement | null>(null);
 
   function handleSignOutClick() {
     authClient.logoutAsync('');
@@ -22,23 +24,40 @@ function App() {
   function handleAuthorizeTokenClick() {
     dispatch(authorizeToken(codeRef.current?.value));
   }
+  
+  function onTextChange(event: React.ChangeEvent<HTMLInputElement>) {
+    dispatch(resetTokenStatus());
+    const txt = event.target.value.toUpperCase().replace(/[^A-Z0-9]/, '');
+    if (codeRef.current) codeRef.current.value = txt;
+    const codeLen = codeRef?.current?.value?.length ?? 0;
+    setAuthBtnEnabled(signedIn && codeLen === 6);
+  }
 
   const firstName = profile?.idp?.displayName?.split(' ')?.[0];
 
   return (
     <div className="App">
       <div className='app-header'>
-        {pxt.appTarget.thumbnailName?.toUpperCase()} - DEVICE AUTH
+        <span className='app-name'>{pxt.appTarget.thumbnailName}</span>&nbsp;&nbsp;<span>Device Activation</span>
       </div>
       <div className='app-content'>
-        {!signedIn && <p><button onClick={() => handleSignInClick()}>SIGN IN</button></p>}
+        {!signedIn && (
+          <div className='user'>
+            <div>Sign in to activate your device</div><div><button className='button' onClick={() => handleSignInClick()}>Sign in</button></div>
+        </div>)}
         {signedIn && (
-        <>
-        <p>{"Hi " + firstName}! Not you? <button onClick={() => handleSignOutClick()}>SIGN OUT</button></p>
-        <div className='enterCode'>Enter the code from your device</div>
-        <div className='enterCodeForm'><p><input type='text' maxLength={6} ref={codeRef}/> <button onClick={() => handleAuthorizeTokenClick()}>AUTHORIZE</button></p>
+          <>
+        <div className='user'>
+          {"Hi " + firstName}! Not you? <button className='button' onClick={() => handleSignOutClick()}>Sign out</button>
         </div>
-        <div className='tokenStatus'>TOKEN STATUS: {tokenStatus}</div>
+        <div className='code'>
+          <div className='enterCode'>Enter the code from your device</div>
+          <div><input type='text' className='code-input' autoFocus maxLength={6} ref={codeRef} onChange={(event) => onTextChange(event)}/></div>
+          <div><button className={'button primary-button' + (authBtnEnabled ? '' : ' disabled')} onClick={() => authBtnEnabled && handleAuthorizeTokenClick()}>Authorize</button></div>
+        </div>
+        {tokenStatus === 'pending' && <div className='token-status pending'>Checking...</div>}
+        {tokenStatus === 'invalid' && <div className='token-status invalid'>Hm, I couldn't find that code. Try again?</div>}
+        {tokenStatus === 'authorized' && <div className='token-status authorized'>Success! You're now signed in on your device</div>}
         </>
         )}
       </div>
