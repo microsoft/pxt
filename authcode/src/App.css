@@ -69,17 +69,20 @@ input {
 }
 
 .token-status.pending {
-  background-color: gray;
+  background-color: #55acee;
+  border-color: #4992ca;
   color: white;
 }
 
 .token-status.invalid {
-  background-color: red;
+  background-color: #f04124;
+  border-color: #cf2a0e;
   color: white;
 }
 
 .token-status.authorized {
-  background-color: green;
+  background-color: #43AC6A;
+  border-color: #368a55;
   color: white;
 }
 

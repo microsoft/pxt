@@ -4,7 +4,7 @@ import * as authClient from '../../services/auth';
 export type AuthState = {
     signedIn: boolean;
     profile?: pxt.auth.UserProfile;
-    tokenStatus: 'initial' | 'pending' | 'authorized' | 'invalid' | 'error';
+    tokenStatus: 'initial' | 'pending' | 'authorized' | 'invalid';
 };
 
 const initialState: AuthState = {
@@ -36,7 +36,7 @@ export const authSlice = createSlice({
             state.tokenStatus = payload.result;
         });
         builder.addCase(authorizeToken.rejected, (state) => {
-            state.tokenStatus = 'error';
+            state.tokenStatus = 'invalid';
         });
     }
 });
@@ -45,7 +45,7 @@ export const { setUserProfile, resetTokenStatus } = authSlice.actions;
 export default authSlice.reducer;
 
 type AuthorizeTokenResult = {
-    result: 'authorized' | 'invalid' | 'error'
+    result: 'authorized' | 'invalid'
 };
 
 export const authorizeToken = createAsyncThunk('token/authorize', async (code: string | undefined): Promise<AuthorizeTokenResult> => {
@@ -53,6 +53,6 @@ export const authorizeToken = createAsyncThunk('token/authorize', async (code: s
         const response = await (await authClient.clientAsync())?.apiAsync('/api/otac/authorize', { code });
         return { result: response?.resp.status };
     } catch (e) {
-        return { result: 'error' };
+        return { result: 'invalid' };
     }
 });
