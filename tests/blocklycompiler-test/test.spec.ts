@@ -322,6 +322,10 @@ describe("blockly compiler", function () {
         it("should handle non-number inputs in logic operators", (done: () => void) => {
             blockTestAsync("logic_non_numeric").then(done, done);
         });
+
+        it("should handle literals being compared", (done: () => void) => {
+            blockTestAsync("compare_literals").then(done, done);
+        });
     });
 
     describe("compiling math", () => {
