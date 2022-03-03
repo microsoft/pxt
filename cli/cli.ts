@@ -398,7 +398,7 @@ function pxtFileList(pref: string) {
         .concat(nodeutil.allFiles(pref + "built/web/fonts", 1))
         .concat(nodeutil.allFiles(pref + "built/web/vs", 4))
         .concat(nodeutil.allFiles(pref + "built/web/skillmap", 4))
-
+        .concat(nodeutil.allFiles(pref + "built/web/authcode", 4))
 }
 
 function semverCmp(a: string, b: string) {
@@ -490,7 +490,8 @@ function ciAsync() {
                         p = p
                             .then(() => buildWebStringsAsync())
                             .then(() => crowdin.execCrowdinAsync("upload", "built/webstrings.json"))
-                            .then(() => crowdin.execCrowdinAsync("upload", "built/skillmap-strings.json"));
+                            .then(() => crowdin.execCrowdinAsync("upload", "built/skillmap-strings.json"))
+                            .then(() => crowdin.execCrowdinAsync("upload", "built/authcode-strings.json"));
                     if (uploadApiStrings)
                         p = p.then(() => crowdin.execCrowdinAsync("upload", "built/strings.json"))
                     if (uploadDocs || uploadApiStrings)
@@ -1067,6 +1068,7 @@ function uploadCoreAsync(opts: UploadOptions) {
             "multiUrl": opts.localDir + "multi.html",
             "asseteditorUrl": opts.localDir + "asseteditor.html",
             "skillmapUrl": opts.localDir + "skillmap.html",
+            "authcodeUrl": opts.localDir + "authcode.html",
             "isStatic": true,
         }
         const targetImagePaths = targetImages.map(k =>
@@ -1115,14 +1117,16 @@ function uploadCoreAsync(opts: UploadOptions) {
         "workerConfig.js",
         "multi.html",
         "asseteditor.html",
-        "skillmap.html"
+        "skillmap.html",
+        "authcode.html"
     ]
 
     // expandHtml is manually called on these files before upload
     // runs <!-- @include --> substitutions, fills in locale, etc
     let expandFiles = [
         "index.html",
-        "skillmap.html"
+        "skillmap.html",
+        "authcode.html"
     ]
 
     nodeutil.mkdirP("built/uploadrepl")
@@ -1995,7 +1999,7 @@ async function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
         });
     }
 
-    // Generate react-common css for skillmap
+    // Generate react-common css for skillmap and authcode
     const skillmapFile = isPxtCore ? "react-common/styles/react-common-skillmap-core.less" :
         "node_modules/pxt-core/react-common/styles/react-common-skillmap.less";
     await nodeutil.spawnAsync({
@@ -2004,6 +2008,17 @@ async function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
             lessCPath,
             skillmapFile,
             "built/web/react-common-skillmap.css",
+            "--include-path=" + lessIncludePaths
+        ]
+    });
+    const authcodeFile = isPxtCore ? "react-common/styles/react-common-authcode-core.less" :
+        "node_modules/pxt-core/react-common/styles/react-common-authcode.less";
+    await nodeutil.spawnAsync({
+        cmd: "node",
+        args: [
+            lessCPath,
+            authcodeFile,
+            "built/web/react-common-authcode.css",
             "--include-path=" + lessIncludePaths
         ]
     });
@@ -2114,6 +2129,34 @@ function buildSkillMapAsync(parsed: commandParser.ParsedCommand) {
                 cmd: os.platform() === "win32" ? "npm.cmd" : "npm",
                 args: ["run-script", "start"],
                 cwd: skillmapRoot,
+                shell: true
+            })
+        });
+}
+
+function buildAuthcodeAsync(parsed: commandParser.ParsedCommand) {
+    // local serve
+    const appRoot = "node_modules/pxt-core/authcode";
+    return rimrafAsync(`${appRoot}/public/blb`, {})
+        .then(() => rimrafAsync(`${appRoot}/build/assets`, {}))
+        .then(() => rimrafAsync(`${appRoot}/public/docs`, {}))
+        .then(() => rimrafAsync(`${appRoot}/public/static`, {}))
+        .then(() => {
+            // read pxtarget.json, save into 'pxtTargetBundle' global variable
+            let cfg = readLocalPxTarget();
+            nodeutil.writeFileSync(`${appRoot}/public/blb/target.js`, "// eslint-disable-next-line \n" + targetJsPrefix + JSON.stringify(cfg));
+            nodeutil.cp("node_modules/pxt-core/built/pxtlib.js", `${appRoot}/public/blb`);
+            nodeutil.cp("built/web/semantic.css", `${appRoot}/public/blb`);
+            nodeutil.cp("node_modules/pxt-core/built/web/icons.css", `${appRoot}/public/blb`);
+            nodeutil.cp("node_modules/pxt-core/built/web/react-common-authcode.css", `${appRoot}/public/blb`);
+
+            // copy 'assets' over from docs/static
+            nodeutil.cpR("docs/static/authcode/assets", `${appRoot}/public/assets`);
+
+            return nodeutil.spawnAsync({
+                cmd: os.platform() === "win32" ? "npm.cmd" : "npm",
+                args: ["run-script", "start"],
+                cwd: appRoot,
                 shell: true
             })
         });
@@ -6953,6 +6996,18 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
             }
         }
     }, buildSkillMapAsync);
+
+    p.defineCommand({
+        name: "buildauthcode",
+        aliases: ["authcode"],
+        advanced: true,
+        help: "Serves the authcode webapp",
+        flags: {
+            serve: {
+                description: "Serve the authcode app locally after building (npm start)"
+            }
+        }
+    }, buildAuthcodeAsync);
 
     advancedCommand("augmentdocs", "test markdown docs replacements", augmnetDocsAsync, "<temlate.md> <doc.md>");
 
