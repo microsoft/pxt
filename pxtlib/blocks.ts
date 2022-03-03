@@ -248,6 +248,10 @@ namespace pxt.blocks {
             reporterType = `argument_reporter_${varType}`;
         }
 
+        if (/^(?:Array<(?:.+)>)|(?:(?:.+)\[\])$/.test(varType)) {
+            reporterType = "argument_reporter_array";
+        }
+
         return reporterType;
     }
 
