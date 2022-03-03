@@ -110,6 +110,7 @@ namespace pxt.blocks {
         alreadyDeclared?: BlockDeclarationType;
         firstReference?: Blockly.Block;
         isAssigned?: boolean;
+        isFunctionParameter?: boolean;
     }
 
     function find(p: Point): Point {
@@ -235,7 +236,7 @@ namespace pxt.blocks {
                 }
             } else if (b.type == "argument_reporter_array") {
                 if (!tp) {
-                    tp = ground("any[]")
+                    tp = lookup(e, b, b.getFieldValue("VALUE")).type
                 }
             }
 
@@ -565,8 +566,14 @@ namespace pxt.blocks {
         // Last pass: if some variable has no type (because it was never used or
         // assigned to), just unify it with int...
         e.allVariables.forEach((v: VarInfo) => {
-            if (getConcreteType(v.type).type == null)
-                union(v.type, ground(v.type.isArrayType ? "number[]" : pNumber.type));
+            if (getConcreteType(v.type).type == null) {
+                if (!v.isFunctionParameter) {
+                    union(v.type, ground(v.type.isArrayType ? "number[]" : pNumber.type));
+                }
+                else if (v.type.isArrayType) {
+                    v.type.type = "any[]"
+                }
+            }
         });
 
         function connectionCheck(i: Blockly.Input) {
@@ -864,7 +871,10 @@ namespace pxt.blocks {
         const stmts = getInputTargetBlock(b, "STACK");
         const argsDeclaration = (b as Blockly.FunctionDefinitionBlock).getArguments().map(a => {
             if (a.type == "Array") {
-                return `${escapeVarName(a.name, e)}: any[]`;
+                const binding = lookup(e, b, a.name);
+                const declaredType = getConcreteType(binding.type);
+                const paramType = (declaredType?.type && declaredType.type !== "Array") ? declaredType.type : "any[]";
+                return `${escapeVarName(a.name, e)}: ${paramType}`;
             }
             return `${escapeVarName(a.name, e)}: ${a.type}`;
         });
@@ -2184,11 +2194,11 @@ namespace pxt.blocks {
     }
 
     function getEscapedCBParameters(b: Blockly.Block, stdfun: StdFunc, e: Environment): string[] {
-        return getCBParameters(b, stdfun).map(binding => lookup(e, b, binding[0]).escapedName);
+        return getCBParameters(b, stdfun).map(binding => lookup(e, b, binding.name).escapedName);
     }
 
-    function getCBParameters(b: Blockly.Block, stdfun: StdFunc): [string, Point][] {
-        let handlerArgs: [string, Point][] = [];
+    function getCBParameters(b: Blockly.Block, stdfun: StdFunc): DeclaredVariable[] {
+        let handlerArgs: DeclaredVariable[] = [];
         if (stdfun.attrs.draggableParameters) {
             for (let i = 0; i < stdfun.comp.handlerArgs.length; i++) {
                 const arg = stdfun.comp.handlerArgs[i];
@@ -2202,7 +2212,10 @@ namespace pxt.blocks {
                 }
 
                 if (varName !== null) {
-                    handlerArgs.push([varName, mkPoint(arg.type)]);
+                    handlerArgs.push({
+                        name: varName,
+                        type: mkPoint(arg.type)
+                    });
                 }
                 else {
                     break;
@@ -2215,7 +2228,10 @@ namespace pxt.blocks {
                 const varField = b.getField("HANDLER_" + arg.name);
                 const varName = varField && varField.getText();
                 if (varName !== null) {
-                    handlerArgs.push([varName, mkPoint(arg.type)]);
+                    handlerArgs.push({
+                        name: varName,
+                        type: mkPoint(arg.type)
+                    });
                 }
                 else {
                     break;
@@ -2459,8 +2475,7 @@ namespace pxt.blocks {
             if (hasStatementInput(block)) {
                 const vars: VarInfo[] = getDeclaredVariables(block, e).map(binding => {
                     return {
-                        name: binding[0],
-                        type: binding[1],
+                        ...binding,
                         id: id++
                     }
                 });
@@ -2557,14 +2572,37 @@ namespace pxt.blocks {
         return block.inputList.some(i => i.type === Blockly.NEXT_STATEMENT);
     }
 
-    function getDeclaredVariables(block: Blockly.Block, e: Environment): [string, Point][] {
+    interface DeclaredVariable {
+        name: string;
+        type: Point;
+        isFunctionParameter?: boolean;
+    }
+
+    function getDeclaredVariables(block: Blockly.Block, e: Environment): DeclaredVariable[] {
         switch (block.type) {
             case 'pxt_controls_for':
             case 'controls_simple_for':
-                return [[getLoopVariableField(block).getField("VAR").getText(), pNumber]];
+                return [{
+                    name: getLoopVariableField(block).getField("VAR").getText(),
+                    type: pNumber
+                }];
             case 'pxt_controls_for_of':
             case 'controls_for_of':
-                return [[getLoopVariableField(block).getField("VAR").getText(), mkPoint(null)]];
+                return [{
+                    name: getLoopVariableField(block).getField("VAR").getText(),
+                    type: mkPoint(null)
+                }];
+            case 'function_definition':
+                return (block as Blockly.FunctionDefinitionBlock).getArguments().filter(arg => arg.type === "Array")
+                    .map(arg => {
+                        const point = mkPoint(null);
+                        point.isArrayType = true;
+                        return {
+                            name: arg.name,
+                            type: point,
+                            isFunctionParameter: true
+                        }
+                    });
             default:
                 break;
         }
@@ -2572,7 +2610,10 @@ namespace pxt.blocks {
         if (isMutatingBlock(block)) {
             const declarations = block.mutation.getDeclaredVariables();
             if (declarations) {
-                return Object.keys(declarations).map(varName => [varName, mkPoint(declarations[varName])] as [string, Point]);
+                return Object.keys(declarations).map(varName => ({
+                    name: varName,
+                    type: mkPoint(declarations[varName])
+                }));
             }
         }
 

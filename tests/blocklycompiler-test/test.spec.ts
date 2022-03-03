@@ -484,6 +484,10 @@ describe("blockly compiler", function () {
         it("should handle an array of empty arrays as array argument", (done: () => void) => {
             blockTestAsync("array_parameter_empty_arrays").then(done, done);
         })
+
+        it("should perform type inference on array arguments", (done: () => void) => {
+            blockTestAsync("array_parameter_type_inference").then(done, done);
+        })
     });
 
     describe("compiling special blocks", () => {
