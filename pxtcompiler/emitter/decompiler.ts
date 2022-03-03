@@ -1926,11 +1926,13 @@ ${output}</xml>`;
                 r.mutationChildren = [];
                 n.parameters.forEach(p => {
                     const paramName = p.name.getText();
+                    let type = normalizeType(p.type.getText());
+                    if (pxt.U.endsWith(type, "[]")) type = "Array";
                     r.mutationChildren.push({
                         nodeName: "arg",
                         attributes: {
                             name: paramName,
-                            type: p.type.getText(),
+                            type,
                             id: env.functionParamIds[name][paramName]
                         }
                     });
@@ -2017,11 +2019,14 @@ ${output}</xml>`;
                             env.declaredFunctions[name].parameters.forEach((p, i) => {
                                 const paramName = p.name.getText();
                                 const argId = env.functionParamIds[name][paramName];
+                                let type = normalizeType(p.type.getText());
+                                if (pxt.U.endsWith(type, "[]")) type = "Array";
+
                                 r.mutationChildren.push({
                                     nodeName: "arg",
                                     attributes: {
                                         name: paramName,
-                                        type: p.type.getText(),
+                                        type: type,
                                         id: argId
                                     }
                                 });
@@ -3004,7 +3009,8 @@ ${output}</xml>`;
                             return Util.lf("Function parameters must declare a type");
                         }
 
-                        if (env.opts.allowedArgumentTypes.indexOf(normalizeType(type)) === -1) {
+                        const normalized = normalizeType(type);
+                        if (env.opts.allowedArgumentTypes.indexOf(normalized) === -1 && !U.endsWith(normalized, "[]")) {
                             return Util.lf("Only types that can be added in blocks can be used for function arguments");
                         }
                     }
