@@ -54,13 +54,37 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.onErrorListResize = this.onErrorListResize.bind(this)
     }
     setBreakpointsMap(breakpoints: pxtc.Breakpoint[], procCallLocations: pxtc.LocationInfo[]): void {
-        let map: pxt.Map<number> = {};
         if (!breakpoints || !this.compilationResult) return;
-        breakpoints.forEach(breakpoint => {
-            let blockId = pxt.blocks.findBlockIdByLine(this.compilationResult.sourceMap, { start: breakpoint.line, length: breakpoint.endLine - breakpoint.line });
-            if (blockId) map[blockId] = breakpoint.id;
-        });
-        this.breakpointsByBlock = map;
+        const blockToAllBreakpoints: {[index: string]: pxtc.Breakpoint[]} = {};
+
+        for (const breakpoint of breakpoints) {
+            const blockId = pxt.blocks.findBlockIdByLine(this.compilationResult.sourceMap, { start: breakpoint.line, length: breakpoint.endLine - breakpoint.line });
+            if (!blockToAllBreakpoints[blockId]) blockToAllBreakpoints[blockId] = [];
+            blockToAllBreakpoints[blockId].push(breakpoint);
+        }
+
+        this.breakpointsByBlock = {};
+        for (const blockId of Object.keys(blockToAllBreakpoints)) {
+            // Default to the last breakpoint for the block
+            let breakpoint = blockToAllBreakpoints[blockId][blockToAllBreakpoints[blockId].length - 1];
+
+            const block = this.editor.getBlockById(blockId);
+            if (!block) {
+                this.breakpointsByBlock[blockId] = breakpoint.id;
+                continue;
+            }
+
+            switch (block.type) {
+                case "pxt_controls_for":
+                case "controls_for":
+                case "controls_simple_for":
+                    // Get the conditional breakpoint
+                    breakpoint = blockToAllBreakpoints[blockId][2];
+                    break;
+            }
+
+            this.breakpointsByBlock[blockId] = breakpoint.id;
+        }
     }
 
     setBreakpointsFromBlocks(): void {
