@@ -4270,8 +4270,10 @@ ${lbl}: .short 0xffff
             }
 
             // c = a[i]
-            if (iterVar)
+            if (iterVar) {
                 proc.emitExpr(iterVar.storeByRef(ir.rtcall(indexer, [collectionVar.loadCore(), toInt(intVarIter.loadCore())])))
+                emitBrk(node.initializer);
+            }
 
             flushHoistedFunctionDefinitions()
 
