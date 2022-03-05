@@ -1,15 +1,22 @@
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import * as authClient from '../../services/auth';
 
+const enum Status {
+    INITIAL = 'initial',
+    PENDING = 'pending',
+    AUTHORIZED = 'authorized',
+    INVALID = 'invalid'
+}
+
 export type AuthState = {
     signedIn: boolean;
     profile?: pxt.auth.UserProfile;
-    tokenStatus: 'initial' | 'pending' | 'authorized' | 'invalid';
+    tokenStatus: Status.INITIAL | Status.PENDING | Status.AUTHORIZED | Status.INVALID;
 };
 
 const initialState: AuthState = {
     signedIn: false,
-    tokenStatus: 'initial'
+    tokenStatus: Status.INITIAL
 };
 
 export const authSlice = createSlice({
@@ -25,18 +32,18 @@ export const authSlice = createSlice({
             }
         },
         resetTokenStatus: (state) => {
-            state.tokenStatus = 'initial';
+            state.tokenStatus = Status.INITIAL;
         }
     },
     extraReducers: (builder) => {
         builder.addCase(authorizeToken.pending, (state) => {
-            state.tokenStatus = 'pending';
+            state.tokenStatus = Status.PENDING;
         });
         builder.addCase(authorizeToken.fulfilled, (state, { payload }) => {
             state.tokenStatus = payload.result;
         });
         builder.addCase(authorizeToken.rejected, (state) => {
-            state.tokenStatus = 'invalid';
+            state.tokenStatus = Status.INVALID;
         });
     }
 });
@@ -45,7 +52,7 @@ export const { setUserProfile, resetTokenStatus } = authSlice.actions;
 export default authSlice.reducer;
 
 type AuthorizeTokenResult = {
-    result: 'authorized' | 'invalid'
+    result: Status.AUTHORIZED | Status.INVALID
 };
 
 export const authorizeToken = createAsyncThunk('token/authorize', async (code: string | undefined): Promise<AuthorizeTokenResult> => {
@@ -53,6 +60,6 @@ export const authorizeToken = createAsyncThunk('token/authorize', async (code: s
         const response = await (await authClient.clientAsync())?.apiAsync('/api/otac/authorize', { code });
         return { result: response?.resp.status };
     } catch (e) {
-        return { result: 'invalid' };
+        return { result: Status.INVALID };
     }
 });
