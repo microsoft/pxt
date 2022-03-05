@@ -52,7 +52,7 @@ export const { setUserProfile, resetTokenStatus } = authSlice.actions;
 export default authSlice.reducer;
 
 type AuthorizeTokenResult = {
-    result: Status;
+    result: Status.AUTHORIZED | Status.INVALID
 };
 
 export const authorizeToken = createAsyncThunk('token/authorize', async (code: string | undefined): Promise<AuthorizeTokenResult> => {
