@@ -11,7 +11,7 @@ const enum Status {
 export type AuthState = {
     signedIn: boolean;
     profile?: pxt.auth.UserProfile;
-    tokenStatus: Status.INITIAL | Status.PENDING | Status.AUTHORIZED | Status.INVALID;
+    tokenStatus: Status;
 };
 
 const initialState: AuthState = {
