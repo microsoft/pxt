@@ -361,6 +361,8 @@ export class ProjectView
                 cmds.maybeReconnectAsync(false, true);
             }
         }
+
+        if (this.editor) this.editor.onPageVisibilityChanged(active);
     }
 
     saveSettings() {
