@@ -59,6 +59,6 @@ declare namespace pxt.workspace {
 
     interface PublishVersion {
         id: string;
-        type: "temporary" | "persistent";
+        type: "snapshot" | "permalink";
     }
 }
