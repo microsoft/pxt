@@ -40,6 +40,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     protected intersectionObserver: IntersectionObserver;
 
     protected debuggerToolbox: DebuggerToolbox;
+    protected highlightedStatement: pxtc.LocationInfo;
 
     // Blockly plugins
     protected navigationController: NavigationController;
@@ -225,6 +226,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     }
                 });
         }
+    }
+
+    onPageVisibilityChanged(isVisible: boolean) {
+        if (!isVisible) return;
+        this.highlightStatement(this.highlightedStatement);
     }
 
     isDropdownDivVisible(): boolean {
@@ -1053,6 +1059,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (!this.compilationResult || this.delayLoadXml || this.loadingXml)
             return false;
         this.updateDebuggerVariables(brk);
+        this.highlightedStatement = stmt;
         if (stmt) {
             let bid = pxt.blocks.findBlockIdByLine(this.compilationResult.sourceMap, { start: stmt.line, length: stmt.endLine - stmt.line });
             if (bid) {
