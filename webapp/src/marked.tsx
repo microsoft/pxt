@@ -384,7 +384,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         // Set markdown options
         marked.setOptions({
             renderer: renderer,
-            sanitize: true,
+            sanitize: false,
             sanitizer: pxt.docs.requireDOMSanitizer()
         })
 
