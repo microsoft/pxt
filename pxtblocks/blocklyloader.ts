@@ -539,18 +539,8 @@ namespace pxt.blocks {
             || pxt.toolbox.getNamespaceColor(ns)
             || 255;
 
-        if (fn.attributes.help) {
-            const helpUrl = fn.attributes.help.replace(/^\//, '');
-            if (/^github:/.test(helpUrl)) {
-                block.setHelpUrl(helpUrl);
-            } else if (helpUrl !== "none") {
-                block.setHelpUrl("/reference/" + helpUrl);
-            }
-        } else if (fn.pkg && !pxt.appTarget.bundledpkgs[fn.pkg]) {// added package
-            let anchor = fn.qName.toLowerCase().split('.');
-            if (anchor[0] == fn.pkg) anchor.shift();
-            block.setHelpUrl(`/pkg/${fn.pkg}#${encodeURIComponent(anchor.join('-'))}`)
-        }
+        const helpUrl = pxt.blocks.getHelpUrl(fn);
+        if (helpUrl) block.setHelpUrl(helpUrl)
 
         block.setColour(color);
         let blockShape = Blockly.OUTPUT_SHAPE_ROUND;

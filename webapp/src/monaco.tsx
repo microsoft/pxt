@@ -1227,9 +1227,15 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         compiler.syntaxInfoAsync("symbol", fileName, offset, source)
             .then(info => {
                 if (info?.symbols) {
-                    for (const s of info.symbols) {
-                        if (s.attributes.help) {
-                            this.parent.setSideDoc('/reference/' + s.attributes.help.replace(/^\//, ''));
+                    for (const fn of info.symbols) {
+                        const url = pxt.blocks.getHelpUrl(fn);
+                        if (url) {
+                            if (pxt.blocks.openHelpUrl) {
+                                pxt.blocks.openHelpUrl(url);
+                            }
+                            else {
+                                window.open(url);
+                            }
                             return;
                         }
                     }
