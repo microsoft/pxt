@@ -36,6 +36,8 @@
     "built/web/vs/language/typescript/src/*.js",
     "built/web/skillmap/css/*.css",
     "built/web/skillmap/js/*.js",
+    "built/web/authcode/css/*.css",
+    "built/web/authcode/js/*.js",
     "pxtcompiler/ext-typescript/lib/lib.d.ts",
     "pxtcompiler/ext-typescript/lib/typescript.js",
     "pxtcompiler/ext-typescript/lib/typescriptServices.d.ts",
