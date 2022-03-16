@@ -1,0 +1,81 @@
+/****************************************************
+ *                Textarea                          *
+ ****************************************************/
+
+.common-textarea-group {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+    border-radius: 2px;
+    border: 1px solid @textareaBorderColor;
+    background: @textareaBackgroundColor;
+}
+
+.common-textarea-group:focus::after,
+.common-textarea-group:focus-within::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border: 2px solid @textareaBorderColorFocus;
+    border-radius: 2px;
+    pointer-events: none;
+}
+
+.common-textarea {
+    width: 100%;
+    min-width: 0;
+    padding: 0.5rem;
+    color: @textareaTextColor;
+    border: none;
+    outline: 0;
+    background: none transparent;
+    text-overflow: ellipsis;
+    resize: none;
+
+    &.resize-both { resize: both; }
+    &.resize-horizontal { resize: horizontal; }
+    &.resize-vertical { resize: vertical; }
+}
+
+
+/****************************************************
+ *               Textarea Label                     *
+ ****************************************************/
+
+.common-textarea-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 0.3rem 0;
+    overflow-wrap: break-word;
+}
+
+/****************************************************
+ *                Disabled Textarea                 *
+ ****************************************************/
+
+.common-textarea-wrapper.disabled {
+    .common-textarea-group {
+        cursor: default;
+        border: 1px solid @textareaBackgroundColorDisabled;
+        background: @textareaBackgroundColorDisabled;
+    }
+}
+
+/****************************************************
+ *                 High Contrast                    *
+ ****************************************************/
+
+.high-contrast {
+    .common-textarea {
+        color: @highContrastTextColor;
+        border-color: @highContrastTextColor;
+        background-color: @highContrastBackgroundColor;
+    }
+
+    .common-textarea-group:focus::after,
+    .common-textarea-group:focus-within::after {
+        border-color: @highContrastHighlightColor;
+    }
+
+}

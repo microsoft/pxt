@@ -131,6 +131,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
                 <div className="image-editor-header-left" />
                 <div className="image-editor-header-center">
                     <EditorToggle
+                        id="image-editor-toggle"
                         className="slim tablet-compact"
                         items={toggleOptions}
                         selected={toggleOptions.findIndex(i => i.view === currentView)}
