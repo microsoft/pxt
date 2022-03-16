@@ -20,6 +20,7 @@ export interface ButtonProps extends ControlProps {
     ariaHasPopup?: string;
     ariaPosInSet?: number;
     ariaSetSize?: number;
+    ariaSelected?: boolean;
 }
 
 export const Button = (props: ButtonProps) => {
@@ -34,6 +35,7 @@ export const Button = (props: ButtonProps) => {
         ariaHasPopup,
         ariaPosInSet,
         ariaSetSize,
+        ariaSelected,
         role,
         onClick,
         onKeydown,
@@ -76,7 +78,8 @@ export const Button = (props: ButtonProps) => {
             aria-haspopup={ariaHasPopup as any}
             aria-posinset={ariaPosInSet}
             aria-setsize={ariaSetSize}
-            aria-describedby={ariaDescribedBy}>
+            aria-describedby={ariaDescribedBy}
+            aria-selected={ariaSelected}>
                 <span className="common-button-flex">
                     {leftIcon && <i className={leftIcon} aria-hidden={true}/>}
                     <span className="common-button-label">
