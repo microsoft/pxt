@@ -40,7 +40,7 @@ export class FieldEditorView<U> implements pxt.react.FieldEditorView<U> {
     protected hideCallback: () => void;
     protected containerClass: string;
 
-    constructor(protected contentDiv: HTMLDivElement) {
+    constructor(protected contentDiv: HTMLDivElement, protected inContainer: boolean) {
     }
 
     injectElement(element: JSX.Element) {
@@ -61,14 +61,15 @@ export class FieldEditorView<U> implements pxt.react.FieldEditorView<U> {
 
         this.visible = true;
         this.resize(this.editorBounds);
-        this.contentDiv.style.display = "";
+        this.contentDiv.style.display = "block";
 
-        this.overlayDiv = document.createElement("div");
-        pxt.BrowserUtils.addClass(this.overlayDiv, "blocks-editor-field-overlay")
-        this.contentDiv.parentElement.appendChild(this.overlayDiv);
-
-        this.overlayDiv.addEventListener("mousedown", this.handleOutsideClick);
-        document.addEventListener("mousedown", this.handleOutsideClick);
+        if (!this.inContainer) {
+            this.overlayDiv = document.createElement("div");
+            pxt.BrowserUtils.addClass(this.overlayDiv, "blocks-editor-field-overlay")
+            this.contentDiv.parentElement.appendChild(this.overlayDiv);
+            this.overlayDiv.addEventListener("mousedown", this.handleOutsideClick);
+            document.addEventListener("mousedown", this.handleOutsideClick);
+        }
     }
 
     hide() {
@@ -81,8 +82,11 @@ export class FieldEditorView<U> implements pxt.react.FieldEditorView<U> {
         this.clearContents();
         this.contentDiv.style.display = "none";
 
-        this.overlayDiv.parentElement.removeChild(this.overlayDiv);
-        document.removeEventListener("mousedown", this.handleOutsideClick);
+        if (!this.inContainer) {
+            this.overlayDiv.parentElement.removeChild(this.overlayDiv);
+            document.removeEventListener("mousedown", this.handleOutsideClick);
+        }
+
 
         if (this.hideCallback) this.hideCallback();
     }
@@ -133,6 +137,13 @@ export class FieldEditorView<U> implements pxt.react.FieldEditorView<U> {
     }
 
     protected resizeContentCore = () => {
+        if (this.inContainer) {
+            if (this.componentRef && this.visible && this.componentRef.onResize) {
+                this.componentRef.onResize();
+            }
+            return;
+        }
+
         this.resizeFrameRef = undefined;
         const bounds = this.editorBounds;
 
@@ -208,7 +219,7 @@ export function setContainerClass(className: string) {
 }
 
 export function init() {
-    pxt.react.getFieldEditorView = function<U>(fieldEditorId: string, value: U, options: any) {
+    pxt.react.getFieldEditorView = function<U>(fieldEditorId: string, value: U, options: any, container?: HTMLDivElement) {
         if (current) current.dispose();
 
         const refHandler = (e: FieldEditorComponent<any>) => {
@@ -220,7 +231,7 @@ export function init() {
             }
         }
 
-        current = new FieldEditorView(document.getElementById("blocks-editor-field-div") as HTMLDivElement);
+        current = new FieldEditorView(container || document.getElementById("blocks-editor-field-div") as HTMLDivElement, !!container);
 
         switch (fieldEditorId) {
             case "image-editor":
@@ -233,6 +244,10 @@ export function init() {
             case "tilemap-editor":
                 current.injectElement(<ImageFieldEditor ref={ refHandler } singleFrame={true} />);
                 break;
+            case "soundeffect-editor":
+                current.injectElement(<div id="soundeffectplaceholder" />)
+                break;
+
         }
 
         if (cachedBounds) current.resize(cachedBounds);
