@@ -348,6 +348,8 @@ export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptM
     pxt.debug(`publishing script; ${stext.length} bytes`)
     return Cloud.privatePostAsync("scripts", scrReq, /* forceLiveEndpoint */ true)
         .then((inf: Cloud.JsonScript) => {
+            if (!h.pubVersions) h.pubVersions = [];
+            h.pubVersions.push({ id: inf.id, type: "snapshot" });
             if (inf.shortid) inf.id = inf.shortid;
             h.pubId = inf.shortid
             h.pubCurrent = h.saveId === saveId
