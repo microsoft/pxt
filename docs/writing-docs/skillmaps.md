@@ -211,7 +211,7 @@ The node `name`, `description`, and `tags` are shown in the skillmap panel.
 Reward nodes are at the same level as activities. The node completes a path and displays the reward certificate. Set these properties for the reward node:
 
 * **type**: the type of node, for a reward node use `certificate`
-* **kind**: the kind for the this `type` of node, use `completion`
+* **kind**: the kind for this `type` of node, use `completion`
 * **url**: the URL path to a certificate document (i.e. the "Certificate of Completion")
 
 Here's a sample reward node:
@@ -219,8 +219,8 @@ Here's a sample reward node:
 ```
 ### space-finish
 
-* kind: completion
 * type: certificate
+* kind: completion
 * url: https://microsoft.github.io/pxt-skillmap-sample/certificates/design-a-space-explorer.pdf
 ```
 
@@ -228,7 +228,7 @@ Here's a sample reward node:
 
 ## Loading a skillmap
 
-Skillmaps are loaded into a MakeCode editor using a URL with the `skillmap` resource type. Using https://arcade.makecode.com/--skillmap will load the default skillmap for MakeCode Arcade. To load skillmaps from somewhere else, you append an external resource address path to this URL. If you want to use a skillmap from the [Skillmap Sample](https://github.com/microsoft/pxt-skillmap-sample) repository in GitHub, then you specify it with a direct path to the skillmap document file.
+Skillmaps are loaded into a MakeCode editor using a URL with the `skillmap` resource type. Using https://arcade.makecode.com/--skillmap will load the default skillmap for MakeCode Arcade. To load skillmaps from somewhere else, append an external resource address path to this URL. To use a skillmap from the [Skillmap Sample](https://github.com/microsoft/pxt-skillmap-sample) repository in GitHub, specify it with a direct path to the skillmap document file.
 
 Connect `https://arcade.makecode.com/--skillmap` with the GitHub resource specifier as a parameter using `#`. So, you have `https://arcade.makecode.com/--skillmap` + `#` + `github:microsoft/pxt-skillmap-sample/skillmap`. This forms the full skillmap load URL:
 
