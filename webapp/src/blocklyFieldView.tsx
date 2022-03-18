@@ -4,6 +4,7 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 
 import { ImageFieldEditor } from "./components/ImageFieldEditor";
+import { SoundEffectEditor } from "./components/soundEffectEditor/SoundEffectEditor";
 
 export interface EditorBounds {
     top: number;
@@ -245,7 +246,7 @@ export function init() {
                 current.injectElement(<ImageFieldEditor ref={ refHandler } singleFrame={true} />);
                 break;
             case "soundeffect-editor":
-                current.injectElement(<div id="soundeffectplaceholder" />)
+                current.injectElement(<SoundEffectEditor />)
                 break;
 
         }

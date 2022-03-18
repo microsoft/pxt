@@ -1,0 +1,53 @@
+.sound-effect-editor {
+    width: 100%;
+    height: 100%;
+    background-color: @white;
+    border-radius: 0.25rem;
+}
+
+.sound-preview {
+    height: 8rem;
+    background: #e63022;
+    opacity: 0.1;
+}
+
+.sound-effect-header {
+    display: flex;
+    flex-direction: row;
+    position: relative;
+    height: 3.5rem;
+    position: relative;
+
+    justify-content: center;
+    align-items: center;
+
+    background-color: #E63022;
+    border-top-left-radius: 0.25rem;
+    border-top-right-radius: 0.25rem;
+
+    & > .common-button {
+        position: absolute;
+        right: 0;
+        top: 0;
+    }
+}
+
+.frequency-graph-header {
+    display: flex;
+    flex-direction: row;
+
+    & > span {
+        flex-grow: 1;
+    }
+}
+
+.dropdown-and-label {
+    display: flex;
+    flex-direction: row;
+    margin-right: 0.5rem;
+    align-items: center;
+
+    .dropdown-label {
+        margin-right: 0.5rem;
+    }
+}
