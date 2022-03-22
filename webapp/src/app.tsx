@@ -2929,10 +2929,12 @@ export class ProjectView
                 let fn = pxt.outputName();
                 if (!resp.outfiles[fn]) {
                     pxt.tickEvent("compile.noemit")
-                    const noHexFileDiagnostic = resp.diagnostics?.find(diag => diag.code === 9043);
+                    const noHexFileDiagnostic = resp.diagnostics.find(diag => diag.code === 9043)
+                                            || resp.diagnostics.length == 1 ?  resp.diagnostics[0] : undefined ;
                     if (noHexFileDiagnostic) {
                         core.warningNotification(noHexFileDiagnostic.messageText as string);
-                    } else {
+                    }
+                    else {
                         core.warningNotification(lf("Compilation failed, please check your code for errors."));
                     }
                     return;
