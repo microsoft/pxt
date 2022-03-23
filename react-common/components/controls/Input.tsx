@@ -19,6 +19,7 @@ export interface InputProps extends ControlProps {
     onChange?: (newValue: string) => void;
     onEnterKey?: (value: string) => void;
     onIconClick?: (value: string) => void;
+    onBlur?: (value: string) => void;
 }
 
 export function Input(props: InputProps) {
@@ -41,7 +42,8 @@ export function Input(props: InputProps) {
         selectOnClick,
         onChange,
         onEnterKey,
-        onIconClick
+        onIconClick,
+        onBlur
     } = props;
 
     const [value, setValue] = React.useState(initialValue || "");
@@ -76,6 +78,10 @@ export function Input(props: InputProps) {
         if (onIconClick) onIconClick(value);
     }
 
+    const blurHandler = () => {
+        if (onBlur) onBlur(value);
+    }
+
     return (
         <div className={classList("common-input-wrapper", disabled && "disabled", className)}>
             {label && <label className="common-input-label">
@@ -97,6 +103,7 @@ export function Input(props: InputProps) {
                     onClick={clickHandler}
                     onChange={changeHandler}
                     onKeyDown={enterKeyHandler}
+                    onBlur={blurHandler}
                     autoComplete={autoComplete ? "" : "off"}
                     autoCorrect={autoComplete ? "" : "off"}
                     autoCapitalize={autoComplete ? "" : "off"}

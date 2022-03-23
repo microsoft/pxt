@@ -1,9 +1,9 @@
 import * as React from "react";
 import { classList, ControlProps } from "../util";
-import { Button, ButtonProps } from "./Button";
+import { Button, ButtonViewProps } from "./Button";
 import { FocusList } from "./FocusList";
 
-export interface DropdownItem extends ButtonProps {
+export interface DropdownItem extends ButtonViewProps {
     id: string;
     role?: "option" | undefined;
 }
@@ -108,7 +108,7 @@ export const Dropdown = (props: DropdownProps) => {
                                     className={classList("common-dropdown-item", item.className)}
                                     onClick={() => {
                                         setExpanded(false);
-                                        item.onClick();
+                                        onItemSelected(item.id);
                                     }}
                                     ariaSelected={item.id === selectedId}
                                     role="option"/>
