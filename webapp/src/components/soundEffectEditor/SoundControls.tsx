@@ -3,6 +3,7 @@ import * as React from "react";
 import { Dropdown, DropdownItem } from "../../../../react-common/components/controls/Dropdown";
 import { RadioButtonGroup, RadioGroupChoice } from "../../../../react-common/components/controls/RadioButtonGroup";
 import { Input } from "../../../../react-common/components/controls/Input";
+import { DraggableGraph } from "../../../../react-common/components/controls/DraggableGraph";
 
 
 
@@ -199,6 +200,12 @@ export const SoundControls = (props: SoundControlsProps) => {
                     />
                 </div>
             </div>
+            <DraggableGraph
+                min={0}
+                max={2000}
+                points={[effect.startFrequency, effect.endFrequency]}
+                interpolation={effect.interpolation}
+            />
         </div>
     </div>
 }
