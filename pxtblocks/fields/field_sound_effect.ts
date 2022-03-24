@@ -76,7 +76,7 @@ namespace pxtblockly {
             widgetDiv.style.left = (this.sourceBlock_.RTL ? coord.x - 20 : coord.x + 20) + "px";
             widgetDiv.style.top = coord.y + "px";
             widgetDiv.style.width = "30rem";
-            widgetDiv.style.height = "30rem";
+            widgetDiv.style.height = "40rem";
 
             fv.onHide(() => {
 

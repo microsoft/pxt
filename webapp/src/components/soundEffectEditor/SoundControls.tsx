@@ -17,8 +17,8 @@ export const SoundControls = (props: SoundControlsProps) => {
         wave: "sine",
         interpolation: "linear",
         effect: "vibrato",
-        startFrequency: 0,
-        endFrequency: 500,
+        startFrequency: 100,
+        endFrequency: 1800,
         startVolume: 500,
         endVolume: 0,
         duration: 1000
@@ -79,10 +79,10 @@ export const SoundControls = (props: SoundControlsProps) => {
             id: "curve"
         },
         {
-            label: pxt.U.lf("Exponential"),
+            label: pxt.U.lf("Logarithmic"),
             leftIcon: "fas fa-slash",
-            title: pxt.U.lf("Exponential"),
-            id: "exponential"
+            title: pxt.U.lf("Logarithmic"),
+            id: "logarithmic"
         }
     ];
 
@@ -135,6 +135,21 @@ export const SoundControls = (props: SoundControlsProps) => {
                 ...effect,
                 duration: val
             });
+        }
+    }
+
+    const onFrequencyChange = (index: number, newValue: number) => {
+        if (index === 0) {
+            setEffect({
+                ...effect,
+                startFrequency: newValue
+            })
+        }
+        else {
+            setEffect({
+                ...effect,
+                endFrequency: newValue
+            })
         }
     }
 
@@ -203,8 +218,10 @@ export const SoundControls = (props: SoundControlsProps) => {
             <DraggableGraph
                 min={0}
                 max={2000}
+                aspectRatio={2.5}
                 points={[effect.startFrequency, effect.endFrequency]}
                 interpolation={effect.interpolation}
+                onPointChange={onFrequencyChange}
             />
         </div>
     </div>
