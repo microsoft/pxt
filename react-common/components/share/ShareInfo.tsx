@@ -46,7 +46,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
     const handlePublishClick = async () => {
         let publishedShareData = await publishAsync(name, thumbnailUri);
         setShareData(publishedShareData);
-        if (!publishedShareData.error) setShareState("publish");
+        if (!publishedShareData?.error) setShareState("publish");
     }
 
     const handleCopyClick = () => {
@@ -119,7 +119,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
                             onClick={() => setShareState("gifrecord")} />
                     </div>}
                     <div>{lf("By publishing you agree that you are allowed to share this game.")}</div>
-                    {shareData.error && <div className="project-share-error">
+                    {shareData?.error && <div className="project-share-error">
                         {(shareData.error.statusCode === 413
                             && pxt.appTarget?.cloud?.cloudProviders?.github)
                             ? lf("Oops! Your project is too big. You can create a GitHub repository to share it.")
@@ -145,11 +145,11 @@ export const ShareInfo = (props: ShareInfoProps) => {
                         leftIcon="fas fa-code"
                         onClick={handleEmbedClick} />
                     <SocialButton className="share-button"
-                        url={shareData.url}
+                        url={shareData?.url}
                         type='facebook'
                         heading={lf("Share on Facebook")} />
                     <SocialButton className="share-button"
-                        url={shareData.url}
+                        url={shareData?.url}
                         type='twitter'
                         heading={lf("Share on Twitter")} />
                 </div>}
@@ -159,10 +159,10 @@ export const ShareInfo = (props: ShareInfoProps) => {
                         selected={embedOptions.findIndex(i => i.name === embedState)} />
                     <Textarea readOnly={true}
                         rows={5}
-                        initialValue={shareData.embed[embedState]} />
+                        initialValue={shareData?.embed[embedState]} />
                 </div>}
                 {showQRCode && <div className="project-qrcode">
-                    <img src={shareData.qr} />
+                    <img src={shareData?.qr} />
                 </div>}
             </>}
             {shareState === "gifrecord" && <GifInfo
