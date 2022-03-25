@@ -1,10 +1,14 @@
 import * as React from "react";
+import * as core from "./core";
 import * as data from "./data";
 import * as sui from "./sui";
 import * as simulator from "./simulator";
 import * as screenshot from "./screenshot";
 import * as qr from "./qr";
 import { fireClickOnEnter } from "./util";
+
+import { Modal, ModalAction } from "../../react-common/components/controls/Modal";
+import { Share, ShareData } from "../../react-common/components/share/Share";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -152,6 +156,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             return;
         }
 
+        // TODO shakao: streamline recording state to only be for adding frame?
         if (this.state.recordingState == ShareRecordingState.GifRecording) {
             if (this._gifEncoder.addFrame(msg.data, msg.delay))
                 this.gifRender();
@@ -261,7 +266,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             .then(encoder => this._gifEncoder = encoder);
     }
 
-    gifRecord() {
+    gifRecord2() {
         pxt.tickEvent("share.gifrecord", { view: 'computer', collapsedTo: '' + !this.props.parent.state.collapseEditorTools }, { interactiveConsent: true });
 
         if (this.state.recordingState != ShareRecordingState.None) return;
@@ -294,7 +299,67 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         );
     }
 
-    gifRender() {
+    gifRecord = async () => {
+        pxt.tickEvent("share.gifrecord", { view: 'computer', collapsedTo: '' + !this.props.parent.state.collapseEditorTools }, { interactiveConsent: true });
+
+        if (this.state.recordingState != ShareRecordingState.None) return;
+
+        this.setState({ recordingState: ShareRecordingState.GifLoading }, async () => {
+            try {
+                const encoder = await this.loadEncoderAsync();
+                if (!encoder) {
+                    this.setState({
+                        recordingState: ShareRecordingState.None,
+                        recordError: lf("Oops, gif encoder could not load. Please try again.")
+                    });
+                } else {
+                    encoder.start();
+                    const gifwidth = pxt.appTarget.appTheme.simGifWidth || 160;
+                    this.setState({ recordingState: ShareRecordingState.GifRecording },
+                        () => simulator.driver.startRecording(gifwidth));
+                }
+            } catch (e: any) {
+                pxt.reportException(e);
+                this.setState({
+                    recordingState: ShareRecordingState.None,
+                    recordError: lf("Oops, gif recording failed. Please try again.")
+                });
+                // TODO shakao: note error
+                if (this._gifEncoder) {
+                    this._gifEncoder.cancel();
+                }
+            }
+        });
+    }
+
+    gifRender = async (): Promise<string> => {
+        pxt.debug(`render gif`)
+        simulator.driver.stopRecording();
+        if (!this._gifEncoder) return undefined;
+
+        this.props.parent.stopSimulator();
+        let uri = await this._gifEncoder.renderAsync();
+        pxt.log(`gif: ${uri ? uri.length : 0} chars`)
+        const maxSize = pxt.appTarget.appTheme.simScreenshotMaxUriLength;
+        let recordError: string = undefined;
+        if (uri) {
+            if (maxSize && uri.length > maxSize) {
+                pxt.tickEvent(`gif.toobig`, { size: uri.length });
+                uri = undefined;
+                recordError = lf("Gif is too big, try recording a shorter time.");
+            } else
+                pxt.tickEvent(`gif.ok`, { size: uri.length });
+        }
+
+        // give a breather to the browser to render the gif
+        pxt.Util.delay(1000).then(() => this.props.parent.startSimulator());
+
+        this.setState({ recordingState: ShareRecordingState.None })
+        // TODO shakao return error
+        return uri;
+    }
+
+    gifRender2() {
         pxt.debug(`render gif`)
         simulator.driver.stopRecording();
         if (!this._gifEncoder) return;
@@ -329,7 +394,88 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         this.props.parent.createGitHubRepositoryAsync();
     }
 
+    protected async getShareUrl(pubId: string) {
+        const targetTheme = pxt.appTarget.appTheme;
+        const header = this.props.parent.state.header;
+        let shareData: ShareData = {
+            url: "",
+            embed: {}
+        };
+
+        let shareUrl = targetTheme.shareUrl || "https://makecode.com/";
+        if (!/\/$/.test(shareUrl)) shareUrl += '/';
+        let rootUrl = targetTheme.embedUrl
+        if (!/\/$/.test(rootUrl)) rootUrl += '/';
+        const verPrefix = pxt.webConfig.verprefix || '';
+
+        if (header) {
+            shareData.url = `${shareUrl}${pubId}`;
+            shareData.embed.code = pxt.docs.codeEmbedUrl(`${rootUrl}${verPrefix}`, pubId);
+            shareData.embed.editor = pxt.docs.embedUrl(`${rootUrl}${verPrefix}`, "pub", pubId);
+            shareData.embed.url = `${rootUrl}${verPrefix}#pub:${pubId}`;
+
+            let padding = '81.97%';
+            // TODO: parts aspect ratio
+            let simulatorRunString = `${verPrefix}---run`;
+            if (pxt.webConfig.runUrl) {
+                if (pxt.webConfig.isStatic) {
+                    simulatorRunString = pxt.webConfig.runUrl;
+                }
+                else {
+                    // Always use live, not /beta etc.
+                    simulatorRunString = pxt.webConfig.runUrl.replace(pxt.webConfig.relprefix, "/---")
+                }
+            }
+            if (pxt.appTarget.simulator) padding = (100 / pxt.appTarget.simulator.aspectRatio).toPrecision(4) + '%';
+            const runUrl = rootUrl + simulatorRunString.replace(/^\//, '');
+            shareData.embed.simulator = pxt.docs.runUrl(runUrl, padding, pubId);
+        }
+
+        if (targetTheme.qrCode) {
+            shareData.qr = await qr.renderAsync(`${shareUrl}${pubId}`);
+        }
+
+        return shareData;
+    }
+
     renderCore() {
+        const { parent } = this.props;
+        const { visible, projectName: newProjectName, title, screenshotUri } = this.state;
+        const { simScreenshot, simGif } = pxt.appTarget.appTheme;
+        const light = !!pxt.options.light;
+
+        const screenshotAsync = async () => await this.props.parent.requestScreenshotAsync();
+        const publishAsync = async (name: string, screenshotUri?: string) => {
+            if (name && parent.state.projectName != name) {
+                await parent.updateHeaderNameAsync(name);
+            }
+            try {
+                const id = await parent.anonymousPublishAsync(screenshotUri);
+                return await this.getShareUrl(id);
+            } catch (e) {
+                return { url: "", embed: {}, error: e } as ShareData
+            }
+        }
+
+        return visible
+            ? <Modal
+                title={lf("Share Project")}
+                fullscreen={simScreenshot || simGif} // TODO only fullsreen if simulator
+                className="sharedialog"
+                parentElement={document.getElementById("root") || undefined}
+                onClose={this.hide}>
+                <Share projectName={newProjectName}
+                    showModalAsync={core.dialogAsync}
+                    screenshotUri={screenshotUri}
+                    screenshotAsync={simScreenshot ? screenshotAsync : undefined}
+                    gifRecordAsync={!light && simGif ? this.gifRecord : undefined}
+                    gifRenderAsync={!light && simGif ? this.gifRender : undefined}
+                    publishAsync={publishAsync} />
+            </Modal>
+            : <></>
+    }
+
+    renderCore2() {
         const { visible, projectName: newProjectName, loading, recordingState, screenshotUri, thumbnails, recordError, pubId, qrCodeUri, qrCodeExpanded, title, sharingError } = this.state;
         const targetTheme = pxt.appTarget.appTheme;
         const header = this.props.parent.state.header;
@@ -544,8 +690,15 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
 
     componentDidUpdate() {
         const container = document.getElementById("shareLoanedSimulator");
-        if (container && this.loanedSimulator && !this.loanedSimulator.parentNode)
+        if (container && this.loanedSimulator && !this.loanedSimulator.parentNode) {
             container.appendChild(this.loanedSimulator);
+        }
+
+        const { screenshotUri, visible } = this.state;
+        const targetTheme = pxt.appTarget.appTheme;
+        if (visible && this.loanedSimulator && targetTheme.simScreenshot && !screenshotUri) {
+            this.screenshotAsync().then(() => this.forceUpdate());
+        }
     }
 
     protected handleKeyDown = (e: KeyboardEvent) => {

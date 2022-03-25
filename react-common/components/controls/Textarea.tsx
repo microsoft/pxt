@@ -44,6 +44,11 @@ export const Textarea = (props: TextareaProps) => {
 
     const [value, setValue] = React.useState(initialValue || "");
 
+    React.useEffect(() => {
+        setValue(initialValue)
+    }, [initialValue])
+
+
     const changeHandler = (e: React.ChangeEvent<any>) => {
         const newValue = (e.target as any).value;
         if (!readOnly && (value !== newValue)) {
