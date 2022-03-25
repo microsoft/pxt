@@ -40,6 +40,7 @@ Here is an integration sample:
 * [React component](https://github.com/microsoft/pxt-react-extension-template/blob/master/src/components/snippet.tsx)
 * [HTML only](https://jsfiddle.net/L8msdjpu/2/)
 * [MkDocs plugin](https://microsoft.github.io/pxt-mkdocs-sample/)
+* [Svelte implementation](https://go.calliope.cc/tools/makecode/codeimages/) ([source](https://github.com/calliope-edu/MakeCode-Block-Image-Tool))
 
 ## Custom rendering
 
