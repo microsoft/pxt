@@ -23,14 +23,6 @@ export interface ShareEditorProps extends ISettingsProps {
     loading?: boolean;
 }
 
-export enum ShareRecordingState {
-    None,
-    ScreenshotSnap,
-    GifLoading,
-    GifRecording,
-    GifRendering
-}
-
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 export interface ShareEditorState {
     mode?: ShareMode;
@@ -42,7 +34,6 @@ export interface ShareEditorState {
     projectNameChanged?: boolean;
     thumbnails?: boolean;
     screenshotUri?: string;
-    recordingState?: ShareRecordingState;
     recordError?: string;
     qrCodeUri?: string;
     qrCodeExpanded?: boolean;
@@ -59,7 +50,6 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             pubId: undefined,
             visible: false,
             screenshotUri: undefined,
-            recordingState: ShareRecordingState.None,
             recordError: undefined,
             title: undefined
         }
@@ -92,7 +82,6 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             screenshotUri: undefined,
             projectName: undefined,
             projectNameChanged: false,
-            recordingState: ShareRecordingState.None,
             recordError: undefined,
             qrCodeUri: undefined,
             title: undefined
@@ -145,7 +134,6 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             || this.state.projectName != nextState.projectName
             || this.state.projectNameChanged != nextState.projectNameChanged
             || this.state.loading != nextState.loading
-            || this.state.recordingState != nextState.recordingState
             || this.state.screenshotUri != nextState.screenshotUri
             || this.state.qrCodeUri != nextState.qrCodeUri
             || this.state.qrCodeExpanded != nextState.qrCodeExpanded
@@ -169,10 +157,11 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
     screenshotAsync = () => {
         return this.props.parent.requestScreenshotAsync()
             .then(img => {
-                const st: ShareEditorState = { recordingState: ShareRecordingState.None, recordError: undefined };
-                if (img) st.screenshotUri = img;
-                else st.recordError = lf("Oops, screenshot failed. Please try again.")
-                this.setState(st);
+                if (img) {
+                    this.setState({ screenshotUri: img });
+                } else {
+                    this.setState({ recordError: lf("Oops, screenshot failed. Please try again.") });
+                }
             });
     }
 
@@ -185,25 +174,20 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
     gifRecord = async () => {
         pxt.tickEvent("share.gifrecord", { view: 'computer', collapsedTo: '' + !this.props.parent.state.collapseEditorTools }, { interactiveConsent: true });
 
-        if (this.state.recordingState != ShareRecordingState.None) return;
-
         try {
             const encoder = await this.loadEncoderAsync();
             if (!encoder) {
                 this.setState({
-                    recordingState: ShareRecordingState.None,
                     recordError: lf("Oops, gif encoder could not load. Please try again.")
                 });
             } else {
                 encoder.start();
                 const gifwidth = pxt.appTarget.appTheme.simGifWidth || 160;
-                this.setState({ recordingState: ShareRecordingState.GifRecording },
-                    () => simulator.driver.startRecording(gifwidth));
+                simulator.driver.startRecording(gifwidth);
             }
         } catch (e: any) {
             pxt.reportException(e);
             this.setState({
-                recordingState: ShareRecordingState.None,
                 recordError: lf("Oops, gif recording failed. Please try again.")
             });
             if (this._gifEncoder) {
@@ -233,8 +217,6 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
 
         // give a breather to the browser to render the gif
         pxt.Util.delay(1000).then(() => this.props.parent.startSimulator());
-
-        this.setState({ recordingState: ShareRecordingState.None })
         return uri;
     }
 
