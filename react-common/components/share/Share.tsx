@@ -22,13 +22,15 @@ export interface ShareProps {
     screenshotAsync: () => Promise<string>;
     gifRecordAsync: () => Promise<void>;
     gifRenderAsync: () => Promise<string | void>;
+    gifAddFrame: (dataUri: ImageData, delay?: number) => boolean;
     publishAsync: (name: string, screenshotUri?: string) => Promise<ShareData>;
-    showModalAsync(options: DialogOptions): Promise<void>;
+    registerSimulatorMsgHandler?: (handler: (msg: any) => void) => void;
+    unregisterSimulatorMsgHandler?: () => void;
 }
 
 export const Share = (props: ShareProps) => {
-    const { projectName, screenshotUri, screenshotAsync, gifRecordAsync,
-        gifRenderAsync, publishAsync, showModalAsync } = props;
+    const { projectName, screenshotUri, screenshotAsync, gifRecordAsync, gifRenderAsync, gifAddFrame,
+        publishAsync, registerSimulatorMsgHandler, unregisterSimulatorMsgHandler } = props;
 
 return <div className="project-share">
         {(!!screenshotAsync || !!gifRecordAsync) && <div className="project-share-simulator">
@@ -39,6 +41,9 @@ return <div className="project-share">
             screenshotAsync={screenshotAsync}
             gifRecordAsync={gifRecordAsync}
             gifRenderAsync={gifRenderAsync}
-            publishAsync={publishAsync} />
+            gifAddFrame={gifAddFrame}
+            publishAsync={publishAsync}
+            registerSimulatorMsgHandler={registerSimulatorMsgHandler}
+            unregisterSimulatorMsgHandler={unregisterSimulatorMsgHandler} />
     </div>
 }

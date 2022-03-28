@@ -16,11 +16,15 @@ export interface ShareInfoProps {
     screenshotAsync?: () => Promise<string>;
     gifRecordAsync?: () => Promise<void>;
     gifRenderAsync?: () => Promise<string | void>;
+    gifAddFrame?: (dataUri: ImageData, delay?: number) => boolean;
     publishAsync: (name: string, screenshotUri?: string) => Promise<ShareData>;
+    registerSimulatorMsgHandler?: (handler: (msg: any) => void) => void;
+    unregisterSimulatorMsgHandler?: () => void;
 }
 
 export const ShareInfo = (props: ShareInfoProps) => {
-    const { projectName, description, screenshotUri, screenshotAsync, gifRecordAsync, gifRenderAsync, publishAsync } = props;
+    const { projectName, description, screenshotUri, screenshotAsync, gifRecordAsync, gifRenderAsync, gifAddFrame,
+        publishAsync, registerSimulatorMsgHandler, unregisterSimulatorMsgHandler } = props;
     const [ name, setName ] = React.useState(projectName);
     const [ thumbnailUri, setThumbnailUri ] = React.useState(screenshotUri);
     const [ shareState, setShareState ] = React.useState<"share" | "gifrecord" | "publish">("share");
@@ -154,7 +158,8 @@ export const ShareInfo = (props: ShareInfoProps) => {
                         heading={lf("Share on Twitter")} />
                 </div>}
                 {embedState !== "none" && <div className="project-embed">
-                    <EditorToggle className="slim tablet-compact"
+                    <EditorToggle id="project-embed-toggle"
+                        className="slim tablet-compact"
                         items={embedOptions}
                         selected={embedOptions.findIndex(i => i.name === embedState)} />
                     <Textarea readOnly={true}
@@ -171,7 +176,10 @@ export const ShareInfo = (props: ShareInfoProps) => {
                 onCancel={exitGifRecord}
                 screenshotAsync={screenshotAsync}
                 gifRecordAsync={gifRecordAsync}
-                gifRenderAsync={gifRenderAsync}  />}
+                gifRenderAsync={gifRenderAsync}
+                gifAddFrame={gifAddFrame}
+                registerSimulatorMsgHandler={registerSimulatorMsgHandler}
+                unregisterSimulatorMsgHandler={unregisterSimulatorMsgHandler} />}
         </div>
     </>
 }

@@ -68,8 +68,6 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         this.setAdvancedMode = this.setAdvancedMode.bind(this);
         this.handleProjectNameChange = this.handleProjectNameChange.bind(this);
         this.restartSimulator = this.restartSimulator.bind(this);
-        this.handleRecordClick = this.handleRecordClick.bind(this);
-        this.handleScreenshotClick = this.handleScreenshotClick.bind(this);
         this.handleScreenshotMessage = this.handleScreenshotMessage.bind(this);
         this.handleCreateGitHubRepository = this.handleCreateGitHubRepository.bind(this);
     }
@@ -112,7 +110,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             && (pxt.appTarget.appTheme.simScreenshot || pxt.appTarget.appTheme.simGif);
         if (thumbnails) {
             this.loanedSimulator = simulator.driver.loanSimulator();
-            this.props.parent.pushScreenshotHandler(this.handleScreenshotMessage);
+            // this.props.parent.pushScreenshotHandler(this.handleScreenshotMessage);
         }
         this.setState({
             thumbnails,
@@ -133,35 +131,8 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
 
         if (!msg || !visible) return;
 
-        if (msg.event === "start") {
-            switch (this.state.recordingState) {
-                case ShareRecordingState.None:
-                    this.gifRecord();
-                    break;
-                default:
-                    // ignore
-                    break;
-            }
-            return;
-        } else if (msg.event == "stop") {
-            switch (this.state.recordingState) {
-                case ShareRecordingState.GifRecording:
-                    this.gifRender();
-                    break;
-                default:
-                    // ignore
-                    break;
-            }
-            return;
-        }
-
-        // TODO shakao: streamline recording state to only be for adding frame?
         if (this.state.recordingState == ShareRecordingState.GifRecording) {
-            if (this._gifEncoder.addFrame(msg.data, msg.delay))
-                this.gifRender();
-        } else if (this.state.recordingState == ShareRecordingState.ScreenshotSnap || this.state.recordingState === ShareRecordingState.None) {
-            // received a screenshot
-            this.setState({ screenshotUri: pxt.BrowserUtils.imageDataToPNG(msg.data), recordingState: ShareRecordingState.None, recordError: undefined })
+            this._gifEncoder.addFrame(msg.data, msg.delay);
         } else {
             // ignore
             // make sure simulator is stopped
@@ -181,14 +152,6 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         if (Object.keys(newState).length > 0) {
             this.setState(newState);
         }
-    }
-
-    componentDidMount() {
-        document.addEventListener("keydown", this.handleKeyDown);
-    }
-
-    componentWillUnmount() {
-        document.removeEventListener("keydown", this.handleKeyDown);
     }
 
     shouldComponentUpdate(nextProps: ShareEditorProps, nextState: ShareEditorState, nextContext: any): boolean {
@@ -220,14 +183,6 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         this.props.parent.restartSimulator();
     }
 
-    handleScreenshotClick() {
-        pxt.tickEvent("share.takescreenshot", { view: 'computer', collapsedTo: '' + !this.props.parent.state.collapseEditorTools }, { interactiveConsent: true });
-        if (this.state.recordingState != ShareRecordingState.None) return;
-
-        this.setState({ recordingState: ShareRecordingState.ScreenshotSnap, recordError: undefined },
-            () => this.screenshotAsync());
-    }
-
     screenshotAsync = () => {
         return this.props.parent.requestScreenshotAsync()
             .then(img => {
@@ -236,20 +191,6 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                 else st.recordError = lf("Oops, screenshot failed. Please try again.")
                 this.setState(st);
             });
-    }
-
-    handleRecordClick() {
-        switch (this.state.recordingState) {
-            case ShareRecordingState.None:
-                this.gifRecord();
-                break;
-            case ShareRecordingState.GifRecording:
-                this.gifRender();
-                break;
-            default:
-                // ignore
-                break;
-        }
     }
 
     private loadEncoderAsync(): Promise<screenshot.GifEncoder> {
@@ -263,32 +204,29 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
 
         if (this.state.recordingState != ShareRecordingState.None) return;
 
-        this.setState({ recordingState: ShareRecordingState.GifLoading }, async () => {
-            try {
-                const encoder = await this.loadEncoderAsync();
-                if (!encoder) {
-                    this.setState({
-                        recordingState: ShareRecordingState.None,
-                        recordError: lf("Oops, gif encoder could not load. Please try again.")
-                    });
-                } else {
-                    encoder.start();
-                    const gifwidth = pxt.appTarget.appTheme.simGifWidth || 160;
-                    this.setState({ recordingState: ShareRecordingState.GifRecording },
-                        () => simulator.driver.startRecording(gifwidth));
-                }
-            } catch (e: any) {
-                pxt.reportException(e);
+        try {
+            const encoder = await this.loadEncoderAsync();
+            if (!encoder) {
                 this.setState({
                     recordingState: ShareRecordingState.None,
-                    recordError: lf("Oops, gif recording failed. Please try again.")
+                    recordError: lf("Oops, gif encoder could not load. Please try again.")
                 });
-                // TODO shakao: note error
-                if (this._gifEncoder) {
-                    this._gifEncoder.cancel();
-                }
+            } else {
+                encoder.start();
+                const gifwidth = pxt.appTarget.appTheme.simGifWidth || 160;
+                this.setState({ recordingState: ShareRecordingState.GifRecording },
+                    () => simulator.driver.startRecording(gifwidth));
             }
-        });
+        } catch (e: any) {
+            pxt.reportException(e);
+            this.setState({
+                recordingState: ShareRecordingState.None,
+                recordError: lf("Oops, gif recording failed. Please try again.")
+            });
+            if (this._gifEncoder) {
+                this._gifEncoder.cancel();
+            }
+        }
     }
 
     gifRender = async (): Promise<string> => {
@@ -314,8 +252,12 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         pxt.Util.delay(1000).then(() => this.props.parent.startSimulator());
 
         this.setState({ recordingState: ShareRecordingState.None })
-        // TODO shakao return error
         return uri;
+    }
+
+    gifAddFrame = (dataUri?: ImageData, delay?: number) => {
+        if (this._gifEncoder) return this._gifEncoder.addFrame(dataUri, delay);
+        return false;
     }
 
     handleCreateGitHubRepository() {
@@ -373,6 +315,8 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         const { visible, projectName: newProjectName, title, screenshotUri } = this.state;
         const { simScreenshot, simGif } = pxt.appTarget.appTheme;
         const light = !!pxt.options.light;
+        const thumbnails = pxt.appTarget.cloud && pxt.appTarget.cloud.thumbnails
+            && (simScreenshot || simGif);
 
         const screenshotAsync = async () => await this.props.parent.requestScreenshotAsync();
         const publishAsync = async (name: string, screenshotUri?: string) => {
@@ -395,12 +339,14 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                 parentElement={document.getElementById("root") || undefined}
                 onClose={this.hide}>
                 <Share projectName={newProjectName}
-                    showModalAsync={core.dialogAsync}
                     screenshotUri={screenshotUri}
                     screenshotAsync={simScreenshot ? screenshotAsync : undefined}
                     gifRecordAsync={!light && simGif ? this.gifRecord : undefined}
                     gifRenderAsync={!light && simGif ? this.gifRender : undefined}
-                    publishAsync={publishAsync} />
+                    gifAddFrame={!light && simGif ? this.gifAddFrame : undefined}
+                    publishAsync={publishAsync}
+                    registerSimulatorMsgHandler={thumbnails ? parent.pushScreenshotHandler : undefined}
+                    unregisterSimulatorMsgHandler={thumbnails ? parent.popScreenshotHandler : undefined} />
             </Modal>
             : <></>
     }
@@ -415,22 +361,6 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         const targetTheme = pxt.appTarget.appTheme;
         if (visible && this.loanedSimulator && targetTheme.simScreenshot && !screenshotUri) {
             this.screenshotAsync().then(() => this.forceUpdate());
-        }
-    }
-
-    protected handleKeyDown = (e: KeyboardEvent) => {
-        const { visible } = this.state;
-        const targetTheme = pxt.appTarget.appTheme;
-        const pressed = e.key.toLocaleLowerCase();
-
-        // Don't fire events if component is hidden or if they are typing in a name
-        if (!visible || (document.activeElement && document.activeElement.tagName === "INPUT")) return;
-
-        if (targetTheme.simScreenshotKey && pressed === targetTheme.simScreenshotKey.toLocaleLowerCase()) {
-            this.handleScreenshotClick();
-        }
-        else if (targetTheme.simGifKey && pressed === targetTheme.simGifKey.toLocaleLowerCase()) {
-            this.handleRecordClick();
         }
     }
 }

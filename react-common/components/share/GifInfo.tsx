@@ -11,10 +11,15 @@ export interface GifInfoProps {
     screenshotAsync?: () => Promise<string>;
     gifRecordAsync?: () => Promise<void>;
     gifRenderAsync?: () => Promise<string | void>;
+    gifAddFrame?: (dataUri: ImageData, delay?: number) => boolean;
+
+    registerSimulatorMsgHandler?: (handler: (msg: any) => void) => void;
+    unregisterSimulatorMsgHandler?: () => void;
 }
 
 export const GifInfo = (props: GifInfoProps) => {
-    const { initialUri, onApply, onCancel, screenshotAsync, gifRecordAsync, gifRenderAsync } = props;
+    const { initialUri, onApply, onCancel, screenshotAsync, gifRecordAsync, gifRenderAsync, gifAddFrame,
+        registerSimulatorMsgHandler, unregisterSimulatorMsgHandler } = props;
     const [ uri, setUri ] =  React.useState(initialUri);
 
     const handleApplyClick = (evt?: any) => {
@@ -50,6 +55,9 @@ export const GifInfo = (props: GifInfoProps) => {
         </div>
         <GifRecorder onScreenshot={screenshotAsync ? handleScreenshotClick : undefined}
             onRecordStart={gifRecordAsync}
-            onRecordStop={handleRecordStopClick} />
+            onRecordStop={handleRecordStopClick}
+            onGifFrame={gifAddFrame}
+            registerSimulatorMsgHandler={registerSimulatorMsgHandler}
+            unregisterSimulatorMsgHandler={unregisterSimulatorMsgHandler} />
     </>
 }
