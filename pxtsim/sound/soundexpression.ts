@@ -456,7 +456,7 @@ namespace pxsim.codal.music {
 
         // Vibrato effect
         // Steps need to be spread across duration evenly.
-        let normalizedFxnSteps = (fx.duration / 10000) * fxnSteps;
+        let normalizedFxnSteps = Math.round(fx.duration / 10000 * fxnSteps);
         switch(fxChoice) {
             case 1:
                 fx.effects[2].steps = normalizedFxnSteps;

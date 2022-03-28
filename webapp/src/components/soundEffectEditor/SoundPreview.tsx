@@ -19,8 +19,8 @@ export const SoundPreview = (props: SoundPreviewProps) => {
     const onAnimateRef = () => {
         if (!pathAnimation || !rectAnimation) return;
         handleStartAnimationRef((duration: number) => {
-            pathAnimation.setAttribute("duration", duration + "ms");
-            rectAnimation.setAttribute("duration", duration + "ms");
+            pathAnimation.setAttribute("dur", duration + "ms");
+            rectAnimation.setAttribute("dur", duration + "ms");
             (pathAnimation as any).beginElement();
             (rectAnimation as any).beginElement();
         })
@@ -39,15 +39,15 @@ export const SoundPreview = (props: SoundPreviewProps) => {
     return <div className="sound-preview">
         <svg viewBox={`0 0 ${width} ${height}`} xmlns="http://www.w3.org/2000/svg">
             <defs>
-                <linearGradient id="preview-fill" x1="100%">
-                    <stop offset="0%" stop-color="#E63022"/>
-                    <stop offset="0%" stop-color="grey"/>
+                <linearGradient id="preview-fill" x1="100%" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stopColor="#E63022"/>
+                    <stop offset="0%" stopColor="grey"/>
                     <animate ref={handlePathAnimateRef} attributeName="x1" from="0%" to="100%" dur="1000ms" begin="indefinite" />
                 </linearGradient>
             </defs>
             <path d={`M ${0} ${height / 2} h ${width}`} fill="none" stroke="grey" strokeWidth="2px" />
             <path d={renderSoundPath(sound, width, height)} fill="none" stroke="url('#preview-fill')" strokeWidth="4px"/>
-            <rect x="-1" y="0" width="1" height="100%" fill="grey">
+            <rect x="-2" y="0" width="1" height="100%" fill="grey">
                 <animate ref={handleRectAnimateRef} attributeName="x" from="0%" to="100%" dur="1000ms" begin="indefinite" />
             </rect>
         </svg>
@@ -72,6 +72,8 @@ function renderSoundPath(sound: pxt.assets.Sound, width: number, height: number)
         switch (interpolation) {
             case "logarithmic":
                 return logInterpolation(startFrequency, endFrequency, x / width);
+            case "curve":
+                return startFrequency + (endFrequency - startFrequency) * Math.sin(x / width * (Math.PI / 2))
             case "linear":
             default:
                 return ((endFrequency - startFrequency) / width) * x + startFrequency;
@@ -88,19 +90,25 @@ function renderSoundPath(sound: pxt.assets.Sound, width: number, height: number)
 
     let currentX = 0;
 
+    // To make the graph appear consistent with the implementation, use a seeded random for the noise waveform.
+    // The numbers are still nonsense but at least this reflects that it's deterministic.
+    const random = new SeededRandom(startFrequency + endFrequency);
+
     while (currentX < width) {
         parts.push(renderHalfWavePart(
             volumeToAmplitude(getVolumeAt(currentX)),
             frequencyToWidth(getFrequencyAt(currentX)) / 2,
             wave,
-            false
+            false,
+            random
         ))
         currentX += frequencyToWidth(getFrequencyAt(currentX)) / 2
         parts.push(renderHalfWavePart(
             volumeToAmplitude(getVolumeAt(currentX)),
             frequencyToWidth(getFrequencyAt(currentX)) / 2,
             wave,
-            true
+            true,
+            random
         ))
         currentX += frequencyToWidth(getFrequencyAt(currentX)) / 2
     }
@@ -108,23 +116,32 @@ function renderSoundPath(sound: pxt.assets.Sound, width: number, height: number)
     return parts.join(" ");
 }
 
-function renderWavePart(amplitude: number, width: number, wave: pxt.assets.SoundWaveForm) {
-    switch (wave) {
-        case "triangle":
-            return `l ${width / 4} ${-amplitude} l ${width / 2} ${amplitude * 2} l ${width / 4} ${-amplitude}`;
-        case "square":
-            return `v ${-amplitude} h ${width / 2} v ${amplitude * 2} h ${width / 2} v ${-amplitude}`;
-        case "sawtooth":
-            return `v ${-amplitude} l ${width} ${amplitude * 2} v ${-amplitude}`;
-        case "sine":
-            return `v ${-amplitude} l ${width} ${amplitude * 2} v ${-amplitude}`;
-        case "noise":
-            return `v ${-amplitude} l ${width} ${amplitude * 2} v ${-amplitude}`;
+class SeededRandom {
+    // Implementation of the Galois Linear Feedback Shift Register
+    private lfsr: number;
+    public seed: number;
+    public i = 0;
 
+    constructor(seed: number) {
+        this.seed = seed;
+        this.lfsr = seed;
+    }
+
+
+    next(): number {
+        const n = this.lfsr = (this.lfsr >> 1) ^ ((-(this.lfsr & 1)) & 0xb400);
+        console.log(this.i + ": " + n);
+        this.i ++;
+        return n / 0xffff;
+    }
+
+    randomRange(min: number, max: number): number {
+        return min + (max - min) * this.next();
     }
 }
 
-function renderHalfWavePart(amplitude: number, width: number, wave: pxt.assets.SoundWaveForm, flip: boolean) {
+
+function renderHalfWavePart(amplitude: number, width: number, wave: pxt.assets.SoundWaveForm, flip: boolean, random: SeededRandom) {
     switch (wave) {
         case "triangle":
             return `l ${width / 2} ${flip ? amplitude : -amplitude} l ${width / 2} ${flip ? -amplitude : amplitude}`;
@@ -138,9 +155,32 @@ function renderHalfWavePart(amplitude: number, width: number, wave: pxt.assets.S
                 return `v ${-amplitude} l ${width} ${amplitude}`
             }
         case "sine":
-            return `l ${width / 2} ${flip ? amplitude : -amplitude} l ${width / 2} ${flip ? -amplitude : amplitude}`;
+            return `q ${width / 2} ${(flip ? amplitude : -amplitude) * 1.9} ${width} 0`;
         case "noise":
-            return `l ${width / 2} ${flip ? amplitude : -amplitude} l ${width / 2} ${flip ? -amplitude : amplitude}`;
+            const outParts: string[] = [];
+            const points: number[] = [];
+
+            const slice = Math.min(4, width / 4);
+
+            for (let x = 0; x < width; x += slice) {
+                points.push(random.randomRange(-amplitude, amplitude));
+            }
+
+            console.log(JSON.stringify(points));
+
+            points[0] = flip ? amplitude : -amplitude;
+            points[points.length - 1] = 0;
+            let offset = 0;
+            let x = 0;
+            for (const point of points) {
+                let dx = Math.min(slice, width - x);
+                outParts.push(`v ${point - offset} h ${dx}`)
+                offset = point;
+                x += dx;
+
+                if (x >= width) break;
+            }
+            return outParts.join(" ");
 
     }
 }
