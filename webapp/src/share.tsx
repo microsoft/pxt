@@ -68,7 +68,6 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         this.setAdvancedMode = this.setAdvancedMode.bind(this);
         this.handleProjectNameChange = this.handleProjectNameChange.bind(this);
         this.restartSimulator = this.restartSimulator.bind(this);
-        this.handleScreenshotMessage = this.handleScreenshotMessage.bind(this);
         this.handleCreateGitHubRepository = this.handleCreateGitHubRepository.bind(this);
     }
 
@@ -86,7 +85,6 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         if (this.loanedSimulator) {
             simulator.driver.unloanSimulator();
             this.loanedSimulator = undefined;
-            this.props.parent.popScreenshotHandler();
             simulator.driver.stopRecording();
         }
         this.setState({
@@ -110,7 +108,6 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             && (pxt.appTarget.appTheme.simScreenshot || pxt.appTarget.appTheme.simGif);
         if (thumbnails) {
             this.loanedSimulator = simulator.driver.loanSimulator();
-            // this.props.parent.pushScreenshotHandler(this.handleScreenshotMessage);
         }
         this.setState({
             thumbnails,
@@ -124,20 +121,6 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             title,
             projectName: header.name
         }, thumbnails ? (() => this.props.parent.startSimulator()) : undefined);
-    }
-
-    handleScreenshotMessage(msg: pxt.editor.ScreenshotData) {
-        const { visible } = this.state;
-
-        if (!msg || !visible) return;
-
-        if (this.state.recordingState == ShareRecordingState.GifRecording) {
-            this._gifEncoder.addFrame(msg.data, msg.delay);
-        } else {
-            // ignore
-            // make sure simulator is stopped
-            simulator.driver.stopRecording();
-        }
     }
 
     UNSAFE_componentWillReceiveProps(newProps: ShareEditorProps) {
