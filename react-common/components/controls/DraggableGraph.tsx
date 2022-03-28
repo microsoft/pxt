@@ -35,24 +35,25 @@ export const DraggableGraph = (props: DraggableGraphProps) => {
     const unit = width / 40;
     const halfUnit = unit / 2;
 
-    const yOffset = unit * 2;
-    const availableHeight = height - yOffset * 2;
+    const yOffset = unit;
+    const availableHeight = height - unit * 5 / 2;
     const availableWidth = width - halfUnit * 3;
 
     const xSlice = availableWidth / (points.length - 1);
     const yScale = availableHeight / (max - min);
 
     const [dragIndex, setDragIndex] = React.useState(-1);
-    const [dragValue, setDragValue] = React.useState(-1);
 
     const svgCoordToValue = (point: DOMPoint) =>
         (1 - ((point.y - yOffset) / availableHeight)) * (max - min) + min;
 
     let animationRef: number;
 
-    const throttledSetDragValue = (value: number) => {
+    const throttledSetDragValue = (index: number, value: number) => {
         if (animationRef) cancelAnimationFrame(animationRef);
-        animationRef = requestAnimationFrame(() => setDragValue(Math.max(Math.min(value, max), min)));
+        animationRef = requestAnimationFrame(() => {
+            handlePointChange(index, value);
+        });
     }
 
     const handlePointChange = (index: number, newValue: number) => {
@@ -75,14 +76,14 @@ export const DraggableGraph = (props: DraggableGraphProps) => {
                 const coord = clientCoord(ev);
                 const svg = screenToSVGCoord(ref.ownerSVGElement, coord);
                 setDragIndex(index);
-                throttledSetDragValue(svgCoordToValue(svg));
+                throttledSetDragValue(index, svgCoordToValue(svg));
             };
 
             ref.onpointermove = ev => {
                 if (dragIndex !== index) return;
                 const coord = clientCoord(ev);
                 const svg = screenToSVGCoord(ref.ownerSVGElement, coord);
-                throttledSetDragValue(svgCoordToValue(svg));
+                throttledSetDragValue(index, svgCoordToValue(svg));
             };
 
             ref.onpointerleave = ev => {
@@ -90,7 +91,7 @@ export const DraggableGraph = (props: DraggableGraphProps) => {
                 setDragIndex(-1);
                 const coord = clientCoord(ev);
                 const svg = screenToSVGCoord(ref.ownerSVGElement, coord);
-                handlePointChange(index, svgCoordToValue(svg));
+                throttledSetDragValue(index, svgCoordToValue(svg));
             };
 
             ref.onpointerup = ev => {
@@ -98,13 +99,12 @@ export const DraggableGraph = (props: DraggableGraphProps) => {
                 setDragIndex(-1);
                 const coord = clientCoord(ev);
                 const svg = screenToSVGCoord(ref.ownerSVGElement, coord);
-                handlePointChange(index, svgCoordToValue(svg));
+                throttledSetDragValue(index, svgCoordToValue(svg));
             };
         });
-    }, [dragIndex])
+    }, [dragIndex, onPointChange])
 
     const getValue = (index: number) => {
-        if (index === dragIndex) return dragValue;
         return points[index];
     }
 

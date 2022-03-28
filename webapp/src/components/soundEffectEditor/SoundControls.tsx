@@ -6,23 +6,13 @@ import { Input } from "../../../../react-common/components/controls/Input";
 import { DraggableGraph } from "../../../../react-common/components/controls/DraggableGraph";
 
 
-
 export interface SoundControlsProps {
-
+    onSoundChange: (newValue: pxt.assets.Sound) => void;
+    sound: pxt.assets.Sound;
 }
 
 export const SoundControls = (props: SoundControlsProps) => {
-
-    const [ effect, setEffect ] = React.useState<pxt.assets.Sound>({
-        wave: "sine",
-        interpolation: "linear",
-        effect: "vibrato",
-        startFrequency: 100,
-        endFrequency: 1800,
-        startVolume: 500,
-        endVolume: 0,
-        duration: 1000
-    });
+    const { onSoundChange, sound } = props;
 
     const waveformOptions: RadioGroupChoice[] = [
         {
@@ -53,8 +43,8 @@ export const SoundControls = (props: SoundControlsProps) => {
     ]
 
     const onWaveformSelected = (id: string) => {
-        setEffect({
-            ...effect,
+        onSoundChange({
+            ...sound,
             wave: id as pxt.assets.SoundWaveForm
         });
     }
@@ -87,8 +77,8 @@ export const SoundControls = (props: SoundControlsProps) => {
     ];
 
     const onInterpolationSelected = (id: string) => {
-        setEffect({
-            ...effect,
+        onSoundChange({
+            ...sound,
             interpolation: id as pxt.assets.SoundInterpolation
         });
     }
@@ -121,8 +111,8 @@ export const SoundControls = (props: SoundControlsProps) => {
     ];
 
     const onEffectSelected = (id: string) => {
-        setEffect({
-            ...effect,
+        onSoundChange({
+            ...sound,
             effect: id as pxt.assets.SoundEffect
         });
     }
@@ -131,23 +121,38 @@ export const SoundControls = (props: SoundControlsProps) => {
         const val = parseInt(newValue);
 
         if (!isNaN(val) && val > 0) {
-            setEffect({
-                ...effect,
+            onSoundChange({
+                ...sound,
                 duration: val
             });
         }
     }
 
+    const onVolumeChange = (index: number, newValue: number) => {
+        if (index === 0) {
+            onSoundChange({
+                ...sound,
+                startVolume: newValue
+            })
+        }
+        else {
+            onSoundChange({
+                ...sound,
+                endVolume: newValue
+            })
+        }
+    }
+
     const onFrequencyChange = (index: number, newValue: number) => {
         if (index === 0) {
-            setEffect({
-                ...effect,
+            onSoundChange({
+                ...sound,
                 startFrequency: newValue
             })
         }
         else {
-            setEffect({
-                ...effect,
+            onSoundChange({
+                ...sound,
                 endFrequency: newValue
             })
         }
@@ -160,7 +165,7 @@ export const SoundControls = (props: SoundControlsProps) => {
                     {pxt.U.lf("Waveform:")}
                 </span>
                 <span className="sound-label waveform-name">
-                    {getWaveformLabel(effect.wave)}
+                    {getWaveformLabel(sound.wave)}
                 </span>
             </div>
             <div className="waveform-and-duration-controls">
@@ -168,7 +173,7 @@ export const SoundControls = (props: SoundControlsProps) => {
                     className="common-radio-buttons"
                     id="waveform-select"
                     choices={waveformOptions}
-                    selectedId={effect.wave}
+                    selectedId={sound.wave}
                     onChoiceSelected={onWaveformSelected}
                 />
                 <div className="duration-controls">
@@ -176,7 +181,7 @@ export const SoundControls = (props: SoundControlsProps) => {
                         {pxt.U.lf("Duration (ms)")}
                     </div>
                     <Input
-                        initialValue={effect.duration + ""}
+                        initialValue={sound.duration + ""}
                         className="sound-duration-input"
                         onEnterKey={onDurationChange}
                         onBlur={onDurationChange}
@@ -185,44 +190,61 @@ export const SoundControls = (props: SoundControlsProps) => {
             </div>
         </div>
         <div className="sound-graph-container">
-            <div className="frequency-graph-header">
-                <span className="sound-label">
-                    {pxt.U.lf("Frequency (Hz)")}
-                </span>
-                <div className="dropdown-and-label">
+            <div className="frequency-graph">
+                <div className="sound-graph-header">
                     <span className="sound-label">
-                        {pxt.U.lf("Effect")}
+                        {pxt.U.lf("Frequency (Hz)")}
                     </span>
+                    <div className="dropdown-and-label">
+                        <span className="sound-label">
+                            {pxt.U.lf("Effect")}
+                        </span>
 
-                    <Dropdown
-                        id="effect-dropdown"
-                        className="icon-preview"
-                        selectedId={effect.effect}
-                        onItemSelected={onEffectSelected}
-                        items={effectOptions}
-                    />
+                        <Dropdown
+                            id="effect-dropdown"
+                            className="icon-preview"
+                            selectedId={sound.effect}
+                            onItemSelected={onEffectSelected}
+                            items={effectOptions}
+                        />
+                    </div>
+                    <div className="dropdown-and-label">
+                        <span className="sound-label">
+                            {pxt.U.lf("Interpolation")}
+                        </span>
+                        <Dropdown
+                            id="interpolation-dropdown"
+                            className="icon-preview"
+                            selectedId={sound.interpolation}
+                            onItemSelected={onInterpolationSelected}
+                            items={interpolationOptions}
+                        />
+                    </div>
                 </div>
-                <div className="dropdown-and-label">
-                    <span className="sound-label">
-                        {pxt.U.lf("Interpolation")}
-                    </span>
-                    <Dropdown
-                        id="interpolation-dropdown"
-                        className="icon-preview"
-                        selectedId={effect.interpolation}
-                        onItemSelected={onInterpolationSelected}
-                        items={interpolationOptions}
-                    />
-                </div>
+                <DraggableGraph
+                    min={0}
+                    max={2000}
+                    aspectRatio={3}
+                    points={[sound.startFrequency, sound.endFrequency]}
+                    interpolation={sound.interpolation}
+                    onPointChange={onFrequencyChange}
+                />
             </div>
-            <DraggableGraph
-                min={0}
-                max={2000}
-                aspectRatio={2.5}
-                points={[effect.startFrequency, effect.endFrequency]}
-                interpolation={effect.interpolation}
-                onPointChange={onFrequencyChange}
-            />
+            <div className="volume-graph">
+                <div className="sound-graph-header">
+                    <span className="sound-label">
+                        {pxt.U.lf("Volume")}
+                    </span>
+                </div>
+                <DraggableGraph
+                    min={0}
+                    max={1023}
+                    aspectRatio={5}
+                    points={[sound.startVolume, sound.endVolume]}
+                    interpolation="linear"
+                    onPointChange={onVolumeChange}
+                />
+            </div>
         </div>
     </div>
 }

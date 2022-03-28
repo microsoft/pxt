@@ -7,8 +7,12 @@
 
 .sound-preview {
     height: 8rem;
-    background: #e63022;
-    opacity: 0.1;
+    padding: 0 0.5rem;
+    background: #fbe2d6;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .sound-effect-header {
@@ -32,14 +36,21 @@
     }
 }
 
-.frequency-graph-header {
+.sound-graph-header {
     display: flex;
     flex-direction: row;
     align-items: center;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
 
     & > span {
         flex-grow: 1;
     }
+}
+
+.frequency-graph {
+    padding-top: 0.5rem;
+    border-bottom: 1px solid #dedede;
 }
 
 .dropdown-and-label {
@@ -64,6 +75,7 @@
     font-weight: 400;
     line-height: 2rem;
     margin-right: 0.5rem;
+    user-select: none;
 }
 
 .sound-label.waveform-name {
@@ -85,5 +97,22 @@
         input {
             width: 4rem;
         }
+    }
+}
+
+.common-button.sound-effect-play-button {
+    width: 3rem;
+    height: 3rem;
+    overflow: hidden;
+    padding: 0;
+    border-radius: 2rem;
+    background: #333333;
+    position: absolute;
+    right: 0;
+    margin-top: -1.5rem;
+
+    .fas.fa-play {
+        margin: 0 0 0 0.25rem;
+        color: white;
     }
 }
