@@ -35,6 +35,16 @@ namespace pxtblockly {
         protected asset: SoundEffect;
 
         protected onInit(): void {
+            if (!this.options) this.options = {} as any;
+            if (!this.options.durationInputName) this.options.durationInputName = "duration";
+            if (!this.options.startFrequencyInputName) this.options.startFrequencyInputName = "startFrequency";
+            if (!this.options.endFrequencyInputName) this.options.endFrequencyInputName = "endFrequency";
+            if (!this.options.startVolumeInputName) this.options.startVolumeInputName = "startVolume";
+            if (!this.options.endVolumeInputName) this.options.endVolumeInputName = "endVolume";
+            if (!this.options.waveFieldName) this.options.waveFieldName = "waveShape";
+            if (!this.options.interpolationFieldName) this.options.interpolationFieldName = "interpolation";
+            if (!this.options.effectFieldName) this.options.effectFieldName = "effect";
+
             this.redrawPreview();
         }
 
@@ -59,13 +69,37 @@ namespace pxtblockly {
         }
 
         showEditor_() {
+            const initialSound = this.readCurrentSound();
+            Blockly.Events.disable();
 
             Blockly.WidgetDiv.show(this, this.sourceBlock_.RTL, () => {
                 fv.hide();
+
+                Blockly.Events.enable();
+                Blockly.Events.setGroup(true);
+                this.fireNumberInputUpdate(this.options.durationInputName, initialSound.duration);
+                this.fireNumberInputUpdate(this.options.startFrequencyInputName, initialSound.startFrequency);
+                this.fireNumberInputUpdate(this.options.endFrequencyInputName, initialSound.endFrequency);
+                this.fireNumberInputUpdate(this.options.startVolumeInputName, initialSound.startVolume);
+                this.fireNumberInputUpdate(this.options.endVolumeInputName, initialSound.endVolume);
+                this.fireFieldDropdownUpdate(this.options.waveFieldName, waveformMapping[initialSound.wave]);
+                this.fireFieldDropdownUpdate(this.options.interpolationFieldName, interpolationMapping[initialSound.interpolation]);
+                this.fireFieldDropdownUpdate(this.options.effectFieldName, effectMapping[initialSound.effect]);
+                Blockly.Events.setGroup(false);
             })
             const widgetDiv = Blockly.WidgetDiv.DIV as HTMLDivElement;
+            const opts = {
+                onClose: () => {
+                    fv.hide();
+                    Blockly.WidgetDiv.hideIfOwner(this);
+                },
+                onSoundChange: (newSound: pxt.assets.Sound) => {
+                    this.updateSiblingBlocks(newSound);
+                },
+                initialSound: initialSound
+            }
 
-            const fv = pxt.react.getFieldEditorView("soundeffect-editor", this.asset, this.options, widgetDiv);
+            const fv = pxt.react.getFieldEditorView("soundeffect-editor", this.asset, opts, widgetDiv);
 
             const block = this.sourceBlock_ as Blockly.BlockSvg;
             const bounds = block.getBoundingRectangle();
@@ -91,5 +125,109 @@ namespace pxtblockly {
             this.size_.height = TOTAL_HEIGHT;
             this.size_.width = TOTAL_WIDTH;
         }
+
+        protected updateSiblingBlocks(sound: pxt.assets.Sound) {
+            this.setNumberInputValue(this.options.durationInputName, sound.duration);
+            this.setNumberInputValue(this.options.startFrequencyInputName, sound.startFrequency);
+            this.setNumberInputValue(this.options.endFrequencyInputName, sound.endFrequency);
+            this.setNumberInputValue(this.options.startVolumeInputName, sound.startVolume);
+            this.setNumberInputValue(this.options.endVolumeInputName, sound.endVolume);
+            this.setFieldDropdownValue(this.options.waveFieldName, waveformMapping[sound.wave]);
+            this.setFieldDropdownValue(this.options.interpolationFieldName, interpolationMapping[sound.interpolation]);
+            this.setFieldDropdownValue(this.options.effectFieldName, effectMapping[sound.effect]);
+        }
+
+        protected setNumberInputValue(name: string, value: number) {
+            const block = this.getSiblingBlock(name) || this.getSiblingBlock(name, true);
+            if (!block) return;
+
+            if (block.type === "math_number" || block.type === "math_integer" || block.type === "math_whole_number") {
+                block.setFieldValue(Math.round(value), "NUM");
+            }
+            else if (block.type === "math_number_minmax") {
+                block.setFieldValue(Math.round(value), "SLIDER");
+            }
+        }
+
+        protected getNumberInputValue(name: string) {
+            const block = this.getSiblingBlock(name) || this.getSiblingBlock(name, true);
+            if (!block) return undefined;
+
+            if (block.type === "math_number" || block.type === "math_integer" || block.type === "math_whole_number") {
+                return parseInt(block.getFieldValue("NUM") + "");
+            }
+            else if (block.type === "math_number_minmax") {
+                return parseInt(block.getFieldValue("SLIDER") + "");
+            }
+            return undefined;
+        }
+
+        protected fireNumberInputUpdate(name: string, oldValue: number) {
+            const block = this.getSiblingBlock(name) || this.getSiblingBlock(name, true);
+
+            let fieldName: string
+            if (block.type === "math_number" || block.type === "math_integer" || block.type === "math_whole_number") {
+                fieldName = "NUM";
+            }
+            else if (block.type === "math_number_minmax") {
+                fieldName = "SLIDER";
+            }
+
+            if (!fieldName) return;
+
+            Blockly.Events.fire(new Blockly.Events.Change(block, "field", fieldName, oldValue, this.getNumberInputValue(name)));
+        }
+
+        protected setFieldDropdownValue(name: string, value: string) {
+            const field = this.getSiblingField(name) || this.getSiblingField(name, true);
+            field.setValue(value);
+        }
+
+        protected getFieldDropdownValue(name: string) {
+            const field = this.getSiblingField(name) || this.getSiblingField(name, true);
+            return field.getValue() as string;
+        }
+
+        protected fireFieldDropdownUpdate(name: string, oldValue: string) {
+            const field = this.getSiblingField(name) || this.getSiblingField(name, true);
+
+            if (!field) return;
+
+            Blockly.Events.fire(new Blockly.Events.Change(field.sourceBlock_, "field", field.name, oldValue, this.getFieldDropdownValue(name)));
+        }
+
+        protected readCurrentSound(): pxt.assets.Sound {
+            return {
+                duration: this.getNumberInputValue(this.options.durationInputName),
+                startFrequency: this.getNumberInputValue(this.options.startFrequencyInputName),
+                endFrequency: this.getNumberInputValue(this.options.endFrequencyInputName),
+                startVolume: this.getNumberInputValue(this.options.startVolumeInputName),
+                endVolume: this.getNumberInputValue(this.options.endVolumeInputName),
+                wave: Object.keys(waveformMapping).find(k => waveformMapping[k] === this.getFieldDropdownValue(this.options.waveFieldName)) as any,
+                interpolation: Object.keys(interpolationMapping).find(k => interpolationMapping[k] === this.getFieldDropdownValue(this.options.interpolationFieldName)) as any,
+                effect: Object.keys(effectMapping).find(k => effectMapping[k] === this.getFieldDropdownValue(this.options.effectFieldName)) as any,
+            }
+        }
     }
+
+    const waveformMapping: {[index: string]: string} = {
+        "sine": "WaveShape.Sine",
+        "square": "WaveShape.Square",
+        "sawtooth": "WaveShape.Sawtooth",
+        "triangle": "WaveShape.Triangle",
+        "noise": "WaveShape.Noise",
+    };
+
+    const effectMapping: {[index: string]: string} = {
+        "none": "SoundExpressionEffect.None",
+        "vibrato": "SoundExpressionEffect.Vibrato",
+        "tremolo": "SoundExpressionEffect.Tremolo",
+        "warble": "SoundExpressionEffect.Warble",
+    };
+
+    const interpolationMapping: {[index: string]: string} = {
+        "linear": "InterpolationCurve.Linear",
+        "curve": "InterpolationCurve.Curve",
+        "logarithmic": "InterpolationCurve.Logarithmic",
+    };
 }

@@ -246,7 +246,7 @@ export function init() {
                 current.injectElement(<ImageFieldEditor ref={ refHandler } singleFrame={true} />);
                 break;
             case "soundeffect-editor":
-                current.injectElement(<SoundEffectEditor />)
+                current.injectElement(<SoundEffectEditor onClose={options.onClose} onSoundChange={options.onSoundChange} initialSound={options.initialSound} />)
                 break;
 
         }

@@ -5,22 +5,17 @@ import { SoundEffectHeader } from "./SoundEffectHeader";
 import { SoundPreview } from "./SoundPreview";
 
 export interface SoundEffectEditorProps {
-
+    onSoundChange?: (newValue: pxt.assets.Sound) => void;
+    onClose?: () => void;
+    initialSound: pxt.assets.Sound;
 }
 
 export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
+    const { onSoundChange, onClose, initialSound } = props;
+
     const [ selectedView, setSelectedView ] = React.useState<"editor" | "gallery">("editor");
 
-    const [ sound, setSound ] = React.useState<pxt.assets.Sound>({
-        wave: "sine",
-        interpolation: "linear",
-        effect: "vibrato",
-        startFrequency: 100,
-        endFrequency: 1800,
-        startVolume: 1023,
-        endVolume: 0,
-        duration: 1000
-    });
+    const [ sound, setSound ] = React.useState<pxt.assets.Sound>(initialSound);
 
     let startPreviewAnimation: (duration: number) => void;
     let startControlsAnimation: (duration: number) => void;
@@ -83,8 +78,8 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
         pxsim.codal.music.playSoundExpressionAsync(codalSound.src, () => cancelled);
     }
 
-    const onClose = () => {
-
+    const handleClose = () => {
+        if (onClose) onClose();
     }
 
     const onViewSelected = (view: "editor" | "gallery") => {
@@ -102,13 +97,14 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
     const handleSoundChange = (newSound: pxt.assets.Sound) => {
         if (cancelSound) cancelSound();
         setSound(newSound);
+        if (onSoundChange) onSoundChange(newSound);
     }
 
     return <div className="sound-effect-editor">
         <SoundEffectHeader
             selectedView={selectedView}
             onViewSelected={onViewSelected}
-            onClose={onClose}
+            onClose={handleClose}
         />
         <SoundPreview sound={sound} handleStartAnimationRef={handlePreviewAnimationRef} />
         <Button
