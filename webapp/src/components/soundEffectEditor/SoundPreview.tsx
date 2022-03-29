@@ -69,6 +69,9 @@ function renderSoundPath(sound: pxt.assets.Sound, width: number, height: number)
     }
 
     const getFrequencyAt = (x: number) => {
+        // Frequency doesn't really have any meaning for noise waveform
+        if (wave === "noise") return random.randomRange(200, 500);
+
         switch (interpolation) {
             case "logarithmic":
                 return logInterpolation(startFrequency, endFrequency, x / width);
@@ -92,7 +95,7 @@ function renderSoundPath(sound: pxt.assets.Sound, width: number, height: number)
 
     // To make the graph appear consistent with the implementation, use a seeded random for the noise waveform.
     // The numbers are still nonsense but at least this reflects that it's deterministic.
-    const random = new SeededRandom(startFrequency + endFrequency);
+    const random = new SeededRandom(startFrequency + endFrequency + 1);
 
     while (currentX < width) {
         parts.push(renderHalfWavePart(
@@ -161,9 +164,10 @@ function renderHalfWavePart(amplitude: number, width: number, wave: pxt.assets.S
             const points: number[] = [];
 
             const slice = Math.min(4, width / 4);
-
+            let positive = flip;
             for (let x = 0; x < width; x += slice) {
-                points.push(random.randomRange(-amplitude, amplitude));
+                points.push(random.randomRange(0, amplitude) * (positive ? 1 : -1));
+                positive = !positive
             }
 
             console.log(JSON.stringify(points));
