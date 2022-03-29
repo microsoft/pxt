@@ -32,7 +32,7 @@ namespace pxtblockly {
     }
 
     export class FieldSoundEffect extends FieldBase<FieldSoundEffectParams> {
-        protected asset: SoundEffect;
+        protected mostRecentValue: pxt.assets.Sound;
 
         protected onInit(): void {
             if (!this.options) this.options = {} as any;
@@ -86,7 +86,10 @@ namespace pxtblockly {
                 this.fireFieldDropdownUpdate(this.options.interpolationFieldName, interpolationMapping[initialSound.interpolation]);
                 this.fireFieldDropdownUpdate(this.options.effectFieldName, effectMapping[initialSound.effect]);
                 Blockly.Events.setGroup(false);
+
+                if (this.mostRecentValue) this.setBlockData(JSON.stringify(this.mostRecentValue))
             })
+
             const widgetDiv = Blockly.WidgetDiv.DIV as HTMLDivElement;
             const opts = {
                 onClose: () => {
@@ -94,12 +97,13 @@ namespace pxtblockly {
                     Blockly.WidgetDiv.hideIfOwner(this);
                 },
                 onSoundChange: (newSound: pxt.assets.Sound) => {
+                    this.mostRecentValue = newSound;
                     this.updateSiblingBlocks(newSound);
                 },
                 initialSound: initialSound
             }
 
-            const fv = pxt.react.getFieldEditorView("soundeffect-editor", this.asset, opts, widgetDiv);
+            const fv = pxt.react.getFieldEditorView("soundeffect-editor", initialSound, opts, widgetDiv);
 
             const block = this.sourceBlock_ as Blockly.BlockSvg;
             const bounds = block.getBoundingRectangle();
@@ -149,9 +153,9 @@ namespace pxtblockly {
             }
         }
 
-        protected getNumberInputValue(name: string) {
+        protected getNumberInputValue(name: string, defaultValue: number) {
             const block = this.getSiblingBlock(name) || this.getSiblingBlock(name, true);
-            if (!block) return undefined;
+            if (!block) return defaultValue;
 
             if (block.type === "math_number" || block.type === "math_integer" || block.type === "math_whole_number") {
                 return parseInt(block.getFieldValue("NUM") + "");
@@ -159,7 +163,7 @@ namespace pxtblockly {
             else if (block.type === "math_number_minmax") {
                 return parseInt(block.getFieldValue("SLIDER") + "");
             }
-            return undefined;
+            return defaultValue;
         }
 
         protected fireNumberInputUpdate(name: string, oldValue: number) {
@@ -175,7 +179,7 @@ namespace pxtblockly {
 
             if (!fieldName) return;
 
-            Blockly.Events.fire(new Blockly.Events.Change(block, "field", fieldName, oldValue, this.getNumberInputValue(name)));
+            Blockly.Events.fire(new Blockly.Events.Change(block, "field", fieldName, oldValue, this.getNumberInputValue(name, oldValue)));
         }
 
         protected setFieldDropdownValue(name: string, value: string) {
@@ -197,16 +201,42 @@ namespace pxtblockly {
         }
 
         protected readCurrentSound(): pxt.assets.Sound {
+            const savedSound = this.readBlockDataSound();
             return {
-                duration: this.getNumberInputValue(this.options.durationInputName),
-                startFrequency: this.getNumberInputValue(this.options.startFrequencyInputName),
-                endFrequency: this.getNumberInputValue(this.options.endFrequencyInputName),
-                startVolume: this.getNumberInputValue(this.options.startVolumeInputName),
-                endVolume: this.getNumberInputValue(this.options.endVolumeInputName),
-                wave: Object.keys(waveformMapping).find(k => waveformMapping[k] === this.getFieldDropdownValue(this.options.waveFieldName)) as any,
-                interpolation: Object.keys(interpolationMapping).find(k => interpolationMapping[k] === this.getFieldDropdownValue(this.options.interpolationFieldName)) as any,
-                effect: Object.keys(effectMapping).find(k => effectMapping[k] === this.getFieldDropdownValue(this.options.effectFieldName)) as any,
+                duration: this.getNumberInputValue(this.options.durationInputName, savedSound.duration),
+                startFrequency: this.getNumberInputValue(this.options.startFrequencyInputName, savedSound.startFrequency),
+                endFrequency: this.getNumberInputValue(this.options.endFrequencyInputName, savedSound.endFrequency),
+                startVolume: this.getNumberInputValue(this.options.startVolumeInputName, savedSound.startVolume),
+                endVolume: this.getNumberInputValue(this.options.endVolumeInputName, savedSound.endVolume),
+                wave: reverseLookup(waveformMapping, this.getFieldDropdownValue(this.options.waveFieldName)) as any || savedSound.wave,
+                interpolation: reverseLookup(interpolationMapping, this.getFieldDropdownValue(this.options.interpolationFieldName)) as any || savedSound.interpolation,
+                effect: reverseLookup(effectMapping, this.getFieldDropdownValue(this.options.effectFieldName)) as any || savedSound.effect,
             }
+        }
+
+        // This stores the values of the fields in case a block (e.g. a variable) is placed in one
+        // of the inputs.
+        protected readBlockDataSound(): pxt.assets.Sound {
+            const data = this.getBlockData();
+            let sound: pxt.assets.Sound;
+
+            try {
+                sound = JSON.parse(data);
+            }
+            catch (e) {
+                sound = {
+                    duration: 1000,
+                    startFrequency: 100,
+                    endFrequency: 1800,
+                    startVolume: 1023,
+                    endVolume: 0,
+                    wave: "sine",
+                    interpolation: "linear",
+                    effect: "none"
+                }
+            }
+
+            return sound;
         }
     }
 
@@ -230,4 +260,8 @@ namespace pxtblockly {
         "curve": "InterpolationCurve.Curve",
         "logarithmic": "InterpolationCurve.Logarithmic",
     };
+
+    function reverseLookup(map: {[index: string]: string}, value: string) {
+        return Object.keys(map).find(k => map[k] === value);
+    }
 }

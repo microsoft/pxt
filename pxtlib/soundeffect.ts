@@ -1,7 +1,7 @@
 namespace pxt.assets {
     export type SoundWaveForm = "square" | "sine" | "triangle" | "noise" | "sawtooth";
     export type SoundInterpolation = "linear" | "curve" | "logarithmic";
-    export type SoundEffect = "vibrato" | "tremolo" | "warble";
+    export type SoundEffect = "vibrato" | "tremolo" | "warble" | "none";
 
     export interface Sound {
         wave: SoundWaveForm;
