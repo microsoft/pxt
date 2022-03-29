@@ -19,27 +19,27 @@ export const SoundControls = (props: SoundControlsProps) => {
         {
             title: getWaveformLabel("sine"),
             id: "sine",
-            icon: "fas fa-slash"
+            icon: "xicon sound-sine"
         },
         {
             title: getWaveformLabel("square"),
             id: "square",
-            icon: "fas fa-slash"
+            icon: "xicon sound-square"
         },
         {
             title: getWaveformLabel("sawtooth"),
             id: "sawtooth",
-            icon: "fas fa-slash"
+            icon: "xicon sound-saw"
         },
         {
             title: getWaveformLabel("triangle"),
             id: "triangle",
-            icon: "fas fa-slash"
+            icon: "xicon sound-triangle"
         },
         {
             title: getWaveformLabel("noise"),
             id: "noise",
-            icon: "fas fa-slash"
+            icon: "xicon sound-noise"
         }
     ]
 
@@ -53,25 +53,19 @@ export const SoundControls = (props: SoundControlsProps) => {
     const interpolationOptions: DropdownItem[] = [
         {
             label: pxt.U.lf("Linear"),
-            leftIcon: "fas fa-slash",
+            leftIcon: "xicon sound-linear",
             title: pxt.U.lf("Linear"),
             id: "linear"
         },
         {
-            label: pxt.U.lf("None"),
-            leftIcon: "fas fa-slash",
-            title: pxt.U.lf("None"),
-            id: "none"
-        },
-        {
             label: pxt.U.lf("Curve"),
-            leftIcon: "fas fa-slash",
+            leftIcon: "xicon sound-curve",
             title: pxt.U.lf("Curve"),
             id: "curve"
         },
         {
             label: pxt.U.lf("Logarithmic"),
-            leftIcon: "fas fa-slash",
+            leftIcon: "xicon sound-logarithmic",
             title: pxt.U.lf("Logarithmic"),
             id: "logarithmic"
         }
@@ -87,25 +81,25 @@ export const SoundControls = (props: SoundControlsProps) => {
     const effectOptions: DropdownItem[] = [
         {
             label: pxt.U.lf("None"),
-            leftIcon: "fas fa-slash",
+            leftIcon: "xicon sound-none",
             title: pxt.U.lf("None"),
             id: "none"
         },
         {
             label: pxt.U.lf("Vibrato"),
-            leftIcon: "fas fa-wave-sine",
+            leftIcon: "xicon sound-vibrato",
             title: pxt.U.lf("Vibrato"),
             id: "vibrato"
         },
         {
             label: pxt.U.lf("Tremolo"),
-            leftIcon: "fas fa-wave-square",
+            leftIcon: "xicon sound-tremolo",
             title: pxt.U.lf("Tremolo"),
             id: "tremolo"
         },
         {
             label: pxt.U.lf("Warble"),
-            leftIcon: "fas fa-waveform",
+            leftIcon: "xicon sound-warble",
             title: pxt.U.lf("Warble"),
             id: "warble"
         }

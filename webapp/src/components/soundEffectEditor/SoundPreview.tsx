@@ -123,7 +123,6 @@ class SeededRandom {
     // Implementation of the Galois Linear Feedback Shift Register
     private lfsr: number;
     public seed: number;
-    public i = 0;
 
     constructor(seed: number) {
         this.seed = seed;
@@ -133,8 +132,6 @@ class SeededRandom {
 
     next(): number {
         const n = this.lfsr = (this.lfsr >> 1) ^ ((-(this.lfsr & 1)) & 0xb400);
-        console.log(this.i + ": " + n);
-        this.i ++;
         return n / 0xffff;
     }
 
@@ -169,8 +166,6 @@ function renderHalfWavePart(amplitude: number, width: number, wave: pxt.assets.S
                 points.push(random.randomRange(0, amplitude) * (positive ? 1 : -1));
                 positive = !positive
             }
-
-            console.log(JSON.stringify(points));
 
             points[0] = flip ? amplitude : -amplitude;
             points[points.length - 1] = 0;
