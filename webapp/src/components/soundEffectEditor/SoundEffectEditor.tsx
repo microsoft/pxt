@@ -23,6 +23,8 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
     });
 
     let startPreviewAnimation: (duration: number) => void;
+    let startControlsAnimation: (duration: number) => void;
+    let cancelSound: () => void;
 
     const play = () => {
         const codalSound = new pxsim.codal.music.Sound();
@@ -68,8 +70,17 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
         codalSound.duration = sound.duration
         codalSound.steps = 90;
 
+        if (cancelSound) cancelSound();
+        let cancelled = false;
+        cancelSound = () => {
+            cancelled = true;
+            if (startPreviewAnimation) startPreviewAnimation(1);
+            if (startControlsAnimation) startControlsAnimation(1);
+        }
+
         if (startPreviewAnimation) startPreviewAnimation(sound.duration);
-        pxsim.codal.music.playSoundExpressionAsync(codalSound.src);
+        if (startControlsAnimation) startControlsAnimation(sound.duration);
+        pxsim.codal.music.playSoundExpressionAsync(codalSound.src, () => cancelled);
     }
 
     const onClose = () => {
@@ -82,6 +93,15 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
 
     const handlePreviewAnimationRef = (startAnimation: (duration: number) => void) => {
         startPreviewAnimation = startAnimation;
+    }
+
+    const handleControlsAnimationRef = (startAnimation: (duration: number) => void) => {
+        startControlsAnimation = startAnimation;
+    }
+
+    const handleSoundChange = (newSound: pxt.assets.Sound) => {
+        if (cancelSound) cancelSound();
+        setSound(newSound);
     }
 
     return <div className="sound-effect-editor">
@@ -97,7 +117,7 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
             onClick={play}
             leftIcon="fas fa-play"
             />
-        <SoundControls sound={sound} onSoundChange={setSound} />
+        <SoundControls sound={sound} onSoundChange={handleSoundChange} handleStartAnimationRef={handleControlsAnimationRef} />
         <Button
             label={pxt.U.lf("Generate Similar Sound")}
             title={pxt.U.lf("Generate Similar Sound")}

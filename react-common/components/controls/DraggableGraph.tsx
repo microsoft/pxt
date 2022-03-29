@@ -9,8 +9,9 @@ export interface DraggableGraphProps extends ControlProps {
     aspectRatio: number; // width / height
     onPointChange: (index: number, newValue: number) => void;
 
-    // Points are equally spaced along the graph
+    // Points are equally spaced y-values along the width of the graph
     points: number[];
+    handleStartAnimationRef?: (startAnimation: (duration: number) => void) => void;
 }
 
 export const DraggableGraph = (props: DraggableGraphProps) => {
@@ -19,6 +20,7 @@ export const DraggableGraph = (props: DraggableGraphProps) => {
         min,
         max,
         points,
+        handleStartAnimationRef,
         onPointChange,
         id,
         className,
@@ -108,12 +110,21 @@ export const DraggableGraph = (props: DraggableGraphProps) => {
         return points[index];
     }
 
+    const handleRectAnimateRef = (ref: SVGAnimateElement) => {
+        if (ref && handleStartAnimationRef) {
+            handleStartAnimationRef((duration: number) => {
+                ref.setAttribute("dur", duration + "ms");
+                (ref as any).beginElement();
+            })
+        }
+    }
+
     return <div
         id={id}
         className={classList("common-draggable-graph", className)}
         aria-label={ariaLabel}
         aria-hidden={ariaHidden}
-        aria-describedBy={ariaDescribedBy}
+        aria-describedby={ariaDescribedBy}
         role={role}>
         <svg viewBox={`0 0 ${width} ${height}`} xmlns="http://www.w3.org/2000/svg">
             {points.map((val, index) => {
@@ -163,6 +174,9 @@ export const DraggableGraph = (props: DraggableGraphProps) => {
                             />
                     </g>
             })}
+            <rect x="-2" y="0" width="1" height="100%" fill="grey">
+                <animate ref={handleRectAnimateRef} attributeName="x" from="2%" to="98%" dur="1000ms" begin="indefinite" />
+            </rect>
         </svg>
     </div>
 }

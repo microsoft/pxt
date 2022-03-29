@@ -9,10 +9,11 @@ import { DraggableGraph } from "../../../../react-common/components/controls/Dra
 export interface SoundControlsProps {
     onSoundChange: (newValue: pxt.assets.Sound) => void;
     sound: pxt.assets.Sound;
+    handleStartAnimationRef?: (startAnimation: (duration: number) => void) => void;
 }
 
 export const SoundControls = (props: SoundControlsProps) => {
-    const { onSoundChange, sound } = props;
+    const { onSoundChange, sound, handleStartAnimationRef } = props;
 
     const waveformOptions: RadioGroupChoice[] = [
         {
@@ -158,6 +159,24 @@ export const SoundControls = (props: SoundControlsProps) => {
         }
     }
 
+    let startFreqAnimation: (duration: number) => void;
+    let startVolumeAnimation: (duration: number) => void;
+
+    const handleFreqAnimationRef = (startAnimation: (duration: number) => void) => {
+        startFreqAnimation = startAnimation;
+    }
+
+    const handleVolumeAnimationRef = (startAnimation: (duration: number) => void) => {
+        startVolumeAnimation = startAnimation;
+    }
+
+    if (handleStartAnimationRef) {
+        handleStartAnimationRef((duration: number) => {
+            if (startFreqAnimation) startFreqAnimation(duration);
+            if (startVolumeAnimation) startVolumeAnimation(duration);
+        });
+    }
+
     return <div className="sound-controls">
         <div className="waveform-and-duration">
             <div className="waveform-control-label">
@@ -228,6 +247,7 @@ export const SoundControls = (props: SoundControlsProps) => {
                     points={[sound.startFrequency, sound.endFrequency]}
                     interpolation={sound.interpolation}
                     onPointChange={onFrequencyChange}
+                    handleStartAnimationRef={handleFreqAnimationRef}
                 />
             </div>
             <div className="volume-graph">
@@ -243,6 +263,7 @@ export const SoundControls = (props: SoundControlsProps) => {
                     points={[sound.startVolume, sound.endVolume]}
                     interpolation="linear"
                     onPointChange={onVolumeChange}
+                    handleStartAnimationRef={handleVolumeAnimationRef}
                 />
             </div>
         </div>
