@@ -2311,10 +2311,10 @@ export class ProjectView
                 .then(img => pxt.BrowserUtils.browserDownloadDataUri(img, pkg.genFileName(".png")))
     }
 
-    pushScreenshotHandler(handler: (msg: pxt.editor.ScreenshotData) => void): void {
+    pushScreenshotHandler = (handler: (msg: pxt.editor.ScreenshotData) => void): void => {
         this.screenshotHandlers.push(handler);
     }
-    popScreenshotHandler(): void {
+    popScreenshotHandler = (): void => {
         this.screenshotHandlers.pop();
     }
 
