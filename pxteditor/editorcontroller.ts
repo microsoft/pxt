@@ -70,6 +70,7 @@ namespace pxt.editor {
 
         | "print" // print code
         | "pair" // pair device
+        | "disconnect" // disconnect device
 
         | "workspacesync" // EditorWorspaceSyncRequest
         | "workspacereset"
@@ -574,6 +575,9 @@ namespace pxt.editor {
                                 }
                                 case "pair": {
                                     return projectView.pairAsync();
+                                }
+                                case "disconnect": {
+                                    return projectView.disconnectAsync()
                                 }
                                 case "info": {
                                     return Promise.resolve()

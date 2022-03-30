@@ -2790,6 +2790,10 @@ export class ProjectView
         return cmds.pairAsync();
     }
 
+    disconnectAsync(): Promise<void> {
+        return cmds.disconnectAsync()
+    }
+
     ///////////////////////////////////////////////////////////
     ////////////             Compile              /////////////
     ///////////////////////////////////////////////////////////
