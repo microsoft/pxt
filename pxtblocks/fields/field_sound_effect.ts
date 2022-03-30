@@ -15,21 +15,12 @@ namespace pxtblockly {
         effectFieldName: string;
     }
 
-    const TOTAL_WIDTH = 80;
-    const TOTAL_HEIGHT = 20;
+    const MUSIC_ICON_WIDTH = 20;
+    const TOTAL_WIDTH = 160;
+    const TOTAL_HEIGHT = 40;
     const X_PADDING = 5;
-    const Y_PADDING = 1;
-
-    interface SoundEffect {
-        wave: number;
-        startFrequency: number;
-        endFrequency: number;
-        startVolume: number;
-        endVolume: number;
-        duration: number;
-        interpolation: number;
-        effect: number;
-    }
+    const Y_PADDING = 4;
+    const PREVIEW_WIDTH = TOTAL_WIDTH - X_PADDING * 5 - MUSIC_ICON_WIDTH;
 
     export class FieldSoundEffect extends FieldBase<FieldSoundEffectParams> {
         protected mostRecentValue: pxt.assets.Sound;
@@ -60,12 +51,46 @@ namespace pxtblockly {
             pxsim.U.clear(this.fieldGroup_);
             const bg = new svg.Rect()
                 .at(X_PADDING, Y_PADDING)
-                .size(70, 8)
+                .size(TOTAL_WIDTH, TOTAL_HEIGHT)
                 .setClass("blocklySpriteField")
-                .stroke("#898989", 1)
-                .corner(4);
+                .stroke("#fff", 1)
+                .corner(TOTAL_HEIGHT / 2);
+
+            const clipPathId = "preview-clip-" + pxt.U.guidGen();
+
+            const clip = new svg.ClipPath()
+                .id(clipPathId)
+                .clipPathUnits(false)
+
+            const clipRect = new svg.Rect()
+                .size(PREVIEW_WIDTH, TOTAL_HEIGHT)
+                .fill("#FFF")
+                .at(0, 0);
+
+            clip.appendChild(clipRect);
+
+            const path = new svg.Path()
+                .stroke("grey", 2)
+                .fill("none")
+                .setD(pxt.assets.renderSoundPath(this.readCurrentSound(), TOTAL_WIDTH - X_PADDING * 4 - MUSIC_ICON_WIDTH, TOTAL_HEIGHT - Y_PADDING * 2))
+                .clipPath("url('#" + clipPathId + "')")
+
+
+            const g = new svg.Group()
+                .translate(MUSIC_ICON_WIDTH + X_PADDING * 3, Y_PADDING + 3);
+
+            g.appendChild(clip);
+            g.appendChild(path);
+
+            const musicIcon = new svg.Text("\uf001")
+                .appendClass("melody-editor-field-icon")
+                .setAttribute("alignment-baseline", "middle")
+                .anchor("middle")
+                .at(X_PADDING * 2 + MUSIC_ICON_WIDTH / 2, TOTAL_HEIGHT / 2 + 3);
 
             this.fieldGroup_.appendChild(bg.el);
+            this.fieldGroup_.appendChild(musicIcon.el);
+            this.fieldGroup_.appendChild(g.el);
         }
 
         showEditor_() {
@@ -99,6 +124,7 @@ namespace pxtblockly {
                 onSoundChange: (newSound: pxt.assets.Sound) => {
                     this.mostRecentValue = newSound;
                     this.updateSiblingBlocks(newSound);
+                    this.redrawPreview();
                 },
                 initialSound: initialSound
             }
