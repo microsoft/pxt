@@ -136,9 +136,11 @@ namespace pxtblockly {
             const coord = workspaceToScreenCoordinates(block.workspace as Blockly.WorkspaceSvg,
                 new Blockly.utils.Coordinate(this.sourceBlock_.RTL ? bounds.left : bounds.right, bounds.top));
 
+            const left = (this.sourceBlock_.RTL ? coord.x - 20 : coord.x + 20)
+            const top = coord.y
             widgetDiv.style.position = "absolute";
-            widgetDiv.style.left = (this.sourceBlock_.RTL ? coord.x - 20 : coord.x + 20) + "px";
-            widgetDiv.style.top = coord.y + "px";
+            widgetDiv.style.left = left + "px";
+            widgetDiv.style.top = top + "px";
             widgetDiv.style.width = "30rem";
             widgetDiv.style.height = "40rem";
 
@@ -147,6 +149,28 @@ namespace pxtblockly {
             });
 
             fv.show();
+
+            const divBounds = widgetDiv.getBoundingClientRect();
+            const injectDivBounds = block.workspace.getInjectionDiv().getBoundingClientRect();
+
+            if (divBounds.height > injectDivBounds.height) {
+                widgetDiv.style.height = "";
+                widgetDiv.style.top = "1rem";
+                widgetDiv.style.bottom = "1rem";
+            }
+            else {
+                widgetDiv.style.top = Math.min(top, (injectDivBounds.bottom - divBounds.height) - (divBounds.top - top)) + "px";
+            }
+
+            if (divBounds.width > injectDivBounds.width) {
+                widgetDiv.style.width = "";
+                widgetDiv.style.left = "1rem";
+                widgetDiv.style.right = "1rem";
+            }
+            else {
+                widgetDiv.style.left = Math.min(left, (injectDivBounds.right - divBounds.width) - (divBounds.left - left)) + "px";
+            }
+
         }
 
         render_() {

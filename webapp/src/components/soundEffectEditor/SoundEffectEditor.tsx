@@ -20,6 +20,7 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
     let startPreviewAnimation: (duration: number) => void;
     let startControlsAnimation: (duration: number) => void;
     let cancelSound: () => void;
+    let previewSynthListener: (freq: number, vol: number) => void;
 
     const play = () => {
         const codalSound = new pxsim.codal.music.Sound();
@@ -69,13 +70,13 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
         let cancelled = false;
         cancelSound = () => {
             cancelled = true;
-            if (startPreviewAnimation) startPreviewAnimation(1);
-            if (startControlsAnimation) startControlsAnimation(1);
+            if (startPreviewAnimation) startPreviewAnimation(-1);
+            if (startControlsAnimation) startControlsAnimation(-1);
         }
 
         if (startPreviewAnimation) startPreviewAnimation(sound.duration);
         if (startControlsAnimation) startControlsAnimation(sound.duration);
-        pxsim.codal.music.playSoundExpressionAsync(codalSound.src, () => cancelled);
+        pxsim.codal.music.playSoundExpressionAsync(codalSound.src, () => cancelled, previewSynthListener);
     }
 
     const handleClose = () => {
@@ -94,6 +95,10 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
         startControlsAnimation = startAnimation;
     }
 
+    const handleSynthListenerRef = (onPull: (freq: number, vol: number) => void) => {
+        previewSynthListener = onPull;
+    }
+
     const handleSoundChange = (newSound: pxt.assets.Sound) => {
         if (cancelSound) cancelSound();
         setSound(newSound);
@@ -106,7 +111,7 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
             onViewSelected={onViewSelected}
             onClose={handleClose}
         />
-        <SoundPreview sound={sound} handleStartAnimationRef={handlePreviewAnimationRef} />
+        <SoundPreview sound={sound} handleStartAnimationRef={handlePreviewAnimationRef} handleSynthListenerRef={handleSynthListenerRef} />
         <Button
             className="sound-effect-play-button"
             title={lf("Play")}

@@ -28,6 +28,11 @@ namespace pxt.assets {
             return Math.pow(start, 1 - percent) * Math.pow(end, percent)
         }
 
+        // To make the graph appear consistent with the implementation, use a seeded random for the noise waveform.
+        // The numbers are still nonsense but at least this reflects that it's deterministic.
+        const random = new SeededRandom(startFrequency + endFrequency + 1);
+
+
         let getFrequencyAt: (x: number) => number;
 
         switch (interpolation) {
@@ -42,6 +47,10 @@ namespace pxt.assets {
                 break;
         }
 
+        if (wave === "noise") {
+            getFrequencyAt = () => random.randomRange(500, 1000)
+        }
+
         const getVolumeAt = (x: number) =>
             ((endVolume - startVolume) / width) * x + startVolume;
 
@@ -51,10 +60,6 @@ namespace pxt.assets {
         const parts: string[] = [`M ${2} ${height / 2}`];
 
         let currentX = 0;
-
-        // To make the graph appear consistent with the implementation, use a seeded random for the noise waveform.
-        // The numbers are still nonsense but at least this reflects that it's deterministic.
-        const random = new SeededRandom(startFrequency + endFrequency + 1);
 
         while (currentX < width) {
             parts.push(renderHalfWavePart(
@@ -73,6 +78,48 @@ namespace pxt.assets {
                 random
             ))
             currentX += frequencyToWidth(getFrequencyAt(currentX)) / 2
+        }
+
+        return parts.join(" ");
+    }
+
+    export function renderWaveSnapshot(frequency: number, volume: number, wave: SoundWaveForm, width: number, height: number, timeBase: number) {
+        // To make the graph appear consistent with the implementation, use a seeded random for the noise waveform.
+        // The numbers are still nonsense but at least this reflects that it's deterministic.
+        const random = new SeededRandom(frequency);
+        if (wave === "noise") frequency = random.randomRange(500, 1000);
+
+
+        const amplitude = (volume / 1023) * (height - 2) / 2;
+        const waveHalfWidth =  (width / (frequency * timeBase / 1000)) / 2;
+
+        let numSegments = Math.ceil(width / (waveHalfWidth * 2));
+
+        if (numSegments % 2 === 1) numSegments++;
+
+        // Center the wave because it makes an animation look better. The overflow will be clipped
+        // by the outer svg
+        const parts: string[] = [`M ${(width / 2) - (numSegments * waveHalfWidth)} ${height / 2}`];
+
+        let currentX = 0;
+
+        for (let i = 0; i < numSegments; i++) {
+            parts.push(renderHalfWavePart(
+                amplitude,
+                waveHalfWidth,
+                wave,
+                false,
+                random
+            ))
+            currentX += waveHalfWidth
+            parts.push(renderHalfWavePart(
+                amplitude,
+                waveHalfWidth,
+                wave,
+                true,
+                random
+            ))
+            currentX += waveHalfWidth
         }
 
         return parts.join(" ");
