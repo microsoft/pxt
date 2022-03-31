@@ -86,7 +86,7 @@ namespace pxtblockly {
                 .appendClass("melody-editor-field-icon")
                 .setAttribute("alignment-baseline", "middle")
                 .anchor("middle")
-                .at(X_PADDING * 2 + MUSIC_ICON_WIDTH / 2, TOTAL_HEIGHT / 2 + 3);
+                .at(X_PADDING * 2 + MUSIC_ICON_WIDTH / 2, TOTAL_HEIGHT / 2 + 4);
 
             this.fieldGroup_.appendChild(bg.el);
             this.fieldGroup_.appendChild(musicIcon.el);

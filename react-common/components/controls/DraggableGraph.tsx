@@ -5,6 +5,7 @@ export interface DraggableGraphProps extends ControlProps {
     interpolation: pxt.assets.SoundInterpolation;
     min: number;
     max: number;
+    squiggly?: boolean;
 
     aspectRatio: number; // width / height
     onPointChange: (index: number, newValue: number) => void;
@@ -28,7 +29,8 @@ export const DraggableGraph = (props: DraggableGraphProps) => {
         ariaHidden,
         ariaDescribedBy,
         role,
-        aspectRatio
+        aspectRatio,
+        squiggly
     } = props;
 
     const width = 1000;
@@ -149,13 +151,14 @@ export const DraggableGraph = (props: DraggableGraphProps) => {
                                 className="draggable-graph-path"
                                 stroke="black"
                                 fill="none"
-                                strokeWidth="1px"
+                                strokeWidth="2px"
                                 d={getInterpolationPath(
                                     x + halfUnit,
                                     y + halfUnit,
                                     Math.max(xSlice * (index + 1), 0),
                                     yOffset + Math.max(yScale * (max - getValue(index + 1)) - halfUnit, halfUnit) + halfUnit,
-                                    interpolation
+                                    interpolation,
+                                    squiggly
                                 )}
                             />
                         }
@@ -181,15 +184,58 @@ export const DraggableGraph = (props: DraggableGraphProps) => {
     </div>
 }
 
-function getInterpolationPath(x0: number, y0: number, x1: number, y1: number, curve: pxt.assets.SoundInterpolation) {
-    const start =`M ${x0} ${y0}`;
+function getInterpolationPath(x0: number, y0: number, x1: number, y1: number, curve: pxt.assets.SoundInterpolation, squiggly: boolean) {
+    let pathFunction: (x: number) => number;
+
     switch (curve) {
         case "linear":
-            return `${start} L ${x1} ${y1}`;
+            pathFunction = x => y0 + (x - x0) * (y1 - y0) / (x1 - x0);
+            break;
         case "curve":
-            return `${start} Q ${x0 + 0.5 * (x1 - x0)} ${y1} ${x1} ${y1}`
+            pathFunction = x => y0 + (y1 - y0) * Math.sin((x - x0) / (x1 - x0) * (Math.PI / 2));
+            break;
         case "logarithmic":
-            return `${start} Q ${x0} ${y1} ${x1} ${y1}`
+            pathFunction = x => y0 + Math.log10(1 + 9 * ((x - x0) / (x1 - x0))) * (y1 - y0)
+            break;
     }
-    return "";
+
+    const slices = 20;
+    const slice = (x1 - x0) / slices;
+
+    const parts: string[] = [`M ${x0} ${y0}`];
+
+    let prevX = x0;
+    let prevY = y0;
+
+    let currX = x0;
+    let currY = y0;
+
+    const squiggleAmplitude = 40;
+
+    for (let i = 1; i < slices + 1; i++) {
+        currX = x0 + i * slice;
+        currY = pathFunction(currX);
+        if (!squiggly) {
+            parts.push(`L ${currX} ${currY}`);
+            continue;
+        }
+
+        const angle = Math.atan2(currY - prevY, currX - prevX);
+        const distance = Math.sqrt((currY - prevY) ** 2 + (currX - prevX) ** 2);
+
+        const cx1 = prevX + Math.cos(angle) * (distance / 4) + squiggleAmplitude * Math.cos(angle + Math.PI / 2);
+        const cy1 = prevY + Math.sin(angle) * (distance / 4) + squiggleAmplitude * Math.sin(angle + Math.PI / 2);
+
+        parts.push(`Q ${cx1} ${cy1} ${prevX + Math.cos(angle) * (distance / 2)} ${prevY + Math.sin(angle) * (distance / 2)}`)
+
+        const cx2 = prevX + Math.cos(angle) * (3 * distance / 4) - squiggleAmplitude * Math.cos(angle + Math.PI / 2);
+        const cy2 = prevY + Math.sin(angle) * (3 * distance / 4) - squiggleAmplitude * Math.sin(angle + Math.PI / 2);
+
+        parts.push(`Q ${cx2} ${cy2} ${currX} ${currY}`)
+
+        prevX = currX;
+        prevY = currY;
+    }
+
+    return parts.join(" ");
 }

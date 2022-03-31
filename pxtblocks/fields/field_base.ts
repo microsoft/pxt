@@ -71,6 +71,8 @@ namespace pxtblockly {
         protected getSiblingBlock(inputName: string, useGrandparent = false) {
             const block = useGrandparent ? this.sourceBlock_.parentBlock_ : this.sourceBlock_;
 
+            if (!block || !block.inputList) return undefined;
+
             for (const input of block.inputList) {
                 if (input.name === inputName) {
                     return input.connection.targetBlock();

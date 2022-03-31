@@ -24,30 +24,29 @@ namespace pxt.assets {
             interpolation
         } = sound;
 
-        const logInterpolation = (start: number, end: number, percent: number) => {
+        const scale = (start: number, end: number, percent: number) => {
             return Math.pow(start, 1 - percent) * Math.pow(end, percent)
         }
 
-        const getFrequencyAt = (x: number) => {
-            // Frequency doesn't really have any meaning for noise waveform
-            if (wave === "noise") return random.randomRange(200, 500);
+        let getFrequencyAt: (x: number) => number;
 
-            switch (interpolation) {
-                case "logarithmic":
-                    return logInterpolation(startFrequency, endFrequency, x / width);
-                case "curve":
-                    return startFrequency + (endFrequency - startFrequency) * Math.sin(x / width * (Math.PI / 2))
-                case "linear":
-                default:
-                    return ((endFrequency - startFrequency) / width) * x + startFrequency;
-            }
+        switch (interpolation) {
+            case "linear":
+                getFrequencyAt = x => startFrequency + x * (endFrequency - startFrequency) / width;
+                break;
+            case "curve":
+                getFrequencyAt = x => startFrequency + (endFrequency - startFrequency) * Math.sin(x / width * (Math.PI / 2));
+                break;
+            case "logarithmic":
+                getFrequencyAt = x => startFrequency + Math.log10(1 + 9 * (x / width)) * (endFrequency - startFrequency)
+                break;
         }
 
         const getVolumeAt = (x: number) =>
             ((endVolume - startVolume) / width) * x + startVolume;
 
         const volumeToAmplitude = (volume: number) => (volume / 1023) * (height - 2) / 2;
-        const frequencyToWidth = (frequency: number) => Math.min(width, Math.max(10, (1 / logInterpolation(1, 4000, frequency / 4000)) * width / 2));
+        const frequencyToWidth = (frequency: number) => Math.min(width, Math.max(10, (1 / scale(1, 4000, frequency / 4000)) * width / 2));
 
         const parts: string[] = [`M ${2} ${height / 2}`];
 

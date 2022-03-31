@@ -242,6 +242,7 @@ export const SoundControls = (props: SoundControlsProps) => {
                     interpolation={sound.interpolation}
                     onPointChange={onFrequencyChange}
                     handleStartAnimationRef={handleFreqAnimationRef}
+                    squiggly={sound.effect === "vibrato" || sound.effect === "warble"}
                 />
             </div>
             <div className="volume-graph">
@@ -258,6 +259,7 @@ export const SoundControls = (props: SoundControlsProps) => {
                     interpolation="linear"
                     onPointChange={onVolumeChange}
                     handleStartAnimationRef={handleVolumeAnimationRef}
+                    squiggly={sound.effect === "tremolo"}
                 />
             </div>
         </div>
