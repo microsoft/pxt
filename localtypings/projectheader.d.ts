@@ -20,6 +20,7 @@ declare namespace pxt.workspace {
         pubId: string; // for published scripts
         pubCurrent: boolean; // is this exactly pubId, or just based on it
         pubVersions?: PublishVersion[];
+        pubPermalink?: string; // permanent (persistent) share ID
         githubId?: string;
         githubTag?: string; // the release tag if any (commit.tag)
         githubCurrent?: boolean;

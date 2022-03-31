@@ -1,4 +1,5 @@
 import * as React from "react";
+import * as auth from "./auth";
 import * as core from "./core";
 import * as data from "./data";
 import * as sui from "./sui";
@@ -40,7 +41,7 @@ export interface ShareEditorState {
     title?: string;
 }
 
-export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorState> {
+export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorState> {
     private loanedSimulator: HTMLElement;
     private _gifEncoder: screenshot.GifEncoder;
 
@@ -280,18 +281,21 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         const { parent } = this.props;
         const { visible, projectName: newProjectName, title, screenshotUri } = this.state;
         const { simScreenshot, simGif } = pxt.appTarget.appTheme;
+        const hasIdentity = auth.hasIdentity() && this.isLoggedIn();
         const light = !!pxt.options.light;
         const thumbnails = pxt.appTarget.cloud && pxt.appTarget.cloud.thumbnails
             && (simScreenshot || simGif);
 
         const screenshotAsync = async () => await this.props.parent.requestScreenshotAsync();
-        const publishAsync = async (name: string, screenshotUri?: string) => {
+        const publishAsync = async (name: string, screenshotUri?: string, forceAnonymous?: boolean) => {
             pxt.tickEvent("menu.embed.publish", undefined, { interactiveConsent: true });
             if (name && parent.state.projectName != name) {
                 await parent.updateHeaderNameAsync(name);
             }
             try {
-                const id = await parent.anonymousPublishAsync(screenshotUri);
+                const id = (hasIdentity && !forceAnonymous
+                    ? await parent.persistentPublishAsync(screenshotUri)
+                    : await parent.anonymousPublishAsync(screenshotUri));
                 return await this.getShareUrl(id);
             } catch (e) {
                 pxt.tickEvent("menu.embed.error", { code: (e as any).statusCode })
@@ -302,12 +306,13 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         return visible
             ? <Modal
                 title={lf("Share Project")}
-                fullscreen={simScreenshot || simGif} // TODO only fullsreen if simulator
+                fullscreen={simScreenshot || simGif}
                 className="sharedialog"
                 parentElement={document.getElementById("root") || undefined}
                 onClose={this.hide}>
                 <Share projectName={newProjectName}
                     screenshotUri={screenshotUri}
+                    showShareDropdown={hasIdentity}
                     screenshotAsync={simScreenshot ? screenshotAsync : undefined}
                     gifRecordAsync={!light && simGif ? this.gifRecord : undefined}
                     gifRenderAsync={!light && simGif ? this.gifRender : undefined}
@@ -330,93 +335,5 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         if (visible && this.loanedSimulator && targetTheme.simScreenshot && !screenshotUri) {
             this.screenshotAsync().then(() => this.forceUpdate());
         }
-    }
-}
-
-interface SocialButtonProps {
-    url?: string;
-    type?: "facebook" | "twitter" | "discourse";
-    icon?: string; // override type
-    label?: string;
-    ariaLabel?: string;
-    heading?: string;
-}
-
-class SocialButton extends data.Component<SocialButtonProps, {}> {
-    constructor(props: SocialButtonProps) {
-        super(props);
-        this.state = {
-        }
-
-        this.handleClick = this.handleClick.bind(this);
-    }
-
-    handleClick(e: React.MouseEvent<any>) {
-        const { type, url: shareUrl, heading } = this.props;
-
-        const socialOptions = pxt.appTarget.appTheme.socialOptions;
-        pxt.tickEvent(`share.${type}`, undefined, { interactiveConsent: true })
-
-        let url = '';
-        switch (type) {
-            case "facebook": {
-                url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
-                break;
-            }
-            case "twitter": {
-                let twitterText = lf("Check out what I made!");
-                if (socialOptions.twitterHandle && socialOptions.orgTwitterHandle) {
-                    twitterText = lf("Check out what I made with @{0} and @{1}!", socialOptions.twitterHandle, socialOptions.orgTwitterHandle);
-                } else if (socialOptions.twitterHandle) {
-                    twitterText = lf("Check out what I made with @{0}!", socialOptions.twitterHandle);
-                } else if (socialOptions.orgTwitterHandle) {
-                    twitterText = lf("Check out what I made with @{0}!", socialOptions.orgTwitterHandle);
-                }
-                url = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}` +
-                    `&text=${encodeURIComponent(twitterText)}` +
-                    (socialOptions.hashtags ? `&hashtags=${encodeURIComponent(socialOptions.hashtags)}` : '') +
-                    (socialOptions.related ? `&related=${encodeURIComponent(socialOptions.related)}` : '');
-                break;
-            }
-            case "discourse": {
-                // https://meta.discourse.org/t/compose-a-new-pre-filled-topic-via-url/28074
-                url = `${socialOptions.discourse || "https://forum.makecode.com/"}new-topic?title=${encodeURIComponent(shareUrl)}`;
-                if (socialOptions.discourseCategory)
-                    url += `&category=${encodeURIComponent(socialOptions.discourseCategory)}`;
-                break;
-            }
-        }
-        pxt.BrowserUtils.popupWindow(url, heading, 600, 600);
-        e.preventDefault();
-    }
-
-    renderCore() {
-        const { type, label, ariaLabel, icon } = this.props;
-        return <a role="button" className={`ui button large ${label ? "labeled" : ""} icon ${type}`} tabIndex={0} aria-label={ariaLabel}
-            onClick={this.handleClick} onKeyDown={fireClickOnEnter}><sui.Icon icon={icon || type} />{label}</a>
-    }
-}
-
-interface EmbedMenuItemProps {
-    label: string;
-    mode: ShareMode;
-    currentMode: ShareMode;
-    onClick: (mode: ShareMode) => void;
-}
-
-class EmbedMenuItem extends sui.StatelessUIElement<EmbedMenuItemProps> {
-    constructor(props: EmbedMenuItemProps) {
-        super(props);
-
-        this.handleClick = this.handleClick.bind(this);
-    }
-
-    handleClick() {
-        this.props.onClick(this.props.mode);
-    }
-
-    renderCore() {
-        const { label, mode, currentMode } = this.props;
-        return <sui.MenuItem id={`tab${mode}`} active={currentMode == mode} tabIndex={0} name={label} onClick={this.handleClick} />
     }
 }

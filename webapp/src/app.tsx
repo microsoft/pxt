@@ -3676,6 +3676,34 @@ export class ProjectView
         return Cloud.privatePostAsync("scripts", scrReq, /* forceLiveEndpoint */ true)
     }
 
+
+    persistentPublishAsync(screenshotUri?: string): Promise<string> {
+        pxt.tickEvent("publish");
+        this.setState({ publishing: true })
+        const mpkg = pkg.mainPkg
+        const epkg = pkg.getEditorPkg(mpkg)
+        return this.saveProjectNameAsync()
+            .then(() => this.saveFileAsync())
+            .then(() => mpkg.filesToBePublishedAsync(true))
+            .then(files => {
+                if (epkg.header.pubCurrent && !screenshotUri)
+                    return Promise.resolve(epkg.header.pubId)
+                const meta: workspace.ScriptMeta = {
+                    description: mpkg.config.description,
+                };
+                const blocksSize = this.blocksEditor.contentSize();
+                if (blocksSize) {
+                    meta.blocksHeight = blocksSize.height;
+                    meta.blocksWidth = blocksSize.width;
+                }
+                return workspace.persistentPublishAsync(epkg.header, files, meta, screenshotUri)
+                    .then(header => header.pubId)
+            }).finally(() => {
+                this.setState({ publishing: false })
+            })
+    }
+
+
     async saveLocalProjectsToCloudAsync(headerIds: string[]): Promise<pxt.Map<string> | undefined> {
         return cloud.saveLocalProjectsToCloudAsync(headerIds);
     }

@@ -2,6 +2,7 @@ import * as React from "react";
 import { Button } from "../controls/Button";
 import { EditorToggle } from "../controls/EditorToggle";
 import { Input } from "../controls/Input";
+import { MenuDropdown } from "../controls/MenuDropdown";
 import { Textarea } from "../controls/Textarea";
 
 import { ShareData } from "./Share";
@@ -12,19 +13,20 @@ export interface ShareInfoProps {
     projectName: string;
     description?: string;
     screenshotUri?: string;
+    showShareDropdown?: boolean;
 
     screenshotAsync?: () => Promise<string>;
     gifRecordAsync?: () => Promise<void>;
     gifRenderAsync?: () => Promise<string | void>;
     gifAddFrame?: (dataUri: ImageData, delay?: number) => boolean;
-    publishAsync: (name: string, screenshotUri?: string) => Promise<ShareData>;
+    publishAsync: (name: string, screenshotUri?: string, forceAnonymous?: boolean) => Promise<ShareData>;
     registerSimulatorMsgHandler?: (handler: (msg: any) => void) => void;
     unregisterSimulatorMsgHandler?: () => void;
 }
 
 export const ShareInfo = (props: ShareInfoProps) => {
-    const { projectName, description, screenshotUri, screenshotAsync, gifRecordAsync, gifRenderAsync, gifAddFrame,
-        publishAsync, registerSimulatorMsgHandler, unregisterSimulatorMsgHandler } = props;
+    const { projectName, description, screenshotUri, showShareDropdown, screenshotAsync, gifRecordAsync,
+        gifRenderAsync, gifAddFrame, publishAsync, registerSimulatorMsgHandler, unregisterSimulatorMsgHandler } = props;
     const [ name, setName ] = React.useState(projectName);
     const [ thumbnailUri, setThumbnailUri ] = React.useState(screenshotUri);
     const [ shareState, setShareState ] = React.useState<"share" | "gifrecord" | "publish">("share");
@@ -47,8 +49,8 @@ export const ShareInfo = (props: ShareInfoProps) => {
         exitGifRecord();
     }
 
-    const handlePublishClick = async () => {
-        let publishedShareData = await publishAsync(name, thumbnailUri);
+    const handlePublishClick = async (forceAnonymous?: boolean) => {
+        let publishedShareData = await publishAsync(name, thumbnailUri, forceAnonymous);
         setShareData(publishedShareData);
         if (!publishedShareData?.error) setShareState("publish");
     }
@@ -76,7 +78,6 @@ export const ShareInfo = (props: ShareInfoProps) => {
         }
     }
 
-
     const embedOptions = [{
         name: "code",
         label: lf("Code"),
@@ -99,10 +100,23 @@ export const ShareInfo = (props: ShareInfoProps) => {
         onClick: () => setEmbedState("simulator")
     }];
 
+    const dropdownOptions = [{
+        title: lf("Create snapshot"),
+        label: lf("Create snapshot"),
+        onClick: () => handlePublishClick(true)
+    }]
+
     return <>
         <div className="project-share-info">
             {(shareState === "share" || shareState === "publish") && <>
-                {showSimulator && <h2>{lf("About your project")}</h2>}
+                {showSimulator && <div className="project-share-title">
+                    <h2>{lf("About your project")}</h2>
+                    {showShareDropdown && <MenuDropdown id="project-share-dropdown"
+                        icon="fas fa-ellipsis-h"
+                        title={lf("More share options")}
+                        items={dropdownOptions}
+                        />}
+                </div>}
                 <Input label={lf("Project Name")}
                     initialValue={name}
                     placeholder={lf("Name your project")}

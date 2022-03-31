@@ -314,12 +314,7 @@ export interface ScriptMeta {
     blocksHeight?: number;
 }
 
-// https://github.com/Microsoft/pxt-backend/blob/master/docs/sharing.md#anonymous-publishing
-export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptMeta, screenshotUri?: string) {
-    checkHeaderSession(h);
-
-    const saveId = {}
-    h.saveId = saveId
+function getScriptRequest(h: Header, text: ScriptText, meta: ScriptMeta, screenshotUri?: string) {
     let thumbnailBuffer: string;
     let thumbnailMimeType: string;
     if (screenshotUri) {
@@ -329,14 +324,16 @@ export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptM
             thumbnailMimeType = m[1];
         }
     }
-    const stext = JSON.stringify(text, null, 2) + "\n"
-    const scrReq = {
+    return {
+        id: h.id,
+        shareId: h.pubPermalink,
         name: h.name,
         target: h.target,
         targetVersion: h.targetVersion,
         description: meta.description || lf("Made with ❤️ in {0}.", pxt.appTarget.title || pxt.appTarget.name),
         editor: h.editor,
-        text: text,
+        header: JSON.stringify(cloud.excludeLocalOnlyMetadataFields(h)),
+        text: JSON.stringify(text),
         meta: {
             versions: pxt.appTarget.versions,
             blocksHeight: meta.blocksHeight,
@@ -345,7 +342,16 @@ export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptM
         thumbnailBuffer,
         thumbnailMimeType
     }
-    pxt.debug(`publishing script; ${stext.length} bytes`)
+}
+
+// https://github.com/Microsoft/pxt-backend/blob/master/docs/sharing.md#anonymous-publishing
+export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptMeta, screenshotUri?: string) {
+    checkHeaderSession(h);
+
+    const saveId = {}
+    h.saveId = saveId
+    const scrReq = getScriptRequest(h, text, meta, screenshotUri)
+    pxt.debug(`publishing script; ${scrReq.text.length} bytes`)
     return Cloud.privatePostAsync("scripts", scrReq, /* forceLiveEndpoint */ true)
         .then((inf: Cloud.JsonScript) => {
             if (!h.pubVersions) h.pubVersions = [];
@@ -357,6 +363,27 @@ export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptM
             pxt.debug(`published; id /${h.pubId}`)
             return saveAsync(h)
                 .then(() => inf)
+        })
+}
+
+export function persistentPublishAsync(h: Header, text: ScriptText, meta: ScriptMeta, screenshotUri?: string) {
+    checkHeaderSession(h);
+
+    const saveId = {}
+    h.saveId = saveId
+    const scrReq = getScriptRequest(h, text, meta, screenshotUri)
+    pxt.debug(`publishing script; ${scrReq.text.length} bytes`)
+    return cloud.shareAsync(h.id, scrReq)
+        .then((resp: { shareID: string, scr: cloud.SharedCloudProject }) => {
+            const { shareID, scr: script } = resp;
+            if (!h.pubVersions) h.pubVersions = [];
+            h.pubVersions.push({ id: script.id, type: "permalink" });
+            h.pubId = shareID
+            h.pubCurrent = h.saveId === saveId
+            h.pubPermalink = shareID;
+            h.meta = script.meta;
+            pxt.debug(`published; id /${h.pubId}`)
+            return saveAsync(h).then(() => h)
         })
 }
 
