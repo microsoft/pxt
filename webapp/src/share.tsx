@@ -155,6 +155,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
     }
 
     screenshotAsync = () => {
+        pxt.tickEvent("share.takescreenshot", { view: 'computer', collapsedTo: '' + !this.props.parent.state.collapseEditorTools }, { interactiveConsent: true });
         return this.props.parent.requestScreenshotAsync()
             .then(img => {
                 if (img) {
@@ -285,6 +286,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
 
         const screenshotAsync = async () => await this.props.parent.requestScreenshotAsync();
         const publishAsync = async (name: string, screenshotUri?: string) => {
+            pxt.tickEvent("menu.embed.publish", undefined, { interactiveConsent: true });
             if (name && parent.state.projectName != name) {
                 await parent.updateHeaderNameAsync(name);
             }
@@ -292,6 +294,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                 const id = await parent.anonymousPublishAsync(screenshotUri);
                 return await this.getShareUrl(id);
             } catch (e) {
+                pxt.tickEvent("menu.embed.error", { code: (e as any).statusCode })
                 return { url: "", embed: {}, error: e } as ShareData
             }
         }

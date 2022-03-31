@@ -67,6 +67,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
     }
 
     const handleQRCodeClick = () => {
+        pxt.tickEvent('share.qrtoggle');
         if (!showQRCode) {
             setEmbedState("none");
             setShowQRCode(true);
