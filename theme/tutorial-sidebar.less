@@ -423,6 +423,30 @@
     top: calc(5.5rem + @mainMenuHeight);
 }
 
+
+/*******************************
+        Details Expander
+*******************************/
+.tabTutorial {
+    details {
+        padding: 0.5rem 0.5rem 0.5rem 2rem;
+        margin-bottom: 1rem;
+        color: @tutorialPrimaryColor;
+        background-color: @tutorialSecondaryColor;
+        border-radius: 0.5rem;
+    }
+
+    summary {
+        margin-left: -1rem;
+    }
+
+    details[open] summary {
+        padding-bottom: 0.5rem;
+    }
+}
+
+
+
 /*******************************
         Media Adjustments
 *******************************/
