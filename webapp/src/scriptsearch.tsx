@@ -272,7 +272,10 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
     }
 
     async installGh(scr: pxt.github.GitRepo) {
-        pxt.tickEvent("packages.github", { name: scr.fullName });
+        pxt.tickEvent("packages.github", {
+            name: scr.fullName,
+            slug: scr.slug.toLowerCase()
+        });
         this.hide(null, this.backOnHide());
         let r: { version: string, config: pxt.PackageConfig };
         try {
