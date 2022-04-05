@@ -22,7 +22,7 @@ export interface InputProps extends ControlProps {
     onBlur?: (value: string) => void;
 }
 
-export function Input(props: InputProps) {
+export const Input = (props: InputProps) => {
     const {
         id,
         className,
@@ -84,7 +84,7 @@ export function Input(props: InputProps) {
 
     return (
         <div className={classList("common-input-wrapper", disabled && "disabled", className)}>
-            {label && <label className="common-input-label">
+            {label && <label className="common-input-label" htmlFor={id}>
                 {label}
             </label>}
             <div className="common-input-group">
@@ -92,8 +92,8 @@ export function Input(props: InputProps) {
                     id={id}
                     className={classList("common-input", icon && "has-icon")}
                     title={title}
-                    role={role || "button"}
-                    tabIndex={disabled ? 0 : -1}
+                    role={role || "textbox"}
+                    tabIndex={disabled ? -1 : 0}
                     aria-label={ariaLabel}
                     aria-hidden={ariaHidden}
                     type={type || "text"}
