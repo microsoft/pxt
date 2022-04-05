@@ -527,7 +527,7 @@ namespace pxt.blocks {
                         if (b.type in e.stdCallTable) {
                             const call = e.stdCallTable[b.type];
                             if (call.attrs.shim === "ENUM_GET" || call.attrs.shim === "KIND_GET") return;
-                            visibleParams(call, countOptionals(b)).forEach((p, i) => {
+                            visibleParams(call, countOptionals(b, call)).forEach((p, i) => {
                                 const isInstance = call.isExtensionMethod && i === 0;
                                 if (p.definitionName && !b.getFieldValue(p.definitionName)) {
                                     let i = b.inputList.find((i: Blockly.Input) => i.name == p.definitionName);
@@ -1041,7 +1041,7 @@ namespace pxt.blocks {
                 if (call) {
                     if (call.imageLiteral)
                         expr = compileImage(e, b, call.imageLiteral, call.imageLiteralColumns, call.imageLiteralRows, call.namespace, call.f,
-                            visibleParams(call, countOptionals(b)).map(ar => compileArgument(e, b, ar, comments)))
+                            visibleParams(call, countOptionals(b, call)).map(ar => compileArgument(e, b, ar, comments)))
                     else
                         expr = compileStdCall(e, b, call, comments);
                 }
@@ -1316,13 +1316,13 @@ namespace pxt.blocks {
     }
 
     function eventArgs(call: StdFunc, b: Blockly.Block): BlockParameter[] {
-        return visibleParams(call, countOptionals(b)).filter(ar => !!ar.definitionName);
+        return visibleParams(call, countOptionals(b, call)).filter(ar => !!ar.definitionName);
     }
 
     function compileCall(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
         const call = e.stdCallTable[b.type];
         if (call.imageLiteral)
-            return mkStmt(compileImage(e, b, call.imageLiteral, call.imageLiteralColumns, call.imageLiteralRows, call.namespace, call.f, visibleParams(call, countOptionals(b)).map(ar => compileArgument(e, b, ar, comments))))
+            return mkStmt(compileImage(e, b, call.imageLiteral, call.imageLiteralColumns, call.imageLiteralRows, call.namespace, call.f, visibleParams(call, countOptionals(b, call)).map(ar => compileArgument(e, b, ar, comments))))
         else if (call.hasHandler)
             return compileEvent(e, b, call, eventArgs(call, b), call.namespace, comments)
         else
@@ -1410,7 +1410,7 @@ namespace pxt.blocks {
             return H.mkPropertyAccess(b.getFieldValue("MEMBER"), mkText(info.name));
         }
         else {
-            args = visibleParams(func, countOptionals(b)).map((p, i) => compileArgument(e, b, p, comments, func.isExtensionMethod && i === 0 && !func.isExpression));
+            args = visibleParams(func, countOptionals(b, func)).map((p, i) => compileArgument(e, b, p, comments, func.isExtensionMethod && i === 0 && !func.isExpression));
         }
 
         let callNamespace = func.namespace;
@@ -2163,7 +2163,13 @@ namespace pxt.blocks {
         return mkStmt(mkText("let " + v.escapedName + tp + " = "), defl)
     }
 
-    function countOptionals(b: Blockly.Block) {
+    function countOptionals(b: Blockly.Block, func: StdFunc) {
+            if (func.attrs.compileHiddenArguments) {
+                return func.comp.parameters.reduce((prev, block) => {
+                if (block.isOptional) prev++;
+                return prev
+            }, 0);
+        }
         if ((b as MutatingBlock).mutationToDom) {
             const el = (b as MutatingBlock).mutationToDom();
             if (el.hasAttribute("_expanded")) {

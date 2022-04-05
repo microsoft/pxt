@@ -84,6 +84,7 @@ namespace pxtblockly {
 
         protected getSiblingField(fieldName: string, useGrandparent = false) {
             const block = useGrandparent ? this.sourceBlock_.parentBlock_ : this.sourceBlock_;
+            if (!block) return undefined;
             return block.getField(fieldName);
         }
     }

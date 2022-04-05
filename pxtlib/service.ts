@@ -831,7 +831,8 @@ namespace ts.pxtc {
         "topblock",
         "callInDebugger",
         "duplicateShadowOnDrag",
-        "argsNullable"
+        "argsNullable",
+        "compileHiddenArguments"
     ];
 
     export function parseCommentString(cmt: string): CommentAttrs {

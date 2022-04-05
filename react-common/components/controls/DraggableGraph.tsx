@@ -1,5 +1,5 @@
 import * as React from "react";
-import { ControlProps, bindGestureEvents, GestureTarget, ClientCoordinates, screenToSVGCoord, clientCoord, classList } from "../util";
+import { ControlProps, screenToSVGCoord, clientCoord, classList } from "../util";
 
 export interface DraggableGraphProps extends ControlProps {
     interpolation: pxt.assets.SoundInterpolation;
@@ -115,6 +115,7 @@ export const DraggableGraph = (props: DraggableGraphProps) => {
     const handleRectAnimateRef = (ref: SVGAnimateElement) => {
         if (ref && handleStartAnimationRef) {
             handleStartAnimationRef((duration: number) => {
+                if (duration <= 0) duration = 1;
                 ref.setAttribute("dur", duration + "ms");
                 (ref as any).beginElement();
             })

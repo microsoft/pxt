@@ -176,7 +176,7 @@ namespace pxtblockly {
         render_() {
             super.render_();
 
-            this.size_.height = TOTAL_HEIGHT;
+            this.size_.height = TOTAL_HEIGHT + Y_PADDING * 2;
             this.size_.width = TOTAL_WIDTH;
         }
 
@@ -234,11 +234,13 @@ namespace pxtblockly {
 
         protected setFieldDropdownValue(name: string, value: string) {
             const field = this.getSiblingField(name) || this.getSiblingField(name, true);
+            if (!field) return;
             field.setValue(value);
         }
 
         protected getFieldDropdownValue(name: string) {
             const field = this.getSiblingField(name) || this.getSiblingField(name, true);
+            if (!field) return undefined;
             return field.getValue() as string;
         }
 

@@ -235,7 +235,7 @@ export const SoundControls = (props: SoundControlsProps) => {
                     </div>
                 </div>
                 <DraggableGraph
-                    min={0}
+                    min={1}
                     max={2000}
                     aspectRatio={3}
                     points={[sound.startFrequency, sound.endFrequency]}
