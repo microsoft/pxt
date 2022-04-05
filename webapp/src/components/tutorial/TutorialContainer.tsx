@@ -16,6 +16,7 @@ interface TutorialContainerProps {
     currentStep?: number;
     hideIteration?: boolean;
     hasTemplate?: boolean;
+    preferredEditor?: string;
 
     tutorialOptions?: pxt.tutorial.TutorialOptions; // TODO (shakao) pass in only necessary subset
 
@@ -28,8 +29,9 @@ const MIN_HEIGHT = 80;
 const MAX_HEIGHT = 194;
 
 export function TutorialContainer(props: TutorialContainerProps) {
-    const { parent, tutorialId, name, steps, hideIteration, hasTemplate, tutorialOptions,
-        onTutorialStepChange, onTutorialComplete, setParentHeight } = props;
+    const { parent, tutorialId, name, steps, hideIteration, hasTemplate,
+        preferredEditor, tutorialOptions, onTutorialStepChange, onTutorialComplete,
+        setParentHeight } = props;
     const [ currentStep, setCurrentStep ] = React.useState(props.currentStep || 0);
     const [ hideModal, setHideModal ] = React.useState(false);
     const [ showScrollGradient, setShowScrollGradient ] = React.useState(false);
@@ -141,7 +143,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
             {title && <div className="tutorial-title">{title}</div>}
             <MarkedContent className="no-select" tabIndex={0} markdown={markdown} parent={parent}/>
         </div>
-        {hasTemplate && currentStep == firstNonModalStep &&
+        {hasTemplate && currentStep == firstNonModalStep && preferredEditor !== "asset" &&
             <TutorialResetCode tutorialId={tutorialId} currentStep={visibleStep} resetTemplateCode={parent.resetTutorialTemplateCode} />}
         {showScrollGradient && <div className="tutorial-scroll-gradient" />}
         <div className="tutorial-controls">
