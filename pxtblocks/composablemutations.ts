@@ -121,6 +121,7 @@ namespace pxt.blocks {
         const totalOptions = def.parameters.length;
         const buttonDelta = toggle ? totalOptions : 1;
         const variableInlineInputs = info.blocksById[b.type].attributes.inlineInputMode === "variable";
+        const compileHiddenArguments = info.blocksById[b.type].attributes.compileHiddenArguments;
 
         const state = new MutationState(b as MutatingBlock);
         state.setEventsEnabled(false);
@@ -146,8 +147,8 @@ namespace pxt.blocks {
                 state.setEventsEnabled(false);
                 if (saved.hasAttribute(inputInitAttr) && saved.getAttribute(inputInitAttr) == "true" && !state.getBoolean(inputInitAttr)) {
                     state.setValue(inputInitAttr, true)
-                    initOptionalInputs();
                 }
+                initOptionalInputs();
 
                 if (saved.hasAttribute(numVisibleAttr)) {
                     const val = parseInt(saved.getAttribute(numVisibleAttr));
@@ -172,6 +173,19 @@ namespace pxt.blocks {
         });
 
         initOptionalInputs();
+        if (compileHiddenArguments) {
+            let optIndex = 0
+            for (let i = 0; i < b.inputList.length; i++) {
+                const input = b.inputList[i];
+                if (Util.startsWith(input.name, optionalInputWithFieldPrefix) || optionNames.indexOf(input.name) !== -1) {
+                    if (input.connection && !(input.connection as any).isConnected() && !b.isInsertionMarker()) {
+                        const param = comp.definitionNameToParam[def.parameters[optIndex].name];
+                        attachShadowBlock(input, param);
+                    }
+                    ++optIndex;
+                }
+            }
+        }
         (b as Blockly.BlockSvg).render = (opt_bubble) => {
             if (updatingInputs) return;
             updatingInputs = true;
@@ -211,23 +225,7 @@ namespace pxt.blocks {
                     setInputVisible(input, visible);
                     if (visible && input.connection && !(input.connection as any).isConnected() && !b.isInsertionMarker()) {
                         const param = comp.definitionNameToParam[def.parameters[optIndex].name];
-                        let shadow = createShadowValue(info, param);
-
-                        if (shadow.tagName.toLowerCase() === "value") {
-                            // Unwrap the block
-                            shadow = shadow.firstElementChild;
-                        }
-
-                        Blockly.Events.disable();
-
-                        try {
-                            const nb = Blockly.Xml.domToBlock(shadow, b.workspace);
-                            if (nb) {
-                                input.connection.connect(nb.outputConnection);
-                            }
-                        } catch (e) { }
-
-                        Blockly.Events.enable();
+                        attachShadowBlock(input, param);
                     }
                     ++optIndex;
                 }
@@ -291,6 +289,26 @@ namespace pxt.blocks {
         function setInputVisible(input: Blockly.Input, visible: boolean) {
             // If the block isn't rendered, Blockly will crash
             input.setVisible(visible);
+        }
+
+        function attachShadowBlock(input: Blockly.Input, param: BlockParameter) {
+            let shadow = createShadowValue(info, param);
+
+            if (shadow.tagName.toLowerCase() === "value") {
+                // Unwrap the block
+                shadow = shadow.firstElementChild;
+            }
+
+            Blockly.Events.disable();
+
+            try {
+                const nb = Blockly.Xml.domToBlock(shadow, b.workspace);
+                if (nb) {
+                    input.connection.connect(nb.outputConnection);
+                }
+            } catch (e) { }
+
+            Blockly.Events.enable();
         }
     }
 

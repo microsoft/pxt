@@ -219,6 +219,8 @@ namespace pxtblockly {
         protected fireNumberInputUpdate(name: string, oldValue: number) {
             const block = this.getSiblingBlock(name) || this.getSiblingBlock(name, true);
 
+            if (!block) return;
+
             let fieldName: string
             if (block.type === "math_number" || block.type === "math_integer" || block.type === "math_whole_number") {
                 fieldName = "NUM";
