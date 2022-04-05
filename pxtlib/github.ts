@@ -563,7 +563,7 @@ namespace pxt.github {
                     .then(resolveRefAsync))
     }
 
-    export function pkgConfigAsync(repopath: string, tag = "master") {
+    export function pkgConfigAsync(repopath: string, tag: string) {
         return db.loadConfigAsync(repopath, tag)
     }
 
