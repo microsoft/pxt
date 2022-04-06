@@ -1036,9 +1036,11 @@ namespace pxt.github {
         return p ? "github:" + p.fullName.toLowerCase() + (p.tag ? `#${p.tag}` : '') : undefined;
     }
 
-    export function normalizeRepoId(id: string) {
+    export function normalizeRepoId(id: string, defaultTag?: string) {
         const gid = parseRepoId(id);
         if (!gid) return undefined;
+        if (!gid.tag && defaultTag)
+            gid.tag = defaultTag
         return stringifyRepo(gid);
     }
 

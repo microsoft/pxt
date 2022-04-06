@@ -2930,7 +2930,7 @@ export class ProjectView
                 if (!resp.outfiles[fn]) {
                     pxt.tickEvent("compile.noemit")
                     const noHexFileDiagnostic = resp.diagnostics.find(diag => diag.code === 9043)
-                                            || resp.diagnostics.length == 1 ?  resp.diagnostics[0] : undefined ;
+                        || resp.diagnostics.length == 1 ? resp.diagnostics[0] : undefined;
                     if (noHexFileDiagnostic) {
                         core.warningNotification(noHexFileDiagnostic.messageText as string);
                     }
@@ -4955,7 +4955,8 @@ async function importGithubProject(repoid: string, requireSignin?: boolean) {
     core.showLoading("loadingheader", lf("importing GitHub project..."));
     try {
         // normalize for precise matching
-        repoid = pxt.github.normalizeRepoId(repoid);
+        // if the branch is not specified, assume "master"
+        repoid = pxt.github.normalizeRepoId(repoid, "master");
         // try to find project with same id
         let hd = workspace.getHeaders().find(h => h.githubId &&
             pxt.github.normalizeRepoId(h.githubId) == repoid
