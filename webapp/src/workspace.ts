@@ -1451,7 +1451,8 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
 }
 
 export async function importGithubAsync(id: string): Promise<Header> {
-    const repoid = pxt.github.normalizeRepoId(id).replace(/^github:/, "")
+    // if tag is not specified, asssume master
+    const repoid = pxt.github.normalizeRepoId(id, "master").replace(/^github:/, "")
     const parsed = pxt.github.parseRepoId(repoid)
 
     let sha = ""
