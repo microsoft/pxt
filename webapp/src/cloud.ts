@@ -12,10 +12,15 @@ import U = pxt.Util;
 
 type CloudProject = {
     id: string;
+    shareId?: string;
     header: string;
     text: string;
     version: string;
 };
+
+export interface SharedCloudProject extends CloudProject, pxt.Cloud.JsonScript {
+    text: string;
+}
 
 const localOnlyMetadataFields: (keyof Header)[] = [
     // different for different local storage instances
@@ -94,6 +99,26 @@ function getAsync(h: Header): Promise<File> {
                 resolve(file);
             } else {
                 pxt.tickEvent(`identity.cloudApi.getProject.failed`);
+                reject(result.err);
+            }
+        } finally {
+            cloudMeta.syncFinished();
+        }
+    });
+}
+
+export function shareAsync(id: string, scriptData: any): Promise<{ shareID: string, scr: SharedCloudProject }> {
+    return new Promise(async (resolve, reject) => {
+        const cloudMeta = getCloudTempMetadata(id);
+        try {
+            cloudMeta.syncInProgress();
+            const result = await auth.apiAsync<{ shareID: string, scr: SharedCloudProject }>(
+                `/api/user/project/share`,
+                scriptData,
+                "POST");
+            if (result.success) {
+                resolve(result.resp);
+            } else {
                 reject(result.err);
             }
         } finally {

@@ -18,25 +18,27 @@ export interface ShareData {
 export interface ShareProps {
     projectName: string;
     screenshotUri?: string;
+    showShareDropdown?: boolean;
 
     screenshotAsync: () => Promise<string>;
     gifRecordAsync: () => Promise<void>;
     gifRenderAsync: () => Promise<string | void>;
     gifAddFrame: (dataUri: ImageData, delay?: number) => boolean;
-    publishAsync: (name: string, screenshotUri?: string) => Promise<ShareData>;
+    publishAsync: (name: string, screenshotUri?: string, forceAnonymous?: boolean) => Promise<ShareData>;
     registerSimulatorMsgHandler?: (handler: (msg: any) => void) => void;
     unregisterSimulatorMsgHandler?: () => void;
 }
 
 export const Share = (props: ShareProps) => {
-    const { projectName, screenshotUri, screenshotAsync, gifRecordAsync, gifRenderAsync, gifAddFrame,
-        publishAsync, registerSimulatorMsgHandler, unregisterSimulatorMsgHandler } = props;
+    const { projectName, screenshotUri, showShareDropdown, screenshotAsync, gifRecordAsync, gifRenderAsync,
+        gifAddFrame, publishAsync, registerSimulatorMsgHandler, unregisterSimulatorMsgHandler } = props;
 
 return <div className="project-share">
         {(!!screenshotAsync || !!gifRecordAsync) && <div className="project-share-simulator">
             <div id="shareLoanedSimulator" />
         </div>}
         <ShareInfo projectName={projectName}
+            showShareDropdown={showShareDropdown}
             screenshotUri={screenshotUri}
             screenshotAsync={screenshotAsync}
             gifRecordAsync={gifRecordAsync}
