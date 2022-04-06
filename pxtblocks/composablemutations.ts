@@ -174,6 +174,7 @@ namespace pxt.blocks {
 
         initOptionalInputs();
         if (compileHiddenArguments) {
+            // Make sure all inputs have shadow blocks attached
             let optIndex = 0
             for (let i = 0; i < b.inputList.length; i++) {
                 const input = b.inputList[i];
@@ -186,6 +187,7 @@ namespace pxt.blocks {
                 }
             }
         }
+
         (b as Blockly.BlockSvg).render = (opt_bubble) => {
             if (updatingInputs) return;
             updatingInputs = true;
