@@ -24,7 +24,7 @@ namespace pxsim.codal.music.SoundSynthesizerEffects {
     // Linear interpolate function.
     // parameter[0]: end frequency
     export function logarithmicInterpolation(synth: SoundEmojiSynthesizer, context: ToneEffect) {
-        synth.frequency = synth.effect.frequency + (Math.log10(context.step) * (context.parameter[0] - synth.effect.frequency) / 1.95);
+        synth.frequency = synth.effect.frequency + (Math.log10(Math.max(context.step, 0.1)) * (context.parameter[0] - synth.effect.frequency) / 1.95);
     }
 
     // Curve interpolate function
