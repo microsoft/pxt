@@ -111,7 +111,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
             {(shareState === "share" || shareState === "publish") && <>
                 {showSimulator && <div className="project-share-title">
                     <h2>{lf("About your project")}</h2>
-                    {showShareDropdown && <MenuDropdown id="project-share-dropdown"
+                    {showShareDropdown && shareState === "share" && <MenuDropdown id="project-share-dropdown"
                         icon="fas fa-ellipsis-h"
                         title={lf("More share options")}
                         items={dropdownOptions}

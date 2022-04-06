@@ -233,7 +233,7 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
         this.props.parent.createGitHubRepositoryAsync();
     }
 
-    protected async getShareUrl(pubId: string) {
+    protected async getShareUrl(pubId: string, persistent?: boolean) {
         const targetTheme = pxt.appTarget.appTheme;
         const header = this.props.parent.state.header;
         let shareData: ShareData = {
@@ -241,7 +241,9 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
             embed: {}
         };
 
-        let shareUrl = targetTheme.shareUrl || "https://makecode.com/";
+        let shareUrl = (persistent
+            ? targetTheme.homeUrl
+            : targetTheme.shareUrl) || "https://makecode.com/";
         if (!/\/$/.test(shareUrl)) shareUrl += '/';
         let rootUrl = targetTheme.embedUrl
         if (!/\/$/.test(rootUrl)) rootUrl += '/';
@@ -293,10 +295,11 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
                 await parent.updateHeaderNameAsync(name);
             }
             try {
-                const id = (hasIdentity && !forceAnonymous
+                const persistentPublish = hasIdentity && !forceAnonymous;
+                const id = (persistentPublish
                     ? await parent.persistentPublishAsync(screenshotUri)
                     : await parent.anonymousPublishAsync(screenshotUri));
-                return await this.getShareUrl(id);
+                return await this.getShareUrl(id, persistentPublish);
             } catch (e) {
                 pxt.tickEvent("menu.embed.error", { code: (e as any).statusCode })
                 return { url: "", embed: {}, error: e } as ShareData
