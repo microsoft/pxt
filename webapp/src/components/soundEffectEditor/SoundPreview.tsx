@@ -3,7 +3,7 @@ import * as React from "react";
 export interface SoundPreviewProps {
     sound: pxt.assets.Sound;
     handleStartAnimationRef?: (startAnimation: (duration: number) => void) => void;
-    handleSynthListenerRef?: (onPull: (freq: number, volume: number) => void) => void;
+    handleSynthListenerRef?: (onPull: (freq: number, volume: number, sound: pxt.assets.Sound) => void) => void;
 }
 
 export const SoundPreview = (props: SoundPreviewProps) => {
@@ -26,19 +26,21 @@ export const SoundPreview = (props: SoundPreviewProps) => {
                 animationStartTime = 0;
                 return;
             }
-            let frequency = sound.startFrequency;
-            let volume = sound.startVolume;
+            let toDraw = sound;
+            let frequency = toDraw.startFrequency;
+            let volume = toDraw.startVolume;
 
-            handleSynthListenerRef((freq, vol) => {
+            handleSynthListenerRef((freq, vol, sound) => {
                 frequency = freq;
                 volume = vol * 1023;
+                toDraw = sound;
             })
 
             const doAnimationFrame = () => {
                 if (!animationPath) return;
                 const dt = Date.now() - animationStartTime;
 
-                if (dt > sound.duration) {
+                if (dt > toDraw.duration) {
                     animationPath.setAttribute("opacity", "0");
                     previewPath.setAttribute("opacity", "1");
                     return;
@@ -46,7 +48,7 @@ export const SoundPreview = (props: SoundPreviewProps) => {
                 animationPath.setAttribute("opacity", "1");
                 previewPath.setAttribute("opacity", "0");
 
-                animationPath.setAttribute("d", pxt.assets.renderWaveSnapshot(frequency, volume, sound.wave, width, height, 10))
+                animationPath.setAttribute("d", pxt.assets.renderWaveSnapshot(frequency, volume, toDraw.wave, width, height, 10))
 
                 requestAnimationFrame(doAnimationFrame);
             }

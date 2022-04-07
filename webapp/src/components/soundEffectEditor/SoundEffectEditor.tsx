@@ -24,16 +24,16 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
     let startPreviewAnimation: (duration: number) => void;
     let startControlsAnimation: (duration: number) => void;
     let cancelSound: () => void;
-    let previewSynthListener: (freq: number, vol: number) => void;
+    let previewSynthListener: (freq: number, vol: number, sound: pxt.assets.Sound) => void;
 
-    const play = () => {
+    const play = (toPlay = sound) => {
         const codalSound = new pxsim.codal.music.Sound();
-        codalSound.frequency = sound.startFrequency;
-        codalSound.volume = sound.startVolume;
-        codalSound.endFrequency = sound.endFrequency;
-        codalSound.endVolume = sound.endVolume;
+        codalSound.frequency = toPlay.startFrequency;
+        codalSound.volume = toPlay.startVolume;
+        codalSound.endFrequency = toPlay.endFrequency;
+        codalSound.endVolume = toPlay.endVolume;
 
-        switch (sound.wave) {
+        switch (toPlay.wave) {
             case "sine": codalSound.wave = pxsim.codal.music.WaveShape.Sine; break;
             case "triangle": codalSound.wave = pxsim.codal.music.WaveShape.Triangle; break;
             case "square": codalSound.wave = pxsim.codal.music.WaveShape.Square; break;
@@ -41,7 +41,7 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
             case "noise": codalSound.wave = pxsim.codal.music.WaveShape.Noise; break;
         }
 
-        switch (sound.interpolation) {
+        switch (toPlay.interpolation) {
             case "linear": codalSound.shape = pxsim.codal.music.InterpolationEffect.Linear; break;
             case "curve": codalSound.shape = pxsim.codal.music.InterpolationEffect.Curve;  break;
             case "logarithmic": codalSound.shape = pxsim.codal.music.InterpolationEffect.Logarithmic;  break;
@@ -49,7 +49,7 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
 
         // These values were chosen through trial and error to get something
         // that sounded pleasing and is most like the intended effect
-        switch (sound.effect) {
+        switch (toPlay.effect) {
             case "vibrato":
                 codalSound.fx = pxsim.codal.music.Effect.Vibrato;
                 codalSound.fxnSteps = 512;
@@ -67,7 +67,7 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
                 break;
         }
 
-        codalSound.duration = sound.duration
+        codalSound.duration = toPlay.duration
         codalSound.steps = 90;
 
         if (cancelSound) cancelSound();
@@ -78,9 +78,11 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
             if (startControlsAnimation) startControlsAnimation(-1);
         }
 
-        if (startPreviewAnimation) startPreviewAnimation(sound.duration);
-        if (startControlsAnimation) startControlsAnimation(sound.duration);
-        pxsim.codal.music.playSoundExpressionAsync(codalSound.src, () => cancelled, previewSynthListener);
+        if (startPreviewAnimation) startPreviewAnimation(toPlay.duration);
+        if (startControlsAnimation) startControlsAnimation(toPlay.duration);
+        pxsim.codal.music.playSoundExpressionAsync(codalSound.src, () => cancelled, (freq, volume) => {
+            previewSynthListener(freq, volume, toPlay)
+        });
     }
 
     const handleClose = () => {
@@ -99,15 +101,15 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
         startControlsAnimation = startAnimation;
     }
 
-    const handleSynthListenerRef = (onPull: (freq: number, vol: number) => void) => {
+    const handleSynthListenerRef = (onPull: (freq: number, vol: number, sound: pxt.assets.Sound) => void) => {
         previewSynthListener = onPull;
     }
 
     const handleSoundChange = (newSound: pxt.assets.Sound, setSoundSeed = true) => {
         if (cancelSound) cancelSound();
         if (setSoundSeed) setSimilarSoundSeed(undefined);
-        setSound(newSound);
         if (onSoundChange) onSoundChange(newSound);
+        setSound(newSound);
     }
 
     return <div className="sound-effect-editor">
@@ -128,14 +130,16 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
             label={pxt.U.lf("Generate Similar Sound")}
             title={pxt.U.lf("Generate Similar Sound")}
             onClick={() => {
+                let newSound: pxt.assets.Sound;
                 if (!similarSoundSeed) {
                     setSimilarSoundSeed(sound);
-                    handleSoundChange(generateSimilarSound(sound), false);
+                    newSound = generateSimilarSound(sound);
                 }
                 else {
-                    handleSoundChange(generateSimilarSound(similarSoundSeed), false);
+                    newSound = generateSimilarSound(similarSoundSeed);
                 }
-                play();
+                handleSoundChange(newSound, false);
+                play(newSound);
             }}
         />
     </div>

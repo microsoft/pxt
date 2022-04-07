@@ -46,7 +46,7 @@ export const Input = (props: InputProps) => {
         onBlur
     } = props;
 
-    const [value, setValue] = React.useState(initialValue || "");
+    const [value, setValue] = React.useState(undefined);
 
     const clickHandler = (evt: React.MouseEvent<any>) => {
         if (selectOnClick) {
@@ -79,7 +79,10 @@ export const Input = (props: InputProps) => {
     }
 
     const blurHandler = () => {
-        if (onBlur) onBlur(value);
+        if (onBlur) {
+            onBlur(value);
+        }
+        setValue(undefined);
     }
 
     return (
@@ -98,7 +101,7 @@ export const Input = (props: InputProps) => {
                     aria-hidden={ariaHidden}
                     type={type || "text"}
                     placeholder={placeholder}
-                    value={value || ''}
+                    value={value || initialValue || ""}
                     readOnly={!!readOnly}
                     onClick={clickHandler}
                     onChange={changeHandler}
