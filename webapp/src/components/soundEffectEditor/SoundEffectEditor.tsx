@@ -17,6 +17,10 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
 
     const [ sound, setSound ] = React.useState<pxt.assets.Sound>(initialSound);
 
+    // When using the "Generate Similar Sound" button, we keep the original sound around so
+    // that we never stray too far away from where we started
+    const [ similarSoundSeed, setSimilarSoundSeed ] = React.useState<pxt.assets.Sound>(undefined);
+
     let startPreviewAnimation: (duration: number) => void;
     let startControlsAnimation: (duration: number) => void;
     let cancelSound: () => void;
@@ -43,8 +47,8 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
             case "logarithmic": codalSound.shape = pxsim.codal.music.InterpolationEffect.Logarithmic;  break;
         }
 
-        // These values were chosen through trial and error to get a sound
-        // that sounded pleasing and most like the intended effect
+        // These values were chosen through trial and error to get something
+        // that sounded pleasing and is most like the intended effect
         switch (sound.effect) {
             case "vibrato":
                 codalSound.fx = pxsim.codal.music.Effect.Vibrato;
@@ -99,8 +103,9 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
         previewSynthListener = onPull;
     }
 
-    const handleSoundChange = (newSound: pxt.assets.Sound) => {
+    const handleSoundChange = (newSound: pxt.assets.Sound, setSoundSeed = true) => {
         if (cancelSound) cancelSound();
+        if (setSoundSeed) setSimilarSoundSeed(undefined);
         setSound(newSound);
         if (onSoundChange) onSoundChange(newSound);
     }
@@ -122,7 +127,101 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
         <Button
             label={pxt.U.lf("Generate Similar Sound")}
             title={pxt.U.lf("Generate Similar Sound")}
-            onClick={() => {}}
+            onClick={() => {
+                if (!similarSoundSeed) {
+                    setSimilarSoundSeed(sound);
+                    handleSoundChange(generateSimilarSound(sound), false);
+                }
+                else {
+                    handleSoundChange(generateSimilarSound(similarSoundSeed), false);
+                }
+                play();
+            }}
         />
     </div>
+}
+
+
+function generateSimilarSound(sound: pxt.assets.Sound) {
+    const res = {
+        ...sound
+    };
+
+    res.interpolation = pickRandom("linear", "curve", "logarithmic")
+
+    res.duration = clamp(
+        res.duration + (Math.random() - 0.5) * res.duration,
+        Math.min(100, res.duration),
+        Math.max(2000, res.duration)
+    );
+
+
+    if (res.wave === "noise") {
+        // The primary waveforms don't produce sounds that are similar to noise,
+        // but adding an effect sorta does
+        if (percentChance(20)) {
+            res.wave = pickRandom("sine", "sawtooth", "square", "triangle");
+            res.effect = pickRandom("vibrato", "tremolo", "warble");
+        }
+    }
+    else {
+        res.wave = pickRandom("sine", "sawtooth", "square", "triangle");
+
+        // Adding an effect can drastically alter the sound, so keep it
+        // at a low percent chance unless there already is one
+        if (res.effect !== "none" || percentChance(10)) {
+            res.effect = pickRandom("vibrato", "tremolo", "warble");
+        }
+    }
+
+    // Instead of randomly changing the frequency, change the slope and choose
+    // a new start frequency. This keeps a similar profile to the sound
+    const oldFrequencyDifference = res.endFrequency - res.startFrequency;
+    let newFrequencyDifference = oldFrequencyDifference + (oldFrequencyDifference * 2) * (Math.random() - 0.5);
+
+    if (Math.sign(oldFrequencyDifference) !== Math.sign(newFrequencyDifference)) {
+        newFrequencyDifference *= -1;
+    }
+
+    newFrequencyDifference = clamp(newFrequencyDifference, -2000, 2000);
+
+    res.startFrequency = clamp(
+        Math.random() * 2000,
+        Math.max(-newFrequencyDifference, 1),
+        Math.min(2000, 2000 - newFrequencyDifference)
+    );
+
+    res.endFrequency = clamp(res.startFrequency + newFrequencyDifference, 1, 2000);
+
+    // Same strategy for volume
+    const oldVolumeDifference = res.endVolume - res.startVolume;
+    let newVolumeDifference = oldVolumeDifference + oldVolumeDifference * (Math.random() - 0.5);
+
+    newVolumeDifference = clamp(newVolumeDifference, -1023, 1023);
+
+    if (Math.sign(oldVolumeDifference) !== Math.sign(newVolumeDifference)) {
+        newVolumeDifference *= -1;
+    }
+
+    res.startVolume = clamp(
+        Math.random() * 1023,
+        Math.max(-newVolumeDifference, 0),
+        Math.min(1023, 1023 - newVolumeDifference)
+    );
+
+    res.endVolume = clamp(res.startVolume + newVolumeDifference, 0, 1023);
+
+    return res;
+}
+
+function pickRandom<U extends string>(...choices: U[]) {
+    return choices[Math.floor(Math.random() * choices.length)]
+}
+
+function percentChance(percent: number) {
+    return Math.random() * 100 < percent;
+}
+
+function clamp(value: number, min: number, max: number) {
+    return Math.floor(Math.min(max, Math.max(min, value)))
 }
