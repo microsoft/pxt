@@ -100,6 +100,16 @@ namespace pxtblockly {
             Blockly.WidgetDiv.show(this, this.sourceBlock_.RTL, () => {
                 fv.hide();
 
+                widgetDiv.classList.remove("sound-effect-editor-widget");
+                widgetDiv.style.transform = "";
+                widgetDiv.style.position = "";
+                widgetDiv.style.left = "";
+                widgetDiv.style.top = "";
+                widgetDiv.style.width = "";
+                widgetDiv.style.height = "";
+                widgetDiv.style.opacity = "";
+                widgetDiv.style.transition = "";
+
                 Blockly.Events.enable();
                 Blockly.Events.setGroup(true);
                 this.fireNumberInputUpdate(this.options.durationInputName, initialSound.duration);
@@ -134,18 +144,24 @@ namespace pxtblockly {
             const block = this.sourceBlock_ as Blockly.BlockSvg;
             const bounds = block.getBoundingRectangle();
             const coord = workspaceToScreenCoordinates(block.workspace as Blockly.WorkspaceSvg,
-                new Blockly.utils.Coordinate(this.sourceBlock_.RTL ? bounds.left : bounds.right, bounds.top));
+                new Blockly.utils.Coordinate(bounds.right, bounds.top));
 
-            const left = (this.sourceBlock_.RTL ? coord.x - 20 : coord.x + 20)
-            const top = coord.y
+            const animationDistance = 20;
+
+            const left = coord.x + 20;
+            const top = coord.y - animationDistance;
+            widgetDiv.style.opacity = "0";
+            widgetDiv.classList.add("sound-effect-editor-widget");
             widgetDiv.style.position = "absolute";
             widgetDiv.style.left = left + "px";
             widgetDiv.style.top = top + "px";
             widgetDiv.style.width = "30rem";
             widgetDiv.style.height = "40rem";
+            widgetDiv.style.display = "block";
+            widgetDiv.style.transition = "transform 0.25s ease 0s, opacity 0.25s ease 0s";
 
             fv.onHide(() => {
-
+                // do nothing
             });
 
             fv.show();
@@ -155,11 +171,14 @@ namespace pxtblockly {
 
             if (divBounds.height > injectDivBounds.height) {
                 widgetDiv.style.height = "";
-                widgetDiv.style.top = "1rem";
+                widgetDiv.style.top = `calc(1rem - ${animationDistance}px)`;
                 widgetDiv.style.bottom = "1rem";
             }
             else {
-                widgetDiv.style.top = Math.min(top, (injectDivBounds.bottom - divBounds.height) - (divBounds.top - top)) + "px";
+                if (divBounds.bottom > injectDivBounds.bottom || divBounds.top < injectDivBounds.top) {
+                    // This editor is pretty tall, so just center vertically on the inject div
+                    widgetDiv.style.top = (injectDivBounds.top + (injectDivBounds.height / 2) - (divBounds.height / 2)) - animationDistance + "px";
+                }
             }
 
             if (divBounds.width > injectDivBounds.width) {
@@ -168,9 +187,29 @@ namespace pxtblockly {
                 widgetDiv.style.right = "1rem";
             }
             else {
-                widgetDiv.style.left = Math.min(left, (injectDivBounds.right - divBounds.width) - (divBounds.left - left)) + "px";
+                // Check to see if we are bleeding off the right side of the canvas
+                if (divBounds.left + divBounds.width >= injectDivBounds.right) {
+                    // If so, try and place to the left of the block instead of the right
+                    const blockLeft = workspaceToScreenCoordinates(block.workspace as Blockly.WorkspaceSvg,
+                        new Blockly.utils.Coordinate(bounds.left, bounds.top));
+
+                    const toolboxWidth = block.workspace.getToolbox().getWidth();
+                    const workspaceLeft = injectDivBounds.left + toolboxWidth;
+
+                    if (blockLeft.x - divBounds.width - 20 > workspaceLeft) {
+                        widgetDiv.style.left = (blockLeft.x - divBounds.width - 20) + "px"
+                    }
+                    else {
+                        // As a last resort, just center on the inject div
+                        widgetDiv.style.left = (workspaceLeft + ((injectDivBounds.width - toolboxWidth) / 2) - divBounds.width / 2) + "px";
+                    }
+                }
             }
 
+            requestAnimationFrame(() => {
+                widgetDiv.style.opacity = "1";
+                widgetDiv.style.transform = `translateY(${animationDistance}px)`;
+            })
         }
 
         render_() {
