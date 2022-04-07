@@ -127,6 +127,8 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
             />
         <SoundControls sound={sound} onSoundChange={handleSoundChange} handleStartAnimationRef={handleControlsAnimationRef} />
         <Button
+            className="link-button"
+            leftIcon="fas fa-sync"
             label={pxt.U.lf("Generate Similar Sound")}
             title={pxt.U.lf("Generate Similar Sound")}
             onClick={() => {
