@@ -192,7 +192,7 @@ function generateSimilarSound(sound: pxt.assets.Sound) {
     res.startFrequency = clamp(
         Math.random() * 2000,
         Math.max(-newFrequencyDifference, 1),
-        Math.min(2000, 2000 - newFrequencyDifference)
+        clamp(2000 - newFrequencyDifference, 1, 2000)
     );
 
     res.endFrequency = clamp(res.startFrequency + newFrequencyDifference, 1, 2000);
@@ -210,7 +210,7 @@ function generateSimilarSound(sound: pxt.assets.Sound) {
     res.startVolume = clamp(
         Math.random() * 1023,
         Math.max(-newVolumeDifference, 0),
-        Math.min(1023, 1023 - newVolumeDifference)
+        clamp(1023 - newVolumeDifference, 0, 1023)
     );
 
     res.endVolume = clamp(res.startVolume + newVolumeDifference, 0, 1023);
