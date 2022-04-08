@@ -3000,9 +3000,11 @@ namespace pxt.blocks {
     }
 
     export function getFixedInstanceDropdownValues(apis: pxtc.ApisInfo, qName: string) {
-        return pxt.Util.values(apis.byQName).filter(sym => sym.kind === pxtc.SymbolKind.Variable
+        const symbols = pxt.Util.values(apis.byQName).filter(sym => sym.kind === pxtc.SymbolKind.Variable
             && sym.attributes.fixedInstance
-            && isSubtype(apis, sym.retType, qName));
+            && isSubtype(apis, sym.retType, qName))
+            .sort((l,r) => (r.attributes.weight || 50) - (l.attributes.weight || 50))
+        return symbols
     }
 
     export function generateIcons(instanceSymbols: pxtc.SymbolInfo[]) {
