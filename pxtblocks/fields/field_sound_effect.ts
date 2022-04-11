@@ -97,7 +97,15 @@ namespace pxtblockly {
             const initialSound = this.readCurrentSound();
             Blockly.Events.disable();
 
-            Blockly.WidgetDiv.show(this, this.sourceBlock_.RTL, () => {
+            let bbox: Blockly.utils.Rect;
+
+            // This is due to the changes in https://github.com/microsoft/pxt-blockly/pull/289
+            // which caused the widgetdiv to jump around if any fields underneath changed size
+            let widgetOwner = {
+                getScaledBBox: () => bbox
+            }
+
+            Blockly.WidgetDiv.show(widgetOwner, this.sourceBlock_.RTL, () => {
                 fv.hide();
 
                 widgetDiv.classList.remove("sound-effect-editor-widget");
@@ -129,7 +137,7 @@ namespace pxtblockly {
             const opts = {
                 onClose: () => {
                     fv.hide();
-                    Blockly.WidgetDiv.hideIfOwner(this);
+                    Blockly.WidgetDiv.hideIfOwner(widgetOwner);
                 },
                 onSoundChange: (newSound: pxt.assets.Sound) => {
                     this.mostRecentValue = newSound;
@@ -206,6 +214,9 @@ namespace pxtblockly {
                     }
                 }
             }
+
+            const finalDimensions = widgetDiv.getBoundingClientRect();
+            bbox = new Blockly.utils.Rect(finalDimensions.top, finalDimensions.bottom, finalDimensions.left, finalDimensions.right);
 
             requestAnimationFrame(() => {
                 widgetDiv.style.opacity = "1";
