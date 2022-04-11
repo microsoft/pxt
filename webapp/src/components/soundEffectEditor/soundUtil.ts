@@ -63,20 +63,46 @@ export function getGallerySounds(): SoundGalleryItem[] {
             }
         },
         {
-            name: pxt.U.lf("Kick Drum 1"),
+            name: pxt.U.lf("Radio"),
+            sound: {
+                interpolation: "linear",
+                effect: "none",
+                wave: "noise",
+                startVolume: 1023,
+                endVolume: 0,
+                startFrequency: 500,
+                endFrequency: 499,
+                duration: 750
+            }
+        },
+        {
+            name: pxt.U.lf("Jump"),
+            sound: {
+                interpolation: "linear",
+                effect: "warble",
+                wave: "square",
+                startVolume: 1023,
+                endVolume: 0,
+                startFrequency: 400,
+                endFrequency: 600,
+                duration: 100
+            }
+        },
+        {
+            name: pxt.U.lf("Water Drop"),
             sound: {
                 interpolation: "linear",
                 effect: "none",
                 wave: "sine",
                 startVolume: 1023,
                 endVolume: 0,
-                startFrequency: 130,
-                endFrequency: 1,
-                duration: 100
+                startFrequency: 200,
+                endFrequency: 600,
+                duration: 150
             }
         },
         {
-            name: pxt.U.lf("Kick Drum 2"),
+            name: pxt.U.lf("Kick Drum"),
             sound: {
                 interpolation: "curve",
                 effect: "none",
@@ -86,6 +112,19 @@ export function getGallerySounds(): SoundGalleryItem[] {
                 startFrequency: 200,
                 endFrequency: 1,
                 duration: 100
+            }
+        },
+        {
+            name: pxt.U.lf("Tom"),
+            sound: {
+                interpolation: "curve",
+                effect: "none",
+                wave: "triangle",
+                startVolume: 1023,
+                endVolume: 0,
+                startFrequency: 300,
+                endFrequency: 200,
+                duration: 75
             }
         },
         {
@@ -128,42 +167,16 @@ export function getGallerySounds(): SoundGalleryItem[] {
             }
         },
         {
-            name: pxt.U.lf("Radio"),
+            name: pxt.U.lf("Triangle"),
             sound: {
                 interpolation: "linear",
                 effect: "none",
                 wave: "noise",
                 startVolume: 1023,
                 endVolume: 0,
-                startFrequency: 500,
-                endFrequency: 499,
-                duration: 750
-            }
-        },
-        {
-            name: pxt.U.lf("Jump"),
-            sound: {
-                interpolation: "linear",
-                effect: "warble",
-                wave: "square",
-                startVolume: 1023,
-                endVolume: 0,
-                startFrequency: 400,
-                endFrequency: 600,
-                duration: 100
-            }
-        },
-        {
-            name: pxt.U.lf("Water Drop"),
-            sound: {
-                interpolation: "linear",
-                effect: "none",
-                wave: "sine",
-                startVolume: 1023,
-                endVolume: 0,
-                startFrequency: 200,
-                endFrequency: 600,
-                duration: 150
+                startFrequency: 54,
+                endFrequency: 54,
+                duration: 500
             }
         }
     ];

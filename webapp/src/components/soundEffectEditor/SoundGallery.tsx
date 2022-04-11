@@ -18,14 +18,16 @@ export const SoundGallery = (props: SoundGalleryProps) => {
     const { sounds, onSoundSelected, visible } = props;
 
     return <div className={classList("sound-gallery", visible && "visible")} aria-hidden={!visible}>
-        {sounds.map((item, index) =>
-            <Button
-                key={index}
-                title={item.name}
-                label={<SoundGalleryEntry {...item} />}
-                onClick={() => onSoundSelected(item.sound)}
-            />
-        )}
+        <div className="sound-gallery-scroller">
+            {sounds.map((item, index) =>
+                <Button
+                    key={index}
+                    title={item.name}
+                    label={<SoundGalleryEntry {...item} />}
+                    onClick={() => onSoundSelected(item.sound)}
+                />
+            )}
+        </div>
     </div>
 }
 
@@ -43,7 +45,7 @@ const SoundGalleryEntry = (props: SoundGalleryItem) => {
     return <div className="sound-gallery-item-label">
         <Button
             className="sound-effect-play-button"
-            title={lf("Play")}
+            title={lf("Preview sound")}
             onClick={play}
             leftIcon="fas fa-play"
             />
@@ -51,7 +53,12 @@ const SoundGalleryEntry = (props: SoundGalleryItem) => {
             {name}
         </div>
         <svg viewBox={`0 0 ${width} ${height}`} xmlns="http://www.w3.org/2000/svg">
-            <path d={pxt.assets.renderSoundPath(sound, width, height)} stroke="grey" strokeWidth="2" fill="none"/>
+            <path
+                className="sound-gallery-preview-wave"
+                d={pxt.assets.renderSoundPath(sound, width, height)}
+                stroke="grey"
+                strokeWidth="2"
+                fill="none"/>
         </svg>
     </div>
 }
