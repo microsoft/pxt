@@ -69,3 +69,26 @@ export enum CheckboxStatus {
     Unselected,
     Waiting
 }
+
+export interface ClientCoordinates {
+    clientX: number;
+    clientY: number;
+}
+
+export function clientCoord(ev: PointerEvent | MouseEvent | TouchEvent): ClientCoordinates {
+    if ((ev as TouchEvent).touches) {
+        const te = ev as TouchEvent;
+        if (te.touches.length) {
+            return te.touches[0];
+        }
+        return te.changedTouches[0];
+    }
+    return (ev as PointerEvent | MouseEvent);
+}
+
+export function screenToSVGCoord(ref: SVGSVGElement, coord: ClientCoordinates) {
+    const screenCoord = ref.createSVGPoint();
+    screenCoord.x = coord.clientX;
+    screenCoord.y = coord.clientY;
+    return screenCoord.matrixTransform(ref.getScreenCTM().inverse());
+}

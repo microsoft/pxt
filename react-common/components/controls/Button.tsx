@@ -1,9 +1,7 @@
 import * as React from "react";
 import { classList, ControlProps, fireClickOnEnter } from "../util";
 
-export interface ButtonProps extends ControlProps {
-    onClick: () => void;
-    onKeydown?: (e: React.KeyboardEvent) => void;
+export interface ButtonViewProps extends ControlProps {
     buttonRef?: (ref: HTMLButtonElement) => void;
     title: string;
     label?: string | JSX.Element;
@@ -21,6 +19,12 @@ export interface ButtonProps extends ControlProps {
     ariaPosInSet?: number;
     ariaSetSize?: number;
     ariaSelected?: boolean;
+}
+
+
+export interface ButtonProps extends ButtonViewProps {
+    onClick: () => void;
+    onKeydown?: (e: React.KeyboardEvent) => void;
 }
 
 export const Button = (props: ButtonProps) => {

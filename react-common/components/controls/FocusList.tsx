@@ -4,6 +4,8 @@ import { ContainerProps } from "../util";
 export interface FocusListProps extends ContainerProps {
     role: string;
     childTabStopId?: string;
+    useUpAndDownArrowKeys?: boolean;
+    onItemReceivedFocus?: (item: HTMLElement) => void;
 }
 
 /**
@@ -23,6 +25,8 @@ export const FocusList = (props: FocusListProps) => {
         ariaLabel,
         childTabStopId,
         children,
+        onItemReceivedFocus,
+        useUpAndDownArrowKeys
     } = props;
 
     let focusableElements: HTMLElement[];
@@ -59,6 +63,11 @@ export const FocusList = (props: FocusListProps) => {
         const target = document.activeElement as HTMLElement;
         const index = focusableElements.indexOf(target);
 
+        const focus = (element: HTMLElement) => {
+            element.focus();
+            if (onItemReceivedFocus) onItemReceivedFocus(element);
+        }
+
         if (index === -1 && target !== focusList) return;
 
         if (e.key === "Enter" || e.key === " ") {
@@ -73,33 +82,33 @@ export const FocusList = (props: FocusListProps) => {
                 target.dispatchEvent(new Event("click"));
             }
         }
-        else if (e.key === "ArrowRight") {
+        else if (e.key === (useUpAndDownArrowKeys ? "ArrowDown" : "ArrowRight")) {
             if (index === focusableElements.length - 1 || target === focusList) {
-                focusableElements[0].focus();
+                focus(focusableElements[0]);
             }
             else {
-                focusableElements[index + 1].focus();
+                focus(focusableElements[index + 1]);
             }
             e.preventDefault();
             e.stopPropagation();
         }
-        else if (e.key === "ArrowLeft") {
+        else if (e.key === (useUpAndDownArrowKeys ? "ArrowUp" : "ArrowLeft")) {
             if (index === 0 || target === focusList) {
-                focusableElements[focusableElements.length - 1].focus();
+                focus(focusableElements[focusableElements.length - 1]);
             }
             else {
-                focusableElements[Math.max(index - 1, 0)].focus();
+                focus(focusableElements[Math.max(index - 1, 0)]);
             }
             e.preventDefault();
             e.stopPropagation();
         }
         else if (e.key === "Home") {
-            focusableElements[0].focus();
+            focus(focusableElements[0]);
             e.preventDefault();
             e.stopPropagation();
         }
         else if (e.key === "End") {
-            focusableElements[focusableElements.length - 1].focus();
+            focus(focusableElements[focusableElements.length - 1]);
             e.preventDefault();
             e.stopPropagation();
         }
