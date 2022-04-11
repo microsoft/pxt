@@ -2,8 +2,9 @@ import * as React from "react";
 import { Button } from "../../../../react-common/components/controls/Button";
 import { SoundControls } from "./SoundControls";
 import { SoundEffectHeader } from "./SoundEffectHeader";
+import { SoundGallery } from "./SoundGallery";
 import { SoundPreview } from "./SoundPreview";
-import { soundToCodalSound } from "./soundUtil";
+import { getGallerySounds, soundToCodalSound } from "./soundUtil";
 
 export interface SoundEffectEditorProps {
     onSoundChange?: (newValue: pxt.assets.Sound) => void;
@@ -72,38 +73,50 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
         setSound(newSound);
     }
 
+    const handleGallerySelection = (newSound: pxt.assets.Sound) => {
+        handleSoundChange(newSound)
+        setSelectedView("editor");
+    }
+
     return <div className="sound-effect-editor">
         <SoundEffectHeader
             selectedView={selectedView}
             onViewSelected={onViewSelected}
             onClose={handleClose}
         />
-        <SoundPreview sound={sound} handleStartAnimationRef={handlePreviewAnimationRef} handleSynthListenerRef={handleSynthListenerRef} />
-        <Button
-            className="sound-effect-play-button"
-            title={lf("Play")}
-            onClick={play}
-            leftIcon="fas fa-play"
+        <div className="sound-effect-editor-content">
+            <SoundPreview sound={sound} handleStartAnimationRef={handlePreviewAnimationRef} handleSynthListenerRef={handleSynthListenerRef} />
+            <Button
+                className="sound-effect-play-button"
+                title={lf("Play")}
+                onClick={play}
+                leftIcon="fas fa-play"
+                />
+            <SoundControls sound={sound} onSoundChange={handleSoundChange} handleStartAnimationRef={handleControlsAnimationRef} />
+            <Button
+                className="link-button"
+                leftIcon="fas fa-sync"
+                label={pxt.U.lf("Generate Similar Sound")}
+                title={pxt.U.lf("Generate Similar Sound")}
+                onClick={() => {
+                    let newSound: pxt.assets.Sound;
+                    if (!similarSoundSeed) {
+                        setSimilarSoundSeed(sound);
+                        newSound = generateSimilarSound(sound);
+                    }
+                    else {
+                        newSound = generateSimilarSound(similarSoundSeed);
+                    }
+                    handleSoundChange(newSound, false);
+                    play(newSound);
+                }}
             />
-        <SoundControls sound={sound} onSoundChange={handleSoundChange} handleStartAnimationRef={handleControlsAnimationRef} />
-        <Button
-            className="link-button"
-            leftIcon="fas fa-sync"
-            label={pxt.U.lf("Generate Similar Sound")}
-            title={pxt.U.lf("Generate Similar Sound")}
-            onClick={() => {
-                let newSound: pxt.assets.Sound;
-                if (!similarSoundSeed) {
-                    setSimilarSoundSeed(sound);
-                    newSound = generateSimilarSound(sound);
-                }
-                else {
-                    newSound = generateSimilarSound(similarSoundSeed);
-                }
-                handleSoundChange(newSound, false);
-                play(newSound);
-            }}
-        />
+            <SoundGallery
+                sounds={getGallerySounds()}
+                onSoundSelected={handleGallerySelection}
+                visible={selectedView === "gallery"}
+                />
+        </div>
     </div>
 }
 

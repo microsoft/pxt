@@ -1,3 +1,5 @@
+import { SoundGalleryItem } from "./SoundGallery";
+
 export function soundToCodalSound(sound: pxt.assets.Sound): pxsim.codal.music.Sound {
     const codalSound = new pxsim.codal.music.Sound();
     codalSound.frequency = sound.startFrequency;
@@ -43,4 +45,128 @@ export function soundToCodalSound(sound: pxt.assets.Sound): pxsim.codal.music.So
     codalSound.steps = 90;
 
     return codalSound;
+}
+
+export function getGallerySounds(): SoundGalleryItem[] {
+    const res: SoundGalleryItem[] = [
+        {
+            name: pxt.U.lf("Laser"),
+            sound: {
+                interpolation: "curve",
+                effect: "none",
+                wave: "square",
+                startVolume: 1023,
+                endVolume: 0,
+                startFrequency: 1600,
+                endFrequency: 1,
+                duration: 300
+            }
+        },
+        {
+            name: pxt.U.lf("Kick Drum 1"),
+            sound: {
+                interpolation: "linear",
+                effect: "none",
+                wave: "sine",
+                startVolume: 1023,
+                endVolume: 0,
+                startFrequency: 130,
+                endFrequency: 1,
+                duration: 100
+            }
+        },
+        {
+            name: pxt.U.lf("Kick Drum 2"),
+            sound: {
+                interpolation: "curve",
+                effect: "none",
+                wave: "square",
+                startVolume: 1023,
+                endVolume: 0,
+                startFrequency: 200,
+                endFrequency: 1,
+                duration: 100
+            }
+        },
+        {
+            name: pxt.U.lf("Snare"),
+            sound: {
+                interpolation: "logarithmic",
+                effect: "warble",
+                wave: "noise",
+                startVolume: 1023,
+                endVolume: 0,
+                startFrequency: 523,
+                endFrequency: 1,
+                duration: 100
+            }
+        },
+        {
+            name: pxt.U.lf("Hi-Hat"),
+            sound: {
+                interpolation: "linear",
+                effect: "none",
+                wave: "noise",
+                startVolume: 1023,
+                endVolume: 0,
+                startFrequency: 500,
+                endFrequency: 1,
+                duration: 10
+            }
+        },
+        {
+            name: pxt.U.lf("Cowbell"),
+            sound: {
+                interpolation: "linear",
+                effect: "vibrato",
+                wave: "sine",
+                startVolume: 1023,
+                endVolume: 0,
+                startFrequency: 500,
+                endFrequency: 500,
+                duration: 50
+            }
+        },
+        {
+            name: pxt.U.lf("Radio"),
+            sound: {
+                interpolation: "linear",
+                effect: "none",
+                wave: "noise",
+                startVolume: 1023,
+                endVolume: 0,
+                startFrequency: 500,
+                endFrequency: 499,
+                duration: 750
+            }
+        },
+        {
+            name: pxt.U.lf("Jump"),
+            sound: {
+                interpolation: "linear",
+                effect: "warble",
+                wave: "square",
+                startVolume: 1023,
+                endVolume: 0,
+                startFrequency: 400,
+                endFrequency: 600,
+                duration: 100
+            }
+        },
+        {
+            name: pxt.U.lf("Water Drop"),
+            sound: {
+                interpolation: "linear",
+                effect: "none",
+                wave: "sine",
+                startVolume: 1023,
+                endVolume: 0,
+                startFrequency: 200,
+                endFrequency: 600,
+                duration: 150
+            }
+        }
+    ];
+
+    return res;
 }

@@ -60,9 +60,11 @@ export const Button = (props: ButtonProps) => {
         disabled && "disabled"
     );
 
-    let clickHandler = () => {
+    let clickHandler = (ev: React.MouseEvent) => {
         if (onClick) onClick();
         if (href) window.open(href, target || "_blank", "noopener,noreferrer")
+        ev.stopPropagation();
+        ev.preventDefault();
     }
 
     return (

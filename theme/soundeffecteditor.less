@@ -12,6 +12,8 @@
     width: 100%;
     height: 100%;
     background-color: @white;
+    display: flex;
+    flex-direction: column;
 
     .link-button {
         margin-left: 2rem;
@@ -134,4 +136,52 @@
 
 .common-button.sound-effect-play-button:focus::after {
     border-radius: 2rem;
+}
+
+.sound-gallery {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    top: -100%;
+    width: 100%;
+    transition: top 0.25s ease;
+    background: #481041;
+    padding: 1rem;
+}
+
+.sound-gallery > .common-button {
+    margin-bottom: 0.5rem;
+    padding: 0.6rem 2rem 0.6rem;
+}
+
+.sound-gallery.visible {
+    top: 0px;
+}
+
+.sound-effect-editor-content {
+    flex-grow: 1;
+    position: relative;
+    overflow: hidden;
+}
+
+.sound-gallery-item-label {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    .common-button.sound-effect-play-button {
+        position: relative;
+        margin-top: 0;
+        z-index: 2;
+    }
+
+    .sound-effect-name {
+        font-size: 22px;
+        flex-grow: 1;
+    }
+
+    svg {
+        width: 10rem;
+    }
 }
