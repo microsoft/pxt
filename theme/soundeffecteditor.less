@@ -4,13 +4,18 @@
 .sound-effect-editor-widget {
     box-shadow: 0 0 3px ~"rgb(0 0 0 / 30%)";
     border-radius: 0.25rem;
-    overflow: hidden;
+    overflow-y: scroll;
+    background-color: @white;
 }
 
 .sound-effect-editor {
     width: 100%;
     height: 100%;
     background-color: @white;
+
+    .link-button {
+        margin-left: 2rem;
+    }
 }
 
 .sound-preview {

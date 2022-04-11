@@ -172,7 +172,7 @@ namespace pxtblockly {
             if (divBounds.height > injectDivBounds.height) {
                 widgetDiv.style.height = "";
                 widgetDiv.style.top = `calc(1rem - ${animationDistance}px)`;
-                widgetDiv.style.bottom = "1rem";
+                widgetDiv.style.bottom = `calc(1rem + ${animationDistance}px)`;
             }
             else {
                 if (divBounds.bottom > injectDivBounds.bottom || divBounds.top < injectDivBounds.top) {
@@ -181,7 +181,9 @@ namespace pxtblockly {
                 }
             }
 
-            if (divBounds.width > injectDivBounds.width) {
+            const toolboxWidth = block.workspace.getToolbox().getWidth();
+
+            if (divBounds.width > injectDivBounds.width - toolboxWidth) {
                 widgetDiv.style.width = "";
                 widgetDiv.style.left = "1rem";
                 widgetDiv.style.right = "1rem";
@@ -193,7 +195,6 @@ namespace pxtblockly {
                     const blockLeft = workspaceToScreenCoordinates(block.workspace as Blockly.WorkspaceSvg,
                         new Blockly.utils.Coordinate(bounds.left, bounds.top));
 
-                    const toolboxWidth = block.workspace.getToolbox().getWidth();
                     const workspaceLeft = injectDivBounds.left + toolboxWidth;
 
                     if (blockLeft.x - divBounds.width - 20 > workspaceLeft) {

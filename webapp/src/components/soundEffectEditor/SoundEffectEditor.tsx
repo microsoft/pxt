@@ -3,6 +3,7 @@ import { Button } from "../../../../react-common/components/controls/Button";
 import { SoundControls } from "./SoundControls";
 import { SoundEffectHeader } from "./SoundEffectHeader";
 import { SoundPreview } from "./SoundPreview";
+import { soundToCodalSound } from "./soundUtil";
 
 export interface SoundEffectEditorProps {
     onSoundChange?: (newValue: pxt.assets.Sound) => void;
@@ -27,48 +28,7 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
     let previewSynthListener: (freq: number, vol: number, sound: pxt.assets.Sound) => void;
 
     const play = (toPlay = sound) => {
-        const codalSound = new pxsim.codal.music.Sound();
-        codalSound.frequency = toPlay.startFrequency;
-        codalSound.volume = toPlay.startVolume;
-        codalSound.endFrequency = toPlay.endFrequency;
-        codalSound.endVolume = toPlay.endVolume;
-
-        switch (toPlay.wave) {
-            case "sine": codalSound.wave = pxsim.codal.music.WaveShape.Sine; break;
-            case "triangle": codalSound.wave = pxsim.codal.music.WaveShape.Triangle; break;
-            case "square": codalSound.wave = pxsim.codal.music.WaveShape.Square; break;
-            case "sawtooth": codalSound.wave = pxsim.codal.music.WaveShape.Sawtooth; break;
-            case "noise": codalSound.wave = pxsim.codal.music.WaveShape.Noise; break;
-        }
-
-        switch (toPlay.interpolation) {
-            case "linear": codalSound.shape = pxsim.codal.music.InterpolationEffect.Linear; break;
-            case "curve": codalSound.shape = pxsim.codal.music.InterpolationEffect.Curve;  break;
-            case "logarithmic": codalSound.shape = pxsim.codal.music.InterpolationEffect.Logarithmic;  break;
-        }
-
-        // These values were chosen through trial and error to get something
-        // that sounded pleasing and is most like the intended effect
-        switch (toPlay.effect) {
-            case "vibrato":
-                codalSound.fx = pxsim.codal.music.Effect.Vibrato;
-                codalSound.fxnSteps = 512;
-                codalSound.fxParam = 2;
-                break;
-            case "tremolo":
-                codalSound.fx = pxsim.codal.music.Effect.Tremolo;
-                codalSound.fxnSteps = 900;
-                codalSound.fxParam = 3;
-                break;
-            case "warble":
-                codalSound.fx = pxsim.codal.music.Effect.Warble;
-                codalSound.fxnSteps = 700;
-                codalSound.fxParam = 2;
-                break;
-        }
-
-        codalSound.duration = toPlay.duration
-        codalSound.steps = 90;
+        const codalSound = soundToCodalSound(toPlay);
 
         if (cancelSound) cancelSound();
         let cancelled = false;
@@ -127,6 +87,8 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
             />
         <SoundControls sound={sound} onSoundChange={handleSoundChange} handleStartAnimationRef={handleControlsAnimationRef} />
         <Button
+            className="link-button"
+            leftIcon="fas fa-sync"
             label={pxt.U.lf("Generate Similar Sound")}
             title={pxt.U.lf("Generate Similar Sound")}
             onClick={() => {
@@ -144,7 +106,6 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
         />
     </div>
 }
-
 
 function generateSimilarSound(sound: pxt.assets.Sound) {
     const res = {
