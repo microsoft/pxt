@@ -10,7 +10,7 @@
     "react-common": "file:../built/react-common/components",
     "react-dom": "16.11.0",
     "react-redux": "5.1.1",
-    "react-scripts": "4.0.3",
+    "react-scripts": "5.0.0",
     "redux": "3.7.2",
     "typescript": "3.7.5"
   },
