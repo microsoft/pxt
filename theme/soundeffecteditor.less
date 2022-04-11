@@ -1,3 +1,6 @@
+@soundPreviewBackgroundColor: #fbe2d6;
+@soundEffectHeaderColor: #E63022;
+
 .sound-effect-editor-widget {
     box-shadow: 0 0 3px ~"rgb(0 0 0 / 30%)";
     border-radius: 0.25rem;
@@ -13,7 +16,7 @@
 .sound-preview {
     height: 8rem;
     padding: 0 2.5rem;
-    background: #fbe2d6;
+    background: @soundPreviewBackgroundColor;
 
     display: flex;
     justify-content: center;
@@ -34,7 +37,7 @@
     justify-content: center;
     align-items: center;
 
-    background-color: #E63022;
+    background-color: @soundEffectHeaderColor;
 
     & > .common-button {
         position: absolute;
