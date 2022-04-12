@@ -283,7 +283,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         let r: { version: string, config: pxt.PackageConfig };
         try {
             core.showLoading("downloadingpackage", lf("downloading extension..."));
-            r = await pxt.github.downloadLatestPackageAsync(scr);
+            r = await pxt.github.downloadLatestPackageAsync(scr, true /* use proxy */);
         }
         catch (e) {
             core.handleNetworkError(e);
