@@ -323,7 +323,7 @@ export class EditorPackage {
         if (!parsed) return
 
         const packagesConfig = await pxt.packagesConfigAsync()
-        const tag = await pxt.github.latestVersionAsync(parsed.slug, packagesConfig)
+        const tag = await pxt.github.latestVersionAsync(parsed.slug, packagesConfig, true)
         // since all repoes in a mono-repo are tied to the same version number,
         // we'll update them all to this tag at once.
         const ghids = Util.values(this.ksPkg.dependencies())
