@@ -1181,7 +1181,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
         pxt.debug(`github: reconstructing pxt.json`)
         cfg = pxt.diff.reconstructConfig(parsed, files, commit, pxt.appTarget.blocksprj || pxt.appTarget.tsprj);
         if (parsed.fileName && parsed.project)
-            // add root folder as reference
+            // add root folder as reference when creating nested project
             cfg.dependencies[parsed.project] = `github:${parsed.slug}`
         files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
     }
@@ -1207,7 +1207,10 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
         await downloadAsync(fn)
 
     if (!cfg.name) {
-        cfg.name = parsed.fileName && parsed.project ? `${parsed.project}-${parsed.fileName}` : (parsed.project || parsed.fullName)
+        cfg.name = parsed.fileName && parsed.project
+            // when creating nested project, mangle name
+            ? `${parsed.project}-${parsed.fileName}`
+            : (parsed.project || parsed.fullName)
         cfg.name = cfg.name.replace(/pxt-/ig, '')
             .replace(/\//g, '-')
             .replace(/-+/, "-")
