@@ -1,13 +1,16 @@
 .common-draggable-graph-text {
     user-select: none;
     color: @commonTextColor;
-    text-anchor: middle;
 }
 
 .draggable-graph-point {
-    fill: @draggableGraphPointColor;
+    fill: @draggableGraphHandleColor;
 }
 
 .draggable-graph-path {
-    stroke: @draggableGraphPointColor;
+    stroke: @draggableGraphPathColor;
+}
+
+.draggable-graph-surface {
+    cursor: pointer;
 }

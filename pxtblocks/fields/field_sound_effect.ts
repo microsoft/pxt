@@ -167,6 +167,7 @@ namespace pxtblockly {
             widgetDiv.style.height = "40rem";
             widgetDiv.style.display = "block";
             widgetDiv.style.transition = "transform 0.25s ease 0s, opacity 0.25s ease 0s";
+            widgetDiv.style.borderRadius = "";
 
             fv.onHide(() => {
                 // do nothing
