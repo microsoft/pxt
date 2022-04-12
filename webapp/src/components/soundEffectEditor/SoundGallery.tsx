@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Button } from "../../../../react-common/components/controls/Button";
-import { classList } from "../../../../react-common/components/util";
+import { classList, fireClickOnEnter } from "../../../../react-common/components/util";
 import { soundToCodalSound } from "./soundUtil";
 
 export interface SoundGalleryItem {
@@ -20,12 +20,17 @@ export const SoundGallery = (props: SoundGalleryProps) => {
     return <div className={classList("sound-gallery", visible && "visible")} aria-hidden={!visible}>
         <div className="sound-gallery-scroller">
             {sounds.map((item, index) =>
-                <Button
+                <div
                     key={index}
+                    className="common-button"
                     title={item.name}
-                    label={<SoundGalleryEntry {...item} />}
-                    onClick={() => onSoundSelected(item.sound)}
-                />
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={fireClickOnEnter}
+                    onClick={() => onSoundSelected(item.sound)}>
+
+                    <SoundGalleryEntry {...item} />
+                </div>
             )}
         </div>
     </div>
