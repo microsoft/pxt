@@ -1211,7 +1211,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
         if (parsed.fileName && /pxt-/.test(parsed.project))
             cfg.name = `${parsed.fileName.toLowerCase()}-${parsed.project.slice("pxt-".length)}`
         else
-            cfg.name = parsed.fileName ? `${parsed.project}-${parsed.fileName}` : (parsed.project || parsed.fullName)
+            cfg.name = parsed.fileName && parsed.project ? `${parsed.project}-${parsed.fileName}` : (parsed.project || parsed.fullName)
         cfg.name = cfg.name.replace(/pxt-/ig, '')
             .replace(/\//g, '-')
             .replace(/-+/, "-")
