@@ -24,6 +24,7 @@ namespace pxtblockly {
 
     export class FieldSoundEffect extends FieldBase<FieldSoundEffectParams> {
         protected mostRecentValue: pxt.assets.Sound;
+        protected drawnSound: pxt.assets.Sound;
 
         protected onInit(): void {
             if (!this.options) this.options = {} as any;
@@ -37,9 +38,12 @@ namespace pxtblockly {
             if (!this.options.effectFieldName) this.options.effectFieldName = "effect";
 
             this.redrawPreview();
+
+            this.sourceBlock_.workspace.addChangeListener(this.onWorkspaceChange);
         }
 
         protected onDispose(): void {
+            this.sourceBlock_.workspace.removeChangeListener(this.onWorkspaceChange);
         }
 
         protected onValueChanged(newValue: string): string {
@@ -48,6 +52,20 @@ namespace pxtblockly {
 
         redrawPreview() {
             if (!this.fieldGroup_) return;
+
+            if (this.drawnSound) {
+                const current = this.readCurrentSound();
+                if (current.startFrequency === this.drawnSound.startFrequency &&
+                    current.endFrequency === this.drawnSound.endFrequency &&
+                    current.startVolume === this.drawnSound.startVolume &&
+                    current.endVolume === this.drawnSound.endVolume &&
+                    current.wave === this.drawnSound.wave &&
+                    current.interpolation === this.drawnSound.interpolation
+                ) {
+                    return;
+                }
+            }
+
             pxsim.U.clear(this.fieldGroup_);
             const bg = new svg.Rect()
                 .at(X_PADDING, Y_PADDING)
@@ -69,10 +87,11 @@ namespace pxtblockly {
 
             clip.appendChild(clipRect);
 
+            this.drawnSound = this.readCurrentSound();
             const path = new svg.Path()
                 .stroke("grey", 2)
                 .fill("none")
-                .setD(pxt.assets.renderSoundPath(this.readCurrentSound(), TOTAL_WIDTH - X_PADDING * 4 - MUSIC_ICON_WIDTH, TOTAL_HEIGHT - Y_PADDING * 2))
+                .setD(pxt.assets.renderSoundPath(this.drawnSound, TOTAL_WIDTH - X_PADDING * 4 - MUSIC_ICON_WIDTH, TOTAL_HEIGHT - Y_PADDING * 2))
                 .clipPath("url('#" + clipPathId + "')")
 
 
@@ -167,6 +186,7 @@ namespace pxtblockly {
             widgetDiv.style.height = "40rem";
             widgetDiv.style.display = "block";
             widgetDiv.style.transition = "transform 0.25s ease 0s, opacity 0.25s ease 0s";
+            widgetDiv.style.borderRadius = "";
 
             fv.onHide(() => {
                 // do nothing
@@ -342,6 +362,15 @@ namespace pxtblockly {
             }
 
             return sound;
+        }
+
+        protected onWorkspaceChange = (ev: Blockly.Events.BlockChange) => {
+            if (ev.type !== Blockly.Events.CHANGE) return;
+
+            const block = this.sourceBlock_.workspace.getBlockById(ev.blockId);
+            if (!block || block !== this.sourceBlock_ && block.parentBlock_ !== this.sourceBlock_) return;
+
+            this.redrawPreview();
         }
     }
 

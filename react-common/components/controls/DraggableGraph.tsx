@@ -130,6 +130,19 @@ export const DraggableGraph = (props: DraggableGraphProps) => {
         aria-describedby={ariaDescribedBy}
         role={role}>
         <svg viewBox={`0 0 ${width} ${height}`} xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <filter id="dropshadow">
+                    <feGaussianBlur in="SourceAlpha" stdDeviation="3" />
+                    <feOffset dx="0" dy="0" />
+                    <feComponentTransfer>
+                        <feFuncA type="linear" slope="0.5"/>
+                    </feComponentTransfer>
+                    <feMerge>
+                        <feMergeNode />
+                        <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                </filter>
+            </defs>
             {points.map((val, index) => {
                 const isNotLast = index < points.length - 1;
                 const x = Math.max(xSlice * index - halfUnit, unit);
@@ -139,14 +152,7 @@ export const DraggableGraph = (props: DraggableGraphProps) => {
                 // flip the label to the other side if it would overlap path
                 const shouldFlipLabel = isNotLast && interpolation === "logarithmic" && getValue(index + 1) > getValue(index);
 
-                return <g key={index}>
-                        <rect
-                            className="draggable-graph-point"
-                            x={x}
-                            y={y}
-                            width={unit}
-                            height={unit}
-                            />
+                return <g key={index} className="draggable-graph-column">
                         {isNotLast &&
                             <path
                                 className="draggable-graph-path"
@@ -154,16 +160,30 @@ export const DraggableGraph = (props: DraggableGraphProps) => {
                                 fill="none"
                                 strokeWidth="2px"
                                 d={getInterpolationPath(
-                                    x + halfUnit,
-                                    y + halfUnit,
+                                    x,
+                                    y,
                                     Math.max(xSlice * (index + 1), 0),
-                                    yOffset + Math.max(yScale * (max - getValue(index + 1)) - halfUnit, halfUnit) + halfUnit,
+                                    yOffset + Math.max(yScale * (max - getValue(index + 1)) - halfUnit, halfUnit),
                                     interpolation,
                                     squiggly
                                 )}
                             />
                         }
-                        <text x={x + halfUnit} y={shouldFlipLabel ? y + unit * 2 : y - halfUnit} fontSize={unit} className="common-draggable-graph-text">
+
+                        <circle
+                            className="draggable-graph-point"
+                            cx={x + halfUnit}
+                            cy={y}
+                            r={unit}
+                            fill="white"
+                            filter="url(#dropshadow)"
+                        />
+                        <text
+                            className="common-draggable-graph-text"
+                            x={isNotLast ? x + unit * 2 : x - unit}
+                            y={shouldFlipLabel ? y + unit * 2 : Math.max(y - unit, unit)}
+                            textAnchor={isNotLast ? "start" : "end"}
+                            fontSize={unit}>
                             {Math.round(getValue(index))}
                         </text>
                         <rect
@@ -175,6 +195,7 @@ export const DraggableGraph = (props: DraggableGraphProps) => {
                             height={height}
                             fill="white"
                             opacity={0}
+
                             />
                     </g>
             })}
