@@ -84,9 +84,27 @@ export const SoundPreview = (props: SoundPreviewProps) => {
 
     return <div className="sound-preview">
         <svg viewBox={`0 0 ${width} ${height}`} xmlns="http://www.w3.org/2000/svg">
-            <path d={`M ${0} ${height / 2} h ${width}`} fill="none" stroke="grey" strokeWidth="2px" />
-            <path ref={handlePreviewPathRef} d={pxt.assets.renderSoundPath(sound, width, height)} fill="none" stroke="grey" strokeWidth="4px" strokeLinejoin="round"/>
-            <path ref={handleAnimationPathRef} d="" fill="none" stroke="#E63022" strokeWidth="6px" strokeLinejoin="round"/>
+            <path
+                className="sound-preview-baseline"
+                d={`M ${0} ${height / 2} h ${width}`} fill="none"
+                stroke="grey"
+                strokeWidth="2px" />
+            <path
+                ref={handlePreviewPathRef}
+                className="sound-preview-static-wave"
+                d={pxt.assets.renderSoundPath(sound, width, height)}
+                fill="none"
+                stroke="grey"
+                strokeWidth="4px"
+                strokeLinejoin="round"/>
+            <path
+                ref={handleAnimationPathRef}
+                className="sound-preview-animated-wave"
+                d=""
+                fill="none"
+                stroke="#E63022"
+                strokeWidth="6px"
+                strokeLinejoin="round"/>
             <rect x="-2" y="0" width="1" height="100%" fill="grey"/>
         </svg>
     </div>

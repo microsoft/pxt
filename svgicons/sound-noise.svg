@@ -1,11 +1,3 @@
-<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<line x1="13.4" y1="6.68994" x2="20" y2="6.68994" stroke="black" stroke-width="1.5"/>
-<line x1="8" y1="17.2502" x2="14.6" y2="17.2502" stroke="black" stroke-width="1.5"/>
-<line x1="5" y1="17.2502" x2="6.66154" y2="17.2502" stroke="black" stroke-width="1.5"/>
-<line x1="16.4" y1="17.2502" x2="20" y2="17.2502" stroke="black" stroke-width="1.5"/>
-<line x1="5" y1="11.97" x2="8.6" y2="11.97" stroke="black" stroke-width="1.5"/>
-<line x1="11.6" y1="11.97" x2="13.4" y2="11.97" stroke="black" stroke-width="1.5"/>
-<line x1="10.4" y1="6.68994" x2="12.2" y2="6.68994" stroke="black" stroke-width="1.5"/>
-<line x1="15.8" y1="11.97" x2="19.4" y2="11.97" stroke="black" stroke-width="1.5"/>
-<line x1="5" y1="6.68994" x2="8.6" y2="6.68994" stroke="black" stroke-width="1.5"/>
+<svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M5.4033 1.9372L6.59184 1.90137L8.03476 10.5589L9.33699 3.61362L11.0333 8.70247L12.6762 4.32143L13.4919 8.40001H14V9.60001H12.5081L12.3238 8.67858L10.9667 12.2975L9.66301 8.3864L8.58972 14.1106L7.40816 14.0986L6.13431 6.45554L5.5967 11.5628L4.43612 11.7051L3.12211 8.09152L2.71022 9.83389H1V8.63389H1.76082L2.87789 3.9085L4.67545 8.85178L5.4033 1.9372Z" fill="black"/>
 </svg>

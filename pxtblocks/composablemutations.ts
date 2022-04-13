@@ -132,6 +132,7 @@ namespace pxt.blocks {
         Blockly.Extensions.apply('inline-svgs', b, false);
 
         let updatingInputs = false;
+        let firstRender = true;
 
         appendMutation(b, {
             mutationToDom: (el: Element) => {
@@ -190,9 +191,12 @@ namespace pxt.blocks {
 
         (b as Blockly.BlockSvg).render = (opt_bubble) => {
             if (updatingInputs) return;
-            updatingInputs = true;
-            updateShape(0, undefined, true);
-            updatingInputs = false;
+            if (firstRender) {
+                firstRender = false;
+                updatingInputs = true;
+                updateShape(0, undefined, true);
+                updatingInputs = false;
+            }
             Blockly.BlockSvg.prototype.render.call(b, opt_bubble);
         }
 

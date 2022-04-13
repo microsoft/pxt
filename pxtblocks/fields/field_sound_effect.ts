@@ -97,7 +97,15 @@ namespace pxtblockly {
             const initialSound = this.readCurrentSound();
             Blockly.Events.disable();
 
-            Blockly.WidgetDiv.show(this, this.sourceBlock_.RTL, () => {
+            let bbox: Blockly.utils.Rect;
+
+            // This is due to the changes in https://github.com/microsoft/pxt-blockly/pull/289
+            // which caused the widgetdiv to jump around if any fields underneath changed size
+            let widgetOwner = {
+                getScaledBBox: () => bbox
+            }
+
+            Blockly.WidgetDiv.show(widgetOwner, this.sourceBlock_.RTL, () => {
                 fv.hide();
 
                 widgetDiv.classList.remove("sound-effect-editor-widget");
@@ -129,7 +137,7 @@ namespace pxtblockly {
             const opts = {
                 onClose: () => {
                     fv.hide();
-                    Blockly.WidgetDiv.hideIfOwner(this);
+                    Blockly.WidgetDiv.hideIfOwner(widgetOwner);
                 },
                 onSoundChange: (newSound: pxt.assets.Sound) => {
                     this.mostRecentValue = newSound;
@@ -172,7 +180,7 @@ namespace pxtblockly {
             if (divBounds.height > injectDivBounds.height) {
                 widgetDiv.style.height = "";
                 widgetDiv.style.top = `calc(1rem - ${animationDistance}px)`;
-                widgetDiv.style.bottom = "1rem";
+                widgetDiv.style.bottom = `calc(1rem + ${animationDistance}px)`;
             }
             else {
                 if (divBounds.bottom > injectDivBounds.bottom || divBounds.top < injectDivBounds.top) {
@@ -181,7 +189,9 @@ namespace pxtblockly {
                 }
             }
 
-            if (divBounds.width > injectDivBounds.width) {
+            const toolboxWidth = block.workspace.getToolbox().getWidth();
+
+            if (divBounds.width > injectDivBounds.width - toolboxWidth) {
                 widgetDiv.style.width = "";
                 widgetDiv.style.left = "1rem";
                 widgetDiv.style.right = "1rem";
@@ -193,7 +203,6 @@ namespace pxtblockly {
                     const blockLeft = workspaceToScreenCoordinates(block.workspace as Blockly.WorkspaceSvg,
                         new Blockly.utils.Coordinate(bounds.left, bounds.top));
 
-                    const toolboxWidth = block.workspace.getToolbox().getWidth();
                     const workspaceLeft = injectDivBounds.left + toolboxWidth;
 
                     if (blockLeft.x - divBounds.width - 20 > workspaceLeft) {
@@ -205,6 +214,9 @@ namespace pxtblockly {
                     }
                 }
             }
+
+            const finalDimensions = widgetDiv.getBoundingClientRect();
+            bbox = new Blockly.utils.Rect(finalDimensions.top, finalDimensions.bottom, finalDimensions.left, finalDimensions.right);
 
             requestAnimationFrame(() => {
                 widgetDiv.style.opacity = "1";

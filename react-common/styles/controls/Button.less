@@ -193,6 +193,27 @@
 }
 
 /****************************************************
+ *                   Link Buttons                   *
+ ****************************************************/
+
+.common-button.link-button {
+    background: none;
+    border: none;
+    padding: 0;
+    color: @buttonLinkColor;
+}
+
+.common-button.link-button:hover {
+    text-decoration: underline;
+}
+
+.common-button.link-button:focus::after {
+    outline: none;
+    border: none;
+    text-decoration: underline;
+}
+
+/****************************************************
  *                 High Contrast                    *
  ****************************************************/
 
