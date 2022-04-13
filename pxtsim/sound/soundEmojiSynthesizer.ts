@@ -162,7 +162,7 @@ namespace pxsim.codal.music {
                         }
 
                         // Synthesize a sample
-                        let s = this.effect.tone.tonePrint(this.effect.tone.parameter, this.position);
+                        let s = this.effect.tone.tonePrint(this.effect.tone.parameter, Math.max(this.position, 0));
 
                         // Apply volume scaling and OR mask (if specified).
                         this.buffer[sample] = (((s * gain) + offset)) // | this.orMask;
