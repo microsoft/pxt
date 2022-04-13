@@ -1,7 +1,6 @@
 declare let pxt: any;
 declare let Seriously: any;
 declare let webkitSpeechRecognition: any;
-declare let MediaRecorder: any;
 declare let YT: any;
 
 interface Coord {
@@ -48,6 +47,7 @@ interface StreamerState {
     recording?: () => void;
     stingering?: boolean;
     addSite?: boolean;
+    siteUrl: string
 }
 
 interface StreamerConfig {
@@ -171,7 +171,6 @@ function onYouTubeIframeAPIReady() {
     const stingervideoserious = document.getElementById('stingervideoserious') as HTMLVideoElement
     const backgroundvideo = document.getElementById('backgroundvideo') as HTMLVideoElement
     const backgroundyoutube = document.getElementById('backgroundyoutube') as HTMLIFrameElement
-    const intro = document.getElementById('intro')
     const addsiteinput = document.getElementById('addsiteinput') as HTMLInputElement;
     const hasGetDisplayMedia = !!(<any>navigator)?.mediaDevices?.getDisplayMedia;
 
@@ -189,7 +188,8 @@ function onYouTubeIframeAPIReady() {
     const state: StreamerState = {
         sceneIndex: -1,
         paintColor: paintColors[0],
-        face: true
+        face: true,
+        siteUrl: undefined
     }
     let editorConfigs;
     const db = await openDbAsync()
@@ -284,7 +284,7 @@ function onYouTubeIframeAPIReady() {
             hardwareCamLabel: "",
             emojis: "😄🤔😭👀",
             micDelay: 300,
-            title: ""
+            title: "",
         }
         return cfg;
     }
@@ -422,7 +422,7 @@ function onYouTubeIframeAPIReady() {
         addSep(toolbox);
         addButton(toolbox, "Add", "Add web site", addAddSiteButton)
         if (config.extraSites) config.extraSites.forEach(addSiteButton)
-        addButton(toolbox, "Code", "Reload MakeCode editor", () => startStinger(config.stingerVideo, loadEditor, config.stingerVideoGreenScreen, config.stingerVideoDelay))
+        addButton(toolbox, "Code", "Reload MakeCode editor", () => startStinger(config.stingerVideo, loadEditor, config.stingerVideoGreenScreen, config.stingerVideoDelay), !state.siteUrl)
 
         addSep(toolbox)
         if (state.speech)
@@ -493,7 +493,7 @@ function onYouTubeIframeAPIReady() {
         }
 
         function addSiteButton(url) {
-            addButton(toolbox, "SingleBookmark", url, () => setSite(url), false)
+            addButton(toolbox, "SingleBookmark", url, () => setSite(url), url === state.siteUrl)
         }
 
         function addPaintButton(icon, title, tool) {
@@ -528,6 +528,8 @@ function onYouTubeIframeAPIReady() {
     }
 
     function setSite(url) {
+        const reload = state.siteUrl === url
+        state.siteUrl = url
         const config = readConfig();
         const ytid = parseYouTubeVideoId(url);
         if (ytid)
@@ -536,9 +538,9 @@ function onYouTubeIframeAPIReady() {
             if (state.sceneIndex === CHAT_SCENE_INDEX || state.sceneIndex == COUNTDOWN_SCENE_INDEX)
                 setScene("right");
             if (config.multiEditor && state.sceneIndex == LEFT_SCENE_INDEX)
-                setFrameUrl(editor2(), url, true);
+                setFrameUrl(editor2(), url, true, reload);
             else
-                setFrameUrl(editor(), url);
+                setFrameUrl(editor(), url, false, reload);
         }, config.stingerVideoGreenScreen, config.stingerVideoDelay)
     }
 
@@ -896,17 +898,20 @@ function onYouTubeIframeAPIReady() {
         }
     }
 
-    function setFrameUrl(frame: HTMLIFrameElement, url: string, secondary?: boolean) {
+    function setFrameUrl(frame: HTMLIFrameElement, url: string, secondary?: boolean, reload?: boolean) {
         const caches = secondary ? cachedFrames2 : cachedFrames;
         let cached = caches[url];
         if (!cached) {
             cached = caches[url] = document.createElement("iframe");
             cached.className = "box animated site hidden"
-            cached.setAttribute("allow", "usb;camera")
+            cached.setAttribute("allow", "usb;camera;serial;microphone")
             cached.setAttribute("sandbox", "allow-scripts allow-same-origin allow-top-navigation allow-downloads allow-popups allow-popups-to-escape-sandbox allow-forms");
             cached.src = url;
             frame.parentElement.insertBefore(cached, frame);
         }
+
+        if (reload)
+            cached.src = cached.src
 
         // insert and remove
         frame.classList.add('hidden')
@@ -932,12 +937,14 @@ function onYouTubeIframeAPIReady() {
         if (hash)
             url += `#${hash}`
 
-        setFrameUrl(editor(), url)
+        const reload = !state.siteUrl
+        state.siteUrl = undefined
+        setFrameUrl(editor(), url, false, reload)
 
         if (config.multiEditor) {
             if (!editor2().parentElement)
                 container.insertBefore(editor2(), editor());
-            setFrameUrl(editor2(), url, true)
+            setFrameUrl(editor2(), url, true, reload)
         } else {
             // remove from DOM
             const e2 = editor2();
@@ -946,6 +953,7 @@ function onYouTubeIframeAPIReady() {
         }
 
         loadStyle();
+        render()
     }
 
     function loadStyle() {
@@ -1121,6 +1129,8 @@ background-image: url(${config.backgroundImage});
     }
 
     async function loadFaceCam() {
+        if (!state.face) return;
+
         // load previous webcam
         const config = readConfig();
         try {
@@ -1131,6 +1141,8 @@ background-image: url(${config.backgroundImage});
             console.log(`face cam started`)
             if (!config.faceCamId)
                 stopStream(facecam.srcObject); // request permission only
+            state.face = true
+            render()
             return; // success!
         }
         catch (e) {
@@ -1138,6 +1150,7 @@ background-image: url(${config.backgroundImage});
             stopStream(facecam.srcObject);
             facecamcontainer.classList.add("error");
             state.faceCamError = true;
+            state.face = false
             saveConfig(config)
             console.log(`could not start face cam`, e)
             render()
@@ -1358,19 +1371,11 @@ background-image: url(${config.backgroundImage});
         const introvideo = document.getElementById("introvideo") as HTMLVideoElement;
         playpip.onclick = function (e) {
             tickEvent("streamer.intro.video", undefined, { interactiveConsent: true })
-            intro.classList.add('hidden')
             stopEvent(e)
             loadSettings()
             hideSettings();
             (<any>introvideo).requestPictureInPicture()
                 .then(() => introvideo.play())
-        }
-        const skippip = document.getElementById("skippip")
-        skippip.onclick = function (e) {
-            tickEvent("streamer.intro.skip", undefined, { interactiveConsent: true })
-            intro.remove()
-            loadSettings()
-            hideSettings()
         }
     }
 
@@ -1462,7 +1467,6 @@ background-image: url(${config.backgroundImage});
                 const slug = frags.join(':')
                 switch (action) {
                     case "editor": {
-                        intro.remove(); // always hide
                         setEditor(arg, slug); break;
                     }
                     case "doc": {
@@ -2001,6 +2005,7 @@ background-image: url(${config.backgroundImage});
         facecamselect.onchange = function () {
             const selected = facecamselect.options[facecamselect.selectedIndex];
             config.faceCamId = selected.value;
+            state.face = true
             if (config.hardwareCamId == config.faceCamId)
                 config.hardwareCamId = undefined; // priority to face cam
             saveConfig(config)
@@ -2637,7 +2642,6 @@ background-image: url(${config.backgroundImage});
             if (state.addSite) state.addSite = false;
             if (state.paint) togglePaint();
             if (settingsVisible()) toggleSettings();
-            if (intro.parentNode) intro.remove();
             render();
         }
 

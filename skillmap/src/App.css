@@ -1,4 +1,3 @@
-
 :root {
     --black: #000;
     --white: #fff;
@@ -20,7 +19,6 @@
     --card-hover-color: #BFBFBF;
     --card-border-color: #e9eef2;
     --dropdown-hover-color: #CCC;
-    --modal-overlay-color: rgba(0, 0, 0, 0.5);
     --inverted-text-color: var(--white);
     --subtitle-text-color: #6e6e6e;
 
@@ -38,6 +36,12 @@
 
     --graph-backround-zindex: 10;
     --above-graph-zindex: 20;
+
+    --high-contrast-text: var(--white);
+    --high-contrast-background: var(--black);
+    --high-contrast-highlight: #ffff00;
+    --high-contrast-focus-outline: 2px solid var(--high-contrast-highlight);
+    --high-contrast-hyperlink: #807FFF;
 }
 
 
@@ -89,7 +93,6 @@ code {
     max-height: var(--header-height);
     display: flex;
     align-items: center;
-    font-size: 2rem;
     color: var(--inverted-text-color);
     flex-grow: 0;
     flex-shrink: 0;
@@ -141,17 +144,20 @@ code {
     height: 80%;
     margin: .5rem;
     margin-right: 1rem;
-    padding-top: .5rem;
-    padding-left: 1rem;
+    padding: .6rem;
     font-family: var(--feature-text-font);
     font-weight: 500;
     flex-direction: row-reverse;
+    align-items: center;
 }
 
 .user-menu .header-dropdown {
     height: inherit;
     cursor: pointer;
     width: 3.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .user-menu .avatar {
@@ -162,6 +168,7 @@ code {
 }
 
 .user-menu .avatar img {
+    border: solid 2px white;
     border-radius: 100%;
     width: 2.5rem;
     height: 2.5rem;
@@ -180,7 +187,7 @@ code {
     display: none;
 }
 
-.header i.icon {
+.header i {
     line-height: 2rem;
     cursor: pointer;
 }
@@ -231,8 +238,8 @@ code {
     background-color: rgba(0,0,0,.1);
 }
 
-.header-button:hover>.icon,
-.header-dropdown:hover>.icon {
+.header-button:hover>i,
+.header-dropdown:hover>i {
     transform: scale(1.2);
 }
 
@@ -241,7 +248,7 @@ code {
 }
 
 .header-button.sign-in:hover>span,
-.header-button.sign-in:hover>.icon {
+.header-button.sign-in:hover>i {
     transform: none;
 }
 
@@ -252,6 +259,22 @@ code {
     flex-shrink: 10;
     font-size: 1.2rem;
     font-weight: 700;
+}
+
+.avatar-initials {
+    height: 2.5rem;
+    width: 2.5rem;
+    border-radius: 100%;
+    border: solid 2px white;
+    background-color: #028B9B;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+.header-dropdown.user-dropdown .dropdown-menu {
+    top: var(--header-height);
 }
 
 /* TOP BANNER */
@@ -326,15 +349,49 @@ code {
     font-style: italic;
 }
 
+.badge-modal-image {
+    display: flex;
+    justify-content: center;
+}
+
+.badge-modal-image img {
+    height: 15rem;
+}
+
 /* USABILLA */
 .usabilla_live_button_container {
     top: unset !important;
-    bottom: 5rem !important;
+    bottom: 9rem !important;
 }
 
 /** mscc cookie banner. Can be removed once the banner is out of the checked in pxtweb in doccdn */
 #msccBanner {
     display: none;
+}
+
+/*******************************/
+/*****   HIGH CONTRAST     *****/
+/*******************************/
+
+.high-contrast .header {
+    background-color: var(--high-contrast-background);
+    border-bottom: 2px solid var(--high-contrast-text);
+}
+
+.high-contrast .header-dropdown i {
+    height: calc(var(--header-height) - 2px);
+}
+
+.high-contrast .avatar-initials {
+    background-color: var(--high-contrast-background);
+}
+
+.high-contrast a {
+    color: var(--high-contrast-hyperlink);
+    text-decoration: underline;
+}
+.high-contrast a:hover {
+    outline: var(--high-contrast-focus-outline);
 }
 
 
@@ -352,8 +409,7 @@ code {
     }
 
     .usabilla_live_button_container {
-        top: 10rem !important;
-        bottom: unset !important;
+        bottom: 14rem !important;
     }
 }
 

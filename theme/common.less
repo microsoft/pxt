@@ -9,11 +9,16 @@
              Layout
 *******************************/
 
+@mobileAndBelow: ~"only screen and (max-width: @{largestMobileScreen})";
+@tabletAndBelow: ~"only screen and (max-width: @{largestTabletScreen})";
+@computerAndBelow: ~"only screen and (max-width: @{largestSmallMonitor})";
+@largeMonitorAndBelow: ~"only screen and (max-width: @{largestLargeMonitor})";
+
 html {
     height: 100%;
     width: 100%;
     overflow: hidden;
-    font-size:16px;
+    font-size: 16px!important;
 }
 
 body {
@@ -96,7 +101,6 @@ pre {
 @editorToolsHeight: 10rem;
 @editorToolsCollapsedHeight: 4.7rem;
 @editorToolsCollapsedMobileHeight: 3.4rem;
-@editorToolsThinHeight: 3rem;
 #editortools {
     position: fixed;
     top: auto;
@@ -152,6 +156,7 @@ pre {
 .transparentEditorTools #editortools {
     background-color: transparent;
     z-index: (@blocklyFlyoutZIndex)-1;
+    border: unset;
 }
 
 #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #assetEditor, #editorSidebar {
@@ -489,7 +494,7 @@ div.simframe > iframe {
 
 .ui.item.logo .name,
 .ui.item.logo .name-short {
-    font-family: Segoe UI, Tahoma, Geneva, Verdana;
+    font-family: @segoeUIFont;
     font-size: 18px;
     font-weight: 700;
     color: #fff;
@@ -682,7 +687,7 @@ div.simframe > iframe {
 
 #notificationBanner {
     padding: 0;
-    font-family: "Segoe UI", "Helvetica Neue", sans-serif;
+    font-family: @segoeUIFont;
     height: @bannerHeight;
     margin-top: 0;
     display: flex;
@@ -1005,7 +1010,7 @@ p.ui.font.small {
 /* Mobile only */
 @media only screen and (max-width: @largestMobileScreen) {
     .menubar .right.menu .signin-button .icon {
-        margin-left: -.7rem;
+        margin-left: -.2rem;
     }
 
     .ui.mobile.only {
@@ -1056,6 +1061,7 @@ p.ui.font.small {
         max-width: 100%;
         min-width: 100%;
         height:100% !important;
+        background-color: @simulatorBackground;
     }
     #miniSimOverlay {
         display: none;
@@ -1325,8 +1331,8 @@ p.ui.font.small {
     .simPanel.ui.items {
         position: fixed;
         padding: 0;
-        margin: 1em;
-        bottom: ~"calc(4.5rem + var(--extra-mobile-sim-padding))" !important;
+        margin: 1em 1em 0;
+        bottom: ~"calc(5.5rem + var(--extra-mobile-sim-padding))" !important;
         right: 0.5rem;
         top: unset;
         left: unset;
@@ -1355,7 +1361,7 @@ p.ui.font.small {
         position: absolute;
         display: block;
         width: 10rem; /* match width of div.simframe */
-        height: 9rem;
+        height: 8rem;
     }
 
     .simPanel {
@@ -1428,7 +1434,6 @@ p.ui.font.small {
         bottom: @editorToolsCollapsedHeight;
     }
 }
-
 
 /*******************************
         Media Adjustments
@@ -1801,29 +1806,6 @@ p.ui.font.small {
     #editorSidebar {
         top: @thinMenuHeight;
     }
-    #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #assetEditor, #editorSidebar {
-        bottom: @editorToolsThinHeight;
-    }
-
-
-    #editortools {
-        height: @editorToolsThinHeight;
-
-        .ui.button {
-            padding: 0.5rem;
-        }
-
-        #downloadArea,
-        #editorToolbarArea,
-        #projectNameArea,
-        input {
-            font-size: 0.8em !important;
-        }
-
-        .ui.button {
-            font-size: .92857143rem !important;
-        }
-    }
 }
 
 .simView .simPanel {
@@ -1957,6 +1939,10 @@ div.simframe.ui.embed {
     -ms-interpolation-mode: nearest-neighbor;
 }
 
+.ui.menu .logged-in-dropdown {
+    justify-content: center;
+}
+
 .ui.menu .item.sign-in-dropdown {
     padding-left: 0rem;
     padding-right: .3rem;
@@ -1971,7 +1957,7 @@ div.signin-button {
     border-radius: 6px;
     height: 3rem;
     padding: .6rem;
-    font-family: Segoe UI,Tahoma,Geneva,Verdana;
+    font-family: @segoeUIFont;
     font-weight: 500;
 
     .text {
@@ -1987,8 +1973,6 @@ div.signin-button:focus {
     border: 3px solid #fff;
     outline: 1px ridge #000;
 }
-
-
 
 /* Profile dialog */
 .profiledialog {
@@ -2090,7 +2074,8 @@ div.signin-button:focus {
     }
 }
 
-img.pixelart {
+.image.pixelart {
+    background-color: @white;
     image-rendering: auto;
     image-rendering: crisp-edges;
     image-rendering: pixelated;

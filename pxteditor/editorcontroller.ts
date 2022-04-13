@@ -56,9 +56,14 @@ namespace pxt.editor {
         | "unloadproject"
         | "shareproject"
         | "savelocalprojectstocloud"
+        | "projectcloudstatus"
+        | "requestprojectcloudstatus"
+        | "convertcloudprojectstolocal"
+        | "setlanguagerestriction"
 
         | "toggletrace" // EditorMessageToggleTraceRequest
         | "togglehighcontrast"
+        | "sethighcontrast" // EditorMessageSetHighContrastRequest
         | "togglegreenscreen"
         | "settracestate" //
         | "setsimulatorfullscreen" // EditorMessageSimulatorFullScreenRequest
@@ -105,7 +110,8 @@ namespace pxt.editor {
 
     export type EditorMessageTutorialEventRequest = EditorMessageTutorialProgressEventRequest |
         EditorMessageTutorialCompletedEventRequest |
-        EditorMessageTutorialLoadedEventRequest;
+        EditorMessageTutorialLoadedEventRequest |
+        EditorMessageTutorialExitEventRequest;
 
     export interface EditorMessageTutorialProgressEventRequest extends EditorMessageRequest {
         action: "tutorialevent";
@@ -127,6 +133,13 @@ namespace pxt.editor {
     export interface EditorMessageTutorialLoadedEventRequest extends EditorMessageRequest {
         action: "tutorialevent";
         tutorialEvent: "loaded";
+        tutorialId: string;
+        projectHeaderId: string;
+    }
+
+    export interface EditorMessageTutorialExitEventRequest extends EditorMessageRequest {
+        action: "tutorialevent";
+        tutorialEvent: "exit";
         tutorialId: string;
         projectHeaderId: string;
     }
@@ -230,6 +243,27 @@ namespace pxt.editor {
         headerIds: string[];
     }
 
+    export interface EditorMessageSaveLocalProjectsToCloudResponse extends EditorMessageResponse {
+        action: "savelocalprojectstocloud";
+        headerIdMap?: pxt.Map<string>;
+    }
+
+    export interface EditorMessageProjectCloudStatus extends EditorMessageRequest {
+        action: "projectcloudstatus";
+        headerId: string;
+        status: pxt.cloud.CloudStatus;
+    }
+
+    export interface EditorMessageRequestProjectCloudStatus extends EditorMessageRequest {
+        action: "requestprojectcloudstatus";
+        headerIds: string[];
+    }
+
+    export interface EditorMessageConvertCloudProjectsToLocal extends EditorMessageRequest {
+        action: "convertcloudprojectstolocal";
+        userId: string;
+    }
+
     export interface EditorMessageImportTutorialRequest extends EditorMessageRequest {
         action: "importtutorial";
         // markdown to load
@@ -293,6 +327,11 @@ namespace pxt.editor {
         enabled: boolean;
     }
 
+    export interface EditorMessageSetHighContrastRequest extends EditorMessageRequest {
+        action: "sethighcontrast";
+        on: boolean;
+    }
+
     export interface EditorMessageStartActivity extends EditorMessageRequest {
         action: "startactivity";
         activityType: "tutorial" | "example" | "recipe";
@@ -335,6 +374,11 @@ namespace pxt.editor {
     export interface EditorShareResponse extends EditorMessageRequest {
         action: "shareproject";
         script: Cloud.JsonScript;
+    }
+
+    export interface EditorSetLanguageRestriction extends EditorMessageRequest {
+        action: "setlanguagerestriction";
+        restriction: pxt.editor.LanguageRestriction;
     }
 
     const pendingRequests: pxt.Map<{
@@ -515,6 +559,11 @@ namespace pxt.editor {
                                     return Promise.resolve()
                                         .then(() => projectView.toggleHighContrast());
                                 }
+                                case "sethighcontrast": {
+                                    const hcmsg = data as EditorMessageSetHighContrastRequest;
+                                    return Promise.resolve()
+                                        .then(() => projectView.setHighContrast(hcmsg.on));
+                                }
                                 case "togglegreenscreen": {
                                     return Promise.resolve()
                                         .then(() => projectView.toggleGreenScreen());
@@ -545,7 +594,29 @@ namespace pxt.editor {
                                 }
                                 case "savelocalprojectstocloud": {
                                     const msg = data as EditorMessageSaveLocalProjectsToCloud;
-                                    return projectView.saveLocalProjectsToCloudAsync(msg.headerIds);
+                                    return projectView.saveLocalProjectsToCloudAsync(msg.headerIds)
+                                        .then(guidMap => {
+                                            resp = <EditorMessageSaveLocalProjectsToCloudResponse>{
+                                                headerIdMap: guidMap
+                                            };
+                                        })
+                                }
+                                case "requestprojectcloudstatus": {
+                                    // Responses are sent as separate "projectcloudstatus" messages.
+                                    const msg = data as EditorMessageRequestProjectCloudStatus;
+                                    return projectView.requestProjectCloudStatus(msg.headerIds);
+                                }
+                                case "convertcloudprojectstolocal": {
+                                    const msg = data as EditorMessageConvertCloudProjectsToLocal;
+                                    return projectView.convertCloudProjectsToLocal(msg.userId);
+                                }
+                                case "setlanguagerestriction": {
+                                    const msg = data as EditorSetLanguageRestriction;
+                                    if (msg.restriction === "no-blocks") {
+                                        console.warn("no-blocks language restriction is not supported");
+                                        throw new Error("no-blocks language restriction is not supported")
+                                    }
+                                    return projectView.setLanguageRestrictionAsync(msg.restriction);
                                 }
                             }
                             return Promise.resolve();

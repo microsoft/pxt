@@ -1,10 +1,13 @@
 import * as React from "react";
 import * as pkg from "../../package";
 import * as simulator from "../../simulator";
-import * as sui from "../../sui";
 import { connect } from 'react-redux';
 
-import { AssetEditorState, GalleryView, isGalleryAsset } from './store/assetEditorReducer';
+import { Button } from "../../../../react-common/components/controls/Button";
+import { List } from "../../../../react-common/components/controls/List";
+import { Modal, ModalAction } from "../../../../react-common/components/controls/Modal";
+
+import { AssetEditorState, GalleryView, isGalleryAsset } from './store/assetEditorReducerState';
 import { dispatchChangeGalleryView, dispatchChangeSelectedAsset, dispatchUpdateUserAssets } from './actions/dispatch';
 
 import { AssetPreview } from "./assetPreview";
@@ -165,10 +168,12 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
         const isNamed = asset?.meta?.displayName || isGalleryAsset;
         const name = getDisplayNameForAsset(asset, isGalleryAsset);
 
-        const actions: sui.ModalButton[] = [{ label: lf("Delete"), onclick: this.deleteAssetHandler, icon: 'trash', className: 'red' }];
+        const actions: ModalAction[] = [
+            { label: lf("Delete"), onClick: this.deleteAssetHandler, icon: 'icon trash', className: 'red' }
+        ];
 
         return <div className="asset-editor-sidebar">
-            <div className="asset-editor-sidebar-info">
+            <List className="asset-editor-sidebar-info">
                 <div>{lf("Asset Preview")}</div>
                 <div className="asset-editor-sidebar-preview">
                     { asset && <AssetPreview asset={asset} />  }
@@ -183,20 +188,45 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
                 {details.map(el => {
                     return <div key={el.name} className="asset-editor-sidebar-detail">{`${el.name}: ${el.value}`}</div>
                 })}
-            </div>
-            { asset && <div className="asset-editor-sidebar-controls">
-                {canEdit && <sui.MenuItem name={lf("Edit")} className="asset-editor-button" icon="edit" onClick={this.editAssetHandler}/>}
-                <sui.MenuItem name={lf("Duplicate")} className="asset-editor-button" icon="copy" onClick={this.duplicateAssetHandler}/>
-                {canCopy && <sui.MenuItem name={lf("Copy")} className="asset-editor-button" icon="paste" onClick={this.copyAssetHandler}/>}
-                {canDelete && <sui.MenuItem name={lf("Delete Asset")}
+            </List>
+            { asset && <List className="asset-editor-sidebar-controls">
+                {canEdit && <Button
+                    label={lf("Edit")}
+                    title={lf("Edit the selected asset")}
+                    ariaLabel={lf("Edit the selected asset")}
+                    leftIcon="icon edit"
+                    className="asset-editor-button"
+                    onClick={this.editAssetHandler} />}
+                <Button
+                    label={lf("Duplicate")}
+                    title={lf("Duplicate the selected asset")}
+                    ariaLabel={lf("Duplicate the selected asset")}
+                    leftIcon="icon copy"
+                    className="asset-editor-button"
+                    onClick={this.duplicateAssetHandler} />
+                {canCopy && <Button
+                    label={lf("Copy")}
+                    title={lf("Copy the selected asset to the clipboard")}
+                    ariaLabel={lf("Copy the selected asset to the clipboard")}
+                    leftIcon="icon paste"
+                    className="asset-editor-button"
+                    onClick={this.copyAssetHandler} />}
+                {canDelete && <Button
+                    label={lf("Delete Asset")}
+                    title={lf("Delete the selected asset")}
+                    ariaLabel={lf("Delete the selected asset")}
                     className="delete-asset"
-                    dataTooltip={!canDelete ? (isGalleryAsset ? lf("Can't delete gallery item") : lf("Asset is used in your project")) : undefined}
-                    onClick={canDelete ? this.showDeleteModal : undefined}/>}
-            </div>}
+                    onClick={this.showDeleteModal} />}
+            </List>}
             <textarea className="asset-editor-sidebar-copy" ref={this.copyTextAreaRefHandler} ></textarea>
-            <sui.Modal className="asset-editor-delete-dialog" isOpen={showDeleteModal} onClose={this.hideDeleteModal} closeIcon={true} dimmer={true} header={lf("Delete Asset")} buttons={actions}>
+            {showDeleteModal && <Modal
+                className="asset-editor-delete-dialog"
+                onClose={this.hideDeleteModal}
+                title={lf("Delete Asset")}
+                actions={actions}
+                parentElement={document.getElementById("root")}>
                 <div>{lf("Are you sure you want to delete {0}? Deleted assets cannot be recovered.", name)}</div>
-            </sui.Modal>
+            </Modal>}
         </div>
     }
 }

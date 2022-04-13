@@ -1484,8 +1484,8 @@ namespace pxt {
     export function assetEquals(a: Asset, b: Asset) {
         if (a == b) return true;
         if (a.id !== b.id || a.type !== b.type ||
-            !arrayEquals(a.meta.tags, b.meta.tags) ||
-            !arrayEquals(a.meta.blockIDs, b.meta.blockIDs) ||
+            !U.arrayEquals(a.meta.tags, b.meta.tags) ||
+            !U.arrayEquals(a.meta.blockIDs, b.meta.blockIDs) ||
             a.meta.displayName !== b.meta.displayName
         )
             return false;
@@ -1496,7 +1496,7 @@ namespace pxt {
                 return sprite.bitmapEquals(a.bitmap, (b as ProjectImage | Tile).bitmap);
             case AssetType.Animation:
                     const bAnimation = b as Animation;
-                    return a.interval === bAnimation.interval && arrayEquals(a.frames, bAnimation.frames, sprite.bitmapEquals);
+                    return a.interval === bAnimation.interval && U.arrayEquals(a.frames, bAnimation.frames, sprite.bitmapEquals);
             case AssetType.Tilemap:
                 return a.data.equals((b as ProjectTilemap).data);
         }
@@ -1626,16 +1626,6 @@ namespace pxt {
         }
 
         return id;
-    }
-
-    function arrayEquals<U>(a: U[], b: U[], compare: (c: U, d: U) => boolean = (c, d) => c === d) {
-        if (a == b) return true;
-        if (!a && b || !b && a || a.length !== b.length) return false;
-
-        for (let i = 0; i < a.length; i++) {
-            if (!compare(a[i], b[i])) return false;
-        }
-        return true;
     }
 
     function serializeTilemap(tilemap: sprite.TilemapData, id: string, name: string): JRes {

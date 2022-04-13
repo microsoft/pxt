@@ -98,7 +98,7 @@ export function clientCoord(ev: PointerEvent | MouseEvent | TouchEvent): ClientC
 }
 
 /**
- * Similar to sui.fireClickOnEnter, but interactions limited to enter key / ignores
+ * Similar to fireClickOnEnter, but interactions limited to enter key / ignores
  * space bar.
  */
 export function fireClickOnlyOnEnter(e: React.KeyboardEvent<HTMLElement>): void {

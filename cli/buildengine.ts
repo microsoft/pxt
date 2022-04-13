@@ -179,7 +179,7 @@ export function setThisBuild(b: BuildEngine) {
 
 function patchYottaHexInfo(extInfo: pxtc.ExtensionInfo) {
     let buildEngine = thisBuild
-    let hexPath = buildEngine.buildPath + "/build/" + pxt.appTarget.compileService.yottaTarget
+    let hexPath = buildEngine.buildPath + "/build/" + pxt.appTarget.compileService.yottaTarget.split("@")[0]
         + "/source/" + pxt.appTarget.compileService.yottaBinary;
 
     return {

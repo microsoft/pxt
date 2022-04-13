@@ -1,16 +1,24 @@
 /// <reference path="../lib/skillMap.d.ts" />
 
+/* eslint-disable import/no-unassigned-import, import/no-internal-modules */
+import '../styles/modal.css'
+/* eslint-enable import/no-unassigned-import, import/no-internal-modules */
+
 import * as React from "react";
 import { connect } from 'react-redux';
-import { ModalType, ShareState, SkillMapState } from '../store/reducer';
-import { dispatchHideModal, dispatchRestartActivity, dispatchOpenActivity, dispatchResetUser, dispatchShowCarryoverModal, dispatchSetShareStatus, dispatchCloseUserProfile } from '../actions/dispatch';
-
-import { tickEvent, postAbuseReportAsync, postShareAsync } from "../lib/browserUtils";
-import { lookupActivityProgress, lookupPreviousActivityStates, lookupPreviousCompletedActivityState, isCodeCarryoverEnabled } from "../lib/skillMapUtils";
+import { ModalState, ModalType, ShareState, SkillMapState } from '../store/reducer';
+import { dispatchHideModal, dispatchNextModal, dispatchShowShareModal, dispatchRestartActivity, dispatchOpenActivity, dispatchResetUser, dispatchShowCarryoverModal, dispatchSetShareStatus, dispatchCloseUserProfile, dispatchShowUserProfile, dispatchShowLoginModal } from '../actions/dispatch';
+import { tickEvent, postAbuseReportAsync, resolvePath, postShareAsync } from "../lib/browserUtils";
+import { lookupActivityProgress, lookupPreviousActivityStates, lookupPreviousCompletedActivityState, isCodeCarryoverEnabled, getCompletionBadge, isRewardNode } from "../lib/skillMapUtils";
 import { getProjectAsync } from "../lib/workspaceProvider";
 import { editorUrl } from "./makecodeFrame";
 
-import { Modal, ModalAction } from './Modal';
+import { Modal, ModalAction } from 'react-common/controls/Modal';
+import { jsxLF } from "react-common/util";
+import { Badge } from "react-common/profile/Badge";
+import { Button } from "react-common/controls/Button";
+import { Checkbox } from "react-common/controls/Checkbox";
+import { Input } from "react-common/controls/Input";
 
 interface AppModalProps {
     type: ModalType;
@@ -22,13 +30,21 @@ interface AppModalProps {
     actions?: ModalAction[];
     showCodeCarryoverModal?: boolean;
     shareState?: ShareState;
+    hasPendingModals?: boolean;
+    reward?: MapReward;
+    badge?: pxt.auth.Badge;
+    signedIn: boolean;
     dispatchHideModal: () => void;
+    dispatchNextModal: () => void;
     dispatchRestartActivity: (mapId: string, activityId: string, previousHeaderId?: string, carryoverCode?: boolean) => void;
     dispatchOpenActivity: (mapId: string, activityId: string, previousHeaderId?: string, carryoverCode?: boolean) => void;
     dispatchShowCarryoverModal: (mapId: string, activityId: string) => void;
+    dispatchShowUserProfile: () => void;
     dispatchCloseUserProfile: () => void;
     dispatchResetUser: () => void;
     dispatchSetShareStatus: (headerId?: string, url?: string) => void;
+    dispatchShowShareModal: (mapId: string, activityId: string, teamsShare?: boolean) => void;
+    dispatchShowLoginModal: () => void;
 }
 
 interface AppModalState {
@@ -49,7 +65,6 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
 
     render() {
         const  { activity, type } = this.props;
-
         switch (type) {
             case "completion":
                 if (!activity) return <div />
@@ -66,9 +81,13 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
             case "share":
                 return this.renderShareModal();
             case "login":
-                return this.renderLoginModal();
+                return this.renderLoginModal(false);
+            case "login-prompt":
+                return this.renderLoginModal(true);
             case "delete-account":
                 return this.renderDeleteAccountModal();
+            case "reward":
+                return this.renderRewardModal();
             default:
                 return <div/>
         }
@@ -80,11 +99,11 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
         this.props.dispatchSetShareStatus();
     }
 
-    protected handleRewardClick = () => {
-        const  { mapId, skillMap, type, activity } = this.props;
-        const reward = activity as MapReward;
-        tickEvent("skillmap.reward", { path: mapId, activity: reward.activityId });
-        window.open(reward.url || skillMap!.completionUrl);
+    protected handleRewardShareClick = () => {
+        const { mapId, userState, pageSourceUrl, skillMap, activity, shareState } = this.props;
+        const previousState = lookupPreviousCompletedActivityState(userState!, pageSourceUrl!, skillMap!, activity!.activityId);
+        if (previousState)
+            this.props.dispatchShowShareModal(mapId, previousState.activityId, true);
     }
 
     protected getCompletionActionText(action: MapCompletionAction) {
@@ -95,6 +114,8 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                 return lf("Start Skill Map")
             case "editor":
                 return lf("Keep Building")
+            case "tutorial":
+                return lf("Start Tutorial")
             case "docs":
             default:
                 return lf("Learn More")
@@ -104,7 +125,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
     protected getCompletionActions(actions: MapCompletionAction[]) {
         const { userState, pageSourceUrl, mapId, skillMap, activity,
             dispatchOpenActivity, dispatchShowCarryoverModal } = this.props;
-        const reward = activity as MapReward;
+        const reward = activity as MapRewardNode;
         const modalActions: ModalAction[] = [];
         actions?.forEach(el => {
             const action: Partial<ModalAction> = {
@@ -137,6 +158,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                         modalActions.push(action as ModalAction);
                     }
                     break;
+                case "tutorial":
                 case "map":
                 case "docs":
                 default:
@@ -147,38 +169,61 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
         return modalActions;
     }
 
+    renderConfetti() {
+        const density = 100;
+        return Array(density).fill(0).map((el, i) => {
+            const style = {
+                animationDelay: `${0.1 * (i % density)}s`,
+                left: `${1 * (Math.floor(Math.random() * density))}%`
+            }
+            return <div key={i} style={style} className={`confetti ${Math.random() > 0.5 ? "reverse" : ""} color-${Math.floor(Math.random() * 9)}`} />
+        })
+    }
+
     renderCompletionModal() {
-        const  { skillMap, type, activity } = this.props;
+        const  { skillMap, type, activity, userState, pageSourceUrl, dispatchNextModal, reward, mapId } = this.props;
         if (!type || !skillMap) return <div />
 
-        const reward = activity as MapReward;
+        const node = activity as MapRewardNode;
 
         const completionModalTitle = lf("You Did It!");
         const completionModalText = lf("Congratulations on completing {0}. Take some time to explore any activities you missed, or reset your progress to try again. But first, be sure to claim your reward using the button below.", "{0}");
         const completionModalTextSegments = completionModalText.split("{0}");
 
-        const density = 100;
+        const previousState = lookupPreviousCompletedActivityState(userState!, pageSourceUrl!, skillMap!, activity!.activityId);
+
+
+        const onCertificateClick = () => {
+            tickEvent("skillmap.openCertificate", { path: mapId, activity: activity!.activityId });
+            window.open((reward as MapRewardCertificate).url || skillMap!.completionUrl);
+        };
+
+        const onButtonClick = reward ? onCertificateClick : dispatchNextModal
 
         return <div className="confetti-container">
-            <Modal title={completionModalTitle} actions={this.getCompletionActions(reward.actions)} className="completion" onClose={this.handleOnClose}>
+            <Modal title={completionModalTitle} actions={this.getCompletionActions(node.actions)} className="completion" onClose={this.handleOnClose}>
                 {completionModalTextSegments[0]}{<strong>{skillMap.displayName}</strong>}{completionModalTextSegments[1]}
-                <div className="completion-reward" onClick={this.handleRewardClick}>
-                    <i className="icon gift" />
-                    <span>{lf("Claim your reward!")}</span>
-                </div>
-            </Modal>
-            {Array(density).fill(0).map((el, i) => {
-                const style = {
-                    animationDelay: `${0.1 * (i % density)}s`,
-                    left: `${1 * (Math.floor(Math.random() * density))}%`
+                <Button
+                    className="primary completion-reward"
+                    title={lf("Claim your reward!")}
+                    label={lf("Claim your reward!")}
+                    leftIcon="fas fa-gift"
+                    onClick={onButtonClick} />
+                {(previousState && previousState.headerId) &&
+                    <Button
+                        className="primary completion-reward"
+                        title={lf("Share your game!")}
+                        label={lf("Share your game!")}
+                        leftIcon="fas fa-share"
+                        onClick={this.handleRewardShareClick} />
                 }
-                return <div key={i} style={style} className={`confetti ${Math.random() > 0.5 ? "reverse" : ""} color-${Math.floor(Math.random() * 9)}`} />
-            })}
+            </Modal>
+            {this.renderConfetti()}
         </div>
     }
 
     renderRestartWarning() {
-        const  { mapId, activity, dispatchRestartActivity, showCodeCarryoverModal, dispatchShowCarryoverModal } = this.props;
+        const  { userState, pageSourceUrl, skillMap, mapId, activity, dispatchRestartActivity, showCodeCarryoverModal, dispatchShowCarryoverModal } = this.props;
         const restartModalTitle = lf("Restart Activity?");
         const restartModalText = lf("Are you sure you want to restart {0}? You won't lose your path progress but the code you have written for this activity will be deleted.", "{0}");
         const restartModalTextSegments = restartModalText.split("{0}");
@@ -187,8 +232,12 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
             { label: lf("CANCEL"), onClick: this.handleOnClose },
             { label: lf("RESTART"), onClick: () => {
                 tickEvent("skillmap.activity.restart", { path: mapId, activity: activity!.activityId });
-                if (showCodeCarryoverModal) dispatchShowCarryoverModal(mapId, activity!.activityId);
-                else dispatchRestartActivity(mapId, activity!.activityId);
+                if (showCodeCarryoverModal) {
+                    const previousState = lookupPreviousCompletedActivityState(userState!, pageSourceUrl!, skillMap!, activity!.activityId);
+                    dispatchRestartActivity(mapId, activity!.activityId, previousState.headerId, !!previousState.headerId);
+                } else {
+                    dispatchRestartActivity(mapId, activity!.activityId);
+                }
             }}
         ]
 
@@ -265,7 +314,6 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
         </Modal>
     }
 
-    protected handleShareInputClick = (evt: any) => { evt.target.select() }
     protected handleShareCopyClick = () => {
         const { mapId, activity } = this.props;
         tickEvent("skillmap.share.copy", { path: mapId, activity: activity!.activityId });
@@ -286,7 +334,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
 
         const actions = [];
         if (!shortId) {
-            actions.push({ label: lf("Cancel"), onClick: () => this.handleOnClose });
+            actions.push({ label: lf("Cancel"), onClick: this.handleOnClose });
             actions.push({ label: lf("Publish"), onClick: async () => {
                 tickEvent("skillmap.share", { path: mapId, activity: activity!.activityId });
                 this.setState({ loading: true });
@@ -297,7 +345,6 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
             }});
         }
 
-
         return <Modal title={resetModalTitle} actions={actions} onClose={this.handleOnClose}>
             {shortId ?
                 <div>{ lf("Your project is ready! Use the address below to share your projects.") }</div> :
@@ -306,60 +353,79 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
                 </div>
             }
             {(loading && !shortId) && <div className="share-loader">
-                <div className="ui active inline loader" />
+                <div className="common-spinner" />
                 <span>{lf("Loading...")}</span>
             </div>}
-            {shortId && <div className="share-input">
-                <input type="text" readOnly={true} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
-                    value={`https://makecode.com/${shortId}`} onClick={this.handleShareInputClick}></input>
-                <div className="share-copy" onClick={this.handleShareCopyClick} role="button">
-                    <i className="icon copy" />
-                    {lf("Copy")}
-                </div>
+            {shortId && <Input
+                    type="text"
+                    className="share-input"
+                    ariaLabel="Generated shareable URL for project"
+                    initialValue={`https://makecode.com/${shortId}`}
+                    icon="fas fa-copy"
+                    iconTitle="Copy project URL"
+                    readOnly={true}
+                    autoComplete={false}
+                    selectOnClick={true}
+                    onIconClick={this.handleShareCopyClick} />}
+            {(shortId && shareState?.rewardsShare) && <div>
+                {this.renderConfetti()}
             </div>}
         </Modal>
     }
 
-    renderLoginModal() {
-        const providers = pxt.auth.identityProviders();
+    renderLoginModal(activityPrompt: boolean) {
         const rememberMeSelected = this.state.checkboxSelected ?? false;
 
-        return <Modal title={lf("Sign in or Signup")} onClose={this.handleOnClose}>
-            <div className="sign-in-description">
-                <p>{lf("Connect an existing account in order to sign in or signup for the first time.")}
-                    <a href="https://aka.ms/cloudsave" target="_blank" onClick={() => {
-                        tickEvent("skillmap.signindialog.learn");
-                        window.open("https://aka.ms/cloudsave", "_blank");
-                    }}>
-                        <i className="icon external alternate" />{lf("Learn more")}
-                    </a>
-                </p>
-            </div>
-            <div className="sign-in-container">
-                <div className="sign-in-prompt">
-                    <p>{lf("Choose an account to connect:")}</p>
+        const signInIconAltText = lf("Sign in icon")
+
+        const msft = pxt.auth.identityProvider("microsoft");
+        const buttons = [];
+        buttons.push({
+            label: lf("Sign In"),
+            onClick: async () => {
+                pxt.tickEvent(`skillmap.signindialog.signin`, { provider: msft.name ? msft.name : "", rememberMe: rememberMeSelected.toString() });
+                pxt.auth.client().loginAsync(msft.id, rememberMeSelected, { hash: location.hash })
+            }
+        })
+
+        const onRememberMeChecked = (newValue: boolean) => {
+            tickEvent("skillmap.signindialog.rememberme", { rememberMe: newValue.toString() });
+            this.setState({ checkboxSelected: newValue });
+        }
+
+        return <Modal title={activityPrompt ? lf("Save your Completed Activity") : lf("Sign into MakeCode Arcade")} onClose={this.handleOnClose} actions={buttons} className="sign-in">
+            <div className="description">
+                <p>{lf("Sign in with your Microsoft Account. We'll save your projects to the cloud, where they're accessible from anywhere.")}</p>
+
+            <div className="container">
+                    { activityPrompt && <img src={resolvePath("/assets/cloud-user.svg")} alt={signInIconAltText} className="icon cloud-user"/> }
+                    <p>{ lf("Don't have a Microsoft Account? Start signing in to create one!")}
+                        <a href="https://aka.ms/cloudsave" target="_blank" onClick={() => {
+                            tickEvent("skillmap.signindialog.learn");
+                            window.open("https://aka.ms/cloudsave", "_blank");
+                        }}>
+                            <i className="fas fa-external-link-alt" aria-hidden={true} />{lf("Learn more")}
+                        </a>
+                    </p>
                 </div>
-                {providers.map((p, key) => {
-                    return <div className="modal-button" key={key} role="button" onClick={async () => {
-                        pxt.tickEvent(`skillmap.signindialog.signin`, { provider: p.name ? p.name : "", rememberMe: rememberMeSelected.toString() });
-                        pxt.auth.client().loginAsync(p.id, rememberMeSelected, { hash: location.hash })
-                    }}>
-                        <i className={`xicon ${p.id}`} />
-                        <div className="label">
-                            {p.name}
-                        </div>
-                    </div>
-                })}
-                <div className="sign-in-remember checkbox" onClick={() => {
-                    const rememberMe = !rememberMeSelected;
-                    tickEvent("skillmap.signindialog.rememberme", { rememberMe: rememberMe.toString() });
-                    this.setState({ checkboxSelected: rememberMe });
-                }}>
-                    <i className={`icon square outline ${rememberMeSelected ? "check" : ""}`} />
-                    {lf("Remember me")}
+                <div className="remember">
+                    <Checkbox id="sign-in-remember-me" label={lf("Remember me")} onChange={onRememberMeChecked} isChecked={rememberMeSelected} />
                 </div>
             </div>
         </Modal>
+    }
+
+    async handleSigninClick(provider: pxt.AppCloudProvider) {
+        const rememberMeSelected = this.state.checkboxSelected ?? false;
+        pxt.tickEvent(`skillmap.signindialog.signin`, { provider: provider.id, rememberMe: rememberMeSelected.toString() });
+        await pxt.auth.client().loginAsync(provider.id, rememberMeSelected, { hash: location.hash });
+    }
+
+    handleRememberMeClick() {
+        const rememberMeSelected = this.state.checkboxSelected ?? false;
+        const rememberMe = !rememberMeSelected;
+        tickEvent("skillmap.signindialog.rememberme", { rememberMe: rememberMe.toString() });
+        this.setState({ checkboxSelected: rememberMe });
     }
 
     renderDeleteAccountModal() {
@@ -368,7 +434,7 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
         const buttons = [];
         buttons.push({
             label: lf("Confirm"),
-            className: checkboxSelected ? "confirm" : "confirm disabled",
+            disabled: !checkboxSelected,
 
             onClick: async () => {
                 if (checkboxSelected) {
@@ -383,7 +449,6 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
 
         buttons.push({
             label: lf("Back to safety"),
-            className: "disagree",
             onClick: this.props.dispatchHideModal
         })
 
@@ -393,8 +458,144 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
             <div className="confirm-delete checkbox" onClick={() => {
                     this.setState({ checkboxSelected: !checkboxSelected });
                 }}>
-                <i className={`icon square outline ${checkboxSelected ? "check" : ""}`} />
+                <i className={`far ${checkboxSelected ? "fa-check-square" : "fa-square"}`} />
                 { lf("I understand this is permanent. No undo.") }
+            </div>
+        </Modal>
+    }
+
+    renderRewardModal() {
+        const { reward } = this.props;
+
+        let modal: JSX.Element | undefined;
+
+        if (reward?.type === "certificate") modal = this.renderCertificateModal(reward);
+        else if (reward?.type === "completion-badge") modal = this.renderBadgeModal(reward);
+
+        return <div className="confetti-container">
+            {modal}
+            {this.renderConfetti()}
+        </div>
+    }
+
+    renderCertificateModal(reward: MapRewardCertificate) {
+        const title = lf("Rewards");
+        const  { mapId, skillMap, activity, hasPendingModals, dispatchNextModal } = this.props;
+
+        const buttons: ModalAction[] = [];
+
+        const onCertificateClick = () => {
+            tickEvent("skillmap.openCertificate", { path: mapId, activity: activity!.activityId });
+            window.open((reward as MapRewardCertificate).url || skillMap!.completionUrl);
+        };
+
+        buttons.push(
+            {
+                label: lf("Open Certificate"),
+                className: "completion-reward inverted",
+                icon: "file outline",
+                onClick: onCertificateClick
+            }
+        )
+
+        if (hasPendingModals) {
+            const onNextRewardClick = () => {
+                tickEvent("skillmap.nextReward", { path: mapId, activity: activity!.activityId, currentReward: reward!.type });
+                dispatchNextModal();
+            };
+
+            buttons.push(
+                {
+                    label: lf("Next Reward"),
+                    className: "completion-reward",
+                    icon: "right circle arrow",
+                    onClick: onNextRewardClick
+                }
+            )
+        }
+
+        return <Modal title={title} onClose={this.handleOnClose} actions={buttons}>
+            {lf("Use the button below to get your completion certificate!")}
+            {reward.previewUrl &&
+                <div className="certificate-reward">
+                    <img src={reward.previewUrl} alt={lf("certificate Preview")} />
+                </div>
+            }
+        </Modal>
+    }
+
+    renderBadgeModal(reward: MapCompletionBadge) {
+        const title = lf("Rewards");
+        const  { mapId, skillMap, activity, hasPendingModals, badge, dispatchNextModal, dispatchShowUserProfile, dispatchHideModal, signedIn, dispatchShowLoginModal } = this.props;
+
+        const goToBadges = () => {
+            tickEvent("skillmap.goToBadges", { path: mapId, activity: activity!.activityId });
+            dispatchHideModal();
+            dispatchShowUserProfile();
+        }
+
+        const signIn = () => {
+            tickEvent("skillmap.badgeSignIn", { path: mapId, activity: activity!.activityId });
+            dispatchHideModal();
+            dispatchShowLoginModal();
+        }
+
+        const buttons: ModalAction[] = [];
+        let message: JSX.Element[];
+
+        if (signedIn) {
+            message = jsxLF(
+                lf("You’ve received the {0} Badge! Find it in the badges section of your {1}."),
+                <span>{pxt.U.rlf(badge!.title)}</span>,
+                <a onClick={goToBadges}>{lf("User Profile")}</a>
+            );
+            buttons.push(
+                {
+                    label: lf("Go to Badges"),
+                    className: "completion-reward inverted",
+                    icon: "trophy",
+                    onClick: goToBadges
+                }
+            )
+        }
+        else {
+            message = jsxLF(
+                lf("You’ve received the {0} Badge! {1} to save your progress"),
+                <span>{pxt.U.rlf(skillMap!.displayName)}</span>,
+                <a onClick={signIn}>{lf("Sign In")}</a>
+            );
+            buttons.push(
+                {
+                    label: lf("Sign In"),
+                    className: "completion-reward inverted",
+                    xicon: true,
+                    icon: "cloud-user",
+                    onClick: signIn
+                }
+            )
+        }
+
+        if (hasPendingModals) {
+            const onNextRewardClick = () => {
+                tickEvent("skillmap.nextReward", { path: mapId, activity: activity!.activityId, currentReward: reward!.type });
+                dispatchNextModal();
+            };
+
+            buttons.push(
+                {
+                    label: lf("Next Reward"),
+                    className: "completion-reward",
+                    icon: "right circle arrow",
+                    onClick: onNextRewardClick
+                }
+            )
+        }
+
+
+        return <Modal title={title} onClose={this.handleOnClose} actions={buttons}>
+            {message}
+            <div className="badge-modal-image">
+                <Badge badge={badge!} />
             </div>
         </Modal>
     }
@@ -403,13 +604,19 @@ export class AppModalImpl extends React.Component<AppModalProps, AppModalState> 
 function mapStateToProps(state: SkillMapState, ownProps: any) {
     if (!state) return {};
     const { pageSourceUrl, shareState } = state;
-    const { currentMapId, currentActivityId, type } = state.modal || {};
+    const [ modal ] = state.modalQueue || [];
+    const { currentMapId, currentActivityId, type, currentReward } = modal || {};
 
     // Set the map as currently open map (editorView), or mapId passed into modal
     const currentMap = state.editorView ?
         state.maps[state.editorView.currentMapId] :
         (currentMapId && state.maps[currentMapId]);
     const activity = (currentMapId && currentActivityId) ? state.maps[currentMapId]?.activities[currentActivityId] : undefined
+
+    let badge: pxt.auth.Badge | undefined;
+    if (currentMap && activity && isRewardNode(activity) && currentReward?.type === "completion-badge") {
+        badge = getCompletionBadge(pageSourceUrl, currentMap, activity as MapRewardNode);
+    }
 
     return {
         type,
@@ -419,7 +626,11 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         showCodeCarryoverModal: currentMap && activity && isCodeCarryoverEnabled(state.user, state.pageSourceUrl, currentMap, activity),
         mapId: currentMapId,
         activity: currentMapId && currentActivityId ? state.maps[currentMapId].activities[currentActivityId] : undefined,
-        shareState
+        shareState,
+        reward: currentReward,
+        hasPendingModals: state.modalQueue?.length && state.modalQueue?.length > 1,
+        badge,
+        signedIn: state.auth.signedIn,
     }
 }
 
@@ -430,7 +641,11 @@ const mapDispatchToProps = {
     dispatchResetUser,
     dispatchShowCarryoverModal,
     dispatchCloseUserProfile,
-    dispatchSetShareStatus
+    dispatchSetShareStatus,
+    dispatchShowShareModal,
+    dispatchNextModal,
+    dispatchShowUserProfile,
+    dispatchShowLoginModal
 };
 
 export const AppModal = connect(mapStateToProps, mapDispatchToProps)(AppModalImpl);

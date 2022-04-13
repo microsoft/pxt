@@ -83,9 +83,8 @@ namespace pxtblockly {
             this.blocksInfo = options.blocksInfo;
         }
 
-        init() {
-            super.init();
-
+        initView() {
+            super.initView();
             if (this.sourceBlock_ && this.sourceBlock_.isInFlyout) {
                 this.setValue(this.getOptions()[0][1]);
             }

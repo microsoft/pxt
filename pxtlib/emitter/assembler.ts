@@ -1,4 +1,3 @@
-/* eslint-disable no-cond-assign */
 // TODO: add a macro facility to make 8-bit assembly easier?
 
 namespace ts.pxtc.assembler {
@@ -304,7 +303,7 @@ namespace ts.pxtc.assembler {
             // recursive-descent parsing of multiplication
             if (s.indexOf("*") >= 0) {
                 let m: RegExpExecArray = null;
-                while (m = /^([^\*]*)\*(.*)$/.exec(s)) {
+                while (null != (m = /^([^\*]*)\*(.*)$/.exec(s))) {
                     let tmp = this.parseOneInt(m[1])
                     if (tmp == null) return null;
                     mul *= tmp;
@@ -947,6 +946,40 @@ namespace ts.pxtc.assembler {
                 }
 
             })
+        }
+
+        public getSourceMap() {
+            const sourceMap: pxt.Map<number[]> = {}
+
+            let locFile = ""
+            let locLn = 0
+            let locPos = 0
+            let locEnd = 0
+            this.lines.forEach((ln, i) => {
+                const m = /^; ([\w\/\.-]+)\(([\d]+),\d+\):/.exec(ln.text)
+                if (m) {
+                    flush()
+                    locFile = m[1]
+                    locLn = parseInt(m[2])
+                }
+                if (ln.type == "instruction") {
+                    if (!locPos) locPos = ln.location
+                    locEnd = ln.location
+                }
+            })
+            flush()
+
+            function flush() {
+                if (locFile && locPos) {
+                    if (!sourceMap[locFile])
+                        sourceMap[locFile] = []
+                    sourceMap[locFile].push(locLn, locPos, locEnd - locPos)
+                }
+                locPos = 0
+                locEnd = 0
+            }
+
+            return sourceMap
         }
 
 

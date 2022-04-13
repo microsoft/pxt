@@ -1,5 +1,5 @@
-function hasNumberArray(a: boolean, b: number[]) {
+function doSomething(arg: bc.Test) {
 
 }
 
-hasNumberArray(true, []);
+doSomething(bc.createTest());

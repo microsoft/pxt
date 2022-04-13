@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   inkscape:version="1.0beta2 (2b71d25, 2019-12-03)"
+   sodipodi:docname="sound-vibrato.svg"
+   id="svg12"
+   version="1.1"
+   fill="none"
+   viewBox="0 0 1000 1000"
+   height="1000"
+   width="1000">
+  <metadata
+     id="metadata18">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs16" />
+  <sodipodi:namedview
+     inkscape:current-layer="svg12"
+     inkscape:window-maximized="0"
+     inkscape:window-y="31"
+     inkscape:window-x="10"
+     inkscape:cy="444.56866"
+     inkscape:cx="543.35942"
+     inkscape:zoom="0.77791981"
+     showgrid="false"
+     id="namedview14"
+     inkscape:window-height="903"
+     inkscape:window-width="1541"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0"
+     guidetolerance="10"
+     gridtolerance="10"
+     objecttolerance="10"
+     borderopacity="1"
+     inkscape:document-rotation="0"
+     bordercolor="#666666"
+     pagecolor="#ffffff" />
+  <path
+     style="stroke-width:103.575;stroke-miterlimit:4;stroke-dasharray:none;fill:none;fill-opacity:1"
+     inkscape:connector-curvature="0"
+     id="path10"
+     stroke-width="1.5"
+     stroke="black"
+     d="M 71.999494,717.01326 237.11088,345.51308 c 18.82774,-42.36242 78.95004,-42.36242 97.77779,0 l 116.22301,261.4987 c 18.82666,42.36135 78.95004,42.36135 97.77671,0 l 116.22354,-261.4987 c 18.82669,-42.36242 78.95005,-42.36242 97.77674,0 l 165.11186,371.50018" />
+</svg>

@@ -401,6 +401,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     public openBlocks() {
+        this.openBlocksAsync();
+    }
+
+
+    public async openBlocksAsync() {
         pxt.tickEvent(`typescript.showBlocks`);
         let initPromise = Promise.resolve();
 
@@ -412,7 +417,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (!this.currFile) {
             const mainPkg = pkg.mainEditorPkg();
             if (mainPkg && mainPkg.files[pxt.MAIN_TS]) {
-                initPromise = this.loadFileAsync(mainPkg.files[pxt.MAIN_TS]);
+                await this.loadFileAsync(mainPkg.files[pxt.MAIN_TS]);
             }
             else {
                 return;
@@ -531,6 +536,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         });
 
         core.showLoadingAsync("switchtoblocks", lf("switching to blocks..."), promise);
+        return initPromise;
     }
 
     public showBlockConversionFailedDialog(blockFile: string, programTooLarge: boolean): Promise<void> {
@@ -843,13 +849,22 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             const logoHeight = (this.parent.isJavaScriptActive()) ? this.parent.updateEditorLogo(toolboxWidth, this.getEditorColor()) : 0;
 
             this.editor.layout({ width: monacoArea.offsetWidth - toolboxWidth, height: monacoArea.offsetHeight - logoHeight });
-
-            blocklyFieldView.setEditorBounds({
-                top: 0,
-                left: 0,
-                width: window.innerWidth,
-                height: window.innerHeight
-            });
+            if (monacoArea && this.parent.isTutorial() && !pxt.BrowserUtils.isTabletSize()) {
+                const containerRect = monacoArea.getBoundingClientRect();
+                blocklyFieldView.setEditorBounds({
+                    top: containerRect.top,
+                    left: containerRect.left,
+                    width: containerRect.width,
+                    height: containerRect.height
+                });
+            } else {
+                blocklyFieldView.setEditorBounds({
+                    top: 0,
+                    left: 0,
+                    width: window.innerWidth,
+                    height: window.innerHeight
+                });
+            }
 
             if (monacoToolboxDiv) monacoToolboxDiv.style.height = `100%`;
         }
@@ -1212,9 +1227,15 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         compiler.syntaxInfoAsync("symbol", fileName, offset, source)
             .then(info => {
                 if (info?.symbols) {
-                    for (const s of info.symbols) {
-                        if (s.attributes.help) {
-                            this.parent.setSideDoc('/reference/' + s.attributes.help.replace(/^\//, ''));
+                    for (const fn of info.symbols) {
+                        const url = pxt.blocks.getHelpUrl(fn);
+                        if (url) {
+                            if (pxt.blocks.openHelpUrl) {
+                                pxt.blocks.openHelpUrl(url);
+                            }
+                            else {
+                                window.open(url);
+                            }
                             return;
                         }
                     }

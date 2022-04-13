@@ -13,6 +13,7 @@ This page was written using this documentation system, check it out at https://g
 ## Reference
 
 * [Macros](/writing-docs/macros)
+* [Snippets](/writing-docs/snippets)
 * [Anchors](/writing-docs/anchors)
 * [Routing](/writing-docs/routing)
 * [Tutorials](/writing-docs/tutorials)

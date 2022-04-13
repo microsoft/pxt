@@ -2,12 +2,17 @@ import * as React from "react";
 import * as sui from "./sui";
 import * as data from "./data";
 import * as cloud from "./cloud";
+import { fireClickOnEnter } from "./util";
 
 const repeat = pxt.Util.repeatMap;
 
 export interface CodeCardState { }
 
-export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
+interface CodeCardProps extends pxt.CodeCard {
+    tallCard?: boolean;
+}
+
+export class CodeCardView extends data.Component<CodeCardProps, CodeCardState> {
 
     public element: HTMLDivElement;
 
@@ -93,7 +98,7 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
         const style = card.style || "card"
         const cardDiv = <div className={`ui ${style} ${color} ${card.onClick ? "link" : ''} ${className ? className : ''}`}
             role={card.role} aria-selected={card.role === "option" ? "true" : undefined} aria-label={ariaLabel} title={card.title}
-            onClick={clickHandler} tabIndex={card.onClick ? card.tabIndex || 0 : null} onKeyDown={card.onClick ? sui.fireClickOnEnter : null}>
+            onClick={clickHandler} tabIndex={card.onClick ? card.tabIndex || 0 : null} onKeyDown={card.onClick ? fireClickOnEnter : null}>
             {card.header ?
                 <div key="header" className={"ui content " + (card.responsive ? " tall desktop only" : "")}>
                     {card.header}
@@ -122,8 +127,10 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
                     </div>
                 </div> : undefined}
             {(card.shortName || name || descriptions) ?
-                <div className="content">
-                    {card.shortName || name ? <div className="header">{card.shortName || name}</div> : null}
+                <div className={`content ${this.props.tallCard? "tall" : ""}`}>
+                    {card.shortName || name ? <div className="header">{card.shortName || name}
+                            <div className="tags">{card.tags?.join(" ")}</div>
+                        </div> : null}
                     {descriptions && descriptions.map((element, index) => {
                         return <div key={`line${index}`} className={`description tall ${card.icon || card.iconContent || card.imageUrl ? "" : "long"}`}>{renderMd(element)}</div>
                     })

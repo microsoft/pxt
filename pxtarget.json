@@ -18,7 +18,7 @@
         "homeUrl": "https://makecode.com/",
         "cardLogo": "./static/logo.svg",
         "appLogo": "./static/logo.svg",
-        "crowdinProject": "kindscript",
+        "crowdinProject": "makecode",
         "docMenu": [
             {
                 "name": "About",

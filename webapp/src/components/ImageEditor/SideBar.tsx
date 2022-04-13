@@ -13,18 +13,19 @@ interface SideBarProps {
     selectedTool: ImageEditorTool;
     isTilemap: boolean;
     dispatchChangeImageTool: (tool: ImageEditorTool) => void;
+    lightMode: boolean;
 }
 
 export class SideBarImpl extends React.Component<SideBarProps,{}> {
     protected handlers: (() => void)[] = [];
 
     render() {
-        const { selectedTool, isTilemap } = this.props;
+        const { selectedTool, isTilemap, lightMode } = this.props;
         return (
             <div className={`image-editor-sidebar ${isTilemap ? "tilemap" : ""}`}>
                 {isTilemap &&
                     <div className="image-editor-tilemap-minimap">
-                        <Minimap />
+                        <Minimap lightMode={lightMode} />
                     </div>
                 }
                 <div className="image-editor-tool-buttons">

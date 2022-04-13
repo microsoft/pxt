@@ -8,6 +8,9 @@ import * as sui from "./sui";
 import * as coretsx from "./coretsx";
 import * as auth from "./auth";
 
+
+import { pushNotificationMessage } from "../../react-common/components/Notification";
+
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
 
@@ -109,7 +112,7 @@ export function cancelAsyncLoading(id: string) {
 ///////////////////////////////////////////////////////////
 
 function showNotificationMsg(kind: string, msg: string) {
-    coretsx.pushNotificationMessage({ kind: kind, text: msg, hc: getHighContrastOnce() });
+    pushNotificationMessage({ kind: kind, text: msg, hc: getHighContrastOnce() });
 }
 
 export function errorNotification(msg: string) {
@@ -172,6 +175,7 @@ export interface DialogOptions {
     confirmationText?: string;      // Display a text input the user must type to confirm.
     confirmationCheckbox?: string;  // Display a checkbox the user must check to confirm.
     confirmationGranted?: boolean;
+    onClose?: () => void;
 }
 
 export function dialogAsync(options: DialogOptions): Promise<void> {

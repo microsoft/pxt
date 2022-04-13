@@ -838,7 +838,7 @@ namespace pxt.sprite {
         buf[offset + 1] = (value >> 8) & 0xff;
     }
 
-    function colorStringToRGB(color: string) {
+    export function colorStringToRGB(color: string) {
         const parsed = parseColorString(color);
         return [_r(parsed), _g(parsed), _b(parsed)]
     }

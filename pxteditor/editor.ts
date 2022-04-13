@@ -225,6 +225,7 @@ namespace pxt.editor {
         openProjectByHeaderIdAsync(headerId: string): Promise<void>;
         overrideTypescriptFile(text: string): void;
         overrideBlocksFile(text: string): void;
+        resetTutorialTemplateCode(keepAssets: boolean): Promise<void>;
 
         exportAsync(): Promise<string>;
 
@@ -272,6 +273,7 @@ namespace pxt.editor {
 
         anonymousPublishAsync(screenshotUri?: string): Promise<string>;
         anonymousPublishHeaderByIdAsync(headerId: string): Promise<Cloud.JsonScript>;
+        persistentPublishAsync(screenshotUri?: string): Promise<string>;
 
         startStopSimulator(opts?: SimulatorStartOptions): void;
         stopSimulator(unload?: boolean, opts?: SimulatorStartOptions): void;
@@ -320,6 +322,7 @@ namespace pxt.editor {
         renderPythonAsync(req: EditorMessageRenderPythonRequest): Promise<EditorMessageRenderPythonResponse>;
 
         toggleHighContrast(): void;
+        setHighContrast(on: boolean): void;
         toggleGreenScreen(): void;
         toggleAccessibleBlocks(): void;
         setAccessibleBlocks(enabled: boolean): void;
@@ -374,7 +377,10 @@ namespace pxt.editor {
 
         openNewTab(header: pxt.workspace.Header, dependent: boolean): void;
         createGitHubRepositoryAsync(): Promise<void>;
-        saveLocalProjectsToCloudAsync(headerIds: string[]): Promise<void>;
+        saveLocalProjectsToCloudAsync(headerIds: string[]): Promise<pxt.Map<string> | undefined>;
+        requestProjectCloudStatus(headerIds: string[]): Promise<void>;
+        convertCloudProjectsToLocal(userId: string): Promise<void>;
+        setLanguageRestrictionAsync(restriction: pxt.editor.LanguageRestriction): Promise<void>;
     }
 
     export interface IHexFileImporter {

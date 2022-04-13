@@ -104,26 +104,13 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
     }
 
     showExtensionAsync(extension: string, url: string) {
-        // sanity check: URL must be approved in targetconfig.json
-        return pxt.targetConfigAsync()
-            .then(config => {
-
-                // sanity check: this should have been caught earlier
-                const packagesConfig = config?.packages;
-                if (packagesConfig?.approvedEditorExtensionUrls?.indexOf(url) < 0 &&
-                    (!/^http:\/\/localhost:/.test(url) || !pxt.BrowserUtils.isLocalHostDev()))
-                    pxt.U.userError("Trying to load an unapproved extension")
-
-                // loading
-                this.setState({ visible: true, extension: extension, url: url }, () => {
-                    this.send(extension, {
-                        target: pxt.appTarget.id,
-                        type: "pxtpkgext",
-                        event: "extshown"
-                    } as pxt.editor.ShownEvent);
-                })
-            })
-
+        this.setState({ visible: true, extension: extension, url: url }, () => {
+            this.send(extension, {
+                target: pxt.appTarget.id,
+                type: "pxtpkgext",
+                event: "extshown"
+            } as pxt.editor.ShownEvent);
+        })
     }
 
     initializeFrame() {

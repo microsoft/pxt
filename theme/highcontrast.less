@@ -11,6 +11,7 @@
 
 @selected: yellow;
 @disabled: #3ff23f;
+@hyperlink: #807FFF;
 
 /* Messages */
 #msg .hc {
@@ -75,6 +76,10 @@
     }
     p > a.ui.link {
         text-decoration: underline;
+    }
+
+    ul > li {
+        color: @HCtextColor;
     }
 
     #tutorialcard .prevbutton,
@@ -225,6 +230,14 @@
     }
     .blocklyPath {
         stroke-width: 3px;
+    }
+
+    .cloudstatusarea {
+        color: @HCtextColor !important;
+
+        .ui.loader:after {
+            border-top-color: @HCtextColor !important;
+        }
     }
 
     /* Menu bar */
@@ -394,6 +407,12 @@
         }
     }
 
+    .signin-button {
+        background-color: @HCbackground;
+        color: @HCtextColor;
+        border: 1px solid @HCtextColor !important;
+    }
+
     /* Inputs */
     .ui.input input,
     .ui.input .input {
@@ -484,7 +503,7 @@
                 border-color: @HCtextColor;
                 border-style: solid;
             }
-            .actions {
+            .ui.grid.stackable .actions {
                 .card-action {
                     border: 2px solid @HCtextColor;
                     .button.attached i {
@@ -494,6 +513,10 @@
                 }
                 .card-action-title {
                     color: @HCtextColor;
+                }
+                .card-action:hover,
+                .card-action:focus-within {
+                    border-color: @selected;
                 }
             }
         }
@@ -525,6 +548,7 @@
         border: 2px solid @HCtextColor !important;
     }
 
+    /* banners */
     #notificationBanner {
         background: @HCbackground !important;
         border: 2px solid @HCtextColor !important;
@@ -532,6 +556,12 @@
         .header {
             color: @HCtextColor !important;
         }
+    }
+
+    .ui.message {
+        background: @HCbackground !important;
+        color: @HCtextColor !important;
+        border: 2px solid @HCtextColor !important;
     }
 
     #winAppError {
@@ -645,7 +675,8 @@
     #assetEditor {
         .asset-editor-sidebar,
         .asset-editor-sidebar-preview,
-        .asset-editor-preview {
+        .asset-editor-preview,
+        .asset-editor-sidebar-temp {
             color: @HCtextColor;
             background-color: @HCbackground;
             border-color: @HCtextColor;
@@ -661,7 +692,10 @@
             border-bottom: 1px solid @HCtextColor;
         }
 
-        .asset-editor-button,
+        .common-button {
+            border: 1px solid;
+        }
+
         .asset-editor-card,
         .create-new {
             color: @HCtextColor;
@@ -674,10 +708,7 @@
             color: @HCbackground;
         }
 
-        .delete-asset {
-            border: 1px solid @red;
-        }
-
+        .asset-editor-card.selected,
         .asset-editor-gallery-tab.selected,
         .asset-editor-button:hover,
         .create-new:hover {
@@ -695,7 +726,8 @@
 
     /* Hyperlinks */
     a {
-        color: @HCtextColor !important;
+        color: @hyperlink !important;
+        text-decoration: underline !important;
     }
 
     #sidedocsbar {
@@ -720,8 +752,10 @@
 
     .ui.dropdown .menu,
     .ui.dropdown .menu > .item,
+    .ui.dropdown .menu > .item:hover,
     .ui.menu .ui.dropdown .menu,
-    .ui.menu .ui.dropdown .menu > .item {
+    .ui.menu .ui.dropdown .menu > .item,
+    .ui.menu .ui.dropdown .menu > .item:hover {
         background: @HCbackground !important;
         color: @HCtextColor !important;
 
@@ -786,7 +820,7 @@
         }
     }
 
-    .tutorialhint {
+    .tutorialhint, .tutorial-hint .tutorial-callout {
         border-color: @HCtextColor;
         background-color: @HCbackground;
         color: @HCtextColor;
@@ -796,9 +830,11 @@
         }
     }
 
-    /* Vertical tutorial */
+    /* Tabbed tutorial */
 
     .tab-tutorial.tab-content { background-color: @HCbackground; }
+    .tutorial-scroll-gradient { display: none; }
+    .tutorial-title { color: @HCtextColor; }
 
     .tutorial-step-bar {
         background-color: @HCbackground;
@@ -816,6 +852,10 @@
             color: @HCbackground;
             background-color: @HCtextColor;
         }
+
+        .tab-badge {
+            display: none;
+        }
     }
 
     .ui.label {
@@ -825,6 +865,17 @@
 
     .ui.blue.labels .label, .ui.blue.label {
         border-color: @selected !important;
+    }
+
+    .formatted-bullet {
+        background: linear-gradient(@HCtextColor, @HCtextColor) ~"no-repeat 45%/2px 100%";
+        i.icon, i.xicon {
+            color: @HCbackground;
+            background-color: @HCtextColor;
+        }
+        &:after {
+            border-color: @HCtextColor !important;
+        }
     }
 
 
@@ -913,6 +964,20 @@
         background-color: @HCbackground !important;
         color: @HCtextColor !important;
 
+        .ui.button {
+            color: @HCtextColor !important;
+
+            &:focus, &:hover {
+                color: @HCtextColor !important;
+                border-color: @selected !important;
+                background: @HCbackground !important;
+
+                i, span {
+                    color: @HCtextColor !important;
+                }
+            }
+        }
+
         table.diffview {
             background: @HCbackground !important;
             color: @HCtextColor !important;
@@ -930,6 +995,10 @@
                 border: 2px dotted #090 !important;
             }
         }
+    }
+
+    .ui.dropdown > .avatar > .initials {
+        background-color: @HCbackground !important;
     }
 }
 

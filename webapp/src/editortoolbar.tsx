@@ -265,7 +265,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
                 break;
             case View.Computer:
             default:
-                downloadButtonClasses += "huge fluid ";
+                downloadButtonClasses += "large fluid ";
                 hwIconClasses = "large";
         }
 

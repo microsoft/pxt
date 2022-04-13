@@ -1,5 +1,6 @@
 import * as React from "react";
 
+import { fireClickOnEnter } from "../../util";
 import { TabContentProps } from "./TabContent";
 
 interface TabPaneProps {
@@ -12,33 +13,38 @@ interface TabPaneProps {
 
 export function TabPane(props: TabPaneProps) {
     const { id, children, className, style, activeTabName } = props;
+    const childArray = (Array.isArray(children) ? children : [children]).filter((el: any) => !!el);
+    if (!childArray || childArray.length == 0) return <div />;
+
     const [ activeTab, setActiveTab ] = React.useState(activeTabName);
-    const childArray = Array.isArray(children) ? children.filter((el: any) => !!el) : [children];
+
+    const selectTab = (tabProps: TabContentProps) => {
+        const { name, onSelected } = tabProps as TabContentProps;
+        if (onSelected) onSelected();
+        setActiveTab(name);
+    }
 
     React.useEffect(() => {
         if (!childArray.some((el: any) => el.props.name === activeTab)) {
-            setActiveTab(childArray[0].props.name);
+            selectTab(childArray[0].props);
         }
     }, [children])
 
     React.useEffect(() => {
-        if (childArray.some((el: any) => el.props.name === activeTabName)) {
-            setActiveTab(activeTabName);
-        } else {
-            setActiveTab(childArray[0].props.name);
-        }
+        const tab = childArray.find((el: any) => el.props.name === activeTabName) || childArray[0];
+        selectTab(tab.props);
     }, [activeTabName])
 
     return <div id={id} className={`tab-container ${className || ""}`} style={style}>
         {childArray.length > 1 && <div className="tab-navigation">
             {childArray.map(el => {
-                const { name, icon, title, onSelected } = el.props as TabContentProps;
-                const tabClickHandler = () => {
-                    if (onSelected) onSelected();
-                    setActiveTab(name);
-                }
-                return <div key={name} className={`tab-icon ${name} ${name == activeTab ? "active" : ""}`} onClick={tabClickHandler}>
-                    <i className={`ui icon ${icon}`} />
+                const { name, icon, title, ariaLabel, showBadge } = el.props as TabContentProps;
+                const tabClickHandler = () => selectTab(el.props);
+
+                return <div key={name} className={`tab-icon ${name} ${name == activeTab ? "active" : ""}`}
+                    aria-label={ariaLabel} tabIndex={0} onClick={tabClickHandler} onKeyDown={fireClickOnEnter}>
+                    {showBadge && <div className="tab-badge" />}
+                    <i className={icon} />
                     <span>{title}</span>
                 </div>
             })}

@@ -215,6 +215,16 @@ namespace ts.pxtc.Util {
         return arr
     }
 
+    export function arrayEquals<U>(a: U[], b: U[], compare: (c: U, d: U) => boolean = (c, d) => c === d) {
+        if (a == b) return true;
+        if (!a && b || !b && a || a.length !== b.length) return false;
+
+        for (let i = 0; i < a.length; i++) {
+            if (!compare(a[i], b[i])) return false;
+        }
+        return true;
+    }
+
     export function iterMap<T>(m: pxt.Map<T>, f: (k: string, v: T) => void) {
         Object.keys(m).forEach(k => f(k, m[k]))
     }
@@ -471,6 +481,21 @@ namespace ts.pxtc.Util {
         let r: pxt.Map<boolean> = {}
         arr.forEach(e => { r[f(e)] = true })
         return r
+    }
+
+    export function deepCopy(src: any) {
+        if (typeof src !== "object" || src === null) {
+            return src;
+        }
+
+        const dst = Array.isArray(src) ? [] : {} as any;
+
+        for (const key in src) {
+            const value = src[key];
+            dst[key] = deepCopy(value);
+        }
+
+        return dst;
     }
 
     export interface ArrayLike<T> {
@@ -1154,6 +1179,7 @@ namespace ts.pxtc.Util {
         "bn": { englishName: "Bengali", localizedName: "বাংলা" },
         "ca": { englishName: "Catalan", localizedName: "Català" },
         "cs": { englishName: "Czech", localizedName: "Čeština" },
+        "cy": { englishName: "Welsh", localizedName: "Cymraeg" },
         "da": { englishName: "Danish", localizedName: "Dansk" },
         "de": { englishName: "German", localizedName: "Deutsch" },
         "el": { englishName: "Greek", localizedName: "Ελληνικά" },
@@ -1609,6 +1635,151 @@ namespace ts.pxtc.Util {
         }
         return url
     }
+    export function cloneTargetBundle(target: pxt.TargetBundle) {
+        target = {
+            ...target
+        };
+
+        const apiInfo = target.apiInfo;
+        delete target.apiInfo;
+
+        const bundleddirs = target.bundleddirs;
+        delete target.bundleddirs;
+
+        const bundledpkgs = target.bundledpkgs;
+        delete target.bundledpkgs;
+
+        const tutorialInfo = target.tutorialInfo;
+        delete target.tutorialInfo;
+
+        const res = clone(target);
+
+        if (apiInfo) {
+            res.apiInfo = {};
+            for (const key of Object.keys(apiInfo)) {
+                const apis = apiInfo[key].apis;
+
+                res.apiInfo[key] = {
+                    sha: apiInfo[key].sha,
+                    apis: {
+                        jres: { ...apis.jres },
+                        byQName: cloneApis(apis.byQName)
+                    }
+                }
+            }
+        }
+
+        if (bundleddirs) {
+            res.bundleddirs = [...bundleddirs]
+        }
+
+        if (bundledpkgs) {
+            res.bundledpkgs = {};
+            for (const key of Object.keys(bundledpkgs)) {
+                res.bundledpkgs[key] = {
+                    ...bundledpkgs[key]
+                };
+            }
+        }
+
+        if (tutorialInfo) {
+            res.tutorialInfo = {};
+
+            for (const key of Object.keys(tutorialInfo)) {
+                const built = tutorialInfo[key];
+
+                res.tutorialInfo[key] = {
+                    hash: built.hash,
+                    usedBlocks: {
+                        ...built.usedBlocks
+                    },
+                    snippetBlocks: {
+                        ...built.snippetBlocks
+                    }
+                }
+            }
+        }
+
+        return res;
+    }
+
+    export function cloneApis(byQName: pxt.Map<pxtc.SymbolInfo>) {
+        const res: pxt.Map<pxtc.SymbolInfo> = {};
+
+        for (const key of Object.keys(byQName)) {
+            res[key] = cloneSymbolInfo(byQName[key]);
+        }
+
+        return res;
+    }
+
+    export function cloneSymbolInfo(sym: pxtc.SymbolInfo): pxtc.SymbolInfo {
+        return {
+            // FIXME: This is a little dangerous, because we do edit the symbol attributes in some places
+            // for localization. However, most of those edits are to top-level properties and only edits
+            // to child objects matter so it *should* be fine
+            attributes: {
+                ...sym.attributes
+            },
+
+            parameters: sym.parameters?.map(cloneParameterDesc),
+            extendsTypes: sym.extendsTypes ? [...sym.extendsTypes] : undefined,
+            pkgs: sym.pkgs ? [...sym.pkgs] : undefined,
+            combinedProperties: sym.combinedProperties ? [...sym.combinedProperties] : undefined,
+
+            name: sym.name,
+            namespace: sym.namespace,
+            fileName: sym.fileName,
+            kind: sym.kind,
+            retType: sym.retType,
+            isInstance: sym.isInstance,
+            isContextual: sym.isContextual,
+            qName: sym.qName,
+            pkg: sym.pkg,
+            snippet: sym.snippet,
+            snippetName: sym.snippetName,
+            snippetWithMarkers: sym.snippetWithMarkers,
+            pySnippet: sym.pySnippet,
+            pySnippetName: sym.pySnippetName,
+            pySnippetWithMarkers: sym.pySnippetWithMarkers,
+            blockFields: sym.blockFields,
+            isReadOnly: sym.isReadOnly,
+            pyName: sym.pyName,
+            pyQName: sym.pyQName,
+            snippetAddsDefinitions: sym.snippetAddsDefinitions,
+        }
+    }
+
+    function cloneParameterDesc(param: pxtc.ParameterDesc): pxtc.ParameterDesc {
+        return {
+            name: param.name,
+            description: param.description,
+            type: param.type,
+            pyTypeString: param.pyTypeString,
+            initializer: param.initializer,
+            default: param.default,
+            properties: param.properties?.map(clonePropertyDesc),
+            handlerParameters: param.handlerParameters?.map(clonePropertyDesc),
+            options: param.options ? U.clone(param.options) : undefined,
+            isEnum: param.isEnum
+        }
+    }
+
+    function clonePropertyDesc(prop: pxtc.PropertyDesc): pxtc.PropertyDesc {
+        return {
+            name: prop.name,
+            type: prop.type
+        }
+    }
+
+
+    export function toUTF8Array(s: string) {
+        return (new TextEncoder()).encode(s);
+    }
+
+    export function fromUTF8Array(s: Uint8Array) {
+        return (new TextDecoder()).decode(s);
+    }
 }
 
 namespace ts.pxtc.BrowserImpl {
@@ -1802,7 +1973,10 @@ namespace ts.pxtc.BrowserImpl {
     }
 
     export function sha256string(s: string) {
-        return sha256buffer(Util.stringToUint8Array(Util.toUTF8(s)))
+        pxt.perf.measureStart("sha256buffer")
+        const res = sha256buffer(Util.toUTF8Array(s));
+        pxt.perf.measureEnd("sha256buffer")
+        return res;
     }
 }
 
@@ -1997,6 +2171,10 @@ namespace ts.pxtc.jsonPatch {
                 ops.replace(parent, lastKey, op.value);
             }
         }
+    }
+
+    export function opsAreEqual(a: PatchOperation, b: PatchOperation): boolean {
+        return (a.op === b.op && U.arrayEquals(a.path, b.path));
     }
 }
 

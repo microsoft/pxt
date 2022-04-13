@@ -1,0 +1,129 @@
+.sharedialog.fullscreen.common-modal-container > .common-modal > .common-modal-body {
+    padding: 0;
+}
+
+.project-share {
+    display: flex;
+    height: 100%;
+}
+
+.project-share-simulator {
+    flex: 1;
+    height: 100%;
+    background-color: @simulatorBackground;
+
+    #shareLoanedSimulator {
+        position: relative;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    .simframe {
+        padding-bottom: 56.25%!important;
+    }
+}
+
+.project-share-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex: 1;
+
+    > div {
+        margin-bottom: 1rem;
+        flex-shrink: 0;
+    }
+}
+
+.project-share-title {
+    display: flex;
+
+    h2 {
+        flex: 1;
+        margin: 0;
+    }
+}
+
+#project-share-dropdown {
+    color: @primaryColor;
+}
+
+.project-share-thumbnail {
+    display: flex;
+    flex-direction: column;
+
+    .project-thumbnail-placeholder,
+    img {
+        margin: 0.3rem 0;
+        width: 15rem;
+        height: 11.25rem;
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+}
+
+.fullscreen {
+    .project-share > div {
+        padding: 2rem;
+    }
+
+    .project-share-info {
+        flex: unset;
+        width: 28rem;
+    }
+}
+
+/////////////////////////////////////////
+//           Embed                     //
+/////////////////////////////////////////
+
+.project-share-actions {
+    display: flex;
+
+    .share-button {
+        width: 3rem;
+        padding: 1rem 0.75rem;
+
+        i {
+            margin: 0;
+        }
+    }
+}
+
+
+/////////////////////////////////////////
+//           Gif Recorder              //
+/////////////////////////////////////////
+
+.gif-recorder {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    bottom: 0;
+    left: calc(~'(100vw - 25rem)/2');
+    padding: 1rem;
+    transform: translateX(-50%);
+    background: @white;
+    border: @teal;
+    border-radius: 0.2rem;
+    font-family: @segoeUIFont;
+}
+
+.gif-recorder-label,
+.thumbnail-label {
+    margin-bottom: 0.5rem;
+    font-family: @segoeUIFont;
+}
+
+.gif-recorder-actions {
+    display: flex;
+}
+
+.thumbnail-image,
+.thumbnail-placeholder {
+    display: flex;
+    background-color: rgba(0, 0, 0, 0.05);
+    width: 24.5rem;
+    height: 18.375rem;
+}

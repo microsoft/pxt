@@ -1,6 +1,7 @@
 import { PageSourceStatus } from "../store/reducer";
 
 const apiRoot = "https://www.makecode.com/api";
+export const cloudLocalStoreKey = "-SHOWN-LOGIN-PROMPT";
 export type MarkdownSource = "docs" | "github" | "local";
 
 export interface MarkdownFetchResult {
@@ -50,9 +51,7 @@ export async function getMarkdownAsync(source: MarkdownSource, url: string): Pro
 
     switch (source) {
         case "docs":
-            toFetch = getDocsIdentifier(url);
-            status = "approved";
-            break;
+            return fetchSkillmapFromDocs(url);
         case "github":
             return await fetchSkillMapFromGithub(url);
         case "local":
@@ -87,6 +86,17 @@ export async function getMarkdownAsync(source: MarkdownSource, url: string): Pro
     };
 }
 
+async function fetchSkillmapFromDocs(path: string): Promise<MarkdownFetchResult | undefined > {
+    const markdown = await pxt.Cloud.markdownAsync(cleanDocsUrl(path));
+    if (markdown) {
+        return {
+            text: markdown,
+            identifier: getDocsIdentifier(path),
+            status: "approved"
+        }
+    }
+    return undefined;
+}
 
 /**
  * Fetches the result and returns an identifier to key the content on. For docs, it
@@ -94,7 +104,7 @@ export async function getMarkdownAsync(source: MarkdownSource, url: string): Pro
  */
 async function fetchSkillMapFromGithub(path: string): Promise<MarkdownFetchResult | undefined> {
     const ghid = pxt.github.parseRepoId(path)
-    const config = await pxt.packagesConfigAsync();
+    const config = await pxt.packagesConfigAsync() || {};
 
     const baseRepo = pxt.github.parseRepoId(ghid.slug);
     const repoStatus = pxt.github.repoStatus(baseRepo, config);
@@ -153,8 +163,12 @@ async function fetchSkillMapFromLocal(path: string): Promise<MarkdownFetchResult
     return undefined;
 }
 
+function cleanDocsUrl(path: string) {
+    return path.trim().replace(/^[\\/]/i, "").replace(/\.md$/i, "");
+}
+
 export function getDocsIdentifier(path: string) {
-    path = path.trim().replace(/^[\\/]/i, "").replace(/\.md$/i, "");
+    path = cleanDocsUrl(path);
     const target = (window as any).pxtTargetBundle?.name || "arcade";
     return `${apiRoot}/md/${target}/${path}`;
 }

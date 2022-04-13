@@ -289,4 +289,30 @@ namespace pxtblockly {
             default: return [];
         }
     }
+
+
+    export function workspaceToScreenCoordinates(ws: Blockly.WorkspaceSvg, wsCoordinates: Blockly.utils.Coordinate) {
+        // The position in pixels relative to the origin of the
+        // main workspace.
+        const scaledWS = wsCoordinates.scale(ws.scale);
+
+        // The offset in pixels between the main workspace's origin and the upper
+        // left corner of the injection div.
+        const mainOffsetPixels = ws.getOriginOffsetInPixels();
+
+        // The client coordinates offset by the injection div's upper left corner.
+        const clientOffsetPixels = Blockly.utils.Coordinate.sum(
+            scaledWS, mainOffsetPixels);
+
+
+        const injectionDiv = ws.getInjectionDiv();
+
+        // Bounding rect coordinates are in client coordinates, meaning that they
+        // are in pixels relative to the upper left corner of the visible browser
+        // window.  These coordinates change when you scroll the browser window.
+        const boundingRect = injectionDiv.getBoundingClientRect();
+
+        return new Blockly.utils.Coordinate(clientOffsetPixels.x + boundingRect.left,
+            clientOffsetPixels.y + boundingRect.top)
+    }
 }

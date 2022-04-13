@@ -164,15 +164,23 @@ namespace pxt.BrowserUtils {
         } catch (e) { return false; }
     }
 
+    export function isTabletSize(): boolean {
+        return window?.innerWidth < pxt.BREAKPOINT_TABLET;
+    }
+
+    export function isComputerSize(): boolean {
+        return window?.innerWidth >= pxt.BREAKPOINT_TABLET;
+    }
+
     export function noSharedLocalStorage(): boolean {
         try {
             return /nosharedlocalstorage/i.test(window.location.href);
         } catch (e) { return false; }
     }
 
-    export function isVerticalTutorial(): boolean {
+    export function useOldTutorialLayout(): boolean {
         try {
-            return /tutoriallayout=v/.test(window.location.href);
+            return (/tutorialview=old/.test(window.location.href));
         } catch (e) { return false; }
     }
 
@@ -1065,6 +1073,7 @@ namespace pxt.BrowserUtils {
 
     interface TutorialInfoIndexedDbEntry {
         id: string;
+        time: number;
         hash: string;
         blocks: Map<number>;
         snippets: Map<Map<number>>;
@@ -1113,7 +1122,7 @@ namespace pxt.BrowserUtils {
 
             return this.db.getAsync<TutorialInfoIndexedDbEntry>(TutorialInfoIndexedDb.TABLE, key)
                 .then((res) => {
-                    if (res && res.hash == hash) {
+                    if (res && res.hash == hash && (Util.now() - (res.time || 0)) < 86400000) {
                         return res;
                     }
 
@@ -1142,6 +1151,7 @@ namespace pxt.BrowserUtils {
 
             const entry: TutorialInfoIndexedDbEntry = {
                 id: key,
+                time: Util.now(),
                 hash,
                 snippets,
                 blocks

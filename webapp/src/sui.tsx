@@ -6,6 +6,7 @@ import * as ReactTooltip from 'react-tooltip';
 import * as data from "./data";
 import * as core from "./core";
 import * as auth from "./auth";
+import { fireClickOnEnter } from "./util";
 
 export const appElement = document.getElementById('content');
 
@@ -46,14 +47,6 @@ export function genericContent(props: UiProps) {
     ]
     if (props.icon && props.rightIcon) retVal = retVal.reverse();
     return retVal;
-}
-
-export function fireClickOnEnter(e: React.KeyboardEvent<HTMLElement>): void {
-    const charCode = core.keyCodeFromEvent(e);
-    if (charCode === core.ENTER_KEY || charCode === core.SPACE_KEY) {
-        e.preventDefault();
-        (e.currentTarget as HTMLElement).click();
-    }
 }
 
 export class UIElement<T, S> extends data.Component<T, S> {
@@ -1336,7 +1329,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
             </div>
             {!isFullscreen && (this.props.actions && this.props.actions.length || this.props.buttons && this.props.buttons.length) ?
                 <div className="actions">
-                    {this.props.actions?.map(action => <div className="left-action">{action}</div>)}
+                    {this.props.actions?.map((action, i) => <div key={`action_left_${i}`} className="left-action">{action}</div>)}
                     {this.props.buttons?.map(action =>
                         action.url ?
                             <Link

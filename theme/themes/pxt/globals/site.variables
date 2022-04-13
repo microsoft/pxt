@@ -39,8 +39,12 @@
 @docsHeaderFont: "Helvetica Neue", Helvetica, Arial, sans-serif;
 @docsPageFont: "Helvetica Neue", Helvetica, Arial, sans-serif;
 
+@segoeUIFont: "Segoe UI", Tahoma, Geneva, Verdana;
+
 @emSize      : 14px;
 @fontSize    : 12pt;
+
+@smallFontSize    : 0.875rem;
 
 /*-------------------
    Links

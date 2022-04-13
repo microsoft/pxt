@@ -1,9 +1,12 @@
 import * as React from "react";
 import * as pkg from "../../package";
-import * as sui from "../../sui";
 import { connect } from 'react-redux';
 
-import { AssetEditorState, GalleryView } from "./store/assetEditorReducer";
+import { List } from "../../../../react-common/components/controls/List";
+import { Button } from "../../../../react-common/components/controls/Button";
+import { Modal, ModalAction } from "../../../../react-common/components/controls/Modal";
+
+import { AssetEditorState, GalleryView } from './store/assetEditorReducerState';
 import { dispatchUpdateUserAssets } from './actions/dispatch';
 
 import { AssetCardList } from "./assetCardList";
@@ -107,26 +110,36 @@ class AssetGalleryImpl extends React.Component<AssetGalleryProps, AssetGallerySt
             <AssetTopbar />
             <div className={`asset-editor-card-list ${view !== GalleryView.User ? "hidden" : ""}`}>
                 <AssetCardList assets={filterAssets(userAssets, isBlocksProject)}>
-                    <div className={`create-new ${disableCreateButton ? "disabled" : ""}`} role="button" onClick={!disableCreateButton ? this.showCreateModal : undefined}>
-                        <i className="icon huge add circle" />
-                        <span>{lf("New Asset")}</span>
-                    </div>
+                    <Button className="create-new inverted"
+                        disabled={disableCreateButton}
+                        leftIcon="icon huge add circle"
+                        title={lf("Create a new asset")}
+                        ariaLabel={lf("Create a new asset")}
+                        onClick={!disableCreateButton ? this.showCreateModal : undefined} />
                 </AssetCardList>
             </div>
             <div className={`asset-editor-card-list ${view !== GalleryView.Gallery ? "hidden" : ""}`}>
                 <AssetCardList assets={galleryAssets} />
             </div>
-            <sui.Modal className="asset-editor-create-dialog" isOpen={showCreateModal} onClose={this.hideCreateModal}
-                closeIcon={true} dimmer={true} header={lf("Create New Asset")}>
+            {showCreateModal && <Modal
+                className="asset-editor-create-dialog"
+                onClose={this.hideCreateModal}
+                title={lf("Create New Asset")}
+                parentElement={document.getElementById("root")}>
                 <div>{lf("Choose your asset type from the options below:")}</div>
-                <div className="asset-editor-create-options">{
+                <List className="asset-editor-create-options">{
                     this.assetCreateOptions.map((opt, i) => {
-                        return <div className="asset-editor-create-button" onClick={opt.handler} role="button" key={i}>
-                            <i className={`icon ${opt.icon}`} /><span>{opt.label}</span>
-                        </div>
+                        return <Button
+                            key={i}
+                            className="asset-editor-create-button inverted"
+                            leftIcon={`icon ${opt.icon}`}
+                            label={opt.label}
+                            title={lf("Create a new {0} asset", opt.label)}
+                            ariaLabel={lf("Create a new {0} asset", opt.label)}
+                            onClick={opt.handler} />
                     })
-                }</div>
-            </sui.Modal>
+                }</List>
+            </Modal>}
         </div>
     }
 }

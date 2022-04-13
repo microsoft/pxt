@@ -128,14 +128,14 @@ namespace pxt.storage.shared {
         return routingEnabled && pxt.BrowserUtils.isLocalHostDev() && !pxt.BrowserUtils.noSharedLocalStorage();
     }
 
-    function storageNamespace(): string {
+    function sharedStorageNamespace(): string {
         if (pxt.BrowserUtils.isChromiumEdge()) { return "chromium-edge"; }
         return pxt.BrowserUtils.browser();
     }
 
     export async function getAsync<T>(container: string, key: string): Promise<T> {
         if (useSharedLocalStorage()) {
-            container += '-' + storageNamespace();
+            container += '-' + sharedStorageNamespace();
             const resp = await pxt.Util.requestAsync({
                 url: `${localhostStoreUrl}${encodeURIComponent(container)}/${encodeURIComponent(key)}`,
                 method: "GET",
@@ -166,7 +166,7 @@ namespace pxt.storage.shared {
         else
             sval = val.toString();
         if (useSharedLocalStorage()) {
-            container += '-' + storageNamespace();
+            container += '-' + sharedStorageNamespace();
             const data = {
                 type: (typeof val === "object") ? "json" : "text",
                 val: sval
@@ -184,7 +184,7 @@ namespace pxt.storage.shared {
 
     export async function delAsync(container: string, key: string): Promise<void> {
         if (useSharedLocalStorage()) {
-            container += '-' + storageNamespace();
+            container += '-' + sharedStorageNamespace();
             await pxt.Util.requestAsync({
                 url: `${localhostStoreUrl}${encodeURIComponent(container)}/${encodeURIComponent(key)}`,
                 method: "DELETE",

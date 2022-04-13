@@ -1,4 +1,5 @@
-import { PageSourceStatus } from '../store/reducer';
+import { ReadyResources } from '../lib/readyResources';
+import { ModalState, PageSourceStatus } from '../store/reducer';
 import * as actions from './types'
 
 export const dispatchAddSkillMap = (map: SkillMap) => ({ type: actions.ADD_SKILL_MAP, map });
@@ -25,14 +26,6 @@ export const dispatchSetPageTheme = (theme: SkillGraphTheme) => ({ type: actions
 export const dispatchSetPageSourceUrl = (url: string, status: PageSourceStatus) => ({ type: actions.SET_PAGE_SOURCE_URL, url, status });
 export const dispatchSetPageAlternateUrls = (urls: string[]) => ({ type: actions.SET_PAGE_ALTERNATE_URLS, urls });
 
-export const dispatchShowCompletionModal = (mapId: string, activityId?: string) => ({ type: actions.SHOW_COMPLETION_MODAL, mapId, activityId });
-export const dispatchShowRestartActivityWarning = (mapId: string, activityId: string) => ({ type: actions.SHOW_RESTART_ACTIVITY_MODAL, mapId, activityId });
-export const dispatchShowReportAbuseModal = () => ({ type: actions.SHOW_REPORT_ABUSE_MODAL });
-export const dispatchShowResetUserModal = () => ({ type: actions.SHOW_RESET_USER_MODAL });
-export const dispatchShowCarryoverModal = (mapId: string, activityId: string) => ({ type: actions.SHOW_CARRYOVER_MODAL, mapId, activityId });
-export const dispatchShowShareModal = (mapId: string, activityId: string) => ({ type: actions.SHOW_SHARE_MODAL, mapId, activityId });
-export const dispatchShowLoginModal = () => ({ type: actions.SHOW_LOGIN_MODAL });
-export const dispatchShowDeleteAccountModal = () => ({ type: actions.SHOW_DELETE_ACCOUNT_MODAL });
 
 export const dispatchHideModal = () => ({ type: actions.HIDE_MODAL });
 
@@ -42,4 +35,21 @@ export const dispatchLogout = () => ({ type: actions.USER_LOG_OUT });
 export const dispatchShowUserProfile = () => ({ type: actions.SHOW_USER_PROFILE });
 export const dispatchCloseUserProfile = () => ({ type: actions.HIDE_USER_PROFILE });
 
-export const dispatchSetShareStatus = (headerId?: string, url?: string) =>  ({ type: actions.SET_SHARE_STATUS, headerId, url })
+export const dispatchSetShareStatus = (headerId?: string, url?: string) =>  ({ type: actions.SET_SHARE_STATUS, headerId, url });
+export const dispatchSetCloudStatus = (headerId: string, status: string) => ({ type: actions.SET_CLOUD_STATUS, headerId, status });
+export const dispatchSetReadyResources = (resources: ReadyResources) => ({ type: actions.SET_READY_RESOURCES, resources });
+export const dispatchGrantSkillmapBadge = (mapId: string) => ({ type: actions.GRANT_SKILLMAP_BADGE, mapId });
+
+export const dispatchShowCompletionModal = (mapId: string, activityId?: string) => ({ type: actions.SHOW_COMPLETION_MODAL, mapId, activityId });
+export const dispatchShowCarryoverModal = (mapId: string, activityId: string) => dispatchSetModal({ type: "carryover", currentMapId: mapId, currentActivityId: activityId });
+export const dispatchShowRestartActivityWarning = (mapId: string, activityId: string) => dispatchSetModal({ type: "restart-warning", currentMapId: mapId,currentActivityId:  activityId });
+export const dispatchShowReportAbuseModal = () => dispatchSetModal({ type: "report-abuse" });
+export const dispatchShowResetUserModal = () => dispatchSetModal({ type: "reset" });
+export const dispatchShowShareModal = (mapId: string, activityId: string, rewardsShare?: boolean) => dispatchSetModal({ type: "share", currentMapId: mapId, currentActivityId: activityId }, rewardsShare);
+export const dispatchShowLoginModal = () => dispatchSetModal({ type: "login"});
+export const dispatchShowLoginPrompt = () => dispatchSetModal({ type: "login-prompt"});
+export const dispatchShowDeleteAccountModal = () => dispatchSetModal({ type: "delete-account" });
+
+export const dispatchEnqueueModals = (modals: ModalState[]) => ({ type: actions.ENQUEUE_MODALS, modals })
+export const dispatchSetModal = (modal: ModalState, rewardsShare?: boolean) => ({ type: actions.SET_MODAL, modal, rewardsShare })
+export const dispatchNextModal = () => ({ type: actions.NEXT_MODAL })

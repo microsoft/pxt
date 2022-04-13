@@ -48,7 +48,7 @@ namespace pxt {
     export function setAppTarget(trg: TargetBundle) {
         appTarget = trg || <TargetBundle>{};
         patchAppTarget();
-        savedAppTarget = U.clone(appTarget)
+        savedAppTarget = U.cloneTargetBundle(appTarget)
     }
 
     let apiInfo: Map<PackageApiInfo>;
@@ -173,6 +173,8 @@ namespace pxt {
         }
         if (!comp.switches)
             comp.switches = {}
+        if (comp.nativeType == pxtc.NATIVE_TYPE_VM)
+            comp.sourceMap = true
         U.jsonCopyFrom(comp.switches, savedSwitches)
         // JS ref counting currently not supported
         comp.jsRefCounting = false
@@ -254,7 +256,7 @@ namespace pxt {
     export function reloadAppTargetVariant(temporary = false) {
         pxt.perf.measureStart("reloadAppTargetVariant")
         const curr = temporary ? "" : JSON.stringify(appTarget);
-        appTarget = U.clone(savedAppTarget)
+        appTarget = U.cloneTargetBundle(savedAppTarget)
         if (appTargetVariant) {
             const v = appTarget.variants && appTarget.variants[appTargetVariant];
             if (v)
@@ -384,6 +386,7 @@ namespace pxt {
         multiUrl?: string; // "/beta---multi"
         asseteditorUrl?: string; // "/beta---asseteditor"
         skillmapUrl?: string; // "/beta---skillmap"
+        authcodeUrl?: string; // "/beta---authcode"
         isStatic?: boolean;
         verprefix?: string; // "v1"
     }

@@ -692,18 +692,20 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
 
     for (const used of usedPackageInfo) {
         if (!used) continue;
-        const { info, dirname } = used;
+        let { info, dirname } = used;
+
+        const byQName = U.cloneApis(info.apis.byQName);
 
         // reinclude the pkg the api originates from, which is trimmed during compression
-        for (const api of Object.keys(info.apis.byQName)) {
-            info.apis.byQName[api].pkg = dirname;
+        for (const api of Object.keys(byQName)) {
+            byQName[api].pkg = dirname;
 
             // We had a bug where we were caching the translated language code and it broke translations.
             // make sure we clear it on any old cached entries from before the bug was fixed
-            delete info.apis.byQName[api].attributes._translatedLanguageCode;
-        }
+            delete byQName[api].attributes._translatedLanguageCode;
 
-        pxt.Util.jsonCopyFrom(result.byQName, info.apis.byQName);
+            result.byQName[api] = byQName[api];
+        }
     }
 
     result.jres = pkg.mainPkg.getJRes() || {};

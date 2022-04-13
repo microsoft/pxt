@@ -1,17 +1,22 @@
 import * as React from "react";
-import * as sui from "../sui";
 
 import { FieldEditorComponent } from '../blocklyFieldView';
 import { AssetCardView } from "./assetEditor/assetCard";
-import { assetToGalleryItem, getAssets } from "./assetEditor/store/assetEditorReducer";
+import { assetToGalleryItem, getAssets } from "../assets";
 import { ImageEditor } from "./ImageEditor/ImageEditor";
 import { obtainShortcutLock, releaseShortcutLock } from "./ImageEditor/keyboardShortcuts";
 import { GalleryTile, setTelemetryFunction } from './ImageEditor/store/imageReducer';
 import { FilterPanel } from './FilterPanel';
+import { fireClickOnEnter } from "../util";
+import { EditorToggle, EditorToggleItem, BasicEditorToggleItem } from "../../../react-common/components/controls/EditorToggle";
 
 export interface ImageFieldEditorProps {
     singleFrame: boolean;
     doneButtonCallback?: () => void;
+}
+
+interface ToggleOption extends BasicEditorToggleItem {
+    view: string;
 }
 
 export interface ImageFieldEditorState {
@@ -39,6 +44,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
     protected galleryAssets: pxt.Asset[];
     protected userAssets: pxt.Asset[];
     protected shortcutLock: number;
+    protected lightMode: boolean;
 
     protected get asset() {
         return this.ref?.getAsset();
@@ -89,19 +95,25 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
 
         const toggleOptions = [{
             label: lf("Editor"),
-            view: "editor",
-            icon: "paint brush",
-            onClick: this.showEditor
+            title: lf("Editor"),
+            focusable: true,
+            icon: "fas fa-paint-brush",
+            onClick: this.showEditor,
+            view: "editor"
         }, {
             label: lf("Gallery"),
-            view: "gallery",
-            icon: "picture",
-            onClick: this.showGallery
+            title: lf("Gallery"),
+            focusable: true,
+            icon: "fas fa-image",
+            onClick: this.showGallery,
+            view: "gallery"
         }, {
             label: lf("My Assets"),
-            view: "my-assets",
-            icon: "folder",
-            onClick: this.showMyAssets
+            title: lf("My Assets"),
+            focusable: true,
+            icon: "fas fa-folder",
+            onClick: this.showMyAssets,
+            view: "my-assets"
         }];
 
         if (!showGallery && !showMyAssets) {
@@ -118,10 +130,15 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
             {showHeader && <div className="gallery-editor-header">
                 <div className="image-editor-header-left" />
                 <div className="image-editor-header-center">
-                    <ImageEditorToggle options={toggleOptions} view={currentView} />
+                    <EditorToggle
+                        id="image-editor-toggle"
+                        className="slim tablet-compact"
+                        items={toggleOptions}
+                        selected={toggleOptions.findIndex(i => i.view === currentView)}
+                    />
                 </div>
                 <div className="image-editor-header-right">
-                    <div className={`gallery-filter-button ${this.state.currentView === "gallery" ? '' : "hidden"}`} role="button" onClick={this.toggleFilter} onKeyDown={sui.fireClickOnEnter}>
+                    <div className={`gallery-filter-button ${this.state.currentView === "gallery" ? '' : "hidden"}`} role="button" onClick={this.toggleFilter} onKeyDown={fireClickOnEnter}>
                         <div className="gallery-filter-button-icon">
                             <i className="icon filter" />
                         </div>
@@ -134,7 +151,13 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
             </div>}
             <div className="image-editor-gallery-window">
                 <div className="image-editor-gallery-content">
-                    <ImageEditor ref="image-editor" singleFrame={this.props.singleFrame} onDoneClicked={this.onDoneClick} onTileEditorOpenClose={this.onTileEditorOpenClose} />
+                    <ImageEditor
+                        ref="image-editor"
+                        singleFrame={this.props.singleFrame}
+                        onDoneClicked={this.onDoneClick}
+                        onTileEditorOpenClose={this.onTileEditorOpenClose}
+                        lightMode={this.lightMode}
+                        />
                     <ImageEditorGallery
                         items={filteredAssets}
                         hidden={currentView === "editor"}
@@ -163,6 +186,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
     init(value: U, close: () => void, options?: any) {
         this.closeEditor = close;
         this.options = options;
+        this.lightMode = options.lightMode;
 
         switch (value.type) {
             case pxt.AssetType.Image:

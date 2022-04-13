@@ -1,11 +1,11 @@
 /// <reference path="../../../built/pxteditor.d.ts" />
 import * as React from "react";
 import { connect } from 'react-redux';
-import { isLocal, resolvePath, getEditorUrl, tickEvent } from "../lib/browserUtils";
+import { isLocal, resolvePath, getEditorUrl, tickEvent, cloudLocalStoreKey } from "../lib/browserUtils";
 import { lookupActivityProgress } from "../lib/skillMapUtils";
 
 import { SkillMapState } from '../store/reducer';
-import  { dispatchSetHeaderIdForActivity, dispatchCloseActivity, dispatchSaveAndCloseActivity, dispatchUpdateUserCompletedTags, dispatchSetShareStatus } from '../actions/dispatch';
+import  { dispatchSetHeaderIdForActivity, dispatchCloseActivity, dispatchSaveAndCloseActivity, dispatchUpdateUserCompletedTags, dispatchSetShareStatus, dispatchSetCloudStatus, dispatchShowLoginPrompt } from '../actions/dispatch';
 
 /* eslint-disable import/no-unassigned-import, import/no-internal-modules */
 import '../styles/makecode-editor.css'
@@ -23,12 +23,17 @@ interface MakeCodeFrameProps {
     previousHeaderId?: string;
     progress?: ActivityState;
     shareHeaderId?: string;
+    signedIn?: boolean;
+    highContrast?: boolean;
+    pageSourceUrl: string;
     dispatchSetHeaderIdForActivity: (mapId: string, activityId: string, id: string, currentStep: number, maxSteps: number, isCompleted: boolean) => void;
     dispatchCloseActivity: (finished?: boolean) => void;
     dispatchSaveAndCloseActivity: () => void;
     dispatchUpdateUserCompletedTags: () => void;
     dispatchSetShareStatus: (headerId?: string, url?: string) => void;
-    onFrameLoaded: (sendMessageAsync: (message: any) => Promise<any>) => void;
+    dispatchShowLoginPrompt: () => void;
+    dispatchSetCloudStatus: (headerId: string, status: string) => void;
+    onWorkspaceReady: (sendMessageAsync: (message: any) => Promise<any>) => void;
 }
 
 type FrameState = "loading" | "no-project" | "opening-project" | "project-open" | "closing-project";
@@ -65,8 +70,18 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
         };
     }
 
+    UNSAFE_componentWillReceiveProps(nextProps: MakeCodeFrameProps) {
+        if (this.props.highContrast != nextProps.highContrast) {
+            this.sendMessageAsync({
+                type: "pxteditor",
+                action: "sethighcontrast",
+                on: nextProps.highContrast
+            }  as pxt.editor.EditorMessageSetHighContrastRequest);
+        }
+    }
+
     async componentDidUpdate() {
-        const { shareHeaderId } = this.props;
+        const { shareHeaderId, highContrast } = this.props;
         const { frameState, pendingShare } = this.state;
         if (frameState === "project-open" && this.props.save) {
             this.setState({ frameState: "closing-project" }, async () => {
@@ -139,8 +154,6 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
 
             const root = document.getElementById("root");
             if (root) pxt.BrowserUtils.addClass(root, "editor");
-
-            this.props.onFrameLoaded((message) => this.sendMessageAsync(message));
         }
     }
 
@@ -161,6 +174,11 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
 
         switch (data.action) {
             case "newproject":
+                if (!this.state.workspaceReady) {
+                    this.setState({ workspaceReady: true });
+                    this.sendMessageAsync(); // Flush message queue
+                    this.props.onWorkspaceReady((message) => this.sendMessageAsync(message));
+                }
                 if (this.state.frameState === "loading") {
                     this.setState({ frameState: "no-project" });
                 }
@@ -168,12 +186,17 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
             case "tutorialevent":
                 this.handleTutorialEvent(data as pxt.editor.EditorMessageTutorialEventRequest);
                 break;
+            case "projectcloudstatus": {
+                const msg = data as pxt.editor.EditorMessageProjectCloudStatus;
+                this.props.dispatchSetCloudStatus(msg.headerId, msg.status);
+                break;
+            }
             default:
                 // console.log(JSON.stringify(data, null, 4));
         }
     }
 
-    protected sendMessageAsync(message: any) {
+    protected sendMessageAsync(message?: any) {
         return new Promise(resolve => {
             const sendMessageCore = (message: any) => {
                 message.response = true;
@@ -186,14 +209,14 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
             }
 
             if (this.ref) {
-                if (!this.ref.contentWindow) {
+                if (!this.state.workspaceReady) {
                     this.messageQueue.push(message);
                 }
                 else {
                     while (this.messageQueue.length) {
                         sendMessageCore(this.messageQueue.shift());
                     }
-                    sendMessageCore(message);
+                    if (message) sendMessageCore(message);
                 }
             }
         });
@@ -255,7 +278,8 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
     }
 
     protected handleTutorialEvent(event: pxt.editor.EditorMessageTutorialEventRequest) {
-        const { dispatchSetHeaderIdForActivity, mapId, activityId, progress } = this.props;
+        const { dispatchSetHeaderIdForActivity, dispatchSaveAndCloseActivity,
+            mapId, activityId, progress } = this.props;
 
         switch (event.tutorialEvent) {
             case "progress":
@@ -276,6 +300,9 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
             case "completed":
                 this.onTutorialFinished();
                 break;
+            case "exit":
+                dispatchSaveAndCloseActivity();
+                break;
         }
     }
 
@@ -294,10 +321,15 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
     }
 
     protected onTutorialFinished() {
-        const { mapId, activityId } = this.props;
+        const { mapId, activityId, signedIn, pageSourceUrl } = this.props;
         tickEvent("skillmap.activity.complete", { path: mapId, activity: activityId });
         this.finishedActivityState = "finished";
         this.props.dispatchSaveAndCloseActivity();
+        const haveSeen = pxt.storage.getLocal(pageSourceUrl + cloudLocalStoreKey)
+        if (!signedIn && !haveSeen) {
+            this.props.dispatchShowLoginPrompt();
+            pxt.storage.setLocal(pageSourceUrl + cloudLocalStoreKey, "true")
+        }
     }
 }
 
@@ -329,7 +361,10 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         previousHeaderId: previousHeaderId,
         progress,
         save: saveState === "saving",
-        shareHeaderId
+        shareHeaderId,
+        signedIn: state.auth.signedIn,
+        highContrast: state.auth.preferences?.highContrast,
+        pageSourceUrl: state.pageSourceUrl
     }
 }
 
@@ -343,7 +378,9 @@ const mapDispatchToProps = {
     dispatchCloseActivity,
     dispatchSaveAndCloseActivity,
     dispatchUpdateUserCompletedTags,
-    dispatchSetShareStatus
+    dispatchSetShareStatus,
+    dispatchShowLoginPrompt,
+    dispatchSetCloudStatus
 };
 
 export const MakeCodeFrame = connect(mapStateToProps, mapDispatchToProps)(MakeCodeFrameImpl);

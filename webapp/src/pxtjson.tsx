@@ -6,6 +6,7 @@ import * as core from "./core";
 import * as data from "./data";
 
 import Util = pxt.Util;
+import { fireClickOnEnter } from "./util";
 
 export class Editor extends srceditor.Editor {
     config: pxt.PackageConfig = {} as any;
@@ -139,7 +140,7 @@ export class Editor extends srceditor.Editor {
             <div className="ui content">
                 <div className="ui small header">
                     <div className="content">
-                        <sui.Button autoFocus title={lf("Go back")} tabIndex={0} onClick={this.goBack} onKeyDown={sui.fireClickOnEnter}>
+                        <sui.Button autoFocus title={lf("Go back")} tabIndex={0} onClick={this.goBack} onKeyDown={fireClickOnEnter}>
                             <sui.Icon icon="arrow left" />
                             <span className="ui text landscape only">{lf("Go back")}</span>
                         </sui.Button>

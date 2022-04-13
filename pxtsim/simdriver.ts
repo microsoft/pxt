@@ -413,7 +413,7 @@ namespace pxsim {
             frame.id = 'sim-frame-' + this.nextId()
             frame.title = pxsim.localization.lf("Simulator")
             frame.allowFullscreen = true;
-            frame.setAttribute('allow', 'autoplay');
+            frame.setAttribute('allow', 'autoplay;microphone');
             frame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
             frame.className = 'no-select'
             const furl = (url || this.getSimUrl()) + '#' + frame.id;

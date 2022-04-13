@@ -239,6 +239,14 @@ namespace pxsim {
             return res;
         }
 
+        export function toUTF8Array(s: string) {
+            return (new TextEncoder()).encode(s);
+        }
+
+        export function fromUTF8Array(s: Uint8Array) {
+            return (new TextDecoder()).decode(s);
+        }
+
         export function isPxtElectron(): boolean {
             return typeof window != "undefined" && !!(window as any).pxtElectron;
         }

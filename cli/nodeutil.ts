@@ -359,9 +359,9 @@ export function cpR(src: string, dst: string, maxDepth = 8) {
     }
 }
 
-export function cp(srcFile: string, destDirectory: string) {
+export function cp(srcFile: string, destDirectory: string, destName?: string) {
     mkdirP(destDirectory);
-    let dest = path.resolve(destDirectory, path.basename(srcFile));
+    let dest = path.resolve(destDirectory, destName || path.basename(srcFile));
     let buf = fs.readFileSync(path.resolve(srcFile));
     fs.writeFileSync(dest, buf);
 }

@@ -84,7 +84,7 @@ namespace pxtblockly {
             // playing twice (once in the editor and once when the code runs in the sim)
             Blockly.Events.fire(new Blockly.Events.Ui(this.sourceBlock_, "melody-editor", false, true))
 
-            Blockly.DropDownDiv.showPositionedByBlock(this, this.sourceBlock_, () => {
+            Blockly.DropDownDiv.showPositionedByBlock(this, this.sourceBlock_ as Blockly.BlockSvg, () => {
                 this.onEditorClose();
                 // revert all style attributes for dropdown div
                 pxt.BrowserUtils.removeClass(contentDiv, "melody-content-div");
@@ -306,7 +306,7 @@ namespace pxtblockly {
 
         // The height of the preview on the block itself
         protected getPreviewHeight(): number {
-            return this.constants_.FIELD_BORDER_RECT_HEIGHT;
+            return this.getConstants()?.FIELD_BORDER_RECT_HEIGHT || 16;
         }
 
         protected getDropdownBackgroundColour() {

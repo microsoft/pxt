@@ -7,6 +7,7 @@ import { SvgGraph, getGraph, PADDING, UNIT, MIN_HEIGHT, MIN_WIDTH } from '../lib
 
 /* eslint-disable import/no-unassigned-import, import/no-internal-modules */
 import '../styles/skillgraph.css'
+import { MenuBar } from "react-common/controls/MenuBar";
 /* eslint-enable import/no-unassigned-import, import/no-internal-modules */
 
 interface SkillGraphContainerProps {
@@ -71,7 +72,7 @@ export class SkillGraphContainerImpl extends React.Component<SkillGraphContainer
 
         return <div className="skill-graph-wrapper">
             <div className={`skill-graph-content ${useBackground ? "has-background" : ""}`}>
-                <div className="skill-graph-activities">
+                <MenuBar className="skill-graph-activities" ariaLabel={lf("Skill Map")}>
                     <svg viewBox={`-${widthDiff + padding} -${heightDiff + padding} ${width + padding * 2} ${height + padding * 2}`} preserveAspectRatio="xMidYMid meet">
                         {graphs.map((el, i) => {
                             translateY += el.height;
@@ -80,7 +81,7 @@ export class SkillGraphContainerImpl extends React.Component<SkillGraphContainer
                             </g>
                         })}
                     </svg>
-                </div>
+                </MenuBar>
                 {backgroundImageUrl && <div className="skill-graph-background">
                     <img src={backgroundImageUrl} alt={lf("Background Image")} onLoad={this.onImageLoad} />
                 </div>}

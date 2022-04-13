@@ -1375,7 +1375,7 @@ namespace pxt.hexloader {
                             .then(ret => new Promise<string>((resolve, reject) => {
                                 let retry = 0;
                                 const delay = 8000; // ms
-                                const maxWait = 180000; // ms
+                                const maxWait = 300000; // ms
                                 const startTry = U.now();
                                 const tryGet = () => {
                                     retry++;

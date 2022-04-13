@@ -39,6 +39,7 @@ namespace pxt.auth {
                 encoded?: string;
                 dataUrl?: string;
             };
+            pictureUrl?: string;
         };
     };
 
@@ -46,6 +47,15 @@ namespace pxt.auth {
         mapProgress: any;
         completedTags: any;
     };
+
+    export type UserBadgeState = {
+        badges: Badge[];
+    }
+
+    export type SetPrefResult = {
+        success: boolean;
+        res: UserPreferences;
+    }
 
     /**
      * User preference state that should be synced with the cloud.
@@ -55,12 +65,16 @@ namespace pxt.auth {
         highContrast?: boolean;
         reader?: string;
         skillmap?: UserSkillmapState;
+        badges?: UserBadgeState;
+        email?: boolean;
     };
 
     export const DEFAULT_USER_PREFERENCES: () => UserPreferences = () => ({
         highContrast: false,
         language: pxt.appTarget.appTheme.defaultLocale,
-        reader: ""
+        reader: "",
+        skillmap: { mapProgress: {}, completedTags: {} },
+        email: false
     });
 
     /**
@@ -73,6 +87,11 @@ namespace pxt.auth {
 
     let _client: AuthClient;
     export function client(): AuthClient { return _client; }
+
+    const PREFERENCES_DEBOUNCE_MS = 1 * 1000;
+    const PREFERENCES_DEBOUNCE_MAX_MS = 10 * 1000;
+    let debouncePreferencesChangedTimeout = 0;
+    let debouncePreferencesChangedStarted = 0;
 
     export abstract class AuthClient {
         /**
@@ -293,22 +312,96 @@ namespace pxt.auth {
             return result.success;
         }
 
-        public async patchUserPreferencesAsync(ops: ts.pxtc.jsonPatch.PatchOperation | ts.pxtc.jsonPatch.PatchOperation[]) {
-            ops = Array.isArray(ops) ? ops : [ops];
-            if (!ops.length) { return; }
+        private patchQueue: {
+            ops: ts.pxtc.jsonPatch.PatchOperation[];
+            filter?: (op: ts.pxtc.jsonPatch.PatchOperation) => boolean;
+        }[] = [];
+
+        public async patchUserPreferencesAsync(patchOps: ts.pxtc.jsonPatch.PatchOperation | ts.pxtc.jsonPatch.PatchOperation[], opts: {
+            immediate?: boolean,                                            // Sync the change with cloud immediately, don't debounce
+            filter?: (op: ts.pxtc.jsonPatch.PatchOperation) => boolean      // Filter the final set of patch operations
+        } = {}): Promise<SetPrefResult> {
+            const defaultSuccessAsync = async (): Promise<SetPrefResult> => ({ success: true, res: await this.userPreferencesAsync() });
+
+            patchOps = Array.isArray(patchOps) ? patchOps : [patchOps];
+            patchOps = patchOps.filter(op => !!op);
+            if (!patchOps.length) { return await defaultSuccessAsync(); }
+
+            const patchDiff = (pSrc: UserPreferences, ops: ts.pxtc.jsonPatch.PatchOperation[], filter?: (op: ts.pxtc.jsonPatch.PatchOperation) => boolean) => {
+                // Apply patches to pDst and return the diff as a set of new patch ops.
+                const pDst = U.deepCopy(pSrc);
+                ts.pxtc.jsonPatch.patchInPlace(pDst, ops);
+                let diff = ts.pxtc.jsonPatch.diff(pSrc, pDst);
+                // Run caller-provided filter
+                if (diff.length && filter) { diff = diff.filter(filter); }
+                return diff;
+            }
+
+            // Process incoming patch operations to produce a more fine-grained set of diffs. Incoming patches may be overly destructive
+
+            // Apply the patch in isolation and get the diff from original
             const curPref = await this.userPreferencesAsync();
-            ts.pxtc.jsonPatch.patchInPlace(curPref, ops);
+            const diff = patchDiff(curPref, patchOps, opts.filter);
+            if (!diff.length) { return await defaultSuccessAsync(); }
+
+            // Apply the new diff to the current state
+            ts.pxtc.jsonPatch.patchInPlace(curPref, diff);
             await this.setUserPreferencesAsync(curPref);
-            // If we're not logged in, non-persistent local state is all we'll use
-            if (!await this.loggedInAsync()) { return; }
-            // If the user is logged in, save to cloud
-            const result = await this.apiAsync<UserPreferences>('/api/user/preferences', ops, 'PATCH');
-            if (result.success) {
-                pxt.debug("Updating local user preferences w/ cloud data after result of POST")
-                // Set user profile from returned value so we stay in-sync
-                this.setUserPreferencesAsync(result.resp)
+
+            // If the user is not logged in, non-persistent local state is all we'll use (no sync to cloud)
+            if (!await this.loggedInAsync()) { return await defaultSuccessAsync(); }
+
+            // If the user is logged in, sync to cloud, but debounce the api call as this can be called frequently from skillmaps
+
+            // Queue the patch for sync with backend
+            this.patchQueue.push({ ops: patchOps, filter: opts.filter });
+
+            clearTimeout(debouncePreferencesChangedTimeout);
+            const syncPrefs = async () => {
+                debouncePreferencesChangedStarted = 0;
+                if (!this.patchQueue.length) { return await defaultSuccessAsync(); }
+
+                // Fetch latest prefs from remote
+                const getResult = await this.apiAsync<Partial<UserPreferences>>('/api/user/preferences');
+                if (!getResult.success) {
+                    pxt.reportError("identity", "failed to fetch preferences for patch", getResult as any);
+                    return { success: false, res: undefined };
+                }
+
+                // Apply queued patches to the remote state in isolation and develop a final diff to send to the backend
+                const remotePrefs = U.deepCopy(getResult.resp) || DEFAULT_USER_PREFERENCES();
+                const patchQueue = this.patchQueue;
+                this.patchQueue = []; // Reset the queue
+                patchQueue.forEach(patch => {
+                    const diff = patchDiff(remotePrefs, patch.ops, patch.filter);
+                    ts.pxtc.jsonPatch.patchInPlace(remotePrefs, diff);
+                });
+
+                // Diff the original and patched remote states to get a final set of patch operations
+                const finalOps = pxtc.jsonPatch.diff(getResult.resp, remotePrefs);
+
+                const patchResult = await this.apiAsync<UserPreferences>('/api/user/preferences', finalOps, 'PATCH');
+                if (patchResult.success) {
+                    // Set user profile from returned value so we stay in sync
+                    this.setUserPreferencesAsync(patchResult.resp);
+                } else {
+                    pxt.reportError("identity", "failed to patch preferences", patchResult as any);
+                }
+                return { success: patchResult.success, res: patchResult.resp };
+            }
+
+            if (opts.immediate) {
+                return await syncPrefs();
             } else {
-                pxt.reportError("identity", "update preferences failed", result as any);
+                if (!debouncePreferencesChangedStarted) {
+                    debouncePreferencesChangedStarted = U.now();
+                }
+                if (PREFERENCES_DEBOUNCE_MAX_MS < U.now() - debouncePreferencesChangedStarted) {
+                    return await syncPrefs();
+                } else {
+                    debouncePreferencesChangedTimeout = setTimeout(syncPrefs, PREFERENCES_DEBOUNCE_MS);
+                    return { success: false, res: undefined }; // This needs to be implemented correctly to return a promise with the debouncer
+                }
             }
         }
 
@@ -605,5 +698,16 @@ namespace pxt.auth {
                 profile.idp.picture.dataUrl = url.createObjectURL(blob);
             } catch { }
         }
+    }
+
+    /**
+     * Checks only the ID and sourceURL
+     */
+    export function badgeEquals(badgeA: pxt.auth.Badge, badgeB: pxt.auth.Badge) {
+        return badgeA.id === badgeB.id && badgeA.sourceURL === badgeB.sourceURL;
+    }
+
+    export function hasBadge(preferences: pxt.auth.UserBadgeState, badge: pxt.auth.Badge) {
+        return preferences.badges.some(toCheck => badgeEquals(toCheck, badge));
     }
 }

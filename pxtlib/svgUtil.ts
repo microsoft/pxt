@@ -471,6 +471,11 @@ namespace pxt.svgUtil {
             cb(this.d);
             return this.update();
         }
+
+        setD(d: string): this {
+            this.setAttribute("d", d);
+            return this;
+        }
     }
 
     export class Image extends Drawable<SVGImageElement> {

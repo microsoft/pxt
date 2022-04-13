@@ -1,5 +1,37 @@
 # Microsoft MakeCode Blog
 
+## [MakeCode Arcade Valentine’s Update](/blog/arcade/valentine-update-2022)
+
+February 9th, 2022 by [Jaqster](https://github.com/jaqster)
+
+Love is in the air! But instead of a box of chocolates, we’ve got something better for you... updates for MakeCode Arcade and a Valentine’s Day tutorial! 💖
+
+**[Continue reading this blog post](/blog/arcade/valentine-update-2022)**
+
+## [Sing 2 Skillmap](/blog/arcade/sing-2-skillmap)
+
+December 27th, 2021 by [ElizabethRiffle](https://github.com/ElizabethRiffle)
+
+This December, Microsoft MakeCode is collaborating with Universal Studios to bring you a Sing 2 inspired skillmap in Makecode Arcade!
+
+**[Continue reading this blog post](/blog/arcade/sing-2-skillmap)**
+
+## [Computer Science Education Week 2021](/blog/csed-week/csed-week-2021)
+
+November 8th, 2021 by [Jaqster](https://github.com/jaqster)
+
+Computer Science Education Week is coming up December 6th - 12th. This is an annual event to raise the visibility of computer science in education, and to inspire teachers and students to complete an "Hour of Code" during this week.
+
+**[Continue reading this blog post](/blog/csed-week/csed-week-2021)**
+
+## [MakeCode Arcade Tutorial Update](/blog/arcade/tutorial-update)
+
+September 24th, 2021 by [Jaqster](https://github.com/jaqster)
+
+In an effort to help optimize screen layout for everyone, we’ve updated our tutorial interface...
+
+**[Continue reading this blog post](/blog/arcade/tutorial-update)**
+
 ## [Introducing Cloud Sync for MakeCode Arcade](/blog/arcade/intro-cloud-sync)
 
 August 12th, 2021 by [eanders-ms](https://github.com/eanders-ms)

@@ -89,7 +89,16 @@ function saveCache() {
 }
 
 function matches(ce: CacheEntry, prefix: string) {
-    return ce.path.slice(0, prefix.length) == prefix;
+    if (ce.path.slice(0, prefix.length) == prefix) {
+        // exact match
+        return true;
+    } else if (ce.path.endsWith(":*")) {
+        // ce.path is a wildcard
+        const [ce_proto] = ce.path.split(':');
+        const [prefix_proto] = prefix.split(':');
+        return ce_proto == prefix_proto;
+    }
+    return false;
 }
 
 function notify(ce: CacheEntry, path: string) {
@@ -275,13 +284,6 @@ mountVirtualApi("gh-search", {
     isOffline: () => !Cloud.isOnline(),
 })
 
-mountVirtualApi("gh-pkgcfg", {
-    getAsync: query =>
-        pxt.github.pkgConfigAsync(stripProtocol(query)).catch(core.handleNetworkError),
-    expirationTime: p => 60 * 1000,
-    isOffline: () => !Cloud.isOnline(),
-})
-
 // gh-commits:repo#sha
 mountVirtualApi("gh-commits", {
     getAsync: query => {
@@ -306,7 +308,6 @@ mountVirtualApi("target-config", {
                         pxt.storage.setLocal("targetconfig", JSON.stringify(js))
                         invalidate("target-config");
                         invalidate("gh-search");
-                        invalidate("gh-pkgcfg");
                     }
                     return js;
                 })

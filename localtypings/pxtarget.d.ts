@@ -29,6 +29,7 @@ declare namespace pxt {
         windowsStoreLink?: string;
         // release manifest for the electron app
         electronManifest?: pxt.electron.ElectronManifest;
+        profileNotification?: ProfileNotification;
     }
 
     interface PackagesConfig {
@@ -86,6 +87,7 @@ declare namespace pxt {
         checkdocsdirs?: string[]; // list of /docs subfolders for checkdocs, irrespective of SUMMARY.md
         cacheusedblocksdirs?: string[]; // list of /docs subfolders for parsing and caching used block ids (for tutorial loading)
         blockIdMap?: Map<string[]>; // list of target-specific blocks that are "synonyms" (eg. "agentturnright" and "minecraftAgentTurn")
+        defaultBadges?: pxt.auth.Badge[];
     }
 
     interface BrowserOptions {
@@ -170,6 +172,8 @@ declare namespace pxt {
     }
 
     interface AppCloud {
+        // specify the desired api root, https://makecode.com/api/
+        apiRoot?: string;
         workspaces?: boolean;
         packages?: boolean;
         sharing?: boolean; // uses cloud-based anonymous sharing
@@ -423,6 +427,7 @@ declare namespace pxt {
         githubEditor?: boolean; // allow editing github repositories from the editor
         githubCompiledJs?: boolean; // commit binary.js in commit when creating a github release,
         blocksCollapsing?: boolean; // collapse/uncollapse functions/event in blocks
+        workspaceSearch?: boolean; // allow CTRL+F blocks workspace search
         hideHomeDetailsVideo?: boolean; // hide video/large image from details card
         tutorialBlocksDiff?: boolean; // automatically display blocks diffs in tutorials
         tutorialTextDiff?: boolean; // automatically display text diffs in tutorials
@@ -494,6 +499,10 @@ declare namespace pxt {
     interface TargetBundle extends AppTarget {
         bundledpkgs: Map<Map<string>>;   // @internal use only (cache)
         bundleddirs: string[];
+        staticpkgdirs?: {
+            base: string[];
+            extensions: string[];
+        }      // if defined, used in staticpkg as pkgs to combine with bundled dirs. Otherwise, bundled dirs will be combined with eachother.
         versions: TargetVersions;        // @derived
         apiInfo?: Map<PackageApiInfo>;
         tutorialInfo?: Map<BuiltTutorialInfo>; // hash of tutorial code mapped to prebuilt info for each tutorial
@@ -574,6 +583,15 @@ declare namespace pxt {
         type: "serviceworker";
         action: "packet-io-status";
     }
+
+    interface ProfileNotification {
+        message: string;
+        title: string
+        icon: string;
+        actionText: string;
+        link: string;
+        xicon?: boolean;
+    }
 }
 
 declare namespace pxt.editor {
@@ -593,7 +611,10 @@ declare namespace pxt.editor {
         Standard = "",
         PythonOnly = "python-only",
         JavaScriptOnly = "javascript-only",
-        NoBlocks = "no-blocks"
+        BlocksOnly = "blocks-only",
+        NoBlocks = "no-blocks",
+        NoPython = "no-python",
+        NoJavaScript = "no-javascript"
     }
 }
 
@@ -636,10 +657,12 @@ declare namespace ts.pxtc {
         useMkcd?: boolean;
         useELF?: boolean;
         useESP?: boolean;
+        sourceMap?: boolean;
         saveAsPNG?: boolean;
         noSourceInFlash?: boolean;
         useModulator?: boolean;
         webUSB?: boolean; // use WebUSB when supported
+        disableHIDBridge?: boolean; // disable hid bridge
         hexMimeType?: string;
         moveHexEof?: boolean;
         driveName?: string;
@@ -799,6 +822,7 @@ declare namespace ts.pxtc {
         mutatePropertyEnum?: string;
         inlineInputMode?: string; // can be inline, external, or auto
         expandableArgumentMode?: string; // can be disabled, enabled, or toggle
+        compileHiddenArguments?: boolean; // if true, compiles the values in expandable arguments even when collapsed
         draggableParameters?: string; // can be reporter or variable; defaults to variable
 
 
@@ -1074,19 +1098,26 @@ declare namespace pxt.tutorial {
     }
 
     interface TutorialStepInfo {
-        // fullscreen?: boolean; // DEPRECATED, replaced by "showHint"
-        // unplugged?: boolean: // DEPRECATED, replaced by "showDialog"
-
+        // Step metadata
         showHint?: boolean; // automatically displays hint
         showDialog?: boolean; // no coding, displays in modal
+        resetDiff?: boolean; // reset diffify algo
         tutorialCompleted?: boolean;
+
+        // Step content
+        title?: string;
+        activity?: number;
         contentMd?: string;
+
+        // Validation
+        requiredBlockMd?: string;
+        listOfValidationRules?: pxt.tutorial.TutorialRuleStatus[]; // Whether the user code has been marked valid for these set of rules
+
+        // Old
         headerContentMd?: string;
         hintContentMd?: string;
-        requiredBlockMd?: string;
-        activity?: number;
-        resetDiff?: boolean; // reset diffify algo
-        listOfValidationRules?: pxt.tutorial.TutorialRuleStatus[]; // Whether the user code has been marked valid for these set of rules
+        // fullscreen?: boolean; // DEPRECATED, replaced by "showHint"
+        // unplugged?: boolean: // DEPRECATED, replaced by "showDialog"
     }
 
     interface TutorialActivityInfo {
@@ -1117,11 +1148,32 @@ declare namespace pxt.tutorial {
         jres?: string; // JRES to be used when generating hints; necessary for tilemaps
         customTs?: string; // custom typescript code loaded in a separate file for the tutorial
         tutorialValidationRules?: pxt.Map<boolean>; //a map of rules used in a tutorial and if the rules are activated
+        templateLoaded?: boolean; // if the template code has been loaded once, we skip
     }
     interface TutorialCompletionInfo {
         // id of the tutorial
         id: string;
         // number of steps completed
         steps: number;
+    }
+}
+
+declare namespace pxt.auth {
+    type BadgeType = "skillmap-completion";
+
+    type Badge = SkillmapBadge;
+
+    interface BaseBadge {
+        id: string;
+        type: BadgeType;
+        title: string;
+        image: string;
+        lockedImage?: string;
+        timestamp?: number;
+    }
+
+    interface SkillmapBadge extends BaseBadge {
+        type: "skillmap-completion";
+        sourceURL: string;
     }
 }

@@ -1,17 +1,20 @@
 {
     "editor": "blocksprj",
-    "title": "Tutorial Completed ",
+    "title": "Tutorial Completed",
     "steps": [
         {
+            "title": "Introduction",
             "contentMd": "Let's get started!",
             "headerContentMd": "Let's get started!"
         },
         {
+            "title": "Step 1",
             "contentMd": "The tutorial finishes at this step",
             "headerContentMd": "The tutorial finishes at this step",
             "tutorialCompleted": true
         },
         {
+            "title": "Step 2",
             "contentMd": "There may be steps afterwards",
             "headerContentMd": "There may be steps afterwards"
         }

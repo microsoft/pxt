@@ -1,46 +1,29 @@
 import * as React from "react";
 
-import { Button } from "../../sui";
 import { MarkedContent } from "../../marked";
+import { TutorialCallout } from "./TutorialCallout";
 
 interface TutorialHintProps {
     parent: pxt.editor.IProjectView;
     markdown: string;
 
-    showLabel?: boolean;
+    // Telemetry data
+    tutorialId: string;
+    currentStep: number;
 }
 
 export function TutorialHint(props: TutorialHintProps) {
-    const { parent, markdown, showLabel } = props;
-    const [ visible, setVisible ] = React.useState(false);
+    const { parent, markdown, tutorialId, currentStep } = props;
 
-    const captureEvent = (e: any) => {
-        e.preventDefault();
-        e.stopPropagation();
-        e.nativeEvent?.stopImmediatePropagation();
-    }
-
-    const closeHint = (e: any) => {
-        document.removeEventListener("click", closeHint);
-        setVisible(false);
-    }
-
-    const toggleHint = () => {
+    const onHintClick = (visible: boolean) => {
         if (!visible) {
-            document.addEventListener("click", closeHint);
-        } else {
-            document.removeEventListener("click", closeHint);
+            pxt.tickEvent(`tutorial.showhint`, { tutorial: tutorialId, step: currentStep });
         }
-        setVisible(!visible);
     }
 
-    return <div className="tutorial-hint-container">
-        <Button icon="lightbulb" text={showLabel ? lf("Hint") : undefined} className="tutorial-hint"
-            disabled={!markdown} onClick={markdown ? toggleHint : undefined} />
-        {visible && <div className={`tutorialhint no-select`} onClick={captureEvent}>
-            <MarkedContent markdown={markdown} unboxSnippets={true} parent={parent} />
-        </div>}
-        {visible && <div className="tutorial-hint-mask" onClick={closeHint} />}
-    </div>
-
+    return <TutorialCallout className="tutorial-hint"
+            buttonIcon="lightbulb"
+            onClick={onHintClick}>
+                {markdown && <MarkedContent markdown={markdown} unboxSnippets={true} parent={parent} />}
+        </TutorialCallout>
 }

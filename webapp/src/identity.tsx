@@ -5,6 +5,7 @@ import * as auth from "./auth";
 import * as data from "./data";
 import * as cloudsync from "./cloudsync";
 import * as cloud from "./cloud";
+import { fireClickOnEnter } from "./util";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -71,7 +72,7 @@ export class LoginDialog extends auth.Component<LoginDialogProps, LoginDialogSta
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape>
                 <p>{lf("Sign in with your Microsoft Account. We'll save your projects to the cloud, where they're accessible from anywhere.")}</p>
                 <p>{lf("Don't have a Microsoft Account? Start signing in to create one!")}</p>
-                <sui.Link className="ui" text={lf("Learn more")} icon="external alternate" ariaLabel={lf("Learn more")} href="/identity/sign-in" target="_blank" onKeyDown={sui.fireClickOnEnter} />
+                <sui.Link className="ui" text={lf("Learn more")} icon="external alternate" ariaLabel={lf("Learn more")} href="/identity/sign-in" target="_blank" onKeyDown={fireClickOnEnter} />
             </sui.Modal>
         );
     }
@@ -124,6 +125,11 @@ export class UserMenu extends auth.Component<UserMenuProps, UserMenuState> {
         }
     }
 
+    avatarPicUrl(): string {
+        const user = this.getUserProfile();
+        return user?.idp?.pictureUrl ?? user?.idp?.picture?.dataUrl;
+    }
+
     renderCore() {
         const loggedIn = this.isLoggedIn();
         const user = this.getUserProfile();
@@ -140,30 +146,29 @@ export class UserMenu extends auth.Component<UserMenuProps, UserMenuState> {
         )
         const avatarElem = (
             <div className="avatar">
-                <img src={user?.idp?.picture?.dataUrl} alt={lf("User Menu")} />
+                <img src={this.avatarPicUrl()} alt={lf("User Menu")} />
             </div>
         );
         const initialsElem = (
             <div className="avatar">
-                <span>{pxt.auth.userInitials(user)}</span>
+                <span className="initials">{pxt.auth.userInitials(user)}</span>
             </div>
         );
-        const signedInElem = user?.idp?.picture?.dataUrl ? avatarElem : initialsElem;
+        const signedInElem = this.avatarPicUrl() ? avatarElem : initialsElem;
 
         const githubUser = this.getData("github:user") as pxt.editor.UserInfo;
-        const showGhUnlink = !loggedIn && githubUser;
 
         return (
             <sui.DropdownMenu role="menuitem"
                 title={title}
-                className="item icon user-dropdown-menuitem sign-in-dropdown"
+                className={`item icon user-dropdown-menuitem ${loggedIn ? 'logged-in-dropdown' : 'sign-in-dropdown'}`}
                 titleContent={loggedIn ? signedInElem : signedOutElem}
-                tabIndex={loggedIn? 0 : -1}
+                tabIndex={loggedIn ? 0 : -1}
                 onClick={this.handleDropdownClicked}
             >
                 {loggedIn ? <sui.Item role="menuitem" text={lf("My Profile")} onClick={this.handleProfileClicked} /> : undefined}
                 {loggedIn ? <div className="ui divider"></div> : undefined}
-                {showGhUnlink ?
+                {githubUser ?
                     <sui.Item role="menuitem" title={lf("Unlink {0} from GitHub", githubUser.name)} onClick={this.handleUnlinkGitHubClicked}>
                         <div className="icon avatar" role="presentation">
                             <img className="circular image" src={githubUser.photo} alt={lf("User picture")} />
@@ -171,7 +176,7 @@ export class UserMenu extends auth.Component<UserMenuProps, UserMenuState> {
                         <span>{lf("Unlink GitHub")}</span>
                     </sui.Item>
                     : undefined}
-                {showGhUnlink ? <div className="ui divider"></div> : undefined}
+                {githubUser && <div className="ui divider"></div>}
                 {!loggedIn ? <sui.Item role="menuitem" text={lf("Sign in")} onClick={this.handleLoginClicked} /> : undefined}
                 {loggedIn ? <sui.Item role="menuitem" text={lf("Sign out")} onClick={this.handleLogoutClicked} /> : undefined}
             </sui.DropdownMenu>
@@ -202,11 +207,7 @@ export class CloudSaveStatus extends data.Component<CloudSaveStatusProps, {}> {
         return (<div className="cloudstatusarea">
             {!syncing && <sui.Item className={"ui tiny cloudicon xicon " + cloudStatus.icon} title={cloudStatus.tooltip} tabIndex={-1}></sui.Item>}
             {syncing && <sui.Item className={"ui tiny inline loader active cloudprogress" + (preparing ? " indeterminate" : "")} title={cloudStatus.tooltip} tabIndex={-1}></sui.Item>}
-            {cloudStatus.value === "localEdits" && <span className="ui mobile hide no-select cloudtext" role="note">{lf("saving...")}</span>}
-            {cloudStatus.value === "syncing" && <span className="ui mobile hide no-select cloudtext" role="note">{lf("saving...")}</span>}
-            {cloudStatus.value === "justSynced" && <span className="ui mobile hide no-select cloudtext" role="note">{lf("saved!")}</span>}
-            {cloudStatus.value === "offline" && <span className="ui mobile hide no-select cloudtext" role="note">{lf("offline")}</span>}
-            {cloudStatus.value === "conflict" && <span className="ui mobile hide no-select cloudtext" role="note">{lf("conflict!")}</span>}
+            {cloudStatus.value !== "none" && cloudStatus.value !== "synced" && <span className="ui mobile hide no-select cloudtext" role="note">{cloudStatus.shortStatus}</span>}
         </div>);
     }
 }

@@ -174,6 +174,17 @@ function nativeHostSaveCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     return Promise.resolve();
 }
 
+function nativeHostWorkspaceLoadedCoreAsync(): Promise<void> {
+    log(`native workspace loaded`)
+    const nativePostMessage = nativeHostPostMessageFunction();
+    if (nativePostMessage) {
+        nativePostMessage(<pxt.editor.NativeHostMessage>{
+            cmd: "workspaceloaded"
+        })
+    }
+    return Promise.resolve();
+}
+
 export function nativeHostBackAsync(): Promise<void> {
     log(`native back`)
     const nativePostMessage = nativeHostPostMessageFunction();
@@ -402,7 +413,7 @@ export async function initAsync() {
             log(`enabled webusb`);
             pxt.usb.setEnabled(true);
             pxt.packetio.mkPacketIOAsync = pxt.usb.mkWebUSBHIDPacketIOAsync;
-        } else {
+        } else if (!pxt.appTarget?.compile?.disableHIDBridge) {
             log(`enabled hid bridge (webusb disabled)`);
             pxt.usb.setEnabled(false);
             pxt.packetio.mkPacketIOAsync = hidbridge.mkHIDBridgePacketIOAsync;
@@ -418,6 +429,7 @@ export async function initAsync() {
         log(`deploy: webkit deploy/save`);
         pxt.commands.deployCoreAsync = nativeHostDeployCoreAsync;
         pxt.commands.saveOnlyAsync = nativeHostSaveCoreAsync;
+        pxt.commands.workspaceLoadedAsync = nativeHostWorkspaceLoadedCoreAsync;
     } else if (pxt.winrt.isWinRT()) { // windows app
         log(`deploy: winrt`)
         pxt.packetio.mkPacketIOAsync = pxt.winrt.mkWinRTPacketIOAsync;

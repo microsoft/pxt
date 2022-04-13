@@ -232,6 +232,10 @@ class FileGithubDb implements pxt.github.IGithubDb {
             })
     }
 
+    latestVersionAsync(repopath: string, config: pxt.PackagesConfig): Promise<string> {
+        return this.db.latestVersionAsync(repopath, config)
+    }
+
     loadConfigAsync(repopath: string, tag: string): Promise<pxt.PackageConfig> {
         return this.loadAsync(repopath, tag, "pxt", (r, t) => this.db.loadConfigAsync(r, t));
     }
@@ -248,49 +252,6 @@ function searchAsync(...query: string[]) {
             for (let r of res) {
                 console.log(`${r.fullName}: ${r.description}`)
             }
-        })
-}
-
-function pkginfoAsync(repopath: string) {
-    let parsed = pxt.github.parseRepoId(repopath)
-    if (!parsed) {
-        console.log('Unknown repo');
-        return Promise.resolve();
-    }
-
-    const pkgInfo = (cfg: pxt.PackageConfig, tag?: string) => {
-        pxt.log(`name: ${cfg.name}`)
-        pxt.log(`description: ${cfg.description}`)
-        if (pxt.appTarget.appTheme)
-            pxt.log(`shareable url: ${pxt.appTarget.appTheme.embedUrl}#pub:gh/${parsed.fullName}${tag ? "#" + tag : ""}`)
-    }
-
-    return pxt.packagesConfigAsync()
-        .then(config => {
-            const status = pxt.github.repoStatus(parsed, config);
-            pxt.log(`github org: ${parsed.owner}`);
-            if (parsed.tag) pxt.log(`github tag: ${parsed.tag}`);
-            pxt.log(`package status: ${status == pxt.github.GitRepoStatus.Approved ? "approved" : status == pxt.github.GitRepoStatus.Banned ? "banned" : "neutral"}`)
-            if (parsed.tag)
-                return pxt.github.downloadPackageAsync(repopath, config)
-                    .then(pkg => {
-                        let cfg: pxt.PackageConfig = JSON.parse(pkg.files[pxt.CONFIG_NAME])
-                        pkgInfo(cfg, parsed.tag)
-                        pxt.debug(`size: ${JSON.stringify(pkg.files).length}`)
-                    })
-
-            return pxt.github.pkgConfigAsync(parsed.fullName)
-                .then(cfg => {
-                    pkgInfo(cfg)
-                    return pxt.github.listRefsAsync(repopath)
-                        .then(tags => {
-                            pxt.log("tags: " + tags.join(", "))
-                            return pxt.github.listRefsAsync(repopath, "heads")
-                        })
-                        .then(heads => {
-                            pxt.log("branches: " + heads.join(", "))
-                        })
-                })
         })
 }
 
@@ -398,7 +359,7 @@ function pxtFileList(pref: string) {
         .concat(nodeutil.allFiles(pref + "built/web/fonts", 1))
         .concat(nodeutil.allFiles(pref + "built/web/vs", 4))
         .concat(nodeutil.allFiles(pref + "built/web/skillmap", 4))
-
+        .concat(nodeutil.allFiles(pref + "built/web/authcode", 4))
 }
 
 function semverCmp(a: string, b: string) {
@@ -470,6 +431,9 @@ function ciAsync() {
     pxt.log(`upload api strings: ${uploadApiStrings}`);
     pxt.log(`upload docs: ${uploadDocs}`);
 
+    lintJSONInDirectory(path.resolve("."));
+    lintJSONInDirectory(path.resolve("docs"));
+
     function npmPublishAsync() {
         if (!npmPublish) return Promise.resolve();
         return nodeutil.runNpmAsync("publish");
@@ -487,7 +451,8 @@ function ciAsync() {
                         p = p
                             .then(() => buildWebStringsAsync())
                             .then(() => crowdin.execCrowdinAsync("upload", "built/webstrings.json"))
-                            .then(() => crowdin.execCrowdinAsync("upload", "built/skillmap-strings.json"));
+                            .then(() => crowdin.execCrowdinAsync("upload", "built/skillmap-strings.json"))
+                            .then(() => crowdin.execCrowdinAsync("upload", "built/authcode-strings.json"));
                     if (uploadApiStrings)
                         p = p.then(() => crowdin.execCrowdinAsync("upload", "built/strings.json"))
                     if (uploadDocs || uploadApiStrings)
@@ -522,6 +487,22 @@ function ciAsync() {
                     return Promise.resolve();
                 }
             });
+    }
+}
+
+function lintJSONInDirectory(dir: string) {
+    for (const file of fs.readdirSync(dir)) {
+        const fullPath = path.join(dir, file);
+        if (file.endsWith(".json")) {
+            const contents = fs.readFileSync(fullPath, "utf8");
+            try {
+                JSON.parse(contents)
+            }
+            catch (e) {
+                console.log("Could not parse " + fullPath)
+                process.exit(1);
+            }
+        }
     }
 }
 
@@ -863,7 +844,7 @@ function uploadToGitRepoAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
     if (U.startsWith(label, tid + "/"))
         label = label.slice(tid.length + 1)
     if (!/^v\d/.test(label)) {
-        console.log('label is not a version; skipping release upload');
+        console.log(`label "${label}" is not a version; skipping release upload`);
         return Promise.resolve();
     }
     let repoUrl = process.env["PXT_RELEASE_REPO"]
@@ -1048,6 +1029,7 @@ function uploadCoreAsync(opts: UploadOptions) {
             "multiUrl": opts.localDir + "multi.html",
             "asseteditorUrl": opts.localDir + "asseteditor.html",
             "skillmapUrl": opts.localDir + "skillmap.html",
+            "authcodeUrl": opts.localDir + "authcode.html",
             "isStatic": true,
         }
         const targetImagePaths = targetImages.map(k =>
@@ -1096,14 +1078,16 @@ function uploadCoreAsync(opts: UploadOptions) {
         "workerConfig.js",
         "multi.html",
         "asseteditor.html",
-        "skillmap.html"
+        "skillmap.html",
+        "authcode.html"
     ]
 
     // expandHtml is manually called on these files before upload
     // runs <!-- @include --> substitutions, fills in locale, etc
     let expandFiles = [
         "index.html",
-        "skillmap.html"
+        "skillmap.html",
+        "authcode.html"
     ]
 
     nodeutil.mkdirP("built/uploadrepl")
@@ -1910,88 +1894,155 @@ ${gcards.map(gcard => `[${gcard.name}](${gcard.url})`).join(',\n')}
     pxt.log(`target-strings.json built`)
 }
 
-function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
-    const forceRedbuild = parsed && parsed.flags["force"] || false;
-    if (!fs.existsSync(path.join("theme", "style.less")) ||
-        !fs.existsSync(path.join("theme", "theme.config")))
-        return Promise.resolve();
-
-    let dirty = !fs.existsSync("built/web/semantic.css");
-    if (!dirty) {
-        const csstime = fs.statSync("built/web/semantic.css").mtime;
-        dirty = nodeutil.allFiles("theme")
-            .map(f => fs.statSync(f))
-            .some(stat => stat.mtime > csstime);
+async function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
+    if (!fs.existsSync(path.join("theme", "style.less")) || !fs.existsSync(path.join("theme", "theme.config"))) {
+        return;
     }
 
-    if (!dirty && !forceRedbuild) return Promise.resolve();
-
-    let pkg = readJson("package.json")
+    const pkg = readJson("package.json");
+    const isPxtCore = pkg["name"] === "pxt-core";
 
     nodeutil.mkdirP(path.join("built", "web"));
     const lessPath = require.resolve('less');
     const lessCPath = path.join(path.dirname(lessPath), '/bin/lessc');
-    return nodeutil.spawnAsync({
+
+    const lessIncludePaths = [
+        "node_modules/semantic-ui-less",
+        "node_modules/pxt-core/theme",
+        "theme/foo/bar",
+        "theme",
+        "node_modules/pxt-core/react-common/styles",
+        "react-common/styles",
+        "node_modules/@fortawesome",
+        "node_modules/pxt-core/node_modules/@fortawesome" // for locally linked dev environment
+    ].join(":");
+
+    // Build semantic css
+    await nodeutil.spawnAsync({
         cmd: "node",
-        args: [lessCPath, "theme/style.less", "built/web/semantic.css", "--include-path=node_modules/semantic-ui-less:node_modules/pxt-core/theme:theme/foo/bar", "--no-ie-compat"]
-    }).then(() => {
-        const fontFile = fs.readFileSync("node_modules/semantic-ui-less/themes/default/assets/fonts/icons.woff")
-        const url = "url(data:application/font-woff;charset=utf-8;base64,"
-            + fontFile.toString("base64") + ") format('woff')"
-        let semCss = fs.readFileSync('built/web/semantic.css', "utf8")
-        semCss = semCss.replace('src: url("fonts/icons.eot");', "")
-            .replace(/src:.*url\("fonts\/icons\.woff.*/g, "src: " + url + ";")
-        return semCss;
-    }).then((semCss) => {
-        // Append icons.css to semantic.css (custom pxt icons)
-        const iconsFile = (pkg["name"] == "pxt-core") ? 'built/web/icons.css' : 'node_modules/pxt-core/built/web/icons.css';
-        const iconsCss = fs.readFileSync(iconsFile, "utf-8");
-        semCss = semCss + "\n" + iconsCss;
-        nodeutil.writeFileSync('built/web/semantic.css', semCss);
-    }).then(() => {
-        // generate blockly css
-        if (!fs.existsSync(path.join("theme", "blockly.less")))
-            return Promise.resolve();
-        return nodeutil.spawnAsync({
-            cmd: "node",
-            args: [lessCPath, "theme/blockly.less", "built/web/blockly.css", "--include-path=node_modules/semantic-ui-less:node_modules/pxt-core/theme:theme/foo/bar", "--no-ie-compat"]
-        })
-    }).then(() => {
-        // run postcss with autoprefixer and rtlcss
-        pxt.debug("running postcss");
-        const postcss = require('postcss');
-        const browserList = [
-            "Chrome >= 38",
-            "Firefox >= 31",
-            "Edge >= 12",
-            "ie >= 11",
-            "Safari >= 9",
-            "Opera >= 21",
-            "iOS >= 9",
-            "ChromeAndroid >= 59",
-            "FirefoxAndroid >= 55"
+        args: [
+            lessCPath,
+            "theme/style.less",
+            "built/web/semantic.css",
+            "--include-path=" + lessIncludePaths
         ]
-        const cssnano = require('cssnano')({
-            zindex: false,
-            autoprefixer: { browsers: browserList, add: true }
-        });
-        const rtlcss = require('rtlcss');
-        const files = ['semantic.css', 'blockly.css']
-        files.forEach(cssFile => {
-            fs.readFile(`built/web/${cssFile}`, "utf8", (err, css) => {
-                postcss([cssnano])
-                    .process(css, { from: `built/web/${cssFile}`, to: `built/web/${cssFile}` }).then((result: any) => {
-                        fs.writeFile(`built/web/${cssFile}`, result.css, (err2) => {
-                            // process rtl css
-                            postcss([rtlcss])
-                                .process(result.css, { from: `built/web/${cssFile}`, to: `built/web/rtl${cssFile}` }).then((result2: any) => {
-                                    nodeutil.writeFileSync(`built/web/rtl${cssFile}`, result2.css, { encoding: "utf8" });
-                                });
-                        });
-                    });
-            })
-        });
     })
+    let fontAwesomeSource = "node_modules/@fortawesome/fontawesome-free/webfonts/";
+    if (!fs.existsSync(fontAwesomeSource)) {
+        fontAwesomeSource = "node_modules/pxt-core/" + fontAwesomeSource;
+    }
+
+    // Inline all of our icon fonts
+    let semCss = await readFileAsync('built/web/semantic.css', "utf8");
+    semCss = await linkFontAsync("icons", semCss);
+    semCss = await linkFontAsync("outline-icons", semCss);
+    semCss = await linkFontAsync("brand-icons", semCss);
+    semCss = await linkFontAsync("fa-solid-900", semCss, fontAwesomeSource, "\\.\\.\\/webfonts\\/");
+    semCss = await linkFontAsync("fa-regular-400", semCss, fontAwesomeSource, "\\.\\.\\/webfonts\\/");
+
+    // Append icons.css to semantic.css (custom pxt icons)
+    const iconsFile = isPxtCore ? 'built/web/icons.css' : 'node_modules/pxt-core/built/web/icons.css';
+    const iconsCss = await readFileAsync(iconsFile, "utf8");
+
+    semCss = semCss + "\n" + iconsCss;
+    nodeutil.writeFileSync('built/web/semantic.css', semCss);
+
+    // Generate blockly css
+    if (fs.existsSync(path.join("theme", "blockly.less"))) {
+        await nodeutil.spawnAsync({
+            cmd: "node",
+            args: [
+                lessCPath,
+                "theme/blockly.less",
+                "built/web/blockly.css",
+                "--include-path=" + lessIncludePaths
+            ]
+        });
+    }
+
+    // Generate react-common css for skillmap and authcode
+    const skillmapFile = isPxtCore ? "react-common/styles/react-common-skillmap-core.less" :
+        "node_modules/pxt-core/react-common/styles/react-common-skillmap.less";
+    await nodeutil.spawnAsync({
+        cmd: "node",
+        args: [
+            lessCPath,
+            skillmapFile,
+            "built/web/react-common-skillmap.css",
+            "--include-path=" + lessIncludePaths
+        ]
+    });
+    const authcodeFile = isPxtCore ? "react-common/styles/react-common-authcode-core.less" :
+        "node_modules/pxt-core/react-common/styles/react-common-authcode.less";
+    await nodeutil.spawnAsync({
+        cmd: "node",
+        args: [
+            lessCPath,
+            authcodeFile,
+            "built/web/react-common-authcode.css",
+            "--include-path=" + lessIncludePaths
+        ]
+    });
+
+    let skillmapCss = await readFileAsync(`built/web/react-common-skillmap.css`, "utf8");
+    skillmapCss = await linkFontAsync("fa-solid-900", skillmapCss, fontAwesomeSource, "\\.\\.\\/webfonts\\/");
+    skillmapCss = await linkFontAsync("fa-regular-400", skillmapCss, fontAwesomeSource, "\\.\\.\\/webfonts\\/");
+    await writeFileAsync(`built/web/react-common-skillmap.css`, skillmapCss, "utf8");
+
+
+    // Run postcss with autoprefixer and rtlcss
+    pxt.debug("running postcss");
+    const postcss = require('postcss');
+    const browserList = [
+        "Chrome >= 38",
+        "Firefox >= 31",
+        "Edge >= 12",
+        "ie >= 11",
+        "Safari >= 9",
+        "Opera >= 21",
+        "iOS >= 9",
+        "ChromeAndroid >= 59",
+        "FirefoxAndroid >= 55"
+    ];
+
+    const cssnano = require("cssnano")({
+        zindex: false,
+        autoprefixer: { browsers: browserList, add: true }
+    });
+
+    const rtlcss = require("rtlcss");
+    const files = ["semantic.css", "blockly.css", "react-common-skillmap.css"];
+
+    for (const cssFile of files) {
+        const css = await readFileAsync(`built/web/${cssFile}`, "utf8");
+        const processed = await postcss([cssnano])
+                .process(css, { from: `built/web/${cssFile}`, to: `built/web/${cssFile}` });
+
+        await writeFileAsync(`built/web/${cssFile}`, processed.css);
+
+        const processedRtl = await postcss([rtlcss])
+            .process(processed.css, { from: `built/web/${cssFile}`, to: `built/web/rtl${cssFile}` });
+
+        await writeFileAsync(`built/web/rtl${cssFile}`, processedRtl.css, "utf8");
+    }
+
+    if (!isPxtCore) {
+        // This is just to support the local skillmap serve for development
+        nodeutil.cp("built/web/react-common-skillmap.css", "node_modules/pxt-core/skillmap/public/blb");
+        nodeutil.cp("built/web/semantic.css", "node_modules/pxt-core/skillmap/public/blb");
+    }
+}
+
+async function linkFontAsync(font: string, semCss: string, sourceDir = "node_modules/semantic-ui-less/themes/default/assets/fonts/", refDir = "fonts\\/") {
+    const fontFile = await readFileAsync(sourceDir + font + ".woff")
+    const url = "url(data:application/font-woff;charset=utf-8;base64,"
+        + fontFile.toString("base64") + ") format('woff')"
+    const r = new RegExp(`src:.*url\\((?:"|')${refDir + font}\\.woff.*`, "g")
+
+    semCss = semCss.replace('src: url("' + refDir + font + '.eot");', "")
+        .replace('src: url(' + refDir + font + '.eot);', "")
+        .replace(r, "src: " + url + ";")
+    return semCss;
 }
 
 function buildWebStringsAsync() {
@@ -2004,6 +2055,7 @@ function buildWebStringsAsync() {
 function buildSkillMapAsync(parsed: commandParser.ParsedCommand) {
     // local serve
     const skillmapRoot = "node_modules/pxt-core/skillmap";
+    const reactScriptsConfigRoot = `${skillmapRoot}/node_modules/react-scripts/config`;
     const docsPath = parsed.flags["docs"];
     return rimrafAsync(`${skillmapRoot}/public/blb`, {})
         .then(() => rimrafAsync(`${skillmapRoot}/build/assets`, {}))
@@ -2016,9 +2068,17 @@ function buildSkillMapAsync(parsed: commandParser.ParsedCommand) {
             nodeutil.cp("node_modules/pxt-core/built/pxtlib.js", `${skillmapRoot}/public/blb`);
             nodeutil.cp("built/web/semantic.css", `${skillmapRoot}/public/blb`);
             nodeutil.cp("node_modules/pxt-core/built/web/icons.css", `${skillmapRoot}/public/blb`);
+            nodeutil.cp("node_modules/pxt-core/built/web/react-common-skillmap.css", `${skillmapRoot}/public/blb`);
 
             // copy 'assets' over from docs/static
             nodeutil.cpR("docs/static/skillmap/assets", `${skillmapRoot}/public/assets`);
+
+            // copy default react-scripts webpack config into a webpack.config.base file if necessary
+            if (!fs.existsSync(`${reactScriptsConfigRoot}/webpack.config.base.js`)) {
+                nodeutil.cp(`${reactScriptsConfigRoot}/webpack.config.js`, reactScriptsConfigRoot, "webpack.config.base.js");
+            }
+            // wrap the config in our webpack.config.override for build customization
+            nodeutil.cp(`${skillmapRoot}/webpack.config.override.js`, reactScriptsConfigRoot, "webpack.config.js");
 
             if (docsPath) {
                 // copy docs over from specified path
@@ -2030,6 +2090,34 @@ function buildSkillMapAsync(parsed: commandParser.ParsedCommand) {
                 cmd: os.platform() === "win32" ? "npm.cmd" : "npm",
                 args: ["run-script", "start"],
                 cwd: skillmapRoot,
+                shell: true
+            })
+        });
+}
+
+function buildAuthcodeAsync(parsed: commandParser.ParsedCommand) {
+    // local serve
+    const appRoot = "node_modules/pxt-core/authcode";
+    return rimrafAsync(`${appRoot}/public/blb`, {})
+        .then(() => rimrafAsync(`${appRoot}/build/assets`, {}))
+        .then(() => rimrafAsync(`${appRoot}/public/docs`, {}))
+        .then(() => rimrafAsync(`${appRoot}/public/static`, {}))
+        .then(() => {
+            // read pxtarget.json, save into 'pxtTargetBundle' global variable
+            let cfg = readLocalPxTarget();
+            nodeutil.writeFileSync(`${appRoot}/public/blb/target.js`, "// eslint-disable-next-line \n" + targetJsPrefix + JSON.stringify(cfg));
+            nodeutil.cp("node_modules/pxt-core/built/pxtlib.js", `${appRoot}/public/blb`);
+            nodeutil.cp("built/web/semantic.css", `${appRoot}/public/blb`);
+            nodeutil.cp("node_modules/pxt-core/built/web/icons.css", `${appRoot}/public/blb`);
+            nodeutil.cp("node_modules/pxt-core/built/web/react-common-authcode.css", `${appRoot}/public/blb`);
+
+            // copy 'assets' over from docs/static
+            nodeutil.cpR("docs/static/authcode/assets", `${appRoot}/public/assets`);
+
+            return nodeutil.spawnAsync({
+                cmd: os.platform() === "win32" ? "npm.cmd" : "npm",
+                args: ["run-script", "start"],
+                cwd: appRoot,
                 shell: true
             })
         });
@@ -2209,7 +2297,8 @@ async function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
     let coreDependencies: string[];
     const corepkg = "libs/" + pxt.appTarget.corepkg;
 
-    const packageDirs = pxt.appTarget.bundleddirs.map(dir => path.resolve(dir));
+    // use staticpkgdirs if defined, otherwise fall back to bundledirs
+    const packageDirs = (pxt.appTarget.staticpkgdirs?.extensions || pxt.appTarget.bundleddirs).map(dir => path.resolve(dir));
     const rootDir = process.cwd();
 
     await buildWebStringsAsync();
@@ -2278,23 +2367,32 @@ async function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
             }
 
             if (!options.packaged) return;
+            if (pxt.appTarget.staticpkgdirs && pxt.appTarget.staticpkgdirs.base.indexOf(dirname) === -1) return;
 
             // We want to cache a hex file for each of the native packages in case they are added to a project.
             // This won't cover the whole matrix, but handles the common case of projects that add one extra
             // extension in the offline app.
-            const allDeps = pkg.sortedDeps(true).map(dep => path.resolve(path.join(dirname, dep.verArgument())));
+            const allDeps = pkg.sortedDeps(true).map(dep => path.resolve(path.join(dirname, dep.verArgument())))
+                .map(dep => path.resolve(dep).replace(/---.*/, "")); // keep path format (/ vs \\) consistent, trim --- suffix to avoid duplicate imports.
             const config = nodeutil.readPkgConfig(dirname);
             const host = pkg.host() as Host;
 
-            for (const extraPackage of packageDirs.filter(dirname => allDeps.indexOf(dirname) == -1)) {
+            const pkgsToBuildWith = packageDirs.filter(dirname => !allDeps.some(el => el.indexOf(dirname.replace(/---.*/, "")) !== -1));
+
+            pxt.log(`Dependencies of pkg: ${allDeps}`);
+            pxt.log(`Attemping to bundle necessary hexfiles to compile with: ${pkgsToBuildWith}`);
+            for (const extraPackage of pkgsToBuildWith) {
                 process.chdir(path.join(rootDir, dirname));
+                const deps: pxt.Map<string> = {
+                    ...config.dependencies,
+                    extra: "file:" + path.relative(path.resolve("."), extraPackage)
+                }
                 host.fileOverrides["pxt.json"] = JSON.stringify({
                     ...config,
-                    dependencies: {
-                        ...config.dependencies,
-                        extra: "file:" + path.relative(path.resolve("."), extraPackage)
-                    }
+                    dependencies: deps
                 })
+                pxt.log(`Building hex cache for ${pkg.config.name} with dependencies:`)
+                console.dir(deps);
                 mainPkg = new pxt.MainPackage(host);
 
                 try {
@@ -2320,6 +2418,8 @@ async function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                 catch (e) {
                     // We're not being smart and verifying that the packages are actually compatible, so
                     // we might get some errors. Ignore them and keep going.
+                    // -- This will likely happen if you have any packages listed that have hw specific versions,
+                    // e.g. serial && serial---linux
                     pxt.debug(`Unable to cache hex for project ${dirname} with '${extraPackage}'`);
                 }
             }
@@ -3018,7 +3118,7 @@ function installPackageNameAsync(packageName: string): Promise<void> {
         return pxt.packagesConfigAsync()
             .then(config => (parsed.tag ? Promise.resolve(parsed.tag) : pxt.github.latestVersionAsync(parsed.slug, config))
                 .then(tag => { parsed.tag = tag })
-                .then(() => pxt.github.pkgConfigAsync(parsed.fullName, parsed.tag))
+                .then(() => pxt.github.pkgConfigAsync(parsed.fullName, parsed.tag, config))
                 .then(cfg => mainPkg.loadAsync(true)
                     .then(() => {
                         let ver = pxt.github.stringifyRepo(parsed)
@@ -6836,7 +6936,7 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
         help: "build required css files",
         flags: {
             force: {
-                description: "force re-compile of less files"
+                description: "deprecated; now on by default"
             }
         }
     }, buildSemanticUIAsync);
@@ -6857,6 +6957,18 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
             }
         }
     }, buildSkillMapAsync);
+
+    p.defineCommand({
+        name: "buildauthcode",
+        aliases: ["authcode"],
+        advanced: true,
+        help: "Serves the authcode webapp",
+        flags: {
+            serve: {
+                description: "Serve the authcode app locally after building (npm start)"
+            }
+        }
+    }, buildAuthcodeAsync);
 
     advancedCommand("augmentdocs", "test markdown docs replacements", augmnetDocsAsync, "<temlate.md> <doc.md>");
 

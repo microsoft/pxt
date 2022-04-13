@@ -2,8 +2,11 @@ import * as React from "react";
 import { connect } from "react-redux";
 import { SkillMapState } from "../store/reducer";
 import * as authClient from "../lib/authClient";
+import { infoNotification, errorNotification } from "../lib/notifications"
 
-import { Modal } from './Modal';
+import { Modal } from 'react-common/controls/Modal';
+import { CheckboxStatus} from "react-common/util";
+import { Profile} from "react-common/profile/Profile";
 
 import { dispatchCloseUserProfile, dispatchShowDeleteAccountModal } from "../actions/dispatch"
 
@@ -11,12 +14,28 @@ interface UserProfileProps {
     signedIn: boolean;
     profile: pxt.auth.UserProfile
     showProfile: boolean;
+    preferences?: pxt.auth.UserPreferences;
     dispatchCloseUserProfile: () => void;
     dispatchShowDeleteAccountModal: () => void;
 }
 
+interface UserProfileState {
+    notification?: pxt.ProfileNotification;
+    modal?: DialogOptions;
+    emailSelected: CheckboxStatus;
+}
 
-export class UserProfileImpl extends React.Component<UserProfileProps, {}> {
+export class UserProfileImpl extends React.Component<UserProfileProps, UserProfileState> {
+    constructor(props: UserProfileProps) {
+        super(props);
+
+        authClient.userPreferencesAsync().
+            then( pref => this.setState({ emailSelected: pref?.email ? CheckboxStatus.Selected : CheckboxStatus.Unselected })
+        )
+        pxt.targetConfigAsync()
+            .then(config => this.setState({ notification: config.profileNotification }));
+    }
+
     render() {
         const { showProfile } = this.props;
 
@@ -28,14 +47,34 @@ export class UserProfileImpl extends React.Component<UserProfileProps, {}> {
     }
 
     renderUserProfile = () => {
-        const user = this.props.profile;
+        const { profile, preferences } = this.props;
+        const { notification, modal, emailSelected } = this.state;
 
-        return <Modal title={user?.idp?.displayName || ""} fullscreen={true} onClose={this.handleOnClose}>
-        <div className="profiledialog">
-            {this.getAccountPanel()}
-            {this.getFeedbackPanel()}
-        </div>
+        return <Modal
+            title={lf("My Profile")}
+            fullscreen={true}
+            onClose={this.handleOnClose}
+            parentElement={document.querySelector(".app-container") || undefined}>
+                <Profile
+                    user={{profile, preferences}}
+                    signOut={this.handleSignout}
+                    deleteProfile={this.handleDeleteAccountClick}
+                    notification={notification}
+                    showModalAsync={this.showModalAsync}
+                    checkedEmail={emailSelected}
+                    onClickedEmail={this.handleEmailClick} />
+
+                {modal &&
+                    <Modal title={modal.header} onClose={this.closeModal} className={modal.className}>
+                        {modal.jsx}
+                    </Modal>
+                }
         </Modal>
+    }
+
+    avatarPicUrl = (): string | undefined => {
+        const { profile } = this.props;
+        return profile?.idp?.pictureUrl ?? profile?.idp?.picture?.dataUrl;
     }
 
     getAccountPanel = () => {
@@ -44,7 +83,7 @@ export class UserProfileImpl extends React.Component<UserProfileProps, {}> {
 
         const avatarElem = (
             <div className="profile-pic avatar">
-                <img src={profile?.idp?.picture?.dataUrl} alt={lf("User")} />
+                <img src={this.avatarPicUrl()} alt={lf("User")} />
             </div>
         );
         const initialsElem = (
@@ -57,7 +96,7 @@ export class UserProfileImpl extends React.Component<UserProfileProps, {}> {
             <div className="header-text">
                 <label>{lf("Profile")}</label>
             </div>
-            {profile?.idp?.picture?.dataUrl ? avatarElem : initialsElem}
+            {this.avatarPicUrl() ? avatarElem : initialsElem}
             <div className="row-span-two">
                 <label className="title">{lf("Name")}</label>
                 <p className="value">{profile?.idp?.displayName || profile?.idp?.username}</p>
@@ -71,7 +110,7 @@ export class UserProfileImpl extends React.Component<UserProfileProps, {}> {
                 <p className="value">{provider?.name}</p>
             </div>
             <div className="row-span-two" onClick={this.handleSignout}>
-                <div className="sign-out modal-button" >
+                <div className="ui icon button" >
                     <span className={`xicon ${profile?.idp?.provider}`} />
                     <span> {lf("Sign out")} </span>
                 </div>
@@ -95,8 +134,8 @@ export class UserProfileImpl extends React.Component<UserProfileProps, {}> {
                 { lf("What do you think about the Sign In & Cloud Save feature? Is there something you'd like to change? Did you encounter issues? Please let us know!") }
             </div>
             <div className="row-span-two">
-                <a className="ui"  title={lf("Provide feedback in a from")} href="https://aka.ms/AAcnpaj" target="_blank">
-                    <i className="icon external alternate"></i>
+                <a className="ui"  title={lf("Provide feedback in a form")} href="https://aka.ms/AAcnpaj" target="_blank">
+                    <i className="fas fa-external-link-alt"></i>
                     { lf("Take the Survey") }
                 </a>
             </div>
@@ -111,15 +150,40 @@ export class UserProfileImpl extends React.Component<UserProfileProps, {}> {
     handleDeleteAccountClick = async () => {
         this.props.dispatchShowDeleteAccountModal();
     }
+
+    handleEmailClick = (isSelected: boolean) => {
+        this.setState({ emailSelected: CheckboxStatus.Waiting })
+        authClient.setEmailPrefAsync(isSelected).then(setResult => {
+            if (setResult?.success) {
+                infoNotification(lf("Settings saved"))
+                this.setState({ emailSelected: setResult.res?.email ? CheckboxStatus.Selected : CheckboxStatus.Unselected})
+            } else {
+                errorNotification(lf("Oops, something went wrong"))
+                this.setState({ emailSelected: !isSelected ? CheckboxStatus.Selected: CheckboxStatus.Unselected })
+            }
+        })
+    }
+
+    showModalAsync = async (options: DialogOptions) => {
+        this.setState({ modal: options });
+    }
+
+    closeModal = () => {
+        const onClose = this.state.modal?.onClose;
+
+        this.setState({ modal: undefined });
+        if (onClose) onClose();
+    }
 }
 
-function mapStateToProps(state: SkillMapState) {
+function mapStateToProps(state: SkillMapState, ownProps: any) {
     if (!state) return {};
 
     return {
         signedIn: state.auth.signedIn,
         profile: state.auth.profile,
-        showProfile: state.showProfile
+        showProfile: state.showProfile,
+        preferences: state.auth.preferences
     }
 }
 

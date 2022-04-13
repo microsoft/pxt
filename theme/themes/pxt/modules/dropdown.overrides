@@ -7,10 +7,11 @@
     height: 2.5rem;
     width: 2.5rem;
     border-radius: 100%;
+    border: solid 2px white;
 }
 
 .ui.dropdown > .avatar > .initials {
-    background-color: @secondaryColor;
+    background-color: @teal;
     display: flex;
     align-items: center;
     justify-content: center;

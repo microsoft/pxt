@@ -322,6 +322,10 @@ describe("blockly compiler", function () {
         it("should handle non-number inputs in logic operators", (done: () => void) => {
             blockTestAsync("logic_non_numeric").then(done, done);
         });
+
+        it("should handle literals being compared", (done: () => void) => {
+            blockTestAsync("compare_literals").then(done, done);
+        });
     });
 
     describe("compiling math", () => {
@@ -479,6 +483,10 @@ describe("blockly compiler", function () {
 
         it("should handle an array of empty arrays as array argument", (done: () => void) => {
             blockTestAsync("array_parameter_empty_arrays").then(done, done);
+        })
+
+        it("should perform type inference on array arguments", (done: () => void) => {
+            blockTestAsync("array_parameter_type_inference").then(done, done);
         })
     });
 

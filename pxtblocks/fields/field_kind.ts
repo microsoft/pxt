@@ -6,7 +6,6 @@ namespace pxtblockly {
 
         initView() {
             super.initView();
-            this.initVariables();
         }
 
         onItemSelected_(menu: Blockly.Menu, menuItem: Blockly.MenuItem) {
@@ -24,6 +23,11 @@ namespace pxtblockly {
             // update cached option list when adding a new kind
             if (this.opts?.initialMembers && !this.opts.initialMembers.find(el => el == value)) this.getOptions();
             return super.doClassValidation_(value);
+        }
+
+        getOptions(opt_useCache?: boolean) {
+            this.initVariables();
+            return super.getOptions(opt_useCache);
         }
 
         private initVariables() {

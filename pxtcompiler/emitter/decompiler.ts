@@ -899,6 +899,8 @@ ${output}</xml>`;
                         return getTaggedTemplateExpression(n as ts.TaggedTemplateExpression);
                     case SK.CallExpression:
                         return getStatementBlock(n, undefined, undefined, true) as any;
+                    case SK.AsExpression:
+                        return getOutputBlock((n as ts.AsExpression).expression);
                     default:
                         error(n, Util.lf("Unsupported syntax kind for output expression block: {0}", SK[n.kind]));
                         break;
@@ -1924,11 +1926,13 @@ ${output}</xml>`;
                 r.mutationChildren = [];
                 n.parameters.forEach(p => {
                     const paramName = p.name.getText();
+                    let type = normalizeType(p.type.getText());
+                    if (pxt.U.endsWith(type, "[]")) type = "Array";
                     r.mutationChildren.push({
                         nodeName: "arg",
                         attributes: {
                             name: paramName,
-                            type: p.type.getText(),
+                            type,
                             id: env.functionParamIds[name][paramName]
                         }
                     });
@@ -2015,11 +2019,14 @@ ${output}</xml>`;
                             env.declaredFunctions[name].parameters.forEach((p, i) => {
                                 const paramName = p.name.getText();
                                 const argId = env.functionParamIds[name][paramName];
+                                let type = normalizeType(p.type.getText());
+                                if (pxt.U.endsWith(type, "[]")) type = "Array";
+
                                 r.mutationChildren.push({
                                     nodeName: "arg",
                                     attributes: {
                                         name: paramName,
-                                        type: p.type.getText(),
+                                        type: type,
                                         id: argId
                                     }
                                 });
@@ -3002,7 +3009,8 @@ ${output}</xml>`;
                             return Util.lf("Function parameters must declare a type");
                         }
 
-                        if (env.opts.allowedArgumentTypes.indexOf(normalizeType(type)) === -1) {
+                        const normalized = normalizeType(type);
+                        if (env.opts.allowedArgumentTypes.indexOf(normalized) === -1 && !U.endsWith(normalized, "[]")) {
                             return Util.lf("Only types that can be added in blocks can be used for function arguments");
                         }
                     }
@@ -3315,6 +3323,8 @@ ${output}</xml>`;
                 return checkStatement(n, env, true, undefined);
             case SK.TaggedTemplateExpression:
                 return checkTaggedTemplateExpression(n as ts.TaggedTemplateExpression, env);
+            case SK.AsExpression:
+                return checkAsExpression(n as ts.AsExpression);
 
         }
         return Util.lf("Unsupported syntax kind for output expression block: {0}", SK[n.kind]);
@@ -3424,6 +3434,34 @@ ${output}</xml>`;
 
         // The compiler will have already caught any invalid tags or templates
         return undefined;
+    }
+
+    function checkAsExpression(n: ts.AsExpression) {
+        // The only time we allow casts to decompile is in the very special case where someone has
+        // written a program comparing two string, boolean, or numeric literals in blocks and
+        // converted to text. e.g. 3 == 5 or true != false
+        if (n.type.getText().trim() === "any" && (ts.isStringOrNumericLiteral(n.expression) ||
+            n.expression.kind === SK.TrueKeyword || n.expression.kind === SK.FalseKeyword)) {
+            const [parent] = getParent(n);
+
+            if (parent.kind === SK.BinaryExpression) {
+                switch ((parent as ts.BinaryExpression).operatorToken.kind) {
+                    case SK.EqualsEqualsToken:
+                    case SK.EqualsEqualsEqualsToken:
+                    case SK.ExclamationEqualsToken:
+                    case SK.ExclamationEqualsEqualsToken:
+                    case SK.LessThanToken:
+                    case SK.LessThanEqualsToken:
+                    case SK.GreaterThanToken:
+                    case SK.GreaterThanEqualsToken:
+                        return undefined;
+                    default:
+                        break;
+                }
+            }
+        }
+
+        return Util.lf("Casting not supported in blocks");
     }
 
     function getParent(node: Node): [Node, Node] {

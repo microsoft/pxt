@@ -4,6 +4,7 @@ import * as React from "react";
 import * as data from "./data";
 import * as sui from "./sui";
 import * as compiler from "./compiler";
+import { fireClickOnEnter } from "./util";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -133,8 +134,8 @@ export class ShowValidationMessage extends data.Component<TutorialCodeValidation
                     {lf("Do you still want to continue?")}
                 </div>
                 <div className="moveOnButtons">
-                    <sui.Button className="yes" ariaLabel={lf("yes button for tutorial code validation")} onClick={this.moveOnToNextTutorialStep.bind(this)} onKeyDown={sui.fireClickOnEnter} > {lf("Continue Anyway")} </sui.Button>
-                    <sui.Button className="no" ariaLabel={lf("no button for tutorial code validation")} onClick={this.stayOnThisTutorialStep.bind(this)} onKeyDown={sui.fireClickOnEnter} > {lf("Keep Editing")} </sui.Button>
+                    <sui.Button className="yes" ariaLabel={lf("yes button for tutorial code validation")} onClick={this.moveOnToNextTutorialStep.bind(this)} onKeyDown={fireClickOnEnter} > {lf("Continue Anyway")} </sui.Button>
+                    <sui.Button className="no" ariaLabel={lf("no button for tutorial code validation")} onClick={this.stayOnThisTutorialStep.bind(this)} onKeyDown={fireClickOnEnter} > {lf("Keep Editing")} </sui.Button>
                 </div>
             </div>
         </div>;

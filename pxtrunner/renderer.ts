@@ -774,7 +774,7 @@ namespace pxt.runner {
                 return renderNextAsync();
             }
 
-            const m = /^\[([^\]]+)\]$/.exec(text);
+            const m = /^\[(.+)\]$/.exec(text);
             if (!m) return renderNextAsync();
 
             const code = m[1];
