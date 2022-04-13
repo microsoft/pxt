@@ -28,6 +28,22 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
     let cancelSound: () => void;
     let previewSynthListener: (freq: number, vol: number, sound: pxt.assets.Sound) => void;
 
+    React.useEffect(() => {
+        const keyListener = (ev: KeyboardEvent) => {
+            // Ignore all keys that could be used for accessibility navigation
+            if (ev.key.length !== 1 || ev.metaKey || ev.ctrlKey || /[0-9]/.test(ev.key)) return;
+
+            // Ignore when a text input is focused
+            if (document.activeElement && document.activeElement.tagName === "INPUT" && (document.activeElement as HTMLInputElement).type === "text") return;
+
+            play();
+        };
+
+        document.addEventListener("keydown", keyListener);
+
+        return () => document.removeEventListener("keydown", keyListener);
+    })
+
     const play = (toPlay = sound) => {
         const codalSound = soundToCodalSound(toPlay);
 
