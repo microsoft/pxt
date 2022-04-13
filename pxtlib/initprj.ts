@@ -121,7 +121,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [8.x]
+        node-version: [14.x]
 
     steps:
       - uses: actions/checkout@v1
@@ -153,7 +153,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [8.x]
+        node-version: [14.x]
     steps:
       - uses: actions/checkout@v2
       - name: Use Node.js $\{{ matrix.node-version }}

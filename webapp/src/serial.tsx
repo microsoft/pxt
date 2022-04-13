@@ -8,6 +8,7 @@ import * as data from "./data";
 import * as auth from "./auth";
 
 import Util = pxt.Util
+import { fireClickOnEnter } from "./util"
 
 const maxEntriesPerChart: number = 4000;
 
@@ -29,7 +30,7 @@ export class Editor extends srceditor.Editor {
     lineColors: string[];
     hcLineColors: string[];
     currentLineColors: string[];
-    highContrast?: boolean = false
+    highContrast?: boolean = false;
 
     //refs
     startPauseButton: StartPauseButton
@@ -48,7 +49,7 @@ export class Editor extends srceditor.Editor {
 
     setVisible(b: boolean) {
         // TODO: It'd be great to re-render this component dynamically when the contrast changes,
-        // but for now the user has to toggle the serial editor to see a change. 
+        // but for now the user has to toggle the serial editor to see a change.
         const highContrast = core.getHighContrastOnce();
         if (highContrast !== this.highContrast) {
             this.setHighContrast(highContrast)
@@ -241,6 +242,9 @@ export class Editor extends srceditor.Editor {
             if (this.consoleRoot) {
                 pxt.BrowserUtils.removeClass(this.consoleRoot, "nochart");
             }
+
+            // Force rerender to hide placeholder chart
+            if (this.charts.length == 1) this.parent.forceUpdate();
         }
         homeChart.addPoint(variable, nvalue, receivedTime)
     }
@@ -454,7 +458,7 @@ export class Editor extends srceditor.Editor {
                 <div id="serialHeader" className="ui serialHeader">
                     <div className="leftHeaderWrapper">
                         <div className="leftHeader">
-                            <sui.Button title={lf("Go back")} tabIndex={0} onClick={this.goBack} onKeyDown={sui.fireClickOnEnter}>
+                            <sui.Button title={lf("Go back")} tabIndex={0} onClick={this.goBack} onKeyDown={fireClickOnEnter}>
                                 <sui.Icon icon="arrow left" />
                                 <span className="ui text landscape only">{lf("Go back")}</span>
                             </sui.Button>
@@ -471,6 +475,9 @@ export class Editor extends srceditor.Editor {
                         <span className="ui small header">{this.isSim ? lf("Simulator") : lf("Device")}</span>
                     </div>
                 </div>
+                {this.charts?.length == 0 && <div id="serialPlaceholder" className="ui segment">
+                    <div className="ui bottom left attached no-select label seriallabel">{lf("Values will be logged when the {0} sends data", this.isSim ? lf("simulator") : lf("device"))}</div>
+                </div>}
                 <div id="serialCharts" ref={this.handleChartRootRef}></div>
                 <div id="serialConsole" ref={this.handleConsoleRootRef}></div>
             </div>

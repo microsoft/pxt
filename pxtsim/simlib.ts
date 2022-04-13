@@ -268,23 +268,25 @@ namespace pxsim {
             stopTone();
             clearVca();
         }
-
-        function clearVco() {
-            if (_vco) {
-                try {
-                    _vco.stop();
-                    _vco.disconnect();
-                } catch { }
-                _vco = undefined;
-            }
-        }
         function clearVca() {
             if (_vca) {
                 try {
-                    _vca.disconnect();
+                    disconnectVca(_vca, _vco);
                 } catch { }
                 _vca = undefined;
+                _vco = undefined;
             }
+        }
+
+        function disconnectVca(gain: GainNode, osc?: AudioNode) {
+            if (gain.gain.value) {
+                gain.gain.setTargetAtTime(0, context().currentTime, 0.015);
+            }
+
+            setTimeout(() => {
+                gain.disconnect();
+                if (osc) osc.disconnect();
+            }, 450)
         }
 
         export function frequency(): number {
@@ -457,12 +459,12 @@ namespace pxsim {
             generator: OscillatorNode | AudioBufferSourceNode;
             gain: GainNode
             mute() {
-                if (this.generator) {
+                if (this.gain)
+                    disconnectVca(this.gain, this.generator)
+                else if (this.generator) {
                     this.generator.stop()
                     this.generator.disconnect()
                 }
-                if (this.gain)
-                    this.gain.disconnect()
                 this.gain = null
                 this.generator = null
             }
@@ -551,7 +553,8 @@ namespace pxsim {
                     currWave = soundWaveIdx
                     currFreq = freq
                     ch.gain = ctx.createGain()
-                    ch.gain.gain.value = scaledStart;
+                    ch.gain.gain.value = 0;
+                    ch.gain.gain.setTargetAtTime(scaledStart, _context.currentTime, 0.015);
 
                     if (endFreq != freq) {
                         if ((ch.generator as any).frequency != undefined) {
@@ -575,7 +578,13 @@ namespace pxsim {
 
                 ch.gain.gain.setValueAtTime(scaledStart, ctx.currentTime + (timeOff / 1000))
                 timeOff += duration
-                ch.gain.gain.linearRampToValueAtTime(scaledEnd, ctx.currentTime + (timeOff / 1000))
+
+                // To prevent clipping, we ramp to this value slightly earlier than intended. This is so that we
+                // can go for a smooth ramp to 0 in ch.mute() without this operation interrupting it. If we had
+                // more accurate timing this would not be necessary, but we'd probably have to do something like
+                // running a metronome in a webworker to get the level of precision we need
+                const endTime = scaledEnd !== 0 && duration > 50 ? ((timeOff - 50) / 1000) : ((timeOff - 10) / 1000)
+                ch.gain.gain.linearRampToValueAtTime(scaledEnd, ctx.currentTime + endTime)
 
                 return loopAsync()
             }
@@ -591,17 +600,19 @@ namespace pxsim {
             let ctx = context();
             if (!ctx) return;
 
-            clearVco();
 
             gain = Math.max(0, Math.min(1, gain));
             try {
-                _vco = ctx.createOscillator();
-                _vca = ctx.createGain();
-                _vco.type = 'triangle';
-                _vco.connect(_vca);
-                _vca.connect(ctx.destination);
+                if (!_vco) {
+                    _vco = ctx.createOscillator();
+                    _vca = ctx.createGain();
+                    _vca.gain.value = 0;
+                    _vco.type = 'triangle';
+                    _vco.connect(_vca);
+                    _vca.connect(ctx.destination);
+                    _vco.start(0);
+                }
                 setCurrentToneGain(gain);
-                _vco.start(0);
             } catch (e) {
                 _vco = undefined;
                 _vca = undefined;
@@ -614,7 +625,7 @@ namespace pxsim {
 
         export function setCurrentToneGain(gain: number) {
             if (_vca?.gain) {
-                _vca.gain.value = _mute ? 0 : gain;
+                _vca.gain.setTargetAtTime(_mute ? 0 : gain, _context.currentTime, 0.015)
             }
         }
 
@@ -643,6 +654,76 @@ namespace pxsim {
                 audio.onerror = () => res();
                 audio.play();
             })
+        }
+
+        const MAX_SCHEDULED_BUFFER_NODES = 3;
+
+        export function playPCMBufferStreamAsync(pull: () => Float32Array, sampleRate: number, volume = 0.3, isCancelled?: () => boolean) {
+            return new Promise<void>(resolve => {
+                let nodes: AudioBufferSourceNode[] = [];
+                let nextTime = context().currentTime;
+                let allScheduled = false;
+
+                // Every time we pull a buffer, schedule a node in the future to play it.
+                // Scheduling the nodes ahead of time sounds much smoother than trying to
+                // do it when the previous node completes (which sounds SUPER choppy in
+                // FireFox).
+                function playNext() {
+                    const cancelled = isCancelled && isCancelled();
+                    while (!allScheduled && nodes.length < MAX_SCHEDULED_BUFFER_NODES && !cancelled) {
+                        const data = pull();
+                        if (!data || !data.length) {
+                            allScheduled = true;
+                            break;
+                        }
+                        play(data);
+                    }
+
+                    if ((allScheduled && nodes.length === 0)) {
+                        channel.remove();
+                        if (resolve) resolve();
+                        resolve = undefined;
+                    }
+                }
+
+                function play(data: Float32Array) {
+                    const buff = context().createBuffer(1, data.length, sampleRate);
+                    if (buff.copyToChannel) {
+                        buff.copyToChannel(data, 0);
+                    }
+                    else {
+                        const channelBuffer = buff.getChannelData(0);
+                        for (let i = 0; i < data.length; i++) {
+                            channelBuffer[i] = data[i];
+                        }
+                    }
+
+                    // Audio buffer source nodes are supposedly very cheap, so no need to reuse them
+                    const newNode = context().createBufferSource();
+                    nodes.push(newNode);
+                    newNode.connect(channel.gain);
+                    newNode.buffer = buff;
+                    newNode.addEventListener("ended", () => {
+                        nodes.shift().disconnect();
+                        playNext();
+                    });
+                    newNode.start(nextTime);
+                    nextTime += buff.duration;
+                }
+
+                const channel = new Channel();
+                channel.gain = context().createGain();
+                channel.gain.gain.value = 0;
+                if (!_mute)
+                    channel.gain.gain.setValueAtTime(volume, context().currentTime);
+                channel.gain.connect(context().destination);
+
+                if (channels.length > 5)
+                    channels[0].remove()
+                channels.push(channel);
+
+                playNext();
+            });
         }
 
         function frequencyFromMidiNoteNumber(note: number) {

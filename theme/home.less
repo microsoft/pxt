@@ -15,6 +15,10 @@
 @homeDetailViewSelectedCardZIndex: @homeDetailViewZIndex+1; /* Show the card arrow above the detail view */
 @homeFooterZIndex: @homeCarouselArrowZIndex+1;
 
+@heroBannerGradientColor: rgba(0,0,0,1);
+@heroBannerDotOutlineColor: rgba(0, 0, 0, .4);
+@heroBannerDotOutlineAtiveColor: rgba(255, 255, 255, .75);
+
 #homescreen {
     background: lighten(@homeScreenBackground, 10%);
     z-index: @homeScreenZIndex;
@@ -32,7 +36,7 @@
             z-index: @homeScreenZIndex+2 !important;
         }
     }
-    .getting-started-segment {
+    .ui.segment.getting-started-segment {
         border: 0;
         margin-top: -2.1rem !important;
         margin-bottom: 2.1rem !important;
@@ -53,27 +57,63 @@
             text-shadow: -1px 0 rgb(87, 87, 87), 0 1px rgb(87, 87, 87), 1px 0 rgb(87, 87, 87), 0 -1px rgb(87, 87, 87);
         }
     }
-    .getting-started-segment.hero {
-        .action {
+    .ui.segment.getting-started-segment.hero {
+        -webkit-transition: background-image 0.5s ease-in;
+        transition: background-image 0.5s ease-in;
+        overflow: hidden;
+
+        .hero-banner-contents {
             position: absolute;
-            left: 1rem;
-            bottom: 1rem;
-            margin: 0.5rem;       
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 20rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            margin-left: @carouselArrowSize;
         }
-        .dots {
-            position: absolute;
-            bottom: 2rem;
-            right: 2rem;
 
-            button {
-                margin-right: 1.5rem;
+        .description {
+            display: flex;
+            align-items: flex-end;
+            width: 20rem;
+            height: 6.5rem;
+            overflow-y: auto;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: @white;
+            p {
+                flex-grow: 0;
+                max-height: 100%;
             }
+        }
 
-            button.active {
-                background: @primaryColor;
+        .action {
+            margin: 1rem 0;
+        }
+
+        .dots button {
+            transition: background-color 0.5s;
+            border: 2px solid @heroBannerDotOutlineColor;
+            margin-right: 1.25rem;
+
+            &.active {
+                border-color: @heroBannerDotOutlineAtiveColor;
+                background-color: transparent;
             }
+        }
+
+        .gradient-overlay {
+            position: relative;
+            height: 100%;
+            width: 40rem;
+            top: 0;
+            left: 0;
+            background: linear-gradient(to right, @heroBannerGradientColor 0%, rgba(0, 0, 0, 0) 100%);
         }
     }
+
     .content {
         height: 100%;
     }
@@ -86,7 +126,7 @@
         min-height: 100%;
         background: @homeScreenBackground;
     }
-    .gallerysegment {
+    .ui.segment.gallerysegment {
         background: none;
         border: none;
         box-shadow: none;
@@ -250,9 +290,9 @@
             border-radius: 0.5rem;
             background-color: @primaryColor;
         }
-        .actions {
+        .ui.grid.stackable .actions {
             padding-right: 4rem !important;
-            position: absolute;
+            position: relative;
             bottom: 0;
             text-align: right;
 
@@ -278,9 +318,14 @@
 
                 .button.attached i {
                     display: block;
-                    margin: auto!important;
-                    opacity: 0.05;
+                    margin: auto !important;
+                    opacity: 0.65;
                     color: @homeCardHeaderColor;
+
+                    // These three have text in front of the icons, so leave them faint.
+                    &.blocks, &.js, &.py {
+                        opacity: 0.05;
+                    }
                 }
                 .button.attached .icon:not(.xicon) {
                     margin: 0 auto!important;
@@ -375,7 +420,7 @@
     }
 }
 
-.scriptmanager, .projectsdialog {
+.scriptmanager .ui.cards, .projectsdialog {
     .ui.card {
         margin-right: 5px;
         border-radius: @homeCardBorderRadius;
@@ -384,6 +429,10 @@
         background-color: @homeCardBackgroundColor;
         .ui.image, .ui.imagewrapper, .content {
             border-radius: @homeCardImageBorderRadius !important;
+            .tags {
+                color:#717171;
+                font-size: 1rem;
+            }
         }
         .header {
             color: @homeCardHeaderColor;
@@ -393,8 +442,8 @@
         }
     }
     .ui.card:focus {
-        outline: none;
-        border: @homeCardBorderSize solid @homeCardFocusBorderColor !important;
+        border: 2px solid transparent;
+        outline: @homeCardBorderSize solid @homeCardFocusBorderColor !important;
     }
 }
 
@@ -486,7 +535,8 @@
 @media only screen and (max-width: @largestTabletScreen) {
     /* Carousel */
     .projectsdialog {
-        .getting-started-segment {
+        .ui.segment.getting-started-segment {
+            background-position: left center;
             height: 250px;
             .getting-started {
                 padding: @carouselArrowSizeTablet;
@@ -494,6 +544,10 @@
             }
             .getting-started-header {
                 font-size: 40px;
+            }
+
+            &.hero .hero-banner-contents {
+                margin-left: @carouselArrowSizeTablet;
             }
         }
         .ui.segment.tabsegment {
@@ -546,14 +600,6 @@
             width: 200px;
         }
     }
-
-    /** squeeze the logos to sides of the screen */
-    #homemenu .left.menu {
-        margin-left: 0 !important;
-    }
-    #homemenu .right.menu {
-        margin-right: 0 !important;
-    }
 }
 
 
@@ -562,9 +608,26 @@
 @media only screen and (max-width: @largestMobileScreen) {
     /* Carousel */
     .projectsdialog {
-        .getting-started-segment {
+        .ui.segment.getting-started-segment {
+            height: 10rem;
+            margin-bottom: 0.5rem !important;
+            .getting-started-header {
+                font-size: 30px;
+            }
             .getting-started {
                 padding: @carouselArrowSizeMobile;
+            }
+
+            &.hero .hero-banner-contents {
+                margin-left: @carouselArrowSizeMobile;
+                .description {
+                    width: 12rem;
+                    height: 4rem;
+                    font-size: 1rem;
+                }
+                .dots {
+                    display: none;
+                }
             }
         }
         .ui.segment.tabsegment {
@@ -594,11 +657,9 @@
     }
 
     .projectsdialog {
-        .ui.card, .ui.cards>.card {
+        .ui.card.buttoncard {
             width: 9rem;
             height: 9rem;
-        }
-        .ui.card.buttoncard {
             .content {
                 padding: 1rem;
             }
@@ -623,6 +684,12 @@
                 height: 2.4rem;
                 padding: 0.7rem;
             }
+            .ui.image~.content.tall {
+                height: 3rem;
+                .tags {
+                    font-size: .8rem;
+                }
+            }
         }
         .ui.card.file {
             .content .header {
@@ -634,13 +701,6 @@
             .meta {
                 font-size: 0.7rem;
                 padding: 0.5rem;
-            }
-        }
-        .getting-started-segment {
-            height: 10rem;
-            margin-bottom: 0.5rem !important;
-            .getting-started-header {
-                font-size: 30px;
             }
         }
         .carouselcontainer {
@@ -758,10 +818,21 @@
                 height: 220px;
             }
         }
-        .getting-started-segment {
+        .ui.segment.getting-started-segment {
             margin-top: -3.1rem!important;
             margin-bottom: 0rem!important;
             height: 168px;
+
+            &.hero .hero-banner-contents {
+                .description {
+                    width: 12rem;
+                    height: 4rem;
+                    font-size: 1rem;
+                }
+                .dots {
+                    display: none;
+                }
+            }
         }
     }
 }

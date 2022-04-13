@@ -1,0 +1,57 @@
+/*
+  Your use of the content in the files referenced here is subject to the terms of the license at https://aka.ms/fabric-assets-license
+*/
+@font-face {
+  font-family: 'FabricMDL2Icons';
+  src: url('../fonts/fabric-icons-7047ab83.woff') format('woff');
+}
+
+.ms-Icon {
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+  display: inline-block;
+  font-family: 'FabricMDL2Icons';
+  font-style: normal;
+  font-weight: normal;
+  speak: none;
+}
+
+.ms-Icon--Add:before { content: "\E710"; }
+.ms-Icon--ArrowTallUpLeft:before { content: "\F2BD"; }
+.ms-Icon--ArrowUpRightMirrored8:before { content: "\EEEF"; }
+.ms-Icon--BrowserScreenShot:before { content: "\EBED"; }
+.ms-Icon--ChevronDown:before { content: "\E70D"; }
+.ms-Icon--ChevronUp:before { content: "\E70E"; }
+.ms-Icon--ChromeClose:before { content: "\E8BB"; }
+.ms-Icon--CircleShape:before { content: "\F1A5"; }
+.ms-Icon--CircleShapeSolid:before { content: "\F63C"; }
+.ms-Icon--ClosedCaption:before { content: "\EF84"; }
+.ms-Icon--Code:before { content: "\E943"; }
+.ms-Icon--Contact:before { content: "\E77B"; }
+.ms-Icon--DoubleColumn:before { content: "\F1D4"; }
+.ms-Icon--EditCreate:before { content: "\F3C9"; }
+.ms-Icon--EraseTool:before { content: "\E75C"; }
+.ms-Icon--FullView:before { content: "\F1A2"; }
+.ms-Icon--Highlight:before { content: "\E7E6"; }
+.ms-Icon--ImagePixel:before { content: "\F30C"; }
+.ms-Icon--MyMoviesTV:before { content: "\EE6C"; }
+.ms-Icon--OfficeChat:before { content: "\F70F"; }
+.ms-Icon--OpenFile:before { content: "\E8E5"; }
+.ms-Icon--OpenPane:before { content: "\E8A0"; }
+.ms-Icon--OpenPaneMirrored:before { content: "\EA5B"; }
+.ms-Icon--PenWorkspace:before { content: "\EDC6"; }
+.ms-Icon--PictureCenter:before { content: "\F522"; }
+.ms-Icon--Record2:before { content: "\EA3F"; }
+.ms-Icon--RectangleShape:before { content: "\F1A9"; }
+.ms-Icon--Remove:before { content: "\E738"; }
+.ms-Icon--Reset:before { content: "\E423"; }
+.ms-Icon--Robot:before { content: "\E99A"; }
+.ms-Icon--Save:before { content: "\E74E"; }
+.ms-Icon--Settings:before { content: "\E713"; }
+.ms-Icon--SingleBookmark:before { content: "\EDFF"; }
+.ms-Icon--Stop:before { content: "\E71A"; }
+.ms-Icon--Timer:before { content: "\E91E"; }
+.ms-Icon--Video:before { content: "\E714"; }
+.ms-Icon--Webcam2:before { content: "\E960"; }
+.ms-Icon--Webcam2Off:before { content: "\E36D"; }
+.ms-Icon--WhiteBoardApp32:before { content: "\F674"; }

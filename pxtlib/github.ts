@@ -105,6 +105,7 @@ namespace pxt.github {
 
     // caching
     export interface IGithubDb {
+        latestVersionAsync(repopath: string, config: PackagesConfig): Promise<string>;
         loadConfigAsync(repopath: string, tag: string): Promise<pxt.PackageConfig>;
         loadPackageAsync(repopath: string, tag: string): Promise<CachedPackage>;
     }
@@ -163,6 +164,7 @@ namespace pxt.github {
     }
 
     export class MemoryGithubDb implements IGithubDb {
+        private latestVersions: pxt.Map<string> = {};
         private configs: pxt.Map<pxt.PackageConfig> = {};
         private packages: pxt.Map<CachedPackage> = {};
 
@@ -188,7 +190,10 @@ namespace pxt.github {
         }
 
         async loadConfigAsync(repopath: string, tag: string): Promise<pxt.PackageConfig> {
-            if (!tag) tag = "master";
+            if (!tag) {
+                pxt.debug(`dep: default to master branch`)
+                tag = "master";
+            }
 
             // cache lookup
             const key = `${repopath}/${tag}`;
@@ -213,8 +218,20 @@ namespace pxt.github {
             return this.cacheConfig(key, cfg);
         }
 
+        async latestVersionAsync(repopath: string, config: PackagesConfig): Promise<string> {
+            let resolved = this.latestVersions[repopath]
+            if (!resolved) {
+                pxt.debug(`dep: resolve latest version of ${repopath}`)
+                this.latestVersions[repopath] = resolved = await pxt.github.latestVersionAsync(repopath, config, true, false)
+            }
+            return resolved
+        }
+
         async loadPackageAsync(repopath: string, tag: string): Promise<CachedPackage> {
-            if (!tag) tag = "master";
+            if (!tag) {
+                pxt.debug(`load pkg: default to master branch`)
+                tag = "master";
+            }
 
             // try using github proxy first
             if (hasProxy()) {
@@ -563,36 +580,40 @@ namespace pxt.github {
                     .then(resolveRefAsync))
     }
 
-    export function pkgConfigAsync(repopath: string, tag = "master") {
-        return db.loadConfigAsync(repopath, tag)
+    export async function pkgConfigAsync(repopath: string, tag: string, config: pxt.PackagesConfig) {
+        if (!tag)
+            tag = await db.latestVersionAsync(repopath, config)
+        return await db.loadConfigAsync(repopath, tag)
     }
 
-    export function downloadPackageAsync(repoWithTag: string, config: pxt.PackagesConfig): Promise<CachedPackage> {
+    export async function downloadPackageAsync(repoWithTag: string, config: pxt.PackagesConfig): Promise<CachedPackage> {
         const p = parseRepoId(repoWithTag)
         if (!p) {
             pxt.log('Unknown GitHub syntax');
-            return Promise.resolve<CachedPackage>(undefined);
+            return undefined
         }
 
         if (isRepoBanned(p, config)) {
             pxt.tickEvent("github.download.banned");
             pxt.log('Github repo is banned');
-            return Promise.resolve<CachedPackage>(undefined);
+            return undefined;
         }
 
-        return db.loadPackageAsync(p.fullName, p.tag)
-            .then(cached => {
-                const dv = upgradedDisablesVariants(config, repoWithTag)
-                if (dv) {
-                    const cfg = Package.parseAndValidConfig(cached.files[pxt.CONFIG_NAME])
-                    if (cfg) {
-                        pxt.log(`auto-disable ${dv.join(",")} due to targetconfig entry for ${repoWithTag}`)
-                        cfg.disablesVariants = dv
-                        cached.files[pxt.CONFIG_NAME] = Package.stringifyConfig(cfg)
-                    }
-                }
-                return cached
-            })
+        // always try to upgrade unbound versions
+        if (!p.tag) {
+            p.tag = await db.latestVersionAsync(p.slug, config)
+        }
+        const cached = await db.loadPackageAsync(p.fullName, p.tag)
+        const dv = upgradedDisablesVariants(config, repoWithTag)
+        if (dv) {
+            const cfg = Package.parseAndValidConfig(cached.files[pxt.CONFIG_NAME])
+            if (cfg) {
+                pxt.log(`auto-disable ${dv.join(",")} due to targetconfig entry for ${repoWithTag}`)
+                cfg.disablesVariants = dv
+                cached.files[pxt.CONFIG_NAME] = Package.stringifyConfig(cfg)
+            }
+        }
+        return cached
     }
 
     export async function downloadLatestPackageAsync(repo: ParsedRepo): Promise<{ version: string, config: pxt.PackageConfig }> {
@@ -603,7 +624,7 @@ namespace pxt.github {
         await pxt.github.downloadPackageAsync(repoWithTag, packageConfig)
 
         // return config
-        const config = await pkgConfigAsync(repo.fullName, tag)
+        const config = await pkgConfigAsync(repo.fullName, tag, packageConfig)
         const version = `github:${repoWithTag}`
 
         return { version, config };
@@ -1012,13 +1033,14 @@ namespace pxt.github {
     }
 
     export function stringifyRepo(p: ParsedRepo) {
-        return p ? "github:" + p.fullName.toLowerCase() + "#" + (p.tag || "master") : undefined;
+        return p ? "github:" + p.fullName.toLowerCase() + (p.tag ? `#${p.tag}` : '') : undefined;
     }
 
-    export function normalizeRepoId(id: string) {
+    export function normalizeRepoId(id: string, defaultTag?: string) {
         const gid = parseRepoId(id);
         if (!gid) return undefined;
-        gid.tag = gid.tag || "master";
+        if (!gid.tag && defaultTag)
+            gid.tag = defaultTag
         return stringifyRepo(gid);
     }
 

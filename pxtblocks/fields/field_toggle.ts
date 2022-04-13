@@ -24,15 +24,9 @@ namespace pxtblockly {
             this.type_ = params.type;
         }
 
-        init() {
-            if (this.fieldGroup_) {
-                // Field has already been initialized once.
+        initView() {
+            if (!this.fieldGroup_) {
                 return;
-            }
-            // Build the DOM.
-            this.fieldGroup_ = Blockly.utils.dom.createSvgElement('g', {}, null) as SVGGElement;
-            if (!this.visible_) {
-                (this.fieldGroup_ as any).style.display = 'none';
             }
             // Add an attribute to cassify the type of field.
             if ((this as any).getArgTypes() !== null) {
@@ -118,11 +112,7 @@ namespace pxtblockly {
             this.setValue(this.getValue());
 
             // Force a render.
-            this.render_();
-            this.size_.width = 0;
-            (this as any).mouseDownWrapper_ =
-                Blockly.bindEventWithChecks_((this as any).getClickTarget_(), 'mousedown', this,
-                    (this as any).onMouseDown_);
+            this.markDirty();
         }
 
         getDisplayText_() {
@@ -217,15 +207,22 @@ namespace pxtblockly {
                 let leftPadding = 0, rightPadding = 0;
                 switch (outputShape) {
                     case Blockly.OUTPUT_SHAPE_HEXAGONAL:
-                        width = innerWidth;
+                        width = size.width / 2;
                         halfWidth = width / 2;
-                        let quarterWidth = halfWidth / 2;
-                        // TODO: the left padding calculation is a hack, we should calculate left padding based on width (generic case)
-                        leftPadding = -halfWidth + quarterWidth;
-                        rightPadding = -quarterWidth;
-                        const topLeftPoint = -quarterWidth;
-                        const bottomRightPoint = halfWidth;
-                        this.toggleThumb_.setAttribute('points', `${topLeftPoint},-14 ${topLeftPoint - 14},0 ${topLeftPoint},14 ${bottomRightPoint},14 ${bottomRightPoint + 14},0 ${bottomRightPoint},-14`);
+                        leftPadding = -halfWidth; // total translation when toggle is left-aligned = 0
+                        rightPadding = halfWidth - innerWidth; // total translation when right-aligned = width
+
+                        /**
+                         *  Toggle defined clockwise from bottom left:
+                         *
+                         *        0,  14 ----------- width, 14
+                         *       /                           \
+                         *  -14, 0                            width + 14, 0
+                         *       \                           /
+                         *        0, -14 ----------- width, -14
+                         */
+
+                        this.toggleThumb_.setAttribute('points', `${0},-14 -14,0 ${0},14 ${width},14 ${width + 14},0 ${width},-14`);
                         break;
                     case Blockly.OUTPUT_SHAPE_ROUND:
                     case Blockly.OUTPUT_SHAPE_SQUARE:

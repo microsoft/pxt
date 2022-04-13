@@ -3,12 +3,17 @@
     background-color: rgba(0, 0, 0, 0.2);
 }
 
+.header-dropdown {
+    position: relative;
+}
+
 .dropdown-menu {
     position: absolute;
     background-color: var(--body-background-color);
     z-index: var(--above-frame-zindex);
     border: 1px solid var(--dropdown-hover-color);
     border-top: 0px;
+    right: 0em;
 }
 
 .dropdown-item {

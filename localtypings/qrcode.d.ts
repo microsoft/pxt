@@ -52,4 +52,5 @@ interface QRCode {
     renderTo2dContext(context: CanvasRenderingContext2D, cellSize?: number): void;
 }
 
+// eslint-disable-next-line no-var
 declare var qrcode: QRCodeFactory;

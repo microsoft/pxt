@@ -76,7 +76,6 @@ namespace ts.pxtc.service {
         return [...retApis, ...completionSymbols(enumVals, COMPLETION_DEFAULT_WEIGHT)]
     }
 
-
     export function getBasicKindDefault(kind: SyntaxKind, isPython: boolean): string | undefined {
         switch (kind) {
             case SK.StringKeyword: return "\"\"";
@@ -123,7 +122,7 @@ namespace ts.pxtc.service {
                 callingConvention: ir.CallingConvention.Plain,
                 paramDefl: {},
             },
-            fileName: "main.ts",
+            fileName: pxt.MAIN_TS,
             parameters: [],
             retType: "any",
         }
@@ -153,7 +152,7 @@ namespace ts.pxtc.service {
                 callingConvention: ir.CallingConvention.Plain,
                 paramDefl: {},
             },
-            fileName: "main.ts",
+            fileName: pxt.MAIN_TS,
             parameters: [],
             retType: typeName,
         }
@@ -264,8 +263,6 @@ namespace ts.pxtc.service {
         }
         return null
     }
-
-
 
     export function getDefaultEnumValue(t: Type, python: boolean): string {
         // Note: AFAIK this is NOT guranteed to get the same default as you get in

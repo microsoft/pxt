@@ -8,6 +8,7 @@ import * as core from "./core"
 import * as coretsx from "./coretsx";
 
 import Util = pxt.Util;
+import { fireClickOnEnter } from "./util"
 
 export const enum CategoryNameID {
     Loops = "loops",
@@ -213,14 +214,8 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
 
             // Hide flyout
             this.closeFlyout();
-            if (parent.parent.state?.accessibleBlocks) {
-                Blockly.navigation.setState(Blockly.navigation.STATE_WS);
-            }
         } else {
             let handled = false;
-            if (parent.parent.state?.accessibleBlocks) {
-                Blockly.navigation.setState(Blockly.navigation.STATE_TOOLBOX);
-            }
             if (customClick) {
                 handled = customClick(parent);
                 if (handled) return;
@@ -555,8 +550,10 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
         const { toolbox } = this.props;
         const isRtl = Util.isUserLanguageRtl();
 
-        const accessibleBlocksEnabled = (Blockly.getMainWorkspace() as any).keyboardAccessibilityMode;
-        const blocklyNavigationState = (Blockly.navigation as any).currentState_ as number;
+        const mainWorkspace = Blockly.getMainWorkspace() as any;
+        const accessibleBlocksEnabled = mainWorkspace.keyboardAccessibilityMode;
+        const accessibleBlocksState = accessibleBlocksEnabled
+            && (toolbox.props.parent as any).navigationController?.navigation?.getState(mainWorkspace);
         const keyMap: { [key: string]: number } = {
             "DOWN": accessibleBlocksEnabled ? 83 : 40, // 'S' || down arrow
             "UP": accessibleBlocksEnabled ? 87 : 38, // 'W' || up arrow
@@ -565,7 +562,7 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
         }
 
         const charCode = core.keyCodeFromEvent(e);
-        if (!accessibleBlocksEnabled || blocklyNavigationState != 1) {
+        if (!accessibleBlocksEnabled || accessibleBlocksState == "toolbox") {
             if (charCode == keyMap["DOWN"]) {
                 this.nextItem();
             } else if (charCode == keyMap["UP"]) {
@@ -578,7 +575,7 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
                 // Close the flyout
                 toolbox.closeFlyout();
             } else if (charCode == core.ENTER_KEY || charCode == core.SPACE_KEY) {
-                sui.fireClickOnEnter.call(this, e);
+                fireClickOnEnter.call(this, e);
             } else if (charCode == core.TAB_KEY
                 || charCode == 37 /* Left arrow key */
                 || charCode == 39 /* Left arrow key */
@@ -589,7 +586,7 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
             } else if (!accessibleBlocksEnabled) {
                 toolbox.setSearch();
             }
-        } else if (accessibleBlocksEnabled && blocklyNavigationState == 1
+        } else if (accessibleBlocksEnabled && accessibleBlocksState == "flyout"
             && ((charCode == keyMap["LEFT"] && !isRtl)
             || (charCode == keyMap["RIGHT"] && isRtl))) {
             this.focusElement();
@@ -784,7 +781,7 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
             style={treeRowStyle} tabIndex={0}
             aria-label={lf("Toggle category {0}", rowTitle)} aria-expanded={selected}
             onMouseEnter={this.onmouseenter} onMouseLeave={this.onmouseleave}
-            onClick={onClick} onContextMenu={onClick} onKeyDown={onKeyDown ? onKeyDown : sui.fireClickOnEnter}>
+            onClick={onClick} onContextMenu={onClick} onKeyDown={onKeyDown ? onKeyDown : fireClickOnEnter}>
             <span className="blocklyTreeIcon" role="presentation"></span>
             {iconImageStyle}
             <span style={{ display: 'inline-block' }} className={`blocklyTreeIcon ${iconClass}`} role="presentation">{iconContent}</span>
@@ -825,7 +822,9 @@ export interface TreeGroupProps {
 export class TreeGroup extends data.Component<TreeGroupProps, {}> {
     renderCore() {
         const { visible } = this.props;
-        return <div role="group" style={{ backgroundPosition: '0px 0px', 'display': visible ? '' : 'none' }}>
+        if (!this.props.children) return <div />;
+
+        return <div role="tree" style={{ backgroundPosition: '0px 0px', 'display': visible ? '' : 'none' }}>
             {this.props.children}
         </div>
     }

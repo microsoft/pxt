@@ -4,16 +4,27 @@ let child_process = require("child_process")
 let lineNo = 0
 let addresses = {}
 let fn = ""
+let src = ""
+let vm = false
 for (let line of fs.readFileSync("built/binary.asm", "utf8").split(/\n/)) {
     lineNo++
     let m = /; (0x[a-f0-9]+)/.exec(line)
     if (m) {
         let addr = parseInt(m[1], 0)
-        addresses[addr] = fn + " @  vi +" + lineNo + " built/binary.asm  / " + line
+        addresses[addr] = fn + " " + src + " @  vi +" + lineNo + " built/binary.asm  / " + line
     }
+
+    if (/^; VM start/.test(line))
+        vm = true
 
     m = /; Function (.*)/.exec(line)
     if (m) fn = m[1]
+
+    m = /; Proc: (.*)/.exec(line)
+    if (m) src = m[1]
+
+    m = /^; (\S+\(.*\): .*)/.exec(line)
+    if (m) src = m[1]
 
     if (/^; endfun/.test(line))
         fn = ""
@@ -64,6 +75,21 @@ if (mapFn) {
     }
 }
 
+function processAddr(k) {
+    let ok = false
+    let offlist = [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4]
+    if (vm) offlist = [-2, -4, -6, 0, 2, 4]
+    for (const off of offlist) {
+        if (addresses[k + off]) {
+            console.log(`0x${k.toString(16)} - ${addresses[k + off]}`)
+            ok = true
+            break
+        }
+    }
+    if (!ok)
+        console.log(`0x${k.toString(16)}`)
+}
+
 let stack = child_process.execSync("pbpaste", {
     encoding: "utf8"
 })
@@ -73,16 +99,10 @@ for (let line of stack.split(/\n/)) {
         for (let w of m[1].split(/\s+/)) {
             let k = parseInt(w, 0)
             if (k < k) continue
-            let ok = false
-            for (let off = 5; off >= -4; --off) {
-                if (addresses[k - off]) {
-                    console.log(`0x${k.toString(16)} - ${addresses[k - off]}`)
-                    ok = true
-                    break
-                }
-            }
-            if (!ok)
-                console.log(`0x${k.toString(16)}`)
+            processAddr(k)
         }
+    } else {
+        m = /^  (0x[a-f0-9]+)$/i.exec(line)
+        if (m) processAddr(parseInt(m[1], 0))
     }
 }

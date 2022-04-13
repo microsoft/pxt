@@ -1,0 +1,55 @@
+.common-menu-dropdown {
+    height: 100%;
+    position: relative;
+}
+
+.common-menu-dropdown > .menu-button.expanded {
+    background: @buttonMenuBackgroundActiveColor;
+}
+
+.common-menu-dropdown-pane {
+    position: absolute;
+    right: 0;
+    width: 12rem;
+
+    ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        background: @menuDropdownPaneBackground;
+    }
+
+    li {
+        width: 100%;
+    }
+}
+
+.common-menu-dropdown-item {
+    background: none;
+    text-align: left;
+    width: 100%;
+    margin: 0;
+    padding: 1rem;
+}
+
+.common-menu-dropdown-item.common-button:focus::after {
+    outline: @buttonFocusOutlineLightBackground;
+}
+
+/****************************************************
+ *                 High Contrast                    *
+ ****************************************************/
+
+.high-contrast {
+    .common-menu-dropdown-pane {
+        color: @highContrastTextColor;
+        background-color: @highContrastBackgroundColor;
+        border: 1px solid @highContrastTextColor;
+    }
+
+    .common-menu-dropdown-item:hover,
+    .common-menu-dropdown > .menu-button.expanded {
+        outline: @highContrastFocusOutline;
+        z-index: @highContrastFocusZIndex;
+    }
+}

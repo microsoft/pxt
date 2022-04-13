@@ -1,7 +1,7 @@
 /// <reference path="../localtypings/pxtarget.d.ts"/>
 
 namespace pxt {
-    declare var require: any;
+    declare let require: any;
 
     let lzmaPromise: Promise<any>;
     function getLzmaAsync() {
@@ -219,12 +219,15 @@ namespace pxt.cpp {
         const isPlatformio = !!compileService.platformioIni;
         const isCodal = compileService.buildEngine == "codal" || compileService.buildEngine == "dockercodal"
         const isDockerMake = compileService.buildEngine == "dockermake" || compileService.buildEngine == "dockercross"
-        const isYotta = !isPlatformio && !isCodal && !isDockerMake
+        const isEspIdf = compileService.buildEngine == "dockerespidf"
+        const isYotta = !isPlatformio && !isCodal && !isDockerMake && !isEspIdf
         const isVM = compile.nativeType == pxtc.NATIVE_TYPE_VM
         if (isPlatformio)
             sourcePath = "/src/"
         else if (isCodal || isDockerMake)
             sourcePath = "/pxtapp/"
+        else if (isEspIdf)
+            sourcePath = "/main/"
 
         let pxtConfig = "// Configuration defines\n"
         let pointersInc = "\nPXT_SHIMS_BEGIN\n"
@@ -256,8 +259,6 @@ namespace pxt.cpp {
             return name.trim().replace(/[\_\*]$/, "")
         }
 
-        let makefile = ""
-
         for (const pkg of mainDeps) {
             if (pkg.getFiles().indexOf(constsName) >= 0) {
                 const src = pkg.host().readFile(pkg, constsName)
@@ -269,8 +270,11 @@ namespace pxt.cpp {
                     }
                 })
             }
-            if (!makefile && pkg.getFiles().indexOf("Makefile") >= 0) {
-                makefile = pkg.host().readFile(pkg, "Makefile")
+
+            for (const fn of pkg.getFiles()) {
+                if (["Makefile", "sdkconfig.defaults", "CMakeLists.txt"].indexOf(fn) >= 0 || U.endsWith(fn, ".mk")) {
+                    res.generatedFiles["/" + fn] = pkg.host().readFile(pkg, fn)
+                }
             }
         }
 
@@ -702,6 +706,13 @@ namespace pxt.cpp {
                     })
                 }
 
+                m = /^\s*PXT_EXPORT\(([:\&\w]+)\)/.exec(ln)
+                if (m) {
+                    if (!res.vmPointers)
+                        res.vmPointers = []
+                    res.vmPointers.push(m[1])
+                }
+
                 m = /^#define\s+PXT_COMM_BASE\s+([0-9a-fx]+)/.exec(ln)
                 if (m)
                     res.commBase = parseInt(m[1])
@@ -771,7 +782,7 @@ namespace pxt.cpp {
                             (!U.startsWith(fi.name, "pxt::") && !U.startsWith(fi.name, "pxtrt::"))) {
                             const wrap = generateVMWrapper(fi, argTypes)
                             const nargs = fi.argsFmt.length - 1
-                            pointersInc += `{ "${fi.name}", (OpFun)${wrap}, ${nargs} },\n`
+                            pointersInc += `{ "${fi.name}", (OpFun)(void*)${wrap}, ${nargs} },\n`
                         }
                     } else
                         pointersInc += "PXT_FNPTR(::" + fi.name + "),\n"
@@ -991,6 +1002,11 @@ namespace pxt.cpp {
 
         optSettings["PXT_TARGET"] = JSON.stringify(appTarget.id)
 
+        function allFilesWithExt(ext: string) {
+            let allfiles = Object.keys(res.extensionFiles).concat(Object.keys(res.generatedFiles))
+            return allfiles.filter(f => U.endsWith(f, ext)).map(s => s.slice(1))
+        }
+
         const configJson = U.jsonUnFlatten(optSettings)
         if (isDockerMake) {
             let packageJson = {
@@ -999,6 +1015,17 @@ namespace pxt.cpp {
                 dependencies: res.npmDependencies,
             }
             res.generatedFiles["/package.json"] = JSON.stringify(packageJson, null, 4) + "\n"
+        } else if (isEspIdf) {
+            const files = U.concatArrayLike<string>([
+                allFilesWithExt(".c"),
+                allFilesWithExt(".cpp"),
+                allFilesWithExt(".s")
+            ]).map(s => s.slice(sourcePath.length - 1)).concat(["main.cpp"])
+            files.push("pointers.cpp")
+            res.generatedFiles[sourcePath + "CMakeLists.txt"] =
+                `idf_component_register(\n  SRCS\n` +
+                files.map(f => `    "${f}"\n`).join("") +
+                `  INCLUDE_DIRS\n    "."\n)\n`
         } else if (isCodal) {
             let cs = compileService
             let cfg = U.clone(cs.codalDefinitions) || {}
@@ -1083,13 +1110,10 @@ int main() {
 }
 #endif
 `
-        if (makefile) {
-            let allfiles = Object.keys(res.extensionFiles).concat(Object.keys(res.generatedFiles))
+        if (res.generatedFiles["/Makefile"]) {
             let inc = ""
-            let objs: string[] = []
             let add = (name: string, ext: string) => {
-                let files = allfiles.filter(f => U.endsWith(f, ext)).map(s => s.slice(1))
-                inc += `${name} = ${files.join(" ")}\n`
+                inc += `${name} = ${allFilesWithExt(ext).join(" ")}\n`
             }
             add("PXT_C", ".c")
             add("PXT_CPP", ".cpp")
@@ -1097,7 +1121,6 @@ int main() {
             add("PXT_HEADERS", ".h")
             inc += "PXT_SOURCES := $(PXT_C) $(PXT_S) $(PXT_CPP)\n"
             inc += "PXT_OBJS := $(addprefix bld/, $(PXT_C:.c=.o) $(PXT_S:.s=.o) $(PXT_CPP:.cpp=.o))\n"
-            res.generatedFiles["/Makefile"] = makefile
             res.generatedFiles["/Makefile.inc"] = inc
         }
 
@@ -1348,11 +1371,11 @@ namespace pxt.hexloader {
                         return U.httpGetTextAsync(hexurl + ".hex")
                     })
                     .then(r => r, e =>
-                        Cloud.privatePostAsync("compile/extension", { data: extInfo.compileData })
+                        Cloud.privatePostAsync("compile/extension", { data: extInfo.compileData }, true)
                             .then(ret => new Promise<string>((resolve, reject) => {
                                 let retry = 0;
                                 const delay = 8000; // ms
-                                const maxWait = 120000; // ms
+                                const maxWait = 300000; // ms
                                 const startTry = U.now();
                                 const tryGet = () => {
                                     retry++;
@@ -1559,9 +1582,9 @@ namespace pxt.hexloader {
                 buf = ""
                 let cnt = parseInt(nxt, 16)
                 while (cnt-- > 0) {
-                    /* tslint:disable:no-octal-literal */
+                    /* eslint-disable no-octal */
                     buf += "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
-                    /* tslint:enable:no-octal-literal */
+                    /* eslint-enable no-octal */
                 }
             } else {
                 buf = ts.pxtc.decodeBase64(nxt)

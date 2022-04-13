@@ -402,7 +402,21 @@ namespace helpers {
         return stringSubstrHelper(s, start, end - start);
     }
 
-    // TODO move to PXT
+    // also note this doesn't handle unicode, but neither does JS (there's toLocaleUpperCase())
+    export function stringToUpperCase(s: string): string {
+        let r = ""
+        let prev = 0
+        for (let i = 0; i < s.length; i++) {
+            const c = s.charCodeAt(i)
+            if (97 <= c && c <= 122) {
+                r += s.slice(prev, i) + String.fromCharCode(c - 32)
+                prev = i + 1
+            }
+        }
+        r += s.slice(prev)
+        return r
+    }
+
     // also note this doesn't handle unicode, but neither does JS (there's toLocaleLowerCase())
     export function stringToLowerCase(s: string): string {
         let r = ""

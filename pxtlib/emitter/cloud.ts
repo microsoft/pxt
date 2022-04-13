@@ -113,11 +113,12 @@ namespace pxt.Cloud {
         })
     }
 
-    // 1h check on markdown content if not on development server
-    const MARKDOWN_EXPIRATION = pxt.BrowserUtils.isLocalHostDev() ? 0 : 1 * 60 * 60 * 1000;
-    // 1w check don't use cached version and wait for new content
-    const FORCE_MARKDOWN_UPDATE = MARKDOWN_EXPIRATION * 24 * 7;
     export async function markdownAsync(docid: string, locale?: string): Promise<string> {
+        // 1h check on markdown content if not on development server
+        const MARKDOWN_EXPIRATION = pxt.BrowserUtils.isLocalHostDev() ? 0 : 1 * 60 * 60 * 1000;
+        // 1w check don't use cached version and wait for new content
+        const FORCE_MARKDOWN_UPDATE = MARKDOWN_EXPIRATION * 24 * 7;
+
         locale = locale || pxt.Util.userLanguage();
         const branch = "";
 
@@ -127,8 +128,12 @@ namespace pxt.Cloud {
         const downloadAndSetMarkdownAsync = async () => {
             try {
                 const r = await downloadMarkdownAsync(docid, locale, entry?.etag);
-                await db.setAsync(locale, docid, branch, r.etag, undefined, r.md || entry?.md);
-                return r.md;
+                // TODO directly compare the entry/response etags after backend change
+                if (!entry || (r.md && entry.md !== r.md)) {
+                    await db.setAsync(locale, docid, branch, r.etag, undefined, r.md);
+                    return r.md;
+                }
+                return entry.md;
             } catch {
                 return ""; // no translation
             }
@@ -178,8 +183,8 @@ namespace pxt.Cloud {
         } else {
             url = `md/${pxt.appTarget.id}/${docid.replace(/^\//, "")}?targetVersion=${encodeURIComponent(targetVersion)}`;
         }
-        if (!packaged && locale != "en") {
-            url += `&lang=${encodeURIComponent(locale)}`
+        if (locale != "en") {
+            url += `${packaged ? "?" : "&"}lang=${encodeURIComponent(locale)}`
         }
         if (pxt.BrowserUtils.isLocalHost() && !pxt.Util.liveLocalizationEnabled()) {
             return localRequestAsync(url).then(resp => {

@@ -235,6 +235,23 @@ namespace pxt.blocks {
         ));
     }
 
+    export function getHelpUrl(fn: pxtc.SymbolInfo) {
+        if (fn.attributes.help) {
+            const helpUrl = fn.attributes.help.replace(/^\//, '');
+            if (/^github:/.test(helpUrl)) {
+                return helpUrl;
+            } else if (helpUrl !== "none") {
+                return "/reference/" + helpUrl;
+            }
+        } else if (fn.pkg && !pxt.appTarget.bundledpkgs[fn.pkg]) {// added package
+            let anchor = fn.qName.toLowerCase().split('.');
+            if (anchor[0] == fn.pkg) anchor.shift();
+            return `/pkg/${fn.pkg}#${encodeURIComponent(anchor.join('-'))}`;
+        }
+
+        return undefined;
+    }
+
     /**
      * Returns which Blockly block type to use for an argument reporter based
      * on the specified TypeScript type.
@@ -248,6 +265,10 @@ namespace pxt.blocks {
             reporterType = `argument_reporter_${varType}`;
         }
 
+        if (/^(?:Array<(?:.+)>)|(?:(?:.+)\[\])$/.test(varType)) {
+            reporterType = "argument_reporter_array";
+        }
+
         return reporterType;
     }
 
@@ -259,6 +280,8 @@ namespace pxt.blocks {
                 return "text width";
             case "boolean":
                 return "random";
+            case "Array":
+                return "list";
             default:
                 return "align justify"
         }
@@ -323,7 +346,7 @@ namespace pxt.blocks {
             'pxt_controls_for': {
                 name: Util.lf("a loop that repeats the number of times you say"),
                 tooltip: Util.lf("Have the variable '{0}' take on the values from 0 to the end number, counting by 1, and do the specified blocks."), // The name of the iteration variable that goes in {0} is replaced in blocklyloader
-                url: 'blocks/loops/for',
+                url: '/blocks/loops/for',
                 category: 'loops',
                 block: {
                     message0: Util.lf("for %1 from 0 to %2"),
@@ -334,7 +357,7 @@ namespace pxt.blocks {
             'controls_simple_for': {
                 name: Util.lf("a loop that repeats the number of times you say"),
                 tooltip: Util.lf("Have the variable '{0}' take on the values from 0 to the end number, counting by 1, and do the specified blocks."), // The name of the iteration variable that goes in {0} is replaced in blocklyloader
-                url: 'blocks/loops/for',
+                url: '/blocks/loops/for',
                 category: 'loops',
                 block: {
                     message0: Util.lf("for %1 from 0 to %2"),
@@ -345,7 +368,7 @@ namespace pxt.blocks {
             'pxt_controls_for_of': {
                 name: Util.lf("a loop that repeats for each value in an array"),
                 tooltip: Util.lf("Have the variable '{0}' take the value of each item in the array one by one, and do the specified blocks."), // The name of the iteration variable that goes in {0} is replaced in blocklyloader
-                url: 'blocks/loops/for-of',
+                url: '/blocks/loops/for-of',
                 category: 'loops',
                 block: {
                     message0: Util.lf("for element %1 of %2"),
@@ -356,7 +379,7 @@ namespace pxt.blocks {
             'controls_for_of': {
                 name: Util.lf("a loop that repeats for each value in an array"),
                 tooltip: Util.lf("Have the variable '{0}' take the value of each item in the array one by one, and do the specified blocks."), // The name of the iteration variable that goes in {0} is replaced in blocklyloader
-                url: 'blocks/loops/for-of',
+                url: '/blocks/loops/for-of',
                 category: 'loops',
                 block: {
                     message0: Util.lf("for element %1 of %2"),
@@ -641,7 +664,7 @@ namespace pxt.blocks {
             'text': {
                 name: Util.lf("a piece of text"),
                 tooltip: Util.lf("A letter, word, or line of text."),
-                url: 'types/string',
+                url: '/types/string',
                 category: 'text',
                 block: {
                     search: Util.lf("a piece of text") // Only used for search; this string is not surfaced in the block's text
@@ -650,7 +673,7 @@ namespace pxt.blocks {
             'text_length': {
                 name: Util.lf("number of characters in the string"),
                 tooltip: Util.lf("Returns the number of letters (including spaces) in the provided text."),
-                url: 'reference/text/length',
+                url: '/reference/text/length',
                 category: 'text',
                 block: {
                     TEXT_LENGTH_TITLE: Util.lf("length of %1")
@@ -659,7 +682,7 @@ namespace pxt.blocks {
             'text_join': {
                 name: Util.lf("join items to create text"),
                 tooltip: Util.lf("Create a piece of text by joining together any number of items."),
-                url: 'reference/text/join',
+                url: '/reference/text/join',
                 category: 'text',
                 block: {
                     TEXT_JOIN_TITLE_CREATEWITH: Util.lf("join")
@@ -668,7 +691,7 @@ namespace pxt.blocks {
             'procedures_defnoreturn': {
                 name: Util.lf("define the function"),
                 tooltip: Util.lf("Create a function."),
-                url: 'types/function/define',
+                url: '/types/function/define',
                 category: 'functions',
                 block: {
                     PROCEDURES_DEFNORETURN_TITLE: Util.lf("function"),
@@ -678,7 +701,7 @@ namespace pxt.blocks {
             'procedures_callnoreturn': {
                 name: Util.lf("call the function"),
                 tooltip: Util.lf("Call the user-defined function."),
-                url: 'types/function/call',
+                url: '/types/function/call',
                 category: 'functions',
                 block: {
                     PROCEDURES_CALLNORETURN_TITLE: Util.lf("call function")
@@ -687,7 +710,7 @@ namespace pxt.blocks {
             'function_return': {
                 name: Util.lf("return a value from within a function"),
                 tooltip: Util.lf("Return a value from within a user-defined function."),
-                url: 'types/function/return',
+                url: '/types/function/return',
                 category: 'functions',
                 block: {
                     message_with_value: Util.lf("return %1"),
@@ -697,7 +720,7 @@ namespace pxt.blocks {
             'function_definition': {
                 name: Util.lf("define the function"),
                 tooltip: Util.lf("Create a function."),
-                url: 'types/function/define',
+                url: '/types/function/define',
                 category: 'functions',
                 block: {
                     FUNCTIONS_EDIT_OPTION: Util.lf("Edit Function")
@@ -706,7 +729,7 @@ namespace pxt.blocks {
             'function_call': {
                 name: Util.lf("call the function"),
                 tooltip: Util.lf("Call the user-defined function."),
-                url: 'types/function/call',
+                url: '/types/function/call',
                 category: 'functions',
                 block: {
                     FUNCTIONS_CALL_TITLE: Util.lf("call"),
@@ -716,7 +739,7 @@ namespace pxt.blocks {
             'function_call_output': {
                 name: Util.lf("call the function with a return value"),
                 tooltip: Util.lf("Call the user-defined function with a return value."),
-                url: 'types/function/call',
+                url: '/types/function/call',
                 category: 'functions',
                 block: {
                 }

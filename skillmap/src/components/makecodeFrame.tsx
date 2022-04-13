@@ -1,83 +1,103 @@
 /// <reference path="../../../built/pxteditor.d.ts" />
 import * as React from "react";
 import { connect } from 'react-redux';
-import { saveProjectAsync, getProjectAsync } from "../lib/workspaceProvider";
-import { isLocal, resolvePath, getEditorUrl, tickEvent } from "../lib/browserUtils";
-import { isActivityCompleted, lookupActivityProgress, lookupPreviousActivityStates } from "../lib/skillMapUtils";
+import { isLocal, resolvePath, getEditorUrl, tickEvent, cloudLocalStoreKey } from "../lib/browserUtils";
+import { lookupActivityProgress } from "../lib/skillMapUtils";
 
 import { SkillMapState } from '../store/reducer';
-import  { dispatchSetHeaderIdForActivity, dispatchCloseActivity, dispatchSaveAndCloseActivity, dispatchUpdateUserCompletedTags, dispatchShowCarryoverModal, dispatchSetReloadHeaderState } from '../actions/dispatch';
+import  { dispatchSetHeaderIdForActivity, dispatchCloseActivity, dispatchSaveAndCloseActivity, dispatchUpdateUserCompletedTags, dispatchSetShareStatus, dispatchSetCloudStatus, dispatchShowLoginPrompt } from '../actions/dispatch';
 
-/* tslint:disable:no-import-side-effect */
+/* eslint-disable import/no-unassigned-import, import/no-internal-modules */
 import '../styles/makecode-editor.css'
-/* tslint:enable:no-import-side-effect */
+/* eslint-enable import/no-unassigned-import, import/no-internal-modules */
 
 interface MakeCodeFrameProps {
     save: boolean;
-    reload: "reloading" | "reload" | undefined;
     mapId: string;
     activityId: string;
     title: string;
-    url: string;
     tutorialPath: string;
-    completed: boolean;
     activityHeaderId?: string;
     activityType: MapActivityType;
-    showCodeCarryoverModal: boolean;
-    carryoverModalVisible: boolean;
+    carryoverCode: boolean;
+    previousHeaderId?: string;
+    progress?: ActivityState;
+    shareHeaderId?: string;
+    signedIn?: boolean;
+    highContrast?: boolean;
+    pageSourceUrl: string;
     dispatchSetHeaderIdForActivity: (mapId: string, activityId: string, id: string, currentStep: number, maxSteps: number, isCompleted: boolean) => void;
     dispatchCloseActivity: (finished?: boolean) => void;
     dispatchSaveAndCloseActivity: () => void;
     dispatchUpdateUserCompletedTags: () => void;
-    dispatchShowCarryoverModal: (mapId: string, activityId: string) => void;
-    dispatchSetReloadHeaderState: (state: "reload" | "reloading" | "active") => void;
+    dispatchSetShareStatus: (headerId?: string, url?: string) => void;
+    dispatchShowLoginPrompt: () => void;
+    dispatchSetCloudStatus: (headerId: string, status: string) => void;
+    onWorkspaceReady: (sendMessageAsync: (message: any) => Promise<any>) => void;
 }
+
+type FrameState = "loading" | "no-project" | "opening-project" | "project-open" | "closing-project";
 
 interface MakeCodeFrameState {
-    loaded: boolean;
-
-    // See handleFrameRef
-    unloading: boolean;
+    frameState: FrameState;
+    loadPercent?: number; // Progress bar load % from 0 - 100 (loaded)
+    workspaceReady: boolean;
+    pendingShare: boolean;
 }
 
-/* tslint:disable:no-http-string */
+interface PendingMessage {
+    original: pxt.editor.EditorMessageRequest;
+    handler: (response: any) => void;
+}
+
 export const editorUrl: string = isLocal() ? "http://localhost:3232/index.html" : getEditorUrl((window as any).pxtTargetBundle.appTheme.embedUrl)
-/* tslint:enable:no-http-string */
 
 class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFrameState> {
     protected ref: HTMLIFrameElement | undefined;
-    protected messageQueue: any[] = [];
+    protected messageQueue: pxt.editor.EditorMessageRequest[] = [];
     protected finishedActivityState: "saving" | "finished" | undefined;
     protected nextId: number = 0;
-    protected pendingMessages: {[index: string]: any} = {};
+    protected pendingMessages: {[index: string]: PendingMessage} = {};
     protected isNewActivity: boolean = false;
-    protected sentReloadImportRequest: boolean = false;
 
     constructor(props: MakeCodeFrameProps) {
         super(props);
         this.state = {
-            loaded: false,
-            unloading: false
+            frameState: "loading",
+            workspaceReady: false,
+            loadPercent: 0,
+            pendingShare: false
         };
     }
 
-    async componentDidUpdate() {
-        if (this.props.save) {
-            this.sendMessage({
+    UNSAFE_componentWillReceiveProps(nextProps: MakeCodeFrameProps) {
+        if (this.props.highContrast != nextProps.highContrast) {
+            this.sendMessageAsync({
                 type: "pxteditor",
-                action: "saveproject",
-                response: false
-            } as pxt.editor.EditorMessage, true);
+                action: "sethighcontrast",
+                on: nextProps.highContrast
+            }  as pxt.editor.EditorMessageSetHighContrastRequest);
+        }
+    }
+
+    async componentDidUpdate() {
+        const { shareHeaderId, highContrast } = this.props;
+        const { frameState, pendingShare } = this.state;
+        if (frameState === "project-open" && this.props.save) {
+            this.setState({ frameState: "closing-project" }, async () => {
+                await this.closeActivityAsync();
+            })
+        }
+        else if (frameState === "no-project" && this.props.activityId) {
+            this.setState({ frameState: "opening-project", loadPercent: 0 }, async () => {
+                await this.startActivityAsync();
+            });
         }
 
-        if (this.props.reload === "reload" && !this.sentReloadImportRequest) {
-            this.sentReloadImportRequest = true;
-            const project = await getProjectAsync(this.props.activityHeaderId!);
-            this.sendMessage({
-                type: "pxteditor",
-                action: "importproject",
-                project: project
-            } as pxt.editor.EditorMessageImportProjectRequest, true)
+        if (shareHeaderId && !pendingShare) {
+            this.setState({ pendingShare: true }, async () => {
+                await this.shareProjectAsync();
+            });
         }
     }
 
@@ -93,41 +113,41 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
     }
 
     render() {
-        const { url, title, save, carryoverModalVisible } = this.props;
-        const { loaded, unloading } = this.state;
+        const {title, activityId } = this.props;
+        const { frameState, loadPercent } = this.state;
 
-        const loadingText = save ? lf("Saving...") : lf("Loading...")
+        const loadingText =  lf("Loading...")
         const imageAlt = "MakeCode Logo";
 
-        /* tslint:disable:react-iframe-missing-sandbox */
-        return <div className="makecode-frame-outer">
-            <div className={`makecode-frame-loader ${(loaded && !save && !carryoverModalVisible) ? "hidden" : ""}`}>
+        const openingProject = frameState === "opening-project";
+        const showLoader = openingProject || frameState === "closing-project";
+
+        let url = editorUrl
+        if (editorUrl.charAt(editorUrl.length - 1) === "/" && !isLocal()) {
+            url = editorUrl.substr(0, editorUrl.length - 1);
+        }
+        url += `?controller=1&skillsMap=1&noproject=1&nocookiebanner=1&ws=browser`;
+
+        /* eslint-disable @microsoft/sdl/react-iframe-missing-sandbox */
+        return <div className="makecode-frame-outer" style={{ display: activityId ? "block" : "none" }}>
+            <div className={`makecode-frame-loader ${showLoader ? "" : "hidden"}`}>
                 <img src={resolvePath("assets/logo.svg")} alt={imageAlt} />
+                {openingProject && <div className="makecode-frame-loader-bar">
+                    <div className="makecode-frame-loader-fill" style={{ width: loadPercent + "%" }} />
+                </div>}
                 <div className="makecode-frame-loader-text">{loadingText}</div>
             </div>
-            <iframe className="makecode-frame" src={unloading ? "about:blank" : url} title={title} ref={this.handleFrameRef}></iframe>
+            <iframe className="makecode-frame" src={url} title={title} ref={this.handleFrameRef}></iframe>
         </div>
-        /* tslint:enable:react-iframe-missing-sandbox */
+        /* eslint-enable @microsoft/sdl/react-iframe-missing-sandbox */
     }
 
 
     protected handleFrameRef = (ref: HTMLIFrameElement) => {
         if (ref && ref.contentWindow) {
             window.addEventListener("message", this.onMessageReceived);
+            ref.addEventListener("load", this.handleFrameReload)
             this.ref = ref;
-
-            this.ref.addEventListener("load", () => {
-                // This is a workaround for a bug in Chrome where for some reason the page hangs when
-                // trying to unload the makecode iframe. Instead, we set the src to about:blank, wait for
-                // that to load, and then unload the iframe
-                if (this.state.unloading) {
-                    this.props.dispatchCloseActivity(this.finishedActivityState === "finished");
-                    this.props.dispatchUpdateUserCompletedTags();
-
-                    this.finishedActivityState = undefined;
-                }
-            });
-
             // Hide Usabilla widget + footer when inside iframe view
             setElementVisible(".usabilla_live_button_container", false);
             setElementVisible("footer", false);
@@ -137,240 +157,214 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
         }
     }
 
+    protected handleFrameReload = () => {
+        this.setState({frameState: "loading"})
+    }
+
     protected onMessageReceived = (event: MessageEvent) => {
         const data = event.data as pxt.editor.EditorMessageRequest;
+        if (this.state.frameState === "opening-project") this.setState({ loadPercent: Math.min((this.state.loadPercent || 0) + 4, 95) });
 
         if (data.type === "pxteditor" && data.id && this.pendingMessages[data.id]) {
-            this.onResponseReceived(this.pendingMessages[data.id], event.data as pxt.editor.EditorMessageResponse);
+            const pending = this.pendingMessages[data.id];
+            pending.handler(data);
             delete this.pendingMessages[data.id];
             return;
         }
 
         switch (data.action) {
-            case "event":
-                this.handleEditorTickEvent(data as pxt.editor.EditorMessageEventRequest);
-                break;
-            case "workspacesync":
-                this.handleWorkspaceSyncRequest(data as pxt.editor.EditorWorkspaceSyncRequest);
-                break;
-            case "workspacesave":
-                this.handleWorkspaceSaveRequestAsync(data as pxt.editor.EditorWorkspaceSaveRequest);
-                break;
-            case "workspaceevent":
-                if ((data as pxt.editor.EditorWorkspaceEvent).event.type === "createproject") {
-                    this.handleWorkspaceReadyEventAsync();
+            case "newproject":
+                if (!this.state.workspaceReady) {
+                    this.setState({ workspaceReady: true });
+                    this.sendMessageAsync(); // Flush message queue
+                    this.props.onWorkspaceReady((message) => this.sendMessageAsync(message));
+                }
+                if (this.state.frameState === "loading") {
+                    this.setState({ frameState: "no-project" });
                 }
                 break;
+            case "tutorialevent":
+                this.handleTutorialEvent(data as pxt.editor.EditorMessageTutorialEventRequest);
+                break;
+            case "projectcloudstatus": {
+                const msg = data as pxt.editor.EditorMessageProjectCloudStatus;
+                this.props.dispatchSetCloudStatus(msg.headerId, msg.status);
+                break;
+            }
             default:
                 // console.log(JSON.stringify(data, null, 4));
         }
     }
 
-    protected onResponseReceived(original: any, response: pxt.editor.EditorMessageResponse) {
-        const { save } = this.props;
-
-        if (original.action === "saveproject" && save) {
-            if (this.finishedActivityState === "saving") {
-                this.finishedActivityState = "finished";
-
-                // Save again to be sure we get any final edits
-                this.sendMessage({
-                    type: "pxteditor",
-                    action: "saveproject"
-                } as pxt.editor.EditorMessage, true);
-            }
-            else {
-                this.setState({
-                    unloading: true
-                });
-            }
-        }
-
-        if (original.action === "importproject") {
-            if (this.props.reload === "reload") {
-                this.props.dispatchSetReloadHeaderState("active");
-            }
-            else {
-                this.onEditorLoaded();
-            }
-        }
-    }
-
-    protected sendMessage(message: any, response = false) {
-        const sendMessageCore = (message: any) => {
-            if (response) {
+    protected sendMessageAsync(message?: any) {
+        return new Promise(resolve => {
+            const sendMessageCore = (message: any) => {
                 message.response = true;
                 message.id = this.nextId++ + "";
-                this.pendingMessages[message.id] = message;
+                this.pendingMessages[message.id] = {
+                    original: message,
+                    handler: resolve
+                };
+                this.ref!.contentWindow!.postMessage(message, "*");
             }
-            this.ref!.contentWindow!.postMessage(message, "*");
-        }
 
-        if (this.ref) {
-            if (!this.ref.contentWindow) {
-                this.messageQueue.push(message);
-            }
-            else {
-                while (this.messageQueue.length) {
-                    sendMessageCore(this.messageQueue.shift());
+            if (this.ref) {
+                if (!this.state.workspaceReady) {
+                    this.messageQueue.push(message);
                 }
-                sendMessageCore(message);
+                else {
+                    while (this.messageQueue.length) {
+                        sendMessageCore(this.messageQueue.shift());
+                    }
+                    if (message) sendMessageCore(message);
+                }
             }
-        }
+        });
     }
 
-    protected handleWorkspaceSyncRequest(request: pxt.editor.EditorWorkspaceSyncRequest) {
-        this.sendMessage({
-            ...request,
-            success: true,
-            projects: []
-        } as pxt.editor.EditorWorkspaceSyncResponse);
-    }
-
-    protected async handleWorkspaceSaveRequestAsync(request: pxt.editor.EditorWorkspaceSaveRequest) {
-        const { dispatchSetHeaderIdForActivity, activityHeaderId, activityType, title, mapId, activityId } = this.props;
-
-        const project = {
-            ...request.project,
-            header: {
-                ...request.project.header!,
-                id: activityHeaderId || request.project.header!.id
-            }
-        };
-
-        // Patch the name, otherwise it will be the name of the GitHub repo
-        if (project.header?.name !== title) {
-            project.header!.name = title;
-            const pxtJSON = project.text!["pxt.json"];
-            if (pxtJSON) {
-                const config = JSON.parse(pxtJSON);
-                config.name = title;
-                project.text!["pxt.json"] = pxt.Package.stringifyConfig(config);
-            }
-        }
-
-        if (project.header.tutorialCompleted) {
-            const existing = await getProjectAsync(project.header.id);
-
-            if (existing?.header?.tutorial) {
-                project.header.tutorial = existing.header.tutorial;
-                project.header.tutorial.tutorialStep = project.header.tutorialCompleted.steps - 1;
-                delete project.header.tutorialCompleted;
-            }
-        }
-
-        if ((activityType !== "tutorial" || project.header.tutorial || project.header.tutorialCompleted) && !this.props.reload) {
-            await saveProjectAsync(project);
-        }
-
-        if (project.header!.tutorial) {
-            dispatchSetHeaderIdForActivity(
-                mapId,
-                activityId,
-                project.header.id,
-                (project.header.tutorial.tutorialStep || 0) + 1,
-                project.header.tutorial.tutorialStepInfo!.length,
-                false
-            );
-        }
-        else if (project.header!.tutorialCompleted) {
-            dispatchSetHeaderIdForActivity(
-                mapId,
-                activityId,
-                project.header.id,
-                project.header.tutorialCompleted.steps,
-                project.header.tutorialCompleted.steps,
-                true
-            );
-        }
-    }
-
-    protected async handleWorkspaceReadyEventAsync() {
+    protected async startActivityAsync() {
         if (this.props.activityHeaderId) {
-            const project = await getProjectAsync(this.props.activityHeaderId);
-            this.sendMessage({
+            await this.sendMessageAsync({
                 type: "pxteditor",
-                action: "importproject",
-                project: project
-            } as pxt.editor.EditorMessageImportProjectRequest, true)
+                action: "openheader",
+                headerId: this.props.activityHeaderId
+            }  as pxt.editor.EditorMessageOpenHeaderRequest);
         }
         else {
             this.isNewActivity = true;
-            this.sendMessage({
+            await this.sendMessageAsync({
                 type: "pxteditor",
                 action: "startactivity",
                 path: this.props.tutorialPath,
-                activityType: "tutorial"
-            } as pxt.editor.EditorMessageStartActivity, true);
+                title: this.props.title,
+                activityType: "tutorial",
+                carryoverPreviousCode: this.props.carryoverCode,
+                previousProjectHeaderId: this.props.previousHeaderId
+            } as pxt.editor.EditorMessageStartActivity);
         }
     }
 
-    protected handleEditorTickEvent(event: pxt.editor.EditorMessageEventRequest) {
-        switch (event.tick) {
-            case "tutorial.editorLoaded":
+    protected async closeActivityAsync() {
+        await this.sendMessageAsync({
+            type: "pxteditor",
+            action: "saveproject"
+        } as pxt.editor.EditorMessageRequest);
+
+        this.props.dispatchCloseActivity(this.finishedActivityState === "finished");
+        this.props.dispatchUpdateUserCompletedTags();
+        this.finishedActivityState = undefined;
+
+        await this.sendMessageAsync({
+            type: "pxteditor",
+            action: "unloadproject"
+        } as pxt.editor.EditorMessageRequest);
+
+        this.setState({ frameState: "no-project" });
+    }
+
+    protected async shareProjectAsync() {
+        const { shareHeaderId, dispatchSetShareStatus } = this.props;
+
+        const resp = (await this.sendMessageAsync({
+            type: "pxteditor",
+            action: "shareproject",
+            headerId: shareHeaderId
+        })) as any;
+
+        dispatchSetShareStatus(shareHeaderId, resp.resp.shortid);
+        this.setState({
+            pendingShare: false
+        });
+    }
+
+    protected handleTutorialEvent(event: pxt.editor.EditorMessageTutorialEventRequest) {
+        const { dispatchSetHeaderIdForActivity, dispatchSaveAndCloseActivity,
+            mapId, activityId, progress } = this.props;
+
+        switch (event.tutorialEvent) {
+            case "progress":
+                if (activityId) {
+                    dispatchSetHeaderIdForActivity(
+                        mapId,
+                        activityId,
+                        event.projectHeaderId,
+                        event.currentStep + 1,
+                        event.totalSteps,
+                        event.isCompleted || !!progress?.isCompleted
+                    );
+                }
+                break;
+            case "loaded":
                 this.onEditorLoaded();
                 break;
-            case "tutorial.complete":
+            case "completed":
                 this.onTutorialFinished();
+                break;
+            case "exit":
+                dispatchSaveAndCloseActivity();
                 break;
         }
     }
 
     protected onEditorLoaded() {
-        const { mapId, activityId, showCodeCarryoverModal } = this.props;
-        tickEvent("skillmap.activity.loaded", { path: mapId, activity: activityId });
-        this.setState({
-            loaded: true
-        });
+        const { mapId, activityId } = this.props;
+        if (mapId && activityId) {
+            tickEvent("skillmap.activity.loaded", { path: mapId, activity: activityId });
+            this.setState({
+                frameState: "project-open"
+            });
 
-        if (this.isNewActivity) {
-            this.isNewActivity = false;
-            if (showCodeCarryoverModal) this.props.dispatchShowCarryoverModal(mapId, activityId);
+            if (this.isNewActivity) {
+                this.isNewActivity = false;
+            }
         }
     }
 
     protected onTutorialFinished() {
-        const { mapId, activityId } = this.props;
+        const { mapId, activityId, signedIn, pageSourceUrl } = this.props;
         tickEvent("skillmap.activity.complete", { path: mapId, activity: activityId });
-        this.finishedActivityState = "saving";
+        this.finishedActivityState = "finished";
         this.props.dispatchSaveAndCloseActivity();
+        const haveSeen = pxt.storage.getLocal(pageSourceUrl + cloudLocalStoreKey)
+        if (!signedIn && !haveSeen) {
+            this.props.dispatchShowLoginPrompt();
+            pxt.storage.setLocal(pageSourceUrl + cloudLocalStoreKey, "true")
+        }
     }
 }
 
 function mapStateToProps(state: SkillMapState, ownProps: any) {
-    if (!state || !state.editorView) return {};
+    const shareHeaderId = !state.shareState?.url ? state.shareState?.headerId : undefined;
 
-    const { currentActivityId, currentMapId, currentHeaderId, state: saveState } = state.editorView;
+    if (!state || !state.editorView) return {
+        shareHeaderId
+    };
 
-    let url = editorUrl
+    const { currentActivityId, currentMapId, currentHeaderId, state: saveState, allowCodeCarryover, previousHeaderId } = state.editorView;
+
     let title: string | undefined;
     const map = state.maps[currentMapId];
+    const activity = map?.activities[currentActivityId] as MapActivity;
 
-    const activity = map.activities[currentActivityId] as MapActivity;
-    if (editorUrl.charAt(editorUrl.length - 1) === "/" && !isLocal()) {
-        url = editorUrl.substr(0, editorUrl.length - 1);
-    }
+    title = activity?.displayName;
 
-    url += `?controller=1&skillsMap=1&noproject=1&nocookiebanner=1`;
-    title = activity.displayName;
-
-    const previous = lookupPreviousActivityStates(state.user, state.pageSourceUrl, map, activity.activityId);
-    const previousActivityCompleted = previous.some(state => state?.isCompleted &&
-        state.maxSteps === state.currentStep);
+    const progress = lookupActivityProgress(state.user, state.pageSourceUrl, currentMapId, currentActivityId);
 
     return {
-        url,
         tutorialPath: activity.url,
         title,
         mapId: currentMapId,
         activityId: currentActivityId,
         activityHeaderId: currentHeaderId,
-        completed: lookupActivityProgress(state.user, state.pageSourceUrl, currentMapId, currentActivityId)?.isCompleted,
         activityType: activity.type,
-        showCodeCarryoverModal: activity.allowCodeCarryover && previousActivityCompleted,
-        carryoverModalVisible: state.modal?.type === "carryover",
+        carryoverCode: allowCodeCarryover,
+        previousHeaderId: previousHeaderId,
+        progress,
         save: saveState === "saving",
-        reload: saveState === "reload" || saveState === "reloading" ? saveState : undefined
+        shareHeaderId,
+        signedIn: state.auth.signedIn,
+        highContrast: state.auth.preferences?.highContrast,
+        pageSourceUrl: state.pageSourceUrl
     }
 }
 
@@ -384,8 +378,9 @@ const mapDispatchToProps = {
     dispatchCloseActivity,
     dispatchSaveAndCloseActivity,
     dispatchUpdateUserCompletedTags,
-    dispatchShowCarryoverModal,
-    dispatchSetReloadHeaderState
+    dispatchSetShareStatus,
+    dispatchShowLoginPrompt,
+    dispatchSetCloudStatus
 };
 
 export const MakeCodeFrame = connect(mapStateToProps, mapDispatchToProps)(MakeCodeFrameImpl);

@@ -51,41 +51,25 @@ export function fixIndentationInRange(model: monaco.editor.IReadOnlyModel, range
 
     const codeLines = lines.map((s, i) => !!s ? i : -1).filter(i => i >= 0);
 
-    let prev;
-    let baseIndent = 0;
-    if (!startsWithinLine) {
-        prev = getLine(source, model, range.startLineNumber - 1);
-        baseIndent = getIndent(prev);
-        if (isCodeBlock(prev)) {
-            baseIndent += INDENT;
-        }
+    let line = range.startLineNumber - 1;
+    let prev = getLine(source, model, line);
+    while (!prev && line > 0) {
+        line = line - 1;
+        prev = getLine(source, model, line);
+    }
+    let baseIndent = getIndent(prev);
+    if (isCodeBlock(prev)) {
+        baseIndent += INDENT;
     }
 
-    for (let i = 0; i < codeLines.length; i++) {
+    lines[0] = startsWithinLine ? lines[0] : setIndent(baseIndent, lines[0]);
+
+    for (let i = 1; i < codeLines.length; i++) {
         let currIndex = codeLines[i];
         let curr = lines[currIndex];
-        let next = lines[codeLines[i + 1]];
 
-        if (prev) {
-            let prevIndent = getIndent(prev);
-            let nextIndent = getIndent(next);
-            let currentIndent = getIndent(curr);
-
-            // TODO additional heuristics based on position of next line?
-            if (isCodeBlock(prev)) {
-                // at the start of a code block, add one additional indent
-                let indent = prevIndent + INDENT;
-                lines[currIndex] = setIndent(Math.max(baseIndent, indent), curr);
-            } else if (next && prevIndent == nextIndent && prevIndent != currentIndent && !isCodeBlock(curr)) {
-                // if previous and next line have same indent, adjust current to match
-                lines[currIndex] = setIndent(Math.max(baseIndent, prevIndent), curr);
-            }
-            else if (currentIndent < baseIndent) {
-                lines[currIndex] = setIndent(baseIndent, curr);
-            }
-        }
-
-        prev = lines[currIndex];
+        let currentIndent = getIndent(curr);
+        lines[currIndex] = setIndent(baseIndent + currentIndent, curr);
     }
 
     return [{

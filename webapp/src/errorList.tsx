@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import * as sui from "./sui";
+import { fireClickOnEnter } from "./util";
 
 type GroupedError = {
     error: pxtc.KsDiagnostic,
@@ -68,13 +69,13 @@ export class ErrorList extends React.Component<ErrorListProps, ErrorListState> {
 
         return (
             <div className={`errorList ${isCollapsed ? 'errorListSummary' : ''} ${this.props.isInBlocksEditor ? 'errorListBlocks' : ''}`} hidden={!errorsAvailable}>
-                <div className="errorListHeader" role="button" aria-label={lf("{0} error list", isCollapsed ? lf("Expand") : lf("Collapse"))} onClick={this.onCollapseClick} onKeyDown={sui.fireClickOnEnter} tabIndex={0}>
+                <div className="errorListHeader" role="button" aria-label={lf("{0} error list", isCollapsed ? lf("Expand") : lf("Collapse"))} onClick={this.onCollapseClick} onKeyDown={fireClickOnEnter} tabIndex={0}>
                     <h4>{lf("Problems")}</h4>
                     <div className="ui red circular label countBubble">{errorCount}</div>
                     <div className="toggleButton"><sui.Icon icon={`chevron ${isCollapsed ? 'up' : 'down'}`} /></div>
                 </div>
                 {!isCollapsed && <div className="errorListInner">
-                    {exception && <div className="debuggerSuggestion" role="button" onClick={this.props.startDebugger} onKeyDown={sui.fireClickOnEnter} tabIndex={0}>
+                    {exception && <div className="debuggerSuggestion" role="button" onClick={this.props.startDebugger} onKeyDown={fireClickOnEnter} tabIndex={0}>
                         {lf("Debug this project")}
                         <sui.Icon className="debug-icon" icon="icon bug" />
                     </div>}
@@ -203,7 +204,7 @@ class ErrorListItem extends React.Component<ErrorListItemProps, ErrorListItemSta
 
         return <div className={`item ${stackframe ? 'stackframe' : ''}`} role="button"
             onClick={!blockError ? this.onErrorListItemClick : undefined}
-            onKeyDown={sui.fireClickOnEnter}
+            onKeyDown={fireClickOnEnter}
             aria-label={lf("Go to {0}: {1}", stackframe ? '' : 'error', message)}
             tabIndex={0}>
             {message} {(errorCount <= 1) ? null : <div className="ui gray circular label countBubble">{errorCount}</div>}

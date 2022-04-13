@@ -1,0 +1,128 @@
+@commonTextColor: rgb(50, 49, 48);
+@commonBorderColor: rgb(96, 94, 92);
+@commonBackgroundDisabledColor: rgb(243, 242, 241);
+
+@mobileBreakpoint: 320px;
+@tabletBreakpoint: 768px;
+@computerBreakpoint: 992px;
+@largeMonitorBreakpoint: 1200px;
+@widescreenMonitorBreakpoint: 1920px;
+
+@largestMobileScreen: (@tabletBreakpoint - 1px);
+@largestTabletScreen: (@computerBreakpoint - 1px);
+@largestSmallMonitor: (@largeMonitorBreakpoint - 1px);
+@largestLargeMonitor: (@widescreenMonitorBreakpoint - 1px);
+
+@mobileAndBelow: ~"only screen and (max-width: @{largestMobileScreen})";
+@tabletAndBelow: ~"only screen and (max-width: @{largestTabletScreen})";
+@computerAndBelow: ~"only screen and (max-width: @{largestSmallMonitor})";
+@largeMonitorAndBelow: ~"only screen and (max-width: @{largestLargeMonitor})";
+
+
+/****************************************************
+ *                    Buttons                       *
+ ****************************************************/
+
+@buttonTextColor: @commonTextColor;
+@buttonTextColorInverted: @white;
+@buttonBackgroundColor: @white;
+@buttonBackgroundColorDisabled: @commonBackgroundDisabledColor;
+
+@buttonMenuTextColor: #ffffff;
+@buttonMenuTextColorInverted: @primaryColor;
+@buttonMenuBackgroundColorInverted: @buttonMenuTextColor;
+@buttonFocusOutlineDarkBackground: @buttonTextColorInverted solid 1px;;
+@buttonFocusOutlineLightBackground: @commonBorderColor solid 1px;
+@buttonMenuBackgroundHoverColor: rgba(0,0,0,.1);
+@buttonMenuBackgroundActiveColor: rgba(0,0,0,.15);
+
+
+/****************************************************
+ *                    Dropdowns                      *
+ ****************************************************/
+
+
+ /****************************************************
+ *                DraggableGraph                     *
+ ****************************************************/
+
+ @draggableGraphPathColor: #E63022;
+ @draggableGraphPointColor: #E63022;
+
+/****************************************************
+ *                    Modals                        *
+ ****************************************************/
+
+@modalCloseColor: #333333;
+@modalBodyBackgroundColor: #ffffff;
+@modalHeaderBackgroundColor: @modalBodyBackgroundColor;
+@modalFooterBackgroundColor: #f9fafb;
+@modalSeparatorBorder: 1px solid rgba(34, 36, 38, .15);
+@modalOverlayColor: rgba(0, 0, 0, 0.5);
+@modalDimmerZIndex: 1000;
+@modalFullscreenZIndex: @modalDimmerZIndex;
+
+
+/****************************************************
+ *                 MenuDropdowns                    *
+ ****************************************************/
+
+ @menuDropdownPaneBackground: #ffffff;
+
+
+/****************************************************
+ *                    Checkboxes                    *
+ ****************************************************/
+
+@checkboxFocusOutline: @commonBorderColor solid 1px;
+
+/****************************************************
+ *                    Inputs                        *
+ ****************************************************/
+
+@inputTextColor: @commonTextColor;
+@inputTextColorDisabled: rgb(161, 159, 157);
+@inputBorderColor: @commonBorderColor;
+@inputBorderColorFocus: rgb(0, 120, 212);
+@inputBackgroundColor: #ffffff;
+@inputBackgroundColorDisabled: @commonBackgroundDisabledColor;
+@inputButtonColor: rgb(0, 120, 212);
+@inputButtonColorHover: rgb(16, 110, 190);
+
+/****************************************************
+ *                  Textarea                        *
+ ****************************************************/
+
+ @textareaTextColor: @commonTextColor;
+ @textareaBorderColor: @commonBorderColor;
+ @textareaBorderColorFocus: rgb(0, 120, 212);
+ @textareaBackgroundColor: #ffffff;
+ @textareaBackgroundColorDisabled: @commonBackgroundDisabledColor;
+
+/****************************************************
+ *              EditorToggle                        *
+ ****************************************************/
+
+@editorToggleBackgroundColor: rgba(52,73,94,.4);
+@editorToggleBorderColor: rgba(52,73,94,.2);
+@editorToggleBorderWidth: 3px;
+
+/****************************************************
+ *                RadioButtonGroup                  *
+ ****************************************************/
+
+ @radioButtonIconBackground: #eaeaea;
+ @radioButtonIconBackgroundChecked: #ffffff;
+ @radioButtonIconColor: #333333;
+ @radioButtonIconColorChecked: #E63022;
+ @radioButtonIconBorder: #A6A6A6;
+
+/****************************************************
+ *                 High Contrast                    *
+ ****************************************************/
+
+ @highContrastTextColor: #ffffff;
+ @highContrastBackgroundColor: #000000;
+ @highContrastHighlightColor: #ffff00;
+ @highContrastFocusOutline: 2px solid @highContrastHighlightColor;
+ @highContrastFocusZIndex: 1;

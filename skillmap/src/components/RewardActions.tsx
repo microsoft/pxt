@@ -1,35 +1,29 @@
 import * as React from "react";
 import { connect } from 'react-redux';
 
-import { dispatchOpenActivity, dispatchShowCompletionModal } from '../actions/dispatch';
+import { dispatchOpenActivity, dispatchShowCompletionModal, dispatchShowLoginModal } from '../actions/dispatch';
 
 import { ActivityStatus } from '../lib/skillMapUtils';
 import { tickEvent } from "../lib/browserUtils";
+import { Button } from "react-common/controls/Button";
+import { SkillMapState } from "../store/reducer";
 
 interface OwnProps {
     mapId: string;
     activityId: string;
     status?: ActivityStatus;
-    type?: MapRewardType;
+    signedIn?: boolean;
 }
 
 interface DispatchProps {
     dispatchOpenActivity: (mapId: string, activityId: string) => void;
     dispatchShowCompletionModal: (mapId: string, activityId: string) => void;
+    dispatchShowLoginModal: () => void;
 }
 
 type RewardActionsProps = OwnProps & DispatchProps;
 
 export class RewardActionsImpl extends React.Component<RewardActionsProps> {
-    protected getRewardActionText(): string {
-        switch (this.props.type) {
-            case "certificate":
-                return lf("Claim Certificate");
-            default:
-                return lf("Claim Reward");
-        }
-    }
-
     protected handleActionButtonClick = () => {
         const { status, mapId, activityId, dispatchShowCompletionModal } = this.props;
         switch (status) {
@@ -42,20 +36,50 @@ export class RewardActionsImpl extends React.Component<RewardActionsProps> {
     }
 
     render() {
-        const { status } = this.props;
+        const { status, signedIn, dispatchShowLoginModal } = this.props;
         if (status === "locked") return <div />
 
-        return <div className="actions">
-            <div className="action-button" role="button" onClick={this.handleActionButtonClick}>
-                {this.getRewardActionText()}
+        const showSignIn = pxt.auth.hasIdentity() && !signedIn;
+
+        return (
+            <div className="actions">
+                <Button
+                    tabIndex={-1}
+                    ariaPosInSet={1}
+                    ariaSetSize={showSignIn ? 2 : 1}
+                    className="primary inverted"
+                    title={lf("Claim Reward")}
+                    label={lf("Claim Reward")}
+                    onClick={this.handleActionButtonClick}
+                />
+                {showSignIn &&
+                    <Button
+                        tabIndex={-1}
+                        ariaPosInSet={2}
+                        ariaSetSize={2}
+                        className="teal"
+                        onClick={dispatchShowLoginModal}
+                        label={lf("Sign in to Save")}
+                        title={lf("Sign in to Save")}
+                    />
+                }
             </div>
-        </div>
+            )
     }
+}
+
+function mapStateToProps(state: SkillMapState, ownProps: any) {
+    if (!state) return {};
+
+    return {
+        signedIn: state.auth.signedIn
+    };
 }
 
 const mapDispatchToProps = {
     dispatchOpenActivity,
-    dispatchShowCompletionModal
+    dispatchShowCompletionModal,
+    dispatchShowLoginModal
 }
 
-export const RewardActions = connect<{}, DispatchProps, OwnProps>(null, mapDispatchToProps)(RewardActionsImpl);
+export const RewardActions = connect(mapStateToProps, mapDispatchToProps)(RewardActionsImpl);

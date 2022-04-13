@@ -6,12 +6,11 @@ Microsoft MakeCode uses the [Application Insights Javascript SDK](https://github
 
 ## Cookies
 
-There are two types of cookies stored by Microsoft MakeCode.
+There are three types of cookies stored by Microsoft MakeCode website.
 
-- Language selection cookie. This is used to persist the language selection by user across sessions (Examples: English, French or German).
-- Application Insight cookie for user tracking. This is used to correlate the data across sessions.
-
-There's no authentication in MakeCode and it doesn't perform any authenticated user tracking or use cookies to identify authenticated users.
+- Language selection cookie (PXT_LANG). This is used to persist the language selection by user across sessions (Examples: English, French or German).
+- Application Insight cookie (ai_user & ai_session) for user behavior tracking. This is used to correlate the data across sessions. No PII information is collected.
+- Identity cookie (x-mkcd-auth-token) if you log into our website where it is supported.
 
 ## Application Insights SDK Telemetry
 
@@ -25,40 +24,24 @@ Here's the lifetime of the data tracked by Application Insights:
 
 ### Telemetry Details
 
-The following sections contain the information that the Application Insights SDK attempts to extract from the environment about the device, location, and user.
+The following sections contain the information that the Application Insights SDK attempts to collect about the environment and the user.
 
 #### Device telemetry
 
-The device (workstation, laptop, mobile device, etc.) the website is running on.
+This is always set to "Browser" for the web
 
 Property | Description
 ---|---
-`device.type`  | Type of device
-`device.id`	| unique ID
-`device.oemName` |
-`device.model` |
-`device.network` | number  - IANA interface type
-`device.resolution`  | screen resolution
-`device.locale` | display language of the OS
-`device.ip` | last 8 bits zeroed out to anonymise
-`device.language` |
-`device.os` |  OS running on the device
-`device.osversion` |
+`device.type`  | "browser"
+`device.id`	| "Browser"
 
 #### User telemetry
 
-Data about the current user. Users are identified by a cookie, so a single person can look like
-more than one user in the telemetry if they use different machines or browsers, or delete cookies.
+Data about the current user. Users are identified by a cookie. This cookie is a randomnly generated hash by the application insights. A single user will get a new hash\cookie, every time the browser cache is cleared or a different browser is used on the same machine. A single person can look like more than one user in the telemetry, if they use different machines or browsers, or delete cookies.
 
 Property | Description
 ---|---
 `user.id` | Unique, cookie-based user id, automatically assigned.
-`user.authenticatedId` | Not used by Microsoft MakeCode
-`user.accountId` | Not used by Microsoft MakeCode
-`user.accountAcquisitionDate` |
-`user.agent` |
-`user.storeRegion` |
-
 
 #### User Session telemetry
 
@@ -71,16 +54,6 @@ Property | Description
 ---|---
 `session.id` | Automatically assigned id
 `session.isFirst` | Boolean. True if this is the first session for this user.
-`session.acquisitionDate` | Number. The dateTime when this session was created.
-`session.renewalDate` | Number. DateTime when telemetry was last sent with this session.
-
-#### Location telemetry
-
-The estimated geographical location of the user's device. The last 8 bits of IP address are sanitized to zero by Application insights.
-
-Property | Description
----|---
-`location.ip` | IP address
 
 #### Operation telemetry
 
@@ -89,10 +62,7 @@ Represents the user request. The operation id is used to correlate related event
 Property | Description
 ---|---
 `id` | Unique id
-`name` |
-`parentId` |
-`rootId` |
-`syntheticSource` | String identifying the bot or test agent.
+`name` | String
 
 <br/>
 **Note:** Refer to the [Application Insights SDK API Reference](https://github.com/microsoft/ApplicationInsights-JS/blob/master/API-reference.md) documentation for further details.

@@ -22,6 +22,7 @@
 @lightGrey: #d9d9d9;
 
 @greenTextColor: darken(@green, 5);
+@yellowTextColor: #8e6505;
 
 @lightTextColor              : darken(@secondaryColor, 15%);
 @invertedUnselectedTextColor : rgba(255, 255, 255, 0.8);
@@ -38,8 +39,12 @@
 @docsHeaderFont: "Helvetica Neue", Helvetica, Arial, sans-serif;
 @docsPageFont: "Helvetica Neue", Helvetica, Arial, sans-serif;
 
+@segoeUIFont: "Segoe UI", Tahoma, Geneva, Verdana;
+
 @emSize      : 14px;
 @fontSize    : 12pt;
+
+@smallFontSize    : 0.875rem;
 
 /*-------------------
    Links
@@ -175,6 +180,7 @@
 @sidebarTutorialColor: @lightGrey;
 
 @homeScreenBackground: #ecf0f1;
+@cloudCardBackground: #58AFBA;
 
 /*-------------------
    Full screen
@@ -297,7 +303,7 @@
 @homeCardBorderSize: 5px;
 @homeCardBorderColor: #e9eef2;
 @homeCardHoverBorderColor: white;
-@homeCardFocusBorderColor: yellow;
+@homeCardFocusBorderColor: @primaryColor;
 @homeCardColor: @textColor;
 @homeCardMetaColor: @homeCardColor;
 @homeCardHeaderColor: @homeCardColor;
@@ -317,7 +323,8 @@
 @homeDetailCardActionBackground: @homeScreenBackground;
 @homeDetailCardActionText: white;
 @homeInvertedDetailCardActionBackground: lighten(@homeScreenBackground, 10%);
-
+@homeHeaderBorderSize: 3px;
+@homeHeaderSelectedBorderColor: white;
 /*-------------------
    Tutorial
 --------------------*/
@@ -387,3 +394,8 @@
 @assetUnselected: #e3ddd0;
 @assetTypeButton: @teal;
 
+/*---------------------------
+   Tutorial Code Validation
+----------------------------*/
+@tutorialCodeValidationCorrectBackground: @green;
+@tutorialCodeValidationCorrectTextColor: @white;

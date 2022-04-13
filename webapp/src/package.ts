@@ -316,30 +316,29 @@ export class EditorPackage {
         return null;
     }
 
-    updateDepAsync(pkgid: string): Promise<void> {
+    async updateDepAsync(pkgid: string): Promise<void> {
         let p = this.ksPkg.resolveDep(pkgid);
         if (!p || p.verProtocol() != "github") return Promise.resolve();
         let parsed = pxt.github.parseRepoId(p.verArgument())
-        if (!parsed) return Promise.resolve();
-        return pxt.targetConfigAsync()
-            .then(config => pxt.github.latestVersionAsync(parsed.slug, config.packages))
-            .then(tag => {
-                // since all repoes in a mono-repo are tied to the same version number,
-                // we'll update them all to this tag at once.
-                const ghids = Util.values(this.ksPkg.dependencies())
-                    .map(ver => pxt.github.parseRepoId(ver))
-                    .filter(ghid => ghid?.slug === parsed.slug);
-                return Promise.all(ghids.map(ghid => {
-                    ghid.tag = tag;
-                    return pxt.github.pkgConfigAsync(ghid.fullName, ghid.tag)
-                        .catch(core.handleNetworkError)
-                        .then((cfg: pxt.PackageConfig) => ({ ghid, cfg }));
-                }))
-            })
-            .then(updates => this.updateConfigAsync(config =>
-                updates.forEach(({ ghid, cfg }) => config.dependencies[cfg.name] = pxt.github.stringifyRepo(ghid))
-            ))
-            .then(() => this.saveFilesAsync());
+        if (!parsed) return
+
+        const packagesConfig = await pxt.packagesConfigAsync()
+        const tag = await pxt.github.latestVersionAsync(parsed.slug, packagesConfig)
+        // since all repoes in a mono-repo are tied to the same version number,
+        // we'll update them all to this tag at once.
+        const ghids = Util.values(this.ksPkg.dependencies())
+            .map(ver => pxt.github.parseRepoId(ver))
+            .filter(ghid => ghid?.slug === parsed.slug);
+        const updates = await Promise.all(ghids.map(ghid => {
+            ghid.tag = tag;
+            return pxt.github.pkgConfigAsync(ghid.fullName, ghid.tag, packagesConfig)
+                .catch(core.handleNetworkError)
+                .then((cfg: pxt.PackageConfig) => ({ ghid, cfg }));
+        }))
+        await this.updateConfigAsync(config =>
+            updates.forEach(({ ghid, cfg }) => config.dependencies[cfg.name] = pxt.github.stringifyRepo(ghid))
+        )
+        await this.saveFilesAsync();
     }
 
     removeDepAsync(pkgid: string) {
@@ -770,10 +769,10 @@ export function mainEditorPkg() {
 }
 
 export function genFileName(extension: string): string {
-    /* tslint:disable:no-control-regex */
+    /* eslint-disable no-control-regex */
     let sanitizedName = mainEditorPkg().header.name.replace(/[()\\\/.,?*^:<>!;'#$%^&|"@+=«»°{}\[\]¾½¼³²¦¬¤¢£~­¯¸`±\x00-\x1F]/g, '');
     sanitizedName = sanitizedName.trim().replace(/\s+/g, '-');
-    /* tslint:enable:no-control-regex */
+    /* eslint-enable no-control-regex */
     if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.fileNameExclusiveFilter) {
         const rx = new RegExp(pxt.appTarget.appTheme.fileNameExclusiveFilter, 'g');
         sanitizedName = sanitizedName.replace(rx, '');

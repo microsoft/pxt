@@ -1,4 +1,4 @@
-/* tslint:disable:forin cli only run in node */
+/* eslint-disable @typescript-eslint/no-for-in-array */
 
 const MaxColumns = 100;
 const argRegex = /^(-+)?(.+)$/;

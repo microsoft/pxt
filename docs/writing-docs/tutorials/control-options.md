@@ -65,23 +65,31 @@ This template example gives some initial code as a starting point for making a g
 ````
 ```template
 controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
-	
+
 })
 scene.setBackgroundColor(9)
 let mySprite = sprites.create(img`
-    . . . . . . . . 
-    . . . . . . . . 
-    . . . . . . . . 
-    . . . . . . . . 
-    . . . . . . . . 
-    . . . . . . . . 
-    . . . . . . . . 
-    . . . . . . . . 
+    . . . . . . . .
+    . . . . . . . .
+    . . . . . . . .
+    . . . . . . . .
+    . . . . . . . .
+    . . . . . . . .
+    . . . . . . . .
+    . . . . . . . .
 
     `, SpriteKind.Player)
 game.onUpdateInterval(1000, function () {
-	
+
 })
+```
+````
+
+For a "blank" template that only contains the `on start` block (in targets like Minecraft, which has two default blocks on the workspace) simply make a template block with an empty comment:
+
+````
+```template
+//
 ```
 ````
 
@@ -112,6 +120,23 @@ input.onButtonPressed(Button.A, function () {
 
 ```ghost
 basic.showIcon(IconNames.Heart)
+```
+````
+
+### Custom code
+
+If you want to load existing code into a tutorial but have it hidden from the user, you can include a `customts` block. The code in the snippet will **not** appear on the Workspace and will **not** show up in the Toolbox.
+
+This can be used to add starter code that the user does not need to see and should not have to modify. It's a good idea to add this code inside a custom namespace, to avoid inadvertent errors in user code.
+
+````
+```customts
+namespace camera {
+    let camera = sprites.create(image.create(16, 16), SpriteKind.Player)
+    controller.moveSprite(camera)
+    camera.setFlag(SpriteFlag.Invisible, true)
+    scene.cameraFollowSprite(camera)
+}
 ```
 ````
 

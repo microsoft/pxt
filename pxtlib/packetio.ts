@@ -18,6 +18,9 @@ namespace pxt.packetio {
 
         onCustomEvent: (type: string, payload: Uint8Array) => void;
         sendCustomEventAsync(type: string, payload: Uint8Array): Promise<void>;
+        // returns a list of part ids that are not supported by the connected hardware. currently
+        // only used by pxt-microbit to warn users about v2 blocks on v1 hardware
+        unsupportedParts?(): string[];
     }
 
     export interface PacketIO {
@@ -72,7 +75,11 @@ namespace pxt.packetio {
     }
 
     export function icon() {
-        return !!wrapper && (wrapper.icon || "usb");
+        return !!wrapper && (wrapper.icon || pxt.appTarget.appTheme.downloadDialogTheme?.deviceIcon || "usb");
+    }
+
+    export function unsupportedParts() {
+        return wrapper?.unsupportedParts ? wrapper.unsupportedParts() : [];
     }
 
     let disconnectPromise: Promise<void>

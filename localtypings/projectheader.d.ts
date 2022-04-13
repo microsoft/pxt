@@ -19,6 +19,8 @@ declare namespace pxt.workspace {
         targetVersion: string;
         pubId: string; // for published scripts
         pubCurrent: boolean; // is this exactly pubId, or just based on it
+        pubVersions?: PublishVersion[];
+        pubPermalink?: string; // permanent (persistent) share ID
         githubId?: string;
         githubTag?: string; // the release tag if any (commit.tag)
         githubCurrent?: boolean;
@@ -30,6 +32,7 @@ declare namespace pxt.workspace {
         extensionUnderTest?: string;
         // id of cloud user who created this project
         cloudUserId?: string;
+        isSkillmapProject?: boolean;
     }
 
     export interface Header extends InstallHeader {
@@ -42,11 +45,6 @@ declare namespace pxt.workspace {
         isDeleted: boolean; // mark whether or not a header has been deleted
         saveId?: any; // used to determine whether a project has been edited while we're saving to cloud
 
-        // DEPRECATED (formerly for cloud sync)
-        blobId_: string;       // id of the cloud blob holding this script
-        blobVersion_: string;  // version of the cloud blob
-        blobCurrent_: boolean; // has the current version of the script been pushed to cloud
-
         // For cloud sync (local only metadata)
         cloudVersion: string;     // The cloud-assigned version number (e.g. etag)
         cloudCurrent: boolean;    // Has the current version of the project been pushed to cloud
@@ -58,5 +56,10 @@ declare namespace pxt.workspace {
 
         // Other
         _rev: string; // used for idb / pouchdb revision tracking
+    }
+
+    interface PublishVersion {
+        id: string;
+        type: "snapshot" | "permalink";
     }
 }

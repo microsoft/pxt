@@ -48,7 +48,7 @@ namespace pxt {
     export function setAppTarget(trg: TargetBundle) {
         appTarget = trg || <TargetBundle>{};
         patchAppTarget();
-        savedAppTarget = U.clone(appTarget)
+        savedAppTarget = U.cloneTargetBundle(appTarget)
     }
 
     let apiInfo: Map<PackageApiInfo>;
@@ -173,6 +173,8 @@ namespace pxt {
         }
         if (!comp.switches)
             comp.switches = {}
+        if (comp.nativeType == pxtc.NATIVE_TYPE_VM)
+            comp.sourceMap = true
         U.jsonCopyFrom(comp.switches, savedSwitches)
         // JS ref counting currently not supported
         comp.jsRefCounting = false
@@ -254,7 +256,7 @@ namespace pxt {
     export function reloadAppTargetVariant(temporary = false) {
         pxt.perf.measureStart("reloadAppTargetVariant")
         const curr = temporary ? "" : JSON.stringify(appTarget);
-        appTarget = U.clone(savedAppTarget)
+        appTarget = U.cloneTargetBundle(savedAppTarget)
         if (appTargetVariant) {
             const v = appTarget.variants && appTarget.variants[appTargetVariant];
             if (v)
@@ -358,26 +360,13 @@ namespace pxt {
         }
     }
 
-    let activityEvents: Map<number> = {};
-    const tickActivityDebounced = Util.debounce(() => {
-        tickEvent("activity", activityEvents);
-        activityEvents = {};
-    }, 10000, false);
-    /**
-     * Ticks activity events. This event gets aggregated and eventually gets sent.
-     */
-    export function tickActivity(...ids: string[]) {
-        ids.filter(id => !!id).map(id => id.slice(0, 64))
-            .forEach(id => activityEvents[id] = (activityEvents[id] || 0) + 1);
-        tickActivityDebounced();
-    }
-
     export interface WebConfig {
         relprefix: string; // "/beta---",
         workerjs: string;  // "/beta---worker",
         monacoworkerjs: string; // "/beta---monacoworker",
         gifworkerjs: string; // /beta---gifworker",
         serviceworkerjs: string; // /beta---serviceworker
+        typeScriptWorkerJs: string; // /beta---tsworker
         pxtVersion: string; // "?",
         pxtRelId: string; // "9e298e8784f1a1d6787428ec491baf1f7a53e8fa",
         pxtCdnUrl: string; // "https://pxt.azureedge.net/commit/9e2...e8fa/",
@@ -397,6 +386,7 @@ namespace pxt {
         multiUrl?: string; // "/beta---multi"
         asseteditorUrl?: string; // "/beta---asseteditor"
         skillmapUrl?: string; // "/beta---skillmap"
+        authcodeUrl?: string; // "/beta---authcode"
         isStatic?: boolean;
         verprefix?: string; // "v1"
     }
@@ -408,8 +398,9 @@ namespace pxt {
             monacoworkerjs: "/monacoworker.js",
             gifworkerjs: "/gifjs/gif.worker.js",
             serviceworkerjs: "/serviceworker.js",
+            typeScriptWorkerJs: "/tsworker.js",
             pxtVersion: "local",
-            pxtRelId: "",
+            pxtRelId: "localRelId",
             pxtCdnUrl: "/cdn/",
             commitCdnUrl: "/cdn/",
             blobCdnUrl: "/blb/",
@@ -502,6 +493,9 @@ namespace pxt {
     export const BLOCKS_PROJECT_NAME = "blocksprj";
     export const JAVASCRIPT_PROJECT_NAME = "tsprj";
     export const PYTHON_PROJECT_NAME = "pyprj";
+    export const MAIN_BLOCKS = "main.blocks";
+    export const MAIN_TS = "main.ts";
+    export const MAIN_PY = "main.py";
     export const DEFAULT_GROUP_NAME = "other"; // used in flyout, for snippet groups
     export const TILEMAP_CODE = "tilemap.g.ts";
     export const TILEMAP_JRES = "tilemap.g.jres";
@@ -510,13 +504,18 @@ namespace pxt {
     export const TUTORIAL_CODE_START = "_onCodeStart.ts";
     export const TUTORIAL_CODE_STOP = "_onCodeStop.ts";
     export const TUTORIAL_INFO_FILE = "tutorial-info-cache.json";
+    export const TUTORIAL_CUSTOM_TS = "tutorial.custom.ts";
+    export const BREAKPOINT_TABLET = 991; // TODO (shakao) revisit when tutorial stuff is more settled
 
     export function outputName(trg: pxtc.CompileTarget = null) {
         if (!trg) trg = appTarget.compile
 
-        if (trg.nativeType == ts.pxtc.NATIVE_TYPE_VM)
-            return ts.pxtc.BINARY_PXT64
-        else if (trg.useUF2 && !trg.switches.rawELF)
+        if (trg.nativeType == ts.pxtc.NATIVE_TYPE_VM) {
+            if (trg.useESP)
+                return trg.useUF2 ? ts.pxtc.BINARY_UF2 : ts.pxtc.BINARY_ESP
+            else
+                return ts.pxtc.BINARY_PXT64
+        } else if (trg.useUF2 && !trg.switches.rawELF)
             return ts.pxtc.BINARY_UF2
         else if (trg.useELF)
             return ts.pxtc.BINARY_ELF

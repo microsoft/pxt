@@ -1,0 +1,64 @@
+.common-dropdown {
+    position: relative;
+    width: fit-content;
+}
+
+.common-dropdown > .common-button {
+    display: block;
+    box-sizing: border-box;
+
+    color: @inputTextColor;
+    background-color: @inputBackgroundColor;
+    border: 1px solid @inputBorderColor;
+
+    min-width: 10rem;
+    border-radius: 2px;
+    padding: 0px 28px 0px 8px;
+    margin: 0px;
+    height: 32px;
+    line-height: 30px;
+    position: relative;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    text-align: left;
+
+    & > .common-button-flex > i.right {
+        position: absolute;
+        right: 0
+    }
+
+    &:focus::after {
+        outline: none;
+    }
+
+    &:focus {
+        border: 1px solid @inputBorderColorFocus;
+    }
+}
+
+.common-dropdown > .common-menu-dropdown-pane {
+    width: unset;
+    right: unset;
+    min-width: 100%;
+    left: 0;
+    z-index: 1;
+
+    li .common-button {
+        text-align: left;
+        width: 100%;
+        padding-left: 0.5rem;
+    }
+}
+
+.common-dropdown-shadow {
+    box-shadow: 0 3.2px 7.2px 0 rgb(0 0 0 ~"/ 13%"), 0 0.6px 1.8px 0 rgb(0 0 0 ~"/ 11%");
+}
+
+.common-dropdown.icon-preview > .common-button {
+    min-width: unset;
+
+    .common-button-label {
+        display: none;
+    }
+}

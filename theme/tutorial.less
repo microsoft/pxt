@@ -65,6 +65,13 @@
     justify-content: center;
 }
 
+#mainmenu .ui.item.tutorialname {
+    cursor: unset;
+    &:hover, &:focus {
+        background: none;
+    }
+}
+
 .tutorial #tutorialcard {
     position: relative;
     z-index: @tutorialCardZIndex;
@@ -151,11 +158,9 @@ body#docs.tutorial {
     width: 100%;
     font-size: 12pt;
     padding-left: 1rem;
-    height: calc(@tutorialCardHeight - 1rem);
+    height: 100%;
     margin-bottom: 0.4rem;
-    overflow-y: hidden;
     overflow-x: auto;
-    cursor:pointer;
 }
 
 .tutorial.tutorialExpanded #tutorialcard .tutorialmessage .content {
@@ -164,7 +169,8 @@ body#docs.tutorial {
 }
 
 #tutorialcard .tutorialmessage .content p,
-.tutorialhint p {
+.tutorialhint p,
+.tutorial-callout p {
     line-height: 1.4em !important;
     color: @tutorialSegmentColor;
 }
@@ -217,13 +223,15 @@ body#docs.tutorial {
 
 @media only screen and (min-height: 400px) {
     .hintdialog .ui.segment .blocklyPreview,
-    .tutorialhint .ui.segment .blocklyPreview {
+    .tutorialhint .ui.segment .blocklyPreview,
+    .tutorial-callout .ui.segment .blocklyPreview {
         max-height: 45vh;
     }
 }
 
 @media only screen and (max-height: 800px) {
-    .tutorialhint img {
+    .tutorialhint img,
+    .tutorial-callout img {
         max-height: 30vh;
     }
 }
@@ -271,6 +279,16 @@ code.lang-filterblocks {
         > i, > span, > i.orange {
             color: @black !important;
         }
+    }
+}
+
+#tutorialcard .isValidated {
+    background: @tutorialCodeValidationCorrectBackground;
+    > i, > span, > i.nextbutton {
+        color: @tutorialCodeValidationCorrectTextColor !important;
+    }
+    i.large.icon, i.large.icons{
+        font-size: 1.7em;
     }
 }
 
@@ -343,7 +361,8 @@ code.lang-filterblocks {
     }
 }
 
-.tutorialhint {
+.tutorialhint,
+.tutorial-callout {
     position: absolute;
     max-width: 100%;
     min-width: 300px;
@@ -357,7 +376,8 @@ code.lang-filterblocks {
     box-shadow: 0px 0px 8px 1px rgba(0, 0, 0, .3);
 }
 
-.tutorialhint:before {
+.tutorialhint:before,
+.tutorial-callout:before {
     content: ' ';
     position: absolute;
     width: 0;
@@ -370,16 +390,19 @@ code.lang-filterblocks {
     transform: rotateZ(-135deg);
 }
 
-.tutorialhint > div {
+.tutorialhint > div,
+.tutorial-callout > div {
     max-height: 60vh;
     overflow: auto;
 }
 
-.tutorialhint.hidden {
+.tutorialhint.hidden,
+.tutorial-callout.hidden {
     display: none;
 }
 
-.tutorialhint .lang-blocks .segment.raised {
+.tutorialhint .lang-blocks .segment.raised,
+.tutorial-callout .lang-blocks .segment.raised {
     border: none;
     background: none;
     box-shadow: none;
@@ -481,35 +504,60 @@ code.lang-filterblocks {
 /******************************
     Immersive Reader button
 ******************************/
+// TODO (shakao) remove #mainmenu items when cleaning up
+// old tutorial code
+#editorSidebar .immersive-reader-button.ui.item,
+#editorSidebar .immersive-reader-button.ui.item:focus,
+#mainmenu .immersive-reader-button.ui.item,
+#mainmenu .immersive-reader-button.ui.item:focus {
+    width: 2rem;
+    height: 2rem;
+    background-repeat: no-repeat;
+    background-size: 80%;
+    background-position: center;
+    border-radius: .2em!important;
+}
 #mainmenu .immersive-reader-button.ui.item,
 #mainmenu .immersive-reader-button.ui.item:focus {
     background-image: @immersiveReaderLightIcon;
-    width: 1.8rem;
-    height: 1.8rem;
-    background-repeat: no-repeat;
-    background-size: contain;
-    margin-top: .4rem;
+}
+#editorSidebar .immersive-reader-button.ui.item,
+#editorSidebar .immersive-reader-button.ui.item:focus{
+    background-image: @immersiveReaderIcon;
 }
 
-.modals .immersive-reader-button {
+#mainmenu .immersive-reader-button:focus,
+#mainmenu .immersive-reader-button:hover {
+    background-color: #00000059!important;
+    filter: brightness(0.8);
+}
+
+.modals .ui.button.immersive-reader-button {
     background-image: @immersiveReaderIcon;
-    width: 1.8rem;
-    height: 1.8rem;
+    width: 2rem;
+    height: 2.8rem;
     background-repeat: no-repeat;
-    background-size: contain;
-    background-color: transparent;
+    background-size: 60%;
+    background-color: #f9fafb;
+    background-position: center;
     box-shadow: none;
     transition: none;
     float: left;
-    margin-top: 10px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    margin-left: 0!important;
 }
 
-.modals .immersive-reader-button:hover, .modals .immersive-reader-button:focus {
+.modals .ui.button.immersive-reader-button:hover,
+.modals .ui.button.immersive-reader-button:focus {
     box-shadow: none;
     background-image: @immersiveReaderIcon;
     background-repeat: no-repeat;
     background-size: contain;
-    background-color: transparent
+    background-color: #f9fafb;
+    background-position: center;
+    background-size: 60%;
+    filter: brightness(0.8);
 }
 
 /*******************************
@@ -637,7 +685,7 @@ code.lang-filterblocks {
  * CSS for embedded tutorial used in the skills map
  */
 .tutorial.tutorial-embed {
-    #filelist, #maineditor, &.sideDocs #sidedocs, .simView #simulators {
+    #editorSidebar, #maineditor, &.sideDocs #sidedocs, .simView #simulators {
         top: @tutorialEmbedMenuHeight;
     }
     .simView #boardview {
@@ -682,6 +730,20 @@ code.lang-filterblocks {
 
 /* > Small Monitor */
 @media only screen and (min-width: @computerBreakpoint) {
+    .thin {
+        .landscape.only {
+            display: none;
+        }
+
+        .portrait.hide {
+            display: none;
+        }
+
+        .portrait.only {
+            display: block!important;
+            height: auto!important;
+        }
+    }
 }
 
 /* Large Monitor */
@@ -765,7 +827,7 @@ code.lang-filterblocks {
     * CSS for embedded tutorial used in the skills map
     */
     .tutorial.tutorial-embed {
-        #filelist {
+        #editorSidebar {
             top: unset;
         }
     }

@@ -14,7 +14,9 @@ export class AssetPreview extends React.Component<AssetPreviewProps> {
 
         const isAnimation = asset.type === pxt.AssetType.Animation && asset.framePreviewURIs?.length > 1;
 
-        return <div className="asset-editor-preview" title={asset.meta.displayName || asset.id}>
+        const title = asset.meta.displayName || (asset.meta.temporaryInfo ? lf("Temporary Asset") : asset.id);
+
+        return <div className="asset-editor-preview" title={title}>
             <img
                 src={asset.previewURI}
                 alt={lf("A preview of your asset (eg image, tile, animation)")}

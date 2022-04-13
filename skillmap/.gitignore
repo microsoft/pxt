@@ -14,6 +14,8 @@
 /public/pxtlib.js
 /public/assets
 /public/blb
+/public/docs
+/public/static
 
 # misc
 .DS_Store
@@ -26,5 +28,4 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-package-lock.json
 react-app-env.d.ts

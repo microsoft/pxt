@@ -5,6 +5,7 @@ import * as data from "./data";
 import * as sui from "./sui";
 import * as pkg from "./package";
 import * as core from "./core";
+import { fireClickOnEnter } from "./util";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -14,6 +15,47 @@ interface FileListState {
 }
 
 const customFile = "custom.ts";
+const customFileText = `
+enum MyEnum {
+    //% block="one"
+    One,
+    //% block="two"
+    Two
+}
+
+/**
+ * ${lf("Custom blocks")}
+ */
+//% weight=100 color=#0fbc11 icon="\uf0c3"
+namespace custom {
+    /**
+     * TODO: ${lf("describe your function here")}
+     * @param n ${lf("describe parameter here")}, eg: 5
+     * @param s ${lf("describe parameter here")}, eg: "Hello"
+     * @param e ${lf("describe parameter here")}
+     */
+    //% block
+    export function foo(n: number, s: string, e: MyEnum): void {
+        // Add code here
+    }
+
+    /**
+     * TODO: ${lf("describe your function here")}
+     * @param value ${lf("describe value here")}, eg: 5
+     */
+    //% block
+    export function fib(value: number): number {
+        return value <= 1 ? value : fib(value -1) + fib(value - 2);
+    }
+}
+`;
+const customFileHeader = (homeUrl: string) => `
+/**
+* ${lf("Use this file to define custom functions and blocks.")}
+* ${lf("Read more at {0}", homeUrl + 'blocks/custom')}
+*/
+`
+
 export class FileList extends data.Component<ISettingsProps, FileListState> {
 
     constructor(props: ISettingsProps) {
@@ -152,7 +194,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                 && !files.some(f => f.name == localized);
             const hasDelete = deleteFiles
                 && file.name != pxt.CONFIG_NAME
-                && (usesGitHub || file.name != "main.ts")
+                && (usesGitHub || file.name != pxt.MAIN_TS)
                 && !file.isReadonly();
             const nameStart = folder.length ? folder.length + 1 : 0;
             return (
@@ -232,6 +274,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
     }
 
     private addProjectFile() {
+        const mainPkg = pkg.mainEditorPkg();
         const validRx = /^[\w][\/\w\-\.]*$/;
         core.promptAsync({
             header: lf("Add new file?"),
@@ -244,7 +287,8 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                     return lf("Don't use spaces or special characters.");
                 return undefined;
             },
-            body: lf("Please provide a name for your new file.")
+            body: lf("Please provide a name for your new file."),
+            initialValue: !mainPkg.files[customFile] ? customFile : undefined
         }).then(str => {
             if (!str)
                 return Promise.resolve()
@@ -289,6 +333,10 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                         ext = "json"
                         comment = undefined;
                         break;
+                    case "jres":
+                        ext = "jres"
+                        comment = undefined;
+                        break;
                     default:
                         // not a valid extension; leave it as it was and append def extension
                         name = str;
@@ -308,12 +356,15 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                 core.warningNotification(lf("File already exists"))
                 return Promise.resolve()
             }
-            return this.props.parent.updateFileAsync(
-                fileName,
-                comment ? `${comment} ${commentText}
-` : "",
-                true
-            );
+            let fileText = "";
+            if (fileName == customFile) {
+                fileText = customFileHeader(pxt.appTarget.appTheme.homeUrl) + customFileText;
+            } else if (comment) {
+                fileText = `${comment} ${commentText}
+`;
+            }
+
+            return this.props.parent.updateFileAsync(fileName, fileText, true);
         });
     }
 
@@ -327,45 +378,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             body: lf("A new JavaScript file, custom.ts, will be added to your project. You can define custom functions and blocks in that file.")
         }).then(v => {
             if (!v) return undefined;
-            return this.props.parent.updateFileAsync(customFile, `
-/**
- * ${lf("Use this file to define custom functions and blocks.")}
- * ${lf("Read more at {0}", pxt.appTarget.appTheme.homeUrl + 'blocks/custom')}
- */
-
-enum MyEnum {
-    //% block="one"
-    One,
-    //% block="two"
-    Two
-}
-
-/**
- * ${lf("Custom blocks")}
- */
-//% weight=100 color=#0fbc11 icon="\uf0c3"
-namespace custom {
-    /**
-     * TODO: ${lf("describe your function here")}
-     * @param n ${lf("describe parameter here")}, eg: 5
-     * @param s ${lf("describe parameter here")}, eg: "Hello"
-     * @param e ${lf("describe parameter here")}
-     */
-    //% block
-    export function foo(n: number, s: string, e: MyEnum): void {
-        // Add code here
-    }
-
-    /**
-     * TODO: ${lf("describe your function here")}
-     * @param value ${lf("describe value here")}, eg: 5
-     */
-    //% block
-    export function fib(value: number): number {
-        return value <= 1 ? value : fib(value -1) + fib(value - 2);
-    }
-}
-`, true);
+            return this.props.parent.updateFileAsync(customFile, customFileHeader(pxt.appTarget.appTheme.homeUrl) + customFileText, true);
         });
     }
 
@@ -376,7 +389,7 @@ namespace custom {
         const plus = showFiles && !pxt.shell.isReadOnly() && (!mainPkg.files[customFile] || pxt.appTarget.appTheme.addNewTypeScriptFile);
         const meta: pkg.PackageMeta = this.getData("open-pkg-meta:" + mainPkg.getPkgId());
         return <div role="tree" className={`ui tiny vertical ${targetTheme.invertedMenu ? `inverted` : ''} menu filemenu landscape only hidefullscreen`}>
-            <div role="treeitem" aria-selected={showFiles} aria-expanded={showFiles} aria-label={lf("File explorer toolbar")} key="projectheader" className="link item" onClick={this.toggleVisibility} tabIndex={0} onKeyDown={sui.fireClickOnEnter}>
+            <div role="treeitem" aria-selected={showFiles} aria-expanded={showFiles} aria-label={lf("File explorer toolbar")} key="projectheader" className="link item" onClick={this.toggleVisibility} tabIndex={0} onKeyDown={fireClickOnEnter}>
                 {lf("Explorer")}
                 <sui.Icon icon={`chevron ${showFiles ? "up" : "down"} icon`} />
                 {plus ? <sui.Button className="primary label" icon="plus" title={lf("Add custom blocks?")} onClick={this.handleCustomBlocksClick} onKeyDown={this.handleButtonKeydown} /> : undefined}
@@ -500,7 +513,7 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
             role="treeitem"
             aria-selected={isActive}
             aria-label={isActive ? lf("{0}, it is the current opened file in the JavaScript editor", file.name) : file.name}
-            onKeyDown={sui.fireClickOnEnter}
+            onKeyDown={fireClickOnEnter}
             className={className}>
             {this.props.children}
             {hasDelete && <sui.Button className="primary label" icon="trash"
@@ -508,8 +521,8 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
                 onClick={this.handleRemove}
                 onKeyDown={this.handleButtonKeydown} />}
             {meta && meta.numErrors ? <span className='ui label red button' role="button" title={lf("Go to error")}>{meta.numErrors}</span> : undefined}
-            {shareUrl && <sui.Button className="button primary label" icon="share alternate" title={lf("Share")} onClick={this.handleShare} onKeyDown={sui.fireClickOnEnter} />}
-            {previewUrl && <sui.Button className="button primary label" icon="flask" title={lf("Preview")} onClick={this.handlePreview} onKeyDown={sui.fireClickOnEnter} />}
+            {shareUrl && <sui.Button className="button primary label" icon="share alternate" title={lf("Share")} onClick={this.handleShare} onKeyDown={fireClickOnEnter} />}
+            {previewUrl && <sui.Button className="button primary label" icon="flask" title={lf("Preview")} onClick={this.handlePreview} onKeyDown={fireClickOnEnter} />}
             {!!addLocalizedFile && <sui.Button className="primary label" icon="xicon globe"
                 title={lf("Add localized file")}
                 onClick={this.handleAddLocale}
@@ -564,7 +577,7 @@ class PackgeTreeItem extends sui.StatelessUIElement<PackageTreeItemProps> {
         return <div className="header link item" role="treeitem"
             aria-selected={isActive} aria-expanded={isActive}
             aria-label={lf("{0}, {1}", p.getPkgId(), isActive ? lf("expanded") : lf("collapsed"))}
-            onClick={this.handleClick} tabIndex={0} onKeyDown={sui.fireClickOnEnter} {...rest}>
+            onClick={this.handleClick} tabIndex={0} onKeyDown={fireClickOnEnter} {...rest}>
             <sui.Icon icon={`chevron ${isActive ? "up" : "down"} icon`} />
             {hasRefresh ? <sui.Button className="primary label" icon="refresh" title={lf("Refresh extension {0}", p.getPkgId())}
                 onClick={this.handleRefresh} onKeyDown={this.handleButtonKeydown} text={version || ''}></sui.Button> : undefined}
