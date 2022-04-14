@@ -663,6 +663,7 @@ const lint = lintWithEslint
 
 const testdecompiler = testTask("decompile-test", "decompilerunner.js");
 const testlang = testTask("compile-test", "compilerunner.js");
+const testhelpers = testTask("helpers-test", "helperrunner.js");
 const testerr = testTask("errors-test", "errorrunner.js");
 const testfmt = testTask("format-test", "formatrunner.js");
 const testpydecomp = testTask("pydecompile-test", "pydecompilerunner.js");
@@ -691,6 +692,7 @@ const buildBlocksTestRunner = () => compileTsProject("tests/blocks-test", "built
 const testAll = gulp.series(
     testdecompiler,
     testlang,
+    testhelpers,
     testerr,
     testfmt,
     testpydecomp,
@@ -794,6 +796,7 @@ exports.onlinelearning = onlinelearning;
 exports.skillmap = skillmap;
 exports.authcode = authcode;
 exports.icons = buildSVGIcons;
+exports.testhelpers = testhelpers;
 exports.cli = gulp.series(
     gulp.parallel(pxtlib, pxtweb),
     gulp.parallel(pxtcompiler, pxtsim, backendutils),
