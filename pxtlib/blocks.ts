@@ -6,7 +6,7 @@ namespace pxt.blocks {
     // The JS Math functions supported in the blocks. The order of this array
     // determines the order of the dropdown in the math_js_op block
     export const MATH_FUNCTIONS = {
-        unary: ["sqrt", "sin", "cos", "tan"],
+        unary: ["sqrt", "sin", "cos", "tan", "asin", "acos"],
         binary: ["atan2"],
         infix: ["idiv", "imul"]
     };
@@ -469,6 +469,8 @@ namespace pxt.blocks {
                     "sqrt": Util.lf("Returns the square root of the argument"),
                     "sin": Util.lf("Returns the sine of the argument"),
                     "cos": Util.lf("Returns the cosine of the argument"),
+                    "acos": Util.lf("Returns the arccosine of the argument"),
+                    "asine": Util.lf("Returns the arcsine of the argument"),
                     "tan": Util.lf("Returns the tangent of the argument"),
                     "atan2": Util.lf("Returns the arctangent of the quotient of the two arguments"),
                     "idiv": Util.lf("Returns the integer portion of the division operation on the two arguments"),
@@ -483,6 +485,8 @@ namespace pxt.blocks {
                     "sqrt": Util.lf("{id:op}square root"),
                     "sin": Util.lf("{id:op}sin"),
                     "cos": Util.lf("{id:op}cos"),
+                    "asin": Util.lf("{id:op}asin"),
+                    "acos": Util.lf("{id:op}acos"),
                     "tan": Util.lf("{id:op}tan"),
                     "atan2": Util.lf("{id:op}atan2"),
                     "idiv": Util.lf("{id:op}integer ÷"),
