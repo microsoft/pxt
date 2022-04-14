@@ -1,15 +1,20 @@
 namespace split {
+    const errors: string[] = [];
+    function error(name: string, args: any[], expected: string, result: string) {
+        errors.push(`FAILED ${name}(${args.filter(a => a != undefined).map(a => `"${a}"`).join(", ")}) => "${result}", expected "${expected}"`);
+    }
+
     function testrsplit(str: string, expect: string[], sep?: string, maxSplit?: number) {
         const res = _py.py_string_rsplit(str, sep, maxSplit);
 
-        const error = `FAILED py_string_rsplit "${str}" "${sep}" "${maxSplit}" => [${res.map(val => `"${val}"`).join(", ")}]`;
-
         if (res.length !== expect.length) {
-            throw error;
+            error("py_string_rsplit", [str, sep, maxSplit], `[${expect.map(val => `"${val}"`).join(", ")}]`, `[${res.map(val => `"${val}"`).join(", ")}]`);
+            return;
         }
         for (let i = 0; i < expect.length; i++) {
             if (res[i] !== expect[i]) {
-                throw error;
+                error("py_string_rsplit", [str, sep, maxSplit], `[${expect.map(val => `"${val}"`).join(", ")}]`, `[${res.map(val => `"${val}"`).join(", ")}]`);
+                return;
             }
         }
         console.log("passed")
@@ -18,14 +23,15 @@ namespace split {
     function testsplit(str: string, expect: string[], sep?: string, maxSplit?: number) {
         const res = _py.py_string_split(str, sep, maxSplit);
 
-        const error = `FAILED py_string_split "${str}" "${sep}" "${maxSplit}" => [${res.map(val => `"${val}"`).join(", ")}]`;
 
         if (res.length !== expect.length) {
-            throw error
+            error("py_string_split", [str, sep, maxSplit], `[${expect.map(val => `"${val}"`).join(", ")}]`, `[${res.map(val => `"${val}"`).join(", ")}]`);
+            return;
         }
         for (let i = 0; i < expect.length; i++) {
             if (res[i] !== expect[i]) {
-                throw error
+                error("py_string_split", [str, sep, maxSplit], `[${expect.map(val => `"${val}"`).join(", ")}]`, `[${res.map(val => `"${val}"`).join(", ")}]`);
+                return;
             }
         }
         console.log("passed")
@@ -63,4 +69,9 @@ namespace split {
     testsplit("  ", [], null, 1)
     testsplit(" a  b c e  ", ["a", "b c e  "], null, 1)
     testsplit(" a  b c e  ", ["a", "b", "c e  "], null, 2)
+
+
+    if (errors.length) {
+        throw errors.join("\n");
+    }
 }

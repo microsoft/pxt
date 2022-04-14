@@ -1,6 +1,7 @@
 namespace strip {
+    const errors: string[] = [];
     function error(name: string, args: string[], expected: string, result: string) {
-        throw `FAILED ${name}(${args.filter(a => a != undefined).map(a => `"${a}"`).join(", ")}) => "${result}", expected "${expected}"`;
+        errors.push(`FAILED ${name}(${args.filter(a => a != undefined).map(a => `"${a}"`).join(", ")}) => "${result}", expected "${expected}"`);
     }
 
     function teststrip(expected: string, str: string, chars?: string) {
@@ -44,4 +45,8 @@ namespace strip {
     testrstrip("aabbcc", "aabbccbbaa", "ab")
     testrstrip("a abbcc", "a abbccbba a", "ab ")
     testrstrip("", "a abbccbba a", "abc ")
+
+    if (errors.length) {
+        throw errors.join("\n");
+    }
 }
