@@ -18,6 +18,10 @@ To enable some additional features for extension developers, the following domai
 * https://github.com
 * https://raw.githubusercontent.com/
 
+## ~button /domains
+
+Test Domains
+
 ## Where are my projects saved?
 
 Projects are kept in the browser's local indexed data store. You can save your project with a name. If you don't name your project, it's kept as an "Untitled" project. You can also save your project to a file or in the cloud.
