@@ -121,7 +121,6 @@ export class ProjectView
     allEditors: srceditor.Editor[] = [];
     settings: EditorSettings;
     scriptSearch: scriptsearch.ScriptSearch;
-    extensionsBrowser: extensionsBrowser.ExtensionsBrowser;
     home: projects.Projects;
     extensions: extensions.Extensions;
     shareEditor: share.ShareEditor;
@@ -186,6 +185,7 @@ export class ProjectView
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
         if (shouldShowHomeScreen) this.homeLoaded();
 
+        this.hidePackageDialog = this.hidePackageDialog.bind(this);
         this.hwDebug = this.hwDebug.bind(this);
         this.hideLightbox = this.hideLightbox.bind(this);
         this.openSimSerial = this.openSimSerial.bind(this);
@@ -3859,9 +3859,18 @@ export class ProjectView
         return this.newProjectDialog.promptUserAsync();
     }
 
+    hidePackageDialog() {
+        this.setState({
+            ...this.state,
+            extensionsVisible: false
+        })
+    }
+
     showPackageDialog() {
-        // this.scriptSearch.showExtensions();
-        this.extensionsBrowser.showExtensions();
+        this.setState({
+            ...this.state,
+            extensionsVisible: true
+        })
     }
 
     showBoardDialogAsync(features?: string[], closeIcon?: boolean): Promise<void> {
@@ -4382,10 +4391,6 @@ export class ProjectView
         this.scriptSearch = c;
     }
 
-    private handleExtensionsBrowserRef = (c: extensionsBrowser.ExtensionsBrowser) => {
-        this.extensionsBrowser = c;
-    }
-
     private handleExtensionRef = (c: extensions.Extensions) => {
         this.extensions = c;
     }
@@ -4529,7 +4534,7 @@ export class ProjectView
         const hasIdentity = pxt.auth.hasIdentity();
         return (
             <div id='root' className={rootClasses}>
-                <extensionsBrowser.ExtensionsBrowser parent={this} ref={this.handleExtensionsBrowserRef}/>
+                <extensionsBrowser.ExtensionsBrowser isVisible={this.state.extensionsVisible} hideExtensions={this.hidePackageDialog} parent={this}/>
                 {greenScreen ? <greenscreen.WebCam close={this.toggleGreenScreen} /> : undefined}
                 {accessibleBlocks && <accessibleblocks.AccessibleBlocksInfo />}
                 {hideMenuBar || inHome ? undefined :

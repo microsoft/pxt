@@ -4,8 +4,10 @@ import * as core from "./core";
 import * as db from "./db";
 import * as compiler from "./compiler";
 import * as auth from "./auth";
+import * as toolbox from "./toolbox"
 
 import Util = pxt.Util;
+import { getBlocksEditor } from "./app";
 
 let hostCache = new db.Table("hostcache")
 
@@ -343,7 +345,22 @@ export class EditorPackage {
     }
 
     removeDepAsync(pkgid: string) {
-        return this.updateConfigAsync(cfg => delete cfg.dependencies[pkgid])
+        const blocksEditor = getBlocksEditor();
+        const namespaces = getNsForPkg(pkgid)
+        namespaces?.forEach(ns => {
+            const maybeBlocks = [...blocksEditor.getBlocksForCategory(ns), ...blocksEditor.getBlocksForCategory(ns, "more")]
+
+            maybeBlocks.forEach(b => {
+                if (b.type != "button") {
+                    blocksEditor.editor.getBlocksByType((b as toolbox.BlockDefinition).attributes.blockId, false).forEach(foundBlock =>{
+                        foundBlock.dispose(true);
+                    })
+                }
+            })
+        })
+
+        return blocksEditor.saveToTypeScriptAsync()
+            .then(() => this.updateConfigAsync(cfg => delete cfg.dependencies[pkgid]))
             .then(() => this.saveFilesAsync());
     }
 
@@ -763,6 +780,48 @@ export function getEditorPkg(p: pxt.Package): EditorPackage {
         newOne.makeTopLevel();
     (p as any)._editorPkg = newOne
     return newOne
+}
+
+
+/**
+ * Fetches all packages that have a dependency on the given package
+ *
+ */
+export function getDependents(pkgid: string) {
+    const deps: string[] = []
+    Object.keys(mainPkg.deps).forEach(id => {
+        const pkg = mainPkg.deps[id]
+        if (pkg.dependencies(false)[pkgid]) {
+            deps.push(id)
+        }
+    })
+    return deps
+}
+
+export function findExtForNs(ns: string): pxt.Package {
+    const pkgId = Object.keys(mainPkg.deps).find( dep => {
+        const associatedNamespaces = getNsForPkg(dep)
+        return associatedNamespaces?.includes(ns)
+    })
+    return mainPkg.deps[pkgId]
+}
+
+export function getNsForPkg(pkgId: string) {
+    const pkg = mainPkg.deps[pkgId]
+    if (!pkg) return undefined
+    const nsRegex = /\s*namespace\s+(\w*)/gm;
+    const ns: string[] = [];
+    pkg.getFiles().filter(f => Util.endsWith(f, ".ts")).forEach(fileName => {
+        const matches = nsRegex.exec(pkg.readFile(fileName))
+        if (matches) {
+            for (let i = 0; i < matches.length; i++) {
+                if (i % 2 != 0) {
+                    ns.push(matches[i])
+                }
+            }
+        }
+    })
+    return ns
 }
 
 export function mainEditorPkg() {

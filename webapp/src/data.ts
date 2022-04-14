@@ -280,7 +280,7 @@ mountVirtualApi("gh-search", {
     getAsync: query => pxt.targetConfigAsync()
         .then(config => pxt.github.searchAsync(stripProtocol(query), config ? config.packages : undefined))
         .catch(core.handleNetworkError),
-    expirationTime: p => 60 * 1000,
+    expirationTime: p => 360 * 1000,
     isOffline: () => !Cloud.isOnline(),
 })
 

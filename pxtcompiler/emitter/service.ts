@@ -715,6 +715,7 @@ namespace ts.pxtc.service {
     // don't export, fuse is internal only
     let lastFuse: Fuse<SearchInfo>;
     let lastProjectFuse: Fuse<ProjectSearchInfo>;
+    let lastExtensionFuse: Fuse<ExtensionMeta>;
     export let builtinItems: SearchInfo[];
     export let blockDefinitions: pxt.Map<pxt.blocks.BlockDefinition>;
     export let tbSubset: pxt.Map<boolean | string>;
@@ -786,6 +787,7 @@ namespace ts.pxtc.service {
         snippet: (v: OpArg) => string;
         blocksInfo: (v: OpArg) => BlocksInfo;
         apiSearch: (v: OpArg) => SearchInfo[];
+        extensionSearch: (v: OpArg) => ExtensionMeta[];
         projectSearch: (v: OpArg) => ProjectSearchInfo[];
         projectSearchClear: () => void;
     };
@@ -1213,6 +1215,28 @@ namespace ts.pxtc.service {
             }
             const fns = lastFuse.search(search.term);
             return fns.slice(0, SEARCH_RESULT_COUNT);
+        },
+        extensionSearch: v => {
+            const extensions = v.extensions.srcs
+            const searchFor = v.search.term;
+
+            const fuseOptions = {
+                shouldSort: true,
+                threshold: 0.6,
+                location: 0,
+                distance: 100,
+                maxPatternLength: 16,
+                minMatchCharLength: 2,
+                findAllMatches: false,
+                caseSensitive: false,
+                keys: [
+                    { name: 'name', weight: 1 }
+                ]
+            };
+
+            lastExtensionFuse = new Fuse(extensions, fuseOptions);
+            const found = lastExtensionFuse.search(searchFor);
+            return found;
         },
         projectSearch: v => {
             const search = v.projectSearch;

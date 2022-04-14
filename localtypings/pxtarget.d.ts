@@ -47,6 +47,13 @@ declare namespace pxt {
         // list of trusted custom editor extension urls
         // that can bypass consent and send/receive messages
         approvedEditorExtensionUrls?: string[];
+        extensionsToIgnore?: string[]; // List of extensions to ignore when allowing for deletion
+        categories?: ExtensionCategory[];
+    }
+
+    interface ExtensionCategory {
+        name: string;
+        extensions: string[];
     }
 
     interface ShareConfig {

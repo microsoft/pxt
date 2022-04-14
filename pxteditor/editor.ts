@@ -100,6 +100,7 @@ namespace pxt.editor {
         errorListState?: ErrorListState;
 
         screenshoting?: boolean;
+        extensionsVisible?: boolean;
     }
 
     export interface EditorState {
