@@ -1,0 +1,264 @@
+/* Global --------------------------------------------------------------------------- */
+
+html {
+    font-size: 10px !important;
+}
+
+body,
+a,
+button,
+p,
+li {
+    font-size: 1.8rem;
+    font-family: 'Roboto', sans-serif;
+}
+
+.lg-p {
+    font-size: 2.2rem;
+}
+
+li {
+    padding: 1rem 0;
+}
+
+li li {
+    padding: 0;
+    margin: 0.5rem 0;
+}
+
+/* Dynamic scaling */
+@media (min-width: 4000px) {
+    html {
+        font-size: 16px !important;
+    }
+}
+
+@media (min-width: 3000px) {
+    html {
+        font-size: 14px !important;
+    }
+}
+
+@media (min-width: 2000px) {
+    html {
+        font-size: 12px !important;
+    }
+}
+
+@media (max-width: 768px) {
+    html {
+        font-size: 8px !important;
+    }
+}
+
+ol {
+    font-weight: bold;
+}
+
+li span {
+    font-weight: normal;
+}
+
+h1 {
+    font-size: 7.2rem;
+    text-transform: uppercase;
+}
+h2 {
+    font-size: 5.4rem;
+    text-transform: uppercase;
+}
+h3 {
+    font-size: 3.6rem;
+    text-transform: uppercase;
+}
+h4 {
+    font-size: 2.4rem;
+}
+h5 {
+    font-size: 2rem;
+}
+
+.background-white {
+    color: black;
+    background-color: white;
+}
+.background-black {
+    color: white;
+    background-color: black;
+}
+.background-marina {
+    color: black;
+    background-color: #3dc1aa;
+}
+.background-sunflower {
+    color: black;
+    background-color: #eeca49;
+}
+.background-papaya {
+    color: white;
+    background-color: #de594b;
+}
+.background-eggplant {
+    color: white;
+    background-color: #453052;
+}
+
+.background-eggplant a {
+    color: #3dc1aa;
+}
+
+.background-eggplant a:hover {
+    color: #2ead98;
+}
+
+.background-marina a,
+.background-sunflower a {
+    color: #453052;
+}
+
+.background-marina a:hover,
+.background-sunflower a:hover {
+    color: #33203f;
+}
+
+.background-papaya a {
+    color: #fadd73;
+}
+
+.background-papaya a:hover {
+    color: #eeca49;
+}
+
+.marina {
+    color: #3dc1aa;
+}
+.sunflower {
+    color: #eeca49;
+}
+.papaya {
+    color: #de594b;
+}
+.eggplant {
+    color: #453052;
+}
+
+
+#header-bar,
+#header-bar > div {
+    display: flex;
+    align-items: center;
+    flex: 1;
+}
+
+.header-bar-left {
+    justify-content: flex-start;
+}
+.header-bar-right {
+    justify-content: flex-end;
+}
+
+.header-org-logo {
+    display: flex;
+}
+.header-org-logo-sm {
+    display: none;
+}
+
+.header-org-logo img,
+.header-org-logo-sm img {
+    margin: 0 15px;
+    height: 22px;
+    flex-shrink: 0;
+}
+
+.header-title {
+    white-space: nowrap;
+}
+
+.header-title:before {
+    content: '';
+    position: relative;
+    height: 18px;
+    border-left: 2px solid white;
+}
+
+.header-title span {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana;
+    font-size: 18px;
+    font-weight: 700;
+    color: white;
+    margin-left: 15px;
+    margin-bottom: 1px;
+}
+
+a.header-icon {
+    height: 100%;
+    padding: 15px;
+    color: white;
+    text-decoration: none;
+}
+
+a.header-icon:hover,
+a.header-icon:focus {
+    color: white;
+    opacity: 0.8;
+}
+
+a.header-icon i.icon {
+    height: unset;
+}
+
+nav a {
+    cursor: pointer;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana;
+    font-style: unset;
+    text-transform: none !important;
+}
+
+nav .icon {
+    font-size: 26px;
+    line-height: 26px;
+}
+
+nav .header-bar-left a,
+nav .header-bar-left a:hover {
+    display: flex;
+    color: white;
+    text-decoration: none;
+}
+
+nav .header-bar-right .btn:active svg path {
+    fill: white;
+}
+
+nav .header-bar-right .btn {
+    min-width: unset;
+    padding: 10px;
+    width: 160px;
+    margin: 0 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+nav .header-bar-right .btn span {
+    margin-right: 10px;
+    line-height: 18px;
+}
+
+nav .header-bar-right .btn svg path {
+    fill: black;
+}
+
+table{
+    border-collapse: collapse;
+    border-spacing: 0;
+    margin-top: 40px;
+    margin-left: 20%;
+    margin-right: 20%;
+
+}
+th, td{
+    padding: 10px 20px;
+    border: 1px solid #000;
+}

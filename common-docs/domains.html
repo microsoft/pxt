@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+
+    <meta charset="UTF-8" />
+    <meta
+        name="Description"
+        content="This page is used to test the reachable web sites (domains) required for MakeCode functionality"
+    />
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, user-scalable=yes"
+    />
+
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+        name="apple-mobile-web-app-status-bar-style"
+        content="translucent-black"
+    />
+    <meta name="format-detection" content="telephone=no" />
+    <meta
+        name="application-name"
+        content="Reachable MakeCode domains"
+    />
+
+    <meta name="msapplication-config" content="none" />
+    <meta name="theme-color" content="#3DC1AA" />
+
+    <title>Reachable MakeCode domains</title>
+
+    <link rel="stylesheet" href="https://pxt.azureedge.net/blob/2163189fd5e35c0981ed55318415582a7c9aeb12/doccdn/semantic.css" type="text/css">
+    <link rel="stylesheet" href="domains/style.css" type="text/css">
+
+</head>
+
+<body id='root' class='root'>
+    <nav
+    id="header-bar"
+    class="background-eggplant"
+    style="height: 60px"
+    >
+        <div class="header-bar-left">
+            <a
+                class="header-icon"
+                role="menuitem"
+                aria-label="Return home"
+                tabindex="0"
+                href="/faq">
+                <i
+                    class="icon arrow left"
+                    aria-hidden="true"
+                    role="presentation"
+                ></i>
+            </a>
+        </div>
+        <div class="header-bar-right">
+            <a
+                class="header-icon"
+                role="menuitem"
+                aria-label="Return home"
+                tabindex="0"
+                href="@homeurl@">
+                <i
+                    class="icon home"
+                    aria-hidden="true"
+                    role="presentation"
+                ></i>
+            </a>
+        </div>
+    </nav>
+    
+    <script>
+        let table = document.createElement('table');
+        let thead = document.createElement('thead');
+        let tbody = document.createElement('tbody');
+
+        async function checkURL(url) {
+            fetch(url, {mode: 'no-cors'}).then( r=>{
+                console.log(`${url} reachable`)
+                return true;
+            })
+            .catch(e=>{
+                console.log(`Error: ${url} not reachable ${e}`)
+                return false;
+            });
+        }
+
+        function addRow(url) {
+            // Creating and adding data to second row of the table
+            let row = document.createElement('tr');
+            let row_data_1 = document.createElement('td');
+            row_data_1.innerHTML = url;
+            let row_data_2 = document.createElement('td');
+
+            row_data_2.innerHTML = "Loading..."
+            fetch(url, {mode: 'no-cors'}).then( r=>{
+                console.log(`${url} reachable`)
+                row_data_2.innerHTML = "Success"
+            })
+            .catch(e=>{
+                row_data_2.innerHTML = "Failure"
+            });
+
+            row.appendChild(row_data_1);
+            row.appendChild(row_data_2);
+            tbody.appendChild(row);
+        }
+
+        function createTable() {
+
+            table.appendChild(thead);
+            table.appendChild(tbody);
+
+            // Adding the entire table to the body tag
+            document.getElementById('root').appendChild(table);
+
+            // Creating and adding data to first row of the table
+            let row_1 = document.createElement('tr');
+            let heading_1 = document.createElement('th');
+            heading_1.innerHTML = "Domain";
+            let heading_2 = document.createElement('th');
+            heading_2.innerHTML = "Reachable?";
+
+            row_1.appendChild(heading_1);
+            row_1.appendChild(heading_2);
+            thead.appendChild(row_1);
+        }
+
+        createTable();
+
+        addRow("@homeurl@")
+        addRow("https://makecode.com");
+        addRow("https://trg-arcade.userpxt.io");
+        addRow("https://pxt.azureedge.net");
+        addRow("https://api.github.com");
+        addRow("https://immersivereaderprod.cognitiveservices.azure.com");
+        addRow("https://github.com");
+        addRow("https://raw.githubusercontent.com/")
+
+    </script>
+
+    <!-- @include footer.html -->
+    <!-- @include tracking.html -->
+</body>
+
+</html>
+
