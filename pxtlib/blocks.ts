@@ -235,6 +235,23 @@ namespace pxt.blocks {
         ));
     }
 
+    export function getHelpUrl(fn: pxtc.SymbolInfo) {
+        if (fn.attributes.help) {
+            const helpUrl = fn.attributes.help.replace(/^\//, '');
+            if (/^github:/.test(helpUrl)) {
+                return helpUrl;
+            } else if (helpUrl !== "none") {
+                return "/reference/" + helpUrl;
+            }
+        } else if (fn.pkg && !pxt.appTarget.bundledpkgs[fn.pkg]) {// added package
+            let anchor = fn.qName.toLowerCase().split('.');
+            if (anchor[0] == fn.pkg) anchor.shift();
+            return `/pkg/${fn.pkg}#${encodeURIComponent(anchor.join('-'))}`;
+        }
+
+        return undefined;
+    }
+
     /**
      * Returns which Blockly block type to use for an argument reporter based
      * on the specified TypeScript type.
@@ -246,6 +263,10 @@ namespace pxt.blocks {
 
         if (varType === "boolean" || varType === "number" || varType === "string") {
             reporterType = `argument_reporter_${varType}`;
+        }
+
+        if (/^(?:Array<(?:.+)>)|(?:(?:.+)\[\])$/.test(varType)) {
+            reporterType = "argument_reporter_array";
         }
 
         return reporterType;

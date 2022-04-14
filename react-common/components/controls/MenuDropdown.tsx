@@ -15,6 +15,7 @@ export interface MenuDropdownProps extends ControlProps {
     label?: string | JSX.Element;
     title: string;
     icon?: string;
+    tabIndex?: number;
 }
 
 export const MenuDropdown = (props: MenuDropdownProps) => {
@@ -27,7 +28,8 @@ export const MenuDropdown = (props: MenuDropdownProps) => {
         items,
         label,
         title,
-        icon
+        icon,
+        tabIndex
     } = props;
 
     const [ expanded, setExpanded ] = React.useState(false);
@@ -66,6 +68,7 @@ export const MenuDropdown = (props: MenuDropdownProps) => {
         <Button
             id={id}
             label={label}
+            tabIndex={tabIndex}
             buttonRef={handleButtonRef}
             title={title}
             leftIcon={icon}

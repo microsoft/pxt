@@ -1,3 +1,5 @@
+
+
 .common-modal-container {
     position: fixed;
     display: flex;
@@ -7,12 +9,12 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: var(--modal-overlay-color);
+    background-color: @modalOverlayColor;
     z-index: @modalDimmerZIndex;
 }
 
 .common-modal-container.fullscreen {
-    z-index: var(--fullscreen-modal-zindex)
+    z-index: @modalFullscreenZIndex;
 }
 
 .common-modal {
@@ -44,7 +46,7 @@
 }
 
 .common-modal-body {
-    background-color: @modalBodyBackgroundColor;
+    background-color: @pageBackground;
     min-height: 4rem;
     padding: 1.25rem 1.5rem;
 }
@@ -77,7 +79,7 @@
 }
 
 .fullscreen > .common-modal > .common-modal-header {
-    background-color: var(--primary-color);
+    background-color: @primaryColor;
     color: white;
     margin-bottom: 0;
 
@@ -99,7 +101,7 @@
 
 .fullscreen > .common-modal > .common-modal-body {
     flex-grow: 1;
-    background-color: var(--body-background-color);
+    background-color: @homeScreenBackground;
     padding: 1rem;
     max-height: unset;
 }

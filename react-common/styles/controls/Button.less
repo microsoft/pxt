@@ -32,6 +32,10 @@
     margin-left: 0.5rem;
 }
 
+.common-button-flex {
+    white-space: nowrap;
+}
+
 /****************************************************
  *                  Color Variants                   *
  ****************************************************/
@@ -186,6 +190,27 @@
 .common-button.menu-button.inverted:hover  {
     background: @buttonMenuBackgroundColorInverted;
     color: @buttonMenuTextColorInverted;
+}
+
+/****************************************************
+ *                   Link Buttons                   *
+ ****************************************************/
+
+.common-button.link-button {
+    background: none;
+    border: none;
+    padding: 0;
+    color: @buttonLinkColor;
+}
+
+.common-button.link-button:hover {
+    text-decoration: underline;
+}
+
+.common-button.link-button:focus::after {
+    outline: none;
+    border: none;
+    text-decoration: underline;
 }
 
 /****************************************************

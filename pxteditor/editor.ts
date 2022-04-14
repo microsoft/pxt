@@ -274,6 +274,7 @@ namespace pxt.editor {
 
         anonymousPublishAsync(screenshotUri?: string): Promise<string>;
         anonymousPublishHeaderByIdAsync(headerId: string): Promise<Cloud.JsonScript>;
+        persistentPublishAsync(screenshotUri?: string): Promise<string>;
 
         startStopSimulator(opts?: SimulatorStartOptions): void;
         stopSimulator(unload?: boolean, opts?: SimulatorStartOptions): void;

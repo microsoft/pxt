@@ -1,9 +1,7 @@
 import * as React from "react";
 import { classList, ControlProps, fireClickOnEnter } from "../util";
 
-export interface ButtonProps extends ControlProps {
-    onClick: () => void;
-    onKeydown?: (e: React.KeyboardEvent) => void;
+export interface ButtonViewProps extends ControlProps {
     buttonRef?: (ref: HTMLButtonElement) => void;
     title: string;
     label?: string | JSX.Element;
@@ -20,6 +18,13 @@ export interface ButtonProps extends ControlProps {
     ariaHasPopup?: string;
     ariaPosInSet?: number;
     ariaSetSize?: number;
+    ariaSelected?: boolean;
+}
+
+
+export interface ButtonProps extends ButtonViewProps {
+    onClick: () => void;
+    onKeydown?: (e: React.KeyboardEvent) => void;
 }
 
 export const Button = (props: ButtonProps) => {
@@ -34,6 +39,7 @@ export const Button = (props: ButtonProps) => {
         ariaHasPopup,
         ariaPosInSet,
         ariaSetSize,
+        ariaSelected,
         role,
         onClick,
         onKeydown,
@@ -54,9 +60,11 @@ export const Button = (props: ButtonProps) => {
         disabled && "disabled"
     );
 
-    let clickHandler = () => {
+    let clickHandler = (ev: React.MouseEvent) => {
         if (onClick) onClick();
         if (href) window.open(href, target || "_blank", "noopener,noreferrer")
+        ev.stopPropagation();
+        ev.preventDefault();
     }
 
     return (
@@ -76,7 +84,8 @@ export const Button = (props: ButtonProps) => {
             aria-haspopup={ariaHasPopup as any}
             aria-posinset={ariaPosInSet}
             aria-setsize={ariaSetSize}
-            aria-describedby={ariaDescribedBy}>
+            aria-describedby={ariaDescribedBy}
+            aria-selected={ariaSelected}>
                 <span className="common-button-flex">
                     {leftIcon && <i className={leftIcon} aria-hidden={true}/>}
                     <span className="common-button-label">

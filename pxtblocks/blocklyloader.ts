@@ -539,18 +539,8 @@ namespace pxt.blocks {
             || pxt.toolbox.getNamespaceColor(ns)
             || 255;
 
-        if (fn.attributes.help) {
-            const helpUrl = fn.attributes.help.replace(/^\//, '');
-            if (/^github:/.test(helpUrl)) {
-                block.setHelpUrl(helpUrl);
-            } else if (helpUrl !== "none") {
-                block.setHelpUrl("/reference/" + helpUrl);
-            }
-        } else if (fn.pkg && !pxt.appTarget.bundledpkgs[fn.pkg]) {// added package
-            let anchor = fn.qName.toLowerCase().split('.');
-            if (anchor[0] == fn.pkg) anchor.shift();
-            block.setHelpUrl(`/pkg/${fn.pkg}#${encodeURIComponent(anchor.join('-'))}`)
-        }
+        const helpUrl = pxt.blocks.getHelpUrl(fn);
+        if (helpUrl) block.setHelpUrl(helpUrl)
 
         block.setColour(color);
         let blockShape = Blockly.OUTPUT_SHAPE_ROUND;
@@ -2108,28 +2098,10 @@ namespace pxt.blocks {
                 }
                 xmlList[xmlList.length - 1].setAttribute('gap', '24');
 
-                if (Blockly.Blocks['variables_set']) {
-                    let gap = Blockly.Blocks['variables_change'] ? 8 : 24;
-                    let blockText = '<xml>' +
-                        '<block type="variables_set" gap="' + gap + '">' +
-                        Blockly.Variables.generateVariableFieldXmlString(mostRecentVariable) +
-                        '</block>' +
-                        '</xml>';
-                    let block = Blockly.Xml.textToDom(blockText).firstChild as HTMLElement;
-                    {
-                        let value = goog.dom.createDom('value');
-                        value.setAttribute('name', 'VALUE');
-                        let shadow = goog.dom.createDom('shadow');
-                        shadow.setAttribute("type", "math_number");
-                        value.appendChild(shadow);
-                        let field = goog.dom.createDom('field');
-                        field.setAttribute('name', 'NUM');
-                        field.appendChild(document.createTextNode("0"));
-                        shadow.appendChild(field);
-                        block.appendChild(value);
-                    }
-                    xmlList.push(block);
+                if (Blockly.Blocks['variables_change'] || Blockly.Blocks['variables_set']) {
+                    xmlList.unshift(createFlyoutGroupLabel("Your Variables"));
                 }
+
                 if (Blockly.Blocks['variables_change']) {
                     let gap = Blockly.Blocks['variables_get'] ? 20 : 8;
                     let blockText = '<xml>' +
@@ -2150,7 +2122,29 @@ namespace pxt.blocks {
                         shadow.appendChild(field);
                         block.appendChild(value);
                     }
-                    xmlList.push(block);
+                    xmlList.unshift(block);
+                }
+                if (Blockly.Blocks['variables_set']) {
+                    let gap = Blockly.Blocks['variables_change'] ? 8 : 24;
+                    let blockText = '<xml>' +
+                        '<block type="variables_set" gap="' + gap + '">' +
+                        Blockly.Variables.generateVariableFieldXmlString(mostRecentVariable) +
+                        '</block>' +
+                        '</xml>';
+                    let block = Blockly.Xml.textToDom(blockText).firstChild as HTMLElement;
+                    {
+                        let value = goog.dom.createDom('value');
+                        value.setAttribute('name', 'VALUE');
+                        let shadow = goog.dom.createDom('shadow');
+                        shadow.setAttribute("type", "math_number");
+                        value.appendChild(shadow);
+                        let field = goog.dom.createDom('field');
+                        field.setAttribute('name', 'NUM');
+                        field.appendChild(document.createTextNode("0"));
+                        shadow.appendChild(field);
+                        block.appendChild(value);
+                    }
+                    xmlList.unshift(block);
                 }
             }
             return xmlList;
@@ -2588,6 +2582,8 @@ namespace pxt.blocks {
 
             if (elems.length > 1) {
                 let returnBlock = mkReturnStatementBlock();
+                // Add divider
+                elems.splice(1, 0, createFlyoutGroupLabel("Your Functions"));
                 // Insert after the "make a function" button
                 elems.splice(1, 0, returnBlock as HTMLElement);
             }
@@ -3004,9 +3000,11 @@ namespace pxt.blocks {
     }
 
     export function getFixedInstanceDropdownValues(apis: pxtc.ApisInfo, qName: string) {
-        return pxt.Util.values(apis.byQName).filter(sym => sym.kind === pxtc.SymbolKind.Variable
+        const symbols = pxt.Util.values(apis.byQName).filter(sym => sym.kind === pxtc.SymbolKind.Variable
             && sym.attributes.fixedInstance
-            && isSubtype(apis, sym.retType, qName));
+            && isSubtype(apis, sym.retType, qName))
+            .sort((l,r) => (r.attributes.weight || 50) - (l.attributes.weight || 50))
+        return symbols
     }
 
     export function generateIcons(instanceSymbols: pxtc.SymbolInfo[]) {

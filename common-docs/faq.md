@@ -58,7 +58,7 @@ When you download the program for your project, the name you gave the project be
 
 ## I just added / approved a new translation in Crowdin, when will it show up?
 
-[Translations](https://makecode.com/translate) are managed by the [Crowdin](https://crowdin.com/project/kindscript) site. There's a scheduled process which checks for new translations in Crowdin and brings them down to the website serving a MakeCode editor. The process usually takes 10 - 30 minutes from when a new translation is approved to when it will appear in an online editor.
+[Translations](https://makecode.com/translate) are managed by the [Crowdin](https://crowdin.com/project/makecode) site. There's a scheduled process which checks for new translations in Crowdin and brings them down to the website serving a MakeCode editor. The process usually takes 10 - 30 minutes from when a new translation is approved to when it will appear in an online editor.
 
 ## Where is the "Add Package" button?
 

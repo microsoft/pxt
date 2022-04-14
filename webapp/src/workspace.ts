@@ -314,12 +314,7 @@ export interface ScriptMeta {
     blocksHeight?: number;
 }
 
-// https://github.com/Microsoft/pxt-backend/blob/master/docs/sharing.md#anonymous-publishing
-export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptMeta, screenshotUri?: string) {
-    checkHeaderSession(h);
-
-    const saveId = {}
-    h.saveId = saveId
+function getScriptRequest(h: Header, text: ScriptText, meta: ScriptMeta, screenshotUri?: string) {
     let thumbnailBuffer: string;
     let thumbnailMimeType: string;
     if (screenshotUri) {
@@ -329,14 +324,16 @@ export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptM
             thumbnailMimeType = m[1];
         }
     }
-    const stext = JSON.stringify(text, null, 2) + "\n"
-    const scrReq = {
+    return {
+        id: h.id,
+        shareId: h.pubPermalink,
         name: h.name,
         target: h.target,
         targetVersion: h.targetVersion,
         description: meta.description || lf("Made with ❤️ in {0}.", pxt.appTarget.title || pxt.appTarget.name),
         editor: h.editor,
-        text: text,
+        header: JSON.stringify(cloud.excludeLocalOnlyMetadataFields(h)),
+        text: JSON.stringify(text),
         meta: {
             versions: pxt.appTarget.versions,
             blocksHeight: meta.blocksHeight,
@@ -345,9 +342,20 @@ export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptM
         thumbnailBuffer,
         thumbnailMimeType
     }
-    pxt.debug(`publishing script; ${stext.length} bytes`)
+}
+
+// https://github.com/Microsoft/pxt-backend/blob/master/docs/sharing.md#anonymous-publishing
+export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptMeta, screenshotUri?: string) {
+    checkHeaderSession(h);
+
+    const saveId = {}
+    h.saveId = saveId
+    const scrReq = getScriptRequest(h, text, meta, screenshotUri)
+    pxt.debug(`publishing script; ${scrReq.text.length} bytes`)
     return Cloud.privatePostAsync("scripts", scrReq, /* forceLiveEndpoint */ true)
         .then((inf: Cloud.JsonScript) => {
+            if (!h.pubVersions) h.pubVersions = [];
+            h.pubVersions.push({ id: inf.id, type: "snapshot" });
             if (inf.shortid) inf.id = inf.shortid;
             h.pubId = inf.shortid
             h.pubCurrent = h.saveId === saveId
@@ -355,6 +363,27 @@ export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptM
             pxt.debug(`published; id /${h.pubId}`)
             return saveAsync(h)
                 .then(() => inf)
+        })
+}
+
+export function persistentPublishAsync(h: Header, text: ScriptText, meta: ScriptMeta, screenshotUri?: string) {
+    checkHeaderSession(h);
+
+    const saveId = {}
+    h.saveId = saveId
+    const scrReq = getScriptRequest(h, text, meta, screenshotUri)
+    pxt.debug(`publishing script; ${scrReq.text.length} bytes`)
+    return cloud.shareAsync(h.id, scrReq)
+        .then((resp: { shareID: string, scr: cloud.SharedCloudProject }) => {
+            const { shareID, scr: script } = resp;
+            if (!h.pubVersions) h.pubVersions = [];
+            h.pubVersions.push({ id: script.id, type: "permalink" });
+            h.pubId = shareID
+            h.pubCurrent = h.saveId === saveId
+            h.pubPermalink = shareID;
+            h.meta = script.meta;
+            pxt.debug(`published; id /${h.pubId}`)
+            return saveAsync(h).then(() => h)
         })
 }
 
@@ -1151,6 +1180,9 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
             U.userError(lf("Invalid pxt.json file."));
         pxt.debug(`github: reconstructing pxt.json`)
         cfg = pxt.diff.reconstructConfig(parsed, files, commit, pxt.appTarget.blocksprj || pxt.appTarget.tsprj);
+        if (parsed.fileName && parsed.project)
+            // add root folder as reference when creating nested project
+            cfg.dependencies[parsed.project] = `github:${parsed.slug}`
         files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
     }
     // patch the github references back to local workspaces
@@ -1175,7 +1207,14 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
         await downloadAsync(fn)
 
     if (!cfg.name) {
-        cfg.name = (parsed.fileName || parsed.project || parsed.fullName).replace(/[^\w\-]/g, "");
+        cfg.name = parsed.fileName && parsed.project
+            // when creating nested project, mangle name
+            ? `${parsed.project}-${parsed.fileName}`
+            : (parsed.project || parsed.fullName)
+        cfg.name = cfg.name.replace(/pxt-/ig, '')
+            .replace(/\//g, '-')
+            .replace(/-+/, "-")
+            .replace(/[^\w\-]/g, "")
         if (!justJSON)
             files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
     }
@@ -1449,7 +1488,8 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
 }
 
 export async function importGithubAsync(id: string): Promise<Header> {
-    const repoid = pxt.github.normalizeRepoId(id).replace(/^github:/, "")
+    // if tag is not specified, asssume master
+    const repoid = pxt.github.normalizeRepoId(id, "master").replace(/^github:/, "")
     const parsed = pxt.github.parseRepoId(repoid)
 
     let sha = ""

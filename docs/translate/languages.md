@@ -1,6 +1,6 @@
 # Languages
 
-On the Crowdin [home page](https://crowdin.com/project/kindscript) are the all of the languages enabled for the MakeCode project. You go here first to choose the language or languages you wish to participate in for translation.
+On the Crowdin [home page](https://crowdin.com/project/makecode) are the all of the languages enabled for the MakeCode project. You go here first to choose the language or languages you wish to participate in for translation.
 
 ![Enabled languages](/static/translation/languages.jpg)
 
@@ -16,21 +16,21 @@ Under each language there are top-level folders for all of the editors (includin
 
 #### Active targets
 
-- [x] [adafruit](https://crowdin.com/project/kindscript/en#/adafruit)
-- [x] [arcade](https://crowdin.com/project/kindscript/en#/arcade)
-- [x] [brainpad](https://crowdin.com/project/kindscript/en#/brainpad)
-- [x] [core](https://crowdin.com/project/kindscript/en#/core)
-- [x] [chibitronics](https://crowdin.com/project/kindscript/en#/chibitronics)
-- [x] [ev3](https://crowdin.com/project/kindscript/en#/ev3)
-- [x] [maker](https://crowdin.com/project/kindscript/en#/maker)
-- [x] [microbit](https://crowdin.com/project/kindscript/en#/microbit)
-- [x] [minecraft](https://crowdin.com/project/kindscript/en#/minecraft)
-- [x] [stm32iotnode](https://crowdin.com/project/kindscript/en#/stm32iotnode)
+- [x] [adafruit](https://crowdin.com/project/makecode/en#/adafruit)
+- [x] [arcade](https://crowdin.com/project/makecode/en#/arcade)
+- [x] [brainpad](https://crowdin.com/project/makecode/en#/brainpad)
+- [x] [core](https://crowdin.com/project/makecode/en#/core)
+- [x] [chibitronics](https://crowdin.com/project/makecode/en#/chibitronics)
+- [x] [ev3](https://crowdin.com/project/makecode/en#/ev3)
+- [x] [maker](https://crowdin.com/project/makecode/en#/maker)
+- [x] [microbit](https://crowdin.com/project/makecode/en#/microbit)
+- [x] [minecraft](https://crowdin.com/project/makecode/en#/minecraft)
+- [x] [stm32iotnode](https://crowdin.com/project/makecode/en#/stm32iotnode)
 
 #### Inactive targets
 
-- [ ] [v0](https://crowdin.com/project/kindscript/en#/v0)
-- [ ] [calliope](https://crowdin.com/project/kindscript/en#/calliope)
-- [ ] [calliopemini](https://crowdin.com/project/kindscript/en#/calliopemini)
-- [ ] [grovezero](https://crowdin.com/project/kindscript/en#/grovezero)
+- [ ] [v0](https://crowdin.com/project/makecode/en#/v0)
+- [ ] [calliope](https://crowdin.com/project/makecode/en#/calliope)
+- [ ] [calliopemini](https://crowdin.com/project/makecode/en#/calliopemini)
+- [ ] [grovezero](https://crowdin.com/project/makecode/en#/grovezero)
 

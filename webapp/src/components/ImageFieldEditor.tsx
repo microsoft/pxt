@@ -8,10 +8,15 @@ import { obtainShortcutLock, releaseShortcutLock } from "./ImageEditor/keyboardS
 import { GalleryTile, setTelemetryFunction } from './ImageEditor/store/imageReducer';
 import { FilterPanel } from './FilterPanel';
 import { fireClickOnEnter } from "../util";
+import { EditorToggle, EditorToggleItem, BasicEditorToggleItem } from "../../../react-common/components/controls/EditorToggle";
 
 export interface ImageFieldEditorProps {
     singleFrame: boolean;
     doneButtonCallback?: () => void;
+}
+
+interface ToggleOption extends BasicEditorToggleItem {
+    view: string;
 }
 
 export interface ImageFieldEditorState {
@@ -90,19 +95,25 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
 
         const toggleOptions = [{
             label: lf("Editor"),
-            view: "editor",
-            icon: "paint brush",
-            onClick: this.showEditor
+            title: lf("Editor"),
+            focusable: true,
+            icon: "fas fa-paint-brush",
+            onClick: this.showEditor,
+            view: "editor"
         }, {
             label: lf("Gallery"),
-            view: "gallery",
-            icon: "picture",
-            onClick: this.showGallery
+            title: lf("Gallery"),
+            focusable: true,
+            icon: "fas fa-image",
+            onClick: this.showGallery,
+            view: "gallery"
         }, {
             label: lf("My Assets"),
-            view: "my-assets",
-            icon: "folder",
-            onClick: this.showMyAssets
+            title: lf("My Assets"),
+            focusable: true,
+            icon: "fas fa-folder",
+            onClick: this.showMyAssets,
+            view: "my-assets"
         }];
 
         if (!showGallery && !showMyAssets) {
@@ -119,7 +130,12 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
             {showHeader && <div className="gallery-editor-header">
                 <div className="image-editor-header-left" />
                 <div className="image-editor-header-center">
-                    <ImageEditorToggle options={toggleOptions} view={currentView} />
+                    <EditorToggle
+                        id="image-editor-toggle"
+                        className="slim tablet-compact"
+                        items={toggleOptions}
+                        selected={toggleOptions.findIndex(i => i.view === currentView)}
+                    />
                 </div>
                 <div className="image-editor-header-right">
                     <div className={`gallery-filter-button ${this.state.currentView === "gallery" ? '' : "hidden"}`} role="button" onClick={this.toggleFilter} onKeyDown={fireClickOnEnter}>

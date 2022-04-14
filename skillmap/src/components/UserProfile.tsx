@@ -134,7 +134,7 @@ export class UserProfileImpl extends React.Component<UserProfileProps, UserProfi
                 { lf("What do you think about the Sign In & Cloud Save feature? Is there something you'd like to change? Did you encounter issues? Please let us know!") }
             </div>
             <div className="row-span-two">
-                <a className="ui"  title={lf("Provide feedback in a from")} href="https://aka.ms/AAcnpaj" target="_blank">
+                <a className="ui"  title={lf("Provide feedback in a form")} href="https://aka.ms/AAcnpaj" target="_blank">
                     <i className="fas fa-external-link-alt"></i>
                     { lf("Take the Survey") }
                 </a>

@@ -19,9 +19,10 @@ export interface InputProps extends ControlProps {
     onChange?: (newValue: string) => void;
     onEnterKey?: (value: string) => void;
     onIconClick?: (value: string) => void;
+    onBlur?: (value: string) => void;
 }
 
-export function Input(props: InputProps) {
+export const Input = (props: InputProps) => {
     const {
         id,
         className,
@@ -41,10 +42,11 @@ export function Input(props: InputProps) {
         selectOnClick,
         onChange,
         onEnterKey,
-        onIconClick
+        onIconClick,
+        onBlur
     } = props;
 
-    const [value, setValue] = React.useState(initialValue || "");
+    const [value, setValue] = React.useState(undefined);
 
     const clickHandler = (evt: React.MouseEvent<any>) => {
         if (selectOnClick) {
@@ -76,9 +78,16 @@ export function Input(props: InputProps) {
         if (onIconClick) onIconClick(value);
     }
 
+    const blurHandler = () => {
+        if (onBlur) {
+            onBlur(value);
+        }
+        setValue(undefined);
+    }
+
     return (
         <div className={classList("common-input-wrapper", disabled && "disabled", className)}>
-            {label && <label className="common-input-label">
+            {label && <label className="common-input-label" htmlFor={id}>
                 {label}
             </label>}
             <div className="common-input-group">
@@ -86,17 +95,18 @@ export function Input(props: InputProps) {
                     id={id}
                     className={classList("common-input", icon && "has-icon")}
                     title={title}
-                    role={role || "button"}
-                    tabIndex={disabled ? 0 : -1}
+                    role={role || "textbox"}
+                    tabIndex={disabled ? -1 : 0}
                     aria-label={ariaLabel}
                     aria-hidden={ariaHidden}
                     type={type || "text"}
                     placeholder={placeholder}
-                    value={value || ''}
+                    value={value || initialValue || ""}
                     readOnly={!!readOnly}
                     onClick={clickHandler}
                     onChange={changeHandler}
                     onKeyDown={enterKeyHandler}
+                    onBlur={blurHandler}
                     autoComplete={autoComplete ? "" : "off"}
                     autoCorrect={autoComplete ? "" : "off"}
                     autoCapitalize={autoComplete ? "" : "off"}

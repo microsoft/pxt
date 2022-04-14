@@ -49,7 +49,7 @@ const webapp = () => compileTsProject("webapp", "built", true);
 const reactCommon = () => compileTsProject("react-common", "built/react-common", true);
 
 // We output a dummy package.json in the built react-common directory to prevent
-// npm from complaining when we npm install in the skillmap
+// npm from complaining when we npm install in the skillmap and authcode
 const reactCommonPackageJson = () => {
     fs.writeFileSync(path.resolve("built/react-common/components/package.json"), `
     {
@@ -248,6 +248,10 @@ function updatestrings() {
 
 function updateSkillMapStrings() {
     return buildStrings("built/skillmap-strings.json", ["skillmap/src"], true);
+}
+
+function updateAuthcodeStrings() {
+    return buildStrings("built/authcode-strings.json", ["authcode/src"], true);
 }
 
 // TODO: Copied from Jakefile; should be async
@@ -611,13 +615,48 @@ const runSkillmapTests = () => exec("./node_modules/.bin/mocha ./built/tests/tes
 const testSkillmap = gulp.series(buildSkillmapTests, runSkillmapTests);
 
 /********************************************************
+                      Authcode
+*********************************************************/
+
+const authcodeRoot = "authcode";
+const authcodeOut = "built/web/authcode";
+
+const cleanAuthcode = () => rimraf(authcodeOut);
+
+const npmInstallAuthcode = () => exec(!fs.existsSync(`${authcodeRoot}/node_modules`) ? "npm ci --prefer-offline" : "echo \"Skip install\"", false, { cwd: authcodeRoot });
+const npmBuildAuthcode = () => exec("npm run build", true, { cwd: authcodeRoot });
+
+const buildAuthcode = async () => {
+    try {
+        await npmInstallAuthcode();
+        await npmBuildAuthcode();
+    }
+    finally {
+    }
+}
+
+const copyAuthcodeCss = () => gulp.src(`${authcodeRoot}/build/static/css/*`)
+    .pipe(gulp.dest(`${authcodeOut}/css`));
+
+const copyAuthcodeJs = () => gulp.src(`${authcodeRoot}/build/static/js/*`)
+    .pipe(gulp.dest(`${authcodeOut}/js`));
+
+const copyAuthcodeHtml = () => rimraf("webapp/public/authcode.html")
+    .then(() => gulp.src(`${authcodeRoot}/build/index.html`)
+                    .pipe(replace(/="\/static\//g, `="/blb/authcode/`))
+                    .pipe(concat("authcode.html"))
+                    .pipe(gulp.dest("webapp/public")));
+
+const authcode = gulp.series(cleanAuthcode, buildAuthcode, gulp.series(copyAuthcodeCss, copyAuthcodeJs, copyAuthcodeHtml));
+
+/********************************************************
                  Tests and Linting
 *********************************************************/
 
 const lintWithEslint = () => Promise.all(
     ["cli", "pxtblocks", "pxteditor", "pxtlib", "pxtcompiler",
         "pxtpy", "pxtrunner", "pxtsim", "pxtwinrt", "webapp",
-        "docfiles/pxtweb", "skillmap", "docs/static/streamer"].map(dirname =>
+        "docfiles/pxtweb", "skillmap", "authcode", "docs/static/streamer"].map(dirname =>
             exec(`node node_modules/eslint/bin/eslint.js -c .eslintrc.js --ext .ts,.tsx ./${dirname}/`, true)))
     .then(() => console.log("linted"))
 const lint = lintWithEslint
@@ -696,6 +735,7 @@ function testTask(testFolder, testFile) {
 const buildAll = gulp.series(
     updatestrings,
     updateSkillMapStrings,
+    updateAuthcodeStrings,
     copyTypescriptServices,
     copyBlocklyTypings,
     gulp.parallel(pxtlib, pxtweb),
@@ -709,6 +749,7 @@ const buildAll = gulp.series(
     reactCommonPackageJson,
     gulp.parallel(buildcss, buildSVGIcons),
     skillmap,
+    authcode,
     webapp,
     browserifyWebapp,
     browserifyAssetEditor,
@@ -751,6 +792,8 @@ exports.watchCli = initWatchCli;
 exports.testlanguageservice = testlanguageservice;
 exports.onlinelearning = onlinelearning;
 exports.skillmap = skillmap;
+exports.authcode = authcode;
+exports.icons = buildSVGIcons;
 exports.cli = gulp.series(
     gulp.parallel(pxtlib, pxtweb),
     gulp.parallel(pxtcompiler, pxtsim, backendutils),

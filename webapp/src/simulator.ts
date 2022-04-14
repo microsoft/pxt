@@ -291,7 +291,9 @@ export function run(pkg: pxt.MainPackage, debug: boolean,
     lastCompileResult = res;
     const { mute, highContrast, light, clickTrigger, storedState, autoRun } = options;
     const isIpcRenderer = pxt.BrowserUtils.isIpcRenderer() || undefined;
-    const dependencies = pkg.dependencies()
+    const dependencies: pxt.Map<string> = {}
+    for(const dep of pkg.sortedDeps())
+        dependencies[dep.id] = dep.version()
 
     const opts: pxsim.SimulatorRunOptions = {
         boardDefinition: boardDefinition,

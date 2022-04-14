@@ -363,6 +363,8 @@ export class ProjectView
                 cmds.maybeReconnectAsync(false, true);
             }
         }
+
+        if (this.editor) this.editor.onPageVisibilityChanged(active);
     }
 
     saveSettings() {
@@ -427,7 +429,9 @@ export class ProjectView
         this.saveSettings()
         this.editor.domUpdate();
         simulator.setState(this.state.header ? this.state.header.editor : '', this.state.tutorialOptions && !!this.state.tutorialOptions.tutorial)
-        this.editor.resize();
+        if (!this.state.fullscreen) {
+            this.editor.resize();
+        }
 
         let p = Promise.resolve();
         if (this.editor && this.editor.isReady) {
@@ -2309,10 +2313,10 @@ export class ProjectView
                 .then(img => pxt.BrowserUtils.browserDownloadDataUri(img, pkg.genFileName(".png")))
     }
 
-    pushScreenshotHandler(handler: (msg: pxt.editor.ScreenshotData) => void): void {
+    pushScreenshotHandler = (handler: (msg: pxt.editor.ScreenshotData) => void): void => {
         this.screenshotHandlers.push(handler);
     }
-    popScreenshotHandler(): void {
+    popScreenshotHandler = (): void => {
         this.screenshotHandlers.pop();
     }
 
@@ -2927,10 +2931,12 @@ export class ProjectView
                 let fn = pxt.outputName();
                 if (!resp.outfiles[fn]) {
                     pxt.tickEvent("compile.noemit")
-                    const noHexFileDiagnostic = resp.diagnostics?.find(diag => diag.code === 9043);
+                    const noHexFileDiagnostic = resp.diagnostics.find(diag => diag.code === 9043)
+                        || resp.diagnostics.length == 1 ? resp.diagnostics[0] : undefined;
                     if (noHexFileDiagnostic) {
                         core.warningNotification(noHexFileDiagnostic.messageText as string);
-                    } else {
+                    }
+                    else {
                         core.warningNotification(lf("Compilation failed, please check your code for errors."));
                     }
                     return;
@@ -3671,6 +3677,34 @@ export class ProjectView
         pxt.debug(`publishing script; ${stext.length} bytes`)
         return Cloud.privatePostAsync("scripts", scrReq, /* forceLiveEndpoint */ true)
     }
+
+
+    persistentPublishAsync(screenshotUri?: string): Promise<string> {
+        pxt.tickEvent("publish");
+        this.setState({ publishing: true })
+        const mpkg = pkg.mainPkg
+        const epkg = pkg.getEditorPkg(mpkg)
+        return this.saveProjectNameAsync()
+            .then(() => this.saveFileAsync())
+            .then(() => mpkg.filesToBePublishedAsync(true))
+            .then(files => {
+                if (epkg.header.pubCurrent && !screenshotUri)
+                    return Promise.resolve(epkg.header.pubId)
+                const meta: workspace.ScriptMeta = {
+                    description: mpkg.config.description,
+                };
+                const blocksSize = this.blocksEditor.contentSize();
+                if (blocksSize) {
+                    meta.blocksHeight = blocksSize.height;
+                    meta.blocksWidth = blocksSize.width;
+                }
+                return workspace.persistentPublishAsync(epkg.header, files, meta, screenshotUri)
+                    .then(header => header.pubId)
+            }).finally(() => {
+                this.setState({ publishing: false })
+            })
+    }
+
 
     async saveLocalProjectsToCloudAsync(headerIds: string[]): Promise<pxt.Map<string> | undefined> {
         return cloud.saveLocalProjectsToCloudAsync(headerIds);
@@ -4625,13 +4659,18 @@ function initPacketIO() {
     pxt.packetio.configureEvents(
         () => data.invalidate("packetio:*"),
         (buf, isErr) => {
-            const data = Util.fromUTF8(Util.uint8ArrayToString(buf))
-            //pxt.debug('serial: ' + data)
-            window.postMessage({
-                type: 'serial',
-                id: 'n/a', // TODO
-                data
-            }, "*")
+            try {
+                const data = Util.fromUTF8(Util.uint8ArrayToString(buf))
+                //pxt.debug('serial: ' + data)
+                window.postMessage({
+                    type: 'serial',
+                    id: 'n/a', // TODO
+                    data
+                }, "*")
+            } catch (e) {
+                // data decoding failed, ignore
+                console.debug(`invalid utf8 serial data`, { buf, e })
+            }
         },
         (type, payload) => {
             const messageSimulators = pxt.appTarget.simulator?.messageSimulators;
@@ -4962,7 +5001,8 @@ async function importGithubProject(repoid: string, requireSignin?: boolean) {
     core.showLoading("loadingheader", lf("importing GitHub project..."));
     try {
         // normalize for precise matching
-        repoid = pxt.github.normalizeRepoId(repoid);
+        // if the branch is not specified, assume "master"
+        repoid = pxt.github.normalizeRepoId(repoid, "master");
         // try to find project with same id
         let hd = workspace.getHeaders().find(h => h.githubId &&
             pxt.github.normalizeRepoId(h.githubId) == repoid

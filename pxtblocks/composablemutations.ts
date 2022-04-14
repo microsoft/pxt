@@ -113,12 +113,15 @@ namespace pxt.blocks {
         // by BlocklyLoader. The number makes it an invalid JS identifier
         const buttonAddName = "0_add_button";
         const buttonRemName = "0_rem_button";
+        const buttonAddRemName = "0_add_rem_button";
         const numVisibleAttr = "_expanded";
         const inputInitAttr = "_input_init";
 
         const optionNames = def.parameters.map(p => p.name);
         const totalOptions = def.parameters.length;
         const buttonDelta = toggle ? totalOptions : 1;
+        const variableInlineInputs = info.blocksById[b.type].attributes.inlineInputMode === "variable";
+        const compileHiddenArguments = info.blocksById[b.type].attributes.compileHiddenArguments;
 
         const state = new MutationState(b as MutatingBlock);
         state.setEventsEnabled(false);
@@ -128,7 +131,8 @@ namespace pxt.blocks {
 
         Blockly.Extensions.apply('inline-svgs', b, false);
 
-        addPlusButton();
+        let updatingInputs = false;
+        let firstRender = true;
 
         appendMutation(b, {
             mutationToDom: (el: Element) => {
@@ -144,8 +148,8 @@ namespace pxt.blocks {
                 state.setEventsEnabled(false);
                 if (saved.hasAttribute(inputInitAttr) && saved.getAttribute(inputInitAttr) == "true" && !state.getBoolean(inputInitAttr)) {
                     state.setValue(inputInitAttr, true)
-                    initOptionalInputs();
                 }
+                initOptionalInputs();
 
                 if (saved.hasAttribute(numVisibleAttr)) {
                     const val = parseInt(saved.getAttribute(numVisibleAttr));
@@ -157,6 +161,7 @@ namespace pxt.blocks {
                             }
                             else {
                                 state.setValue(numVisibleAttr, addDelta(delta));
+                                updateButtons();
                             }
                         }
                         else {
@@ -168,14 +173,32 @@ namespace pxt.blocks {
             }
         });
 
-        // Blockly only lets you hide an input once it is rendered, so we can't
-        // hide the inputs in init() or domToMutation(). This will get executed after
-        // the block is rendered
-        setTimeout(() => {
-            if ((b as Blockly.BlockSvg).rendered && !(b.workspace as Blockly.WorkspaceSvg).isDragging()) {
-                updateShape(0, undefined, true);
+        initOptionalInputs();
+        if (compileHiddenArguments) {
+            // Make sure all inputs have shadow blocks attached
+            let optIndex = 0
+            for (let i = 0; i < b.inputList.length; i++) {
+                const input = b.inputList[i];
+                if (Util.startsWith(input.name, optionalInputWithFieldPrefix) || optionNames.indexOf(input.name) !== -1) {
+                    if (input.connection && !(input.connection as any).isConnected() && !b.isInsertionMarker()) {
+                        const param = comp.definitionNameToParam[def.parameters[optIndex].name];
+                        attachShadowBlock(input, param);
+                    }
+                    ++optIndex;
+                }
             }
-        }, 1);
+        }
+
+        (b as Blockly.BlockSvg).render = (opt_bubble) => {
+            if (updatingInputs) return;
+            if (firstRender) {
+                firstRender = false;
+                updatingInputs = true;
+                updateShape(0, undefined, true);
+                updatingInputs = false;
+            }
+            Blockly.BlockSvg.prototype.render.call(b, opt_bubble);
+        }
 
         // Set skipRender to true if the block is still initializing. Otherwise
         // the inputs will render before their shadow blocks are created and
@@ -208,29 +231,14 @@ namespace pxt.blocks {
                     setInputVisible(input, visible);
                     if (visible && input.connection && !(input.connection as any).isConnected() && !b.isInsertionMarker()) {
                         const param = comp.definitionNameToParam[def.parameters[optIndex].name];
-                        let shadow = createShadowValue(info, param);
-
-                        if (shadow.tagName.toLowerCase() === "value") {
-                            // Unwrap the block
-                            shadow = shadow.firstElementChild;
-                        }
-
-                        Blockly.Events.disable();
-
-                        try {
-                            const nb = Blockly.Xml.domToBlock(shadow, b.workspace);
-                            if (nb) {
-                                input.connection.connect(nb.outputConnection);
-                            }
-                        } catch (e) { }
-
-                        Blockly.Events.enable();
+                        attachShadowBlock(input, param);
                     }
                     ++optIndex;
                 }
             }
 
             updateButtons();
+            if (variableInlineInputs) b.setInputsInline(visibleOptions < 4);
             if (!skipRender) (b as Blockly.BlockSvg).render();
         }
 
@@ -240,33 +248,30 @@ namespace pxt.blocks {
         }
 
         function updateButtons() {
+            if (updatingInputs) return;
             const visibleOptions = state.getNumber(numVisibleAttr);
             const showPlus = visibleOptions !== totalOptions;
             const showMinus = visibleOptions !== 0;
-            const hasMinus = !!b.getInput(buttonRemName);
-            const hasPlus = !!b.getInput(buttonAddName);
 
-            if (!showPlus) {
-                b.removeInput(buttonAddName, true);
+            if (b.inputList.some(i => i.name === buttonAddName)) b.removeInput(buttonAddName, true);
+            if (b.inputList.some(i => i.name === buttonRemName)) b.removeInput(buttonRemName, true);
+            if (b.inputList.some(i => i.name === buttonAddRemName)) b.removeInput(buttonAddRemName, true);
+
+            if (showPlus && showMinus) {
+                addPlusAndMinusButtons();
             }
-
-            if (!showMinus) {
-                b.removeInput(buttonRemName, true);
+            else if (showPlus) {
+                addPlusButton();
             }
-
-            if (showMinus && !hasMinus) {
+            else if (showMinus) {
                 addMinusButton();
             }
+        }
 
-            if (showPlus) {
-                // make sure plus button is last in line.
-                if (hasPlus && b.inputList.findIndex(el => el.name === buttonAddName) !== b.inputList.length - 1) {
-                    b.removeInput(buttonAddName, true);
-                    addPlusButton();
-                } else if (!hasPlus) {
-                    addPlusButton();
-                }
-            }
+        function addPlusAndMinusButtons() {
+            b.appendDummyInput(buttonAddRemName)
+                .appendField(new Blockly.FieldImage((b as any).REMOVE_IMAGE_DATAURI, 24, 24, lf("Hide optional arguments"), () => updateShape(-1 * buttonDelta), false))
+                .appendField(new Blockly.FieldImage((b as any).ADD_IMAGE_DATAURI, 24, 24, lf("Reveal optional arguments"), () => updateShape(buttonDelta), false))
         }
 
         function addPlusButton() {
@@ -289,12 +294,27 @@ namespace pxt.blocks {
 
         function setInputVisible(input: Blockly.Input, visible: boolean) {
             // If the block isn't rendered, Blockly will crash
-            if ((b as Blockly.BlockSvg).rendered) {
-                let renderList = input.setVisible(visible);
-                renderList.forEach((block: Blockly.BlockSvg) => {
-                    block.render();
-                });
+            input.setVisible(visible);
+        }
+
+        function attachShadowBlock(input: Blockly.Input, param: BlockParameter) {
+            let shadow = createShadowValue(info, param);
+
+            if (shadow.tagName.toLowerCase() === "value") {
+                // Unwrap the block
+                shadow = shadow.firstElementChild;
             }
+
+            Blockly.Events.disable();
+
+            try {
+                const nb = Blockly.Xml.domToBlock(shadow, b.workspace);
+                if (nb) {
+                    input.connection.connect(nb.outputConnection);
+                }
+            } catch (e) { }
+
+            Blockly.Events.enable();
         }
     }
 
