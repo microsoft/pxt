@@ -40,6 +40,8 @@ declare namespace pxt {
         bannedRepos?: string[];
         allowUnapproved?: boolean;
         preferredRepos?: string[]; // list of company/project(#tag) of packages to show by default in search
+        preferredRepoLib?: RepoData[];
+        approvedRepoLib?: RepoData[];
         // format:
         // "acme-corp/pxt-widget": "min:v0.1.2" - auto-upgrade to that version
         // "acme-corp/pxt-widget": "dv:foo,bar" - add "disablesVariant": ["foo", "bar"] to pxt.json
@@ -49,6 +51,11 @@ declare namespace pxt {
         approvedEditorExtensionUrls?: string[];
         extensionsToIgnore?: string[]; // List of extensions to ignore when allowing for deletion
         categories?: ExtensionCategory[];
+    }
+
+    interface RepoData {
+        slug: string;
+        tags: string[]
     }
 
     interface ExtensionCategory {

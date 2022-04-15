@@ -40,9 +40,11 @@ export function ExtensionsBrowser(props: ExtensionsProps) {
     const [lastVisibleState, setLastVisibleState] = useState(props.isVisible)
     const [deletionCandidate, setDeletionCandidate] = useState(undefined)
     const [preferredExts, setPreferredExts] = useState([])
+    const [extensionTags, setExtensionTags] = useState(new Map<string, pxt.RepoData[]>())
 
     if (lastVisibleState != props.isVisible) {
         updateInstalledExts();
+        updateExtensionTags();
         setLastVisibleState(props.isVisible)
         updatePreferredExts();
         if (!props.isVisible) {
@@ -60,7 +62,7 @@ export function ExtensionsBrowser(props: ExtensionsProps) {
     useEffect(() => {
         if (searchFor && searchFor != "") {
             if (searchFor.indexOf("/") >= 0) {
-                fetchAThingAsync();
+                searchForGithubAsync();
             } else {
                 workerOpAsync("extensionSearch", {
                     search: {
@@ -80,7 +82,7 @@ export function ExtensionsBrowser(props: ExtensionsProps) {
     /**
      * Github search
      */
-    async function fetchAThingAsync() {
+    async function searchForGithubAsync() {
         setExtensionsToShow([emptyCard, emptyCard, emptyCard, emptyCard])
         const exts = await fetchGithubDataAsync([searchFor])
         const parsedExt = exts.map(repo => parseGithubRepo(repo))
@@ -139,6 +141,25 @@ export function ExtensionsBrowser(props: ExtensionsProps) {
         finally {
             core.hideLoading("installingextension")
         }
+    }
+
+
+    function updateExtensionTags() {
+        if (extensionTags.size > 0)
+            return
+        let trgConfigFetch = data.getDataWithStatus("target-config:");
+        let trgConfig = trgConfigFetch.data as pxt.TargetConfig;
+        const allRepos = [...trgConfig.packages.preferredRepoLib, ...trgConfig.packages.approvedRepoLib]
+        const newMap = extensionTags
+        allRepos.forEach(repo => {
+            repo.tags.forEach(tag => {
+                if (!newMap.has(tag)) {
+                    newMap.set(tag, [])
+                }
+                newMap.set(tag, [...newMap.get(tag), repo])
+            })
+        })
+        setExtensionTags(newMap)
     }
 
     async function addGithubPackage(scr: ExtensionMeta) {
@@ -225,13 +246,7 @@ export function ExtensionsBrowser(props: ExtensionsProps) {
 
 
     function getCategoryNames(): string[] {
-        let trgConfigFetch = data.getDataWithStatus("target-config:");
-        let trgConfig = trgConfigFetch.data as pxt.TargetConfig;
-
-        if (trgConfig) {
-            return trgConfig.packages.categories.map(c => c.name)
-        }
-        return [];
+        return Array.from(extensionTags.keys())
     }
 
     function handleInstalledCardClick(src: ExtensionMeta) {
@@ -248,20 +263,15 @@ export function ExtensionsBrowser(props: ExtensionsProps) {
         setSelectedTag(category)
         setSearchFor("")
 
-        let trgConfigFetch = data.getDataWithStatus("target-config:");
-        let trgConfig = trgConfigFetch.data as pxt.TargetConfig;
-
-        const categoryExtensions = trgConfig.packages.categories.find(c => {
-            return c.name == category
-        })
+        const categoryExtensions = extensionTags.get(category)
 
         const toBeFetched: string[] = []
         const extensionsWeHave: ExtensionMeta[] = []
 
-        categoryExtensions.extensions.forEach(e => {
-            const fetched = getExtensionFromFetched(e);
+        categoryExtensions.forEach(e => {
+            const fetched = getExtensionFromFetched(e.slug);
             if (!fetched) {
-                toBeFetched.push(e)
+                toBeFetched.push(e.slug)
             } else {
                 extensionsWeHave.push(fetched)
             }
@@ -315,12 +325,12 @@ export function ExtensionsBrowser(props: ExtensionsProps) {
 
         const toBeFetched: string[] = [];
         if (trgConfig) {
-            trgConfig.packages.preferredRepos.forEach(r => {
-                const fetched = getExtensionFromFetched(r)
+            trgConfig.packages.preferredRepoLib.forEach(r => {
+                const fetched = getExtensionFromFetched(r.slug)
                 if (fetched) {
                     repos.push(fetched)
                 } else {
-                    toBeFetched.push(r)
+                    toBeFetched.push(r.slug)
                 }
             })
         }
