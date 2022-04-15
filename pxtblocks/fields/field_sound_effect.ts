@@ -25,6 +25,8 @@ namespace pxtblockly {
     export class FieldSoundEffect extends FieldBase<FieldSoundEffectParams> {
         protected mostRecentValue: pxt.assets.Sound;
         protected drawnSound: pxt.assets.Sound;
+        protected workspace: Blockly.Workspace;
+        protected registeredChangeListener = false;
 
         protected onInit(): void {
             if (!this.options) this.options = {} as any;
@@ -39,11 +41,20 @@ namespace pxtblockly {
 
             this.redrawPreview();
 
-            this.sourceBlock_.workspace.addChangeListener(this.onWorkspaceChange);
+            if (this.workspace)  {
+                this.workspace = this.sourceBlock_.workspace;
+                if (!this.sourceBlock_.isShadow() && !this.sourceBlock_.isInsertionMarker()) {
+                    this.registeredChangeListener = true;
+                    this.workspace.addChangeListener(this.onWorkspaceChange);
+                }
+            }
         }
 
         protected onDispose(): void {
-            this.sourceBlock_.workspace.removeChangeListener(this.onWorkspaceChange);
+            if (this.workspace && this.registeredChangeListener) {
+                this.workspace.removeChangeListener(this.onWorkspaceChange);
+                this.registeredChangeListener = false;
+            }
         }
 
         protected onValueChanged(newValue: string): string {
@@ -248,7 +259,7 @@ namespace pxtblockly {
             super.render_();
 
             this.size_.height = TOTAL_HEIGHT + Y_PADDING * 2;
-            this.size_.width = TOTAL_WIDTH;
+            this.size_.width = TOTAL_WIDTH + X_PADDING;
         }
 
         protected updateSiblingBlocks(sound: pxt.assets.Sound) {
