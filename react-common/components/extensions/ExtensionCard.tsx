@@ -1,17 +1,18 @@
 import * as React from "react";
 
+
 interface ExtensionCardProps extends pxt.CodeCard {
-    scr: any;
+    scr: pxtc.service.ExtensionMeta;
     onCardClick: (scr: any) => void;
     loading?: boolean;
 }
 
 export const ExtensionCard = (props: ExtensionCardProps) => {
-    function handleClick() {
+    const handleClick = () => {
         props.onCardClick(props.scr);
     }
 
-    function handleLearnMoreClick(e: React.MouseEvent) {
+    const handleLearnMoreClick = (e: React.MouseEvent) => {
         e.stopPropagation();
         window.open(props.learnMoreUrl, "_blank")
     }

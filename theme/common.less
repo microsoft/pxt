@@ -879,13 +879,16 @@ Field editors
     background-color: @primaryColor;
 }
 
+/*******************************
+        Extensions
+*******************************/
 .extensionsBrowser.hide {
     display: none;
 }
 
 .extensionsBrowser {
     position: absolute;
-    background-color: white;
+    background-color: @white;
     width: 100%;
     min-height: 100%;
     z-index: 200;
@@ -910,7 +913,7 @@ Field editors
         background-color: #E5E5E5;
 
         .header {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: @segoeUIFont;
             font-size: 2em;
             font-weight: 400;
             padding: 4rem 2rem 2rem;
@@ -935,7 +938,7 @@ Field editors
         gap: .8rem;
 
         .importButtonLink {
-            color: blue;
+            color: @blue;
             cursor: pointer;
         }
 
@@ -951,7 +954,7 @@ Field editors
         gap: .8rem;
 
         .breadcrumbs {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: @segoeUIFont;
             width: 100%;
             padding-bottom: 1.5rem;
 
@@ -965,8 +968,6 @@ Field editors
             }
         }
     }
-
-
 
     .extension-grid {
         display: flex;
@@ -989,17 +990,17 @@ Field editors
     }
 
     .extensionTag {
-        border: .1rem solid #AAAAAA;
+        border: .1rem solid @extensionTagBackgroundColor;
         padding: .6rem 1.25rem;
         border-radius: 1.6rem;
         cursor: pointer;
-        color: #444444;
+        color: @extensionTagColor;
     }
 
     .extensionTag.selected {
         background-color: @blue;
         border-color: @blue;
-        color: white
+        color: @white
     }
 
     .tab-header {

@@ -383,7 +383,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         const extensionsToDelete = [];
         const extension = pkg.findExtForNs(ns);
         extensionsToDelete.push(extension.id)
-        while ( extensionsToDelete.length > 0) {
+        while (extensionsToDelete.length > 0) {
             const id = extensionsToDelete.pop()
             await pkg.mainEditorPkg().removeDepAsync(id)
             extensionsToDelete.push(...pkg.getDependents(id))

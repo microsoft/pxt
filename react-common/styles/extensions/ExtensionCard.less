@@ -1,5 +1,5 @@
 .extensionCard.loading {
-    background: linear-gradient(-45deg, #ffffff46, #f3f3f350, #dee2ff6e, #f1f1f149);
+    background: @loadingAnimation;
     background-size: 400% 400%;
     animation: gradient 3s infinite alternate;
 }
@@ -35,7 +35,7 @@
     }
 
     .name {
-        font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-family: @defaultFont;
         font-weight: 600;
         font-size: 1.5rem;
         line-height: 1.6rem;

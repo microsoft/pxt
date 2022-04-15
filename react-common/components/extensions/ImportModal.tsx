@@ -8,20 +8,21 @@ export interface ImportModalProps {
 
 export const ImportModal = (props: ImportModalProps) => {
 
-    function handleOnImportClick() {
+    const handleOnImportClick = () => {
         props.onImportClick((document.getElementById("url-input") as HTMLFormElement).value)
     }
 
     const actions = [
-    {
-        label: lf("Cancel"),
-        onClick: props.onCancelClick
-    },
-    {
-        label: lf("Import"),
-        onClick: handleOnImportClick
-    }]
-    return <Modal title="Import extension" actions={actions} className="import-extension-modal">
+        {
+            label: lf("Cancel"),
+            onClick: props.onCancelClick
+        },
+        {
+            label: lf("Import"),
+            onClick: handleOnImportClick
+        }
+    ];
+    return <Modal title={lf("Import extension")} actions={actions} className="import-extension-modal">
         {lf("Enter Github project URL")}
         <input id="url-input"></input>
     </Modal>
