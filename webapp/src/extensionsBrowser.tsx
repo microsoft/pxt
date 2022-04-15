@@ -96,15 +96,15 @@ export function ExtensionsBrowser(props: ExtensionsProps) {
         }
         const addedExtensions = allExtensions;
         newExtension.forEach(e => {
-            if (!addedExtensions.has(e.name)) {
-                addedExtensions.set(e.name, e)
+            if (!addedExtensions.has(e.name.toLowerCase())) {
+                addedExtensions.set(e.name.toLowerCase(), e)
             }
         })
         setAllExtensions(addedExtensions);
     }
 
     function getExtensionFromFetched(extensionUrl: string) {
-        const fullName = allExtensions.get(extensionUrl)
+        const fullName = allExtensions.get(extensionUrl.toLowerCase())
         if (fullName) {
             return fullName
         }
@@ -156,7 +156,9 @@ export function ExtensionsBrowser(props: ExtensionsProps) {
                 if (!newMap.has(tag)) {
                     newMap.set(tag, [])
                 }
-                newMap.set(tag, [...newMap.get(tag), repo])
+                const repos = newMap.get(tag)
+                if (!repos.find(r => r.slug.toLowerCase() == repo.slug.toLowerCase()))
+                    newMap.set(tag, [...newMap.get(tag), repo])
             })
         })
         setExtensionTags(newMap)
@@ -259,7 +261,6 @@ export function ExtensionsBrowser(props: ExtensionsProps) {
             setExtensionsToShow([])
             return;
         }
-        setExtensionsToShow([emptyCard, emptyCard, emptyCard, emptyCard])
         setSelectedTag(category)
         setSearchFor("")
 
