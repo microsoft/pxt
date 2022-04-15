@@ -259,7 +259,7 @@ namespace pxtblockly {
             super.render_();
 
             this.size_.height = TOTAL_HEIGHT + Y_PADDING * 2;
-            this.size_.width = TOTAL_WIDTH;
+            this.size_.width = TOTAL_WIDTH + X_PADDING;
         }
 
         protected updateSiblingBlocks(sound: pxt.assets.Sound) {
