@@ -18,9 +18,11 @@ To enable some additional features for extension developers, the following domai
 * https://github.com
 * https://raw.githubusercontent.com/
 
-## ~button /domains
+## ~button /domains.html
 
 Test Domains
+
+## ~
 
 ## Where are my projects saved?
 
