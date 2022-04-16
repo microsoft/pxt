@@ -1516,7 +1516,9 @@ export async function importGithubAsync(id: string): Promise<Header> {
                 hasCloseIcon: true,
                 helpUrl: "/github/import"
             })
-            if (!r) return Promise.resolve(undefined);
+            if (!r)
+                return cloudsync.ensureGitHubTokenAsync()
+                    .then(() => undefined)
         }
     } catch (e) {
         if (e.statusCode == 409) {
