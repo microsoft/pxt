@@ -1517,8 +1517,9 @@ export async function importGithubAsync(id: string): Promise<Header> {
                 helpUrl: "/github/import"
             })
             if (!r)
-                return cloudsync.ensureGitHubTokenAsync()
-                    .then(() => undefined)
+                return Promise.resolve(undefined);
+            // make sure early that we can write to the repo
+            await cloudsync.ensureGitHubTokenAsync()
         }
     } catch (e) {
         if (e.statusCode == 409) {
