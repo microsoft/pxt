@@ -12,6 +12,10 @@ export interface SoundEffectEditorProps {
     initialSound: pxt.assets.Sound;
 }
 
+export interface CancellationToken {
+    cancelled: boolean;
+}
+
 export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
     const { onSoundChange, onClose, initialSound } = props;
 
@@ -23,10 +27,18 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
     // that we never stray too far away from where we started
     const [ similarSoundSeed, setSimilarSoundSeed ] = React.useState<pxt.assets.Sound>(undefined);
 
+    const [ cancelToken, setCancelToken ] = React.useState<CancellationToken>(null);
+
     let startPreviewAnimation: (duration: number) => void;
     let startControlsAnimation: (duration: number) => void;
-    let cancelSound: () => void;
-    let previewSynthListener: (freq: number, vol: number, sound: pxt.assets.Sound) => void;
+    let previewSynthListener: (freq: number, vol: number, sound: pxt.assets.Sound, cancelToken: CancellationToken) => void;
+
+    const cancel = () => {
+        if (!cancelToken) return;
+        cancelToken.cancelled = true;
+        if (startPreviewAnimation) startPreviewAnimation(-1);
+        if (startControlsAnimation) startControlsAnimation(-1);
+    }
 
     React.useEffect(() => {
         const keyListener = (ev: KeyboardEvent) => {
@@ -47,19 +59,31 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
     const play = (toPlay = sound) => {
         const codalSound = soundToCodalSound(toPlay);
 
-        if (cancelSound) cancelSound();
-        let cancelled = false;
-        cancelSound = () => {
-            cancelled = true;
-            if (startPreviewAnimation) startPreviewAnimation(-1);
-            if (startControlsAnimation) startControlsAnimation(-1);
-        }
+        cancel();
+
+        let newToken = {
+            cancelled: false
+        };
+
+        setCancelToken(newToken)
 
         if (startPreviewAnimation) startPreviewAnimation(toPlay.duration);
         if (startControlsAnimation) startControlsAnimation(toPlay.duration);
-        pxsim.codal.music.playSoundExpressionAsync(codalSound.src, () => cancelled, (freq, volume) => {
-            previewSynthListener(freq, volume, toPlay)
-        });
+        pxsim.codal.music.playSoundExpressionAsync(codalSound.src, () => newToken.cancelled, (freq, volume) => {
+            previewSynthListener(freq, volume, toPlay, newToken)
+        })
+        .then(() => {
+            setCancelToken(null);
+        })
+    }
+
+    const handlePlayButtonClick = () => {
+        if (cancelToken) {
+            cancel();
+        }
+        else {
+            play();
+        }
     }
 
     const handleClose = () => {
@@ -78,12 +102,12 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
         startControlsAnimation = startAnimation;
     }
 
-    const handleSynthListenerRef = (onPull: (freq: number, vol: number, sound: pxt.assets.Sound) => void) => {
+    const handleSynthListenerRef = (onPull: (freq: number, vol: number, sound: pxt.assets.Sound, token: CancellationToken) => void) => {
         previewSynthListener = onPull;
     }
 
     const handleSoundChange = (newSound: pxt.assets.Sound, setSoundSeed = true) => {
-        if (cancelSound) cancelSound();
+        if (cancelToken) cancel();
         if (setSoundSeed) setSimilarSoundSeed(undefined);
         if (onSoundChange) onSoundChange(newSound);
         setSound(newSound);
@@ -101,12 +125,15 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
             onClose={handleClose}
         />
         <div className="sound-effect-editor-content">
-            <SoundPreview sound={sound} handleStartAnimationRef={handlePreviewAnimationRef} handleSynthListenerRef={handleSynthListenerRef} />
+            <SoundPreview
+                sound={sound}
+                handleStartAnimationRef={handlePreviewAnimationRef}
+                handleSynthListenerRef={handleSynthListenerRef} />
             <Button
                 className="sound-effect-play-button"
-                title={lf("Play")}
-                onClick={play}
-                leftIcon="fas fa-play"
+                title={cancelToken ? lf("Stop") : lf("Play")}
+                onClick={handlePlayButtonClick}
+                leftIcon={cancelToken ? "fas fa-stop" : "fas fa-play"}
                 />
             <SoundControls sound={sound} onSoundChange={handleSoundChange} handleStartAnimationRef={handleControlsAnimationRef} />
             <Button
