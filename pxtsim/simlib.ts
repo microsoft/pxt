@@ -261,10 +261,10 @@ namespace pxsim {
 
             const ctx = context();
             if (mute) {
-                destination.gain.setTargetAtTime(0, ctx.currentTime, 0.05);
+                destination.gain.setTargetAtTime(0, ctx.currentTime, 0.015);
             }
             else {
-                destination.gain.setTargetAtTime(1, ctx.currentTime, 0.05);
+                destination.gain.setTargetAtTime(1, ctx.currentTime, 0.015);
             }
 
             if (!mute && ctx && ctx.state === "suspended")
