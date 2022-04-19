@@ -206,16 +206,72 @@ namespace pxsim.codal.music {
         return result;
     }
 
-    let soundPromise: Promise<void>;
+    interface PendingSound {
+        notes: string;
+        onFinished: () => void;
+        onCancelled: () => void;
+    }
+
+    let playing = false;
+    let soundQueue: PendingSound[];
+    let cancellationToken = {
+        cancelled: false
+    };
 
     export function __playSoundExpression(notes: string, waitTillDone: boolean): void {
-        const cb = getResume();
-        if (!soundPromise) soundPromise = Promise.resolve();
+        if (!soundQueue) soundQueue = [];
 
-        soundPromise = soundPromise.then(() => playSoundExpressionAsync(notes));
+        const cb = getResume();
+
+        const soundPromise = new Promise<void>((resolve, reject) => {
+            soundQueue.push({
+                notes,
+                onFinished: resolve,
+                onCancelled: reject
+            });
+        })
+
+        if (!playing) {
+            playNextSoundAsync();
+        }
 
         if (!waitTillDone) cb();
-        else soundPromise = soundPromise.then(cb);
+        else soundPromise.then(cb);
+    }
+
+    async function playNextSoundAsync() {
+        if (soundQueue.length) {
+            playing = true;
+            const sound = soundQueue.shift();
+            let currentToken = cancellationToken;
+
+            try {
+                await playSoundExpressionAsync(sound.notes, () => currentToken.cancelled);
+                if (currentToken.cancelled) {
+                    sound.onCancelled();
+                }
+                else {
+                    sound.onFinished();
+                }
+            }
+            catch {
+                sound.onCancelled();
+            }
+
+            playNextSoundAsync();
+        }
+        else {
+            playing = false;
+        }
+    }
+
+    export function clearSoundQueue() {
+        soundQueue = [];
+        cancellationToken.cancelled = true;
+
+        cancellationToken = {
+            cancelled: false
+        };
     }
 
     export function playSoundExpressionAsync(notes: string, isCancelled?: () => boolean, onPull?: (freq: number, volume: number) => void) {
@@ -249,6 +305,7 @@ namespace pxsim.codal.music {
     }
 
     export function __stopSoundExpressions() {
+        clearSoundQueue();
         AudioContextManager.stopAll();
     }
 

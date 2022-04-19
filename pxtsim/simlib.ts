@@ -226,8 +226,21 @@ namespace pxsim {
         // for playing WAV
         let audio: HTMLAudioElement;
 
+        const channels: Channel[] = []
+
+        // All other nodes get connected to this node which is connected to the actual
+        // destination. Used for muting
+        let destination: GainNode;
+
         function context(): AudioContext {
-            if (!_context) _context = freshContext();
+            if (!_context) {
+                _context = freshContext();
+                if (_context) {
+                    destination = _context.createGain();
+                    destination.connect(_context.destination);
+                    destination.gain.setValueAtTime(1, 0);
+                }
+            }
             return _context;
         }
 
@@ -245,8 +258,15 @@ namespace pxsim {
 
         export function mute(mute: boolean) {
             _mute = mute;
-            stopAll();
+
             const ctx = context();
+            if (mute) {
+                destination.gain.setTargetAtTime(0, ctx.currentTime, 0.015);
+            }
+            else {
+                destination.gain.setTargetAtTime(1, ctx.currentTime, 0.015);
+            }
+
             if (!mute && ctx && ctx.state === "suspended")
                 ctx.resume();
         }
@@ -454,11 +474,10 @@ namespace pxsim {
             return node
         }
 
-        const channels: Channel[] = []
         class Channel {
             generator: OscillatorNode | AudioBufferSourceNode;
             gain: GainNode
-            mute() {
+            disconnectNodes() {
                 if (this.gain)
                     disconnectVca(this.gain, this.generator)
                 else if (this.generator) {
@@ -471,7 +490,7 @@ namespace pxsim {
             remove() {
                 const idx = channels.indexOf(this)
                 if (idx >= 0) channels.splice(idx, 1)
-                this.mute()
+                this.disconnectNodes()
             }
         }
 
@@ -511,7 +530,7 @@ namespace pxsim {
             const scaleVol = (n: number, isSqWave?: boolean) => (n / 1024) / 4 * (isSqWave ? .5 : 1);
 
             const finish = () => {
-                ch.mute()
+                ch.disconnectNodes()
                 timeOff = 0
                 currWave = -1
                 currFreq = -1
@@ -545,7 +564,7 @@ namespace pxsim {
                             })
                     }
 
-                    ch.generator = _mute ? null : getGenerator(soundWaveIdx, freq)
+                    ch.generator = getGenerator(soundWaveIdx, freq)
 
                     if (!ch.generator)
                         return U.delay(duration)
@@ -570,7 +589,7 @@ namespace pxsim {
                     }
 
                     ch.generator.connect(ch.gain)
-                    ch.gain.connect(ctx.destination);
+                    ch.gain.connect(destination);
                     ch.generator.start();
                 }
 
@@ -609,7 +628,7 @@ namespace pxsim {
                     _vca.gain.value = 0;
                     _vco.type = 'triangle';
                     _vco.connect(_vca);
-                    _vca.connect(ctx.destination);
+                    _vca.connect(destination);
                     _vco.start(0);
                 }
                 setCurrentToneGain(gain);
@@ -625,7 +644,7 @@ namespace pxsim {
 
         export function setCurrentToneGain(gain: number) {
             if (_vca?.gain) {
-                _vca.gain.setTargetAtTime(_mute ? 0 : gain, _context.currentTime, 0.015)
+                _vca.gain.setTargetAtTime(gain, _context.currentTime, 0.015)
             }
         }
 
@@ -663,14 +682,33 @@ namespace pxsim {
                 let nodes: AudioBufferSourceNode[] = [];
                 let nextTime = context().currentTime;
                 let allScheduled = false;
+                const channel = new Channel();
+
+                channel.gain = context().createGain();
+                channel.gain.gain.value = 0;
+                channel.gain.gain.setValueAtTime(volume, context().currentTime);
+                channel.gain.connect(destination);
+
+                if (channels.length > 5)
+                    channels[0].remove()
+                channels.push(channel);
+
+                const checkCancel = () => {
+                    if (isCancelled && isCancelled() || !channel.gain) {
+                        if (resolve) resolve();
+                        resolve = undefined;
+                        channel.remove();
+                        return true;
+                    }
+                    return false;
+                }
 
                 // Every time we pull a buffer, schedule a node in the future to play it.
                 // Scheduling the nodes ahead of time sounds much smoother than trying to
                 // do it when the previous node completes (which sounds SUPER choppy in
                 // FireFox).
                 function playNext() {
-                    const cancelled = isCancelled && isCancelled();
-                    while (!allScheduled && nodes.length < MAX_SCHEDULED_BUFFER_NODES && !cancelled) {
+                    while (!allScheduled && nodes.length < MAX_SCHEDULED_BUFFER_NODES && !checkCancel()) {
                         const data = pull();
                         if (!data || !data.length) {
                             allScheduled = true;
@@ -687,6 +725,8 @@ namespace pxsim {
                 }
 
                 function play(data: Float32Array) {
+                    if (checkCancel()) return;
+
                     const buff = context().createBuffer(1, data.length, sampleRate);
                     if (buff.copyToChannel) {
                         buff.copyToChannel(data, 0);
@@ -710,17 +750,6 @@ namespace pxsim {
                     newNode.start(nextTime);
                     nextTime += buff.duration;
                 }
-
-                const channel = new Channel();
-                channel.gain = context().createGain();
-                channel.gain.gain.value = 0;
-                if (!_mute)
-                    channel.gain.gain.setValueAtTime(volume, context().currentTime);
-                channel.gain.connect(context().destination);
-
-                if (channels.length > 5)
-                    channels[0].remove()
-                channels.push(channel);
 
                 playNext();
             });
