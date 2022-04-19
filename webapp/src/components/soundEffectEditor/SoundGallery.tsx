@@ -48,6 +48,7 @@ const SoundGalleryEntry = (props: SoundGalleryItem) => {
     const handlePlayButtonClick = () => {
         if (cancelToken) {
             cancelToken.cancelled = true
+            setCancelToken(null);
             return;
         }
         const newToken = {
@@ -65,14 +66,16 @@ const SoundGalleryEntry = (props: SoundGalleryItem) => {
         <div className="sound-effect-name">
             {name}
         </div>
-        <svg viewBox={`0 0 ${width} ${height}`} xmlns="http://www.w3.org/2000/svg">
-            <path
-                className="sound-gallery-preview-wave"
-                d={pxt.assets.renderSoundPath(sound, width, height)}
-                stroke="grey"
-                strokeWidth="2"
-                fill="none"/>
-        </svg>
+        <div className="sound-gallery-preview">
+            <svg viewBox={`0 0 ${width} ${height}`} xmlns="http://www.w3.org/2000/svg">
+                <path
+                    className="sound-gallery-preview-wave"
+                    d={pxt.assets.renderSoundPath(sound, width, height)}
+                    stroke="grey"
+                    strokeWidth="2"
+                    fill="none"/>
+            </svg>
+        </div>
         <Button
             className="sound-effect-play-button"
             title={cancelToken ? lf("Stop Sound Preview") : lf("Preview Sound")}

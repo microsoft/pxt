@@ -214,7 +214,7 @@
 
 .sound-gallery-scroller > .common-button {
     margin-bottom: 0.5rem;
-    padding: 0.6rem 2rem 0.6rem;
+    padding: 0.6rem 1rem 0.6rem;
 }
 
 .sound-gallery-item-label {
@@ -230,13 +230,24 @@
 
     .sound-effect-name {
         font-size: 22px;
-        flex-grow: 1;
+        width: 8rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        text-align: left;
+        height: 2rem;
+        align-items: center;
+        display: flex;
     }
 
     svg {
         width: 10rem;
     }
+
+    .sound-gallery-preview {
+        flex-grow: 1;
+    }
 }
+
 
 .sound-gallery-preview-wave {
     stroke: @soundGalleryWaveColor;

@@ -227,7 +227,7 @@ export const SoundControls = (props: SoundControlsProps) => {
                         </span>
                         <Dropdown
                             id="interpolation-dropdown"
-                            className="icon-preview"
+                            className="icon-preview hang-left"
                             selectedId={sound.interpolation}
                             onItemSelected={onInterpolationSelected}
                             items={interpolationOptions}
