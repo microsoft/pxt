@@ -898,10 +898,23 @@ Field editors
         height: 4rem;
         background-color: @blue;
         z-index: 202;
+        display: flex;
+
+        .header-left, .header-right, .header-center {
+            flex: 1
+        }
 
         .header-left {
             display: flex;
             height: 100%;
+        }
+
+        .header-center {
+            color: @white;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
     }
 

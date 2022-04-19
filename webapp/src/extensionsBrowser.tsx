@@ -20,7 +20,7 @@ interface ExtensionsProps {
     isVisible: boolean;
     hideExtensions: () => void;
     header: pxt.workspace.Header;
-    reloadHeaderAsync: () => void;
+    reloadHeaderAsync: () => Promise<void>;
 }
 
 enum TabState {
@@ -130,7 +130,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                 .addDependencyAsync({ ...config, isExtension: true }, version, false)
             if (added) {
                 await pxt.Util.delay(1000)
-                props.reloadHeaderAsync();
+                await props.reloadHeaderAsync();
             }
         }
         finally {
@@ -416,6 +416,10 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
             <div className="header-left">
                 <Button className="menu-button" leftIcon="fas fa-arrow-left large" title={lf("Back")} label={lf("Back")} onClick={props.hideExtensions} />
             </div>
+            <div className="header-center">
+                {lf("Extensions")}
+            </div>
+            <div className="header-right"></div>
         </MenuBar>
         <div className="extensionSearchHeader">
             <div className="header">{(lf("Do more with your micro:bit"))}</div>
