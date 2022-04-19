@@ -41,7 +41,7 @@ namespace pxtblockly {
 
             this.redrawPreview();
 
-            if (this.workspace)  {
+            if (this.sourceBlock_.workspace)  {
                 this.workspace = this.sourceBlock_.workspace;
                 if (!this.sourceBlock_.isShadow() && !this.sourceBlock_.isInsertionMarker()) {
                     this.registeredChangeListener = true;
