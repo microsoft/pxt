@@ -1,9 +1,10 @@
 import * as React from "react";
+import { CancellationToken } from "./SoundEffectEditor";
 
 export interface SoundPreviewProps {
     sound: pxt.assets.Sound;
     handleStartAnimationRef?: (startAnimation: (duration: number) => void) => void;
-    handleSynthListenerRef?: (onPull: (freq: number, volume: number, sound: pxt.assets.Sound) => void) => void;
+    handleSynthListenerRef?: (onPull: (freq: number, volume: number, sound: pxt.assets.Sound, cancelToken: CancellationToken) => void) => void;
 }
 
 export const SoundPreview = (props: SoundPreviewProps) => {
@@ -29,18 +30,20 @@ export const SoundPreview = (props: SoundPreviewProps) => {
             let toDraw = sound;
             let frequency = toDraw.startFrequency;
             let volume = toDraw.startVolume;
+            let cancelToken: CancellationToken = null;
 
-            handleSynthListenerRef((freq, vol, sound) => {
+            handleSynthListenerRef((freq, vol, sound, token) => {
                 frequency = freq;
                 volume = vol * 1023;
                 toDraw = sound;
+                cancelToken = token;
             })
 
             const doAnimationFrame = () => {
                 if (!animationPath) return;
                 const dt = Date.now() - animationStartTime;
 
-                if (dt > toDraw.duration) {
+                if (cancelToken?.cancelled || dt > toDraw.duration) {
                     animationPath.setAttribute("opacity", "0");
                     previewPath.setAttribute("opacity", "1");
                     return;

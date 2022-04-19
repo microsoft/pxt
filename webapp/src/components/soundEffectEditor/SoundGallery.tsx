@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Button } from "../../../../react-common/components/controls/Button";
 import { classList, fireClickOnEnter } from "../../../../react-common/components/util";
+import { CancellationToken } from "./SoundEffectEditor";
 import { soundToCodalSound } from "./soundUtil";
 
 export interface SoundGalleryItem {
@@ -42,29 +43,45 @@ const SoundGalleryEntry = (props: SoundGalleryItem) => {
     const width = 160;
     const height = 40;
 
-    const play = () => {
+    const [ cancelToken, setCancelToken ] = React.useState<CancellationToken>(null);
+
+    const handlePlayButtonClick = () => {
+        if (cancelToken) {
+            cancelToken.cancelled = true
+            setCancelToken(null);
+            return;
+        }
+        const newToken = {
+            cancelled: false
+        }
+        setCancelToken(newToken);
         const codalSound = soundToCodalSound(sound);
-        pxsim.codal.music.playSoundExpressionAsync(codalSound.src);
+        pxsim.codal.music.playSoundExpressionAsync(codalSound.src, () => newToken.cancelled)
+            .then(() => {
+                setCancelToken(null);
+            });
     }
 
     return <div className="sound-gallery-item-label">
-        <Button
-            className="sound-effect-play-button"
-            title={lf("Preview sound")}
-            onClick={play}
-            leftIcon="fas fa-play"
-            />
         <div className="sound-effect-name">
             {name}
         </div>
-        <svg viewBox={`0 0 ${width} ${height}`} xmlns="http://www.w3.org/2000/svg">
-            <path
-                className="sound-gallery-preview-wave"
-                d={pxt.assets.renderSoundPath(sound, width, height)}
-                stroke="grey"
-                strokeWidth="2"
-                fill="none"/>
-        </svg>
+        <div className="sound-gallery-preview">
+            <svg viewBox={`0 0 ${width} ${height}`} xmlns="http://www.w3.org/2000/svg">
+                <path
+                    className="sound-gallery-preview-wave"
+                    d={pxt.assets.renderSoundPath(sound, width, height)}
+                    stroke="grey"
+                    strokeWidth="2"
+                    fill="none"/>
+            </svg>
+        </div>
+        <Button
+            className="sound-effect-play-button"
+            title={cancelToken ? lf("Stop Sound Preview") : lf("Preview Sound")}
+            onClick={handlePlayButtonClick}
+            leftIcon={cancelToken ? "fas fa-stop" : "fas fa-play"}
+            />
     </div>
 }
 
