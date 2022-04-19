@@ -4568,7 +4568,7 @@ export class ProjectView
         const hasIdentity = pxt.auth.hasIdentity();
         return (
             <div id='root' className={rootClasses}>
-                <extensionsBrowser.ExtensionsBrowser isVisible={this.state.extensionsVisible} hideExtensions={this.hidePackageDialog} parent={this}/>
+                <extensionsBrowser.ExtensionsBrowser isVisible={this.state.extensionsVisible} hideExtensions={this.hidePackageDialog} header={this.state.header} reloadHeaderAsync={this.reloadHeaderAsync}/>
                 {greenScreen ? <greenscreen.WebCam close={this.toggleGreenScreen} /> : undefined}
                 {accessibleBlocks && <accessibleblocks.AccessibleBlocksInfo />}
                 {hideMenuBar || inHome ? undefined :

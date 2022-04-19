@@ -388,9 +388,8 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
             await pkg.mainEditorPkg().removeDepAsync(id)
             extensionsToDelete.push(...pkg.getDependents(id))
         }
-        await Util.delay(1000) // TODO VVN: Without a delay the reload still tries to load the neopixel
+        await Util.delay(1000) // TODO VVN: Without a delay the reload still tries to load the extension
         await this.props.parent.parent.reloadHeaderAsync()
-        // TODO VVN: If we're deleting a package that another extension has a dependency on.....we should also delete that one
     }
 
     private cancelDeleteExtension() {

@@ -168,8 +168,12 @@ export abstract class ToolboxEditor extends srceditor.Editor {
 
             let trgConfigFetch = data.getDataWithStatus("target-config:");
             let trgConfig = trgConfigFetch.data as pxt.TargetConfig;
+            let isHidden = false;
+            if (trgConfig && trgConfig.packages && trgConfig.packages.extensionsToIgnore && extensionPkg) {
+                isHidden = trgConfig.packages.extensionsToIgnore.includes(extensionPkg.id)
+            }
 
-            const hasDel = (nsAttr._def && nsAttr._def.parts.length > 0) || (foundExtension && extensionPkg.id != "core" && !trgConfig.packages.extensionsToIgnore.includes(extensionPkg.id))
+            const hasDel = (nsAttr._def && nsAttr._def.parts.length > 0) || (foundExtension && extensionPkg.id != "core" && !isHidden)
             return hasDel;
         }
 
