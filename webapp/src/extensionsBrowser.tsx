@@ -20,7 +20,7 @@ interface ExtensionsProps {
     isVisible: boolean;
     hideExtensions: () => void;
     header: pxt.workspace.Header;
-    reloadHeaderAsync: () => Promise<void>;
+    parent: pxt.editor.IProjectView;
 }
 
 enum TabState {
@@ -119,7 +119,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         props.hideExtensions()
         await pkg.mainEditorPkg().removeDepAsync(dep.name)
         await pxt.Util.delay(1000) // TODO VVN: Without a delay the reload still tries to load the extension
-        await props.reloadHeaderAsync()
+        await props.parent.reloadHeaderAsync()
     }
 
     async function addDepIfNoConflict(config: pxt.PackageConfig, version: string) {
@@ -130,7 +130,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                 .addDependencyAsync({ ...config, isExtension: true }, version, false)
             if (added) {
                 await pxt.Util.delay(1000)
-                await props.reloadHeaderAsync();
+                await props.parent.reloadHeaderAsync();
             }
         }
         finally {

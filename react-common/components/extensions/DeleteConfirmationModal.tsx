@@ -2,9 +2,9 @@ import * as React from "react";
 import { Modal } from "../controls/Modal"
 
 export interface ImportModalProps {
-    onCancelClick: () => void,
-    onDeleteClick: (url: string) => void,
-    ns: string
+    onCancelClick: () => void;
+    onDeleteClick: (url: string) => void;
+    ns: string;
 }
 
 export const DeleteConfirmationModal = (props: ImportModalProps) => {
