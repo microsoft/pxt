@@ -884,17 +884,21 @@ Field editors
         Editor Sidebar
 *******************************/
 
+@sidebarPrimaryColor: @teal;
+@sidebarSecondaryColor: @blue;
+@sidbarActiveTabIconColor: @sidebarSecondaryColor;
+
 #editorSidebar {
     border-right: 2px solid darken(desaturate(@blocklyToolboxColor, 60%), 10%);
 
     .tab-navigation {
-        color: @blue;
-        background-color: @teal;
+        color: @sidebarSecondaryColor;
+        background-color: @sidebarPrimaryColor;
     }
 
     .tab-icon.active {
-        color: @teal;
-        background-color: @blue;
+        color: @sidbarActiveTabIconColor;
+        background-color: @sidebarPrimaryColor;
     }
 }
 
