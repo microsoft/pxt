@@ -149,7 +149,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         const allRepos = [...trgConfig.packages.preferredRepoLib, ...trgConfig.packages.approvedRepoLib]
         const newMap = extensionTags
         allRepos.forEach(repo => {
-            repo.tags.forEach(tag => {
+            repo.tags?.forEach(tag => {
                 if (!newMap.has(tag)) {
                     newMap.set(tag, [])
                 }

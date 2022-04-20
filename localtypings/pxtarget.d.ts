@@ -55,7 +55,7 @@ declare namespace pxt {
 
     interface RepoData {
         slug: string;
-        tags: string[]
+        tags?: string[]
     }
 
     interface ExtensionCategory {
