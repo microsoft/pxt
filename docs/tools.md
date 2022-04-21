@@ -34,9 +34,9 @@ Control scenes, webcams and editors to take your online coding to the next level
 
 ## [Screenshot tool](/screenshot-tool)
 
-![A screenshot of the Screenshot tool](/static/tools/screenshot-tool.png)
+[![A screenshot of the Screenshot tool](/static/tools/screenshot-tool.png)](/screenshot-tool)
 
-Create a screenshot of the blocks shown for selected lines of code. Copy the screenshot and use it in your own documents, messages, blogs, etc.
+Create a SVG image of the blocks shown for selected lines of code. Copy the screenshot and use it in your own documents, messages, blogs, etc.
 
 ## See Also
 
