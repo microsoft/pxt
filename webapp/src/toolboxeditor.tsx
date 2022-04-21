@@ -173,7 +173,7 @@ export abstract class ToolboxEditor extends srceditor.Editor {
                 isHidden = trgConfig.packages.extensionsToIgnore.includes(extensionPkg.id)
             }
 
-            const hasDel = (nsAttr && nsAttr._def && nsAttr._def.parts.length > 0) || (foundExtension && extensionPkg.id != "core" && !isHidden)
+            const hasDel = (nsAttr?._def?.parts?.length > 0) || (foundExtension && extensionPkg.id != "core" && !isHidden)
             return hasDel;
         }
 
