@@ -6,6 +6,7 @@ export interface DraggableGraphProps extends ControlProps {
     min: number;
     max: number;
     squiggly?: boolean;
+    valueUnits?: string;
 
     aspectRatio: number; // width / height
     onPointChange: (index: number, newValue: number) => void;
@@ -30,7 +31,8 @@ export const DraggableGraph = (props: DraggableGraphProps) => {
         ariaDescribedBy,
         role,
         aspectRatio,
-        squiggly
+        squiggly,
+        valueUnits
     } = props;
 
     const width = 1000;
@@ -152,8 +154,6 @@ export const DraggableGraph = (props: DraggableGraphProps) => {
                 const shouldFlipLabel = (
                     isNotLast && getValue(index + 1) > getValue(index) ||
                     !isNotLast && getValue(index - 1) > getValue(index)
-                ) && (
-                    interpolation === "logarithmic" || squiggly
                 );
 
                 return <g key={index} className="draggable-graph-column">
@@ -188,7 +188,7 @@ export const DraggableGraph = (props: DraggableGraphProps) => {
                             y={shouldFlipLabel ? y + unit * 2 : Math.max(y - unit, unit)}
                             textAnchor={isNotLast ? "start" : "end"}
                             fontSize={unit}>
-                            {Math.round(getValue(index))}
+                            {Math.round(getValue(index)) + (valueUnits || "")}
                         </text>
                         <rect
                             className="draggable-graph-surface"

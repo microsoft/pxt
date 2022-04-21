@@ -3,9 +3,9 @@ import { SoundGalleryItem } from "./SoundGallery";
 export function soundToCodalSound(sound: pxt.assets.Sound): pxsim.codal.music.Sound {
     const codalSound = new pxsim.codal.music.Sound();
     codalSound.frequency = sound.startFrequency;
-    codalSound.volume = sound.startVolume;
+    codalSound.volume = (sound.startVolume / pxt.assets.MAX_VOLUME) * 1023;
     codalSound.endFrequency = sound.endFrequency;
-    codalSound.endVolume = sound.endVolume;
+    codalSound.endVolume = (sound.endVolume / pxt.assets.MAX_VOLUME) * 1023;
 
     switch (sound.wave) {
         case "sine": codalSound.wave = pxsim.codal.music.WaveShape.Sine; break;
@@ -55,7 +55,7 @@ export function getGallerySounds(): SoundGalleryItem[] {
                 interpolation: "curve",
                 effect: "none",
                 wave: "square",
-                startVolume: 1023,
+                startVolume: pxt.assets.MAX_VOLUME,
                 endVolume: 0,
                 startFrequency: 1600,
                 endFrequency: 1,
@@ -68,7 +68,7 @@ export function getGallerySounds(): SoundGalleryItem[] {
                 interpolation: "linear",
                 effect: "none",
                 wave: "noise",
-                startVolume: 1023,
+                startVolume: pxt.assets.MAX_VOLUME,
                 endVolume: 0,
                 startFrequency: 500,
                 endFrequency: 499,
@@ -81,7 +81,7 @@ export function getGallerySounds(): SoundGalleryItem[] {
                 interpolation: "linear",
                 effect: "warble",
                 wave: "square",
-                startVolume: 1023,
+                startVolume: pxt.assets.MAX_VOLUME,
                 endVolume: 0,
                 startFrequency: 400,
                 endFrequency: 600,
@@ -94,7 +94,7 @@ export function getGallerySounds(): SoundGalleryItem[] {
                 interpolation: "linear",
                 effect: "none",
                 wave: "sine",
-                startVolume: 1023,
+                startVolume: pxt.assets.MAX_VOLUME,
                 endVolume: 0,
                 startFrequency: 200,
                 endFrequency: 600,
@@ -107,7 +107,7 @@ export function getGallerySounds(): SoundGalleryItem[] {
                 interpolation: "curve",
                 effect: "none",
                 wave: "square",
-                startVolume: 1023,
+                startVolume: pxt.assets.MAX_VOLUME,
                 endVolume: 0,
                 startFrequency: 200,
                 endFrequency: 1,
@@ -120,7 +120,7 @@ export function getGallerySounds(): SoundGalleryItem[] {
                 interpolation: "curve",
                 effect: "none",
                 wave: "triangle",
-                startVolume: 1023,
+                startVolume: pxt.assets.MAX_VOLUME,
                 endVolume: 0,
                 startFrequency: 300,
                 endFrequency: 200,
@@ -133,7 +133,7 @@ export function getGallerySounds(): SoundGalleryItem[] {
                 interpolation: "logarithmic",
                 effect: "warble",
                 wave: "noise",
-                startVolume: 1023,
+                startVolume: pxt.assets.MAX_VOLUME,
                 endVolume: 0,
                 startFrequency: 523,
                 endFrequency: 1,
@@ -146,7 +146,7 @@ export function getGallerySounds(): SoundGalleryItem[] {
                 interpolation: "linear",
                 effect: "none",
                 wave: "noise",
-                startVolume: 1023,
+                startVolume: pxt.assets.MAX_VOLUME,
                 endVolume: 0,
                 startFrequency: 500,
                 endFrequency: 1,
@@ -159,7 +159,7 @@ export function getGallerySounds(): SoundGalleryItem[] {
                 interpolation: "linear",
                 effect: "vibrato",
                 wave: "sine",
-                startVolume: 1023,
+                startVolume: pxt.assets.MAX_VOLUME,
                 endVolume: 0,
                 startFrequency: 500,
                 endFrequency: 500,
@@ -172,7 +172,7 @@ export function getGallerySounds(): SoundGalleryItem[] {
                 interpolation: "linear",
                 effect: "none",
                 wave: "noise",
-                startVolume: 1023,
+                startVolume: pxt.assets.MAX_VOLUME,
                 endVolume: 0,
                 startFrequency: 54,
                 endFrequency: 54,

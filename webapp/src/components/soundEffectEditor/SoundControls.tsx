@@ -236,8 +236,9 @@ export const SoundControls = (props: SoundControlsProps) => {
                 </div>
                 <DraggableGraph
                     min={1}
-                    max={2000}
+                    max={pxt.assets.MAX_FREQUENCY}
                     aspectRatio={3}
+                    valueUnits={pxt.U.lf("Hz")}
                     points={[sound.startFrequency, sound.endFrequency]}
                     interpolation={sound.interpolation}
                     onPointChange={onFrequencyChange}
@@ -253,8 +254,9 @@ export const SoundControls = (props: SoundControlsProps) => {
                 </div>
                 <DraggableGraph
                     min={0}
-                    max={1023}
+                    max={pxt.assets.MAX_VOLUME}
                     aspectRatio={5}
+                    valueUnits="%"
                     points={[sound.startVolume, sound.endVolume]}
                     interpolation="linear"
                     onPointChange={onVolumeChange}
