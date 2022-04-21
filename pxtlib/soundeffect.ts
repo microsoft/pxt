@@ -14,6 +14,9 @@ namespace pxt.assets {
         duration: number;
     }
 
+    export const MAX_FREQUENCY = 5000;
+    export const MAX_VOLUME = 100;
+
     export function renderSoundPath(sound: pxt.assets.Sound, width: number, height: number) {
         const {
             startFrequency,
@@ -52,10 +55,13 @@ namespace pxt.assets {
         }
 
         const getVolumeAt = (x: number) =>
-            ((endVolume - startVolume) / width) * x + startVolume;
+            Math.max(Math.min(((endVolume - startVolume) / width) * x + startVolume, 100), 0);
 
-        const volumeToAmplitude = (volume: number) => (volume / 1023) * (height - 2) / 2;
-        const frequencyToWidth = (frequency: number) => Math.min(width, Math.max(10, (1 / scale(1, 4000, frequency / 4000)) * width / 2));
+        const minWaveWidth = 10;
+        const maxWaveWidth = width / 2;
+
+        const volumeToAmplitude = (volume: number) => (volume / MAX_VOLUME) * (height - 2) / 2;
+        const frequencyToWidth = (frequency: number) => (1 - frequency / MAX_FREQUENCY) * (maxWaveWidth - minWaveWidth) + minWaveWidth;
 
         const parts: string[] = [`M ${2} ${height / 2}`];
 
@@ -90,7 +96,7 @@ namespace pxt.assets {
         if (wave === "noise") frequency = random.randomRange(500, 1000);
 
 
-        const amplitude = (volume / 1023) * (height - 2) / 2;
+        const amplitude = (volume / MAX_VOLUME) * (height - 2) / 2;
         const waveHalfWidth =  (width / (frequency * timeBase / 1000)) / 2;
 
         let numSegments = Math.ceil(width / (waveHalfWidth * 2));
