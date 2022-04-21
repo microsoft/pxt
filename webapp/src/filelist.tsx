@@ -231,9 +231,10 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             && pkgid != pxt.appTarget.corepkg
             && p.getKsPkg().config && !p.getKsPkg().config.core
             && p.getKsPkg().level <= 1;
-        const upd = del && p.getKsPkg()?.verProtocol() == "github";
+        const gh = p.getKsPkg()?.verProtocol() == "github"
+        const upd = del && gh;
         const meta: pkg.PackageMeta = this.getData("open-pkg-meta:" + p.getPkgId());
-        let version = upd ? p.getKsPkg().verArgument().split('#')[1] : undefined; // extract github tag
+        let version = gh ? p.getKsPkg().verArgument().split('#')[1] : undefined; // extract github tag
         if (version && version.length > 20) version = version.substring(0, 7);
         return [<PackgeTreeItem key={"hd-" + pkgid}
             pkg={p} isActive={expandedPkg == pkgid} onItemClick={this.togglePkg}
@@ -580,10 +581,10 @@ class PackgeTreeItem extends sui.StatelessUIElement<PackageTreeItemProps> {
             onClick={this.handleClick} tabIndex={0} onKeyDown={fireClickOnEnter} {...rest}>
             <sui.Icon icon={`chevron ${isActive ? "up" : "down"} icon`} />
             {hasRefresh ? <sui.Button className="primary label" icon="refresh" title={lf("Refresh extension {0}", p.getPkgId())}
-                onClick={this.handleRefresh} onKeyDown={this.handleButtonKeydown} text={version || ''}></sui.Button> : undefined}
+                onClick={this.handleRefresh} onKeyDown={this.handleButtonKeydown} text={version || ''}></sui.Button>
+                : version ? <span className="label" style={{background: 'transparent'}}>{version}</span> : undefined}
             {hasDelete ? <sui.Button className="primary label" icon="trash" title={lf("Delete extension {0}", p.getPkgId())}
                 onClick={this.handleRemove} onKeyDown={this.handleButtonKeydown} /> : undefined}
-
             {this.props.children}
         </div>
     }
