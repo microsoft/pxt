@@ -334,10 +334,32 @@ namespace pxt.blocks {
     }
 
     export function createToolboxBlock(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, comp: pxt.blocks.BlockCompileInfo): HTMLElement {
+        let parent: HTMLElement;
+        let parentInput: HTMLElement;
+
+        if (fn.attributes.toolboxParent) {
+            const parentFn = info.blocksById[fn.attributes.toolboxParent];
+
+            if (parentFn) {
+                parent = createToolboxBlock(info, parentFn, pxt.blocks.compileInfo(parentFn));
+
+                parentInput = fn.attributes.toolboxParentArgument ?
+                    parent.querySelector(`value[name=${fn.attributes.toolboxParentArgument}]`) :
+                    parent.querySelector(`value`);
+
+                if (parentInput) {
+                    while (parentInput.firstChild) parentInput.removeChild(parentInput.firstChild);
+                }
+                else {
+                    parent = undefined;
+                }
+            }
+        }
+
         //
         // toolbox update
         //
-        let block = document.createElement("block");
+        let block = document.createElement(parent ? "shadow" : "block");
         block.setAttribute("type", fn.attributes.blockId);
         if (fn.attributes.blockGap)
             block.setAttribute("gap", fn.attributes.blockGap);
@@ -405,6 +427,12 @@ namespace pxt.blocks {
                 });
             }
         }
+
+        if (parent) {
+            parentInput.appendChild(block);
+            return parent;
+        }
+
         return block;
     }
 
