@@ -78,17 +78,30 @@
 
 .project-share-actions {
     display: flex;
+    margin-top: 1rem;
+    position: relative;
+    margin-bottom: 2rem;
 
-    .share-button {
-        width: 3rem;
-        padding: 1rem 0.75rem;
-
-        i {
-            margin: 0;
-        }
+    .common-button {
+        margin-right: 1rem;
     }
 }
 
+.project-share-text {
+    margin-bottom: 1rem;
+}
+
+.common-button.menu-button.project-qrcode {
+    position: absolute;
+    right: 0;
+    height: 6rem;
+    padding: 0.5rem;
+    top: -0.5rem;
+
+    img {
+        height: 5rem;
+    }
+}
 
 /////////////////////////////////////////
 //           Gif Recorder              //

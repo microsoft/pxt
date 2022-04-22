@@ -35,6 +35,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
     const [ showQRCode, setShowQRCode ] = React.useState(false);
 
     const showSimulator = !!screenshotAsync || !!gifRecordAsync;
+    const showDescription = shareState !== "publish";
 
     React.useEffect(() => {
         setThumbnailUri(screenshotUri)
@@ -117,16 +118,17 @@ export const ShareInfo = (props: ShareInfoProps) => {
                         items={dropdownOptions}
                         />}
                 </div>}
-                <Input label={lf("Project Name")}
-                    initialValue={name}
-                    placeholder={lf("Name your project")}
-                    readOnly={shareState === "publish"}
-                    onChange={setName} />
-                <Textarea label={lf("Description")}
-                    initialValue={description}
-                    placeholder={lf("Tell others about your game")}
-                    readOnly={shareState === "publish"}
-                    rows={5} />
+                {showDescription && <>
+                    <Input label={lf("Project Name")}
+                        initialValue={name}
+                        placeholder={lf("Name your project")}
+                        onChange={setName} />
+                    <Textarea label={lf("Description")}
+                        initialValue={description}
+                        placeholder={lf("Tell others about your game")}
+                        rows={5} />
+                    </>
+                }
                 {shareState === "share" && <>
                     {showSimulator && <div className="project-share-thumbnail">
                         {thumbnailUri
@@ -137,7 +139,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
                             label={lf("Update project thumbnail")}
                             onClick={() => setShareState("gifrecord")} />
                     </div>}
-                    <div>{lf("By publishing you agree that you are allowed to share this game.")}</div>
+                    <div>{lf("You need to publish your project to share it or embed it in other web pages. You acknowledge having consent to publish this project.")}</div>
                     {shareData?.error && <div className="project-share-error">
                         {(shareData.error.statusCode === 413
                             && pxt.appTarget?.cloud?.cloudProviders?.github)
@@ -149,29 +151,45 @@ export const ShareInfo = (props: ShareInfoProps) => {
                         label={lf("Publish to share")}
                         onClick={handlePublishClick} />
                 </>}
-                {shareState === "publish" && <div className="project-share-actions">
-                    <Button className="teal"
-                        title={lf("Copy link")}
-                        label={lf("Copy link")}
-                        leftIcon="fas fa-link"
-                        onClick={handleCopyClick} />
-                    <Button className="share-button"
-                        title={lf("Show QR code")}
-                        leftIcon="fas fa-qrcode"
-                        onClick={handleQRCodeClick} />
-                    <Button className="share-button"
-                        title={lf("Show embed code")}
-                        leftIcon="fas fa-code"
-                        onClick={handleEmbedClick} />
-                    <SocialButton className="share-button"
-                        url={shareData?.url}
-                        type='facebook'
-                        heading={lf("Share on Facebook")} />
-                    <SocialButton className="share-button"
-                        url={shareData?.url}
-                        type='twitter'
-                        heading={lf("Share on Twitter")} />
-                </div>}
+
+                {shareState === "publish" &&
+                    <div className="project-share-data">
+                        <div className="project-share-text">
+                            {lf("Your project is ready! Use the address below to share your projects.")}
+                        </div>
+                        <div className="common-input-attached-button">
+                            <Input
+                                initialValue={shareData.url}
+                                readOnly={true}
+                                onChange={setName} />
+                            <Button className="teal"
+                                title={lf("Copy link")}
+                                label={lf("Copy link")}
+                                leftIcon="fas fa-link"
+                                onClick={handleCopyClick} />
+                        </div>
+                        <div className="project-share-actions">
+                            <Button className="circle-button gray"
+                                title={lf("Show embed code")}
+                                leftIcon="fas fa-code"
+                                onClick={handleEmbedClick} />
+                            <SocialButton className="circle-button facebook"
+                                url={shareData?.url}
+                                type='facebook'
+                                heading={lf("Share on Facebook")} />
+                            <SocialButton className="circle-button twitter"
+                                url={shareData?.url}
+                                type='twitter'
+                                heading={lf("Share on Twitter")} />
+                            <Button
+                                className="menu-button project-qrcode"
+                                title={lf("Show QR Code")}
+                                label={<img src={shareData?.qr} />}
+                                onClick={handleQRCodeClick}
+                            />
+                        </div>
+                    </div>
+                }
                 {embedState !== "none" && <div className="project-embed">
                     <EditorToggle id="project-embed-toggle"
                         className="slim tablet-compact"
@@ -180,9 +198,6 @@ export const ShareInfo = (props: ShareInfoProps) => {
                     <Textarea readOnly={true}
                         rows={5}
                         initialValue={shareData?.embed[embedState]} />
-                </div>}
-                {showQRCode && <div className="project-qrcode">
-                    <img src={shareData?.qr} />
                 </div>}
             </>}
             {shareState === "gifrecord" && <GifInfo
