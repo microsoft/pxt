@@ -72,6 +72,14 @@
     }
 }
 
+.share-publish-button {
+    height: 3rem;
+
+    .common-spinner {
+        display: inline-block;
+    }
+}
+
 /////////////////////////////////////////
 //           Embed                     //
 /////////////////////////////////////////
@@ -100,6 +108,35 @@
 
     img {
         height: 5rem;
+    }
+}
+
+.common-button.menu-button.project-qrcode:focus::after {
+    outline: @buttonFocusOutlineLightBackground;
+}
+
+.project-share-data .common-input-attached-button .common-button {
+    width: 10rem;
+    padding: .8rem 1rem .95rem;
+}
+
+.qrcode-image {
+    image-rendering: optimizeSpeed;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: optimize-contrast;
+    image-rendering: pixelated;
+    -ms-interpolation-mode: nearest-neighbor;
+}
+
+
+.qrcode-modal-body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .qrcode-image {
+        height: 20rem;
     }
 }
 

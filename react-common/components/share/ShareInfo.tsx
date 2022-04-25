@@ -4,6 +4,7 @@ import { EditorToggle } from "../controls/EditorToggle";
 import { Input } from "../controls/Input";
 import { MenuDropdown } from "../controls/MenuDropdown";
 import { Textarea } from "../controls/Textarea";
+import { Modal } from "../controls/Modal";
 
 import { ShareData } from "./Share";
 import { GifInfo } from "./GifInfo";
@@ -29,13 +30,15 @@ export const ShareInfo = (props: ShareInfoProps) => {
         gifRenderAsync, gifAddFrame, publishAsync, registerSimulatorMsgHandler, unregisterSimulatorMsgHandler } = props;
     const [ name, setName ] = React.useState(projectName);
     const [ thumbnailUri, setThumbnailUri ] = React.useState(screenshotUri);
-    const [ shareState, setShareState ] = React.useState<"share" | "gifrecord" | "publish">("share");
+    const [ shareState, setShareState ] = React.useState<"share" | "gifrecord" | "publish" | "publishing">("share");
     const [ shareData, setShareData ] = React.useState<ShareData>();
     const [ embedState, setEmbedState ] = React.useState<"none" | "code" | "editor" | "simulator">("none");
     const [ showQRCode, setShowQRCode ] = React.useState(false);
+    const [ copySuccessful, setCopySuccessful ] = React.useState(false);
 
     const showSimulator = !!screenshotAsync || !!gifRecordAsync;
     const showDescription = shareState !== "publish";
+    let qrCodeButtonRef: HTMLButtonElement;
 
     React.useEffect(() => {
         setThumbnailUri(screenshotUri)
@@ -51,13 +54,20 @@ export const ShareInfo = (props: ShareInfoProps) => {
     }
 
     const handlePublishClick = async (forceAnonymous?: boolean) => {
+        setShareState("publishing");
         let publishedShareData = await publishAsync(name, thumbnailUri, forceAnonymous);
         setShareData(publishedShareData);
         if (!publishedShareData?.error) setShareState("publish");
+        else setShareState("share")
     }
 
     const handleCopyClick = () => {
         navigator.clipboard.writeText(shareData.url);
+        setCopySuccessful(true);
+    }
+
+    const handleCopyBlur = () => {
+        setCopySuccessful(false);
     }
 
     const handleEmbedClick = () => {
@@ -105,14 +115,25 @@ export const ShareInfo = (props: ShareInfoProps) => {
         title: lf("Create snapshot"),
         label: lf("Create snapshot"),
         onClick: () => handlePublishClick(true)
-    }]
+    }];
+
+    const handleQRCodeButtonRef = (ref: HTMLButtonElement) => {
+        if (ref) qrCodeButtonRef = ref;
+    }
+
+    const handleQRCodeModalClose = () => {
+        setShowQRCode(false);
+        if (qrCodeButtonRef) qrCodeButtonRef.focus();
+    }
+
+    const prePublish = shareState === "share" || shareState === "publishing";
 
     return <>
         <div className="project-share-info">
-            {(shareState === "share" || shareState === "publish") && <>
+            {(prePublish|| shareState === "publish") && <>
                 {showSimulator && <div className="project-share-title">
                     <h2>{lf("About your project")}</h2>
-                    {showShareDropdown && shareState === "share" && <MenuDropdown id="project-share-dropdown"
+                    {showShareDropdown && prePublish && <MenuDropdown id="project-share-dropdown"
                         icon="fas fa-ellipsis-h"
                         title={lf("More share options")}
                         items={dropdownOptions}
@@ -129,7 +150,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
                         rows={5} />
                     </>
                 }
-                {shareState === "share" && <>
+                {prePublish && <>
                     {showSimulator && <div className="project-share-thumbnail">
                         {thumbnailUri
                             ? <img src={thumbnailUri} />
@@ -146,10 +167,16 @@ export const ShareInfo = (props: ShareInfoProps) => {
                             ? lf("Oops! Your project is too big. You can create a GitHub repository to share it.")
                             : lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.")}
                     </div>}
-                    <Button className="primary"
-                        title={lf("Publish to share")}
-                        label={lf("Publish to share")}
-                        onClick={handlePublishClick} />
+                    {shareState === "share" ?
+                        <Button className="primary share-publish-button"
+                            title={lf("Publish to share")}
+                            label={lf("Publish to share")}
+                            onClick={handlePublishClick} /> :
+                        <Button className="primary share-publish-button"
+                            title={lf("Publishing...")}
+                            label={ <div className="common-spinner" />}
+                            onClick={() => {}} />
+                    }
                 </>}
 
                 {shareState === "publish" &&
@@ -162,11 +189,12 @@ export const ShareInfo = (props: ShareInfoProps) => {
                                 initialValue={shareData.url}
                                 readOnly={true}
                                 onChange={setName} />
-                            <Button className="teal"
+                            <Button className={copySuccessful ? "green" : "primary"}
                                 title={lf("Copy link")}
-                                label={lf("Copy link")}
+                                label={copySuccessful ? lf("Copied!") : lf("Copy link")}
                                 leftIcon="fas fa-link"
-                                onClick={handleCopyClick} />
+                                onClick={handleCopyClick}
+                                onBlur={handleCopyBlur} />
                         </div>
                         <div className="project-share-actions">
                             <Button className="circle-button gray"
@@ -183,8 +211,9 @@ export const ShareInfo = (props: ShareInfoProps) => {
                                 heading={lf("Share on Twitter")} />
                             <Button
                                 className="menu-button project-qrcode"
+                                buttonRef={handleQRCodeButtonRef}
                                 title={lf("Show QR Code")}
-                                label={<img src={shareData?.qr} />}
+                                label={<img className="qrcode-image" src={shareData?.qr} />}
                                 onClick={handleQRCodeClick}
                             />
                         </div>
@@ -210,6 +239,14 @@ export const ShareInfo = (props: ShareInfoProps) => {
                 gifAddFrame={gifAddFrame}
                 registerSimulatorMsgHandler={registerSimulatorMsgHandler}
                 unregisterSimulatorMsgHandler={unregisterSimulatorMsgHandler} />}
+
+            {showQRCode &&
+                <Modal title={lf("QR Code")} onClose={handleQRCodeModalClose}>
+                    <div className="qrcode-modal-body">
+                        <img className="qrcode-image" src={shareData?.qr} />
+                    </div>
+                </Modal>
+            }
         </div>
     </>
 }
