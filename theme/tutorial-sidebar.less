@@ -731,16 +731,6 @@ body.horizontal-tutorial {
         max-width: 100%;
     }
 
-    .sim-sidebar {
-        position: relative;
-        display: flex;
-        justify-content: center;
-        width: @simulatorWidth;
-        flex-grow: 1;
-        top: @mainMenuHeight;
-    }
-
-
     @media only screen and (min-width: @largestTabletScreen) {
         #root.tabTutorial,
         #root.headless.tabTutorial {
@@ -772,6 +762,15 @@ body.horizontal-tutorial {
                 right: unset;
                 margin-left: 1rem;
             }
+        }
+
+        .sim-sidebar {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            width: @simulatorWidth;
+            flex-grow: 1;
+            top: @mainMenuHeight;
         }
     }
 }
