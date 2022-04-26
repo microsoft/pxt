@@ -1422,7 +1422,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 name: ts.pxtc.ON_START_TYPE,
                 attributes: {
                     blockId: ts.pxtc.ON_START_TYPE,
-                    weight: pxt.appTarget.runtime.onStartWeight || 10
+                    weight: pxt.appTarget.runtime.onStartWeight || 10,
+                    group: pxt.appTarget.runtime.onStartGroup || undefined
                 },
                 blockXml: `<block type="pxt-on-start"></block>`
             });
