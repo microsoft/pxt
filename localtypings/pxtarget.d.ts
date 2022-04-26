@@ -135,6 +135,7 @@ declare namespace pxt {
         loopsBlocks?: boolean;
         onStartNamespace?: string; // default = loops
         onStartColor?: string;
+        onStartGroup?: string;
         onStartWeight?: number;
         onStartUnDeletable?: boolean;
         pauseUntilBlock?: BlockOptions;
