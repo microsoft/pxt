@@ -179,6 +179,7 @@ namespace pxt.BrowserUtils {
     }
 
     export function useOldTutorialLayout(): boolean {
+        if (pxt.appTarget?.appTheme?.legacyTutorial) return true;
         try {
             return (/tutorialview=old/.test(window.location.href));
         } catch (e) { return false; }
