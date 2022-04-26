@@ -25,15 +25,16 @@
  *                    Buttons                       *
  ****************************************************/
 
-@buttonTextColor: @commonTextColor;
-@buttonTextColorInverted: @white;
+@buttonTextColorLightBackground: @commonTextColor;
+@buttonTextColorDarkBackground: @white;
 @buttonBackgroundColor: @white;
 @buttonBackgroundColorDisabled: @commonBackgroundDisabledColor;
+@buttonGrayColor: #e0e1e2;
 
 @buttonMenuTextColor: #ffffff;
 @buttonMenuTextColorInverted: @primaryColor;
 @buttonMenuBackgroundColorInverted: @buttonMenuTextColor;
-@buttonFocusOutlineDarkBackground: @buttonTextColorInverted solid 1px;;
+@buttonFocusOutlineDarkBackground: @buttonTextColorDarkBackground solid 1px;;
 @buttonFocusOutlineLightBackground: @commonBorderColor solid 1px;
 @buttonMenuBackgroundHoverColor: rgba(0,0,0,.1);
 @buttonMenuBackgroundActiveColor: rgba(0,0,0,.15);
@@ -98,19 +99,19 @@
 
 @inputTextColor: @commonTextColor;
 @inputTextColorDisabled: rgb(161, 159, 157);
-@inputBorderColor: @commonBorderColor;
+@inputBorderColor: rgba(34,36,38,.15);
 @inputBorderColorFocus: rgb(0, 120, 212);
 @inputBackgroundColor: #ffffff;
 @inputBackgroundColorDisabled: @commonBackgroundDisabledColor;
 @inputButtonColor: rgb(0, 120, 212);
-@inputButtonColorHover: rgb(16, 110, 190);
+@inputButtonColorHover: rgb(3, 33, 60);
 
 /****************************************************
  *                  Textarea                        *
  ****************************************************/
 
  @textareaTextColor: @commonTextColor;
- @textareaBorderColor: @commonBorderColor;
+ @textareaBorderColor: @inputBorderColor;
  @textareaBorderColorFocus: rgb(0, 120, 212);
  @textareaBackgroundColor: #ffffff;
  @textareaBackgroundColorDisabled: @commonBackgroundDisabledColor;

@@ -24,6 +24,7 @@ export interface ButtonViewProps extends ControlProps {
 
 export interface ButtonProps extends ButtonViewProps {
     onClick: () => void;
+    onBlur?: () => void;
     onKeydown?: (e: React.KeyboardEvent) => void;
 }
 
@@ -43,6 +44,7 @@ export const Button = (props: ButtonProps) => {
         role,
         onClick,
         onKeydown,
+        onBlur,
         buttonRef,
         title,
         label,
@@ -75,6 +77,7 @@ export const Button = (props: ButtonProps) => {
             ref={buttonRef}
             onClick={!disabled ? clickHandler : undefined}
             onKeyDown={onKeydown || fireClickOnEnter}
+            onBlur={onBlur}
             role={role || "button"}
             tabIndex={tabIndex || (disabled ? -1 : 0)}
             aria-label={ariaLabel}
