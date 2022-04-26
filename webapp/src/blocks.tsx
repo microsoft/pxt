@@ -1392,6 +1392,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private filterBlocks(subns: string, blocks: toolbox.BlockDefinition[]) {
+        if (!blocks) return [];
         return blocks.filter((block => !(block.attributes.blockHidden)
             && !(block.attributes.deprecated && !this.parent.isTutorial())
             && ((!subns && !block.attributes.subcategory && !block.attributes.advanced)

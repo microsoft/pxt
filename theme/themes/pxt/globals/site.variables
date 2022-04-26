@@ -399,3 +399,9 @@
 ----------------------------*/
 @tutorialCodeValidationCorrectBackground: @green;
 @tutorialCodeValidationCorrectTextColor: @white;
+
+/*---------------------------
+   Extensions
+----------------------------*/
+@extensionTagBackgroundColor: #AAAAAA;
+@extensionTagColor: #444444;
