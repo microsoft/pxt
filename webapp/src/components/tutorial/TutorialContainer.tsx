@@ -7,6 +7,7 @@ import { ImmersiveReaderButton, launchImmersiveReader } from "../../immersiverea
 import { TutorialStepCounter } from "./TutorialStepCounter";
 import { TutorialHint } from "./TutorialHint";
 import { TutorialResetCode } from "./TutorialResetCode";
+import { fireClickOnEnter } from "../../../../react-common/components/util";
 
 interface TutorialContainerProps {
     parent: pxt.editor.IProjectView;
@@ -23,6 +24,7 @@ interface TutorialContainerProps {
     onTutorialStepChange?: (step: number) => void;
     onTutorialComplete?: () => void;
     setParentHeight?: (height?: number) => void;
+    exitTutorial: () => void;
 }
 
 const MIN_HEIGHT = 80;
@@ -31,7 +33,7 @@ const MAX_HEIGHT = 194;
 export function TutorialContainer(props: TutorialContainerProps) {
     const { parent, tutorialId, name, steps, hideIteration, hasTemplate,
         preferredEditor, tutorialOptions, onTutorialStepChange, onTutorialComplete,
-        setParentHeight } = props;
+        setParentHeight, exitTutorial } = props;
     const [ currentStep, setCurrentStep ] = React.useState(props.currentStep || 0);
     const [ hideModal, setHideModal ] = React.useState(false);
     const [ showScrollGradient, setShowScrollGradient ] = React.useState(false);
@@ -45,7 +47,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
 
     React.useEffect(() => {
         const observer = new ResizeObserver(() => {
-            if (pxt.BrowserUtils.isTabletSize()) {
+            if (pxt.BrowserUtils.isTabletSize() || pxt.appTarget?.appTheme?.horizontalTutorial) {
                 setLayout("horizontal");
             } else {
                 setLayout("vertical");
@@ -127,6 +129,16 @@ export function TutorialContainer(props: TutorialContainerProps) {
         })
     }
 
+    const tutorialExitButton = () => {
+        return <div className="tutorial-exit" aria-label={lf("Exit tutorial")} tabIndex={0}
+            onClick={exitTutorial} onKeyDown={fireClickOnEnter}>
+            {lf("Exit Tutorial")}
+        </div>;
+    }
+
+    const horizontalTutorial = pxt.appTarget?.appTheme?.horizontalTutorial;
+    const desktopHorizontal = horizontalTutorial && !pxt.BrowserUtils.isTabletSize();
+
     const backButton = <Button icon="arrow circle left" disabled={!showBack} text={lf("Back")} onClick={tutorialStepBack} />;
     const nextButton = showDone
         ? <Button icon="check circle" text={lf("Done")} onClick={onTutorialComplete} />
@@ -135,6 +147,7 @@ export function TutorialContainer(props: TutorialContainerProps) {
 
     return <div className="tutorial-container">
         <div className="tutorial-top-bar">
+            {desktopHorizontal && tutorialExitButton()}
             <TutorialStepCounter tutorialId={tutorialId} currentStep={visibleStep} totalSteps={steps.length} title={name} setTutorialStep={setCurrentStep} />
             {showImmersiveReader && <ImmersiveReaderButton content={markdown} tutorialOptions={tutorialOptions} />}
         </div>

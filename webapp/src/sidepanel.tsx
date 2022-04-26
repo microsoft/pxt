@@ -78,7 +78,10 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
     }
 
     protected showTutorialTab = () => {
-        this.props.showMiniSim(true);
+        const horizontalTutorial = pxt.appTarget?.appTheme?.horizontalTutorial;
+        const desktopHorizontal = horizontalTutorial && !pxt.BrowserUtils.isTabletSize();
+
+        this.props.showMiniSim(!desktopHorizontal);
         this.setState({ activeTab: TUTORIAL_TAB });
     }
 
@@ -130,7 +133,9 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
             handleHardwareDebugClick, onTutorialStepChange, onTutorialComplete } = this.props;
         const { activeTab, height } = this.state;
 
-        const isTabTutorial = tutorialOptions?.tutorial && !pxt.BrowserUtils.useOldTutorialLayout();
+        const horizontalTutorial = pxt.appTarget?.appTheme?.horizontalTutorial;
+        const desktopHorizontal = horizontalTutorial && !pxt.BrowserUtils.isTabletSize();
+        const isTabTutorial = tutorialOptions?.tutorial && !pxt.BrowserUtils.useOldTutorialLayout() && !desktopHorizontal;
         const isLockedEditor = pxt.appTarget.appTheme.lockedEditor;
         const hasSimulator = !pxt.appTarget.simulator?.headless;
         const marginHeight = hasSimulator ? "6.5rem" : "3rem";
@@ -138,29 +143,33 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         const backButton = <Button icon="arrow circle left" text={lf("Back")} onClick={this.showTutorialTab} />;
         const nextButton = <Button icon="arrow circle right" text={lf("Next")} onClick={this.showTutorialTab} />;
 
+        const sim = <>
+            {isTabTutorial && !isLockedEditor && this.tutorialExitButton()}
+            <div className="ui items simPanel" ref={this.handleSimPanelRef}>
+                <div id="boardview" className="ui vertical editorFloat" role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0} />
+                <simtoolbar.SimulatorToolbar parent={parent} collapsed={collapseEditorTools} simSerialActive={simSerialActive} devSerialActive={deviceSerialActive} showSimulatorSidebar={this.showSimulatorTab} />
+                {showKeymap && <keymap.Keymap parent={parent} />}
+                <div className="ui item portrait hide hidefullscreen">
+                    {pxt.options.debug && <Button key="hwdebugbtn" className="teal" icon="xicon chip" text={"Dev Debug"} onClick={handleHardwareDebugClick} />}
+                </div>
+                {showSerialButtons && <div id="serialPreview" className="ui editorFloat portrait hide hidefullscreen">
+                    <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={this.handleSimSerialClick} parent={parent} />
+                    <serialindicator.SerialIndicator ref="devIndicator" isSim={false} onClick={this.handleDeviceSerialClick} parent={parent} />
+                </div>}
+                {showFileList && <filelist.FileList parent={parent} />}
+                {showFullscreenButton && !desktopHorizontal && <div id="miniSimOverlay" role="button" title={lf("Open in fullscreen")} onClick={this.handleSimOverlayClick} />}
+            </div>
+            {isTabTutorial && <div className="tutorial-controls">
+                { backButton }
+                <Button icon="lightbulb" disabled={true} className="tutorial-hint" />
+                { nextButton }
+            </div>}
+        </>
+
         return <div id="simulator" className="simulator">
             <TabPane id="editorSidebar" activeTabName={activeTab} style={height ? { height: `calc(${height}px + ${marginHeight})` } : undefined}>
-                {hasSimulator && <TabContent name={SIMULATOR_TAB} icon="xicon gamepad" onSelected={this.showSimulatorTab} ariaLabel={lf("Open the simulator tab")}>
-                    {isTabTutorial && !isLockedEditor && this.tutorialExitButton()}
-                    <div className="ui items simPanel" ref={this.handleSimPanelRef}>
-                        <div id="boardview" className="ui vertical editorFloat" role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0} />
-                        <simtoolbar.SimulatorToolbar parent={parent} collapsed={collapseEditorTools} simSerialActive={simSerialActive} devSerialActive={deviceSerialActive} showSimulatorSidebar={this.showSimulatorTab} />
-                        {showKeymap && <keymap.Keymap parent={parent} />}
-                        <div className="ui item portrait hide hidefullscreen">
-                            {pxt.options.debug && <Button key="hwdebugbtn" className="teal" icon="xicon chip" text={"Dev Debug"} onClick={handleHardwareDebugClick} />}
-                        </div>
-                        {showSerialButtons && <div id="serialPreview" className="ui editorFloat portrait hide hidefullscreen">
-                            <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={this.handleSimSerialClick} parent={parent} />
-                            <serialindicator.SerialIndicator ref="devIndicator" isSim={false} onClick={this.handleDeviceSerialClick} parent={parent} />
-                        </div>}
-                        {showFileList && <filelist.FileList parent={parent} />}
-                        {showFullscreenButton && <div id="miniSimOverlay" role="button" title={lf("Open in fullscreen")} onClick={this.handleSimOverlayClick} />}
-                    </div>
-                    {isTabTutorial && <div className="tutorial-controls">
-                        { backButton }
-                        <Button icon="lightbulb" disabled={true} className="tutorial-hint" />
-                        { nextButton }
-                    </div>}
+                {hasSimulator && !desktopHorizontal && <TabContent name={SIMULATOR_TAB} icon="xicon gamepad" onSelected={this.showSimulatorTab} ariaLabel={lf("Open the simulator tab")}>
+                    {sim}
                 </TabContent>}
                 {tutorialOptions && <TabContent name={TUTORIAL_TAB} icon="icon tasks" showBadge={activeTab !== TUTORIAL_TAB} onSelected={this.showTutorialTab} ariaLabel={lf("Open the tutorial tab")}>
                     <TutorialContainer
@@ -175,9 +184,15 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                         preferredEditor={tutorialOptions.metadata?.preferredEditor}
                         onTutorialStepChange={onTutorialStepChange}
                         onTutorialComplete={onTutorialComplete}
-                        setParentHeight={this.setComponentHeight} />
+                        setParentHeight={this.setComponentHeight}
+                        exitTutorial={() => this.props.parent.exitTutorial()} />
                 </TabContent>}
             </TabPane>
+            {desktopHorizontal &&
+                <div className="sim-sidebar">
+                    {sim}
+                </div>
+            }
         </div>
     }
 }

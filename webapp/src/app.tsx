@@ -4261,7 +4261,7 @@ export class ProjectView
         if (this.isTutorial()) {
             if (!pxt.BrowserUtils.useOldTutorialLayout()) {
                 const sidebarEl = document?.getElementById("editorSidebar");
-                if (sidebarEl && pxt.BrowserUtils.isTabletSize()) {
+                if (sidebarEl && pxt.BrowserUtils.isTabletSize() || pxt.appTarget?.appTheme?.horizontalTutorial) {
                     this.setState({ editorOffset: sidebarEl.offsetHeight + "px" });
                 } else {
                     this.setState({ editorOffset: undefined });
@@ -5155,6 +5155,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     pxt.perf.measureEnd("setAppTarget");
 
     enableAnalytics()
+
+    if (pxt.appTarget?.appTheme?.horizontalTutorial) {
+        pxsim.U.addClass(document.body, 'horizontal-tutorial');
+    }
 
     if (!pxt.BrowserUtils.isBrowserSupported() && !/skipbrowsercheck=1/i.exec(window.location.href)) {
         pxt.tickEvent("unsupported");

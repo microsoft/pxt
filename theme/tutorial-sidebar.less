@@ -427,34 +427,10 @@
 }
 
 /*******************************
-        Media Adjustments
+    Horizontal layout
 *******************************/
 
-/* Desktop Only */
-@media only screen and (max-height: @tallEditorBreakpoint) and (min-width: @largestTabletScreen) {
-    #root.tabTutorial:not(.fullscreensim) .tab-simulator:not(.hidden) {
-        .simPanel {
-            height: calc(100% - @tutorialControlsOffset);
-            min-height: @tutorialSimulatorMinHeight;
-        }
-        #boardview {
-            height: calc(100% - @tutorialBoardviewOffset);
-            min-height: @tutorialSimulatorMinHeight;
-        }
-        #simulators {
-            height: 100%;
-            min-height: @tutorialSimulatorMinHeight;
-        }
-        .simframe {
-            padding-bottom: unset !important;
-            height: 100%;
-            min-height: @tutorialSimulatorMinHeight;
-        }
-    }
-}
-
-/* <= Tablet (Mobile + Tablet) */
-@media only screen and (max-width: @largestTabletScreen) {
+.mixin-horizontal-tutorial() {
     #root.tabTutorial,
     #root.headless.tabTutorial {
         #maineditor > .full-abs {
@@ -746,6 +722,92 @@
             }
         }
     }
+}
+
+body.horizontal-tutorial {
+    .mixin-horizontal-tutorial();
+
+    #editorSidebar {
+        max-width: 100%;
+    }
+
+    .sim-sidebar {
+        position: relative;
+        display: flex;
+        justify-content: center;
+        width: @simulatorWidth;
+        flex-grow: 1;
+        top: @mainMenuHeight;
+    }
+
+
+    @media only screen and (min-width: @largestTabletScreen) {
+        #root.tabTutorial,
+        #root.headless.tabTutorial {
+            #editorSidebar {
+                top: @mainMenuHeight;
+                position: relative;
+            }
+        }
+        #simulator {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .simPanel {
+            width: 90%
+        }
+
+        .tutorial-top-bar {
+            background-color: @tutorialPrimaryColor;
+            right: 4rem;
+            width: 30rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            .tutorial-exit {
+                position: relative;
+                top: unset;
+                right: unset;
+                margin-left: 1rem;
+            }
+        }
+    }
+}
+
+/*******************************
+        Media Adjustments
+*******************************/
+
+/* Desktop Only */
+@media only screen and (max-height: @tallEditorBreakpoint) and (min-width: @largestTabletScreen) {
+    body:not(.horizontal-tutorial) {
+        #root.tabTutorial:not(.fullscreensim) .tab-simulator:not(.hidden) {
+            .simPanel {
+                height: calc(100% - @tutorialControlsOffset);
+                min-height: @tutorialSimulatorMinHeight;
+            }
+            #boardview {
+                height: calc(100% - @tutorialBoardviewOffset);
+                min-height: @tutorialSimulatorMinHeight;
+            }
+            #simulators {
+                height: 100%;
+                min-height: @tutorialSimulatorMinHeight;
+            }
+            .simframe {
+                padding-bottom: unset !important;
+                height: 100%;
+                min-height: @tutorialSimulatorMinHeight;
+            }
+        }
+    }
+}
+
+/* <= Tablet (Mobile + Tablet) */
+@media only screen and (max-width: @largestTabletScreen) {
+    .mixin-horizontal-tutorial();
 }
 
 /* Mobile */
