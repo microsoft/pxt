@@ -410,6 +410,7 @@ declare namespace pxt {
         monacoFieldEditors?: string[]; // A list of field editors to show in monaco. Currently only "image-editor" is supported
         disableAPICache?: boolean; // Disables the api cache in target.js
         sidebarTutorial?: boolean; // Move the tutorial pane to be on the left side of the screen
+        legacyTutorial?: boolean; // Use the legacy tutorial format without tabs
         /**
          * Internal and temporary flags:
          * These flags may be removed without notice, please don't take a dependency on them
