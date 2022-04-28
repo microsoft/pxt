@@ -441,7 +441,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                         <div className="breadcrumbs">
                             <span className="link" onClick={handleHomeButtonClick}>{lf("Home")}</span>
                         </div>
-                        <div className="extension-grid">
+                        <div className="ui cards centered">
                             {extensionsToShow?.map(scr =>
                                 <ExtensionCard scr={scr} onCardClick={installExtension} learnMoreUrl={scr.fullName ? `/pkg/${scr.fullName}` : undefined}
                                     name={scr.name} imageUrl={scr.imageUrl} description={scr.description} loading={scr.loading} />)}
@@ -454,7 +454,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                             <span>/</span>
                             <span>{selectedTag}</span>
                         </div>
-                        <div className="extension-grid">
+                        <div className="ui cards centered">
                             {extensionsToShow?.map(scr =>
                                 <ExtensionCard scr={scr} onCardClick={installExtension} learnMoreUrl={scr.fullName ? `/pkg/${scr.fullName}` : undefined}
                                     name={scr.name} imageUrl={scr.imageUrl} description={scr.description} loading={scr.loading} />)}
@@ -467,37 +467,39 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                             <Button title={lf("Installed")} label={lf("Installed")} onClick={() => { setCurrentTab(TabState.Installed) }} className={currentTab == TabState.Installed ? "selected" : ""} />
                             <Button title={lf("In Development")} label={lf("In Development")} onClick={() => { setCurrentTab(TabState.InDevelopment) }} className={currentTab == TabState.InDevelopment ? "selected" : ""} />
                         </div>
-                        {currentTab == TabState.Recommended && preferredExts.map(e => <ExtensionCard scr={e} name={e.name} onCardClick={installExtension} imageUrl={e.imageUrl} description={e.description}
-                            learnMoreUrl={e.fullName ? `/pkg/${e.fullName}` : undefined} loading={e.loading} />)}
-                        {currentTab == TabState.Installed && installedExtensions.map(e =>
-                            <ExtensionCard
-                                key={'url:' + e.name}
-                                scr={e}
-                                name={e.name}
-                                onCardClick={() => handleInstalledCardClick(e)}
-                                imageUrl={e.imageUrl}
-                                description={e.description}
-                                learnMoreUrl={e.fullName ? `/pkg/${e.fullName}` : undefined}
-                                role="button"
-                            />
-                        )
-                        }
-                        {currentTab == TabState.InDevelopment && local.forEach(p =>
-                            <ExtensionCard
-                                key={'local:' + p.id}
-                                name={p.name}
-                                description={lf("Local copy of {0} hosted on github.com", p.githubId)}
-                                url={"https://github.com/" + p.githubId}
-                                imageUrl={p.icon}
-                                scr={p}
-                                onCardClick={addLocal}
-                                label={lf("Local")}
-                                title={lf("Local GitHub extension")}
-                                labelClass="blue right ribbon"
-                                role="button"
-                            />
-                        )
-                        }
+                        <div className="ui cards centered">
+                            {currentTab == TabState.Recommended && preferredExts.map(e => <ExtensionCard scr={e} name={e.name} onCardClick={installExtension} imageUrl={e.imageUrl} description={e.description}
+                                learnMoreUrl={e.fullName ? `/pkg/${e.fullName}` : undefined} loading={e.loading} />)}
+                            {currentTab == TabState.Installed && installedExtensions.map(e =>
+                                <ExtensionCard
+                                    key={'url:' + e.name}
+                                    scr={e}
+                                    name={e.name}
+                                    onCardClick={() => handleInstalledCardClick(e)}
+                                    imageUrl={e.imageUrl}
+                                    description={e.description}
+                                    learnMoreUrl={e.fullName ? `/pkg/${e.fullName}` : undefined}
+                                    role="button"
+                                />
+                            )
+                            }
+                            {currentTab == TabState.InDevelopment && local.forEach(p =>
+                                <ExtensionCard
+                                    key={'local:' + p.id}
+                                    name={p.name}
+                                    description={lf("Local copy of {0} hosted on github.com", p.githubId)}
+                                    url={"https://github.com/" + p.githubId}
+                                    imageUrl={p.icon}
+                                    scr={p}
+                                    onCardClick={addLocal}
+                                    label={lf("Local")}
+                                    title={lf("Local GitHub extension")}
+                                    labelClass="blue right ribbon"
+                                    role="button"
+                                />
+                            )
+                            }
+                        </div>
                     </div>
                 }
             </div>
