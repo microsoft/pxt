@@ -471,7 +471,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                                     learnMoreUrl={e.fullName ? `/pkg/${e.fullName}`: undefined} loading={e.loading} />)}
                             {currentTab == TabState.Installed && installedExtensions.map(e =>
                                     <ExtensionCard
-                                        key={'url' + e.name}
+                                        key={'url:' + e.name}
                                         scr={e}
                                         name={e.name}
                                         onCardClick={() => handleInstalledCardClick(e)}
@@ -481,7 +481,19 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                                         role="button"
                                     />)}
                             {currentTab == TabState.InDevelopment && local.forEach(p => {
-                                        <ExtensionCard scr={p} name={p.name} description={lf("Local copy of {0} hosted on github.com", p.githubId)} onCardClick={addLocal} />
+                                    <ExtensionCard
+                                        key={'local:' + p.id}
+                                        name={p.name}
+                                        description={lf("Local copy of {0} hosted on github.com", p.githubId)}
+                                        url={"https://github.com/" + p.githubId}
+                                        imageUrl={p.icon}
+                                        scr={p}
+                                        onCardClick={addLocal}
+                                        label={lf("Local")}
+                                        title={lf("Local GitHub extension")}
+                                        labelClass="blue right ribbon"
+                                        role="button"
+                                    />
                                     })}
                         </div>
                     }
