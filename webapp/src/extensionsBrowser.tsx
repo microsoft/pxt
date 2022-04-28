@@ -16,7 +16,8 @@ import { DeleteConfirmationModal } from "../../react-common/components/extension
 // import { ExtensionCard } from "../../react-common/components/extensions/ExtensionCard";
 
 type ExtensionMeta = pxtc.service.ExtensionMeta;
-const emptyCard = { name: "", loading: true }
+type EmptyCard = {name: string, loading?: boolean}
+const emptyCard: EmptyCard = { name: "", loading: true }
 
 interface ExtensionsProps {
     isVisible: boolean;
@@ -35,14 +36,14 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
 
     const [searchFor, setSearchFor] = useState("");
     const [allExtensions, setAllExtensions] = useState(fetchBundled());
-    const [extensionsToShow, setExtensionsToShow] = useState([]);
+    const [extensionsToShow, setExtensionsToShow] = useState(new Array<ExtensionMeta & EmptyCard>());
     const [selectedTag, setSelectedTag] = useState("");
     const [currentTab, setCurrentTab] = useState(TabState.Recommended);
     const [showImportExtensionDialog, setShowImportExtensionDialog] = useState(false);
-    const [installedExtensions, setInstalledExtensions] = useState([])
+    const [installedExtensions, setInstalledExtensions] = useState(new Array<ExtensionMeta & EmptyCard>())
     const [lastVisibleState, setLastVisibleState] = useState(props.isVisible)
     const [deletionCandidate, setDeletionCandidate] = useState(undefined)
-    const [preferredExts, setPreferredExts] = useState([])
+    const [preferredExts, setPreferredExts] = useState(new Array<ExtensionMeta & EmptyCard>())
     const [extensionTags, setExtensionTags] = useState(new Map<string, pxt.RepoData[]>())
 
     if (lastVisibleState != props.isVisible) {
@@ -470,7 +471,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                                     learnMoreUrl={e.fullName ? `/pkg/${e.fullName}`: undefined} loading={e.loading} />)}
                             {currentTab == TabState.Installed && installedExtensions.map(e =>
                                     <ExtensionCard
-                                        key={'url' + e.id}
+                                        key={'url' + e.name}
                                         scr={e}
                                         name={e.name}
                                         onCardClick={() => handleInstalledCardClick(e)}
