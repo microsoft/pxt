@@ -1,9 +1,3 @@
-.extensionCard.loading {
-    background: @loadingAnimation;
-    background-size: 400% 400%;
-    animation: gradient 3s infinite alternate;
-}
-
 @keyframes gradient {
     0% {
         background-position: 0% 50%;
@@ -16,41 +10,58 @@
     }
 }
 
-.extensionCard.ui.card {
-    height: 19rem;
-    display: flex;
-    justify-content: space-between;
-    margin: 0;
-    overflow: hidden;
+.extensionCard.loading {
+    background: @loadingAnimation;
+    background-size: 400% 400%;
+    animation: gradient 3s infinite alternate;
+}
 
-    img {
-        height: 11rem;
+.ui.extensionsBrowser {
+    .extension-grid {
+        overflow-y: auto;
+        overflow-x: hidden;
+        margin-top: 0.5rem;
+    }
+    .ui.card {
+        height: 20rem;
+        .ui.cardimage {
+            background-color: transparent;
+            height: 11rem;
+            &.upload {
+                margin: 3em auto;
+            }
+        }
+        .content:not(.extra) {
+            .header {
+                white-space: nowrap;
+                text-overflow: ellipsis;
+                overflow: hidden;
+            }
+            .description {
+                height: 2.8em;
+                overflow: hidden;
+            }
+            .description.long  {
+                height: 14em;
+            }
+        }
+    }
+    .ui.card.loading {
+        background: @loadingAnimation;
+        background-size: 400% 400%;
+        animation: gradient 3s infinite alternate;
+    }
+    /* Search input */
+    .ui.search {
+        max-width: 50%;
+        margin: auto;
     }
 
-    .content {
-        justify-content: flex-start;
-        display: flex;
-        flex-direction: column;
-        padding: 0.2em 1em;
-    }
-
-    .name {
-        font-family: @defaultFont;
-        font-weight: 600;
-        font-size: 1.5rem;
-        line-height: 1.6rem;
-        padding-top: .5rem;
-    }
-
-    .description {
-        font-weight: 400;
-        text-overflow: ellipsis;
-        padding-top: .8rem;
-        font-size: 1rem;
-    }
-
-    .learnmore {
-        font-size: 1rem;
-        align-self: flex-end;
+    .ui.inline.loader {
+        margin-top: 4em;
+        :after, :before {
+            width: 4rem;
+            height: 4rem;
+        }
     }
 }
