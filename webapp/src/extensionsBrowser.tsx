@@ -4,6 +4,7 @@ import * as core from "./core";
 import * as workspace from "./workspace";
 import * as pkg from "./package";
 import * as sui from "./sui";
+import * as codecard from "./codecard";
 
 import { MenuBar } from "../../react-common/components/controls/MenuBar";
 import { Button } from "../../react-common/components/controls/Button";
@@ -12,7 +13,7 @@ import { SearchInput } from "./components/searchInput";
 import { useState, useEffect } from "react";
 import { ImportModal } from "../../react-common/components/extensions/ImportModal";
 import { DeleteConfirmationModal } from "../../react-common/components/extensions/DeleteConfirmationModal";
-import { ExtensionCard } from "../../react-common/components/extensions/ExtensionCard";
+// import { ExtensionCard } from "../../react-common/components/extensions/ExtensionCard";
 
 type ExtensionMeta = pxtc.service.ExtensionMeta;
 const emptyCard = { name: "", loading: true }
@@ -468,7 +469,16 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                             {currentTab == TabState.Recommended && preferredExts.map(e => <ExtensionCard scr={e} name={e.name} onCardClick={installExtension} imageUrl={e.imageUrl} description={e.description}
                                     learnMoreUrl={e.fullName ? `/pkg/${e.fullName}`: undefined} loading={e.loading} />)}
                             {currentTab == TabState.Installed && installedExtensions.map(e =>
-                                    <ExtensionCard scr={e} name={e.name} onCardClick={() => handleInstalledCardClick(e)} imageUrl={e.imageUrl} description={e.description} learnMoreUrl={e.fullName ? `/pkg/${e.fullName}` : undefined}/>)}
+                                    <ExtensionCard
+                                        key={'url' + e.id}
+                                        scr={e}
+                                        name={e.name}
+                                        onCardClick={() => handleInstalledCardClick(e)}
+                                        imageUrl={e.imageUrl}
+                                        description={e.description}
+                                        learnMoreUrl={e.fullName ? `/pkg/${e.fullName}` : undefined}
+                                        role="button"
+                                    />)}
                             {currentTab == TabState.InDevelopment && local.forEach(p => {
                                         <ExtensionCard scr={p} name={p.name} description={lf("Local copy of {0} hosted on github.com", p.githubId)} onCardClick={addLocal} />
                                     })}
@@ -477,4 +487,27 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                 </div>
         </sui.Modal>
     )
+}
+
+interface ExtensionCardProps extends pxt.CodeCard {
+    scr: pxtc.service.ExtensionMeta;
+    onCardClick: (scr: any) => void;
+    loading?: boolean;
+}
+
+class ExtensionCard extends sui.StatelessUIElement<ExtensionCardProps> {
+    constructor(props: ExtensionCardProps) {
+        super(props);
+        this.handleClick = this.handleClick.bind(this);
+    }
+
+    handleClick() {
+        const { scr, onCardClick } = this.props;
+        onCardClick(scr);
+    }
+
+    renderCore() {
+        const { onCardClick, onClick, scr, ...rest } = this.props;
+        return <codecard.CodeCardView {...rest} onClick={this.handleClick} />
+    }
 }
